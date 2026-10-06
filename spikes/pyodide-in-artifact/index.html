@@ -1,0 +1,55 @@
+<title>Zero to Quant Python probe</title>
+<style>
+:root { --bg: #FFFFFF; --fg: #000000; --muted: #6B6B6B; --line: #E5E5E5; --ok: #13803B; --bad: #9A5800; --face: #565656; --lip: #262626; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141414; --fg: #FFFFFF; --muted: #8C8C8C; --line: #4B4B4B; --ok: #5ED981; --bad: #F9D25C; --face: #F2F2F2; --lip: #B3B3B3; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #141414; --fg: #FFFFFF; --muted: #8C8C8C; --line: #4B4B4B; --ok: #5ED981; --bad: #F9D25C; --face: #F2F2F2; --lip: #B3B3B3; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 16px/24px system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; }
+main { max-width: 640px; margin: 0 auto; padding-block: 32px 64px; padding-inline: 16px; display: grid; gap: 16px; }
+h1 { font-size: 24px; line-height: 30px; margin: 0; }
+p { margin: 0; color: var(--muted); }
+button { justify-self: start; min-height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: var(--face); color: var(--bg); font: 700 17px/20px system-ui, sans-serif; box-shadow: 0 4px 0 var(--lip); cursor: pointer; }
+button:active { transform: translateY(4px); box-shadow: none; }
+button:disabled { opacity: 0.5; cursor: default; }
+pre { margin: 0; padding: 12px 16px; border: 2px solid var(--line); border-radius: 16px; font: 500 13px/20px ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 120px; }
+#saved { font-size: 14px; }
+</style>
+<main>
+  <h1>Zero to Quant Python probe</h1>
+  <p>Press the button once. It starts full Python with NumPy and pandas inside this page (about 13 MB to download, so use Wi-Fi), runs a small calculation, and saves the timings so the build plan can use them.</p>
+  <button id="run" type="button">Start Python</button>
+  <pre id="log" aria-live="polite">Waiting.</pre>
+  <p id="saved"></p>
+</main>
+<script>
+(function () {
+  const btn = document.getElementById('run'), logEl = document.getElementById('log'), saved = document.getElementById('saved');
+  const lines = [];
+  const write = (s) => { lines.push(s); logEl.textContent = lines.join('\n'); };
+  btn.addEventListener('click', () => {
+    btn.disabled = true; lines.length = 0; write('Starting worker');
+    let w;
+    try { w = new Worker('zq-py-worker.js', { type: 'module' }); } catch (e) { write('Module worker blocked: ' + e.message); return finish(false); }
+    const t = setTimeout(() => { write('Timed out after 120 s'); w.terminate(); finish(false); }, 120000);
+    w.onerror = (e) => { clearTimeout(t); write('Worker error: ' + (e.message || 'unknown')); finish(false); };
+    w.onmessage = (e) => {
+      const d = e.data;
+      if (d.log) write(d.ms + ' ms  ' + d.log);
+      if (d.error) { clearTimeout(t); write(d.ms + ' ms  ERROR ' + d.error); w.terminate(); finish(false); }
+      if (d.done) { clearTimeout(t); write(d.ms + ' ms  done'); w.terminate(); finish(true); }
+    };
+    w.postMessage({ packages: ['numpy', 'pandas'], code: "import numpy as np, pandas as pd\np = pd.Series([100.0, 120.0, 90.0, 110.0])\ndd = float((1 - p / p.cummax()).max())\nf'drawdown={dd:.4f} numpy={np.__version__} pandas={pd.__version__}'" });
+  });
+  async function finish(ok) {
+    btn.disabled = false;
+    const result = { ok, log: lines.join('\n'), userAgent: navigator.userAgent, when: new Date().toISOString() };
+    try {
+      if (!window.claude || typeof window.claude.use !== 'function') throw new Error('no viewer');
+      const db = await window.claude.use('db'), user = await window.claude.use('user');
+      if (!db) throw new Error('storage unavailable');
+      const id = user ? String(await user.id()).replace(/[^A-Za-z0-9_-]/g, '_') : 'anon';
+      await db.doc('pyprobe/' + id).set(result);
+      saved.textContent = 'Results saved. You can close this page.';
+    } catch (e) { saved.textContent = 'Results were not saved (' + (e.code || e.message) + '). A screenshot of the log works too.'; }
+  }
+})();
+</script>

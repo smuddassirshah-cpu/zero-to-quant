@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brainy Bertie</title>
+<meta name="description" content="Prototype rig for Brainy Bertie, the Zero to Quant mascot and AI tutor face: every state, small sizes, speech bubble, themes and reduced motion.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Besley:ital,wght@0,400..900;1,400..900&family=Source+Code+Pro:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+/* ===== bertie.css (production: component tokens join tokens.css, rules join components.css) ===== */
+/* Character colours are fixed in both themes: a character does not invert. Only the ground shadow adapts. */
+:root {
+  --bertie-line: #2A2420;
+  --bertie-skin: #F9D0AC;
+  --bertie-skin-shade: #EFB089;
+  --bertie-blush: #F2917A;
+  --bertie-hair: #FFFFFF;
+  --bertie-hair-shade: #E4E1EA;
+  --bertie-brow: #4A433E;
+  --bertie-tache: #F3F0EC;
+  --bertie-eye: #2A2420;
+  --bertie-mouth: #6E2B26;
+  --bertie-tongue: #E9806C;
+  --bertie-jumper: #6F7D8E;
+  --bertie-shirt: #FFFFFF;
+  --bertie-tie: var(--pear-400);
+  --bertie-orbit: var(--hint);
+  --bertie-zzz: var(--text-muted);
+  --bertie-shadow: rgba(0, 0, 0, 0.10);
+}
+:root[data-theme="dark"] { --bertie-shadow: rgba(0, 0, 0, 0.45); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bertie-shadow: rgba(0, 0, 0, 0.45); } }
+
+.bertie { position: relative; display: inline-block; flex: none; width: var(--b-size); height: var(--b-size); line-height: 0; -webkit-tap-highlight-color: transparent; }
+.bertie > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.bertie[data-interactive] > svg { cursor: pointer; }
+.b-svg .ln { stroke: var(--bertie-line); stroke-width: var(--b-sw); stroke-linejoin: round; stroke-linecap: round; }
+/* Merged outline: every hair shape is drawn twice, first as a line-coloured silhouette with a double-width stroke,
+   then filled on top. Overlaps merge, so the hair has one outer edge and no seams where locks cross. */
+.b-svg .hl { fill: var(--bertie-line); stroke: var(--bertie-line); stroke-width: calc(var(--b-sw) * 2); stroke-linejoin: round; }
+.b-svg .f-skin { fill: var(--bertie-skin); }
+.b-svg .f-shade { fill: var(--bertie-skin-shade); }
+.b-svg .f-hair { fill: var(--bertie-hair); }
+.b-svg .f-hair-shade { fill: var(--bertie-hair-shade); }
+.b-svg .f-tache { fill: var(--bertie-tache); }
+.b-svg .f-jumper { fill: var(--bertie-jumper); }
+.b-svg .f-shirt { fill: var(--bertie-shirt); }
+.b-svg .f-tie { fill: var(--bertie-tie); }
+.b-svg .f-eye { fill: var(--bertie-eye); }
+.b-svg .glint { fill: #FFFFFF; }
+.b-svg .brow { fill: none; stroke: var(--bertie-brow); stroke-width: var(--b-brow); stroke-linecap: round; }
+.b-svg .lid { fill: none; stroke: var(--bertie-eye); stroke-width: var(--b-lid); stroke-linecap: round; }
+.b-svg .lid-edge { fill: none; stroke: var(--bertie-eye); stroke-width: var(--b-sw); stroke-linecap: round; }
+.b-svg .mouth { fill: var(--bertie-mouth); }
+.b-svg .tongue { fill: var(--bertie-tongue); }
+.b-svg .blush { fill: var(--bertie-blush); }
+.b-svg .orbit { fill: var(--bertie-orbit); stroke: var(--bg-surface); stroke-width: 2px; }
+.b-svg .orbit-ring { fill: none; stroke: var(--bertie-orbit); stroke-width: var(--b-sw); stroke-dasharray: 2 7; stroke-linecap: round; opacity: 0.55; }
+.b-svg .zzz { fill: var(--bertie-zzz); font: 800 20px/1 var(--font-sans); }
+
+/* Pose channels: the controller writes inline transforms, CSS interpolates them. */
+.b-svg .brow-g, .b-svg .tache-half { transition: transform 260ms var(--spring-bounce); }
+.b-svg .eye-g { transition: transform 200ms var(--spring-bounce); }
+.b-svg .lid-g { transition: transform 180ms var(--ease-standard); }
+.b-svg .eyes { transition: transform 140ms var(--ease-standard); }
+.b-svg .mouth-g { transition: transform 180ms var(--ease-standard); }
+.b-svg .features { transition: transform 360ms var(--ease-morph); }
+.b-svg .body { transition: transform 220ms var(--spring-bounce); }
+.b-svg .blush-g { transition: opacity 300ms var(--ease-standard); }
+
+/* Eye modes: open (eyeball and lids), happy (an arch), closed (a smile line). A cartoon eye change is a cut. */
+.b-svg .eye-happy, .b-svg .eye-closed { opacity: 0; }
+.b-svg[data-eyes="happy"] .eyeball, .b-svg[data-eyes="closed"] .eyeball { opacity: 0; }
+.b-svg[data-eyes="happy"] .eye-happy { opacity: 1; }
+.b-svg[data-eyes="closed"] .eye-closed { opacity: 1; }
+
+/* Speech bubble */
+.bertie-bubble {
+  position: absolute; z-index: 5; width: max-content; padding: 12px 16px;
+  background: var(--bg-surface); color: var(--ink); border: 2px solid var(--line); border-radius: var(--r-md);
+  box-shadow: var(--e2); font: 400 16px/24px var(--font-sans); text-align: left; overflow-wrap: anywhere;
+}
+.bertie-bubble .who { display: block; font: 700 13px/16px var(--font-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.bertie-bubble::before { content: ""; position: absolute; width: 14px; height: 14px; background: inherit; border: inherit; border-width: 0 0 2px 2px; border-radius: 0 0 0 3px; }
+.bertie-bubble[data-place="right"]::before { left: -9px; top: var(--tail, 22px); transform: rotate(45deg); }
+.bertie-bubble[data-place="top"]::before { bottom: -9px; left: var(--tail, 50%); margin-left: -7px; transform: rotate(-45deg); }
+.bertie-bubble[data-tone="correct"] { background: var(--green-fill); border-color: var(--green-frame); }
+.bertie-bubble[data-tone="notyet"] { background: var(--amber-fill); border-color: var(--amber-frame); }
+:root[data-theme="dark"] .bertie-bubble[data-tone="correct"], :root[data-theme="dark"] .bertie-bubble[data-tone="notyet"] { background: var(--bg-raised); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .bertie-bubble[data-tone="correct"], :root:not([data-theme="light"]) .bertie-bubble[data-tone="notyet"] { background: var(--bg-raised); } }
+/* ===== Demo page (not part of the component) ===== */
+body { min-height: 100%; }
+.page { max-width: 1040px; margin: 0 auto; padding: 0 16px 64px; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; padding: 20px 0 16px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand .t-overline { color: var(--text-muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { display: inline-flex; padding: 3px; border-radius: var(--r-pill); background: var(--bg-sunken); border: 1px solid var(--line); }
+.seg button { min-height: 38px; padding: 0 14px; border: 0; border-radius: var(--r-pill); background: transparent; font: 600 14px/18px var(--font-sans); color: var(--text-2); }
+.seg button[aria-pressed="true"] { background: var(--bg-surface); color: var(--ink); box-shadow: var(--e1); }
+.grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.panel { background: var(--bg-surface); border: 2px solid var(--line); border-radius: var(--r-xl); padding: 20px; min-width: 0; }
+.panel h2 { margin: 0 0 4px; }
+.panel p.lead { margin: 0 0 16px; color: var(--text-2); }
+.stage { position: relative; height: 420px; border-radius: var(--r-lg); background: radial-gradient(120% 90% at 50% 100%, var(--bg-sunken), var(--bg-surface) 70%); display: grid; place-items: end center; padding-bottom: 28px; overflow: hidden; }
+@media (min-width: 900px) { .stage { height: 440px; place-items: center start; padding: 0 0 0 28px; } }
+.stage .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 28px; }
+.target { position: absolute; right: 18px; top: 22px; width: 44px; height: 44px; border-radius: 50%; border: 3px dashed var(--manip); display: grid; place-items: center; color: var(--manip); font: 700 12px/1 var(--font-sans); background: var(--manip-wash); }
+.target[hidden] { display: none; }
+.caption { margin: 14px 2px 0; min-height: 48px; }
+.caption b { font-weight: 700; }
+.states { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 560px) { .states { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.sbtn { min-height: 44px; padding: 6px 12px; border: 2px solid var(--line); border-radius: var(--r-pill); background: var(--bg-surface); text-align: left; display: flex; align-items: center; gap: 8px; font: 600 15px/18px var(--font-sans); }
+.sbtn small { margin-left: auto; white-space: nowrap; font: 500 12px/14px var(--font-sans); color: var(--text-muted); }
+.sbtn:hover { background: var(--bg-hover); }
+.sbtn[aria-pressed="true"] { border-color: var(--ink); }
+.group-label { margin: 16px 0 8px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.row .btn { min-height: 44px; font-size: 15px; padding: 0 18px; }
+.switch { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font: 600 15px/18px var(--font-sans); }
+.switch input { width: 20px; height: 20px; accent-color: var(--ink); }
+.sizes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px 28px; }
+.sizes figure { margin: 0; display: grid; justify-items: center; gap: 8px; }
+.sizes figcaption { font: 500 13px/18px var(--font-sans); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ctx { display: grid; gap: 12px; margin-top: 8px; }
+.verdict { display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 10px; border-radius: var(--r-md); border: 2px solid; font: 600 15px/20px var(--font-sans); width: fit-content; max-width: 100%; }
+.verdict.ok { background: var(--green-fill); border-color: var(--green-frame); }
+.verdict.no { background: var(--amber-fill); border-color: var(--amber-frame); }
+.verdict .xp { color: var(--green-text); font-variant-numeric: tabular-nums; margin-left: 6px; }
+.verdict .sub { font-weight: 400; color: var(--text-2); }
+.ctx-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 24px; }
+.dock { width: 52px; height: 52px; padding: 0; display: grid; place-items: center; }
+.node-wrap { display: grid; justify-items: center; gap: 0; }
+.node { width: 64px; height: 56px; border-radius: 50%; background: var(--prob); box-shadow: 0 6px 0 var(--prob-lip); margin-top: -4px; }
+.beam { width: 48px; height: 10px; border-radius: 50%; background: var(--bertie-shadow); margin-top: 4px; }
+.ctx-label { font: 500 13px/18px var(--font-sans); color: var(--text-muted); margin-top: 8px; text-align: center; }
+.palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.sw { display: flex; align-items: center; gap: 10px; font: 500 13px/16px var(--font-sans); min-width: 0; }
+.sw i { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line-strong); flex: none; }
+.sw code { font: 500 12px/16px var(--font-mono); color: var(--text-muted); display: block; overflow: hidden; text-overflow: ellipsis; }
+.note { margin-top: 12px; color: var(--text-muted); font: 500 13px/18px var(--font-sans); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <div id="brand-bertie"></div>
+      <div>
+        <div class="t-overline">Zero to Quant, mascot rig</div>
+        <h1 class="t-h1" style="margin:0">Brainy Bertie</h1>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Theme">
+        <button type="button" data-theme-btn="light">Light</button>
+        <button type="button" data-theme-btn="dark">Dark</button>
+      </div>
+      <div class="seg" role="group" aria-label="Motion">
+        <button type="button" data-motion-btn="full">Full motion</button>
+        <button type="button" data-motion-btn="reduced">Reduced</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="h-stage">
+      <h2 id="h-stage" class="t-h2">Stage</h2>
+      <p class="lead">Tap Bertie to flick the bobble. Every state below plays here and on the small sizes at once.</p>
+      <div class="stage" id="stage">
+        <div class="target" id="target" hidden aria-hidden="true">look</div>
+        <div id="hero"></div>
+      </div>
+      <p class="caption" id="caption" aria-live="polite"></p>
+    </section>
+
+    <div style="display:grid;gap:16px;min-width:0">
+      <section class="panel" aria-labelledby="h-states">
+        <h2 id="h-states" class="t-h2">States</h2>
+        <p class="lead">Held states stay until the app changes them. One-shots play, then return to the held state.</p>
+        <div class="t-overline group-label muted" style="margin-top:0">Held</div>
+        <div class="states" id="held"></div>
+        <div class="t-overline group-label muted">One-shot</div>
+        <div class="states" id="oneshot"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-talk">
+        <h2 id="h-talk" class="t-h2">Speech and gaze</h2>
+        <p class="lead">Bubbles use text only, never HTML. Streaming lifts the moustache on each delta, at most six times a second.</p>
+        <div class="row">
+          <button class="btn secondary" type="button" id="say-hint">Say a hint</button>
+          <button class="btn secondary" type="button" id="say-stream">Stream a reply</button>
+          <button class="btn secondary" type="button" id="say-close">Close bubble</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn secondary" type="button" id="point">Point at the target</button>
+          <label class="switch"><input type="checkbox" id="follow"> Follow my pointer</label>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" style="margin-top:16px" aria-labelledby="h-sizes">
+    <h2 id="h-sizes" class="t-h2">Sizes</h2>
+    <p class="lead">Below 80 px Bertie switches to the small cut: seven broad locks and no wisps, shoulders only, no bow tie, glints or blush, lines held at 1.25 px, eyes 20% larger. From 80 px he is the full drawing.</p>
+    <div class="sizes" id="sizes"></div>
+    <div class="t-overline group-label muted">In context</div>
+    <div class="ctx">
+      <div class="verdict ok"><span data-mini="32"></span><span>Correct.<span class="xp">+15 XP</span> <span class="sub">Both conditions hold.</span></span></div>
+      <div class="verdict no"><span data-mini="32" data-mini-state="notyet"></span><span>Not yet. <span class="sub">Is any cell in both?</span></span></div>
+      <div class="ctx-row">
+        <div><button class="btn secondary round dock" type="button" aria-label="Ask Bertie, the tutor"><span data-mini="40"></span></button><div class="ctx-label">Dock, 40</div></div>
+        <div class="node-wrap"><span data-mini="64" data-float></span><div class="beam"></div><div class="node"></div><div class="ctx-label">Map marker, 64</div></div>
+        <div><span data-mini="32" data-mini-state="away"></span><div class="ctx-label">Exam top bar, 32</div></div>
+        <div><span data-mini="96" data-mini-state="sleeping"></span><div class="ctx-label">Rest day, 96</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:16px" aria-labelledby="h-pal">
+    <h2 id="h-pal" class="t-h2">Palette</h2>
+    <p class="lead">Fixed in both themes: a character does not invert. The pear bow tie is his only brand colour; effects borrow pear, green and the hint indigo.</p>
+    <div class="palette" id="palette"></div>
+    <p class="note" id="weight"></p>
+  </section>
+</div>
+
+<script>
+/* ===== bertie.js (production module; this block is the whole component) =====
+   API: Bertie.mount(el, { size, interactive, label, float }) -> instance
+        instance.setState(name, { at, then }) -> Promise
+        instance.lookAt(x, y | Element | null)
+        instance.say(text, { place, tone, stream, announce, within }) -> { append(delta), end(), close() }
+        instance.pulse()      one mouth beat, for streaming owned by another component
+        instance.quiet(on)    hold still while the learner manipulates a canvas
+        instance.destroy()
+   Rendering: inline SVG. Bobble and hair: a small spring integrator on requestAnimationFrame that sleeps at rest.
+   Everything else: CSS transitions for pose channels, Web Animations for timed effects. */
+(function () {
+  'use strict';
+  const VB = { l: [-8, -12, 216, 216], s: [16, 10, 168, 168] };
+  const PIVOT = [100, 150];        // under the chin: tilts swing the top of the head, like a bobble head
+  const FACE = [100, 98];
+  const EYE = { l: [82, 99], r: [118, 99] };
+  const BROW = { l: [81, 86], r: [119, 86] };
+  const TACHE = [100, 116];
+  const MOUTH = [100, 134];
+  const HC = [100, 90];            // hair centre
+  const LID_TRAVEL = 12.6;         // lid edge from the top of the eye (open) to just above its bottom (shut)
+
+  const f1 = v => Math.round(v * 10) / 10;
+  const rad = d => d * Math.PI / 180;
+  const pt = p => `${p[0]} ${p[1]}`;
+  const polar = (a, r) => [f1(HC[0] + Math.cos(rad(a)) * r), f1(HC[1] - Math.sin(rad(a)) * r)];
+
+  // A lock of hair: rounded root, one side bulging, the tip curling by `curl` degrees towards the other side.
+  // R: root point; dir: direction (degrees, 0 right, 90 up); len: length; w: half width at the root.
+  function lockPath(R, dir, len, w, curl) {
+    const u = [Math.cos(rad(dir)), -Math.sin(rad(dir))], n = [u[1], -u[0]];
+    const P = (s, t) => `${f1(R[0] + u[0] * s + n[0] * t)} ${f1(R[1] + u[1] * s + n[1] * t)}`;
+    const ts = len * Math.cos(rad(curl)), tt = len * Math.sin(rad(curl));
+    const k = Math.sign(curl) || 1, cvx = -k, ccv = k;
+    return `M${P(0, cvx * w)}C${P(0.4 * len, cvx * w * 1.7)} ${P(0.95 * ts, cvx * w * 0.9 + tt * 0.6)} ${P(ts, tt)}` +
+      `C${P(0.7 * ts, ccv * w * 0.05 + tt * 0.5)} ${P(0.45 * len, ccv * w * 0.95)} ${P(0, ccv * w)}` +
+      `C${P(-1.3 * w, ccv * w)} ${P(-1.3 * w, cvx * w)} ${P(0, cvx * w)}Z`;
+  }
+  // Locks around the head: [root angle, root radius, length, half width, curl, sweep]. Sweep turns a lock off the radial.
+  // Side locks are longest and stick out sideways; crown locks are shorter, so the high bald dome shows.
+  const RING = {
+    l: [[206, 36, 48, 18, -22, -2], [180, 36, 60, 20, -26, -4], [154, 36, 56, 19, -28, -8], [128, 34, 48, 17, -26, -6], [104, 34, 42, 16, 22, 4],
+      [78, 34, 44, 16, 26, 8], [52, 34, 48, 17, 26, 6], [26, 36, 56, 19, 28, 8], [0, 36, 60, 20, 26, 4], [-26, 36, 48, 18, 22, 2],
+      [168, 40, 64, 6, -34, -8], [12, 40, 64, 6, 34, 8]],          // the last two are wisps: thin, loose, the liveliest springs
+    s: [[200, 34, 44, 20, -24, -8], [166, 34, 50, 21, -28, -10], [124, 32, 42, 19, -24, -6], [90, 32, 38, 18, 10, 0],
+      [56, 32, 42, 19, 24, 6], [14, 34, 50, 21, 28, 10], [-20, 34, 44, 20, 24, 8]],
+  };
+  const STIFF = { l: [0.85, 1, 0.9, 1.1, 0.95, 1.05, 0.9, 1.1, 1, 0.85, 0.6, 0.65], s: [0.9, 1, 1.1, 0.95, 1.05, 1, 0.9] };
+  const TUFTS = {};
+  for (const lod of ['l', 's']) {
+    TUFTS[lod] = RING[lod].map(([a, r0, len, w, curl, sweep], i) => {
+      const R = polar(a, r0), c = Math.cos(rad(a));
+      return { root: R, d: lockPath(R, a + sweep, len, w, curl), side: Math.abs(c) < 0.3 ? 0 : -Math.sign(c), k: STIFF[lod][i], lim: w < 10 ? 30 : 16 };
+    });
+  }
+  // The shaded mass behind the locks: a scalloped cloud, closed behind the face. It fills the gaps between locks.
+  const massPath = (rx, ry, a0, a1, n, bulge) => {
+    const P = (a, k) => [f1(HC[0] + Math.cos(rad(a)) * rx * k), f1(HC[1] - Math.sin(rad(a)) * ry * k)];
+    let d = `M${pt(P(a0, 1))}`;
+    for (let i = 0; i < n; i++) { const a = a0 + (a1 - a0) * i / n, b = a0 + (a1 - a0) * (i + 1) / n; d += `Q${pt(P((a + b) / 2, bulge))} ${pt(P(b, 1))}`; }
+    return d + `L${HC[0]} ${HC[1] + 40}Z`;
+  };
+  const MASS = { l: massPath(70, 54, 222, -42, 9, 1.22), s: massPath(68, 54, 216, -36, 7, 1.22) };
+  // The face carries its own hairline: the dome narrows at the temples, where the hair behind shows through and
+  // comes down to a point above each ear. The hair wraps the head instead of framing an egg.
+  const FACE_D = 'M100 44C114 44 126 50 133 60C127 70 129 85 140 96Q145 97 146 102C146 131 126 151 100 151C74 151 54 131 54 102Q55 97 60 96C71 85 73 70 67 60C74 50 86 44 100 44Z';
+  const TACHE_L = 'M100 113C92 107 80 108 73 115C66 122 65 132 68 138C72 134 76 136 80 133C84 137 89 136 92 132C95 135 98 134 100 131';
+  const TACHE_R = 'M100 113C108 107 120 108 127 115C134 122 135 132 132 138C128 134 124 136 120 133C116 137 111 136 108 132C105 135 102 134 100 131';
+  const MOUTH_D = 'M89 134Q100 140 111 134C111 152 89 152 89 134Z';
+  const BOLT = 'M13.5 2.5L5 13.5h6l-1 8 8.5-11h-6z';
+  let uid = 0;
+
+  const svgMarkup = (lod, id) => {
+    const T = TUFTS[lod], L = lod === 'l';
+    const eye = s => {
+      const [x, y] = EYE[s];
+      return `<g class="eye-g" data-side="${s}">
+          <g class="eyeball" clip-path="url(#${id}-eye-${s})">
+            <ellipse class="f-eye" cx="${x}" cy="${y}" rx="6.1" ry="8.1"/>${L ? `<circle class="glint" cx="${x + 2.1}" cy="${y - 2.9}" r="2.1"/>` : ''}
+            <g class="lid-g"><g class="lid-b"><path class="f-skin" d="M${x - 9} ${y - 36}H${x + 9}V${y - 8.1}Q${x} ${y - 6} ${x - 9} ${y - 8.1}Z"/><path class="lid-edge" d="M${x + 9} ${y - 8.1}Q${x} ${y - 6} ${x - 9} ${y - 8.1}"/></g></g>
+          </g>
+          <path class="lid eye-happy" d="M${x - 7.5} ${y + 3}Q${x} ${y - 8} ${x + 7.5} ${y + 3}"/>
+          <path class="lid eye-closed" d="M${x - 7.5} ${y - 1}Q${x} ${y + 6.5} ${x + 7.5} ${y - 1}"/>
+        </g>`;
+    };
+    return `
+<svg class="b-svg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" data-eyes="open">
+  <defs>
+    <clipPath id="${id}-eye-l"><ellipse cx="${EYE.l[0]}" cy="${EYE.l[1]}" rx="6.1" ry="8.1"/></clipPath>
+    <clipPath id="${id}-eye-r"><ellipse cx="${EYE.r[0]}" cy="${EYE.r[1]}" rx="6.1" ry="8.1"/></clipPath>
+    <clipPath id="${id}-mouth"><path d="${MOUTH_D}"/></clipPath>
+  </defs>
+  <g class="figure">
+    <g class="body">
+      <g class="neck"><path class="ln f-shade" d="M88 128H112V172H88Z"/></g>
+      ${L ? '<path class="ln f-jumper" d="M38 194C38 174 62 160 100 160C138 160 162 174 162 194Q162 200 156 200H44Q38 200 38 194Z"/>'
+        : '<path class="ln f-jumper" d="M32 178C34 166 62 156 100 156C138 156 166 166 168 178Z"/>'}
+      <path class="ln f-shirt" d="${L ? 'M86 160L100 182L114 160Z' : 'M88 157L100 175L112 157Z'}"/>
+      ${L ? '<g class="tie"><path class="ln f-tie" d="M100 167L88 160V174ZM100 167L112 160V174Z"/><circle class="ln f-tie" cx="100" cy="167" r="3.8"/></g>' : ''}
+    </g>
+    <g class="head">
+      <g class="hair"><g class="puff">
+        <g class="hair-line"><path class="hl" d="${MASS[lod]}"/>${T.map((t, i) => `<path class="hl tuft-l" data-i="${i}" d="${t.d}"/>`).join('')}</g>
+        <path class="f-hair-shade" d="${MASS[lod]}"/>
+        ${T.map((t, i) => `<path class="f-hair tuft" data-i="${i}" d="${t.d}"/>`).join('')}
+      </g></g>
+      <ellipse class="ln f-skin" cx="54" cy="106" rx="8.5" ry="11.5"/><ellipse class="ln f-skin" cx="146" cy="106" rx="8.5" ry="11.5"/>
+      <path class="ln f-skin" d="${FACE_D}"/>
+      <g class="features">
+        ${L ? '<g class="blush-g"><ellipse class="blush" cx="69" cy="116" rx="7.5" ry="4.5"/><ellipse class="blush" cx="131" cy="116" rx="7.5" ry="4.5"/></g>' : ''}
+        <g class="eyes">${eye('l')}${eye('r')}</g>
+        <g class="brows">
+          <g class="brow-g" data-side="l"><path class="brow" d="M73 89Q80 80 91 85"/></g>
+          <g class="brow-g" data-side="r"><path class="brow" d="M109 85Q120 80 127 89"/></g>
+        </g>
+        <g class="mouth-g"><path class="mouth" d="${MOUTH_D}"/><ellipse class="tongue" clip-path="url(#${id}-mouth)" cx="100" cy="148" rx="7" ry="4"/></g>
+        <g class="tache">
+          <g class="tache-half" data-side="l"><path class="f-tache" d="${TACHE_L}H102V113Z"/><path class="ln" fill="none" d="${TACHE_L}"/></g>
+          <g class="tache-half" data-side="r"><path class="f-tache" d="${TACHE_R}H98V113Z"/><path class="ln" fill="none" d="${TACHE_R}"/></g>
+        </g>
+        <ellipse class="ln f-shade" cx="100" cy="112" rx="9.5" ry="8"/>
+      </g>
+      <g class="orbits"></g>
+    </g>
+  </g>
+  <g class="fx"></g>
+</svg>`;
+  };
+
+  // Poses. tilt: degrees (+ clockwise). hx, hy: head offset in viewBox units (+ down).
+  // bl, br: brow [dy, r]; r > 0 lifts the inner end. ms: moustache corner lift [left, right] in degrees.
+  // lid: [left, right] closure 0..1; lt: lid slant in degrees, + lowers the outer ends (kind, sympathetic).
+  // mouth: [open 0..1, width]; 0.25 is the resting smile under the moustache.
+  // gaze: [x, y] units, or 'target' (look: fallback when no target). turn: features offset (three-quarter turn).
+  const P = o => Object.assign({ tilt: 0, hx: 0, hy: 0, bl: [0, 0], br: [0, 0], eyes: 'open', eyeS: 1, lid: [0.1, 0.1], lt: 6, gaze: [0, 0], ms: [3, 3], mouth: [0.25, 1], blush: 0.45, turn: 0, body: 0 }, o);
+  const POSES = {
+    idle: P({}),
+    listening: P({ tilt: 2, bl: [-2, 2], br: [-2, 2], lid: [0.04, 0.04], lt: 4, gaze: 'target', look: [2, 2.8], ms: [4, 4] }),
+    thinking: P({ tilt: -5, hx: -2, bl: [-7, -2], br: [1, -6], lid: [0.02, 0.34], lt: 2, gaze: [3.5, -3.6], ms: [-3, 8], mouth: [0.16, 0.6], blush: 0.3 }),
+    talking: P({ bl: [-1, 1], br: [-1, 1], lid: [0.06, 0.06], ms: [5, 5], mouth: [0.3, 1] }),
+    correct: P({ hy: -2, bl: [-5, 3], br: [-5, 3], lid: [0.16, 0.16], lt: 3, ms: [11, 11], blush: 0.8, mouth: [0.55, 1.1] }),
+    notyet: P({ tilt: 6, bl: [-4, 10], br: [-4, 10], lid: [0.2, 0.2], lt: 14, ms: [6, 6], mouth: [0.24, 0.85], gaze: [-0.5, 0.8], blush: 0.5 }),
+    curious: P({ tilt: -7, bl: [-9, 1], br: [1, -4], lid: [0, 0.26], lt: 0, gaze: [2.5, -1], ms: [1, 7], mouth: [0.2, 0.75] }),
+    sleeping: P({ tilt: 9, hy: 4, bl: [3, 0], br: [3, 0], eyes: 'closed', ms: [0, 0], mouth: [0.4, 0.45], blush: 0.6 }),
+    away: P({ tilt: -4, turn: -8, bl: [0, 3], br: [0, 3], eyes: 'closed', ms: [3, 3], blush: 0.3 }),
+    point: P({ bl: [-5, 2], br: [-7, 0], lid: [0, 0], lt: 4, gaze: 'target', look: [3.8, -1], ms: [7, 7], mouth: [0.3, 1] }),
+    celebrate: P({ hy: -3, bl: [-8, 4], br: [-8, 4], eyes: 'happy', ms: [13, 13], blush: 0.95, mouth: [1, 1.2] }),
+    streak: P({ hy: -2, bl: [-9, 3], br: [-9, 3], eyeS: 1.12, lid: [0, 0], lt: 0, gaze: [0, -3.6], ms: [10, 10], mouth: [0.7, 0.9], blush: 0.85 }),
+    surprised: P({ hy: -5, bl: [-12, 3], br: [-12, 3], eyeS: 1.3, lid: [0, 0], lt: 0, ms: [-2, -2], mouth: [0.9, 0.55], blush: 0.5 }),
+    shrug: P({ tilt: -4, bl: [-3, -5], br: [-8, 5], lid: [0.28, 0.08], lt: 0, ms: [-3, 4], mouth: [0.18, 0.8], body: -7, gaze: [-2.5, 0] }),
+  };
+  const HELD = ['idle', 'listening', 'thinking', 'talking', 'correct', 'notyet', 'curious', 'sleeping', 'away', 'point'];
+  const ONE_SHOT = { celebrate: 1900, streak: 1700, surprised: 900, shrug: 800 };
+  const ALIAS = { speaking: 'talking', pleased: 'correct', concerned: 'notyet', encouraging: 'notyet', rest: 'sleeping', pointing: 'point', complete: 'celebrate' };
+  const CLOSES_BUBBLE = ['celebrate', 'streak', 'sleeping', 'away'];
+  const LIFE = { idle: 'full', listening: 'blink', talking: 'blink', correct: 'blink', notyet: 'blink', curious: 'blink', point: 'blink', thinking: 'slow' };
+
+  // Springs: unit mass; zeta = c / (2 sqrt k). Head about 0.3 (three visible wobbles), locks about 0.27.
+  const K = { a: 150, ca: 7.5, y: 260, cy: 15, x: 220, cx: 15, t: 240, ct: 8.5, h: 200, ch: 9, hy: 320, chy: 12 };
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const ease = (name, fallback) => css(name) || fallback;
+  const tf = (cx, cy, inner) => `translate(${cx}px, ${cy}px) ${inner} translate(${-cx}px, ${-cy}px)`;
+
+  const live = new Set();
+  const isReduced = () => {
+    const m = document.documentElement.getAttribute('data-motion');
+    if (m === 'reduced') return true;
+    if (m === 'full') return false;
+    return matchMedia('(prefers-reduced-motion: reduce)').matches;
+  };
+  const motionChanged = () => live.forEach(b => b._motionChanged());
+  new MutationObserver(motionChanged).observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] });
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', motionChanged);
+
+  class Bertie {
+    constructor(el, { size = 160, interactive = false, label = '', float = false } = {}) {
+      this.size = size;
+      this.float = float;   // course-map marker: a slower, deeper hover in place of breathing
+      this.lod = size < 80 ? 's' : 'l';
+      this.T = TUFTS[this.lod];
+      this.root = document.createElement('div');
+      this.root.className = 'bertie';
+      this.root.style.setProperty('--b-size', size + 'px');
+      // The rig is a template of numeric constants from this module and never carries data, so it is parsed as SVG, not HTML.
+      this.svg = document.importNode(new DOMParser().parseFromString(svgMarkup(this.lod, 'bz' + (++uid)), 'image/svg+xml').documentElement, true);
+      this.root.appendChild(this.svg);
+      if (label) { this.svg.setAttribute('role', 'img'); this.svg.setAttribute('aria-label', label); this.svg.removeAttribute('aria-hidden'); }
+      const vb = VB[this.lod];
+      this.vb = vb;
+      this.svg.setAttribute('viewBox', vb.join(' '));
+      this.svg.dataset.lod = this.lod;
+      const scale = size / vb[2];                       // px per viewBox unit
+      const linePx = clamp(size / 70, 1.25, 2.6);
+      this.svg.style.setProperty('--b-sw', (linePx / scale).toFixed(2) + 'px');
+      this.svg.style.setProperty('--b-brow', Math.max(6.4, 1.8 / scale).toFixed(2) + 'px');
+      this.svg.style.setProperty('--b-lid', Math.max(3.6, 1.5 / scale).toFixed(2) + 'px');
+      this.eyeBoost = this.lod === 's' ? 1.2 : 1;      // small cut: eyes 20% larger so they survive 32 px
+      this.browLift = this.lod === 's' ? -5 : 0;       // and thick brows lifted clear of them
+      const q = s => this.svg.querySelector(s);
+      const qa = s => [...this.svg.querySelectorAll(s)];
+      this.n = {
+        figure: q('.figure'), body: q('.body'), head: q('.head'), hair: q('.hair'), puff: q('.puff'), features: q('.features'), eyes: q('.eyes'),
+        eyeL: q('.eye-g[data-side="l"]'), eyeR: q('.eye-g[data-side="r"]'), lids: qa('.lid-g'), blinks: qa('.lid-b'),
+        browL: q('.brow-g[data-side="l"]'), browR: q('.brow-g[data-side="r"]'), brows: q('.brows'),
+        tache: q('.tache'), tacheL: q('.tache-half[data-side="l"]'), tacheR: q('.tache-half[data-side="r"]'),
+        mouth: q('.mouth-g'), blush: q('.blush-g'), orbits: q('.orbits'), fx: q('.fx'),
+        tufts: this.T.map((t, i) => [q(`.tuft-l[data-i="${i}"]`), q(`.tuft[data-i="${i}"]`)]),
+      };
+      // Physics state
+      const z = () => this.T.map(() => 0);
+      this.ph = { a: 0, va: 0, x: 0, vx: 0, y: 0, vy: 0, aT: 0, xT: 0, yT: 0, h: 0, vh: 0, hy: 0, vhy: 0, t: z(), vt: z() };
+      this.raf = 0; this.last = 0;
+      this.scope = { timers: [], anims: [] };
+      this.breath = null;
+      this.base = 'idle'; this.state = null; this.target = null; this.lastPulse = 0; this.pulses = 0;
+      this.pose = POSES.idle;
+      this._tick = this._tick.bind(this);
+      if (interactive) {
+        this.root.dataset.interactive = '';
+        this._onTap = e => this.flick(e);
+        this.svg.addEventListener('pointerdown', this._onTap);
+      }
+      el.appendChild(this.root);
+      live.add(this);
+      this.visible = true;
+      // Offscreen instances stop breathing and blinking: no paint work for a mascot nobody can see.
+      this.io = new IntersectionObserver(([entry]) => {
+        this.visible = entry.isIntersecting;
+        if (this.breath) this.visible && !this.quieted ? this.breath.play() : this.breath.pause();
+      });
+      this.io.observe(this.root);
+      this.setState('idle');
+    }
+
+    get reduced() { return isReduced(); }
+
+    /* ---------- public API ---------- */
+    setState(name, opts = {}) {
+      name = ALIAS[name] || name;
+      if (!POSES[name]) throw new RangeError(`Bertie: unknown state "${name}"`);
+      this._clearScope();
+      if (CLOSES_BUBBLE.includes(name)) this.closeBubble();   // these need the space above him, and he is not speaking
+      if (opts.at !== undefined) this.target = opts.at;
+      const oneShot = ONE_SHOT[name];
+      if (!oneShot) this.base = name;
+      this.state = name;
+      this.svg.dataset.state = name;
+      this._applyPose(POSES[name]);
+      this._breathe(name);
+      this._script(name);
+      this.root.dispatchEvent(new CustomEvent('bertie:state', { detail: { state: name }, bubbles: true }));
+      if (!oneShot) return Promise.resolve();
+      return new Promise(resolve => {
+        this._later(() => { const next = opts.then || this.base; this.setState(next); resolve(); }, this.reduced ? Math.min(oneShot, 1200) : oneShot);
+      });
+    }
+
+    lookAt(x, y) {
+      if (x === null || x === undefined) this.target = null;
+      else if (x instanceof Element) this.target = x;
+      else this.target = { x, y };
+      this._applyGaze();
+      if (this.state === 'point' || this.state === 'listening' || (this.state === 'idle' && this.target)) this._applyTilt();
+    }
+
+    pulse() {
+      const now = performance.now();
+      if (now - this.lastPulse < 160) return;    // at most about 6 beats a second
+      this.lastPulse = now;
+      this.pulses++;
+      const [open, w] = this.pose.mouth;
+      if (this.reduced) return;
+      const T = v => tf(MOUTH[0], MOUTH[1], `scale(${w}, ${v})`);
+      this._anim(this.n.mouth, [{ transform: T(open) }, { transform: T(rnd(0.6, 0.95)) }, { transform: T(open) }], { duration: 170, easing: 'ease-out' });
+      this._anim(this.n.tache, [{ transform: 'translateY(0px)' }, { transform: 'translateY(-2px)' }, { transform: 'translateY(0px)' }], { duration: 170, easing: 'ease-out' });
+      if (this.pulses % 4 === 0) this._anim(this.n.brows, [{ transform: 'translateY(0px)' }, { transform: 'translateY(-3px)' }, { transform: 'translateY(0px)' }], { duration: 260, easing: 'ease-out' });
+      if (this.pulses % 5 === 0) this._kick(0, 26, 0);
+    }
+
+    say(text = '', { place = 'auto', tone = 'plain', stream = false, announce = false, within = null } = {}) {
+      this.closeBubble();
+      const b = document.createElement('div');
+      b.className = 'bertie-bubble';
+      b.dataset.tone = tone;
+      if (announce) b.setAttribute('aria-live', 'polite');
+      const who = document.createElement('span'); who.className = 'who'; who.textContent = 'Bertie';
+      const body = document.createElement('span'); body.className = 'text'; body.textContent = text;
+      b.append(who, body);
+      this.root.appendChild(b);
+      this.bubble = { el: b, place, within };
+      this._place();
+      if (!this.reduced) b.animate([{ opacity: 0, transform: 'scale(0.92)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 200, easing: ease('--ease-enter', 'ease-out') });
+      const back = ['talking', 'thinking', 'listening'].includes(this.base) ? 'idle' : this.base;   // a finished reply never returns to a waiting state
+      this.setState('talking');
+      const handle = {
+        append: d => { body.textContent += d; this.pulse(); this._place(); },
+        end: () => { if (this.state === 'talking') this.setState(back); },
+        close: () => this.closeBubble(),
+      };
+      if (!stream) {
+        const words = text.split(/\s+/).filter(Boolean).length;
+        const until = performance.now() + clamp(words * 240, 700, 4000);
+        const beat = () => { if (this.state !== 'talking') return; if (performance.now() > until) { handle.end(); return; } this.pulse(); this._later(beat, rnd(150, 230)); };
+        beat();
+      }
+      return handle;
+    }
+
+    closeBubble() {
+      if (!this.bubble) return;
+      const el = this.bubble.el; this.bubble = null;
+      if (this.reduced) { el.remove(); return; }
+      el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120 }).onfinish = () => el.remove();
+    }
+
+    // While the learner drags on a canvas Bertie holds still: no breathing, blinks or fidgets (motion follows only the learner).
+    quiet(on = true) {
+      this.quieted = on;
+      if (this.breath) (on || !this.visible) ? this.breath.pause() : this.breath.play();
+    }
+
+    flick(e) {
+      if (this.reduced) { this._blink(); return; }
+      const r = this.svg.getBoundingClientRect();
+      const dx = e && e.clientX ? (e.clientX - (r.left + r.width / 2)) / (r.width / 2) : 0.6;
+      this._kick(-dx * 260, -60, -dx * 30);
+      this._blink();
+    }
+
+    destroy() {
+      this._clearScope();
+      if (this.breath) this.breath.cancel();
+      cancelAnimationFrame(this.raf); this.raf = 0;
+      if (this._onTap) this.svg.removeEventListener('pointerdown', this._onTap);
+      this.io.disconnect();
+      this.closeBubble();
+      live.delete(this);
+      this.root.remove();
+    }
+
+    /* ---------- pose ---------- */
+    _applyPose(p) {
+      this.pose = p;
+      const n = this.n;
+      this.svg.dataset.eyes = p.eyes;
+      n.browL.style.transform = tf(BROW.l[0], BROW.l[1], `translate(0px, ${p.bl[0] + this.browLift}px) rotate(${-p.bl[1]}deg)`);
+      n.browR.style.transform = tf(BROW.r[0], BROW.r[1], `translate(0px, ${p.br[0] + this.browLift}px) rotate(${p.br[1]}deg)`);
+      n.tacheL.style.transform = tf(TACHE[0], TACHE[1], `rotate(${p.ms[0]}deg)`);
+      n.tacheR.style.transform = tf(TACHE[0], TACHE[1], `rotate(${-p.ms[1]}deg)`);
+      n.mouth.style.transform = tf(MOUTH[0], MOUTH[1], `scale(${p.mouth[1]}, ${p.mouth[0]})`);
+      if (n.blush) n.blush.style.opacity = p.blush;
+      n.features.style.transform = `translate(${p.turn}px, 0px)`;
+      n.body.style.transform = `translate(0px, ${p.body}px)`;
+      const s = p.eyeS * this.eyeBoost;
+      n.eyeL.style.transform = tf(EYE.l[0], EYE.l[1], `scale(${s})`);
+      n.eyeR.style.transform = tf(EYE.r[0], EYE.r[1], `scale(${s})`);
+      n.lids[0].style.transform = tf(EYE.l[0], EYE.l[1], `translate(0px, ${(p.lid[0] * LID_TRAVEL).toFixed(2)}px) rotate(${-p.lt}deg)`);
+      n.lids[1].style.transform = tf(EYE.r[0], EYE.r[1], `translate(0px, ${(p.lid[1] * LID_TRAVEL).toFixed(2)}px) rotate(${p.lt}deg)`);
+      this._applyGaze();
+      this._applyTilt();
+    }
+
+    _targetVector() {
+      if (!this.target) return null;
+      let tx, ty;
+      if (this.target instanceof Element) { const r = this.target.getBoundingClientRect(); tx = r.left + r.width / 2; ty = r.top + r.height / 2; }
+      else { tx = this.target.x; ty = this.target.y; }
+      const r = this.svg.getBoundingClientRect();
+      const fx = r.left + (FACE[0] - this.vb[0]) / this.vb[2] * r.width, fy = r.top + (FACE[1] - this.vb[1]) / this.vb[3] * r.height;
+      const dx = tx - fx, dy = ty - fy, d = Math.max(Math.hypot(dx, dy), 1);
+      return { ux: dx / d, uy: dy / d, d };
+    }
+
+    _applyGaze() {
+      const p = this.pose;
+      let g = p.gaze;
+      const usesTarget = g === 'target' || (this.target && ['idle', 'talking', 'correct', 'notyet', 'curious'].includes(this.state));
+      if (usesTarget) {
+        const v = this._targetVector();
+        g = v ? [clamp(v.ux * 4.5 * Math.min(1, v.d / 60), -4.5, 4.5), clamp(v.uy * 3.6 * Math.min(1, v.d / 60), -3.6, 3.6)] : (p.look || [0, 0]);   // no target: the pose's default glance
+      }
+      this.gaze = g;
+      this.n.eyes.style.transform = `translate(${g[0].toFixed(2)}px, ${g[1].toFixed(2)}px)`;
+    }
+
+    _applyTilt() {
+      const p = this.pose;
+      let tilt = p.tilt, hx = p.hx;
+      const v = this._targetVector();
+      if (v && this.state === 'point') { tilt += v.ux * 9; hx += v.ux * 4; }
+      else if (v && this.state === 'listening') { tilt += v.ux * 4; }
+      else if (v && this.state === 'idle') { tilt += v.ux * 3; }
+      const ph = this.ph;
+      ph.aT = tilt; ph.xT = hx; ph.yT = p.hy;
+      this._wake();
+    }
+
+    /* ---------- physics: neck spring, hair mass and locks ---------- */
+    _kick(va, vy, vx) {
+      if (this.reduced) return;
+      const ph = this.ph;
+      ph.va += va; ph.vy += vy; ph.vx += vx;
+      ph.vh += -va * 0.35; ph.vhy += -vy * 0.18;
+      this.T.forEach((t, i) => { ph.vt[i] += -va * 0.7 * t.k + t.side * vy * 0.28; });
+      this._wake();
+    }
+    _kickTufts(scale) {
+      if (this.reduced) return;
+      this.T.forEach((t, i) => { this.ph.vt[i] += (t.side || (i % 2 ? 1 : -1)) * scale * t.k; });
+      this.ph.vhy -= scale * 0.12;
+      this._wake();
+    }
+    _wake() {
+      if (this.reduced) { this._snap(); return; }
+      if (this.raf) return;
+      this.last = performance.now();
+      this.raf = requestAnimationFrame(this._tick);
+    }
+    _snap() {
+      const ph = this.ph;
+      ph.a = ph.aT; ph.x = ph.xT; ph.y = ph.yT; ph.va = ph.vx = ph.vy = 0;
+      ph.t.fill(0); ph.vt.fill(0); ph.h = ph.vh = ph.hy = ph.vhy = 0;
+      cancelAnimationFrame(this.raf); this.raf = 0;
+      this._render();
+    }
+    _tick(now) {
+      const ph = this.ph, T = this.T;
+      const dt = Math.min(0.034, (now - this.last) / 1000); this.last = now;
+      const steps = Math.max(1, Math.ceil(dt / (1 / 240))), h = dt / steps;
+      for (let s = 0; s < steps; s++) {
+        const aAcc = -K.a * (ph.a - ph.aT) - K.ca * ph.va;
+        const yAcc = -K.y * (ph.y - ph.yT) - K.cy * ph.vy;
+        const xAcc = -K.x * (ph.x - ph.xT) - K.cx * ph.vx;
+        ph.va += aAcc * h; ph.a += ph.va * h;
+        ph.vy += yAcc * h; ph.y += ph.vy * h;
+        ph.vx += xAcc * h; ph.x += ph.vx * h;
+        // The hair mass lags the head: rotation and a small vertical give, each on its own soft spring.
+        const hAcc = -K.h * ph.h - K.ch * ph.vh - 0.55 * aAcc;
+        const hyAcc = -K.hy * ph.hy - K.chy * ph.vhy - 0.35 * yAcc;
+        ph.vh += hAcc * h; ph.h = clamp(ph.h + ph.vh * h, -9, 9);
+        ph.vhy += hyAcc * h; ph.hy = clamp(ph.hy + ph.vhy * h, -6, 6);
+        // Each lock lags the head on its own spring; stiffness differs per lock so they never move in step.
+        for (let i = 0; i < T.length; i++) {
+          const t = T[i];
+          const tAcc = -K.t * t.k * ph.t[i] - K.ct * ph.vt[i] - 0.9 * aAcc + t.side * 0.05 * yAcc;
+          ph.vt[i] += tAcc * h; ph.t[i] = clamp(ph.t[i] + ph.vt[i] * h, -t.lim, t.lim);
+        }
+      }
+      this._render();
+      const still = Math.abs(ph.a - ph.aT) < 0.02 && Math.abs(ph.va) < 0.5 && Math.abs(ph.y - ph.yT) < 0.02 && Math.abs(ph.vy) < 0.3
+        && Math.abs(ph.x - ph.xT) < 0.02 && Math.abs(ph.vx) < 0.3 && Math.abs(ph.h) < 0.03 && Math.abs(ph.vh) < 0.4 && Math.abs(ph.hy) < 0.03 && Math.abs(ph.vhy) < 0.4 && ph.t.every(v => Math.abs(v) < 0.05) && ph.vt.every(v => Math.abs(v) < 0.5);
+      if (still) { this.raf = 0; this._snap(); return; }   // sleep at rest: no frames spent on a still mascot
+      this.raf = requestAnimationFrame(this._tick);
+    }
+    _render() {
+      const ph = this.ph;
+      const st = clamp(-ph.vy * 0.0005, -0.05, 0.05);    // a little stretch with vertical speed
+      this.n.head.setAttribute('transform',
+        `translate(${ph.x.toFixed(2)} ${ph.y.toFixed(2)}) rotate(${ph.a.toFixed(2)} ${PIVOT[0]} ${PIVOT[1]}) translate(${PIVOT[0]} ${PIVOT[1]}) scale(${(1 - st * 0.6).toFixed(3)} ${(1 + st).toFixed(3)}) translate(${-PIVOT[0]} ${-PIVOT[1]})`);
+      this.n.hair.setAttribute('transform', `translate(0 ${ph.hy.toFixed(2)}) rotate(${ph.h.toFixed(2)} ${HC[0]} ${HC[1] + 20})`);
+      this.n.tufts.forEach((pair, i) => {
+        const r = `rotate(${ph.t[i].toFixed(2)} ${this.T[i].root[0]} ${this.T[i].root[1]})`;
+        pair[0].setAttribute('transform', r); pair[1].setAttribute('transform', r);   // outline copy and fill move together
+      });
+    }
+
+    /* ---------- scripted motion ---------- */
+    _later(fn, ms) { const id = setTimeout(fn, ms); this.scope.timers.push(id); return id; }
+    _anim(el, frames, opts) { const a = el.animate(frames, opts); this.scope.anims.push(a); return a; }
+    _clearScope() {
+      this.scope.timers.forEach(clearTimeout);
+      this.scope.anims.forEach(a => a.cancel());
+      this.scope = { timers: [], anims: [] };
+      this.n.orbits.replaceChildren();
+      this.n.fx.replaceChildren();
+    }
+    _breathe(name) {
+      const want = this.reduced || this.size < 48 ? null : name === 'sleeping' ? 'sleep' : name === 'away' ? null : 'awake';
+      if (this.breathKind === want) return;
+      if (this.breath) { this.breath.cancel(); this.breath = null; }
+      this.breathKind = want;
+      if (!want) return;
+      const amp = want === 'sleep' ? 3 : this.float ? 6 : 1.6;
+      this.breath = this.n.figure.animate([{ transform: 'translateY(0px)' }, { transform: `translateY(${-amp}px)` }, { transform: 'translateY(0px)' }],
+        { duration: want === 'sleep' ? 4400 : this.float ? 2000 : 3200, iterations: Infinity, easing: 'ease-in-out' });
+      if (!this.visible || this.quieted) this.breath.pause();
+    }
+    _motionChanged() {
+      if (this.breath) { this.breath.cancel(); this.breath = null; this.breathKind = undefined; }
+      if (this.reduced) this._snap();
+      this.setState(this.state && ONE_SHOT[this.state] ? this.base : (this.state || 'idle'));
+    }
+    // A blink drops each lid from wherever the pose holds it to shut, and back: 150 ms, a fifth of them double.
+    _blink(double = false) {
+      const o = { duration: 150, easing: 'ease-in-out', iterations: double ? 2 : 1 };
+      this.n.blinks.forEach((b, i) => {
+        const d = ((1 - this.pose.lid[i]) * LID_TRAVEL).toFixed(2);
+        this._anim(b, [{ transform: 'translateY(0px)' }, { transform: `translateY(${d}px)`, offset: 0.45 }, { transform: 'translateY(0px)' }], o);
+      });
+    }
+    _life(kind) {
+      if (!kind) return;
+      const blinkLoop = () => { if (this.visible && !this.quieted) this._blink(Math.random() < 0.2); this._later(blinkLoop, kind === 'slow' ? rnd(4500, 8000) : rnd(2500, 6000)); };
+      this._later(blinkLoop, rnd(1200, 3000));
+      if (kind !== 'full' || this.reduced) return;
+      const fidget = () => {
+        const r = this.visible && !this.quieted ? Math.random() : 2;
+        if (r < 0.45 && !this.target) {
+          const dir = Math.random() < 0.5 ? -1 : 1;
+          this.n.eyes.style.transform = `translate(${dir * 3.8}px, 0.6px)`;
+          this._later(() => this._applyGaze(), rnd(900, 1500));
+        } else if (r < 0.75) {
+          this._kick(rnd(-30, 30), 0, 0);
+        } else if (r <= 1) {
+          this._anim(this.n.brows, [{ transform: 'translateY(0px)' }, { transform: 'translateY(-3.5px)' }, { transform: 'translateY(0px)' }], { duration: 520, easing: 'ease-in-out' });
+        }
+        this._later(fidget, rnd(5000, 10000));
+      };
+      this._later(fidget, rnd(3000, 6000));
+    }
+
+    _orbit() {
+      const NS = 'http://www.w3.org/2000/svg';
+      const cx = 100, cy = 26, rx = 80, ry = 17, rot = -12 * Math.PI / 180;
+      const ring = document.createElementNS(NS, 'ellipse');
+      ring.setAttribute('cx', cx); ring.setAttribute('cy', cy); ring.setAttribute('rx', rx); ring.setAttribute('ry', ry);
+      ring.setAttribute('transform', `rotate(-12 ${cx} ${cy})`); ring.setAttribute('class', 'orbit-ring');
+      this.n.orbits.appendChild(ring);
+      const frames = [];
+      for (let i = 0; i <= 24; i++) {
+        const th = i / 24 * Math.PI * 2, x = rx * Math.cos(th), y = ry * Math.sin(th);
+        const X = cx + x * Math.cos(rot) - y * Math.sin(rot), Y = cy + x * Math.sin(rot) + y * Math.cos(rot);
+        const front = (Math.sin(th) + 1) / 2;
+        frames.push({ transform: `translate(${X.toFixed(1)}px, ${Y.toFixed(1)}px) scale(${(0.7 + 0.45 * front).toFixed(2)})`, opacity: (0.35 + 0.65 * front).toFixed(2) });
+      }
+      [0, 1, 2].forEach(k => {
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('r', this.lod === 's' ? 8 : 6); c.setAttribute('class', 'orbit');
+        this.n.orbits.appendChild(c);
+        if (this.reduced) { const f = frames[[4, 12, 19][k]]; c.style.transform = f.transform; c.style.opacity = 0.9; return; }
+        this._anim(c, frames, { duration: 1200, iterations: Infinity, delay: -k * 400, easing: 'linear' });
+      });
+    }
+    _zzz() {
+      const NS = 'http://www.w3.org/2000/svg';
+      [0, 1, 2].forEach(k => {
+        const t = document.createElementNS(NS, 'text');
+        t.setAttribute('class', 'zzz'); t.textContent = 'z';
+        t.setAttribute('font-size', [16, 20, 25][k]);
+        this.n.fx.appendChild(t);
+        if (this.reduced) { t.style.transform = `translate(${162 + k * 13}px, ${18 - k * 16}px)`; t.style.opacity = 0.85; return; }
+        this._anim(t, [
+          { transform: 'translate(158px, 30px) rotate(-8deg)', opacity: 0 },
+          { transform: 'translate(168px, 14px) rotate(0deg)', opacity: 1, offset: 0.25 },
+          { transform: 'translate(190px, -28px) rotate(10deg)', opacity: 0 },
+        ], { duration: 3000, iterations: Infinity, delay: -k * 1000, easing: 'ease-out' });
+      });
+    }
+    _puff(amount = 0.1, duration = 600) {      // hair stands on end: scale up from the nape, spring back
+      if (this.reduced) return;
+      const T = k => tf(100, 120, `scale(${1 + k * 0.5}, ${1 + k})`);
+      this._anim(this.n.puff, [{ transform: T(0) }, { transform: T(amount), offset: 0.22 }, { transform: T(amount * 0.8), offset: 0.5 }, { transform: T(0) }],
+        { duration, easing: ease('--spring-physical', 'ease-out') });
+    }
+    _sparks() {                                     // the bolt's charge: six short pear dashes off the hair
+      if (this.reduced) return;
+      const NS = 'http://www.w3.org/2000/svg';
+      [-150, -120, -95, -70, -45, -20].forEach((deg, i) => {
+        const a = deg * Math.PI / 180, l = document.createElementNS(NS, 'path');
+        const x0 = 100 + Math.cos(a) * 96, y0 = 78 + Math.sin(a) * 78;
+        l.setAttribute('d', `M${f1(x0)} ${f1(y0)}l${f1(Math.cos(a) * 12)} ${f1(Math.sin(a) * 12)}`);
+        l.setAttribute('stroke', 'var(--pear-500)'); l.setAttribute('stroke-width', 5); l.setAttribute('stroke-linecap', 'round');
+        this.n.fx.appendChild(l);
+        this._anim(l, [{ opacity: 0, transform: 'translate(0px, 0px)' }, { opacity: 1, offset: 0.2 }, { opacity: 0, transform: `translate(${f1(Math.cos(a) * 14)}px, ${f1(Math.sin(a) * 14)}px)` }],
+          { duration: 420, delay: i * 18, easing: 'ease-out', fill: 'forwards' });
+      });
+    }
+    _burst() {
+      const NS = 'http://www.w3.org/2000/svg';
+      const colours = ['var(--green-face)', 'var(--pear-400)', 'var(--green-frame)', 'var(--pear-300)'];
+      const n = 12;
+      for (let i = 0; i < n; i++) {
+        const r = document.createElementNS(NS, 'rect');
+        const s = 9 + (i % 3) * 3;
+        r.setAttribute('width', s); r.setAttribute('height', s); r.setAttribute('rx', 2);
+        r.setAttribute('x', -s / 2); r.setAttribute('y', -s / 2);
+        r.style.fill = colours[i % colours.length];
+        this.n.fx.appendChild(r);
+        const a = i / n * Math.PI * 2 + (i % 2 ? 0.2 : -0.1), d = 116 * (0.8 + (i % 3) * 0.12);
+        const x0 = 100 + Math.cos(a) * 64, y0 = 86 + Math.sin(a) * 60;   // start on a ring outside the face, never over it
+        const x = 100 + Math.cos(a) * d, y = 86 + Math.sin(a) * d * 0.9;
+        if (this.reduced) {
+          r.style.transform = `translate(${f1(100 + Math.cos(a) * 118)}px, ${f1(82 + Math.sin(a) * 106)}px) rotate(${i * 20}deg)`;
+          this._anim(r, [{ opacity: 1 }, { opacity: 1, offset: 0.7 }, { opacity: 0 }], { duration: 1150, fill: 'forwards' });   // fades before the 1.2 s cap clears it
+          continue;
+        }
+        this._anim(r, [{ transform: `translate(${f1(x0)}px, ${f1(y0)}px) rotate(0deg) scale(0.4)`, opacity: 0 },
+          { transform: `translate(${f1(x0 + (x - x0) * 0.25)}px, ${f1(y0 + (y - y0) * 0.25)}px) rotate(${(i % 2 ? 1 : -1) * 45}deg) scale(1)`, opacity: 1, offset: 0.15 },
+          { opacity: 1, offset: 0.7 },
+          { transform: `translate(${f1(x)}px, ${f1(y)}px) rotate(${(i % 2 ? 1 : -1) * 180}deg) scale(0.6)`, opacity: 0 }],
+          { duration: 700, easing: ease('--ease-enter', 'ease-out'), fill: 'forwards' });
+      }
+    }
+    _bolt() {
+      const NS = 'http://www.w3.org/2000/svg';
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('transform', 'translate(100 -40)');
+      const inner = document.createElementNS(NS, 'g');
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', BOLT); path.setAttribute('transform', 'translate(-21.6 -21.6) scale(1.8)');
+      path.setAttribute('fill', 'var(--pear-400)'); path.setAttribute('stroke', 'var(--pear-700)'); path.setAttribute('stroke-width', '1.4'); path.setAttribute('stroke-linejoin', 'round');
+      inner.appendChild(path); g.appendChild(inner);
+      this.n.fx.appendChild(g);
+      if (this.reduced) { this._anim(inner, [{ opacity: 1 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }], { duration: 1150, fill: 'forwards' }); return; }
+      // Pops in above him, hangs while he looks up at it, then strikes down into his hair at about 780 ms.
+      this._anim(inner, [
+        { transform: 'translateY(22px) scale(0)', opacity: 0 },
+        { transform: 'translateY(-2px) scale(1.18)', opacity: 1, offset: 0.24 },
+        { transform: 'translateY(0px) scale(1)', opacity: 1, offset: 0.34 },
+        { transform: 'translateY(-4px) scale(1)', opacity: 1, offset: 0.72 },
+        { transform: 'translateY(46px) scale(0.55)', opacity: 1, offset: 0.9 },
+        { transform: 'translateY(58px) scale(0.2)', opacity: 0 },
+      ], { duration: 880, easing: 'ease-in-out', fill: 'forwards' });
+    }
+
+    // Per-state motion: life (blinks, fidgets), effects and spring impulses.
+    _script(name) {
+      const R = this.reduced;
+      this._life(LIFE[name]);
+      switch (name) {
+        case 'thinking': this._orbit(); break;
+        case 'correct':
+          this._kick(0, 120, 0);                               // the nod: down, the spring brings him back
+          this._later(() => this._kick(0, 70, 0), 260);
+          if (!R) { this.svg.dataset.eyes = 'happy'; this._later(() => { this.svg.dataset.eyes = 'open'; }, 650); }
+          break;
+        case 'notyet':
+          this._later(() => this._kick(0, 60, 0), 480);        // the encouraging nod after the tilt lands
+          break;
+        case 'curious': this._kick(-60, 0, 0); break;
+        case 'sleeping': this._zzz(); break;
+        case 'point': {
+          const v = this._targetVector(); const dir = v ? Math.sign(v.ux) || 1 : 1;
+          this._kick(dir * 70, 0, dir * 50);
+          this._later(() => this._kick(dir * 50, 0, dir * 40), 420);
+          break;
+        }
+        case 'celebrate':
+          if (R) { this._burst(); break; }
+          this.ph.yT = 6; this._wake();                          // anticipation: sink on the spring
+          this._later(() => { this.ph.yT = this.pose.hy; this._kick(Math.random() < 0.5 ? -160 : 160, -520, 0); this._kickTufts(160); this._puff(0.08, 600); this._burst(); }, 150);
+          this._later(() => this._kick(0, -260, 0), 760);
+          this._later(() => this._kick(-120, 0, 0), 1150);
+          break;
+        case 'streak':
+          this._bolt();
+          if (R) break;
+          this._later(() => { this._kick(0, 140, 0); this._kickTufts(260); this._puff(0.12, 700); this._sparks(); this.svg.dataset.eyes = 'happy'; }, 780);   // the hair takes the charge
+          this._later(() => this._kick(0, 90, 0), 1150);
+          this._later(() => this._kick(0, 80, 0), 1400);
+          break;
+        case 'surprised':
+          this._kick(0, -330, 0); this._kickTufts(200); this._puff(0.1, 650);
+          break;
+        case 'shrug':
+          this._kick(-60, 0, 0);
+          this._later(() => { this.n.body.style.transform = 'translate(0px, 0px)'; }, 380);
+          break;
+      }
+    }
+
+    _place() {
+      if (!this.bubble) return;
+      const { el: b, place, within } = this.bubble;
+      const r = this.root.getBoundingClientRect();
+      const box = within ? within.getBoundingClientRect() : { left: 0, right: document.documentElement.clientWidth };
+      const L = box.left + 16, R = box.right - 16;               // the bubble stays inside its bounds with a 16 px gutter
+      const s = this.size;
+      let p = place;
+      if (p === 'auto') p = R - (r.left + s * 0.94) >= 220 ? 'right' : 'top';
+      b.dataset.place = p;
+      b.style.left = b.style.top = b.style.bottom = b.style.right = '';
+      if (p === 'right') {
+        b.style.left = Math.round(s * 0.94) + 'px';
+        b.style.top = Math.round(s * 0.08) + 'px';
+        b.style.maxWidth = Math.max(160, Math.min(320, R - r.left - s * 0.94)) + 'px';
+        b.style.setProperty('--tail', Math.round(s * 0.3) + 'px');
+      } else {
+        b.style.bottom = Math.round(s + 14) + 'px';
+        b.style.maxWidth = Math.min(340, R - L) + 'px';
+        const bw = b.offsetWidth;
+        let left = (s - bw) / 2;
+        if (r.left + left < L) left += L - (r.left + left);
+        if (r.left + left + bw > R) left -= r.left + left + bw - R;
+        b.style.left = Math.round(left) + 'px';
+        b.style.setProperty('--tail', Math.round(clamp(s / 2 - left, 20, bw - 20)) + 'px');
+      }
+    }
+  }
+
+  window.Bertie = { mount: (el, opts) => new Bertie(el, opts), states: { held: HELD.slice(), oneShot: Object.keys(ONE_SHOT) }, aliases: Object.assign({}, ALIAS) };
+})();
+</script>
+
+<script>
+/* ===== Demo wiring ===== */
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const html = document.documentElement;
+  const wide = () => innerWidth >= 900;
+
+  const hero = Bertie.mount($('#hero'), { size: wide() ? 220 : 180, interactive: true });
+  Bertie.mount($('#brand-bertie'), { size: 48 });
+  const sizes = $('#sizes');
+  const minis = [];
+  [32, 40, 48, 64, 96, 160].forEach(s => {
+    const f = document.createElement('figure');
+    const holder = document.createElement('div');
+    const cap = document.createElement('figcaption'); cap.textContent = s + ' px';
+    f.append(holder, cap); sizes.appendChild(f);
+    minis.push(Bertie.mount(holder, { size: s }));
+  });
+  const fixed = [];
+  document.querySelectorAll('[data-mini]').forEach(el => {
+    const b = Bertie.mount(el, { size: +el.dataset.mini, float: 'float' in el.dataset });
+    if (el.dataset.miniState) { b.setState(el.dataset.miniState); fixed.push(b); } else minis.push(b);
+  });
+  const all = () => [hero, ...minis];
+
+  const INFO = {
+    idle: ['Idle', 'Default everywhere. Breathes, blinks every 2.5 to 6 s, glances or nods now and then.'],
+    listening: ['Listening', 'The learner is typing in the chat composer. Eyes and head lean towards it.'],
+    thinking: ['Thinking', 'From the tutor call until the first text arrives. Three electrons orbit his head.'],
+    talking: ['Talking', 'While a reply streams. Mouth and moustache lift on each text delta, at most 6 a second.'],
+    correct: ['Correct', 'After Check, when right. Happy squint, double nod, moustache smile. Held until Continue.'],
+    notyet: ['Not yet', 'After Check, when not yet right. Sympathetic tilt, kind brows, then an encouraging nod. Held until Try again.'],
+    curious: ['Curious', 'A tutor reply marked curious; Explore screens. One brow up, head cocked.'],
+    sleeping: ['Sleeping', 'Rest day on Today and streak freezes. Slow breath, rising z.'],
+    away: ['Away', 'Timed exam or an open homework item. Eyes shut and turned aside: not peeking.'],
+    point: ['Point', 'The tutor highlights a canvas element. Head tilts and nudges towards it; eyes follow.'],
+    celebrate: ['Celebrate', 'Lesson complete. One-shot, 1.9 s, skippable. Sink, hop, square burst, second hop.'],
+    streak: ['Streak', 'Streak extended. One-shot, 1.7 s. The bolt sparks above him and his hair takes the charge.'],
+    surprised: ['Surprised', 'A counter-intuitive reveal, such as Monty Hall. One-shot, 0.9 s.'],
+    shrug: ['Shrug', 'Tutor errors: offline, rate limited, empty reply. One-shot, 0.8 s.'],
+  };
+  const caption = $('#caption');
+  const buttons = new Map();
+  const setAll = (name, opts) => {
+    if (name === 'point') { $('#target').hidden = false; opts = Object.assign({ at: $('#target') }, opts); }
+    else if (!Bertie.states.oneShot.includes(name)) $('#target').hidden = true;
+    if (name !== 'talking') hero.closeBubble();   // a state button starts a fresh moment; the demo clears any old bubble
+    hero.setState(name, opts);
+    minis.forEach(b => b.setState(name, name === 'point' ? Object.assign({}, opts, { at: null }) : opts));
+  };
+  $('#hero').addEventListener('bertie:state', e => {
+    const s = e.detail.state;
+    caption.replaceChildren();
+    const b = document.createElement('b'); b.textContent = INFO[s][0] + '. ';
+    caption.append(b, document.createTextNode(INFO[s][1]));
+    buttons.forEach((btn, k) => btn.setAttribute('aria-pressed', String(k === s)));
+  });
+  const mk = (parent, name, tag) => {
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'sbtn'; btn.setAttribute('aria-pressed', 'false'); btn.dataset.state = name;
+    btn.append(document.createTextNode(INFO[name][0]));
+    if (tag) { const s = document.createElement('small'); s.textContent = tag; btn.appendChild(s); }
+    btn.addEventListener('click', () => setAll(name));
+    parent.appendChild(btn); buttons.set(name, btn);
+  };
+  Bertie.states.held.forEach(n => mk($('#held'), n));
+  Bertie.states.oneShot.forEach(n => mk($('#oneshot'), n, { celebrate: '1.9 s', streak: '1.7 s', surprised: '0.9 s', shrug: '0.8 s' }[n]));
+  hero.root.dispatchEvent(new CustomEvent('bertie:state', { detail: { state: 'idle' }, bubbles: true }));
+
+  // Speech
+  $('#say-hint').addEventListener('click', () => {
+    hero.say('You shaded row 5 and column 5, which is 12 cells. Is any cell in both?', { announce: true, within: $('#stage') });
+  });
+  let streamTimer = 0;
+  $('#say-stream').addEventListener('click', () => {
+    clearTimeout(streamTimer);
+    hero.setState('thinking');
+    const reply = 'Close. Your 1/36 divides by all 36 outcomes, but the news has already ruled most of them out. How many outcomes are left?';
+    const parts = reply.match(/\S+\s*/g);
+    streamTimer = setTimeout(() => {
+      const h = hero.say('', { stream: true, announce: true, within: $('#stage') });
+      let i = 0;
+      const next = () => { if (i >= parts.length) { h.end(); return; } h.append(parts[i++]); streamTimer = setTimeout(next, 70 + Math.random() * 90); };
+      next();
+    }, 1400);
+  });
+  $('#say-close').addEventListener('click', () => { clearTimeout(streamTimer); hero.closeBubble(); if (hero.state === 'talking') hero.setState('idle'); });
+  $('#point').addEventListener('click', () => setAll('point'));
+
+  // Pointer follow
+  let raf = 0, px = 0, py = 0;
+  const onMove = e => { px = e.clientX; py = e.clientY; if (!raf) raf = requestAnimationFrame(() => { raf = 0; all().forEach(b => b.lookAt(px, py)); }); };
+  $('#follow').addEventListener('change', e => {
+    if (e.target.checked) addEventListener('pointermove', onMove);
+    else { removeEventListener('pointermove', onMove); all().forEach(b => b.lookAt(null)); }
+  });
+
+  // Theme and motion
+  const sysDark = matchMedia('(prefers-color-scheme: dark)');
+  const theme = () => html.dataset.theme || (sysDark.matches ? 'dark' : 'light');
+  const syncTheme = () => document.querySelectorAll('[data-theme-btn]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeBtn === theme())));
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.addEventListener('click', () => { html.dataset.theme = b.dataset.themeBtn; syncTheme(); }));
+  syncTheme();
+  const sysReduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const motion = () => html.dataset.motion || (sysReduce.matches ? 'reduced' : 'full');
+  const syncMotion = () => document.querySelectorAll('[data-motion-btn]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.motionBtn === motion())));
+  document.querySelectorAll('[data-motion-btn]').forEach(b => b.addEventListener('click', () => { html.dataset.motion = b.dataset.motionBtn; syncMotion(); }));
+  syncMotion();
+
+  // Palette
+  const PAL = [['Line', '--bertie-line'], ['Skin', '--bertie-skin'], ['Skin shade', '--bertie-skin-shade'], ['Blush', '--bertie-blush'], ['Hair', '--bertie-hair'], ['Hair shade', '--bertie-hair-shade'],
+    ['Brows', '--bertie-brow'], ['Moustache', '--bertie-tache'], ['Mouth', '--bertie-mouth'], ['Jumper', '--bertie-jumper'], ['Bow tie', '--bertie-tie'], ['Orbit', '--bertie-orbit']];
+  const pal = $('#palette');
+  PAL.forEach(([label, v]) => {
+    const d = document.createElement('div'); d.className = 'sw';
+    const i = document.createElement('i'); i.style.background = `var(${v})`;
+    const t = document.createElement('div'); t.textContent = label;
+    const c = document.createElement('code'); c.textContent = v; t.appendChild(c);
+    d.append(i, t); pal.appendChild(d);
+  });
+  $('#weight').textContent = 'Component weight (bertie.js plus bertie.css, esbuild 0.24 and gzip -9): 47,195 bytes source, 30,968 minified, 10,615 minified and gzipped against a 12,000-byte budget. No images, fonts or network requests.';
+})();
+</script>
+</body>
+</html>
