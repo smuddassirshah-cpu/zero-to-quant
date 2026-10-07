@@ -165,4 +165,73 @@ None yet. A new dependency adds an entry: name and exact version, maintained, la
 
 ## 6. Build decisions
 
-None yet. Each stage adds its decisions here in the format above, numbered B1 onwards, with the stage that made them. Stage 14 records the scene layer's go or revert decision per family here.
+Each stage adds its decisions here in the format above, numbered B1 onwards, with the stage that made them. Stage 14 records the scene layer's go or revert decision per family here.
+
+### B1 Tools run on Node's own type stripping; `tsx` is not installed (stage 1)
+
+- **Decision.** Tools, tests and `eslint-plugin-zq` are TypeScript run directly by Node 22.22.0 (`node tools/x.ts`), which strips types with no flag and no warning [measured, 7 October 2026]. Every project enforces what Node can run: `erasableSyntaxOnly` in `tsconfig.base.json`, and `nodenext` resolution with explicit `.ts` imports in `tsconfig.node.base.json`, which `tools`, `tests` and every `packages/*` project extend. `src/` keeps `bundler` resolution, which Vite runs. ESLint loads the plugin's `src/index.ts` this way, with no build step.
+- **Reason.** One fewer loader and dependency; the type checker refuses exactly the syntax Node would refuse (an `enum`, an extensionless import), which the first review found `tsc` would otherwise pass.
+- **Rejected.** `tsx` 4.23.15 as pinned in `ARCHITECTURE.md` 3.2 (an extra runtime layer with nothing to do); compiling the tools and the plugin (a build step before every lint).
+- **Deviation.** From `ARCHITECTURE.md` 3.2 and 4.6, both updated. `tsx` is added if a tool ever needs JSX or path aliases.
+
+### B2 `zq/no-colour-literals` covers `.ts` as well as `.tsx` under `src/` (stage 1)
+
+- **Decision.** The rule runs on `src/**/*.{ts,tsx}`, not only `.tsx`.
+- **Reason.** Widget `logic.ts` and scene files produce render data (fills, strokes, marks); a colour literal there escapes the tokens as surely as one in a view. `CLAUDE.md` says colours come from tokens only.
+- **Rejected.** `.tsx` only, as `ARCHITECTURE.md` 10.4 read.
+- **Deviation.** From `ARCHITECTURE.md` 10.4, updated. Stricter, not looser.
+
+### B3 The raw-HTML sink rule names its two exemptions in its source (stage 1)
+
+- **Decision.** `zq/no-inner-html` refuses `innerHTML` and `outerHTML` (assigned, or as an object key), `insertAdjacentHTML`, `document.write` and `writeln`, `setHTMLUnsafe`, `parseHTMLUnsafe`, `createContextualFragment`, `parseFromString`, `new DOMParser()` and `dangerouslySetInnerHTML` everywhere. Its exemption list lives in the rule's source, not in configuration, and names each sink's file and the APIs it may use: `src/engine/render/Tex.tsx` (`innerHTML`, `dangerouslySetInnerHTML`; S1) and `src/ui/bertie/markup.ts` (`DOMParser`, `parseFromString`; S2). A test asserts the list has exactly these two entries, so a third sink needs a reviewed change to the rule and an entry in section 2. Closes `STATE.md` open question 9.
+- **Known limits.** Aliases (`const w = window; w.open()`), destructuring and `Reflect.set` with the property name as a string are not caught; review covers them.
+- **Deviation.** No: `PLAN.md` 7.2 and section 2's S2 asked for this extension.
+
+### B4 Layering is the custom rule `zq/layering`, not `no-restricted-imports` per directory (stage 1)
+
+- **Decision.** `zq/layering` reads the table of `ARCHITECTURE.md` 4.5 from `eslint.config.js`: ordered layers, most specific first, each with `files`, `allow` and `deny` globs over repository paths and `npm:` names, with `$1` (a capture from the importer's path) and `$dir` (the importer's folder) for "its own folder". Type-only imports are checked too. Interpretations: colocated tests and `tests/` may import anything; root config files may import `packages/*` and `tools/` only; widget logic and scenes may not import views, CSS, Preact, classic zod or any `schema.ts`; `src/widgets/**/schema.ts` is importable only by `registry.node.gen.ts` (the later `zq/no-schema-import` rule, enforced early); `platform/web` and `platform/artifact` reach platform types only through `platform/types.ts`; `sw/` may import its own folder and the runtime packages.
+- **Reason.** Flat-config entries for one rule replace each other per file, so per-directory `no-restricted-imports` blocks would silently drop the general rows' bans for specific folders.
+- **Rejected.** `no-restricted-imports` per directory (`ARCHITECTURE.md` 4.5 as drafted); `eslint-plugin-import`'s zones (a new dependency).
+- **Deviation.** From `ARCHITECTURE.md` 4.5 and 10.4's mechanism, both updated; the table itself is unchanged.
+
+### B5 The merge rule is procedural: the agents' GitHub connection is the owner's own account (stage 1)
+
+- **Finding** [measured, 7 October 2026]. The session platform's GitHub connection authenticates as `smuddassirshah-cpu`, the owner, and pull requests the sessions open are authored by that account. No separate bot identity exists, so `STATE.md` open question 7 closes unfavourably.
+- **Decision.** `PLAN.md` 7.1's named fallback applies: the merge rule is procedural. `CLAUDE.md` hard rule 3 binds every session (agents merge into `stage/*` only and never apply `visual-approved`); `label-guard.yml` refuses `visual-approved` from any account other than the owner's, which stops every other account but cannot tell a session from the owner.
+- **Consequence.** The stage 1 check "a merge into `main` and a `visual-approved` label from the bot identity are both refused" cannot be demonstrated. Branch protection still guards against accidents (force pushes, deletions, merging red CI). Whether this private repository's plan offers branch protection at all is [recalled, unverified: GitHub Free offers it only on public repositories]; the owner checks, and the settings to apply are in `README.md`.
+- **Upgrade path.** A machine account or a GitHub App with its own token for the sessions, when the platform offers one; then `CODEOWNERS` review on `main` becomes binding.
+- **Deviation.** No: `PLAN.md` 7.1 and 9 anticipated it. The definition-of-done item is reported as not met.
+
+### B6 The git hooks are advisory; CI is the binding gate (stage 1)
+
+- **Decision.** lefthook's pre-commit (format, lint, CSS, staged secrets) and pre-push (full-history secrets, `npm run check`, unit tests, audits) catch problems early, but a clone without lefthook installed skips them silently, and `npm install` in a second worktree rewrites the shared hooks to point at that worktree. CI runs the same checks, and only CI gates a merge.
+- **Stage 1 bootstrap.** Until the CI pull request merged, the hooks called tools that did not exist yet, so the stage's first commits and pushes used `LEFTHOOK=0`, and the foundation pull request merged into `stage/1` on local checks only, because no CI existed to gate it. Every later merge is gated by CI.
+- **Deviation.** From `CLAUDE.md` gating rule 3 ("merge only with CI green") for the foundation pull request only, which could not meet it.
+
+### B7 Release budgets: the numbers `budgets.ts` enforces (stage 1)
+
+- **Artifact.** Only `.html .js .mjs .css .json .svg`; archives, `.wasm`, fonts, dotfiles and a root `preflight.js` fail by name; each file at most 16,000,000 bytes (the host's 16 MB per text file, read as decimal megabytes, the stricter reading) [our choice]; one release at most 230 files and 150,000,000 bytes (`ARCHITECTURE.md` 6.2.5). Links and non-regular files fail, because a link could publish something no build wrote.
+- **Web.** Each file at most 25 MiB and at most 20,000 files [recalled, unverified: Cloudflare Pages' limits; checked at stage 25]; source maps live in `dist/maps/`, outside the deployed folder.
+- **Deviation.** No.
+
+### B8 The Artifact page fragment (stage 1)
+
+- **Decision.** `tools/release/page.ts` writes the fragment of `ARCHITECTURE.md` 6.2.2 from Vite's manifest: the Google Fonts links, the app stylesheet, `#app`, then two classic inline scripts: the old-browser gate (it shows its message and sets a flag) and the bootstrap (a page-level `import()` of the entry, which shows "Zero to Quant could not start. Reload to try again." and logs the error if the import fails). Two scripts, so a browser that cannot parse `import()` still shows the gate's message. Vite's manifest moves out of the published folder. Stage 4 inserts the import map before the bootstrap.
+- **Open.** The two messages live in `page.ts` until `copy.ts` exists (stage 5), which then owns them and lints them.
+- **Deviation.** No.
+
+### B9 Preview and development routes are switched by mode or `ZQ_DEV_ROUTES=1` (stage 1)
+
+- **Decision.** `__DEV_ROUTES__` is true in `dev` mode, or in any build when `ZQ_DEV_ROUTES=1` (the preview Artifact of stage 25 and `dev:artifact`).
+- **Open.** Because the variable is read from the environment, a stray export would compile development routes into a release build: stage 83's release procedure checks that it is unset and that the built entry carries no development routes.
+- **Deviation.** No.
+
+### B10 `stage/1` was branched from the Blueprint branch (stage 1)
+
+- **Decision.** `stage/1` was created from `stage2-blueprint` at `e73e090`, not from `main`, because `main` did not yet carry `CLAUDE.md`, `PLAN.md` or the appendices that stage 1 implements (the owner's pull request smuddassirshah-cpu/zero-to-quant#1). Once that merges, `stage/1` is a clean descendant of `main`.
+- **Deviation.** From `CLAUDE.md` gating rule 2 ("create `stage/<n>` from `main`").
+
+### B11 Playwright's container image (stage 1)
+
+- **Finding** [measured, MCR's tag list and manifest, 7 October 2026]. `mcr.microsoft.com/playwright:v1.63.0-noble` exists; index digest `sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27`. Visual CI pins the digest when it first runs. Closes `STATE.md` open question 8 and `ARCHITECTURE.md` 14 item 11.
+- **Deviation.** No.
