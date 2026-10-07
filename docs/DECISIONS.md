@@ -211,14 +211,16 @@ Each stage adds its decisions here in the format above, numbered B1 onwards, wit
 ### B7 Release budgets: the numbers `budgets.ts` enforces (stage 1)
 
 - **Artifact.** Only `.html .js .mjs .css .json .svg`; archives, `.wasm`, fonts, dotfiles and a root `preflight.js` fail by name; each file at most 16,000,000 bytes (the host's 16 MB per text file, read as decimal megabytes, the stricter reading) [our choice]; one release at most 230 files and 150,000,000 bytes (`ARCHITECTURE.md` 6.2.5). Links and non-regular files fail, because a link could publish something no build wrote.
-- **Web.** Each file at most 25 MiB and at most 20,000 files [recalled, unverified: Cloudflare Pages' limits; checked at stage 25]; source maps live in `dist/maps/`, outside the deployed folder.
-- **Deviation.** No.
+- **Web.** Each file at most 25 MiB and at most 20,000 files [recalled, unverified: Cloudflare Pages' limits; checked at stage 25]; source maps live in `dist/maps/`, outside the deployed folder, and any `.map` inside a checked folder fails. Both targets need a root `index.html`; links are never followed.
+- **Not built at stage 1.** `ARCHITECTURE.md` 6.2.5's retained-version row (300 files, 200 MB) and peak row (480 files, 250 MB) need two release ledgers, so they are checked by `tools/release/artifact-plan.ts` at stage 83, which writes the publish plan from the new and previous ledgers.
+- **Deviation.** Yes, from `ARCHITECTURE.md` 6.2.5, which assigns all three rows to `budgets.ts`: two rows move to stage 83's `artifact-plan.ts`, where the data for them first exists.
 
 ### B8 The Artifact page fragment (stage 1)
 
-- **Decision.** `tools/release/page.ts` writes the fragment of `ARCHITECTURE.md` 6.2.2 from Vite's manifest: the Google Fonts links, the app stylesheet, `#app`, then two classic inline scripts: the old-browser gate (it shows its message and sets a flag) and the bootstrap (a page-level `import()` of the entry, which shows "Zero to Quant could not start. Reload to try again." and logs the error if the import fails). Two scripts, so a browser that cannot parse `import()` still shows the gate's message. Vite's manifest moves out of the published folder. Stage 4 inserts the import map before the bootstrap.
+- **Decision.** `tools/release/page.ts` writes the fragment of `ARCHITECTURE.md` 6.2.2 from Vite's manifest: the Google Fonts links, the app stylesheet, `#app`, then two classic inline scripts: the old-browser gate (it shows its message and sets a flag) and the bootstrap (a page-level `import()` of the entry, which shows "Zero to Quant could not start. Reload to try again." and logs the error if the import fails). Two scripts, so a browser that cannot parse `import()` still shows the gate's message. Vite's manifest moves out of the published folder. Stage 4 inserts the import map between the two scripts.
+- **Order.** `<div id="app">` comes before the gate script, because the gate writes its message into it; `ARCHITECTURE.md` 6.2.2 lists `#app` after the import map.
 - **Open.** The two messages live in `page.ts` until `copy.ts` exists (stage 5), which then owns them and lints them.
-- **Deviation.** No.
+- **Deviation.** Yes, in element order only, from `ARCHITECTURE.md` 6.2.2, which is updated to match.
 
 ### B9 Preview and development routes are switched by mode or `ZQ_DEV_ROUTES=1` (stage 1)
 
