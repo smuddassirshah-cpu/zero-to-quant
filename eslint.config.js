@@ -18,6 +18,11 @@ export default defineConfig([
     '.workflows/',
     '.claude/',
   ]),
+  {
+    // No inline disables or inline configuration of any rule: an exception belongs in this file,
+    // where review sees it. An inline directive is reported and has no effect.
+    linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
+  },
   js.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
@@ -40,6 +45,16 @@ export default defineConfig([
   },
   {
     plugins: { zq },
+  },
+  {
+    files: ['**/*.{ts,tsx,js,mjs}'],
+    rules: { 'zq/no-empty-catch': 'error', 'zq/no-inner-html': 'error' },
+  },
+  {
+    // ARCHITECTURE.md 10.4 scopes no-colour-literals to `.tsx`; widened to `src/**/*.ts` because
+    // widget logic and scene files produce render data.
+    files: ['src/**/*.{ts,tsx}'],
+    rules: { 'zq/no-forbidden-apis': 'error', 'zq/no-colour-literals': 'error' },
   },
   {
     // CLAUDE.md: no eval or new Function anywhere.
