@@ -1,51 +1,84 @@
-# Fails a pull request whose visual-approved label was not applied by the owner (docs/PLAN.md 7.6). Make
-# "label-guard / visual-approved" a required check on main and stage/*. Limit: the session platform's GitHub
-# connection acts as the owner's own account, so this refuses every other account but may not tell an agent
-# from the owner; see tools/ci/label-guard.ts and CLAUDE.md hard rule 3.
+# The visual-approved label must come from the owner, after the pull request's latest push (docs/PLAN.md 7.6;
+# docs/DECISIONS.md G1). Make "label-guard / visual-approved" a required check on main and stage/*.
+# - pull_request_target, so the workflow and the guard come from the base side: on pull_request GitHub reads the
+#   workflow from the pull request's merge commit, which the pull request could rewrite. No step checks out or
+#   runs pull request code. pull_request_target reads the workflow from the base branch or from the default
+#   branch [unverified which; recalled that GitHub moved it to the default branch], so the guard binds only once
+#   it is on main.
+# - Every push removes the label (the reset job, the only one that may write), so the owner re-applies it to the
+#   commits he has seen. The guard job runs even when reset fails or is skipped, and fails if reset failed.
+# - Limit: the session platform's GitHub connection acts as the owner's own account, so this refuses every other
+#   account but may not tell an agent from the owner (tools/ci/label-guard.ts; CLAUDE.md hard rule 3).
 name: label-guard
 
 on:
-  pull_request:
+  pull_request_target:
     types: [labeled, unlabeled, opened, reopened, synchronize]
 
-permissions:
-  contents: read
-  pull-requests: read
-  issues: read
+permissions: {}
 
 concurrency:
   group: label-guard-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  cancel-in-progress: false
+
+env:
+  LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'visual-approved') }}
+  ACTION: ${{ github.event.action }}
 
 jobs:
-  visual-approved:
+  reset:
+    if: github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'visual-approved')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    env:
-      LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'visual-approved') }}
+    permissions:
+      pull-requests: write
     steps:
+      - name: New commits need a fresh visual-approved
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api --method DELETE "repos/$REPO/issues/$NUMBER/labels/visual-approved"
+
+  visual-approved:
+    needs: reset
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    env:
+      RESET: ${{ needs.reset.result }}
+    steps:
+      - name: Removed after new commits
+        if: env.ACTION == 'synchronize' && env.LABELLED == 'true'
+        run: |
+          if [ "$RESET" != success ]; then echo "label-guard: removing visual-approved failed ($RESET)"; exit 1; fi
+          echo "label-guard: visual-approved removed because new commits arrived; the owner applies it again."
       - name: Nothing to check
         if: env.LABELLED != 'true'
         run: echo "visual-approved is not on this pull request."
-      - uses: actions/checkout@v5 # pin to a commit SHA
-        if: env.LABELLED == 'true'
+      - uses: actions/checkout@v5 # pin to a commit SHA (STATE.md open question 25)
+        if: env.LABELLED == 'true' && env.ACTION != 'synchronize'
         with:
-          # The guard runs from the base branch, so a pull request cannot rewrite the check that judges it.
-          ref: ${{ github.event.pull_request.base.sha }}
+          # The base-side commit this workflow runs from; never the pull request's head or merge commit.
+          ref: ${{ github.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@v5 # pin to a commit SHA
-        if: env.LABELLED == 'true'
+      - uses: actions/setup-node@v5 # pin to a commit SHA (STATE.md open question 25)
+        if: env.LABELLED == 'true' && env.ACTION != 'synchronize'
         with:
           node-version-file: .nvmrc
       - name: Fetch the issue events
-        if: env.LABELLED == 'true'
+        if: env.LABELLED == 'true' && env.ACTION != 'synchronize'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number }}
         run: gh api --paginate --slurp "repos/$REPO/issues/$NUMBER/events" > "$RUNNER_TEMP/events.json"
       - name: The owner applied visual-approved
-        if: env.LABELLED == 'true'
+        if: env.LABELLED == 'true' && env.ACTION != 'synchronize'
         env:
           OWNER: ${{ github.repository_owner }}
         run: node tools/ci/label-guard.ts "$RUNNER_TEMP/events.json" "$OWNER"

@@ -1,9 +1,10 @@
 /*
- * Who applied visual-approved (docs/PLAN.md 7.6). Usage: node tools/ci/label-guard.ts <events.json> <owner-login>
+ * Who applied visual-approved, and when (docs/PLAN.md 7.6; docs/DECISIONS.md G1).
+ * Usage: node tools/ci/label-guard.ts <events.json> <owner-login>
  * Reads a pull request's issue events (`gh api --paginate --slurp`, so an array of pages, or a plain array) and
  * passes only if the latest `labeled` event for the label was by the owner, applied directly rather than
- * through a GitHub App (performed_via_github_app set): an agent acting through an installed App is refused
- * even when the App acts as the owner's account.
+ * through a GitHub App (performed_via_github_app set), and no force-push came after it. label-guard.yml removes
+ * the label on every push, so a label present on a pull request was applied after its head commit.
  * Measured limit, 7 October 2026: the session platform's GitHub connection authenticates as the owner's own
  * account (smuddassirshah-cpu), so a label an agent applies through it may be indistinguishable from the owner's
  * own [unverified: whether its events carry performed_via_github_app]. The guard then refuses every other
@@ -36,12 +37,22 @@ export function flatten(json: unknown): LabelEvent[] {
   return events as LabelEvent[];
 }
 
-export function verdict(events: readonly LabelEvent[], owner: string): { ok: boolean; reason: string } {
-  const latest = events
-    .filter((e) => e.event === 'labeled' && e.label?.name === LABEL)
+const last = (events: readonly LabelEvent[], keep: (e: LabelEvent) => boolean) =>
+  events
+    .filter(keep)
     .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id - b.id)
     .at(-1);
+
+export function verdict(events: readonly LabelEvent[], owner: string): { ok: boolean; reason: string } {
+  const latest = last(events, (e) => e.event === 'labeled' && e.label?.name === LABEL);
   if (latest === undefined) return { ok: false, reason: `no labeled event for ${LABEL}` };
+  const pushed = last(events, (e) => e.event === 'head_ref_force_pushed');
+  if (pushed !== undefined && pushed.created_at >= latest.created_at) {
+    return {
+      ok: false,
+      reason: `commits were force-pushed at ${pushed.created_at}, after ${LABEL} was applied`,
+    };
+  }
   const who = latest.actor?.login ?? '(unknown)';
   if (who.toLowerCase() !== owner.toLowerCase()) {
     return { ok: false, reason: `${LABEL} was applied by ${who}; only ${owner} may apply it` };

@@ -39,6 +39,13 @@ describe('label guard', () => {
     expect(verdict([labeled('zq-bot', at, 5), labeled(OWNER, at, 4)], OWNER).ok).toBe(false);
   });
 
+  it('fails a label that a later force-push made stale', () => {
+    const push = { event: 'head_ref_force_pushed', created_at: '2026-10-07T13:00:00Z', id: 9, actor: null };
+    const label = labeled(OWNER, '2026-10-07T12:00:00Z', 1);
+    expect(verdict([label, push], OWNER).reason).toMatch(/force-pushed at 2026-10-07T13:00:00Z/);
+    expect(verdict([push, labeled(OWNER, '2026-10-07T14:00:00Z', 10)], OWNER).ok).toBe(true);
+  });
+
   it('fails a label applied through a GitHub App, even as the owner', () => {
     const events = [labeled(OWNER, '2026-10-07T12:00:00Z', 1, LABEL, { slug: 'claude' })];
     expect(verdict(events, OWNER).reason).toMatch(/through the GitHub App claude/);
