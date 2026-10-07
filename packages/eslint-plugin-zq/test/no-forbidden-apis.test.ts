@@ -15,6 +15,10 @@ tester.run('no-forbidden-apis', rule, {
     'el.open',
     'const { open } = dialogState',
     'function f({ open }) { return open }',
+    'let f: Function',
+    'type F = typeof Function',
+    'const o = { Function: 1 }',
+    'x.Function',
     'document.createElement("div")',
     'document.createElement(tag)',
     'h(Component, {})',
@@ -53,7 +57,10 @@ tester.run('no-forbidden-apis', rule, {
     fails('globalThis.eval("1")', 'globalThis.eval'),
     fails('new Function("return 1")', 'new Function'),
     fails('Function("return 1")', 'Function'),
-    fails('window.Function("return 1")', 'Function'),
+    fails('window.Function("return 1")', 'window.Function'),
+    fails('Reflect.construct(Function, ["return 1"])', 'Function'),
+    fails('const F = Function', 'Function'),
+    fails('register(Function)', 'Function'),
   ],
 });
 
@@ -70,7 +77,17 @@ typed.run('no-forbidden-apis (typed)', rule, {
     typedFails('document.defaultView?.open("x");', 'document.defaultView.open'),
     typedFails('const w = window; w.open("x");', 'w.open'),
     typedFails('const { print } = parent;', 'parent.print'),
-    typedFails('const F = Function; export const f = new F("return 1");', 'new Function'),
+    {
+      code: 'const F = Function; export const f = new F("return 1");',
+      filename: TYPED,
+      errors: [...forbidden('Function'), ...forbidden('new Function')],
+    },
+    typedFails(
+      'export const f = new ((() => 1).constructor as FunctionConstructor)("return 1");',
+      'new Function',
+    ),
+    typedFails('export const f = ((() => 1).constructor as FunctionConstructor)("return 1");', 'Function'),
+    typedFails('parent.Function("return 1");', 'parent.Function'),
     {
       code: 'const nav = navigator; export const s = nav.serviceWorker;',
       filename: TYPED,

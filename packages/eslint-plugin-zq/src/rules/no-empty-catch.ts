@@ -9,8 +9,13 @@
 //   `Boolean`, `JSON.stringify`), a JSX expression, or an assignment to a variable or property
 //   declared outside the handler. Member access (`e.message`), conversions, templates, `+`, `?:`
 //   branches, `??` and `||`, spreads, TypeScript wrappers and object and array literals carry it
-//   on the way. A read in a test, under `void` or in a discarded statement does not count, and
-//   locals are not traced: `const x = e; report(x)` fails, `report(e)` passes.
+//   on the way. A read in a test, under `void` or in a discarded statement does not count. One
+//   level of local `const` is traced: `const text = String(e); show(text)` passes, while a `let`,
+//   or a `const` copied into another, is not followed.
+// - Accepted residue: a call carries the error even into a function that drops it
+//   (`Math.max(Number(e))`), an immediately called arrow counts as its implicit return
+//   (`(() => e)()`), and `&&` carries it to a `return` that does not return it
+//   (`return e && undefined`). Telling these apart needs data flow; review catches them.
 // - One pass collects the facts. A stack holds the open frames (catch clauses and every function);
 //   a `throw` or logger call marks frames down to and including the nearest function, so one
 //   inside a nested function counts for that function only. Marking stops at a frame already
@@ -73,7 +78,7 @@ function handlerFn(sourceCode: SourceCode, arg: ESNode): Fn | undefined {
 }
 
 /** True when this read of the error carries it out of `handler` (see the decision notes). */
-function leaves(sourceCode: SourceCode, read: Rule.Node, handler: ESNode): boolean {
+function leaves(sourceCode: SourceCode, read: Rule.Node, handler: ESNode, traced = false): boolean {
   const [lo, hi] = sourceCode.getRange(handler);
   const outside = (target: ESNode): boolean => {
     let root = target;
@@ -113,6 +118,18 @@ function leaves(sourceCode: SourceCode, read: Rule.Node, handler: ESNode): boole
         break;
       case 'AssignmentExpression':
         return parent.right === node && outside(parent.left);
+      case 'VariableDeclarator': {
+        const declaration = parent.parent;
+        if (traced || parent.init !== node || parent.id.type !== 'Identifier') return false;
+        if (declaration.type !== 'VariableDeclaration' || declaration.kind !== 'const') return false;
+        return sourceCode
+          .getDeclaredVariables(parent)
+          .some((v) =>
+            v.references.some(
+              (r) => r.isRead() && leaves(sourceCode, r.identifier as Rule.Node, handler, true),
+            ),
+          );
+      }
       default:
         if (!CARRIERS.has(parent.type)) return false;
     }

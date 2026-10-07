@@ -59,6 +59,24 @@ const violations = [
     code: "export const ink = '#ff0000';\n",
     message: "'#ff0000' is a colour literal",
   },
+  {
+    rule: 'zq/no-forbidden-apis',
+    file: 'src/app/__planted_open.mjs',
+    code: "globalThis.open('https://example.com');\n",
+    message: "'globalThis.open' is forbidden",
+  },
+  {
+    rule: 'zq/no-colour-literals',
+    file: 'src/app/__planted_colour.js',
+    code: "export const ink = 'rgb(255, 0, 0)';\n",
+    message: "'rgb(255, 0, 0)' is a colour literal",
+  },
+  {
+    rule: 'zq/layering',
+    file: 'src/engine/__planted_layering.ts',
+    code: "export * from '../screens/today/View.tsx';\n",
+    message: 'engine/ may not import src/screens/today/View.tsx',
+  },
 ];
 
 // An inline directive does not switch a rule off: noInlineConfig reports the directive instead.
