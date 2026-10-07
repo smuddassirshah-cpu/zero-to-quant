@@ -3,13 +3,28 @@
 // Decision notes:
 // - The exemptions are hard-coded, not options: a third sink needs a reviewed change to this file
 //   and a DECISIONS.md entry, never a line of configuration. Each exemption names the APIs its sink
-//   may use, so Tex.tsx still may not call DOMParser and markup.ts may not set innerHTML.
-// - Object-literal keys are checked as well as assignments, which catches `Object.assign(el, {
-//   innerHTML })` and props objects; `dangerouslySetInnerHTML` is a key here too, for `h()` calls.
-// - Names are matched statically (`el.innerHTML`, `el['innerHTML']`). Computed names built at run
-//   time and `Reflect.set` are out of reach of a syntactic rule; review catches them.
+//   may use, so Tex.tsx still may not call DOMParser and markup.ts may not set innerHTML; and S2
+//   parses SVG only, so its `parseFromString` must take the literal `'image/svg+xml'`.
+// - `innerHTML` and `outerHTML` are refused in every write position (assignment, compound
+//   assignment, destructuring target, `for ... of` left side) and as object-literal keys, which
+//   catches `Object.assign(el, { innerHTML })`, props objects and `Object.defineProperties`; also
+//   as the key argument of `Reflect.set`, `Reflect.defineProperty` and `Object.defineProperty`.
+// - A sink method is refused on any access, called or not, so `.call`, `.apply`, `.bind` and
+//   destructuring are covered. `write` and `writeln` count on a document: `document` itself, or
+//   any expression the type checker types as `Document` (`el.ownerDocument`, an alias).
+// - Names are matched statically, `+` of literals folded (`el['inner' + 'HTML']`). Names built at
+//   run time are out of reach of a static rule; review catches them.
 import type { Rule } from 'eslint';
-import { jsxName, propName, staticString, tailName, type ESNode, type NodeOf } from '../util/ast.ts';
+import {
+  hasType,
+  jsxName,
+  keyName,
+  patternSource,
+  propName,
+  staticString,
+  tailName,
+  type ESNode,
+} from '../util/ast.ts';
 import { repoPath } from '../util/paths.ts';
 
 /** Repository path -> the sink APIs that file may use. Exactly two entries (a test holds this). */
@@ -28,10 +43,37 @@ const METHODS = new Set([
   'parseFromString',
 ]);
 const DOCUMENT_METHODS = new Set(['write', 'writeln']);
+const DOCUMENT_TYPES = new Set(['Document']);
+const KEY_SETTERS = new Set(['Reflect.set', 'Reflect.defineProperty', 'Object.defineProperty']);
 
-function keyName(node: NodeOf<'Property'>): string | undefined {
-  const { key } = node;
-  return !node.computed && key.type === 'Identifier' ? key.name : staticString(key);
+/** True when `node` is written to, not read. */
+function isWriteTarget(node: Rule.Node): boolean {
+  const { parent } = node;
+  switch (parent?.type) {
+    case 'AssignmentExpression':
+    case 'AssignmentPattern':
+    case 'ForOfStatement':
+    case 'ForInStatement':
+      return parent.left === node;
+    case 'ArrayPattern':
+    case 'RestElement':
+    case 'UpdateExpression':
+      return true;
+    case 'Property':
+      return parent.value === node && parent.parent.type === 'ObjectPattern';
+    default:
+      return false;
+  }
+}
+
+/** True for `parser.parseFromString(text, 'image/svg+xml')`, the only call sink S2 makes. */
+function parsesSvg(member: Rule.Node): boolean {
+  const call = member.parent;
+  return (
+    call?.type === 'CallExpression' &&
+    call.callee === member &&
+    staticString(call.arguments[1]) === 'image/svg+xml'
+  );
 }
 
 const rule: Rule.RuleModule = {
@@ -41,32 +83,51 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       sink: "'{{name}}' turns a string into markup; the only raw-HTML sinks are S1 and S2 (docs/DECISIONS.md 2)",
+      svgOnly: "Sink S2 parses SVG only: call parseFromString with 'image/svg+xml' (docs/DECISIONS.md S2)",
     },
   },
   create(context) {
+    const { sourceCode } = context;
     const allowed = new Set(SINKS[repoPath(context)]);
     const report = (node: ESNode, name: string) => {
       if (!allowed.has(name)) context.report({ node, messageId: 'sink', data: { name } });
     };
+    const isDocument = (node: ESNode) =>
+      tailName(node) === 'document' || hasType(sourceCode, node, DOCUMENT_TYPES);
+    const method = (node: ESNode, name: string, owner: ESNode | undefined) => {
+      if (METHODS.has(name)) report(node, name);
+      else if (DOCUMENT_METHODS.has(name) && owner && isDocument(owner)) report(node, `document.${name}`);
+    };
+
     return {
-      AssignmentExpression(node) {
-        const name = propName(node.left);
-        if (name && PROPERTIES.has(name)) report(node.left, name);
+      MemberExpression(node) {
+        const name = propName(node);
+        if (name === undefined) return;
+        if (PROPERTIES.has(name) && isWriteTarget(node)) report(node, name);
+        else if (name === 'parseFromString' && allowed.has(name) && !parsesSvg(node)) {
+          context.report({ node, messageId: 'svgOnly' });
+        } else method(node, name, node.object);
       },
       CallExpression(node) {
-        const name = propName(node.callee);
-        if (!name || node.callee.type !== 'MemberExpression') return;
-        if (METHODS.has(name)) report(node.callee, name);
-        else if (DOCUMENT_METHODS.has(name) && tailName(node.callee.object) === 'document') {
-          report(node.callee, `document.${name}`);
-        }
+        const [, key] = node.arguments;
+        const callee = node.callee.type === 'MemberExpression' ? node.callee : undefined;
+        const setter = callee && `${tailName(callee.object) ?? ''}.${propName(callee) ?? ''}`;
+        const name = setter && KEY_SETTERS.has(setter) ? staticString(key) : undefined;
+        if (key && name && KEYS.has(name)) report(key, name);
       },
       NewExpression(node) {
         if (tailName(node.callee) === 'DOMParser') report(node.callee, 'DOMParser');
       },
       Property(node) {
         const name = keyName(node);
-        if (name && KEYS.has(name) && node.parent.type === 'ObjectExpression') report(node.key, name);
+        if (name === undefined) return;
+        if (node.parent.type === 'ObjectExpression') {
+          if (KEYS.has(name)) report(node.key, name);
+        } else if (name === 'parseFromString' && allowed.has(name)) {
+          context.report({ node: node.key, messageId: 'svgOnly' });
+        } else {
+          method(node.key, name, patternSource(node.parent));
+        }
       },
       JSXAttribute(node: Rule.Node) {
         if (jsxName(node) === 'dangerouslySetInnerHTML') report(node, 'dangerouslySetInnerHTML');

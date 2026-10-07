@@ -1,13 +1,24 @@
 // Stage 1's definition of done: a planted violation of each lint rule fails. Each file is written
-// at a real path, linted with the repository's own eslint.config.js (the type-aware parser needs
-// the files on disk), and removed in a `finally` with any directory planting created, whatever
-// the lint did. The two sink files pass only at their exempt paths, and are planted only when no
-// such file exists yet.
+// at a real path and linted with the repository's own eslint.config.js (the type-aware parser
+// needs the files on disk). The two sink files pass only at their exempt paths.
+// Hygiene: every planted file starts with MARKER. Stale planted files from a killed run are
+// removed first; a file at a planted path without the marker is real, and the test refuses to
+// run rather than touch it (the sink paths become real files at stages 23 and 59). Cleanup
+// removes this run's files one by one and its directories only when empty, so a real file
+// written meanwhile survives.
 // ESLint's Node API runs in a child process (an argument list, no shell): there ESLint loads the
 // config and the plugin itself, as `npx eslint` does, and that natively loaded copy of the plugin
 // stays out of this run's coverage, which it would otherwise distort.
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmdirSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 import type { ESLint } from 'eslint';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -15,6 +26,7 @@ import { REPO_ROOT } from '../src/util/paths.ts';
 
 type Result = Pick<ESLint.LintResult, 'filePath' | 'messages'>;
 
+const MARKER = '// zq-planted: written and removed by packages/eslint-plugin-zq/test/planted.test.ts';
 const LINT = [
   "import { ESLint } from 'eslint';",
   'const [cwd, ...files] = process.argv.slice(1);',
@@ -49,6 +61,14 @@ const violations = [
   },
 ];
 
+// An inline directive does not switch a rule off: noInlineConfig reports the directive instead.
+const disabled = {
+  rule: 'zq/no-inner-html',
+  file: 'src/app/__planted_disable.ts',
+  code: 'export function show(el: HTMLElement, html: string): void {\n  el.innerHTML = html; // eslint-disable-line zq/no-inner-html\n}\n',
+  message: "'innerHTML' turns a string into markup",
+};
+
 const sinks = [
   {
     file: 'src/engine/render/Tex.tsx',
@@ -60,25 +80,51 @@ const sinks = [
   },
 ];
 
+const planted = [...violations, disabled, ...sinks];
 const results = new Map<string, Result>();
-const planted: string[] = [];
+const createdFiles: string[] = [];
+const createdDirs: string[] = [];
+
+const ours = (file: string) => readFileSync(file, 'utf8').startsWith(MARKER);
+
+function clearStale(target: string): void {
+  if (!existsSync(target)) return;
+  if (!path.basename(target).startsWith('__planted_') && !ours(target)) {
+    throw new Error(
+      `${path.relative(REPO_ROOT, target)} is a real file; move its check off the planted test`,
+    );
+  }
+  unlinkSync(target);
+}
+
+function plant(target: string, code: string): void {
+  const missing: string[] = [];
+  for (let dir = path.dirname(target); !existsSync(dir); dir = path.dirname(dir)) missing.unshift(dir);
+  for (const dir of missing) {
+    mkdirSync(dir);
+    createdDirs.push(dir);
+  }
+  writeFileSync(target, `${MARKER}\n${code}`, { flag: 'wx' });
+  createdFiles.push(target);
+}
+
+function cleanUp(): void {
+  for (const file of createdFiles) if (existsSync(file) && ours(file)) unlinkSync(file);
+  for (const dir of [...createdDirs].reverse()) if (readdirSync(dir).length === 0) rmdirSync(dir);
+}
 
 beforeAll(() => {
+  const targets = planted.map(({ file, code }) => ({ target: path.join(REPO_ROOT, file), code }));
+  for (const { target } of targets) clearStale(target);
   try {
-    for (const { file, code } of [...violations, ...sinks]) {
-      const target = path.join(REPO_ROOT, file);
-      if (existsSync(target)) continue;
-      planted.push(mkdirSync(path.dirname(target), { recursive: true }) ?? target);
-      writeFileSync(target, code, { flag: 'wx' });
-    }
-    const files = [...violations, ...sinks].map(({ file }) => path.join(REPO_ROOT, file));
-    const args = ['--input-type=module', '--eval', LINT, REPO_ROOT, ...files];
-    const out = execFileSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8' });
+    for (const { target, code } of targets) plant(target, code);
+    const args = ['--input-type=module', '--eval', LINT, REPO_ROOT, ...targets.map(({ target }) => target)];
+    const out = execFileSync(process.execPath, args, { cwd: REPO_ROOT, encoding: 'utf8', timeout: 90_000 });
     for (const result of JSON.parse(out) as Result[]) {
       results.set(path.relative(REPO_ROOT, result.filePath).split(path.sep).join('/'), result);
     }
   } finally {
-    for (const entry of [...planted].reverse()) rmSync(entry, { recursive: true, force: true });
+    cleanUp();
   }
 }, 120_000);
 
@@ -89,12 +135,20 @@ describe('planted violations', () => {
     expect(messages[0]?.message).toContain(message);
   });
 
+  it('an inline disable neither silences zq/no-inner-html nor passes unreported', () => {
+    const messages = results.get(disabled.file)?.messages ?? [];
+    expect(messages.filter((m) => m.ruleId === disabled.rule).map((m) => m.message)).toEqual([
+      expect.stringContaining(disabled.message),
+    ]);
+    expect(messages.some((m) => m.ruleId === null && m.message.includes("'noInlineConfig'"))).toBe(true);
+  });
+
   it.each(sinks)('$file passes as a justified sink', ({ file }) => {
     expect(results.get(file)?.messages).toEqual([]);
   });
 
-  it('leaves nothing behind', () => {
-    expect(planted.length).toBeGreaterThan(0);
-    for (const entry of planted) expect(existsSync(entry)).toBe(false);
+  it('removes every file and directory it created', () => {
+    expect(createdFiles).toHaveLength(planted.length);
+    for (const entry of [...createdFiles, ...createdDirs]) expect(existsSync(entry)).toBe(false);
   });
 });

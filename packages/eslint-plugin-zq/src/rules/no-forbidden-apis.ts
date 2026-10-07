@@ -1,25 +1,54 @@
-// zq/no-forbidden-apis (scope `src/`, ARCHITECTURE.md 10.4): new windows, printing, iframes and
-// code from strings are refused, and the service worker is reached only by the web platform.
+// zq/no-forbidden-apis (scope `src/`, ARCHITECTURE.md 10.4): new windows, printing, embedded
+// documents and code from strings are refused, and the service worker is reached only by the web
+// platform.
 // Decision notes:
-// - A bare `open()`, `print()`, `eval()` or `Function()` is refused only when scope analysis finds
-//   no declaration for it in the file, so a local `open` or an imported `print` is fine. The same
-//   holds for the `window`, `self` and `globalThis` objects of a member access.
-// - Member accesses are refused whether or not they are called (`const o = window.open` too).
-// - `createElement` and `createElementNS` are matched on any object, so `doc.createElement` and
-//   `el.ownerDocument.createElement` are covered; the tag literal is compared case-insensitively.
+// - Two checks run side by side. The syntactic one works everywhere, `.js` included: `window`,
+//   `self` and `globalThis` when nothing in the file declares them, and a bare `open()`, `print()`,
+//   `eval()` or `Function()` that scope analysis resolves to the global (a local or imported `open`
+//   is fine). Where the type checker is available (`.ts`, `.tsx`) it also refuses `open`, `print`
+//   and `eval` on any `Window` (`parent`, `top`, `document.defaultView`, an alias), `serviceWorker`
+//   on any `Navigator`, and calling or constructing any `FunctionConstructor`.
+// - Member accesses are refused whether or not they are called, and so is destructuring them.
+// - Embedding elements (`iframe`, `object`, `embed`) are refused in JSX and as the literal tag of
+//   `createElement`, `createElementNS`, `h`, `jsx` or `jsxs` on any receiver, case-insensitively
+//   and with any namespace prefix (`'html:iframe'`) removed.
 import type { Rule } from 'eslint';
-import { isGlobal, jsxName, propName, staticString, type ESNode, type NodeOf } from '../util/ast.ts';
+import {
+  hasType,
+  isGlobal,
+  jsxName,
+  keyName,
+  patternSource,
+  propName,
+  staticString,
+  tailName,
+  unwrap,
+  type ESNode,
+  type NodeOf,
+} from '../util/ast.ts';
 import { repoPath } from '../util/paths.ts';
 
 const GLOBAL_OBJECTS = new Set(['window', 'self', 'globalThis']);
-const MEMBERS = new Set(['open', 'print', 'eval', 'Function']);
+const WINDOW_MEMBERS = new Set(['open', 'print', 'eval']);
+const BARE = new Set([...WINDOW_MEMBERS, 'Function']);
+const WINDOW_TYPES = new Set(['Window']);
+const NAVIGATOR_TYPES = new Set(['Navigator', 'WorkerNavigator']);
+const FUNCTION_TYPES = new Set(['FunctionConstructor']);
+const EMBEDS = new Set(['iframe', 'object', 'embed']);
+const FACTORIES = new Map([
+  ['createElement', 0],
+  ['createElementNS', 1],
+  ['h', 0],
+  ['jsx', 0],
+  ['jsxs', 0],
+]);
 const SERVICE_WORKER_DIRS = ['src/platform/web/', 'src/sw/'];
 
 const rule: Rule.RuleModule = {
   meta: {
     type: 'problem',
     docs: {
-      description: 'Refuse window.open, print, iframes, eval, new Function and stray service-worker use',
+      description: 'Refuse window.open, print, embedded documents, eval, Function and stray service workers',
     },
     schema: [],
     messages: {
@@ -33,49 +62,54 @@ const rule: Rule.RuleModule = {
     const file = repoPath(context);
     const workerAllowed = SERVICE_WORKER_DIRS.some((dir) => file.startsWith(dir));
     const globalObject = (node: ESNode) =>
-      node.type === 'Identifier' && GLOBAL_OBJECTS.has(node.name) && isGlobal(sourceCode, node)
-        ? node.name
-        : undefined;
+      node.type === 'Identifier' && GLOBAL_OBJECTS.has(node.name) && isGlobal(sourceCode, node);
+    const isWindow = (node: ESNode) => globalObject(node) || hasType(sourceCode, node, WINDOW_TYPES);
     const isNavigator = (node: ESNode) =>
-      node.type === 'Identifier'
-        ? node.name === 'navigator' && isGlobal(sourceCode, node)
-        : node.type === 'MemberExpression' && propName(node) === 'navigator' && !!globalObject(node.object);
+      (node.type === 'Identifier' && node.name === 'navigator' && isGlobal(sourceCode, node)) ||
+      (node.type === 'MemberExpression' && propName(node) === 'navigator' && globalObject(node.object)) ||
+      hasType(sourceCode, node, NAVIGATOR_TYPES);
+    const isFunctionConstructor = (node: ESNode) =>
+      (node.type === 'MemberExpression' && propName(node) === 'Function' && globalObject(node.object)) ||
+      hasType(sourceCode, node, FUNCTION_TYPES);
     const forbid = (node: ESNode, name: string) => {
       context.report({ node, messageId: 'forbidden', data: { name } });
     };
-    const bare = (node: NodeOf<'CallExpression' | 'NewExpression'>, prefix: string) => {
-      const { callee } = node;
-      if (callee.type === 'Identifier' && MEMBERS.has(callee.name) && isGlobal(sourceCode, callee)) {
-        forbid(node, `${prefix}${callee.name}`);
+    // `owner.name`, read from `owner` by a member access or a destructuring pattern.
+    const access = (node: ESNode, name: string, owner: ESNode) => {
+      if (WINDOW_MEMBERS.has(name) && isWindow(owner)) forbid(node, `${sourceCode.getText(owner)}.${name}`);
+      else if (name === 'serviceWorker' && !workerAllowed && isNavigator(owner)) {
+        context.report({ node, messageId: 'serviceWorker' });
       }
+    };
+    const invoke = (node: NodeOf<'CallExpression' | 'NewExpression'>) => {
+      const callee = unwrap(node.callee);
+      const prefix = node.type === 'NewExpression' ? 'new ' : '';
+      if (callee.type === 'Identifier' && BARE.has(callee.name) && isGlobal(sourceCode, callee)) {
+        forbid(node, `${prefix}${callee.name}`);
+      } else if (isFunctionConstructor(callee)) forbid(node, `${prefix}Function`);
     };
 
     return {
       MemberExpression(node) {
         const name = propName(node);
-        if (name === undefined) return;
-        const owner = globalObject(node.object);
-        if (owner && MEMBERS.has(name)) forbid(node, `${owner}.${name}`);
-        else if (name === 'serviceWorker' && !workerAllowed && isNavigator(node.object)) {
-          context.report({ node, messageId: 'serviceWorker' });
-        }
+        if (name !== undefined) access(node, name, node.object);
+      },
+      Property(node) {
+        const name = keyName(node);
+        const owner = node.parent.type === 'ObjectPattern' ? patternSource(node.parent) : undefined;
+        if (name !== undefined && owner) access(node, name, owner);
       },
       CallExpression(node) {
-        bare(node, '');
-        const method = propName(node.callee);
-        const tag =
-          method === 'createElement'
-            ? node.arguments[0]
-            : method === 'createElementNS'
-              ? node.arguments[1]
-              : undefined;
-        if (tag && staticString(tag)?.toLowerCase() === 'iframe') forbid(node, 'iframe');
+        invoke(node);
+        const index = FACTORIES.get(tailName(node.callee) ?? '');
+        const tag = index === undefined ? undefined : staticString(node.arguments[index]);
+        const element = tag?.toLowerCase().replace(/^[^:]*:/, '');
+        if (element && EMBEDS.has(element)) forbid(node, element);
       },
-      NewExpression(node) {
-        bare(node, 'new ');
-      },
+      NewExpression: invoke,
       JSXOpeningElement(node: Rule.Node) {
-        if (jsxName(node) === 'iframe') forbid(node, 'iframe');
+        const element = jsxName(node);
+        if (element && EMBEDS.has(element)) forbid(node, element);
       },
     };
   },

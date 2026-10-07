@@ -18,6 +18,12 @@ tester.run('no-colour-literals', rule, {
     'const token = "var(--zq-ink)"',
     'const n = 1',
     'const built = `#${hex}`',
+    'import ink from "#abc"',
+    'export * from "#fff"',
+    'export { ink } from "#aabbcc"',
+    'void import("#abcd")',
+    'type Ink = typeof import("#fff")',
+    'declare module "#fff" {}',
   ],
   invalid: [
     { code: 'const c = "#abc"', errors: colour('#abc') },

@@ -18,6 +18,11 @@ export default defineConfig([
     '.workflows/',
     '.claude/',
   ]),
+  {
+    // No inline disables or inline configuration of any rule: an exception belongs in this file,
+    // where review sees it. An inline directive is reported and has no effect.
+    linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' },
+  },
   js.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
