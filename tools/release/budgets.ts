@@ -2,15 +2,16 @@
 // <web|artifact> <dir>` exits 1 and names the largest groups when a file or the release breaks one.
 // Decision notes:
 // - Artifact: only the host's served types. Archives, WebAssembly and fonts get messages of their own,
-//   because each breaks a different rule (CLAUDE.md hard rule 1); a root `preflight.js` is reserved by
-//   the host; anything under a dot-name is refused, since nothing hidden belongs in a release.
+//   because each breaks a different rule (CLAUDE.md hard rule 1); a root `preflight.js`, in any case, is
+//   reserved by the host; anything under a dot-name is refused, since nothing hidden belongs in a release.
+// - Both targets need a root `index.html` and refuse source maps, which the build moves to dist/maps/.
 // - The host's 16 MB per text file is read as 16,000,000 bytes [our choice: the stricter reading].
-// - Web: 25 MiB per file and 20,000 files are Cloudflare Pages' limits [recalled, unverified]. Source
-//   maps stay CI artefacts, so they are listed as not deployed and left out of every count.
-// - Symbolic links and special files fail on both targets: a link could publish what no build wrote.
+// - Web: 25 MiB per file and 20,000 files are Cloudflare Pages' limits [recalled, unverified].
+// - The walk recurses only into real folders and never follows a link: links and special files are
+//   violations on both targets, since a link could publish what no build wrote.
 // - One pass over the files, O(n); sorting the listing and the report's groups is O(n log n).
-import { existsSync, readdirSync, statSync } from 'node:fs';
-import { extname, join, relative, sep } from 'node:path';
+import { existsSync, lstatSync, readdirSync, statSync } from 'node:fs';
+import { extname, join } from 'node:path';
 
 export type Target = 'web' | 'artifact';
 
@@ -32,56 +33,50 @@ export const LIMITS = {
 const SERVED = new Set(['.html', '.js', '.mjs', '.css', '.json', '.svg']);
 const ARCHIVES = new Set(['.zip', '.tar', '.gz', '.tgz', '.br', '.zst', '.7z', '.rar', '.bz2', '.xz']);
 const FONTS = new Set(['.woff', '.woff2', '.ttf', '.otf', '.eot']);
+const PAGE = 'index.html';
 const RELEASE = '(release)';
-const IRREGULAR = 'not a regular file: links are not published';
+const IRREGULAR = 'not a regular file or folder: links are never followed or published';
 const USAGE = 'Usage: node tools/release/budgets.ts <web|artifact> <dir>';
 
 const n = (value: number): string => value.toLocaleString('en-GB');
 const plural = (count: number, noun: string): string => `${n(count)} ${noun}${count === 1 ? '' : 's'}`;
 
-function artifactTypeRule(path: string): string | undefined {
+function typeRule(target: Target, path: string): string | undefined {
+  const ext = extname(path);
+  const lower = ext.toLowerCase();
+  if (lower === '.map') return 'source map: maps belong in dist/maps/ and are never deployed';
+  if (target === 'web') return undefined;
   if (path.split('/').some((part) => part.startsWith('.'))) {
     return 'dotfile or dot-folder: nothing hidden is published (a leftover .vite/ manifest is the usual cause)';
   }
-  if (path === 'preflight.js') {
+  if (path.toLowerCase() === 'preflight.js') {
     return 'a root preflight.js is reserved by the host, which runs it against open pages on every publish';
   }
-  const ext = extname(path);
   if (SERVED.has(ext)) return undefined;
-  const lower = ext.toLowerCase();
   if (ARCHIVES.has(lower)) return 'archive: the Artifact publishes no archives or other binaries';
   if (lower === '.wasm') return 'WebAssembly: the Artifact publishes no binaries; it belongs to the web app';
   if (FONTS.has(lower)) return 'font file: the Artifact takes fonts only from Google Fonts';
   return `${ext || 'no extension'}: the host serves only ${[...SERVED].join(' ')}`;
 }
 
-/** Splits off what the target never deploys: the web build's hidden source maps. */
-export function partition(
-  target: Target,
-  files: readonly FileEntry[],
-): { deployed: FileEntry[]; skipped: FileEntry[] } {
-  const deployed: FileEntry[] = [];
-  const skipped: FileEntry[] = [];
-  for (const file of files) (target === 'web' && file.path.endsWith('.map') ? skipped : deployed).push(file);
-  return { deployed, skipped };
-}
-
 export function checkBudgets(target: Target, files: readonly FileEntry[]): Violation[] {
   const limits = LIMITS[target];
-  const { deployed } = partition(target, files);
   const violations: Violation[] = [];
   const fail = (path: string, message: string) => violations.push({ path, message });
   let bytes = 0;
-  for (const { path, size } of deployed) {
+  let page = false;
+  for (const { path, size } of files) {
     bytes += size;
-    const type = target === 'artifact' ? artifactTypeRule(path) : undefined;
+    page ||= path === PAGE;
+    const type = typeRule(target, path);
     if (type) fail(path, type);
     if (size > limits.fileBytes) {
       fail(path, `${n(size)} bytes is over the limit of ${n(limits.fileBytes)} per file`);
     }
   }
-  if (deployed.length > limits.files) {
-    fail(RELEASE, `${plural(deployed.length, 'file')} is over the limit of ${n(limits.files)}`);
+  if (!page) fail(PAGE, 'missing: the folder needs a root index.html');
+  if (files.length > limits.files) {
+    fail(RELEASE, `${plural(files.length, 'file')} is over the limit of ${n(limits.files)}`);
   }
   if (bytes > limits.releaseBytes) {
     fail(RELEASE, `${n(bytes)} bytes is over the limit of ${n(limits.releaseBytes)}`);
@@ -115,17 +110,21 @@ export function largestGroups(
     .slice(0, top);
 }
 
-/** Every file under `dir`, with `/`-separated relative paths; links and special files apart. */
+/** Every regular file under `dir`, with `/`-separated relative paths; links and special files apart. */
 export function listFiles(dir: string): { files: FileEntry[]; irregular: string[] } {
   const files: FileEntry[] = [];
   const irregular: string[] = [];
-  for (const entry of readdirSync(dir, { recursive: true, withFileTypes: true })) {
-    if (entry.isDirectory()) continue;
-    const full = join(entry.parentPath, entry.name);
-    const path = relative(dir, full).split(sep).join('/');
-    if (entry.isFile()) files.push({ path, size: statSync(full).size });
-    else irregular.push(path);
-  }
+  const walk = (folder: string, prefix: string): void => {
+    // Dirents carry lstat types, so a link to a folder is a link here, never a folder.
+    for (const entry of readdirSync(folder, { withFileTypes: true })) {
+      const full = join(folder, entry.name);
+      const path = prefix + entry.name;
+      if (entry.isDirectory()) walk(full, `${path}/`);
+      else if (entry.isFile()) files.push({ path, size: lstatSync(full).size });
+      else irregular.push(path);
+    }
+  };
+  walk(dir, '');
   files.sort((a, b) => (a.path < b.path ? -1 : 1));
   irregular.sort();
   return { files, irregular };
@@ -142,14 +141,11 @@ export function main(argv: readonly string[], print: (line: string) => void = co
     return 2;
   }
   const { files, irregular } = listFiles(dir);
-  const { deployed, skipped } = partition(target, files);
   const links = irregular.map((path) => ({ path, message: IRREGULAR }));
   const violations = [...links, ...checkBudgets(target, files)];
-  const bytes = deployed.reduce((sum, file) => sum + file.size, 0);
-  const maps = skipped.map((file) => file.path).join(', ');
   if (violations.length === 0) {
-    const tail = maps ? `; not deployed: ${maps}` : '';
-    print(`budgets ${target}: ${plural(deployed.length, 'file')}, ${n(bytes)} bytes, within budget${tail}`);
+    const bytes = files.reduce((sum, file) => sum + file.size, 0);
+    print(`budgets ${target}: ${plural(files.length, 'file')}, ${n(bytes)} bytes, within budget`);
     return 0;
   }
   print(`budgets ${target}: ${plural(violations.length, 'violation')} in ${dir}`);
@@ -159,11 +155,10 @@ export function main(argv: readonly string[], print: (line: string) => void = co
     ['extension', byExtension],
   ] as const) {
     print(`Largest groups by ${label}:`);
-    for (const group of largestGroups(deployed, keyOf)) {
+    for (const group of largestGroups(files, keyOf)) {
       print(`  ${group.key}: ${plural(group.files, 'file')}, ${n(group.bytes)} bytes`);
     }
   }
-  if (maps) print(`Not deployed: ${maps}`);
   return 1;
 }
 
