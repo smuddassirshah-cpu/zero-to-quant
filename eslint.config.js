@@ -17,6 +17,7 @@ export default defineConfig([
     'test-results/',
     '.workflows/',
     '.claude/',
+    'tools/py/.venv/',
   ]),
   js.configs.recommended,
   {
