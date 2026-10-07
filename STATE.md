@@ -1,6 +1,6 @@
 # Build state
 
-Current stage: 1
+Current stage: 2
 Last updated: 7 October 2026
 Preview Artifact: not yet created (stage 25 creates it; its URL goes here)
 
@@ -22,7 +22,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 
 | # | Stage | Depends on | AD plan | AD actual | Status | Gate |
 |---|---|---|---|---|---|---|
-| 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | awaiting review | - |
+| 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
 | 2 | Spike S1 on the owner's iPhone | 1 | 3 | - | pending | - |
 | 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | pending | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
@@ -180,6 +180,7 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-07 | A2 `pytest` 9.0.2 advisory waived to 7 November 2026 | Pinned to Pyodide's version | n; for the owner |
 | 2026-10-07 | T1 gitleaks 8.30.1, pip-audit 2.10.1, the Go floor; npm-only licence gate until stage 25 | Named in `PLAN.md` 7.1 and 7.6 | n; versions for the owner |
 | 2026-10-07 | G1 The label guard: owner's label after the head commit, reset on every push, on `pull_request_target` | The owner cannot approve his own pull request | y: `PLAN.md` 7.1 |
+| 2026-10-07 | Stage 1 gate: approved by the owner ("Approved and continue"); A1, A2 (pytest stays at 9.0.2, Pyodide's version), L1, T1 and B16 approved; branch protection to be applied by the owner per `README.md`; the superseded `stage1/*` branches may be deleted once stage 1 reaches `main`; the licence holder is Syed Muddassir Shah | The owner's answers at the gate | n |
 
 ## Open questions
 
@@ -263,4 +264,4 @@ Each with the stage it affects; the stage that closes it records the answer in `
 
 ## Next action
 
-Stage 1 is awaiting the owner's review. On his "approved, continue": set stage 1's Gate date, open the pull request `stage 1: scaffold, toolchain and CI` from `stage/1` into `main` (after smuddassirshah-cpu/zero-to-quant#1, the Blueprint, merges), then start stage 2 (spike S1 on the owner's iPhone) and, as its dependencies allow, stage 3.
+Stage 1 approved on 7 October 2026 (the owner: "Approved and continue"). The owner merges the Blueprint (smuddassirshah-cpu/zero-to-quant#1) and then the stage 1 pull request into `main`. Stage 2 (spike S1 on the owner's iPhone) is in progress on `stage/2`.

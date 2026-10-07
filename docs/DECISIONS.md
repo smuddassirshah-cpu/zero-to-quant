@@ -161,7 +161,7 @@ Pending. Record each check with device, app version and date, the import-map ver
 
 ## 5. Dependencies, licences and advisories
 
-A new dependency adds an entry: name and exact version, maintained, last release, licence, why, and the date of the owner's approval. Licence exceptions beyond the allow-lists of `PLAN.md` 7.6, and advisory waivers past a week, are entered here with their reason. `tools/ci/licences.exceptions.json` and `tools/ci/audit-waivers.json` name these entries; an exception that matches nothing or a waiver past its date fails CI. Stage 1 recorded L1, A1, A2, T1 and G1 for the owner's review at its gate.
+A new dependency adds an entry: name and exact version, maintained, last release, licence, why, and the date of the owner's approval. Licence exceptions beyond the allow-lists of `PLAN.md` 7.6, and advisory waivers past a week, are entered here with their reason. `tools/ci/licences.exceptions.json` and `tools/ci/audit-waivers.json` name these entries; an exception that matches nothing or a waiver past its date fails CI. Stage 1 recorded L1, A1, A2, T1 and G1 for the owner's review at its gate; on 7 October 2026 the owner approved L1, A1, A2 (pytest stays at 9.0.2) and T1, and B16's tree additions.
 
 ### L1 Licence exceptions for four of stylelint's dependencies (stage 1)
 
