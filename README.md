@@ -19,7 +19,7 @@ Prerequisites, at the versions CI uses:
 |---|---|---|
 | Node.js and npm | 22.22.0 and 10.9.4 (`.nvmrc`; at least 22.18, whose built-in type stripping runs the tools) | `nvm install` in the repository |
 | Go | 1.24 or later | Builds the pinned gitleaks; Go fetches the toolchain the module asks for |
-| Python | 3.12 | System or `pyenv`; only the CI packages need it |
+| Python | 3.12.15 (`tools/py/.python-version`) | System, `pyenv` or `uv python install`; only the CI packages need it. Another 3.12 patch works locally with `UV_PYTHON=/path/to/python3.12` |
 | uv | 0.8.17 | `python3 -m pip install --require-hashes --only-binary :all: -r tools/py/uv-bootstrap.txt` |
 
 From a clean clone:

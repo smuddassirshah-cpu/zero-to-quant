@@ -299,7 +299,7 @@ Fonts: Archivo, Besley and Source Code Pro (SIL Open Font Licence) through Googl
 | `@types/node` | 22.20.5 | MIT | Node types matching the runtime |
 | `yaml` | 2.9.1 | ISC | Content parsing (content-format 2.3) |
 | `wrangler`, `@anthropic-ai/sdk`, `@cloudflare/workers-types` | 4.147.0, 0.131.0, 5.20261006.1 | MIT or Apache-2.0 | Tutor proxy (`AI-TUTOR.md` 6.3) |
-| Python via `uv` 0.8.17 | 3.12 for CI drill runs and `zqverify`, with Pyodide's 3.14 beside it; `tools/py/uv.lock` pins NumPy 2.4.6, pandas 3.0.2, SciPy 1.18.0, statsmodels 0.14.6, scikit-learn 1.8.0, matplotlib 3.10.8, SymPy 1.14.0, pytest and hypothesis (resolves on 3.12 [measured]) | PSF | Learner floor (programming decision 16, raised from 3.11 by the `docs/PLAN.md` review), Pyodide parity, verifier |
+| Python via `uv` 0.8.17 | 3.12 (3.12.15 since stage 1, `tools/py/.python-version`; uv itself installed by wheel hash from `tools/py/uv-bootstrap.txt`) for CI drill runs and `zqverify`, with Pyodide's 3.14 beside it; `tools/py/uv.lock` pins NumPy 2.4.6, pandas 3.0.2, SciPy 1.18.0, statsmodels 0.14.6, scikit-learn 1.8.0, matplotlib 3.10.8, SymPy 1.14.0, pytest and hypothesis (resolves on 3.12 [measured]); stage 1 pinned pytest 9.0.2 (Pyodide's), hypothesis 6.168.5 and, in the `dev` group, pip-audit 2.10.1 | PSF | Learner floor (programming decision 16, raised from 3.11 by the `docs/PLAN.md` review), Pyodide parity, verifier |
 | Playwright container | `mcr.microsoft.com/playwright:v1.63.0-noble`, index digest `sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27` [measured, MCR tag list and manifest, 7 October 2026] | Apache-2.0 | Visual baselines render in one pinned image |
 
 ### 3.3 Browser support
