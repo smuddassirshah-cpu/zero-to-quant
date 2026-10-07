@@ -1958,7 +1958,7 @@ typescript-eslint `strict-type-checked` and `stylistic-type-checked`, `eslint-pl
 | `zq/no-colour-literals` | `src/**/*.{ts,tsx,js,mjs}` (widened at stage 1, `docs/DECISIONS.md` B2) | Hex, `rgb()` and `hsl()` literals; colours come from tokens (stylelint enforces the same in CSS) |
 | `zq/no-empty-catch` | everywhere | A `catch` clause, or a `.catch(fn)` or `.then(a, fn)` handler (inline or a local function), that neither rethrows, logs (`log`, `logger`, `console`) nor passes its error on (returned, thrown, passed to a call that is not a conversion, or stored outside the handler) (engineering floor) |
 | `zq/copy-in-copy-files` | `screens/`, `app/`, `engine/player`, `tutor/ui` | Learner-facing string literals in JSX; they live in `copy.ts`, which the copy lint checks for British spelling, banned filler and voice |
-| `zq/layering` | `src`, `packages`, `tools`, `proxy`, `tests` and the root config files (`.ts`, `.tsx`, `.js`, `.mjs`) | The layering of section 4.5, with `$1` captures for a screen's own folder |
+| `zq/layering` | `.ts`, `.tsx`, `.js` and `.mjs` files under `src`, `packages`, `tools`, `proxy` and `tests`, and the root `*.config.{ts,js}` files | The layering of section 4.5, with `$1` captures for a screen's own folder |
 
 No file may switch a rule off: `linterOptions.noInlineConfig` is set for the whole repository, so an `eslint-disable` comment does nothing and an exception can only live in `eslint.config.js`, where review sees it (stage 1, `docs/DECISIONS.md` B12).
 
