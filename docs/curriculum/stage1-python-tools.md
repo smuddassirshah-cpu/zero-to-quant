@@ -10,6 +10,15 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 
 **Tags.** Decisions sit in tables with the rejected alternative and the reason. [measured] marks a behaviour run while writing this draft (section 0.2). [searched] marks a resource detail confirmed by a web search on 6 October 2026. [check] marks a resource detail (a chapter or lecture number, a problem-set name, a URL path) that I recall but could not confirm from this environment, whose network proxy blocked cs50.harvard.edu, missing.csail.mit.edu, sqlbolt.com and wesmckinney.com; confirm it before the content cites it (`checked: false` in `Level.companion` until then). [our choice] marks a design decision without outside evidence. [unverified] marks a platform fact not yet measured.
 
+> **Revised by the `docs/PLAN.md` review, 7 October 2026.** These lines win over the rest of this file where they differ; content agents are briefed from them, and CI enforces them on the lesson files.
+>
+> | Where | Was | Now |
+> |---|---|---|
+> | Decision 11, sections 0.2 and 6, project Trade Ledger | CPython 3.11 is the learner floor and the CI interpreter | **CPython 3.12** with `tools/py/uv.lock` (NumPy 2.4.6, pandas 3.0.2, SciPy 1.18.0, matplotlib 3.10.8, the Pyodide pins); SciPy 1.18.0 does not install on 3.11 and the soft deadline needs `sys.monitoring` (`PLAN.md` conflict 19). The 3.11.15 runs recorded in this file stand as records of what was checked on 6 October; the reruns happen at `PLAN.md` stage 26 |
+> | Section 0.2 disagreement, lesson 66, `drl.py.lab-float-sum` | Built-in `sum([0.1] * 10**6)` differs between the floor and Pyodide | It no longer differs: CPython 3.12.3 gives `100000.0`, as 3.14 does [measured, 7 October 2026]; the plain loop, Kahan's loop and `math.fsum` comparison is unchanged |
+> | Section 6 message table | "float division by zero" (3.11) against "division by zero" (3.14) | Unchanged on the new floor: 3.12.3 still prints "float division by zero" [measured]; the section 6 rule stands: predict-output items that end in an exception ask for its type, never its message |
+> | Skills, runtime tags | Sample lessons list 3 or 4 skills in `introduces`; any CI runtime tag | At most 2 skills introduced a lesson, the rest as step tags (`ASSESSMENT.md` 4.1); runtime tags are void, `needs` decides where code runs (`CONTENT-FORMAT.md` decision 18) |
+
 **At a glance.**
 
 | Item | Hours | Courses | Levels | Lessons | Lesson hours | Homework sets | Topic exam | Estimates against hours |

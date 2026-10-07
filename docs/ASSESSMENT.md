@@ -7,6 +7,22 @@
 > | 15.2 item 6 | C++ code possibly sent to Compiler Explorer through the proxy | Dropped: C++ code never leaves the device |
 > | 0.3, 17 (runtime tags) | Waiting for the content format's next revision | Settled: `CONTENT-FORMAT.md` decision 18 as tidied removes the tags |
 > | Stage names A1 to A15 | This file's numbering | Kept; `docs/PLAN.md` section 11 maps them to its stages |
+> | 2.9 (`1.2.exit`), 11.4, 11.6, 15.2 item 5, 18 item 9 | GitHub and Codeforces API lookups on the web app | Withdrawn: paste-verify and manual entries on both targets (`docs/PLAN.md` conflict 5) |
+
+> **Revised by the `docs/PLAN.md` review, 7 October 2026** (its section 13 lists the findings). Section numbers are unchanged.
+>
+> | Where | Was | Now |
+> |---|---|---|
+> | Decision 6, 3.5, 2.9, 11.8 | The learner's confirmed long-form mark counts in a gate; real papers self-marked with no evidence | Blind self-marking first; a gate counts $\min(\text{learner}, \text{Bertie})$ per rubric point, with a disputed list resolved by a fresh exit-item sitting; with the tutor off, gate marks stay provisional; real papers are sat typed in the app and marked by Bertie against the official solutions; a `human-mark` confirm on the 1.3 to 1.6 exits |
+> | 4.1, 4.3, 5.2, 6.5, 13.6 | 1 or 2 skills a lesson on 1,550 lessons | Skills at level grain (3 to 8 a level, about 1,500 on the path), `introduces` at most 2, step tags with no card, a card budget per topic; load and volumes rerun for 2,044 counted lessons |
+> | 10.3 to 10.5, 11.9, decision 17 | Warm Mosteller and Zhou problems in Stages 1 and 2; "recognised and re-solved" counted as cold | `original` problems only before 3.3, `imitates` tags with a CI check, "seen" leaves both counts; warm mode is Bertie after grading; one cold problem a week from 1.5, two from Stage 2 |
+> | 3.2, 3.7, 3.8, 7.2, 7.3 | A fixed slot map; unlimited diagnostic sittings; model answers on every result screen; pools of six | Slot order shuffled per form, no method named in a stem, cross-method pools of at least 12, two unlabelled slots per form; one diagnostic sitting per paper; model answers withheld for held-out items after a fail; retention sittings at 3 and 12 months and cumulative Stage 1 and Stage 2 papers |
+> | 2.3 to 2.5, 6.3, 8.5 | Nothing inside an item holds the learner back; homework from one level; recognition quizzes; the same prompt as a long-form redo | A planner soft gate per level; homework 25 to 30% from earlier levels and topics, with "which tool?" items from 1.5; a production item on every Prove, Derive or Show lesson; long-form siblings |
+> | 5.4, 5.6, decision 26 | Only difficulty 3 maintained; one "Mastered" word for two things | A `core-interview` tier (0.5, 1.5 and the interview patterns, 1.6 on the researcher track) held at 0.90 with stretch cards at 0.80; the lesson star is "Passed" |
+> | 3.1 `topic` kind | Long-form at most 30% of marks | Long-form at least 30%, target 40%; at least 30% of marks on applied items with a named trap or edge case; rubrics carry a `consequence` line |
+> | 2.7 | Five items credit any skip; retake next day | Two items per skipped level (5 to 20, one at difficulty 4 per level); 3-day cool-down after a second fail |
+> | 8.7, 8.8 | Earned hours reach only the estimate share; no reliance figures | Earned hours scale by each item's estimate share; reliance figures, the marking calibration score and the 20% reliance check in the weekly review |
+> | 18 item 1, 19 A2 | `db` size probe in A2, writing until `quota_exceeded` | Bounded probe in `docs/PLAN.md` stage 2 |
 
 Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 
@@ -33,10 +49,10 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 | 3 | Exam clock | **Wall-clock timer that survives a reload**, one pause budget of 15 minutes per paper, recorded on the attempt | A timer that pauses whenever the app closes; no pause at all | A crash or a closed tab must not void a three-hour paper; a doorbell is real life. Recording the pause keeps the record honest without enforcement theatre |
 | 4 | Fresh resits | **The freshest form plus unseen generator variants from the exam reserve**; CI requires at least 50% of a paper's marks from generator slots, or at least 5 forms | Three fixed forms (the prototype's "new paper next time") | With three fixed forms, a fourth sitting repeats a paper. Generator slots never repeat a parameter point the learner has seen |
 | 5 | After a failed paper | **Cool-down (3 days for topic exams, 7 for stage papers) and a remediation set** on the failed skills; the resit unlocks when both are done | Immediate resits; a fixed number of attempts | The curriculum's rule 3: "Marks under the bar mean more problems, not a new book." A short cool-down stops paper shopping; no attempt limit, because the learner is the only stakeholder |
-| 6 | Long-form marks in a gate | **The learner's confirmed mark counts**; Bertie's suggested mark is stored and shown beside it; a pass that depends on points the learner raised above Bertie's is labelled "self-marked pass" | Bertie's mark as the record; the lower of the two | Matches `CONTENT-FORMAT.md` decision 15 and `AI-TUTOR.md` 2.7. The label keeps the record honest without making an AI the examiner |
+| 6 | Long-form marks in a gate | **The learner marks each rubric point blind; Bertie's marks then appear; a gate counts $\min(\text{learner}, \text{Bertie})$ per point.** A point the learner holds above Bertie goes on a disputed list, resolved by a fresh exit-item sitting on that slot. With the tutor off or failed, a gate's long-form marks stay provisional until Bertie or a person marks them. Outside gates (homework, practice) the learner's final mark after seeing Bertie's counts, with the gap kept as a calibration score. A person marks one finals-style sitting per Stage 1 maths topic (`human-mark`, 2.10) (revised by the `docs/PLAN.md` review) | The learner's confirmed mark (draft 2: "the pass stands"); Bertie's mark alone as the record | Novices over-mark their own proofs [recalled: self-assessment literature], and 40 of the 1.5 paper's 100 marks are long-form, so a self-marked gate could pass with 30 of the 60 auto-marked marks. The lower mark cannot be raised by either party alone; the disputed list and the fresh sitting give an honest learner a way out; the external mark calibrates both |
 | 7 | Mastery model | **FSRS-6 (via `ts-fsrs` 5.4.2) per skill and difficulty band**, three bands (core 1 to 2, standard 3, stretch 4 to 5), run with fuzz and short-term learning steps off; due dates computed by this file's tiers, not by the library | Elo; BKT; IRT; Leitner boxes (design research 8.4's provisional pick) | The only family built to fit one learner's own history (its optimiser runs on a single person's reviews); it models forgetting, which a four-year path needs most; bands give it the difficulty axis Elo would otherwise supply. Fuzz would break the fold's determinism, and the library's default 1- and 10-minute learning steps assume flashcards seen several times a day [measured, section 0.2]. Full comparison in section 5.1 |
 | 8 | What the mastery map shows | **The chance of solving a fresh standard (difficulty 3) item on the skill today**, as a percentage | An abstract score; points | A number with a testable meaning: the calibration report (section 5.9) checks it against outcomes |
-| 9 | Review load | **Retention tiers (0.90 active, 0.85 recent, 0.80 dormant, floor 0.70) with a weekly load balancer; redo and organic attempts count as reviews; implicit repetition through `encompasses` edges; review may borrow up to 1 hour a week from Main** | One desired retention for everything; an unbounded queue | Simulated with FSRS-6 defaults, flat 0.90 needs about 2.7 h a week of maintenance over the last half-year of the path at 15 h a week, against a 2 h review block that also holds the Redo queue; the tiers bring it to 1.7 h [measured, section 6.5] |
+| 9 | Review load | **Retention tiers (0.90 active, 0.85 recent, 0.80 dormant, floor 0.70), plus a `core-interview` tier held at 0.90 for the rest of the path with its stretch cards at 0.80; a weekly load balancer that lowers non-core dormant retention first; redo and organic attempts count as reviews; implicit repetition through `encompasses` edges; review may borrow up to 1 hour a week from Main** | One desired retention for everything; an unbounded queue; letting interview-level skill decay | Rerun by the review at level grain (about 1,500 standard cards plus 124 stretch cards): flat 0.90 needs about 3.2 h a week over the last half-year at 15 h a week; the tiers with the core-interview holds need 2.3 h, plus about 0.5 h of older redo, against a 2 h block with 1 h of borrowing [simulated, section 6.5] |
 | 10 | Mastery points against XP | **MP is a ledger of first-try success in unscaffolded work; XP is activity; neither drives the model** | Design research 6.2: "MP drives the per-skill mastery map and review scheduling" | Points only go up; a memory model must be able to go down. Driving scheduling from a ledger would hide forgetting |
 | 11 | Redo queue | **Wrong first tries in quizzes, level reviews, homework, exams, weekly problems and textbook sets, plus revealed lesson screens; due 7 and 30 days after the miss; a miss restarts the cycle; generated items come back as a fresh variant at the same level** | Every wrong lesson screen; the identical problem every time | Trap screens are built to be failed and would flood the queue. A variant tests the method, not the remembered answer; authored items without a generator repeat as they are |
 | 12 | Placement | **Two short adaptive ladders (maths, at most 10 items; code, at most 4) that set priors only**; completion comes only from exams and exit parts | Placement that marks topics complete | A 10-minute diagnostic cannot carry the weight of a 90-minute paper. Priors with short stabilities get verified by the first reviews |
@@ -44,7 +60,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 | 14 | Progress against the path | **Earned curriculum hours** (estimates of completed units) against **spent hours** (measured in-app time plus logged outside work); the ratio is the learner's pace factor and drives the forecast. **The path's length is the learner's track total**, read from curriculum data: 3,100 h today, 3,300 to 3,905 h if the owner accepts `canon-gap.md`'s proposals | Percentage of lessons done; a fixed 3,100 | The curriculum's unit is the hour, and about 83% of the path's hours happen outside lesson screens (textbooks, homework, projects) [counted: lesson time is 17% of the 1,470 hours the seven curriculum files have planned so far]. Tracks are data (`CONTENT-FORMAT.md` 0.3 change 9), and their totals already differ by up to 250 h under the proposals |
 | 15 | Mental arithmetic | **"Daily 10"**: a cold 120-second Zetamac-format run (the day's official score), a 3-minute targeted deck, a second run, a 2-minute chain or estimation deck, a summary. The exit counts the **median of the last 7 days' cold scores on a physical keyboard** (at least 5 runs) | Best single score | One lucky run is not a skill. Interview tests are taken on a computer [inferred] |
 | 16 | 80-in-8 | **Multiple choice, minus 1 per wrong answer, no skipping, no going back** as the default configuration; free entry as a practice variant; target net 55, then 70 | The Stage 0 catalogue's free entry with Skip | The most commonly reported Optiver format and pass line [sourced from a search summary of quantvault.org and quantt.co.uk; unverified with the firm]. It stays configuration |
-| 17 | Weekly probability problems | **Three a week from the start of 1.5: one consolidation, one new pattern, one stretch**; warm mode (hints after a first attempt, Bertie after grading) until 3.3, cold mode after | Random draws | Interleaves patterns, keeps the new one inside what the learner has been taught, and mirrors the book order the curriculum sets |
+| 17 | Weekly probability problems | **Three a week from the start of 1.5: one consolidation, one new pattern, one stretch, all `original` problems before 3.3**; warm mode is hints after a first attempt and Bertie after grading; one of the three is cold from the start of 1.5 and two from Stage 2; all cold in Stage 3 (revised by the `docs/PLAN.md` review) | Random draws; warm until 3.3; recreated book problems before 3.3 | Interleaves patterns, keeps the new one inside what the learner has been taught, fades support towards the cold interview, and keeps the books the 3.3 exit counts unseen |
 | 18 | Work outside the app | **Honest self-report with up to 3 evidence links, labelled "self-reported" everywhere**; it earns XP (capped) and hours, can create redo items and satisfy external exit parts; it never earns MP and never updates the mastery model | Ignoring outside work; treating it as verified | The textbook problem sets are most of the curriculum's hours. Keeping them out of MP and the model keeps both calibrated against marked outcomes |
 | 19 | Leagues | **No league for one learner.** A **ghost race** against the learner's own recent weeks, ranked on MP. A **friends board** only in a shared Artifact with at least 2 opted-in people who can write to it: weekly MP and hours, no tiers, no demotion. It is a P2 feature, because on a personal plan a friend can save anything only as an Editor invited by email, which also lets them publish the app (section 12.5) | Design research 6.2's 30-person Greek-letter leagues (also in the approved prototype); simulated rivals | A single-user app has nobody to place in a league of 30; simulated rivals would be fiction presented as competition. Beating your own usual week is true and still motivating. The board's cost is an access grant, not code, so it waits until a friend actually joins |
 | 20 | Source of truth for progress | **An append-only event log**; every other progress structure is derived by a deterministic fold and can be rebuilt | Mutable progress documents | Merging two devices or two targets becomes a set union; a model change (grade mapping, retention tiers, FSRS version) becomes a rebuild instead of a migration |
@@ -53,7 +69,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 | 23 | Learning record export | **One self-contained HTML record, plus the CSV tables in one zip** built with `fflate` (already shipped for log packs), through the `downloads` capability | A PDF built in the browser; one download prompt per CSV | `html`, `csv` and `zip` are on the allow-list's second group [sourced: `downloads.d.ts`]; each save asks the viewer once, so one zip beats four prompts; HTML prints from any browser outside the Artifact; no PDF library ships |
 | 24 | Study day | **A day runs from 04:00 to 04:00 local**, configurable from 00:00 to 06:00; weeks start Monday 04:00 | Local midnight (design research 6.2, inferred) | A session from 23:30 to 00:30 belongs to one study day; Anki uses the same default [recalled, unverified] |
 | 25 | The "no exit test, no next stage" rule | **The planner never schedules the next stage's main work before the exit is passed**; lessons stay open (no locks, design research 7.4), and starting one asks once and records an override | Hard locks | The rule is the owner's; the planner is where it bites. Locks would contradict the approved course map and the "Jump here" flow |
-| 26 | When a lesson counts as Mastered | **75% of the quiz's marks on the first completion**: 3 of 4, 4 of 5, 3 of 3 | 80% (design research 8.2) | The curriculum files set four quiz items per lesson (549 items for 137 lessons in 1.3, 625 for 156 in 1.5 [counted]). At 80%, a four-item quiz needs a perfect score, so Mastered would mean perfect. 75% keeps the intent, one slip allowed, at the real quiz length |
+| 26 | When a lesson counts as Passed | **75% of the quiz's marks on the first completion**: 3 of 4, 4 of 5, 3 of 3. The star reads "Passed"; "Mastered" is kept for the delayed FSRS state of section 5.6, and the lesson node shows its first delayed review's result (renamed by the `docs/PLAN.md` review) | 80% (design research 8.2); calling the star "Mastered" | At 80% a four-item quiz needs a perfect score. An immediate quiz measures performance, not learning [recalled: Soderstrom and Bjork 2015], so one word for both would tell the learner they have learned what they have only just seen |
 | 27 | Sections inside a paper | **A section may carry its own clock, calculator rule and pass bar.** A timed section closes for good when its time ends or the learner moves on; untimed sections share the paper's clock with a suggested split; a paper passes only when its total and every section bar pass | One clock, one calculator rule and one pass mark per paper | The 0.3 topic exam runs a 40-minute non-calculator section before a calculator section (`stage0-precalc-computing.md` 4.1); the 1.3 paper needs 70% on its 18.01 half as well as overall (`stage1-calculus.md` decision 12) |
 | 28 | An exit item inside a paper | **An exit may set a bar on one slot of a paper (`slotMin`), met by any sitting of that paper; a missed slot bar can be retaken alone as an exit-item sitting**: a fresh item from the same pool, the slot's share of the paper's time, Bertie away, a 3-day cool-down | Re-sitting the whole paper for one answer; an untimed take-home | The 1.6, 2.1 and 2.2 exits ask for an explanation at 7 of 10 that the curriculum files put inside the topic exam (`stage1-statistics-ts.md` S8 and T8). Re-sitting a 90-minute paper because one 10-mark answer scored 6 is out of proportion; an untimed retake would lower the bar |
 | 29 | Problem sets named by an exit | **Instrument kind `sets`**: named homework sets submitted, and every item below full marks redone correctly once | Logging the real problem sets only | The 1.3 exit names the 18.02 problem sets (`stage1-calculus.md` open item 2). Our sets on the same skills can be checked in the app; the real sets still confirm |
@@ -139,33 +155,34 @@ Searches on 6 October 2026 confirmed: GCSE Higher Paper 1 is 80 marks in 1 hour 
 
 | Layer | When | Format | Help | Attempts | Pass rule | Feeds |
 |---|---|---|---|---|---|---|
-| Lesson screen | inside a lesson | one task on a canvas | hint ladder after the first Check; Bertie per `AI-TUTOR.md` 2.2 | unlimited; Show solution after 2 | none | XP; Redo only if revealed |
-| Lesson quiz | end of every lesson | 3 to 5 items, difficulty 2 to 3 | none until graded | one per item | 75% marks the lesson Mastered; never blocks | XP, MP, FSRS (creates cards), Redo |
+| Lesson screen | inside a lesson | one task on a canvas | hint ladder after this screen's first Check or 90 s of active input (`trap` screens after a first Check only); Bertie per `AI-TUTOR.md` 2.2 | unlimited; Show solution after 2 | none | XP; Redo only if revealed |
+| Lesson quiz | end of every lesson | 3 to 5 items, difficulty 2 to 3; one short production item on a Prove, Derive or Show lesson | none until graded | one per item | 75% marks the lesson Passed; never blocks | XP, MP, FSRS (creates cards), Redo |
 | Practice | on demand | generated sets of 5 to 10 | none (help-enabled practice is a later option) | one per item | none | XP (capped), FSRS |
-| Level review | after the level's lessons | 6 to 10 items, difficulty 2 to 4, interleaved | none until graded | one per item | none | XP, MP, FSRS, Redo |
-| Homework | issued at the end of each level, due in 7 days | 6 to 12 problems: at least 1 long-form, 1 code drill, 1 at difficulty 5 | none until submitted | answers editable until submission | score recorded; no gate | XP, MP, FSRS, Redo |
-| Level check | before "Jump here" | 5 items from the levels skipped | none | one | 4 of 5 credits the skipped lessons | MP, FSRS, credited hours |
+| Level review | after the level's lessons | 6 to 10 items, difficulty 2 to 4, interleaved, up to 30% from earlier levels and courses | none until graded | one per item | the planner's soft gate (section 8.5): at least 70% here or 60% on the homework before the next level enters Main | XP, MP, FSRS, Redo |
+| Homework | issued at the end of each level, due in 7 days | 6 to 12 problems: at least 1 long-form, 1 code drill, 1 at difficulty 5; 25 to 30% from earlier levels and topics, unlabelled | none until submitted | answers editable until submission | score recorded; the soft gate as above | XP, MP, FSRS, Redo |
+| Level check | before "Jump here" | 2 items per skipped level, 5 to 20 in all, at least 1 at difficulty 4 per level | none | one; 3-day cool-down after a second fail | 80% of marks credits the skipped lessons | MP, FSRS, credited hours |
 | Topic exam | after the topic's levels, or first to test out | timed paper, 45 to 90 minutes (finals-style 180) | none; Bertie away app-wide | one sitting; resits after cool-down | 70% (curriculum bars where named) | XP, MP, FSRS, Redo, topic completion |
 | Exit parts | after the topic exam | real papers, capstone drills, projects, counters | per instrument | per instrument | per curriculum line | topic and stage completion |
 | Stage exit | when every part is met | the curriculum's checklist, rebuilt in section 2.9 | as parts | as parts | all parts | stage completion |
 
-Two habits run beside the ladder: the Daily 10 (section 9) and the three weekly probability problems from 1.5 (section 10). The Redo queue (section 6) runs underneath everything.
+Two habits run beside the ladder: the Daily 10 (section 9) and the three weekly probability problems from 1.5 (section 10). The Redo queue (section 6) runs underneath everything. Retention sittings (section 3.8) return to every passed topic paper at 3 and 12 months.
 
 ### 2.2 Lesson screens
 
-Formative only. Retries are unlimited and free (design research 5.4). A screen's first try earns 15 XP, a later success 5, a revealed screen 0. Lesson screens never update the mastery model: they are scaffolded, and the learner met the idea seconds ago. A revealed screen (Show solution) adds its item to the Redo queue, except `trap` screens, whose purpose is the failure; a revealed trap is still recorded.
+Formative only. Retries are unlimited and free (design research 5.4). Hints open per screen: after this screen's first Check or 90 seconds of active input, and on `trap` screens only after a first Check (`docs/PLAN.md` 6.5). Every `trap` and `generalise` screen ends with a one-sentence self-explanation prompt, unmarked and self-rated (`CONTENT-FORMAT.md` 9.3 rule 38). A screen's first try earns 15 XP, a later success 5, a revealed screen 0. Lesson screens never update the mastery model: they are scaffolded, and the learner met the idea seconds ago. A revealed screen (Show solution) adds its item to the Redo queue, except `trap` screens, whose purpose is the failure; a revealed trap is still recorded.
 
 ### 2.3 Lesson quiz
 
 - 3 to 5 items in the scaffold-free style (design research 5.9), one attempt each, "Why?" after each item, Bertie available after each item is graded (`AI-TUTOR.md` 2.2).
-- **Mastered**: at least 75% of quiz marks on the first completion, so one slip is allowed on the usual four-item quiz and none on a three-item quiz (decision 26). The test is exact: earned $\geq 0.75 \times$ maximum, in fractions. The course-map node gets its star. A later retake from Practice can earn the star; it earns no XP.
+- **Each quiz checks its objective's verb.** A lesson whose objective begins Prove, Derive or Show has one short production item: a 2 to 4 line proof or a two-sentence explanation in `free-response`, marked against a 3-point rubric (blind self-mark, then Bertie's, section 3.5), which counts towards Passed. Order-the-steps (O) items on proof lessons become "write the missing step" items. CI rule 9.3.15 checks it (`CONTENT-FORMAT.md`).
+- **Passed**: at least 75% of quiz marks on the first completion, so one slip is allowed on the usual four-item quiz and none on a three-item quiz (decision 26). The test is exact: earned $\geq 0.75 \times$ maximum, in fractions. The course-map node gets its "Passed" star, and later shows the result of the skill's first delayed review. A later retake from Practice can earn the star; it earns no XP.
 - The quiz is the usual moment a skill's FSRS card is created (section 5.3).
 - Wrong items join the Redo queue.
 
 ### 2.4 Level review
 
-- Unlocks when every lesson in the level is done. 6 to 10 items (`Level.review.count`), difficulty 2 to 4, interleaved across the level's skills. Up to 30% of the items come from due standard cards of earlier levels in the same course, so the review is also spaced practice.
-- No pass mark. The first completion earns full XP; later runs count as practice.
+- Unlocks when every lesson in the level is done. 6 to 10 items (`Level.review.count`), difficulty 2 to 4, interleaved across the level's skills. Up to 30% of the items come from due standard cards of earlier levels and earlier courses, so the review is also spaced practice.
+- No pass mark, but it feeds the planner's soft gate (section 8.5). The first completion earns full XP; later runs count as practice.
 - Misses join the Redo queue. The redo also serves as the skill's card review when it falls due (section 6.4, rule 4), so the skill is not tested twice.
 
 ### 2.5 Homework
@@ -183,7 +200,9 @@ Formative only. Retries are unlimited and free (design research 5.4). A screen's
 3. The set's score is shown with worked solutions, accepted-answer rules and diagnoses per item. Bertie opens for review modes.
 4. Wrong items (below full marks on a single-mark item; below 60% of marks on a multi-part or long-form item) join the Redo queue.
 
-**No gate.** Homework never blocks progress. Its score feeds the topic readiness view and the exam remediation logic.
+**Interleaving.** 25 to 30% of every set's items come from earlier levels and earlier topics: due or fading standard cards at difficulty 3 to 4, unlabelled, in mixed order with the level's own items. From 1.5 onwards, at least two items per set are "which tool?" problems whose method differs from the level's. Interleaved practice of mathematics trains tool choice, which blocked practice does poorly [recalled: Rohrer and Taylor 2007 and later classroom trials].
+
+**Soft gate, no lock.** Homework never locks anything. With the level review it feeds the planner's soft gate (section 8.5), the topic readiness view and the exam remediation logic.
 
 **Code items on either target.** A code item runs wherever the target can provide its runtime (decision 30): the engine compares the drill's `needs` with what this build ships and whether Python loaded on this device. Python with NumPy and pandas runs in the Artifact [sourced: `spikes/README.md`]; whether SciPy, statsmodels and scikit-learn ship in the Artifact is a per-course budget decision in `ARCHITECTURE.md` [unverified until that paper fixes it]; C++ never runs there. When the target cannot run an item, the item shows "Run this one in the web app" with the drill id and seed, and accepts a pasted result code (section 14.3). The set can be submitted with that item pending; the item is marked when the code arrives and counts as unanswered if none arrives within the 7 days after submission.
 
@@ -193,7 +212,7 @@ Generated on demand: "Practise this level", "Weakest skills" (lowest standard-ba
 
 ### 2.7 Level check
 
-Offered before "Jump here" on the course map (design research 7.4). Five items at difficulty 3, stratified across the skills the skipped lessons introduce: the skipped skills are split into five groups in course order and one item is drawn from each group's practice pool. Four of five correct credits every skipped lesson in that course as "Skipped by check" (credited hours, section 7.4). Fewer than four: the jump still happens (design research: skipping the check still allows the jump), and nothing is credited. No cool-down; a failed check can be retaken a day later with fresh items.
+Offered before "Jump here" on the course map (design research 7.4). Two items per skipped level, at least 5 and at most 20 in all, with at least one item at difficulty 4 for each skipped level and the rest at difficulty 3, drawn from the levels' practice pools. 80% of the marks credits every skipped lesson in that course as "Skipped by check" (credited hours, section 7.4). Below that, the jump still happens (design research: skipping the check still allows the jump), and nothing is credited. A failed check can be retaken a day later with fresh items; after a second failed check, the next waits 3 days (revised by the `docs/PLAN.md` review: five items could credit up to 43 lessons).
 
 ### 2.8 Topic exam
 
@@ -217,14 +236,15 @@ Each curriculum checkbox or exit line is one exit part. "Gate" is the instrument
 | Part | Curriculum line | Gate | Confirm | Runs on |
 |---|---|---|---|---|
 | `1.1.exit` | From a CSV of daily prices, compute returns, annualised volatility and maximum drawdown, and plot them | Capstone drill on a seeded, messy CSV (hidden tests at $10^{-6}$, three figure assertions), then `setup-checklist` project mode: the same script run locally, output pasted and compared (`stage1-python-tools.md` decision 16) | None | Both (pandas runs in the Artifact) |
-| `1.2.exit` | The 1.1 project is in a Git repository with at least one test | Paste-verify of `git log --oneline -n 5`, `git status`, `pytest -q` (at least 1 passed); repository URL; GitHub API check on the web app only (`widgets-programming.md` 6.11). Met once, then policed weekly by the Build block's commit check (section 8.2; `stage1-python-tools.md` decision 17) | None | Both (API: web) |
-| `1.3.exit` | The MIT 18.01 final at 70%, plus the 18.02 problem sets on partial derivatives and Lagrange multipliers | (1) `exm.calc.finals`, whose own pass needs 70% overall and 70% on Section A, the 18.01 half (decision 27); (2) `sets`: homework sets M1 to M4 submitted, and every item below full marks redone correctly once (decision 29) | (1) A real 18.01 final, timed at its printed length, closed book, self-marked against MIT's solutions, at 70%; (2) the 18.02SC Unit 2 problem sets, Parts A to C, logged as done, wrong problems in the Redo queue. `estHours` 15 | Both |
-| `1.4.exit` | The 18.06 final at 70%, and least squares and PCA written in NumPy from the matrix operations | `exm.linalg` at 70%; capstone drills `drl.linalg.exit-lstsq` (Cholesky normal equations and Householder QR, the factorisations written by the learner, banned calls checked on the syntax tree) and `drl.linalg.exit-pca` (PCA from the SVD) | One real 18.06 final at 70%, in the order `stage1-linear-algebra.md` 4.3 gives once the public finals are checked. `estHours` 13 | Both [the 2-second timing test on Pyodide is unverified on a phone] |
-| `1.5.exit` | Two Stat 110 past finals at 70% | `exm.prob.finals` at 70% | Two real Stat 110 finals, each timed at its printed length under its own rules, self-marked against Harvard's solutions, each at 70%; the second offered no sooner than 3 days after the first. `estHours` 20 | Both |
-| `1.6.exit` | Fit a linear regression in NumPy, match the statsmodels output, and explain every number in its summary table | `exm.stats` at 70% with `slotMin` 0.7 on Q19, "explain the table" (decision 28); capstone `drl.stats.exit-ols` (every field of the summary against stored statsmodels values) | None: no public paper tests "match statsmodels". `estHours` 9.5 | Paper: both; drill: wherever statsmodels ships |
+| `1.2.exit` | The 1.1 project is in a Git repository with at least one test | Paste-verify of `git log --oneline -n 5`, `git status`, `pytest -q` (at least 1 passed); repository URL (kept as text; the GitHub API check is withdrawn by `docs/PLAN.md` conflict 5, so the paste-verify is the check on both targets). Met once, then policed weekly by the Build block's commit check (section 8.2; `stage1-python-tools.md` decision 17) | None | Both |
+| `1.3.exit` | The MIT 18.01 final at 70%, plus the 18.02 problem sets on partial derivatives and Lagrange multipliers | (1) `exm.calc.finals`, whose own pass needs 70% overall and 70% on Section A, the 18.01 half (decision 27); (2) `sets`: homework sets M1 to M4 submitted, and every item below full marks redone correctly once (decision 29) | (1) A real 18.01 final, sat typed in the app at its printed length under its printed aids, marked by the gate rule against MIT's solutions, at 70%; (2) the 18.02SC Unit 2 problem sets, Parts A to C, logged as done, wrong problems in the Redo queue; (3) `human-mark`: one sitting of `exm.calc.finals` marked by a person. `estHours` 15 | Both |
+| `1.4.exit` | The 18.06 final at 70%, and least squares and PCA written in NumPy from the matrix operations | `exm.linalg` at 70%; capstone drills `drl.linalg.exit-lstsq` (Cholesky normal equations and Householder QR, the factorisations written by the learner, banned calls checked on the syntax tree) and `drl.linalg.exit-pca` (PCA from the SVD) | One real 18.06 final at 70%, sat typed and marked by the gate rule, in the order `stage1-linear-algebra.md` 4.3 gives once the public finals are checked; `human-mark` on one sitting of `exm.linalg`. `estHours` 13 | Both [the 2-second timing test on Pyodide is unverified on a phone] |
+| `1.5.exit` | Two Stat 110 past finals at 70% | `exm.prob.finals` at 70% | Two real Stat 110 finals, each sat typed in the app at its printed length under its own printed rules (`aids`), marked by the gate rule against Harvard's solutions, each at 70%; the second offered no sooner than 3 days after the first; `human-mark` on one sitting of `exm.prob.finals`. `estHours` 20 | Both |
+| `1.6.exit` | Fit a linear regression in NumPy, match the statsmodels output, and explain every number in its summary table | `exm.stats` at 70% with `slotMin` 0.7 on Q19, "explain the table" (decision 28); capstone `drl.stats.exit-ols` (every field of the summary against stored statsmodels values) | `human-mark` on one sitting of `exm.stats`; no public paper tests "match statsmodels". `estHours` 9.5 | Paper: both; drill: wherever statsmodels ships |
 | `1.7.exit` | Explain a limit order book, the bid-ask spread, and market against limit orders; derive put-call parity; price a European option on a binomial tree in Python | Topic exam at 70% with `slotMin` 0.7 on its two explanation slots and its derivation slot; a binomial-pricer drill | None | Both (standard library and NumPy) |
 | `1.8.exit` | 150 problems solved, and a fresh LeetCode medium finished in 30 minutes more often than not | Problem ledger at 150 (in-app verified plus self-reported, shown separately, section 11.5); timed held-out mediums: at least 5 solved within 30 minutes in the last 9 timed attempts | None | Both (Python); C++ solutions on the web app |
 | `1.9.exit` | Rewrite the 1.7 binomial pricer in C++ with tests and time it against the Python version | Paste-verify of the doctest summary and both timings (`widgets-programming.md` 6.11) | None | Both (paste); timings always local |
+| `s1.cumulative` (review addition) | None in `curriculum.md`: added so no Stage 1 maths topic goes unexamined after its own exam | The Stage 1 cumulative paper (section 3.8): 180 minutes, unlabelled, across calculus, linear algebra, probability and statistics, at 70% | None | Both |
 
 Track rule: on the Trader and Researcher tracks, `1.9.exit` moves to the Stage 2 checklist (curriculum 1.9: "traders and researchers can let C++ slip into Stage 2").
 
@@ -235,6 +255,7 @@ Track rule: on the Trader and Researcher tracks, `1.9.exit` moves to the Stage 2
 | `2.1.exit` | One tabular prediction problem end to end with time-ordered cross-validation; explain leakage, regularisation and the bias-variance trade-off without notes | `ml-workbench` capstone passing its pipeline and leakage audits; the 2.1 topic exam at 70% with `slotMin` 0.7 on its three closed-book explanation slots | Optional: the learner's own repository | Web app unless scikit-learn ships in the Artifact |
 | `2.2.exit` | Test a pair of price series for cointegration, and explain why models are fitted to returns and not prices | `exm.ts` at 70% with `slotMin` 0.7 on Q15, "why returns, not prices"; capstone `drl.ts.exit-coint` on generated pairs whose cointegration is known | None. `estHours` 5.0 | Paper: both; drill: wherever statsmodels ships |
 | `2.3.exit` | Three finished projects, each with tests and a written results note | Three project records marked finished (section 11.4) | The repositories themselves | Both |
+| `s2.cumulative` (review addition) | None in `curriculum.md`: a delayed cumulative check before interview preparation | The Stage 2 cumulative paper (section 3.8): 180 minutes, unlabelled, across 2.1, 2.2 and the Stage 1 maths, at 70% | None | Both |
 
 **Stage 3.**
 
@@ -283,6 +304,8 @@ const Instrument = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('log-count'), log: z.enum(['mock-human', 'mock-stranger']), target: z.number().int().positive() }).strict(),
   z.object({ kind: z.literal('project'), projectKind: z.string().regex(/^[a-z][a-z0-9-]*$/), count: z.number().int().positive(),
              notePredicates: z.array(z.string().max(40)).default([]) }).strict(),   // extra results-note predicates that must pass
+  z.object({ kind: z.literal('human-mark'), exam: Id('exm'), count: z.number().int().min(1).default(1) }).strict(),
+                                                   // a sitting of this paper marked by a person (review addition)
 ]);
 const TrackName = z.string().regex(/^[a-z][a-z-]{1,23}$/);    // the last segment of a trk.* id
 const ExitPart = z.object({ id: z.string().regex(/^[0-9a-z][0-9a-z.-]{0,31}$/), text: Prose,
@@ -306,6 +329,7 @@ An exit part is met when every `gate` and every `confirm` instrument is satisfie
 | `problem-sets` | every listed reference is logged done |
 | `counter`, `timed-window`, `median`, `book-log`, `log-count` | the rules of sections 11.5, 9.3, 11.9 and 11.7 |
 | `project` | `count` projects of that kind are finished (section 11.4), with every `notePredicates` entry passing on their results notes |
+| `human-mark` | `count` sittings of the paper carry a logged mark by a person (marker type self-declared: study partner, tutor or paid marker; the marker's per-question marks entered by the learner). The result screen shows the app's gate mark beside it; a gap above 10 percentage points adds the paper to the content-gap report as "in-app marking may be miscalibrated" |
 
 ### 2.11 Content gaps the rebuilt exits expose
 
@@ -320,7 +344,7 @@ One conflict stays open in Stage 2: the curriculum's track table gives the Trade
 
 | Unit | Done | Mastered or complete |
 |---|---|---|
-| Lesson | every screen completed and the quiz attempted | quiz at 75% or better on the first completion (the star) |
+| Lesson | every screen completed and the quiz attempted | Passed: quiz at 75% or better on the first completion (the star); Mastered applies to skills only (section 5.6) |
 | Level | every lesson done, level review done, homework submitted | n/a |
 | Course | every level done | n/a |
 | Topic | n/a | topic exam passed (or tested out) and every topic exit part met |
@@ -338,12 +362,12 @@ One engine runs every timed, help-free paper: topic exams, finals-style papers, 
 
 | Kind | Used for | Minutes | Marks | Items | Calculator | Code | Long-form | Pass |
 |---|---|---|---|---|---|---|---|---|
-| `topic` | topic exams other than 1.3 to 1.5 | 45 to 90 (about 1.5 times the summed item estimates) | 40 to 80 | 12 to 25, mixed formats, difficulty mix 20/50/20/10 at levels 2/3/4/5 (design research 8.4) | per paper or per section | allowed | at most 30% of marks | 70% |
+| `topic` | topic exams other than 1.3 to 1.5 | 45 to 90 (about 1.5 times the summed item estimates) | 40 to 80 | 12 to 25, mixed formats, difficulty mix 20/50/20/10 at levels 2/3/4/5 (design research 8.4); at least 30% of marks on applied items that contain a named trap or edge case | per paper or per section | allowed | at least 30% of marks, target 40% (the lesson-creator final test: about 30% short answer, 40% long-form, 30% applied) | 70% |
 | `finals` | 1.3 calculus, 1.4 linear algebra, 1.5 probability | 180 | 100 | 10 or 11 multi-part questions in the style of MIT 18.01, MIT 18.06 and Stat 110 finals [recalled, unverified: 3 hours each]; 1.3 in two sections on one clock | none: answers in exact form | none (code lives in the capstones) | at least 40% of marks (proofs, derivations, explanations) | 70%; 1.3 also 70% on Section A |
 | `gcse` | `s0.gcse` | 90 | 80 | 26 questions in rising difficulty, mostly multi-part, built to Ofqual's Higher weightings (`stage0-precalc-computing.md` 4.4) | none | none | "show that" questions as rubric items | 80% |
 | `challenge` | `s0.precalc` | 60 | 30 | 30 single-mark items across the precalculus units (section 2.11) | basic | none | none | 85% |
 | `cold-set` | `3.3.zhou` gate | 90 | 20 problems, 1 mark each | recreated green-book-style problems from the held-out bank | none | none | none (answers only, as in an interview) | 80% |
-| `level-check` | "Jump here" | about 8 | 5 | 5 | per course | no | no | 4 of 5 |
+| `level-check` | "Jump here" | about 3 per skipped level | 5 to 20 | 2 per skipped level | per course | no | no | 80% |
 | `placement` | onboarding | about 12 | adaptive | at most 14 | basic | no | no | none |
 | `exit-item` | a missed `slotMin` bar (decision 28) | the slot's share of the paper's minutes, rounded up to 5 | the slot's marks | 1, fresh from the slot's pool | as the paper | as the paper | as the slot | the `slotMin` bar |
 
@@ -363,7 +387,7 @@ The speed formats (Zetamac, 80-in-8) and the 1.8 timed medium have their own tim
 
 ### 3.2 Forms and fresh variants
 
-A paper is a list of forms (`Exam.forms`, at least 3, `CONTENT-FORMAT.md` 3.8). Each form is a list of slots: fixed items, generator slots, pool slots.
+A paper is a list of forms (`Exam.forms`, at least 3, `CONTENT-FORMAT.md` 3.8). Each form is a list of slots: fixed items, generator slots, pool slots. A slot names what a question must cover, never the method: the serving order of slots is shuffled per sitting (`hash32(attemptId, 'order')`, sections kept), item stems never name the method (a lint warns on each topic's method terms, the reviewer decides), long-form pools are built across methods (a variance question solvable by indicators, by Eve's law or by a generating function), and two slots per form are unlabelled: drawn from the whole topic's pool at difficulty 3 to 4, at the marks of the slot they replace. The same rule holds for the 1.3 and 1.4 papers and for difficulty-5 homework items. Choosing the tool for an unlabelled story is what real finals and interviews test (revised by the `docs/PLAN.md` review).
 
 **Choosing what to serve:**
 
@@ -387,8 +411,10 @@ servePaper(exam, learner, attemptId):
 1. Forms of one paper have equal total marks, and each form's difficulty mix is within 5 percentage points of the declared mix at every level.
 2. Every skill of the topic appears in at least one form; every form covers at least 80% of the topic's levels.
 3. Either at least 50% of each form's marks come from generator slots, or the paper has at least 5 forms.
-4. Reserve capacity: for every generator slot, the reserve at that level holds at least $6 \times$ (forms $\times$ count) admissible points, so six sittings stay fresh.
+4. Reserve capacity: for every generator slot, the reserve at that level holds at least $6 \times$ (forms $\times$ count) admissible points, so six sittings stay fresh; every long-form pool slot holds at least 12 held-out items.
 5. Held-out items and reserve points never appear in practice, homework, level reviews, redo variants or Bertie's practice picks (`CONTENT-FORMAT.md` 5.4).
+6. A held-out long-form item whose model answer has been shown to the learner is retired from that learner's pool (section 3.7).
+7. No two forms of a paper serve the same slot order, and every form has two unlabelled slots.
 
 **Practice papers.** "Practice paper" builds a paper of the same shape from the practice pool (never the reserve), timed or untimed. It records attempts in the `practice` context, affects no completion and no cool-down, and earns practice XP.
 
@@ -396,7 +422,9 @@ servePaper(exam, learner, attemptId):
 
 The rules screen (prototype `exam.js`) shows: minutes, number of questions, total marks, pass mark in marks ("56 of 80") and any section bar ("and 49 of Section A's 70"), sections with their minutes and calculator rules, aids, "Bertie is out of the room for this paper" (Bertie in his `away` state, `BERTIE.md` section 5), the seen-items warning if any, and, for papers on an exit, an attestation:
 
-> I will sit this paper under exam conditions: no notes, no other tabs or devices, calculator rule as stated.
+> I will sit this paper under exam conditions: no other tabs or devices; aids and calculator as stated above.
+
+The aids line comes from the paper's own `aids` data (formula cards, a page of notes, none), so a paper that allows notes says so and one that allows none says "no notes".
 
 Start is enabled when:
 
@@ -433,8 +461,8 @@ On a target that cannot run one of the paper's code items (decision 30: a C++ it
 - Totals are kept as exact fractions. The pass test is total $\geq$ pass $\times$ maximum and, for each section bar, section total $\geq$ bar $\times$ section maximum, computed exactly; only the display rounds (to one decimal place). Exit `slotMin` bars are recorded per slot on the result and never change the paper's own pass.
 - Follow-through parts are marked after the part they depend on, against the learner's own answer to it.
 - The result is **provisional** until every long-form item is confirmed. Auto-marked parts show at once.
-- **Self-marked pass.** If the paper passes on the learner's marks but would fail on Bertie's suggested marks, the result reads "Pass (self-marked). With Bertie's suggested marks: 66%." and lists the points where the two differ. The pass stands (decision 6).
-- If the tutor is off or fails, long-form items are self-marked alone and the result says so.
+- **Gate marking** (decision 6). The learner marks every rubric point blind; Bertie's marks then appear beside them; the paper counts $\min(\text{learner}, \text{Bertie})$ per point. Points where the learner's mark is higher are listed as **disputed**: the learner may accept the lower mark, or sit a fresh exit-item sitting on that slot (3-day cool-down, as decision 28), whose own gate mark replaces the slot's. The result never reads "self-marked pass" any more, because a learner's mark alone cannot raise a gate.
+- If the tutor is off or fails, long-form marks in a gate stay **provisional** ("Pass pending marking") until Bertie or a person marks them; outside gates the learner's self-mark counts and the result says so.
 
 ### 3.6 Pass marks
 
@@ -442,20 +470,20 @@ On a target that cannot run one of the paper's code items (decision 30: a C++ it
 |---|---|---|
 | Topic exam | 70% | design research 8.2 |
 | Finals-style 1.3, 1.4, 1.5 | 70%; 1.3 also 70% on Section A | curriculum exits; `stage1-calculus.md` decision 12 |
-| Lesson quiz (the Mastered star, not a gate) | 75% | decision 26 |
+| Lesson quiz (the Passed star, not a gate) | 75% | decision 26 |
 | Exit-item sitting | the exit's `slotMin`, 70% in every current exit | curriculum exits as rebuilt in section 2.9 |
 | GCSE-style Paper 1 | 80% | curriculum Stage 0 exit |
 | Precalculus challenge | 85% | curriculum Stage 0 exit |
 | Cold set (3.3) | 80% | curriculum 3.3 exit |
 | Long-form exit items (1.6, 1.7, 2.1, 2.2) | 7 of 10 each | [our choice]: the owner's lesson-creator skill marks long answers out of 10; 7 allows one missing point and one imprecision. The prototype's 6 of 10 (`review.js`) stays the bar for counting an ordinary long-form item as correct |
-| Level check | 4 of 5 | [our choice] |
+| Level check | 80% of marks | [our choice] |
 
 ### 3.7 The result screen
 
 As the prototype's `#exam-result`: score and pass mark (and section bars), a pass stamp (design research 4.7: count-up, stamp on spring-snap; the only particles are Bertie's own `celebrate` one-shot at 160 px, `BERTIE.md` section 5) or a plain "Not yet" heading with Bertie back to `idle`, time used, pauses, then:
 
 - **By skill:** marks earned against marks available per skill, sorted weakest first, each with its current mastery.
-- **By question:** the learner's answer, the accepted-answer rule, the worked solution and the diagnosis line; time spent on the question.
+- **By question:** the learner's answer, the accepted-answer rule, the worked solution and the diagnosis line; time spent on the question. After a **fail**, held-out long-form pool items show per-skill results and the rubric points missed, not the model answer, so the pool stays unseen for the resit; after a pass the model answers show and those items retire from the learner's pool. Every long-form rubric's `consequence` line ("would fail in production because", `CONTENT-FORMAT.md` 3.4) shows under the points missed.
 - **Next:** on a pass, the topic's remaining exit parts, including any `slotMin` bar this sitting missed ("Q19 scored 6 of 10; the exit asks for 7. Retake it alone from Friday."); on a fail, the remediation set and the date the resit opens.
 - **Bertie** opens in review modes; the recap (`AI-TUTOR.md` 2.9) runs on request.
 
@@ -465,13 +493,14 @@ Items that meet the Redo rule of section 6.1 join the Redo queue. Every item upd
 
 | Paper | After a fail | After abandoning | After a pass |
 |---|---|---|---|
-| Topic exam (`topic`) | 3 days and the remediation set | 24 hours; the items served are burned (counted as seen) | Practice sittings at any time; a further "retention sitting" from the reserve is offered 30 days later and never changes completion |
+| Topic exam (`topic`) | 3 days and the remediation set | 24 hours; the items served are burned (counted as seen) | Practice sittings at any time; **retention sittings** scheduled about 3 and 12 months after the pass: a 60 to 90 minute form at difficulty 3 to 4 from the reserve. Below 60% the topic goes back into Main as remediation and its completion reopens in the planner until a later retention sitting reaches 60% |
 | Finals-style, GCSE-style, precalculus challenge, cold set | 7 days and the remediation set | 24 hours; items burned | As above |
+| Cumulative papers (review addition) | 7 days and the remediation set | 24 hours | A **Stage 1 cumulative paper** (180 minutes, unlabelled, calculus, linear algebra, probability and statistics) is part of the Stage 1 exit; a **Stage 2 cumulative paper** (180 minutes, ML, time series and the Stage 1 maths) must pass before 3.3 starts |
 | Level check | 1 day | 1 day | n/a |
 | Exit-item sitting | 3 days and a remediation set of 3 items on the slot's skills | 24 hours; the item is burned | The exit item is met; no further sittings |
-| Diagnostic sitting (a topic exam or stage paper sat before starting that topic's or stage's lessons) | none | none | A pass counts in full |
+| Diagnostic sitting (the first sitting of a topic exam or stage paper, before that topic's or stage's lessons) | none, once: one diagnostic sitting per topic paper and per stage paper | none | A pass counts in full |
 
-There is no limit on the number of sittings; every sitting is in the record.
+There is no limit on the number of sittings, but only the first sitting of each paper is a diagnostic: every later sitting, before or after the lessons, carries the normal cool-down and remediation. Every sitting is in the record.
 
 **Remediation set**, built when a fail is marked:
 
@@ -515,6 +544,7 @@ in-progress ──Leave, confirmed──► abandoned ──24 h──► ready
 in-progress ──Submit, or now ≥ endsAt──► submitted
 submitted ──auto-marking──► marking (long-form items pending)
 marking ──every long-form item confirmed──► marked
+marking ──gate long-form marks lack Bertie or a person (tutor off)──► provisional ──marked by Bertie or a person──► marked
 marked ──pass──► passed
 marked ──fail──► cool-down ──(days elapsed) and (remediation done)──► ready
 ```
@@ -533,7 +563,7 @@ A skill is a method the learner can be asked to apply to a fresh problem and can
 2. It has at least one generator, or at least 6 authored items across the three bands.
 3. Its name is an action: "Condition by counting outcomes", not "Conditional probability".
 
-**Granularity:** 3 to 8 skills per level; a lesson introduces 1 or 2. With about 1,550 lessons in about 285 levels (section 0.2), the path holds about 1,000 to 2,000 skills; this file plans with 1,500 [inferred]. At about 36,000 unscaffolded attempts over the path (section 13.6), that is about 24 pieces of evidence per skill.
+**Granularity: a skill is an examinable method at level grain.** 3 to 8 skills per level; `Lesson.introduces` holds at most 2 (`CONTENT-FORMAT.md` 3.2). Finer distinctions a lesson teaches ("orderings of a multiset" inside "count equally likely outcomes") are **step tags** on screens and items: they drive diagnosis, hints, the content-gap report and the redo variant choice, and they create no FSRS card. The path's 377 counted levels (`docs/CURRICULUM.md` 0.1) at about 4 skills each give about 1,500 skills [counted levels; skills per level our choice]; at about 50,000 unscaffolded attempts over the path (section 13.6) that is about 33 pieces of evidence per skill. The review found every sample lesson in the item files introducing 3 or 4 skills, which at 2,044 lessons would mean about 7,600 skills, about 1,140 hours of maintenance over the path and 5 or 6 pieces of evidence per skill [simulated, section 6.5]; those lists are re-cut to at most 2 skills plus step tags before any lesson file is written.
 
 **Interview patterns** (`skl.interview.*`: symmetry, linearity of expectation, indicator variables, first-step analysis, conditioning on the first event, order statistics, geometric probability, optional stopping, expected value of a game, Kelly sizing) are skills with `pattern: true`. The weekly problems (section 10) select by them.
 
@@ -565,6 +595,7 @@ export const Skill = z.object({
 4. A redundant `requires` edge (implied by a longer path) is a warning, not an error.
 5. Every skill is tagged on at least one quiz item and appears in at least one exam pool or form.
 6. Every skill has a generator or at least 6 items spread over at least two bands.
+7. **Card budget:** a level introduces at most 8 skills, and a topic at most $5 \times$ its levels (a warning above $4 \times$); a lesson introduces at most 2. A step tag never names a skill id.
 
 The compiler emits one `skills-<stage>.json` per stage: nodes, both edge lists, and each skill's generators and item counts per band.
 
@@ -610,7 +641,7 @@ One FSRS card per skill per band, created on first evidence:
 | `std` | 3 | **yes** | the mastery number; the review schedule; readiness |
 | `stretch` | 4 and 5 | no | the stretch star; readiness for hard slots; stretch practice |
 
-Only standard cards are scheduled. Core and stretch cards are updated whenever evidence arrives and decay like any card, but they never put an item in the review queue: core is implied by standard, and stretch is growth, not maintenance.
+Only standard cards are scheduled, with one exception. Core and stretch cards are updated whenever evidence arrives and decay like any card; core is implied by standard and never queued. **Stretch cards of `core-interview` topics are scheduled** at 0.80 retention and served at difficulty 4, because interview and finals readiness sits at difficulty 4 to 5 (section 5.4). Other stretch cards stay growth, not maintenance.
 
 Card state is `ts-fsrs`'s `Card` (stability, difficulty, last review, reps, lapses, state) plus `successes` and an implicit-credit accumulator. Cards are derived state (section 13.3); the event log holds the evidence.
 
@@ -650,6 +681,7 @@ so the due date is `lastReview + t*(r)`. Due dates are computed when read, never
 | `active` | the current main item and alongside items; any topic the learner pins (for example probability during interview preparation) | 0.90 |
 | `recent` | topics completed within the last 365 days, and every topic of the current stage | 0.85 |
 | `dormant` | everything else | 0.80, lowered by the balancer to no less than 0.70 |
+| `core-interview` | topics marked `coreInterview: true` in curriculum data: 0.5, 1.5 and the interview patterns (`skl.interview.*`) on every track, 1.6 on the researcher track | 0.90 for standard cards for the rest of the path; stretch cards 0.80 at difficulty 4; never lowered by the balancer |
 
 **Load balancer.** Each Monday, and after a tier change:
 
@@ -660,7 +692,7 @@ demand(r) = minutes of Redo items due in the next 28 days, except those counted 
 r = 0.80
 while demand(r) > budget and r > 0.70:  r = r - 0.025
 while demand(r) < 0.7 × budget and r < 0.80:  r = r + 0.025
-dormant retention = r
+dormant retention = r            # non-core dormant cards only; core-interview cards keep their 0.90 and 0.80
 ```
 
 Item minutes are the generator's or item's estimate, 3 minutes when unknown [our choice]. The chosen $r$ is shown under You, Stats ("Older topics are kept at 78% recall to fit your review time").
@@ -781,7 +813,7 @@ With $D_0$ the study day of the miss and $D_1$ the study day the first redo was 
 | A generator instance | A fresh variant: same generator and level, a new seed, never a parameter point the learner has seen, never the exam reserve |
 | An authored item | The same item at its current `rev` (`CONTENT-FORMAT.md` 4.4 covers revisions and retirement) |
 | A code drill | The same drill from its starter code, not the learner's last attempt |
-| A long-form item | The same prompt, a blank editor, marked against the rubric as before |
+| A long-form item | Its **sibling**: the same skill in a different story (`Item.sibling`, required on every long-form homework and paper item, `CONTENT-FORMAT.md` 3.2), with a blank editor, marked against its rubric. An item with no sibling (outside homework and papers) returns as itself and its review grade is capped at Hard, because the learner has read its model answer |
 | A textbook problem | The reference ("Blitzstein and Hwang, exercise 2.12"); the learner redoes it in the book and marks it right or wrong, labelled self-reported; no card update |
 
 ### 6.4 The daily review session
@@ -807,37 +839,44 @@ When nothing is due: "Nothing due today." with an optional "Practise your weakes
 
 ### 6.5 Load: measured and budgeted
 
-**Maintenance reviews** (scheduled standard-card reviews after a card's first 90 days; earlier reviews are assumed to come from organic in-topic work), simulated with FSRS-6 default weights, 1,500 standard cards created evenly over the path, 3 minutes per review [measured, draft 2, section 0.2]. Each cell gives total hours; mean hours a week; mean over the last 26 weeks; the highest 4-week mean:
+**Maintenance reviews** (scheduled reviews after a card's first 90 days; earlier reviews are assumed to come from organic in-topic work), simulated with FSRS-6 default weights through `ts-fsrs` 5.4.2 with fuzz and short-term steps off, the first review Good, each later outcome drawn from the model's own retrievability, 3 minutes a standard review and 5 minutes a stretch review, seed 777, path weeks $= 3{,}100 / H$. **Rerun by the `docs/PLAN.md` review on 7 October 2026** [simulated]: draft 2's run is reproduced within 4%, then repeated at level grain with cards created across each item's own span (4 per level over the 377 counted levels), and with the `core-interview` tier of section 5.4:
 
-| Desired retention by card age (0 to 90 days / 90 to 365 / over 365) | 15 h a week, 3,100 h (207 weeks) | 25 h a week, 3,100 h (124 weeks) | 15 h a week, 3,655 h (244 weeks: the Trader track with every `canon-gap.md` proposal) |
-|---|---|---|---|
-| Flat 0.90 | 365; 1.8; 2.7; 3.1 | 234; 1.9; 3.2; 3.8 | 405; 1.7; 2.8; 3.1 |
-| 0.90 / 0.85 / 0.80 | 211; 1.0; 1.7; 2.0 | 155; 1.3; 2.0; 2.2 | 246; 1.0; 1.6; 1.9 |
-| 0.90 / 0.80 / 0.70 | 157; 0.8; 1.1; 1.3 | 116; 0.9; 1.6; 1.9 | 163; 0.7; 0.9; 1.3 |
+| Setting (15 h a week unless stated) | Cards | Total hours | Mean h a week | Last 26 weeks | Highest 4-week mean |
+|---|---|---|---|---|---|
+| Draft 2 reproduced: 1,500 cards evenly, tiers 0.90 / 0.85 / 0.80 by card age | 1,500 | 219 | 1.06 | 1.65 | 1.94 |
+| Flat 0.90, 1,500 cards | 1,500 | 380 | 1.84 | 3.16 | 3.85 |
+| Level grain, tiers | 1,508 | 233 | 1.13 | 1.69 | 2.09 |
+| Level grain, tiers 0.90 / 0.80 / 0.70 | 1,508 | 164 | 0.79 | 0.99 | 1.25 |
+| **Level grain with `core-interview` (0.5, 1.5): standard 0.90 for life, stretch 0.80 (chosen)** | **1,632** | **299** | **1.45** | **2.32** | **2.71** |
+| As chosen, non-core dormant lowered to 0.75 by the balancer | 1,632 | 280 | 1.36 | 2.28 | 2.63 |
+| As chosen, plus 1.6 (researcher track) | 1,692 | 323 | 1.56 | 2.79 | 3.03 |
+| As chosen, 10 h a week (310 weeks) | 1,632 | 405 | 1.31 | 1.85 | 2.61 |
+| As chosen, 25 h a week (124 weeks) | 1,632 | 198 | 1.60 | 2.40 | 2.77 |
+| The sample lessons' grain: 3.75 skills a lesson, 2,044 lessons | 7,665 | 1,140 | 5.52 | 9.04 | 9.91 |
 
-Card age approximates the tiers of section 5.4. The longer track was run with the same 1,500 cards; its extra topics would add cards, so its row is a lower bound. Implicit repetition (section 5.5) will lower every figure by an amount that depends on how many `encompasses` edges authors write; it was not simulated. Draft 1's figures (1,400 cards, single-week peaks) were within 15% of these.
+Implicit repetition (section 5.5) will lower every figure by an amount that depends on how many `encompasses` edges authors write; it was not simulated. Topics added by `canon-gap.md` add cards in proportion to their levels.
 
-**Redo load** [inferred: counts extrapolated from the curriculum files (section 0.2); error shares assumed]:
+**Redo load** [inferred: counts from `docs/CURRICULUM.md` 0.1 for the 2,044 counted lessons; error shares assumed]:
 
 | Source | Attempts over the path | Share wrong (assumed) | Misses |
 |---|---|---|---|
-| Lesson quizzes (about 1,550 lessons, 4 items) | 6,200 | 15% | 930 |
-| Level reviews (about 285 levels, 8 items) | 2,280 | 20% | 456 |
-| Homework (about 285 sets, 8 items) | 2,280 | 30% | 684 |
-| Papers (about 21 sittings, 22 items) | 462 | 25% | 116 |
-| Weekly problems (about 140 weeks: 1.5 starts after about 1,090 mapped hours, near week 75, 3 a week) | 420 | 40% | 168 |
-| Revealed lesson screens (about 9,300 task screens) | 9,300 | 5% | 465 |
-| **In-app total** | | | **about 2,800** |
+| Lesson quizzes (2,044 lessons, 4 items) | 8,180 | 15% | 1,230 |
+| Level reviews (377 levels, 8 items) | 3,020 | 20% | 600 |
+| Homework (373 sets, 8 items) | 2,980 | 30% | 890 |
+| Papers (about 50 sittings with retention and cumulative papers, 22 items) | 1,100 | 25% | 280 |
+| Weekly problems (about 170 weeks, 3 a week) | 510 | 40% | 200 |
+| Revealed lesson screens (about 12,300 task screens) | 12,300 | 5% | 610 |
+| **In-app total** | | | **about 3,800** |
 
-With two redos per miss and a restart on about a quarter of first redos and a sixth of second redos, each miss costs $E$ redo attempts, where $E = 1 + \tfrac14 E + \tfrac34\left(1 + \tfrac16 E\right)$, so $E = 2.8$: about 7,900 attempts, or about 330 hours at 2.5 minutes, about 1.5 hours a week on average at 15 hours a week. Textbook problem sets add their own redos on top, in the book.
+With two redos per miss and a restart on about a quarter of first redos and a sixth of second redos, each miss costs $E$ redo attempts, where $E = 1 + \tfrac14 E + \tfrac34\left(1 + \tfrac16 E\right)$, so $E = 2.8$: about 10,700 attempts, or about 450 hours at 2.5 minutes, about 1.75 hours a week on average at 15 hours a week. Textbook problem sets add their own redos on top, in the book.
 
-**Finding.** Most redo is current-topic work: a 7-day redo almost always falls inside the topic being studied, and a 30-day redo does in the long topics (1.3, 1.5 and 1.8 each run about three to five months at 15 hours a week). Taking two thirds of redo as current-topic [assumed], the Review block holds about 0.5 h of redo plus tiered maintenance of 1.0 h a week on average and 1.7 h in the last half-year: 1.5 to 2.2 h against a 2-hour block. The curriculum's 9/3/2/1 split therefore fits on average and is tight in the last year; with flat 0.90 retention it would not fit (about 3.2 h late in the path). Three rules absorb the excess:
+**Finding.** Most redo is current-topic work: a 7-day redo almost always falls inside the topic being studied, and a 30-day redo does in the long topics. Taking two thirds of redo as current-topic [assumed], the Review block holds about 0.6 h of older redo plus maintenance of 1.45 h a week on average and 2.3 h in the last half-year: about 2.05 h on average and 2.9 h late, against a 2-hour block. The curriculum's 9/3/2/1 split therefore fits on average with a little borrowing and needs nearly the full hour of borrowing late in the path; on the researcher track with 1.6 held as core-interview it exceeds it by about 0.4 h. Three rules absorb the excess:
 
 1. **Redo of current-topic problems counts as Main.** Re-solving last week's probability problems while studying probability is main-subject work. Review holds older material.
 2. **Review may borrow from Main** when the week's review demand exceeds the block: up to 1 hour a week by default (Settings: off, up to 1 h, up to 2 h). Redo and review are solving, so the 60% rule is unaffected.
-3. **The load balancer** (section 5.4) lowers dormant retention to as little as 0.70 before any borrowing beyond the setting is proposed.
+3. **The load balancer** (section 5.4) lowers non-core dormant retention to as little as 0.70 before any borrowing beyond the setting is proposed; core-interview cards are never lowered.
 
-Anything still over the budget is shown as review debt with its minutes; nothing is dropped silently. The forecast (section 8.7) absorbs the cost through the pace factor. The weekly review shows the real load from week one, which replaces these assumptions. [Decision for the owner: keep 9/3/2/1 with borrowing (recommended: the measured load fits on average), or move to 8/3/3/1 from Stage 1.]
+Anything still over the budget is shown as review debt with its minutes; nothing is dropped silently. The forecast (section 8.7) absorbs the cost through the pace factor. The weekly review shows the real load from week one, which replaces these assumptions. [Decision for the owner, `docs/PLAN.md` 12 decision 9: keep 9/3/2/1 with borrowing (recommended), or move to 8/3/3/1, from Stage 2 on the researcher track.]
 
 ---
 
@@ -883,7 +922,7 @@ while lo ≤ hi and asked + 3 ≤ 10:
 The curriculum: "Sit each stage's exit test first. Pass it and you skip the stage. Fail it and you have a list of what to study." On entering a stage (at onboarding, or when the previous stage closes) the stage page leads with "Sit the exit test first", listing the gate instruments and their total time.
 
 - **Recommended** when the placement anchor lies beyond the stage's midpoint or the learner says they have studied this material before; otherwise shown as optional with its time ("about 3 hours").
-- A sitting before the stage's lessons is a **diagnostic sitting**: no cool-down, no XP for a fail (a diagnostic is a measurement, not study), full credit for a pass.
+- The first sitting of a stage paper before the stage's lessons is a **diagnostic sitting**: no cool-down, no XP for a fail (a diagnostic is a measurement, not study), full credit for a pass. There is one diagnostic sitting per stage paper; any later sitting carries the normal cool-down and remediation (section 3.8).
 - A failed diagnostic produces the study list: every skill below 60% of its marks, grouped by level, with "Start at 0.2, Level 3" as the action.
 - Confirm instruments (real papers) come after the gates, as everywhere.
 
@@ -892,7 +931,7 @@ The curriculum: "Sit each stage's exit test first. Pass it and you skip the stag
 Any topic exam can be sat before its lessons.
 
 - **Pass:** the topic exam part is met; every lesson in the topic shows "Tested out"; their hours are credited (7.4); the topic's remaining exit parts appear as the next actions.
-- **Fail:** a diagnostic sitting (no cool-down). Levels whose skills scored at least 80% of their marks are marked "Suggested skip": the learner can take each level's check to skip it, or study it.
+- **Fail:** the first such sitting is the topic's one diagnostic sitting (no cool-down); a second sitting before or after the lessons carries the normal cool-down and remediation. Levels whose skills scored at least 80% of their marks are marked "Suggested skip": the learner can take each level's check to skip it, or study it. Result screens after a fail withhold held-out long-form model answers (section 3.7), so the pool stays fresh for the resit.
 
 ### 7.4 Credited hours
 
@@ -959,6 +998,7 @@ Each agenda keeps at least 60% of its minutes on solving. Today shows the agenda
 ### 8.5 Order inside a stage and between stages
 
 - **Inside a stage.** Main moves to the next numbered item when the current item's topic exam is passed (or, for items without one, when its exit parts are met). Outstanding exit work of earlier items (real papers, problem-set logs, counters) gets one Main session a week until met.
+- **Inside an item: the soft gate per level** (revised by the `docs/PLAN.md` review; consistent with decision 25, so nothing locks). The next level's lessons enter Main only when the current level review scored at least 70%, or its homework at least 60%, or a remediation set built as in section 3.8 on the level's weak skills has been done. Until then the agenda leads with that remediation, and the course map says "Ready when level H2 is secure". Opening the next level anyway asks once and records an override, which the weekly review lists, as the stage rule does. This is the owner's lesson-creator rule "never move to the next module until the quick check is passed", applied at level grain.
 - **Between stages.** The planner never puts the next stage's work into Main or Build before the current stage's exit is met (curriculum rule 3), except the 1.9 track deferral. Lessons of later stages stay open (no locks); opening the first one asks once, "The curriculum's rule is no exit test, no next stage. Open anyway?", and records an override that the weekly review lists.
 
 ### 8.6 Measuring time
@@ -970,7 +1010,7 @@ Each agenda keeps at least 60% of its minutes on solving. Today shows the agenda
 ### 8.7 Earned hours, pace and forecast
 
 - **Estimates.** Every unit carries an estimate: lessons (their minutes), level reviews and homework (summed item estimates), companion work (content), papers (their minutes), exit parts (`estHours`). CI checks that each topic's estimates sum to within 10% of its curriculum hours (section 17).
-- **Earned** = estimates of completed units: lesson completed, level review done, homework submitted, companion work logged done, topic exam passed, exit part met.
+- **Earned** = estimates of completed units (lesson completed, level review done, homework submitted, companion work logged done, topic exam passed, exit part met), **scaled per item by its estimate share**: an item's earned hours are (estimates completed / the item's estimate total) $\times$ its curriculum hours, so a completed item reads 100% of its hours even though redo and spent-only work carry no estimates (revised by the `docs/PLAN.md` review).
 - **Credited** = estimates of tested-out and skipped units (section 7.4).
 - **Spent** = in-app active time, paper time and outside minutes.
 - **Mapped spent** = spent minus habit time. The curriculum says its two habits "are not on the map": the Daily 10 once 0.5's 20 hours are earned, and the weekly probability problems, count as spent hours and appear in the weekly review, but leave the pace factor alone. Without this, the Daily 10 alone would make every learner look about 7% slower than they are.
@@ -989,7 +1029,8 @@ Opens on the first visit of a new week (Monday 04:00 local), and from You at any
 - MP against the ghost (section 12.4);
 - redo done and still due; review debt if any;
 - papers sat and exit parts met; overrides of the stage rule;
-- next week's plan with **Accept** or **Adjust** (goal hours, pinned topics, a planned break).
+- next week's plan with **Accept** or **Adjust** (goal hours, pinned topics, a planned break);
+- **reliance figures** (`AI-TUTOR.md` 9.7): the share of screens resolved after a tutor reply, the hint-before-attempt rate, and per skill the gap between assisted screen success and unassisted quiz and redo success; the marking **calibration score** (mean gap between the learner's blind marks and Bertie's, section 3.5); and, while the reliance check is on (`docs/PLAN.md` 12 decision 11), the 30-day redo success on skills where Bertie was switched off against the rest.
 
 Bertie's weekly recap is a P1 addition using `AI-TUTOR.md` 2.9's recap mode with the week's record as input.
 
@@ -1094,13 +1135,13 @@ The curriculum: "three interview-style probability problems a week from item 1.5
 
 ### 10.1 Cadence
 
-- Starts on the Monday after the learner completes the first lesson of 1.5, and runs to the end of the path.
+- Starts on the Monday after the learner completes the first lesson of 1.5, and runs to the end of the path. If the owner adopts the earlier habit (`docs/PLAN.md` 12 decision 12), one `original` problem a week runs from 0.3 level C4, built on 0.3 course C, rising to three at 1.5.
 - Three problems are released at the start of each study week (Monday 04:00 local), aiming to be done by Sunday. About 15 minutes each: 0.75 hours of Main.
 - **Carry-over:** unfinished problems stay open into the next week. At most 6 are open at once: a new week releases only as many as fit. A problem open for more than 14 days moves to "Skipped", where it stays available, with no XP, streak or redo effect.
 
 ### 10.2 The bank
 
-Each problem carries: its pattern skills (`pattern: true`, section 4.1), the topic skills it needs, a difficulty from 1 to 5, a source tag (`mosteller`, `zhou`, `crack`, `joshi`, `jane-street-guide`, `original`), a held-out flag (held-out problems serve only cold sets), an exact answer, a worked solution with alternatives, diagnosed wrong answers and a linked widget configuration. Recreated problems are cited "after Mosteller, problem 1" and never copied (`widgets-finance-games.md` decision 9). Parametrised families (waiting times for patterns, gambler's ruin, dice and card expectations, geometric probability, order statistics, coupon collecting, optimal stopping) have exact solvers and simulation checks in CI.
+Each problem carries: its pattern skills (`pattern: true`, section 4.1), the topic skills it needs, a difficulty from 1 to 5, a source tag (`mosteller`, `zhou`, `crack`, `joshi`, `jane-street-guide`, `original`), for every recreated problem an `imitates` reference naming the book problem it follows (`zhou-4.12`, `mosteller-17`), a held-out flag (held-out problems serve only cold sets), an exact answer, a worked solution with alternatives, diagnosed wrong answers and a linked widget configuration. Recreated problems are cited "after Mosteller, problem 1" and never copied (`widgets-finance-games.md` decision 9). Parametrised families (waiting times for patterns, gambler's ruin, dice and card expectations, geometric probability, order statistics, coupon collecting, optimal stopping) have exact solvers and simulation checks in CI.
 
 ### 10.3 Selection
 
@@ -1108,7 +1149,9 @@ Each problem carries: its pattern skills (`pattern: true`, section 4.1), the top
 taught(p)     = every topic skill p needs has at least one card
 eligible(p)   = taught(p) and p never attempted and not held out
 level(pat)    = highest difficulty with at least 2 of the last 3 attempts on that pattern solved; 2 if none
-books(stage)  = stage 1: mosteller, original · stage 2: zhou, original · stage 3: crack, zhou, jane-street-guide (joshi on the Developer track)
+books(stage)  = stage 1: original · stage 2: original · stage 3: original, jane-street-guide, then crack (joshi on the Developer track)
+                # no problem that imitates Zhou chapters 4 or 5, or any Mosteller, Crack or Joshi problem, is eligible before 3.3;
+                # imitations of Zhou chapters 4 and 5 serve only the held-out cold set, never the weekly bank
 
 consolidation = a pattern attempted before with a success rate below 80% (else the least recently practised), at level(pat)
 new           = an eligible pattern never attempted, at difficulty 2
@@ -1123,14 +1166,17 @@ The week's three are recorded in a `weekly-assign` event on first open. Selectio
 
 | Stages | Mode | Rules |
 |---|---|---|
-| 1 and 2 | `weekly` (warm) | Hints after the first attempt; Bertie after the first Check, as on a lesson screen (`AI-TUTOR.md` 2.2); "See the picture" after solving or the third hint; the first try is what counts for MP and the card |
-| 3 | `cold` | A visible clock, no hints, one attempt, then the full solution (`puzzle-workbench` cold mode) |
+| 1 and 2 | `weekly` (warm) | Hints after the first attempt, and from Stage 1 only after the learner writes a one-line plan; Bertie after grading (decision 17); "See the picture" after solving or the third hint; the first try is what counts for MP and the card |
+| From 1.5: one of the three each week; from Stage 2: two | `cold` | A visible clock, no hints, no Bertie, one attempt, the plan spoken aloud through `voice-capture` where the device allows (a P1 primitive, built with the 1.7 wave, which runs before 1.5), then the full solution (`puzzle-workbench` cold mode) |
+| 3 | `cold` | All three cold |
+
+From Stage 2, sealed tutor calls are capped at 20 a day, shown to the learner ("Bertie: 14 of 20 today"), so support fades as the path nears the interview.
 
 After each problem the learner rates it easy, hard or failed. "Failed" or a wrong first try adds it to the Redo queue; "hard" grades the card Hard (section 5.3).
 
 ### 10.5 The road to the 3.3 exit
 
-The weekly habit builds towards `3.3.zhou`: the book order (Mosteller, then Zhou, then Crack, then Joshi) is the curriculum's 3.3 order, so by Stage 3 the learner has met most Zhou-style patterns warm. The exit then asks for the cold set in the app and the book-log of the real chapter (section 11.9).
+The weekly habit builds towards `3.3.zhou` through patterns, not book problems: before 3.3 every weekly problem is `original`, so the learner meets each Zhou-style pattern in new stories and meets the books themselves cold, in the curriculum's 3.3 order (Mosteller, then Zhou, then Crack, then Joshi), through the book-log. The exit then asks for the cold set in the app and the book-log of the real chapter (section 11.9).
 
 ---
 
@@ -1196,7 +1242,7 @@ const Project = z.object({                                            // the lea
 }).strict();
 ```
 
-**Finished** means all four of: a repository URL; tests passing, from a pasted `pytest -q` summary with at least one passed and none failed (paste-verify, `widgets-programming.md` 6.11); a README (attested); and a results note written in `results-note` and marked at 7 of 10 or better with its `sections-complete` and `metrics-consistent` predicates passing (`widgets-finance-games.md` 7.11), which includes the section on what failed (curriculum 2.3). Replications (3.1) also need the note's out-of-sample section, and an exit's `notePredicates` (the P1 checklist, if accepted) add their own sections. On the web app, the repository URL can be checked through GitHub's public API on request (`widgets-programming.md` 6.11); the Artifact uses the pastes only.
+**Finished** means all four of: a repository URL; tests passing, from a pasted `pytest -q` summary with at least one passed and none failed (paste-verify, `widgets-programming.md` 6.11); a README (attested); and a results note written in `results-note` and marked at 7 of 10 or better with its `sections-complete` and `metrics-consistent` predicates passing (`widgets-finance-games.md` 7.11), which includes the section on what failed (curriculum 2.3). Replications (3.1) also need the note's out-of-sample section, and an exit's `notePredicates` (the P1 checklist, if accepted) add their own sections. The repository URL is stored as text and never fetched; the pastes are the check on both targets (`docs/PLAN.md` conflict 5).
 
 ### 11.5 The algorithm problem ledger
 
@@ -1207,7 +1253,7 @@ const Project = z.object({                                            // the lea
 
 ### 11.6 Contests and competitions
 
-- **Codeforces:** a handle, then one `contest` entry per contest (date, contest, problems solved, rating after). On the web app, "Fetch my rating history" calls Codeforces' public API on request [unverified: whether the API allows cross-origin requests]; the Artifact uses manual entries. The curriculum's targets show as goals: one contest a week once 100 problems are solved, a rating of 1,400 in the first year of Stage 2. Neither is an exit.
+- **Codeforces:** a handle, then one `contest` entry per contest (date, contest, problems solved, rating after). Entries are manual on both targets: the web app's Codeforces API lookup is withdrawn (`docs/PLAN.md` conflict 5), which keeps the CSP's only outside host the tutor proxy. The curriculum's targets show as goals: one contest a week once 100 problems are solved, a rating of 1,400 in the first year of Stage 2. Neither is an exit.
 - **Kaggle, IMC Prosperity, Project Euler:** `competition` entries with a link and a result line.
 - The in-app `contest-arena` (`widgets-programming.md` 9.1) keeps its own record, labelled "simulated rivals" and "estimate, not a Codeforces rating".
 
@@ -1230,13 +1276,15 @@ const RealPaper = OutsideEntry.extend({
 ```
 
 - A series counts once, so two Stat 110 finals must be two different series.
-- The attestation reads: "I sat this paper timed, without notes, and marked it strictly against the official mark scheme or solutions."
-- The entry opens a form with the paper's expected time (GCSE 90 minutes; MIT and Stat 110 finals 180 [recalled, unverified]) and a timer the learner can run in the app while sitting the paper on paper.
+- **Aids per paper.** `RealPaper` gains `aids: z.string().max(200)`, filled from the paper's printed rules (for a Stat 110 final, for example, "four double-sided pages of your own notes; no calculator" [check per paper]). The attestation reads: "I sat this paper timed, under its printed rules (aids: …), and typed my working as I went."
+- **Sitting.** The paper is sat in the app's long-form editor under its own timer, typed (handwritten marking is P1 and needs image input, which the owner's iPhone view lacks [measured, `spikes/README.md`]). After the timer, the learner pastes the official solution for each question; Bertie marks the typed working against it, and the confirm counts $\min(\text{learner}, \text{Bertie})$ per question as in decision 6. With the tutor off, the confirm stays provisional.
+- **Reserved papers.** At the start of 1.5 (and of 1.3 and 1.4) the planner names the reserved real finals and lists the files the learner must not open, because Stat 110's practice finals sit beside the Strategic Practice sets used for homework.
+- The entry opens with the paper's expected time (GCSE 90 minutes; MIT and Stat 110 finals 180 [recalled, unverified]).
 - **Calibration of our papers:** the app stores each real score beside the learner's latest in-app score on the matching paper. A gap of more than 15 percentage points adds the paper to the content-gap report (`AI-TUTOR.md` 2.10) as "in-app paper may be miscalibrated".
 
 ### 11.9 The book-log
 
-`puzzle-workbench` book-log mode (`widgets-finance-games.md` 8.1). For `3.3.zhou` the learner enters the number of problems in the chapter from their own copy once ("this chapter has N problems in my edition"), then logs each problem by reference with its outcome: solved cold, solved with a hint, failed. The part is met when problems solved cold reach 80% of N. No problem text is stored.
+`puzzle-workbench` book-log mode (`widgets-finance-games.md` 8.1). For `3.3.zhou` the learner enters the number of problems in the chapter from their own copy once ("this chapter has N problems in my edition"), then logs each problem by reference with its outcome: solved cold, solved with a hint, failed, or **seen** (recognised from earlier). A seen problem leaves both the numerator and the denominator: the part is met when problems solved cold reach 80% of N minus the seen ones, and the record shows how many were seen. Recognising a problem met with hints earlier is recall, not cold solving (revised by the `docs/PLAN.md` review). No problem text is stored.
 
 ---
 
@@ -1486,22 +1534,22 @@ Implementations, at the paths `ARCHITECTURE.md` 4.2 fixes: `DbStore` (`platform/
 
 ### 13.6 Volumes
 
-Estimates for one learner over a 3,100-hour path [inferred from the counts in sections 0.2 and 6.5; sizes from section 0.2]. Draft 1 assumed 2,000 lessons; the curriculum files point to about 1,550:
+Estimates for one learner over the whole path [inferred from the counts in sections 0.2 and 6.5; sizes from section 0.2]. Recomputed by the `docs/PLAN.md` review for the 2,148 lessons of `docs/CURRICULUM.md` (2,044 counted plus 3.2's 104), which scales the lesson-driven rows of draft 2's 1,550-lesson model by about 1.39:
 
 | Events | Count | Mean size (JSON) | Total |
 |---|---|---|---|
-| Lesson screen attempts (about 9,300 task screens, 1.3 tries each; no snapshot) | 12,000 | 250 B | 3.0 MB |
-| Quiz, level review, homework, paper, check, weekly, redo and review-session attempts (with snapshot) | 26,000 | 700 B | 18 MB |
-| Practice attempts (no snapshot) | 10,000 | 250 B | 2.5 MB |
-| Code answers (drills in any context) | 3,000 | 3 KB | 9 MB |
+| Lesson screen attempts (about 12,900 task screens, 1.3 tries each; no snapshot) | 16,600 | 250 B | 4.2 MB |
+| Quiz, level review, homework, paper, check, weekly, redo and review-session attempts (with snapshot) | 36,000 | 700 B | 25 MB |
+| Practice attempts (no snapshot) | 13,900 | 250 B | 3.5 MB |
+| Code answers (drills in any context) | 4,200 | 3 KB | 12.6 MB |
 | Speed runs with per-item records (four a study day) | 5,000 | 1.5 KB | 7.5 MB |
 | Time events | 20,000 | 120 B | 2.4 MB |
 | Everything else | 10,000 | 300 B | 3 MB |
-| **Total** | **about 86,000** | | **about 45 MB** |
+| **Total** | **about 106,000** | | **about 58 MB** |
 
-Unscaffolded attempts (rows two and three) total about 36,000, the figure section 4.1 uses. At a planned 3 times compression and base64's 4/3, the log is about 20 MB in about 105 packs after four years (about 5 MB after the first year). The snapshot is about 1 MB of JSON (4,500 cards, 1,550 lessons, about 40,000 seen parameter points, the Redo queue, the fact model, weekly series), about 300 KB packed, in 2 parts. **Documents per learner:** about 130 to 150, against the database's 25,000 [sourced: `db.d.ts`], so even ten friends use about 6% of the count. Every document stays under the 256 KiB limit by construction. A longer track (up to 3,905 hours) scales these by at most 1.26.
+Unscaffolded attempts (rows two and three) total about 50,000, the figure section 4.1 uses. At a planned 3 times compression and base64's 4/3, the log is about 26 MB in about 140 packs over the path (about 5 MB after the first year). The snapshot is about 1.2 MB of JSON (about 1,630 scheduled cards plus core and stretch cards, 2,148 lessons, about 55,000 seen parameter points, the Redo queue, the fact model, weekly series), about 400 KB packed, in 2 or 3 parts. **Documents per learner:** about 170 to 190, against the database's 25,000 [sourced: `db.d.ts`]. Every document stays under the 256 KiB limit by construction. A longer track (up to 3,905 hours) scales these by at most 1.26. The synthetic learner (`tests/synthetic/`) generates this volume, and the fold's 3-second rebuild budget on the iPhone is set against it (`docs/PLAN.md` 3.1).
 
-**Unknown:** the total size cap of one artifact's database [unverified: `db.d.ts` names the cap but not its value]. If it turns out smaller than (participants $\times$ 25 MB), the fallback is a checkpoint: freeze a full snapshot as a base, export packs older than 18 months to a file the learner keeps, and delete them from the store. It is specified here and built only if the probe in section 18 shows it is needed.
+**Unknown:** the total size cap of one artifact's database [unverified: `db.d.ts` names the cap but not its value]. If it turns out smaller than (participants $\times$ 30 MB, the 26 MB log plus snapshot and drafts), the fallback is a checkpoint: freeze a full snapshot as a base, export packs older than 18 months to a file the learner keeps, and delete them from the store. It is specified here and built only if the bounded probe of `docs/PLAN.md` stage 2 shows it is needed.
 
 ### 13.7 Several devices
 
@@ -1613,7 +1661,7 @@ The brief's rule is "local-first, nothing leaves the device except to Claude whe
 2. **Tutor calls**, when the learner uses Bertie: through `sample` on the viewer's own Claude account in the Artifact, or through the tutor proxy to the Claude API on the web app, carrying the context `AI-TUTOR.md` section 4 specifies (the screen, the learner's answer or working), never the progress log.
 3. **The friends board entry**, when opted in.
 4. **Sync files, backups and result codes**, when the learner saves or copies them.
-5. **On the web app, on request only:** GitHub's public API (a repository URL the learner entered) and Codeforces' public API (a handle).
+5. **Withdrawn:** the web app's GitHub and Codeforces API lookups (`docs/PLAN.md` conflict 5). Repository URLs and handles are stored as text and never fetched.
 6. **C++ drills send nothing.** `docs/PLAN.md` drops the Compiler Explorer route: C++ runs through in-browser Clang on the web app if the 1.9 spike passes, otherwise on the learner's machine with pasted output, so learner code never leaves the device.
 
 Nothing else. Neither target sends telemetry (`ARCHITECTURE.md` decision 27); the tutor proxy logs no learner content (`AI-TUTOR.md` 6.3.9).
@@ -1641,7 +1689,7 @@ Every component's definition of done in section 19 includes its tests from this 
 
 | Area | Tests |
 |---|---|
-| Fold and log | Property tests over random event streams (fast-check): determinism, order independence, idempotence under duplicates, incremental equals rebuild; a synthetic four-year learner (about 86,000 events, section 13.6, and a 3,905-hour variant) for the rebuild time budget and the document count and size budget |
+| Fold and log | Property tests over random event streams (fast-check): determinism, order independence, idempotence under duplicates, incremental equals rebuild; a synthetic whole-path learner (about 106,000 events, section 13.6, and a 3,905-hour variant) for the rebuild time budget and the document count and size budget |
 | Stores | `DbStore` against a fake `db` that enforces 256 KiB, path parity, last-writer-wins, the error codes and the rule set of section 12.5 (a second viewer's write outside its subtree and board entry rejects); outbox replay after each error code; pack compaction with a crash injected between pack write and chunk delete; two simulated devices appending concurrently lose nothing; two tabs on one device elect one writer, and "Use here" moves it without losing a queued event; device-only mode off, then on again, uploads the mirror without duplicates |
 | Export and import | Round trip from each target to the other, full and sync; a sync file holds exactly the events above the peer's last `have`; sync files applied twice or out of order change nothing; re-import is idempotent; rejection cases (oversized, bad hash, unknown format or kind, schema failure, a gzip bomb past the output cap, a `javascript:` link, a 3 KB note); the REPLACE path |
 | Result codes | Round trip; checksum failure; wrong drill or seed; duplicate |
@@ -1651,7 +1699,10 @@ Every component's definition of done in section 19 includes its tests from this 
 | Redo | The date table of section 6.2 with late first redos, misses at each step, the 14-day floor, duplicate misses merging; variant selection never repeats a seen point or touches the reserve |
 | Exam engine | Fake clock: time-up auto-submit, resume after reload, pause budget exhaustion, a backwards clock jump; timed sections closing on time and on "Finish section", with the calculator present only where allowed; form choice by freshness; the seen-items warning; exact-fraction pass at the boundary (69.99% fails, 70% passes); a 1.3 paper at 72 overall and 48 of 70 in Section A fails; follow-through marking; code partial marks; the self-marked-pass label; a missed `slotMin` bar offered as an exit-item sitting after 3 days; cool-down and remediation unlock; abandon rules; lease takeover; "Sit this paper in the web app" exactly when the runtime check fails |
 | Homework | Issue seeding without repeated points; submission marking; late and overdue states; pending web-app items resolved by result code |
-| Lesson quiz | Mastered at 3 of 4, 4 of 5 and 3 of 3; not at 2 of 3 or 3 of 5 |
+| Lesson quiz | Passed at 3 of 4, 4 of 5 and 3 of 3; not at 2 of 3 or 3 of 5; a Prove, Derive or Show lesson's production item counts |
+| Gate marking | The lower mark per point counts; Bertie's marks hidden until every point is self-marked; a disputed point resolved by an exit-item sitting; provisional state with the tutor off |
+| Soft gate and interleaving | The next level enters Main only after its condition or a remediation set, with an override recorded; a homework instance's earlier-level share and "which tool?" items |
+| Retention sittings | Scheduled at 3 and 12 months; below 60% reopens the topic; one diagnostic sitting per paper |
 | Streaks and XP | Study day at 04:00 across timezone changes; each qualifying route; rest-day earning and auto-use; weekly mode; planned breaks; every XP and MP table row |
 | Planner | The block table of section 8.1 for 5, 10, 15 and 25 hours, and blocks summing to the goal for every quarter hour from 3 to 40; alongside shares; the stage rule and the 1.9 deferral; the 60% swap; habit time excluded from the pace factor; path length read from a track (3,100 and a 3,655-hour fixture); the forecast on synthetic histories |
 | Mental arithmetic | 7-day median rule with touch runs excluded; voided runs; 80-in-8 scoring; weakest-fact selection |
@@ -1706,7 +1757,7 @@ Done in revision 2: `Skill` fields and CI rules (sections 4.2, 4.3); the instrum
 
 | # | Item | Status and effect |
 |---|---|---|
-| 1 | The total size cap of one artifact's database | [unverified]. A probe Artifact that writes 192 KiB documents until `quota_exceeded` measures it before stage A2 ends. Decides whether the checkpoint of section 13.6 is built |
+| 1 | The total size cap of one artifact's database | [unverified]. The bounded probe of `docs/PLAN.md` stage 2 writes paced 192 KiB documents up to a 60 MB ceiling, records success or the cap, and deletes its data. A cap at or above 30 MB times the expected participants means the checkpoint of section 13.6 is not built |
 | 2 | Whether the Artifact frame allows a file picker, and whether links to other hosts open | [unverified]. The paste path (sync files of about 40 KB a week) and copyable links work either way; a full backup restores on the web app if the picker is blocked |
 | 3 | Zetamac's default ranges | [recalled, unverified]; configuration, so a correction costs no code |
 | 4 | 80-in-8 details (option count, penalty, skipping, pass lines) | From secondary sources via search summaries [unverified with the firm]; configuration |
@@ -1714,7 +1765,7 @@ Done in revision 2: `Skill` fields and CI rules (sections 4.2, 4.3); the instrum
 | 6 | Durations of MIT 18.01, MIT 18.06 and Stat 110 finals, and how many past finals with solutions are public | [recalled, unverified]. `1.5.exit` needs two Stat 110 finals; if fewer than three are public, resits of the confirm step run out |
 | 7 | FSRS on problem-solving skills | [inferred]. Contained by the optimiser, the calibration report and the fallback (section 5.9) |
 | 8 | `fsrs-browser` or the WebAssembly binding: size and speed | [unverified]; the optimiser is P1 and runs only on the web app |
-| 9 | Codeforces API cross-origin access | [unverified]; manual entry works regardless |
+| 9 | Codeforces API cross-origin access | **Closed**: the lookup is withdrawn (`docs/PLAN.md` conflict 5); manual entry |
 | 10 | The effect of implicit repetition on review load | Not simulated; depends on how many `encompasses` edges authors write |
 | 11 | Redo volume | [inferred] from assumed error rates (section 6.5); the weekly review shows the real figure from week one |
 | 12 | Which of SciPy, statsmodels and scikit-learn ship in the Artifact | [unverified]; `ARCHITECTURE.md` sets the per-course budget. Decides "Runs on" for 1.6, 2.1 and 2.2; the handoff covers either answer |
@@ -1730,8 +1781,8 @@ For `docs/PLAN.md` section 11. Each stage is one review gate and testable alone.
 
 | Stage | Deliverable | Depends on | Done when |
 |---|---|---|---|
-| A1 | Event envelope and schemas; the fold framework with snapshots; `MemoryStore`; the synthetic four-year learner generator | engine core | The property tests of section 16 pass; a full rebuild of the synthetic learner meets the time budget on the reference phone |
-| A2 | `IdbStore`, `DbStore` with chunks, packs, snapshots, outbox, leases and failure behaviour; the Web Locks writer election; device-only mode; the Artifact's `db` rule set (section 12.5); the database size probe | A1; the `db` and `user` capabilities | The fake-`db` test suite passes; two-device and two-tab concurrency lose nothing; the probe's result is recorded in `DECISIONS.md` |
+| A1 | Event envelope and schemas; the `AppendQueue`; the fold framework with snapshots; `MemoryStore`; the synthetic whole-path learner generator (`docs/PLAN.md` stage 9a, before the player) | engine core | The property tests of section 16 pass; the `AppendQueue` contract suite passes; a full rebuild of the synthetic learner meets the time budget on the reference phone |
+| A2 | `IdbStore`, `DbStore` with chunks, packs, snapshots, outbox, leases and failure behaviour; the Web Locks writer election; device-only mode; the Artifact's `db` rule set (section 12.5) | A1; the `db` and `user` capabilities; the size probe's result (`docs/PLAN.md` stage 2) | The fake-`db` test suite and A1's `AppendQueue` contract suite pass; two-device and two-tab concurrency lose nothing |
 | A3 | Full backups and sync files with `have` acknowledgement, import, REPLACE, result codes, the handoff link | A2 | Round trips between targets, full and sync; every rejection case; idempotent and order-free re-import |
 | A4 | Time tracking, streaks, rest days, breaks, XP and MP ledgers, achievements | A1 | Section 16's streak and points tests; Today and You read only derived state |
 | A5 | Skill graph loading; FSRS cards by band; grade mapping; retention tiers; implicit repetition; mastery numbers and map states; readiness | A1; content C8 (skills compiled) | Golden card states; readiness hand checks; the mastery map renders from the synthetic learner |

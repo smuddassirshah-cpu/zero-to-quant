@@ -4,6 +4,10 @@ Definitive library for Zero to Quant, Stage 2 Phase 1 (Blueprint), 6 October 202
 
 **What this file owns.** Every widget's final id, tier, kind, cluster, priority, build size and build order; which primitives each composite composes; the name map from catalogue ids to final ids; the merges; and the coverage check against the curriculum. **What it does not own.** Each widget's detailed behaviour (interactions, visuals, show-why recipes, generators, misconceptions) stays in the catalogue section named as its "spec", as `ARCHITECTURE.md` says ("the widget catalogues own each widget's behaviour"). Where this file and a catalogue disagree on a name, a priority, a merge or a contract detail, this file wins. The agent-facing authoring guide, `docs/engine/WIDGET-AUTHORING.md` (arch 10.5, written at stage E4), is a different file and cites this one.
 
+> **Revised by `docs/PLAN.md` on 7 October 2026.** Every id, priority, size and composition below stands. Two things change. (1) A fifth tier, `scene` (`ARCHITECTURE.md` decision 36 and 5.14): a composite written as data over primitives plus a pure model, with no view of its own. About 125 of the 147 P0 composites are built as scenes; 22 stay hand-written (`docs/PLAN.md` 3.2 lists them). Decision 4's objection to a declarative scene engine was to logic inside content, which scenes do not put there, so decision 4 now governs presets only, and decision 16's "254 composites" reads as about 200 scenes and about 50 bespoke composites. (2) Section 7's waves become the review gates of `docs/PLAN.md` 11.4 (stages 27 to 58), built after the engine and before content, with a few entries pulled forward where another widget embeds them or a preset expands to them.
+
+> **Revised by the `docs/PLAN.md` review, 7 October 2026.** (1) The services of section 3 get stages of their own, `docs/PLAN.md` 3a to 3f, each with Python or `git` parity, ahead of the batches that use them. (2) `code-cell` and `parsons` no longer compose each other: `parsons` embeds `code-cell`'s runner component, and `code-cell`'s Parsons mode is configuration that swaps its editor pane for `token-tray` (sections 5.1.1, 5.7.4). (3) The named fallback for an over-budget `core` is a `core-code` chunk, measured after stage 32 (decision 12, 9.2 item 1). (4) A handed-off drill shows no Parsons fallback. (5) `svd-stepper` is the fourth scene pilot, built in stage 14.
+
 **How to read it.** Section 0 lists the decisions and the counts. Section 1 states the contract every entry assumes. Section 2 maps catalogue ids to final ids. Section 3 lists the services widgets depend on. Sections 4 to 6 are the entries: primitives and inputs, composites by cluster, presets. Section 7 is the build order. Section 8 is the curriculum coverage, including the table of which items each widget serves and the P0 confirmation. Section 9 lists rejected alternatives and open questions.
 
 **Evidence tags** follow the sibling papers: [measured], [sourced], [recalled], [unverified], [inferred], [our choice]. Counts in this file were produced by a script over the catalogues and curriculum files on 6 October 2026 [measured]; section 8.1 describes it.
@@ -27,7 +31,7 @@ Definitive library for Zero to Quant, Stage 2 Phase 1 (Blueprint), 6 October 202
 | 9 | Element ids | `kind:name` everywhere; on a multi-widget screen the host prefixes the widget's local id (`grid/cell:5,3`). Stage 0's `kind-name` ids convert by turning the first hyphen into a colon; the ids that sample lessons already use (0.1 requests R4 and R5, the 1.3 sample) are binding | `kind-name` | arch 0.3 and 5.1; `CONTENT-FORMAT.md` decision 17 |
 | 10 | Priority rule | P0: needed by a lesson in 0.1 to 1.5 or by the weekly problems that start at 1.5. P1: first needed in 1.6 to 1.9. P2: first needed in Stage 2 or 3. A widget takes the priority of its earliest mode; later modes carry their own priority in the entry | Catalogue priorities as written | The owner's depth-first order; the curriculum files moved several widgets and modes (0.3 below) |
 | 11 | 1.7 stays P1 | 1.7 Finance basics is P1 although it runs "alongside 1.3 to 1.6"; its first three courses (RB, EQ, MK, Stage 0 maths only) are the first P1 wave | All of 1.7 in P0 | finance decision 14 and finance-projects decision 4: skill gates unlock it; the P0 build stays bounded |
-| 12 | Cluster rule | A widget sits in the cluster of its home catalogue section (arch's 22 lazy chunks); primitives, inputs and `code-cell` sit in `core`; `path-simulator`, `filtration-tree`, `kelly-lab` and `puzzle-workbench` sit in `probability`, where their P0 use is | Cluster by first use; everything shared in `core` | Home-topic chunks keep related widgets together; `core` is loaded with every lesson, so only code used everywhere goes there (arch decision 8, budget 9.2); the compiler preloads every cluster a course uses |
+| 12 | Cluster rule | A widget sits in the cluster of its home catalogue section (arch's 22 lazy chunks); primitives, inputs and `code-cell` sit in `core`; `path-simulator`, `filtration-tree`, `kelly-lab` and `puzzle-workbench` sit in `probability`, where their P0 use is. If `core` exceeds 80 KB gzipped when measured after `docs/PLAN.md` stage 32, `code-cell` and the code primitives (`code-surface`, `diff-view`, `text-terminal`) move to a `core-code` chunk loaded with a lesson's first code screen (revised by the review: the P1 finance primitives do not exist at P0, so a `core-markets` split could not shrink `core`) | Cluster by first use; everything shared in `core` | Home-topic chunks keep related widgets together; `core` is loaded with every lesson, so only code used everywhere goes there (arch decision 8, budget 9.2); the compiler preloads every cluster a course uses |
 | 13 | Python | Pyodide 314.0.7 on both targets (arch decision 15). Every catalogue mention of MicroPython, `ulab`, `micropython-ok` or `ulab-ok` is void; a drill declares `needs` and hands off only for C++ or for a package its course has not budgeted in the Artifact | The catalogues' MicroPython split | The owner's iPhone measurement: Pyodide with NumPy and pandas runs inside the Artifact |
 | 14 | Build size | S, M or L per entry (1.6) | Line or day estimates | Relative size is what orders a wave; absolute estimates for agent work are [unverified] |
 | 15 | Drops and proposals | `vim-sim` is dropped (no lesson uses it). The canon-gap proposals are not added as widgets: the curriculum covers those lessons with modes of existing widgets (8.5); `brownian-path` and `ctmc-clock` become modes of `path-simulator` and `markov-chain` | Keeping unused widgets in the library | A widget nobody uses costs a build and a review; the curriculum is the test |
@@ -152,7 +156,7 @@ Entries that merge two or more catalogue specs under one id: `binomial-tree`, `c
 
 ## 3. Services widgets depend on
 
-Services are not widgets: they have no view and no state of their own. Pure services live in packages so that widgets, workers, generators and CI parity tests import the same code (arch 4.5 forbids workers from importing `src/widgets`). This adds one package, `@zq/models`, with one entry point per domain so a cluster chunk imports only its own.
+Services are not widgets: they have no view and no state of their own. Pure services live in packages so that widgets, workers, generators and CI parity tests import the same code (arch 4.5 forbids workers from importing `src/widgets`). This adds one package, `@zq/models`, with one entry point per domain so a cluster chunk imports only its own. Each service is built in its own `docs/PLAN.md` stage, ahead of the batches that use it, with unit, property and parity tests against the versions pinned in `tools/py/uv.lock` (NumPy 2.4.6, pandas 3.0.2, SciPy 1.18.0, statsmodels 0.14.6): `linalg`, `quad`, `ode`, `roots`, `units`, `sample` in 3a; `stats-core` in 3b; `nd-core`, `frame-core`, `price-series` in 3c; `code-lex`, `seed-bank`, `mutant-forge`, `vfs`, `shell` in 3d; `algo-trace` and `trace.py` in 3e; `git-model` in 3f. The `markets` and `ml` services come with their P1 and P2 waves.
 
 | Service | Home | Used by | Spec |
 |---|---|---|---|
@@ -724,7 +728,7 @@ composite · tier composite · cluster `core` · **P0** · size L · spec progra
 
 The code exercise: edit, Run against visible examples, Submit against hidden tests, read the results.
 
-- **Composes** `code-surface`, `text-terminal`, `value-table`, `diff-view`, `node-link`, `parsons`; services `python-runner`, `sql-runner`, `cpp-runner`, `shell-interpreter`, `vfs`, `handoff`.
+- **Composes** `code-surface`, `text-terminal`, `value-table`, `diff-view`, `node-link`, and `token-tray` for its Parsons mode; services `python-runner`, `sql-runner`, `cpp-runner`, `shell-interpreter`, `vfs`, `handoff`. It does not compose `parsons` (revised by the `docs/PLAN.md` review, which removed a composition cycle): its Parsons mode, used on screens under 768 px (programming decision 15), is configuration that swaps the editor pane for `token-tray` over the reference solution's lines and runs the result with the same runner. A drill handed off to the web app shows the link and accepts the result code; it offers no Parsons fallback.
 - **Config** `CodeCellConfig { language, mode, layout?, brief, files, entry?, examples, suite, db?, data?, stdin?, parsons?, review?, answer?, heldOut? }`.
 - **Answers** `code`.
 - **AI hooks** targets `line:<n>`, `test:<k>`, `file:<path>`, `cell:<k>`, `run`, `submit`; describe, e.g. "Drill max_drawdown (Python). Last submit: 5 of 7 hidden tests passed; first failure 'flat prices': expected 0.0, got nan."
@@ -1419,7 +1423,7 @@ composite · tier composite · cluster `python` · **P0** · size M · spec prog
 
 Put shuffled lines of code in order and at the right indentation, leaving out distractors.
 
-- **Composes** `token-tray`, `code-surface`, `code-cell`.
+- **Composes** `token-tray`, `code-surface`, and `code-cell`'s runner component (not the `code-cell` widget), so the composition graph has no cycle.
 - **Config** `ParsonsConfig { language, lines, distractors?, grading, indentation?, fixedLines?, adaptive? }`.
 - **Answers** `ordering`.
 - **AI hooks** targets `pline:<id>`, `slot:<n>`; describe, e.g. "Parsons: 5 of 7 lines placed. Order: L1, L3, L2, L4, L6. Indents: 0, 1, 1, 2, 1."
@@ -4516,7 +4520,7 @@ Bias is where a sampling distribution centres relative to $\theta$; variance is 
 
 ## 7. Build order
 
-The build follows the depth-first content order. Widget work starts when stage E4 is approved and runs beside E5 to E10, one widget per pull request (arch 13, 10.5). These waves replace the catalogues' own waves (W0 to W3, A to D, D0 to D4, W-A1 to W-D, G1 to J, G0 to H2); 7.5 maps them.
+The build follows the depth-first content order. `docs/PLAN.md` section 11.4 turns these waves into review gates (stages 27 to 58), after the engine and before any content, and pulls a few entries forward where a widget embeds or presets expand to a later one; one widget, or up to three scenes, per pull request (arch 10.5). These waves replace the catalogues' own waves (W0 to W3, A to D, D0 to D4, W-A1 to W-D, G1 to J, G0 to H2); 7.5 maps them.
 
 ### 7.1 Stage E4: the reference lesson set
 
@@ -5200,7 +5204,7 @@ Dropped: `vim-sim`: No lesson uses it: python-tools decision 19 covers 1.2 L8 wi
 | Alternative | Why rejected |
 |---|---|
 | One widget per catalogue entry (332 modules) | Duplicates and synonyms would ship twice: 18 catalogue ids are another name for a library widget, and 29 entries merge two or more specs of one widget (section 2) |
-| A generic scene engine with every graph composite as a `plot-2d` preset | Decision 4: presets cannot derive state; the logic would move into an expression dataflow language inside content |
+| A generic scene engine with every graph composite as a `plot-2d` preset | Decision 4: presets cannot derive state; the logic would move into an expression dataflow language inside content. Still rejected in that form; `docs/PLAN.md` 3.2 adopts scenes as library code with typed bindings and model functions instead |
 | Keeping the Stage 0 primitive names because the prob-stats catalogue and the statistics curriculum file use them | Aliases cost nothing at compile time; four catalogues and the other ten curriculum files use the calc-linalg names |
 | `vector-plane`, `matrix-grid`, `linear-map` as aliases | Their Stage 0 configs differ in shape from the 1.4 widgets; a preset's `expand` converts them, so the 0.3 lessons keep their ids |
 | Separate `dealer-sim` and `market-maker-sim` | One market model, one `exchange-sim`, two specs; 3.3 play mode would have been a third |
@@ -5213,10 +5217,10 @@ Dropped: `vim-sim`: No lesson uses it: python-tools decision 19 covers 1.2 L8 wi
 
 | # | Question | Effect if unfavourable | How it closes |
 |---|---|---|---|
-| 1 | Does `core` (37 primitives and inputs plus `code-cell`) fit the 80 KB gzipped cluster budget? [unverified] | Split `core` into `core` (P0 hosts and inputs) and `core-markets` (the P1 finance primitives) | Measured by `size-limit` at the end of L0 |
+| 1 | Does `core` (37 primitives and inputs plus `code-cell`) fit the 80 KB gzipped cluster budget? [unverified] | Move `code-cell` and the code primitives into a `core-code` chunk loaded with a lesson's first code screen (a `core-markets` split cannot help at P0, where the finance primitives do not exist yet) | Measured by `size-limit` after `docs/PLAN.md` stage 19 and again after stage 32, when `code-cell` exists |
 | 2 | Do composite views stay within 25 KB minified when they lay out four or more primitives (for example `prob-square`, `dist-explorer`)? [unverified] | Move a mode into a sibling composite or a preset | The per-widget budget check in CI |
 | 3 | Does `algo-lab`'s one view carry linked-list rewiring and heap sifting at Brilliant quality? [inferred yes, because the gestures live in `node-link` and `array-strip`] | Promote that preset to a composite with a written reason (arch 10.5) | The first two presets built (`sort-lab`, `recursion-tree`) in W4 |
-| 4 | Agent build time per size class [unverified] | Wave dates move | Recorded per pull request from W1 |
+| 4 | Agent build time per size class [unverified] | Wave dates move | Recorded per pull request from `docs/PLAN.md` stage 1; the four stage 14 pilots set the scene rates per family; every batch gate re-forecasts |
 | 5 | Is `dmath` fast enough for `ml-core` training loops on the budget phone? [unverified] | Use `Math` in visual-only paths and `dmath` only where a number is shown or graded | E1 benchmark |
 | 6 | The `downloads` capability for starter suites (finance-projects open item 7) [unverified] | `setup-checklist` project mode offers `.txt` suites with rename instructions | E10 |
 

@@ -10,6 +10,8 @@ Blueprint, Stage 2 Phase 1. Draft 1, 6 October 2026.
 
 **Writing conventions.** Lesson time is 15 minutes including the quiz in every item file, so lesson hours are lessons $\times 0.25$. Course and level codes (W, P, W1, KC3) are document shorthand scoped to one item; the same letter recurs across items (Y, B and A in 0.4, 0.5 and 1.1; N, H, V and Z in 1.4 and 1.5; CP in 1.9 and 2.1). The app computes display numbers from position and content refers to courses only by id (`CONTENT-FORMAT.md` 4.1).
 
+> **Revised by the `docs/PLAN.md` review, 7 October 2026.** (1) **Skill granularity**: every item file's sample lessons list 3 or 4 skills in `introduces`; skills are now examinable methods at level grain, 3 to 8 a level and about 1,500 on the path, with at most 2 introduced per lesson and finer distinctions as step tags (`ASSESSMENT.md` 4.1). Content agents re-cut those lists when they write the lesson files. (2) **Duration**: the curriculum's "roughly 4 years at 15 hours a week" counts mapped hours only; section 6.5 adds habits, review and holidays. (3) **Recommendation**: P1 to P4 with O1, plus a new core item 2.1b Deep learning (120 h), are recommended as core rather than as a cap option, with 60 h of real analysis on the researcher and ML tracks (sections 6.1 and 6.2; `docs/PLAN.md` 12 decision 2). (4) **Python floor**: wherever an item file names CPython 3.11 as the learner floor or the CI interpreter, read CPython 3.12 with `tools/py/uv.lock` (`docs/PLAN.md` conflict 19; SciPy 1.18.0 needs 3.12). Verification runs recorded on 3.11 stand as records and are rerun at `docs/PLAN.md` stage 26.
+
 ---
 
 ## 0. Summary
@@ -651,6 +653,8 @@ Hours are revision 2's, which already subtract what the item files teach inside 
 | P14 | ML research track: deep learning 150, language models from scratch 120, learning theory 60, reinforcement learning 50 | 380 | A fourth Stage 2 track, `trk.ml-research` (2.1x) | ML research | 2 | 2.1 levels TN5 and TN6 and lessons 33, 110, 115 are first contacts; PyTorch and JAX are not in Pyodide, so course 2 trains off-device |
 | P15 | Bayesian computation | 40 | Elective after 2.1 | Researcher, ML research | 3 | 1.5 lesson 134 (Metropolis) and 1.6 course BY hold the first pass |
 | P16 | Derivatives add-on: real analysis 120, measure-theoretic probability 100, stochastic calculus 150 | 370 | Optional, after Stage 2, on `trk.derivatives` | Desk quant | 3 | 3.2 is written (104 lessons). `stage3-stochastic-interview.md` decisions 2 and 3 count 3.2's 150 h for a learner who opts in and require neither prerequisite course, because levels BR1 and BR2 teach Shreve II ch. 1 and 2; with P16 they become review levels |
+| 2.1b | Deep learning core (review addition): Prince, *Understanding Deep Learning*, chapters 1 to 12; Karpathy's *Neural Networks: Zero to Hero* re-implemented in NumPy so that micrograd, an MLP and a character-level transformer at toy scale run in Pyodide; the MIT 6.7960 problem sets; a toy double-descent replication offered as a 3.1 option | 120 | New Stage 2 item after 2.1 | All | 1 | 2.1 levels TN5 and TN6 and lessons 113 and 115 (initialisation, attention) are the first pass; P14's deep-learning course (150 h) would start from 2.1b's end, so accepting both saves about 60 h of P14 [our estimate]. Without it the project's aim of ML-lab-calibre thinking is not delivered |
+| A1 | Real analysis (review addition): Abbott, *Understanding Analysis*, chapters 1 to 6 | 60 | After 1.3, on the researcher and ML research tracks | Researcher, ML research | 2 | Taken from P7 (proof) or P16 (its real analysis 120 h); research interviews and ML theory assume it |
 | O1 | Offset: 2.4 Contests from 140 to 60 h outside the developer track | -80 | 2.4 | Trader, researcher, ML research | 1 | `stage1-dsa-cpp.md` 4.3 already defines `2.4.exit-core` for this case: a 36-lesson core, 12 contests and `arena-2` |
 
 ### 6.2 Hours if accepted
@@ -665,7 +669,7 @@ From `canon-gap.md` 0.2 and 4.2. Years assume 52 working weeks.
 | ML research (new) | | 3,820 (3,860 with P15) | | 4.9 | 3,802 |
 | Derivatives add-on (P16) | 3.2 uncounted | +370 on any track (+150 if only 3.2 is counted, as its file does) | | +0.5 | |
 
-**Minimum set**, if the owner wants to cap the growth: P1, P2, P3 and P4 with O1. Net +170 h (3,270 h) outside the developer track and +250 h (3,350 h) on it.
+**Recommended core set** (the `docs/PLAN.md` review; earlier offered only as a cap option): P1, P2, P3 and P4 with O1, net +170 h (3,270 h) outside the developer track and +250 h (3,350 h) on it, plus 2.1b (+120 h): 3,390 h, and 3,450 h on the researcher and ML tracks with A1. The four subjects of P1 to P4 are core in every programme `canon-gap.md` surveys (Princeton ORFE, CMU MSCF, Baruch, Cambridge), and the review recommends them on their merits, not as a cap. The years in the table above count mapped hours at 52 weeks; section 6.5 gives the full duration.
 
 **Exit-test changes that follow** (canon-gap 4.4; each fits `ASSESSMENT.md` 2.10 without new machinery): Stage 1 adds a proof portfolio (P7) and a differential-equations unit exam (P8); 1.5's exit adds the P2 problems and 1.6's the P5 tasks; every Stage 2 results note passes the P1 checklist (pre-registration, bias audit, deflated Sharpe ratio, bootstrap interval); the Stage 3 Zhou line becomes 80% of chapter 4 and 70% of chapter 5 (with P2). Each new item brings its own topic paper and exit part.
 
@@ -689,6 +693,19 @@ These change what sections 1 to 4 show. The item files build the recommended opt
 ### 6.4 The owner's decisions in one list
 
 From `canon-gap.md` section 7, with D1 to D8 above: (1) which of P1 to P16 and O1 to accept, or the minimum set; (2) whether the item files' first passes count, which is what cut 105 h from ten proposals in revision 2; (3) whether to add the ML research track; (4) whether to count 3.2 and make it the P16 add-on; (5) the exit-test changes; (6) which paid spines the learner is told to buy; (7) the hours ceiling, 3,565 to 3,820 h with every proposal or 3,270 h with the minimum set.
+
+### 6.5 Duration with habits, review and holidays
+
+Added by the `docs/PLAN.md` review [simulated: `ASSESSMENT.md` 6.5's FSRS rerun for maintenance and the planner's block rules for habits; 60 h of retention sittings our estimate]. Total hours are the mapped hours plus the Daily 10 after 0.5, the weekly probability problems from 1.5, maintenance review and retention sittings; years at 52 study weeks, with 46 study weeks a year in brackets. Earned hours scale by each item's estimate share, so an item reads complete when it is (`ASSESSMENT.md` 8.7).
+
+| Scope (mapped hours) | 10 h a week | 15 h a week | 25 h a week |
+|---|---|---|---|
+| Today (3,100) | 4,170 h: 8.0 years (9.1) | 3,820 h: 4.9 years (5.5) | 3,550 h: 2.7 years (3.1) |
+| P1 to P4 with O1 (3,270) | 4,410 h: 8.5 (9.6) | 4,030 h: 5.2 (5.8) | 3,750 h: 2.9 (3.3) |
+| Recommended: P1 to P4, O1 and 2.1b (3,390) | 4,570 h: 8.8 (9.9) | 4,180 h: 5.4 (6.1) | 3,880 h: 3.0 (3.4) |
+| Recommended, researcher or ML track with A1 (3,450) | 4,650 h: 9.0 (10.1) | 4,260 h: 5.5 (6.2) | 3,950 h: 3.1 (3.5) |
+
+At 15 h a week, today's scope adds about 360 h of habits and 360 h of maintenance and retention sittings to the 3,100 mapped hours; at the learner's pace the forecast (`ASSESSMENT.md` 8.7) replaces these figures within months.
 
 ---
 

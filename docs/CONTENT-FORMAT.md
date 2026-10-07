@@ -9,6 +9,19 @@
 > | 3.2 `Topic` | `exam` required; every topic counted in the path | `exam` optional (0.4 and 0.5 close on exit parts; 2.4 waits for the owner's decision D4); `counted: false` for 3.2 |
 > | 3.3 Why rows, 3.10 rules | `why.then` shown after a wrong answer | Unresolved screens show the diagnosis and `why.shown` only; `why.shown` passes the leak lint |
 > | 3.1 | 1 to 4 courses per topic | 1 to 5 (`docs/CURRICULUM.md` 7, request 1) |
+> | 14 C7, 13 item 2 | "`docs/PLAN.md` stage 22"; a 13 MB or 49 MB first Python load | Stage 25; 24 MB of files (`docs/PLAN.md` conflicts 4 and 8) |
+
+> **Revised by the `docs/PLAN.md` review, 7 October 2026** (its section 13 lists the findings). Section numbers are unchanged.
+>
+> | Where | Was | Now |
+> |---|---|---|
+> | 3.2 `Lesson.introduces`, `ItemHead` | Up to 4 skills a lesson | At most 2, at level grain; `steps` tags with no card (`ASSESSMENT.md` 4.1); items gain `sibling` (required on long-form homework and paper items) and `imitates` (recreated book problems) |
+> | 3.2 `long-form` | 10-point rubrics only; no consequence line | `scale` 10 or 3 (the quiz production item); an optional `consequence` line shown on result screens |
+> | 3.2 `Lesson`, 9.3 | Every learner walks every ladder screen | `fastPath`: one sharp check item behind "Skip to the trap" when the hook and first ladder screen are first-try correct (lesson-creator's adaptive pace) |
+> | 3.2 `Exam` | A fixed slot order | `shuffle` (default on) and `unlabelledSlots` (default 2) (`ASSESSMENT.md` 3.2) |
+> | 6.13 point 1, 9.1 steps 5 to 7 | The owner checks that the English means what the maths computes, merges every lesson and checks every phone preview | An independent reviewer agent restates the maths from the English and `zqverify` checks the restatement; a paid human spot check of 5 lessons per course from Stage 1; the owner reviews per level on the long-lived preview Artifact |
+> | 9.3 rules 15, 27 and new 34 to 38 | Quizzes test the introduced skill only; citations checked only by a person with the book | Prove, Derive and Show lessons have a production item; free-source locations are fetched and checked while authoring; method-free stems; fast path; time estimates by difficulty |
+> | 13 item 1, 14 C8 and C11 | SciPy and statsmodels "not packaged"; "under 255 files"; C11 as a first level of the reference lesson | Packaged and measured (`ARCHITECTURE.md` 6.3.3); within the 230-file release budget; C11 is the reference lesson plus level W1 of `crs.numwork` (`docs/PLAN.md` stage 84) |
 
 Working paper for the Stage 2 Blueprint, 6 October 2026, revision 2. Scope: how lessons, items, generators and code drills are written, compiled, proved correct and graded. Input to `docs/PLAN.md` (component tree, interfaces, failure modes and execution stages for the content system).
 
@@ -49,7 +62,7 @@ Working paper for the Stage 2 Blueprint, 6 October 2026, revision 2. Scope: how 
 | 15 | Long-form marking | **Self-mark against a rubric of 4 to 10 points totalling 10 marks; Bertie drafts a mark per point with a verbatim quote as evidence (`AI-TUTOR.md` 2.7); the learner accepts or changes every point** | AI mark as the record; self-mark only | The owner asked for the tutor from day one; the record stays the learner's, and a quote that is not in the answer scores 0 |
 | 16 | Authoring workflow | **Agent drafts, `zq check` loop, storyboard, adversarial reviewer agent, owner merges**, one lesson per pull request | Owner writes; whole levels per pull request | An 800-line lesson YAML is a reviewable diff; a level is five of them |
 | 17 | Element references | **The widgets' own `kind:name` ids (`AI-TUTOR.md` 0.2), written with the widget in content: `grid/cell:5,5`**; recipe arguments and set answers use the bare `cell:5,5` | Revision 1's `grid:cell-5-5`; a second id scheme for content | One id per element across widgets, tutor act lines, set answers and hints. The compiler resolves every reference against the widget's `targets(config)` |
-| 18 | Code runtimes | **Pyodide 314.0.7 on both targets; no runtime tags.** A drill declares `needs`; CI runs every drill on CPython 3.11 and on Pyodide with exactly its `needs` loaded; where it runs is decided at run time from `needs` against `PythonRuntime.available()` (`ARCHITECTURE.md` 5.9). C++ drills never run in the Artifact (tidied for the blueprint: was four CI runtime tags with MicroPython as the Artifact fallback) | MicroPython with `ulab` as a fallback runtime; CI tags | The owner dropped MicroPython after the iPhone spike ran Pyodide with NumPy and pandas inside the Artifact. One runtime means one grader and one set of tracebacks everywhere |
+| 18 | Code runtimes | **Pyodide 314.0.7 on both targets; no runtime tags.** A drill declares `needs`; CI runs every drill on CPython 3.12 (raised from 3.11 by the `docs/PLAN.md` review, conflict 19: the soft deadline needs `sys.monitoring` and SciPy 1.18.0 needs 3.12) and on Pyodide with exactly its `needs` loaded; where it runs is decided at run time from `needs` against `PythonRuntime.available()` (`ARCHITECTURE.md` 5.9). C++ drills never run in the Artifact (tidied for the blueprint: was four CI runtime tags with MicroPython as the Artifact fallback) | MicroPython with `ulab` as a fallback runtime; CI tags | The owner dropped MicroPython after the iPhone spike ran Pyodide with NumPy and pandas inside the Artifact. One runtime means one grader and one set of tracebacks everywhere |
 | 19 | Tracks | **Data in `curriculum.yaml`** (`trk.*`, each topic and course marked core, elective, optional or absent) | A fixed `trader`, `researcher`, `developer` enum on each course | `canon-gap.md` proposes a fourth track and an add-on; the owner has not decided. Data absorbs either answer without a schema change |
 | 20 | Tutor fields | **Content, checked like copy**: `tutor.focus` on every task screen, `tutor.reps`, `why.rep`; a lint fails any tutor text that contains a value the screen's check accepts | Tutor context assembled from copy alone | `AI-TUTOR.md` 4.1 needs an outline title, representations and notes per screen. Tutor notes are not sealed, so the leak lint is the guard |
 
@@ -409,6 +422,7 @@ const Feature = z.object({
 }).strict();
 const ModelLine = z.object({ id: LocalId, text: Prose.optional(), tex: Tex.optional(), because: z.string().max(160).optional() }).strict();
 const RubricPoint = z.object({ id: LocalId, point: Prose, marks: z.number().int().min(1).max(3).default(1), evidence: z.array(LocalId).min(1) }).strict();
+const StepTag = z.string().regex(/^[a-z][a-z0-9-]{1,40}$/);   // a sub-step of a skill: diagnosis, hints, the gap report; never an FSRS card
 const CodeRef = z.object({ kind: z.literal('code'), drill: Id('drl') }).strict();
 
 const BaseChecks = [
@@ -447,10 +461,13 @@ const BaseChecks = [
              ordered: z.boolean().default(false), floatTol: z.number().nonnegative().optional() }).strict(),
   CodeRef,
   z.object({ kind: z.literal('long-form'), genre: z.enum(['proof', 'derivation', 'written', 'results-note']),
-             rubric: z.array(RubricPoint).min(4).max(10), model: z.array(ModelLine).min(2),
+             scale: z.union([z.literal(10), z.literal(3)]).default(10),                  // 3: a quiz production item (review addition)
+             rubric: z.array(RubricPoint).min(2).max(10), model: z.array(ModelLine).min(1),
+             consequence: Prose.optional(),                                             // "would fail in production because ...", on result screens
              marking: z.enum(['tutor-draft', 'self']).default('tutor-draft'),               // AI-TUTOR.md 2.7
              minWords: z.number().int().min(0).max(400).default(0) }).strict()
-    .refine(c => c.rubric.reduce((s, p) => s + p.marks, 0) === 10, 'rubric marks must total 10'),
+    .refine(c => c.rubric.reduce((s, p) => s + p.marks, 0) === c.scale, 'rubric marks must total the scale')
+    .refine(c => c.scale === 3 ? c.rubric.length <= 3 : c.rubric.length >= 4 && c.model.length >= 2, 'a 10-point rubric has 4 to 10 points; a 3-point one at most 3'),
 ] as const;
 const BaseCheck = z.discriminatedUnion('kind', BaseChecks);
 export const Check = z.union([
@@ -550,6 +567,9 @@ const ItemHead = {
   title: z.string().max(60),                         // homework lists and the Redo queue
   use: z.array(ItemUse).min(1),
   heldOut: z.boolean().default(false),               // exam-only; practice never shows it
+  steps: z.array(StepTag).max(6).default([]),        // sub-steps exercised (ASSESSMENT.md 4.1); no card
+  sibling: Id('itm').optional(),                     // same skill, different story; required on long-form homework and paper items (CI)
+  imitates: z.string().regex(/^[a-z-]+-[0-9a-z.]+$/).optional(),   // the book problem a recreated problem follows, e.g. zhou-4.12 (ASSESSMENT.md 10.3)
 };
 export const AuthoredItem = z.object({
   ...ItemHead,
@@ -578,7 +598,9 @@ export const Lesson = z.object({
   summaryLine: z.string().max(140),
   frame: z.object({ why: Prose, before: Prose.optional() }).strict(),   // lesson-creator: the problem this concept solves
   insight: Prose,                                                      // maths-teaching: the one-line aha
-  introduces: z.array(Id('skl')).min(1).max(4),
+  introduces: z.array(Id('skl')).min(1).max(2),     // level grain (ASSESSMENT.md 4.1); finer distinctions go in `steps`
+  steps: z.array(StepTag).max(8).default([]),
+  fastPath: z.object({ check: Id('itm') }).strict().optional(),   // "Skip to the trap" behind one sharp item (rule 35)
   uses: z.array(Id('skl')).default([]),
   requires: z.array(Id('lsn')).default([]),
   terms: z.array(Id('gls')).default([]),
@@ -658,7 +680,8 @@ const ExitPart = z.object({ id: z.string().regex(/^[0-9a-z][0-9a-z.-]{0,31}$/), 
 export const Topic = z.object({ zq: z.literal(1), id: Id('top'), number: z.string().regex(/^\d\.\d+$/), title: z.string(), hours: z.number().int().positive(),
   cover: z.array(z.string()).min(1), resources: z.array(Citation).min(1), exit: z.array(ExitPart).min(1),
   courses: z.array(Id('crs')).min(1), exam: Id('exm').optional(),       // optional: 0.4 and 0.5 close on their Stage 0 exit parts (docs/CURRICULUM.md 4.4)
-  counted: z.boolean().default(true) }).strict();                         // false: hours sit outside the path total (3.2, docs/CURRICULUM.md 2.2)
+  counted: z.boolean().default(true),                                      // false: hours sit outside the path total (3.2, docs/CURRICULUM.md 2.2)
+  coreInterview: z.union([z.boolean(), z.array(TrackName)]).default(false) }).strict();   // ASSESSMENT.md 5.4: held at 0.90; a track list limits it (1.6 on the researcher track)
 export const Stage = z.object({ id: Id('stg'), number: z.number().int().min(0).max(3), title: z.string(), hours: z.number().int().positive(),
   topics: z.array(Id('top')).min(1), exit: z.array(ExitPart).min(1) }).strict();
 const TrackStatus = z.enum(['core', 'elective', 'optional', 'absent']);
@@ -696,6 +719,8 @@ export const Exam = z.object({ zq: z.literal(1), id: Id('exm'), rev: Rev,
   title: z.string(), minutes: z.number().int().min(5).max(240), marks: z.number().int().positive(),
   pass: z.number().min(0.5).max(1).optional(), calculator: z.enum(['none', 'basic', 'scientific', 'any']),
   mix: z.partialRecord(z.enum(['1', '2', '3', '4', '5']), z.number().min(0).max(1)),   // shares by difficulty; CI: they sum to 1
+  shuffle: z.boolean().default(true),                // slot order shuffled per sitting (ASSESSMENT.md 3.2)
+  unlabelledSlots: z.number().int().min(0).max(4).default(2),   // slots replaced per form by whole-topic draws
   forms: z.array(ExamForm).min(1) }).strict();       // paper kinds need at least 3 forms (CI, ASSESSMENT.md 3.2)
 
 /* ---------- 13. Code drills and projects (code lives in .py files beside drill.yaml) ---------- */
@@ -1100,7 +1125,7 @@ The Python verifier is written from the `semantics` text in the spec, by a diffe
  [5] verify    answers, misconception values, spaces, chains, claims, simulation ... Python (zqverify)
  [6] generate  box enumeration, TS against Python, built-item checks ......... Node + Python
  [7] replay    runtime graders on correct, accepted and diagnosed answers ...... Node (packages/graders)
- [8] drills    reference, starter, wrong solutions, mutants ................. CPython 3.11, Pyodide 314.0.7
+ [8] drills    reference, starter, wrong solutions, mutants ................. CPython 3.12, Pyodide 314.0.7
  [9] render    storyboard, overflow at 390px, axe ............................. Playwright
         │
         ▼
@@ -1259,7 +1284,7 @@ The readability formula is crude (a heuristic syllable count) and short sentence
 
 | Check | Rule |
 |---|---|
-| Reference passes | Every test passes on CPython 3.11 (the learner's minimum) and on the pinned Pyodide with exactly the drill's `needs` loaded |
+| Reference passes | Every test passes on CPython 3.12 (the learner's minimum, with `tools/py/uv.lock`) and on the pinned Pyodide with exactly the drill's `needs` loaded |
 | Starter fails | The starter code fails at least one test, so a drill cannot be passed by pressing Submit |
 | Known-wrong solutions fail | Each `wrong/*.py` fails the test it names, and its first failing test maps to its diagnosis |
 | Mutants are killed | `mutant-forge` (programming catalogue, section 2.4) generates operator, boundary, constant, argument and statement mutants of the reference; every mutant a seeded fuzzer can distinguish from the reference must fail at least one hidden test. Equivalent mutants are discarded by the fuzzer, not by hand |
@@ -1267,7 +1292,7 @@ The readability formula is crude (a heuristic syllable count) and short sentence
 | Time headroom | The reference uses at most 25% of the time limit under 4x CPU throttling |
 | Edge cases | At least two tests are flagged as edge cases (empty input, ties, extreme values) |
 | Hidden suite size | At least twice the visible examples |
-| Same verdicts on both interpreters | The reference, every wrong solution and every mutant give identical verdicts on CPython 3.11 and Pyodide 314.0.7; a drill that depends on behaviour only one of them has is rejected |
+| Same verdicts on both interpreters | The reference, every wrong solution and every mutant give identical verdicts on CPython 3.12 and Pyodide 314.0.7; a drill that depends on behaviour only one of them has is rejected |
 
 **Runtime placement** (tidied for the blueprint; the four tags of revision 2 are withdrawn):
 
@@ -1291,7 +1316,7 @@ Learners always see CPython's own tracebacks, the same as on their laptop.
 
 Stated plainly, so nobody reads more into a green build than it says:
 
-1. **That the English means what the maths computes.** The verifier proves that "at least one die shows a 5" was computed as `a == 5 or b == 5`; only a person proves the sentence says that. Generators reduce the surface to a finite phrasebook and a specimen sheet; authored items rely on review.
+1. **That the English means what the maths computes.** The verifier proves that "at least one die shows a 5" was computed as `a == 5 or b == 5`; it cannot prove the sentence says that. Generators reduce the surface to a finite phrasebook and a specimen sheet. For authored items the check is the **semantic review** (section 9.1 step 5): a reviewer agent that sees only the English restates the maths in the verify language, and `zqverify` compares its answer with the authored one, so a sentence that a careful reader would compute differently fails. From Stage 1 a paid human spot check of 5 lessons per course adds a person (`docs/PLAN.md` 12 decision 10). The owner, who is also the learner, is not asked to check maths he has not yet learned.
 2. **That a feedback line's wording is true.** It proves the misconception produces the value; whether the sentence describes the misconception well is review.
 3. **Pedagogy.** Whether the hook is good, the ladder well paced or the trap tempting is review against the checklist in section 9.3.
 4. **Independence.** Blind pairing of generator and verifier authors is a process rule. The verify language and the Monte Carlo check share the space definitions, so a wrong space definition would fool both; spaces are few, unit-tested and reviewed once.
@@ -1528,9 +1553,9 @@ Lessons are written mostly by agents and reviewed by the owner, in depth-first c
 2. **Draft.** The agent writes the lesson YAML, any new library entries and the quiz, and runs `zq check <file>` until it is clean. `zq check` runs every section 6 check scoped to the file, in seconds.
 3. **Look.** The agent runs `zq storyboard <lesson id>`, reads the screenshots, and fixes what reads badly.
 4. **Self-review** against the checklist in section 9.3; the agent writes a short note on each reviewer-enforced rule into the pull request.
-5. **Adversarial review.** A second agent session, which did not write the lesson, reviews the YAML and the storyboard: English against the verified maths (section 6.13, point 1), pedagogy, voice, traps. It comments on the pull request.
-6. **Owner review and merge.** The owner reads the diff, the storyboard and, for generators, the specimen sheet. One lesson per pull request; a level-closing pull request adds the bank, homework set and level review.
-7. **Phone check, optional.** `zq preview --artifact <lesson id>` builds a one-lesson player page, which a Claude session publishes as a private Artifact, so the owner can try the lesson on a phone before merging.
+5. **Adversarial and semantic review.** A second agent session, which did not write the lesson, reviews the YAML and the storyboard for pedagogy, voice and traps. A third, the semantic reviewer, receives only the English of every graded screen and item (prompts, options, stems; no `verify` blocks, answers, diagnoses or Why text), writes its own restatement of each in the verify language, and `zqverify` checks each restatement's answer against the authored one; every disagreement is resolved in the pull request, either by fixing the English or by the reviewer withdrawing its reading with a stated reason. Both comment on the pull request.
+6. **Merge into the level branch.** One lesson plus its library entries per pull request, with no line cap on YAML; generators with their Python twins and goldens in pull requests of their own; a level-closing pull request adds the bank, homework set and level review. Pull requests merge into `stage/<course>/<level>` once CI is green and the reviews above are recorded (the agents' bot identity may merge there, never into `main`).
+7. **Level gate.** The level's branch is built into the long-lived preview Artifact (`zq preview --artifact`, `docs/PLAN.md` stage 25); the owner plays the level on the phone, judges the learning experience, and records the gate at `ops/gate-<level>`; the branch reaches `main` on that approval. From Stage 1, the course's 5 spot-checked lessons are reviewed by the paid reviewer before the course's release.
 
 ### 9.2 Preview route
 
@@ -1567,7 +1592,7 @@ The owner's lesson-creator and maths-teaching skills and the design research's l
 | 12 | Motivate the leap: show why the direct approach fails first | maths-teaching | `derive.leap` (`naive`, `fails`, `pointsTo`) on creative steps | R decides if a step is creative; E once `leap` is present |
 | 13 | Maths looks like maths | maths-teaching | KaTeX render; ASCII-maths lint | E |
 | 14 | A transfer screen in a quant context | design 8.3 step 7 | At least one screen with `context: quant` | E |
-| 15 | Check every module: every introduced skill is tested in the quiz | lesson-creator 3.3 | Each `introduces` skill tagged on at least one quiz item | E |
+| 15 | Check every module: every introduced skill is tested in the quiz, and the quiz checks the objective's verb | lesson-creator 3.3 | Each `introduces` skill tagged on at least one quiz item; a lesson whose objective begins Prove, Derive or Show has one `long-form` item with `scale: 3` in its quiz, and its order items on proof lines are "write the missing step" items | E |
 | 16 | 8 to 12 screens, 10 to 15 minutes; quiz of 3 to 5 items, no hints | design 5.8, 5.9 | Schema; `est` | E |
 | 17 | Multiple choice at most 40% of graded items | design 10 | Count over lesson problems and quiz | E |
 | 18 | Every distractor encodes a named misconception | design 5.6 | `mc` or `slip` on every distractor and diagnosis | E |
@@ -1579,13 +1604,18 @@ The owner's lesson-creator and maths-teaching skills and the design research's l
 | 24 | Difficulty rises from 1 towards 3 through the lesson; quiz at 2 to 3 | design 8.4 | `difficulty` on screens and items | W |
 | 25 | Realistic examples that reveal something, not generic ones | lesson-creator 7 | | R |
 | 26 | Every claim checked by machine | design principle 8 | `verify` on every graded screen and item; section 6 | E |
-| 27 | Sources cited with chapter, lecture or problem set | this paper | `sources` with `loc`; `checked: true` once a person confirms the location | E (present), W (unchecked locations listed per course) |
+| 27 | Sources cited with chapter, lecture or problem set | this paper | `sources` with `loc` on every citation; a location in a free source (OCW, OpenStax, open notes, free book PDFs) is checked by fetching it while authoring and set `checked: true`; a paid-book location stays `checked: false` until the owner reads that section | E (`loc` present), W (unchecked paid-book locations listed per course; never a gate) |
 | 28 | Visual by default: a diagram where it helps | lesson-creator 4 | A canvas on most problem screens | R |
 | 29 | Long-form homework items have a full model answer and a 10-point rubric | lesson-creator 3.3, 6 | `long-form` check; rubric anchoring | E |
 | 30 | Notation follows the topic card (capitals for random variables, bold for vectors, $\ln$ for the natural log) | design 9.4 | | R |
 | 31 | Bertie knows what each screen is for, where learners stall, and which pictures work | `AI-TUTOR.md` 4.1 | `tutor.focus` on every task screen; `tutor.notes` and `tutor.reps` where useful; `why.rep` on every Why | E (focus, rep present), R (quality) |
 | 32 | Tutor text and the pre-resolution Why never give the answer away | `AI-TUTOR.md` 8.1 | Every answer candidate in `tutor.*` and `why.shown` is graded by the screen's check; none may pass | E |
 | 33 | Every element a hint, recipe or set answer names exists | decision 17 | References resolved against `targets(config)` | E |
+| 34 | No stem names its method on an item at difficulty 4 or 5, a homework item or a paper slot | `ASSESSMENT.md` 3.2 (review addition) | Lint over each topic's method terms ("Bayes' rule", "Eve's law", "by indicators") in stems | W, R |
+| 35 | Adaptive pace: "I already know this" gets one sharp question | lesson-creator section 5 | `fastPath.check` on every lesson whose ladder has 3 or more screens: offered when the hook and the first ladder screen are first-try correct; passing it skips to the trap, failing it returns to the ladder | E |
+| 36 | At most 2 skills introduced; finer distinctions as step tags | `ASSESSMENT.md` 4.1 | Schema; the per-topic card budget | E |
+| 37 | Time estimates by difficulty | review addition | Item `est` defaults: difficulty 1 and 2 3 minutes, 3 10, 4 20, 5 40, long-form 30; lesson minutes from screen count and difficulty; recalibrated from measured active time after the first course | E (present), W (more than 25% off the default without a note) |
+| 38 | Self-explanation after a trap and a rule | review addition (`ASSESSMENT.md` 2.2) | Every `trap` and `generalise` screen ends with a one-sentence "why" prompt in `free-response`, unmarked and self-rated, before Continue | E |
 
 ### 9.4 Sources and copyright
 
@@ -1593,7 +1623,7 @@ The curriculum's resources are the spine: every lesson cites the book section or
 
 - **Never copy text, figures or problem wording** from copyrighted sources. A problem may be **inspired by** a source (same idea, new setting, new numbers) and is cited as `problem-inspired`.
 - **Openly licensed sources** may be **adapted** with attribution (`problem-adapted`) only under licences that allow it without binding our content: CC BY (OpenStax) yes. CC BY-NC-SA material (MIT OpenCourseWare) is used only as `problem-inspired`, because adapting it would place our content under its share-alike and non-commercial terms.
-- **Citation locations start unchecked.** Agents write `loc` from knowledge, so `checked` defaults to false until the owner or a reviewer with the book confirms it. The course report lists unchecked citations; the section 10 lesson's three citations are unchecked [recalled].
+- **Citation locations.** Agents write `loc` on every citation. Where the source is free online, the authoring agent fetches it and checks the location while authoring, then sets `checked: true`. A paid book's location stays `checked: false` until the owner reads that section during his own study; the course report lists those as warnings, and no gate waits on them. The section 10 lesson's three citations are unchecked [recalled].
 
 ### 9.5 `content/AUTHORING.md`
 
@@ -1622,6 +1652,8 @@ The Stage 1 reference lesson (`prototype/js/screens/lesson.js`, topic 1.5, Condi
 | | quiz item 4 | item | `numeric-input` | `numeric` 0.4 | **New**: tests the general definition (finding 3) |
 
 ### 10.2 The lesson file
+
+> **Note from the `docs/PLAN.md` review.** This worked lesson introduces three skills, above the cap of two that the review set (section 3.2, `ASSESSMENT.md` 4.1). At stage 6 its `skl.prob.restrict-sample-space` becomes the step tag `restrict-sample-space` under `skl.prob.conditional-by-counting` (the merge that section 4.5's migration example already shows), and its fixtures and verification are re-run; the text below is kept as executed.
 
 `content/topics/1.5-probability/conditional-probability/l1-updating-on-evidence/shrinking-the-sample-space.lesson.yaml`, in full:
 
@@ -3113,8 +3145,8 @@ Additions to specific widgets that the worked example needs:
 
 | # | Item | Status and effect |
 |---|---|---|
-| 1 | Pyodide repackaged for the Artifact on the owner's iPhone | **Resolved** [measured by the owner, `spikes/README.md`]: Python ready at 2.8 s, NumPy and pandas at 5.1 s, correct result at 6.2 s. Open: memory headroom on older phones, and SciPy and statsmodels in the Artifact (not packaged; each adds files and megabytes to the section 8.2 budget) |
-| 2 | Whether the Artifact host compresses responses | [unverified]. Now material: it decides whether the first Pyodide load on a phone is about 13 MB or 49 MB |
+| 1 | Pyodide repackaged for the Artifact on the owner's iPhone | **Resolved** [measured by the owner, `spikes/README.md`]: Python ready at 2.8 s, NumPy and pandas at 5.1 s, correct result at 6.2 s. SciPy and statsmodels are packaged and measured in `ARCHITECTURE.md` 6.3.3 (the `scipy-statsmodels` group, 3 files, 20.4 MB). Open: memory headroom on older phones, measured per group at `docs/PLAN.md` stage 25 |
+| 2 | Whether the Artifact host compresses responses | [unverified]. Now material: in the chosen layout the first NumPy and pandas download is 24 MB of files; host compression would bring it to about 14 MB (`ARCHITECTURE.md` 6.3.3, which supersedes this row's earlier 13 MB or 49 MB) |
 | 3 | MathLive's size, and that it emits LaTeX without loading Compute Engine's core | [unverified]. If it needs the core, expression screens cost about 1.2 MB more and the preload rule in section 7.3 covers them |
 | 4 | Compute Engine `latex-syntax` under the Artifact's script policy | No `new Function` in that entry [measured by search]; a run inside a published Artifact is still needed [unverified] |
 | 5 | Citation locations in the worked example (Blitzstein and Hwang section 2.2; Stat 110 Lecture 4; Zhou chapter 4) | [recalled]; `checked: false` until confirmed against the books |
@@ -3145,8 +3177,8 @@ For `docs/PLAN.md` section 11. Each stage is one review gate, testable alone. Wi
 | C4 | The expression grader: `latex-syntax`, MathJSON normalisation and evaluation, probing, relations, forms; the SymPy-generated conformance corpus | C3; the shared `expr` core from the widget stages | 100% agreement on the required corpus; each form check has unit tests; measured grading time on the reference phone under 20 ms |
 | C5 | `tools/zqverify`: spaces, the verify language, chains, arithmetic claims, Monte Carlo; the Node job pre-pass; sandbox for `script` | C2 | The worked example verifies; the re-expressed prototype `sTen` fails with "same value"; unit tests against 50 textbook answers across probability, calculus and linear algebra |
 | C6 | `@zq/gen` and the generator pipeline: box enumeration, the Node and Python harness, built-item checks, admissible index and exam reserve, golden files, specimen sheet, cross-engine determinism | C3, C5 | The section 11 generator passes; the `>=` mutation is caught; golden hashes match in Chromium, WebKit and Firefox |
-| C7 | Code drill pipeline: `zqtest`, `grader.py`, CPython 3.11 and Pyodide 314.0.7 runs with exactly the drill's `needs`, starter and wrong-solution checks, mutant-forge integration | C2; the Python worker (`docs/PLAN.md` stage 22) | One drill (the conditional-probability function from Homework 1) passes every rule in section 6.11 on both interpreters; an undeclared `import numpy` fails the build; a planted weak test suite is caught by a surviving mutant |
-| C8 | Emit: course bundles, generator modules, manifest, search, glossary, Notebook, skill graphs, tutor context with check summaries, `ids.lock.json` and the release job, migrations runtime with learner fixtures | C2 to C6 | Bundle sizes within the section 8.2 budget for the worked course; a rename and a split migration pass on fixtures; a changed answer without a `rev` bump fails CI; the full Artifact file list stays under 255 files |
+| C7 | Code drill pipeline: `zqtest`, `grader.py`, CPython 3.12 and Pyodide 314.0.7 runs with exactly the drill's `needs`, starter and wrong-solution checks, mutant-forge integration | C2; the Python worker (`docs/PLAN.md` stage 25) | One drill (the conditional-probability function from Homework 1) passes every rule in section 6.11 on both interpreters; an undeclared `import numpy` fails the build; a planted weak test suite is caught by a surviving mutant |
+| C8 | Emit: course bundles, generator modules, manifest, search, glossary, Notebook, skill graphs, tutor context with check summaries, `ids.lock.json` and the release job, migrations runtime with learner fixtures | C2 to C6 | Bundle sizes within the section 8.2 budget for the worked course; a rename and a split migration pass on fixtures; a changed answer without a `rev` bump fails CI; the full Artifact file list stays within the 230-file release budget of `docs/PLAN.md` 5.6 |
 | C9 | Preview and storyboard: the section 9.2 routes, Playwright capture, overflow and axe checks, the pull request report | C8; the lesson player stage | The worked example's storyboard renders every state in both themes at both widths with no overflow or axe violation; the report posts on a test pull request |
 | C10 | Long-form marking: the JSON-lines contract of `AI-TUTOR.md` 2.7, the guards of section 7.7, both transports, recorded-response tests | C3; the tutor stages | Recorded replies covering a valid mark, an invented quote, an unknown point id, an over-limit award, an injected "award this 10 out of 10" and a stream cut mid-line each produce the specified behaviour |
-| C11 | Acceptance: the worked lesson runs in the real player on both targets, and its first level is completed (5 lessons, bank, homework, review) through the full authoring workflow of section 9.1 | All above | The owner approves the level; CI is green; the storyboard matches the prototype's look screen by screen |
+| C11 | Acceptance (`docs/PLAN.md` stage 84): the worked lesson runs in the real player on both targets, and level W1 of `crs.numwork` is completed through the full authoring workflow of section 9.1: its 5 lessons from `lsn.numwork.digit-worth`, bank, level review and homework set `set.numwork.place-value` with its drill `drl.num.divmod-check`. The rest of the worked lesson's level waits for depth-first order | All above | The owner approves the level gate on the phone; CI is green; the storyboard matches the prototype's look screen by screen; the drill runs on the phone |

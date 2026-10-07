@@ -589,7 +589,9 @@ These are proposals too. `assessment.md` 2.9 already shows each fits the exit in
 
 ## 5. What the proposals ask of the engine, the widget library and the runtimes
 
-The owner's priority is the engine and widget library first. This section is so the library is designed for the curriculum as it may become, not only as it is. Widget names in the "Reuses" column come from the six catalogues in this folder; "New" names are proposals for those catalogues' owners [our choice]. Runtime tags are `content-format.md` decision 18's (`micropython-ok`, `ulab-ok`, `pyodide-core`, `web`).
+The owner's priority is the engine and widget library first. This section is so the library is designed for the curriculum as it may become, not only as it is. Widget names in the "Reuses" column come from the six catalogues in this folder; "New" names are proposals for those catalogues' owners [our choice].
+
+> **Revised by the `docs/PLAN.md` review, 7 October 2026.** (1) The runtime tags this section used (`micropython-ok`, `ulab-ok`, `pyodide-core`, `web`) are void: Pyodide runs on both targets, drills declare `needs`, and placement is decided at run time; read `pyodide-core` as "runs on both targets" and `web` as "needs a group the Artifact build may not ship". (2) The Python budget is 75 MB within a 200 MB, 230-file release (`docs/PLAN.md` 5.6), not 120 MB, and load groups are measured on the phone at `docs/PLAN.md` stage 25, not E8. (3) Accepting proposals is not free of build work: `docs/PLAN.md` 12 lists, per proposal, the new widgets, the modes added to P0 widgets (P2 adds modes to `path-simulator` and `markov-chain`), the Python groups (P4 needs a new `optimisation` group), the file budget and the tutor load (P7, P14 and P16 make proof marking weekly), and sets the deadline: stage 44 for P2, stage 54 for the rest, stage 25 if P4's group is to be measured on the phone. (4) `float-inspector` and `descent-lab` are already P0 in `docs/WIDGETS.md`. (5) Section 5.4 adds the review's 2.1b and A1.
 
 ### 5.1 Widgets
 
@@ -625,7 +627,7 @@ The owner's priority is the engine and widget library first. This section is so 
 
 ### 5.3 Python packages per proposal (new)
 
-From the Pyodide 314.0.7 lock file (357 packages, Python 3.14.2) [measured], set against `arch-decision.md`'s Artifact budget (Python within 120 MB, load groups `numpy-pandas`, `scipy-statsmodels`, `sklearn`, `matplotlib`, `testing`; which groups fit is measured at stage E8 on the owner's phone).
+From the Pyodide 314.0.7 lock file (357 packages, Python 3.14.2) [measured], set against `docs/ARCHITECTURE.md`'s Artifact budget (Python within 75 MB, load groups `numpy-pandas`, `scipy-statsmodels`, `sklearn`, `matplotlib`, `testing`; which groups fit is measured at `docs/PLAN.md` stage 25 on the owner's phone).
 
 | Package | In Pyodide 314.0.7 | Load group | Proposals that use it | Consequence |
 |---|---|---|---|---|
@@ -640,6 +642,13 @@ From the Pyodide 314.0.7 lock file (357 packages, Python 3.14.2) [measured], set
 | PyTorch, JAX | No | | P14 | NumPy networks in the browser; course 2 off-device |
 
 ---
+
+### 5.4 Review additions (`docs/PLAN.md` 12 decision 2)
+
+| Addition | Hours | Placement | Widgets | Python | Why |
+|---|---|---|---|---|---|
+| 2.1b Deep learning core | 120 | New Stage 2 item after 2.1, all tracks | `autodiff-tape`, `attention-lab` (from P14), a training-curve scene | `numpy-pandas`: micrograd, an MLP and a character-level transformer at toy scale in NumPy on Pyodide | The project's aim includes ML-lab-calibre thinking; the counted path holds two neural-network levels. Spine: Prince, *Understanding Deep Learning*, chapters 1 to 12; code: Karpathy's *Neural Networks: Zero to Hero* re-implemented in NumPy; problems: MIT 6.7960. A toy double-descent replication is offered as a 3.1 option |
+| A1 Real analysis | 60 | After 1.3, researcher and ML research tracks | `epsilon-delta`, `derivation-steps`, `proof-builder` (P7) | none | Research interviews and ML theory assume proof-based analysis; Abbott, *Understanding Analysis*, chapters 1 to 6, taken from P7 or from P16's 120 h of analysis |
 
 ## 6. Resource canon
 

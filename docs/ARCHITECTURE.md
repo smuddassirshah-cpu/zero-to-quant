@@ -10,6 +10,25 @@
 > | 5.9 `CppRuntime` | In-browser Clang or the proxy to Compiler Explorer | In-browser Clang only; the proxy serves the tutor alone |
 > | 6.2.2, 14 item 1 | Entry as `<script type="module">`; open question | Classic inline bootstrap with dynamic `import()`, the measured path |
 > | 13 | Stage names E0 to E10 | Kept; `docs/PLAN.md` section 11 maps them to its stages |
+> | 0.1 decision 7, new decision 36, 4.2, 4.5, 5.3, new 5.14, 8.1.1, 12 risk 7 | Four tiers; about 100 widgets | Five tiers with `scene`: composites written as data over primitives plus a pure model (`docs/PLAN.md` section 3.2, conflict 1) |
+> | 4.3 | `@zq/mathcore` without `dmath`; `@zq/graders` without the leak extractor | `dmath` in `@zq/mathcore` from the first engine stage; `leak.ts` in `@zq/graders` (`docs/PLAN.md` conflicts 6 and 7) |
+> | 5.10.3, 6.3.1 | No fetch timeouts; no rule for a stalled Python load | `AbortSignal.timeout` on own-file fetches; a load silent for 30 s is a network failure (`docs/PLAN.md` 8.1) |
+> | 4.2 | `src/ui/bertie/` without `markup.ts` | `markup.ts` added (`BERTIE.md` decision 19) |
+> | 6.4.2 | `connect-src` silent on third-party APIs | No third-party origin: the GitHub and Codeforces calls are withdrawn (`docs/PLAN.md` conflict 5) |
+> | 13 | Widget waves beside E5 to E10; content from the end of E6 | `docs/PLAN.md` section 11 orders the build: engine, Python, every P0 widget batch, tutor, progress, assessments, builds, then content |
+
+> **Revised by the `docs/PLAN.md` review, 7 October 2026** (its section 13 lists the findings). Section numbers are unchanged.
+>
+> | Where | Was | Now |
+> |---|---|---|
+> | 4.3, 13 | The services widgets' numbers come from had no stage | `docs/PLAN.md` stages 3a to 3f build `@zq/mathcore` numerics and `stats-core` and `@zq/models` data, code, algo and git, each with Python or `git` parity against the pinned versions |
+> | 5.7.1, 5.7.3 | Hints open after the lesson's first Check | Per screen: after this screen's first Check or 90 s of active input; `trap` screens after a first Check only |
+> | 6.2.6, decision 17 | Drift, garbage collection and rollback read the ignored `dist/artifact/publish-plan.json`; no resume rule; the read-before-publish rule unaddressed | A committed release ledger per release (`releases/<release>.json`) whose hash goes into `meta/release`; the session rebuilds and verifies every file against it; a resume rule; the provenance question goes to Anthropic (`docs/PLAN.md` 12 decision 7) |
+> | 6.3.3, risk 16 | One fallback (the spike's layout) for both a behaviour failure and a policy objection | F1 for behaviour (the spike's layout plus `testing`, with raised file limits) and F2 for policy (no Python in the Artifact) (`docs/PLAN.md` 4.3) |
+> | 6.5 | A new preview Artifact per lesson | One long-lived preview Artifact, republished per gate, results in its `db` at `ops/gate-<stage>` (`docs/PLAN.md` stage 25) |
+> | 8.1, 8.3 | Baselines for every screen, widget state and storyboard, committed | Baselines for widget fixture states (390 px, both themes) and app screens (both widths and themes) only, on an orphan `visual-baselines` branch with a budget; storyboards are pull request artefacts; nightly runs deterministic tutor graders only |
+> | Decision 31, 3.2 | CPython 3.11 floor; timeouts there undecided; Python pins unlisted | CPython 3.12 floor (`sys.monitoring`, and SciPy 1.18.0 needs 3.12 [measured]); `tools/py/uv.lock` pins the CI packages to Pyodide's versions |
+> | 6.2.3, decision 29, risk 5, 14 item 10 | Page-level `import()` unverified; generator modules per course; "67 MB against 105 MB"; the `db` cap probe in A2 | Measured; per topic; 75 MB; the bounded probe of `docs/PLAN.md` stage 2 |
 
 Working paper for the Stage 2 Blueprint, 6 October 2026. Scope: the stack, the module tree, every interface between the engine, the widget library, the content, the tutor and the two runtime targets, the two builds, versioning and migrations, testing and CI, developer experience, risks and the engine's build stages. Input to `docs/PLAN.md` sections 3, 4, 6, 8, 10 and 11. With `CONTENT-FORMAT.md`, `AI-TUTOR.md`, `ASSESSMENT.md`, `BERTIE.md` and the six widget catalogues, it is meant to leave Phase 2 with no architectural decision to make.
 
@@ -42,7 +61,7 @@ Working paper for the Stage 2 Blueprint, 6 October 2026. Scope: the stack, the m
 | 4 | TypeScript | **6.0.3** (16 April 2026) | 7.0.2, the native compiler (latest) | typescript-eslint 8.71.1 declares `typescript >=4.8.4 <6.1.0` [measured]; type-aware lint rules are part of the agent guard rails. Move when typescript-eslint supports 7 |
 | 5 | Widget contract | **A pure logic module (Node-safe), a Preact view and a build-time schema per widget; the engine's `WidgetHost` implements the lifecycle once** (lock, marks, highlight, annotate, ghost preview, reset, reveal, serialisation, timers, announcements) | Each widget implements a 20 to 25 method instance interface (`widgets-stage0.md` 1.1, `widgets-calc-linalg.md` 2.2) | The prototype's defects were in machinery: timers, state and XP. Writing the machinery once and keeping widget code to pure functions plus a view makes 100 widgets testable in Node and leaves agents nothing stateful to get wrong |
 | 6 | Widget state | **Two parts: `a` (answer state, graded and saved) and `v` (view state: zoom, step, time cursor)** | One state object | Show-why may tween only `v`, so "show-why never edits answer state" (calc-linalg 2.6) becomes a type rule; Try again restores `v` from a snapshot |
-| 7 | Library tiers | **Primitives and inputs (about 25), composites with their own view (about 75), presets (the rest: configuration plus pure functions, no view, expanded at compile time)** [our estimate] | Every catalogue entry as a module with a view | The six catalogues name 332 distinct widget ids [measured]; the owner expects 60 to 100 widgets. A preset costs a config transform and a test, not a component |
+| 7 | Library tiers | **Five tiers: primitives (29) and inputs (8), hand-written; scenes (about 200, P0 125): composites written as data over primitives plus a pure model, turned into widget modules by the engine (decision 36, section 5.14); bespoke composites with their own view (about 50, P0 22); presets (23): configuration over a base widget, expanded at compile time** (revised for `docs/PLAN.md`; `docs/WIDGETS.md` 0.2 gives the 314 ids) | Every catalogue entry as a module with a view; this paper's first estimate of about 25, 75 and the rest | The library has 314 ids, 254 of them composites. A preset costs a config transform and a test; a scene costs a layout, a model function and fixtures, not a component; only interactions no primitive offers get a view of their own |
 | 8 | Code splitting | **One lazy chunk per widget cluster (22 clusters); modules shared by two or more clusters (primitives, inputs, render helpers, `@zq/mathcore`) go to the `w-core` cluster chunk, never to the entry; two content files per course (content-format decision 13); lazy chunks for KaTeX, MathLive, the Compute Engine parser and MiniSearch** | A chunk per widget; one bundle; shared modules merged into the entry | A chunk per widget is about 100 more files against 255 per publish and 511 per version [sourced]; one bundle makes the first load pay for Stage 3; merging shared widget code into the entry would move every primitive used by two clusters into the first load, and the entry budget (section 9.2) would fail as the library grows |
 | 9 | CSS | **Design tokens as custom properties, CSS Modules per component, one stylesheet per target (`cssCodeSplit: false`)** | A CSS file per chunk; CSS-in-JS | Saves about 25 files; widget styles are present before a lazy widget renders, so no unstyled flash; one own-file stylesheet is within the Artifact's style policy [sourced] |
 | 10 | Runtime validation | **Classic `zod` 4.6.5 only in workers, Node and CI; `zod/mini` on the main thread** | Classic zod everywhere | A one-object schema bundles to 92 KB gzipped with classic zod and 6.4 KB with `zod/mini` [measured]. Course bundles, imports and remote events are validated in the data worker, which is where classic zod lives |
@@ -52,7 +71,7 @@ Working paper for the Stage 2 Blueprint, 6 October 2026. Scope: the stack, the m
 | 14 | Randomness | **Philox4x32-10 counter-based generator in `@zq/mathcore`**, addressed by (seed, stream, index) | mulberry32 (prototype); xorshift | Calc-linalg decision 9 needs addressable draws; Philox uses only 32-bit integer multiplies, so every engine gives identical bits |
 | 15 | Python | **Pyodide 314.0.7 on both targets: one worker, two loaders** (native on the web; the split-archive loader in the Artifact) | MicroPython (dropped by the owner); a second worker per target | The owner's measured iPhone result (spike `pyodide-in-artifact`); one grader and one test protocol everywhere |
 | 16 | Python files in the Artifact | **Every published file is genuinely the type its extension names. Each load group's archive members ship as JSON parts of at most 8 MB holding every member's original deflate-compressed bytes as base64; the worker rebuilds each archive in memory from those bytes (no recompression), Python's `zipfile` checks every member's CRC-32 on extraction, and our manifest's SHA-256 checks every part** | Concatenated side modules served as `.wasm` (this paper's first draft); one `.wasm` per side module (the spike's layout); wheels renamed to a served extension | A concatenation of side modules is not WebAssembly, so serving it as `.wasm` sidesteps the host's served-type list, which `widgets-programming.md` 13.1 already refused for renamed archives without the platform's confirmation. The spike's layout needs 276 side-module files for the scientific stack [measured, section 6.3.3], over 255 per publish. The whole stack is 153 MB raw, over any Python budget that leaves room for content, but about 67 MB in 15 files in this layout [measured] |
-| 17 | Artifact release | **Content-addressed files; a generated publish plan in batches (content and Python first, the page last, then garbage collection); budgets per release, for the retained version and for the peak (section 6.2.5)** | Ad hoc publishes | A full turnover must fit 511 files per version with the old release still live, and every app release renames about 40 chunks because hashed import specifiers cascade |
+| 17 | Artifact release | **Content-addressed files; a committed release ledger per release, its hash in `meta/release`; a publish plan in batches derived from the new and previous ledgers (content and Python first, the page last, then garbage collection), resumable from the first step whose effect is not visible; budgets per release, for the retained version and for the peak (section 6.2.5)** | Ad hoc publishes; a plan kept only in ignored build output | A full turnover must fit 511 files per version with the old release still live, and every app release renames about 40 chunks because hashed import specifiers cascade |
 | 18 | Web offline | **vite-plugin-pwa 2.0.0 with `injectManifest` and Workbox 7.4.1**: app precached, content and Python cached by hash at runtime, per-course "Keep offline" | `generateSW`; a hand-written service worker | Our routing of hashed content, Python and update timing needs code; Workbox gives tested precaching and strategies |
 | 19 | Routing | **Hash routes keyed by content ids; a typed in-house router of about 80 lines** | Path routes; preact-iso; wouter | Neither the Artifact page nor GitHub Pages can rewrite paths; ids are identity (content-format 4.1), display numbers are breadcrumbs |
 | 20 | Test layers | **Vitest 5.0.3 in Node for pure modules; Vitest browser mode on Playwright Chromium for widgets; Playwright 1.63.0 end to end on both targets, the Artifact through a local host emulator with a fake `window.claude`** | jsdom or happy-dom for widgets; Storybook | Widgets need layout, pointer capture and SVG geometry, which DOM emulators lack; the in-app gallery uses the real host |
@@ -64,13 +83,14 @@ Working paper for the Stage 2 Blueprint, 6 October 2026. Scope: the stack, the m
 | 26 | Two tabs on one device | **Web Locks leader election: one writer per device; other tabs read only with "Use here"** | A device id per tab | `ASSESSMENT.md` 13 assumes one writer per device id; two tabs would collide on `seq` |
 | 27 | Telemetry | **None leaves the device; a local ring-buffer log and a "Copy diagnostics" action** | Remote error reporting | Privacy (assessment 15), and the Artifact can reach no other host [sourced] |
 | 28 | Bertie | **The prototype rig ported to TypeScript, mounted imperatively inside a Preact wrapper, sharing `engine/motion/spring.ts`** | Rendering the rig through Preact | The rig writes SVG transforms every frame; that belongs outside the virtual DOM (decision 2) |
-| 29 | Generator modules | **Self-contained ES modules per course, built by the content compiler with esbuild, loaded by dynamic import** | Generators importing the app's hashed chunks | Content and app chunks stay independent; a generator module is plain data in, plain JSON out |
+| 29 | Generator modules | **Self-contained ES modules per topic (21 files), built by the content compiler with esbuild, loaded by dynamic import** | Generators importing the app's hashed chunks | Content and app chunks stay independent; a generator module is plain data in, plain JSON out |
 | 30 | Release coupling | **The app and the content are always built and released together; the page names the content manifest file by its hash (`<meta name="zq-manifest">`), and the manifest is a content-addressed file of its own, not part of the entry chunk** | Independent content releases; the manifest embedded in the entry chunk (this paper's first draft) | One compatibility state to test. With the manifest inside the entry, every content fix renames the entry, and through hashed import specifiers every lazy chunk: about 40 files republished to the Artifact and 1.8 MB re-precached on the web for a typo. Depth-first content means years of content-only releases, so a content release now changes only the page, the manifest and the courses it touches |
-| 31 | Python timeouts | **Two levels: a soft deadline, checked from a `sys.monitoring` callback on backward jumps (every loop iteration) once per 1,000 jumps, raises `ZqTimeout`, a `BaseException` subclass that a learner's `except Exception` cannot swallow; the page's watchdog terminates the worker only when the soft deadline does not fire (a long call inside C code)** | Watchdog only (this paper's first draft); `sys.settrace` line events | Neither target can use Pyodide's interrupt buffer (section 6.3.1). With the watchdog alone, every learner infinite loop costs a worker restart, about 3 to 4 s on the owner's iPhone. `sys.monitoring` exists from Python 3.12 and a raising callback propagates into the monitored code [recalled]; line tracing costs more per line than a jump callback costs per loop iteration [recalled]. Overhead is measured at E8; above 1.3 times on the reference drills, the soft deadline is dropped and the watchdog alone remains |
+| 31 | Python timeouts | **Two levels: a soft deadline, checked from a `sys.monitoring` callback on backward jumps (every loop iteration) once per 1,000 jumps, raises `ZqTimeout`, a `BaseException` subclass that a learner's `except Exception` cannot swallow; the page's watchdog terminates the worker only when the soft deadline does not fire (a long call inside C code)** | Watchdog only (this paper's first draft); `sys.settrace` line events | Neither target can use Pyodide's interrupt buffer (section 6.3.1). With the watchdog alone, every learner infinite loop costs a worker restart, about 3 to 4 s on the owner's iPhone. `sys.monitoring` exists from Python 3.12 and a raising callback propagates into the monitored code [recalled]; line tracing costs more per line than a jump callback costs per loop iteration [recalled]. CI's floor is therefore CPython 3.12, not 3.11 (SciPy 1.18.0, Pyodide's version, also requires 3.12 [measured: `uv pip compile`, 7 October 2026]), and the CI harness wraps every drill run in a subprocess wall-clock limit as an outer guard. Overhead is measured at E8; above 1.3 times on the reference drills, the soft deadline is dropped and the watchdog alone remains |
 | 32 | Artifact update signal | **A `meta/release` document in `db`, written by the release session through `ArtifactData` and read with one `onSnapshot`; `version.json` stays the web target's signal** | `version.json` on both targets | Whether a published page's own-file fetches see later versions is [unverified]; if file paths are version-scoped (the `assets` contract describes one root-relative path that "resolves from every page and version", implying the others do not [inferred]), `version.json` would always report the page's own release |
 | 33 | Compiler access to widgets | **`@zq/compiler` takes a `CompilerRegistry` as a parameter; `tools/zq` builds it from a generated `src/widgets/registry.node.gen.ts` (logic, schema and preset files, no views)** | The compiler package importing `src/widgets` directly | Section 4.5 forbids packages importing `src/`; injection keeps the package testable with a fake registry and keeps views and CSS out of Node |
 | 34 | Single-key shortcuts | **On by default, with a Settings switch "Single-key shortcuts"; never active while focus is in a field or on a control that handles the key itself** | Always on | WCAG 2.2 SC 2.1.4 (level A) requires a way to turn off single-character shortcuts, and this paper claims AA |
 | 35 | Phone text entry | **Numeric and expression answers on touch devices use the in-app keypad and symbol bar (`inputmode="none"`, as the prototype's exam screen does); free text and code keep the system keyboard, with the button row lifted above it through `visualViewport`** | The system keyboard everywhere | The system keyboard covers the Check row on a 390 px phone and offers no fraction or minus keys that match the graders' forms |
+| 36 | Scenes | **A `scene` tier: `defineScene({ init, derive, layout, answer, describe, ... })` in a pure `scene.ts`; bindings are typed paths into answer state, view state, derived values and config; `derive` calls `@zq/models` and `@zq/mathcore`; the generic `SceneView` renders the layout with the primitives' controlled components and memoises every layer that binds only config. A composite is a scene unless it needs free text or code editing, a clock-driven loop, a service with its own state machine, a gesture no primitive offers, or fails the frame budget as a scene** | Every composite with its own view; a declarative dataflow inside content (`docs/WIDGETS.md` decision 4 rejected that, rightly) | About 225 agent-days less for P0 alone (`docs/PLAN.md` 3.2); render discipline (section 2.5) holds by construction; content still holds only configuration |
 
 ### 0.2 What was executed
 
@@ -258,7 +278,7 @@ Fonts: Archivo, Besley and Source Code Pro (SIL Open Font Licence) through Googl
 | `@types/node` | 22.20.5 | MIT | Node types matching the runtime |
 | `yaml` | 2.9.1 | ISC | Content parsing (content-format 2.3) |
 | `wrangler`, `@anthropic-ai/sdk`, `@cloudflare/workers-types` | 4.147.0, 0.131.0, 5.20261006.1 | MIT or Apache-2.0 | Tutor proxy (`AI-TUTOR.md` 6.3) |
-| Python via `uv` | 3.11 and 3.14 for CI drill runs; 3.12 for `zqverify` (content-format 2.5) | PSF | Learner floor (programming decision 16), Pyodide parity, verifier |
+| Python via `uv` 0.8.17 | 3.12 for CI drill runs and `zqverify`, with Pyodide's 3.14 beside it; `tools/py/uv.lock` pins NumPy 2.4.6, pandas 3.0.2, SciPy 1.18.0, statsmodels 0.14.6, scikit-learn 1.8.0, matplotlib 3.10.8, SymPy 1.14.0, pytest and hypothesis (resolves on 3.12 [measured]) | PSF | Learner floor (programming decision 16, raised from 3.11 by the `docs/PLAN.md` review), Pyodide parity, verifier |
 | Playwright container | `mcr.microsoft.com/playwright:v1.63.0-noble` [recalled tag format] | Apache-2.0 | Visual baselines render in one pinned image |
 
 ### 3.3 Browser support
@@ -395,12 +415,18 @@ src/                                   [TypeScript, TSX, CSS Modules]
 │   ├── registry.gen.ts                generated: type@v -> cluster loader (CI checks it is current)
 │   ├── registry.node.gen.ts           generated: logic, schema and preset modules only, for tools/zq (decision 33)
 │   ├── clusters/<cluster>.ts          generated: one entry per cluster, the lazy chunk boundary;
-│   │                                  imports logic, View and preset runtime parts, never schema.ts
+│   │                                  imports logic and View (a scene's scene.ts with SceneView) and
+│   │                                  preset runtime parts, never schema.ts
 │   ├── primitives/<type>/             logic.ts, schema.ts, View.tsx, view.module.css,
 │   │                                  fixtures.ts, logic.test.ts, view.browser.test.ts,
 │   │                                  states/v<n>.json (one per past stateVersion)
 │   ├── inputs/<type>/                 same shape
-│   ├── composites/<cluster>/<type>/   same shape
+│   ├── scene/                         the scene layer (section 5.14): define.ts (SceneDef -> WidgetModule),
+│   │                                  bind.ts (typed paths), SceneView.tsx, layout.tsx (row, column, stack,
+│   │                                  grid, overlay, embed), nodes.ts (primitive name -> controlled component)
+│   ├── scenes/<cluster>/<type>/       scene.ts (pure: data and functions), schema.ts, fixtures.ts,
+│   │                                  scene.test.ts, states/v<n>.json; no View.tsx, no CSS
+│   ├── composites/<cluster>/<type>/   bespoke composites only; same shape as primitives
 │   └── presets/<cluster>/<type>.ts    preset: base widget, config transform, predicates, recipes
 ├── screens/                           one folder per screen: View.tsx, load.ts, copy.ts, *.module.css
 │   ├── today/ learn/ course/ lesson/ review/ practice/ redo/ homework/ exam/ drill/ daily/
@@ -411,7 +437,7 @@ src/                                   [TypeScript, TSX, CSS Modules]
 │   │                                  Toast, ProgressBar, Dots, Chip, VerdictChip, Tangram, Icon,
 │   │                                  StatBadge, Tabs, Switch, TextField, Keypad, SymbolBar, Table,
 │   │                                  art.ts (course art drawn in code, from prototype/js/art.js)
-│   └── bertie/                        geometry.ts, poses.ts, bertie.ts, bertie.css, Bertie.tsx
+│   └── bertie/                        geometry.ts, poses.ts, markup.ts (DOMParser), bertie.ts, bertie.css, Bertie.tsx
 ├── sw/
 │   └── sw.ts                          web service worker (Workbox), web build only
 ├── styles/                            tokens.css (from prototype/css/tokens.css), base.css,
@@ -428,20 +454,23 @@ packages/                              [TypeScript, no DOM unless stated]
 │                                      platform interfaces, events, RPC messages (section 5)
 ├── mathcore/       @zq/mathcore       pure maths shared by widgets, graders and generators:
 │                                      rng (Philox4x32-10), rational (BigInt), num-parse, expr
-│                                      (calc-linalg 2.3 grammar, no eval), sample, quad, ode,
+│                                      (calc-linalg 2.3 grammar, no eval), dmath (deterministic exp,
+│                                      log, log1p, expm1, tanh, pow, sin, cos), sample, quad, ode,
 │                                      roots, linalg, stats, units
 ├── content-schema/ @zq/content-schema zod schemas and inferred types        (content-format 3.2)
 ├── content-compiler/ @zq/compiler     compile(project, { registry: CompilerRegistry }); the CLI
 │                                      entry is tools/zq (decision 33)        (content-format 8)
 ├── graders/        @zq/graders        pure graders and the predicate registry interface
-│                                      (content-format 7); imports @zq/mathcore only
+│                                      (content-format 7); leak.ts, the candidate-answer extractor
+│                                      shared by the compiler's tutor-field lint and the tutor's leak
+│                                      probe; imports @zq/mathcore only
 ├── gen-kit/        @zq/gen            defineGenerator, phrases, exact values  (content-format 5)
 ├── models/         @zq/models         pure domain models shared by widgets, workers, generators and CI: algo, code,
 │                                      data, git, markets, ml (docs/WIDGETS.md 3); one entry point per domain
 └── eslint-plugin-zq/                  the custom lint rules (section 10.4)
 ```
 
-`@zq/graders`, `@zq/mathcore` and every widget's `logic.ts` and `schema.ts` run unchanged in Node (compiler, CI replay) and in the browser. A CI test imports all of them in plain Node with no DOM globals defined.
+`@zq/graders`, `@zq/mathcore` and every widget's `logic.ts` and `schema.ts` run unchanged in Node (compiler, CI replay) and in the browser. A CI test imports all of them in plain Node with no DOM globals defined. The numeric services of `@zq/mathcore` (`linalg`, `quad`, `ode`, `roots`, `units`, `sample`, `stats`) and the `@zq/models` domains `data`, `code`, `algo` and `git` are built in `docs/PLAN.md` stages 3a to 3f, each with Python or `git` parity against the versions in `tools/py/uv.lock`, before the widget batches that use them; `markets` and `ml` are built with their P1 and P2 waves.
 
 ### 4.4 `tools/` and `tests/`
 
@@ -484,8 +513,9 @@ Enforced by `no-restricted-imports` per directory and by `knip`. A higher row ma
 | `app/`, `screens/` | `engine/`, `widgets/registry`, `tutor/`, `ui/`, `platform/types`, packages | another screen's internals |
 | `tutor/` | `engine/` (player state, widget describe), `ui/`, packages | `screens/`, `platform/*` implementations |
 | `engine/` | `ui/`, packages, `platform/types` | `screens/`, `tutor/` (the player receives `TutorService` by injection), `platform/web`, `platform/artifact` |
-| `widgets/` | `engine/widgets/api`, `engine/interaction`, `engine/render`, `engine/motion`, `ui/`, `@zq/mathcore`, `@zq/contracts` | `platform/`, `app/`, `tutor/`, `engine/player`, `engine/progress`, `zod` (classic) |
-| `widgets/**/logic.ts` | `@zq/mathcore`, `@zq/contracts`, its own folder | anything with DOM, Preact, CSS |
+| `widgets/` | `engine/widgets/api`, `engine/interaction`, `engine/render`, `engine/motion`, `ui/`, `@zq/mathcore`, `@zq/models`, `@zq/contracts` | `platform/`, `app/`, `tutor/`, `engine/player`, `engine/progress`, `zod` (classic) |
+| `widgets/**/logic.ts`, `widgets/scenes/**/scene.ts` | `@zq/mathcore`, `@zq/models`, `@zq/contracts`, its own folder; a scene also `widgets/scene/define.ts` and the primitives' `logic.ts` | anything with DOM, Preact, CSS |
+| `widgets/scene/` (`SceneView`, `nodes.ts`) | primitives' and inputs' controlled components, the engine layers `widgets/` may import | composites' internals other than their exported controlled component |
 | `ui/` | `engine/motion`, `@zq/contracts` | `engine/` otherwise |
 | `platform/web`, `platform/artifact` | `platform/shared`, packages | `engine/` beyond types |
 | `packages/*` | each other per their manifests | `src/` (the compiler receives widgets through `CompilerRegistry`) |
@@ -630,7 +660,7 @@ A widget is a folder with five source files, two test files and a `states/` fold
 
 ```ts
 // @zq/contracts/src/widget.ts
-export type WidgetTier = 'primitive' | 'input' | 'composite' | 'preset';
+export type WidgetTier = 'primitive' | 'input' | 'scene' | 'composite' | 'preset';   // 'scene': section 5.14
 export type ClusterId =
   | 'core' | 'number' | 'algebra' | 'geometry' | 'precalc' | 'computing'
   | 'calculus' | 'linalg' | 'stochastic' | 'probability' | 'statistics' | 'timeseries'
@@ -910,7 +940,8 @@ export interface PlayerState {
   overlay: Overlay;
   nudge: TokenList | null;                              // shown under the input; costs no attempt
   gen: number;                                          // grade generation; stale results and show-why compare against it
-  firstCheckDone: boolean;                              // hints open after the first Check in a lesson (design research 5.5)
+  checked: Record<LocalId, number>;                     // Checks per screen; hints open after this screen's first Check,
+  activeInputMs: Record<LocalId, number>;               // or after 90 s of active time with an input (trap screens: first Check only)
   tally: Record<LocalId, Tally>;
   quiz: Record<ContentId, { verdict: 'correct' | 'not-yet'; whyOpened: boolean }>;
   complete: null | 'celebrate' | 'rest-day' | 'streak' | 'next';
@@ -1009,7 +1040,7 @@ export interface ItemPolicy {
 
 | Policy | Feedback | Attempts | Hints | Why | Solution | Redo | Source |
 |---|---|---|---|---|---|---|---|
-| Lesson screen | immediate | unlimited | after first Check | after grade | after two | revealed | design research 5.4, assessment 0.1 decision 11 |
+| Lesson screen | immediate | unlimited | after this screen's first Check or 90 s of active input (`trap`: first Check only) | after grade | after two | revealed | design research 5.4, assessment 0.1 decision 11, `docs/PLAN.md` 6.5 |
 | Lesson quiz | immediate | 1 | none | after grade | after grade | wrong first try | design research 5.9 |
 | Practice | immediate | 1 | only in help-enabled sets | after grade | after grade | wrong first try | assessment 2.6 |
 | Level review, redo | immediate | 1 | none | after grade | after grade | wrong first try | assessment 2.4, 6 |
@@ -1254,6 +1285,7 @@ export interface Lifecycle {
 | Bundle fails validation | Not cached; "This course could not be opened. Update the app." and a log entry with the first schema path; never a partial lesson |
 | Bundle `zq` major unknown | "Update the app to open this course" (content-format 4.5); only stale caches can cause it (decision 30) |
 | Lazy chunk import fails | One retry; then "A new version is available. Reload to continue." with Reload. The usual cause is an old page whose files a later release removed (section 6.2.6) |
+| A fetch hangs | Every own-file fetch carries `AbortSignal.timeout` (20 s for the manifest and bundles, 120 s per Python part); a timeout is a failed fetch under the rows above (added by `docs/PLAN.md` 8.1) |
 | Widget throws in render or logic | The widget's error boundary shows "This part of the screen failed. Skip this screen" (Continue enabled, result `read`), logs the error with the widget type and version, never the state |
 | Generator throws | The item is skipped, the set draws the next seed, the error is logged with `gen`, `v` and the seed |
 | IndexedDB unavailable or full | `BlobCache` and `DraftStore` fall back to memory; content refetches per session; progress follows assessment 13.8 |
@@ -1337,6 +1369,82 @@ export interface DataWorkerApi extends RpcApi {
 
 The Python and SQL workers speak their own message protocols (section 6.3), because their runs stream events and must be terminable mid-run.
 
+### 5.14 Scenes
+
+Added for `docs/PLAN.md` (its section 3.2 and conflict 1). A scene is a composite written as data: a layout of primitive nodes, a pure model that derives every value shown, and typed bindings between them. `defineScene` turns it into the `WidgetLogic` of section 5.3, and the generated cluster entry pairs that logic with the generic `SceneView`, so the host, the compiler, the tutor, content and every test suite treat a scene exactly as they treat a hand-written composite.
+
+```ts
+// @zq/contracts/src/scene.ts
+/** The five sources a scene binds to: config, prepared constants, answer state, view state, derived values. */
+export interface SceneSrc<C, K, A, V, D> { c: C; k: K; a: A; v: V; d: D }
+/** Dotted paths into T, checked by the type system ('d.point.x', 'a.theta'). */
+export type PathOf<T> = /* recursive template-literal path type, depth at most 5 */ string;
+export type Bind<S, T = unknown> = PathOf<S> | { from: (src: S) => T };      // a path, or a named pure function written in scene.ts
+export interface Write<S, A, V, T> {                                          // controls write answer or view state only
+  path: PathOf<{ a: A; v: V }>;
+  from?: (value: T, src: S) => Json;                                          // e.g. a dragged point to an angle
+}
+
+export type SceneNode<S, A, V> =
+  | { id: LocalId; prim: PrimType; props: Bindable<S>;                                          // any primitive or input other than the three below
+      children?: SceneNode<S, A, V>[];                                                          // HostPrim only
+      writes?: Write<S, A, V, Json>;                                                            // WritingPrim only
+      answer?: true; tryable?: true; visibleWhen?: Bind<S, boolean> }
+  | { id: LocalId; prim: 'marks'; type: MarkType; data: Bind<S>; style?: Bindable<S>; table?: true; visibleWhen?: Bind<S, boolean> }
+  | { id: LocalId; prim: 'live-formula'; tex: string; slots: Record<string, Bind<S>> }
+  | { id: LocalId; prim: 'value-table'; rows: Bind<S>; columns: { key: string; label: string }[]; table?: true }
+  | { layout: 'row' | 'column' | 'stack' | 'grid' | 'overlay'; gap?: SpaceToken; children: SceneNode<S, A, V>[] }
+  | { id: LocalId; embed: `${string}@${number}`; config: Bind<S>; state: PathOf<{ a: A; v: V }> };   // another scene, or a bespoke composite's controlled component
+
+export interface SceneDef<C extends BaseConfig, K extends Json, A extends Json, V extends Json, D extends Json> {
+  readonly type: string; readonly v: number; readonly cluster: ClusterId;
+  readonly answers: readonly AnswerType[]; readonly stateVersion: number;
+  readonly tweenable?: readonly (keyof V & string)[];
+  readonly needs?: WidgetLogic<C, A, V>['needs'];
+  prepare?(config: C): K;                                    // once per config: paths, grids, constants; layers binding only c and k are static
+  init(config: C, seed: SeedSource): WidgetState<A, V>;
+  derive(config: C, k: K, s: WidgetState<A, V>): D;          // pure; once per state change; at most 2 ms P95 at 4x throttling
+  readonly layout: SceneNode<SceneSrc<C, K, A, V, D>, A, V>;
+  answer(config: C, s: WidgetState<A, V>, d: D): Answer | null;
+  describe: { brief: string; full?: string };                // templates over {c.*}, {k.*}, {a.*}, {v.*}, {d.*}; node phrases are appended
+  exports?: readonly PathOf<{ d: D }>[];                     // template values content may use
+  recipes?: Record<string, DeclarativeRecipe | ((config: C, s: WidgetState<A, V>, args: Record<string, Json>) => MotionStep[])>;
+  secret?(config: C, s: WidgetState<A, V>, d: D): string | null;
+  solved?(config: C, s: WidgetState<A, V>, key: Json): WidgetState<A, V>;
+  migrate?: WidgetLogic<C, A, V>['migrate'];
+  overrides?: Partial<Pick<WidgetLogic<C, A, V>, 'dirty' | 'summarise' | 'marks' | 'predicates' | 'targets' | 'table' | 'tryValue' | 'resolvers' | 'elementMeta'>>;   // at most 3
+}
+/** Node-safe: imported by registry.node.gen.ts, the compiler and CI. */
+export function defineScene<C extends BaseConfig, K extends Json, A extends Json, V extends Json, D extends Json>(def: SceneDef<C, K, A, V, D>): WidgetLogic<C, A, V> & { readonly scene: SceneDef<C, K, A, V, D> };
+```
+
+Builders in `src/widgets/scene/build.ts` (`plot2d`, `plot3d`, `marks`, `dragPoint`, `slider`, `stepper`, `tokenTray`, `liveFormula`, `valueTable`, `row`, `column`, `stack`, `grid`, `overlay`, `embed`) return these nodes with their types inferred, so a scene reads as a short layout (`docs/PLAN.md` 3.2 shows one).
+
+**Node kinds.** `HostPrim`, the primitives whose controlled component hosts child layers: `plot-2d`, `plot-3d`, `number-line`, `cell-grid`, `node-link`, `array-strip`, `matrix`, `price-ladder`, `cashflow-timeline`, `span-track`. `WritingPrim`, the primitives and inputs that change state: every one except `marks`, `live-formula`, `value-table`, `code-surface`, `diff-view` and `text-terminal`, which only display. `src/widgets/scene/nodes.ts` encodes both lists, the builders' types enforce them, and a test checks that every primitive and input is in the table.
+
+**What `defineScene` generates.**
+
+| `WidgetLogic` member | From |
+|---|---|
+| `tier` | always `'scene'` |
+| `init`, `answer`, `secret`, `solved`, `migrate` | the scene's own functions (`answer` and `secret` receive `derive`'s result) |
+| `dirty` | answer state differs from `init` with the same seed, unless overridden |
+| `answerObjects` | element ids of nodes marked `answer` |
+| `staticTargets`, `targets` | each node's primitive targets, named by node id under the `kind:name` rule (`handle:p`, `mark:arc`, `cell:3,4`); the scene suite fails on a collision; at most 40 |
+| `describe` | the scene's template, then each visible node's phrase from its primitive; brief at most 300 characters, full at most 2 KB |
+| `table` | marks and value tables marked `table` |
+| `tryable`, `tryValue` | control nodes marked `tryable`, set through their `writes` path |
+| `summarise` | the changed control's label and new value |
+| `exports` | the declared `d.*` paths |
+| `recipes` | declarative steps (`set` on `v.*` paths in `tweenable`, `highlight`, `annotate`, waits) or named functions |
+| `predicates`, `marks`, `resolvers`, `elementMeta` | overrides only |
+
+**`SceneView`** (in `src/widgets/scene/`, the widgets layer, because it imports primitives' controlled components). One computed signal per instance holds `derive(config, k, state)`; every bound property is a computed signal over the five sources; a node whose bindings read only `c.*` and `k.*` renders inside a memoised `Layer`, so a drag frame never diffs it (section 2.5 rules 1 and 2 hold by construction). Control nodes call `api.change` during a gesture and `api.commit` at its end for `a.*` writes, and `api.view` for `v.*` writes, which never engage Check. Pointer, keyboard and tap-then-tap paths are the primitives' own. Dense marks go to `CanvasLayer` by the marks primitive's own threshold.
+
+**Tests.** Every scene runs the generic contract suite (section 8.1.1) and the generic browser suite over its fixtures, plus the scene suite: every binding resolves for every fixture state; every `writes` path lies in `a` or `v`; `derive` returns equal results on repeated calls and stays within 2 ms P95 at 4x; a render probe shows no static node re-rendering during a drag; templates resolve; generated targets include every `staticTargets` id. A scene has no per-scene browser test file and no CSS. Model functions that `derive` calls live in `@zq/models` or `@zq/mathcore` with unit, property and Python parity tests.
+
+**Limits.** A `scene.ts` above 400 lines, or one needing more than three overrides, becomes a bespoke composite; so does a composite that needs free text or code editing, a clock-driven loop, a service with its own state machine, a gesture no primitive offers, or that fails the frame budget as a scene (`docs/PLAN.md` 3.2 rule 3). The pull request names the reason.
+
 ---
 
 ## 6. Build targets
@@ -1396,7 +1504,7 @@ The host wraps the published page in its own document skeleton [sourced: Artifac
 
 | Host rule [sourced] | How the build complies | Status |
 |---|---|---|
-| Scripts only from the listed CDNs or own files | Every script is an own file; no CDN | Page-level module scripts and page-level dynamic `import()` [unverified]; module workers and worker `import()` [measured by the owner's spike] |
+| Scripts only from the listed CDNs or own files | Every script is an own file; no CDN | Page-level dynamic `import()` of an own `.mjs` [measured by the Artifact probe on the owner's iPhone, section 14 item 1]; module workers and worker `import()` [measured by the owner's spike]; page-level `<script type="module">` is not relied on |
 | Stylesheets only from Google Fonts or own files | One own stylesheet; Google Fonts for Archivo, Besley, Source Code Pro | KaTeX's inline `style` attributes set through `innerHTML` are [unverified]: the repository holds no record of the prototype running as a published Artifact, and neither spike rendered KaTeX; S1 checks it |
 | Fonts | KaTeX `woff2` as own files. Fallbacks, in order: `FontFace` objects built from the fetched bytes (own-file fetch is measured, and a font constructed from an `ArrayBuffer` makes no font request for a font policy to block [recalled]); then `data:` URIs inside the stylesheet, which is how the prototype's vendored `katex.css` already ships them | [unverified]; spike S1 |
 | No fetch to other hosts | Content, Python and fonts are own files; the tutor uses `sample` | Measured for `.json` and `.wasm` |
@@ -1460,7 +1568,7 @@ capabilities: {
 | Retained version: this release plus the files only the previous release uses, after garbage collection | at most 300 | at most 225 MB | A page opened before the release still loads its lazy chunks (section 6.2.6) |
 | Peak, while a release is staged | at most 480 | at most 250 MB | The host allows 511 files and 256 MB per version [sourced]; the margin absorbs a miscount |
 
-A release whose peak would exceed the last row becomes a maintenance release (section 6.2.6): expected for a format-wide re-emit of every course (about 110 MB renamed at once) and for a Pyodide upgrade late in the path, not for ordinary releases (about 294 files and 220 MB at peak on the estimates above: one release, the previous release's 40 renamed app files, and the next release's 40).
+Under fallback F1 (section 6.3.3) the Python files rise to 81 and a release to about 280 files, so the limits become 290 per release, 340 retained and 480 at peak; F2 drops Python and the release to about 200 files. A release whose peak would exceed the last row becomes a maintenance release (section 6.2.6): expected for a format-wide re-emit of every course (about 110 MB renamed at once) and for a Pyodide upgrade late in the path, not for ordinary releases (about 294 files and 220 MB at peak on the estimates above: one release, the previous release's 40 renamed app files, and the next release's 40).
 
 **What runs where.** By size, the whole scientific stack fits the Artifact [measured, section 6.3.3]; the first draft's raw layout (153 MB) would not have. The limits that remain are iPhone memory and download size, measured at E8: a load group that exhausts memory on the owner's phone is removed from the Artifact build through `python.groups` (section 11.4), and `PythonRuntime.available()` then answers `not-in-this-build`, so the drill screen offers the web app with a result code (assessment 14.3). Depth-first content reaches SciPy, statsmodels and scikit-learn long after NumPy and pandas, so E8 measures all groups but only `stdlib` and `numpy-pandas` must pass before the first Python course ships.
 
@@ -1468,14 +1576,17 @@ A release whose peak would exceed the last row becomes a maintenance release (se
 
 #### 6.2.6 Release procedure
 
-Publishing an Artifact is a Claude tool call, not a CI step, so a release is a plan a Claude session executes. The owner, not the session, runs the checks on the live page: a cloud session cannot operate the page inside the owner's Claude app.
+Publishing an Artifact is a Claude tool call, not a CI step, so a release is a plan a Claude session executes. The owner, not the session, runs the checks on the live page: a cloud session cannot operate the page inside the owner's Claude app. Releases run in fresh cloud sessions, so nothing a release needs may live only in ignored build output.
 
-1. `npm run release:artifact` builds content and app, runs the budgets, and writes `dist/artifact/publish-plan.json`: an ordered list of publishes, each at most 255 paths (removals counted, conservatively [our choice; whether `null` entries count is unverified]) and 64 MB [sourced], each with a `files` map, the paths to remove (`null`), a label, and `page: 'live' | 'new'`.
-2. **Before the first publish** the session lists the live artifact's files (`scope: "files"`) and compares them with the plan's record of the previous release. Any difference stops the release: the Artifact tool refuses to replace paths the session has neither read, listed nor published, and a difference means someone published in between.
-3. **Order.** First the new content and Python files (new names, nothing referencing them yet). Each of these staging publishes re-sends the **live** page byte for byte (`page: 'live'`), because a publish names the page [inferred from the Artifact tool contract], so viewers see no change. Then the publish with the new page and the app files (`page: 'new'`, the moment the release goes live). Then the session writes `meta/release` (`{ release, at }`) with `ArtifactData`, which raises the update notice on open pages (decision 32). Last, a garbage-collection publish removes files that neither the new release nor the one before it references.
-4. **Peak check.** The plan computes the version's peak (retained plus new files). Above the peak limit of section 6.2.5, the plan becomes a **maintenance release**: publish a small page that says "Zero to Quant is updating. Your progress is safe; come back in a few minutes." and removes the old files, then upload the new files, then publish the new page.
-5. **Self-test.** The owner opens Settings, Diagnostics, Self-test on the iPhone: capabilities present, the manifest named by the page fetched and its hash checked, one course bundle fetched and validated, KaTeX loaded with its fonts, a widget cluster loaded, Python started with NumPy, `meta/release` equal to the page's own release. The page shows the result and writes it to `ops/selftest-<release>` in `db`; the session reads that document with `ArtifactData` and records it in the release checklist. Nothing is written to progress.
-6. The owner goes through the rest of the release checklist in `docs/engine/RELEASE.md` on the phone.
+1. **The release ledger.** `npm run release:artifact` builds content and app from the tagged commit, runs the budgets, and writes `releases/<release>.json`: every path the release publishes with its SHA-256 and size, the page's hash, the manifest's name and the release id. The ledger is committed in the release pull request and reviewed there; CI builds twice and checks that both builds match it. The same command writes `dist/artifact/publish-plan.json`, an ordered list of publishes, each at most 255 paths (removals counted, conservatively [our choice; whether `null` entries count is unverified]) and 64 MB [sourced], each with a `files` map, the paths to remove (`null`), a label, and `page: 'live' | 'new'`; the plan is derived from the new ledger and the previous one, so any session can regenerate it.
+2. **Build and verify in the session.** The release session checks out the tag, rebuilds every file itself from the hash-pinned inputs (`package-lock.json`, `pyodide-lock.json`, our wheel locks), and checks each file's SHA-256 against the committed ledger; it publishes only bytes it built and verified. It reads in full every text file it writes by hand or that no reviewed source produced (the page fragment, `version.json`, the publish plan). Whether this satisfies the Artifact tool's rule that Claude reads a file it did not write before publishing it, for build outputs from reviewed sources and for repackaged third-party binaries such as `pyodide.asm.wasm` and the base64 JSON parts, is [unverified] and goes to Anthropic (`docs/PLAN.md` 12 decision 7).
+3. **Before the first publish** the session lists the live artifact's files (`scope: "files"`) and compares them with the **previous release's committed ledger** (named by the hash in `meta/release`). Any difference stops the release: the Artifact tool refuses to replace paths the session has neither read, listed nor published, and a difference means someone published in between.
+4. **Order.** First the new content and Python files (new names, nothing referencing them yet). Each of these staging publishes re-sends the **live** page byte for byte (`page: 'live'`), because a publish names the page [inferred from the Artifact tool contract], so viewers see no change. Then the publish with the new page and the app files (`page: 'new'`, the moment the release goes live). Then the session writes `meta/release` (`{ release, at, ledger: <SHA-256 of the ledger> }`) with `ArtifactData`, which raises the update notice on open pages (decision 32). Last, a garbage-collection publish removes every path that neither the new ledger nor the previous one names.
+5. **Resume.** A session that dies part-way is replaced by one that re-runs the procedure from the first step whose effect is not yet visible: staged files missing from the listing are published again (content-addressed, so a repeat changes nothing); a listing that holds the new page but a `meta/release` that still names the old ledger resumes at the `meta/release` write; a `meta/release` naming the new ledger with old files still listed resumes at garbage collection. Drift in step 3 is then judged against the union of the previous ledger and the new ledger's already-published paths.
+6. **Peak check.** The plan computes the version's peak (retained plus new files). Above the peak limit of section 6.2.5, the plan becomes a **maintenance release**: publish a small page that says "Zero to Quant is updating. Your progress is safe; come back in a few minutes." and removes the old files, then upload the new files, then publish the new page.
+7. **Rollback** publishes the previous ledger's page and app files, which the retained version still holds, and writes `meta/release` back to the previous ledger's hash.
+8. **Self-test.** The owner opens Settings, Diagnostics, Self-test on the iPhone: capabilities present, the manifest named by the page fetched and its hash checked, one course bundle fetched and validated, KaTeX loaded with its fonts, a widget cluster loaded, Python started with NumPy, `meta/release` equal to the page's own release. The page shows the result and writes it to `ops/selftest-<release>` in `db`; the session reads that document with `ArtifactData` and records it in the release checklist. Nothing is written to progress.
+9. The owner goes through the rest of the release checklist in `docs/engine/RELEASE.md` on the phone.
 
 ### 6.3 Python on both targets
 
@@ -1503,6 +1614,7 @@ export type FromPython =
 - **Timeouts** (decision 31). Neither target can send the cross-origin isolation headers that `SharedArrayBuffer` and Pyodide's interrupt buffer need: GitHub Pages sets no custom headers [recalled], and the Artifact's headers are the host's. (On the web a service worker could add the headers to the responses it serves [recalled]; rejected, because the first visit is not yet controlled by it and the Artifact would still need the path below.) Two levels instead:
   1. **Soft deadline.** `grader.py` registers a `sys.monitoring` callback for backward jumps on the learner's code objects; every 1,000 jumps it compares `time.monotonic()` with the test's deadline and raises `ZqTimeout` (a `BaseException` subclass), which the grader reports as `timeout` for that test. The worker stays warm and the next test runs at once. The efficiency probes' line counter (programming decision 10) runs separately under `sys.settrace`, only for the probe runs.
   2. **Hard watchdog.** The page expects a `test-start` and then an `event` for that test within its limit plus 1,500 ms; otherwise it terminates the worker, reports `timeout`, and restarts it, warm from `BlobCache`. This catches long calls inside C code (a huge NumPy allocation), which never jump in Python bytecode.
+- **Load stall.** While loading, a worker that sends no `progress` message for 30 s is terminated and reported as `failed: network`, with Retry (added by `docs/PLAN.md` 8.1).
 - **Memory.** A `memory` failure or a crash restarts the worker once; a second failure sets `failed` and offers the web app. The worker is terminated when the learner leaves a course, and after 10 minutes without a code screen. Loading a group drops nothing already loaded, so a lesson that needs `sklearn` after `numpy-pandas` adds to one interpreter; the memory each group adds is measured at E8 on the owner's phone (risk 4).
 - **Core caching.** The worker's `fetch` interception (section 6.3.3) also serves `pyodide.asm.wasm` and `pyodide-lock.json` from `BlobCache` by hash. `pyodide.mjs` and `pyodide.asm.mjs` (1.27 MB together) arrive by `import()`, which `fetch` interception cannot see, so in the Artifact they rely on the HTTP cache; on the web the service worker holds them. A warm start therefore fetches at most those two module scripts. If S1 shows the Artifact host does not compress responses, `pyodide.asm.wasm` (9.6 MB raw, 3.5 MB gzipped [measured]) also ships as gzip inside JSON parts and is inflated with `DecompressionStream` (fflate where that is missing), saving about 5 MB on every cold start over mobile data.
 - **Isolation.** Learner code runs only in this worker: no DOM, no storage of ours, no network beyond the loader's own files (programming 2.12).
@@ -1535,7 +1647,7 @@ Measured for Pyodide 314.0.7 in review (section 0.2), with the spike's strip rul
 
 With the core (11.0 MB), the spike's layout for NumPy and pandas is 49 MB in 69 files, matching the spike's README; this layout is 24 MB in 8 files (core 5, stdlib 1, numpy-pandas 2), and the whole stack is about 67 MB in 15 files against 153 MB in about 311. If the host compresses responses, the transfer for NumPy and pandas is about 14 MB either way (the numpy-pandas parts gzip from 10.4 to 7.7 MB [measured]); if it does not, this layout halves the first download.
 
-Measured on the owner's iPhone with the spike's layout for core, stdlib, NumPy and pandas: Python ready at 2.8 s, packages at 5.1 s, the calculation at 6.2 s (spike README). This layout changes the bytes fetched and adds a base64 decode, so S1 re-runs the spike's calculation with it on the iPhone; it passes only within 1 s of the spike's 6.2 s. Fallback if it fails, or if the platform says that whole-archive content inside JSON is not acceptable use: the spike's own layout for `stdlib` and `numpy-pandas` (69 files, proven), with the other groups web-only. The player warms Python on the title screen of a lesson with code screens when nothing needs downloading (section 5.10.2), so most of the warm start falls inside reading time.
+Measured on the owner's iPhone with the spike's layout for core, stdlib, NumPy and pandas: Python ready at 2.8 s, packages at 5.1 s, the calculation at 6.2 s (spike README). This layout changes the bytes fetched and adds a base64 decode, so S1 re-runs the spike's calculation with it on the iPhone; it passes only within 1 s of the spike's 6.2 s. Two fallbacks (`docs/PLAN.md` 4.3). **F1**, if this layout misbehaves on the phone: the spike's own layout for core, `stdlib` and `numpy-pandas` (69 files, proven) plus `testing` as JSON text maps (12 files), with `matplotlib`, `scipy-statsmodels` and `sklearn` web-only and the release file limits raised to 290, 340 retained and 480 at peak (section 6.2.5). **F2**, if the platform says repackaged archive content in published files is not acceptable, or that repackaged binaries cannot be published unread: no Python in the Artifact, every drill handed off. F1 does not answer a policy objection, because it repackages archives as this layout does. The player warms Python on the title screen of a lesson with code screens when nothing needs downloading (section 5.10.2), so most of the warm start falls inside reading time.
 
 ### 6.4 The web app
 
@@ -1572,6 +1684,7 @@ worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'
 - `'unsafe-inline'` for styles is needed because KaTeX's output carries inline `style` attributes; scripts allow no inline code and no `eval`.
 - The Python worker is created from its own file, so the document's meta policy does not govern it; Pyodide's 6 `eval(` call sites [measured] run there.
 - The tutor proxy origin comes from `VITE_ZQ_TUTOR_URL` at build time and is fixed for that build; Settings holds only the token (ai-tutor 6.3.6).
+- No third-party origin is allowed: the GitHub and Codeforces API lookups that `ASSESSMENT.md` once planned are withdrawn (`docs/PLAN.md` conflict 5), so the proxy is the only host outside the app's own origin that a page can reach.
 
 #### 6.4.3 Deploy
 
@@ -1583,7 +1696,7 @@ worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'
 
 - **`npm run dev`.** The Vite dev server in `dev` mode with `WebPlatform`, development routes, content compiled on the fly from `content/` with hot reload (section 10.3), and the tutor through the local proxy when `.env` has a key.
 - **`npm run dev:artifact`.** The same app with `ArtifactPlatform`, served by `tools/artifact-host` (section 8.2), which enforces the file-type allow-list and a CSP like the host's, has no service worker, and provides a fake `window.claude` (`sample` replays recorded replies or calls the local proxy; `db` is in memory with the declared rules enforced; `user` and `downloads` are fakes).
-- **`zq preview --artifact <lesson id>`** (content-format 9.1 step 7). An Artifact build whose manifest holds one course and whose start route is the lesson, with the development routes compiled in, for the owner to try on a phone before merging. Published by a Claude session as a separate private Artifact.
+- **`zq preview --artifact`** (built at `docs/PLAN.md` stage 25; content-format 9.1 step 7). An Artifact build whose manifest holds one course (or the gallery), whose start route is a lesson, a level, a course or `#/gallery`, with the development routes and the split Python loader compiled in. A Claude session republishes it to **one long-lived private preview Artifact** (its URL in `STATE.md`) for each device gate, never creating a new one, so no preview needs deleting; the owner records the gate's result in its `db` at `ops/gate-<stage>` (`{ result: 'pass' | 'fail', notes, at }`), which the session reads with `ArtifactData`.
 
 ---
 
@@ -1636,14 +1749,14 @@ worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'
 | Widget interaction | Vitest browser mode, `@vitest/browser-playwright`, Chromium | Browser | Pointer, tap-then-tap and keyboard paths reach the canonical answer; reduced motion; axe in every state; focus order; no console errors; the scope is empty after unmount | Changed clusters on pull requests, all nightly |
 | Content | `zq check`, `zq verify`, grader replay, storyboards (content-format 6, 9) | Node, Python, Chromium | Every answer proved twice, every screen renders | content-format 6.12 |
 | End to end | Playwright, both targets | Chromium (pull request), WebKit and Firefox (nightly) | Section 8.1.2 | About 40 specs |
-| Visual | Playwright `toHaveScreenshot`, pinned container | Chromium | Every screen, every widget fixture state, every storyboard: 390 by 844 and 1,280 by 800, light and dark, motion `test` | Changed areas on pull requests, all nightly |
+| Visual | Playwright `toHaveScreenshot`, pinned container | Chromium | Every widget fixture state at 390 by 844, light and dark; every app screen at 390 by 844 and 1,280 by 800, light and dark; motion `test`. Lesson storyboards are rendered for pull requests as artefacts, never as baselines. Baselines live on the orphan branch `visual-baselines`, rewritten as one commit when the owner approves a change; `main` holds `tests/visual/baselines.lock.json` with each image's SHA-256; `budgets.ts` caps the set at 4,000 images and 300 MB | Changed areas on pull requests, all nightly |
 | Accessibility | `@axe-core/playwright` on every screen and storyboard state; a keyboard-only run of the reference lesson; a manual VoiceOver pass per wave on the owner's iPhone | Chromium, device | WCAG 2.2 AA to the extent tools can tell | Every pull request |
 | Performance | `tests/perf`: per-widget drag at 4x throttling, start-up traces, fold rebuild, `size-limit`, release budgets | Chromium, Node | Section 9 budgets | Changed widgets on pull requests, all nightly |
 | Devices | The preview Artifact on the owner's iPhone; an Android phone of the budget class when available | Devices | Feel, timing, memory | Each widget wave and each release |
 
 #### 8.1.1 The generic widget contract suite
 
-Run for every widget and every fixture in Node, with no widget-specific code:
+Run for every widget (scenes included; they add the scene suite of section 5.14) and every fixture in Node, with no widget-specific code:
 
 - `init` is deterministic for a seed; the state survives a JSON round trip and is at most 32 KB.
 - `describe('brief')` is at most 300 characters and `describe('full')` at most 2 KB; neither contains `secret()` as a substring, nor any value of the check's canonical answer for a sealed fixture.
@@ -1700,9 +1813,9 @@ Each runs on the web build (served with its service worker) and on the Artifact 
 | `content` (content-format 6.12) | Pull requests touching `content/`, `packages/content-*`, `packages/graders`, widgets | Yes | per content-format |
 | `build` (both targets; release budgets; `size-limit`) | Every pull request | Yes | 4 min |
 | `e2e` (Chromium, both targets) | Every pull request | Yes | 10 min, sharded |
-| `visual` (changed areas) | Every pull request | Yes; a changed baseline needs the owner's `visual-approved` label | 6 min |
+| `visual` (changed areas) | Every pull request | Yes; a changed baseline needs the owner's `visual-approved` label, and `label-guard.yml` fails the job if any other account applied it | 6 min |
 | `perf` (changed widgets; web start-up) | Every pull request | Yes | 5 min |
-| `nightly`: full visual, full performance, WebKit and Firefox end to end and generator goldens, full `zq verify` with Monte Carlo, `npm audit`, `pip-audit`, licence allow-list, recorded tutor evals (ai-tutor 9.6), fold rebuild benchmark | Daily on `main` | Opens an issue on failure | 60 min |
+| `nightly`: full visual (about 3,000 baselines), full performance, WebKit and Firefox end to end and generator goldens, full `zq verify` with Monte Carlo, `npm audit`, `pip-audit`, licence allow-lists, the deterministic tutor graders over the last accepted run's recorded replies (no key; ai-tutor 9.1), fold rebuild benchmark | Daily on `main` | Opens an issue on failure | 60 min |
 | `release`: everything above, two clean builds with identical file hashes, the Artifact publish plan dry run, the Pages deploy | On a `v*` tag | Yes | 75 min |
 
 Browsers, Pyodide's distribution and the Playwright container are cached between runs, keyed by their pinned versions.
@@ -1885,9 +1998,9 @@ Beyond sections 5.10.3 and 6.3.1, and the tutor's and progress papers' tables:
 | 2 | Spike S1 fails: page-level module scripts, own fonts, the JSON-part Python layout, MathLive, Web Locks, version scoping or reload behave differently in the Artifact | Medium | A loader or a fallback changes | S1 runs in stage E0 before anything depends on it; every check has a named fallback (sections 5.9, 6.2.3, 6.3.3, 11.6) |
 | 3 | The Artifact host changes its policy, limits or capability contracts | Low to medium | A target breaks | Design for absence everywhere; the emulator encodes the contracts we rely on; the release self-test; the web app as the full-function fallback |
 | 4 | Pyodide with pandas, SciPy or scikit-learn exhausts iPhone memory | Medium | Drills crash | One worker, packages per course, termination when idle, restart once, then hand off; memory measured at E8 on the owner's phone; heavy groups may stay web-only |
-| 5 | The scientific stack does not fit the Artifact's Python budget | Low (it fits by size: 67 MB against 105 MB [measured]) | Some drills hand off | Memory, not size, is now the binding limit (risk 4); `python.groups` removes a group from the Artifact build; handoff with result codes exists from E8 (assessment 14.3); depth-first content reaches those packages late |
+| 5 | The scientific stack does not fit the Artifact's Python budget | Low (it fits by size: 67 MB against the 75 MB Python budget of section 6.2.5 [measured]) | Some drills hand off | Memory, not size, is now the binding limit (risk 4); `python.groups` removes a group from the Artifact build; handoff with result codes exists from E8 (assessment 14.3); depth-first content reaches those packages late |
 | 6 | Agent-written widgets drift from render discipline and budgets | High | Janky drags on phones | Lint (`zq/no-state-in-render`, `zq/no-raw-pointer`), the per-widget frame test as a merge gate, the gallery's frame readout, adversarial review |
-| 7 | Catalogue scale (332 ids) overwhelms the library | High | Inconsistent widgets, slow build | Presets as a tier (decision 7); a composite needs a written reason; the generic contract suite makes each new widget's floor automatic |
+| 7 | Catalogue scale (314 ids after the merge) overwhelms the library | High | Inconsistent widgets, slow build | Scenes as the default composite (decision 36, section 5.14) and presets as a tier (decision 7); a bespoke composite needs one of the five written reasons; the generic contract suite makes each new widget's floor automatic; three pilot scenes test the bet before the batches start (`docs/PLAN.md` stage 14) |
 | 8 | File or size budget creep in the Artifact | Medium | Releases fail | Budgets enforced in every build, not at release time; the maintenance release path; Python budget separate from content |
 | 9 | Determinism breaks across browsers (generators, Philox, number formatting) | Low | Different items on different devices | Integer-only RNG; known-answer tests and golden seeds in Chromium, WebKit and Firefox nightly |
 | 10 | Two targets drift apart | Medium | Bugs on one target only | One codebase; platform code is the only difference; one conformance suite per adapter; every end-to-end scenario on both targets |
@@ -1896,12 +2009,14 @@ Beyond sections 5.10.3 and 6.3.1, and the tutor's and progress papers' tables:
 | 13 | TypeScript 7 and its faster checker stay out of reach | Low | Slower type checks | Revisit when typescript-eslint declares support; nothing in the code depends on the version |
 | 14 | A stale open page after a release | Medium | Lazy chunk 404s | Garbage collection keeps the previous release's files; chunk failures show the reload message; `version.json` checks |
 | 15 | Bertie drops frames on mid-range Android | Low | A sluggish mascot | `BERTIE.md` 9 budget, the three-instance rule, the frame test, and its own fallback (fewer particles and strands) |
-| 16 | The platform considers archive members wrapped in JSON an evasion of the served-type list, or changes the list | Low to medium | The Artifact's Python shrinks | Every file is genuinely its type and the method is the spike's own, extended; the owner asks Anthropic before the first Python course ships in the Artifact, and the fallback is the spike's proven layout for `stdlib` and `numpy-pandas` with the other groups web-only (section 6.3.3) |
+| 16 | The platform considers archive members wrapped in JSON an evasion of the served-type list, changes the list, or rules that repackaged third-party binaries cannot be published without being read in full | Low to medium | The Artifact's Python shrinks or goes | Every file is genuinely its type and the method is the spike's own, extended; the owner asks Anthropic both questions at stage 25 (`docs/PLAN.md` 12 decision 7). A policy objection means F2: no Python in the Artifact, every drill handed off. The spike's layout (F1) answers only a behaviour failure, because it repackages archives too (`docs/PLAN.md` 4.3) |
 | 17 | The soft deadline's `sys.monitoring` callback slows learner code noticeably | Low | Efficiency drills misjudge, or tests near their limit fail | Measured at E8 on the reference drills; above 1.3 times, the soft deadline is dropped (decision 31); efficiency probes already compare against the reference on the same device under the same instrumentation |
 
 ---
 
 ## 13. Build stages
+
+> **Superseded as an order by `docs/PLAN.md` section 11**, which builds the engine, the Python runtime and every P0 widget batch before the tutor, progress, assessments and builds, then content. The E stages map to it as follows: E0 is stages 1 and 2; E1 stage 3, with its numerics in 3a and 3b and the `@zq/models` services in 3c to 3f; E2 stage 4; E3 stage 5 (Bertie moves to stage 59); E4 stages 10a to 19 (with the scene layer, stage 14); E5 stage 23; E6 stages 9 and 24, with assessment A1 (the event log and `AppendQueue`) as stage 9a before the player; E7 stages 74a and 74b; E8 stages 25 and 26; E9 stage 82; E10 stage 83. The rows below keep their deliverables and definitions of done, which `docs/PLAN.md` cites.
 
 Each stage is one review gate. Engine stages are numbered E0 to E10; content stages are those of `CONTENT-FORMAT.md` section 14, assessment stages A1 to A15 (`ASSESSMENT.md` 19), tutor stages T0 to T8 (`AI-TUTOR.md` 11.2), widget waves W0 to W3 per catalogue (`widgets-stage0.md` 1.12 and the sibling catalogues). Security and test work sits inside the stage that creates the exposure.
 
@@ -1915,9 +2030,9 @@ Each stage is one review gate. Engine stages are numbered E0 to E10; content sta
 | **E5 Content runtime** | The manifest file and its page meta tag (`vite-plugin-zq-content`), the loader, `BlobCache` wiring, validation in the data worker, `Prose`, `Tex` and `TexSlots`, templates, the generator runtime with `make` and `makeWhere` | E4; content-format C1 (schema) and C8 (emit of the reference lesson) | The reference lesson's bundle loads and validates; every row of section 5.10.3 is tested; a content edit hot-reloads into an open lesson without losing the screen; a content-only rebuild changes only the page, the manifest and that course's files (section 6.1) |
 | **E6 Lesson player and item runner** | Section 5.7: reducer, effect runner, views, hint ladder, Why, Show solution, quiz, completion sequence, key map, announcements, `ItemRunner` and the policies; graders wired in; progress events through the append queue | E5; the graders package (content-format 14); A1, A4 (points rules) | Every row of the transition table tested; the reference lesson runs end to end on both targets with no lesson-specific code; keyboard-only run; axe; the storyboard renders every state; no animation frames once idle |
 | **E7 App shell and screens** | Router, shell, stores, the screens of section 5.8 (Today, Learn, Course, Review, You, Settings with Diagnostics, Notebook, Search, Import, Onboarding shell), error boundaries, update notices, `version.json` | E6; A4 and A5 for live data (the synthetic learner until then) | Visual baselines for every screen at both widths and themes with the synthetic learner; axe; route, focus and title tests; warm start-up within budget |
-| **E8 Python and SQL** | The Python worker and protocol, both loaders, `tools/pysplit` (fetch, groups, JSON parts, manifest, SHA-256), the worker-side cache, the watchdog, the drill screen and `code-cell` integration; the SQLite worker | E4, E5 (parallel with E6 and E7) | The reference course's drills pass on both targets in CI with real Pyodide; tampered-part, CRC, soft-deadline, watchdog and crash tests; soft-deadline overhead on the reference drills recorded (decision 31); the Artifact Python files within section 6.2.5; iPhone timings and memory per load group recorded by the owner, `stdlib` and `numpy-pandas` passing |
+| **E8 Python and SQL** | The Python worker and protocol, both loaders, `tools/pysplit` (fetch, groups, JSON parts, manifest, SHA-256), the worker-side cache, the watchdog, the drill screen and `code-cell` integration; the SQLite worker; `zq preview --artifact` and the long-lived preview Artifact | E4, E5 (parallel with E6 and E7) | The reference course's drills pass on both targets in CI with real Pyodide; tampered-part, CRC, soft-deadline, watchdog and crash tests; soft-deadline overhead on the reference drills recorded (decision 31); the Artifact Python files within section 6.2.5; iPhone timings and memory recorded by the owner for every load group, the stage passing on `stdlib` and `numpy-pandas` and the other results setting `python.groups` |
 | **E9 Web target** | Service worker, Keep offline, update flow, CSP, web manifest and icons, `pages.yml`, `serve:web` | E7, E8 | Offline and update end-to-end scenarios; zero CSP violations reported across the end-to-end suite; a tagged deploy reaches GitHub Pages and installs on the owner's phone |
-| **E10 Artifact target and release** | `page.ts`, the capability declaration (after loading the `artifact-capabilities` skill), the publish planner with batches, garbage collection, peak check and the maintenance path, Self-test, `docs/engine/RELEASE.md` | E7, E8 | Planner tests (batch limits, live-page re-send, file-listing drift stop, order, previous-release retention, maintenance path); the built Artifact passes every end-to-end scenario in the emulator; the first live publish passes Self-test on the owner's iPhone and the session reads the result from `ops/selftest-<release>` |
+| **E10 Artifact target and release** | `page.ts`, the capability declaration (after loading the `artifact-capabilities` skill), the release ledger, the publish planner with batches, rebuild-and-verify, garbage collection and rollback from ledgers, the resume rule, peak check and the maintenance path, Self-test, `docs/engine/RELEASE.md` | E7, E8 | Planner tests (batch limits, live-page re-send, drift stop against the previous ledger, order, previous-release retention, resume after a session death at each step, maintenance path); the built Artifact passes every end-to-end scenario in the emulator; the first live publish passes Self-test on the owner's iPhone and the session reads the result from `ops/selftest-<release>` |
 
 **Interleaving.** Content stages (`CONTENT-FORMAT.md` 14) map in as follows: C1 (schema) and C2 (`zq check`) run beside E1 to E3; C2's element-reference checks need E4's `CompilerRegistry`; E5 needs C1 and the C8 emit of the reference lesson; E6 needs C3 (graders); C4's expression grader needs E1's `expr` core; E8 needs C7 (drill pipeline, now without MicroPython); C9 (preview and storyboard) needs E6; C10 needs the tutor stages; C11 (acceptance on both targets) needs E10. Widget waves start once E4 is approved and run beside E5 to E10, one widget per review. T0 and T1 start once E4 fixes the widget hooks; T5 needs E6; A2 needs E2; A7 needs E6. The first complete vertical slice, the reference lesson on both targets with Bertie through fake backends, is the end of E6, and it is the point where content authoring at volume can begin.
 
@@ -1936,7 +2051,7 @@ Each stage is one review gate. Engine stages are numbered E0 to E10; content sta
 | 7 | Whether the Artifact host compresses responses [unverified, as content-format 8.2 notes] | Course downloads at raw size on mobile data | Measured in S1 from transfer sizes |
 | 8 | iPhone memory with pandas plus scikit-learn in one worker [unverified] | Those drills hand off | E8 |
 | 9 | Exact capability declaration keys for `sample` and `downloads` | Wrong declaration at first publish | **Mostly closed**: section 6.2.4 gives the declaration; `db` and `user` are sourced, `sample: {}` and `downloads: {}` inferred; checked against the `artifact-capabilities` skill at E10 |
-| 10 | The total size cap of one Artifact's database [unverified; `ASSESSMENT.md` 13.6] | The checkpoint fallback in assessment 13.6 | assessment A2's probe |
+| 10 | The total size cap of one Artifact's database [unverified; `ASSESSMENT.md` 13.6] | The checkpoint fallback in assessment 13.6 | The bounded probe of `docs/PLAN.md` stage 2 (paced, up to 60 MB, then deleted) |
 | 11 | The Playwright container tag format for 1.63.0 [recalled] | A different image name | E0 |
 | 12 | Whether `version.json` is cached by the Artifact host despite a query string [unverified] | Update notices arrive late | S1 |
 | 13 | `CONTENT-FORMAT.md` sections 12 to 14 against this paper | **Closed in review**: 12.1's compile-time exports, 12.2's `hash32` and `makeWhere`, the runtime-tag change and the C1 to C11 mapping are in sections 0.3, 5.1, 5.3, 5.9 and 13. Section 10.5 (the compiled screen example) was not re-read | |
