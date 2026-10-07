@@ -10,7 +10,7 @@ Preview Artifact: not yet created (stage 25 creates it; its URL goes here)
 
 | Session | Stage | Branch | Started |
 |---|---|---|---|
-| none yet | | | |
+| Main session (integration, docs, review fixes) and seven sub-sessions (lint, release and CI units; four adversarial reviewers), `session_01J92GRXudcwDnRYVFX2Sqby` | 1 | `stage/1` | 2026-10-07 11:50 UTC |
 
 ## Device-gate queue
 
@@ -22,7 +22,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 
 | # | Stage | Depends on | AD plan | AD actual | Status | Gate |
 |---|---|---|---|---|---|---|
-| 1 | Scaffold, toolchain and CI | none | 5 | - | pending | - |
+| 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | awaiting review | - |
 | 2 | Spike S1 on the owner's iPhone | 1 | 3 | - | pending | - |
 | 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | pending | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
@@ -159,6 +159,8 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-07 | D7 Decision 13 (b): every deployed web build on Cloudflare Pages behind an Access policy admitting only the owner until a content licence exists; GitHub Pages kept as the public-release path | The owner: "CloudFlare is fine"; keeps "no public release" and the phone handoff | n |
 | 2026-10-07 | D8 Decision 14 (b): Zhou chapter 5 joins the Stage 3 exit at 70% cold as exit part `3.3.zhou-ch5` (7 h moved from `3.3.books`); `docs/curriculum.md` gains the checkbox | The owner: "Add in chapter 5"; P2 and PZ6 teach chapter 5 to every learner | n |
 | 2026-10-07 | Blueprint approved by the owner ("Approved. Continue"); stage 1 starts | Phase 2 gate | n |
+| 2026-10-07 | B1 to B13 (stage 1): tools on Node's own type stripping, no `tsx`; colour rule on `.ts` too; the sink rule's two hard-coded exemptions; `zq/layering`; merge rights procedural because the GitHub connection is the owner's account; hooks advisory, CI binding; release budget numbers; the page fragment's two scripts; `ZQ_DEV_ROUTES`; `stage/1` from the Blueprint branch; the Playwright image; no inline lint configuration; every file in a layer | `docs/DECISIONS.md` section 6 | y: B1, B2, B4, B5 (label guard, G1), B6, B7, B8, B10 |
+| 2026-10-07 | L1, A1, A2, T1, G1 (stage 1): four licence exceptions under stylelint; `braces` and `pytest` advisory waivers to 7 November 2026; gitleaks 8.30.1, pip-audit 2.10.1 and the Go floor; the label guard's mechanism | `docs/DECISIONS.md` section 5, for the owner's review | y: G1 |
 
 ## Open questions
 
@@ -217,6 +219,27 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 12 | `docs/PLAN.md` section 1 scope and section 12's build table | Applied (revision 2) | |
 | 13 | `docs/AI-TUTOR.md`: `top.real-analysis` proof-heavy; the adopted items' Bertie rules | Applied (second review round: 2.5, 3.1, 2.12) | |
 
+## Stage 1 record
+
+**Pull requests into `stage/1`** (all merged by the session; smuddassirshah-cpu/zero-to-quant#4 closed as replaced by #6):
+
+| PR | Unit | Changed lines | Review rounds |
+|---|---|---|---|
+| #2 | Workspace, pins, TypeScript projects, Vite modes, empty app, formatter, stylelint, knip, lefthook, env examples, licence, `CODEOWNERS`, template | 6,178 (about 5,900 of them `package-lock.json`) | 2 |
+| #3 | `budgets.ts`, `page.ts`, `.size-limit.json` | 677 | 2 |
+| #5 | Minimal `tools/artifact-host`, Playwright boot tests on three paths | 526 | 2 |
+| #6 | `eslint-plugin-zq`: four rules, `noInlineConfig`, planted test | 1,194 (683 code and config, 511 tests) | 2 |
+| #7 | `zq/layering` and the layer table, residual rule fixes | 815 | 3 |
+| #8 | gitleaks tool, `.gitleaks.toml`, hooks that fail closed | 846 | 2 |
+| #9 | `tools/py` with `uv.lock` | 42 plus the lock | 2 |
+| #10 | Licences, `npm audit`, `pip-audit`, waivers | 983 | 2 |
+| #11 | `ci.yml`, `nightly.yml`, `label-guard.yml`, `VITE_*` check, last scan fixes | 907 | 3; CI green on its first run |
+| docs | `docs/DECISIONS.md` B1 to B13 (with the units' L1, A1, A2, T1, G1), `ARCHITECTURE.md` 3.2, 4.5, 4.6, 6.2.2, 6.2.5, 10.4, 14, `README.md`, this file | | 1 |
+
+**Measured effort** [measured from the session transcripts, first to last tool call, gaps over 15 minutes removed]: about 9 session-hours across the main session and seven sub-sessions, 1.5 AD against the plan's 5. Tokens: about 0.22 million output and 0.32 billion input including cache reads; sub-session output counts look understated by the transcript format [unverified].
+
+**Owner actions waiting** (stage report): branch protection or rulesets (`README.md`; open question 27); decisions on A1, A2, L1 and the pins of T1; the superseded and merged remote branches (`stage1/*`), which can be deleted once stage 1 reaches `main`.
+
 ## Next action
 
-Once the owner replies "approved, continue" and `stage2-blueprint` is merged into `main`, create `stage/1` from `main` and begin stage 1 (`docs/PLAN.md` 11.3, row 1).
+Stage 1 is awaiting the owner's review. On his "approved, continue": set stage 1's Gate date, open the pull request `stage 1: scaffold, toolchain and CI` from `stage/1` into `main` (after smuddassirshah-cpu/zero-to-quant#1, the Blueprint, merges), then start stage 2 (spike S1 on the owner's iPhone) and, as its dependencies allow, stage 3.
