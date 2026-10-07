@@ -233,6 +233,19 @@ Each stage adds its decisions here in the format above, numbered B1 onwards, wit
 - **Decision.** `stage/1` was created from `stage2-blueprint` at `e73e090`, not from `main`, because `main` did not yet carry `CLAUDE.md`, `PLAN.md` or the appendices that stage 1 implements (the owner's pull request smuddassirshah-cpu/zero-to-quant#1). Once that merges, `stage/1` is a clean descendant of `main`.
 - **Deviation.** From `CLAUDE.md` gating rule 2 ("create `stage/<n>` from `main`").
 
+### B12 No inline lint configuration anywhere (stage 1)
+
+- **Decision.** `linterOptions: { noInlineConfig: true, reportUnusedDisableDirectives: 'error' }` for the whole repository: an `eslint-disable` comment changes nothing, so every exception to a rule is a line in `eslint.config.js` that review reads.
+- **Reason.** The adversarial review showed `el.innerHTML = s; // eslint-disable-line zq/no-inner-html` linting clean in `src/engine/`, which would let one comment add a third raw-HTML sink against `PLAN.md` 7.2 and section 2.
+- **Rejected.** Refusing disables only for the security rules (a list to keep in step with the rules, and a new dependency for the usual comment-policing plugin); allowing disables with a description (still unreviewed in effect).
+- **Deviation.** No; it enforces the existing floor.
+
+### B13 Every file belongs to a layer (stage 1)
+
+- **Decision.** `zq/layering` ends with catch-all rows for `src/**`, `packages/**`, `tools/**` and `proxy/**` that allow nothing outside their own tree and name the fix ("add a layer row"); resolved targets are normalised, so `@/engine/../screens/x` and `@zq/models/../../src/x` are judged by where they land; an unmapped `@zq/*` name is refused; type-only imports reach the globs a layer lists in `allowTypes`, which gives `platform/web` and `platform/artifact` the "`engine/` beyond types" of `ARCHITECTURE.md` 4.5 exactly.
+- **Reason.** The adversarial review found new folders and `index.ts` files unchecked, and `..` passing through `**`.
+- **Deviation.** No.
+
 ### B11 Playwright's container image (stage 1)
 
 - **Finding** [measured, MCR's tag list and manifest, 7 October 2026]. `mcr.microsoft.com/playwright:v1.63.0-noble` exists; index digest `sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27`. Visual CI pins the digest when it first runs. Closes `STATE.md` open question 8 and `ARCHITECTURE.md` 14 item 11.

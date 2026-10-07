@@ -1952,13 +1952,15 @@ typescript-eslint `strict-type-checked` and `stylistic-type-checked`, `eslint-pl
 | `zq/no-raw-pointer` | `widgets/composites`, `widgets/presets` | `addEventListener` and `on*` pointer and touch handlers; use the interaction hooks |
 | `zq/no-state-in-render` | `widgets/**/View.tsx` | Reading `api.state.value` in a component body; use `useComputed` |
 | `zq/no-inner-html` | everywhere | `innerHTML` and `outerHTML` (assigned or as object keys), `insertAdjacentHTML`, `dangerouslySetInnerHTML`, `document.write`, `setHTMLUnsafe`, `parseHTMLUnsafe`, `createContextualFragment`, `DOMParser` and `parseFromString`; the two exemptions are hard-coded in the rule: `engine/render/Tex.tsx` (S1) and, for `DOMParser`, `ui/bertie/markup.ts` (S2) |
-| `zq/no-forbidden-apis` | `src/` | `window.open`, `print`, iframes, `navigator.serviceWorker` outside `platform/web` and `sw/`, `eval`, `new Function` |
+| `zq/no-forbidden-apis` | `src/` | `open`, `print` and `eval` as globals or on any `Window` (aliases and destructuring included, through the type checker); `Function` and any `FunctionConstructor`; `iframe`, `object` and `embed` elements (JSX, `createElement`, `createElementNS`, `h()`); `navigator.serviceWorker` outside `platform/web` and `sw/` |
 | `zq/no-classic-zod` | `src/` except `workers/` and `**/schema.ts` | Importing `zod`; `zod/mini` is allowed |
 | `zq/no-schema-import` | `src/` except `widgets/registry.node.gen.ts` | Importing any `widgets/**/schema.ts` (decision 33; section 4.5) |
 | `zq/no-colour-literals` | `src/**/*.{ts,tsx}` (widened at stage 1, `docs/DECISIONS.md` B2) | Hex, `rgb()` and `hsl()` literals; colours come from tokens (stylelint enforces the same in CSS) |
-| `zq/no-empty-catch` | everywhere | A `catch` that neither rethrows nor logs (engineering floor) |
+| `zq/no-empty-catch` | everywhere | A `catch` clause, or a `.catch(fn)` or `.then(a, fn)` handler (inline or a local function), that neither rethrows, logs (`log`, `logger`, `console`) nor passes its error on (returned, thrown, passed to a call that is not a conversion, or stored outside the handler) (engineering floor) |
 | `zq/copy-in-copy-files` | `screens/`, `app/`, `engine/player`, `tutor/ui` | Learner-facing string literals in JSX; they live in `copy.ts`, which the copy lint checks for British spelling, banned filler and voice |
 | `zq/layering` | `src`, `packages`, `tools`, `proxy`, `tests` | The layering of section 4.5, with `$1` captures for a screen's own folder |
+
+No file may switch a rule off: `linterOptions.noInlineConfig` is set for the whole repository, so an `eslint-disable` comment does nothing and an exception can only live in `eslint.config.js`, where review sees it (stage 1, `docs/DECISIONS.md` B12).
 
 ### 10.5 Authoring widgets with agents
 
