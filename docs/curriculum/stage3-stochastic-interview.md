@@ -11,6 +11,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 1, 6 October 2026.
 > | The earlier review's runtime-tags row below; decision 18; 3.0 drills; the exit tables' Runs on columns | Pyodide 314.0.7 on both targets; the standard library, NumPy and pandas in the Artifact; which further packages ship in the Artifact build left open | **No Python, SQL or C++ in the Artifact.** The Artifact publishes only files built from this repository's own sources (`docs/PLAN.md` 4.3), so no Pyodide, SQLite or compiler ships there. Every drill and every code item (K items, code screens, Labs, capstones, projects) runs in Pyodide 314.0.7 on the web app, or on CPython 3.12 on the learner's machine where this file says so; in the Artifact it shows its starter code, recorded output and the web-app link, and returns by result code (`docs/ASSESSMENT.md` 14.3). A lesson screen or quiz item whose widget runs learner code resolves as `read` in the Artifact and is finished in the web app (`docs/PLAN.md` 4.3, live-code screens). Lessons are otherwise unaffected: authored code runs at build time and ships as recorded output, and every number a widget shows comes from our own JavaScript models. Maths renders as MathML in the Artifact. Wherever this file says a drill, Lab, capstone, project or paper with code runs "on both targets" or "in the Artifact", or that Pyodide, NumPy or pandas run in the Artifact, read "in the web app"; the iPhone run of Pyodide inside an Artifact (`spikes/README.md`) is a record, not adopted, and where this file calls the brief's "Pyodide cannot run in the Artifact" a conflict, the brief's outcome now holds by the publishing rule |
 > | Papers and exits | 3.2 and 3.3 drills on both targets | **A paper with any code item is sat in the web app** (`docs/ASSESSMENT.md` 3.3; `docs/AI-TUTOR.md` 2.12); a paper whose items need no runtime (predicted output, recorded traces and outputs) plays on both targets. An exit part that needs a drill, Lab or capstone has that part done in the web app. Every 3.2 and 3.3 drill runs in the web app; the cold sets, mocks and paste-verify parts need no runtime and play on both targets |
 > | CI parity | CPython against Pyodide justified by "both targets run Pyodide" | **CI parity is CPython 3.12 (`tools/py/uv.lock`) against Pyodide 314.0.7 on the web app**: Pyodide grades every drill there, and CPython 3.12 is the learner's own floor, so any difference between them fails CI. Runs recorded on CPython 3.11 stand as records and are rerun at `docs/PLAN.md` stage 26 |
+> | Section 4.4 exit; `docs/curriculum.md`'s 3.3 checkboxes | Zhou chapter 5 in the book-log only, joining the exit "if canon-gap P2 is accepted"; `3.3.books` proposed | **The owner, 7 October 2026 (`docs/PLAN.md` 12 decision 14 (b)):** a fourth curriculum checkbox, exit part `3.3.zhou-ch5`, Zhou chapter 5 logged cold at 70%; its 7 hours leave `3.3.books` (now 54.5 h); `3.3.books` is a part by D6's default (`docs/CURRICULUM.md` 6.3) |
 
 > **Revised by the `docs/PLAN.md` review, 7 October 2026.** These lines win over the rest of this file where they differ; content agents are briefed from them, and CI enforces them on the lesson files.
 >
@@ -39,7 +40,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 1, 6 October 2026.
 | 3.3 Interview preparation | 250 | 5 | 28 | 154 | 38.5 (15.4%) | 28 | `exm.iv.paper`: 120 min, 15 questions, 100 marks; pass 70%. Exit gate `exm.iv.zhou-cold` (kind `cold-set`): 20 recreated green-book-style problems, 120 min in two sittings; pass 80% |
 | **Total** | 400 (250 counted) | 10 | 48 | 258 | 64.5 | 48 | 3 papers |
 
-**Exits.** 3.2 has no curriculum exit; section 4.2 proposes `3.2.done` (the finals paper at 70% plus a three-pricer capstone drill) for the owner. 3.3 keeps the curriculum's three checkboxes as `3.3.zhou`, `3.3.zetamac` and `3.3.mocks` (`ASSESSMENT.md` 2.9), and section 4.4 proposes a fourth part, `3.3.books`, for the map line's "the interview books solved cold". Section 4.5 rebuilds the Stage 2 exit and section 4.6 the Stage 3 exit.
+**Exits.** 3.2 has no curriculum exit; section 4.2 proposes `3.2.done` (the finals paper at 70% plus a three-pricer capstone drill) for the owner. 3.3 keeps the curriculum's checkboxes as `3.3.zhou`, `3.3.zetamac` and `3.3.mocks` (`ASSESSMENT.md` 2.9), with `3.3.zhou-ch5` since the owner's fourth checkbox of 7 October 2026 (revision 2 row above), and section 4.4 proposes a fourth part, `3.3.books`, for the map line's "the interview books solved cold". Section 4.5 rebuilds the Stage 2 exit and section 4.6 the Stage 3 exit.
 
 ---
 
@@ -232,7 +233,7 @@ At the end of 3.3 the learner can:
 |---|---|---|
 | IV-O1 | Solve fresh difficulty-3 probability problems cold at 85% within 10 minutes each, and difficulty-4 problems at 60% within 15 minutes, saying the plan aloud first | Cold practice sets (PZ1 to PZ5, PZ7); `exm.iv.paper` section A |
 | IV-O2 | Solve 80% of the probability chapter of Zhou's green book cold | `3.3.zhou`: `exm.iv.zhou-cold` at 80% and the book-log at 80% (section 4.4) |
-| IV-O3 | Solve Brownian motion, martingale and Itô questions at interview depth | 85% on difficulty-3 items (PZ6); Zhou chapter 5 in the book-log |
+| IV-O3 | Solve Brownian motion, martingale and Itô questions at interview depth | 85% on difficulty-3 items (PZ6); `3.3.zhou-ch5`: Zhou chapter 5 at 70% cold in the book-log |
 | IV-O4 | Reach Zetamac 50 (median of 7 cold days) and a net 55 in the 80-in-8 format | `3.3.zetamac`; the 80-in-8 goal (`ASSESSMENT.md` 9.3) |
 | IV-O5 | Estimate products and quotients within 5% in 10 seconds, logs and roots to 2 significant figures, and Fermi quantities within a factor of 3 with a stated decomposition | Timed decks at 80% (QM2); `exm.iv.paper` B |
 | IV-O6 | Solve logic and number puzzles with invariants, pigeonhole, backward induction, information counts and modular arithmetic, and explain the argument in two sentences | 85% on difficulty-3 items (QM4, QM5) |
@@ -245,7 +246,7 @@ At the end of 3.3 the learner can:
 | IV-O13 | Complete a 6-hour data take-home and its write-up, with leakage checks and a results note at 7 of 10 | The TR6 take-home rehearsal (drills block), marked with the `results-note` rubric; homework TR6 |
 | IV-O14 | Think aloud to the mock rubric at 7 of 10; tell a two-minute career story; walk through a 2.3 project and the 3.1 replication with their uncertainty and what failed | `mock-interview` rubric marks (IV1, IV2, IV4) |
 | IV-O15 | Plan applications against the hiring calendar for the target firms, and rehearse online assessments under their formats | Homework IV3; the application plan logged |
-| IV-O16 | Pass the 3.3 exit | `3.3.zhou`, `3.3.zetamac`, `3.3.mocks` (and `3.3.books` if accepted), section 4.4 |
+| IV-O16 | Pass the 3.3 exit | `3.3.zhou`, `3.3.zhou-ch5`, `3.3.zetamac`, `3.3.mocks` and `3.3.books`, section 4.4 |
 
 #### 1.2.3 Prerequisites
 
@@ -1473,7 +1474,7 @@ The capstone drill `drl.stoch.exit-three-pricers` (exams block, 3 hours, section
 |---|---|---|---|---|
 | 1 | Mosteller, *Fifty Challenging Problems in Probability* | From week 1, beside PZ1 to PZ3 | All 56 problems [recalled count; the learner enters it from the Dover edition] | `3.3.books` (proposed) |
 | 2 | Zhou, *A Practical Guide to Quantitative Finance Interviews*, chapter 4 | After PZ5 and before `exm.iv.zhou-cold`'s second sitting | Every problem | `3.3.zhou` (80% cold) |
-| 3 | Zhou, chapters 2, 3, 5, 6 and 7 | Chapter 2 and 3 with QM4 to QM6; 5 after PZ6; 6 after MG5; 7 after TR4 | Every problem | `3.3.books` (proposed) |
+| 3 | Zhou, chapters 2, 3, 5, 6 and 7 | Chapter 2 and 3 with QM4 to QM6; 5 after PZ6; 6 after MG5; 7 after TR4 | Every problem | Chapter 5: `3.3.zhou-ch5` (70%); the rest `3.3.books` |
 | 4 | Crack, *Heard on the Street* | After Zhou | About 150 of 242 quantitative questions: all the pure quantitative and logic ones, the derivatives ones on the trader track and for desk quants, the statistics ones on the researcher track | `3.3.books` (proposed) |
 | 5 | Joshi, Denson and Downes, *Quant Job Interview Questions and Answers* (developer track and desk quants), or Stefanica, Radoičić and Wang, *150 Most Frequently Asked Questions on Quant Interviews* (others) | After TR5, or after TR3 | Chapters on the track's rounds | `3.3.books` (proposed) |
 | 6 | Jane Street, *Probability and Markets* | With MG3 | All of it, once | Read, not logged |
@@ -1593,9 +1594,10 @@ The curriculum's three checkboxes become three exit parts, as `ASSESSMENT.md` 2.
 | Part | Curriculum line | Gate (in the app) | Confirm (logged) | Taught in | Runs on |
 |---|---|---|---|---|---|
 | `3.3.zhou` | 80% of the probability chapter in Zhou solved cold | `exm.iv.zhou-cold` at 80% (16 of 20) | `book-log` of Zhou chapter 4 in the learner's own copy: problems solved cold at least 80% of the chapter's count, entered from their edition | PZ1 to PZ5, PZ7 | Both |
+| `3.3.zhou-ch5` | 70% of the stochastic processes chapter in Zhou (chapter 5) solved cold | `book-log` of Zhou chapter 5 in the learner's own copy: problems solved cold at least 70% of the chapter's count, entered from their edition | None: the log is the evidence | PZ6; 1.5 levels Z4b and Z4c | Both |
 | `3.3.zetamac` | Zetamac at 50 or more | Median of the last 7 study days' cold Zetamac-format scores, physical keyboard, at least 5 such days, at 50 or more (`ASSESSMENT.md` 9.3) | None: the in-app run is the Zetamac format | QM1, QM3, the Daily 10, the speed blocks | Both |
 | `3.3.mocks` | Ten mock interviews done, at least three with a stranger | `mock-interview` log: ten mocks with a human partner, each with its rubric marked, and at least three with partner type "stranger" (self-declared) | The log is the evidence | IV1 to IV4 | Both |
-| `3.3.books` (proposed, decision 14) | The map line: "the interview books solved cold" | `book-log` of every book on the track's list (Mosteller; Zhou chapters 2 to 7; Crack's selected questions; Joshi or Stefanica by track), each with at least 70% of its logged problems solved cold, Zhou chapter 4's 80% counted under `3.3.zhou` | The log is the evidence | All of 3.3 | Both |
+| `3.3.books` (proposed, decision 14) | The map line: "the interview books solved cold" | `book-log` of every book on the track's list (Mosteller; Zhou chapters 2, 3, 6 and 7; Crack's selected questions; Joshi or Stefanica by track), each with at least 70% of its logged problems solved cold, Zhou chapter 4's 80% counted under `3.3.zhou` and chapter 5's 70% under `3.3.zhou-ch5` | The log is the evidence | All of 3.3 | Both |
 
 ```ts
 // exit data for 3.3, using ASSESSMENT.md 2.10's ExitPart; 3.3.books needs book-log's enum widened (request 1 below)
@@ -1604,6 +1606,13 @@ The curriculum's three checkboxes become three exit parts, as `ASSESSMENT.md` 2.
   gate: [ { kind: 'exam', exam: 'exm.iv.zhou-cold', pass: 0.8 } ],
   confirm: [ { kind: 'book-log', book: 'zhou', chapter: '4', share: 0.8 } ],
   estHours: 14 }          // the two 60-minute sittings (2) and the chapter worked cold (12)
+
+// the owner, 7 October 2026 (docs/PLAN.md 12 decision 14 (b))
+{ id: '3.3.zhou-ch5',
+  text: '70% of the stochastic processes chapter in Zhou (chapter 5) solved cold',
+  gate: [ { kind: 'book-log', book: 'zhou', chapter: '5', share: 0.7 } ],
+  confirm: [],
+  estHours: 7 }           // chapter 5 worked cold after PZ6, moved from 3.3.books
 
 { id: '3.3.zetamac',
   text: 'Zetamac at 50 or more',
@@ -1622,10 +1631,10 @@ The curriculum's three checkboxes become three exit parts, as `ASSESSMENT.md` 2.
 { id: '3.3.books',
   text: 'The interview books, in order, solved cold',
   gate: [ { kind: 'book-log', book: 'mosteller', chapter: 'all', share: 0.7 },
-          { kind: 'book-log', book: 'zhou', chapter: '2,3,5,6,7', share: 0.7 },
+          { kind: 'book-log', book: 'zhou', chapter: '2,3,6,7', share: 0.7 },
           { kind: 'book-log', book: 'crack', chapter: 'selected', share: 0.7 } ],   // plus 'joshi' or 'stefanica' by track (request 2)
   confirm: [],
-  estHours: 61.5 }        // Mosteller 12, Zhou chapters 2, 3, 5, 6, 7 26, Crack 22, Jane Street 1.5; Joshi or Stefanica sits in the track variant
+  estHours: 54.5 }        // Mosteller 12, Zhou chapters 2, 3, 6, 7 19, Crack 22, Jane Street 1.5; Joshi or Stefanica sits in the track variant
 ```
 
 **Requests to `ASSESSMENT.md` 2.10** (no new instrument kinds): (1) widen `book-log`'s `book` enum to `['mosteller', 'zhou', 'crack', 'joshi', 'stefanica']` and let `chapter` take a list or `all`; (2) a track-selected gate list, as `stage1-dsa-cpp.md` section 8's request 3 also needs, so that `3.3.books` can name Joshi on the developer track and Stefanica elsewhere.
@@ -1791,7 +1800,7 @@ Stage page line, map line first: "Stage 3 exit: replication finished (1 of 1). I
 | PZ3 | Blitzstein and Hwang chapter 2, "Mixed practice" exercises marked s [check heading] | Optional: warm-up for any pattern below 80% in the cold review |
 | PZ4 | Grinstead and Snell chapter 11, absorbing chain exercises (as in 1.5) | Optional: three exercises for first-step speed |
 | PZ5 | Zhou chapter 4, cold, in book-log mode | After PZ5's homework: work the whole chapter, logging every problem; then sit `exm.iv.zhou-cold`'s second sitting |
-| PZ6 | Zhou chapter 5, cold | After PZ6; log every problem (and if canon-gap P2 is accepted, this chapter joins the exit at 70%) |
+| PZ6 | Zhou chapter 5, cold | After PZ6; log every problem: the chapter is exit part `3.3.zhou-ch5` at 70% (the owner, 7 October 2026) |
 | PZ6 | MIT 18.S096 Fall 2013 lectures 17 and 18 [searched] | Optional for learners without 3.2: watch at 1.5 times speed |
 | PZ7 | Crack, the pure quantitative and logic questions, cold [chapter grouping check] | After Zhou; log each |
 | PZ7 | Stefanica, Radoičić and Wang, the probability questions (researcher and trader tracks) [check] | Cold, logged |

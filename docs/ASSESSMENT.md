@@ -275,6 +275,7 @@ Track rule: on the Trader and Researcher tracks, `1.9.exit` moves to the Stage 2
 |---|---|---|---|---|
 | `3.1.exit` | One replication on GitHub with an out-of-sample extension and a plain note on how much of the effect survived | Project record of kind `replication` marked finished, with the results note's `oos-section` predicate passing | The repository | Both |
 | `3.3.zhou` | 80% of the probability chapter in Zhou solved cold | In-app cold set of recreated green-book-style problems (kind `cold-set`) at 80% | `puzzle-workbench` book-log of the chapter in the learner's own copy: solved cold on at least 80% of the chapter's problems | Both |
+| `3.3.zhou-ch5` | 70% of the stochastic processes chapter in Zhou (chapter 5) solved cold (the owner, 7 October 2026, `docs/PLAN.md` 12 decision 14) | `puzzle-workbench` book-log of Zhou chapter 5 in the learner's own copy: solved cold on at least 70% of the chapter's problems | None: the log is the evidence | Both |
 | `3.3.zetamac` | Zetamac at 50 or more | 7-day median of cold scores at 50 or more (keyboard, at least 5 runs) | None | Both |
 | `3.3.mocks` | Ten mock interviews done, at least three with a stranger | `mock-interview` log: ten mocks with a human partner, rubric marked, at least three with partner type "stranger" (self-declared) | The log is the evidence | Both |
 
@@ -287,7 +288,7 @@ Mocks with Bertie are practice and do not count towards the ten: "at least three
 | P7 Proof and discrete mathematics | A proof portfolio | `rubric` over the topic's proof pool with `count` (for example 8 proofs, each at 7 of 10 or better) |
 | P8 Differential equations | A unit exam | `exam` at 70%, kind `topic` |
 | P1 Research method | Each Stage 2 results note passes the P1 checklist (pre-registration, bias audit, deflated Sharpe ratio, bootstrap interval) | `project` with `notePredicates` naming the `results-note` predicates for those four sections |
-| P2 Stochastic processes | Zhou chapter 4 at 80% and chapter 5 at 70% | Two `book-log` instruments |
+| P2 Stochastic processes (adopted; decision 14 (b)) | Zhou chapter 4 at 80% and chapter 5 at 70% | `3.3.zhou`'s book-log of chapter 4, and the book-log gate of the new part `3.3.zhou-ch5` |
 | P2, P5 | Extra problems in the 1.5 and 1.6 exits | Slots in the finals-style and topic papers; no schema change |
 
 New topics bring their own topic exams and exit parts. Display numbers come from position, so inserting 1.4b or 2.0a renumbers nothing stored (`CONTENT-FORMAT.md` 4.1).

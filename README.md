@@ -9,7 +9,7 @@ One TypeScript codebase builds two targets:
 
 ## Status
 
-The Blueprint carries the owner's decisions of 7 October 2026 and awaits his "approved, continue" (this line is updated at the gate merge). The build has not started; `STATE.md` tracks it stage by stage. Getting-started instructions arrive with build stage 1.
+The Blueprint carries the owner's decisions of 7 October 2026 and was approved by him that day. Build stage 1 (scaffold, toolchain and CI) is in progress; `STATE.md` tracks the build stage by stage. Getting-started instructions arrive with stage 1.
 
 ## Where things are
 

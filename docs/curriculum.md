@@ -244,6 +244,7 @@ The books do not train the live formats, so add:
 **Exit test**
 
 - [ ] 80% of the probability chapter in Zhou solved cold
+- [ ] 70% of the stochastic processes chapter in Zhou (chapter 5) solved cold
 - [ ] Zetamac at 50 or more
 - [ ] Ten mock interviews done, at least three with a stranger
 

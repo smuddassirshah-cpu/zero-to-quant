@@ -78,15 +78,32 @@ These win over anything earlier in the documents (`PLAN.md` revision 2 note).
 
 - **Decision.** The published probe Artifacts of Stage 1 (`spikes/artifact-probe`, `spikes/pyodide-in-artifact`) are to be deleted. Neither was found in the owner's Artifact listing (scope: mine, the default; an Artifact published from another session or organisation may not appear in it) on 7 October 2026 [measured], so nothing has been deleted yet. `spikes/` keeps their sources, and `spikes/README.md` their results, as the record.
 - **Open.** If either probe is found (a listing with scope `all` or `shared`, or a link the owner holds), a session deletes it with the owner's confirmation and records the date here (`STATE.md` open question 22).
+- **Done, 7 October 2026.** Both probes were found by their links and deleted with the owner's confirmation: `claude.ai/artifact/AVT67jiX14bVKkEFpTrbXN` and `claude.ai/artifact/S3wMgZk7sttLXR2AfZAwkG` [measured: the tool confirmed each deletion]. Open question 22 is closed.
 - **Reason.** The owner's instruction; the measurements are recorded and neither runtime is adopted.
 - **Deviation from `PLAN.md`.** No. Stage 2's own probes are published fresh, and its `db` size probe is deleted after its run with the owner's confirmation.
 
-### Open owner decisions (raised by the second review round of `PLAN.md`, 7 October 2026)
+### Owner decisions raised by the second review round of `PLAN.md`, 7 October 2026
 
-Not yet decided. Each default applies if the owner has not decided by the stage named; the decision then gets its own entry here.
+O1 and O2 below are the options as raised; D7 and D8 record what the owner decided at the Blueprint approval the same day.
 
 - **O1 (`PLAN.md` 12 decision 13): where the web app is served before a content licence exists.** Options: (a) GitHub Pages, unlisted but world-readable, which counts as public, so the content licence and the `CONTENT-FORMAT.md` 9.4 sign-off come before stage 25's first deploy; (b) Cloudflare Pages behind a Cloudflare Access policy admitting only the owner's account, until he chooses a licence, with GitHub Pages kept as the public-release path; (c) local only. Recommended and default: (b), needed by stage 25. Reason: decision 8's default (no public release, D4) rules out (a), and (c) breaks the phone handoff the Artifact's drills depend on. The repository is private [measured, GitHub REST API, 7 October 2026].
 - **O2 (`PLAN.md` 12 decision 14): the Stage 3 Zhou exit line.** Options: (a) `3.3.zhou` stays at Zhou chapter 4 logged cold at 80%; (b) canon-gap 4.4's line with P2, chapter 4 at 80% and chapter 5 at 70% cold. Recommended: (b), since P2 was adopted (D2) and 3.3 level PZ6 teaches chapter 5's material to every learner. Default: (a) until the owner confirms, needed before the 3.3 wave is briefed.
+
+### D7 Where the web app is served before a content licence: option (b)
+
+- **Decision.** The owner, at the Blueprint approval ("CloudFlare is fine"): every deployed web build is served from Cloudflare Pages behind a Cloudflare Access policy that admits only his account, until he chooses a content licence. `serve:web` stays the local path. GitHub Pages becomes the public-release path, used only after the licence decision and the Class D review of `PLAN.md` 7. Replaces O1.
+- **Reason.** The only option that keeps decision 8's "no public release" (D4) and the phone handoff every Artifact drill depends on.
+- **Rejected.** (a) GitHub Pages, unlisted but world-readable, which counts as public; (c) local only, which breaks the handoff away from the owner's network.
+- **Open.** Access's free-plan terms (up to 50 users [recalled, unverified]) are checked at stage 25, the first deploy; the Access session lifetime against the service worker's update checks is [unverified] until stage 82 (`PLAN.md` 9).
+- **Deviation from `PLAN.md`.** No: it is decision 13's default.
+
+### D8 The Stage 3 Zhou exit line: option (b)
+
+- **Decision.** The owner, at the Blueprint approval ("Add in chapter 5"): Zhou chapter 5 joins the Stage 3 exit at 70% solved cold, as a new exit part `3.3.zhou-ch5` (a `book-log` gate of chapter 5 at 0.7 in the learner's own copy, 7 hours moved out of `3.3.books`, now 54.5 h). `3.3.zhou` is unchanged: `exm.iv.zhou-cold` at 80% and the chapter 4 book-log at 80%. `docs/curriculum.md` gains the fourth 3.3 checkbox on his instruction. Replaces O2.
+- **Reason.** P2 was adopted (D2): 1.5 levels Z4b and Z4c and 3.3 level PZ6 teach chapter 5's processes and Itô's formula at interview depth to every learner, so the exit measures what the path teaches.
+- **Rejected.** (a) Chapter 4 alone; folding chapter 5 into `3.3.zhou` as a second confirm instrument, which would hide a separate curriculum line inside another part (`ASSESSMENT.md` decision 1: one exit part per curriculum exit line); an in-app cold set for chapter 5, which would add a second held-out pool of recreated problems for 7 hours of reading [our choice].
+- **Edited.** `PLAN.md` 12; `docs/curriculum.md`; `docs/CURRICULUM.md` 3.1, 4.2, 4.3, 6.2, 6.3, 6.4; `ASSESSMENT.md` 2.9; `docs/curriculum/stage3-stochastic-interview.md` (revision 2 row, 3.0, 4.4, the outcomes, the reading rows). The exit data itself is written at stage 78 (`STATE.md` pending edit 4).
+- **Deviation from `PLAN.md`.** No: it is decision 14's recommended option.
 
 ## 2. Raw-HTML sinks
 
