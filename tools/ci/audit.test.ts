@@ -49,6 +49,8 @@ describe('advisories', () => {
   it.each([
     [null, /not a JSON object/],
     [{ error: { summary: 'ENOTFOUND registry' } }, /npm audit failed: ENOTFOUND/],
+    [{ message: 'request failed, reason: ECONNREFUSED', error: { summary: '' } }, /failed: request failed/],
+    [{ error: {} }, /npm audit failed: no reason given/],
     [{ metadata: {} }, /no vulnerabilities object/],
     [{ vulnerabilities: { a: { via: ['b'] } } }, /no advisory could be read/],
   ])('fails closed on %j', (input, message) => {
@@ -78,10 +80,18 @@ describe('evaluate', () => {
     expect(evaluate([], [waiver], 'high', '2026-10-07').unused).toEqual(['GHSA-vfj7-8cjw-p6xm for braces']);
   });
 
-  it('keeps ecosystems apart', () => {
+  it('keeps ecosystems apart and matches a waiver by alias', () => {
     const pypi = { ...waiver, ecosystem: 'pypi' as const };
     expect(evaluate(advisories.slice(0, 1), [pypi], 'high', '2026-10-07').failures).toHaveLength(1);
     expect(expired([pypi, waiver], 'pypi', '2027-01-01')).toHaveLength(1);
+    const aliased = {
+      id: 'PYSEC-1',
+      aliases: [waiver.id],
+      package: 'braces',
+      severity: 'unrated',
+      title: '',
+    };
+    expect(evaluate([aliased], [pypi], 'low', '2026-10-07', 'pypi').waived).toHaveLength(1);
   });
 });
 
@@ -100,7 +110,10 @@ describe('inputs', () => {
     expect(() => parseWaivers({})).toThrow(/must be an array/);
     expect(() => parseWaivers([{ id: 'x' }])).toThrow(/entry 0 needs/);
     expect(() => parseWaivers([{ ...waiver, ecosystem: 'cargo' }])).toThrow(/ecosystem/);
-    expect(() => parseWaivers([{ ...waiver, expires: 'soon' }])).toThrow(/GHSA id/);
+    for (const expires of ['soon', '2026-99-99', '2026-02-30']) {
+      expect(() => parseWaivers([{ ...waiver, expires }])).toThrow(/a real YYYY-MM-DD date/);
+    }
+    expect(parseWaivers([{ ...waiver, expires: '2028-02-29' }])).toHaveLength(1);
   });
 });
 
@@ -112,9 +125,9 @@ describe('main', () => {
     return dir;
   };
   const npm =
-    (stdout: string): Run =>
+    (stdout: string, stderr = ''): Run =>
     () =>
-      Promise.resolve({ code: 1, stdout, stderr: '', missing: false });
+      Promise.resolve({ code: 1, stdout, stderr, missing: false });
 
   it('fails on unwaived advisories and passes when they are waived', async () => {
     const lines: string[] = [];
@@ -124,7 +137,11 @@ describe('main', () => {
     try {
       expect(await main([], npm(one), bare, log)).toBe(1);
       expect(await main(['--level', 'high'], npm(one), waived, log)).toBe(0);
-      expect(await main([], npm(''), bare, log)).toBe(1);
+      expect(await main([], npm('', 'npm error audit endpoint returned an error'), bare, log)).toBe(1);
+      expect(lines.at(-1)).toBe(
+        'audit: npm audit printed no report: npm error audit endpoint returned an error',
+      );
+      expect(await main([], npm('null'), bare, log)).toBe(1);
       expect(lines.at(-1)).toBe('audit: npm audit output is not a JSON object');
     } finally {
       for (const dir of [bare, waived]) rmSync(dir, { recursive: true, force: true });

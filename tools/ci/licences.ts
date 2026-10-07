@@ -9,6 +9,8 @@
  *   licence. A missing, unparsable or unknown licence fails unless tools/ci/licences.exceptions.json lists that
  *   exact name and version, with the reason and the docs/DECISIONS.md entry. An exception that matches nothing
  *   fails too, so the list cannot go stale. O(n) in lockfile entries.
+ * - The npm tree only: the Python lock is CI tooling, and Python licences are checked from stage 25, when
+ *   Pyodide's packages ship on the web app (docs/DECISIONS.md section 5).
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -168,19 +170,18 @@ export function check(installed: readonly Installed[], exceptions: readonly Lice
     const kind = pkg.shipped ? 'shipped' : 'development';
     const label = pkg.licence ?? '(none)';
     counts[kind].set(label, (counts[kind].get(label) ?? 0) + 1);
-    let ok: boolean;
+    // A licence that is not SPDX at all ("SEE LICENSE IN LICENSE.md") can still be excepted.
+    let reason = `${label} is not allowed for ${kind} packages`;
     try {
-      ok = pkg.licence !== undefined && satisfies(parseSpdx(pkg.licence), ALLOWED[kind]);
+      if (pkg.licence !== undefined && satisfies(parseSpdx(pkg.licence), ALLOWED[kind])) continue;
     } catch (error) {
-      failures.push(`${pkg.name}@${pkg.version}: ${error instanceof Error ? error.message : String(error)}`);
-      continue;
+      reason = error instanceof Error ? error.message : String(error);
     }
-    if (ok) continue;
     const exception = exceptions.find((x) => x.name === pkg.name && x.version === pkg.version);
     if (exception !== undefined && (pkg.licence === undefined || pkg.licence === exception.licence)) {
       used.add(exception);
     } else {
-      failures.push(`${pkg.name}@${pkg.version} (${pkg.key}): ${label} is not allowed for ${kind} packages`);
+      failures.push(`${pkg.name}@${pkg.version} (${pkg.key}): ${reason}`);
     }
   }
   for (const x of exceptions) {

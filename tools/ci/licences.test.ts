@@ -114,6 +114,22 @@ describe('check', () => {
     expect(check([{ ...pkg, licence: 'MIT OR' }], []).failures[0]).toMatch(/expected a licence/);
   });
 
+  it('excepts a licence that is not SPDX at all, and fails it without the exception', () => {
+    const licence = 'SEE LICENSE IN LICENSE.md';
+    const pkg = { key: 'node_modules/x', name: 'x', version: '1.0.0', shipped: false, licence };
+    const exception = {
+      name: 'x',
+      version: '1.0.0',
+      licence,
+      reason: 'read',
+      decision: 'docs/DECISIONS.md L0',
+    };
+    expect(check([pkg], [exception])).toMatchObject({ failures: [], excepted: [exception] });
+    expect(check([pkg], []).failures).toEqual([
+      'x@1.0.0 (node_modules/x): unexpected "LICENSE" in "SEE LICENSE IN LICENSE.md"',
+    ]);
+  });
+
   it('validates the exceptions file', () => {
     expect(parseExceptions([linterException])).toEqual([linterException]);
     expect(() => parseExceptions({})).toThrow(/must be an array/);
