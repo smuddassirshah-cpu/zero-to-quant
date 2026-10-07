@@ -11,6 +11,7 @@ Preview Artifact: not yet created (stage 25 creates it; its URL goes here)
 | Session | Stage | Branch | Started |
 |---|---|---|---|
 | Main session (integration, docs, review fixes) and seven sub-sessions (lint, release and CI units; four adversarial reviewers), `session_01J92GRXudcwDnRYVFX2Sqby` | 1 | `stage/1` | 2026-10-07 11:50 UTC |
+| The same main session with its workflow sub-sessions (probe builders, tester, adversarial reviewers), `session_01J92GRXudcwDnRYVFX2Sqby` | 2 | `stage/2` | 2026-10-07 |
 
 ## Device-gate queue
 
@@ -23,7 +24,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 | # | Stage | Depends on | AD plan | AD actual | Status | Gate |
 |---|---|---|---|---|---|---|
 | 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
-| 2 | Spike S1 on the owner's iPhone | 1 | 3 | - | pending | - |
+| 2 | Spike S1 on the owner's iPhone | 1 | 3 | - | in progress | - |
 | 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | pending | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
 | 3b | `stats-core` in `@zq/mathcore/stats` | 3a | 12 | - | pending | - |
@@ -180,6 +181,9 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-07 | A2 `pytest` 9.0.2 advisory waived to 7 November 2026 | Pinned to Pyodide's version | n; for the owner |
 | 2026-10-07 | T1 gitleaks 8.30.1, pip-audit 2.10.1, the Go floor; npm-only licence gate until stage 25 | Named in `PLAN.md` 7.1 and 7.6 | n; versions for the owner |
 | 2026-10-07 | G1 The label guard: owner's label after the head commit, reset on every push, on `pull_request_target` | The owner cannot approve his own pull request | y: `PLAN.md` 7.1 |
+| 2026-10-07 | B17 `stage/2` branched from `stage/1`, not `main` | `main` does not carry stage 1 until the owner merges it | y: `CLAUDE.md` gating rule 2 |
+| 2026-10-07 | B18 The spike S1 source archived in `spikes/s1/` and `spikes/s1-dbsize/` in one pull request; the npm mirror fetched, not committed | Evidence, not engine code; reviewed before publishing | y: `PLAN.md` 11.1 line cap |
+| 2026-10-07 | B19 The probe declares `db` (six rules), `user` (profile) and `sample`; `permissions` is built in and not declared | The capabilities contract 0.2.73 | n |
 | 2026-10-07 | Stage 1 gate: approved by the owner ("Approved and continue"); A1, A2 (pytest stays at 9.0.2, Pyodide's version), L1, T1 and B16 approved; branch protection to be applied by the owner per `README.md`; the superseded `stage1/*` branches may be deleted once stage 1 reaches `main`; the licence holder is Syed Muddassir Shah | The owner's answers at the gate | n |
 
 ## Open questions
@@ -264,4 +268,4 @@ Each with the stage it affects; the stage that closes it records the answer in `
 
 ## Next action
 
-Stage 1 approved on 7 October 2026 (the owner: "Approved and continue"). The owner merges the Blueprint (smuddassirshah-cpu/zero-to-quant#1) and then the stage 1 pull request into `main`. Stage 2 (spike S1 on the owner's iPhone) is in progress on `stage/2`.
+Stage 1 approved on 7 October 2026 (the owner: "Approved and continue"). The owner merges the Blueprint (smuddassirshah-cpu/zero-to-quant#1) and then the stage 1 pull request into `main`. Stage 2 (spike S1 on the owner's iPhone) is in progress on `stage/2`: the probe (https://claude.ai/artifact/KfYB1yPs9DfKTakjZZrGFD) and the `db` size probe (https://claude.ai/artifact/DF7mBFRaKCWkrXp14eRgXs) were published on 7 October 2026 and wait for the owner's run on the iPhone. When he says "S1 ready for republish", the session publishes v2 to the same URL and writes the signal (`spikes/s1/CONTRACT.md`, the runbook), then the omit-page publish, then reads the results from `ops/s1-run-*` and `status/s1-size`.

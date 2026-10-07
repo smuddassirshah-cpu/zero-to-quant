@@ -157,7 +157,7 @@ Details in `spikes/README.md`. Both ran as private Artifacts on the owner's iPho
 
 ### Spike S1 (stage 2)
 
-Pending. Record each check with device, app version and date, the import-map verdict (section 4.3's design or its named fallback) before stage 4 starts, the MathML verdict with screenshots, and the `db` size probe's result.
+Published 7 October 2026 (`spikes/README.md`, `spikes/s1/`, `spikes/s1-dbsize/`); results on the owner's iPhone pending. Record each check with device, app version and date, the import-map verdict (section 4.3's design or its named fallback) before stage 4 starts, the MathML verdict with screenshots, and the `db` size probe's result.
 
 ## 5. Dependencies, licences and advisories
 
@@ -326,3 +326,23 @@ Each stage adds its decisions here in the format above, numbered B1 onwards, wit
 - **Rejected.** Folding the CI tools into `tools/release/` (different jobs and owners); one `tsconfig.base.json` for both resolutions (it cannot be `bundler` and `nodenext` at once).
 - **For the owner.** `CLAUDE.md` asks his approval before restructuring the tree; these are additions, listed here and in the stage report for his decision.
 - **Deviation.** Yes, from the trees of `PLAN.md` 10 and `ARCHITECTURE.md` 4.4.
+
+### B17 `stage/2` was branched from `stage/1` (stage 2)
+
+- **What.** `CLAUDE.md` gating rule 2 creates a stage branch from `main`. `main` does not yet carry stage 1 (the owner merges smuddassirshah-cpu/zero-to-quant#1 and the stage 1 pull request), so `stage/2` starts at the head of the approved `stage/1`.
+- **Reason.** Stage 2 depends on stage 1; a branch from today's `main` would lack the toolchain and records it builds on.
+- **Rejected.** Waiting for the merges to start the spike.
+- **Deviation.** Yes, from `CLAUDE.md` gating rule 2, until stage 1 reaches `main`; the stage 2 pull request into `main` then carries only stage 2's commits.
+
+### B18 The spike S1 source lands in one pull request per probe (stage 2)
+
+- **What.** The probe's source (about 12,700 lines with its test runner and lock) is archived in `spikes/s1/` and `spikes/s1-dbsize/`, the folders the owner chose, in one pull request into `stage/2`, above `PLAN.md` 11.1's line cap. The npm mirror the tests use is fetched and checked by `tools/fetch-npm.mjs`, never committed.
+- **Reason.** A spike is measured evidence, not engine code: no later stage imports it, and splitting it by module would review halves of one page whose checks share a harness. It went through a self-review and an adversarial review (17 major, 34 minor and 15 nit findings, all fixed or answered) before it was published; the archive pull request has its own adversarial review.
+- **Rejected.** Seventeen pull requests of 800 lines; leaving the source outside the repository.
+- **Deviation.** Yes, from `PLAN.md` 11.1 and `CLAUDE.md` gating rule 3, for this pull request.
+
+### B19 The probe declares `db`, `user` and `sample`, not `permissions` (stage 2)
+
+- **Decision.** The probe's declaration is `ARCHITECTURE.md` 6.2.4's rule set plus one canary rule (`s1canary/{self}`, write `interact`), `user` with the `profile` scope, and `sample`. `permissions` is built in on every page and is called without being declared [sourced: the `artifact-capabilities` skill, runtime contract 0.2.73]; the probe's build had listed it and the publishing session removed it before the first publish.
+- **Rejected.** Declaring `permissions: {}`, which the contract says never to pass.
+- **Deviation.** No.
