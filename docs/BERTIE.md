@@ -2,9 +2,11 @@
 
 > **Appendix to `docs/PLAN.md`.** Moved from `docs/blueprint/work/bertie.md` on 7 October 2026 and tidied for the blueprint. Section numbers are unchanged. `docs/PLAN.md` wins where the two differ. Tidied in place: section 12.1's files are TypeScript, and the spring integrator lives in `src/engine/motion/spring.ts`, shared with widgets (`ARCHITECTURE.md` 0.3). The budget of section 9 (12,000 bytes gzipped) applies to the TypeScript build output.
 
-Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
+Blueprint work file, Stage 2 Phase 1. Draft 3, 7 October 2026 (hair only); draft 2, 6 October 2026.
 
 **Draft 2** keeps every section number of draft 1, because `AI-TUTOR.md` cites sections 0, 5, 7, 10 and 12. It is a second art pass on the same rig: a new hair construction, a hairline cut into the face, eyelids, a visible smile and a tighter small cut. The API, the state set, the springs and the motion rules are unchanged. Section 0.3 lists every change and its reason.
+
+**Draft 3, 7 October 2026 (change note).** At the blueprint review the owner confirmed Bertie as drawn except the hair: "Make his hair less spiky, more rounded and fuzzy. Everything else about Bertie is perfect." Draft 3 redraws the hair and nothing else. Draft 2's pointed flame locks become soft, rounded puffs with gently scalloped edges, flaring up and out at the upper corners, with two shaded back puffs behind the crown and two flyaway wisp puffs. The face and hairline, eyes, lids, brows, moustache, mouth, jumper, bow tie, colours and tokens, rig groups and names, states, springs and motion timings are unchanged. Section numbers are unchanged; section 0.4 lists every change and its reason, and sections 0.1 (decisions 2, 14 and 16), 0.2, 1, 2.1 to 2.4, 2.6, 3, 4.1, 4.2, 5.1, 9, 11, 12 and 13 carry it.
 
 **Scope.** The art and animation of Brainy Bertie, the Zero to Quant mascot and the face of the AI tutor: construction (section 2), the SVG rig (3), the motion system (4), states and their triggers (5), reduced motion (6), where he appears (7), accessibility (8), performance and the size budget (9), the JavaScript API (10), the rendering technology decision (11), build layout and tests (12) and open questions (13). It is the art authority that `AI-TUTOR.md` (decision 25, sections 3.2 and 7.2) defers to.
 
@@ -23,7 +25,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 | # | Decision | Chosen | Rejected | Reason |
 |---|---|---|---|---|
 | 1 | Rendering | Inline SVG. A small spring integrator on `requestAnimationFrame` drives the neck and hair; CSS transitions drive pose channels; Web Animations drive timed effects | Rive; Lottie (`lottie-web`); canvas 2D; sprite sheets; CSS keyframes only | Section 11. In short: Rive's default runtime fetch is blocked in the Artifact and the alternatives cannot do live physics, gaze or per-delta speech, or cannot take theme tokens |
-| 2 | Recognisability | Caricature of the wild-haired professor archetype: a high bald dome, white hair swept out sideways in curling locks, a hairline that comes down to a point above each ear, a bushy walrus moustache, a round nose, kind lidded eyes, heavy brows | A likeness of a real person; a non-human mascot | The owner asked for an Einstein-style bobble head. The bald dome inside a wide white halo, plus the moustache, carries recognition at 32 px; nothing in the art copies a photograph |
+| 2 | Recognisability | Caricature of the wild-haired professor archetype: a high bald dome, white hair swept up and out sideways in soft, rounded puffs, a hairline that comes down to a point above each ear, a bushy walrus moustache, a round nose, kind lidded eyes, heavy brows | A likeness of a real person; a non-human mascot | The owner asked for an Einstein-style bobble head. The bald dome inside a wide white halo, plus the moustache, carries recognition at 32 px; nothing in the art copies a photograph |
 | 3 | Levels of detail | Two cuts from one rig: **small** below 80 px, **large** from 80 px | One drawing scaled to every size; three cuts | One scaled drawing fails at 32 px: wisps turn to noise and brows merge with eyes [measured, draft 1]. Two cuts cover 32 to 220 px |
 | 4 | Outline | One warm-ink outline, size-aware: $w_{\text{px}} = \operatorname{clamp}(\text{size}/70,\ 1.25,\ 2.6)$. The hair has one merged outer outline (decision 16) | No outline; pure black `#000000` | White hair on a white canvas has no edge without a line. Warm ink `#2A2420` is softer than black against peach skin and still 15.3:1 on white [measured] |
 | 5 | Colours by theme | Character colours fixed in both themes; only the ground shadow changes | Theme-inverted character | A character does not invert. White hair on the dark canvas is 18.4:1 and needs no help [measured] |
@@ -35,9 +37,9 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 | 11 | Meaning | Bertie is always decorative (`aria-hidden="true"`); text carries every meaning | Bertie as an informative image | Matches `AI-TUTOR.md` 7.8: no state change carries meaning on its own |
 | 12 | Name and likeness | Never called Einstein in copy, alt text or code comments shipped to users; never quotes anyone | Naming the character after the person | Consistent with `AI-TUTOR.md` 3.2. Rights in a famous person's name and likeness may be licensed commercially [recalled, unverified]; section 13 keeps the question open for any public launch |
 | 13 | Speech bubble | `say()` renders plain text only (`textContent`) and keeps the bubble inside a bounding element | `innerHTML`; placement against the viewport | No raw-HTML sink (engineering floor). Viewport-based placement overflowed the stage at 1,280 px in draft 1 [measured]. Lesson verdict bubbles with KaTeX are the lesson player's component; `say()` serves onboarding, the map and the streak sheet |
-| 14 | Size budget | 12,000 bytes minified and gzipped for the whole component (JS and CSS); 100 SVG elements per instance | No budget | Measured 10,615 bytes and 92 elements (section 9) |
+| 14 | Size budget | 12,000 bytes minified and gzipped for the whole component (JS and CSS); 100 SVG elements per instance | No budget | Measured 11,067 bytes and 92 elements (section 9, draft 3) |
 | 15 | Thinking signal | Three electrons on a dashed orbit around his head, in the hint indigo | Spinner; animated ellipsis | The atom reads as "working something out" rather than "loading" |
-| 16 | Hair construction | Twelve flame-shaped locks (ten in a ring, two thin wisps) over a shaded scalloped mass, drawn twice: once as a line-coloured silhouette with a double-width stroke, then filled on top, so every overlap merges into one outer outline | Draft 1's single flame-lobed ring with crescent strands; locks with individual outlines | Draft 1's ring read as a crown of spikes and the face looked pasted on [measured, contact sheet]. Individual outlines show every root as a seam ("paper petals", draft 1). The merged outline keeps one clean edge while each lock still swings on its own spring |
+| 16 | Hair construction (draft 3) | Twelve soft tufts over a shaded scalloped mass: three front puffs a side (largest at the upper corners, tucked in by the ears), a crown puff a side, two back puffs filled with the hair shade that peek over the dome, and two flyaway wisp puffs. Each tuft swells from a narrow root to a round end, and its outer edge is a run of circular scallops. All of it is drawn twice: once as a line-coloured silhouette with a double-width stroke, then filled on top, so every overlap merges into one outer outline | Draft 2's twelve flame-shaped locks with pointed tips; draft 1's single flame-lobed ring with crescent strands; an even ring of round puffs; tufts with individual outlines | The owner found draft 2's points too spiky (review, 7 October 2026). Round ends with scallops read as soft fuzz; the flare at the upper corners and the flyaway wisps keep the wild shock; the back puffs give depth with an existing token. An even ring of round ends merges into one cloud, an afro [measured]. Draft 1's ring read as a crown of spikes [measured, contact sheet]. Individual outlines show every root as a seam ("paper petals", draft 1). The merged outline keeps one clean edge while each tuft still swings on its own spring |
 | 17 | Eyelids | A skin-coloured lid inside each eye, clipped to the eye, with its own edge line. It has a closure (0 to 1) and a slant per pose; blinks drop it to shut | Draft 1's blink by squashing the eye to 8% height; no lids | The brief names lids in the rig. Lids give kind (outer ends down), sceptical (one lid lower) and sleepy faces without new shapes, and a lid blink keeps the eye's outline. At 32 px a lid blink still reads as a blink [measured] |
 | 18 | Hairline | The face path carries the hairline: the dome narrows at the temples and comes down to a point above each ear, where the hair behind shows through | Temple locks drawn over the face and clipped to it; an egg-shaped face inside the hair | The hairline makes the head read as one object with wild hair, not an egg on a cloud. Clipped temple locks left an anti-aliased seam along the clip edge at 2x and 3x [measured] |
 | 19 | Rig markup | Built from the module's numeric constants and parsed with `DOMParser` as `image/svg+xml`; no data reaches it | `innerHTML` on a `div` | The engineering floor requires a written justification for any raw-HTML sink. This template contains only numbers and class names written in the module; parsing it as SVG keeps the HTML parser out entirely. This row is the justification `DECISIONS.md` will carry |
@@ -48,7 +50,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 
 | `AI-TUTOR.md` 7.2 draft 1 said | This file sets | Why |
 |---|---|---|
-| "a halo of 7 to 9 white hair strokes" | Ten locks plus two wisps over a shaded mass, one merged outline (decision 16); seven broad locks in the small cut | Separate strokes showed visible roots and read as petals or thorns [measured, draft 1] |
+| "a halo of 7 to 9 white hair strokes" | Ten rounded tufts (two of them back puffs in the hair shade) plus two wisp puffs over a shaded mass, one merged outline (decision 16, draft 3); seven broad puffs in the small cut | Separate strokes showed visible roots and read as petals or thorns [measured, draft 1] |
 | "Flat fills from the neutral ramp, 2px ink strokes" | Character palette in section 2.4 (skin, jumper, bow tie are not neutral); size-aware outline of 1.25 to 2.6 px | Neutral-only fills made a grey ghost; a fixed 2 px line is too heavy at 32 px and too light at 220 px |
 | `idle`: "hair sways 1° over 4 s" | Breathing bob, blinks, fidgets; the hair moves only through its springs | A constant sway on a still character looks like wind |
 | `pleased`: "a single nod, 300 ms, spring-bounce" | `correct`: happy squint for 650 ms, a double nod from two spring impulses, a broad smile | A single 300 ms nod was too slight to notice at 32 px |
@@ -71,14 +73,29 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 | Markup | `innerHTML` with constant markup | `DOMParser` as SVG (decision 19); the bolt is built with `createElementNS` | Engineering floor |
 | Budget | 9,978 bytes, 60 elements | 10,615 bytes, 92 elements; element budget raised from 80 to 100 | The merged outline draws the hair twice (26 elements) |
 
+### 0.4 Changes in draft 3 (7 October 2026, hair only)
+
+The owner's review note: "Make his hair less spiky, more rounded and fuzzy. Everything else about Bertie is perfect." Only the hair changed.
+
+| Area | Draft 2 | Draft 3 | Reason |
+|---|---|---|---|
+| Tuft shape | Flame-shaped comma locks curling to a point (`lockPath`) | Rounded tufts (`tuftPath`, section 2.2): the half width eases from the root to a round end; past the root-most 40% of each side the outline is a run of circular arcs about 16 u long (22 u in the small cut), each bulging about a quarter of its length | The owner's note. Arcs keep the edge soft at every size and add no elements |
+| Arrangement | Ten locks every 26° from 206° to −26°, plus two thin wisps poking out of the side wings | Three front puffs a side at 214°, 182° and 150° (mirrored), a crown puff at 126° and 54°, two back puffs at 102° and 78°, two wisp puffs at 198° and −18° | Round ends at an even 26° spacing touch and merge into one cloud, an afro with no tufts [measured]. Puffs that grow towards the upper corners and tuck in by the ears keep the archetype's flare |
+| Back puffs | None | The two crown tufts at 102° and 78° are filled with `--bertie-hair-shade` and drawn before the white fills | White puffs in front of shaded ones read as volume and separate the tufts. An all-white crown read as a cloud helmet [measured]. No new colour: the token already shaded the mass |
+| Wisps | Thin locks (half width 6 u) with pointed tips | Small round puffs (end radius 10 u) on short stems below the side wings; still the softest springs | Thin stems read as spikes, and through the crown as a white stripe [measured] |
+| Mass | $70 \times 54\,u$, bulge 1.22 ($68 \times 54$ small) | $62 \times 48\,u$, bulge 1.18 ($58 \times 46$ small) | A mass as large as draft 2's filled the notches between round ends and merged the hair into a blob [measured] |
+| Head with hair | $176 \times 135\,u$ | $188 \times 139\,u$; the small cut still fits inside its viewBox with no margin | Round ends carry more area to the sides than points [measured, `getBBox`] |
+| Budget | 10,615 bytes gzipped | 11,067 bytes gzipped; elements unchanged (92 large, 74 small) | The outline resampling and arc code in `tuftPath` |
+| Rig | `path.tuft[i]` and `path.tuft-l[i]`, 12 large, 7 small | Unchanged: names, groups, counts, pivots, springs, stiffness and limits. A back puff is `path.f-hair-shade.tuft` | The existing springs drive the new shapes with no change [measured, filmstrips] |
+
 ---
 
 ## 1. The character
 
-- **Who he is.** A little cartoon professor in a slate jumper and a pear bow tie, all head: a high bald dome, wild white hair swept out to the sides, heavy dark brows, kind lidded eyes, a round nose and a big bushy moustache over a small smile. His personality is in `AI-TUTOR.md` 3.2: warm, curious, a little dry, never cute.
+- **Who he is.** A little cartoon professor in a slate jumper and a pear bow tie, all head: a high bald dome, wild white hair in soft puffs swept up and out to the sides, heavy dark brows, kind lidded eyes, a round nose and a big bushy moustache over a small smile. His personality is in `AI-TUTOR.md` 3.2: warm, curious, a little dry, never cute.
 - **Design philosophy.** Brilliant's rule is "quiet canvas, loud boundaries" (design research section 1). Bertie follows it: during a problem he is still and small at the edge of the card; he gets energy only at boundaries (a verdict, lesson complete, a streak). A character "lowers the stakes" [sourced, design research 3]: a not-yet result comes with a kind face, not a red cross.
 - **Recognition test.** At 32 px, with the face features blurred, the silhouette alone (a skin dome inside a wide white halo, above a small dark collar) should say "wild-haired professor". The prototype passes at 32 px, 1x, in both themes [measured: the 1x contact sheet, `#sizes` and the verdict chips].
-- **Minimal detail.** In the large cut the eye sees 22 shapes: the hair silhouette, 2 ears, the face, 2 blush ovals, 2 brows, 2 eyes with 2 glints and 2 lid edges, the nose, 2 moustache halves, the mouth, the neck, the jumper, the shirt and the bow tie. No wrinkles, no irises, no hair texture lines, no gradients, and no shading except the hair shade and one darker skin tone for the nose and neck.
+- **Minimal detail.** In the large cut the eye sees 22 shapes: the hair silhouette, 2 ears, the face, 2 blush ovals, 2 brows, 2 eyes with 2 glints and 2 lid edges, the nose, 2 moustache halves, the mouth, the neck, the jumper, the shirt and the bow tie. No wrinkles, no irises, no hair texture lines (the scallops are the hair's edge, not lines inside it), no gradients, and no shading except the hair shade (the mass and the two back puffs) and one darker skin tone for the nose and neck.
 
 ---
 
@@ -103,24 +120,26 @@ The rig is drawn in viewBox units (u). The large cut uses viewBox $(-8, -12, 216
 | Head pivot | Point | $(100, 150)$, under the chin, so tilts swing the top of the head like a bobble head |
 | Hair centre | Point | $(100, 90)$ |
 
-Proportions [measured, `getBBox`]: the head with its hair spans $176 \times 135\,u$ ($x = 12$ to $188$, $y = 16$ to $151$); the large figure is $184\,u$ tall, so the head is 73% of the figure, the bobble-head ratio. The face is $92\,u$ wide, 52% of the hair's width, so the hair reads first and the face second.
+Proportions [measured, `getBBox`, draft 3]: the head with its hair spans $188 \times 139\,u$ ($x = 6$ to $194$, $y = 12$ to $151$); the large figure is $188\,u$ tall, so the head is 74% of the figure, the bobble-head ratio. The face is $92\,u$ wide, 49% of the hair's width, so the hair reads first and the face second. The small cut's hair spans $x = 20$ to $180$, $y = 18.5$ to $132$, inside its viewBox.
 
 ### 2.2 Hair geometry
 
-The hair is generated from tables, so it is tuned by editing numbers rather than redrawing paths.
+The hair is generated from tables, so it is tuned by editing numbers rather than redrawing paths. Draft 3 (7 October 2026) replaced draft 2's pointed locks with rounded tufts; section 0.4 gives the reasons.
 
-- **The lock primitive.** `lockPath(R, dir, len, w, curl)` draws a flame-shaped lock from root $R$ in direction `dir` with half-width $w$ at the root. In the lock's own frame ($s$ along `dir`, $t$ across it) the tip sits at $(L\cos c,\ L\sin c)$ for length $L$ and curl $c$. The side away from the curl bulges (cubic controls at $(0.4L,\ 1.7w)$ and $(0.95L\cos c,\ 0.9w + 0.6L\sin c)$); the side towards the curl hugs it; a round cap closes the root. Each lock is therefore a comma: fat near the head, curling to a point.
-- **Ring (large cut).** Ten locks with roots every 26° from 206° round to −26° (so the ring is symmetric about 90°), root radius 34 to 36 u, lengths 42 to 60 u (longest at 180° and 0°: the side wings), half-widths 16 to 20 u, curls 22° to 28° upwards on each side. The top pair at 104° and 78° both curl to the right: one asymmetry, a cowlick, gives him character without breaking the balance.
-- **Wisps (large cut).** Two thin locks at 168° and 12°, half-width 6 u, length 64 u, curl 34°. They poke out of the side wings and have the softest springs, so they swing widest.
-- **Ring (small cut).** Seven broad locks at 200°, 166°, 124°, 90°, 56°, 14° and −20°, lengths 38 to 50 u, half-widths 18 to 21 u, no wisps.
-- **Mass.** A scalloped cloud around the hair centre, $70 \times 54\,u$, with 9 lobes (7 in the small cut) from 222° to −42°, quadratic control points at 1.22 times the radius, closed behind the face. It is filled with `--bertie-hair-shade`, so the valleys between locks read as depth and a lock swinging aside never shows the page through the hair.
-- **Merged outline.** The `g.hair-line` group draws the mass and every lock in line colour with a stroke twice the outline width; the fills follow on top. The visible ring of line colour is therefore exactly one outline wide, around the union of all shapes, with no internal seams. Each lock's outline copy takes the same spring transform as its fill, so the silhouette updates as the locks swing.
-- **Rejected geometry** [measured in the prototype]: draft 1's ring of sharp flame lobes (a crown of spikes; the face looked pasted on); straight, sharply pointed locks (a sunburst); side locks swept steeply upwards (read as flames); a shade mass made of ten circles (the same look for 20 more elements); temple locks clipped to the face (a seam at 2x).
+- **The tuft primitive.** `tuftPath(R, dir, len, w, curl, cap, chord)` draws one tuft from root $R$ in direction `dir`. Its spine runs $\text{len} - \text{cap}$ and bends steadily through `curl` degrees; the half width eases from $w$ at the root to the end radius $\text{cap}$ along the spine (smoothstep, $3q^2 - 2q^3$ for $q$ from 0 to 1); a half circle of radius $\text{cap}$ closes the end. The outline is then resampled into points about `chord` apart, and each pair is joined by a circular arc of radius $0.62 \times$ its chord (`SCALLOP`), which bulges outwards by about a quarter of the chord. The root-most 40% of each side stays straight (`PLAIN`): it lies behind the face or in a valley, where bumps would only add noise. The arc's sweep flag comes from the outline's winding, so every scallop bulges outwards whichever way the tuft points. Each tuft is one path: a narrow root, a full round puff, a gently scalloped edge.
+- **Front puffs (large cut).** Three a side, roots 32° apart at 214°, 182° and 150° (mirrored at −34°, −2° and 30°), root radius 36 u, root half width 11 to 12 u, end radii 15, 20 and 23 u, lengths 31, 50 and 61 u. The upper-corner puff is the largest and reaches furthest, so the hair flares up and out like the archetype; the lower puff is short and tucks in by the ear. Curls of 12° to 22° lift every end upwards.
+- **Crown puffs (large cut).** One a side at 126° and 54°: root radius 34 u, end radius 17 u, length 45 u.
+- **Back puffs (large cut).** Two tufts at 102° and 78°, root half width 13 u, end radius 21 u, length 43 u, flagged `back` (the eighth table column). They are filled with `--bertie-hair-shade` and drawn before the white fills, so they read as hair behind the head, peeking over the dome between the white puffs. Both curl the same way (16° anticlockwise): one asymmetry, a cowlick, gives him character without breaking the balance.
+- **Wisps (large cut).** Two flyaway puffs at 198° and −18°: root half width 5 u, end radius 10 u, length 56 u, curl 24° upwards. They sit below the side wings and keep the softest springs (stiffness 0.6 and 0.65, limit ±30°), so they swing widest.
+- **Small cut.** Seven broad puffs at 208°, 172°, 132°, 90°, 48°, 8° and −28°: root half width 12 to 14 u, end radii 19 to 22 u, lengths 37 to 48 u, scallops 22 u long, so a bump is about 4 px at 32 px. The 90° puff is the one back puff. No wisps.
+- **Mass.** A scalloped cloud around the hair centre, $62 \times 48\,u$ ($58 \times 46\,u$ in the small cut), with 9 lobes (7 in the small cut) from 222° to −42° (−36° small), quadratic control points at 1.18 times the radius, closed behind the face. It is filled with `--bertie-hair-shade`, so the valleys between tufts read as depth and a tuft swinging aside never shows the page through the hair. It stays inside the round ends: a larger mass fills the notches between tufts.
+- **Merged outline.** The `g.hair-line` group draws the mass and every tuft in line colour with a stroke twice the outline width; the fills follow on top (mass, then back puffs, then the white tufts and wisps). The visible ring of line colour is therefore exactly one outline wide, around the union of all shapes, with no internal seams: a white puff meets a shaded one with no line, only the change of tone. Each tuft's outline copy takes the same spring transform as its fill, so the silhouette updates as the tufts swing.
+- **Rejected geometry** [measured in the prototype]: draft 1's ring of sharp flame lobes (a crown of spikes; the face looked pasted on); draft 2's flame locks with pointed tips (too spiky, owner review); and, while drawing draft 3, ten round ends at an even 26° spacing (one solid cloud, an afro, with no tuft readable), club-shaped tufts over draft 2's large mass (a bumpy blob: the mass filled the notches), scallops 12 u long (crinkly at 160 px), two side clouds with no back puffs (a boxy wig, like earmuffs), an all-white crown (a cloud helmet, no depth), thin-stemmed wisps through the crown (a white stripe) and a narrow back crown (a parting at 96 px). From earlier drafts: straight, sharply pointed locks (a sunburst); a shade mass made of ten circles (the same look for 20 more elements); temple locks clipped to the face (a seam at 2x).
 
 ### 2.3 Drawing order (back to front)
 
 1. Body group: neck, jumper, shirt V, bow tie.
-2. Head group: hair group (outline silhouette, mass fill, lock fills), ears, face, features group (blush, eyes with lids, brows, mouth, moustache, nose), orbit group.
+2. Head group: hair group (outline silhouette, mass fill, back-puff fills, white tuft and wisp fills), ears, face, features group (blush, eyes with lids, brows, mouth, moustache, nose), orbit group.
 3. Effects group (particles, bolt, sparks, z), outside the head so effects do not tilt with him.
 
 The nose is drawn over the moustache and the moustache over the mouth: the classic layering that lets the mouth open "under" the moustache. Brows are drawn after the eyes, so a lowered brow overlaps the eye rather than hiding behind it.
@@ -135,8 +154,8 @@ Component tokens join `tokens.css`. They are fixed in both themes except `--bert
 | `--bertie-skin` | `#F9D0AC` | Face, ears, lids | 12.8:1 on the dark canvas |
 | `--bertie-skin-shade` | `#EFB089` | Nose, neck | |
 | `--bertie-blush` | `#F2917A` | Cheeks, opacity 0.3 to 0.95 by state | |
-| `--bertie-hair` | `#FFFFFF` | Locks and wisps | 18.4:1 on `#141414`, 16.7:1 on `#1E1E1E` |
-| `--bertie-hair-shade` | `#E4E1EA` | Hair mass | 14.3:1 on `#141414`; 1.3:1 on white, inside the outline |
+| `--bertie-hair` | `#FFFFFF` | Front tufts and wisps | 18.4:1 on `#141414`, 16.7:1 on `#1E1E1E` |
+| `--bertie-hair-shade` | `#E4E1EA` | Hair mass and the two back puffs (draft 3) | 14.3:1 on `#141414`; 1.3:1 on white, inside the outline |
 | `--bertie-brow` | `#4A433E` | Brows | 6.8:1 on skin |
 | `--bertie-tache` | `#F3F0EC` | Moustache | 1.3:1 on skin, so the outline (10.7:1) defines it |
 | `--bertie-eye` | `#2A2420` | Eyes, closed and happy eye lines | 10.7:1 on skin |
@@ -165,7 +184,7 @@ All strokes are set in viewBox units from a target width in screen pixels, so th
 | | Small cut (below 80 px) | Large cut (80 px and above) |
 |---|---|---|
 | viewBox | $(16, 10, 168, 168)$ | $(-8, -12, 216, 216)$ |
-| Hair | 7 broad locks, no wisps, 7-lobe mass | 10 locks, 2 wisps, 9-lobe mass |
+| Hair | 7 broad puffs (one a back puff), no wisps, 7-lobe mass, 22 u scallops | 10 tufts (two of them back puffs), 2 wisp puffs, 9-lobe mass, 16 u scallops |
 | Body | Shoulder arc and shirt V | Bust with V-neck and bow tie |
 | Face | Eyes ×1.2, brows lifted 5 u to clear them, no glints, no blush | Full |
 | Line | 1.25 px | 1.25 to 2.6 px |
@@ -191,6 +210,7 @@ svg.b-svg [data-state, data-eyes=open|happy|closed, data-lod=s|l]   aria-hidden,
           g.hair-line   outline silhouette: mass + path.tuft-l[i]    (tuft-l[i] shares tuft[i]'s transform)
           path mass fill (hair shade)
           path.tuft[i]  HAIR TUFTS: 12 large, 7 small, each about its root   transform attribute, spring integrator
+                        back puffs (f-hair-shade) first, then white tufts and wisps (f-hair); draft 3
       ears, face (with the hairline)
       g.features        three-quarter turn (away)                    CSS transform + transition
         g.blush-g       opacity by state (large cut)                 CSS opacity + transition
@@ -219,7 +239,7 @@ Transform conventions:
 
 - **One driver per element.** An element takes either a `transform` attribute (written by the spring integrator) or an inline CSS transform (pose transitions and Web Animations), never both, because CSS overrides the attribute. Where two drivers are needed, the rig nests two groups (`g.lid-g` for the pose, `g.lid-b` for blinks).
 - **Explicit pivots.** CSS transforms are written as `translate(cx, cy) <op> translate(-cx, -cy)` in user units, with the SVG defaults `transform-box: view-box` and `transform-origin: 0 0`. This avoids `transform-box: fill-box`, whose box changes as shapes scale.
-- **Pivots** [our choice]: head $(100, 150)$; hair mass $(100, 110)$; locks at their roots; brows $(81, 86)$ and $(119, 86)$; eyes and lids at the eye centres; moustache $(100, 116)$; mouth $(100, 134)$.
+- **Pivots** [our choice]: head $(100, 150)$; hair mass $(100, 110)$; tufts at their roots; brows $(81, 86)$ and $(119, 86)$; eyes and lids at the eye centres; moustache $(100, 116)$; mouth $(100, 134)$.
 - **Unique ids.** Clip paths are the only ids, prefixed `bz<n>-` from a module counter, so any number of instances share a page [measured: ids unique with 16 instances mounted on one page].
 
 ---
@@ -230,7 +250,7 @@ Transform conventions:
 
 | Driver | Moves | Why this driver |
 |---|---|---|
-| Spring integrator (`requestAnimationFrame`) | Head tilt and offset (the neck spring), hair-mass lag, every lock and wisp | Must respond to any sequence of impulses and retargets without a jump, and couple the hair to the head's acceleration. Keyframes cannot |
+| Spring integrator (`requestAnimationFrame`) | Head tilt and offset (the neck spring), hair-mass lag, every tuft and wisp | Must respond to any sequence of impulses and retargets without a jump, and couple the hair to the head's acceleration. Keyframes cannot |
 | CSS transitions on inline transforms | Brows, eyes, lids, gaze, moustache corners, mouth, features turn, body, blush | A pose change is a jump to new values; the browser interpolates from wherever the channel currently is, so interrupted poses blend |
 | Web Animations | Breathing, blinks, talking beats, hair puff, orbit, z, particles, bolt, sparks | Fixed, timed shapes; cancellable as a set when the state changes |
 
@@ -245,11 +265,11 @@ Each spring is a unit mass: $\ddot{x} = -k\,(x - x^{*}) - c\,\dot{x} + \text{dri
 | Head horizontal | 220 | 15 | 0.51 | u, none |
 | Hair-mass rotation | 200 | 9 | 0.32 | degrees, ±9 |
 | Hair-mass vertical | 320 | 12 | 0.34 | u, ±6 |
-| Lock $i$ | $240\,k_i$, $k_i \in [0.85, 1.1]$ | 8.5 | 0.26 to 0.30 | degrees, ±16 |
+| Tuft $i$ | $240\,k_i$, $k_i \in [0.85, 1.1]$ | 8.5 | 0.26 to 0.30 | degrees, ±16 |
 | Wisp $i$ | $240\,k_i$, $k_i \in \{0.6, 0.65\}$ | 8.5 | 0.34 to 0.35 | degrees, ±30 |
 
-- **Coupling.** Hair rotation is driven by $-0.55\,\ddot{\theta}_{\text{head}}$ and hair vertical by $-0.35\,\ddot{y}_{\text{head}}$. Lock $i$ is driven by $-0.9\,\ddot{\theta}_{\text{head}} + 0.05\,\sigma_i\,\ddot{y}_{\text{head}}$, where $\sigma_i$ is $+1$ on the left, $-1$ on the right and $0$ on top. The hair therefore lags and overshoots the head: follow-through without any authored keyframe.
-- **Impulses.** `kick(va, vy, vx)` adds velocity to the head and transfers part of it: $\dot{\theta}_{\text{hair}} \mathrel{-}= 0.35\,v_a$, $\dot{y}_{\text{hair}} \mathrel{-}= 0.18\,v_y$, and to each lock $-0.7\,k_i\,v_a + 0.28\,\sigma_i\,v_y$. Stiffness multipliers differ so locks never move in lockstep; the wisps, softest, swing last and longest.
+- **Coupling.** Hair rotation is driven by $-0.55\,\ddot{\theta}_{\text{head}}$ and hair vertical by $-0.35\,\ddot{y}_{\text{head}}$. Tuft $i$ is driven by $-0.9\,\ddot{\theta}_{\text{head}} + 0.05\,\sigma_i\,\ddot{y}_{\text{head}}$, where $\sigma_i$ is $+1$ on the left, $-1$ on the right and $0$ on top (the two back puffs). The hair therefore lags and overshoots the head: follow-through without any authored keyframe.
+- **Impulses.** `kick(va, vy, vx)` adds velocity to the head and transfers part of it: $\dot{\theta}_{\text{hair}} \mathrel{-}= 0.35\,v_a$, $\dot{y}_{\text{hair}} \mathrel{-}= 0.18\,v_y$, and to each tuft $-0.7\,k_i\,v_a + 0.28\,\sigma_i\,v_y$. Stiffness multipliers differ so tufts never move in lockstep; the wisps, softest, swing last and longest.
 - **Integration.** Semi-implicit Euler at 240 Hz substeps; frame time clamped to 34 ms so a dropped frame cannot explode the system.
 - **Sleep.** When every displacement and velocity is below a small threshold, the loop snaps to the targets and stops requesting frames. A still Bertie costs no frames [measured: `raf` is 0 within 3.5 s of a flick].
 - **Squash and stretch.** The head stretches with vertical speed: $s = \operatorname{clamp}(-0.0005\,\dot{y}, -0.05, 0.05)$, scale $(1 - 0.6s,\ 1 + s)$ about the pivot.
@@ -307,8 +327,8 @@ All poses are offsets from the neutral pose. "Brows" gives lift (u, negative is 
 | `away` | held | Timed exam running; homework item open | tilt −4°; features turned 8 u aside (three-quarter turn); eyes closed | none; no breathing | same | exam submitted (to `idle`) |
 | `point` | held | Tutor act line highlights an element (`highlight`, `AI-TUTOR.md` 5.3) | tilt up to 9° and offset 4 u towards the target; brows −5 and −7 u; lids open; eyes on the target | two nudges towards the target, 420 ms apart | pose only | on next state |
 | `celebrate` | one-shot, 1.9 s | Lesson complete; exam passed | happy eyes (∩); big open smile with tongue (mouth 1.0); blush 0.95 | sink 6 u (150 ms anticipation), hop (impulse −520 u/s with a random sideways spin), hair puff, 12 squares burst from a ring outside his face (700 ms), second hop at 760 ms, sway at 1,150 ms | static ring of 12 squares, fading out by 1.15 s | returns to held state |
-| `streak` | one-shot, 1.7 s | Streak extended (design research 6.2) | eyes wide (×1.12) and up; lids open; brows −9 u; smile 10°; mouth 0.7 | pear bolt pops in above his head (spring overshoot to 1.18), hangs while he looks up, strikes down into his hair at 780 ms; hair puffs, locks flare and six pear sparks fly; happy squint; nods at 1,150 and 1,400 ms | bolt shown still, fading out by 1.15 s | returns to held state |
-| `surprised` | one-shot, 0.9 s | A counter-intuitive reveal (a Trap screen's reveal, Monty Hall) | eyes ×1.3; lids open; brows −12 u; mouth an "o" (0.9, narrow) | jolt up (−330 u/s), hair puff and lock flare | pose only, held 0.9 s | returns to held state |
+| `streak` | one-shot, 1.7 s | Streak extended (design research 6.2) | eyes wide (×1.12) and up; lids open; brows −9 u; smile 10°; mouth 0.7 | pear bolt pops in above his head (spring overshoot to 1.18), hangs while he looks up, strikes down into his hair at 780 ms; hair puffs, tufts flare and six pear sparks fly; happy squint; nods at 1,150 and 1,400 ms | bolt shown still, fading out by 1.15 s | returns to held state |
+| `surprised` | one-shot, 0.9 s | A counter-intuitive reveal (a Trap screen's reveal, Monty Hall) | eyes ×1.3; lids open; brows −12 u; mouth an "o" (0.9, narrow) | jolt up (−330 u/s), hair puff and tuft flare | pose only, held 0.9 s | returns to held state |
 | `shrug` | one-shot, 0.8 s | Tutor errors (`AI-TUTOR.md` 7.5 rows marked shrug) | shoulders up 7 u; tilt −4°; uneven brows and lids (0.28 and 0.08); moustache crooked | shoulders drop back at 380 ms; head sway | pose only | returns to held state |
 
 ### 5.2 Aliases
@@ -374,18 +394,18 @@ One rule protects the boundary principle: during a problem only `idle`, `listeni
 
 ## 9. Performance and size budget
 
-| Measure | Budget | Measured [measured, 6 October 2026] |
+| Measure | Budget | Measured [measured, 7 October 2026, draft 3] |
 |---|---|---|
-| `bertie.js` plus `bertie.css`, minified and gzipped | 12,000 bytes | 10,615 bytes together (JS alone 9,442, CSS alone 1,305); esbuild 0.24, `gzip -9` |
-| Minified | none | 30,968 bytes (JS 26,755, CSS 4,213) |
-| Source | none | 47,195 bytes (JS 41,769, CSS 5,426) |
+| `bertie.js` plus `bertie.css`, minified and gzipped | 12,000 bytes | 11,067 bytes together (JS alone 9,905, CSS alone 1,305); esbuild 0.24, `gzip -9`. Draft 2 was 10,615; the rounded-tuft code adds about 460 bytes |
+| Minified | none | 31,976 bytes (JS 27,763, CSS 4,213) |
+| Source | none | 49,831 bytes (JS 44,405, CSS 5,426) |
 | SVG elements per instance | 100 | 92 large cut; 74 small cut |
 | External requests | 0 | 0: no images, fonts or network |
 | Frames when still | 0 | 0: the integrator sleeps at rest |
 
 - **Offscreen.** An `IntersectionObserver` pauses breathing, blinks and fidgets for instances outside the viewport.
 - **Small instances** (below 48 px) do not breathe: a 1 px bob is invisible at that size but still repaints.
-- **Paint cost.** SVG transforms repaint the SVG rather than compositing, and each lock writes two transforms per frame while the hair moves. The three-instance rule (section 7) bounds the cost. Frame rate on a phone has not been measured [unverified]; section 13 item 3 sets the Phase 2 check.
+- **Paint cost.** SVG transforms repaint the SVG rather than compositing, and each tuft writes two transforms per frame while the hair moves. The three-instance rule (section 7) bounds the cost. Frame rate on a phone has not been measured [unverified]; section 13 item 3 sets the Phase 2 check.
 
 ---
 
@@ -469,14 +489,14 @@ hostBertie.say('What brings you here?', { within: cardEl, announce: true });
 | Criterion | Rive | Lottie (`lottie-web`) | Canvas 2D | SVG + springs + Web Animations (chosen) |
 |---|---|---|---|---|
 | Runs in the Artifact host | Not as shipped. The web runtime fetches its WebAssembly binary from a CDN by default [recalled, unverified], and the Artifact blocks every fetch to another host [sourced, brief]. Self-hosting is now plausible: the Artifact probe ran WebAssembly in the page and in a worker and fetched published `.wasm` files on the owner's iPhone [sourced, `spikes/README.md`]. A self-hosted Rive build has not been tried [unverified]. The `.riv` asset is not a served file type [sourced], so it would ship base64-encoded inside a `.js` or `.json` file | Probably: cdnjs is an allowed script host and `.json` is served [sourced]; that cdnjs carries `lottie-web` is [recalled, unverified] | Yes | Yes: own files only, no WebAssembly |
-| Runtime weight | Hundreds of KB including WebAssembly [recalled, unverified] | About 250 KB minified [recalled, unverified] | None | 10,615 bytes gzipped, everything included [measured] |
+| Runtime weight | Hundreds of KB including WebAssembly [recalled, unverified] | About 250 KB minified [recalled, unverified] | None | 11,067 bytes gzipped, everything included [measured] |
 | Physics, gaze, per-delta speech | State machines and inputs, yes; live springs only through its own tooling | No: plays authored timelines | Yes, all hand-written, including hit-testing and device-pixel handling | Yes |
 | Theme tokens | Through data binding or a second file | Recolouring at runtime | Read tokens in JS | CSS variables directly |
 | Two levels of detail | Two artboards to keep in step | Two files | Code | One rig, two tables (section 2.6) |
 | Authoring and review | Proprietary editor; binary file; no meaningful diff | After Effects plus Bodymovin; large JSON diffs | Code | Code and data in the repo; geometry is generated from numbers (section 2.2), so a change is a reviewable diff |
 | Reduced motion | Separate state or file | Separate file or stop | Hand-written | One switch in the controller (section 6) |
 
-Brilliant builds its motivational animation in Rive state machines [sourced, design research 4.1]. We keep the idea (explicit state graphs, inputs fired by the app) and implement it in code. The brief's reason, that the Artifact CSP blocks Rive's runtime fetches, holds for Rive as shipped. The spike's WebAssembly result removes the hard block for a self-hosted build, so the decision now rests on the other rows: a 10 KB component with live springs, gaze, per-delta speech and CSS tokens, reviewable as text, against a runtime in the hundreds of KB with a binary asset and an editor nobody on the project uses. Revisit only if an animator who works in Rive joins (section 13).
+Brilliant builds its motivational animation in Rive state machines [sourced, design research 4.1]. We keep the idea (explicit state graphs, inputs fired by the app) and implement it in code. The brief's reason, that the Artifact CSP blocks Rive's runtime fetches, holds for Rive as shipped. The spike's WebAssembly result removes the hard block for a self-hosted build, so the decision now rests on the other rows: an 11 KB component with live springs, gaze, per-delta speech and CSS tokens, reviewable as text, against a runtime in the hundreds of KB with a binary asset and an editor nobody on the project uses. Revisit only if an animator who works in Rive joins (section 13).
 
 ---
 
@@ -486,7 +506,7 @@ Brilliant builds its motivational animation in Rive state machines [sourced, des
 
 | File | Contents | Origin in the prototype |
 |---|---|---|
-| `src/ui/bertie/geometry.ts` | Pure functions and tables: `lockPath`, `massPath`, `RING`, `STIFF`, `TUFTS`, `MASS`, `FACE_D`, moustache and mouth paths, key points | the constants block |
+| `src/ui/bertie/geometry.ts` | Pure functions and tables: `tuftPath`, `massPath`, `RING`, `CHORD`, `PLAIN`, `SCALLOP`, `STIFF`, `TUFTS`, `MASS`, `FACE_D`, moustache and mouth paths, key points | the constants block |
 | `src/ui/bertie/poses.ts` | `POSES`, `HELD`, `ONE_SHOT`, `ALIAS`, `LIFE`, `CLOSES_BUBBLE` | verbatim |
 | `src/engine/motion/spring.ts` | Pure integrator shared with widgets (`ARCHITECTURE.md` 5.11): `step(state, targets, tufts, dt) -> state`, `atRest(state)` | `_tick` body, without DOM |
 | `src/ui/bertie/markup.ts` | `svgMarkup(lod, id)` and the `DOMParser` call (decision 19) | `svgMarkup` |
@@ -501,7 +521,7 @@ Splitting geometry, poses and the integrator out of the DOM code makes each one 
 | Test | Check | Tool |
 |---|---|---|
 | Spring | Each spring settles within 2.5 s from a 15° step and from a 500 u/s impulse; no NaN at $dt$ = 1 ms or 34 ms; `atRest` true at the end | Vitest |
-| Geometry | Paths are closed and finite; every lock root lies inside the mass; small-cut shapes lie inside the small viewBox plus 4 u; ring angles symmetric about 90° | Vitest |
+| Geometry | Paths are closed and finite; every tuft root lies inside the mass; every scallop arc bulges outwards (its sweep flag matches the outline's winding); small-cut shapes lie inside the small viewBox plus 4 u; ring angles symmetric about 90° | Vitest |
 | State machine | Every alias resolves; unknown throws `RangeError`; one-shots return to the prior held state or `then`; a reply after `thinking` ends in `idle` | Vitest with a DOM shim |
 | Speech safety | `say('<img src=x onerror=...>')` renders the literal text, creates no element and runs no script | Playwright [passed, draft 2] |
 | Rate limit | 20 `pulse()` calls in one tick produce 1 beat | Playwright [passed, draft 2] |
@@ -520,13 +540,22 @@ Splitting geometry, poses and the integrator out of the DOM code makes each one 
 - At 32 px, 1x, in both themes, he reads as a white-haired professor with a moustache; the dome, brows, eyes and moustache stay separate [measured].
 - Behaviour checks in Chromium (section 12.2 rows marked passed) and the size measurement in section 9 [measured].
 
+### 12.4 Prototype verification (done, draft 3, 7 October 2026)
+
+- Screenshot harness on `prototype/bertie.html`, widths 390 and 1,280, light and dark, with actions for thinking, a streamed reply, not yet, point, celebrate, streak, sleeping, a spoken hint, reduced motion, surprised, the theme toggle and the sizes row: "no errors", no horizontal overflow [measured]. A second pass at 390 px, scrolled to the stage, captured thinking, not yet, curious, the hint bubble, streak, away and shrug in both themes: "no errors" [measured].
+- The hair was chosen over eleven rounds (three single edits, then eight sets of variants), each rendered at 2x on the 220 px stage and at 1x across the size row (section 2.2 lists the rejected ones) [measured].
+- Every state inspected in both themes; the idle large cut at 2x; mid-swing frames of `celebrate` (light) and `streak` (dark) at 2x show no seams where puffs part [measured].
+- One-shots inspected as timed filmstrips at 1x: `celebrate`, `streak` and `surprised` in light [measured]. The puffs lag and overshoot the head, flare on the hop and the bolt's strike, and settle; the wisps swing widest. Sparks and the square burst start outside the hair.
+- At 32 px, 1x, in both themes (size row, verdict chips, exam bar), he reads as a white-haired professor with a moustache: a skin dome inside a round, scalloped white halo [measured].
+- Geometry [measured, `getBBox`]: 92 elements large, 74 small (unchanged); the small cut's hair lies inside its viewBox; clip-path ids unique with 14 instances on the page. Size in section 9.
+
 ---
 
 ## 13. Open questions
 
 1. **Name and likeness for a public launch.** The art is a generic caricature and the copy never names a real person (decision 12). If the app is ever published commercially, the owner should take advice on whether an Einstein-style character needs clearance [recalled, unverified: the name and likeness are licensed commercially].
 2. **Rive later?** Only if an animator who works in Rive joins, and only after a self-hosted runtime is shown to load in the Artifact. The API in section 10 would stay; only the renderer would change.
-3. **Mid-range phone check.** Confirm 60 fps for a 160 px celebration on a mid-range Android phone and the owner's iPhone in Phase 2. If it drops, first stop the outline copies following the locks during one-shots (the fills still swing; the silhouette lags by one shape), then cut the particles to 8.
+3. **Mid-range phone check.** Confirm 60 fps for a 160 px celebration on a mid-range Android phone and the owner's iPhone in Phase 2. If it drops, first stop the outline copies following the tufts during one-shots (the fills still swing; the silhouette lags by one shape), then cut the particles to 8.
 4. **Sound.** Bertie makes no sound of his own; the app's event sounds (design research 4) play alongside him. Revisit only if testers ask for a voice.
-5. **Wisps at 96 px.** At 1x the two wisps read cleanly at 96 px [measured]. If the rest-day card looks busy in Phase 2 review, drop the wisps below 120 px rather than adding a third cut.
-6. **Owner sign-off on the face.** Draft 2 is the second art pass. The owner should confirm the hairline, the lidded eyes and the resting smile before Phase 2 builds the baselines for visual regression.
+5. **Wisps at 96 px.** At 1x the two wisp puffs read cleanly at 96 px, as small flyaways below the side puffs [measured, draft 3]. If the rest-day card looks busy in Phase 2 review, drop the wisps below 120 px rather than adding a third cut.
+6. **Owner sign-off on the hair.** At the 7 October 2026 review the owner confirmed draft 2 as drawn except the hair, which draft 3 redraws. The owner should confirm the draft 3 hair before Phase 2 builds the baselines for visual regression; the face needs no further sign-off.

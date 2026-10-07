@@ -1,8 +1,16 @@
 # Stage 1 detailed curriculum: 1.8 Data Structures and Algorithms, 1.9 C++, 2.4 Contests, and the Stage 1 exit test
 
-Blueprint work file, Stage 2 Phase 1. Draft 1, 6 October 2026.
+Blueprint work file, Stage 2 Phase 1. Draft 1, 6 October 2026; canon-gap O1 applied on 7 October 2026 (Change log at the end).
 
-**Source of truth.** `docs/curriculum.md` for stages, topics, hours and exit tests. This file expands items 1.8 Data structures and algorithms (250 h), 1.9 C++ (140 h) and 2.4 Contests (140 h, Stage 2) into courses, levels, lessons, homework, papers, reading and verification; rebuilds the 1.8 and 1.9 exits and the whole Stage 1 exit test in the app; proposes a completion rule for 2.4, whose curriculum entry sets targets but no exit; and writes one lesson in full.
+**Source of truth.** `docs/curriculum.md` for stages, topics, hours and exit tests. This file expands items 1.8 Data structures and algorithms (250 h), 1.9 C++ (140 h) and 2.4 Contests (Stage 2: 140 h on the developer track and 60 h on the trader, researcher and ML research tracks, after canon-gap O1, which the owner adopted on 7 October 2026) into courses, levels, lessons, homework, papers, reading and verification; rebuilds the 1.8 and 1.9 exits and the whole Stage 1 exit test in the app; sets a completion rule for 2.4, whose curriculum entry sets targets but no exit; and writes one lesson in full.
+
+> **Revision 2 of `docs/PLAN.md`, 7 October 2026: the Artifact publishing rule** (owner correction 5; added by the plan's second review round). These rows win over anything below that reads otherwise, the earlier review's rows included; content agents are briefed from them, and CI enforces them on the lesson files.
+>
+> | Where | Was | Now |
+> |---|---|---|
+> | Decisions 3 and 12; the Runtime paragraph of section 2; 4.1 (`exm.algorithms` Runtime row); the 2.4 Arena rounds | Pyodide 314.0.7 on both targets; the standard library, NumPy and pandas in the Artifact; which further packages ship in the Artifact build left open | **No Python, SQL or C++ in the Artifact.** The Artifact publishes only files built from this repository's own sources (`docs/PLAN.md` 4.3), so no Pyodide, SQLite or compiler ships there. Every drill and every code item (K items, code screens, Labs, capstones, projects) runs in Pyodide 314.0.7 on the web app, or on CPython 3.12 on the learner's machine where this file says so; in the Artifact it shows its starter code, recorded output and the web-app link, and returns by result code (`docs/ASSESSMENT.md` 14.3). A lesson screen or quiz item whose widget runs learner code resolves as `read` in the Artifact and is finished in the web app (`docs/PLAN.md` 4.3, live-code screens). Lessons are otherwise unaffected: authored code runs at build time and ships as recorded output, and every number a widget shows comes from our own JavaScript models. Maths renders as MathML in the Artifact. Wherever this file says a drill, Lab, capstone, project or paper with code runs "on both targets" or "in the Artifact", or that Pyodide, NumPy or pandas run in the Artifact, read "in the web app"; the iPhone run of Pyodide inside an Artifact (`spikes/README.md`) is a record, not adopted, and where this file calls the brief's "Pyodide cannot run in the Artifact" a conflict, the brief's outcome now holds by the publishing rule |
+> | Papers and exits | `exm.algorithms` and Python drills on both targets | **A paper with any code item is sat in the web app** (`docs/ASSESSMENT.md` 3.3; `docs/AI-TUTOR.md` 2.12); a paper whose items need no runtime (predicted output, recorded traces and outputs) plays on both targets. An exit part that needs a drill, Lab or capstone has that part done in the web app. `exm.algorithms` has a code item (item 22), so it is sat in the web app; Arena rounds and every 1.8 and 2.4 drill run there too. The 1.9 paper is compiler-free (decision 13: every snippet and fill compiled in CI and shipped as data), so it plays on both targets |
+> | CI parity | CPython against Pyodide justified by "both targets run Pyodide" | **CI parity is CPython 3.12 (`tools/py/uv.lock`) against Pyodide 314.0.7 on the web app**: Pyodide grades every drill there, and CPython 3.12 is the learner's own floor, so any difference between them fails CI. Runs recorded on CPython 3.11 stand as records and are rerun at `docs/PLAN.md` stage 26 |
 
 **Built on.** `docs/design-research.md` sections 5, 8, 9 and 10 (lesson anatomy, curriculum architecture, teaching style, critiques); `docs/blueprint/work/widgets-programming.md` (widget ids and modes, the `code` check and its efficiency tests, `problem-workbench`, `contest-arena`, the `cpp-runner` spike; its sections 1.3 to 1.5 are the working outline this file replaces); `docs/CONTENT-FORMAT.md` revision 2 (ids, schema, screen types, checks, tutor fields, drills, verification); `docs/ASSESSMENT.md` draft 2 (the assessment ladder, paper kinds, exit parts `1.8.exit` and `1.9.exit`, the problem ledger in 11.5, contests in 11.6, the track rule for 1.9, decision 30 on code items and the two targets); `docs/AI-TUTOR.md` draft 2 (Bertie's gate, code review, the code guard, the lockout); `docs/BERTIE.md` draft 2 (states and who drives them); `docs/ARCHITECTURE.md` (decision 15, Pyodide on both targets); `docs/blueprint/work/canon-gap.md` revision 2 (the resource canon for 1.8, 1.9 and 2.4, G17 on algorithms with proofs, G18 on software construction, P13 for developers, O1 on contest hours); the sibling files `docs/curriculum/stage1-python-tools.md` (1.1 and 1.2, whose lessons 21 and 28 preview recursion and complexity, and whose `recursion-tree`, `complexity-lab` and `sort-lab` modes this file extends), `stage1-probability.md` (indicators, Catalan numbers, optimal stopping), `stage1-linear-algebra.md` (matrix cost, the FFT) and the Stage 0 files; the owner's lesson-creator, maths-teaching, code-craft and project-forge skills.
 
@@ -14,10 +22,12 @@ Blueprint work file, Stage 2 Phase 1. Draft 1, 6 October 2026.
 |---|---|---|---|---|---|---|---|---|
 | 1.8 Data structures and algorithms | 250 | 5 | 26 | 150 | 37.5 (15.0%) | 26 | `exm.algorithms`: 90 min, 22 items, 80 marks | 242.5 h (97.0%) |
 | 1.9 C++ | 140 | 4 | 16 | 88 | 22.0 (15.7%) | 16 | `exm.cpp`: 90 min, 22 items, 80 marks, compiler-free | 134.5 h (96.1%) |
-| 2.4 Contests | 140 | 4 | 15 | 84 | 21.0 (15.0%) | 15 | No topic exam (`ASSESSMENT.md` 2.8); three Arena rounds | 137.5 h (98.2%) |
-| **Total** | **530** | **13** | **57** | **322** | **80.5** | **57** | | **514.5 h** |
+| 2.4 Contests, developer track | 140 | 4 | 15 | 84 | 21.0 (15.0%) | 15 | No topic exam (`ASSESSMENT.md` 2.8); three Arena rounds | 137.5 h (98.2%) |
+| 2.4 Contests, trader, researcher and ML research tracks (canon-gap O1) | 60 | 3 (KC in full, KM and KS in part) | 6 in full, 3 in part | 36 | 9.0 (15.0%) | 6 | No topic exam; two Arena rounds | 57.5 h (95.8%) |
+| **Total, developer track** | **530** | **13** | **57** | **322** | **80.5** | **57** | | **514.5 h** |
+| **Total, other tracks** | **450** | **12** | **48 in full, 3 in part** | **274** | **68.5** | **48** | | **434.5 h** |
 
-Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out mediums solved within 30 minutes) and `1.9.exit` (the 1.7 binomial pricer rewritten in C++ with doctest tests and timed against Python, pasted from the learner's machine) are rebuilt in section 4.4. The Stage 1 exit test, all nine topic exits with the track rule for 1.9, is rebuilt in section 4.5. 2.4 has no curriculum exit; section 4.3 proposes one for the owner.
+Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out mediums solved within 30 minutes) and `1.9.exit` (the 1.7 binomial pricer rewritten in C++ with doctest tests and timed against Python, pasted from the learner's machine) are rebuilt in section 4.4. The Stage 1 exit test, all nine topic exits with the track rule for 1.9, is rebuilt in section 4.5. 2.4 has no curriculum exit; section 4.3 sets `2.4.exit` on the developer track and `2.4.exit-core` on the others.
 
 ---
 
@@ -43,9 +53,9 @@ Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out me
 | 14 | 1.9 and the tracks | **Every track takes the same 88 lessons; the track rule moves `1.9.exit` to the Stage 2 checklist for traders and researchers** (`ASSESSMENT.md` 2.9). The developer track's "at least double these hours" is met by canon-gap P13 (150 h) plus a 1.9 developer reading list (section 5.2), not by more 1.9 lessons | Separate track versions of 1.9; doubling 1.9's lessons | The curriculum lets C++ "slip into Stage 2" for two tracks, which is a scheduling rule, not a content cut. P13 is where the developer's systems depth belongs |
 | 15 | Courses for 1.9 | **Four courses: C++ Foundations (CB, 22), Memory and Ownership (CM, 24), Generic Code and the Standard Library (CL, 21), Performance and the Pricer (CP, 21)** | learncpp's 30 chapters as courses; one course | Four keeps each course inside 20 to 45 lessons and follows the dependency chain the exit needs: a program, then objects that own memory, then the library, then speed and the pricer |
 | 16 | Courses for 2.4 | **Four courses: Contest Craft (KC, 21), Contest Mathematics (KM, 26), Contest Data Structures and Graphs (KS, 19), Contest Techniques: DP and Strings (KD, 18)**, taught from the Competitive Programmer's Handbook and the CSES Problem Set (canon-gap's 2.4 canon) on top of 1.8 | Contests as practice only, no lessons | Rating 1,400 needs techniques 1.8 does not teach: number theory, combinatorics, range-query trees, binary lifting, SCC, bitmask and digit DP, string algorithms |
-| 17 | 2.4 assessment | **No topic exam** (`ASSESSMENT.md` 2.8 lists 2.4 among topics closed by practice records); **three Arena rounds** (`contest-arena`, 2 hours, 6 problems) mark progress; a completion rule `2.4.exit` is **proposed for the owner** (section 4.3) | A timed topic paper; no completion rule | A contest is the native exam; the curriculum gives targets (one contest a week, rating 1,400 in the first year) but no exit, and `ASSESSMENT.md` 11.6 keeps the rating a goal |
-| 18 | Contest cadence and hours | **30 rated contests and 3 Arena rounds inside the 140 hours**, about two in every three weeks of Stage 2; the owner is asked to choose between this and more hours | One contest every week of Stage 2 (53 contests) | 53 contests at 2 hours plus 30 minutes of upsolving is 132.5 hours, leaving 7.5 hours for every lesson, homework set and reading. The curriculum's hours and its cadence conflict; section 0.5 item 4 asks the owner |
-| 19 | 2.4 under canon-gap O1 | **A 36-lesson core** (section 1.3) that a 60-hour trader or researcher version keeps, marked in the tables | Cutting levels at random if O1 is accepted | O1 is proposed at priority 1; marking the core now means accepting it changes data, not content |
+| 17 | 2.4 assessment | **No topic exam** (`ASSESSMENT.md` 2.8 lists 2.4 among topics closed by practice records); **three Arena rounds** on the developer track and two elsewhere (`contest-arena`, 2 hours, 6 problems) mark progress; the completion rules `2.4.exit` and, for the 60-hour tracks, `2.4.exit-core` stand by default (`docs/PLAN.md` 12 decision 3, `docs/CURRICULUM.md` D4; section 4.3) | A timed topic paper; no completion rule | A contest is the native exam; the curriculum gives targets (one contest a week, rating 1,400 in the first year) but no exit, and `ASSESSMENT.md` 11.6 keeps the rating a goal |
+| 18 | Contest cadence and hours | **On the developer track, 30 rated contests and 3 Arena rounds inside the 140 hours**, about two in every three weeks of Stage 2; on the other tracks, 12 contests and 2 rounds inside 60 hours (decision 19) | One contest every week of Stage 2 (53 contests) | 53 contests at 2 hours plus 30 minutes of upsolving is 132.5 hours, leaving 7.5 hours for every lesson, homework set and reading. The curriculum's hours and its cadence conflict; the owner's O1 decision keeps the developer track at 140 hours, which settles it in favour of the hours (section 0.5 item 4) |
+| 19 | 2.4 under canon-gap O1 (adopted 7 October 2026) | **Track-dependent hours: 140 h on the developer track, 60 h on the trader, researcher and ML research tracks.** The 60-hour version is the 36-lesson core marked ◆ (section 1.3); every unmarked lesson, its level's review and homework, `arena-3`, 18 of the 30 contests and the rating goal are developer-only | Cutting levels at random; a second topic id for the developer extension | The owner adopted O1; draft 1 marked the core, so the change is data, not content. One topic with track-dependent hours keeps one course map, one topic page and stable ids, where a second topic would split one subject across two pages; both need a schema field (section 8 request 12) |
 | 20 | When contests start | **Week 1 of Stage 2.** The curriculum's "once you have 100 problems behind you" is met by the Stage 1 exit (150) | Starting contests during 1.8 at 100 problems | `ASSESSMENT.md` decision 25: no next-stage work before the stage exit. Lessons stay open, so a learner can start early with the recorded override |
 | 21 | Display codes | **Two letters**: AC, AH, SQ, TG, DP (1.8); CB, CM, CL, CP (1.9); KC, KM, KS, KD (2.4) | Single letters | All 26 single letters are used by Stage 0 and Stage 1 files; `stage1-statistics-ts.md` already uses two letters. Ids never depend on display codes (`CONTENT-FORMAT.md` 4.1) |
 | 22 | Quiz marks | **1 mark per quiz item, 4 items per lesson, Mastered at 3 of 4** | Marks by difficulty | `ASSESSMENT.md` decision 26 |
@@ -91,7 +101,7 @@ Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out me
 
 **Widgets** use `widgets-programming.md` section 14's ids and modes: `complexity-lab`, `sort-lab`, `dynamic-array`, `pointer-walk`, `range-query-lab`, `binary-search-lab`, `stack-queue-lab`, `linked-list-lab`, `interval-sweep`, `bit-lab`, `tree-lab`, `heap-lab`, `graph-search`, `shortest-path`, `union-find`, `recursion-tree`, `dp-table`, `counterexample-lab`, `problem-workbench`, `hash-table`, `memory-layout`, `compile-pipeline`, `ownership-lab`, `bench-lab`, `contest-arena`, `number-theory-lab`, the code family (`code-cell`, `code-tracer`, `predict-output`, `parsons`, `code-blanks`, `code-annotator`, `diagnostic-reader`, `float-inspector`, `format-lab`, `setup-checklist`), and the primitives (`array-strip`, `cell-grid`, `node-link`, `stepper`, `value-table`, `code-surface`). Shared inputs keep their shared names (`choice`, `numeric-input`, `expression-input`, `derivation-steps`, `token-tray`, `free-response`, `sim-runner`, `live-formula`, `plot-2d`). Element references in hints use `<widget id>/<kind>:<name>` (`CONTENT-FORMAT.md` 3.5).
 
-**Runtime.** 1.8 and 2.4 Python drills declare `needs: []` and run in Pyodide on both targets. Lesson screens without live code run everywhere, because their traces and outputs are recorded in CI. C++ follows decision 12. 2.4 problems read standard input and write standard output (`code-cell` `stdout` tests), with time limits scaled by the device calibration of `contest-arena`.
+**Runtime.** 1.8 and 2.4 Python drills declare `needs: []` and run in Pyodide in the web app (revision 2 header row). Lesson screens without live code run everywhere, because their traces and outputs are recorded in CI. C++ follows decision 12. 2.4 problems read standard input and write standard output (`code-cell` `stdout` tests), with time limits scaled by the device calibration of `contest-arena`.
 
 **Bertie** follows `AI-TUTOR.md` 2.2: hints and lines after the lesson's first Check; Why? and "Explain another way" after a screen resolves; nothing on homework before submission; `away` during papers, timed mediums, Arena rounds and live contests. On code he never writes the learner's code before a pass (the code guard, `AI-TUTOR.md` 8.2); after a pass, "Review my code" returns the owner's code-craft format at the chosen depth (`AI-TUTOR.md` 2.8), which is where the complexity statement and the senior-dev paragraph live. Every task screen carries `tutor.focus`; no tutor field holds a value the screen's check accepts. The lesson player plays `surprised` on each trap reveal (`BERTIE.md` 5.3).
 
@@ -124,6 +134,8 @@ Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out me
 
 Quiz items: 1,288 (4 per lesson). Section 2.4 gives the single and multiple choice shares per course.
 
+On the trader, researcher and ML research tracks 2.4 serves 36 of its 84 lessons (9.0 h): KC 21, KM 14 (levels KM1 and KM2 and lessons 33, 38 and 41), KS 1 (lesson 49), KD none. The three items then serve 274 lessons, 68.5 lesson hours and 1,096 quiz items.
+
 ### 0.5 Open items
 
 | # | Item | Effect |
@@ -131,12 +143,13 @@ Quiz items: 1,288 (4 per lesson). Section 2.4 gives the single and multiple choi
 | 1 | The `cpp-runner` spike (in-browser Clang or the proxy to Compiler Explorer) has not run [unverified] | Decides whether 1.9 homework drills run in the web app or only on the learner's machine with paste-verify; both are specified, and the 1.9 paper needs neither (decision 13) |
 | 2 | NeetCode 150's category counts (9, 5, 6, 7, 7, 11, 15, 3, 7, 9, 13, 6, 12, 11, 8, 6, 8, 7, summing to 150) are recalled; a search on 6 October 2026 agreed on five of them (arrays and hashing 9, two pointers 5, sliding window 6, trees 15, 1-D DP 12) and neetcode.io itself could not be opened from the authoring container [check the other 13 against neetcode.io] | Sets the Problem Gym's per-category counts (section 3.4); a change moves Gym problems between levels, not lessons |
 | 3 | The 1.7 binomial pricer's Python interface is not yet fixed (task in progress elsewhere) | The 1.9 exit compares against it; section 8 request 1 proposes the interface |
-| 4 | **Owner decision:** 2.4 at 140 hours holds about 33 contests, not one a week for all of Stage 2 (decision 18) | Either accept 30 rated contests plus 3 Arena rounds, or raise 2.4 to about 190 hours for 53 contests |
-| 5 | **Owner decision:** the proposed `2.4.exit` (section 4.3) | Without it, 2.4 has no completion state (`ASSESSMENT.md` 2.12) |
+| 4 | **Settled 7 October 2026:** canon-gap O1 keeps 2.4 at 140 hours on the developer track, so that track holds 30 rated contests and 3 Arena rounds, not one contest a week for all of Stage 2 (decision 18) | The weekly cadence stays a goal on the progress page; the other tracks hold 12 contests and 2 rounds |
+| 5 | **Settled by default** (`docs/PLAN.md` 12 decision 3, `docs/CURRICULUM.md` D4): `2.4.exit`, with `2.4.exit-core` for the 60-hour tracks (section 4.3) | 2.4 has a completion state on every track; the two parts need track selection on `ExitPart` (section 8 request 3) |
 | 6 | Usable recursion depth of Pyodide on the reference phone [unverified] | Decision 25's cap of 500; W-B2 measures it |
 | 7 | Arena round paper kind `contest` is not among `ASSESSMENT.md` 3.1's kinds | Section 8 request 2 |
 | 8 | Resource details still marked [check] in section 5: 6.006 Spring 2020 problem-set numbers per topic, most learncpp chapter numbers, CPH chapters 24 to 26 and 29, CS106L lecture titles for the pinned quarter. Grokking's chapters, most 6.006 lecture numbers, CPH chapters 1 to 22 and 27, the USACO Guide module levels and the CSES size were confirmed on 6 October 2026 (Verification log) | Confirm the rest before content cites them |
 | 9 | Widget modes marked [mode to add] in section 2: `shortest-path` Floyd-Warshall, `pointer-walk` reach, `bit-lab` C++ precedence, `memory-layout` false-sharing, `range-query-lab` sparse table, `tree-lab` Euler tour and binary lifting, `graph-search` SCC, bridges and 2-SAT, `number-theory-lab` CRT and Grundy, `bench-lab` denormals | The widget owner confirms; until then those screens use primitives |
+| 10 | `CONTENT-FORMAT.md` 3.2's `Track` cannot hold a track's own hours for a topic, or overrides below course level (section 1.3, In data) | Until section 8 request 12 lands, the 60-hour version cannot be written in `curriculum.yaml`, and the planner would count 140 h of 2.4 on every track |
 
 ### 0.6 What was executed
 
@@ -239,7 +252,7 @@ Solving time (everything except 22 hours of reading and lectures) is 228 hours, 
 
 Solving time is 117 hours, 84%. C++ Lab problems are re-solves of Gym problems, so they do not add to the 1.8 ledger, which counts each problem once.
 
-### 1.3 2.4 Contests (140 h, spread across Stage 2)
+### 1.3 2.4 Contests (140 h on the developer track, 60 h on the other tracks, spread across Stage 2)
 
 **Purpose in a quant or ML career.**
 
@@ -247,7 +260,7 @@ Solving time is 117 hours, 84%. C++ Lab problems are re-solves of Gym problems, 
 - **Speed and accuracy under a clock.** Contests train reading, choosing, coding and debugging under time with an unforgiving judge, the same pressure as a live interview or a production incident.
 - **Mathematics with code.** Number theory, combinatorics, expected values and game theory are the contest topics nearest to quant interview puzzles; Project Euler is maths with code by design.
 - **Research and trading competitions.** Kaggle (researcher track) and firm-run trading competitions such as IMC Prosperity (trader track) are named by the curriculum and taught as their own lessons.
-- **Honest scope.** The curriculum notes that rating-based shortlisting is mainly an Indian campus-hiring practice and that a rating counts for little in trader or researcher interviews. Lesson 1 says so, and canon-gap O1 proposes 60 hours outside the developer track.
+- **Honest scope.** The curriculum notes that rating-based shortlisting is mainly an Indian campus-hiring practice and that a rating counts for little in trader or researcher interviews. Lesson 1 says so, and canon-gap O1, which the owner adopted on 7 October 2026, sets 2.4 at 60 hours outside the developer track.
 
 **Learning outcomes.** At the end of 2.4 the learner can:
 
@@ -261,11 +274,13 @@ Solving time is 117 hours, 84%. C++ Lab problems are re-solves of Gym problems, 
 | CT-O6 | Solve integer geometry problems exactly: orientation, polygon area, convex hull | Homework KM5 |
 | CT-O7 | Use sparse tables, Fenwick and segment trees with lazy propagation, Euler tours, binary lifting, SCC, bridges, 2-SAT and flows | Homework KS1 to KS3 |
 | CT-O8 | Use bitmask, digit, tree and interval DP, string hashing, prefix and Z functions, tries, meet in the middle and square-root techniques | Homework KD1 to KD3 |
-| CT-O9 | Hold a weekly practice loop: contest, upsolve, log; reach the curriculum's first-year target of a 1,400 rating | Contest log (`ASSESSMENT.md` 11.6); proposed `2.4.exit` |
+| CT-O9 | Hold a weekly practice loop: contest, upsolve, log; reach the curriculum's first-year target of a 1,400 rating | Contest log (`ASSESSMENT.md` 11.6); `2.4.exit`, or `2.4.exit-core` outside the developer track |
+
+**Outcomes by track.** The developer track takes all nine. The trader, researcher and ML research tracks take CT-O1 to CT-O3 in full; CT-O4 without matrix powers (lesson 37); from CT-O5, expected values by linearity (38) and winning and losing positions (41); from CT-O7, Fenwick trees (49); and CT-O9 as a loop of 12 contests with no rating target. CT-O6 and CT-O8 are developer-only.
 
 **Prerequisites.** Stage 1 complete, in particular 1.8 (all of it) and, for C++ submissions, 1.9 through lesson 62. 1.5 for expected values and 1.4 for matrices (matrix powers, XOR bases over $\mathrm{GF}(2)$). The curriculum's "100 problems behind you" is met by the Stage 1 exit.
 
-**Hours budget (140 h).**
+**Hours budget, developer track (140 h).**
 
 | Block | What | Hours | Share | Unit that carries the estimate |
 |---|---|---|---|---|
@@ -277,7 +292,45 @@ Solving time is 117 hours, 84%. C++ Lab problems are re-solves of Gym problems, 
 | Projects or drills | 30 rated contests at 2 hours (60.0), each upsolved for 30 minutes (15.0) | 75.0 | 53.6% | Contest log entries (`ASSESSMENT.md` 11.6), counted as earned when logged |
 | **Total** | | **140.0** | 100% | Estimates **137.5 h (98.2%)**; spent-only 2.5 h |
 
-**The 60-hour core if canon-gap O1 is accepted** (trader and researcher tracks). Lessons marked ◆ in section 2.3 form the core: all 21 of course KC, 11 of KM (levels KM1 and KM2) and 4 more (lessons 33, 38, 41 and 49), 36 lessons in all. Budget: lessons 9.0 h; 6 level reviews 1.5 h; 6 homework sets 9.0 h; two Arena rounds 5.0 h; reading 3.0 h; 12 contests with upsolving 30.0 h; redo 2.5 h; total 60.0 h. The developer track keeps all 84 lessons and 140 hours.
+**Hours budget, trader, researcher and ML research tracks (60 h; canon-gap O1, adopted 7 October 2026).** These tracks take the 36 lessons marked ◆ in section 2.3: all 21 of course KC, levels KM1 and KM2 (11 lessons), and lessons 33, 38, 41 and 49 from levels KM3, KM4 and KS1. Those four are taken without their levels' reviews and homework: their quiz items join the Redo queue, and `arena-2` draws on 33, 38 and 41.
+
+| Block | What | Hours | Share | Unit that carries the estimate |
+|---|---|---|---|---|
+| In-app lessons | 36 lessons at 15 minutes (lessons 1 to 33, 38, 41 and 49) | 9.0 | 15.0% | `Lesson.est` |
+| In-app practice and redo | 6 level reviews, KC1 to KC4, KM1 and KM2 (1.5); the Redo and upsolve queue (2.5) | 4.0 | 6.7% | As on the developer track |
+| Homework | 6 sets (KC1 to KC4, KM1, KM2) at about 1.5 hours | 9.0 | 15.0% | Homework `set.*` |
+| Exams | Two Arena rounds, `arena-1` and `arena-2`, of 2 hours plus 30 minutes of review | 5.0 | 8.3% | `exm.contests.arena-*` minutes plus review |
+| External reading and lectures | The rows of section 5.3 marked for every track: Competitive Programmer's Handbook chapters (2.5) and the Codeforces EDU binary-search step (0.5) | 3.0 | 5.0% | `Level.companion` hours (section 5.3) |
+| Projects or drills | 12 rated contests at 2 hours (24.0), each upsolved for 30 minutes (6.0) | 30.0 | 50.0% | Contest log entries, counted as earned when logged |
+| **Total** | | **60.0** | 100% | Estimates **57.5 h (95.8%)**; spent-only 2.5 h |
+
+**Developer-only work.** Levels KM5, KS2, KS3 and KD1 to KD3 in full, and levels KM3, KM4 and KS1 apart from lessons 33, 38, 41 and 49: 48 lessons (12.0 h); those 9 levels' reviews (2.25 h) and homework sets (13.5 h); `arena-3` (2.5 h); 4.75 h of the reading; 18 of the 30 rated contests (45.0 h); and the 1,400 rating goal. That is 80.0 h, O1's offset. Developer-only lessons stay open on every track's course map (`optional`), but outside the developer track they are never planned and their hours are not in the path total. The planner's alongside share for 2.4 (`ASSESSMENT.md` decision 13) uses the track's hours. Under the owner's adopted set the developer track's path is therefore 3,470 h, 80 h above the trader track's 3,390 h [inferred: `docs/PLAN.md` 12 decision 2 gives 3,390 h and 3,450 h and does not list the developer total; section 8 request 13].
+
+**In data.** One topic, `top.contests`, whose hours depend on the track, written with three fields that `CONTENT-FORMAT.md` 3.2's `Track` lacks (section 8 request 12):
+
+```yaml
+# content/curriculum.yaml, tracks; * marks a requested field
+- id: trk.trader                       # trk.researcher and trk.ml-research carry the same entries
+  topics:
+    - { top: top.contests, status: core, hours: 60 }      # * hours: this track's path length counts 60, not Topic.hours (140)
+  courses:
+    - { crs: crs.contestds, status: optional }
+    - { crs: crs.contestdp, status: optional }
+  levels:                                                # * per-level overrides
+    - { lvl: lvl.contestmath.counting, status: optional }
+    - { lvl: lvl.contestmath.games, status: optional }
+    - { lvl: lvl.contestmath.geometry, status: optional }
+  lessons:                                               # * per-lesson overrides; the most specific entry wins
+    - { lsn: lsn.contestmath.contribution, status: core }
+    - { lsn: lsn.contestmath.expected-linearity, status: core }
+    - { lsn: lsn.contestmath.win-lose, status: core }
+    - { lsn: lsn.contestds.fenwick, status: core }
+- id: trk.developer
+  topics:
+    - { top: top.contests, status: core }                 # Topic.hours: 140
+```
+
+CI checks each track's 2.4 budget against that track's hours: the lessons, reviews, sets, rounds, companion rows and contest target the track serves sum to 140 h on the developer track and 60 h on the others (section 6.3).
 
 ---
 
@@ -861,13 +914,13 @@ Transfer screens: lesson 87 runs a risk simulation across cores; lesson 88 expla
 
 ### 2.3 Item 2.4 Contests
 
-Lessons marked ◆ form the 36-lesson core kept if canon-gap O1 is accepted (section 1.3). Every problem is original and Codeforces-style (statement, constraints, input and output format, examples); real Codeforces, CSES and Project Euler problems are linked, never copied (`widgets-programming.md` 9).
+Lessons marked ◆ form the 36-lesson core that every track takes; unmarked lessons are developer-only (canon-gap O1, adopted 7 October 2026; section 1.3). Each level header names its tracks. Every problem is original and Codeforces-style (statement, constraints, input and output format, examples); real Codeforces, CSES and Project Euler problems are linked, never copied (`widgets-programming.md` 9).
 
 #### Course KC: Contest Craft (`crs.contestcraft`, 4 levels, 21 lessons)
 
-How contests work and how to practise for them: reading constraints, fast input, the ad hoc thinking behind most Div. 2 A to C problems, searching under contest limits, and the practice loop of stress tests, upsolving and virtual contests. It ends with the competitions the curriculum adds for each track. CPH chapters 1 to 6 and the USACO Guide's Bronze and Silver modules run alongside.
+How contests work and how to practise for them: reading constraints, fast input, the ad hoc thinking behind most Div. 2 A to C problems, searching under contest limits, and the practice loop of stress tests, upsolving and virtual contests. It ends with the competitions the curriculum adds for each track. CPH chapters 1 to 6 and the USACO Guide's Bronze and Silver modules run alongside. **Tracks:** every track takes the whole course.
 
-**Level KC1: How Contests Work** (`lvl.contestcraft.basics`, 5 lessons)
+**Level KC1: How Contests Work** (`lvl.contestcraft.basics`, 5 lessons; every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -879,7 +932,7 @@ How contests work and how to practise for them: reading constraints, fast input,
 
 Transfer screens: lesson 2 reads constraints as a production capacity estimate; lesson 3 is the same I/O cost that slows a Python market data parser.
 
-**Level KC2: Ad Hoc Thinking** (`lvl.contestcraft.adhoc`, 6 lessons)
+**Level KC2: Ad Hoc Thinking** (`lvl.contestcraft.adhoc`, 6 lessons; every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -892,7 +945,7 @@ Transfer screens: lesson 2 reads constraints as a production capacity estimate; 
 
 Transfer screens: lesson 6 proves a rebalancing target unreachable from lot constraints; lesson 11 counts periods whose net signed volume cancels.
 
-**Level KC3: Searching under Contest Limits** (`lvl.contestcraft.search`, 4 lessons)
+**Level KC3: Searching under Contest Limits** (`lvl.contestcraft.search`, 4 lessons; every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -903,7 +956,7 @@ Transfer screens: lesson 6 proves a rebalancing target unreachable from lot cons
 
 Transfer screens: lesson 12 sizes a batch job's runtime; lesson 15 is the protocol pattern of a request-response market interface.
 
-**Level KC4: Practice Discipline and Other Competitions** (`lvl.contestcraft.practice`, 6 lessons)
+**Level KC4: Practice Discipline and Other Competitions** (`lvl.contestcraft.practice`, 6 lessons; every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -912,15 +965,15 @@ Transfer screens: lesson 12 sizes a batch job's runtime; lesson 15 is the protoc
 | 18 | ◆ `lsn.contestcraft.upsolving` Upsolving and editorials | Practise deliberately: try for 30 to 45 minutes before reading an editorial, then solve again from scratch a week later | A practice plan for the week after a contest with two unsolved problems | `contest-arena` (upsolve list) | Trap: reading the editorial at once, or never returning to the problem. Edge: problems rated about 200 above your rating give the most growth [recalled rule of thumb]; the Redo queue schedules the re-solve | O, C, M, S |
 | 19 | ◆ `lsn.contestcraft.virtual-contest` Contest strategy | Plan a two-hour contest: read every problem, order by expected value, manage penalties, and use the last 15 minutes | A virtual round against the ghost scoreboard | `contest-arena` | Trap: sinking 90 minutes into problem C while B is unsolved. Edge: under Codeforces scoring, points fall with time, so early solves matter | O, C, M, K |
 | 20 | ◆ `lsn.contestcraft.project-euler` Project Euler: maths with code | Solve number problems that reward maths over brute force, with exact integer arithmetic | The sum of all primes below 2,000,000, without testing each number by trial division | `number-theory-lab` (sieve), `code-cell` (answer) | Trap: floating point for large integers. Edge: answers above $2^{63}$ need Python or 128-bit integers; Project Euler asks solvers not to publish solutions to problems beyond the first hundred [recalled] | N, C, M, K |
-| 21 | ◆ `lsn.contestcraft.kaggle-trading` Kaggle and trading competitions | Explain how Kaggle competitions and firm-run trading competitions are scored and won, and the overfitting traps of each | A leaderboard climber drops 300 places when the private leaderboard is revealed. Why? (they tuned to the public test sample) | `choice`, links to 2.1 and the finance cluster | Trap: chasing the public leaderboard (Kaggle) or fitting the sample days (trading competitions). Edge: IMC Prosperity-style rounds score P&L under position limits [check the current format]; the researcher and trader tracks take one of these instead of some contests | C, M, S, O |
+| 21 | ◆ `lsn.contestcraft.kaggle-trading` Kaggle and trading competitions | Explain how Kaggle competitions and firm-run trading competitions are scored and won, and the overfitting traps of each | A leaderboard climber drops 300 places when the private leaderboard is revealed. Why? (they tuned to the public test sample) | `choice`, links to 2.1 and the finance cluster | Trap: chasing the public leaderboard (Kaggle) or fitting the sample days (trading competitions). Edge: IMC Prosperity-style rounds score P&L under position limits [check the current format]; on the trader, researcher and ML research tracks one of these is logged as a `competition` entry (`ASSESSMENT.md` 11.6) beside the 12 contests, outside the 60 hours | C, M, S, O |
 
 Transfer screens: lesson 16 is how a desk tests a new pricer against a slow reference; lesson 21 maps directly onto 2.1's validation discipline and 3.3's market-making games.
 
 #### Course KM: Contest Mathematics (`crs.contestmath`, 5 levels, 26 lessons)
 
-Number theory, modular arithmetic, counting, probability, games and integer geometry as contests use them. CPH chapters 21 to 25 and 29 run alongside; `number-theory-lab` carries the arithmetic.
+Number theory, modular arithmetic, counting, probability, games and integer geometry as contests use them. CPH chapters 21 to 25 and 29 run alongside; `number-theory-lab` carries the arithmetic. **Tracks:** levels KM1 and KM2 and lessons 33, 38 and 41 on every track; the rest is developer-only.
 
-**Level KM1: Primes and Divisibility** (`lvl.contestmath.primes`, 6 lessons)
+**Level KM1: Primes and Divisibility** (`lvl.contestmath.primes`, 6 lessons; every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -931,7 +984,7 @@ Number theory, modular arithmetic, counting, probability, games and integer geom
 | 26 | ◆ `lsn.contestmath.extended-euclid` Extended Euclid and linear equations | Find integers $x, y$ with $ax + by = \gcd(a, b)$, and solve $ax + by = c$ or show it has no solution | $240x + 46y = 2$? ($x = -9$, $y = 47$) | `number-theory-lab` (extended) | Trap: expecting a solution when $\gcd(a, b)$ does not divide $c$. Edge: all solutions are $x + k\frac{b}{g}$, $y - k\frac{a}{g}$; negative coefficients | X, N, C, K |
 | 27 | ◆ `lsn.contestmath.totient` Euler's totient | Compute $\varphi(n)$ from the factorisation and count integers coprime to $n$ | $\varphi(36)$? (12) $\varphi(97)$? (96) | `number-theory-lab` (divisors) | Trap: $\varphi(ab) = \varphi(a)\varphi(b)$ for any $a, b$ (only when coprime). Edge: a totient sieve gives $\varphi$ up to $N$ in one pass | N, N, C, K |
 
-**Level KM2: Modular Arithmetic** (`lvl.contestmath.modular`, 5 lessons)
+**Level KM2: Modular Arithmetic** (`lvl.contestmath.modular`, 5 lessons; every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -943,7 +996,7 @@ Number theory, modular arithmetic, counting, probability, games and integer geom
 
 Transfer screens: lesson 29 is the arithmetic behind the rolling hashes of 1.8 lesson 37; lesson 31 counts paths in large lattices exactly.
 
-**Level KM3: Counting** (`lvl.contestmath.counting`, 5 lessons)
+**Level KM3: Counting** (`lvl.contestmath.counting`, 5 lessons; developer track, except lesson 33 on every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -954,7 +1007,7 @@ Transfer screens: lesson 29 is the arithmetic behind the rolling hashes of 1.8 l
 | 37 | `lsn.contestmath.matrix-power` Matrix powers for linear recurrences | Compute the $n$th term of a linear recurrence in $O(k^3 \log n)$ by raising its companion matrix to a power modulo $p$ | $F_{10^{18}} \bmod (10^9 + 7)$? (209,783,453) | `matrix-multiply` (calc-linalg), `bit-lab` (power) | Trap: iterating $10^{18}$ steps. Edge: the matrix's order (row times column) and the index convention ($F_1 = F_2 = 1$) | N, C, M, K |
 
 
-**Level KM4: Probability and Games** (`lvl.contestmath.games`, 6 lessons)
+**Level KM4: Probability and Games** (`lvl.contestmath.games`, 6 lessons; developer track, except lessons 38 and 41 on every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -967,7 +1020,7 @@ Transfer screens: lesson 29 is the arithmetic behind the rolling hashes of 1.8 l
 
 Transfer screens: lesson 38 sets up the green book's expected-value questions (3.3); lesson 41 is the backward induction behind market-making game strategies.
 
-**Level KM5: Integer Geometry** (`lvl.contestmath.geometry`, 4 lessons)
+**Level KM5: Integer Geometry** (`lvl.contestmath.geometry`, 4 lessons; developer track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -980,9 +1033,9 @@ Transfer screens: lesson 46 is the efficient frontier's convex shape seen as a h
 
 #### Course KS: Contest Data Structures and Graphs (`crs.contestds`, 3 levels, 19 lessons)
 
-The structures and graph algorithms that separate a 1,400 rating from 1,900: range-query trees, trees at scale, and graph connectivity, matching and flow. CPH chapters 9, 14 to 20 and 28 run alongside; the CSES sections "Range Queries", "Tree Algorithms" and "Graph Algorithms" supply the practice [check section names].
+The structures and graph algorithms that separate a 1,400 rating from 1,900: range-query trees, trees at scale, and graph connectivity, matching and flow. CPH chapters 9, 14 to 20 and 28 run alongside; the CSES sections "Range Queries", "Tree Algorithms" and "Graph Algorithms" supply the practice [check section names]. **Tracks:** developer-only, except lesson 49 (Fenwick trees) on every track.
 
-**Level KS1: Range Queries** (`lvl.contestds.ranges`, 6 lessons)
+**Level KS1: Range Queries** (`lvl.contestds.ranges`, 6 lessons; developer track, except lesson 49 on every track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -993,7 +1046,7 @@ The structures and graph algorithms that separate a 1,400 rating from 1,900: ran
 | 52 | `lsn.contestds.compression-offline` Coordinate compression and offline queries | Compress values up to $10^9$ to ranks, and answer queries in a convenient order instead of the given one | Count, for each of $2 \times 10^5$ values, how many earlier values are smaller, with values up to $10^9$ | `range-query-lab` (fenwick), `sort-lab` | Trap: a Fenwick tree of size $10^9$. Edge: equal values share a rank; answers return in the original order | N, C, M, K |
 | 53 | `lsn.contestds.order-statistics` Order-statistic sets | Find the $k$th smallest and the rank of a value in a changing set, with a Fenwick tree over ranks or GCC's policy-based tree | The median of a multiset under $2 \times 10^5$ inserts and deletes | `tree-lab` (bst), `range-query-lab` (fenwick) | Trap: sorting after each change. Edge: `__gnu_pbds::tree` is GCC-only [recalled]; binary search on a Fenwick tree finds the $k$th element in $O(\log n)$ | C, N, M, K |
 
-**Level KS2: Trees at Scale** (`lvl.contestds.trees`, 6 lessons)
+**Level KS2: Trees at Scale** (`lvl.contestds.trees`, 6 lessons; developer track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -1004,7 +1057,7 @@ The structures and graph algorithms that separate a 1,400 rating from 1,900: ran
 | 58 | `lsn.contestds.small-to-large` Small-to-large merging | Merge child sets into the largest one to get $O(n \log n)$ total work | Count distinct colours in every subtree | `tree-lab`, `hash-table` | Trap: merging into the parent's set each time ($O(n^2)$ on a path). Edge: each element moves $O(\log n)$ times because its set at least doubles | N, C, M, K |
 | 59 | `lsn.contestds.functional-graphs` Functional graphs | Find cycles and $k$th successors in graphs where each node has one outgoing edge, with binary lifting | Where is a token after $10^{18}$ moves along "next" pointers on $2 \times 10^5$ nodes? | `graph-search` (implicit), `linked-list-lab` (cycle) | Trap: simulating $10^{18}$ steps. Edge: every component is a cycle with trees hanging into it; Floyd's method finds each cycle (1.8 lesson 65) | N, C, M, K |
 
-**Level KS3: Graphs at Scale** (`lvl.contestds.graphs`, 7 lessons)
+**Level KS3: Graphs at Scale** (`lvl.contestds.graphs`, 7 lessons; developer track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -1020,9 +1073,9 @@ Transfer screens: lesson 62 finds circular exposure among counterparties; lesson
 
 #### Course KD: Contest Techniques: DP and Strings (`crs.contestdp`, 3 levels, 18 lessons)
 
-Dynamic programming beyond 1.8's tables, string algorithms, and the techniques for constraints that rule out the obvious: meet in the middle, square roots, Mo's algorithm, randomisation and linear algebra over $\mathrm{GF}(2)$. CPH chapters 10, 26 and 27 run alongside.
+Dynamic programming beyond 1.8's tables, string algorithms, and the techniques for constraints that rule out the obvious: meet in the middle, square roots, Mo's algorithm, randomisation and linear algebra over $\mathrm{GF}(2)$. CPH chapters 10, 26 and 27 run alongside. **Tracks:** developer-only.
 
-**Level KD1: DP Techniques** (`lvl.contestdp.dp`, 6 lessons)
+**Level KD1: DP Techniques** (`lvl.contestdp.dp`, 6 lessons; developer track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -1034,7 +1087,7 @@ Dynamic programming beyond 1.8's tables, string algorithms, and the techniques f
 | 72 | `lsn.contestdp.dp-optimisation` DP optimisation: monotone queues and the convex hull trick | Speed transitions of the form $\min_j (a_j x + b_j)$ with the convex hull trick, and sliding minima with a monotone deque | Why does a deque of lines with increasing slopes answer each query in amortised $O(1)$? | `dp-table`, `stack-queue-lab` (monotonic-deque) | Trap: using it without checking that slopes and queries are monotone. Edge: a Li Chao tree handles arbitrary order (stretch) [recalled] | C, M, O, K |
 
 
-**Level KD2: Strings** (`lvl.contestdp.strings`, 6 lessons)
+**Level KD2: Strings** (`lvl.contestdp.strings`, 6 lessons; developer track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -1046,7 +1099,7 @@ Dynamic programming beyond 1.8's tables, string algorithms, and the techniques f
 | 78 | `lsn.contestdp.suffix-structures` Suffix arrays in outline | Build a suffix array by doubling in $O(n \log^2 n)$ and read the LCP array's uses | Sort the suffixes of "banana" ([5, 3, 1, 0, 4, 2]) | `sort-lab`, `array-strip` | Trap: comparing suffixes character by character in a sort ($O(n^2 \log n)$). Edge: distinct substrings $= \sum (n - sa_i - lcp_i)$ | O, C, M, K |
 
 
-**Level KD3: Techniques for Hard Constraints** (`lvl.contestdp.techniques`, 6 lessons)
+**Level KD3: Techniques for Hard Constraints** (`lvl.contestdp.techniques`, 6 lessons; developer track)
 
 | # | Lesson | Objective | Hook | Widgets | Trap and edge case | Quiz |
 |---|---|---|---|---|---|---|
@@ -1106,6 +1159,7 @@ Transfer screens: lesson 79 searches 40 trades for a netting set (1.8 lesson 145
 | KS | 76 | 19 | 10 | 38.2% | 14 | 19 | 0 | 5 | 5 | 4 |
 | KD | 72 | 18 | 10 | 38.9% | 16 | 18 | 2 | 2 | 4 | 2 |
 | **Total** | **1,288** | **320** | **121** | **34.2%** | | | | | | |
+| 2.4 core, every track (the 36 ◆ lessons) | 144 | 36 | 14 | 34.7% | 34 | 32 | 8 | 4 | 8 | 8 |
 
 Every course stays under the 40% ceiling. The C++ courses lean on T (predict the output) because predicting what C++ does, including when it does not compile, is the skill those lessons teach.
 
@@ -2418,23 +2472,23 @@ double mc_parallel(int threads, long paths, std::uint64_t seed) {
 
 ### 3.3 Item 2.4 Contests
 
-| Level | Set | Items | Mix | Long-form (five points of 2 marks) | Contest problems | Generators |
-|---|---|---|---|---|---|---|
-| KC1 | `set.contestcraft.basics` | 5 | d3 ×2, d4 ×2, d5 ×1 | From four constraint sets to target complexities, with reasons | `drl.cp.new-highs`, `drl.cp.fast-sum`, `drl.cp.queue-sim`, `drl.cp.multi-test-reset` | `gen.cp.budget` |
-| KC2 | `set.contestcraft.adhoc` | 5 | as above | A parity invariant proves a target unreachable | `drl.cp.no-adjacent-perm`, `drl.cp.mex-queries`, `drl.cp.dance-pairs`, `drl.cp.xor-subarrays` | `gen.cp.invariant-claim` |
-| KC3 | `set.contestcraft.search` | 5 | as above | Why ternary search fails on plateaus, and how to search integers safely | `drl.cp.machines`, `drl.cp.pair-count`, `drl.cp.guess-number` (interactive), `drl.cp.unimodal-peak` | `gen.cp.predicate-bounds` |
-| KC4 | `set.contestcraft.practice` | 5 | as above | An upsolve log for one unsolved contest problem | `drl.cp.hack-overflow`, `drl.cp.prime-sum`, `drl.cp.stress-script`, `drl.cp.leaderboard-gap` | `gen.cp.hack-target` |
-| KM1 | `set.contestmath.primes` | 5 | as above | Euclid's algorithm: correctness and the step bound | `drl.cp.divisor-count-sum`, `drl.cp.spf-factorise`, `drl.cp.diophantine`, `drl.cp.coprime-count` | `gen.cp.gcd-steps` |
-| KM2 | `set.contestmath.modular` | 5 | as above | Fermat inverses: why the modulus must be prime, and what to do otherwise | `drl.cp.ncr-queries`, `drl.cp.mod-pow`, `drl.cp.crt-general`, `drl.cp.mod-normalise` | `gen.cp.mod-predict` |
-| KM3 | `set.contestmath.counting` | 5 | as above | The contribution count for subarray minimums, with ties | `drl.cp.sum-subarray-mins`, `drl.cp.divisible-by-any`, `drl.cp.bracket-count`, `drl.cp.fib-huge` | `gen.cp.inclusion-exclusion` |
-| KM4 | `set.contestmath.games` | 5 | as above | The Sprague-Grundy theorem applied to a sum of three games | `drl.cp.expected-rolls`, `drl.cp.subtraction-game`, `drl.cp.nim-move`, `drl.cp.game-sum` | `gen.cp.grundy` |
-| KM5 | `set.contestmath.geometry` | 5 | as above | Pick's theorem and why geometry stays in integers | `drl.cp.polygon-area`, `drl.cp.convex-hull`, `drl.cp.segment-intersect`, `drl.cp.lattice-points` | `gen.cp.orientation` |
-| KS1 | `set.contestds.ranges` | 5 | as above | Lazy propagation: why pushing tags down keeps every node correct | `drl.cp.fenwick-inversions`, `drl.cp.range-add-sum`, `drl.cp.rmq-sparse`, `drl.cp.kth-in-multiset` | `gen.cp.range-ops` |
-| KS2 | `set.contestds.trees` | 5 | as above | Rerooting: the $n - 2 \cdot \text{size}$ update, derived | `drl.cp.subtree-sums`, `drl.cp.lca-queries`, `drl.cp.sum-distances`, `drl.cp.kth-successor` | `gen.cp.tree-queries` |
-| KS3 | `set.contestds.graphs` | 5 | as above | Max flow equals min cut, on the set's network | `drl.cp.scc-count`, `drl.cp.bridges`, `drl.cp.two-sat`, `drl.cp.max-flow` | `gen.cp.graph-small` |
-| KD1 | `set.contestdp.dp` | 5 | as above | Digit DP: the state, the tight flag and leading zeros | `drl.cp.assignment-bitmask`, `drl.cp.nondecreasing-digits`, `drl.cp.stairs-k`, `drl.cp.stone-merge` | `gen.cp.digit-count` |
-| KD2 | `set.contestdp.strings` | 5 | as above | Why hashing modulo $2^{64}$ can be attacked, and the defence | `drl.cp.kmp-count`, `drl.cp.z-borders`, `drl.cp.distinct-substrings`, `drl.cp.max-xor-pair` | `gen.cp.prefix-function` |
-| KD3 | `set.contestdp.techniques` | 5 | as above | Mo's algorithm: deriving $(n + q)\sqrt{n}$ | `drl.cp.mitm-subsets`, `drl.cp.xor-basis`, `drl.cp.mo-distinct`, `drl.cp.sqrt-blocks` | `gen.cp.block-size` |
+| Level | Set | Tracks | Items | Mix | Long-form (five points of 2 marks) | Contest problems | Generators |
+|---|---|---|---|---|---|---|---|
+| KC1 | `set.contestcraft.basics` | Every track | 5 | d3 ×2, d4 ×2, d5 ×1 | From four constraint sets to target complexities, with reasons | `drl.cp.new-highs`, `drl.cp.fast-sum`, `drl.cp.queue-sim`, `drl.cp.multi-test-reset` | `gen.cp.budget` |
+| KC2 | `set.contestcraft.adhoc` | Every track | 5 | as above | A parity invariant proves a target unreachable | `drl.cp.no-adjacent-perm`, `drl.cp.mex-queries`, `drl.cp.dance-pairs`, `drl.cp.xor-subarrays` | `gen.cp.invariant-claim` |
+| KC3 | `set.contestcraft.search` | Every track | 5 | as above | Why ternary search fails on plateaus, and how to search integers safely | `drl.cp.machines`, `drl.cp.pair-count`, `drl.cp.guess-number` (interactive), `drl.cp.unimodal-peak` | `gen.cp.predicate-bounds` |
+| KC4 | `set.contestcraft.practice` | Every track | 5 | as above | An upsolve log for one unsolved contest problem | `drl.cp.hack-overflow`, `drl.cp.prime-sum`, `drl.cp.stress-script`, `drl.cp.leaderboard-gap` | `gen.cp.hack-target` |
+| KM1 | `set.contestmath.primes` | Every track | 5 | as above | Euclid's algorithm: correctness and the step bound | `drl.cp.divisor-count-sum`, `drl.cp.spf-factorise`, `drl.cp.diophantine`, `drl.cp.coprime-count` | `gen.cp.gcd-steps` |
+| KM2 | `set.contestmath.modular` | Every track | 5 | as above | Fermat inverses: why the modulus must be prime, and what to do otherwise | `drl.cp.ncr-queries`, `drl.cp.mod-pow`, `drl.cp.crt-general`, `drl.cp.mod-normalise` | `gen.cp.mod-predict` |
+| KM3 | `set.contestmath.counting` | Developer | 5 | as above | The contribution count for subarray minimums, with ties | `drl.cp.sum-subarray-mins`, `drl.cp.divisible-by-any`, `drl.cp.bracket-count`, `drl.cp.fib-huge` | `gen.cp.inclusion-exclusion` |
+| KM4 | `set.contestmath.games` | Developer | 5 | as above | The Sprague-Grundy theorem applied to a sum of three games | `drl.cp.expected-rolls`, `drl.cp.subtraction-game`, `drl.cp.nim-move`, `drl.cp.game-sum` | `gen.cp.grundy` |
+| KM5 | `set.contestmath.geometry` | Developer | 5 | as above | Pick's theorem and why geometry stays in integers | `drl.cp.polygon-area`, `drl.cp.convex-hull`, `drl.cp.segment-intersect`, `drl.cp.lattice-points` | `gen.cp.orientation` |
+| KS1 | `set.contestds.ranges` | Developer | 5 | as above | Lazy propagation: why pushing tags down keeps every node correct | `drl.cp.fenwick-inversions`, `drl.cp.range-add-sum`, `drl.cp.rmq-sparse`, `drl.cp.kth-in-multiset` | `gen.cp.range-ops` |
+| KS2 | `set.contestds.trees` | Developer | 5 | as above | Rerooting: the $n - 2 \cdot \text{size}$ update, derived | `drl.cp.subtree-sums`, `drl.cp.lca-queries`, `drl.cp.sum-distances`, `drl.cp.kth-successor` | `gen.cp.tree-queries` |
+| KS3 | `set.contestds.graphs` | Developer | 5 | as above | Max flow equals min cut, on the set's network | `drl.cp.scc-count`, `drl.cp.bridges`, `drl.cp.two-sat`, `drl.cp.max-flow` | `gen.cp.graph-small` |
+| KD1 | `set.contestdp.dp` | Developer | 5 | as above | Digit DP: the state, the tight flag and leading zeros | `drl.cp.assignment-bitmask`, `drl.cp.nondecreasing-digits`, `drl.cp.stairs-k`, `drl.cp.stone-merge` | `gen.cp.digit-count` |
+| KD2 | `set.contestdp.strings` | Developer | 5 | as above | Why hashing modulo $2^{64}$ can be attacked, and the defence | `drl.cp.kmp-count`, `drl.cp.z-borders`, `drl.cp.distinct-substrings`, `drl.cp.max-xor-pair` | `gen.cp.prefix-function` |
+| KD3 | `set.contestdp.techniques` | Developer | 5 | as above | Mo's algorithm: deriving $(n + q)\sqrt{n}$ | `drl.cp.mitm-subsets`, `drl.cp.xor-basis`, `drl.cp.mo-distinct`, `drl.cp.sqrt-blocks` | `gen.cp.block-size` |
 
 **Example problems, 2.4.** Statements are written in Codeforces style; the functions below are the cores, wrapped by KC1's fast-input template in the real drills. Every answer was recomputed by brute force (section 0.6).
 
@@ -2799,7 +2853,7 @@ Both topic papers use kind `topic` (`ASSESSMENT.md` 3.1): one clock, 70% to pass
 | When | Unlocks after level DP7's homework is submitted, or at any time as a test-out or diagnostic sitting |
 | Duration | 90 minutes, one clock, the 15-minute pause budget (`ASSESSMENT.md` 3.4). Summed item estimates 62.5 minutes; 90 is 1.44 times that |
 | Items | 22 items, 80 marks; items 1 to 20 short (3 or 4 marks), item 21 a long-form proof (10), item 22 a code item (8) |
-| Runtime | Python standard library only (`needs: []`), so the paper runs on both targets; Python is loaded and warmed before the clock starts (`ASSESSMENT.md` 3.3) |
+| Runtime | Python standard library only (`needs: []`); item 22 is a code item, so the paper is sat in the web app (revision 2 header row), where Python is loaded and warmed before the clock starts (`ASSESSMENT.md` 3.3) |
 | Calculator | The in-app basic calculator, for ratios and logarithms in items 1 to 4 |
 | Aids | None. Item 22's statement lists the allowed imports (`collections`, `heapq`, `bisect`, `itertools`, `functools`, `math`) |
 | Difficulty by marks | d2 16, d3 40, d4 16, d5 8 (20/50/20/10) |
@@ -2950,35 +3004,47 @@ A colleague writes "C++ is 60 times faster than Python." Write the honest claim,
 Model answer: (1) Against pure Python the speed-up is 60 at $N = 1{,}000$ and about 100 at 2,000; against NumPy it is 4.5 and 4.8; the claim must name which Python. (2) From 2,000 to 5,000 the work grows by $6.25$ (the loop is $\Theta(N^2)$), but the C++ time grows by about 32 and NumPy's by 7: a cost has appeared that is not the arithmetic. (3) Deep in the tree the option values far out of the money fall below about $2.2 \times 10^{-308}$ and become subnormal numbers, which this CPU handles slowly; setting values below $10^{-300}$ to zero gave 0.0122 s at 5,000 with the same price to 9 decimal places [measured]. (4) The report must add the compiler, version and flags; the spread (minimum and maximum, not only the median); confirmation that every version prints the same price at each $N$; and what the timer includes. (5) A fair one-line claim: "On this machine, at $N$ from 1,000 to 2,000, the C++ loop is about 60 to 100 times faster than the same loop in Python and about 4.5 times faster than NumPy; from about 3,000 steps subnormal numbers slow both, and flushing them restores the ratio."
 Rubric (10, scaled to 8 marks): 2 for naming both baselines with their ratios; 2 for comparing the growth with $N^2$; 2 for subnormal numbers as the cause with the fix; 2 for the missing items in (4); 2 for a claim that a reader could check. Answers that call the 5,000 row "noise" score 0 on points 2 and 3, because the spread in the source data (0.053 to 0.066 s for C++) is far smaller than the jump.
 
-### 4.3 Item 2.4: Arena rounds and a proposed exit
+### 4.3 Item 2.4: Arena rounds and the exits
 
 **Arena rounds** (`exm.contests.arena-1`, `-2`, `-3`; proposed paper kind `contest`, section 8 request 2). Each round is a `contest-arena` sitting (`widgets-programming.md` 9.1): 120 minutes, 6 problems A to F in rising difficulty, ICPC-style scoring (problems solved, then penalty minutes: solve time plus 20 per rejected submission), Python or (web app, after 1.9 lesson 62) C++, a seeded scoreboard of simulated rivals, Bertie `away`, editorials and the upsolve list afterwards.
 
-| Round | When | Problems (Codeforces Div. 2 equivalents, our estimate) | Levels drawn on | Expected for the 1,400 target |
+| Round | When | Tracks | Problems (Codeforces Div. 2 equivalents, our estimate) | Levels drawn on | Expected for the 1,400 target |
+|---|---|---|---|---|---|
+| `arena-1` | After level KC4 (lesson 21) | Every track | A, A, B, B, C, C | KC1 to KC4 and all of 1.8 | 3 or more solved |
+| `arena-2` | After level KM5 (lesson 47) on the developer track; after lesson 49, the last core lesson, on the other tracks | Every track | A, B, B, C, C, D | adds KM1, KM2 and lessons 33, 38 and 41, the contest mathematics every track takes | 3 or more |
+| `arena-3` | After level KD3 (lesson 84) | Developer | A, B, C, C, D, E | every 2.4 level | 3 or more, with C solved |
+
+`arena-2` draws only on lessons every track takes, so one round serves both exits; on the developer track the rest of KM3 to KM5 is tested by its homework and by `arena-3`. Draft 1 drew `arena-2` on all of KM1 to KM5, which the 60-hour tracks never study.
+
+Each problem has a reference solution in Python and C++, a brute force, a generator of tests, a checker where answers are not unique, and a Python time limit scaled by the device calibration; a Python reference must pass in under half the limit on the reference phone or the problem is web-only and the round says so on its rules screen [unverified: Pyodide speed on the phone, open item 6's spike measures it]. Rounds do not gate lessons: a round with fewer than 3 solved adds its unsolved problems to the upsolve queue and suggests the level whose lessons the misses used. Only each track's last round counts towards its exit (`arena-3` on the developer track, `arena-2` elsewhere).
+
+**`2.4.exit` and `2.4.exit-core`.** The curriculum gives targets (one contest a week once 100 problems are solved; a rating of 1,400 in the first year) and no exit; `ASSESSMENT.md` 11.6 keeps both as goals. Without an exit 2.4 has no completion state. Draft 1 proposed `2.4.exit`, which stands by default (`docs/PLAN.md` 12 decision 3, `docs/CURRICULUM.md` D4); canon-gap O1, adopted on 7 October 2026, adds `2.4.exit-core` for the 60-hour tracks.
+
+| Part | Tracks | Gate | Confirm | Why this and not the rating |
 |---|---|---|---|---|
-| `arena-1` | After level KC4 (lesson 21) | A, A, B, B, C, C | KC1 to KC4 and all of 1.8 | 3 or more solved |
-| `arena-2` | After level KM5 (lesson 47) | A, B, B, C, C, D | adds KM1 to KM5 | 3 or more |
-| `arena-3` | After level KD3 (lesson 84) | A, B, C, C, D, E | every 2.4 level | 3 or more, with C solved |
-
-Each problem has a reference solution in Python and C++, a brute force, a generator of tests, a checker where answers are not unique, and a Python time limit scaled by the device calibration; a Python reference must pass in under half the limit on the reference phone or the problem is web-only and the round says so on its rules screen [unverified: Pyodide speed on the phone, open item 6's spike measures it]. Rounds are progress markers, not gates: a round with fewer than 3 solved adds its unsolved problems to the upsolve queue and suggests the level whose lessons the misses used.
-
-**Proposed `2.4.exit`** (owner decision, section 0.5 item 5). The curriculum gives targets (one contest a week once 100 problems are solved; a rating of 1,400 in the first year) and no exit; `ASSESSMENT.md` 11.6 keeps both as goals. Without an exit 2.4 has no completion state. The proposal:
-
-| Part | Gate | Confirm | Why this and not the rating |
-|---|---|---|---|
-| `2.4.exit` | (1) 30 contest log entries, each with its upsolve marked done (problems solved during the contest plus at least one more afterwards, or a note that none was within reach); (2) `arena-3` with at least 3 of 6 solved | None. The Codeforces rating stays a goal on the progress page, and on the developer track the planner shows "1,400 target: 1,312 now" from the learner's log | A rating depends on who else enters, moves with rating-system changes, and cannot be read by the Artifact (`ASSESSMENT.md` 11.6: the API's cross-origin access is unverified). The practice record is what the hours buy and what the app can see. Rejected: rating 1,400 as a gate (it would leave a learner who did every hour "not complete" for reasons outside the curriculum) |
+| `2.4.exit` | Developer | (1) 30 contest log entries, each with its upsolve marked done (problems solved during the contest plus at least one more afterwards, or a note that none was within reach); (2) `arena-3` with at least 3 of 6 solved | None. The Codeforces rating stays a goal on the progress page, and the planner shows "1,400 target: 1,312 now" from the learner's log | A rating depends on who else enters, moves with rating-system changes, and cannot be read by the app (`ASSESSMENT.md` 11.6: contest entries are manual on both targets). The practice record is what the hours buy and what the app can see. Rejected: rating 1,400 as a gate (it would leave a learner who did every hour "not complete" for reasons outside the curriculum) |
+| `2.4.exit-core` | Trader, researcher, ML research | (1) 12 contest log entries, each upsolved as above; (2) `arena-2` with at least 3 of 6 solved | None. No rating goal is shown unless the learner sets one: the curriculum says a rating "counts for little in trader or researcher interviews" | The same reasons at the 60-hour scale: 12 contests and the round the core lessons prepare for |
 
 ```ts
-// proposed exit data for 2.4; needs 'contest-upsolved' in log-count's enum and kind 'contest' in the paper kinds (section 8)
+// exit data for 2.4; needs 'contest-upsolved' in log-count's enum, kind 'contest' in the paper kinds,
+// and `tracks` on ExitPart, the tracks a part applies to (section 8 requests 2 and 3; distinct from `track`, which defers a part)
 { id: '2.4.exit',
   text: 'Thirty contests entered and upsolved, and the third Arena round with at least three of six problems solved',
+  tracks: ['developer'],
   gate: [ { kind: 'log-count', log: 'contest-upsolved', target: 30 },
           { kind: 'exam', exam: 'exm.contests.arena-3', pass: 0.5 } ],
   confirm: [],
   estHours: 2.5 }
+{ id: '2.4.exit-core',
+  text: 'Twelve contests entered and upsolved, and the second Arena round with at least three of six problems solved',
+  tracks: ['trader', 'researcher', 'ml-research'],
+  gate: [ { kind: 'log-count', log: 'contest-upsolved', target: 12 },
+          { kind: 'exam', exam: 'exm.contests.arena-2', pass: 0.5 } ],
+  confirm: [],
+  estHours: 2.5 }
 ```
 
-`pass: 0.5` reads, under the `contest` kind, as 3 of 6 problems solved: the kind's score is problems solved over problems set, and penalty minutes only order the scoreboard [our choice]. `estHours` 2.5 is the third round and its review; the contests themselves are earned through their log entries (section 1.3). If canon-gap O1 is accepted, trader and researcher tracks take the 36-lesson core and a 60-hour budget with 12 contests and `arena-2`; the schema has no per-track instrument values, so that version is a second part `2.4.exit-core` selected by track (section 8 request 3). If the owner instead raises 2.4 to about 190 hours for one contest every week (decision 18), the target becomes 50.
+`pass: 0.5` reads, under the `contest` kind, as 3 of 6 problems solved: the kind's score is problems solved over problems set, and penalty minutes only order the scoreboard [our choice]. `estHours` 2.5 is the deciding round and its review; the contests themselves are earned through their log entries (section 1.3). The schema has no per-track instrument values, so the two versions are two parts selected by track (section 8 request 3). A learner who moves to the developer track keeps every log entry and round: `2.4.exit-core` stays met, `2.4.exit` is not yet, and the planner adds the 18 further contests, the developer-only levels and `arena-3`.
 
 ### 4.4 The 1.8 and 1.9 exits, rebuilt
 
@@ -3171,28 +3237,28 @@ The CS106L lectures' 3.0 hours sit inside the CM2, CM3, CL1 and CL2 rows (0.75 e
 
 **Developer reading list** (decision 14; outside 1.9's hours, inside canon-gap P13's 150 hours if accepted): Stroustrup, *A Tour of C++*, 3rd edition; Meyers, *Effective Modern C++* (items on move semantics, smart pointers and lambdas); Williams, *C++ Concurrency in Action*, 2nd edition (the curriculum: "Williams matters only for developer roles"); Roberts, *Programming Abstractions in C++*. Meyers comes after learncpp, as the curriculum says.
 
-### 5.3 Item 2.4 (7.75 hours: CPH 5.5, USACO Guide and Codeforces EDU 2.25)
+### 5.3 Item 2.4 (developer track 7.75 hours: CPH 5.5, USACO Guide and Codeforces EDU 2.25; other tracks 3.0 hours: CPH 2.5, EDU 0.5)
 
-| Level | Read, watch or solve | What to do | Hours |
-|---|---|---|---|
-| KC1 How Contests Work | CPH ch. 1 (introduction: input and output, number types, shortening code) [verified: chapter] | Read before lesson 2; set up the fast-input template it describes in Python and C++ | 0.25 |
-| KC2 Ad Hoc Thinking | CPH ch. 6 (greedy algorithms) [verified] | Read after lesson 8; optional: two CSES "Sorting and Searching" problems, in Gym time | 0.25 |
-| KC3 Searching under Contest Limits | CPH ch. 5 (complete search) [verified]; Codeforces EDU "Binary search", step 1 [check] | Read before lesson 16; do the EDU step's practice problems | 1.0 |
-| KC4 Practice Discipline and Other Competitions | Project Euler problems 1 to 10; one past IMC Prosperity round's write-up or one Kaggle competition overview, by track | Solve the Euler problems in Python; read the track's competition page before lesson 21 | 0 (inside lessons 20 and 21) |
-| KM1 Primes and Divisibility | CPH ch. 21 (number theory), sections on primes, factors and the sieve [verified: chapter] | Read before lesson 23; optional: CSES "Counting Divisors" as upsolving | 0.5 |
-| KM2 Modular Arithmetic | CPH ch. 21, sections on modular arithmetic and solving equations [verified: chapter] | Read before lesson 29; derive Fermat's inverse from the chapter before lesson 30 | 0.25 |
-| KM3 Counting | CPH ch. 22 (combinatorics) [verified] | Read before lesson 33; optional: CSES "Binomial Coefficients" as upsolving | 0.5 |
-| KM4 Probability and Games | CPH ch. 24 (probability) and 25 (game theory) [check] | Read ch. 25 before lesson 41 (Sprague-Grundy) | 0.5 |
-| KM5 Integer Geometry | CPH ch. 29 (geometry) [check] | Read before lesson 44; check its cross-product orientation test against lesson 44's | 0.5 |
-| KS1 Range Queries | CPH ch. 9 (range queries) [verified]; Codeforces EDU "Segment Tree, part 1", step 1 [check] | Read before lesson 50; do the EDU step | 1.25 |
-| KS2 Trees at Scale | CPH ch. 14 (tree algorithms) and 18 (tree queries) [verified]; USACO Guide Gold "Euler Tour Technique" and Platinum "Binary Jumping" [verified] | Read before lesson 55; use the guide's problems for upsolving | 1.0 |
-| KS3 Graphs at Scale | CPH ch. 17 (strong connectivity) and 20 (flows and cuts) [verified] | Read ch. 17 before lesson 60 and ch. 20 before lesson 65 | 0.5 |
-| KD1 DP Techniques | CPH ch. 7 (dynamic programming) and 10 (bit manipulation, bitmask DP) [verified]; USACO Guide Gold "Bitmask DP" [verified] | Read ch. 10 before lesson 67; do two of the guide's problems | 1.0 |
-| KD2 Strings | CPH ch. 26 (string algorithms) [check] | Read before lesson 73 | 0.25 |
-| KD3 Techniques for Hard Constraints | CPH ch. 27 (square root algorithms) [verified] | Read before lesson 80 | 0 (inside lesson 80) |
-| | **Total** | CPH 5.5; USACO Guide and EDU 2.25 | **7.75** |
+| Level | Read, watch or solve | What to do | Hours | Hours, other tracks |
+|---|---|---|---|---|
+| KC1 How Contests Work | CPH ch. 1 (introduction: input and output, number types, shortening code) [verified: chapter] | Read before lesson 2; set up the fast-input template it describes in Python and C++ | 0.25 | 0.25 |
+| KC2 Ad Hoc Thinking | CPH ch. 6 (greedy algorithms) [verified] | Read after lesson 8; optional: two CSES "Sorting and Searching" problems, in Gym time | 0.25 | 0.25 |
+| KC3 Searching under Contest Limits | CPH ch. 5 (complete search) [verified]; Codeforces EDU "Binary search", step 1 [check] | Read before lesson 16; do the EDU step's practice problems | 1.0 | 1.0 |
+| KC4 Practice Discipline and Other Competitions | Project Euler problems 1 to 10; one past IMC Prosperity round's write-up or one Kaggle competition overview, by track | Solve the Euler problems in Python; read the track's competition page before lesson 21 | 0 (inside lessons 20 and 21) | 0 |
+| KM1 Primes and Divisibility | CPH ch. 21 (number theory), sections on primes, factors and the sieve [verified: chapter] | Read before lesson 23; optional: CSES "Counting Divisors" as upsolving | 0.5 | 0.5 |
+| KM2 Modular Arithmetic | CPH ch. 21, sections on modular arithmetic and solving equations [verified: chapter] | Read before lesson 29; derive Fermat's inverse from the chapter before lesson 30 | 0.25 | 0.25 |
+| KM3 Counting | CPH ch. 22 (combinatorics) [verified] | Read before lesson 33; optional: CSES "Binomial Coefficients" as upsolving | 0.5 | none |
+| KM4 Probability and Games | CPH ch. 24 (probability) and 25 (game theory) [check] | Read ch. 25 before lesson 41 (Sprague-Grundy) | 0.5 | 0.5 (both chapters, before lessons 38 and 41) |
+| KM5 Integer Geometry | CPH ch. 29 (geometry) [check] | Read before lesson 44; check its cross-product orientation test against lesson 44's | 0.5 | none |
+| KS1 Range Queries | CPH ch. 9 (range queries) [verified]; Codeforces EDU "Segment Tree, part 1", step 1 [check] | Read before lesson 50; do the EDU step | 1.25 | 0.25 (CPH ch. 9, the binary indexed tree section only, before lesson 49) |
+| KS2 Trees at Scale | CPH ch. 14 (tree algorithms) and 18 (tree queries) [verified]; USACO Guide Gold "Euler Tour Technique" and Platinum "Binary Jumping" [verified] | Read before lesson 55; use the guide's problems for upsolving | 1.0 | none |
+| KS3 Graphs at Scale | CPH ch. 17 (strong connectivity) and 20 (flows and cuts) [verified] | Read ch. 17 before lesson 60 and ch. 20 before lesson 65 | 0.5 | none |
+| KD1 DP Techniques | CPH ch. 7 (dynamic programming) and 10 (bit manipulation, bitmask DP) [verified]; USACO Guide Gold "Bitmask DP" [verified] | Read ch. 10 before lesson 67; do two of the guide's problems | 1.0 | none |
+| KD2 Strings | CPH ch. 26 (string algorithms) [check] | Read before lesson 73 | 0.25 | none |
+| KD3 Techniques for Hard Constraints | CPH ch. 27 (square root algorithms) [verified] | Read before lesson 80 | 0 (inside lesson 80) | none |
+| | **Total** | CPH 5.5; USACO Guide and EDU 2.25 | **7.75** | **3.0** (CPH 2.5; EDU 0.5) |
 
-CPH hours per row: 0.25, 0.25, 0.5, 0, 0.5, 0.25, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0 = 5.5. USACO Guide and EDU: KC3 0.5, KS1 0.75, KS2 0.5, KD1 0.5 = 2.25.
+CPH hours per row: 0.25, 0.25, 0.5, 0, 0.5, 0.25, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0 = 5.5. USACO Guide and EDU: KC3 0.5, KS1 0.75, KS2 0.5, KD1 0.5 = 2.25. Other tracks, CPH: KC1 0.25, KC2 0.25, KC3 0.5, KM1 0.5, KM2 0.25, KM4 0.5, KS1 0.25 = 2.5; EDU: KC3 0.5.
 
 **Stretch, outside the hours.** Halim and Halim, *Competitive Programming 4*, for breadth; the full CSES Problem Set (400 problems since its 2025 expansion [verified: cses.fi blog]) as the long-run list after Stage 2. **Contest problems in the app** are original (decision 6); CSES and Codeforces problems are linked, never copied.
 
@@ -3245,6 +3311,7 @@ Every answer is machine-checked twice before it ships (`CONTENT-FORMAT.md` secti
 | Geometry | Exact integer arithmetic only; no floating point in references | Hulls checked against a brute-force hull on 1,000 random small point sets, with collinear and duplicate points | Checker for vertex order and start |
 | Arena rounds | Each problem passes the family above | Rival scoreboards replay identically from their seed | ICPC scoring |
 | Long-form proofs | Model answers' numeric claims evaluated in code | Rubric anchoring, as below | Self-mark with Bertie's suggestion |
+| Track budgets (canon-gap O1) | For each track, the lessons, level reviews, sets, rounds, companion rows and contest target it serves are summed from their `est` and `companion` hours | The developer track sums to 140 h and the others to 60 h, each equal to the track's 2.4 hours in `curriculum.yaml`; every lesson on a track's plan is reachable there, and every `arena-2` problem draws only on lessons every track takes | Build error |
 
 ### 6.4 Long-form items and what running found
 
@@ -3705,9 +3772,9 @@ for t in trade_ids:
 
 | # | Decision | Options | Recommendation |
 |---|---|---|---|
-| 1 | Contest cadence against 2.4's hours (decision 18) | 30 rated contests and 3 Arena rounds in 140 hours; or about 190 hours for one contest a week | 140 hours and 30 contests: the curriculum's hours are its budget, and its cadence reads as a habit to aim at |
-| 2 | `2.4.exit` (section 4.3) | Adopt the proposal; adopt with the rating as a developer-track confirm; leave 2.4 without an exit | Adopt as proposed; a rating cannot be read by the app and depends on other entrants |
-| 3 | canon-gap O1 (2.4 at 60 hours outside the developer track) | Accept, with the 36-lesson core marked ◆; reject | Accept: the curriculum itself says a rating "counts for little in trader or researcher interviews" |
+| 1 | Contest cadence against 2.4's hours (decision 18) | 30 rated contests and 3 Arena rounds in 140 hours; or about 190 hours for one contest a week | **Settled 7 October 2026** by the O1 decision: 140 hours and 30 contests on the developer track |
+| 2 | `2.4.exit` (section 4.3) | Adopt the proposal; adopt with the rating as a developer-track confirm; leave 2.4 without an exit | **Adopted by default** (`docs/PLAN.md` 12 decision 3, D4), with `2.4.exit-core` for the 60-hour tracks |
+| 3 | canon-gap O1 (2.4 at 60 hours outside the developer track) | Accept, with the 36-lesson core marked ◆; reject | **Adopted by the owner on 7 October 2026**: applied in sections 0 to 6 (Change log) |
 
 **Requests.**
 
@@ -3715,7 +3782,7 @@ for t in trade_ids:
 |---|---|---|
 | 1 | `stage1-finance-projects.md` (1.7) | Keep `price_tree(S0, K, u, d, R, n, kind)` and `price_crr(S0, K, r, sigma, T, n, kind)` with `kind` in {'call', 'put'} and `ValueError` on the drill's invalid inputs: the 1.9 exit mirrors them in C++ and its checker recomputes CRR prices with the same parameters. Name the Pricing Lab's American function `crr_american(S0, K, r, sigma, T, n, kind)` so the C++ `american` flag maps to it |
 | 2 | `ASSESSMENT.md` 3.1 | Add paper kind `contest`: 120 minutes, problems A to F, ICPC scoring, `pass` read as problems solved over problems set, Bertie away, editorials after; resit rules as `topic` |
-| 3 | `ASSESSMENT.md` 2.10 | Add `'contest-upsolved'` to `log-count`'s enum; and a way to select an exit part by track (`tracks` on `ExitPart`), so `2.4.exit-core` can serve canon-gap O1's tracks; and an optional stage-level `headline` list of exit parts, so the Stage 1 page can show the map line's two bars first |
+| 3 | `ASSESSMENT.md` 2.10 | Add `'contest-upsolved'` to `log-count`'s enum; and a way to select an exit part by track (`tracks` on `ExitPart`, distinct from `track`, which defers a part), so that `2.4.exit` serves the developer track and `2.4.exit-core` the trader, researcher and ML research tracks (section 4.3); and an optional stage-level `headline` list of exit parts, so the Stage 1 page can show the map line's two bars first |
 | 4 | `ASSESSMENT.md` 2.9 | Row `1.8.exit`: name `pool.dsa.timed` (40 mediums) and `estHours` 9; row `1.9.exit`: `estHours` 12 and the check details of section 4.4 |
 | 5 | `widgets-programming.md` 6.11 | `exit-1.9`: the checks of section 4.4 (prices at three sizes recomputed, 7 repeats, Release build, no sanitisers); raise the `cpp-toolchain` floor to GCC 13 or Clang 17 (decision 11) |
 | 6 | `widgets-programming.md` | Modes marked [mode to add]: `shortest-path` Floyd-Warshall; `pointer-walk` reach; `bit-lab` C++ precedence; `memory-layout` false sharing; `range-query-lab` sparse table; `tree-lab` Euler tour and binary lifting; `graph-search` SCC, bridges and 2-SAT; `number-theory-lab` CRT and Grundy values; `bench-lab` denormals; `mutant-hunter` C++; `complexity-lab` three-lane race; `code-tracer` hidden-scan hits; `cell-grid` triangle paint (section 7.5) |
@@ -3724,6 +3791,8 @@ for t in trade_ids:
 | 9 | `canon-gap.md` | Add `src.cppreference`, `src.cpp-core-guidelines`, `src.drepper-memory`, `src.carruth-cppcon-2014`, `src.kaggle`, `src.imc-prosperity`; confirm NeetCode 150's category counts (section 0.5 item 2) |
 | 10 | Spikes (`spikes/README.md`) | W-B2: usable recursion depth of Pyodide on the reference phone (decision 25); Pyodide's speed against CPython, which scales contest time limits; W-C: the `cpp-runner` spike, which decides where 1.9 drills run |
 | 11 | Content review | Confirm every remaining [check] and [recalled] resource detail in sections 2 and 5: 6.006 Spring 2020 problem-set numbers per topic and lectures 1 to 3, 5, 10, 11, 13, 16 and 17, learncpp chapter numbers other than 8 and 22, CPH chapters 24 to 26 and 29, CS106L lecture titles for one pinned quarter, Drepper section numbers, NeetCode 150's category counts, the CMake default-build-type behaviour in lesson 70 |
+| 12 | `CONTENT-FORMAT.md` 3.2 (`Track`) and `ASSESSMENT.md` 8.7 (path length) | An optional `hours` on a track's topic entry, which replaces `Topic.hours` in that track's path length; optional `levels` and `lessons` overrides beside `courses`, the most specific entry winning (section 1.3, In data). Canon-gap O1 needs both: 2.4 is 60 h on three tracks and its core cuts through levels KM3, KM4 and KS1 |
+| 13 | `docs/CURRICULUM.md` and `docs/PLAN.md` | 2.4 is 140 h on the developer track and 60 h on the trader, researcher and ML research tracks; `2.4.exit-core` joins the Stage 2 exit on those tracks; the developer track's path under the adopted set is 3,470 h [inferred], which the stated 3,390 h and 3,450 h do not cover |
 
 **Not executed here** (section 0.6): LeetCode, Codeforces and CSES (no network use), doctest itself (tests were written as plain asserts), Pyodide (CPython 3.11 stood in), and the in-browser C++ paths.
 
@@ -3756,3 +3825,21 @@ for t in trade_ids:
 **Hours and coverage.** The three budgets sum to 250, 140 and 140 hours, the 60-hour core to 60, and the reading tables to 36.0, 23.0 and 7.75 hours; lesson counts give 37.5, 22.0 and 21.0 lesson hours. Every concept in the curriculum's 1.8 Cover list (complexity, arrays, hashing, two pointers, stacks, queues, linked lists, binary search, trees, heaps, graphs, recursion, dynamic programming, greedy methods) is taught by a named level; 1.9 and 2.4 have no Cover list. No gap needed filling.
 
 **Citations.** Confirmed: Grokking 2nd edition's 13 chapters; 6.006 Spring 2020 lectures 4, 6, 7, 8, 9, 12, 15 and 19 and problem sets 0 to 8 with solutions; learncpp lessons 8.13 and 8.14 and chapter 22; CPH's three parts and chapters 1 to 22 and 27; USACO Guide module levels (Euler Tour and Bitmask DP in Gold, Binary Jumping in Platinum); CSES now holds 400 problems (was "300"); libc++ 17 marks `<format>` stable (decision 11's [check] closed); Joshi chapters 1 to 3 and 8; the CS106L, Drepper and IMC Prosperity URLs. Five of NeetCode's 18 category counts matched a search summary. Still [check] or [recalled]: 6.006 problem-set numbers per topic and the unconfirmed lecture numbers, other learncpp chapters, CPH chapters 24 to 26 and 29, CS106L lecture titles, Drepper's section numbers, Carruth's talk, CLRS 4th edition chapter numbers, the other 13 NeetCode counts. Nothing was found to be invented.
+
+---
+
+## Change log
+
+**7 October 2026: canon-gap O1 adopted** (the owner's blueprint review, decision 2: 2.4 Contests loses 80 h outside the developer track; `docs/blueprint/work/canon-gap.md` O1). 2.4 is now track-dependent: 140 h on the developer track, 60 h on the trader, researcher and ML research tracks. No lesson, set or problem was added, removed or renumbered; draft 1 had already marked the 36-lesson core.
+
+| Where | Change |
+|---|---|
+| Header, at a glance, 0.4 | 2.4 has two rows (developer 140 h; other tracks 60 h, 36 lessons, 6 sets, two rounds, estimates 57.5 h); totals per track: 530 h and 322 lessons on the developer track, 450 h and 274 lessons elsewhere |
+| Decisions 17 to 19, open items 4, 5 and 10 | O1 applied as track-dependent hours on one topic; the cadence question settled at 140 h and 30 contests for developers; `2.4.exit` standing by default (D4) with `2.4.exit-core` beside it; the schema gap recorded |
+| 1.3 | Outcomes by track; the developer budget renamed; the 60-hour budget as a full table; the developer-only work itemised (80.0 h: lessons 12.0, reviews 2.25, homework 13.5, `arena-3` 2.5, reading 4.75, contests 45.0); the track data in `curriculum.yaml` with its requested fields |
+| 2.3, 2.4 | The ◆ note, each course's and each level's tracks; lesson 21's competitions logged outside the 60 hours; a quiz-type row for the core (144 items, 34.7% choice) |
+| 3.3 | A Tracks column on the homework table: KC1 to KC4, KM1 and KM2 on every track, the other nine sets developer-only |
+| 4.3 | Rounds by track; `arena-2` now draws only on lessons every track takes (draft 1 drew it on all of KM1 to KM5, which the 60-hour tracks never study); `2.4.exit-core` written as data; the 190-hour variant removed; the Why cell now cites `ASSESSMENT.md` 11.6's manual contest entries |
+| 5.3, 6.3, 8 | Reading hours per track (7.75 and 3.0); a CI row for track budgets; owner decisions 1 to 3 marked settled; request 3 extended, requests 12 (`Track` hours and level and lesson overrides) and 13 (`docs/CURRICULUM.md` and `docs/PLAN.md` hours, and the developer path of 3,470 h) added |
+
+**Recomputed** with python3 (CPython 3.11): both 2.4 budgets from their tables (140.0 and 60.0 h; shares 100.1% and 100.0% after rounding), the reading columns (7.75 and 3.0 h; CPH 5.5 and 2.5), the developer-only total (80.0 h), the core's lessons (36: 1 to 33, 38, 41, 49) and its quiz items from the lesson tables (144; C 36, M 14, 34.7%), and the per-track totals in the at-a-glance table (530 and 450 h; 322 and 274 lessons; 80.5 and 68.5 lesson hours; 514.5 and 434.5 estimated hours). No hook or example answer changed, so none needed rerunning.

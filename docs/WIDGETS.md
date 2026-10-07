@@ -1,16 +1,18 @@
 # Widget library
 
-Definitive library for Zero to Quant, Stage 2 Phase 1 (Blueprint), 6 October 2026. It merges the six widget catalogues in `docs/blueprint/work/` (`widgets-stage0.md`, `widgets-calc-linalg.md`, `widgets-prob-stats-ts.md`, `widgets-programming.md`, `widgets-finance-games.md`, `widgets-ml-research.md`) into one set of final ids, consistent with the engine architecture (`docs/ARCHITECTURE.md`), and checks it against every lesson in the eleven curriculum files in `docs/curriculum/`. Input to `docs/PLAN.md`.
+Definitive library for Zero to Quant, Stage 2 Phase 1 (Blueprint), 6 October 2026; revised 7 October 2026 for the adopted curriculum additions. It merges the six widget catalogues in `docs/blueprint/work/` (`widgets-stage0.md`, `widgets-calc-linalg.md`, `widgets-prob-stats-ts.md`, `widgets-programming.md`, `widgets-finance-games.md`, `widgets-ml-research.md`) into one set of final ids, consistent with the engine architecture (`docs/ARCHITECTURE.md`), adds the widgets the four new curriculum files name in their section 8 (`stage1-real-analysis.md`, `stage2-numerics-optimisation.md`, `stage2-deep-learning.md`, `stage2-research-method.md`), and checks the result against every lesson in the fifteen curriculum files in `docs/curriculum/`. Input to `docs/PLAN.md`.
 
-**What this file owns.** Every widget's final id, tier, kind, cluster, priority, build size and build order; which primitives each composite composes; the name map from catalogue ids to final ids; the merges; and the coverage check against the curriculum. **What it does not own.** Each widget's detailed behaviour (interactions, visuals, show-why recipes, generators, misconceptions) stays in the catalogue section named as its "spec", as `ARCHITECTURE.md` says ("the widget catalogues own each widget's behaviour"). Where this file and a catalogue disagree on a name, a priority, a merge or a contract detail, this file wins. The agent-facing authoring guide, `docs/engine/WIDGET-AUTHORING.md` (arch 10.5, written at stage E4), is a different file and cites this one.
+**What this file owns.** Every widget's final id, tier, kind, cluster, priority, build size and build order; which primitives each composite composes; the name map from catalogue ids to final ids; the merges; and the coverage check against the curriculum. **What it does not own.** Each widget's detailed behaviour (interactions, visuals, show-why recipes, generators, misconceptions) stays in the catalogue section named as its "spec" (for the 24 widgets added on 7 October, the curriculum file's section 8.1 and its lesson rows), as `ARCHITECTURE.md` says ("the widget catalogues own each widget's behaviour"). Where this file and a catalogue disagree on a name, a priority, a merge or a contract detail, this file wins. The agent-facing authoring guide, `docs/engine/WIDGET-AUTHORING.md` (arch 10.5, written at stage E4), is a different file and cites this one.
 
-> **Revised by `docs/PLAN.md` on 7 October 2026.** Every id, priority, size and composition below stands. Two things change. (1) A fifth tier, `scene` (`ARCHITECTURE.md` decision 36 and 5.14): a composite written as data over primitives plus a pure model, with no view of its own. About 125 of the 147 P0 composites are built as scenes; 22 stay hand-written (`docs/PLAN.md` 3.2 lists them). Decision 4's objection to a declarative scene engine was to logic inside content, which scenes do not put there, so decision 4 now governs presets only, and decision 16's "254 composites" reads as about 200 scenes and about 50 bespoke composites. (2) Section 7's waves become the review gates of `docs/PLAN.md` 11.4 (stages 27 to 58), built after the engine and before content, with a few entries pulled forward where another widget embeds them or a preset expands to them.
+> **Revised by `docs/PLAN.md` on 7 October 2026.** Every id, priority, size and composition below stands. Two things change. (1) A fifth tier, `scene` (`ARCHITECTURE.md` decision 36 and 5.14): a composite written as data over primitives plus a pure model, with no view of its own. About 125 of the 147 P0 composites are built as scenes; 22 stay hand-written (`docs/PLAN.md` 3.2 lists them). Decision 4's objection to a declarative scene engine was to logic inside content, which scenes do not put there, so decision 4 now governs presets only, and decision 16's "254 composites" reads as about 200 scenes and about 50 bespoke composites. *(These figures are draft 1's; the owner-decisions note below supersedes them: 338 ids, 153 P0 composites, of which 131 are scenes and 22 bespoke, and 277 composites in all, about 225 of them scenes.)* (2) Section 7's waves become the review gates of `docs/PLAN.md` 11.4 (stages 27 to 58), built after the engine and before content, with a few entries pulled forward where another widget embeds them or a preset expands to them.
 
 > **Revised by the `docs/PLAN.md` review, 7 October 2026.** (1) The services of section 3 get stages of their own, `docs/PLAN.md` 3a to 3f, each with Python or `git` parity, ahead of the batches that use them. (2) `code-cell` and `parsons` no longer compose each other: `parsons` embeds `code-cell`'s runner component, and `code-cell`'s Parsons mode is configuration that swaps its editor pane for `token-tray` (sections 5.1.1, 5.7.4). (3) The named fallback for an over-budget `core` is a `core-code` chunk, measured after stage 32 (decision 12, 9.2 item 1). (4) A handed-off drill shows no Parsons fallback. (5) `svd-stepper` is the fourth scene pilot, built in stage 14.
 
-**How to read it.** Section 0 lists the decisions and the counts. Section 1 states the contract every entry assumes. Section 2 maps catalogue ids to final ids. Section 3 lists the services widgets depend on. Sections 4 to 6 are the entries: primitives and inputs, composites by cluster, presets. Section 7 is the build order. Section 8 is the curriculum coverage, including the table of which items each widget serves and the P0 confirmation. Section 9 lists rejected alternatives and open questions.
+> **Revised for the owner's decisions at Blueprint review, 7 October 2026.** These lines win over anything below that reads otherwise. (1) **The adopted curriculum additions add 24 ids** (decision 17): 23 composites and 1 preset, all scenes or presets, none bespoke; 6 are **P0** (A1 Real analysis sits between 1.3 and 1.4) and 18 are **P2** (2.0a, 2.0b, 2.1b, 2.2c). Their entries are sections 5.23 to 5.27 and 6.2.9; the library has **338 ids** (section 0.2). (2) **1.5's continuous-time levels Z4b and Z4c** (canon-gap P2, adopted) move `markov-chain`'s `ctmc` mode and `path-simulator`'s Brownian `refine` mode from P2 to **P0** (first uses 1.5 L157 and L162); `ctmc-clock` and `brownian-path` stay aliases of those modes (decision 15). (3) **`forking-paths` is not built**: it is `multiple-testing`'s `garden` mode (`stage2-research-method.md` decision 17). (4) **Correction 5 replaces decision 13**: the Artifact publishes only files built from this repository and has no Python; every Python, SQL and C++ drill hands off to the web app and returns by result code, and `code-cell` shows the handoff link there. Widgets are unaffected: every number a widget shows comes from our own JavaScript models. (5) The new files' 65 modes on 43 existing widgets, and the two P2 modes promoted to P0, are in each entry's **Modes added** and in section 8.4; the first uses they move earlier are in the entries' header lines and section 8.2. (6) Coverage (section 8) now reads fifteen curriculum files and shows 2.3 after 2.2c's move (`docs/CURRICULUM.md` decision 10). (7) Build order (a): every P0 batch, the new wave W5d included, before any content. (8) **Second review round of `docs/PLAN.md`** (its section 13): A1's wave is named **W5d** (stage 51a) everywhere in this file, because W5b is stage 50's batch label in `docs/PLAN.md` 11.4; `code-cell`, `code-tracer`, `parsons`, `bench-lab`, `plot-workbench`, `mutant-hunter` and `injection-lab` state their Artifact mode; `expression-input` and `live-formula` state what each target renders.
 
-**Evidence tags** follow the sibling papers: [measured], [sourced], [recalled], [unverified], [inferred], [our choice]. Counts in this file were produced by a script over the catalogues and curriculum files on 6 October 2026 [measured]; section 8.1 describes it.
+**How to read it.** Section 0 lists the decisions and the counts. Section 1 states the contract every entry assumes. Section 2 maps catalogue ids to final ids. Section 3 lists the services widgets depend on. Sections 4 to 6 are the entries: primitives and inputs, composites by cluster, presets. Sections 5.1 to 5.22 follow the catalogues; 5.23 to 5.27 hold the widgets of the adopted items (A1, 2.0a, 2.0b, 2.1b, 2.2c), appended so that every earlier section number other papers cite stays true. Section 7 is the build order. Section 8 is the curriculum coverage, including the table of which items each widget serves and the P0 confirmation. Section 9 lists rejected alternatives and open questions.
+
+**Evidence tags** follow the sibling papers: [measured], [sourced], [recalled], [unverified], [inferred], [our choice]. Counts in this file were produced by a script over the catalogues and curriculum files on 6 October 2026, and rerun over the fifteen curriculum files on 7 October 2026 [measured]; section 8.1 describes it.
 
 ---
 
@@ -29,29 +31,34 @@ Definitive library for Zero to Quant, Stage 2 Phase 1 (Blueprint), 6 October 202
 | 7 | `binomial-tree` ownership | Finance owns it (1.7 is its first and heaviest user); `BinomialTreeConfig.q` is renamed `divYield` | Calc-linalg ownership; Hull's $q$ | finance 5.1; finance-projects decision 7: $q$ is the risk-neutral probability |
 | 8 | `keypad` | Leaves the widget library; it is `ui/Keypad` with `SymbolBar`, opened by every numeric, interval, matrix-cell and expression field on a coarse pointer and built into `speed-drill` | A `keypad` widget | arch decision 35 and section 5.5 put it in the design system |
 | 9 | Element ids | `kind:name` everywhere; on a multi-widget screen the host prefixes the widget's local id (`grid/cell:5,3`). Stage 0's `kind-name` ids convert by turning the first hyphen into a colon; the ids that sample lessons already use (0.1 requests R4 and R5, the 1.3 sample) are binding | `kind-name` | arch 0.3 and 5.1; `CONTENT-FORMAT.md` decision 17 |
-| 10 | Priority rule | P0: needed by a lesson in 0.1 to 1.5 or by the weekly problems that start at 1.5. P1: first needed in 1.6 to 1.9. P2: first needed in Stage 2 or 3. A widget takes the priority of its earliest mode; later modes carry their own priority in the entry | Catalogue priorities as written | The owner's depth-first order; the curriculum files moved several widgets and modes (0.3 below) |
+| 10 | Priority rule | P0: needed by a lesson in 0.1 to 1.5, A1 included (it sits between 1.3 and 1.4), or by the weekly problems that start at 1.5. P1: first needed in 1.6 to 1.9. P2: first needed in Stage 2 or 3. A widget takes the priority of its earliest mode; later modes carry their own priority in the entry | Catalogue priorities as written | The owner's depth-first order; the curriculum files moved several widgets and modes (0.3 below) |
 | 11 | 1.7 stays P1 | 1.7 Finance basics is P1 although it runs "alongside 1.3 to 1.6"; its first three courses (RB, EQ, MK, Stage 0 maths only) are the first P1 wave | All of 1.7 in P0 | finance decision 14 and finance-projects decision 4: skill gates unlock it; the P0 build stays bounded |
-| 12 | Cluster rule | A widget sits in the cluster of its home catalogue section (arch's 22 lazy chunks); primitives, inputs and `code-cell` sit in `core`; `path-simulator`, `filtration-tree`, `kelly-lab` and `puzzle-workbench` sit in `probability`, where their P0 use is. If `core` exceeds 80 KB gzipped when measured after `docs/PLAN.md` stage 32, `code-cell` and the code primitives (`code-surface`, `diff-view`, `text-terminal`) move to a `core-code` chunk loaded with a lesson's first code screen (revised by the review: the P1 finance primitives do not exist at P0, so a `core-markets` split could not shrink `core`) | Cluster by first use; everything shared in `core` | Home-topic chunks keep related widgets together; `core` is loaded with every lesson, so only code used everywhere goes there (arch decision 8, budget 9.2); the compiler preloads every cluster a course uses |
-| 13 | Python | Pyodide 314.0.7 on both targets (arch decision 15). Every catalogue mention of MicroPython, `ulab`, `micropython-ok` or `ulab-ok` is void; a drill declares `needs` and hands off only for C++ or for a package its course has not budgeted in the Artifact | The catalogues' MicroPython split | The owner's iPhone measurement: Pyodide with NumPy and pandas runs inside the Artifact |
+| 12 | Cluster rule | A widget sits in the cluster of its home catalogue section (arch's 22 lazy chunks, now 26: decision 19); primitives, inputs and `code-cell` sit in `core`; `path-simulator`, `filtration-tree`, `kelly-lab` and `puzzle-workbench` sit in `probability`, where their P0 use is. If `core` exceeds 80 KB gzipped when measured after `docs/PLAN.md` stage 32, `code-cell` and the code primitives (`code-surface`, `diff-view`, `text-terminal`) move to a `core-code` chunk loaded with a lesson's first code screen (revised by the review: the P1 finance primitives do not exist at P0, so a `core-markets` split could not shrink `core`) | Cluster by first use; everything shared in `core` | Home-topic chunks keep related widgets together; `core` is loaded with every lesson, so only code used everywhere goes there (arch decision 8, budget 9.2); the compiler preloads every cluster a course uses |
+| 13 | Python | **Replaced by owner correction 5 (7 October 2026)**: Pyodide 314.0.7 on the web app only; the Artifact has no Python, so every drill declares `needs` and, in the Artifact, hands off to the web app and returns by result code. Every catalogue mention of MicroPython, `ulab`, `micropython-ok` or `ulab-ok` stays void | Pyodide in the Artifact (draft 1's choice); the catalogues' MicroPython split | The Artifact publishes only files built from this repository's own sources, and no third-party binary. The earlier iPhone measurement (Pyodide ran in an Artifact) stands as a record, not adopted |
 | 14 | Build size | S, M or L per entry (1.6) | Line or day estimates | Relative size is what orders a wave; absolute estimates for agent work are [unverified] |
-| 15 | Drops and proposals | `vim-sim` is dropped (no lesson uses it). The canon-gap proposals are not added as widgets: the curriculum covers those lessons with modes of existing widgets (8.5); `brownian-path` and `ctmc-clock` become modes of `path-simulator` and `markov-chain` | Keeping unused widgets in the library | A widget nobody uses costs a build and a review; the curriculum is the test |
-| 16 | Library size | 37 primitives and inputs, 254 composites, 23 presets: 314 ids. This supersedes the estimate in arch decision 7 (about 25, 75 and the rest); the tiers stand | Forcing composites into presets to meet the estimate | The catalogues' composites derive state, which presets cannot (decision 4). The cost stays bounded because composite views are thin (decision 3), and every P1 and P2 composite brief must first show that a preset cannot do the job (arch 10.5) before it is built |
+| 15 | Drops and proposals | `vim-sim` is dropped (no lesson uses it). Draft 1 added no widget for a canon-gap proposal; once the owner adopted P1 to P4, 2.1b and A1, their curriculum files named widgets and decision 17 adds them. `brownian-path` and `ctmc-clock` stay modes of `path-simulator` and `markov-chain`, now P0; `forking-paths` is `multiple-testing`'s `garden` mode | Keeping unused widgets in the library; building `brownian-path`, `ctmc-clock` and `forking-paths` as their own ids | A widget nobody uses costs a build and a review; the curriculum is the test. Each of the three is an existing widget's model with one more view |
+| 16 | Library size | 37 primitives and inputs, 277 composites, 24 presets: 338 ids (draft 1: 254 composites, 23 presets, 314 ids). This supersedes the estimate in arch decision 7 (about 25, 75 and the rest); the tiers stand | Forcing composites into presets to meet the estimate | The catalogues' composites derive state, which presets cannot (decision 4). The cost stays bounded because composite views are thin (decision 3), and every P1 and P2 composite brief must first show that a preset cannot do the job (arch 10.5) before it is built |
+| 17 | Widgets of the adopted items | **24 ids, as the four new curriculum files name them in their section 8.1**: A1's six (`bound-lab`, `quantifier-game`, `cardinality-lab`, `proof-builder`, `line-topology`, `uniform-lab`), 2.0a's six (`backward-error`, `convergence-plot`, `interp-lab`, `fd-grid`, `rng-lab`, `mc-variance`), 2.0b's four (`feasible-region`, `dual-pair`, `convex-set`, `frontier-lab`), 2.1b's seven (`training-curves`, `autodiff-tape`, `lm-sampler`, `conv-lab`, `attention-lab`, `tokeniser-lab`, `scaling-plot`) and 2.2c's `bias-audit`. **Tier: scene** (`docs/PLAN.md` 3.2 rule 3) for all 23 composites, since none needs free text, a clock, a service with its own state machine or a new gesture; **`scaling-plot` is a preset of `convergence-plot`**, which 2.0a builds first | Modes on existing widgets for each (for example `frontier-lab` as modes of `portfolio-lab`); `scaling-plot` as its own scene; bespoke composites for the L entries | The files tested modes first and found no host that draws a backward-error ball, an interpolant with its nodes, a generator's lattice, a set with the segment test, a tape, a kernel or an attention grid. `portfolio-lab` is P1 and near rule 4's cap, so `frontier-lab` embeds its plane instead. A power-law fit with a floor is configuration over `convergence-plot`'s log-log axes and fitted slope |
+| 18 | Priority and wave of A1's widgets | **P0, in a new wave W5d (`docs/PLAN.md` stage 51a) between W5 (1.3) and W6 (1.4)**, built with every other P0 batch before any content (owner decision 1) | A late P0 wave after W7; P1 because A1 is on two tracks only | Decision 10 sets priority by first curriculum use, and A1's first lesson comes before 1.4's. A track-only item is still on the depth-first path of two tracks; the six cost about 8 agent-days at the scene rates (`stage1-real-analysis.md` 8) |
+| 19 | Clusters for the new widgets | **Four new clusters**: `analysis` (A1's six), `numerics` (2.0a's six and the `scaling-plot` preset beside its base), `optim` (2.0b's four), `dl` (2.1b's six composites); `bias-audit` joins `projects` beside `backtest-lab`. 26 lazy chunks in all | Folding A1 into `calculus`, 2.0a and 2.0b into `linalg` or `probability`, and 2.1b into `ml` | `ml` already holds 30 widgets and is near its 80 KB budget [inferred, 2.1b open item 9]; `calculus` holds 25. Each new cluster loads with its own item, and the compiler preloads every cluster a course uses, so `frontier-lab`'s embed of `portfolio-lab` (`finance`) and `scaling-plot` in 2.1b cost one extra chunk on the screens that need it. `ARCHITECTURE.md`'s `Cluster` union and its precache figure (26 chunks at 80 KB, about 2.1 MB) change with it (section 0.3) |
 
 ### 0.2 Counts
 
-The six catalogues name 332 distinct ids [measured]. After the name map, the merges and one drop, the library has **314 ids**, one of them new (`algo-lab`).
+The six catalogues name 332 distinct ids [measured]. After the name map, the merges and one drop, draft 1's library had 314 ids, one of them new (`algo-lab`). The adopted items' four curriculum files add 24 (decision 17), so the library has **338 ids**.
 
 | Tier | Kind | P0 | P1 | P2 | All |
 |---|---|---|---|---|---|
 | primitive | primitive | 24 | 4 | 1 | 29 |
 | input | primitive or composite | 6 | 2 | 0 | 8 |
-| composite | composite | 147 | 46 | 61 | 254 |
-| preset | composite (no view) | 9 | 14 | 0 | 23 |
-| **all** | | **186** | **66** | **62** | **314** |
+| composite | composite | 153 | 46 | 78 | 277 |
+| preset | composite (no view) | 9 | 14 | 1 | 24 |
+| **all** | | **192** | **66** | **80** | **338** |
 
-By kind: primitive 34 (P0 27, P1 6, P2 1), composite 280 (P0 159, P1 60, P2 61).
+By kind: primitive 34 (P0 27, P1 6, P2 1), composite 304 (P0 165, P1 60, P2 79).
 
-By build size: S 55 (P0 38), M 219 (P0 123), L 40 (P0 25).
+By build size: S 58 (P0 38), M 231 (P0 127), L 49 (P0 27).
+
+**The 24 added ids** by item: A1 6 (P0: 4 M, 2 L), 2.0a 6 (P2: 4 M, 2 L), 2.0b 4 (P2: 2 M, 2 L), 2.1b 7 (P2: 2 S, 2 M, 2 L composites and the S preset `scaling-plot`), 2.2c 1 (P2, L). All 23 composites are scenes (`docs/PLAN.md` 3.2), so the P0 split becomes 131 scenes, 22 bespoke composites and 9 presets (draft 1: 125, 22 and 9); among P1 and P2 the 17 new P2 composites are scenes, beside the about 28 bespoke composites `docs/PLAN.md` 3.2 expects there.
 
 ### 0.3 What this file changes in the other papers
 
@@ -74,6 +81,12 @@ By build size: S 55 (P0 38), M 219 (P0 123), L 40 (P0 25).
 | `widgets-programming.md` 6.8 | `vim-sim` P1 | Dropped | Decision 15 |
 | `ARCHITECTURE.md` decision 7 | About 25 primitives and inputs, 75 composites | 37, 254 and 23 presets | Decision 16 |
 | `ARCHITECTURE.md` 4.3 | Seven packages | Plus `@zq/models` for the pure models widgets, workers, generators and CI share (section 3), and `dmath` inside `@zq/mathcore` from E1 | Section 3; ML decision 2: seeded numbers must not depend on the engine's `Math.exp` |
+| `ARCHITECTURE.md` decision 8 and the `Cluster` union | 22 lazy chunks | 26: `analysis`, `numerics`, `optim` and `dl` added; precache at most about 2.1 MB gzipped | Decision 19 |
+| `ARCHITECTURE.md` 4.3, `@zq/models` | Domain entry points of draft 1 | Plus `@zq/models/analysis`, `@zq/models/numerics`, `@zq/models/optim` and `@zq/models/research`, and a tensor autodiff in `ml-core` (section 3) | The adopted items' section 8 |
+| `docs/PLAN.md` 3.2 | 125 P0 scenes; waves W1 to W7 | 131 P0 scenes; wave W5d (A1, 6 scenes, stage 51a) between W5 and W6 | Decisions 17 and 18 |
+| `docs/PLAN.md` 12, "What each proposal asks of the build" | Proposal P1 row: `forking-paths` and `bias-audit`; P2 row: `ctmc-clock` and `brownian-path` as new widgets; 2.1b row: `autodiff-tape`, `attention-lab` and a training-curve scene; P3 row: `convergence-plot`, `fd-grid`, `mc-variance`; P4 row: `feasible-region`, `dual-pair` | P1: `bias-audit` only; P2: modes of `markov-chain` and `path-simulator`, priority P0; 2.1b: seven (decision 17); P3: six; P4: four, `frontier-lab` among them | The four files' section 8 |
+| `widgets-prob-stats-ts.md` 6.4.4; `widgets-calc-linalg.md` 7.1 | `markov-chain` `ctmc` mode and `path-simulator` Brownian `refine` mode P2 | P0 | 1.5 L157 and L162 (canon-gap P2, adopted) |
+| `widgets-ml-research.md` and the ML catalogue's first uses | `classifier-plane`, `loss-lab`, `regularisation-path`, `penalty-geometry`, `descent-lab`'s momentum and stochastic modes first used in 2.1; `sharpe-lab`, `backtest-lab`, `paper-trader`, `mock-interview` in 2.3; `heat-diffusion` in 3.2; `sde-stepper` in 2.2; `pricer-compare` in 2.3 | First used in 2.0a, 2.0b or 2.2c (section 8.2); all stay P2 | 2.0a, 2.0b and 2.2c now precede those items on every track |
 
 ---
 
@@ -111,7 +124,7 @@ One union for every widget (arch 5.2): `choice`, `numeric`, `expression`, `set`,
 
 ### 1.5 Priorities
 
-P0 covers items 0.1 to 0.5, 1.1, 1.2, 1.3, 1.4 and 1.5, and the weekly probability problems that start at 1.5 lesson 1 (assessment decision 17). P1 covers 1.6, 1.7, 1.8 and 1.9. P2 covers 2.1 to 2.4 and 3.1 to 3.3. A widget's priority is the earliest of: the priority of its first curriculum use (section 8), the priority its catalogue gave its first mode, and an explicit decision in section 0.3. A primitive or input takes the earliest priority of anything that composes it. A widget's later modes keep their own priorities, listed in its entry.
+P0 covers items 0.1 to 0.5, 1.1, 1.2, 1.3, A1, 1.4 and 1.5 (its continuous-time levels Z4b and Z4c included), and the weekly probability problems that start at 1.5 lesson 1 (assessment decision 17). P1 covers 1.6, 1.7, 1.8 and 1.9. P2 covers 2.0a, 2.0b, 2.1, 2.1b, 2.2, 2.2c, 2.3, 2.4 and 3.1 to 3.3. A widget's priority is the earliest of: the priority of its first curriculum use (section 8), the priority its catalogue gave its first mode, and an explicit decision in section 0.3. A primitive or input takes the earliest priority of anything that composes it. A widget's later modes keep their own priorities, listed in its entry.
 
 ### 1.6 Build size
 
@@ -148,7 +161,8 @@ The compiler resolves each alias to its final id and warns (`widget-alias`); `zq
 | `dealer-sim` | `market-maker-sim` | merge | section 5, `market-maker-sim` |
 | `keypad` | `ui/Keypad` | ui | design-system component, not a widget |
 | `brownian-path` | `path-simulator` | mode | its `refine` mode (proposed by canon-gap P2; 3.2 files fall back to it) |
-| `ctmc-clock` | `markov-chain` | mode | its `ctmc` mode (same) |
+| `ctmc-clock` | `markov-chain` | mode | its `ctmc` mode (same); both modes are P0 since 1.5's levels Z4b and Z4c (canon-gap P2, adopted) use them |
+| `forking-paths` | `multiple-testing` | mode | its `garden` mode (canon-gap P1's request, listed in `docs/PLAN.md` 12; `stage2-research-method.md` decision 17) |
 
 Entries that merge two or more catalogue specs under one id: `binomial-tree`, `calibration-lab`, `choice`, `code-cell`, `code-surface`, `derivation-steps`, `drag-point`, `expression-input`, `live-formula`, `market-maker-sim`, `marks`, `node-link`, `number-line`, `numeric-input`, `plot-2d`, `plot-3d`, `region-select`, `setup-checklist`, `sharpe-lab`, `shell-sim`, `sign-chart`, `signal-lab`, `sketch-pad`, `slider`, `stepper`, `text-terminal`, `token-tray`, `value-table`, `workspace-sim`. The first spec named in each entry is the owner; the others add modes.
 
@@ -156,7 +170,7 @@ Entries that merge two or more catalogue specs under one id: `binomial-tree`, `c
 
 ## 3. Services widgets depend on
 
-Services are not widgets: they have no view and no state of their own. Pure services live in packages so that widgets, workers, generators and CI parity tests import the same code (arch 4.5 forbids workers from importing `src/widgets`). This adds one package, `@zq/models`, with one entry point per domain so a cluster chunk imports only its own. Each service is built in its own `docs/PLAN.md` stage, ahead of the batches that use it, with unit, property and parity tests against the versions pinned in `tools/py/uv.lock` (NumPy 2.4.6, pandas 3.0.2, SciPy 1.18.0, statsmodels 0.14.6): `linalg`, `quad`, `ode`, `roots`, `units`, `sample` in 3a; `stats-core` in 3b; `nd-core`, `frame-core`, `price-series` in 3c; `code-lex`, `seed-bank`, `mutant-forge`, `vfs`, `shell` in 3d; `algo-trace` and `trace.py` in 3e; `git-model` in 3f. The `markets` and `ml` services come with their P1 and P2 waves.
+Services are not widgets: they have no view and no state of their own. Pure services live in packages so that widgets, workers, generators and CI parity tests import the same code (arch 4.5 forbids workers from importing `src/widgets`). This adds one package, `@zq/models`, with one entry point per domain so a cluster chunk imports only its own. Each service is built in its own `docs/PLAN.md` stage, ahead of the batches that use it, with unit, property and parity tests against the versions pinned in `tools/py/uv.lock` (NumPy 2.4.6, pandas 3.0.2, SciPy 1.18.0, statsmodels 0.14.6): `linalg`, `quad`, `ode`, `roots`, `units`, `sample` in 3a; `stats-core` in 3b; `nd-core`, `frame-core`, `price-series` in 3c; `code-lex`, `seed-bank`, `mutant-forge`, `vfs`, `shell` in 3d; `algo-trace` and `trace.py` in 3e; `git-model` in 3f. The `markets` and `ml` services come with their P1 and P2 waves. Of the adopted items' services, `analysis` is P0 and is built before wave W5d (`docs/PLAN.md` stage 3g, before stage 51a); `numerics`, `optim`, `research` and the tensor autodiff in `ml-core` come with their P2 waves.
 
 | Service | Home | Used by | Spec |
 |---|---|---|---|
@@ -170,7 +184,12 @@ Services are not widgets: they have no view and no state of their own. Pure serv
 | `git-model` | `@zq/models/git` | `git-graph`, `merge-conflict` | programming decision 8 |
 | `PythonRuntime`, `SqlRuntime`, `CppRuntime` (web only), `handoff` | `src/engine/python`, `src/engine/sql`, platform adapters (arch 5.9) | `code-cell` and every drill | arch 6.3 |
 | `exchange-sim`, `ledger`, `finance-core`, `market-gen`, `backtest-core` | `@zq/models/markets` | finance, projects and interview widgets | finance decisions 2, 3, 8, 16 |
-| `ml-core`, `dataset-gen`, `panel-sim`, `sharpe-stats`, `as-sim` | `@zq/models/ml`, run in the data worker through `sim-runner` jobs | ML and research widgets, `market-maker-sim` | ML decisions 1, 4, 7 |
+| `ml-core`, `dataset-gen`, `panel-sim`, `sharpe-stats`, `as-sim` | `@zq/models/ml`, run in the data worker through `sim-runner` jobs | ML and research widgets, `market-maker-sim`; `ml-core` gains a small tensor autodiff with attention and convolution kernels for 2.1b's screens, live below 5,000 parameters, larger runs replayed from CI fixtures | ML decisions 1, 4, 7; `stage2-deep-learning.md` decision 9 |
+| `analysis`: exact rational arithmetic, the topology grammar and classifier, closed-form sup gaps, the quantifier engine and its adversary search | `@zq/models/analysis` | A1's six widgets and its generators | `stage1-real-analysis.md` 8.2 |
+| `numerics`: root finders, interpolation, quadrature, dense and banded linear algebra at screen sizes, the θ-scheme with Rannacher steps and projected SOR, LCG, PCG64, Philox, the inverse normal, van der Corput, Halton and Sobol, the Monte Carlo estimators | `@zq/models/numerics` | 2.0a's widgets and its modes on `root-finder`, `riemann-sum`, `elimination-lab`, `fd-grid` and `pricer-compare` | `stage2-numerics-optimisation.md` 8.3 |
+| `optim`: an exact rational simplex with Phase I, duals and ranges; two-variable branch and bound; an active-set QP to 10 variables with KKT multipliers; simplex projection; the descent methods; the log-barrier path; the SVM dual to 20 points | `@zq/models/optim` | 2.0b's widgets and `descent-lab`'s new modes | Same |
+| `research`: the probabilistic and deflated Sharpe ratios, minimum track record, $\eta(q)$, CSCV for small matrices, Shapley attribution, PPV with bias, the significance filter, McNemar, test length and power | `@zq/models/research` | `bias-audit`, `sharpe-lab`, `test-lab`, `icon-array` and `contingency-table`'s 2.2c modes | `stage2-research-method.md` 8.3 |
+| `@zq/mathcore` additions: float16 and bfloat16 rounding from a double, `nextUp`, `nextDown`, `ulp`, the exact rational value of a double | `@zq/mathcore` | `float-inspector`'s `formats` mode (2.0a and 2.1b), `backward-error` | `stage2-numerics-optimisation.md` 8.3 |
 | `speech` | `src/platform/shared/speech.ts` | `voice-capture` | finance decision 10 |
 | `interview-engine`, `problem-bank` | `src/tutor` (ai-tutor 11.1) and content libraries | `mock-interview`, `puzzle-workbench`, `viva` | finance decision 11; ML decision 10 |
 
@@ -194,6 +213,7 @@ A coordinate plane that hosts marks and handles.
 - **AI hooks** targets `axis:x`, `axis:y`, `grid`, `origin`; describe, e.g. "Axes: x −5 to 5, y −5 to 5, equal aspect. Layers: line L1 y = 2x + 1; point A (1, 3)."
 - **Accessibility** `role="group"` named by `label`. With no handles, the SVG is `role="img"` with `describe('brief')` as its description. The Table toggle lists the data of every mark marked `table: true`.
 - **Reduced motion** Zoom buttons jump.
+- **Modes added** Thomae's points to a chosen denominator and a monotone step function from a listing of $\mathbb Q$, with existing `marks` types (P0, A1 L28, L33, curriculum).
 - Absorbs `plot-axes`: skewed lattice grids, $\pi$ ticks and log axes come from Stage 0 3.1.
 - Gains stacked panels with a linked $x$ axis and a sideways marginal panel (prob-stats 4.2), a trading-time axis and linked crosshairs (finance 4.2), reversed log axes, anchored insets and a weight-space preset (ML 4).
 - Hosts handle layers (`drag-point`, `region-select`, `sketch-pad`) so a primitives-only screen is one widget with one state.
@@ -269,7 +289,7 @@ A KaTeX formula whose numbers update from widget variables, with terms linked to
 - **Config** `LiveFormulaConfig { tex, slots, expr, decimals?, format?, links?, toggles? }`.
 - **Answers** `set`, `choice`.
 - **AI hooks** targets `term:<id>`; describe, e.g. "2x + 3 = 11 [t1: 2x] [t2: 3] [t3: 11]".
-- **Accessibility** KaTeX outputs MathML alongside HTML; the engine announces key values on commit.
+- **Accessibility** on the web KaTeX outputs HTML with a hidden MathML copy; in the Artifact it outputs MathML only (arch decision 37), so the formula is the MathML itself. Slots bind by sentinel tokens on both outputs (arch decision 37, `TexSlots`): in the MathML tree each slot is an `<mn>` whose text follows the variable, so screen readers hear the current value; the engine announces key values on commit.
 - **Reduced motion** no motion of its own.
 - Absorbs `tex-terms`: addressable terms and fixed-width numeric slots; KaTeX never re-renders inside a drag (arch 5.11 `TexSlots`).
 
@@ -372,7 +392,7 @@ Show and edit matrices and vectors with exact entries; select rows, columns and 
 - **AI hooks** targets `cell:<i>,<j>`, `row:<i>`, `col:<j>`, `pivot:<k>`.
 - **Accessibility** `role="grid"` with row and column counts; each cell named "row 2, column 3, five halves". Row operations are announced with the resulting row ("Row 2 minus 3 times row 1. Row 2 is now 0, 2, minus 1").
 - **Reduced motion** No slide; the wash still marks changed entries.
-- **Modes added** row-stochastic editing through a `mass-editor` popover (P0, prob-stats 4.2).
+- **Modes added** row-stochastic editing through a `mass-editor` popover (P0, prob-stats 4.2); `spy`: the sparsity pattern with fill-in highlighted (P2, 2.0a L38, L39, curriculum).
 - Renders through `cell-grid`'s grid and roving keyboard (programming 3.3 recommendation) and adds brackets, augmented bars and row gestures.
 
 #### 4.1.14 `plot-3d`
@@ -634,16 +654,16 @@ One or more number fields.
 
 primitive · tier input · cluster `core` · **P0** · size L · spec stage0 4.3, calc-linalg 3.17 · first use 0.1 L12
 
-Maths input through a MathLive math-field, graded by `cas`.
+Maths input, graded by `cas` with one grader on both targets. **Per target** (`docs/PLAN.md` conflict 21): on the web, a MathLive math-field; in the Artifact, which has no MathLive or KaTeX fonts, the plain field with `SymbolBar` and a live MathML preview is the primary input, not a fallback.
 
 - **Composes** nothing (a leaf primitive).
 - **Config** `ExpressionEntryConfig { keyboard, variables?, placeholder?, prefix? }`.
 - **Answers** `expression`.
 - **AI hooks** targets `field`, `field:<id>`; describe, e.g. "Entered: (x + 3)(x − 2)".
-- **Accessibility** MathLive speaks maths [sourced: MathLive documentation describes its spoken output, not re-checked here]. The ASCII fallback is always available as a toggle.
+- **Accessibility** on the web MathLive speaks maths [sourced: MathLive documentation describes its spoken output, not re-checked here], and the plain field is always available as a toggle. In the Artifact the plain field is a native text input, and its MathML preview is read by the system's MathML support [unverified on iOS 18.7: spike S1].
 - **Reduced motion** no motion of its own.
 - **Modes added** probability keyboard layer (P0, prob-stats 4.2).
-- MathLive field loaded lazily, parsed by the Compute Engine LaTeX parser to MathJSON; plain field fallback (arch 11.6).
+- Both inputs are parsed by the Compute Engine LaTeX parser to MathJSON. On the web MathLive loads lazily, and the plain field takes over if it fails to load (arch 11.6).
 
 #### 4.2.4 `card-sort`
 
@@ -734,9 +754,9 @@ The code exercise: edit, Run against visible examples, Submit against hidden tes
 - **AI hooks** targets `line:<n>`, `test:<k>`, `file:<path>`, `cell:<k>`, `run`, `submit`; describe, e.g. "Drill max_drawdown (Python). Last submit: 5 of 7 hidden tests passed; first failure 'flat prices': expected 0.0, got nan."
 - **Accessibility** the result summary is announced ("3 of 4 examples passed; first failure: test 2, expected 0.25, got 0.2"); results form a list.
 - **Reduced motion** no stagger.
-- **Modes added** helpers `zq_rng`, `assert_mc_close`, `assert_fixture` (P0, prob-stats 4.2); NumPy subspace helpers (P0, calc-linalg 12.3); `zq_fin` and `zq_market` preludes (P1, finance 5); ML helpers and the local paste-back mode for PyTorch (P2, ML 4).
+- **Modes added** helpers `zq_rng`, `assert_mc_close`, `assert_fixture` (P0, prob-stats 4.2); NumPy subspace helpers (P0, calc-linalg 12.3); `zq_fin` and `zq_market` preludes (P1, finance 5); ML helpers and the local paste-back mode for PyTorch (P2, ML 4); the `zq_ra` prelude: exact `Fraction` helpers, Thomae and Cantor utilities, a float-rejection type check (P0, A1 homework RL1, curriculum); the `zq_dl` prelude: float64 gradient-check helpers, seeded two moons, MNIST-1D-style signals and the names corpus, the import scan (P2, 2.1b homework DN1, curriculum); the `zq_research` prelude: seeded `market-gen` fixtures, the trial-ledger loader, `isclose` bands for resampled outputs, the import scan (P2, 2.2c homework IS1, curriculum). All three are web-app only: in the Artifact the cell shows the handoff link (correction 5).
 - Absorbs Stage 0's `code-editor`; one widget for Python, SQL, C++ and shell.
-- Python is Pyodide 314.0.7 on both targets (arch decision 15): the catalogues' MicroPython and `ulab` tags are void; a drill declares `needs` and hands off only for C++ or for a package the course has not budgeted in the Artifact.
+- **Targets** (owner correction 5, which replaces arch decision 15's "both targets"). Python (Pyodide 314.0.7 with every load group), SQL (SQLite) and C++ (if the 1.9 spike passes) run in the web app only. **In the Artifact** the cell shows its starter code, the authored recorded output and "Finish this in the web app" with the handoff link; it has no Run or Submit and returns by result code (`ASSESSMENT.md` 14.3). On a lesson screen or quiz item it resolves as `read` and queues a "Finish in the web app" item (second review round; `docs/PLAN.md` 4.3, live-code screens); in a drill, homework or paper it hands off the whole item. The catalogues' MicroPython and `ulab` tags are void; a drill declares `needs`, which the web app's `budget.ts` checks against the device.
 - Cluster `core` because 20 of the 21 curriculum items use it.
 
 ### 5.2 Number and mental arithmetic (0.1, 0.5)
@@ -1144,7 +1164,7 @@ Sequences as lists, rules and plots.
 - **AI hooks** targets `term:<n>`, `diff:<level>-<n>`, `rule`, `plot`; describe, e.g. "Terms 3, 7, 11, 15, ?. First differences 4, 4, 4."
 - **Accessibility** table semantics and a table view of the plot.
 - **Reduced motion** no motion of its own.
-- **Modes added** explicit and recursive views side by side, index-origin toggle, two-term mode with ratio row, tolerance band (P0, 0.3 L39 to L43, curriculum).
+- **Modes added** explicit and recursive views side by side, index-origin toggle, two-term mode with ratio row, tolerance band (P0, 0.3 L39 to L43, curriculum); subsequence picking; bisection with an "infinitely many terms" marker; tail-supremum and tail-infimum envelopes; the Cauchy band (P0, A1 L15 to L17, curriculum).
 - Partial sums live in `series-explorer` (Stage 0 15.1).
 
 #### 5.5.6 `slide-rule`
@@ -1416,6 +1436,7 @@ Steps through code and shows the current line, the frames, the objects and the o
 - **Accessibility** a text alternative per step ("Frames: global: a refers to o1, b refers to o1. Objects: o1 list [1, 2]."); each step announced on commit; the watch list is a table.
 - **Reduced motion** all cuts; the changed parts keep the "changed" underline for one step.
 - **Modes added** `hits` mode expanding hidden built-in scans (P1, 1.8 sample, curriculum).
+- **Artifact** (second review round; `docs/PLAN.md` 4.3, live-code screens). Recorded traces (`trace`, recorded in CI by `trace.py`) play on both targets. The `live` mode traces the learner's own code with `trace.py` in Pyodide and is web only: in the Artifact a live-mode screen shows the recorded trace of the starter program and the handoff link, resolves as `read` and is finished in the web app.
 
 #### 5.7.4 `parsons`
 
@@ -1430,6 +1451,7 @@ Put shuffled lines of code in order and at the right indentation, leaving out di
 - **Accessibility** the solution is a list; each line reads "line 3 of 7, indent 2: total += x"; moves are announced.
 - **Reduced motion** instant placement.
 - Every `code-cell` drill derives a Parsons version for screens under 768 px (programming decision 15).
+- **Artifact** (second review round; `docs/PLAN.md` 4.3, live-code screens). The `ordering` answer is graded without running code, so the widget plays fully on both targets; in the Artifact the runner pane shows the reference order's recorded output instead of running the learner's order.
 
 #### 5.7.5 `float-inspector`
 
@@ -1443,6 +1465,7 @@ What a float really stores, and the consequences: binary fractions, the gap betw
 - **AI hooks** targets `bit:<i>`, `field:sign`, `field:exponent`, `field:mantissa`, `tick:<k>`; describe, e.g. "Double nearest 0.1 is 0.1000000000000000055511151231257827...; error 5.55e-18. Neighbours 0.09999999999999999 and 0.10000000000000002."
 - **Accessibility** bits read as "bit 52, exponent, 1"; the value, its exact expansion and the error are text; the table view lists neighbours.
 - **Reduced motion** nothing to change.
+- **Modes added** `rounding-model`: each operation of a short chain with its $\delta$ in units of $u$ (P2, 2.0a L2, curriculum); `formats`: binary64, float32, float16 and bfloat16 side by side with a loss-scaling factor, one mode configured twice, for 2.0a and for 2.1b's ranges of $e^x$ (P2, 2.0a L4; 2.1b L9, L27, L32, curriculum); `accumulate`: a running sum in a chosen format with the stall point, beside pairwise and Kahan accumulators (P2, 2.0a L5, L11, curriculum).
 
 #### 5.7.6 `code-blanks`
 
@@ -1553,6 +1576,7 @@ Measuring speed honestly: races between implementations, then methodology (warm-
 - **Reduced motion** results appear together when the run ends.
 - **Modes added** denormals (P1, 1.9, curriculum).
 - Race mode P0; rigorous and profile modes P1; 1.1 L68 shows a build-time profile in `value-table`.
+- **Artifact** (second review round; `docs/PLAN.md` 4.3, live-code screens). Recorded races (`recorded`, timed in CI and labelled with their device) play on both targets. A race the learner runs on the device times Pyodide and is web only: in the Artifact it shows the recorded race and the handoff link, resolves as `read` and is finished in the web app.
 
 #### 5.8.2 `csv-inspector`
 
@@ -1689,6 +1713,7 @@ matplotlib's model (Figure, Axes, Artists) and plotting judgement.
 - **Accessibility** alt text from the artist list ("Axes 1: line 'close'; x label 'Date'; y label 'Price (USD)'; log scale"); each artist is listed as a button linked to its line.
 - **Reduced motion** nothing to change.
 - matplotlib's own SVG with artist ids, recorded at build time.
+- **Artifact** (second review round; `docs/PLAN.md` 4.3, live-code screens). Mapping, state and choice screens read the recorded SVG and play on both targets. A `code` answer runs matplotlib in Pyodide and is web only: in the Artifact that screen resolves as `read` and is finished in the web app.
 
 ### 5.9 Tools (1.2)
 
@@ -1744,6 +1769,7 @@ A pull request to review: the description, commits, changed files and checks.
 - **AI hooks** targets `file:<path>`, `line:<path>:<n>`, `comment:<k>`; describe, e.g. "PR 'Add drawdown', 2 files, 41 changed lines; learner flagged 2 lines (bug, naming); decision none."
 - **Accessibility** comments listed with file and line; defects explained in text after grading.
 - **Reduced motion** nothing to change.
+- **Modes added** `bias-audit` embeds it as a read-only repository (P2, 2.2c L12, curriculum).
 
 #### 5.9.5 `mutant-hunter`
 
@@ -1758,6 +1784,7 @@ Learn testing by killing bugs.
 - **Accessibility** the board is a table; results announced ("4 of 6 mutants killed; reference passes").
 - **Reduced motion** the state changes without the flip.
 - **Modes added** property mode (P0, moved from P1; 1.2 L24, curriculum); coverage overlay (P1, programming 6.6); C++ mutants (P1, 1.9, curriculum).
+- **Artifact** (second review round; `docs/PLAN.md` 4.3, live-code screens). Web only: the learner's tests run against the mutants in `python-runner`. In the Artifact the screen shows the mutant board with the reference suite's recorded results and the handoff link, resolves as `read` and is finished in the web app.
 
 #### 5.9.6 `injection-lab`
 
@@ -1771,6 +1798,7 @@ Why data must never become code.
 - **AI hooks** targets `tok:<i>`, `input`, `method`; describe, e.g. "SQL, string context, concatenation. Input \".
 - **Accessibility** the token list is text ("keyword OR, from input"); the banner is announced.
 - **Reduced motion** nothing to change.
+- **Artifact** (second review round; `docs/PLAN.md` 4.3, live-code screens). `output` and `choice` screens play on both targets from result sets recorded in CI (`code-lex` is JavaScript). A `code` answer runs the learner's query in `sql-runner` and is web only: in the Artifact it shows the recorded result of the vulnerable query and the handoff link, resolves as `read` and is finished in the web app.
 
 #### 5.9.7 `schema-builder`
 
@@ -1801,7 +1829,7 @@ Series as partial sums: convergence and divergence; geometric series; the integr
 - **AI hooks** targets `slider:N`, `bar:<n>`, `sum:<N>`, `limit`, `tail`, `handle:x`, `interval`, `overlay:integral`; tryable `slider:N`.
 - **Accessibility** Table of $N$ and partial sums.
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** Fourier mode (P0, 1.4 L53, curriculum); annuity and perpetuity presets linked to `cashflow-timeline` (P1, finance 5).
+- **Modes added** Fourier mode (P0, 1.4 L53, curriculum); annuity and perpetuity presets linked to `cashflow-timeline` (P1, finance 5); condensation grouping; rearrangement towards a target; the double-sum grid with row and column sweeps (P0, A1 L14, L20, L21, curriculum).
 - First used at 0.3 L63 (geometric series), so it ships with Stage 0; owns partial sums for `sequence-lab` and `sum-visualiser`.
 
 #### 5.10.2 `limit-explorer`
@@ -1816,6 +1844,7 @@ Approach a point from each side and read what the function approaches.
 - **AI hooks** targets `handle:left`, `handle:right`, `slider:h`, `hole`, `dot:value`, `guide:left`, `guide:right`, `curve:f`, `bound:<id>`, `row:<i>`; describe, e.g. "f(x) = (x^2 − 4)/(x − 2), a = 2, hole at x = 2. Left handle x = 1.9 (f = 3.9), right handle x = 2.1 (f = 4.1). Answer field: DNE."; tryable `slider:h`.
 - **Accessibility** The value table is the primary alternative; handle text reads "x = 1.99, f(x) = 3.99".
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
+- **Modes added** Sequence probes $x_n \to c$ with the table of $f(x_n)$, two sequences at once (P0, A1 L27, curriculum).
 - First used at 0.3 L142 (precalc limits), so it ships with Stage 0.
 
 #### 5.10.3 `secant-tangent`
@@ -1830,7 +1859,7 @@ Average rate of change becomes instantaneous: the slope of secant $PQ$ as $Q\to 
 - **AI hooks** targets `handle:P`, `handle:Q`, `handle:Qm`, `handle:C`, `slider:h`, `line:secant`, `line:tangent`, `brace:rise`, `brace:run`, `ruler:tower`, `readout:radar`, `row:<i>`; tryable `slider:h`.
 - **Accessibility** Table of $h$ against slope; "Secant through P(1, 1) and Q(1.5, 2.25): slope 2.5."
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** motion preset with tower, ruler and time scrubber; signed stops excluding 0; centred-window mode with `handle:Qm`; switching position functions (P0, 1.3 L1, curriculum: lesson 1 cannot be built without them).
+- **Modes added** motion preset with tower, ruler and time scrubber; signed stops excluding 0; centred-window mode with `handle:Qm`; switching position functions (P0, 1.3 L1, curriculum: lesson 1 cannot be built without them); the parametric curve $(g(t), f(t))$ with a tangent parallel to its chord (P0, A1 L36, curriculum).
 
 #### 5.10.4 `epsilon-delta`
 
@@ -1844,6 +1873,7 @@ Make the formal definition a game.
 - **AI hooks** targets `handle:delta`, `band:eps`, `strip:delta`, `escape:<i>`, `field:formula`.
 - **Accessibility** Describes escape points: "With δ = 0.3, f leaves the band at x = 2.27, where f = 5.15, above L + ε = 5.1."
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
+- **Modes added** Thomae preset with the band and the strip (P0, A1 L28, curriculum); uniform mode: the curve $\delta(c)$ over a set and its infimum, with a movable centre (P0, A1 L29, L31, curriculum).
 
 #### 5.10.5 `local-zoom`
 
@@ -1857,6 +1887,7 @@ Zoom into a point on a curve until it looks straight (differentiable), or does n
 - **AI hooks** targets `handle:centre`, `slider:mag`, `inset`, `tangent`, `slope:left`, `slope:right`, `curve:f`, `curve:g`; tryable `slider:mag`.
 - **Accessibility** "At ×1,000 around x = 0, |x| still shows a corner: slope −1 on the left, +1 on the right."
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
+- **Modes added** The family $\lvert x\rvert^a\sin\frac1x$ with an $a$ slider; the zigzag-series preset (P0, A1 L34, L38, curriculum).
 - Brownian mode is P2.
 
 #### 5.10.6 `derivative-tracer`
@@ -1871,6 +1902,7 @@ Link $f$, $f'$ and $f''$.
 - **AI hooks** targets `handle:x`, `tangent`, `trace`, `curve:f`, `curve:df`, `curve:d2f`, `sketch`, `feature:<i>`, `band:<i>`, `slider:<param>`; tryable `slider:<param>`.
 - **Accessibility** Table of $x$, $f(x)$, $f'(x)$ at sample points; sketches described in words.
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
+- **Modes added** Darboux preset with $g_2$ (P0, A1 L35, curriculum).
 
 #### 5.10.7 `growth-rectangle`
 
@@ -1938,6 +1970,7 @@ Algorithms that find zeros.
 - **AI hooks** targets `handle:x0`, `handle:lo`, `handle:hi`, `iterate:<n>`, `tangent:<n>`, `bracket:<n>`, `row:<n>`, `marker:predict`.
 - **Accessibility** The table ($n$, $x_n$, $f(x_n)$, error) is primary.
 - **Reduced motion** Steps appear at once.
+- **Modes added** `fixed-point`, embedding `iteration-cobweb` (P2, 2.0a L15, curriculum); `secant` (P2, 2.0a L16, curriculum); `brent`, which `iv-solver`'s algorithm mode embeds (P2, 2.0a L17, L18, curriculum); `newton-2d` (P2, 2.0a L19, curriculum).
 
 #### 5.10.12 `objective-explorer`
 
@@ -1965,7 +1998,7 @@ Convex and concave functions through chords and tangents; Jensen's inequality, $
 - **AI hooks** targets `handle:x1`, `handle:x2`, `handle:lambda`, `chord`, `tangent`, `gap`, `atom:<i>`, `point:Ef`, `point:fE`.
 - **Accessibility** "The chord lies above the curve everywhere between 1 and 3; at λ = 0.5 the gap is 0.25."
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** random-variable mode with the Jensen gap (P0, prob-stats 5); volatility-drag preset (P1) and Kelly growth preset (P2, finance 5).
+- **Modes added** random-variable mode with the Jensen gap (P0, prob-stats 5); volatility-drag preset (P1) and Kelly growth preset (P2, finance 5); three-chord mode with left and right slopes and the subgradient fan (P0, A1 L37, curriculum); `surface`: a function of two variables with the chord test along any line and the Hessian's eigenvalues (P2, 2.0b L23, curriculum).
 
 #### 5.10.14 `descent-lab`
 
@@ -1979,7 +2012,7 @@ Gradient descent on a contour map: the learning rate, divergence, zig-zagging in
 - **AI hooks** targets `handle:start`, `slider:eta`, `iterate:<k>`, `path`, `plot:loss`, `marker:predict`; tryable `slider:eta`.
 - **Accessibility** Table of $k$, $\mathbf x_k$ and $f(\mathbf x_k)$.
 - **Reduced motion** Run shows all iterates at once.
-- **Modes added** stochastic mode (P2, 2.1 L19, curriculum); RMSProp and Adam beside the existing momentum and SGD modes; a race of four optimisers from one start (P2, ML 5).
+- **Modes added** stochastic mode (P2, 2.1 L19, curriculum); RMSProp and Adam beside the existing momentum and SGD modes; a race of four optimisers from one start (P2, ML 5); `cg` beside steepest descent (P2, 2.0a L46, curriculum); `line-search` (P2, 2.0b L36, curriculum); `bfgs` with the inverse-Hessian ellipse (P2, 2.0b L40, curriculum); `proximal`: ISTA beside the subgradient method (P2, 2.0b L41, curriculum); `projected`, embedding `convex-set`'s projection mode (P2, 2.0b L42, curriculum); `nesterov` beside heavy-ball momentum (P2, 2.0b L43, curriculum); a saddle preset with and without noise (P2, 2.0b L46, curriculum); Adam with $L_2$ against AdamW, and underdetermined least squares from a chosen start (P2, 2.1b L14, L48, curriculum). The momentum and stochastic modes' first uses move from 2.1 to 2.0b L43 and L44.
 - Newton mode P1; momentum and stochastic modes P2.
 
 #### 5.10.15 `riemann-sum`
@@ -1994,6 +2027,7 @@ Area by rectangles: left, right, midpoint, upper and lower sums, trapezoids and 
 - **AI hooks** targets `handle:a`, `handle:b`, `slider:n`, `rule:<r>`, `bar:<i>`, `gap:<i>`, `curve:f`, `readout:sum`, `inset:error`, `handle:level`; tryable `slider:n`, `rule:<r>`.
 - **Accessibility** Table of $i$, $x_i^*$, $f(x_i^*)$, area of bar $i$, and the total.
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
+- **Modes added** `romberg` (P2, 2.0a L26, curriculum); `gauss`, nodes and weights to $n = 20$ tabulated at build time (P2, 2.0a L27, L28, curriculum); `adaptive` Simpson with a tolerance (P2, 2.0a L29, curriculum).
 
 #### 5.10.16 `accumulator`
 
@@ -2021,6 +2055,7 @@ First-order differential equations $y'=F(x,y)$: direction fields, solution curve
 - **AI hooks** targets `handle:ic`, `solution`, `euler:<k>`, `field`, `slider:h`, `marker:predict`; tryable `slider:h`.
 - **Accessibility** Qualitative description computed from the field: equilibria and their stability ("y = 0 unstable, y = 1 stable").
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
+- **Modes added** `stiff`: $y' = -\lambda y$ under explicit Euler, implicit Euler and the trapezoidal rule, with their stability regions (P2, 2.0a L54, curriculum).
 
 #### 5.10.18 `solid-of-revolution`
 
@@ -2116,7 +2151,7 @@ Constrained optimisation: walk along a constraint and watch $f$; at the optimum 
 - **AI hooks** targets `handle:point`, `curve:constraint`, `vector:gradf`, `vector:gradg`, `contour:<level>`, `plot:profile`, `slider:c`; tryable `slider:c`.
 - **Accessibility** "On the circle at 40°: f = 3.2. The gradients differ by 25°, so moving along the circle still changes f."
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** minimum-variance portfolio preset (P1, finance 5).
+- **Modes added** minimum-variance portfolio preset (P1, finance 5); `kkt`: inequality constraints, active or inactive, the gradient as a non-negative combination of active normals (P2, 2.0b L32, L33, curriculum).
 
 #### 5.10.25 `region-bounds`
 
@@ -2243,7 +2278,7 @@ Gaussian elimination by hand in exact arithmetic: pivots, multipliers, row opera
 - **AI hooks** targets `row:<i>`, `cell:<i>,<j>`, `pivot:<k>`, `op:<n>`, `builder:target`, `builder:source`, `builder:multiplier`.
 - **Accessibility** Each operation announced with its resulting row; the matrix is a grid.
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** floating mode (P0, 1.4 L16, curriculum).
+- **Modes added** floating mode (P0, 1.4 L16, curriculum); `growth`: the largest entry at each step and the growth factor (P2, 2.0a L32, curriculum).
 
 #### 5.11.9 `subspace-tester`
 
@@ -2323,7 +2358,7 @@ Eigenvectors as directions that do not turn; eigenvalues as stretch factors; fin
 - **AI hooks** targets `handle:x`, `vec:Ax`, `ellipse`, `eigenline:<k>`, `slider:lambda`, `plot:charpoly`, `root:<k>`, `cell:<i>,<j>`; tryable `slider:lambda`.
 - **Accessibility** "x at 30°: Ax = (2.1, 1.3), pointing at 31.8°, 1.8° away; it is 2.5 times as long."
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** left eigenvector for $\lambda = 1$ as the stationary distribution (P0, prob-stats 5).
+- **Modes added** left eigenvector for $\lambda = 1$ as the stationary distribution (P0, prob-stats 5); `perturb`: eigenvalues of $A + E$ as $\lVert E\rVert$ grows, symmetric against defective (P2, 2.0a L42, curriculum).
 
 #### 5.11.15 `linear-dynamics`
 
@@ -2337,7 +2372,7 @@ Powers $A^k$ through the eigen-decomposition; long-run behaviour; Markov matrice
 - **AI hooks** targets `handle:x0`, `iterate:<k>`, `eigenline:<k>`, `component:<k>`, `field`, `trajectory:<i>`, `slider:k`; tryable `slider:k`.
 - **Accessibility** Table of $k$ and $\mathbf x_k$; the portrait described by type and eigenvalues.
 - **Reduced motion** Steps jump.
-- **Modes added** Markov mode linked from `markov-chain` (P0, prob-stats 5).
+- **Modes added** Markov mode linked from `markov-chain` (P0, prob-stats 5); `inverse-iteration`: shifted inverse iteration and Rayleigh quotient iteration with their rates (P2, 2.0a L40, curriculum).
 
 #### 5.11.16 `svd-stepper`
 
@@ -2365,7 +2400,7 @@ PCA as finding the direction of greatest variance: projections onto a line; cova
 - **AI hooks** targets `handle:angle`, `line:direction`, `proj:<i>`, `point:<i>`, `bar:variance`, `ellipse:cov`, `pc:<k>`, `loading:<k>`, `toggle:centre`, `toggle:standardise`; tryable `toggle:centre`, `toggle:standardise`.
 - **Accessibility** "Your line at 20° captures variance 3.1; the most possible is 4.4 at 35°." Table of points and projections.
 - **Reduced motion** Before and after.
-- **Modes added** scree view and returns-panel preset (P0, 1.4 L93, curriculum); PCR link (regress on the top $m$ components, sending coefficients to `regularisation-path`) (P2, ML 5).
+- **Modes added** scree view and returns-panel preset (P0, 1.4 L93, curriculum); PCR link (regress on the top $m$ components, sending coefficients to `regularisation-path`) (P2, ML 5); an embedding table's rows as points (P2, 2.1b L39, curriculum).
 
 #### 5.11.18 `low-rank-approx`
 
@@ -2392,7 +2427,7 @@ How sensitive $A\mathbf x=\mathbf b$ is to small changes in $\mathbf b$: a small
 - **AI hooks** targets `handle:b`, `disc`, `cloud`, `ellipse`, `slider:eps`, `slider:delta`; tryable `slider:eps`, `slider:delta`.
 - **Accessibility** "A 1% change in b moves x by up to 40%; κ = 40."
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** norm-balls mode shared with `penalty-geometry` (P2, ML 4).
+- **Modes added** norm-balls mode shared with `penalty-geometry` (P2, ML 4); `residual`: residual against error for an ill-conditioned solve (P2, 2.0a L31, curriculum).
 - Moved from P1 to P0: 1.4 L88 needs it and L45 previews it (linear-algebra request).
 
 ### 5.12 Probability (1.5)
@@ -2409,9 +2444,9 @@ Random walks and Brownian motion: the scaling limit, a fan of paths, the distrib
 - **AI hooks** targets `path:<i>`, `path:sample`, `cursor:t`, `hist:t`, `density`, `envelope`, `barrier:upper`, `barrier:lower`, `slider:n`, `slider:rho`; tryable `slider:n`, `slider:rho`.
 - **Accessibility** "200 paths to T = 1. At t = 0.5 the sample variance is 0.49 (theory 0.5)." Quantile table at the cursor.
 - **Reduced motion** Paths appear at once.
-- **Modes added** random-walk and price modes (P0, moved from P2; 1.1 L72, L73, curriculum); drift with the ruin formula, running-maximum histogram, link to `lattice-walk` (P0, prob-stats 5); `bridge`, `ratio` and asynchronous two-path modes (P2, 3.2 L39, L69, L71, curriculum).
+- **Modes added** random-walk and price modes (P0, moved from P2; 1.1 L72, L73, curriculum); drift with the ruin formula, running-maximum histogram, link to `lattice-walk` (P0, prob-stats 5); `bridge`, `ratio` and asynchronous two-path modes (P2; `bridge` first at 2.0a L75, the others at 3.2 L69, L71, curriculum).
 - Cluster `probability` because its P0 modes (walk, barrier, scaled walk, price) serve 1.1 L72 and L73 and 1.5.
-- Brownian, two-dimensional and Poisson modes are P2; the 3.2 `brownian-path` request is its `refine` mode (midpoint refinement keeps coarse paths fixed, calc-linalg decision 9).
+- The Brownian mode with its `refine` view (the `brownian-path` request: midpoint refinement keeps coarse paths fixed, calc-linalg decision 9) is P0 since 1.5 L162 (canon-gap P2, adopted; levels Z4b and Z4c use it in lessons 162 to 168); the two-dimensional and Poisson modes stay P2.
 
 #### 5.12.2 `puzzle-workbench`
 
@@ -2482,6 +2517,7 @@ Most interview probability questions with "until" or "first" in them are first-s
 - **AI hooks** targets `node:<id>`, `edge:<a>-<b>`, `eq:<id>`, `term:<id>:<k>`, `chip:one`, `solve`, `sim`; describe, e.g. "States 0, H, HH (absorbing). Unknown: expected tosses. x0 = 1 + ½xH + ½x0 entered; xH missing; boundary xHH = 0 set."; secret: the solution vector; tryable `chip:one`.
 - **Accessibility** Equations as text ("x zero equals 1 plus one half x H plus one half x zero"); states as buttons; walker results announced after each batch.
 - **Reduced motion** Chips appear in place.
+- **Modes added** Continuous-time mode with holding times (P0, 1.5 L161, curriculum).
 
 #### 5.12.7 `odds-ledger`
 
@@ -2509,7 +2545,7 @@ Natural frequencies make conditional probability countable: "Of 1,000 people, 10
 - **AI hooks** targets `block:<attr-combination>`, `block:cond-pos`, `chip:<filter>`, `slider:<rate>`; describe, e.g. "1,000 people: 10 with condition, 9 of them positive; 89 of 990 without it positive. Filter: positive (98 shown). Sorted: yes."; secret: the requested count; tryable `chip:<filter>`, `slider:<rate>`.
 - **Accessibility** Group named "1,000 people"; the table view is the $2 \times 2$ count table; the filter result is announced ("Showing 98 people who test positive; 9 have the condition").
 - **Reduced motion** Instant.
-- **Modes added** Imbalance mode: 1,000 glyphs coloured by confusion outcome, bound to `threshold-lab`'s threshold (P2, ML 5).
+- **Modes added** Imbalance mode: 1,000 glyphs coloured by confusion outcome, bound to `threshold-lab`'s threshold (P2, ML 5); Ioannidis's bias $u$ in FDR mode (P2, 2.2c L19, curriculum).
 - FDR mode P1.
 
 #### 5.12.9 `contingency-table`
@@ -2524,7 +2560,7 @@ Joint, marginal and conditional distributions of two categorical variables; inde
 - **AI hooks** targets `cell:<r>,<c>`, `row:<r>`, `col:<c>`, `margin:row:<r>`, `margin:col:<c>`, `stratum:<i>`, `mosaic`; describe, e.g. "2 × 2 counts. Treated: 81/87 and 192/263; Control: 234/270 and 55/80. Display: row conditional. Combined: no."
 - **Accessibility** A native table with scoped headers; conditional displays announce their denominator ("Row: smokers, 120 people").
 - **Reduced motion** Instant.
-- **Modes added** confusion preset with precision, recall, F1 and MCC; mutual-information readout (P2, ML 5, 2.1 L16).
+- **Modes added** confusion preset with precision, recall, F1 and MCC; mutual-information readout (P2, ML 5, 2.1 L16); bigram counts with row normalisation and add-$k$ (P2, 2.1b L34, L35, curriculum); a paired comparison of two classifiers on one test set with McNemar's statistic (P2, 2.2c L22, curriculum).
 - Expected counts and $\chi^2$ P1.
 
 #### 5.12.10 `game-lab`
@@ -2556,7 +2592,7 @@ Assign numbers to outcomes, then pour each outcome's probability along its arrow
 
 #### 5.12.12 `dist-explorer`
 
-composite · tier composite · cluster `probability` · **P0** · size L · spec prob-stats 6.2.2 · first use 1.5 L47
+composite · tier composite · cluster `probability` · **P0** · size L · spec prob-stats 6.2.2 · first use A1 L48 on the researcher and ML research tracks, 1.5 L47 on the others (moved earlier by the adopted items; was 1.5 L47)
 
 One place to learn every named distribution by its story and its shape; to read $P(a < X \le b)$ as an area and as $F(b) - F(a)$; to find quantiles; to see the mean as a balance point and the SD as a spread.
 
@@ -2566,7 +2602,7 @@ One place to learn every named distribution by its story and its shape; to read 
 - **AI hooks** targets `family`, `slider:<param>`, `stem:<x>`, `curve:density`, `curve:cdf`, `bracket:a`, `bracket:b`, `region:bracket`, `handle:quantile`, `marker:mean`, `band:sd`, `curve:compare` and 3 more; describe, e.g. "Binomial(n = 10, p = 0.3). Bracket 2 ≤ X ≤ 4: 0.5372. Mean 3, SD 1.449. Compare: none. Mode: explore."; secret: target probability, quantile or parameters; tryable `slider:<param>`.
 - **Accessibility** Table view: for discrete, $x$, $P(X = x)$ and $F(x)$ for up to 60 rows; for continuous, quantiles at 5% steps and the bracket probability. Sliders say their parameter ("lambda, 3.5").
 - **Reduced motion** Show-why becomes before-and-after with Play; the dot stream lands as a finished histogram.
-- **Modes added** Beta update (P0, 1.5 L84, curriculum); lognormal preset with $N(d_2)$ (P1, finance 5); A "maximum of $N$" family: density $N\varphi(x)\Phi(x)^{N-1}$ for $N$ independent standard normals, with the $E[\max]$ (P2, ML 5).
+- **Modes added** Beta update (P0, 1.5 L84, curriculum); lognormal preset with $N(d_2)$ (P1, finance 5); A "maximum of $N$" family: density $N\varphi(x)\Phi(x)^{N-1}$ for $N$ independent standard normals, with the $E[\max]$ (P2, ML 5); the distribution of the maximum of $n$ draws, with its mean (P2, 2.2c L23, curriculum).
 
 #### 5.12.13 `galton-board`
 
@@ -2606,7 +2642,7 @@ The picture under all of statistics.
 - **AI hooks** targets `panel:population`, `panel:sample`, `panel:stat`, `dot:<i>`, `stat:last`, `hist:stat`, `curve:normal`, `curve:t`, `line:truth`, `bracket:prediction`, `slider:n`, `chip:<statistic>`; describe, e.g. "Mode CLT. Population: exponential(1). n = 5. 1,000 means drawn; standardised; normal overlay on. Prediction bracket SD 0.40."; secret: the exact standard error and the truth; tryable `slider:n`, `chip:<statistic>`.
 - **Accessibility** "Population exponential, mean 1. n = 30. 1,000 sample means: mean 1.003, SD 0.181; theory 0.183." Table views for each panel's histogram.
 - **Reduced motion** Results appear at once.
-- **Modes added** `predict-se`, correlated population `correlated: { rho }` and `ecdf` view (P1, 1.6 L2 and L4, curriculum); several statistics side by side for `estimator-compare` (P1); Bootstrap rows never drawn are marked out-of-bag; the share converges to $1 - e^{-1}$ (P2, ML 5).
+- **Modes added** `predict-se`, correlated population `correlated: { rho }` and `ecdf` view (P1, 1.6 L2 and L4, curriculum); several statistics side by side for `estimator-compare` (P1); Bootstrap rows never drawn are marked out-of-bag; the share converges to $1 - e^{-1}$ (P2, ML 5); the stationary block bootstrap with the mean block length as a slider and intervals at two lengths (P2, 2.2c L3, curriculum).
 - Sampling, LLN, CLT and $t$ modes P0; bootstrap, permutation and p-value modes P1.
 
 #### 5.12.16 `generating-function`
@@ -2730,7 +2766,7 @@ Every row of $P$ is "where next from here".
 - **AI hooks** targets `node:<id>`, `edge:<a>-<b>`, `cell:<i>,<j>`, `row:<i>`, `walker`, `bar:<id>`, `class:<k>`, `pi:<id>`, `slider:alpha`, `step`; describe, e.g. "3 states. P rows: A (0.9, 0.1, 0), B (0.5, 0, 0.5), C (0, 0.5, 0.5). π10 = (0.71, 0.14, 0.15). Walker at B after 57 steps."; secret: $\pi$ and the classes; tryable `slider:alpha`.
 - **Accessibility** The matrix is the table view; each state is described with its outgoing row and current probability; "Walker at B after 57 steps; visits A 40, B 9, C 8".
 - **Reduced motion** Jumps; Play steps without interpolation.
-- **Modes added** Metropolis mode (P0, moved from P2; 1.5 L134, curriculum); run-length preset (P0, 1.5 L155, curriculum); `ctmc` mode with competing exponential clocks, the 3.2 `ctmc-clock` request (P2, 3.2, curriculum).
+- **Modes added** Metropolis mode (P0, moved from P2; 1.5 L134, curriculum); run-length preset (P0, 1.5 L155, curriculum); `ctmc` mode with competing exponential clocks, the `ctmc-clock` request (P0, moved from P2; 1.5 L157, canon-gap P2 adopted, curriculum); continuous-time, generator and birth-death modes (P0, 1.5 L157 to L161, curriculum).
 
 #### 5.12.25 `lattice-walk`
 
@@ -2843,7 +2879,7 @@ A test is a rule: reject when the statistic lands in a region chosen to have pro
 - **AI hooks** targets `curve:null`, `curve:alt`, `region:alpha`, `region:beta`, `handle:crit-left`, `handle:crit-right`, `marker:observed`, `region:p`, `curve:power`, `slider:<id>`; secret: the p-value and decision asked for; tryable `slider:<id>`.
 - **Accessibility** "Two-sided z test at 0.05: reject when the absolute value of z exceeds 1.96. Effect 0.5, n 25: power 0.71. Observed z 2.31, p 0.021."
 - **Reduced motion** Before-and-after.
-- **Modes added** `ks` test (P1, 1.6 L34, curriculum); compact ADF readout embeddable in `fracdiff-lab` (P2, ML 5).
+- **Modes added** `ks` test (P1, 1.6 L34, curriculum); compact ADF readout embeddable in `fracdiff-lab` (P2, ML 5); the significance filter: the significant region shaded, the conditional mean, power, the exaggeration ratio and the wrong-sign rate (P2, 2.2c L20, curriculum).
 - Simulated Dickey-Fuller null P2.
 
 #### 5.13.7 `multiple-testing`
@@ -2858,7 +2894,7 @@ Run $m$ tests at 5% and some will reject by chance: $P(\text{at least one}) = 1 
 - **AI hooks** targets `cell:<i>`, `line:bh`, `line:bonferroni`, `stem:<rank>`, `table:outcomes`, `point:best`, `slider:<id>`; describe, e.g. "m = 100, 10 real, BH at q = 0.1: 12 discoveries. Truth hidden."; secret: which hypotheses are real; tryable `slider:<id>`.
 - **Accessibility** Sorted p-value table with each method's decision; "20 tests, none real: 1 rejected at 5% with no correction".
 - **Reduced motion** Instant.
-- **Modes added** `forking` mode for 1.6 L41 (P1, curriculum); $t$ axis, BHY, `zoo-timeline` (P2, ML 5); The strategy zoo draws its noise strategies from `backtest-core` and links to `sharpe-lab`'s deflated Sharpe (P2, finance 5).
+- **Modes added** `forking` mode for 1.6 L41 (P1, curriculum); $t$ axis, BHY, `zoo-timeline` (P2, ML 5); The strategy zoo draws its noise strategies from `backtest-core` and links to `sharpe-lab`'s deflated Sharpe (P2, finance 5); `garden`: analysis choices drawn as a tree with `node-link`, each leaf an analysis of one fixture data set, with the garden's false-positive rate; the `forking-paths` request (P2, 2.2c L32, curriculum).
 - Its strategy-zoo mode embeds `overfit-lab`'s zoo panel (ML decision 6).
 
 #### 5.13.8 `summary-table`
@@ -2996,6 +3032,7 @@ The mean-variance picture in the $(\sigma, \mu)$ plane, manipulated directly: co
 - **AI hooks** targets `asset:<id>`, `handle:portfolio`, `curve:frontier`, `line:cml`, `point:tangency`, `point:min-var`, `slider:rho`, `line:beta`, `cloud`; tryable `slider:rho`.
 - **Accessibility** "Weight in A 0.62: volatility 13.1%, expected return 7.2%, Sharpe 0.40." Table view of the curve by weight.
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
+- **Modes added** `frontier-lab` embeds its $(\sigma, \mu)$ plane (P2, 2.0b L28, curriculum).
 
 #### 5.14.9 `order-book`
 
@@ -3078,6 +3115,7 @@ Market against limit, scaled up: the faster you trade, the more you pay in impac
 - **AI hooks** targets `slider:size`, `bucket:<k>`, `curve:volume`, `line:arrival`, `bar:<cost>`, `frontier`, `handle:lambda`; tryable `slider:size`.
 - **Accessibility** "Buying 5% of daily volume over 1 hour: expected cost 18 bp (spread 2, impact 16)."
 - **Reduced motion** Paths appear at once.
+- **Modes added** The Almgren-Chriss frontier mode is first used at 2.0b L53 (P2, curriculum).
 - Almgren-Chriss frontier mode P2.
 
 #### 5.14.15 `payoff-builder`
@@ -3185,7 +3223,7 @@ Build an $N$-step tree; replicate with $\Delta$ shares and a bond; derive the ri
 - **AI hooks** targets `node:<n>,<j>`, `edge:<n>,<j>,up`, `edge:<n>,<j>,down`, `q`, `delta:<n>,<j>`, `bond:<n>,<j>`, `cell:<j>`, `plot:converge`, `slider:<param>`; secret: the full solved tree; tryable `slider:<param>`.
 - **Accessibility** The tree also renders as a table by time step and state; arrow keys follow the tree; delta values are read with each node.
 - **Reduced motion** Layers and overwrites appear at once.
-- **Modes added** `path-dependent` (lookback, Asian), `trinomial` and `perpetual` modes (P2, 3.2 L2 to L4, L20, curriculum); Modes `crr`, `delta`, `dividend`, `vector`, `state-prices`; specified in full in section 5.1 (P1, finance 5).
+- **Modes added** `path-dependent` (lookback, Asian), `trinomial` and `perpetual` modes (P2, 3.2 L2 to L4, L20, curriculum); Modes `crr`, `delta`, `dividend`, `vector`, `state-prices`; specified in full in section 5.1 (P1, finance 5); `as-scheme`: the tree drawn as an explicit scheme in $(x, \tau)$, with the Taylor expansion of one backward step (P2, 2.0a L51, curriculum).
 - Ownership moves to finance (1.7 is its first and heaviest user; the 1.9 C++ exit checks against it).
 - `BinomialTreeConfig.q` is renamed `divYield`: $q$ is the risk-neutral probability, $\delta$ the dividend yield (finance-projects decision 7).
 
@@ -3241,6 +3279,7 @@ Implied volatility is the one number the market quotes options in.
 - **AI hooks** targets `handle:sigma`, `curve:price`, `line:market`, `iterate:<n>`, `bracket`, `smile:<K>`; secret: the true volatility used to generate the quote.
 - **Accessibility** "Market 4.20; at volatility 22.0% the model gives 4.05; increase volatility." Iterates as a table.
 - **Reduced motion** Tangents appear at once.
+- **Modes added** The algorithm mode's first use moves to 2.0a L18, embedding `root-finder` (`brent`) (P2, curriculum).
 - Algorithm mode P2.
 
 ### 5.15 Data structures, algorithms and contests (1.8, 2.4)
@@ -3430,11 +3469,11 @@ The single picture that most of 2.1 returns to.
 - **AI hooks** targets `curve:train`, `curve:cv`, `curve:test`, `whisker:<x>`, `cursor`, `line:noise`, `marker:min`, `marker:1se`, `sketch:train`, `sketch:test`; secret: the test curve while gated.
 - **Accessibility** Table of $x$, train, CV, standard error and test. "Test error lowest at degree 3 (0.41). Training error keeps falling to 0.02 at degree 12."
 - **Reduced motion** Curves appear complete.
-- **Modes added** predict mode on fixed data with a per-degree table (P2, 2.1 sample, curriculum).
+- **Modes added** predict mode on fixed data with a per-degree table (P2, 2.1 sample, curriculum); double descent with label noise and a ridge penalty (P2, 2.1b L47, curriculum).
 
 #### 5.17.3 `classifier-plane`
 
-composite · tier composite · cluster `ml` · **P2** · size L · spec ML 6.2.2 · first use 2.1 L3
+composite · tier composite · cluster `ml` · **P2** · size L · spec ML 6.2.2 · first use 2.0b L21 (moved earlier by the adopted items; was 2.1 L3)
 
 One plane, many models, so the learner sees what each assumes.
 
@@ -3461,7 +3500,7 @@ Draw $M$ training sets from the same process and fit the same model to each.
 
 #### 5.17.5 `loss-lab`
 
-composite · tier composite · cluster `ml` · **P2** · size S · spec ML 6.1.2 · first use 2.1 L11
+composite · tier composite · cluster `ml` · **P2** · size S · spec ML 6.1.2 · first use 2.0b L41 (moved earlier by the adopted items; was 2.1 L11)
 
 A loss is a choice about what to predict.
 
@@ -3471,7 +3510,7 @@ A loss is a choice about what to predict.
 - **AI hooks** targets `handle:c`, `point:<i>`, `curve:<loss>`, `tick:mean`, `tick:median`, `tick:quantile`, `slider:delta`, `slider:tau`; secret: none beyond the minimisers while hidden; tryable `slider:delta`, `slider:tau`.
 - **Accessibility** "c = 2.4. Squared loss 18.2 (minimum 11.6 at the mean, 3.1). Absolute loss 9.0 (minimum 8.2 at any c from 2.0 to 2.6)." Table of points and residuals.
 - **Reduced motion** Before-and-after pair.
-- **Modes added** `pinball-set` mode showing a flat minimiser interval (P2, LD3 homework, curriculum).
+- **Modes added** `pinball-set` mode showing a flat minimiser interval (P2, LD3 homework, curriculum); Gaussian likelihood with a learned $\sigma$ (P2, 2.1b L7, L8, curriculum).
 
 #### 5.17.6 `logistic-lab`
 
@@ -3528,7 +3567,7 @@ With a budget of nine evaluations over two hyperparameters, a 3 by 3 grid tries 
 
 #### 5.17.10 `regularisation-path`
 
-composite · tier composite · cluster `ml` · **P2** · size M · spec ML 6.3.3 · first use 2.1 L31
+composite · tier composite · cluster `ml` · **P2** · size M · spec ML 6.3.3 · first use 2.0b L54 (moved earlier by the adopted items; was 2.1 L31)
 
 Shrinking coefficients trades a little bias for less variance.
 
@@ -3568,7 +3607,7 @@ Linear models fit curves by adding columns: powers of $x$, steps, hinges $(x - \
 
 #### 5.17.13 `penalty-geometry`
 
-composite · tier composite · cluster `ml` · **P2** · size S · spec ML 6.3.4 · first use 2.1 L47
+composite · tier composite · cluster `ml` · **P2** · size S · spec ML 6.3.4 · first use 2.0b L54 (moved earlier by the adopted items; was 2.1 L47)
 
 With two coefficients, the residual sum of squares has elliptical contours centred at the OLS estimate, shaped by $X^\top X$.
 
@@ -3604,6 +3643,7 @@ A forecast of 70% should come true 70% of the time.
 - **AI hooks** targets `bin:<k>`, `line:diagonal`, `curve:distortion`, `curve:platt`, `curve:isotonic`, `handle:p`, `path:stated`, `path:true`, `readout:brier`, `item:<id>`, `bracket:<id>`, `truth:<id>` and 1 more; secret: the true calibration curve.
 - **Accessibility** "10 bins. Forecasts near 0.9 come true 0.74 of the time: over-confident. Brier 0.192 = reliability 0.021 − resolution 0.079 + uncertainty 0.250." Table of bins with counts, mean forecast, observed frequency and interval.
 - **Reduced motion** Before-and-after.
+- **Modes added** Temperature (P2, 2.1b L11, curriculum).
 - One widget for stated against observed frequency: `subject: model` is ML's reliability diagram, recalibration and sizing; `subject: self` is finance's 50% and 90% intervals, hit rate and interval score for 3.3; both share the binning and the scoring rules (Brier, log, interval score).
 
 #### 5.17.16 `tree-builder`
@@ -3645,6 +3685,7 @@ Averaging $B$ identically distributed predictions with variance $\sigma^2$ and p
 - **AI hooks** targets `member:<i>`, `curve:mean`, `field`, `curve:oob`, `curve:test`, `line:floor`, `slider:B`, `slider:mtry`, `formula:var`; secret: the true function; tryable `slider:B`, `slider:mtry`.
 - **Accessibility** "Random forest, 200 trees, mtry 3 of 10: OOB error 0.142, test error 0.150; mean pairwise correlation of tree predictions 0.31."
 - **Reduced motion** The final state appears.
+- **Modes added** Ensembles of networks (P2, 2.1b L50, curriculum).
 
 #### 5.17.19 `boosting-lab`
 
@@ -3684,6 +3725,7 @@ Hidden units are learned features: each draws its own boundary, and the next lay
 - **AI hooks** targets `unit:<layer>:<i>`, `edge:<layer>:<i>-<j>`, `field:output`, `curve:train`, `curve:test`, `chip:<feature>`, `slider:lr`, `slider:l2`, `slider:dropout`, `hist:layer-<l>`; secret: the generator and the Bayes error; tryable `chip:<feature>`, `slider:lr`, `slider:l2`, `slider:dropout`.
 - **Accessibility** Layers as a table of units with their weights and biases; each unit's map described by its boundary ("unit 2 of layer 1: active right of the line x1 + 0.4 x2 = 0.3").
 - **Reduced motion** No live repaint: the state updates on Pause, Step and at the end of a run.
+- **Modes added** A 2D region map with activation-pattern labels (P2, 2.1b L1, L2, curriculum); permuted hidden units, per-layer activation histograms, forward and backward depth statistics, batch-norm and residual toggles, live below 5,000 parameters (P2, 2.1b L16, L41 to L43, L60, curriculum).
 
 #### 5.17.22 `relu-composer`
 
@@ -3697,6 +3739,7 @@ One hidden layer of ReLU units computes $c + \sum_i a_i \max(0, w_i x + b_i)$: a
 - **AI hooks** targets `unit:<i>`, `kink:<i>`, `slope:<i>`, `curve:sum`, `curve:target`, `readout:mse`, `readout:pieces`, `slider:depth`; secret: the best achievable MSE; tryable `slider:depth`.
 - **Accessibility** Units listed with kink, slope and contribution. "5 units, kinks at −1.2, −0.4, 0.3, 0.9, 1.6. MSE against the target 0.012. 6 linear pieces."
 - **Reduced motion** Before-and-after.
+- **Modes added** Compose two networks (P2, 2.1b L3, curriculum).
 
 #### 5.17.23 `sequence-filter`
 
@@ -3918,10 +3961,11 @@ The curriculum asks for a note that includes what failed.
 - **AI hooks** targets `section:<id>`, `metric:<name>`, `check:<id>`, `mark:<item>`.
 - **Accessibility** Real text areas; each check is announced on blur.
 - **Reduced motion** no motion of its own.
+- **Modes added** An audit report template (P2, 2.2c L18, curriculum); a pre-registration template with its lock and a dated deviations log (P2, 2.2c L30, curriculum).
 
 #### 5.19.3 `backtest-lab`
 
-composite · tier composite · cluster `projects` · **P2** · size L · spec finance 7.1 · first use 2.3 L4
+composite · tier composite · cluster `projects` · **P2** · size L · spec finance 7.1 · first use 2.2c L4 (moved earlier by the adopted items; was 2.3 L4)
 
 Most backtests that look good are wrong in one of a few known ways.
 
@@ -3931,10 +3975,11 @@ Most backtests that look good are wrong in one of a few known ways.
 - **AI hooks** targets `step:<n>`, `window`, `row:<date>`, `toggle:<bias>`, `curve:equity`, `curve:biased`, `bracket:<id>`, `line:<n>`, `metric:<name>`, `component:<id>`; secret: the planted bias and the bug lines; tryable `toggle:<bias>`.
 - **Accessibility** "Bar 2023-05-04: signal long; target 100 shares; order filled at the next open, 101.20; equity 10,412." Metrics table; the data window is a table.
 - **Reduced motion** Steps cut; runs appear at once.
+- **Modes added** `perturb`: future-price handles, per-day decision rows for two rules, a fix toggle (P2, 2.2c L13, curriculum); bias `adjustment`: returns from raw against adjusted closes across splits, dividends counted twice (P2, 2.2c L15, curriculum). `bias-audit` embeds it.
 
 #### 5.19.4 `sharpe-lab`
 
-composite · tier composite · cluster `projects` · **P2** · size M · spec finance 7.2, ML 6.8.1 · first use 2.3 L7
+composite · tier composite · cluster `projects` · **P2** · size M · spec finance 7.2, ML 6.8.1 · first use 2.2c L1 (moved earlier by the adopted items; was 2.3 L7)
 
 A Sharpe ratio is an estimate with a wide error bar.
 
@@ -3944,11 +3989,12 @@ A Sharpe ratio is an estimate with a wide error bar.
 - **AI hooks** targets `hist:null`, `marker:learner`, `line:p95`, `slider:<param>`, `curve:years`, `hist:srhat`, `curve:theory`, `line:true`, `handle:srhat`, `curve:psr`, `line:benchmark`, `bar:reported` and 2 more; secret: the true Sharpe ratio of generated returns; tryable `slider:<param>`.
 - **Accessibility** "1,000 null strategies over 3 years: 95th percentile Sharpe 0.95; your strategy 0.90." Histogram table view.
 - **Reduced motion** Final histograms at once.
+- **Modes added** Sub-periods with each period's standard error and the joint $\chi^2$ test (P2, 2.2c L5, curriculum).
 - One widget: finance's performance metrics and their noise (SE, $t$, Sortino, Calmar, drawdown distribution, best of many nulls, deflated Sharpe) and ML's sampling error, annualisation, fat tails and deflations were one idea specified twice (finance-projects request 4).
 
 #### 5.19.5 `paper-trader`
 
-composite · tier composite · cluster `projects` · **P2** · size M · spec finance 7.10 · first use 2.3 L17
+composite · tier composite · cluster `projects` · **P2** · size M · spec finance 7.10 · first use 2.2c L4 (moved earlier by the adopted items; was 2.3 L17)
 
 Build the curriculum's fifth project's strategy logic, then test it against random entries with the same number of trades.
 
@@ -3989,7 +4035,7 @@ The surface is where Black-Scholes is used as a quoting language.
 
 #### 5.19.8 `pricer-compare`
 
-composite · tier composite · cluster `projects` · **P2** · size M · spec finance 7.5 · first use 2.3 L160
+composite · tier composite · cluster `projects` · **P2** · size M · spec finance 7.5 · first use 2.0a L65 (moved earlier by the adopted items; was 2.3 L160)
 
 The options dashboard compares pricers; the learner should know before coding that a tree's error falls like $1/N$ with an odd-even wobble, Monte Carlo's like $1/\sqrt{N}$.
 
@@ -3999,7 +4045,7 @@ The options dashboard compares pricers; the learner should know before coding th
 - **AI hooks** targets `series:tree`, `series:mc`, `line:exact`, `slider:N`, `slider:paths`, `toggle:antithetic`, `toggle:control`; tryable `slider:N`, `slider:paths`, `toggle:antithetic`, `toggle:control`.
 - **Accessibility** Table of method, $N$, price, error and time.
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** `pde` method (P2, 2.3 L164, curriculum).
+- **Modes added** `pde` method (P2, 2.3 L164, curriculum); `work`: error against work on log-log axes for four methods, embedding `convergence-plot` (P2, 2.0a L65, L90, curriculum); the `pde` method's first use moves to 2.0a L65.
 
 #### 5.19.9 `feed-sim`
 
@@ -4116,7 +4162,7 @@ Black-Scholes-Merton by replication: short a call, hold $\Delta$ shares, rebalan
 
 #### 5.21.2 `sde-stepper`
 
-composite · tier composite · cluster `stochastic` · **P2** · size M · spec calc-linalg 7.12 · first use 2.2 L40
+composite · tier composite · cluster `stochastic` · **P2** · size M · spec calc-linalg 7.12 · first use 2.0a L73 (moved earlier by the adopted items; was 2.2 L40)
 
 Simulate stochastic differential equations with Euler-Maruyama: arithmetic and geometric Brownian motion, Ornstein-Uhlenbeck, Vasicek and CIR; mean reversion.
 
@@ -4126,7 +4172,7 @@ Simulate stochastic differential equations with Euler-Maruyama: arithmetic and g
 - **AI hooks** targets `slider:<param>`, `dt:<value>`, `path:<i>`, `line:mean`, `density:stationary`, `plot:error`, `field:drift`, `field:diffusion`; tryable `slider:<param>`.
 - **Accessibility** Parameters and statistics read out; the error table by $\Delta t$.
 - **Reduced motion** At once.
-- **Modes added** Ornstein-Uhlenbeck half-life (P2, prob-stats 5); `cir-feller` mode (P2, 3.2 L84, curriculum).
+- **Modes added** Ornstein-Uhlenbeck half-life (P2, prob-stats 5); `cir-feller` mode (P2, 3.2 L84, curriculum); `strong and weak error` on shared Brownian increments against $\Delta t$ (P2, 2.0a L74, curriculum).
 
 #### 5.21.3 `measure-change`
 
@@ -4157,7 +4203,7 @@ The roughness that defines Brownian motion: as the partition refines, $\sum(\Del
 
 #### 5.21.5 `heat-diffusion`
 
-composite · tier composite · cluster `stochastic` · **P2** · size M · spec calc-linalg 7.11 · first use 3.2 L45
+composite · tier composite · cluster `stochastic` · **P2** · size M · spec calc-linalg 7.11 · first use 2.0a L49 (moved earlier by the adopted items; was 3.2 L45)
 
 The Black-Scholes PDE as a heat equation: going back from expiry, the price curve is the payoff smoothed by a Gaussian kernel; equivalently, each point's value is the average payoff over paths that start there (Feynman-Kac).
 
@@ -4167,7 +4213,7 @@ The Black-Scholes PDE as a heat equation: going back from expiry, the price curv
 - **AI hooks** targets `slider:tau`, `curve:price`, `payoff`, `probe`, `paths:probe`, `sketch`; tryable `slider:tau`.
 - **Accessibility** Curve values at strikes read out; a table of $S$ against value.
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
-- **Modes added** `finite-difference` mode (P2, 3.2 L88, curriculum).
+- **Modes added** `finite-difference` mode (P2, 3.2 L88, curriculum); `modes`: the initial condition's Fourier sine modes, each decaying as $e^{-k^2\pi^2\tau}$ (P2, 2.0a L50, curriculum). Its `finite-difference` mode embeds `fd-grid` instead of a second solver.
 
 #### 5.21.6 `reflection-principle`
 
@@ -4226,7 +4272,7 @@ Interviewers ask "would you play this game, and for how much?" The answer is an 
 
 #### 5.22.2 `mock-interview`
 
-composite · tier composite · cluster `interview` · **P2** · size L · spec finance 8.6 · first use 2.3 L41
+composite · tier composite · cluster `interview` · **P2** · size L · spec finance 8.6 · first use 2.2c L28 (moved earlier by the adopted items; was 2.3 L41)
 
 Interviewers mark the reasoning as it happens.
 
@@ -4252,11 +4298,353 @@ Trader interviews test whether you can turn a probability into a price, set a wi
 - **Modes added** `figgie` mode (P2, 3.3 L92, curriculum).
 - Seeded bots decide every trade; Bertie only narrates and debriefs (finance decision 5).
 
+### 5.23 Real analysis (A1)
+
+Added 7 October 2026 for A1, adopted on the researcher and ML research tracks. All six are **P0** (decision 18: A1 sits between 1.3 and 1.4), all are scenes (`docs/PLAN.md` 3.2) over `@zq/models/analysis` (section 3) in the new cluster `analysis` (decision 19), and every rational they show or grade is exact. The spec is `stage1-real-analysis.md` 8.1 and the lesson rows it names; Config lines give top-level fields, which the wave brief types (arch 10.5). Built in wave W5d, `docs/PLAN.md` stage 51a (section 7.3).
+
+#### 5.23.1 `bound-lab`
+
+composite · tier composite (scene) · cluster `analysis` · **P0** · size M · spec real-analysis 8.1 · first use A1 L1
+
+Sets on the line given by a rule, an upper or lower bound you drag until it stops being one, and the supremum with its $\varepsilon$-band.
+
+- **Composes** `number-line`, `drag-point`, `slider`, `stepper`, `value-table`, `live-formula`, `numeric-input`.
+- **Config** `BoundLabConfig { set, mode, lens?, rationalsOnly?, eps?, map?, bisect?, archimedes?, ask? }`.
+- **Answers** `numeric`, `interval`, `point`, `state`.
+- **AI hooks** targets `bar:upper`, `bar:lower`, `band:eps`, `element:<k>`, `interval:<k>`, `toggle:rationals`; describe, e.g. "Set {1 − 1/n}; upper bar at 1.00, an upper bound; ε = 0.01; first element above 0.99 is n = 101."; secret: the supremum, the infimum and whether each is attained; tryable `band:eps`.
+- **Accessibility** Table of the first elements, the bar's position and whether it bounds the set; hollowed irrational points are also named in text.
+- **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
+- Modes: lens on the first elements; rationals-only switch (lesson 1); a map stepper from below and above (lesson 1); nested-interval bisection (lesson 6); the Archimedes grid of spacing $\frac1n$ (lesson 5). Also used in lessons 3 to 6, 16 and 32.
+
+#### 5.23.2 `quantifier-game`
+
+composite · tier composite (scene) · cluster `analysis` · **P0** · size M · spec real-analysis 8.1 · first use A1 L2
+
+A statement with nested quantifiers as tiles: negate it tile by tile, then play it, making the "there exists" moves against an adversary who makes the "for all" moves.
+
+- **Composes** `token-tray`, `expression-input`, `value-table`, `stepper`, `choice`.
+- **Config** `QuantifierGameConfig { statement, mode, strategyVars?, adversary?, candidates?, compareWith? }`.
+- **Answers** `expression`, `ordering`, `mapping`, `state`, `choice`.
+- **AI hooks** targets `tile:<i>`, `move:<k>`, `strategy`, `toggle:negate`; describe, e.g. "Statement ∀ε ∃N ∀n≥N |a_n − 3/2| < ε; learner's strategy N = 13/(4ε); adversary tried ε = 0.01, found no defeating n up to 10,000."; secret: the adversary's winning move, if one exists; tryable `toggle:negate`.
+- **Accessibility** Tiles are read in order with their quantifier and variable; each round of play is a table row (chooser, move, result).
+- **Reduced motion** baseline.
+- The adversary searches a finite exact candidate set from the model, so a round is a pure function of the moves made, not a state machine (`docs/PLAN.md` 3.2 rule 3). Comparison mode sets two quantifier orders side by side. Also used in lessons 4, 10, 11, 17, 27, 31 and 39.
+
+#### 5.23.3 `cardinality-lab`
+
+composite · tier composite (scene) · cluster `analysis` · **P0** · size M · spec real-analysis 8.1 · first use A1 L7
+
+Counting the infinite: bijections between listed sets, Cantor's zigzag through the rationals, the diagonal argument and the power set.
+
+- **Composes** `cell-grid`, `node-link`, `stepper`, `token-tray`, `value-table`, `numeric-input`.
+- **Config** `CardinalityLabConfig { mode, setA?, setB?, map?, grid?, digitRule?, powerSetOf?, unionOf? }`.
+- **Answers** `numeric`, `mapping`, `set`, `state`.
+- **AI hooks** targets `cell:<i>,<j>`, `path:<k>`, `digit:<n>`, `subset:<a>`, `setB`; describe, e.g. "Zigzag over p/q with repeats skipped; position 10 is 1/4."; secret: the subset the learner's assignment misses in power-set mode; tryable `step`.
+- **Accessibility** Every bijection is a two-column table; the diagonal construction is read digit by digit.
+- **Reduced motion** baseline.
+- Modes: bijection builder with injectivity and surjectivity checks; zigzag; diagonal; power set with Cantor's set $B$ computed live; the union grid; jumps of a monotone function matched to rationals (lesson 33). Also used in lessons 8 to 10 and 33.
+
+#### 5.23.4 `proof-builder`
+
+composite · tier composite (scene) · cluster `analysis` · **P0** · size L · spec real-analysis 8.1 · first use A1 L12
+
+A proof as numbered steps, each a claim with its citation, built up from ordering to writing.
+
+- **Composes** `card-sort`, `token-tray`, `expression-input`, `free-response`, `choice`, `derivation-steps` (embedded for computational lines).
+- **Config** `ProofBuilderConfig { steps, mode, dependencies, gaps?, flaw?, template?, blocks? }`.
+- **Answers** `ordering`, `set`, `expression`, `long-form`, `choice`.
+- **AI hooks** targets `step:<i>`, `citation:<i>`, `gap:<i>`, `flaw`; describe, e.g. "Proof of 7 steps; steps 1 to 4 placed; step 5 cites step 2."; secret: the dependency graph and the flawed step; tryable none.
+- **Accessibility** Steps are a numbered list with their citations; reordering has a keyboard path (move up, move down) as in `card-sort`.
+- **Reduced motion** baseline.
+- Modes: Parsons (any order consistent with the dependency graph is accepted); gap (complete a step from chips or in words); flaw (find the wrong step and say why); template (the skeleton "Let $\varepsilon > 0$. Choose ... Then ... Hence" fixed, the learner fills each line); blocks for cases and for "suppose, for contradiction". Free text goes through `free-response`, so no editor of its own. If `scene.ts` passes rule 4's 400 lines, template mode splits into a preset. Also used in lessons 18, 30, 32, 35, 36 and 40 and in homework scaffolds.
+
+#### 5.23.5 `line-topology`
+
+composite · tier composite (scene) · cluster `analysis` · **P0** · size L · spec real-analysis 8.1 · first use A1 L22
+
+Open, closed, compact and connected sets on the line, by probing neighbourhoods and playing the open-cover game.
+
+- **Composes** `number-line`, `marks` (`intervals`, `dots`), `drag-point`, `slider`, `stepper`, `card-sort`, `value-table`.
+- **Config** `LineTopologyConfig { set, mode, probe?, family?, cover?, cantorDepth?, ternary?, baire? }`.
+- **Answers** `set`, `choice`, `numeric`, `state`.
+- **AI hooks** targets `probe:<x>`, `neighbourhood`, `cover:<k>`, `stage:<k>`, `piece:<i>`; describe, e.g. "Set (0, 1]; probe at 1: every neighbourhood leaves the set, so 1 is not interior."; secret: the classification while gated; tryable `probe:<x>`.
+- **Accessibility** Each set is written in interval notation beside its drawing; probe results and cover choices are table rows.
+- **Reduced motion** baseline.
+- Sets come from a grammar (intervals with open or closed ends, points, $\{\frac1n\}$-type sequences, $\mathbb Q$ on an interval). Modes: interior and limit-point probes and the closure; unions and intersections over indexed families; the open-cover game, with Heine-Borel's bisection shown on failure; the Cantor construction with a ternary probe; a separation test for connectedness; Baire's shrinking closed intervals. The cover game is a pure function of the moves made. If `scene.ts` passes the cap, the Cantor stepper splits into a preset. Also used in lessons 23 to 26.
+
+#### 5.23.6 `uniform-lab`
+
+composite · tier composite (scene) · cluster `analysis` · **P0** · size M · spec real-analysis 8.1 · first use A1 L39
+
+A sequence of functions against its limit: pointwise with $N(x, \varepsilon)$, uniform with the sup gap $d_n$.
+
+- **Composes** `plot-2d`, `marks` (`curve`, `band`, `stems`), `slider`, `drag-point`, `value-table`, `live-formula`, `numeric-input`.
+- **Config** `UniformLabConfig { family, domain, mode, n?, eps?, probe?, series?, radius?, degree?, fixture? }`.
+- **Answers** `numeric`, `point`, `curve`, `choice`.
+- **AI hooks** targets `slider:n`, `probe:x`, `band:gap`, `bar:sup`, `marker:argmax`, `curve:f_n`, `curve:f`; describe, e.g. "f_n(x) = x^n on [0, 1); n = 20; sup gap 1 at every n."; secret: $N(x, \varepsilon)$, $d_n$ and the argmax while gated; tryable `slider:n`.
+- **Accessibility** Table of $n$, $d_n$ and the argmax; the probe reads its $N(x, \varepsilon)$ in text.
+- **Reduced motion** baseline.
+- Modes: the $\varepsilon$-tube; pointwise with a probe; sup gap with a draggable bar; derivative and area panels (lessons 41 and 42); series with the tail bound (lesson 43); power series on $[-r, r]$; Bernstein polynomials with a degree slider; a family mode that replays a stored fixture of models with training and true errors (the sample lesson). Every $d_n$ comes from the model's closed form. Also used in lessons 40 to 48.
+
+### 5.24 Numerical methods (2.0a)
+
+Added 7 October 2026 for 2.0a. All six are **P2**, scenes over `@zq/models/numerics` in the new cluster `numerics`, built in the first P2 wave because 2.0a is the first item of Stage 2. No widget grades a simulated estimate; floating-point answers are only those every faithful implementation agrees on (`stage2-numerics-optimisation.md` decisions 9 and 10). Spec: that file's 8.1.
+
+#### 5.24.1 `backward-error`
+
+composite · tier composite (scene) · cluster `numerics` · **P2** · size M · spec numerics 8.1 · first use 2.0a L7
+
+The conditioning of a problem against the stability of an algorithm: a perturbation ball in the input and its image in the output.
+
+- **Composes** `plot-2d` (two panes), `marks` (`ball`, `band`, `arrow`, `scatter`), `slider`, `value-table`, `numeric-input`, `choice`.
+- **Config** `BackwardErrorConfig { f, x, mode, delta?, poly?, recurrence?, format? }`.
+- **Answers** `numeric`, `choice`, `point`.
+- **AI hooks** targets `ball:input`, `ball:output`, `point:computed`, `point:exact`, `slider:delta`, `row:<n>`; describe, e.g. "f(x) = x − 1 at x = 1.000001; relative input radius 1e-10 gives relative output radius 1.0e-4; κ about 1.0e6."; secret: $\kappa$ and the backward error; tryable `slider:delta`.
+- **Accessibility** Table of input radius, output radius and their ratio; the recurrence table is the primary view in recurrence mode.
+- **Reduced motion** baseline.
+- Modes: conditioning ($\kappa$ against $\left\lvert\frac{xf'(x)}{f(x)}\right\rvert$); polynomial (Horner in binary64 near a multiple root, backward against forward error); recurrence (forward and backward runs with the error multiplied each step). Also used in lessons 8 and 13.
+
+#### 5.24.2 `convergence-plot`
+
+composite · tier composite (scene) · cluster `numerics` · **P2** · size M · spec numerics 8.1 · first use 2.0a L11
+
+Error against step size, iterations or work on log axes, with the order read off a fitted slope.
+
+- **Composes** `plot-2d` (log axes), `marks` (`curve`, `scatter`, `line`), `drag-point`, `slider`, `value-table`, `numeric-input`, `choice`.
+- **Config** `ConvergencePlotConfig { series, axes, xVar, window?, refSlopes?, mode, predict? }`.
+- **Answers** `numeric`, `point`, `choice`.
+- **AI hooks** targets `series:<method>`, `window`, `line:slope`, `ref:<slope>`, `marker:predict`; describe, e.g. "Trapezoid error against h on log-log axes; fitted slope 2.00 over h from 0.1 to 0.001."; secret: the fitted slope while a prediction is open; tryable `window`.
+- **Accessibility** Table of the series and the fitted slope; reference lines are named in text.
+- **Reduced motion** baseline.
+- Modes: semilog (digits per iteration) and log-log (order); reference slopes $-\frac12$, $-1$, $-2$, $-4$; work mode (error against evaluations, flops or measured time) for comparing methods at equal cost; predict mode (drag a slope before the data appear). Series come from `@zq/models` runs or build-time fixtures, never from a graded live draw. **Base of the `scaling-plot` preset** (6.2.9) and embedded by `pricer-compare`'s `work` mode. The widget most used by 2.0a and 2.0b: lessons 14 to 16, 19, 25, 30, 33, 40, 41, 45, 46, 57, 59, 61, 65, 73, 74, 83 and 90 of 2.0a and 37, 39, 40 and 43 of 2.0b.
+
+#### 5.24.3 `interp-lab`
+
+composite · tier composite (scene) · cluster `numerics` · **P2** · size M · spec numerics 8.1 · first use 2.0a L20
+
+Nodes on a function and the interpolant through them, with its error curve.
+
+- **Composes** `plot-2d`, `marks` (`curve`, `scatter`, `band`), `drag-point`, `slider`, `matrix`, `value-table`, `numeric-input`, `choice`.
+- **Config** `InterpLabConfig { f?, data?, nodes, form, degree?, spline?, curve? }`.
+- **Answers** `numeric`, `point`, `curve`, `choice`, `expression`.
+- **AI hooks** targets `node:<i>`, `curve:interpolant`, `curve:error`, `slider:n`, `chip:<form>`; describe, e.g. "Runge's function on 11 equispaced nodes; maximum error 1.92 near x = ±0.94."; secret: the maximum error; tryable `slider:n`.
+- **Accessibility** Table of nodes, values and the error at sample points.
+- **Reduced motion** baseline.
+- Modes: monomial (with the Vandermonde condition number), Lagrange and barycentric forms; the node polynomial; the Runge preset; Chebyshev nodes with a degree slider; piecewise linear and cubic splines (natural, clamped, not-a-knot) with draggable data; a yield-curve preset interpolating zero rates, discount factors or log discount factors with the implied forward curve. Also used in lessons 21 to 24.
+
+#### 5.24.4 `fd-grid`
+
+composite · tier composite (scene) · cluster `numerics` · **P2** · size L · spec numerics 8.1 · first use 2.0a L53
+
+A finite-difference grid in $(x, \tau)$ or $(S, \tau)$, with the stencil at a chosen node and the scheme's stability on show.
+
+- **Composes** `plot-2d`, `plot-3d` (the surface $V(S, \tau)$), `marks` (`cells`, `stencil`, `curve`), `slider`, `stepper`, `value-table`, `numeric-input`, `choice`.
+- **Config** `FdGridConfig { pde, domain, scheme, r?, nodes, payoff, boundary, rannacher?, american?, barrier?, show }`.
+- **Answers** `numeric`, `choice`, `point`, `state`.
+- **AI hooks** targets `node:<i>,<j>`, `stencil`, `slider:r`, `curve:g`, `boundary:<side>`, `curve:gamma`, `curve:exercise`; describe, e.g. "Explicit scheme, r = 0.55; the highest mode's amplification −1.2 overtakes the solution by step 40."; secret: the reference price and the stable limit; tryable `slider:r`.
+- **Accessibility** Table of grid values at the chosen time row and the amplification factor by mode.
+- **Reduced motion** baseline; time stepping shows the final row with Play.
+- Modes: domain (truncation at $S_{\max}$, boundary and terminal conditions); method of lines (the second-difference matrix's eigenvalues); explicit with the amplification factor $g(\theta)$; implicit and Crank-Nicolson with a gamma overlay and the Rannacher start; Black-Scholes error against the closed form; payoff smoothing; Greeks from the grid; American (projected SOR, the free boundary); barrier (on a node, and the $0.5826\,\sigma\sqrt{\Delta t}$ shift). `heat-diffusion`'s `finite-difference` mode embeds it. If `scene.ts` passes the cap, the American and barrier modes split into presets. Also used in lessons 55 to 64.
+
+#### 5.24.5 `rng-lab`
+
+composite · tier composite (scene) · cluster `numerics` · **P2** · size M · spec numerics 8.1 · first use 2.0a L66
+
+What a random number generator is, and how its points fill space.
+
+- **Composes** `plot-2d`, `plot-3d`, `marks` (`scatter`, `cells`, `region`), `slider`, `stepper`, `value-table`, `numeric-input`, `choice`.
+- **Config** `RngLabConfig { generator, mode, n, dims?, modulus?, seed?, streams?, sequence? }`.
+- **Answers** `numeric`, `choice`, `set`, `point`.
+- **AI hooks** targets `plane:<k>`, `point:<i>`, `stream:<s>`, `slider:n`, `chip:<sequence>`; describe, e.g. "RANDU triples rotated: 15 planes visible."; secret: the lattice's plane count; tryable `slider:n`.
+- **Accessibility** Table of the first points and the discrepancy readout; the 3-D view has its 2-D projections.
+- **Reduced motion** Rotation lands at the chosen view.
+- Modes: LCG lattices with RANDU's planes; streams (PCG64 and Philox states, spawned against consecutive seeds, an overlap check); inverse transform on the double grid with its tail limits; rejection (the polar method's region and rate); plain, stratified and Latin hypercube point sets; quasi-random (van der Corput, Halton with its correlated large bases, Sobol, discrepancy). PCG64 and Philox match NumPy's bit generators bit for bit in parity tests. Also used in lessons 67 to 69, 80 and 82 to 84.
+
+#### 5.24.6 `mc-variance`
+
+composite · tier composite (scene) · cluster `numerics` · **P2** · size L · spec numerics 8.1 · first use 2.0a L71
+
+A race of Monte Carlo estimators on common seeds: running estimates with their bands, variance, cost and efficiency.
+
+- **Composes** `plot-2d`, `marks` (`curve`, `band`, `scatter`, `hist`), `sim-runner`, `slider`, `value-table`, `numeric-input`, `choice`.
+- **Config** `McVarianceConfig { target, estimators, N, seed, mode, control?, shift?, strata?, replicates?, greek?, lsm? }`.
+- **Answers** `numeric`, `choice`, `interval`.
+- **AI hooks** targets `series:<estimator>`, `band:<estimator>`, `row:<estimator>`, `slider:N`, `toggle:<method>`, `scatter:control`; describe, e.g. "Call price by plain and control-variate Monte Carlo, 10,000 paths; variance ratio 0.021 (closed form 0.020)."; secret: the closed-form variance ratio; tryable `slider:N`, `toggle:<method>`.
+- **Accessibility** The efficiency table (estimate, standard error, cost, variance times cost) is the primary view.
+- **Reduced motion** Runs show their final state with Play.
+- Modes: single; efficiency; antithetic; control variate (the payoff-control scatter, fitted $b$ and $\rho^2$); importance sampling (shifted density, weight histogram); stratified; conditional; randomised quasi-Monte Carlo; Greeks (bumping with and without common random numbers, pathwise, likelihood ratio); Longstaff and Schwartz (the continuation regression at one date and its exercise boundary). Runs above $2 \times 10^5$ paths go to a Web Worker calling the same pure model. Graded numbers are predictions or closed forms, never a simulated estimate. Also used in lessons 72, 75 to 81 and 84 to 89.
+
+### 5.25 Optimisation (2.0b)
+
+Added 7 October 2026 for 2.0b. All four are **P2**, scenes over `@zq/models/optim` in the new cluster `optim`, built in the wave after 2.0a's. Every pivot and vertex is exact rational arithmetic. Spec: `stage2-numerics-optimisation.md` 8.1.
+
+#### 5.25.1 `feasible-region`
+
+composite · tier composite (scene) · cluster `optim` · **P2** · size L · spec numerics 8.1 · first use 2.0b L1
+
+Linear programmes in two variables: constraints as draggable half-planes, the feasible polygon and the objective's level line.
+
+- **Composes** `plot-2d`, `plot-3d`, `marks` (`half-plane`, `polygon`, `line`, `path`), `drag-point`, `slider`, `stepper`, `matrix` (tableau), `node-link` (branch and bound), `value-table`, `numeric-input`, `choice`.
+- **Config** `FeasibleRegionConfig { constraints, objective, mode, integer?, pivotRule?, phaseOne?, barrier?, view }`.
+- **Answers** `point`, `numeric`, `choice`, `matrix`, `ordering`, `state`.
+- **AI hooks** targets `constraint:<i>`, `vertex:<i>`, `line:objective`, `arrow:gradient`, `tableau:<r>,<c>`, `node:<k>`; describe, e.g. "Feasible region with 4 vertices; objective 3x + 2y; level line through (2, 3), value 12."; secret: the optimal vertex and the next pivot; tryable `slider:objective`.
+- **Accessibility** Vertices, their basic variables and objective values in a table; the tableau is the simplex view's table.
+- **Reduced motion** baseline.
+- Modes: basis labels at each vertex; convex combinations; simplex (the vertex walk beside the tableau, the learner choosing the entering variable); Phase I; Klee-Minty on the cube in 3-D; integer lattice with the branch-and-bound tree; the central path of the log barrier. Also used in lessons 2 to 5, 7, 9 to 11, 15 and 45.
+
+#### 5.25.2 `dual-pair`
+
+composite · tier composite (scene) · cluster `optim` · **P2** · size L · spec numerics 8.1 · first use 2.0b L12
+
+A primal and its dual side by side: the dual as the best bound built from the constraints.
+
+- **Composes** `plot-2d`, `marks` (`curve`, `cone`, `half-plane`, `bars`), `slider`, `drag-point`, `matrix`, `value-table`, `numeric-input`, `choice`.
+- **Config** `DualPairConfig { primal, mode, multipliers?, rhsVar?, market?, convex?, portfolio?, svm? }`.
+- **Answers** `numeric`, `matrix`, `choice`, `point`, `state`.
+- **AI hooks** targets `slider:y<i>`, `value:primal`, `value:dual`, `row:<i>`, `segment:<k>`, `cone`, `curve:g`; describe, e.g. "Multipliers (1, 0.5) build the bound 14 against the primal optimum 12."; secret: the dual optimum; tryable `slider:y<i>`.
+- **Accessibility** Primal and dual values, slacks and multipliers in one table.
+- **Reduced motion** baseline.
+- Modes: bound (multiplier sliders); gap (primal and dual closing); slackness (each slack beside its multiplier); sensitivity (the optimal value against one right-hand side, slopes as shadow prices, kinks as basis changes); Farkas' cone and its certificate; state prices in a one-period market, with an arbitrage when none exist; the concave dual function of a convex programme and Slater's condition; every KKT multiplier of a constrained portfolio with a re-solve check; SVM dual coefficients with support vectors marked. Also used in lessons 13 to 17, 30, 31, 34, 52 and 56.
+
+#### 5.25.3 `convex-set`
+
+composite · tier composite (scene) · cluster `optim` · **P2** · size M · spec numerics 8.1 · first use 2.0b L18
+
+Is it convex? Drag two points in a set and see where the segment between them leaves it.
+
+- **Composes** `plot-2d`, `marks` (`region`, `segment`, `line`, `point`), `drag-point`, `card-sort`, `value-table`, `numeric-input`, `choice`.
+- **Config** `ConvexSetConfig { sets, mode, handles?, hyperplane?, projectOnto? }`.
+- **Answers** `point`, `choice`, `set`, `numeric`, `state`.
+- **AI hooks** targets `set:<k>`, `handle:a`, `handle:b`, `segment`, `hyperplane`, `point:projection`; describe, e.g. "Long-only budget simplex; segment from (0.2, 0.8) to (0.7, 0.3) stays inside."; secret: whether a set is convex in a sorting item; tryable `handle:a`.
+- **Accessibility** The segment test's result and where it leaves the set are stated in text and in a table.
+- **Reduced motion** baseline.
+- Presets: half-planes, balls, norm balls, polytopes, the long-only budget simplex, a cardinality set, a minimum-lot set, sublevel sets. Modes: the segment test; intersections, affine images and sums; separation and supporting hyperplanes; projection with the obtuse-angle condition, onto the simplex as well, which `descent-lab`'s `projected` mode embeds. Also used in lessons 19, 21, 22, 29 and 42.
+
+#### 5.25.4 `frontier-lab`
+
+composite · tier composite (scene) · cluster `optim` · **P2** · size M · spec numerics 8.1 · first use 2.0b L28
+
+The constrained efficient frontier, with the constraints that bend it and the weights that move along it.
+
+- **Composes** `plot-2d`, `marks` (`curve`, `scatter`, `bars`), `slider`, `drag-point`, `value-table`, `numeric-input`, `choice`; embeds `portfolio-lab`'s $(\sigma, \mu)$ plane.
+- **Config** `FrontierLabConfig { assets, mu, sigma, constraints, mode, current?, turnover?, rf? }`.
+- **Answers** `point`, `numeric`, `choice`, `state`.
+- **AI hooks** targets `curve:frontier`, `point:<portfolio>`, `bar:<asset>`, `slider:mu<i>`, `slider:turnover`, `constraint:<k>`; describe, e.g. "Long-only frontier of 5 assets; corner portfolio at σ = 12% where asset C enters."; secret: the optimal weights while hidden; tryable `slider:mu<i>`.
+- **Accessibility** Weights, risk and return of each marked portfolio in a table; the weights chart has a table view.
+- **Reduced motion** baseline.
+- Modes: a constraint editor (budget, long-only, caps, sector limits) whose frontier kinks at corner portfolios; tangency by the rescaled convex problem; sensitivity (one expected return on a slider, the weights swinging); turnover (current weights, a budget, trades ranked by gain per unit of turnover). Every point is solved by the active-set QP in `@zq/models/optim`. A separate widget, not modes of `portfolio-lab` (decision 17). Also used in lessons 33, 34 and 48 to 51.
+
+### 5.26 Deep learning (2.1b)
+
+Added 7 October 2026 for 2.1b. All seven are **P2**; the six composites are scenes in the new cluster `dl`, and `scaling-plot` is a preset of 2.0a's `convergence-plot` (6.2.9). Any training shown is a fixture replay computed in CI by the NumPy reference, or an `ml-core` run below 5,000 parameters (`stage2-deep-learning.md` decision 9). Spec: that file's 8.1.
+
+#### 5.26.1 `training-curves`
+
+composite · tier composite (scene) · cluster `dl` · **P2** · size M · spec deep-learning 8.1 · first use 2.1b L12
+
+Replay a training run and read it: losses, the schedule, gradient norms, per-layer histograms and the update ratio.
+
+- **Composes** `plot-2d`, `marks` (`curve`, `hist`, `band`), `sketch-pad`, `slider`, `stepper`, `value-table`, `choice`.
+- **Config** `TrainingCurvesConfig { runs, panels, mode, step?, layer?, predict? }`.
+- **Answers** `curve`, `point`, `numeric`, `choice`.
+- **AI hooks** targets `curve:train`, `curve:val`, `curve:lr`, `hist:layer-<l>`, `marker:min`; describe, e.g. "Run A: validation loss bottoms at step 1,400 (1.92 nats), then rises."; secret: the hidden curve in predict mode; tryable `step`.
+- **Accessibility** Table of loss, learning rate and gradient norm by step; histograms have bin tables.
+- **Reduced motion** Replays land on their final step with Play.
+- Modes: predict (sketch the curve before it is revealed); side by side (plain against residual, true against shuffled labels, CNN against MLP). Also used in lessons 13, 15, 31, 36, 38, 40, 45 to 47, 57, 59, 73 and 80.
+
+#### 5.26.2 `autodiff-tape`
+
+composite · tier composite (scene) · cluster `dl` · **P2** · size M · spec deep-learning 8.1 · first use 2.1b L17
+
+A computation as a tape and a layered graph: forward, then backward, with every adjoint.
+
+- **Composes** `value-table`, `node-link`, `stepper`, `slider`, `numeric-input`, `live-formula`, `matrix`.
+- **Config** `AutodiffTapeConfig { program, mode, leaves, sweep?, tensor?, shapes? }`.
+- **Answers** `numeric`, `matrix`, `ordering`, `state`.
+- **AI hooks** targets `row:<i>`, `edge:<i>-<j>`, `adjoint:<i>`, `chip:<i>`, `nudge:<leaf>`; describe, e.g. "Tape of 7 rows; backward sweep at row 5; adjoints filled for rows 5 to 7."; secret: every adjoint; tryable `nudge:<leaf>`, `step`.
+- **Accessibility** The tape is the table view; each row reads its operation, value, local derivative and adjoint.
+- **Reduced motion** Each sweep step lands at once.
+- Modes: forward stepping; leaf nudges with exact ratios; the backward sweep with local-derivative chips; fan-out contributions on edges; forward-mode tangents; tensor mode, in which rows are arrays with shapes and vector-Jacobian products. Stepping is a pure function of a step index. Also used in lessons 18 to 26, 29, 32, 56 and 60.
+
+#### 5.26.3 `lm-sampler`
+
+composite · tier composite (scene) · cluster `dl` · **P2** · size S · spec deep-learning 8.1 · first use 2.1b L34
+
+The next-symbol distribution for a context, and seeded sampling from it with temperature, top-$k$ and top-$p$.
+
+- **Composes** `plot-2d` (`bars`), `slider`, `stepper`, `value-table`.
+- **Config** `LmSamplerConfig { model, context, temperature?, topK?, topP?, seed }`.
+- **Answers** `distribution`, `numeric`, `choice`.
+- **AI hooks** targets `bar:<symbol>`, `slider:temperature`, `slider:topK`, `slider:topP`, `step`; describe, e.g. "Context 'em'; temperature 1.0; top symbols m 0.31, i 0.18, a 0.12."; secret: none beyond the fixture; tryable `slider:temperature`.
+- **Accessibility** Table of symbols and probabilities; the running string is read aloud on each step.
+- **Reduced motion** baseline.
+- Distributions come from a count table or a fixture model. Also used in lessons 72 and 74.
+
+#### 5.26.4 `conv-lab`
+
+composite · tier composite (scene) · cluster `dl` · **P2** · size L · spec deep-learning 8.1 · first use 2.1b L51
+
+Convolution in one and two dimensions with a draggable kernel, and the arithmetic of padding, stride, dilation and receptive fields.
+
+- **Composes** `plot-2d`, `marks` (`cells`, `stems`), `drag-point`, `slider`, `stepper`, `matrix`, `value-table`.
+- **Config** `ConvLabConfig { signal, kernel, dims, padding?, stride?, dilation?, layers?, causal?, pooling?, mode }`.
+- **Answers** `numeric`, `matrix`, `set`, `choice`.
+- **AI hooks** targets `kernel:<j>`, `out:<t>`, `rf:<layer>`, `slider:padding`, `slider:stride`, `slider:dilation`; describe, e.g. "Length 32 signal, kernel 3, stride 2, padding 1: output length 16."; secret: output values while gated; tryable `slider:stride`.
+- **Accessibility** Input, kernel and output as tables; the receptive field is listed by index.
+- **Reduced motion** The kernel jumps between positions.
+- Modes: stacked layers with the receptive field; causal and dilated stacks; pooling; the `im2col` matrix; a pair-fusing tree (lesson 58); a patch grid (lesson 77); a block-cost calculator (lesson 63). If `scene.ts` passes the cap, the calculator and patch grid split into a preset. Also used in lessons 52 to 58, 63 and 77.
+
+#### 5.26.5 `attention-lab`
+
+composite · tier composite (scene) · cluster `dl` · **P2** · size L · spec deep-learning 8.1 · first use 2.1b L64
+
+Scaled, masked self-attention laid out: queries, keys, values, the score grid, the softmax rows and the outputs.
+
+- **Composes** `matrix`, `plot-2d` (`cells`), `slider`, `choice`, `stepper`, `value-table`, `live-formula`.
+- **Config** `AttentionLabConfig { tokens, d, heads?, mask, scale, maskOrder?, positions?, fixtureHeads?, view }`.
+- **Answers** `matrix`, `numeric`, `choice`, `set`.
+- **AI hooks** targets `cell:<i>,<j>`, `row:<i>`, `head:<h>`, `toggle:scale`, `toggle:mask`; describe, e.g. "4 tokens, causal mask applied before the softmax; row 3 weights (0.5, 0.3, 0.2, 0)."; secret: the weight matrix while gated; tryable `toggle:scale`.
+- **Accessibility** Every grid is a table with row and column labels; mask cells are named, not only shaded.
+- **Reduced motion** baseline.
+- Modes: scale toggle; causal, padding and no masks, applied before or after the softmax to show the leak; heads; permutation and position toggles; a block view; fixture heads from a small trained model (previous-token, induction). Also used in lessons 65 to 68, 71, 75 and 76.
+
+#### 5.26.6 `tokeniser-lab`
+
+composite · tier composite (scene) · cluster `dl` · **P2** · size S · spec deep-learning 8.1 · first use 2.1b L70
+
+Byte-pair encoding step by step: pair counts, the merge chosen, the tokens and the vocabulary.
+
+- **Composes** `value-table`, `stepper`, `token-tray`, `numeric-input`.
+- **Config** `TokeniserLabConfig { text, merges, tieRule, ask? }`.
+- **Answers** `numeric`, `ordering`, `choice`.
+- **AI hooks** targets `pair:<ab>`, `merge:<k>`, `token:<i>`, `step`; describe, e.g. "After 3 merges: 14 tokens, vocabulary 9."; secret: the next merge while gated; tryable `step`.
+- **Accessibility** Counts and tokens are tables; each merge is announced with its pair and count.
+- **Reduced motion** baseline.
+- Ties break by first occurrence. Used in lesson 70.
+
+### 5.27 Research method (2.2c)
+
+Added 7 October 2026 for 2.2c. One widget, **P2**, a scene with embeds in the `projects` cluster beside `backtest-lab`, over `@zq/models/research`. Spec: `stage2-research-method.md` 8.1.
+
+#### 5.27.1 `bias-audit`
+
+composite · tier composite (scene with embeds) · cluster `projects` · **P2** · size L · spec research-method 8.1 · first use 2.2c L12
+
+Audit a backtest someone else wrote: triage, locate each defect with evidence, attribute the effects, and sit the exit audit.
+
+- **Composes** `code-review`, `backtest-lab` (both embedded as controlled components, `docs/PLAN.md` 3.2 rule 5), `card-sort`, `choice`, `free-response`, `numeric-input`, `value-table`, `plot-2d` (`bars`).
+- **Config** `BiasAuditConfig { case, mode, taxonomy, timeLimit?, defects (sealed), fixtures }`.
+- **Answers** `set`, `mapping`, `ordering`, `numeric`, `state`.
+- **AI hooks** targets `report:<k>`, `chip:<sign>`, `file:<path>`, `line:<path>:<n>`, `field:<name>`, `sentence:<k>`, `finding:<k>`, `class:<id>`, `cell:<subset>`, `bar:<defect>`; describe, e.g. "Audit of 'Weekly reversal, Sharpe 1.9'. Findings: 3 (look-ahead in signal.py lines 41 to 47; universe in universe.py line 12; costs in the note, sentence 4). Time used 54 of 120 minutes."; secret: the planted defects, their spans and effects, sealed like an answer key (`docs/PLAN.md` 12 decision 5) and withheld from Bertie entirely in exit mode; tryable none in exit mode.
+- **Accessibility** The repository is navigable by file and line from the keyboard; every finding is announced with its location and class; the attribution table and chart have a table view.
+- **Reduced motion** Static.
+- Modes: triage (one-paragraph reports with warning-sign chips to order, lesson 12); audit (tap a location, pick a class, add evidence and an effect estimate; a findings ledger; homework AU1); attribution (the Sharpe ratio under every combination of fixed defects, each defect's effect fixed first, last and averaged over orders, with the Shapley bars, lesson 18); exit (audit mode with Bertie away, marked automatically against the sealed list, 2 marks a defect and 1 off a false finding, the true effects shown after submission). Findings are taps and inputs and effects are fixture lookups, so no rule 3 reason applies; if `scene.ts` passes the cap, attribution mode splits into a preset. Also used in lesson 18, homework AU1 and the 2.2c exit.
+
 ---
 
 ## 6. Presets
 
-23 presets. Each is a `PresetDef` (arch 5.3): its `expand` runs in the compiler and the result is validated by the base widget's schema; its predicates and recipes register as `<preset>/<name>`. The base widget must carry every mode a preset needs; those modes are listed under the base's entry.
+24 presets (23 from the catalogues and `scaling-plot`, added 7 October 2026). Each is a `PresetDef` (arch 5.3): its `expand` runs in the compiler and the result is validated by the base widget's schema; its predicates and recipes register as `<preset>/<name>`. The base widget must carry every mode a preset needs; those modes are listed under the base's entry.
 
 ### 6.1 The `algo-lab` family
 
@@ -4516,6 +4904,16 @@ Bias is where a sampling distribution centres relative to $\theta$; variance is 
 - **Modes added** `trimmed` and `mad` estimators (P1, 1.6 L8, curriculum).
 - Expands to `sampling-lab` with up to three statistics side by side and bias, variance and MSE readouts.
 
+#### 6.2.9 `scaling-plot`
+
+preset of `convergence-plot` · composite · tier preset · cluster `numerics` · **P2** · size S · spec deep-learning 8.1, numerics 8.1 · first use 2.1b L78
+
+Loss against compute on log-log axes with a fitted power law, an irreducible floor, extrapolation bands, and the compute-optimal allocation for a budget.
+
+- **Composes** `convergence-plot`.
+- **Answers, AI hooks, accessibility and reduced motion** those of `convergence-plot`; `describeAs` names the preset; targets add `fit:floor` and `band:extrapolation`.
+- Expands to `convergence-plot`'s log-log axes with a fitted law $L(C) = L_\infty + aC^{-b}$, a draggable budget, and the readouts $C \approx 6ND$ and $D \approx 20N$ (2.1b lessons 28 and 78). Added 7 October 2026 (decision 17); sits in `numerics` beside its base, so 2.1b's course TF preloads that chunk for this one screen.
+
 ---
 
 ## 7. Build order
@@ -4550,7 +4948,7 @@ The P1 and P2 primitives and inputs (`cashflow-timeline`, `price-ladder`, `order
 
 ### 7.3 P0 composites and presets by first curriculum use
 
-First use is the earliest lesson row naming the widget (section 8), placed on one timeline: main items in curriculum order, with 0.4 and 0.5 spread across 0.1 to 0.3 and 1.7 across 1.3 to 1.6, because they run alongside (curriculum; assessment decision 13). A wave is due before its first lesson reaches the content stage. Inside a wave, build in the order listed.
+First use is the earliest lesson row naming the widget (section 8), placed on one timeline: main items in curriculum order, A1 between 1.3 and 1.4 and 1.5's levels Z4b and Z4c between its Z4 and Z5, with 0.4 and 0.5 spread across 0.1 to 0.3 and 1.7 across 1.3 to 1.6, because they run alongside (curriculum; assessment decision 13). A wave is due before its first lesson reaches the content stage. Inside a wave, build in the order listed.
 
 | # | Wave | Id | Tier | Cluster | Size | First use |
 |---|---|---|---|---|---|---|
@@ -4671,45 +5069,51 @@ First use is the earliest lesson row naming the widget (section 8), placed on on
 | 115 | W5 | `lagrange-explorer` | composite | `calculus` | M | 1.3 L124 |
 | 116 | W5 | `region-bounds` | composite | `calculus` | M | 1.3 L130 |
 | 117 | W5 | `transform-grid` | composite | `linalg` | M | 1.3 L134 |
-| 118 | W6 | `vector-combo` | composite | `linalg` | M | 1.4 L1 |
-| 119 | W6 | `row-column-picture` | composite | `linalg` | M | 1.4 L6 |
-| 120 | W6 | `elimination-lab` | composite | `linalg` | L | 1.4 L7 |
-| 121 | W6 | `subspace-tester` | composite | `linalg` | S | 1.4 L19 |
-| 122 | W6 | `solution-set` | composite | `linalg` | M | 1.4 L22 |
-| 123 | W6 | `four-subspaces` | composite | `linalg` | M | 1.4 L24 |
-| 124 | W6 | `basis-change` | composite | `linalg` | S | 1.4 L33 |
-| 125 | W6 | `gram-schmidt` | composite | `linalg` | S | 1.4 L50 |
-| 126 | W6 | `eigen-finder` | composite | `linalg` | M | 1.4 L60 |
-| 127 | W6 | `linear-dynamics` | composite | `linalg` | M | 1.4 L65 |
-| 128 | W6 | `svd-stepper` | composite | `linalg` | M | 1.4 L72 |
-| 129 | W6 | `pca-lab` | composite | `linalg` | M | 1.4 L74 |
-| 130 | W6 | `low-rank-approx` | composite | `linalg` | S | 1.4 L86 |
-| 131 | W6 | `condition-number` | composite | `linalg` | M | 1.4 L88 |
-| 132 | W7 | `puzzle-workbench` | composite | `probability` | L | 1.5 L1 (through the weekly problems) |
-| 133 | W7 | `indicator-board` | composite | `probability` | M | 1.5 L10 |
-| 134 | W7 | `prob-square` | composite | `probability` | M | 1.5 L13 |
-| 135 | W7 | `trial-strip` | composite | `probability` | M | 1.5 L16 |
-| 136 | W7 | `first-step-solver` | composite | `probability` | M | 1.5 L16 |
-| 137 | W7 | `odds-ledger` | composite | `probability` | M | 1.5 L17 |
-| 138 | W7 | `icon-array` | composite | `probability` | M | 1.5 L27 |
-| 139 | W7 | `contingency-table` | composite | `probability` | M | 1.5 L28 |
-| 140 | W7 | `game-lab` | composite | `probability` | L | 1.5 L39 |
-| 141 | W7 | `rv-mapper` | composite | `probability` | M | 1.5 L45 |
-| 142 | W7 | `dist-explorer` | composite | `probability` | L | 1.5 L47 |
-| 143 | W7 | `galton-board` | composite | `probability` | M | 1.5 L48 |
-| 144 | W7 | `convolver` | composite | `probability` | M | 1.5 L68 |
-| 145 | W7 | `sampling-lab` | composite | `probability` | L | 1.5 L69 |
-| 146 | W7 | `generating-function` | composite | `probability` | M | 1.5 L78 |
-| 147 | W7 | `order-statistics` | composite | `probability` | M | 1.5 L83 |
-| 148 | W7 | `joint-density` | composite | `probability` | L | 1.5 L88 |
-| 149 | W7 | `geo-prob` | composite | `probability` | M | 1.5 L92 |
-| 150 | W7 | `covariance-lab` | composite | `probability` | M | 1.5 L94 |
-| 151 | W7 | `gaussian-2d` | composite | `probability` | M | 1.5 L96 |
-| 152 | W7 | `cond-expectation` | composite | `probability` | M | 1.5 L106 |
-| 153 | W7 | `filtration-tree` | composite | `probability` | M | 1.5 L108 |
-| 154 | W7 | `markov-chain` | composite | `probability` | L | 1.5 L123 |
-| 155 | W7 | `lattice-walk` | composite | `probability` | M | 1.5 L135 |
-| 156 | W7 | `kelly-lab` | composite | `probability` | M | 1.5 L154 (through `game-lab`) |
+| 118 | W5d | `bound-lab` | composite (scene) | `analysis` | M | A1 L1 |
+| 119 | W5d | `quantifier-game` | composite (scene) | `analysis` | M | A1 L2 |
+| 120 | W5d | `cardinality-lab` | composite (scene) | `analysis` | M | A1 L7 |
+| 121 | W5d | `proof-builder` | composite (scene) | `analysis` | L | A1 L12 |
+| 122 | W5d | `line-topology` | composite (scene) | `analysis` | L | A1 L22 |
+| 123 | W5d | `uniform-lab` | composite (scene) | `analysis` | M | A1 L39 |
+| 124 | W6 | `vector-combo` | composite | `linalg` | M | 1.4 L1 |
+| 125 | W6 | `row-column-picture` | composite | `linalg` | M | 1.4 L6 |
+| 126 | W6 | `elimination-lab` | composite | `linalg` | L | 1.4 L7 |
+| 127 | W6 | `subspace-tester` | composite | `linalg` | S | 1.4 L19 |
+| 128 | W6 | `solution-set` | composite | `linalg` | M | 1.4 L22 |
+| 129 | W6 | `four-subspaces` | composite | `linalg` | M | 1.4 L24 |
+| 130 | W6 | `basis-change` | composite | `linalg` | S | 1.4 L33 |
+| 131 | W6 | `gram-schmidt` | composite | `linalg` | S | 1.4 L50 |
+| 132 | W6 | `eigen-finder` | composite | `linalg` | M | 1.4 L60 |
+| 133 | W6 | `linear-dynamics` | composite | `linalg` | M | 1.4 L65 |
+| 134 | W6 | `svd-stepper` | composite | `linalg` | M | 1.4 L72 |
+| 135 | W6 | `pca-lab` | composite | `linalg` | M | 1.4 L74 |
+| 136 | W6 | `low-rank-approx` | composite | `linalg` | S | 1.4 L86 |
+| 137 | W6 | `condition-number` | composite | `linalg` | M | 1.4 L88 |
+| 138 | W7 | `puzzle-workbench` | composite | `probability` | L | 1.5 L1 (through the weekly problems) |
+| 139 | W7 | `indicator-board` | composite | `probability` | M | 1.5 L10 |
+| 140 | W7 | `prob-square` | composite | `probability` | M | 1.5 L13 |
+| 141 | W7 | `trial-strip` | composite | `probability` | M | 1.5 L16 |
+| 142 | W7 | `first-step-solver` | composite | `probability` | M | 1.5 L16 |
+| 143 | W7 | `odds-ledger` | composite | `probability` | M | 1.5 L17 |
+| 144 | W7 | `icon-array` | composite | `probability` | M | 1.5 L27 |
+| 145 | W7 | `contingency-table` | composite | `probability` | M | 1.5 L28 |
+| 146 | W7 | `game-lab` | composite | `probability` | L | 1.5 L39 |
+| 147 | W7 | `rv-mapper` | composite | `probability` | M | 1.5 L45 |
+| 148 | W7 | `dist-explorer` | composite | `probability` | L | 1.5 L47 (A1 L48 on the researcher and ML research tracks; it stays in W7, since every P0 wave is built before any content) |
+| 149 | W7 | `galton-board` | composite | `probability` | M | 1.5 L48 |
+| 150 | W7 | `convolver` | composite | `probability` | M | 1.5 L68 |
+| 151 | W7 | `sampling-lab` | composite | `probability` | L | 1.5 L69 |
+| 152 | W7 | `generating-function` | composite | `probability` | M | 1.5 L78 |
+| 153 | W7 | `order-statistics` | composite | `probability` | M | 1.5 L83 |
+| 154 | W7 | `joint-density` | composite | `probability` | L | 1.5 L88 |
+| 155 | W7 | `geo-prob` | composite | `probability` | M | 1.5 L92 |
+| 156 | W7 | `covariance-lab` | composite | `probability` | M | 1.5 L94 |
+| 157 | W7 | `gaussian-2d` | composite | `probability` | M | 1.5 L96 |
+| 158 | W7 | `cond-expectation` | composite | `probability` | M | 1.5 L106 |
+| 159 | W7 | `filtration-tree` | composite | `probability` | M | 1.5 L108 |
+| 160 | W7 | `markov-chain` | composite | `probability` | L | 1.5 L123 |
+| 161 | W7 | `lattice-walk` | composite | `probability` | M | 1.5 L135 |
+| 162 | W7 | `kelly-lab` | composite | `probability` | M | 1.5 L154 (through `game-lab`) |
 
 | Wave | Content it serves | Widgets |
 |---|---|---|
@@ -4718,6 +5122,7 @@ First use is the earliest lesson row naming the widget (section 8), placed on on
 | W3 | 0.3 Precalculus, GCSE geometry and statistics | 26 |
 | W4 | 1.1 Python and 1.2 Tools | 31 |
 | W5 | 1.3 Calculus | 26 |
+| W5d | A1 Real analysis (researcher and ML research tracks; added 7 October 2026; `docs/PLAN.md` stage 51a) | 6 |
 | W6 | 1.4 Linear algebra | 14 |
 | W7 | 1.5 Probability and the weekly problems | 25 |
 
@@ -4734,12 +5139,18 @@ Three P0 entries are needed before the curriculum names them, because other widg
 
 **P2**, by the item of first use:
 
-- **2.1** (34): `span-track`, `fit-explorer`, `error-curves`, `classifier-plane`, `bias-variance-lab`, `loss-lab`, `logistic-lab`, `cv-lab`, `leakage-detective`, `tuning-lab`, `regularisation-path`, `feature-builder`, `basis-lab`, `penalty-geometry`, `threshold-lab`, `calibration-lab`, `tree-builder`, `split-scorer`, `ensemble-lab`, `boosting-lab`, `importance-lab`, `nn-playground`, `relu-composer`, `sequence-filter`, `ml-workbench`, `time-cv-lab`, `labelling-lab`, `portfolio-sort`, `bar-sampler`, `fracdiff-lab`, `signal-lab`, `cluster-lab`, `overfit-lab`, `results-note`.
-- **2.2** (5): `series-lab`, `arma-lab`, `garch-lab`, `coint-lab`, `sde-stepper`.
-- **2.3** (13): `backtest-lab`, `sharpe-lab`, `bet-lab`, `paper-trader`, `mock-interview`, `order-lifecycle`, `pairs-lab`, `vol-surface`, `pricer-compare`, `feed-sim`, `candle-builder`, `latency-lab`, `schema-builder`.
+- **2.0a** (9; added 7 October 2026): `backward-error`, `convergence-plot`, `interp-lab`, `heat-diffusion` (from 3.2), `fd-grid`, `pricer-compare` (from 2.3), `rng-lab`, `mc-variance`, `sde-stepper` (from 2.2).
+- **2.0b** (8; added 7 October 2026): `feasible-region`, `dual-pair`, `convex-set`, `classifier-plane` (from 2.1), `frontier-lab`, `loss-lab` (from 2.1), `regularisation-path` (from 2.1), `penalty-geometry` (from 2.1). `classifier-plane` is size L and 2.0b lesson 21 needs only its scatter and boundary marks, so its first build may ship the linear models and add the rest for 2.1.
+- **2.1** (30; draft 1: 34): `span-track`, `fit-explorer`, `error-curves`, `bias-variance-lab`, `logistic-lab`, `cv-lab`, `leakage-detective`, `tuning-lab`, `feature-builder`, `basis-lab`, `threshold-lab`, `calibration-lab`, `tree-builder`, `split-scorer`, `ensemble-lab`, `boosting-lab`, `importance-lab`, `nn-playground`, `relu-composer`, `sequence-filter`, `ml-workbench`, `time-cv-lab`, `labelling-lab`, `portfolio-sort`, `bar-sampler`, `fracdiff-lab`, `signal-lab`, `cluster-lab`, `overfit-lab`, `results-note`.
+- **2.1b** (7; added 7 October 2026): `training-curves`, `autodiff-tape`, `lm-sampler`, `conv-lab`, `attention-lab`, `tokeniser-lab`, and the preset `scaling-plot` after its base `convergence-plot`.
+- **2.2** (4; draft 1: 5): `series-lab`, `arma-lab`, `garch-lab`, `coint-lab`.
+- **2.2c** (5; added 7 October 2026): `sharpe-lab`, `backtest-lab` and `paper-trader` (from 2.3), `bias-audit`, `mock-interview` (from 2.3).
+- **2.3** (8; draft 1: 13): `bet-lab`, `order-lifecycle`, `pairs-lab`, `vol-surface`, `feed-sim`, `candle-builder`, `latency-lab`, `schema-builder`.
 - **2.4** (2): `contest-arena`, `number-theory-lab`.
 - **3.1** (1): `replication-workbench`.
-- **3.2** (6): `measure-change`, `quadratic-variation`, `heat-diffusion`, `reflection-principle`, `ito-sum`, `ito-lemma-lab`.
+- **3.2** (5; draft 1: 6): `measure-change`, `quadratic-variation`, `reflection-principle`, `ito-sum`, `ito-lemma-lab`.
+
+The P2 lines hold 80 ids, the P2 total of section 0.2. The services of section 3 that the 2.0a, 2.0b, 2.1b and 2.2c waves need (`numerics`, `optim`, the tensor autodiff in `ml-core`, `research`) are built at the start of the wave that first uses them.
 - **3.3** (1): `mm-game`.
 
 ### 7.5 Catalogue waves mapped
@@ -4752,6 +5163,7 @@ Three P0 entries are needed before the curriculum names them, because other widg
 | programming | W-A1 to W-A3, W-B1, W-B2, W-C, W-D | W-A1 to W-A3 are W4; W-B1 and W-B2 are the 1.8 P1 wave; W-C the 1.9 wave; W-D the 2.4 wave |
 | finance | D4, G1 to G3, H, J | D4 is W7; G1 to G3 are the 1.7 P1 wave in that order; H is 2.3; J is 3.3 |
 | ML | G0 to G5, H1, H2, E | E (`viva`) is the 1.6 wave; G0 to G5 are 2.1; H1 and H2 are 3.1 |
+| Curriculum files of the adopted items (7 October 2026) | Their section 8 | A1's six are W5d; 2.0a's, 2.0b's, 2.1b's and 2.2c's are the P2 lines of 7.4 |
 
 **Gate per widget**, the union of the catalogues' gates and arch E4: the schema validates every fixture; the generic contract suite passes (arch 8.1.1); pointer, keyboard and tap-then-tap fixture paths reach their expected answers; axe is clean in every state; reduced motion and `test` motion are checked; `describe` is snapshot-tested; P95 frame time is within budget at 4x throttling; the scope is empty after unmount; generators pass CI; parity tests pass for every JavaScript core the widget relies on (programming 12; prob-stats decision 6; finance decision 16; ML decision 1).
 
@@ -4763,13 +5175,15 @@ Three P0 entries are needed before the curriculum names them, because other widg
 
 A script read every Markdown table in the eleven curriculum files whose header has a Widgets column, split cells on unescaped pipes, assigned each row to its curriculum item by its section, and resolved every backticked id in the Widgets cell through the name map of section 2 [measured]. It found 2,148 lesson rows (876 in P0 items) and 48 sample-lesson screen rows. Every id it met is a library id, an alias (section 2), or one of three things it ignores: a local widget name inside a sample lesson (`combo`, `mm`, `heap`, `code`, `grid`), a package or runtime tag (`web`, `numpy`, `pandas`, `statsmodels`, and `micropython-ok`, void under decision 13), or an editor name (`nano`). Rows per item: 0.1 42, 0.2 111, 0.3 146, 0.4 31, 0.5 16, 1.1 107, 1.2 32, 1.3 137, 1.4 98, 1.5 156, 1.6 80, 1.7 80, 1.8 150, 1.9 88, 2.1 152, 2.2 43, 2.3 229, 2.4 84, 3.1 108, 3.2 104, 3.3 154.
 
+**Rerun on 7 October 2026** over the fifteen curriculum files [measured]: 321 new lesson rows (A1 48, 1.5's levels Z4b and Z4c 12, 2.0a 91, 2.0b 58, 2.1b 80, 2.2c 32), 60 of them in P0 items, so 2,469 rows in the files and 936 in P0 items. Section 8.2 shows 2.3 after 2.2c's move (`docs/CURRICULUM.md` decision 10): the 24 rows 2.2c moves or retires are taken out of 2.3's counts, and the 17 that move are counted under 2.2c, so the table covers 2,445 rows. Two tokens in the new Widgets cells are not widget ids and are ignored: `leap`, the derive screen's block (A1 lessons 12, 36, 46 and 47), and `im2col`, a `conv-lab` view (2.1b lesson 56). Every other id the new rows name is a library id or an alias, and every widget the new P0 rows (A1 and 1.5 lessons 157 to 168) name is P0.
+
 ### 8.2 Which curriculum items each widget serves
 
-Numbers are lesson rows naming the widget in that item; "first" is the first lesson that names it. Aliases are folded into their final id.
+Numbers are lesson rows naming the widget in that item; "first" is the first lesson that names it on the timeline of section 7.3. Aliases are folded into their final id. Rows show 2.3 after 2.2c's move (section 8.1) and the adopted items A1, 2.0a, 2.0b, 2.1b and 2.2c in path order.
 
 | Widget | Tier | P | First | Items served (lesson rows) |
 |---|---|---|---|---|
-| `accumulator` | composite | P0 | 1.3 L56 | 1.3 (10), 1.5 (2), 3.3 (1) |
+| `accumulator` | composite | P0 | 1.3 L56 | 1.3 (10), A1 (1), 1.5 (2), 3.3 (1) |
 | `acf-lab` | composite | P1 | 1.6 L56 | 1.6 (2), 2.2 (9) |
 | `adverse-selection` | composite | P1 | 1.7 L43 | 1.7 (1) |
 | `algebra-tiles` | composite | P0 | 0.1 L7 | 0.1 (1), 0.2 (7) |
@@ -4777,8 +5191,11 @@ Numbers are lesson rows naming the widget in that item; "first" is the first les
 | `area-model` | composite | P0 | 0.1 L3 | 0.1 (7), 0.2 (12) |
 | `arma-lab` | composite | P2 | 2.2 L11 | 2.2 (7) |
 | `array-strip` | primitive | P0 | 1.1 L7 | 1.1 (8), 1.8 (10), 2.3 (1), 2.4 (6) |
+| `attention-lab` | composite | P2 | 2.1b L64 | 2.1b (8) |
 | `auction-lab` | composite | P1 | 1.7 L35 | 1.7 (1) |
-| `backtest-lab` | composite | P2 | 2.3 L4 | 2.3 (39) |
+| `autodiff-tape` | composite | P2 | 2.1b L17 | 2.1b (15) |
+| `backtest-lab` | composite | P2 | 2.2c L4 | 2.2c (8), 2.3 (34) |
+| `backward-error` | composite | P2 | 2.0a L7 | 2.0a (3) |
 | `balance-scale` | composite | P0 | 0.2 L18 | 0.2 (3) |
 | `bar-model` | composite | P0 | 0.1 L4 | 0.1 (8), 0.2 (3) |
 | `bar-sampler` | composite | P2 | 2.1 L134 | 2.1 (1), 2.3 (1) |
@@ -4786,99 +5203,109 @@ Numbers are lesson rows naming the widget in that item; "first" is the first les
 | `basis-lab` | composite | P2 | 2.1 L40 | 2.1 (5) |
 | `bench-lab` | composite | P0 | 1.1 L28 | 1.1 (7), 1.8 (1), 1.9 (12), 2.3 (6), 2.4 (1), 3.3 (2) |
 | `bet-lab` | composite | P2 | 2.3 L11 | 2.3 (1), 3.3 (9) |
+| `bias-audit` | composite | P2 | 2.2c L12 | 2.2c (2) |
 | `bias-variance-lab` | composite | P2 | 2.1 L6 | 2.1 (4) |
 | `binary-search-lab` | preset | P1 | 1.8 L46 | 1.8 (8), 1.9 (1), 2.4 (3) |
 | `binomial-expander` | composite | P0 | 0.3 L108 | 0.3 (3), 1.5 (1) |
-| `binomial-tree` | composite | P1 | 1.7 L64 | 1.7 (8), 1.9 (2), 2.3 (3), 3.2 (16), 3.3 (2) |
+| `binomial-tree` | composite | P1 | 1.7 L64 | 1.7 (8), 1.9 (2), 2.0a (3), 2.3 (3), 3.2 (16), 3.3 (2) |
 | `bit-lab` | composite | P1 | 1.8 L78 | 1.8 (5), 1.9 (3), 2.4 (9) |
 | `bond-lab` | composite | P1 | 1.7 L7 | 1.7 (4) |
 | `boosting-lab` | composite | P2 | 2.1 L96 | 2.1 (5) |
+| `bound-lab` | composite | P0 | A1 L1 | A1 (7) |
 | `bounds-explorer` | preset | P0 | 0.1 L39 | 0.1 (1) |
-| `broadcast-lab` | composite | P0 | 1.1 L62 | 1.1 (2) |
-| `bs-explorer` | composite | P1 | 1.7 L72 | 1.7 (4), 2.3 (1), 3.2 (8), 3.3 (4) |
-| `calibration-lab` | composite | P2 | 2.1 L76 | 2.1 (6), 3.3 (3) |
+| `broadcast-lab` | composite | P0 | 1.1 L62 | 1.1 (2), 2.1b (1) |
+| `bs-explorer` | composite | P1 | 1.7 L72 | 1.7 (4), 2.0a (2), 2.3 (1), 3.2 (8), 3.3 (4) |
+| `calibration-lab` | composite | P2 | 2.1 L76 | 2.1 (6), 2.1b (1), 3.3 (3) |
 | `candle-builder` | composite | P2 | 2.3 L192 | 2.3 (5) |
-| `card-sort` | input | P0 | 0.2 L2 | 0.2 (12), 0.3 (9), 0.4 (1), 1.3 (4), 1.5 (2), 1.6 (4), 1.7 (4), 2.1 (4), 2.2 (2), 2.3 (24), 3.1 (14), 3.2 (1), 3.3 (9) |
+| `card-sort` | input | P0 | 0.2 L2 | 0.2 (12), 0.3 (9), 0.4 (1), 1.3 (4), A1 (6), 1.5 (3), 1.6 (4), 1.7 (4), 2.0a (2), 2.0b (5), 2.1 (4), 2.1b (7), 2.2 (2), 2.2c (3), 2.3 (22), 3.1 (14), 3.2 (1), 3.3 (9) |
+| `cardinality-lab` | composite | P0 | A1 L7 | A1 (5) |
 | `carry-arb` | composite | P1 | 1.7 L47 | 1.7 (3) |
 | `cashflow-timeline` | primitive | P1 | 1.7 L1 | 1.7 (6) |
 | `cell-grid` | primitive | P0 | 1.1 L14 | 1.1 (4), 1.8 (10), 2.1 (1), 2.4 (3) |
 | `chance-object` | primitive | P0 | 1.5 L6 | 1.5 (3), 3.2 (1), 3.3 (2) |
-| `choice` (also `choice-cards`) | input | P0 | 0.1 L1 | 0.1 (5), 0.3 (5), 0.4 (2), 1.1 (9), 1.3 (29), 1.4 (7), 1.5 (2), 1.8 (7), 2.4 (1) |
+| `choice` (also `choice-cards`) | input | P0 | 0.1 L1 | 0.1 (5), 0.3 (5), 0.4 (2), 1.1 (9), 1.3 (29), A1 (10), 1.4 (7), 1.5 (2), 1.8 (7), 2.0a (22), 2.0b (23), 2.1b (1), 2.4 (1) |
 | `ci-ladder` | composite | P1 | 1.6 L21 | 1.6 (8) |
 | `circle-to-wave` | composite | P0 | 0.3 L71 | 0.3 (5) |
-| `classifier-plane` | composite | P2 | 2.1 L3 | 2.1 (10) |
-| `cluster-lab` | composite | P2 | 2.1 L137 | 2.1 (6), 2.3 (1) |
+| `classifier-plane` | composite | P2 | 2.0b L21 | 2.0b (3), 2.1 (10) |
+| `cluster-lab` | composite | P2 | 2.1 L137 | 2.1 (6), 2.2c (1) |
 | `code-annotator` | composite | P0 | 1.1 L48 | 1.1 (4), 1.9 (3) |
 | `code-blanks` | composite | P0 | 1.1 L8 | 1.1 (2), 1.8 (3) |
-| `code-cell` (also `code-editor`) | composite | P0 | 0.1 L42 | 0.1 (1), 0.2 (2), 0.3 (1), 0.4 (10), 1.1 (31), 1.2 (9), 1.3 (5), 1.4 (12), 1.5 (3), 1.6 (7), 1.7 (2), 1.8 (7), 1.9 (27), 2.1 (2), 2.2 (7), 2.3 (31), 2.4 (6), 3.1 (6), 3.2 (5), 3.3 (5) |
-| `code-review` | composite | P0 | 1.2 L17 | 1.2 (1), 1.9 (3) |
+| `code-cell` (also `code-editor`) | composite | P0 | 0.1 L42 | 0.1 (1), 0.2 (2), 0.3 (1), 0.4 (10), 1.1 (31), 1.2 (9), 1.3 (5), 1.4 (12), 1.5 (3), 1.6 (7), 1.7 (2), 1.8 (7), 1.9 (27), 2.1 (2), 2.2 (7), 2.3 (30), 2.4 (6), 3.1 (6), 3.2 (5), 3.3 (5) |
+| `code-review` | composite | P0 | 1.2 L17 | 1.2 (1), 1.9 (3), 2.2c (1) |
 | `code-surface` | primitive | P0 | 2.3 L71 | 2.3 (1), 3.3 (5) |
-| `code-tracer` | composite | P0 | 0.4 L24 | 0.4 (5), 1.1 (25), 1.8 (4), 1.9 (17) |
+| `code-tracer` | composite | P0 | 0.4 L24 | 0.4 (5), 1.1 (25), 1.8 (4), 1.9 (17), 2.1b (1) |
 | `coint-lab` | composite | P2 | 2.2 L35 | 2.2 (7), 3.1 (2) |
 | `compile-pipeline` | composite | P1 | 1.9 L1 | 1.9 (7) |
 | `complex-plane` | composite | P0 | 0.2 L85 | 0.2 (3), 0.3 (5), 1.3 (2), 1.4 (2), 2.2 (2) |
 | `complexity-lab` | composite | P0 | 1.1 L8 | 1.1 (3), 1.8 (15), 1.9 (1), 2.4 (3) |
 | `compounding-lab` | composite | P1 | 1.7 L1 | 1.7 (3), 3.3 (1) |
-| `cond-expectation` | composite | P0 | 1.5 L106 | 1.5 (6) |
-| `condition-number` | composite | P0 | 1.4 L88 | 1.4 (1) |
+| `cond-expectation` | composite | P0 | 1.5 L106 | 1.5 (6), 2.0a (1) |
+| `condition-number` | composite | P0 | 1.4 L88 | 1.4 (1), 2.0a (3) |
 | `contest-arena` | composite | P2 | 2.4 L1 | 2.4 (3) |
-| `contingency-table` | composite | P0 | 1.5 L28 | 1.5 (7), 1.6 (1), 2.1 (4) |
-| `convexity-chord` | composite | P0 | 1.3 L50 | 1.3 (3), 1.5 (1), 1.7 (2), 3.3 (1) |
+| `contingency-table` | composite | P0 | 1.5 L28 | 1.5 (7), 1.6 (1), 2.1 (4), 2.1b (2), 2.2c (2) |
+| `conv-lab` | composite | P2 | 2.1b L51 | 2.1b (10) |
+| `convergence-plot` | composite | P2 | 2.0a L11 | 2.0a (20), 2.0b (4) |
+| `convex-set` | composite | P2 | 2.0b L18 | 2.0b (6) |
+| `convexity-chord` | composite | P0 | 1.3 L50 | 1.3 (3), A1 (1), 1.5 (1), 1.7 (2), 2.0b (2), 3.3 (1) |
 | `convolver` | composite | P0 | 1.5 L68 | 1.5 (5) |
 | `counterexample-lab` | composite | P1 | 1.8 L21 | 1.8 (7), 2.4 (4) |
 | `counting-slots` | composite | P0 | 0.1 L13 | 0.1 (1), 0.3 (8), 1.1 (1), 1.5 (12), 2.4 (1), 3.3 (4) |
-| `covariance-lab` | composite | P0 | 1.5 L94 | 1.5 (5), 2.3 (6), 3.2 (3), 3.3 (5) |
+| `covariance-lab` | composite | P0 | 1.5 L94 | 1.5 (6), 2.0a (1), 2.3 (6), 3.2 (3), 3.3 (5) |
 | `csv-inspector` | composite | P0 | 1.1 L40 | 1.1 (3) |
 | `cv-lab` | composite | P2 | 2.1 L23 | 2.1 (8) |
 | `dataframe-lab` | composite | P0 | 1.1 L76 | 1.1 (11) |
-| `dependency-graph` | composite | P0 | 1.3 L112 | 1.3 (3), 2.1 (1) |
-| `derivation-steps` (also `derivation`) | input | P0 | 0.1 L1 | 0.1 (7), 0.2 (8), 0.3 (32), 1.1 (6), 1.3 (39), 1.4 (25), 1.5 (15), 1.6 (21), 1.7 (6), 1.8 (9), 2.1 (13), 2.2 (6), 2.3 (2), 3.1 (6), 3.2 (37), 3.3 (5) |
-| `derivative-tracer` | composite | P0 | 1.3 L10 | 1.3 (12) |
-| `descent-lab` | composite | P0 | 1.3 L53 | 1.3 (2), 1.4 (1), 2.1 (5) |
+| `dependency-graph` | composite | P0 | 1.3 L112 | 1.3 (3), 2.1 (1), 2.1b (2) |
+| `derivation-steps` (also `derivation`) | input | P0 | 0.1 L1 | 0.1 (7), 0.2 (8), 0.3 (32), 1.1 (6), 1.3 (39), A1 (19), 1.4 (25), 1.5 (18), 1.6 (21), 1.7 (6), 1.8 (9), 2.0a (10), 2.0b (6), 2.1 (13), 2.1b (6), 2.2 (6), 2.2c (1), 2.3 (2), 3.1 (6), 3.2 (37), 3.3 (5) |
+| `derivative-tracer` | composite | P0 | 1.3 L10 | 1.3 (12), A1 (2) |
+| `descent-lab` | composite | P0 | 1.3 L53 | 1.3 (2), 1.4 (1), 2.0a (1), 2.0b (13), 2.1 (5), 2.1b (3) |
 | `determinant-lab` | composite | P0 | 0.3 L91 | 0.3 (1), 1.3 (1), 1.4 (5) |
 | `diagnostic-reader` | composite | P0 | 0.4 L23 | 0.4 (2), 1.1 (9), 1.2 (2), 1.9 (25), 2.4 (2) |
 | `diff-view` | primitive | P0 | 1.1 L48 | 1.1 (1), 1.2 (2) |
-| `dist-explorer` | composite | P0 | 1.5 L47 | 1.5 (28), 1.6 (9), 1.7 (2), 2.1 (3), 2.3 (4), 3.1 (1), 3.2 (4), 3.3 (2) |
+| `dist-explorer` | composite | P0 | A1 L48 | A1 (1), 1.5 (28), 1.6 (9), 1.7 (2), 2.0a (5), 2.1 (3), 2.1b (4), 2.2c (2), 2.3 (4), 3.1 (1), 3.2 (4), 3.3 (2) |
 | `dot-plot-stats` | composite | P0 | 0.2 L75 | 0.2 (2), 0.3 (2), 1.6 (1) |
 | `double-number-line` | composite | P0 | 0.1 L24 | 0.1 (4), 0.2 (2), 0.3 (2) |
 | `dp-table` | preset | P1 | 1.8 L45 | 1.8 (18), 2.4 (10) |
-| `drag-point` (also `draggable-point`) | primitive | P0 | 0.2 L36 | 0.2 (1), 0.3 (1), 1.3 (3) |
-| `drawdown-lab` | composite | P0 | 1.1 L97 | 1.1 (3), 1.7 (1), 2.3 (8) |
+| `drag-point` (also `draggable-point`) | primitive | P0 | 0.2 L36 | 0.2 (1), 0.3 (1), 1.3 (3), A1 (1), 2.0a (1), 2.0b (3) |
+| `drawdown-lab` | composite | P0 | 1.1 L97 | 1.1 (3), 1.7 (1), 2.2c (1), 2.3 (7) |
+| `dual-pair` | composite | P2 | 2.0b L12 | 2.0b (11) |
 | `duration-lab` | composite | P1 | 1.7 L13 | 1.7 (3) |
 | `dynamic-array` | preset | P1 | 1.8 L4 | 1.8 (2), 1.9 (2) |
-| `eigen-finder` | composite | P0 | 1.4 L60 | 1.4 (12), 1.5 (2), 2.3 (1), 3.3 (1) |
-| `elimination-lab` | composite | P0 | 1.4 L7 | 1.4 (20) |
-| `ensemble-lab` | composite | P2 | 2.1 L92 | 2.1 (4) |
-| `epsilon-delta` | composite | P0 | 1.3 L4 | 1.3 (3) |
+| `eigen-finder` | composite | P0 | 1.4 L60 | 1.4 (12), 1.5 (2), 2.0a (2), 2.3 (1), 3.3 (1) |
+| `elimination-lab` | composite | P0 | 1.4 L7 | 1.4 (20), 2.0a (2), 2.0b (1) |
+| `ensemble-lab` | composite | P2 | 2.1 L92 | 2.1 (4), 2.1b (1) |
+| `epsilon-delta` | composite | P0 | 1.3 L4 | 1.3 (3), A1 (4) |
 | `equation-stack` | composite | P0 | 0.2 L49 | 0.2 (7), 0.3 (1) |
 | `equation-workbench` | composite | P0 | 0.1 L35 | 0.1 (1), 0.2 (28), 0.3 (11) |
-| `error-curves` | composite | P2 | 2.1 L1 | 2.1 (11) |
+| `error-curves` | composite | P2 | 2.1 L1 | 2.1 (11), 2.1b (1) |
 | `estimator-compare` | preset | P1 | 1.6 L3 | 1.6 (8) |
-| `execution-lab` | composite | P1 | 1.7 L44 | 1.7 (1), 2.3 (2) |
-| `expression-input` (also `expression-entry`) | input | P0 | 0.1 L12 | 0.1 (4), 0.2 (17), 0.3 (10), 1.3 (42), 1.8 (4) |
+| `execution-lab` | composite | P1 | 1.7 L44 | 1.7 (1), 2.0b (1), 2.3 (2) |
+| `expression-input` (also `expression-entry`) | input | P0 | 0.1 L12 | 0.1 (4), 0.2 (17), 0.3 (10), 1.3 (42), 1.8 (4), 2.0a (3), 2.0b (3) |
 | `expression-tree` | composite | P0 | 0.1 L9 | 0.1 (3), 0.2 (4), 0.4 (1), 1.1 (1) |
 | `factor-model-lab` | composite | P1 | 1.7 L28 | 1.7 (1), 2.3 (5), 3.1 (17) |
 | `factor-tree` | composite | P0 | 0.1 L12 | 0.1 (5), 2.4 (1) |
+| `fd-grid` | composite | P2 | 2.0a L53 | 2.0a (11) |
+| `feasible-region` | composite | P2 | 2.0b L1 | 2.0b (11) |
 | `feature-builder` | composite | P2 | 2.1 L35 | 2.1 (6) |
 | `feed-sim` | composite | P2 | 2.3 L180 | 2.3 (6) |
 | `fermi-estimator` | composite | P0 | 0.1 L40 | 0.1 (1), 0.5 (1), 3.3 (3) |
 | `file-tree` | composite | P0 | 0.4 L9 | 0.4 (8), 1.1 (2), 1.2 (1) |
 | `filtration-tree` | composite | P0 | 1.5 L108 | 1.5 (2), 3.2 (15) |
-| `first-step-solver` | composite | P0 | 1.5 L16 | 1.5 (10), 2.4 (1), 3.2 (1), 3.3 (3) |
-| `fit-explorer` | composite | P2 | 2.1 L1 | 2.1 (10) |
-| `float-inspector` | composite | P0 | 1.1 L4 | 1.1 (3), 1.2 (1), 1.9 (4) |
+| `first-step-solver` | composite | P0 | 1.5 L16 | 1.5 (11), 2.4 (1), 3.2 (1), 3.3 (3) |
+| `fit-explorer` | composite | P2 | 2.1 L1 | 2.1 (10), 2.1b (1) |
+| `float-inspector` | composite | P0 | 1.1 L4 | 1.1 (3), 1.2 (1), 1.9 (4), 2.0a (11), 2.1b (3) |
 | `forecast-lab` | composite | P1 | 1.6 L64 | 1.6 (1), 2.2 (7) |
 | `format-lab` | composite | P0 | 1.1 L9 | 1.1 (1), 1.9 (1) |
 | `four-subspaces` | composite | P0 | 1.4 L24 | 1.4 (11) |
 | `fracdiff-lab` | composite | P2 | 2.1 L135 | 2.1 (1) |
-| `free-response` | input | P0 | 0.1 L41 | 0.1 (1), 0.2 (1), 0.3 (5), 1.3 (5), 1.6 (1), 1.7 (2), 1.8 (1), 2.1 (1), 2.2 (1), 2.3 (11), 3.1 (6), 3.3 (5) |
+| `free-response` | input | P0 | 0.1 L41 | 0.1 (1), 0.2 (1), 0.3 (5), 1.3 (5), 1.6 (1), 1.7 (2), 1.8 (1), 2.1 (1), 2.2 (1), 2.2c (3), 2.3 (8), 3.1 (6), 3.3 (5) |
+| `frontier-lab` | composite | P2 | 2.0b L28 | 2.0b (7) |
 | `function-machine` | composite | P0 | 0.2 L1 | 0.2 (11), 0.3 (3), 0.4 (1) |
-| `function-mapping` | composite | P0 | 1.3 L15 | 1.3 (6), 1.5 (2) |
+| `function-mapping` | composite | P0 | 1.3 L15 | 1.3 (6), 1.5 (2), 2.0a (1) |
 | `futures-mtm` | composite | P1 | 1.7 L50 | 1.7 (2), 3.2 (2) |
 | `galton-board` | composite | P0 | 1.5 L48 | 1.5 (2) |
 | `game-lab` | composite | P0 | 1.5 L39 | 1.5 (8), 2.1 (1), 2.4 (2), 3.1 (1), 3.3 (2) |
 | `garch-lab` | composite | P2 | 2.2 L23 | 2.2 (9) |
-| `gaussian-2d` | composite | P0 | 1.5 L96 | 1.5 (4), 1.6 (1), 3.2 (1), 3.3 (2) |
+| `gaussian-2d` | composite | P0 | 1.5 L96 | 1.5 (5), 1.6 (1), 3.2 (1), 3.3 (2) |
 | `gbm-lab` | preset | P1 | 1.7 L23 | 1.7 (2), 3.2 (8) |
 | `generating-function` | composite | P0 | 1.5 L78 | 1.5 (4) |
 | `geo-prob` | composite | P0 | 1.5 L92 | 1.5 (6), 3.3 (3) |
@@ -4888,69 +5315,73 @@ Numbers are lesson rows naming the widget in that item; "first" is the first les
 | `gram-schmidt` | composite | P0 | 1.4 L50 | 1.4 (2) |
 | `graph-explorer` | composite | P0 | 0.1 L26 | 0.1 (3), 0.2 (57), 0.3 (36), 1.5 (1) |
 | `graph-search` | preset | P1 | 1.8 L91 | 1.8 (12), 2.4 (7) |
-| `greeks-lab` | composite | P1 | 1.7 L75 | 1.7 (3), 2.3 (5), 3.2 (1), 3.3 (1) |
+| `greeks-lab` | composite | P1 | 1.7 L75 | 1.7 (3), 2.0a (2), 2.3 (5), 3.2 (1), 3.3 (1) |
 | `groupby-lab` | composite | P0 | 1.1 L86 | 1.1 (2), 1.2 (2) |
 | `growth-rectangle` | composite | P0 | 1.3 L11 | 1.3 (2) |
 | `hash-table` | preset | P0 | 1.1 L25 | 1.1 (3), 1.8 (15), 1.9 (1), 2.4 (5) |
 | `heap-lab` | preset | P1 | 1.8 L23 | 1.8 (11), 1.9 (1) |
-| `heat-diffusion` | composite | P2 | 3.2 L45 | 3.2 (4) |
+| `heat-diffusion` | composite | P2 | 2.0a L49 | 2.0a (3), 3.2 (4) |
 | `hedge-lab` | composite | P1 | 1.7 L52 | 1.7 (1) |
 | `hedging-sim` | composite | P1 | 1.7 L78 | 1.7 (1), 2.3 (1), 3.2 (3), 3.3 (1) |
-| `icon-array` | composite | P0 | 1.5 L27 | 1.5 (5), 1.6 (1), 2.1 (1) |
+| `icon-array` | composite | P0 | 1.5 L27 | 1.5 (5), 1.6 (1), 2.1 (1), 2.2c (1) |
 | `importance-lab` | composite | P2 | 2.1 L102 | 2.1 (6) |
 | `indicator-board` | composite | P0 | 1.5 L10 | 1.5 (14), 2.4 (1), 3.3 (4) |
-| `induction-chain` | composite | P0 | 0.3 L129 | 0.3 (4) |
+| `induction-chain` | composite | P0 | 0.3 L129 | 0.3 (4), A1 (1) |
 | `inequality-regions` | preset | P0 | 0.2 L33 | 0.2 (1) |
 | `injection-lab` | composite | P0 | 1.2 L32 | 1.2 (1) |
+| `interp-lab` | composite | P2 | 2.0a L20 | 2.0a (5) |
 | `interval-sweep` | composite | P1 | 1.8 L52 | 1.8 (6), 2.4 (1) |
-| `iteration-cobweb` | composite | P0 | 0.2 L107 | 0.2 (1), 0.3 (1), 1.3 (1), 1.5 (1), 3.3 (1) |
+| `iteration-cobweb` | composite | P0 | 0.2 L107 | 0.2 (1), 0.3 (1), 1.3 (1), A1 (1), 1.5 (1), 3.3 (1) |
 | `ito-lemma-lab` | composite | P2 | 3.2 L57 | 3.2 (6), 3.3 (3) |
 | `ito-sum` | composite | P2 | 3.2 L52 | 3.2 (6) |
-| `iv-solver` | composite | P1 | 1.7 L79 | 1.7 (2), 2.3 (4), 3.2 (2) |
+| `iv-solver` | composite | P1 | 1.7 L79 | 1.7 (2), 2.0a (1), 2.3 (4), 3.2 (2) |
 | `join-lab` | composite | P0 | 1.1 L87 | 1.1 (3), 1.2 (1) |
 | `joint-density` | composite | P0 | 1.5 L88 | 1.5 (7) |
 | `json-explorer` | composite | P0 | 1.1 L41 | 1.1 (1), 2.3 (5) |
 | `kelly-lab` | composite | P0 | 1.5 L154 (through `game-lab`) | 2.3 (1), 3.3 (6) |
-| `labelling-lab` | composite | P2 | 2.1 L119 | 2.1 (6), 2.3 (1) |
-| `lagrange-explorer` | composite | P0 | 1.3 L124 | 1.3 (5), 1.4 (1), 1.7 (1), 2.3 (1), 3.2 (1) |
+| `labelling-lab` | composite | P2 | 2.1 L119 | 2.1 (6) |
+| `lagrange-explorer` | composite | P0 | 1.3 L124 | 1.3 (5), 1.4 (1), 1.7 (1), 2.0b (2), 2.3 (1), 3.2 (1) |
 | `latency-lab` | composite | P2 | 2.3 L197 | 2.3 (6), 3.3 (1) |
-| `lattice-walk` | composite | P0 | 1.5 L135 | 1.5 (6), 3.2 (1) |
-| `leakage-detective` | composite | P2 | 2.1 L28 | 2.1 (6), 3.1 (4) |
+| `lattice-walk` | composite | P0 | 1.5 L135 | 1.5 (7), 3.2 (1) |
+| `leakage-detective` | composite | P2 | 2.1 L28 | 2.1 (6), 2.2c (1), 3.1 (4) |
 | `least-squares-fit` | composite | P0 | 1.3 L122 | 1.3 (1), 1.4 (8), 1.5 (1), 1.6 (3) |
-| `likelihood-lab` | composite | P1 | 1.6 L11 | 1.6 (12) |
-| `limit-explorer` | composite | P0 | 0.3 L142 | 0.3 (1), 1.3 (6) |
-| `linear-dynamics` | composite | P0 | 1.4 L65 | 1.4 (7), 1.5 (1), 2.2 (1) |
+| `likelihood-lab` | composite | P1 | 1.6 L11 | 1.6 (12), 2.0b (1) |
+| `limit-explorer` | composite | P0 | 0.3 L142 | 0.3 (1), 1.3 (6), A1 (1) |
+| `line-topology` | composite | P0 | A1 L22 | A1 (5) |
+| `linear-dynamics` | composite | P0 | 1.4 L65 | 1.4 (7), 1.5 (1), 2.0a (2), 2.2 (1) |
 | `linear-map` | preset | P0 | 0.3 L89 | 0.3 (4) |
 | `linked-list-lab` | preset | P1 | 1.8 L63 | 1.8 (6), 2.4 (1) |
-| `live-formula` (also `tex-terms`) | primitive | P0 | 1.8 L25 | 1.8 (4), 2.4 (1), 3.1 (2) |
-| `local-zoom` | composite | P0 | 1.3 L9 | 1.3 (4) |
-| `logistic-lab` | composite | P2 | 2.1 L15 | 2.1 (9) |
-| `loss-lab` | composite | P2 | 2.1 L11 | 2.1 (6) |
+| `live-formula` (also `tex-terms`) | primitive | P0 | 1.8 L25 | 1.8 (4), 2.1b (7), 2.2c (1), 2.4 (1), 3.1 (2) |
+| `lm-sampler` | composite | P2 | 2.1b L34 | 2.1b (3) |
+| `local-zoom` | composite | P0 | 1.3 L9 | 1.3 (4), A1 (2) |
+| `logistic-lab` | composite | P2 | 2.1 L15 | 2.1 (9), 2.1b (3) |
+| `loss-lab` | composite | P2 | 2.0b L41 | 2.0b (1), 2.1 (6), 2.1b (2) |
 | `low-rank-approx` | composite | P0 | 1.4 L86 | 1.4 (3) |
 | `margin-lab` | composite | P1 | 1.7 L22 | 1.7 (1), 2.3 (3) |
 | `market-maker-sim` (also `dealer-sim`) | composite | P1 | 1.7 L42 | 1.7 (1), 3.1 (17) |
-| `markov-chain` (also `ctmc-clock`) | composite | P0 | 1.5 L123 | 1.5 (12), 3.3 (3) |
-| `marks` (also `curve-layer`, `geo-layer`, `bar-layer`) | primitive | P0 | 1.3 L65 | 1.3 (1) |
-| `mass-editor` | primitive | P0 | 1.5 L12 | 1.5 (6), 1.6 (1), 2.1 (4), 3.3 (1) |
-| `matrix` | primitive | P0 | 1.7 L10 | 1.3 (2), 1.4 (21), 1.5 (2), 1.6 (1), 1.7 (3), 2.1 (5), 2.3 (4), 2.4 (1), 3.2 (3), 3.3 (3) |
+| `markov-chain` (also `ctmc-clock`) | composite | P0 | 1.5 L123 | 1.5 (18), 3.3 (3) |
+| `marks` (also `curve-layer`, `geo-layer`, `bar-layer`) | primitive | P0 | 1.3 L65 | 1.3 (1), A1 (1) |
+| `mass-editor` | primitive | P0 | 1.5 L12 | 1.5 (6), 1.6 (1), 2.1 (4), 2.1b (2), 3.3 (1) |
+| `matrix` | primitive | P0 | 1.7 L10 | 1.3 (2), 1.4 (21), 1.5 (2), 1.6 (1), 1.7 (3), 2.0a (11), 2.0b (8), 2.1 (5), 2.1b (11), 2.3 (4), 2.4 (1), 3.2 (3), 3.3 (3) |
 | `matrix-grid` | preset | P0 | 0.3 L87 | 0.3 (4) |
-| `matrix-multiply` | composite | P0 | 0.3 L88 | 0.3 (1), 1.1 (1), 1.4 (14), 1.5 (2), 1.8 (1), 2.4 (1) |
+| `matrix-multiply` | composite | P0 | 0.3 L88 | 0.3 (1), 1.1 (1), 1.4 (14), 1.5 (2), 1.8 (1), 2.1b (1), 2.4 (1) |
+| `mc-variance` | composite | P2 | 2.0a L71 | 2.0a (15) |
 | `measure-change` | composite | P2 | 3.2 L30 | 3.2 (8) |
 | `memory-layout` | composite | P1 | 1.8 L24 | 1.8 (1), 1.9 (10) |
 | `merge-conflict` | composite | P0 | 1.2 L14 | 1.2 (1) |
-| `ml-workbench` | composite | P2 | 2.1 L116 | 2.1 (8), 2.3 (3), 3.1 (1), 3.3 (4) |
+| `ml-workbench` | composite | P2 | 2.1 L116 | 2.1 (8), 2.2c (1), 2.3 (2), 3.1 (1), 3.3 (4) |
 | `mm-game` | composite | P2 | 3.3 L84 | 3.3 (12) |
-| `mock-interview` | composite | P2 | 2.3 L41 | 2.3 (5), 3.3 (12) |
+| `mock-interview` | composite | P2 | 2.2c L28 | 2.2c (1), 2.3 (4), 3.3 (12) |
 | `modular-clock` | composite | P0 | 0.1 L16 | 0.1 (1), 1.1 (1), 2.4 (1) |
-| `multiple-testing` | composite | P1 | 1.6 L38 | 1.6 (5), 2.3 (2), 3.1 (6), 3.3 (1) |
+| `multiple-testing` (also `forking-paths`) | composite | P1 | 1.6 L38 | 1.6 (5), 2.2c (4), 2.3 (1), 3.1 (6), 3.3 (1) |
 | `multiplier-chain` | composite | P0 | 0.1 L25 | 0.1 (2), 0.2 (2), 0.3 (9), 1.7 (1), 3.3 (1) |
 | `mutant-hunter` | composite | P0 | 1.2 L19 | 1.2 (5), 1.9 (3) |
-| `ndarray-lab` | composite | P0 | 1.1 L56 | 1.1 (7) |
-| `nn-playground` | composite | P2 | 2.1 L107 | 2.1 (5) |
-| `node-link` (also `node-graph`) | primitive | P0 | 1.1 L1 | 1.1 (8), 1.2 (1), 1.5 (3), 1.7 (1), 1.8 (2), 2.3 (7), 3.3 (3) |
-| `number-line` | primitive | P0 | 0.1 L1 | 0.1 (17), 0.2 (6), 0.3 (3), 0.5 (1), 1.1 (5), 1.3 (1), 1.9 (1) |
+| `ndarray-lab` | composite | P0 | 1.1 L56 | 1.1 (7), 2.1b (1) |
+| `nn-playground` | composite | P2 | 2.1 L107 | 2.1 (5), 2.1b (11) |
+| `node-link` (also `node-graph`) | primitive | P0 | 1.1 L1 | 1.1 (8), 1.2 (1), 1.5 (3), 1.7 (1), 1.8 (2), 2.2c (1), 2.3 (7), 3.3 (3) |
+| `number-line` | primitive | P0 | 0.1 L1 | 0.1 (17), 0.2 (6), 0.3 (3), 0.5 (1), 1.1 (5), 1.3 (1), A1 (2), 1.9 (1), 2.0a (1) |
 | `number-theory-lab` | composite | P2 | 2.4 L20 | 2.4 (15) |
-| `numeric-input` (also `numeric-entry`) | input | P0 | 0.1 L1 | 0.1 (6), 0.2 (2), 0.3 (25), 1.1 (5), 1.3 (80), 1.4 (12), 1.5 (1), 1.6 (2), 1.8 (7), 3.1 (1), 3.2 (1), 3.3 (1) |
+| `numeric-input` (also `numeric-entry`) | input | P0 | 0.1 L1 | 0.1 (6), 0.2 (2), 0.3 (25), 1.1 (5), 1.3 (80), A1 (17), 1.4 (12), 1.5 (1), 1.6 (2), 1.8 (7), 2.0a (61), 2.0b (29), 3.1 (1), 3.2 (1), 3.3 (1) |
 | `objective-explorer` | composite | P0 | 1.3 L35 | 1.3 (9) |
 | `odds-ledger` | composite | P0 | 1.5 L17 | 1.5 (5), 1.6 (3), 3.1 (1), 3.3 (3) |
 | `option-bounds` | composite | P1 | 1.7 L58 | 1.7 (3), 2.3 (1), 3.3 (1) |
@@ -4960,39 +5391,41 @@ Numbers are lesson rows naming the widget in that item; "first" is the first les
 | `order-statistics` | composite | P0 | 1.5 L83 | 1.5 (2), 3.3 (2) |
 | `order-ticket` | input | P1 | 1.7 L29 | 1.7 (3) |
 | `outcome-grid` | composite | P0 | 0.3 L112 | 0.3 (2), 1.5 (7), 3.3 (1) |
-| `overfit-lab` | composite | P2 | 2.1 L144 | 2.1 (2), 2.3 (6), 3.3 (1) |
+| `overfit-lab` | composite | P2 | 2.1 L144 | 2.1 (2), 2.2c (6), 2.3 (3), 3.3 (1) |
 | `ownership-lab` | composite | P1 | 1.9 L23 | 1.9 (9) |
 | `pairs-lab` | composite | P2 | 2.3 L79 | 2.3 (1), 3.1 (15) |
-| `paper-trader` | composite | P2 | 2.3 L17 | 2.3 (5) |
+| `paper-trader` | composite | P2 | 2.2c L4 | 2.2c (1), 2.3 (4) |
 | `parity-lab` | composite | P1 | 1.7 L60 | 1.7 (3), 2.3 (1) |
 | `parsons` | composite | P0 | 0.4 L26 | 0.4 (1), 1.1 (4), 1.8 (1) |
-| `pascal-triangle` | composite | P0 | 0.3 L99 | 0.3 (5), 1.5 (3), 2.4 (1) |
-| `path-simulator` (also `brownian-path`) | composite | P0 | 1.1 L72 | 1.1 (2), 1.5 (6), 3.2 (16), 3.3 (2) |
+| `pascal-triangle` | composite | P0 | 0.3 L99 | 0.3 (5), 1.5 (3), 2.1b (1), 2.4 (1) |
+| `path-simulator` (also `brownian-path`) | composite | P0 | 1.1 L72 | 1.1 (2), 1.5 (13), 2.0a (5), 3.2 (16), 3.3 (2) |
 | `payoff-builder` | composite | P1 | 1.7 L46 | 1.7 (7), 2.3 (1), 3.2 (1), 3.3 (2) |
-| `pca-lab` | composite | P0 | 1.4 L74 | 1.4 (8), 2.1 (3), 3.1 (2), 3.3 (1) |
-| `penalty-geometry` | composite | P2 | 2.1 L47 | 2.1 (5) |
+| `pca-lab` | composite | P0 | 1.4 L74 | 1.4 (8), 2.0a (1), 2.1 (3), 2.1b (1), 3.1 (2), 3.3 (1) |
+| `penalty-geometry` | composite | P2 | 2.0b L54 | 2.0b (1), 2.1 (5) |
 | `permission-bits` | composite | P0 | 1.2 L5 | 1.2 (1) |
 | `pipeline-flow` | composite | P0 | 1.1 L29 | 1.1 (4), 1.2 (4), 2.1 (2) |
 | `place-value-chart` | composite | P0 | 0.1 L1 | 0.1 (13) |
-| `plot-2d` (also `plot-axes`) | primitive | P0 | 1.1 L70 | 1.1 (5), 1.3 (11), 1.4 (3), 1.7 (4), 1.8 (2), 1.9 (2), 2.1 (3), 2.3 (3), 2.4 (2), 3.1 (1), 3.2 (8), 3.3 (10) |
-| `plot-3d` (also `view-3d`) | primitive | P0 | 1.3 L107 | 1.3 (3), 1.4 (1), 3.2 (1) |
+| `plot-2d` (also `plot-axes`) | primitive | P0 | 1.1 L70 | 1.1 (5), 1.3 (11), A1 (6), 1.4 (3), 1.5 (1), 1.7 (4), 1.8 (2), 1.9 (2), 2.0a (7), 2.0b (5), 2.1 (3), 2.1b (12), 2.2c (2), 2.3 (2), 2.4 (2), 3.1 (1), 3.2 (8), 3.3 (10) |
+| `plot-3d` (also `view-3d`) | primitive | P0 | 1.3 L107 | 1.3 (3), 1.4 (1), 2.0a (1), 2.0b (2), 3.2 (1) |
 | `plot-workbench` | composite | P0 | 1.1 L99 | 1.1 (5) |
 | `pnl-attribution` | composite | P1 | 1.7 L77 | 1.7 (2), 2.3 (2), 3.2 (1), 3.3 (1) |
 | `pointer-walk` | preset | P1 | 1.8 L30 | 1.8 (12), 2.4 (3) |
-| `portfolio-lab` | composite | P1 | 1.7 L24 | 1.7 (4), 2.3 (3) |
+| `portfolio-lab` | composite | P1 | 1.7 L24 | 1.7 (4), 2.0b (2), 2.3 (3) |
 | `portfolio-sort` | composite | P2 | 2.1 L127 | 2.1 (1), 2.3 (2), 3.1 (18) |
 | `position-editor` | primitive | P1 | 1.7 L46 | 1.7 (5), 2.3 (2), 3.2 (2) |
 | `posterior-lab` | composite | P1 | 1.6 L70 | 1.6 (11), 2.1 (2), 3.1 (1) |
-| `predict-output` | composite | P0 | 0.4 L22 | 0.3 (1), 0.4 (2), 1.1 (42), 1.2 (3), 1.4 (5), 1.6 (4), 1.8 (1), 1.9 (27) |
+| `predict-output` | composite | P0 | 0.4 L22 | 0.3 (1), 0.4 (2), 1.1 (42), 1.2 (3), 1.4 (5), 1.6 (4), 1.8 (1), 1.9 (27), 2.0a (2), 2.0b (3), 2.1b (5) |
 | `price-ladder` | primitive | P1 | 1.7 L29 | 1.7 (2), 2.3 (2), 3.3 (1) |
-| `pricer-compare` | composite | P2 | 2.3 L160 | 2.3 (7), 3.2 (1) |
+| `pricer-compare` | composite | P2 | 2.0a L65 | 2.0a (3), 2.3 (7), 3.2 (1) |
 | `prob-square` | composite | P0 | 1.5 L13 | 1.5 (11) |
 | `problem-workbench` | composite | P1 | 1.8 L146 | 1.8 (3), 1.9 (1), 2.4 (3), 3.3 (10) |
 | `projection-lab` | composite | P0 | 1.3 L107 | 1.3 (1), 1.4 (8) |
+| `proof-builder` | composite | P0 | A1 L12 | A1 (7) |
 | `puzzle-workbench` | composite | P0 | 1.5 L1 (through the weekly problems) | 3.3 (58) |
 | `qq-plot` | composite | P1 | 1.6 L8 | 1.6 (5), 2.2 (2) |
-| `quadratic-form` | composite | P0 | 1.3 L119 | 1.3 (2), 1.4 (6), 1.5 (1), 1.6 (1), 3.2 (2) |
+| `quadratic-form` | composite | P0 | 1.3 L119 | 1.3 (2), 1.4 (6), 1.5 (1), 1.6 (1), 2.0a (2), 2.0b (7), 3.2 (2) |
 | `quadratic-variation` | composite | P2 | 3.2 L41 | 3.2 (4) |
+| `quantifier-game` | composite | P0 | A1 L2 | A1 (7) |
 | `quote-entry` | input | P1 | 1.7 L42 (through `market-maker-sim`) | 3.3 (1) |
 | `range-query-lab` | preset | P1 | 1.8 L34 | 1.8 (7), 2.4 (12) |
 | `rates-scene` | composite | P0 | 1.3 L24 | 1.3 (1) |
@@ -5000,40 +5433,42 @@ Numbers are lesson rows naming the widget in that item; "first" is the first les
 | `reflection-principle` | composite | P2 | 3.2 L46 | 3.2 (8), 3.3 (2) |
 | `regex-lab` | composite | P0 | 1.1 L43 | 1.1 (1), 1.2 (2) |
 | `region-bounds` | composite | P0 | 1.3 L130 | 1.3 (5), 1.5 (2) |
-| `region-select` (also `region-selector`) | primitive | P0 | 0.1 L13 | 0.1 (2), 0.3 (3), 1.3 (2), 1.5 (2), 1.7 (1), 3.2 (5), 3.3 (1) |
-| `regression-lab` | composite | P1 | 1.7 L27 | 1.6 (19), 1.7 (2), 2.1 (6), 2.2 (3), 2.3 (7), 3.1 (4), 3.2 (1), 3.3 (4) |
-| `regularisation-path` | composite | P2 | 2.1 L31 | 2.1 (12), 2.3 (1) |
-| `relu-composer` | composite | P2 | 2.1 L109 | 2.1 (2) |
+| `region-select` (also `region-selector`) | primitive | P0 | 0.1 L13 | 0.1 (2), 0.3 (3), 1.3 (2), 1.5 (3), 1.7 (1), 2.1b (1), 3.2 (5), 3.3 (1) |
+| `regression-lab` | composite | P1 | 1.7 L27 | 1.6 (19), 1.7 (2), 2.0a (2), 2.1 (6), 2.2 (3), 2.3 (7), 3.1 (4), 3.2 (1), 3.3 (4) |
+| `regularisation-path` | composite | P2 | 2.0b L54 | 2.0b (1), 2.1 (12), 2.3 (1) |
+| `relu-composer` | composite | P2 | 2.1 L109 | 2.1 (2), 2.1b (2) |
 | `replication-workbench` | composite | P2 | 3.1 L1 | 3.1 (22) |
 | `reshape-lab` | composite | P0 | 1.1 L90 | 1.1 (2) |
-| `results-note` | composite | P2 | 2.1 L151 | 2.1 (1), 2.3 (10), 3.1 (5), 3.3 (7) |
-| `riemann-sum` | composite | P0 | 1.3 L54 | 1.3 (9) |
-| `root-finder` | composite | P0 | 1.3 L33 | 1.3 (1), 3.3 (1) |
+| `results-note` | composite | P2 | 2.1 L151 | 2.1 (1), 2.2c (4), 2.3 (7), 3.1 (5), 3.3 (7) |
+| `riemann-sum` | composite | P0 | 1.3 L54 | 1.3 (9), 2.0a (5) |
+| `rng-lab` | composite | P2 | 2.0a L66 | 2.0a (8) |
+| `root-finder` | composite | P0 | 1.3 L33 | 1.3 (1), 2.0a (6), 3.3 (1) |
 | `row-column-picture` | composite | P0 | 1.4 L6 | 1.4 (4) |
 | `rv-mapper` | composite | P0 | 1.5 L45 | 1.5 (5) |
-| `sampling-lab` | composite | P0 | 1.5 L69 | 1.5 (9), 1.6 (10), 2.1 (2), 2.2 (1), 2.3 (1), 3.3 (1) |
+| `sampling-lab` | composite | P0 | 1.5 L69 | 1.5 (9), 1.6 (10), 2.1 (2), 2.2 (1), 2.2c (1), 3.3 (1) |
+| `scaling-plot` | preset | P2 | 2.1b L78 | 2.1b (1) |
 | `scatter-fit` | composite | P0 | 0.2 L46 | 0.2 (1), 0.3 (3) |
 | `schema-builder` | composite | P2 | 2.3 L204 | 2.3 (2) |
 | `scratch-pad` | primitive | P0 | 0.1 L41 (through `free-response`) | none: see 8.5 |
-| `sde-stepper` | composite | P2 | 2.2 L40 | 2.2 (1), 3.1 (3), 3.2 (7) |
+| `sde-stepper` | composite | P2 | 2.0a L73 | 2.0a (2), 2.2 (1), 3.1 (3), 3.2 (7) |
 | `search-path` | composite | P0 | 1.1 L45 | 1.1 (2), 1.2 (1) |
-| `secant-tangent` | composite | P0 | 1.3 L1 | 1.3 (11) |
+| `secant-tangent` | composite | P0 | 1.3 L1 | 1.3 (11), A1 (1) |
 | `sequence-filter` | composite | P2 | 2.1 L115 | 2.1 (1) |
-| `sequence-lab` | composite | P0 | 0.3 L39 | 0.3 (5) |
-| `series-explorer` | composite | P0 | 0.3 L63 | 0.3 (2), 1.3 (12), 1.4 (1), 1.5 (1), 1.7 (1), 3.3 (3) |
+| `sequence-lab` | composite | P0 | 0.3 L39 | 0.3 (5), A1 (6) |
+| `series-explorer` | composite | P0 | 0.3 L63 | 0.3 (2), 1.3 (12), A1 (9), 1.4 (1), 1.5 (1), 1.7 (1), 3.3 (3) |
 | `series-lab` | composite | P2 | 2.2 L1 | 2.2 (10) |
 | `setup-checklist` | composite | P0 | 0.4 L11 | 0.4 (5), 1.1 (1), 1.9 (2), 2.3 (20), 3.1 (1), 3.3 (3) |
-| `share-lab` | composite | P1 | 1.7 L17 | 1.7 (4), 2.3 (2) |
-| `sharpe-lab` | composite | P2 | 2.3 L7 | 2.3 (11), 3.1 (5), 3.3 (1) |
+| `share-lab` | composite | P1 | 1.7 L17 | 1.7 (4), 2.2c (1), 2.3 (2) |
+| `sharpe-lab` | composite | P2 | 2.2c L1 | 2.2c (7), 2.3 (4), 3.1 (5), 3.3 (1) |
 | `shell-sim` | composite | P0 | 0.4 L13 | 0.4 (6), 1.1 (2), 1.2 (8) |
 | `shortest-path` | preset | P1 | 1.8 L98 | 1.8 (7), 2.4 (2) |
 | `sign-chart` | composite | P0 | 0.2 L70 | 0.2 (1), 0.3 (3), 1.3 (4) |
 | `signal-lab` | composite | P2 | 2.1 L136 | 2.1 (2), 2.3 (28), 3.1 (2), 3.3 (1) |
-| `sim-runner` | primitive | P0 | 1.1 L69 | 1.1 (5), 1.3 (3), 1.4 (5), 1.5 (1), 1.6 (1), 1.7 (1), 1.8 (5), 1.9 (3), 2.1 (1), 2.2 (1), 2.3 (4), 2.4 (1), 3.1 (1), 3.2 (2) |
+| `sim-runner` | primitive | P0 | 1.1 L69 | 1.1 (5), 1.3 (3), 1.4 (5), 1.5 (1), 1.6 (1), 1.7 (1), 1.8 (5), 1.9 (3), 2.0a (2), 2.0b (1), 2.1 (1), 2.2 (1), 2.2c (1), 2.3 (4), 2.4 (1), 3.1 (1), 3.2 (2) |
 | `sketch-pad` (also `curve-sketch`) | primitive | P0 | 0.2 L68 | 0.2 (4), 0.3 (1), 1.3 (4), 1.5 (1), 1.7 (2) |
 | `slide-rule` | composite | P0 | 0.3 L51 | 0.3 (3) |
-| `slider` | primitive | P0 | 0.1 L34 | 0.1 (1), 0.2 (10), 0.3 (2), 1.3 (7), 1.4 (1), 1.7 (1), 2.3 (3) |
-| `slope-field` | composite | P0 | 1.3 L60 | 1.3 (5) |
+| `slider` | primitive | P0 | 0.1 L34 | 0.1 (1), 0.2 (10), 0.3 (2), 1.3 (7), 1.4 (1), 1.7 (1), 2.0a (8), 2.0b (3), 2.1b (6), 2.2c (2), 2.3 (3) |
+| `slope-field` | composite | P0 | 1.3 L60 | 1.3 (5), 2.0a (1) |
 | `solid-of-revolution` | composite | P0 | 1.3 L77 | 1.3 (2) |
 | `solid-viewer` | composite | P0 | 0.3 L8 | 0.3 (5) |
 | `solution-set` | composite | P0 | 1.4 L22 | 1.4 (7) |
@@ -5043,86 +5478,121 @@ Numbers are lesson rows naming the widget in that item; "first" is the first les
 | `speed-timer` | primitive | P0 | 0.4 L1 | 0.4 (1), 0.5 (1), 1.8 (1), 3.3 (1) |
 | `split-scorer` | composite | P2 | 2.1 L87 | 2.1 (3) |
 | `stack-queue-lab` | preset | P1 | 1.8 L40 | 1.8 (8), 2.4 (2) |
-| `stat-chart` | composite | P0 | 0.3 L119 | 0.3 (4), 1.1 (2), 1.5 (1) |
-| `stepper` | primitive | P0 | 0.3 L82 | 0.3 (1), 1.2 (1), 1.4 (2), 1.8 (3), 2.4 (4) |
+| `stat-chart` | composite | P0 | 0.3 L119 | 0.3 (4), 1.1 (2), 1.5 (2) |
+| `stepper` | primitive | P0 | 0.3 L82 | 0.3 (1), 1.2 (1), A1 (2), 1.4 (2), 1.8 (3), 2.0a (1), 2.0b (3), 2.4 (4) |
 | `strategy-trainer` | composite | P0 | 0.5 L3 | 0.5 (13), 3.3 (8) |
 | `subspace-tester` | composite | P0 | 1.4 L19 | 1.4 (2) |
 | `sum-visualiser` | composite | P0 | 0.3 L60 | 0.3 (8) |
 | `summary-table` | composite | P1 | 1.6 L45 | 1.6 (13), 2.2 (1), 3.1 (1) |
-| `surface-explorer` | composite | P0 | 1.3 L106 | 1.3 (12), 1.4 (2), 1.6 (1), 2.1 (1) |
-| `svd-stepper` | composite | P0 | 1.4 L72 | 1.4 (8) |
+| `surface-explorer` | composite | P0 | 1.3 L106 | 1.3 (12), 1.4 (2), 1.6 (1), 2.1 (1), 2.1b (1) |
+| `svd-stepper` | composite | P0 | 1.4 L72 | 1.4 (8), 2.0a (3) |
 | `tape-lab` | composite | P1 | 1.7 L40 | 1.7 (2) |
-| `taylor-builder` | composite | P0 | 1.3 L32 | 1.3 (7), 1.5 (2), 1.6 (1), 3.1 (1) |
-| `test-lab` | composite | P1 | 1.6 L26 | 1.6 (13), 2.2 (6) |
+| `taylor-builder` | composite | P0 | 1.3 L32 | 1.3 (7), A1 (1), 1.5 (2), 1.6 (1), 3.1 (1) |
+| `test-lab` | composite | P1 | 1.6 L26 | 1.6 (13), 2.2 (6), 2.2c (2) |
 | `text-terminal` | primitive | P0 | 0.4 L16 | 0.4 (1), 1.2 (1), 1.9 (3) |
 | `threshold-lab` | composite | P2 | 2.1 L71 | 2.1 (8) |
-| `time-cv-lab` | composite | P2 | 2.1 L117 | 2.1 (8), 2.3 (5), 3.3 (2) |
-| `time-series-lab` | composite | P0 | 1.1 L42 | 1.1 (9), 2.3 (12) |
+| `time-cv-lab` | composite | P2 | 2.1 L117 | 2.1 (8), 2.1b (1), 2.3 (1), 3.3 (2) |
+| `time-series-lab` | composite | P0 | 1.1 L42 | 1.1 (9), 2.2c (2), 2.3 (11) |
 | `times-table-grid` | preset | P0 | 0.5 L2 | 0.5 (1), 3.3 (1) |
-| `token-tray` | primitive | P0 | 0.2 L1 | 0.2 (1), 0.3 (1), 0.4 (1), 1.1 (1), 1.2 (1), 1.3 (4), 1.4 (1), 1.5 (1), 1.8 (2), 2.3 (1), 3.1 (1), 3.3 (1) |
+| `token-tray` | primitive | P0 | 0.2 L1 | 0.2 (1), 0.3 (1), 0.4 (1), 1.1 (1), 1.2 (1), 1.3 (4), A1 (1), 1.4 (1), 1.5 (1), 1.8 (2), 2.2c (1), 3.1 (1), 3.3 (1) |
+| `tokeniser-lab` | composite | P2 | 2.1b L70 | 2.1b (1) |
+| `training-curves` | composite | P2 | 2.1b L12 | 2.1b (14) |
 | `transform-grid` | composite | P0 | 1.3 L134 | 1.3 (1), 1.4 (9), 1.5 (3) |
 | `tree-builder` | composite | P2 | 2.1 L86 | 2.1 (4) |
 | `tree-diagram` | composite | P0 | 0.3 L98 | 0.3 (3), 1.5 (10), 1.7 (1), 3.3 (2) |
 | `tree-lab` | preset | P1 | 1.8 L79 | 1.8 (14), 1.9 (2), 2.4 (7) |
 | `trial-simulator` | composite | P0 | 0.3 L106 | 0.3 (5), 1.5 (16), 3.3 (3) |
-| `trial-strip` | composite | P0 | 1.5 L16 | 1.5 (17), 3.3 (2) |
+| `trial-strip` | composite | P0 | 1.5 L16 | 1.5 (18), 3.3 (2) |
 | `tuning-lab` | composite | P2 | 2.1 L29 | 2.1 (4) |
 | `tvm-timeline` | composite | P1 | 1.7 L1 | 1.7 (6) |
 | `typing-trainer` | composite | P0 | 0.4 L1 | 0.4 (9) |
+| `uniform-lab` | composite | P0 | A1 L39 | A1 (9) |
 | `union-find` | preset | P1 | 1.8 L102 | 1.8 (2), 2.4 (2) |
 | `unit-chain` | composite | P0 | 0.1 L30 | 0.1 (1), 0.2 (3) |
 | `unit-circle` | composite | P0 | 0.3 L66 | 0.3 (8), 1.3 (2) |
-| `value-table` (also `data-table`) | primitive | P0 | 0.1 L16 | 0.1 (5), 0.2 (17), 0.3 (22), 1.1 (4), 1.2 (1), 1.3 (10), 1.4 (5), 1.5 (2), 1.6 (3), 1.7 (2), 1.8 (3), 2.1 (2), 2.3 (11), 3.1 (1), 3.2 (14), 3.3 (11) |
+| `value-table` (also `data-table`) | primitive | P0 | 0.1 L16 | 0.1 (5), 0.2 (17), 0.3 (22), 1.1 (4), 1.2 (1), 1.3 (10), A1 (6), 1.4 (5), 1.5 (2), 1.6 (3), 1.7 (2), 1.8 (3), 2.0a (8), 2.0b (5), 2.1 (2), 2.1b (25), 2.2c (2), 2.3 (11), 3.1 (1), 3.2 (14), 3.3 (11) |
 | `vector-combo` | composite | P0 | 1.4 L1 | 1.4 (10) |
 | `vector-plane` | preset | P0 | 0.3 L11 | 0.3 (10) |
 | `venn-diagram` | composite | P0 | 0.1 L14 | 0.1 (1), 0.3 (5), 1.1 (1), 1.5 (4), 2.4 (1), 3.3 (1) |
-| `viva` | composite | P1 | 1.7 L45 | 1.7 (1), 2.1 (1), 2.3 (5), 3.1 (1), 3.3 (2) |
+| `viva` | composite | P1 | 1.7 L45 | 1.7 (1), 2.1 (1), 2.2c (1), 2.3 (4), 3.1 (1), 3.3 (2) |
 | `voice-capture` | primitive | P1 | 1.7 L45 | 1.7 (1), 3.3 (7) |
 | `vol-surface` | composite | P2 | 2.3 L144 | 2.3 (14), 3.2 (4), 3.3 (1) |
 | `volume-slicer` | composite | P0 | 1.3 L77 | 1.3 (6) |
 | `workspace-sim` | composite | P0 | 0.4 L20 | 0.4 (4), 1.1 (3) |
 | `written-method` | composite | P0 | 0.1 L2 | 0.1 (5), 0.2 (2) |
-| `yield-curve-lab` | composite | P1 | 1.7 L10 | 1.7 (4), 3.2 (5), 3.3 (1) |
+| `yield-curve-lab` | composite | P1 | 1.7 L10 | 1.7 (4), 2.0a (1), 3.2 (5), 3.3 (1) |
 
 ### 8.3 P0 confirmation
 
-- **Every P0 lesson has a widget.** All 876 lesson rows in items 0.1 to 1.5 name at least one library widget (0 lesson rows in the whole curriculum name none).
-- **Every widget a P0 lesson names is P0.** 0 exceptions [measured]. This includes the widgets the depth-first order pulls forward (0.3), and the presets and modes those lessons use.
+- **Every P0 lesson has a widget.** All 936 lesson rows in items 0.1 to 1.5 and A1 name at least one library widget (0 lesson rows in the whole curriculum name none; draft 1 counted 876 before A1 and 1.5's continuous-time levels).
+- **Every widget a P0 lesson names is P0.** 0 exceptions [measured], A1 and 1.5 lessons 157 to 168 included. This includes the widgets the depth-first order pulls forward (0.3), and the presets and modes those lessons use: A1's modes on ten existing widgets and 1.5's continuous-time modes on `markov-chain`, `first-step-solver` and `path-simulator` are P0 in their entries.
 - **Sample-lesson screens.** Of the 48 screen rows in the four full sample lessons, 10 name no library id: title and summary screens (art only, by design), and two linear-algebra screens that refer to widgets declared on an earlier screen by their local ids (`combo`, a `vector-combo`; `mm`, a `matrix-multiply`).
 - **Modes.** Every mode a P0 lesson marks [mode to add] is accepted as a P0 mode in its widget's entry (8.4). Where a curriculum file said a lesson "falls back to `plot-2d` with `sim-runner`" without its mode, the mode is now in the library and the fallback is not needed.
 - **The weekly problems** from 1.5 lesson 1 use `puzzle-workbench` (P0 core) with `scratch-pad`; the Daily 10 and spaced review reuse each item's own widget.
 
 ### 8.4 Modes requested by the curriculum files
 
-Each row is accepted. The priority is the priority of the lesson that asks.
+Each row is accepted. The priority is the priority of the lesson that asks. Rows added on 7 October 2026 come from the section 8.2 tables of the four new curriculum files and from `stage1-probability.md` open item 4 (the P2 levels): 65 modes on 43 widgets and two P2 modes promoted to P0.
 
 | Widget | Mode or option | Priority and source |
 |---|---|---|
 | `array-strip` | bytes mode | P0, 1.1 L10, curriculum |
+| `backtest-lab` | `perturb` | P2, 2.2c L13, curriculum |
+| `backtest-lab` | bias `adjustment` | P2, 2.2c L15, curriculum |
 | `basis-lab` | `gam` and `kernel` modes | P2, 2.1 L43, L44, curriculum |
 | `bench-lab` | denormals | P1, 1.9, curriculum |
 | `binomial-tree` | `path-dependent` (lookback, Asian), `trinomial` and `perpetual` modes | P2, 3.2 L2 to L4, L20, curriculum |
+| `binomial-tree` | `as-scheme` | P2, 2.0a L51, curriculum |
 | `bit-lab` | C++ precedence | P1, curriculum |
 | `bond-lab` | `bootstrap-exam` timed variant without knot handles | P1, curriculum |
+| `calibration-lab` | temperature | P2, 2.1b L11, curriculum |
 | `card-sort` | two-bin sort | P2, 2.1 sample, curriculum |
 | `cell-grid` | triangle paint above the diagonal with a mirrored ghost | P1, 1.8 sample, curriculum |
 | `ci-ladder` | `variance` model | P1, 1.6 L24, curriculum |
 | `cluster-lab` | `gmm` mode | P2, 2.1 L142, curriculum |
+| `code-cell` | `zq_ra` prelude, web app only | P0, A1 homework RL1, curriculum |
+| `code-cell` | `zq_dl` prelude, web app only | P2, 2.1b homework DN1, curriculum |
+| `code-cell` | `zq_research` prelude, web app only | P2, 2.2c homework IS1, curriculum |
 | `code-tracer` | `hits` mode expanding hidden built-in scans | P1, 1.8 sample, curriculum |
 | `complex-plane` | locus tracer with region shading | P0, 0.3 L93, curriculum |
 | `complexity-lab` | three-lane race | P1, 1.8 sample, curriculum |
+| `condition-number` | `residual` | P2, 2.0a L31, curriculum |
 | `contest-arena` | ICPC penalty of 20 minutes per rejected submission; web-only problems flagged | P2, dsa-cpp request 7 |
+| `contingency-table` | bigram counts with row normalisation and add-$k$ | P2, 2.1b L34, L35, curriculum |
+| `contingency-table` | paired comparison with McNemar's statistic | P2, 2.2c L22, curriculum |
+| `convexity-chord` | three-chord mode with the subgradient fan | P0, A1 L37, curriculum |
+| `convexity-chord` | `surface`: the chord test in two variables with the Hessian's eigenvalues | P2, 2.0b L23, curriculum |
 | `cv-lab` | `loocv-shortcut` with hat values | P2, 2.1 L25, curriculum |
 | `derivation-steps` | `links` from a line to elements of a widget on an earlier screen | P0, 1.3 sample, curriculum |
 | `derivation-steps` | fill mode with a `leap` block | P1, 1.6 sample, curriculum |
-| `descent-lab` | stochastic mode | P2, 2.1 L19, curriculum |
+| `derivative-tracer` | Darboux preset | P0, A1 L35, curriculum |
+| `descent-lab` | stochastic mode | P2, 2.0b L44 (2.1 L19 in draft 1), curriculum |
+| `descent-lab` | `cg` | P2, 2.0a L46, curriculum |
+| `descent-lab` | `line-search` | P2, 2.0b L36, curriculum |
+| `descent-lab` | `bfgs` | P2, 2.0b L40, curriculum |
+| `descent-lab` | `proximal` | P2, 2.0b L41, curriculum |
+| `descent-lab` | `projected`, embedding `convex-set`'s projection mode | P2, 2.0b L42, curriculum |
+| `descent-lab` | `nesterov` | P2, 2.0b L43, curriculum |
+| `descent-lab` | saddle preset | P2, 2.0b L46, curriculum |
+| `descent-lab` | Adam with $L_2$ against AdamW; underdetermined least squares | P2, 2.1b L14, L48, curriculum |
 | `diagnostic-reader` | mypy format | P0, 1.1 L54, curriculum |
 | `dist-explorer` | Beta update | P0, 1.5 L84, curriculum |
+| `dist-explorer` | the maximum of $n$ draws | P2, 2.2c L23, curriculum |
+| `eigen-finder` | `perturb` | P2, 2.0a L42, curriculum |
 | `elimination-lab` | floating mode | P0, 1.4 L16, curriculum |
+| `elimination-lab` | `growth` with the growth factor | P2, 2.0a L32, curriculum |
+| `ensemble-lab` | ensembles of networks | P2, 2.1b L50, curriculum |
+| `epsilon-delta` | Thomae preset with the band and the strip | P0, A1 L28, curriculum |
+| `epsilon-delta` | uniform mode: $\delta(c)$ over a set and its infimum, movable centre | P0, A1 L29, L31, curriculum |
 | `error-curves` | predict mode on fixed data with a per-degree table | P2, 2.1 sample, curriculum |
+| `error-curves` | double descent with label noise and a ridge penalty | P2, 2.1b L47, curriculum |
 | `estimator-compare` | `trimmed` and `mad` estimators | P1, 1.6 L8, curriculum |
 | `filtration-tree` | `radon-nikodym` mode | P2, 3.2 L10 to L13, curriculum |
+| `first-step-solver` | continuous-time mode with holding times | P0, 1.5 L161, curriculum |
 | `fit-explorer` | `sketch` mode with "Thread every point" and fixed-data "Reveal tomorrow"; compare mode with clipped curves | P2, 2.1 sample, curriculum |
+| `float-inspector` | `rounding-model` | P2, 2.0a L2, curriculum |
+| `float-inspector` | `formats`: binary64, float32, float16, bfloat16, loss scaling; one mode for 2.0a and for 2.1b's ranges of $e^x$ | P2, 2.0a L4; 2.1b L9, L27, L32, curriculum |
+| `float-inspector` | `accumulate` with pairwise and Kahan sums | P2, 2.0a L5, L11, curriculum |
 | `forecast-lab` | `ses` and `holt` methods | P2, 2.2 L19, curriculum |
 | `four-subspaces` | graph mode | P0, 1.4 L32 and L97, curriculum |
 | `game-lab` | Kelly mode, embedding `kelly-lab`'s growth curve per finance decision 17 | P0, moved from P2; 1.5 L154, curriculum |
@@ -5131,25 +5601,37 @@ Each row is accepted. The priority is the priority of the lesson that asks.
 | `geometry-board` | points on a circle with a region counter; the $64 = 65$ dissection preset | P0, 0.3 L125, L128, curriculum |
 | `graph-explorer` | reflect in $y = x$ toggle | P0, 0.3 sample, curriculum |
 | `graph-search` | SCC, bridges and 2-SAT | P1, 1.8, dsa-cpp request 6, curriculum |
-| `heat-diffusion` | `finite-difference` mode | P2, 3.2 L88, curriculum |
+| `heat-diffusion` | `finite-difference` mode, embedding `fd-grid` | P2, 3.2 L88, curriculum |
+| `heat-diffusion` | `modes`: Fourier sine modes decaying | P2, 2.0a L50, curriculum |
+| `icon-array` | Ioannidis's bias $u$ in FDR mode | P2, 2.2c L19, curriculum |
 | `join-lab` | `asof` join | P0, 1.1 L88, curriculum |
+| `lagrange-explorer` | `kkt` | P2, 2.0b L32, L33, curriculum |
 | `latency-lab` | `histogram-from-log` | P2, MS4 homework, curriculum |
 | `least-squares-fit` | ridge mode | P0, 1.4 L47, curriculum |
 | `likelihood-lab` | `logistic` and `exponential-censored` models | P1, 1.6 L65 and ES3 homework, curriculum |
+| `limit-explorer` | sequence probes $x_n \to c$, two sequences at once | P0, A1 L27, curriculum |
+| `linear-dynamics` | `inverse-iteration` and Rayleigh quotient iteration | P2, 2.0a L40, curriculum |
+| `local-zoom` | the family $\lvert x\rvert^a\sin\frac1x$; the zigzag-series preset | P0, A1 L34, L38, curriculum |
 | `loss-lab` | `pinball-set` mode showing a flat minimiser interval | P2, LD3 homework, curriculum |
+| `loss-lab` | Gaussian likelihood with a learned $\sigma$ | P2, 2.1b L7, L8, curriculum |
 | `market-maker-sim` | `glft` mode | P2, 3.1 L78, curriculum |
 | `markov-chain` | Metropolis mode | P0, moved from P2; 1.5 L134, curriculum |
 | `markov-chain` | run-length preset | P0, 1.5 L155, curriculum |
-| `markov-chain` | `ctmc` mode with competing exponential clocks, the 3.2 `ctmc-clock` request | P2, 3.2, curriculum |
+| `markov-chain` | `ctmc` mode with competing exponential clocks, the `ctmc-clock` request | P0, moved from P2; 1.5 L157 (canon-gap P2, adopted), curriculum |
+| `markov-chain` | continuous-time, generator and birth-death modes | P0, 1.5 L157 to L161, curriculum |
 | `mass-editor` | entropy readout | P2, 2.1 L13, curriculum |
+| `matrix` | `spy` with fill-in | P2, 2.0a L38, L39, curriculum |
 | `matrix-multiply` | entry, column, row and outer views, shape puzzle, multiplication counter | P0, 1.4 L9, curriculum |
 | `measure-change` | `importance-sampling` mode | P2, 3.2 L31, curriculum |
 | `memory-layout` | false sharing | P1, curriculum |
 | `mm-game` | `figgie` mode | P2, 3.3 L92, curriculum |
 | `multiple-testing` | `forking` mode for 1.6 L41 | P1, curriculum |
+| `multiple-testing` | `garden`, the `forking-paths` request | P2, 2.2c L32, curriculum |
 | `multiplier-chain` | tile mode: palette, log axis, target line, partial tile, Glue, halving | P0, 0.3 sample, curriculum |
 | `mutant-hunter` | property mode | P0, moved from P1; 1.2 L24, curriculum |
 | `mutant-hunter` | C++ mutants | P1, 1.9, curriculum |
+| `nn-playground` | 2D region map with activation-pattern labels | P2, 2.1b L1, L2, curriculum |
+| `nn-playground` | permuted units, per-layer histograms, depth statistics, batch-norm and residual toggles | P2, 2.1b L16, L41 to L43, L60, curriculum |
 | `node-link` | class-diagram layout | P0, 1.1 L52, curriculum |
 | `number-line` | float-spacing mode: gaps between neighbouring doubles | P0, 1.1 L4, curriculum |
 | `number-theory-lab` | CRT and Grundy values | P2, curriculum |
@@ -5157,26 +5639,48 @@ Each row is accepted. The priority is the priority of the lesson that asks.
 | `order-book` | `sequence` replay of a scripted order list | P1, MK1 homework, curriculum |
 | `order-lifecycle` | `reconcile-diff` | P2, 2.3 L218, curriculum |
 | `path-simulator` | random-walk and price modes | P0, moved from P2; 1.1 L72, L73, curriculum |
-| `path-simulator` | `bridge`, `ratio` and asynchronous two-path modes | P2, 3.2 L39, L69, L71, curriculum |
+| `path-simulator` | `bridge`, `ratio` and asynchronous two-path modes | P2; `bridge` first at 2.0a L75, the others at 3.2 L69, L71, curriculum |
+| `path-simulator` | Brownian mode with its `refine` view, the `brownian-path` request | P0, moved from P2; 1.5 L162 to L168, curriculum |
 | `pca-lab` | scree view and returns-panel preset | P0, 1.4 L93, curriculum |
+| `pca-lab` | embedding rows as points | P2, 2.1b L39, curriculum |
+| `plot-2d` | Thomae's points; a monotone step function from a listing of $\mathbb Q$ | P0, A1 L28, L33, curriculum |
 | `pointer-walk` | `reach` mode | P1, 1.8, dsa-cpp request 6, curriculum |
 | `portfolio-sort` | `hansen-hodrick` beside Newey-West | P2, 3.1 L16, curriculum |
-| `pricer-compare` | `pde` method | P2, 2.3 L164, curriculum |
+| `pricer-compare` | `pde` method | P2, 2.0a L65 (2.3 L164 in draft 1), curriculum |
+| `pricer-compare` | `work`, embedding `convergence-plot` | P2, 2.0a L65, L90, curriculum |
 | `puzzle-workbench` | `debrief-variance` mode | P2, 3.3 L40, curriculum |
 | `range-query-lab` | sparse table | P2, 2.4, dsa-cpp request 6, curriculum |
 | `reflection-principle` | `drift` mode | P2, 3.2 L49, L50, L90, curriculum |
 | `regression-lab` | `ar1` errors for 1.6 L56 | P1, curriculum |
 | `regression-lab` | `glm` mode | P2, 2.1 L39, curriculum |
+| `relu-composer` | compose two networks | P2, 2.1b L3, curriculum |
+| `results-note` | audit report template | P2, 2.2c L18, curriculum |
+| `results-note` | pre-registration template with the lock | P2, 2.2c L30, curriculum |
+| `riemann-sum` | `romberg` | P2, 2.0a L26, curriculum |
+| `riemann-sum` | `gauss` | P2, 2.0a L27, L28, curriculum |
+| `riemann-sum` | `adaptive` Simpson | P2, 2.0a L29, curriculum |
+| `root-finder` | `fixed-point`, embedding `iteration-cobweb` | P2, 2.0a L15, curriculum |
+| `root-finder` | `secant` | P2, 2.0a L16, curriculum |
+| `root-finder` | `brent`, embedded by `iv-solver`'s algorithm mode | P2, 2.0a L17, L18, curriculum |
+| `root-finder` | `newton-2d` | P2, 2.0a L19, curriculum |
 | `sampling-lab` | `predict-se`, correlated population `correlated: { rho }` and `ecdf` view | P1, 1.6 L2 and L4, curriculum |
+| `sampling-lab` | stationary block bootstrap | P2, 2.2c L3, curriculum |
 | `sde-stepper` | `cir-feller` mode | P2, 3.2 L84, curriculum |
+| `sde-stepper` | `strong and weak error` | P2, 2.0a L74, curriculum |
 | `secant-tangent` | motion preset with tower, ruler and time scrubber; signed stops excluding 0; centred-window mode with `handle:Qm`; switching position functions | P0, 1.3 L1, curriculum: lesson 1 cannot be built without them |
+| `secant-tangent` | parametric curve with a tangent parallel to its chord | P0, A1 L36, curriculum |
 | `sequence-lab` | explicit and recursive views side by side, index-origin toggle, two-term mode with ratio row, tolerance band | P0, 0.3 L39 to L43, curriculum |
+| `sequence-lab` | subsequence picking; bisection with an "infinitely many terms" marker; tail envelopes; the Cauchy band | P0, A1 L15 to L17, curriculum |
 | `series-explorer` | Fourier mode | P0, 1.4 L53, curriculum |
+| `series-explorer` | condensation grouping; rearrangement towards a target; the double-sum grid | P0, A1 L14, L20, L21, curriculum |
+| `sharpe-lab` | sub-periods with the joint $\chi^2$ test | P2, 2.2c L5, curriculum |
 | `shell-sim` | job control, remote (`ssh`) and `awk` modes | P0, moved from P1; 1.2 L3, L8, curriculum |
 | `shortest-path` | Floyd-Warshall | P1, 1.8, dsa-cpp request 6, curriculum |
+| `slope-field` | `stiff` with stability regions | P2, 2.0a L54, curriculum |
 | `split-scorer` | `chord` mode for the ESL tie | P2, 2.1 L87, curriculum |
 | `taylor-builder` | bond preset with a stated compounding convention | P0, 1.3, curriculum |
 | `test-lab` | `ks` test | P1, 1.6 L34, curriculum |
+| `test-lab` | significance filter | P2, 2.2c L20, curriculum |
 | `transform-grid` | non-square $A$, 3D to the plane | P0, 1.4 L17, curriculum |
 | `tree-lab` | Euler tour and binary lifting | P1, 1.8, dsa-cpp request 6, curriculum |
 | `trial-strip` | arrival marker in Poisson mode | P0, 1.5 L75, curriculum |
@@ -5193,7 +5697,7 @@ Each row is accepted. The priority is the priority of the lesson that asks.
 | `algo-lab` | Every use is through one of its presets |
 | `scratch-pad` | The ink layer of long-form homework and the working space of `puzzle-workbench` (assessment 2) |
 
-Dropped: `vim-sim`: No lesson uses it: python-tools decision 19 covers 1.2 L8 with a `text-terminal` recording. Rejected rather than deferred; a later lesson that needs it writes a brief. The canon-gap proposals (`forking-paths`, `shrinkage-lab`, `hac-lab`, `var-backtest` and the rest of canon-gap 5.1) are not widgets: the in-budget lessons it flagged use `multiple-testing` (forking mode, 1.6 L41), `pca-lab` (scree view, 1.4 L95), `regression-lab` (`ar1`, 1.6 L56) and `garch-lab` with `test-lab` (2.2 L30). If the owner accepts a canon-gap course, its curriculum file names widgets and this library adds them through the same rules.
+Dropped: `vim-sim`: No lesson uses it: python-tools decision 19 covers 1.2 L8 with a `text-terminal` recording. Rejected rather than deferred; a later lesson that needs it writes a brief. The owner adopted P1 to P4, 2.1b and A1 on 7 October 2026; their files named the 24 widgets of decision 17, every one of which a lesson row names, and `forking-paths` became `multiple-testing`'s `garden` mode. The rest of canon-gap 5.1's widgets (`shrinkage-lab`, `hac-lab`, `var-backtest` and others) served proposals that were not adopted and are not widgets: the in-budget lessons it flagged use `multiple-testing` (forking mode, 1.6 L41), `pca-lab` (scree view, 1.4 L95), `regression-lab` (`ar1`, 1.6 L56) and `garch-lab` with `test-lab` (2.2 L30).
 
 ---
 
@@ -5212,6 +5716,9 @@ Dropped: `vim-sim`: No lesson uses it: python-tools decision 19 covers 1.2 L8 wi
 | Putting every shared composite in `core` | `core` loads with every lesson; the 80 KB cluster budget would fail |
 | Promoting all of 1.7 to P0 because it runs alongside 1.3 to 1.6 | Decision 11 |
 | Retaining `vim-sim` for a possible optional lesson | Decision 15 |
+| `frontier-lab` as new modes of `portfolio-lab` | `portfolio-lab` is P1 and already embeds `regression-lab` and `lagrange-explorer`; a constraint editor, a QP and a turnover view would pass rule 4's cap and put P2 code in a P1 batch (decision 17) |
+| `forking-paths`, `ctmc-clock` and `brownian-path` as their own widgets | Each is one more view of an existing widget's model (decision 15) |
+| One bespoke "numerics lab" for 2.0a | It would merge six models with no shared interaction; six scenes keep each under the cap and testable on its own (`stage2-numerics-optimisation.md` decision 19) |
 
 ### 9.2 Open questions
 
@@ -5223,4 +5730,7 @@ Dropped: `vim-sim`: No lesson uses it: python-tools decision 19 covers 1.2 L8 wi
 | 4 | Agent build time per size class [unverified] | Wave dates move | Recorded per pull request from `docs/PLAN.md` stage 1; the four stage 14 pilots set the scene rates per family; every batch gate re-forecasts |
 | 5 | Is `dmath` fast enough for `ml-core` training loops on the budget phone? [unverified] | Use `Math` in visual-only paths and `dmath` only where a number is shown or graded | E1 benchmark |
 | 6 | The `downloads` capability for starter suites (finance-projects open item 7) [unverified] | `setup-checklist` project mode offers `.txt` suites with rename instructions | E10 |
+| 7 | Do the four new clusters (`analysis`, `numerics`, `optim`, `dl`) each fit the 80 KB gzipped budget? [unverified] | Merge `optim` into `numerics` if both are small, or split `dl` by course | `size-limit` when each wave is built |
+| 8 | Do the L scenes `proof-builder`, `line-topology`, `fd-grid`, `mc-variance`, `feasible-region`, `dual-pair`, `conv-lab`, `attention-lab` and `bias-audit` stay within rule 4's 400 lines of `scene.ts`? [unverified] | The split each entry names (a mode into a preset); otherwise bespoke by rule | At each wave brief, then CI |
+| 9 | Is `ml-core`'s tensor autodiff fast enough for live screens below 5,000 parameters on the budget phone? [unverified] | Fixture replays for those screens too (`stage2-deep-learning.md` decision 9) | Measured when the 2.1b wave is built |
 

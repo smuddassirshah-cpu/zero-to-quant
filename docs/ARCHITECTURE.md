@@ -30,6 +30,22 @@
 > | Decision 31, 3.2 | CPython 3.11 floor; timeouts there undecided; Python pins unlisted | CPython 3.12 floor (`sys.monitoring`, and SciPy 1.18.0 needs 3.12 [measured]); `tools/py/uv.lock` pins the CI packages to Pyodide's versions |
 > | 6.2.3, decision 29, risk 5, 14 item 10 | Page-level `import()` unverified; generator modules per course; "67 MB against 105 MB"; the `db` cap probe in A2 | Measured; per topic; 75 MB; the bounded probe of `docs/PLAN.md` stage 2 |
 
+> **Revision 2, 7 October 2026: the owner's decisions at Blueprint review** (`docs/PLAN.md` revision 2 note and section 4.3). These rows win over anything below that reads otherwise. Section numbers are unchanged; 6.2.7 and decision 37 are new.
+>
+> | Where | Was | Now |
+> |---|---|---|
+> | Decisions 15, 16; 5.9; 6.3; risks 5, 16 | Pyodide on both targets; the Artifact's split-archive loader with JSON parts; fallbacks F1 and F2 | **Pyodide on the web app only.** The Artifact publishes only files generated from this repository's own sources, so it has no Python, SQLite or compiler: `PythonRuntime` and `SqlRuntime` are handoff stubs there and every drill returns by result code. 6.3.3 stays as the record of a measured layout, not built |
+> | Decision 24; 3.1; 6.1; 6.2; new 6.2.7 | Every dependency bundled as the Artifact's own files | **Third-party JavaScript from CDNs at exact versions in the Artifact**, through an import map written from `cdn.lock.json`; workers import self-contained modules by full URL; the web app keeps bundling |
+> | New decision 37; 5.11; 11.6; 14 items 2, 4 | KaTeX fonts as own files; MathLive in both targets | **MathML in the Artifact** (KaTeX `output: 'mathml'`, system maths fonts, no KaTeX CSS or fonts); MathLive web only; the plain expression field with the symbol bar and a live MathML preview in the Artifact |
+> | 4.2, 4.4 | `tools/pysplit`; `loader-split.ts`, `zipstore.ts`, `verify.ts` | `tools/pyvendor` (fetch for the web build only), `tools/cdn` (lock and drift check), `tools/release/provenance.ts`, `platform/artifact/cdn.ts`, `styles/math.css` |
+> | 6.2.5 | About 214 files and 190 MB per release, Python 15 files and 67 MB | About 198 files and 125 MB: 36 app files, about 162 content files, no Python; limits 230 files and 150 MB per release |
+> | 13 E0 (spike S1) | Own fonts, `FontFace`, the JSON-part Python layout, MathLive | CDN loading through an import map (page and module worker), import-map integrity, the UMD fallback, MathML quality and `TexSlots` in MathML; the platform and capability checks kept |
+> | Decision 8, 6.4.1, 9.2 | 22 widget clusters | 26 (`analysis`, `numerics`, `optim`, `dl`; `docs/WIDGETS.md` decision 19) |
+> | 4.3, 13 | Services 3a to 3f | Plus `@zq/models/analysis` (`docs/PLAN.md` stage 3g) for A1, and `numerics`, `optim`, `research` with their P2 waves |
+> | Decisions 7 and 29, risk 7 | 314 widget ids, 125 P0 scenes; 21 generator modules | 338 ids, 131 P0 scenes and 22 bespoke (`docs/WIDGETS.md` 0.2); 26 generator modules, one per topic (`docs/CURRICULUM.md` 0.1) |
+
+> **Second review round of `docs/PLAN.md`, 7 October 2026** (its section 13). Edited in place: decision 7 (338 ids, 24 presets), 8 (one bundle per course), 31 (only the web app runs Python), 36 (about 240 AD less), 37 and 5.11 (`TexSlots` binds sentinels on both outputs, `<mn>` in MathML), 0.3 (CPython 3.12), 3.1 (`@preact/signals-core` 1.14.4), 3.2 (esbuild per topic), 5.7.2 (live-code screens in the Artifact resolve as `read` and are finished in the web app), 6.2.7 item 5 (provenance reads esbuild's metafile too), 9.2 (whole-path learner), 11.3 (exactly two sinks), 12 risk 7 (four pilots, 338 ids), 13 E0 (the single S1 list of `docs/PLAN.md` stage 2) and E9 (the decision-13 web host), 14 items 6 and 20. Wherever 6.1 (`base`), 6.3.1, 6.4.2 and 6.4.3 say GitHub Pages, read the web host of `docs/PLAN.md` 12 decision 13 (default: Cloudflare Pages behind Access, `base` `/`); the meta CSP and the no-isolation-headers design stay, so the hosts remain interchangeable.
+
 Working paper for the Stage 2 Blueprint, 6 October 2026. Scope: the stack, the module tree, every interface between the engine, the widget library, the content, the tutor and the two runtime targets, the two builds, versioning and migrations, testing and CI, developer experience, risks and the engine's build stages. Input to `docs/PLAN.md` sections 3, 4, 6, 8, 10 and 11. With `CONTENT-FORMAT.md`, `AI-TUTOR.md`, `ASSESSMENT.md`, `BERTIE.md` and the six widget catalogues, it is meant to leave Phase 2 with no architectural decision to make.
 
 **How to read it.**
@@ -61,36 +77,37 @@ Working paper for the Stage 2 Blueprint, 6 October 2026. Scope: the stack, the m
 | 4 | TypeScript | **6.0.3** (16 April 2026) | 7.0.2, the native compiler (latest) | typescript-eslint 8.71.1 declares `typescript >=4.8.4 <6.1.0` [measured]; type-aware lint rules are part of the agent guard rails. Move when typescript-eslint supports 7 |
 | 5 | Widget contract | **A pure logic module (Node-safe), a Preact view and a build-time schema per widget; the engine's `WidgetHost` implements the lifecycle once** (lock, marks, highlight, annotate, ghost preview, reset, reveal, serialisation, timers, announcements) | Each widget implements a 20 to 25 method instance interface (`widgets-stage0.md` 1.1, `widgets-calc-linalg.md` 2.2) | The prototype's defects were in machinery: timers, state and XP. Writing the machinery once and keeping widget code to pure functions plus a view makes 100 widgets testable in Node and leaves agents nothing stateful to get wrong |
 | 6 | Widget state | **Two parts: `a` (answer state, graded and saved) and `v` (view state: zoom, step, time cursor)** | One state object | Show-why may tween only `v`, so "show-why never edits answer state" (calc-linalg 2.6) becomes a type rule; Try again restores `v` from a snapshot |
-| 7 | Library tiers | **Five tiers: primitives (29) and inputs (8), hand-written; scenes (about 200, P0 125): composites written as data over primitives plus a pure model, turned into widget modules by the engine (decision 36, section 5.14); bespoke composites with their own view (about 50, P0 22); presets (23): configuration over a base widget, expanded at compile time** (revised for `docs/PLAN.md`; `docs/WIDGETS.md` 0.2 gives the 314 ids) | Every catalogue entry as a module with a view; this paper's first estimate of about 25, 75 and the rest | The library has 314 ids, 254 of them composites. A preset costs a config transform and a test; a scene costs a layout, a model function and fixtures, not a component; only interactions no primitive offers get a view of their own |
-| 8 | Code splitting | **One lazy chunk per widget cluster (22 clusters); modules shared by two or more clusters (primitives, inputs, render helpers, `@zq/mathcore`) go to the `w-core` cluster chunk, never to the entry; two content files per course (content-format decision 13); lazy chunks for KaTeX, MathLive, the Compute Engine parser and MiniSearch** | A chunk per widget; one bundle; shared modules merged into the entry | A chunk per widget is about 100 more files against 255 per publish and 511 per version [sourced]; one bundle makes the first load pay for Stage 3; merging shared widget code into the entry would move every primitive used by two clusters into the first load, and the entry budget (section 9.2) would fail as the library grows |
+| 7 | Library tiers | **Five tiers: primitives (29) and inputs (8), hand-written; scenes (about 225, P0 131): composites written as data over primitives plus a pure model, turned into widget modules by the engine (decision 36, section 5.14); bespoke composites with their own view (about 50, P0 22); presets (24): configuration over a base widget, expanded at compile time** (revised for `docs/PLAN.md`; `docs/WIDGETS.md` 0.2 gives the 338 ids) | Every catalogue entry as a module with a view; this paper's first estimate of about 25, 75 and the rest | The library has 338 ids, 277 of them composites (draft 1: 314 and 254). A preset costs a config transform and a test; a scene costs a layout, a model function and fixtures, not a component; only interactions no primitive offers get a view of their own |
+| 8 | Code splitting | **One lazy chunk per widget cluster (26 clusters since revision 2); modules shared by two or more clusters (primitives, inputs, render helpers, `@zq/mathcore`) go to the `w-core` cluster chunk, never to the entry; one content bundle per course (content-format decision 13; `docs/PLAN.md` 5.2); lazy chunks for KaTeX, MathLive, the Compute Engine parser and MiniSearch on the web, which the Artifact loads from the CDN instead (decision 24; MathLive is web only)** | A chunk per widget; one bundle; shared modules merged into the entry | A chunk per widget is about 100 more files against 255 per publish and 511 per version [sourced]; one bundle makes the first load pay for Stage 3; merging shared widget code into the entry would move every primitive used by two clusters into the first load, and the entry budget (section 9.2) would fail as the library grows |
 | 9 | CSS | **Design tokens as custom properties, CSS Modules per component, one stylesheet per target (`cssCodeSplit: false`)** | A CSS file per chunk; CSS-in-JS | Saves about 25 files; widget styles are present before a lazy widget renders, so no unstyled flash; one own-file stylesheet is within the Artifact's style policy [sourced] |
 | 10 | Runtime validation | **Classic `zod` 4.6.5 only in workers, Node and CI; `zod/mini` on the main thread** | Classic zod everywhere | A one-object schema bundles to 92 KB gzipped with classic zod and 6.4 KB with `zod/mini` [measured]. Course bundles, imports and remote events are validated in the data worker, which is where classic zod lives |
 | 11 | App state | **Signals in small per-domain stores; progress is the event fold of `ASSESSMENT.md` 13, run in the data worker for rebuilds and on the main thread for single events** | A global store library; mutable progress documents | XP, streak and mastery shown on screen are derived, never incremented by UI code, which removes the class of XP defects the prototype had |
 | 12 | Lesson player | **A pure reducer `step(state, event) -> [state, effects]` and a separate effect runner** | XState; state in components | The whole Check, Continue and feedback machine (design research 5.4) becomes a table of tests; no dependency; agents can read it |
 | 13 | Timers, frames, listeners | **Every one belongs to a `Scope`, disposed on leave, Try again and Start over; a grade generation number cancels stale show-why**; raw timers are a lint error in widgets and screens | Ad hoc timers with guards | Generalises the prototype's `showGen` fix, which was the cure for its timer defects |
 | 14 | Randomness | **Philox4x32-10 counter-based generator in `@zq/mathcore`**, addressed by (seed, stream, index) | mulberry32 (prototype); xorshift | Calc-linalg decision 9 needs addressable draws; Philox uses only 32-bit integer multiplies, so every engine gives identical bits |
-| 15 | Python | **Pyodide 314.0.7 on both targets: one worker, two loaders** (native on the web; the split-archive loader in the Artifact) | MicroPython (dropped by the owner); a second worker per target | The owner's measured iPhone result (spike `pyodide-in-artifact`); one grader and one test protocol everywhere |
-| 16 | Python files in the Artifact | **Every published file is genuinely the type its extension names. Each load group's archive members ship as JSON parts of at most 8 MB holding every member's original deflate-compressed bytes as base64; the worker rebuilds each archive in memory from those bytes (no recompression), Python's `zipfile` checks every member's CRC-32 on extraction, and our manifest's SHA-256 checks every part** | Concatenated side modules served as `.wasm` (this paper's first draft); one `.wasm` per side module (the spike's layout); wheels renamed to a served extension | A concatenation of side modules is not WebAssembly, so serving it as `.wasm` sidesteps the host's served-type list, which `widgets-programming.md` 13.1 already refused for renamed archives without the platform's confirmation. The spike's layout needs 276 side-module files for the scientific stack [measured, section 6.3.3], over 255 per publish. The whole stack is 153 MB raw, over any Python budget that leaves room for content, but about 67 MB in 15 files in this layout [measured] |
-| 17 | Artifact release | **Content-addressed files; a committed release ledger per release, its hash in `meta/release`; a publish plan in batches derived from the new and previous ledgers (content and Python first, the page last, then garbage collection), resumable from the first step whose effect is not visible; budgets per release, for the retained version and for the peak (section 6.2.5)** | Ad hoc publishes; a plan kept only in ignored build output | A full turnover must fit 511 files per version with the old release still live, and every app release renames about 40 chunks because hashed import specifiers cascade |
+| 15 | Python | **Pyodide 314.0.7 on the web app only: one worker, the native loader. None in the Artifact** (revision 2), where every drill hands off by result code | Pyodide in the Artifact through the split-archive loader (draft 1, measured working on the owner's iPhone); MicroPython (dropped by the owner) | The owner's publishing rule: the Artifact publishes only files generated from our sources, and Pyodide is a third-party binary. One Python target keeps one grader and one test protocol |
+| 16 | Python files in the Artifact | **Withdrawn by revision 2: none are published.** Draft 1's decision, kept as the record of section 6.3.3: **every published file is genuinely the type its extension names. Each load group's archive members ship as JSON parts of at most 8 MB holding every member's original deflate-compressed bytes as base64; the worker rebuilds each archive in memory from those bytes (no recompression), Python's `zipfile` checks every member's CRC-32 on extraction, and our manifest's SHA-256 checks every part** | Concatenated side modules served as `.wasm` (this paper's first draft); one `.wasm` per side module (the spike's layout); wheels renamed to a served extension | A concatenation of side modules is not WebAssembly, so serving it as `.wasm` sidesteps the host's served-type list, which `widgets-programming.md` 13.1 already refused for renamed archives without the platform's confirmation. The spike's layout needs 276 side-module files for the scientific stack [measured, section 6.3.3], over 255 per publish. The whole stack is 153 MB raw, over any Python budget that leaves room for content, but about 67 MB in 15 files in this layout [measured] |
+| 17 | Artifact release | **Content-addressed files; a committed release ledger per release, its hash in `meta/release`; a publish plan in batches derived from the new and previous ledgers (content first, the page last, then garbage collection), resumable from the first step whose effect is not visible; budgets per release, for the retained version and for the peak (section 6.2.5)** | Ad hoc publishes; a plan kept only in ignored build output | A full turnover must fit 511 files per version with the old release still live, and every app release renames about 40 chunks because hashed import specifiers cascade |
 | 18 | Web offline | **vite-plugin-pwa 2.0.0 with `injectManifest` and Workbox 7.4.1**: app precached, content and Python cached by hash at runtime, per-course "Keep offline" | `generateSW`; a hand-written service worker | Our routing of hashed content, Python and update timing needs code; Workbox gives tested precaching and strategies |
 | 19 | Routing | **Hash routes keyed by content ids; a typed in-house router of about 80 lines** | Path routes; preact-iso; wouter | Neither the Artifact page nor GitHub Pages can rewrite paths; ids are identity (content-format 4.1), display numbers are breadcrumbs |
 | 20 | Test layers | **Vitest 5.0.3 in Node for pure modules; Vitest browser mode on Playwright Chromium for widgets; Playwright 1.63.0 end to end on both targets, the Artifact through a local host emulator with a fake `window.claude`** | jsdom or happy-dom for widgets; Storybook | Widgets need layout, pointer capture and SVG geometry, which DOM emulators lack; the in-app gallery uses the real host |
 | 21 | Visual regression | **Playwright screenshots in the pinned Playwright container, 390 and 1,280 px, light and dark, under a `test` motion mode** | A hosted service | No third party; deterministic fonts and frames |
 | 22 | Package manager | **npm workspaces** (npm 10.9 with Node 22.22) | pnpm 12.9.1; Bun | Every agent container already has npm; at ten workspace packages pnpm's speed and strictness gain little, and `knip` catches undeclared dependencies |
 | 23 | Lint and format | **ESLint 10.12.0 with typescript-eslint strict type-checked rules, eslint-plugin-react-hooks 7.1.1 and our `eslint-plugin-zq`; Prettier 3.9.9; stylelint 17.16.0; knip 6.39.0** | Biome alone; eslint-plugin-jsx-a11y | Our custom rules need ESLint. jsx-a11y last released in October 2024 and declares ESLint up to 9 [measured]; axe in the browser tests covers the outcome |
-| 24 | Dependencies in the Artifact | **Everything bundled as the Artifact's own files**; Google Fonts the only outside source | Pinned CDN copies with integrity (`widgets-stage0.md` 1.10) | One supply path for both targets, nothing breaks if a CDN path moves, and the web app's offline copy is the same bytes |
+| 24 | Dependencies in the Artifact | **Revised by revision 2: no third-party file is published. Third-party JavaScript loads at run time from cdnjs where it hosts the identical file, otherwise jsDelivr's `/npm/` path, at exact versions listed in `cdn.lock.json` (URL, SHA-384, import kind); the page resolves bare names through an import map with `integrity`, workers import full URLs; fonts only from Google Fonts. The web app bundles everything** (section 6.2.7) | Everything bundled as own files (draft 1; the publishing rule forbids it); jsDelivr's `+esm` builds (dependency ranges resolved on the CDN, so `@preact/signals`' peer `preact` would not be ours to pin); unpinned or `@latest` URLs | The rule; exact versions keep both targets on the same code; the nightly drift check and the host's CSP bound what SRI cannot cover |
 | 25 | Sound | **Synthesised with Web Audio** from the design research 4.9 table | Audio files | Zero files against the budget; four short tones |
 | 26 | Two tabs on one device | **Web Locks leader election: one writer per device; other tabs read only with "Use here"** | A device id per tab | `ASSESSMENT.md` 13 assumes one writer per device id; two tabs would collide on `seq` |
 | 27 | Telemetry | **None leaves the device; a local ring-buffer log and a "Copy diagnostics" action** | Remote error reporting | Privacy (assessment 15), and the Artifact can reach no other host [sourced] |
 | 28 | Bertie | **The prototype rig ported to TypeScript, mounted imperatively inside a Preact wrapper, sharing `engine/motion/spring.ts`** | Rendering the rig through Preact | The rig writes SVG transforms every frame; that belongs outside the virtual DOM (decision 2) |
 | 29 | Generator modules | **Self-contained ES modules per topic (21 files), built by the content compiler with esbuild, loaded by dynamic import** | Generators importing the app's hashed chunks | Content and app chunks stay independent; a generator module is plain data in, plain JSON out |
 | 30 | Release coupling | **The app and the content are always built and released together; the page names the content manifest file by its hash (`<meta name="zq-manifest">`), and the manifest is a content-addressed file of its own, not part of the entry chunk** | Independent content releases; the manifest embedded in the entry chunk (this paper's first draft) | One compatibility state to test. With the manifest inside the entry, every content fix renames the entry, and through hashed import specifiers every lazy chunk: about 40 files republished to the Artifact and 1.8 MB re-precached on the web for a typo. Depth-first content means years of content-only releases, so a content release now changes only the page, the manifest and the courses it touches |
-| 31 | Python timeouts | **Two levels: a soft deadline, checked from a `sys.monitoring` callback on backward jumps (every loop iteration) once per 1,000 jumps, raises `ZqTimeout`, a `BaseException` subclass that a learner's `except Exception` cannot swallow; the page's watchdog terminates the worker only when the soft deadline does not fire (a long call inside C code)** | Watchdog only (this paper's first draft); `sys.settrace` line events | Neither target can use Pyodide's interrupt buffer (section 6.3.1). With the watchdog alone, every learner infinite loop costs a worker restart, about 3 to 4 s on the owner's iPhone. `sys.monitoring` exists from Python 3.12 and a raising callback propagates into the monitored code [recalled]; line tracing costs more per line than a jump callback costs per loop iteration [recalled]. CI's floor is therefore CPython 3.12, not 3.11 (SciPy 1.18.0, Pyodide's version, also requires 3.12 [measured: `uv pip compile`, 7 October 2026]), and the CI harness wraps every drill run in a subprocess wall-clock limit as an outer guard. Overhead is measured at E8; above 1.3 times on the reference drills, the soft deadline is dropped and the watchdog alone remains |
+| 31 | Python timeouts | **Two levels: a soft deadline, checked from a `sys.monitoring` callback on backward jumps (every loop iteration) once per 1,000 jumps, raises `ZqTimeout`, a `BaseException` subclass that a learner's `except Exception` cannot swallow; the page's watchdog terminates the worker only when the soft deadline does not fire (a long call inside C code)** | Watchdog only (this paper's first draft); `sys.settrace` line events | The web app, the one target that runs Python, cannot use Pyodide's interrupt buffer (section 6.3.1). With the watchdog alone, every learner infinite loop costs a worker restart, about 3 to 4 s on the owner's iPhone. `sys.monitoring` exists from Python 3.12 and a raising callback propagates into the monitored code [recalled]; line tracing costs more per line than a jump callback costs per loop iteration [recalled]. CI's floor is therefore CPython 3.12, not 3.11 (SciPy 1.18.0, Pyodide's version, also requires 3.12 [measured: `uv pip compile`, 7 October 2026]), and the CI harness wraps every drill run in a subprocess wall-clock limit as an outer guard. Overhead is measured at E8; above 1.3 times on the reference drills, the soft deadline is dropped and the watchdog alone remains |
 | 32 | Artifact update signal | **A `meta/release` document in `db`, written by the release session through `ArtifactData` and read with one `onSnapshot`; `version.json` stays the web target's signal** | `version.json` on both targets | Whether a published page's own-file fetches see later versions is [unverified]; if file paths are version-scoped (the `assets` contract describes one root-relative path that "resolves from every page and version", implying the others do not [inferred]), `version.json` would always report the page's own release |
 | 33 | Compiler access to widgets | **`@zq/compiler` takes a `CompilerRegistry` as a parameter; `tools/zq` builds it from a generated `src/widgets/registry.node.gen.ts` (logic, schema and preset files, no views)** | The compiler package importing `src/widgets` directly | Section 4.5 forbids packages importing `src/`; injection keeps the package testable with a fake registry and keeps views and CSS out of Node |
 | 34 | Single-key shortcuts | **On by default, with a Settings switch "Single-key shortcuts"; never active while focus is in a field or on a control that handles the key itself** | Always on | WCAG 2.2 SC 2.1.4 (level A) requires a way to turn off single-character shortcuts, and this paper claims AA |
 | 35 | Phone text entry | **Numeric and expression answers on touch devices use the in-app keypad and symbol bar (`inputmode="none"`, as the prototype's exam screen does); free text and code keep the system keyboard, with the button row lifted above it through `visualViewport`** | The system keyboard everywhere | The system keyboard covers the Check row on a 390 px phone and offers no fraction or minus keys that match the graders' forms |
-| 36 | Scenes | **A `scene` tier: `defineScene({ init, derive, layout, answer, describe, ... })` in a pure `scene.ts`; bindings are typed paths into answer state, view state, derived values and config; `derive` calls `@zq/models` and `@zq/mathcore`; the generic `SceneView` renders the layout with the primitives' controlled components and memoises every layer that binds only config. A composite is a scene unless it needs free text or code editing, a clock-driven loop, a service with its own state machine, a gesture no primitive offers, or fails the frame budget as a scene** | Every composite with its own view; a declarative dataflow inside content (`docs/WIDGETS.md` decision 4 rejected that, rightly) | About 225 agent-days less for P0 alone (`docs/PLAN.md` 3.2); render discipline (section 2.5) holds by construction; content still holds only configuration |
+| 36 | Scenes | **A `scene` tier: `defineScene({ init, derive, layout, answer, describe, ... })` in a pure `scene.ts`; bindings are typed paths into answer state, view state, derived values and config; `derive` calls `@zq/models` and `@zq/mathcore`; the generic `SceneView` renders the layout with the primitives' controlled components and memoises every layer that binds only config. A composite is a scene unless it needs free text or code editing, a clock-driven loop, a service with its own state machine, a gesture no primitive offers, or fails the frame budget as a scene** | Every composite with its own view; a declarative dataflow inside content (`docs/WIDGETS.md` decision 4 rejected that, rightly) | About 240 agent-days less for P0 alone (about 240 against about 480, `docs/PLAN.md` 3.2); render discipline (section 2.5) holds by construction; content still holds only configuration |
+| 37 | Maths in the Artifact | **MathML (revision 2).** KaTeX 0.19.0 from the CDN with `output: 'mathml'`, rendered in the system's maths font through `styles/math.css`; no KaTeX CSS or fonts. `TexSlots` marks each slot with a sentinel `\text{}` token on both outputs, one binding path (second review round): it binds the HTML span's text node on the web, and in every MathML tree (the Artifact's output and the web's hidden copy) it swaps the sentinel `<mtext>` for an `<mn>` built with `createElementNS`, so slot digits use the maths font and screen readers hear the live value. `\htmlData` attributes are an HTML-output feature [recalled, unverified; S1], so slots never depend on them. MathLive is web only; the Artifact's expression input is the plain field with the symbol bar and a live MathML preview, graded by the same Compute Engine parser | MathML emitted at build time; MathLive without its fonts; KaTeX HTML output with fonts as `FontFace` from own files | Fonts load only from Google Fonts and no third-party file may be published; generated items, live formulas and Bertie's replies need run-time rendering anyway, so build-time MathML would be a second path; MathLive lays out with KaTeX's font metrics [recalled] |
 
 ### 0.2 What was executed
 
@@ -110,9 +127,9 @@ All on 6 October 2026, in a scratch folder outside the repository [measured]:
 | Paper | Was | Now | Why |
 |---|---|---|---|
 | `widgets-stage0.md` 1.1, `widgets-calc-linalg.md` 2.2, `widgets-programming.md` 2 | Each widget implements a lifecycle instance (`getState`, `setState`, `lock`, `mark`, `showWhy`, `reveal`, `reset`, `describe`, `targets` or `ids`, `highlight`, `annotate`, `preview`, `on`, `destroy`) | Section 5.3: pure `WidgetLogic` plus a view; the host does the rest. Section 5.6 maps every old method to its new home | Decision 5 |
-| `widgets-stage0.md` 1.10, 1.11; `widgets-programming.md` 0.1 decision 3, 2.4, 2.10; `CONTENT-FORMAT.md` 7.6 | MicroPython with `ulab` in the Artifact, handoff otherwise; drills tagged compatible | Pyodide on both targets (section 6.3); handoff only for C++ and for packages a course has not budgeted in the Artifact | The owner's decision after the iPhone spike |
+| `widgets-stage0.md` 1.10, 1.11; `widgets-programming.md` 0.1 decision 3, 2.4, 2.10; `CONTENT-FORMAT.md` 7.6 | MicroPython with `ulab` in the Artifact, handoff otherwise; drills tagged compatible | Pyodide on the web app (section 6.3); in the Artifact every drill hands off (revision 2) | The owner's decision after the iPhone spike, then his publishing rule |
 | `ASSESSMENT.md` 17 | Drills tagged `micropython-ok` | Dropped; drills declare `needs`, and the compiler aggregates them per course | As above |
-| `widgets-stage0.md` 1.10 | Artifact dependencies from `cdn.jsdelivr.net/npm/` with `integrity` | Bundled as own files (decision 24) | One supply path |
+| `widgets-stage0.md` 1.10 | Artifact dependencies from `cdn.jsdelivr.net/npm/` with `integrity` | Draft 1 bundled them as own files; revision 2 returns to pinned CDN copies through an import map with `integrity` (decision 24) | The publishing rule |
 | `widgets-stage0.md` 1.8; `AI-TUTOR.md` 0.2 | Element ids `kind:name`, multi-widget prefix `w2/` | Kept; the prefix is the screen's widget id, not a position: `grid/cell:5,3` | Positions change when an author adds a canvas widget; local ids do not (content-format 4.1) |
 | `CONTENT-FORMAT.md` 3.2, 8.2 | The runtime validates bundles with the shared zod schemas | It does, in the data worker only (decision 10) | Main-thread size |
 | `CONTENT-FORMAT.md` 9.2 | Preview routes under `#/preview/...` on the dev server | Kept, plus `#/gallery/<widget>` and the `dev:artifact` emulator (section 10) | Widget-level preview |
@@ -123,11 +140,11 @@ All on 6 October 2026, in a scratch folder outside the repository [measured]:
 | `design-research.md` 8.2 | URL scheme `/learn/{stage}/{topic}/{course}/{level}/{lesson}/{screen}` | Hash routes by id, `#/lesson/<lsn id>/<screen id>`; the stage-to-screen path is a breadcrumb | Decision 19 |
 | `design-research.md` 4.1 principle 8 | "A shared Rive file or a shared JS/CSS state machine" | Shared TypeScript state machines and Web Animations; no Rive (agrees with `BERTIE.md` 11) | Rive's runtime and asset type do not fit the Artifact |
 | `widgets-calc-linalg.md` 2.10, `widgets-stage0.md` 1.9 | Two different reference phones | One budget device class and one CI proxy (section 9.1) | One number to test against |
-| `CONTENT-FORMAT.md` decision 18, 3.2 (`RuntimeTag`, `Drill.aim`), 6.11, stage C7 | Tags `micropython-ok`, `ulab-ok`, `pyodide-core`, `web`; MicroPython as the Artifact's fallback | `RuntimeTag` and `aim` dropped. CI runs every drill on CPython 3.11 and Pyodide 314.0.7; where a drill runs is decided at run time from its `needs` against `PythonRuntime.available()` (section 5.9). C7's MicroPython checks go | The owner dropped MicroPython |
+| `CONTENT-FORMAT.md` decision 18, 3.2 (`RuntimeTag`, `Drill.aim`), 6.11, stage C7 | Tags `micropython-ok`, `ulab-ok`, `pyodide-core`, `web`; MicroPython as the Artifact's fallback | `RuntimeTag` and `aim` dropped. CI runs every drill on CPython 3.12 and Pyodide 314.0.7; where a drill runs is decided at run time from its `needs` against `PythonRuntime.available()` (section 5.9), which in the Artifact is the handoff stub (revision 2). C7's MicroPython checks go | The owner dropped MicroPython |
 | `CONTENT-FORMAT.md` 12.1 | `targets(config)` static form with labels and roles; recipes with argument schemas; `exports` with per-element metadata; `resolve(config, expr)` | `staticTargets`, `recipeArgs` (in `schema.ts`), `exports`, `elementMeta` and `resolvers` on the widget contract (section 5.3), reached by the compiler through `CompilerRegistry` (decision 33) | The first draft's `staticIds` returned ids only and had no recipe argument schemas, so the compiler could not check hint labels or recipe arguments |
 | `CONTENT-FORMAT.md` 5.4, 12.2; `ASSESSMENT.md` 3 and 10 | `hash32(id, seed)`; `hash32(attemptId, slotIndex, k)`; this paper's `hash32(string)` | One definition: `hash32(...parts: (string \| number)[])` (section 5.1) | Three spellings of one function |
 | `CONTENT-FORMAT.md` 5.4, `AI-TUTOR.md` 2.11 | `makeWhere(partial, seed)` assumed of the engine | `GeneratorModule.makeWhere` (section 5.9) | It had no interface here |
-| `CONTENT-FORMAT.md` 8.2 | About 250 files and 105 to 135 MB per version, Pyodide as 69 files and 49 MB | Section 6.2.5: about 200 files per release, Python in 15 files | Decision 16 |
+| `CONTENT-FORMAT.md` 8.2 | About 250 files and 105 to 135 MB per version, Pyodide as 69 files and 49 MB | Section 6.2.5: about 198 files per release and no Python (revision 2) | The publishing rule |
 | `CONTENT-FORMAT.md` 3.2 `Drill.needs` | `'sklearn'` | Kept; `PyPackage` here now spells it the same way (it said `'scikit-learn'`) | One enum |
 | `ASSESSMENT.md` 12.5 | The whole `db` rule set (its decision 32) | Adopted unchanged, plus one rule for `meta` (section 6.2.4); this paper's first draft had declared a different root rule | One owner for the rule set |
 | `widgets-programming.md` decision 9, 2.10 table | `cpp-runner` and `shell-interpreter` named; no engine interface | `CppRuntime` (web only, `null` in the Artifact) and shell drills graded in-widget (section 5.9) | Every drill language needs a contract |
@@ -167,7 +184,7 @@ Collected from the other papers, as the acceptance test for this architecture:
 | Criterion | (a) Preact | (b) Lit | (c) None |
 |---|---|---|---|
 | **Maintainability at content scale** (100 widgets and their presets, mostly agent-written, owner-reviewed) | Strong. TSX is type-checked through every prop and child; hooks and function components are the most common UI idiom in public code [inferred], so agents write them fluently; one obvious way to compose primitives into composites | Medium. Template bindings are strings the TypeScript compiler does not check without the separate lit-analyzer tooling [recalled]; class components with decorators or static `properties` add ceremony; composing primitives means nesting custom elements whose complex config passes as properties, not attributes | Weak. Every widget writes DOM creation and update by hand; a reviewer must check node bookkeeping in every file; the in-house renderer is a framework we would maintain, with no ecosystem |
-| **Runtime fit: Artifact policy** | No `eval`, no `new Function` [measured]; bundles to own files | Same [measured] | Same |
+| **Runtime fit: Artifact policy** | No `eval`, no `new Function` [measured]; bundles to own files on the web, loads from a CDN in the Artifact (revision 2) | Same [measured] | Same |
 | **Runtime fit: size** | 8.5 KB gzipped for Preact, hooks and signals [measured] | 6.8 KB [measured] | 1.8 KB [measured] |
 | **Runtime fit: drag frame time** | Equal to hand-written DOM when per-frame values are bound as signals (decision 2) [measured] | Slightly slower than both with large static arrays in a template, because each part diffs by value [measured] | The floor, but only as fast as (a) with discipline [measured] |
 | **Learner-experience fidelity** (springs, show-why morphs, mascot, keyboard paths) | Equal: motion runs on signals and Web Animations outside rendering; refs give per-frame imperative writes where needed | Equal | Equal |
@@ -229,6 +246,7 @@ Every version is pinned exactly (`save-exact=true` in `.npmrc`), and `package-lo
 |---|---|---|---|---|
 | `preact` | 11.0.0 | MIT | Components and rendering | Entry chunk |
 | `@preact/signals` | 2.11.3 | MIT | Signals and their Preact bindings | Entry chunk |
+| `@preact/signals-core` | 1.14.4 | MIT | Transitive runtime dependency of `@preact/signals` (it imports it by bare name), locked in `cdn.lock.json` and covered by the shipped-licence allow-list | Entry chunk on the web; from the CDN through the import map in the Artifact |
 | `zod` (`zod/mini` entry) | 4.6.5 | MIT | Main-thread validation of tutor replies and route params | Entry chunk, about 6 KB |
 | `zod` (classic) | 4.6.5 | MIT | Bundle, import and event validation | Data worker only |
 | `katex` | 0.19.0 | MIT | Maths typesetting (content-format decision 9 pins it) | Lazy `tex` chunk, preloaded at idle |
@@ -236,14 +254,16 @@ Every version is pinned exactly (`save-exact=true` in `.npmrc`), and `package-lo
 | `@cortex-js/compute-engine` (`latex-syntax` entry) | 0.148.0 | MIT | LaTeX to MathJSON for expression grading (content-format decision 10) | Lazy chunk with `expression-entry` |
 | `minisearch` | 7.2.0 | MIT | Search (content-format decision 14) | Lazy chunk, search screen |
 | `ts-fsrs` | 5.4.2 | MIT | FSRS-6 scheduling (assessment decision 7) | Entry chunk and data worker |
-| `fflate` | 0.8.3 | MIT | gzip for log packs, export files, result codes; zip reading in `pysplit`; inflate where `DecompressionStream` is missing | Data worker; Python worker (only if the core wasm ships compressed, section 6.3.1); Node tools |
+| `fflate` | 0.8.3 | MIT | gzip for log packs, export files, result codes; inflate where `DecompressionStream` is missing | Data worker; Node tools |
 | `idb` | 8.0.4 | ISC | Promise wrapper for IndexedDB | Entry chunk |
 | `pyodide` | 314.0.7 | MPL-2.0 | Python 3.14.2 in a worker | Python worker, lazy |
-| `hypothesis` (PyPI wheel, pure Python) | pinned at E8 with its SHA-256 | MPL-2.0 | Property-based drills (`needs: hypothesis`); not in Pyodide's distribution [measured], so `tools/pysplit/fetch.ts` takes it from PyPI into the `testing` group | Python worker, lazy |
+| `hypothesis` (PyPI wheel, pure Python) | pinned at E8 with its SHA-256 | MPL-2.0 | Property-based drills (`needs: hypothesis`); not in Pyodide's distribution [measured], so `tools/pyvendor/fetch.ts` takes it from PyPI into the `testing` group | Python worker, lazy (web) |
 | `@sqlite.org/sqlite-wasm` | 3.53.4-build2 | Apache-2.0 | SQL drills (programming decision 7) | SQL worker, lazy |
 | `workbox-precaching`, `workbox-routing`, `workbox-strategies`, `workbox-expiration`, `workbox-window` | 7.4.1 | MIT | Web service worker and its registration | Web target only |
 
-Fonts: Archivo, Besley and Source Code Pro (SIL Open Font Licence) through Google Fonts in the Artifact, as in the prototype; the same faces as committed `woff2` files on the web. KaTeX's 20 `woff2` files serve both KaTeX and MathLive; the `woff` and `ttf` copies are not shipped.
+**Where they load, by target (revision 2).** The web build bundles every package above into its own chunks and workers. The Artifact publishes none of them: `preact`, `@preact/signals` (with `@preact/signals-core`), `zod`, `katex`, the Compute Engine `latex-syntax` entry, `minisearch`, `ts-fsrs`, `fflate` and `idb` load from the CDN URLs in `cdn.lock.json` (section 6.2.7); `mathlive`, `pyodide`, `hypothesis`, `@sqlite.org/sqlite-wasm` and the `workbox-*` packages are web only.
+
+Fonts: Archivo, Besley and Source Code Pro (SIL Open Font Licence) through Google Fonts in the Artifact, as in the prototype; the same faces as committed `woff2` files on the web. KaTeX's 20 `woff2` files serve both KaTeX and MathLive on the web; the `woff` and `ttf` copies are not shipped. The Artifact ships no KaTeX font and renders maths as MathML (decision 37).
 
 ### 3.2 Build, test and authoring tools
 
@@ -258,8 +278,8 @@ Fonts: Archivo, Besley and Source Code Pro (SIL Open Font Licence) through Googl
 | `vite-plugin-pwa` | 2.0.0 | MIT | Web manifest and service worker build |
 | `workbox-build` | 7.4.1 | MIT | Peer of `vite-plugin-pwa` 2.0.0 (`^7.4.1`) [measured: peer range]; builds the precache manifest |
 | `@vite-pwa/assets-generator` | 2.0.0 | MIT | App icons from the logo SVG |
-| `esbuild` | 0.28.2 | MIT | Content compiler and per-course generator modules (content-format 8.1) |
-| `tsx` | 4.23.15 | MIT | Running TypeScript tools in Node (`zq`, `pysplit`, release tools) |
+| `esbuild` | 0.28.2 | MIT | Content compiler and the per-topic generator modules (content-format 8.1); its metafile feeds `tools/release/provenance.ts` (6.2.7) |
+| `tsx` | 4.23.15 | MIT | Running TypeScript tools in Node (`zq`, `pyvendor`, `cdn`, release tools) |
 | `vitest`, `@vitest/browser`, `@vitest/browser-playwright`, `@vitest/coverage-v8` | 5.0.3 | MIT | Unit and widget tests |
 | `@playwright/test` | 1.63.0 | Apache-2.0 | End-to-end, visual, performance harness |
 | `axe-core` | 4.14.0 | MPL-2.0 | Accessibility checks inside widget tests |
@@ -309,6 +329,7 @@ Build target `es2022`. Older browsers get a static "This browser is too old for 
 zero-to-quant/                         [npm workspaces root]
 ├── package.json                       workspaces, scripts (section 10.1), engines, exact pins
 ├── package-lock.json                  committed
+├── cdn.lock.json                      generated by tools/cdn: every third-party file the Artifact loads (section 6.2.7)
 ├── .nvmrc  .npmrc                     22.22.0; save-exact=true, engine-strict=true
 ├── tsconfig.base.json                 strict settings shared by every project (section 4.6)
 ├── vite.config.ts                     one config, three modes: web, artifact, dev (section 6.1)
@@ -322,7 +343,7 @@ zero-to-quant/                         [npm workspaces root]
 ├── .github/workflows/
 │   ├── ci.yml                         pull-request gates (section 8.3)
 │   ├── nightly.yml                    full visual, cross-browser, full verify, performance, audits
-│   ├── pages.yml                      web build and GitHub Pages deploy on a release tag
+│   ├── pages.yml                      web build and deploy to the web host on a release tag (`docs/PLAN.md` 12 decision 13)
 │   └── proxy.yml                      manual Worker deploy with wrangler (AI-TUTOR.md 6.3.7)
 ├── content/                           lessons and libraries [YAML]  (CONTENT-FORMAT.md 2.5)
 ├── docs/
@@ -368,7 +389,9 @@ src/                                   [TypeScript, TSX, CSS Modules]
 │   ├── web/                           index.ts, idb-store.ts (ProgressStore), files.ts (Blob link),
 │   │                                  sw-client.ts (updates, offline courses), identity.ts
 │   ├── artifact/                      index.ts, capabilities.ts (claude.use, absence),
-│   │                                  db-store.ts (ProgressStore on db), downloads.ts, identity.ts
+│   │                                  db-store.ts (ProgressStore on db), downloads.ts, identity.ts,
+│   │                                  cdn.ts (awaits the CDN modules at boot, failure codes, Retry),
+│   │                                  python-handoff.ts and sql-handoff.ts (the runtime stubs)
 │   └── fake/                          FakePlatform for tests, gallery and storyboards: scripted
 │                                      tutor, MemoryStore, FakeClock, fixed seeds
 ├── engine/
@@ -401,16 +424,15 @@ src/                                   [TypeScript, TSX, CSS Modules]
 │   │                                  study day)
 │   ├── schedule/                      fsrs.ts, redo.ts, composer.ts      (ASSESSMENT.md 5, 6)
 │   ├── assess/                        homework.ts, exam/, placement.ts   (ASSESSMENT.md 2, 3, 7)
-│   ├── python/                        client.ts (PythonRuntime), budget.ts (packages per course)
-│   ├── sql/                           client.ts (SqlRuntime)
+│   ├── python/                        client.ts (PythonRuntime, web), budget.ts (packages per course)
+│   ├── sql/                           client.ts (SqlRuntime, web)
 │   └── cas/                           expression.ts (lazy Compute Engine parser), mathfield.ts
-│                                      (lazy MathLive, fonts and sounds configured)
+│                                      (lazy MathLive, fonts and sounds configured; web only)
 ├── workers/
 │   ├── data.worker.ts                 bundle validation, fold rebuilds, search, export, import
-│   ├── python.worker.ts               Pyodide, both loaders, the grader (section 6.3)
-│   ├── python/                        loader-native.ts, loader-split.ts, zipstore.ts, verify.ts,
-│   │                                  grader.py, zqtest.py (content-format 3.9), trace.py
-│   └── sql.worker.ts                  SQLite WebAssembly
+│   ├── python.worker.ts               Pyodide, the native loader, the grader (section 6.3); web only
+│   ├── python/                        loader-native.ts, grader.py, zqtest.py (content-format 3.9), trace.py
+│   └── sql.worker.ts                  SQLite WebAssembly; web only
 ├── widgets/                           the library (section 5.3)
 │   ├── registry.gen.ts                generated: type@v -> cluster loader (CI checks it is current)
 │   ├── registry.node.gen.ts           generated: logic, schema and preset modules only, for tools/zq (decision 33)
@@ -441,8 +463,9 @@ src/                                   [TypeScript, TSX, CSS Modules]
 ├── sw/
 │   └── sw.ts                          web service worker (Workbox), web build only
 ├── styles/                            tokens.css (from prototype/css/tokens.css), base.css,
-│                                      katex.css (KaTeX's, with font URLs rewritten), fonts-web.css,
-│                                      fonts-artifact.css
+│                                      katex.css (KaTeX's, with font URLs rewritten; web only),
+│                                      math.css (ours: MathML layout and the maths font stack; Artifact),
+│                                      fonts-web.css, fonts-artifact.css
 └── assets/fonts/                      Archivo, Besley, Source Code Pro woff2 (OFL), web only
 ```
 
@@ -466,11 +489,12 @@ packages/                              [TypeScript, no DOM unless stated]
 │                                      probe; imports @zq/mathcore only
 ├── gen-kit/        @zq/gen            defineGenerator, phrases, exact values  (content-format 5)
 ├── models/         @zq/models         pure domain models shared by widgets, workers, generators and CI: algo, code,
-│                                      data, git, markets, ml (docs/WIDGETS.md 3); one entry point per domain
+│                                      data, git, analysis, markets, ml, numerics, optim, research
+│                                      (docs/WIDGETS.md 3); one entry point per domain
 └── eslint-plugin-zq/                  the custom lint rules (section 10.4)
 ```
 
-`@zq/graders`, `@zq/mathcore` and every widget's `logic.ts` and `schema.ts` run unchanged in Node (compiler, CI replay) and in the browser. A CI test imports all of them in plain Node with no DOM globals defined. The numeric services of `@zq/mathcore` (`linalg`, `quad`, `ode`, `roots`, `units`, `sample`, `stats`) and the `@zq/models` domains `data`, `code`, `algo` and `git` are built in `docs/PLAN.md` stages 3a to 3f, each with Python or `git` parity against the versions in `tools/py/uv.lock`, before the widget batches that use them; `markets` and `ml` are built with their P1 and P2 waves.
+`@zq/graders`, `@zq/mathcore` and every widget's `logic.ts` and `schema.ts` run unchanged in Node (compiler, CI replay) and in the browser. A CI test imports all of them in plain Node with no DOM globals defined. The numeric services of `@zq/mathcore` (`linalg`, `quad`, `ode`, `roots`, `units`, `sample`, `stats`) and the `@zq/models` domains `data`, `code`, `algo`, `git` and `analysis` are built in `docs/PLAN.md` stages 3a to 3g, each with Python or `git` parity against the versions in `tools/py/uv.lock`, before the widget batches that use them; `markets`, `ml`, `numerics`, `optim` and `research` are built with their P1 and P2 waves.
 
 ### 4.4 `tools/` and `tests/`
 
@@ -479,14 +503,17 @@ tools/
 ├── zq/                                the zq CLI: builds CompilerRegistry from registry.node.gen.ts
 │                                      and calls @zq/compiler (decision 33)
 ├── zqverify/                          independent Python verifier             (content-format 6)
-├── pysplit/                           Pyodide archive splitter for the Artifact (section 6.3)
-│   ├── fetch.ts                       downloads the pinned release wheels, checks pyodide-lock SHA-256;
-│   │                                  the hypothesis wheel from PyPI, checked against our pinned SHA-256
-│   └── split.ts                       JSON parts of base64 member bytes per load group, manifest with
-│                                      per-part SHA-256 (section 6.3.3)
+├── pyvendor/                          the web build's Pyodide files (section 6.3.2)
+│   └── fetch.ts                       downloads the pinned release wheels, checks pyodide-lock SHA-256;
+│                                      the hypothesis wheel from PyPI, checked against our pinned SHA-256
+├── cdn/                               the Artifact's third-party modules (section 6.2.7)
+│   ├── lock.ts                        writes cdn.lock.json from package-lock.json: URL, SHA-384, import kind,
+│   │                                  bare imports of each file; prefers cdnjs where its file is identical
+│   └── drift.ts                       nightly: fetches every locked URL and fails on any byte difference
 ├── release/
 │   ├── artifact-plan.ts               publish batches, garbage collection, budgets (section 6.2.6)
-│   ├── page.ts                        rewrites Vite's index.html into the Artifact page fragment
+│   ├── page.ts                        rewrites Vite's index.html into the Artifact page fragment, with the import map
+│   ├── provenance.ts                  fails the Artifact build if a node_modules module or a binary would be published
 │   └── budgets.ts                     file counts and sizes per target; fails the build
 ├── artifact-host/                     local emulator of the Artifact host (section 8.2)
 │   ├── server.ts                      file-type allow-list, CSP header, no service worker
@@ -532,9 +559,9 @@ Enforced by `no-restricted-imports` per directory and by `knip`. A higher row ma
 | Thread | Owns | Talks through |
 |---|---|---|
 | Main | Rendering, signals stores, widget state, the player, grading (non-code), the single-event fold, the append queue | `rpc.ts` to workers; `ProgressStore` |
-| Data worker (one) | Bundle validation (classic zod), full fold rebuilds and late-event re-folds, search queries, export packing, import validation and unpacking (fflate) | Messages; transfers `ArrayBuffer`s |
-| Python worker (at most one) | Pyodide, packages, test runs | Messages; terminated on timeout and restarted |
-| SQL worker (at most one) | SQLite | Messages |
+| Data worker (one) | Bundle validation (classic zod), full fold rebuilds and late-event re-folds, search queries, export packing, import validation and unpacking (fflate); in the Artifact its libraries come from the CDN by full URL (section 6.2.7) | Messages; transfers `ArrayBuffer`s |
+| Python worker (web, at most one) | Pyodide, packages, test runs | Messages; terminated on timeout and restarted |
+| SQL worker (web, at most one) | SQLite | Messages |
 | Service worker (web only) | Caches | `workbox-window` messages |
 
 **Shared mutable state.** None crosses a thread: workers receive copies or transferred buffers and return results. On the main thread:
@@ -1009,10 +1036,12 @@ export function step(s: PlayerState, ev: PlayerEvent, lesson: CompiledLesson, po
 | `engaged` (code) | `submit` | runtime ready | `running(submit)` | `lock on`, `run-code all` |
 | `running(run)` | `ran` | same `gen` | `engaged` | results shown |
 | `running(submit)` | `ran` | same `gen` | `correct` or `not-yet` | as for `graded` |
+| entry to a code screen or code quiz item | `open` or `continue` from the previous screen | its runtime answers `not-in-this-build` (the Artifact: `PythonRuntime` or `SqlRuntime` is the handoff stub) | `reading`, with the handoff panel (starter code, recorded output, link) | Continue enabled at once (second review round; `docs/PLAN.md` 4.3, live-code screens) |
+| `reading` (handoff panel) | `continue` | | next screen or quiz item | `record lsn screen` with `deferred: 'web'`; tally `read`: no attempt, no XP, no Redo entry; the fold derives a "Finish in the web app" item keyed by (lesson id, `rev`, screen id), which a matching result code clears (`ASSESSMENT.md` 14.3) |
 | any task phase | `blocked` | | `blocked` | Check disabled, reason shown with Retry |
 | `blocked` | `unblocked` | | `idle` or `engaged` | |
 | last screen | `continue` | | quiz item 0 | `prefetch quiz` |
-| last quiz item, graded | `continue` | | `complete: celebrate` | `record lsn complete` (with `perfect`), `bertie celebrate`, `feedback complete`, `tutor-auto recap` |
+| last quiz item, graded or deferred | `continue` | | `complete: celebrate` | `record lsn complete` (with `perfect`, and the ids of deferred items, whose result codes the "Passed" star waits for), `bertie celebrate`, `feedback complete`, `tutor-auto recap` |
 | `complete` | `continue` | | rest-day if earned today, then streak if this lesson qualified the day, then `next` | values read from the derived state, never computed here |
 | any | `leave` | | unchanged | `save-position`, `navigate` course map; the scope disposes |
 
@@ -1116,11 +1145,11 @@ export interface Platform {
   readonly content: ContentSource;
   readonly progress: ProgressStore;        // ASSESSMENT.md 13.5, unchanged
   readonly drafts: DraftStore;             // per-device lesson drafts; homework and papers use progress.draft (leased)
-  readonly cache: BlobCache;               // disposable: bundles, generator modules, Python parts
+  readonly cache: BlobCache;               // disposable: bundles, generator modules
   readonly kv: KeyValue;
   readonly tutor: TutorBackend | null;     // AI-TUTOR.md 6.1; null when this view has no tutor
-  readonly python: PythonRuntime;
-  readonly sql: SqlRuntime;
+  readonly python: PythonRuntime;          // web: Pyodide; Artifact: the handoff stub (revision 2)
+  readonly sql: SqlRuntime;                // web: SQLite; Artifact: the handoff stub
   readonly cpp: CppRuntime | null;         // web only (programming decision 9); null in the Artifact, where C++ drills hand off
   readonly feedback: Feedback;
   readonly clock: Clock;
@@ -1163,8 +1192,8 @@ export interface GeneratorModule {
 
 export interface BlobCache {                               // IndexedDB; least recently used beyond 300 MB or 60% of quota
   get(key: string): Promise<ArrayBuffer | null>;
-  put(key: string, data: ArrayBuffer, kind: 'course' | 'gen' | 'py' | 'search'): Promise<void>;
-  evict(kind?: 'course' | 'gen' | 'py' | 'search'): Promise<void>;
+  put(key: string, data: ArrayBuffer, kind: 'course' | 'gen' | 'search'): Promise<void>;
+  evict(kind?: 'course' | 'gen' | 'search'): Promise<void>;
   usage(): Promise<{ bytes: number; quota: number | null }>;
 }
 export interface DraftStore {                             // keys: 'lesson:<lsn id>@<rev>:<screen id>:<widget id>', so a new rev never meets an old draft
@@ -1177,7 +1206,7 @@ export interface KeyValue {                                // small device-local
   setSecret(name: 'tutor-token', value: string | null): Promise<void>;
 }
 
-export type PyPackage = 'numpy' | 'pandas' | 'scipy' | 'statsmodels' | 'sklearn' | 'matplotlib' | 'pytest' | 'hypothesis';   // the content schema's Drill.needs enum, spelt identically
+export type PyPackage = 'numpy' | 'pandas' | 'scipy' | 'statsmodels' | 'sklearn' | 'matplotlib' | 'pytest' | 'hypothesis';   // the content schema's Drill.needs enum, spelt identically; 'cvxpy' and 'highspy' join at the 2.0b wave (docs/PLAN.md 5.7)
 export interface PythonRuntime {
   readonly status: ReadonlySignal<
     | { k: 'cold' } | { k: 'loading'; step: string; done: number; total: number }
@@ -1250,8 +1279,8 @@ export interface Lifecycle {
 | `ProgressStore` | `IdbStore` (assessment 13.5) | `DbStore` with `IdbStore` mirror; `IdbStore` alone when `db` or `user` is absent | `MemoryStore` |
 | `DraftStore`, `BlobCache`, `KeyValue` | IndexedDB (`idb`), `localStorage` mirror for theme and motion only | same | memory |
 | `TutorBackend` | proxy backend (ai-tutor 6.3) | `sample` backend (ai-tutor 6.2) | scripted fake |
-| `PythonRuntime` | worker, native loader | worker, split-archive loader | worker in browser tests; a stub in Node |
-| `SqlRuntime` | SQLite worker | SQLite worker | same |
+| `PythonRuntime` | worker, native loader | handoff stub: `available()` answers `not-in-this-build` for every drill, and `run` is never called (revision 2) | worker in browser tests; a stub in Node |
+| `SqlRuntime` | SQLite worker | handoff stub | same |
 | `CppRuntime` | the W-C spike's backend | `null`: handoff and local paste (programming 2.4) | recorder |
 | `FileSaver` | Blob link and `<input type=file>` | `downloads` capability; paste where no picker | recorder |
 | `Identity` | `null` id, can write | `user` capability | fixed |
@@ -1269,12 +1298,12 @@ export interface Lifecycle {
 3. The platform constructs. In the Artifact, `claude.use('db' | 'user' | 'sample' | 'downloads')` run in parallel; each resolves or turns `null` after the host's 10 seconds [sourced: `claude.d.ts`], and the app renders without them meanwhile (design for absence).
 4. Writer election (section 4.7), then `progress.load()`: the newest snapshot and the events after its basis. Up to 2,000 tail events fold on the main thread; more go to the data worker.
 5. The derived state signal is set; the route renders.
-6. At idle: the data worker starts, the `core` widget cluster and the KaTeX chunk preload, and the current course's bundle prefetches.
+6. At idle: the data worker starts, the `core` widget cluster and KaTeX (the web chunk, or the CDN module in the Artifact) preload, and the current course's bundle prefetches. In the Artifact, steps 2 to 6 run only after the bootstrap's `import()` of the entry has resolved its CDN modules through the import map (section 6.2.7).
 7. Web only: the service worker registers after the first render.
 
 #### 5.10.2 Entering a course
 
-`manifest.courses[id]` gives the bundle and generator file names (content hashes) and the course's clusters and Python packages. The loader asks `BlobCache` by hash, else fetches; a newly fetched bundle goes to the data worker, which checks its SHA-256 against the hash in its file name and validates it once against `@zq/content-schema`'s structural schemas, and is cached with a "validated" flag. Widget-specific config fields are validated at compile time only (CI, through `CompilerRegistry`), never at run time, so the data worker's size does not grow with the widget library; at run time a config is checked for its `BaseConfig` fields and a registered `type@v`. The player then preloads the course's widget clusters. If the current lesson has code screens and `python.available(course.python).downloadBytes` is 0, `python.warm(course.python)` starts on the lesson's title screen; otherwise the title screen shows "This lesson runs Python. Download it now (24 MB)?", the figure being `downloadBytes` (24 MB is core, standard library, NumPy and pandas in the Artifact layout, section 6.3.3), and warming starts on that tap or when the learner reaches the first code screen, never on its own over a connection the learner has not chosen. Generator modules load on the first practice, review or homework item.
+`manifest.courses[id]` gives the bundle and generator file names (content hashes) and the course's clusters and Python packages. The loader asks `BlobCache` by hash, else fetches; a newly fetched bundle goes to the data worker, which checks its SHA-256 against the hash in its file name and validates it once against `@zq/content-schema`'s structural schemas, and is cached with a "validated" flag. Widget-specific config fields are validated at compile time only (CI, through `CompilerRegistry`), never at run time, so the data worker's size does not grow with the widget library; at run time a config is checked for its `BaseConfig` fields and a registered `type@v`. The player then preloads the course's widget clusters. On the web, if the current lesson has code screens and `python.available(course.python).downloadBytes` is 0, `python.warm(course.python)` starts on the lesson's title screen; otherwise the title screen shows "This lesson runs Python. Download it now (21 MB)?", the figure being `downloadBytes` (21 MB is core, standard library, NumPy and pandas in the native layout, section 6.4.1), and warming starts on that tap or when the learner reaches the first code screen, never on its own over a connection the learner has not chosen. In the Artifact the title screen says which screens open the web app instead. Generator modules load on the first practice, review or homework item.
 
 #### 5.10.3 Failure behaviour
 
@@ -1285,7 +1314,7 @@ export interface Lifecycle {
 | Bundle fails validation | Not cached; "This course could not be opened. Update the app." and a log entry with the first schema path; never a partial lesson |
 | Bundle `zq` major unknown | "Update the app to open this course" (content-format 4.5); only stale caches can cause it (decision 30) |
 | Lazy chunk import fails | One retry; then "A new version is available. Reload to continue." with Reload. The usual cause is an old page whose files a later release removed (section 6.2.6) |
-| A fetch hangs | Every own-file fetch carries `AbortSignal.timeout` (20 s for the manifest and bundles, 120 s per Python part); a timeout is a failed fetch under the rows above (added by `docs/PLAN.md` 8.1) |
+| A fetch hangs | Every own-file fetch carries `AbortSignal.timeout` (20 s for the manifest and bundles, 120 s per Python package on the web); a timeout is a failed fetch under the rows above (added by `docs/PLAN.md` 8.1) |
 | Widget throws in render or logic | The widget's error boundary shows "This part of the screen failed. Skip this screen" (Continue enabled, result `read`), logs the error with the widget type and version, never the state |
 | Generator throws | The item is skipped, the set draws the next seed, the error is logged with `gen`, `v` and the seed |
 | IndexedDB unavailable or full | `BlobCache` and `DraftStore` fall back to memory; content refetches per session; progress follows assessment 13.8 |
@@ -1323,12 +1352,15 @@ export interface MotionService {
 // src/engine/render
 export interface TexService {
   ready(): boolean;
-  load(): Promise<void>;                                     // imports the KaTeX chunk once
-  html(src: string, display?: boolean): string;              // KaTeX output, least-recently-used cache of 1,000 entries; strict mode; macros from content/tex-macros.yaml
+  load(): Promise<void>;                                     // imports KaTeX once: the web chunk, or the locked CDN module in the Artifact
+  html(src: string, display?: boolean): string;              // KaTeX output, least-recently-used cache of 1,000 entries; strict mode; macros from content/tex-macros.yaml;
+                                                             // output 'htmlAndMathml' on the web, 'mathml' in the Artifact (decision 37)
 }
 // <Tex src display />: the only component that sets innerHTML, and only to KaTeX output (section 11.1).
-// <TexSlots src slots={{ a: signal }} />: renders once with \htmlData{slot=a}{0} placeholders (KaTeX `trust` limited to \htmlData);
-//   each slot's text node is then bound to its signal, so live numbers inside formulas cost a text write per frame.
+// <TexSlots src slots={{ a: signal }} />: renders once with each slot as a sentinel \text{} token, on both outputs (decision 37);
+//   the web's HTML span text node is bound to its signal, and in every MathML tree (the Artifact's output, the web's hidden copy)
+//   the sentinel <mtext> is swapped for an <mn> made with createElementNS whose textContent follows the signal,
+//   so live numbers inside formulas cost a text write per frame, render in the maths font and read correctly aloud.
 // <Layer> memoises a static SVG group (section 2.5 rule 2).
 // <CanvasLayer draw={(ctx, t) => ...} deps={[...signals]} dprCap={2} />: redraws on the next frame after a dependency changes;
 //   `t` is the design tokens read from CSS variables, refreshed when the theme signal changes.
@@ -1455,7 +1487,7 @@ Builders in `src/widgets/scene/build.ts` (`plot2d`, `plot3d`, `marks`, `dragPoin
 
 | Setting | Web | Artifact | Why |
 |---|---|---|---|
-| HTML entry | `html/web.html` | `html/artifact.html` | Different heads: web manifest, CSP meta and self-hosted fonts against Google Fonts and no manifest |
+| HTML entry | `html/web.html` | `html/artifact.html` | Different heads: web manifest, CSP meta and self-hosted fonts against Google Fonts, the import map and no manifest |
 | `base` | `/zero-to-quant/` (GitHub Pages) or `/` (local), from `VITE_BASE` | `./` | The Artifact references published files by relative path [sourced] |
 | `define` | `__TARGET__ = 'web'` | `__TARGET__ = 'artifact'` | Dead-code elimination removes the other platform |
 | `build.target` | `es2022` | `es2022` | Section 3.3 |
@@ -1465,9 +1497,11 @@ Builders in `src/widgets/scene/build.ts` (`plot2d`, `plot3d`, `marks`, `dragPoin
 | `build.sourcemap` | `hidden`, kept as CI artefacts only | off | Source maps would cost Artifact files and bytes |
 | Chunk names | `assets/[name].[hash].js` | same | Content-addressed, immutable |
 | Service worker | `vite-plugin-pwa`, `injectManifest`, `src/sw/sw.ts` | none | No service workers in the Artifact [sourced] |
-| Python files | `py/314.0.7/` in Pyodide's native layout | `py/314.0.7/` in the split layout (section 6.3) | One worker, two loaders |
+| Python files | `py/314.0.7/` in Pyodide's native layout | none (revision 2) | The publishing rule |
+| Third-party modules | bundled into our chunks | external: bare names left for the page's import map, full URLs in the data worker, both from `cdn.lock.json` (`vite-plugin-zq-cdn`, section 6.2.7) | The publishing rule |
+| KaTeX output | `htmlAndMathml`, KaTeX fonts self-hosted | `mathml`, no KaTeX CSS or fonts | Decision 37 |
 
-Chunking follows decision 8. Dynamic `import()` of `src/widgets/clusters/<cluster>.ts` makes 22 widget chunks; four screen groups (home: Today, Learn, Course, Review, You; assessment: practice, redo, homework, exam, daily, weekly; records: plan, log, notebook, search, import, settings; onboarding) and the tutor are lazy; KaTeX, MathLive, the Compute Engine parser and MiniSearch each get a named chunk. `build.rolldownOptions.output.codeSplitting.groups` puts modules shared by two or more widget clusters into the `w-core` chunk and modules shared by two or more screen groups into the entry, so no small shared chunks appear and widget code never inflates the first load (decision 8); the chunk count is a budget (section 6.2.5), so the configuration is tested, not trusted. Workers are bundled from `new Worker(new URL('../workers/x.worker.ts', import.meta.url), { type: 'module' })`.
+Chunking follows decision 8. Dynamic `import()` of `src/widgets/clusters/<cluster>.ts` makes 26 widget chunks; four screen groups (home: Today, Learn, Course, Review, You; assessment: practice, redo, homework, exam, daily, weekly; records: plan, log, notebook, search, import, settings; onboarding) and the tutor are lazy; On the web, KaTeX, MathLive, the Compute Engine parser and MiniSearch each get a named chunk; in the Artifact they are lazy CDN imports and MathLive is absent. `build.rolldownOptions.output.codeSplitting.groups` puts modules shared by two or more widget clusters into the `w-core` chunk and modules shared by two or more screen groups into the entry, so no small shared chunks appear and widget code never inflates the first load (decision 8); the chunk count is a budget (section 6.2.5), so the configuration is tested, not trusted. Workers are bundled from `new Worker(new URL('../workers/x.worker.ts', import.meta.url), { type: 'module' })`.
 
 Content: `zq build` writes `dist/content/`; a small Vite plugin (`vite-plugin-zq-content`) copies it into the target's `content/` folder, writes the manifest as `content/manifest.<hash>.json`, and injects `<meta name="zq-manifest" content="content/manifest.<hash>.json">` into the page, so the page and its content are pinned together while no app chunk changes when only content does (decision 30). In `dev` mode the same plugin serves the manifest from memory and pushes changes (section 10.3). A CI check builds twice with one changed lesson and asserts that only the page, the manifest and that course's files differ.
 
@@ -1480,40 +1514,39 @@ dist/artifact/
 ├── index.html                            the page, rewritten as a fragment by tools/release/page.ts
 ├── version.json                          the release id at a stable path (section 7.2)
 ├── assets/
-│   ├── app.<hash>.js                     shell, engine, ui, player, Bertie, Preact, signals, zod/mini, ts-fsrs, idb
-│   ├── app.<hash>.css                    tokens, base, every component and widget style, KaTeX CSS
+│   ├── app.<hash>.js                     shell, engine, ui, player, Bertie; no third-party code (revision 2)
+│   ├── app.<hash>.css                    tokens, base, every component and widget style, math.css
 │   ├── s-home.<hash>.js  s-assess.<hash>.js  s-records.<hash>.js  s-onboarding.<hash>.js
 │   ├── tutor.<hash>.js
-│   ├── w-<cluster>.<hash>.js             22 widget clusters
-│   ├── lib-katex.<hash>.js  lib-mathlive.<hash>.js  lib-cas.<hash>.js  lib-search.<hash>.js
-│   └── data.worker.<hash>.js  python.worker.<hash>.js  sql.worker.<hash>.js
-├── fonts/KaTeX_*.woff2                   20 files, shared by KaTeX and MathLive
-├── sqlite/sqlite3.<hash>.wasm  sqlite/sqlite3.<hash>.mjs
-├── content/                              CONTENT-FORMAT.md 8.2; manifest.<hash>.json, named by the page's meta tag
-│   ├── course/<crs>.<hash>.json  gen/<top>.<hash>.mjs
-│   ├── search/<stage>.<hash>.json  glossary.<hash>.json  notebook.<hash>.json
-│   └── assets/<name>.<hash>.svg
-└── py/314.0.7/                           section 6.3.3
+│   ├── w-<cluster>.<hash>.js             26 widget clusters
+│   └── data.worker.<hash>.js             the only worker; its libraries come from the CDN
+└── content/                              CONTENT-FORMAT.md 8.2; manifest.<hash>.json, named by the page's meta tag
+    ├── course/<crs>.<hash>.json  gen/<top>.<hash>.mjs
+    ├── search/<stage>.<hash>.json  glossary.<hash>.json  notebook.<hash>.json
+    └── assets/<name>.<hash>.svg
 ```
+
+Draft 1's `fonts/`, `sqlite/`, `py/314.0.7/` and `lib-*.js` files are gone (revision 2): they were third-party code or binaries.
 
 #### 6.2.2 The page
 
-The host wraps the published page in its own document skeleton [sourced: Artifact tool contract], so `tools/release/page.ts` rewrites Vite's `index.html` into the fragment form the prototype and the spikes used: `<meta charset>`, `<title>Zero to Quant</title>`, the Google Fonts `<link>`s, the app stylesheet `<link>`, the old-browser gate as a classic inline script, `<div id="app">`, and a classic inline bootstrap that calls `import('./assets/app.<hash>.js')` (the path the Artifact probe measured: a page-level dynamic `import()` of an own module file; no `<script type="module">` is relied on). The tokens define light and dark colours on `:root` guarded by `:root:not([data-theme="light"])` and `:root[data-theme="dark"]`, and `body` has an explicit background (both already true of `prototype/css/tokens.css`).
+The host wraps the published page in its own document skeleton [sourced: Artifact tool contract], so `tools/release/page.ts` rewrites Vite's `index.html` into the fragment form the prototype and the spikes used: `<meta charset>`, `<title>Zero to Quant</title>`, the Google Fonts `<link>`s, the app stylesheet `<link>`, the old-browser gate as a classic inline script, the `<script type="importmap">` written from `cdn.lock.json` (section 6.2.7), `<div id="app">`, and a classic inline bootstrap that calls `import('./assets/app.<hash>.js')` (the path the Artifact probe measured: a page-level dynamic `import()` of an own module file; no `<script type="module">` is relied on). The tokens define light and dark colours on `:root` guarded by `:root:not([data-theme="light"])` and `:root[data-theme="dark"]`, and `body` has an explicit background (both already true of `prototype/css/tokens.css`).
 
 #### 6.2.3 Fit with the host's rules
 
 | Host rule [sourced] | How the build complies | Status |
 |---|---|---|
-| Scripts only from the listed CDNs or own files | Every script is an own file; no CDN | Page-level dynamic `import()` of an own `.mjs` [measured by the Artifact probe on the owner's iPhone, section 14 item 1]; module workers and worker `import()` [measured by the owner's spike]; page-level `<script type="module">` is not relied on |
-| Stylesheets only from Google Fonts or own files | One own stylesheet; Google Fonts for Archivo, Besley, Source Code Pro | KaTeX's inline `style` attributes set through `innerHTML` are [unverified]: the repository holds no record of the prototype running as a published Artifact, and neither spike rendered KaTeX; S1 checks it |
-| Fonts | KaTeX `woff2` as own files. Fallbacks, in order: `FontFace` objects built from the fetched bytes (own-file fetch is measured, and a font constructed from an `ArrayBuffer` makes no font request for a font policy to block [recalled]); then `data:` URIs inside the stylesheet, which is how the prototype's vendored `katex.css` already ships them | [unverified]; spike S1 |
-| No fetch to other hosts | Content, Python and fonts are own files; the tutor uses `sample` | Measured for `.json` and `.wasm` |
-| Served types only | `.html .js .mjs .css .json .wasm .woff2 .svg` only, and every file genuinely the type its extension names (decision 16); `tools/release/budgets.ts` fails on any other extension, on a `.wasm` that does not compile as one module, and on a root `preflight.js`, which the host reserves [sourced: Artifact tool contract] | Enforced |
-| 16 MB per text file, 15 MB per binary | Python JSON parts split at 8 MB; `pyodide.asm.wasm` is 9.6 MB [measured] | Enforced |
+| Scripts only from the listed CDNs or own files | Our own files, plus third-party ES modules from cdnjs or jsDelivr at exact versions through the import map (section 6.2.7) | Page-level dynamic `import()` of an own `.mjs` [measured by the Artifact probe on the owner's iPhone, section 14 item 1]; module workers [measured by the owner's spike]; the import map, CDN modules on the page and in a module worker, and import-map `integrity` are [unverified]: S1 |
+| Publishing rule: the session reads every file it did not write; nothing unreadable is published (the owner's correction, revision 2) | Every published file is generated by the session's own build from the repository's sources: app chunks, the stylesheet, content bundles, generator modules, the page and `version.json`; `tools/release/provenance.ts` fails the build on any `node_modules` module or binary | Enforced |
+| Stylesheets only from Google Fonts or own files | One own stylesheet; Google Fonts for Archivo, Besley, Source Code Pro; no KaTeX CSS (MathML output needs none) | MathML's rendering in system maths fonts on iOS 18.7 is [unverified]: S1 |
+| Fonts | No own font files: Google Fonts for text, the system's maths font for MathML (`math.css`) | Decided (decision 37) |
+| No fetch to other hosts | Content is own files; the tutor uses `sample`; CDN modules arrive as scripts, never by `fetch`, so nothing probes a CDN at run time | Measured for `.json` |
+| Served types only | `.html .js .mjs .css .json .svg` only; `tools/release/budgets.ts` fails on any other extension, on any `.wasm`, and on a root `preflight.js`, which the host reserves [sourced: Artifact tool contract] | Enforced |
+| 16 MB per text file, 15 MB per binary | No binaries; the largest files are course bundles of a few MB | Enforced |
 | No service worker, iframe, `window.open`, print | None used; handoff is an anchor or a copy button | Enforced by lint (`zq/no-forbidden-apis`) |
 | Downloads only through `downloads` | `FileSaver` uses it | |
-| WebAssembly | Pyodide and SQLite | Measured |
-| The `assets` store | Not used for app, content or Python files: declaring `assets` makes the artifact organisation-internal and unshareable by public link [sourced: `assets.d.ts`] | Decided |
+| WebAssembly | None published (draft 1's Pyodide and SQLite are web only) | Decided |
+| The `assets` store | Not used for app or content files: declaring `assets` makes the artifact organisation-internal and unshareable by public link [sourced: `assets.d.ts`] | Decided |
 
 #### 6.2.4 Capabilities
 
@@ -1538,39 +1571,36 @@ capabilities: {
 
 #### 6.2.5 File and size budget
 
+Recomputed by revision 2: no Python, SQLite, KaTeX fonts or library chunks; 103 course bundles and 26 topic generator modules for the adopted curriculum (`docs/CURRICULUM.md` 0.1).
+
 | Group | Files | Raw size | Basis |
 |---|---|---|---|
 | Page, entry script, stylesheet, `version.json` | 4 | | section 7.2 |
 | Screen groups and tutor | 5 | | |
-| Widget clusters, `w-core` among them | 22 | | decision 8 |
-| Lazy libraries | 4 | | |
-| Workers | 3 | | |
-| KaTeX fonts | 20 | 0.26 MB | [measured] |
-| SQLite | 2 | | |
-| **App** | **60** | **at most 15 MB** | about 10 MB [inferred from the gzipped budgets of section 9.2] |
-| Pyodide core: `pyodide.mjs`, `pyodide.asm.mjs`, `pyodide.asm.wasm`, `pyodide-lock.json`, our `manifest.json` | 5 | 11.0 MB | [measured] |
-| Load groups (section 6.3.3): stdlib 1 part, numpy-pandas 2, scipy-statsmodels 3, sklearn 1, matplotlib 2, testing 1 | 10 | 55.1 MB, plus about 0.6 MB for `hypothesis` | [measured: member bytes; part counts at 8 MB per part] |
-| **Python, the whole scientific stack** | **15** | **about 67 MB** | |
+| Widget clusters, `w-core` among them | 26 | | decision 8 |
+| The data worker | 1 | | |
+| **App** | **36** | **at most 12 MB** | about 8 MB [inferred from the gzipped budgets of section 9.2] |
+| Third-party libraries | 0 | | loaded from the CDNs in `cdn.lock.json` (section 6.2.7) |
 | Content manifest, search indexes (4), glossary, notebook, skill graphs (4), curriculum, plan | 13 | under 6 MB | content-format 8.2 |
-| Course bundles | 85 | 70 to 100 MB | 85 courses, 2,148 lessons at about 27 KB each plus items and recorded output [inferred, `docs/CURRICULUM.md` 0.1, content-format 8.2] |
-| Generator modules, one per topic | 21 | under 10 MB | 21 topics (tidied: was one per course) |
+| Course bundles | 103 | 80 to 115 MB | 2,445 lessons at about 27 KB each plus items and recorded output [scaled from draft 1's 70 to 100 MB for 2,148 lessons] |
+| Generator modules, one per topic | 26 | under 12 MB | 26 topics |
 | Assets of 8 KB or more | at most 20 | under 4 MB | content-format 8.2 |
-| **Content** | **about 139** | **at most 110 MB** | |
-| **One release** | **about 214** | **about 190 MB** | |
+| **Content** | **about 162** | **at most 130 MB** | |
+| **One release** | **about 198** | **about 125 MB** | |
 
-**Turnover.** Hashed names cascade: a changed entry chunk changes the import specifiers inside every lazy chunk that imports from it, so an app release renames about 40 files (up to 15 MB). A content-only release renames the page, the manifest and the touched course files only (decision 30). A Pyodide upgrade renames all 15 Python files.
+**Turnover.** Hashed names cascade: a changed entry chunk changes the import specifiers inside every lazy chunk that imports from it, so an app release renames about 36 files (up to 12 MB). A content-only release renames the page, the manifest and the touched course files only (decision 30). A third-party version change renames no published file except the page, whose import map changes.
 
 **Limits** [our choice], each checked by `tools/release/budgets.ts`, which fails the build and names the largest groups:
 
 | Limit | Files | Size | Why |
 |---|---|---|---|
-| One release | at most 230 | at most 200 MB (app 15, Python 75, content 110) | Room for growth inside the two limits below |
-| Retained version: this release plus the files only the previous release uses, after garbage collection | at most 300 | at most 225 MB | A page opened before the release still loads its lazy chunks (section 6.2.6) |
+| One release | at most 230 | at most 150 MB (app 12, content 130, margin 8) | Room for growth inside the two limits below |
+| Retained version: this release plus the files only the previous release uses, after garbage collection | at most 300 | at most 200 MB | A page opened before the release still loads its lazy chunks (section 6.2.6) |
 | Peak, while a release is staged | at most 480 | at most 250 MB | The host allows 511 files and 256 MB per version [sourced]; the margin absorbs a miscount |
 
-Under fallback F1 (section 6.3.3) the Python files rise to 81 and a release to about 280 files, so the limits become 290 per release, 340 retained and 480 at peak; F2 drops Python and the release to about 200 files. A release whose peak would exceed the last row becomes a maintenance release (section 6.2.6): expected for a format-wide re-emit of every course (about 110 MB renamed at once) and for a Pyodide upgrade late in the path, not for ordinary releases (about 294 files and 220 MB at peak on the estimates above: one release, the previous release's 40 renamed app files, and the next release's 40).
+A release whose peak would exceed the last row becomes a maintenance release (section 6.2.6): expected only for a format-wide re-emit of every course (up to 130 MB renamed at once), not for ordinary releases (about 270 files and 150 MB at peak: one release, the previous release's 36 renamed app files, and the next release's 36).
 
-**What runs where.** By size, the whole scientific stack fits the Artifact [measured, section 6.3.3]; the first draft's raw layout (153 MB) would not have. The limits that remain are iPhone memory and download size, measured at E8: a load group that exhausts memory on the owner's phone is removed from the Artifact build through `python.groups` (section 11.4), and `PythonRuntime.available()` then answers `not-in-this-build`, so the drill screen offers the web app with a result code (assessment 14.3). Depth-first content reaches SciPy, statsmodels and scikit-learn long after NumPy and pandas, so E8 measures all groups but only `stdlib` and `numpy-pandas` must pass before the first Python course ships.
+**What runs where.** Every Python, SQL and C++ drill runs on the web app; the Artifact's `PythonRuntime` answers `not-in-this-build`, so the drill screen offers the web app with a result code (assessment 14.3). Section 6.3.3 keeps draft 1's measured Python layout as a record.
 
 **Size budgets per file** are in section 9.
 
@@ -1579,25 +1609,34 @@ Under fallback F1 (section 6.3.3) the Python files rise to 81 and a release to a
 Publishing an Artifact is a Claude tool call, not a CI step, so a release is a plan a Claude session executes. The owner, not the session, runs the checks on the live page: a cloud session cannot operate the page inside the owner's Claude app. Releases run in fresh cloud sessions, so nothing a release needs may live only in ignored build output.
 
 1. **The release ledger.** `npm run release:artifact` builds content and app from the tagged commit, runs the budgets, and writes `releases/<release>.json`: every path the release publishes with its SHA-256 and size, the page's hash, the manifest's name and the release id. The ledger is committed in the release pull request and reviewed there; CI builds twice and checks that both builds match it. The same command writes `dist/artifact/publish-plan.json`, an ordered list of publishes, each at most 255 paths (removals counted, conservatively [our choice; whether `null` entries count is unverified]) and 64 MB [sourced], each with a `files` map, the paths to remove (`null`), a label, and `page: 'live' | 'new'`; the plan is derived from the new ledger and the previous one, so any session can regenerate it.
-2. **Build and verify in the session.** The release session checks out the tag, rebuilds every file itself from the hash-pinned inputs (`package-lock.json`, `pyodide-lock.json`, our wheel locks), and checks each file's SHA-256 against the committed ledger; it publishes only bytes it built and verified. It reads in full every text file it writes by hand or that no reviewed source produced (the page fragment, `version.json`, the publish plan). Whether this satisfies the Artifact tool's rule that Claude reads a file it did not write before publishing it, for build outputs from reviewed sources and for repackaged third-party binaries such as `pyodide.asm.wasm` and the base64 JSON parts, is [unverified] and goes to Anthropic (`docs/PLAN.md` 12 decision 7).
+2. **Build and verify in the session.** The release session checks out the tag, rebuilds every file itself from the hash-pinned inputs (`package-lock.json`, `cdn.lock.json`), and checks each file's SHA-256 against the committed ledger; it publishes only bytes it built from the repository's own sources and verified, and it reads in full every text file it writes by hand or that no reviewed source produced (the page fragment with its import map, `version.json`, the publish plan). Under the owner's publishing rule (revision 2) no published file is third-party code or a binary, so draft 1's question to Anthropic is withdrawn.
 3. **Before the first publish** the session lists the live artifact's files (`scope: "files"`) and compares them with the **previous release's committed ledger** (named by the hash in `meta/release`). Any difference stops the release: the Artifact tool refuses to replace paths the session has neither read, listed nor published, and a difference means someone published in between.
-4. **Order.** First the new content and Python files (new names, nothing referencing them yet). Each of these staging publishes re-sends the **live** page byte for byte (`page: 'live'`), because a publish names the page [inferred from the Artifact tool contract], so viewers see no change. Then the publish with the new page and the app files (`page: 'new'`, the moment the release goes live). Then the session writes `meta/release` (`{ release, at, ledger: <SHA-256 of the ledger> }`) with `ArtifactData`, which raises the update notice on open pages (decision 32). Last, a garbage-collection publish removes every path that neither the new ledger nor the previous one names.
+4. **Order.** First the new content files (new names, nothing referencing them yet). Each of these staging publishes re-sends the **live** page byte for byte (`page: 'live'`), because a publish names the page [inferred from the Artifact tool contract], so viewers see no change. Then the publish with the new page and the app files (`page: 'new'`, the moment the release goes live). Then the session writes `meta/release` (`{ release, at, ledger: <SHA-256 of the ledger> }`) with `ArtifactData`, which raises the update notice on open pages (decision 32). Last, a garbage-collection publish removes every path that neither the new ledger nor the previous one names.
 5. **Resume.** A session that dies part-way is replaced by one that re-runs the procedure from the first step whose effect is not yet visible: staged files missing from the listing are published again (content-addressed, so a repeat changes nothing); a listing that holds the new page but a `meta/release` that still names the old ledger resumes at the `meta/release` write; a `meta/release` naming the new ledger with old files still listed resumes at garbage collection. Drift in step 3 is then judged against the union of the previous ledger and the new ledger's already-published paths.
 6. **Peak check.** The plan computes the version's peak (retained plus new files). Above the peak limit of section 6.2.5, the plan becomes a **maintenance release**: publish a small page that says "Zero to Quant is updating. Your progress is safe; come back in a few minutes." and removes the old files, then upload the new files, then publish the new page.
 7. **Rollback** publishes the previous ledger's page and app files, which the retained version still holds, and writes `meta/release` back to the previous ledger's hash.
-8. **Self-test.** The owner opens Settings, Diagnostics, Self-test on the iPhone: capabilities present, the manifest named by the page fetched and its hash checked, one course bundle fetched and validated, KaTeX loaded with its fonts, a widget cluster loaded, Python started with NumPy, `meta/release` equal to the page's own release. The page shows the result and writes it to `ops/selftest-<release>` in `db`; the session reads that document with `ArtifactData` and records it in the release checklist. Nothing is written to progress.
+8. **Self-test.** The owner opens Settings, Diagnostics, Self-test on the iPhone: capabilities present, the manifest named by the page fetched and its hash checked, one course bundle fetched and validated, every locked CDN module loaded through the import map (with the integrity result where the browser reports one), a formula rendered as MathML, a widget cluster loaded, a drill's handoff link built, `meta/release` equal to the page's own release. The page shows the result and writes it to `ops/selftest-<release>` in `db`; the session reads that document with `ArtifactData` and records it in the release checklist. Nothing is written to progress.
 9. The owner goes through the rest of the release checklist in `docs/engine/RELEASE.md` on the phone.
 
-### 6.3 Python on both targets
+#### 6.2.7 Third-party modules from CDNs (revision 2)
+
+1. **The lock.** `tools/cdn/lock.ts` reads `package-lock.json` and writes `cdn.lock.json`: for each runtime package the Artifact uses, the exact file our build imports (for example `preact@11.0.0/dist/preact.mjs`, `preact@11.0.0/hooks/dist/hooks.mjs`, `@preact/signals@2.11.3/dist/signals.module.js`, `@preact/signals-core@1.14.4`, `zod@4.6.5`'s `mini` and `v4/classic` entries, `katex@0.19.0/dist/katex.mjs`, the Compute Engine 0.148.0 `latex-syntax` entry, `minisearch@7.2.0/dist/es/index.js`, `ts-fsrs@5.4.2/dist/index.mjs`, `fflate@0.8.3/esm/browser.js`, `idb@8.0.4/build/index.js`), its URL, its SHA-384, the bare names it imports and where it loads (page or worker). The URL is cdnjs's when cdnjs serves a byte-identical file at that version, otherwise `https://cdn.jsdelivr.net/npm/<name>@<version>/<path>`; never a range, `@latest` or `+esm`. `unpkg.com` is the named alternative host if jsDelivr stops serving a path. [cdnjs coverage per file is unverified: this sandbox cannot reach cdnjs.]
+2. **What the tarballs show** [measured on the npm tarballs, 7 October 2026]: Preact 11.0.0 ships ES modules only, and its `hooks` and `compat` entries import `preact` by bare name; `@preact/signals` 2.11.3 imports `preact`, `preact/hooks` and `@preact/signals-core`; the Compute Engine's chunks import `@cortex-js/compute-engine/integration-rules`; KaTeX's `katex.mjs`, MiniSearch, ts-fsrs, fflate, idb and zod's entries import only relative paths. Preact 10.29.8 ships UMD builds.
+3. **The page.** `tools/release/page.ts` writes one `<script type="importmap">` into the page fragment, before the bootstrap: `imports` maps every bare name our chunks and the locked libraries use to its URL, and `integrity` maps each URL to its SHA-384. The Artifact build (`vite-plugin-zq-cdn`) marks those packages external, so our chunks keep bare names and the browser resolves them through the map, for static imports and for the bootstrap's dynamic `import()`. Lazy libraries (KaTeX, the Compute Engine parser, MiniSearch) are dynamic imports through the same map.
+4. **Workers.** Import maps do not reach workers [recalled], so the data worker's third-party imports (classic zod, ts-fsrs, fflate, all free of bare imports) are rewritten to their full locked URLs at build time. No integrity applies there.
+5. **Checks.** `provenance.ts` fails the Artifact build if any published JavaScript file has an input under `node_modules`: it reads Rolldown's module graph for every app chunk and the data worker, and esbuild's metafile for every generator module, which the content compiler builds outside Rolldown (second review round; a planted import in a fixture generator fails it at stage 4); CI's emulator serves the locked URLs from local copies checked against `cdn.lock.json` (section 8.2), so tests never depend on a live CDN; the nightly `drift.ts` job fetches every locked URL and fails on any byte difference, which blocks Artifact releases until the file is re-pinned.
+6. **Named fallback.** If S1 shows the import map ignored in the Artifact page (for example because the host loads a module before the fragment's map is parsed [unverified]): Preact 10.29.8 and `@preact/signals` load as UMD classic scripts with `integrity` attributes, generated shims (our code) re-export their globals, and the libraries free of bare imports load by full URL as in the worker. Preact 10.29.8 already ran the frame benchmark unchanged (decision 3).
+
+### 6.3 Python on the web app
 
 #### 6.3.1 One worker
 
-`src/workers/python.worker.ts` loads Pyodide 314.0.7 and runs drills with `grader.py` and `zqtest.py` (content-format 3.9), whichever loader brought the files:
+`src/workers/python.worker.ts` loads Pyodide 314.0.7 and runs drills with `grader.py` and `zqtest.py` (content-format 3.9). It exists in the web build only (revision 2); the Artifact's `PythonRuntime` is the handoff stub:
 
 ```ts
 // src/workers/python/protocol.ts
 export type ToPython =
-  | { k: 'init'; loader: 'native' | 'split'; base: string }               // base: absolute URL of py/314.0.7/
+  | { k: 'init'; loader: 'native'; base: string }                         // base: absolute URL of py/314.0.7/ (draft 1 also had 'split')
   | { k: 'load'; packages: PyPackage[] }
   | { k: 'run'; id: number; req: RunRequest }
   | { k: 'trace'; id: number; code: string; maxSteps: number };          // programming 2.3, live tracing
@@ -1611,19 +1650,21 @@ export type FromPython =
   | { k: 'failed'; code: 'network' | 'integrity' | 'memory' | 'crashed'; message: string };
 ```
 
-- **Timeouts** (decision 31). Neither target can send the cross-origin isolation headers that `SharedArrayBuffer` and Pyodide's interrupt buffer need: GitHub Pages sets no custom headers [recalled], and the Artifact's headers are the host's. (On the web a service worker could add the headers to the responses it serves [recalled]; rejected, because the first visit is not yet controlled by it and the Artifact would still need the path below.) Two levels instead:
+- **Timeouts** (decision 31). The web app cannot send the cross-origin isolation headers that `SharedArrayBuffer` and Pyodide's interrupt buffer need: GitHub Pages sets no custom headers [recalled]. (A service worker could add the headers to the responses it serves [recalled]; rejected, because the first visit is not yet controlled by it.) Two levels instead:
   1. **Soft deadline.** `grader.py` registers a `sys.monitoring` callback for backward jumps on the learner's code objects; every 1,000 jumps it compares `time.monotonic()` with the test's deadline and raises `ZqTimeout` (a `BaseException` subclass), which the grader reports as `timeout` for that test. The worker stays warm and the next test runs at once. The efficiency probes' line counter (programming decision 10) runs separately under `sys.settrace`, only for the probe runs.
-  2. **Hard watchdog.** The page expects a `test-start` and then an `event` for that test within its limit plus 1,500 ms; otherwise it terminates the worker, reports `timeout`, and restarts it, warm from `BlobCache`. This catches long calls inside C code (a huge NumPy allocation), which never jump in Python bytecode.
+  2. **Hard watchdog.** The page expects a `test-start` and then an `event` for that test within its limit plus 1,500 ms; otherwise it terminates the worker, reports `timeout`, and restarts it, warm from the service worker cache. This catches long calls inside C code (a huge NumPy allocation), which never jump in Python bytecode.
 - **Load stall.** While loading, a worker that sends no `progress` message for 30 s is terminated and reported as `failed: network`, with Retry (added by `docs/PLAN.md` 8.1).
-- **Memory.** A `memory` failure or a crash restarts the worker once; a second failure sets `failed` and offers the web app. The worker is terminated when the learner leaves a course, and after 10 minutes without a code screen. Loading a group drops nothing already loaded, so a lesson that needs `sklearn` after `numpy-pandas` adds to one interpreter; the memory each group adds is measured at E8 on the owner's phone (risk 4).
-- **Core caching.** The worker's `fetch` interception (section 6.3.3) also serves `pyodide.asm.wasm` and `pyodide-lock.json` from `BlobCache` by hash. `pyodide.mjs` and `pyodide.asm.mjs` (1.27 MB together) arrive by `import()`, which `fetch` interception cannot see, so in the Artifact they rely on the HTTP cache; on the web the service worker holds them. A warm start therefore fetches at most those two module scripts. If S1 shows the Artifact host does not compress responses, `pyodide.asm.wasm` (9.6 MB raw, 3.5 MB gzipped [measured]) also ships as gzip inside JSON parts and is inflated with `DecompressionStream` (fflate where that is missing), saving about 5 MB on every cold start over mobile data.
+- **Memory.** A `memory` failure or a crash restarts the worker once; a second failure sets `failed` and suggests the web app on a computer. The worker is terminated when the learner leaves a course, and after 10 minutes without a code screen. Loading a group drops nothing already loaded, so a lesson that needs `sklearn` after `numpy-pandas` adds to one interpreter; the memory each group adds is measured at E8 on the owner's phone (risk 4).
+- **Core caching.** The service worker caches `py/<version>/**` cache-first (section 6.4.1), so a warm start fetches nothing; draft 1's `fetch` interception and `BlobCache` copies served only the Artifact's split layout.
 - **Isolation.** Learner code runs only in this worker: no DOM, no storage of ours, no network beyond the loader's own files (programming 2.12).
 
 #### 6.3.2 Web: the native loader
 
-`loadPyodide({ indexURL: base })`, then `loadPackage(needs, { checkIntegrity: true })`. The web build copies Pyodide's core files and the wheels of the allowed packages into `py/314.0.7/` unchanged. `tools/pysplit/fetch.ts` downloads the pinned release once (cached by CI), and checks every wheel against the SHA-256 in `pyodide-lock.json` before anything is copied.
+`loadPyodide({ indexURL: base })`, then `loadPackage(needs, { checkIntegrity: true })`. The web build copies Pyodide's core files and the wheels of the allowed packages into `py/314.0.7/` unchanged. `tools/pyvendor/fetch.ts` downloads the pinned release once (cached by CI), and checks every wheel against the SHA-256 in `pyodide-lock.json` before anything is copied.
 
-#### 6.3.3 Artifact: the split-archive loader
+#### 6.3.3 Artifact: the split-archive loader (measured; not adopted)
+
+> **Not built (revision 2).** The owner's publishing rule lets the Artifact publish only files generated from this repository's own sources, and these parts are repackaged third-party binaries, so the Artifact has no Python and `tools/pysplit` is removed. The section stays as the record of a measured layout, with `spikes/README.md`; its sizes still describe the web app's wheels.
 
 The spike's method (`spikes/pyodide-in-artifact`), with every published file genuinely its type, fewer files and fewer bytes (decision 16):
 
@@ -1647,7 +1688,7 @@ Measured for Pyodide 314.0.7 in review (section 0.2), with the spike's strip rul
 
 With the core (11.0 MB), the spike's layout for NumPy and pandas is 49 MB in 69 files, matching the spike's README; this layout is 24 MB in 8 files (core 5, stdlib 1, numpy-pandas 2), and the whole stack is about 67 MB in 15 files against 153 MB in about 311. If the host compresses responses, the transfer for NumPy and pandas is about 14 MB either way (the numpy-pandas parts gzip from 10.4 to 7.7 MB [measured]); if it does not, this layout halves the first download.
 
-Measured on the owner's iPhone with the spike's layout for core, stdlib, NumPy and pandas: Python ready at 2.8 s, packages at 5.1 s, the calculation at 6.2 s (spike README). This layout changes the bytes fetched and adds a base64 decode, so S1 re-runs the spike's calculation with it on the iPhone; it passes only within 1 s of the spike's 6.2 s. Two fallbacks (`docs/PLAN.md` 4.3). **F1**, if this layout misbehaves on the phone: the spike's own layout for core, `stdlib` and `numpy-pandas` (69 files, proven) plus `testing` as JSON text maps (12 files), with `matplotlib`, `scipy-statsmodels` and `sklearn` web-only and the release file limits raised to 290, 340 retained and 480 at peak (section 6.2.5). **F2**, if the platform says repackaged archive content in published files is not acceptable, or that repackaged binaries cannot be published unread: no Python in the Artifact, every drill handed off. F1 does not answer a policy objection, because it repackages archives as this layout does. The player warms Python on the title screen of a lesson with code screens when nothing needs downloading (section 5.10.2), so most of the warm start falls inside reading time.
+Measured on the owner's iPhone with the spike's layout for core, stdlib, NumPy and pandas: Python ready at 2.8 s, packages at 5.1 s, the calculation at 6.2 s (spike README). Draft 1 planned to re-run that calculation with this layout at S1 and named two fallbacks, F1 (the spike's own layout) and F2 (no Python in the Artifact); the owner's rule makes F2's outcome the design, so neither is built.
 
 ### 6.4 The web app
 
@@ -1657,13 +1698,13 @@ Measured on the owner's iPhone with the spike's layout for core, stdlib, NumPy a
 
 | Request | Strategy | Cache |
 |---|---|---|
-| App files: entry, stylesheet, screen groups, tutor, all 22 widget clusters, lazy libraries, workers, fonts, SQLite | Precache (Workbox revision manifest) | `zq-app` (Workbox-managed) |
+| App files: entry, stylesheet, screen groups, tutor, all 26 widget clusters, lazy libraries, workers, fonts, SQLite | Precache (Workbox revision manifest) | `zq-app` (Workbox-managed) |
 | `content/**` (hashed names) | Cache first; filled on first use, by prefetch, and by Keep offline | `zq-content`; on activate, entries not in the new manifest are deleted |
 | `py/<version>/**` | Cache first | `zq-py-<version>`; other versions deleted on activate |
 | The tutor proxy | Network only, never cached | |
 | Navigations | The precached `index.html` | |
 
-Precaching every widget cluster costs at most 1.8 MB gzipped once (22 clusters at the 80 KB budget of section 9) and means any course whose content is cached works offline.
+Precaching every widget cluster costs at most 2.1 MB gzipped once (26 clusters at the 80 KB budget of section 9) and means any course whose content is cached works offline.
 
 **Offline courses.** The course map's "Keep offline" caches the course's bundle, generator module and assets, and offers the course's Python with its size ("Python for this course: 21 MB" for NumPy and pandas: the core files, `python_stdlib.zip` and five wheels, 21.4 MB as files [measured], less on the wire if GitHub Pages compresses the core). The first draft's 49 MB was the Artifact spike's uncompressed layout, which the web target never uses. The current course is kept automatically; Python is cached on the first drill run.
 
@@ -1688,7 +1729,7 @@ worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'
 
 #### 6.4.3 Deploy
 
-- `pages.yml` runs on a tag `v*`: `npm ci`, the full CI gate, `zq build`, `pysplit fetch`, `vite build --mode web`, then the official Pages upload and deploy actions.
+- `pages.yml` runs on a tag `v*`: `npm ci`, the full CI gate, `zq build`, `pyvendor fetch`, `vite build --mode web`, then the deploy to the web host of `docs/PLAN.md` 12 decision 13: under its default (b), `wrangler pages deploy` to a Cloudflare Pages project behind an Access policy admitting only the owner; under (a), the official GitHub Pages upload and deploy actions.
 - **Locally:** `npm run serve:web` serves `dist/web` and starts the Node variant of the proxy on 127.0.0.1 (ai-tutor 6.3.7).
 - The web manifest and icons come from `@vite-pwa/assets-generator` and the logo mark in `prototype/js/core.js`.
 
@@ -1696,7 +1737,7 @@ worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'none'
 
 - **`npm run dev`.** The Vite dev server in `dev` mode with `WebPlatform`, development routes, content compiled on the fly from `content/` with hot reload (section 10.3), and the tutor through the local proxy when `.env` has a key.
 - **`npm run dev:artifact`.** The same app with `ArtifactPlatform`, served by `tools/artifact-host` (section 8.2), which enforces the file-type allow-list and a CSP like the host's, has no service worker, and provides a fake `window.claude` (`sample` replays recorded replies or calls the local proxy; `db` is in memory with the declared rules enforced; `user` and `downloads` are fakes).
-- **`zq preview --artifact`** (built at `docs/PLAN.md` stage 25; content-format 9.1 step 7). An Artifact build whose manifest holds one course (or the gallery), whose start route is a lesson, a level, a course or `#/gallery`, with the development routes and the split Python loader compiled in. A Claude session republishes it to **one long-lived private preview Artifact** (its URL in `STATE.md`) for each device gate, never creating a new one, so no preview needs deleting; the owner records the gate's result in its `db` at `ops/gate-<stage>` (`{ result: 'pass' | 'fail', notes, at }`), which the session reads with `ArtifactData`.
+- **`zq preview --artifact`** (built at `docs/PLAN.md` stage 25; content-format 9.1 step 7). An Artifact build whose manifest holds one course (or the gallery), whose start route is a lesson, a level, a course or `#/gallery`, with the development routes compiled in (and no Python, as every Artifact build). A Claude session republishes it to **one long-lived private preview Artifact** (its URL in `STATE.md`) for each device gate, never creating a new one, so no preview needs deleting; the owner records the gate's result in its `db` at `ops/gate-<stage>` (`{ result: 'pass' | 'fail', notes, at }`), which the session reads with `ArtifactData`.
 
 ---
 
@@ -1778,7 +1819,7 @@ Each runs on the web build (served with its service worker) and on the Artifact 
 2. The reference lesson start to finish: a wrong answer with show-why, the hint ladder, Show solution after two attempts, the quiz, celebration, streak day one.
 3. Resume mid-lesson after a reload; a lesson whose `rev` changed underneath (content-format 4.4).
 4. Keyboard only, the reference lesson.
-5. A code drill: Run, a failing Submit with a diagnosis, a passing Submit; a timeout; a crash and restart (real Pyodide, cached by CI).
+5. A code drill: Run, a failing Submit with a diagnosis, a passing Submit; a timeout; a crash and restart (real Pyodide, cached by CI). Web build only; on the Artifact build the same drill shows the handoff link and accepts the result code the web run produced (revision 2).
 6. Homework: drafts with a lease, submission, marking, a long-form item with the scripted tutor's suggestions.
 7. An exam paper with the fake clock: pause budget, reload mid-paper, submission, result, cool-down.
 8. Export, then import on the other target; a result code from the web app pasted into the Artifact.
@@ -1789,7 +1830,7 @@ Each runs on the web build (served with its service worker) and on the Artifact 
 13. Capability absence: no `db` (browser-only banner), no `sample` (no AI surfaces), `sample` consent declined (Artifact only).
 14. Failure injection: course fetch fails, chunk load fails, `db` returns `unavailable` then recovers.
 15. A learner infinite loop and a long NumPy call: the first ends by the soft deadline with the worker still warm; the second by the watchdog with a restart (real Pyodide).
-16. First Python use with an empty cache: the title screen offers the download with its size and nothing downloads before the tap.
+16. First Python use with an empty cache (web build): the title screen offers the download with its size and nothing downloads before the tap.
 17. Release signal (Artifact only): writing `meta/release` in the emulator shows the update notice on Today, never inside a lesson.
 18. Single-key shortcuts off: H, W, D and T do nothing; every action stays reachable by visible buttons and Tab.
 
@@ -1801,6 +1842,7 @@ Each runs on the web build (served with its service worker) and on the Artifact 
 - **Framing.** The page is wrapped in a document skeleton and loaded in a sandboxed iframe on a second origin; `navigator.serviceWorker` is removed by an init script.
 - **Fake `window.claude`.** Implements `claude.use` and the `sample`, `db`, `user` and `downloads` contracts of the capability version 0.2.69 `.d.ts` files [sourced]: `sample` streams scripted replies through `onText`, honours `AbortSignal` and the `cache` rules, and injects every error code on request; `db` is an in-memory document store with path parity, the declared rules (including `{self}`), `onSnapshot`, last-writer-wins and injected `unavailable`, `resource_exhausted` and `quota_exceeded`; `downloads` records saved files and can refuse `html`.
 - **Versions.** The emulator keeps every published version and has a switch for the one S1 settles: whether an open page's own-file fetches reach its own version's files or the newest version's. Both settings run the release and stale-page scenarios until S1 picks one, after which the other is deleted.
+- **CDN modules.** The emulator, and every Playwright run against the Artifact build, answers requests to the locked CDN URLs from local copies of the same npm files, each checked against its SHA-384 in `cdn.lock.json`; any other CDN URL is refused, so a missing lock entry fails a test instead of reaching the network (revision 2).
 - **Honest limit.** The emulator encodes what the contracts and the spikes say; differences in the real host are caught only by the release self-test and the owner's phone (section 6.2.6).
 
 ### 8.3 CI gates
@@ -1815,7 +1857,7 @@ Each runs on the web build (served with its service worker) and on the Artifact 
 | `e2e` (Chromium, both targets) | Every pull request | Yes | 10 min, sharded |
 | `visual` (changed areas) | Every pull request | Yes; a changed baseline needs the owner's `visual-approved` label, and `label-guard.yml` fails the job if any other account applied it | 6 min |
 | `perf` (changed widgets; web start-up) | Every pull request | Yes | 5 min |
-| `nightly`: full visual (about 3,000 baselines), full performance, WebKit and Firefox end to end and generator goldens, full `zq verify` with Monte Carlo, `npm audit`, `pip-audit`, licence allow-lists, the deterministic tutor graders over the last accepted run's recorded replies (no key; ai-tutor 9.1), fold rebuild benchmark | Daily on `main` | Opens an issue on failure | 60 min |
+| `nightly`: full visual (about 3,000 baselines), full performance, WebKit and Firefox end to end and generator goldens, full `zq verify` with Monte Carlo, `npm audit`, `pip-audit`, licence allow-lists, the CDN drift check (`tools/cdn/drift.ts`), the deterministic tutor graders over the last accepted run's recorded replies (no key; ai-tutor 9.1), fold rebuild benchmark | Daily on `main` | Opens an issue on failure | 60 min |
 | `release`: everything above, two clean builds with identical file hashes, the Artifact publish plan dry run, the Pages deploy | On a `v*` tag | Yes | 75 min |
 
 Browsers, Pyodide's distribution and the Playwright container are cached between runs, keyed by their pinned versions.
@@ -1834,11 +1876,11 @@ Browsers, Pyodide's distribution and the Playwright container are cached between
 
 | Measure | Budget | Basis |
 |---|---|---|
-| Entry script, gzipped | at most 110 KB | Preact, hooks and signals 8.5 KB [measured]; engine, UI, player, Bertie (at most 12 KB, `BERTIE.md` 9), stores [our estimate]; no widget code (`w-core` holds it) and no manifest (its own file, decision 30) |
+| Entry script, gzipped | at most 110 KB on the web; in the Artifact the same budget covers the entry plus its locked CDN modules | Preact, hooks and signals 8.5 KB [measured]; engine, UI, player, Bertie (at most 12 KB, `BERTIE.md` 9), stores [our estimate]; no widget code (`w-core` holds it) and no manifest (its own file, decision 30) |
 | App stylesheet, gzipped | at most 70 KB | Prototype styles plus widget styles [our estimate] |
 | Each screen group, the tutor chunk | at most 60 KB gzipped each | |
 | Each widget cluster | at most 80 KB gzipped; each composite at most 25 KB minified (calc-linalg 2.10) | |
-| KaTeX, MathLive, Compute Engine parser, MiniSearch chunks | 80, 230, 135, 20 KB gzipped | 77, 226, 128, 18 KB [measured] |
+| KaTeX, MathLive, Compute Engine parser, MiniSearch chunks (web); the same files from the CDN in the Artifact, without MathLive | 80, 230, 135, 20 KB gzipped | 77, 226, 128, 18 KB [measured] |
 | Data worker | at most 150 KB gzipped | classic zod 92 KB [measured] plus the fold |
 | Web start-up, cold, "Fast 3G" and 4x CPU | Today interactive within 3.0 s | [our choice] |
 | Start-up, warm (cached), web and Artifact | Today interactive within 1.2 s; 1.5 s on the owner's iPhone in the Artifact | [our choice]; measured at E7 and E10 |
@@ -1848,9 +1890,9 @@ Browsers, Pyodide's distribution and the Playwright container are cached between
 | Check to verdict, non-code checks | within 150 ms, expressions included | design research 5.4 |
 | Interaction to next paint | at most 200 ms | widgets-stage0 1.9 |
 | Idle screen | zero animation frames requested once springs settle | `BERTIE.md` 9 |
-| Fold | single event within 2 ms on the main thread; full rebuild of the synthetic four-year learner within 3 s in the worker on the owner's iPhone | assessment 13.3 |
-| Python warm start from cache | within 4 s on the owner's iPhone | spike: 2.8 s to Python, 5.1 s with NumPy and pandas from the network |
-| Python cold download, NumPy and pandas, Artifact | at most 25 MB of files; within 15 s on the owner's iPhone on Wi-Fi | 24.1 MB in the section 6.3.3 layout [measured]; the time is [our choice], measured at S1 |
+| Fold | single event within 2 ms on the main thread; full rebuild of the synthetic whole-path learner (about 121,000 events, `docs/PLAN.md` 5.5) within 3 s in the worker on the owner's iPhone | assessment 13.3 |
+| Python warm start from cache (web app) | within 4 s on the owner's iPhone | spike: 2.8 s to Python, 5.1 s with NumPy and pandas from the network (inside an Artifact, a comparable record) |
+| Python cold download, NumPy and pandas (web app) | at most 22 MB of files; within 15 s on the owner's iPhone on Wi-Fi | 21.4 MB in the native layout [measured, section 6.4.1]; the time is [our choice], measured at `docs/PLAN.md` stage 25 |
 | Recovery from a learner infinite loop | next test running within 500 ms | soft deadline (decision 31); a watchdog restart is the exception |
 | Memory | at most 30 MB per widget; main-thread heap at most 150 MB outside the Python worker | calc-linalg 2.10 |
 | Celebrations | at most 2.4 s, skippable | design research 4.1 principle 7 |
@@ -1948,26 +1990,32 @@ A new composite with its own view needs one line in the pull request saying why 
 | Handoff payload (`?h=`) | A link from the Artifact | At most 8 KB; base64url and deflate decode; schema; the drill, homework instance and seed must exist | "This link could not be opened." |
 | Progress import, result code | A file or pasted text | assessment 14.2 and 14.3, in the data worker | Rejected with the first error; nothing written |
 | Events from other devices (`db`) | Our own writers, but stored remotely | Event schema on load | Quarantined (assessment 13.8) |
-| Learner code | The learner | None needed: it runs in the Python or SQL worker with no DOM, no app storage, no network beyond the loader | Terminated on timeout; restarted on crash |
+| Learner code | The learner | None needed: it runs on the web app only, in the Python or SQL worker with no DOM, no app storage, no network beyond the loader | Terminated on timeout; restarted on crash |
+| Third-party modules (Artifact) | cdnjs or jsDelivr | Exact-version URLs from `cdn.lock.json` only; import-map `integrity` where the browser enforces it; none in the worker; the nightly drift check (section 6.2.7) | The boot or lazy-load failure rows of section 11.6 |
 | Learner text (long-form, chat, outside-work log) | The learner | Length caps from the schemas; rendered as text, never HTML | Truncated with a note |
 | Tutor replies | Claude | ai-tutor 5.4 and 8: act-line schemas (`zod/mini`), id checks, leak probe, code guard, Markdown subset rendered to DOM nodes | Effects dropped and counted |
 | `KeyValue`, drafts, cache entries | This device | Schema per key on read; cache entries by hash | Discarded |
 
 ### 11.3 Raw-HTML sinks
 
-Exactly one: `engine/render/Tex.tsx` sets `innerHTML` to KaTeX's output. KaTeX escapes its input, runs in strict mode, and its `trust` callback allows only `\htmlData` with a slot name matching `^[a-z][a-z0-9-]{0,15}$` (for `TexSlots`). The tutor's Markdown renderer and Bertie's `say()` build DOM nodes or set `textContent` (ai-tutor 8.8, BERTIE.md decision 13). The justification is recorded in `docs/DECISIONS.md` as the engineering floor requires; the lint rule `zq/no-inner-html` keeps it the only one.
+Exactly two, both justified in `docs/DECISIONS.md` as the engineering floor requires:
+
+1. **S1, `engine/render/Tex.tsx`**, sets `innerHTML` to KaTeX's output, HTML with MathML on the web and MathML alone in the Artifact (decision 37). KaTeX escapes its input and runs in strict mode; for authored TeX its `trust` callback allows only `\htmlData` with a name matching `^[a-z][a-z0-9-]{0,15}$` (term anchors on the web); Bertie's maths renders with `trust: false` (ai-tutor 8.8). `TexSlots` binds slots by sentinel `\text{}` tokens on both outputs and never through `\htmlData` (decision 37): the HTML span's text node on the web, and in every MathML tree an `<mn>` built with `createElementNS` in place of the sentinel `<mtext>`, so live digits use the maths font.
+2. **S2, `src/ui/bertie/markup.ts`**, parses Bertie's SVG template, built from the module's own constants, with `DOMParser` as `image/svg+xml` (BERTIE.md decision 19). No data reaches it.
+
+The tutor's Markdown renderer and Bertie's `say()` build DOM nodes or set `textContent` (ai-tutor 8.8, BERTIE.md decision 13). The lint rule `zq/no-inner-html` keeps these the only two: stage 1 extends it from the `innerHTML` family (section 10.4) to `DOMParser.prototype.parseFromString` and `Range.prototype.createContextualFragment` outside `markup.ts` (`docs/DECISIONS.md` S2).
 
 ### 11.4 Secrets and configuration
 
 - **Secrets in the client:** none of ours. The web app stores one learner-entered credential, the tutor proxy token, in IndexedDB through `KeyValue.setSecret`, never in `localStorage`. Its exposure is an XSS on our own origin, which section 11.3 keeps narrow; its damage is capped by the proxy's spend limits (ai-tutor 0.1 decision 8). Accepted and written down.
 - **Build-time configuration** comes from `VITE_*` variables (`VITE_BASE`, `VITE_ZQ_TUTOR_URL`, `VITE_ZQ_WEB_APP_URL`), with `.env.example` committed and `.env` ignored. No secret is a `VITE_*` variable, because Vite inlines them into the bundle; a CI check fails if any `VITE_*` name contains `KEY`, `TOKEN` or `SECRET`.
-- **Feature flags** live in `src/app/config.ts` with typed defaults per target, nowhere else: `tutor.answerKey: 'sealed' | 'never'` (ai-tutor decision 2's kill switch), `python.groups` (which load groups the Artifact build includes), `friendsBoard`, `devRoutes`.
+- **Feature flags** live in `src/app/config.ts` with typed defaults per target, nowhere else: `tutor.answerKey: 'sealed' | 'never'` (ai-tutor decision 2's kill switch), `friendsBoard`, `devRoutes`. Draft 1's `python.groups` is gone with the Artifact's Python (revision 2).
 
 ### 11.5 Logging and diagnostics
 
 - `app/log.ts` keeps 500 entries in memory and the last 2,000 in IndexedDB: time, level, module, message, and ids only (content ids, widget type and version, error codes, release).
 - Never logged: learner answers, code, long-form text, chat, tutor replies, tokens, viewer ids.
-- Nothing leaves the device. Settings, Diagnostics offers **Copy diagnostics** (the log, the release, the capability summary, storage usage, Python status) and **Self-test** (section 6.2.6), so a problem report is a paste the owner chooses to make.
+- Nothing leaves the device. Settings, Diagnostics offers **Copy diagnostics** (the log, the release, the capability summary, storage usage, Python status on the web, CDN module status in the Artifact) and **Self-test** (section 6.2.6), so a problem report is a paste the owner chooses to make.
 
 ### 11.6 Failure behaviour of the engine's own dependencies
 
@@ -1976,11 +2024,13 @@ Beyond sections 5.10.3 and 6.3.1, and the tutor's and progress papers' tables:
 | Dependency | Failure | Behaviour |
 |---|---|---|
 | Google Fonts (Artifact) | Unreachable | The token font stacks fall back to system fonts; layout tolerates the metric change |
-| KaTeX chunk | Fails to load | Maths renders as its TeX source in the code style, with a Retry in the verdict area |
-| KaTeX fonts (Artifact) | Blocked by the host's font policy | `FontFace` from the fetched `woff2` bytes; failing that, the `data:` URI stylesheet; the choice is fixed at S1, not detected per visit |
+| KaTeX (web chunk or Artifact CDN module) | Fails to load | Maths renders as its TeX source in the code style, with a Retry in the verdict area |
+| Core CDN modules (Artifact: Preact, signals, `zod/mini`, `idb`, `ts-fsrs`) | Unreachable, 404, or integrity refused | The bootstrap's `import()` rejects; one retry after 2 s; never a URL outside the lock; "Zero to Quant could not load part of itself. Check the connection and try again." with Retry and the web app's address; logged as `cdn-network` or `cdn-integrity` |
+| The data worker's CDN modules (Artifact) | Fail to load | `failed: dependency`, restart once; a bundle whose SHA-256 matches its name opens without the structural check, logged; imports and result codes wait |
 | `meta/release` (Artifact) | `db` absent or the subscription ends | `version.json` polling as on the web (section 7.2) |
-| MathLive chunk | Fails to load, or fails spike S1 in the Artifact | `expression-entry` falls back to a plain field with the symbol bar and a live KaTeX preview; grading is unchanged |
-| SQLite | Fails | SQL drills offer the web app; replays of authored queries still show (programming 2.10) |
+| MathLive chunk (web) | Fails to load | `expression-entry` falls back to the plain field with the symbol bar and a live preview, which the Artifact always uses; grading is unchanged |
+| Compute Engine parser (either target) | Fails to load | Expression screens keep Check disabled with "Maths checking could not load" and Retry; other screens work |
+| SQLite (web) | Fails | "SQL could not start in this browser" with Retry; replays of authored queries still show (programming 2.10). In the Artifact SQL drills always hand off |
 | Service worker (web) | Registration fails | The app works online; Settings says "Offline use is unavailable in this browser." |
 | AudioContext | Blocked or absent | Sound silently unavailable; the Settings toggle explains why |
 | Web Locks | Absent | The `localStorage` heartbeat lease (section 4.7) |
@@ -1995,13 +2045,13 @@ Beyond sections 5.10.3 and 6.3.1, and the tutor's and progress papers' tables:
 | # | Risk | Likelihood | Effect | Mitigation |
 |---|---|---|---|---|
 | 1 | Preact 11.0.0, six days old, has a regression that bites us | Medium | Rendering bugs | Exact pin; the full suite at every upgrade; 10.29.8 measured working with the same code, so the fallback is a one-line change and a test run |
-| 2 | Spike S1 fails: page-level module scripts, own fonts, the JSON-part Python layout, MathLive, Web Locks, version scoping or reload behave differently in the Artifact | Medium | A loader or a fallback changes | S1 runs in stage E0 before anything depends on it; every check has a named fallback (sections 5.9, 6.2.3, 6.3.3, 11.6) |
+| 2 | Spike S1 fails: the import map, CDN modules on the page or in a worker, import-map integrity, MathML quality, Web Locks, version scoping or reload behave differently in the Artifact | Medium | A loader or a fallback changes | S1 runs in stage E0 before anything depends on it; every check has a named fallback (sections 5.9, 6.2.3, 6.2.7, 11.6) |
 | 3 | The Artifact host changes its policy, limits or capability contracts | Low to medium | A target breaks | Design for absence everywhere; the emulator encodes the contracts we rely on; the release self-test; the web app as the full-function fallback |
-| 4 | Pyodide with pandas, SciPy or scikit-learn exhausts iPhone memory | Medium | Drills crash | One worker, packages per course, termination when idle, restart once, then hand off; memory measured at E8 on the owner's phone; heavy groups may stay web-only |
-| 5 | The scientific stack does not fit the Artifact's Python budget | Low (it fits by size: 67 MB against the 75 MB Python budget of section 6.2.5 [measured]) | Some drills hand off | Memory, not size, is now the binding limit (risk 4); `python.groups` removes a group from the Artifact build; handoff with result codes exists from E8 (assessment 14.3); depth-first content reaches those packages late |
+| 4 | Pyodide with pandas, SciPy or scikit-learn exhausts iPhone memory in the web app | Medium | Drills crash on the phone | One worker, packages per course, termination when idle, restart once, then the web app on a computer; memory measured at E8 on the owner's phone |
+| 5 | Draft 1: the scientific stack does not fit the Artifact's Python budget | Closed by revision 2 | | The Artifact has no Python; every drill hands off by result code (assessment 14.3) |
 | 6 | Agent-written widgets drift from render discipline and budgets | High | Janky drags on phones | Lint (`zq/no-state-in-render`, `zq/no-raw-pointer`), the per-widget frame test as a merge gate, the gallery's frame readout, adversarial review |
-| 7 | Catalogue scale (314 ids after the merge) overwhelms the library | High | Inconsistent widgets, slow build | Scenes as the default composite (decision 36, section 5.14) and presets as a tier (decision 7); a bespoke composite needs one of the five written reasons; the generic contract suite makes each new widget's floor automatic; three pilot scenes test the bet before the batches start (`docs/PLAN.md` stage 14) |
-| 8 | File or size budget creep in the Artifact | Medium | Releases fail | Budgets enforced in every build, not at release time; the maintenance release path; Python budget separate from content |
+| 7 | Catalogue scale (338 ids after the merge; draft 1: 314) overwhelms the library | High | Inconsistent widgets, slow build | Scenes as the default composite (decision 36, section 5.14) and presets as a tier (decision 7); a bespoke composite needs one of the five written reasons; the generic contract suite makes each new widget's floor automatic; four pilot scenes, one per family, test the bet before the batches start (`docs/PLAN.md` stage 14) |
+| 8 | File or size budget creep in the Artifact | Low (about 198 files and 125 MB against 230 and 150) | Releases fail | Budgets enforced in every build, not at release time; the maintenance release path |
 | 9 | Determinism breaks across browsers (generators, Philox, number formatting) | Low | Different items on different devices | Integer-only RNG; known-answer tests and golden seeds in Chromium, WebKit and Firefox nightly |
 | 10 | Two targets drift apart | Medium | Bugs on one target only | One codebase; platform code is the only difference; one conformance suite per adapter; every end-to-end scenario on both targets |
 | 11 | Visual tests flake | Medium | Ignored failures | Pinned container, committed fonts, `test` motion mode, `document.fonts.ready` before screenshots, zero tolerance only for layout and a small pixel ratio for anti-aliasing |
@@ -2009,8 +2059,10 @@ Beyond sections 5.10.3 and 6.3.1, and the tutor's and progress papers' tables:
 | 13 | TypeScript 7 and its faster checker stay out of reach | Low | Slower type checks | Revisit when typescript-eslint declares support; nothing in the code depends on the version |
 | 14 | A stale open page after a release | Medium | Lazy chunk 404s | Garbage collection keeps the previous release's files; chunk failures show the reload message; `version.json` checks |
 | 15 | Bertie drops frames on mid-range Android | Low | A sluggish mascot | `BERTIE.md` 9 budget, the three-instance rule, the frame test, and its own fallback (fewer particles and strands) |
-| 16 | The platform considers archive members wrapped in JSON an evasion of the served-type list, changes the list, or rules that repackaged third-party binaries cannot be published without being read in full | Low to medium | The Artifact's Python shrinks or goes | Every file is genuinely its type and the method is the spike's own, extended; the owner asks Anthropic both questions at stage 25 (`docs/PLAN.md` 12 decision 7). A policy objection means F2: no Python in the Artifact, every drill handed off. The spike's layout (F1) answers only a behaviour failure, because it repackages archives too (`docs/PLAN.md` 4.3) |
+| 16 | Draft 1: the platform objects to repackaged archives in published files | Closed by revision 2 | | The owner's publishing rule publishes no third-party file |
 | 17 | The soft deadline's `sys.monitoring` callback slows learner code noticeably | Low | Efficiency drills misjudge, or tests near their limit fail | Measured at E8 on the reference drills; above 1.3 times, the soft deadline is dropped (decision 31); efficiency probes already compare against the reference on the same device under the same instrumentation |
+| 18 | A CDN is unreachable, drops a path, or serves altered bytes for a pinned file (Artifact) | Low | The Artifact cannot start, or runs altered code | Exact-version URLs; import-map integrity where enforced; the nightly drift check; the host's CSP limits where altered code can send data; the web app as the fallback; a waiver in `DECISIONS.md` for imports SRI cannot cover |
+| 19 | MathML in system fonts looks worse than KaTeX's HTML on the owner's iPhone | Medium | Maths reads less well in daily use | S1 judges a specimen sheet; `math.css` sets the font stack and spacing; if the owner rejects it, the gap goes to him before stage 23 with the measured options |
 
 ---
 
@@ -2022,7 +2074,7 @@ Each stage is one review gate. Engine stages are numbered E0 to E10; content sta
 
 | Stage | Deliverable | Depends on | Done when |
 |---|---|---|---|
-| **E0 Foundation and spike S1** | Repository scaffold (section 4), pinned toolchain (section 3), CI skeleton with `static`, `unit` and `build` jobs; an empty app booting on the web dev server and in the emulator; `tools/release/page.ts` and `budgets.ts`. **Spike S1**, a page published by a Claude session and opened on the owner's iPhone, checking: page-level module script and dynamic `import()` of an own `.mjs`; an own stylesheet and own `woff2` fonts with KaTeX; inline `style` attributes through `innerHTML`; `FontFace` from fetched font bytes; the section 6.3.3 JSON-part Python layout (a spike version of `split.ts`) running the spike's NumPy and pandas calculation (time and transfer size recorded); whether responses are compressed (transfer against file sizes); MathLive mount and typing; Web Locks; IndexedDB inside a worker; `navigator.storage.estimate()`; an anchor to an external URL; a file input; after a second publish, whether the open page still fetches a file only the first version had, and whether `location.reload()` loads the second version; `meta/release` through `onSnapshot`; whether the system back gesture walks the frame's history | none | CI green on both targets; S1 results in `docs/DECISIONS.md`; every failed check has switched to its named fallback in this paper before E1 starts |
+| **E0 Foundation and spike S1** | Repository scaffold (section 4), pinned toolchain (section 3), CI skeleton with `static`, `unit` and `build` jobs; an empty app booting on the web dev server and in the emulator; `tools/release/page.ts` and `budgets.ts`. **Spike S1** (re-scoped by revision 2), a page published by a Claude session from files it writes itself and opened on the owner's iPhone, checking: an import map in the page fragment, honoured by the classic bootstrap's dynamic `import()`; Preact 11.0.0, `@preact/signals` and `zod/mini` from jsDelivr, and from cdnjs where it hosts the identical file, through the map; whether import-map `integrity` is enforced (a wrong hash must be refused); a module worker importing classic zod, ts-fsrs and fflate by full URL (if refused, the data worker's jobs move to the main thread, section 14 item 19); a classic CDN `<script>` with `integrity` for the Preact 10.29.8 UMD fallback; KaTeX 0.19.0 from the CDN with `output: 'mathml'` on a 40-formula specimen sheet judged by the owner beside the web app's HTML output, and `TexSlots`' sentinel binding, with slot digits in the swapped `<mn>` against the maths font; and the platform checks of `docs/PLAN.md` stage 2 (c), the single list, mirrored here: inline `style` attributes through `innerHTML`; whether responses are compressed (transfer against file sizes); Web Locks; IndexedDB inside a worker; `navigator.storage.estimate()`; whether an anchor to an external URL opens from the frame (the handoff link); a file input; whether `version.json` is cached despite a query string (item 12); after a second publish, whether the open page still fetches a file only the first version had, and whether `location.reload()` loads the second version; whether a publish may omit the page and whether `null` removals count against 255 paths (item 15); `meta/release` through `onSnapshot`; `sample`, `user` and the `db` rules; whether the system back gesture walks the frame's history. Draft 1's own-font, `FontFace`, JSON-part Python and MathLive checks are dropped | none | CI green on both targets; S1 results in `docs/DECISIONS.md`; every failed check has switched to its named fallback in this paper (section 6.2.7 item 6 for the import map) before E1 starts |
 | **E1 Contracts and maths core** | `@zq/contracts` (section 5 types); `@zq/mathcore`: Philox4x32-10, FNV-1a, rationals, number parsing (shared with the graders), the expression compiler without `eval`, scales, basic statistics; `engine/scope.ts`, `engine/rpc.ts` | E0 | Unit and property tests; Philox and `hash32` known-answer vectors; golden draws identical in Node, Chromium, WebKit and Firefox; a scope leak test (no callbacks after dispose); 90% coverage |
 | **E2 Platform adapters** | Section 5.9 for web, Artifact and fake; `KeyValue`, `DraftStore`, `BlobCache`, `Clock`, `RandomSource`, `Feedback` (synthesised tones), `FileSaver`, `Identity`, `Handoff`, `Lifecycle` with writer election; `tools/artifact-host` with the fake `window.claude` | E1; A1 (`MemoryStore`, event envelope) | One conformance suite per interface passes against every implementation; emulator rule and error-injection tests; the two-tab writer test |
 | **E3 Design system, motion, Bertie** | `styles/` from the prototype tokens; `ui/` components; the motion service (section 5.11); Bertie in TypeScript with `Bertie.tsx`; the `#/gallery` and `#/system` routes | E1 (E2 in parallel) | Visual baselines at 390 and 1,280, light and dark; axe clean; keyboard paths for every interactive component; `BERTIE.md` 12.2 tests and its 12 KB budget; spring settling and stability tests; a script checks every text and background token pair against WCAG AA |
@@ -2030,11 +2082,11 @@ Each stage is one review gate. Engine stages are numbered E0 to E10; content sta
 | **E5 Content runtime** | The manifest file and its page meta tag (`vite-plugin-zq-content`), the loader, `BlobCache` wiring, validation in the data worker, `Prose`, `Tex` and `TexSlots`, templates, the generator runtime with `make` and `makeWhere` | E4; content-format C1 (schema) and C8 (emit of the reference lesson) | The reference lesson's bundle loads and validates; every row of section 5.10.3 is tested; a content edit hot-reloads into an open lesson without losing the screen; a content-only rebuild changes only the page, the manifest and that course's files (section 6.1) |
 | **E6 Lesson player and item runner** | Section 5.7: reducer, effect runner, views, hint ladder, Why, Show solution, quiz, completion sequence, key map, announcements, `ItemRunner` and the policies; graders wired in; progress events through the append queue | E5; the graders package (content-format 14); A1, A4 (points rules) | Every row of the transition table tested; the reference lesson runs end to end on both targets with no lesson-specific code; keyboard-only run; axe; the storyboard renders every state; no animation frames once idle |
 | **E7 App shell and screens** | Router, shell, stores, the screens of section 5.8 (Today, Learn, Course, Review, You, Settings with Diagnostics, Notebook, Search, Import, Onboarding shell), error boundaries, update notices, `version.json` | E6; A4 and A5 for live data (the synthetic learner until then) | Visual baselines for every screen at both widths and themes with the synthetic learner; axe; route, focus and title tests; warm start-up within budget |
-| **E8 Python and SQL** | The Python worker and protocol, both loaders, `tools/pysplit` (fetch, groups, JSON parts, manifest, SHA-256), the worker-side cache, the watchdog, the drill screen and `code-cell` integration; the SQLite worker; `zq preview --artifact` and the long-lived preview Artifact | E4, E5 (parallel with E6 and E7) | The reference course's drills pass on both targets in CI with real Pyodide; tampered-part, CRC, soft-deadline, watchdog and crash tests; soft-deadline overhead on the reference drills recorded (decision 31); the Artifact Python files within section 6.2.5; iPhone timings and memory recorded by the owner for every load group, the stage passing on `stdlib` and `numpy-pandas` and the other results setting `python.groups` |
-| **E9 Web target** | Service worker, Keep offline, update flow, CSP, web manifest and icons, `pages.yml`, `serve:web` | E7, E8 | Offline and update end-to-end scenarios; zero CSP violations reported across the end-to-end suite; a tagged deploy reaches GitHub Pages and installs on the owner's phone |
+| **E8 Python and SQL (web app)** | The Python worker and protocol, the native loader, `tools/pyvendor`, the watchdog, the drill screen and `code-cell` integration; the SQLite worker; the Artifact's handoff stubs; `zq preview --artifact` and the long-lived preview Artifact | E4, E5 (parallel with E6 and E7) | The reference course's drills pass on the web build in CI with real Pyodide, and every code screen of the Artifact build shows the handoff link; soft-deadline, watchdog and crash tests; soft-deadline overhead on the reference drills recorded (decision 31); iPhone timings and memory recorded by the owner in the web app for every load group, the stage passing on `stdlib` and `numpy-pandas` |
+| **E9 Web target** | Service worker, Keep offline, update flow, CSP, web manifest and icons, `pages.yml`, `serve:web` | E7, E8 | Offline and update end-to-end scenarios; zero CSP violations reported across the end-to-end suite; a tagged deploy reaches the web host of `docs/PLAN.md` decision 13 (default: Cloudflare Pages behind Access) and installs on the owner's phone |
 | **E10 Artifact target and release** | `page.ts`, the capability declaration (after loading the `artifact-capabilities` skill), the release ledger, the publish planner with batches, rebuild-and-verify, garbage collection and rollback from ledgers, the resume rule, peak check and the maintenance path, Self-test, `docs/engine/RELEASE.md` | E7, E8 | Planner tests (batch limits, live-page re-send, drift stop against the previous ledger, order, previous-release retention, resume after a session death at each step, maintenance path); the built Artifact passes every end-to-end scenario in the emulator; the first live publish passes Self-test on the owner's iPhone and the session reads the result from `ops/selftest-<release>` |
 
-**Interleaving.** Content stages (`CONTENT-FORMAT.md` 14) map in as follows: C1 (schema) and C2 (`zq check`) run beside E1 to E3; C2's element-reference checks need E4's `CompilerRegistry`; E5 needs C1 and the C8 emit of the reference lesson; E6 needs C3 (graders); C4's expression grader needs E1's `expr` core; E8 needs C7 (drill pipeline, now without MicroPython); C9 (preview and storyboard) needs E6; C10 needs the tutor stages; C11 (acceptance on both targets) needs E10. Widget waves start once E4 is approved and run beside E5 to E10, one widget per review. T0 and T1 start once E4 fixes the widget hooks; T5 needs E6; A2 needs E2; A7 needs E6. The first complete vertical slice, the reference lesson on both targets with Bertie through fake backends, is the end of E6, and it is the point where content authoring at volume can begin.
+**Interleaving.** Content stages (`CONTENT-FORMAT.md` 14) map in as follows: C1 (schema) and C2 (`zq check`) run beside E1 to E3; C2's element-reference checks need E4's `CompilerRegistry`; E5 needs C1 and the C8 emit of the reference lesson; E6 needs C3 (graders); C4's expression grader needs E1's `expr` core; E8 needs C7 (drill pipeline, without MicroPython and, since revision 2, with no Artifact runtime); C9 (preview and storyboard) needs E6; C10 needs the tutor stages; C11 (acceptance on both targets) needs E10. Widget waves start once E4 is approved and run beside E5 to E10, one widget per review. T0 and T1 start once E4 fixes the widget hooks; T5 needs E6; A2 needs E2; A7 needs E6. The first complete vertical slice, the reference lesson on both targets with Bertie through fake backends, is the end of E6, and it is the point where content authoring at volume can begin.
 
 ---
 
@@ -2043,13 +2095,13 @@ Each stage is one review gate. Engine stages are numbered E0 to E10; content sta
 | # | Question | Effect if the answer is unfavourable | How it closes |
 |---|---|---|---|
 | 1 | Page-level module scripts and dynamic `import()` in the Artifact | **Closed**: the Artifact probe imported an own `.mjs` with a page-level dynamic `import()` on the owner's iPhone [measured]; the page boots through a classic inline script that imports the entry (section 6.2.2) | |
-| 2 | Own `woff2` fonts under the Artifact's font policy [unverified] | Google Fonts has no KaTeX faces. Fallbacks: `FontFace` from the fetched bytes, which makes no font request [recalled]; then `data:` URIs in the stylesheet, as the prototype's vendored `katex.css` ships them; then system maths fonts | S1 |
-| 3 | The JSON-part Python layout on the owner's iPhone, and the platform's view of it [unverified] | The spike's proven layout for `stdlib` and `numpy-pandas`; other groups web-only (risk 16) | S1 for behaviour; the owner asks Anthropic before the first Python course ships in the Artifact |
-| 4 | MathLive's shadow DOM and adopted stylesheets in the Artifact [unverified] | The plain expression field (section 11.6) | S1 |
+| 2 | Own `woff2` fonts under the Artifact's font policy | **Closed by revision 2**: the Artifact publishes no font and renders MathML in system maths fonts (decision 37) | |
+| 3 | The JSON-part Python layout on the owner's iPhone, and the platform's view of it | **Closed by revision 2**: not built; no Python in the Artifact | |
+| 4 | MathLive's shadow DOM and adopted stylesheets in the Artifact | **Closed by revision 2**: MathLive is web only | |
 | 5 | Web Locks and file inputs inside the Artifact frame [unverified] | The heartbeat lease; paste instead of a file picker | S1 |
-| 6 | Wheel sizes of SciPy, statsmodels, scikit-learn and matplotlib for Pyodide 314.0.7 | **Closed in review** [measured, section 6.3.3]: the whole stack is 67 MB in 15 files in the chosen layout | |
+| 6 | Wheel sizes of SciPy, statsmodels, scikit-learn and matplotlib for Pyodide 314.0.7 | **Closed in review** [measured, section 6.3.3]: the whole stack is 67 MB in 15 files in the JSON-part layout, which revision 2 does not build; the web app's native layout is measured in `docs/PLAN.md` 5.5 | |
 | 7 | Whether the Artifact host compresses responses [unverified, as content-format 8.2 notes] | Course downloads at raw size on mobile data | Measured in S1 from transfer sizes |
-| 8 | iPhone memory with pandas plus scikit-learn in one worker [unverified] | Those drills hand off | E8 |
+| 8 | iPhone memory with pandas plus scikit-learn in one worker, in the web app [unverified] | Those drills need the web app on a computer | E8 |
 | 9 | Exact capability declaration keys for `sample` and `downloads` | Wrong declaration at first publish | **Mostly closed**: section 6.2.4 gives the declaration; `db` and `user` are sourced, `sample: {}` and `downloads: {}` inferred; checked against the `artifact-capabilities` skill at E10 |
 | 10 | The total size cap of one Artifact's database [unverified; `ASSESSMENT.md` 13.6] | The checkpoint fallback in assessment 13.6 | The bounded probe of `docs/PLAN.md` stage 2 (paced, up to 60 MB, then deleted) |
 | 11 | The Playwright container tag format for 1.63.0 [recalled] | A different image name | E0 |
@@ -2059,6 +2111,10 @@ Each stage is one review gate. Engine stages are numbered E0 to E10; content sta
 | 15 | Whether a publish can omit the page, and whether `null` removals count toward 255 paths [unverified] | The planner re-sends the live page and counts removals, which is safe either way | S1's second publish |
 | 16 | Whether the system back gesture in the Claude app walks the frame's history [unverified] | None for data; in-app back controls are the designed path (section 5.8) | S1 |
 | 17 | Overhead of the `sys.monitoring` soft deadline in Pyodide [unverified] | The watchdog alone remains (decision 31) | E8 |
+| 18 | Whether the Artifact page honours an import map in its fragment, and whether iOS 18.7 enforces import-map `integrity` [unverified] | The UMD fallback of section 6.2.7 item 6; without enforced integrity, the drift check and exact pins are the only controls | S1 |
+| 19 | Whether a module worker in the Artifact may import from the CDN hosts [unverified] | The data worker's jobs run on the main thread through an in-thread transport of `rpc.ts`, in slices of at most 8 ms, with the page's CDN modules; the full fold rebuild's budget becomes 6 s in slices with a progress line | S1 |
+| 20 | MathML quality on iOS 18.7; slot digits in the swapped `<mn>` against the surrounding maths font; whether `\htmlData` term anchors survive KaTeX's MathML output [unverified] | Slots use sentinels on both outputs, so only term anchors depend on `\htmlData`: without it, `live-formula` in the Artifact highlights a term's mark from its term list instead of from the formula; if the owner rejects the MathML look, the gap goes to him before stage 23 | S1 |
+| 21 | Which locked files cdnjs serves byte-identically [unverified: cdnjs unreachable from this sandbox] | jsDelivr's `/npm/` path for those files | `tools/cdn/lock.ts` at stage 4 |
 
 ---
 

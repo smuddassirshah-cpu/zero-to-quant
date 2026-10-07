@@ -4,7 +4,7 @@
 >
 > | Where | Was | Now |
 > |---|---|---|
-> | Decision 26, 2.8, 4.1 `CodeCtx`, 11.2 T6b | MicroPython as the Artifact's fallback; CI runtime tags | Pyodide on both targets; placement by `needs` |
+> | Decision 26, 2.8, 4.1 `CodeCtx`, 11.2 T6b | MicroPython as the Artifact's fallback; CI runtime tags | No MicroPython; placement by `needs`. *Superseded by the revision 2 row below: Pyodide runs on the web app only* |
 > | 6.3.7 | Two Worker secrets listed | All three: `ANTHROPIC_API_KEY`, `TUTOR_TOKEN`, `CALL_SIGNING_KEY` |
 > | 11.1 | "If the engine blueprint chooses JSDoc-typed JavaScript" | TypeScript throughout |
 > | 12 items 15, 16 | Open | Closed by `docs/PLAN.md` |
@@ -24,6 +24,19 @@
 > | 6.3.6, 6.3.7, 10.1, 10.5 | Durable Object backend and the KV fallback open; `.env` loading unstated | A SQLite-backed `TutorLimits` pinned in the migrations, tested in the Workers runtime; `node --env-file`; `.dev.vars` for `wrangler dev`; an eval environment with its own token and caps |
 > | 9.1, 9.5, 9.6 | Model-graded evals only on the web model; a 24-scenario deterministic Artifact smoke test; the judge the same model as the tutor; no eval budget | A judged Artifact tier run with per-tier gates and a fallback ladder; the judge on a different model plus 30 owner-graded replies per release; an eval environment and budget; CI and nightly run deterministic graders over recorded replies only |
 > | 9.7 | "Add to eval set" commits real learner text; production signals count calls only | Redaction to an owner-approved paraphrase and a CI flag check; reliance figures and the 20% reliance check |
+
+> **Revision 2 of `docs/PLAN.md`, 7 October 2026: the owner's decisions.** These rows win over anything below that reads otherwise. Section numbers are unchanged.
+>
+> | Where | Was | Now |
+> |---|---|---|
+> | Decision 26, 0.4 row 9, 2.8, 2.12, 4.1 `CodeCtx`, 12 item 16 | Both targets run Pyodide; code review in the Artifact for drills its build ships | **Code review happens in the web app only.** The Artifact publishes only files generated from this repository's own sources, so it has no Python, SQL or C++; every drill hands off, and Bertie reviews it where it runs. Papers with code items are sat in the web app |
+> | 7.3 item 3, 7.8, 8.8 | KaTeX HTML output for Bertie's maths | HTML with MathML on the web; MathML alone in the Artifact (KaTeX from the CDN with `output: 'mathml'`), through the same sink and the same `trust: false` settings (`ARCHITECTURE.md` decision 37) |
+> | 3.2, 7.2 | Bertie draft 2 | Confirmed by the owner, with the hair redrawn as soft rounded tufts (`BERTIE.md` draft 3) |
+> | 9.6 | Decision 5 open | `sealed` on the web; on the Artifact, `sealed` only for the tiers that pass the judged tier run (`docs/PLAN.md` 12 decision 5, default taken) |
+> | 11.2 T6b (second review round) | Code guard and solution unlock on Pyodide on both targets | On Pyodide in the web app; in the Artifact the review follows the drill to the web app (`docs/PLAN.md` stage 66) |
+> | 2.5, 3.1, 2.12 (second review round; `docs/CURRICULUM.md` 7 request 13) | Proof-heavy topics: stochastic calculus and measure-theoretic probability; no subject rules for the adopted items | `top.real-analysis` added to the proof-heavy topics; the subject rules of A1, 2.0a, 2.0b, 2.1b and 2.2c in 3.1; Bertie away during 2.2c's exit audit and while an A1 portfolio proof is written (2.12) |
+> | 8.7 banned-words row (second review round) | The glossary exemption awaiting the owner | Allowed (`docs/PLAN.md` 12 decision 8, default taken) |
+> | 6.3.6 origins, 10.1 waiver (second review round) | The GitHub Pages origin | The web host of `docs/PLAN.md` 12 decision 13 (default: Cloudflare Pages behind Access) |
 
 Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 
@@ -72,7 +85,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 | 23 | Varying effort on the web | Top-level `output_config.effort` fixed at `medium` on every call; a mode that needs `low` or `high` sends an effort-only system message (`{"role": "system", "content": [], "output_config": {"effort": "low"}}`, beta `mid-conversation-output-config-2026-07-01`) as the first entry of `messages` | Top-level effort per mode (draft 1, with this as a fallback once measured) | Changing the top-level effort between requests invalidates the prompt cache on Opus 5.5; the per-message form does not, needs no placement rule, and is supported on Opus 5.5 [sourced: model migration guide, Opus 5.5 effort section]. Pinning `medium`, the model's default, costs nothing [sourced]. This settles draft 1's open question 3 by design instead of by measurement |
 | 24 | Trusted text in chat history | The proxy signs each call block it renders (HMAC-SHA-256 under `CALL_SIGNING_KEY`, over the prompt version, lesson id and block text) and returns block and signature with the reply. The browser keeps them with the thread and sends them back; the proxy re-emits only blocks whose signature verifies | Re-rendering earlier turns from their stored `TutorRequest`s; letting the browser send system text | Decision 15 needs earlier call blocks re-sent byte for byte. Re-rendering would need every earlier request and would drift whenever the renderer changes. Unsigned browser text in a `system` message would turn the proxy into an operator channel for anyone holding the token. A signature keeps "every system message was written by the proxy" true at the cost of one secret and about 20 lines |
 | 25 | Bertie's art and states | `BERTIE.md` is the authority for the character, the rig, the state set and the `mount` API. Section 7.2 here only maps tutor events to `BERTIE.md` states | Draft 1's own state table and art notes | `BERTIE.md` was built and measured in a prototype; its section 0.2 lists what it changed in draft 1. Two specifications of one character would drift |
-| 26 | Code review and the runtime | Bertie reviews a drill wherever the drill runs. Both targets run Pyodide 314.0.7; a drill whose `needs` the Artifact build does not ship, or a C++ drill, hands off to the web app, and its review happens there (tidied for the blueprint: the MicroPython fallback and the CI runtime tags are withdrawn, `ARCHITECTURE.md` decision 15) | Code review on the web app only | The Artifact spike ran Python 3.14.2 with NumPy and pandas on the owner's iPhone [sourced: `spikes/README.md`], so most Stage 0 and Stage 1 drills run in daily use. The review needs run results, so it follows the runtime |
+| 26 | Code review and the runtime | Bertie reviews a drill wherever the drill runs. Since `docs/PLAN.md` revision 2 only the web app runs Pyodide 314.0.7; in the Artifact every drill hands off to the web app, and its review happens there (tidied for the blueprint: the MicroPython fallback and the CI runtime tags are withdrawn, `ARCHITECTURE.md` decision 15) | Code review on the web app only | The Artifact spike ran Python 3.14.2 with NumPy and pandas on the owner's iPhone [sourced: `spikes/README.md`], so most Stage 0 and Stage 1 drills run in daily use. The review needs run results, so it follows the runtime |
 | 27 | Practice picks | Bertie may fix only the generator dimensions listed in its `tutorParams`; the page completes the point with `makeWhere(partial, seed)` from the admissible, non-reserved index and drops a pick that matches nothing (`CONTENT-FORMAT.md` 5.4) | Bertie chooses every parameter within the box (draft 1) | Bertie steers the kind of question, never the numbers, so every served item is one CI has already checked and no exam-reserve point can leak into practice |
 | 28 | Terms not yet taught | Each call carries an embargo list: glossary terms introduced later in the course. The prompt forbids them; the output lint counts them; hint and diagnosis evals require zero | No embargo | An explanation that leans on a term from a later topic is a minimal-leap violation in disguise. `CONTENT-FORMAT.md` 8.4 already compiles the list |
 
@@ -120,7 +133,7 @@ Brilliant's 2026 tutor answers "Get help", asks questions, highlights and annota
 | 6 | Field names follow the content schema: `hints.nudge`, `hints.point`, `hints.step`; `why.yours`, `why.shown`, `why.then`, `why.rep`; `tutor.focus`, `tutor.notes`, `tutor.reps`, `tutor.avoid`; misconception `belief`; the compiler's check summary | 2.3, 2.4, 3.5, 4.1, 4.2 | `CONTENT-FORMAT.md` 3.3, 3.10, 8.4 |
 | 7 | The embargo list of terms not yet taught | 0.1 (28), 3.4, 4.1, 4.2, 4.3, 8.7, 9.4 | `CONTENT-FORMAT.md` 3.10, 8.4 |
 | 8 | Practice picks fix only `tutorParams` and go through `makeWhere`; the fallback selector is FSRS-6, not Elo with Leitner boxes | 0.1 (27), 2.11, 3.4, 4.1 | `CONTENT-FORMAT.md` 5.4; `ASSESSMENT.md` decision 7 |
-| 9 | Code review follows the drill's runtime, now including Pyodide in the Artifact | 0.1 (26), 2.8, 4.1 | `spikes/README.md`; `CONTENT-FORMAT.md` 3.9, 7.6 |
+| 9 | Code review follows the drill's runtime: the web app only, since revision 2 | 0.1 (26), 2.8, 4.1 | `spikes/README.md`; `CONTENT-FORMAT.md` 3.9, 7.6 |
 | 10 | Gate rows for weekly problems (warm and cold), the Daily 10, mock interviews and project notes; why and explain in separate columns; "after the first Check" means the lesson's first Check | 2.2 | `ASSESSMENT.md` 9.1, 10.4 and 17; design research 5.5 |
 | 11 | The authored Why states the result even after a wrong answer, so Bertie's `why` mode keys on answer status, and the engine is asked to treat an early Why as a reveal | 2.4, 12 | `CONTENT-FORMAT.md` 3.3 and its worked lesson (`why.then` on the `cross` screen) |
 | 12 | With tools, the act line goes at the start of the final answer; the parser accepts it at the start of any round | 3.4, 5.2 | Bundled API reference: on Opus 5.5, text written between tool calls returns as progress-update thinking blocks, empty by default; `sample.d.ts`: rounds arrive as one text |
@@ -240,7 +253,7 @@ Four depths, chosen by chips in the Why sheet and the drawer header, with a defa
 | In an interview | `interview` | How the idea is tested in quant interviews, the fastest correct method, the usual trap, and a 30-second spoken version | up to 150 |
 
 - On a sealed screen, `explain` offers only the `new` and `standard` depths, explains the idea behind the screen, not this question's solution, and the leak probe applies. `formal` and `interview` open once the screen is resolved, because "the fastest correct method" on a one-idea screen is the solution method, which the value-based probe cannot catch.
-- `formal` on the Artifact uses the `default` tier; it moves to `complex` only for topics tagged `proof-heavy` (stochastic calculus, measure-theoretic probability) [our choice].
+- `formal` on the Artifact uses the `default` tier; it moves to `complex` only for topics tagged `proof-heavy` (stochastic calculus, measure-theoretic probability, and `top.real-analysis` for A1) [our choice].
 
 ### 2.6 Free questions about the current screen (chat)
 
@@ -266,7 +279,7 @@ Four depths, chosen by chips in the Why sheet and the drawer header, with a defa
 
 ### 2.8 Code review of a drill attempt
 
-- **Where.** Wherever the drill runs (decision 26). Placement follows the drill's `needs` against `PythonRuntime.available()` (`ARCHITECTURE.md` 5.9): Pyodide on both targets, and a hand-off to the web app for a drill the Artifact build cannot run, whose review then happens in the web app. `CodeCtx.packages` tells Bertie which packages are loaded, so it does not suggest a SciPy call where SciPy is absent.
+- **Where.** Wherever the drill runs (decision 26): the web app, since the Artifact hands every drill off (`docs/PLAN.md` revision 2); the drill's `needs` decide what loads there (`ARCHITECTURE.md` 5.9). `CodeCtx.packages` tells Bertie which packages are loaded, so it does not suggest a SciPy call where SciPy is absent.
 - **Authored diagnosis first.** When the first failing test matches a known-wrong solution in the drill's `wrong/` folder, the authored misconception line appears with no call (`CONTENT-FORMAT.md` 7.6). Bertie is offered for everything else, and for "why" questions about an authored line.
 - **Before a pass.** Triggers: "Ask Bertie why" beside the first failing test; "Explain this error" on a traceback (sending the programming catalogue's structured `diagnostic-reader` report). Bertie gets the drill prompt and signature, the learner's numbered code, the run results, the first failing test's input, expected and actual values as the learner sees them, the error and its line, and the submission counts. It finds the first cause, quotes at most two lines of the learner's code, and asks a question or names the next check. Its act line may highlight `line:12` or `test:3`.
 - **Never the hidden tests.** Bertie sees hidden tests' names and pass or fail status only (programming 2.8).
@@ -301,7 +314,8 @@ Four depths, chosen by chips in the Why sheet and the drawer header, with a defa
 ### 2.12 Exam and homework lockout
 
 - **Exams.** Starting any timed paper (topic exam, finals-style paper, GCSE paper, challenge set, cold set) aborts any running tutor call, closes the drawer, and switches Bertie to the `away` state app-wide until the paper is submitted. The tutor service refuses every mode with the internal code `locked`. The paper's attempt record stores `tutorCalls`, which must be 0 (`ASSESSMENT.md` 3.9); the result screen shows "Bertie was out of the room for this paper".
-- **One target per paper.** In the Artifact, a paper with code items that need full CPython shows "Sit this paper in the web app" instead of Start (`ASSESSMENT.md` 3.3), so the timer, the lockout and the integrity record live on one target. The lockout does not reach a second device or the other target; section 8.3 says so plainly.
+- **One target per paper.** In the Artifact, a paper with any code item shows "Sit this paper in the web app" instead of Start (`ASSESSMENT.md` 3.3), so the timer, the lockout and the integrity record live on one target. The lockout does not reach a second device or the other target; section 8.3 says so plainly.
+- **Exit work that is evidence.** During 2.2c's exit audit and while an A1 portfolio proof is being written, Bertie is `away` exactly as for a paper (section 3.1, subject rules).
 - **Homework.** Homework items carry no tutor surfaces until the set is submitted. The paste guard (section 8.3) blocks chat elsewhere that reproduces an unsubmitted item.
 - **Quiz, practice, redo, cold weekly problems, level checks, placement, the Daily 10.** No tutor surfaces on an item until it is graded, or until the session ends for the Daily 10 (section 2.2).
 - **After submission.** Review modes open: why, explain, chat, diagnosis, marking, code review and recap.
@@ -337,6 +351,15 @@ Four depths, chosen by chips in the Why sheet and the drawer header, with a defa
 | Never the answer before two attempts and an explicit request, and then through Show solution | Brief; design research 5.4 (Show solution after 2 not-yet results); decision 13 |
 | Long-form answers marked out of 10 against a rubric, with what was right and what was missing | Lesson-creator section 6; prototype `review.js` rubric |
 | Code annotated at a chosen depth with complexity and a senior-dev paragraph | Code-craft |
+
+**Subject rules of the adopted items** (`docs/CURRICULUM.md` 7 request 13; each item file's Bertie decision is the source). They add to the rules above and live in each course's tutor context, so the leak lint and the evals check them:
+
+| Item | Bertie never | Prefers | Away during | Source |
+|---|---|---|---|---|
+| A1 Real analysis | writes a line of the learner's proof; states an $N$, a $\delta$, a supremum or a counterexample before the screen's Check; supplies the content of a rubric point a draft misses (he names the point only) | "what does the adversary choose first?", "may your $N$ depend on $x$?", "which hypothesis have you not used?", "what would a counterexample need?", "where does completeness enter?" | `exm.analysis`; while a portfolio proof is being written | `stage1-real-analysis.md` decision 16 |
+| 2.0a Numerical methods, 2.0b Optimisation | states an answer before Check; reveals the exact values and solver outputs in `secret()` | "is the error in the problem or in the algorithm?", "which step rounds?", "what happens to the error when you halve the step?", "what is the condition number here?"; "which constraints are binding?", "what would a multiplier of zero mean?", "is the feasible set convex?" | both topic papers | `stage2-numerics-optimisation.md` decision 18 |
+| 2.1b Deep learning | states a gradient, adjoint, loss or shape before the screen's Check; writes or completes the learner's engine, Lab or drill code; says more about a failing hidden test than its name and the lesson that teaches its idea | | `exm.dl` | `stage2-deep-learning.md` decision 12 |
+| 2.2c Research method | names, locates or hints at a planted defect (defects are sealed like an answer key); states a Sharpe statistic, interval or count before the screen's Check; writes or completes a pre-registration, results note or drill; gives a rubric mark on a pre-registration before the learner's own self-mark | "what could the strategy have known at that moment?", "how many things were tried before this one?", "what would this number be on pure noise?" | `exm.research`; the exit audit | `stage2-research-method.md` decision 12 |
 
 ### 3.2 Bertie's character
 
@@ -660,7 +683,7 @@ interface MarkingCtx {
 
 interface CodeCtx {
   drill: { id: string; prompt: string; signature: string; examples: string };
-  packages: string[];                   // the PyPackage values loaded for this attempt (Pyodide 314.0.7 on both targets)
+  packages: string[];                   // the PyPackage values loaded for this attempt (Pyodide 314.0.7, web app only since revision 2)
   files: { name: string; numbered: string }[];    // learner-originated; '12| total += x'
   run?: { status: 'pass' | 'fail' | 'error' | 'timeout'; passed: number; total: number;
           firstFailure?: { name: string; input: string; expected: string; actual: string; hidden: boolean };
@@ -1224,7 +1247,7 @@ Header: `anthropic-beta: server-side-fallback-2026-07-01,mid-conversation-output
 
 - **Token.** `TUTOR_TOKEN`, at least 32 random bytes in base64url, held as a Worker secret (`wrangler secret put TUTOR_TOKEN`) or in the local `.env`. The browser sends it as a bearer token. The proxy compares SHA-256 digests in constant time (`crypto.subtle.timingSafeEqual` on Workers [recalled, unverified: Workers-specific API], `crypto.timingSafeEqual` on Node). Rotation: put a new secret; old devices get `auth_failed` and the Settings prompt.
 - **Call signatures.** `CALL_SIGNING_KEY`, 32 random bytes, a separate Worker secret. The proxy signs each chat call block with HMAC-SHA-256 over `promptVersion`, the lesson id and the block's bytes, and verifies earlier blocks with Web Crypto (`crypto.subtle.verify`, which compares in constant time) before re-emitting them (decision 24). Rotation invalidates open threads, which restart with a summary.
-- **Origins.** `ALLOWED_ORIGINS` (comma-separated: the GitHub Pages origin, `http://localhost:5173`, `http://127.0.0.1:5173`). Other origins get 403 with no CORS headers. Defence in depth only; the token is the control.
+- **Origins.** `ALLOWED_ORIGINS` (comma-separated: the web host's origin, `docs/PLAN.md` 12 decision 13, `http://localhost:5173`, `http://127.0.0.1:5173`). Other origins get 403 with no CORS headers. Defence in depth only; the token is the control.
 - **Limits** per token, in a SQLite-backed Durable Object class `TutorLimits` keyed by the token digest (Worker; the class is declared under `new_sqlite_classes` in the `wrangler.toml` migrations [recalled, unverified: key name, checked at T3]) or in memory (Node). `TutorLimits` is tested in the Workers runtime with `@cloudflare/vitest-pool-workers`: concurrent requests on one counter, fail-closed when storage throws, and day and month rollover. The eval environment (`[env.eval]`, `.env.eval`) has its own token and caps: 4 in flight, 60 a minute, 2,000 requests and USD 60 a day, USD 500 a month:
 
 | Limit | Default | Config var |
@@ -1374,7 +1397,7 @@ Sizes, cuts and the states each place may use are `BERTIE.md` section 7. The doc
 
 1. **Act line hold.** If the text starts with `@`, display waits for the first newline (section 5.2).
 2. **Sentence gating.** Text is shown one complete sentence at a time: up to the last sentence end (`.`, `?` or a blank line) that lies outside a maths span and outside a code fence. Each new sentence passes the leak probe, the code guard and the output lint before it is shown. The cost is at most one sentence of delay, about a second on default tiers.
-3. **Maths.** A `$...$` or `$$...$$` span is rendered with KaTeX once it closes; until then the sentence containing it is held.
+3. **Maths.** A `$...$` or `$$...$$` span is rendered with KaTeX once it closes (MathML output in the Artifact, HTML with MathML on the web); until then the sentence containing it is held.
 4. **Leak.** If a sentence leaks, the call is aborted at once (stopping the spend), the shown text is cleared, and the withheld flow runs (section 8.1).
 5. **End.** On resolve, the remainder passes the same checks and is shown; actions from a trailing act line apply.
 6. **Machine modes.** `diagnose` and `practice` show nothing until the JSON resolves (they are short, on the quick tier). `mark` shows each rubric point as its line completes.
@@ -1440,7 +1463,7 @@ Settings persist in `db` under `data/users/<id>/settings` (Artifact) and Indexed
 
 - The dock and drawer buttons are labelled "Ask Bertie, the tutor"; the avatar art is `aria-hidden`.
 - During streaming the reply region has `aria-busy="true"`; the complete reply is announced once through the shared polite live region as "Bertie says: ...". Partial sentences are never announced.
-- KaTeX output carries its MathML for screen readers.
+- KaTeX output carries its MathML for screen readers; in the Artifact the MathML is the output.
 - Focus moves to the composer when the drawer opens and returns to the triggering control when it closes. Escape closes the drawer; it does not stop a call, so a misplaced key does not lose an answer. Stop has its own control.
 - Chips, Accept and Change buttons and the depth chips meet the 44 px target.
 - Bertie's states never carry meaning alone: every state change that matters (a verdict, an error, away) has text.
@@ -1531,7 +1554,7 @@ Before a drill passes (`code.solved` false and `solutionUnlocked` false), `tutor
 | Exclamation mark | Replaced with a full stop; counted |
 | Emoji | Removed; counted |
 | Praise openers ("Great question", "Absolutely") | Opening clause removed; counted |
-| Banned filler words (`tutor/lint/banned.txt`, the house list) | Counted for evals. A banned word inside a glossary term ("robust standard errors") is exempt, matching `CONTENT-FORMAT.md` 6.10 if the owner accepts that exemption |
+| Banned filler words (`tutor/lint/banned.txt`, the house list) | Counted for evals. A banned word inside a glossary term ("robust standard errors") is exempt, matching `CONTENT-FORMAT.md` 6.10; the owner's default allowed the exemption (`docs/PLAN.md` 12 decision 8) |
 | A term from `<embargo>` | Counted; zero is a gate for `hint` and `diagnose` evals (section 9.5) |
 | A phrase from `<avoid_phrases>` | Counted; zero is a gate in every eval |
 | American spellings listed in `tutor/lint/en-gb.json` (the -ize and -yze verb endings, -or nouns, about 200 entries) | Replaced with British forms outside code and maths; counted |
@@ -1542,7 +1565,7 @@ Before a drill passes (`code.solved` false and `solutionUnlocked` false), `tutor
 ### 8.8 Rendering safety
 
 - Bertie's text is never inserted as HTML. A small Markdown-subset parser (paragraphs, bold, italics, inline code, fenced code, bulleted and numbered lists) builds DOM nodes with `textContent`.
-- Maths spans go to KaTeX with `trust: false`, `strict: 'ignore'`, `maxSize: 10` and `maxExpand: 1000`. KaTeX's own HTML output is the one raw-HTML sink, recorded with its justification in `DECISIONS.md`, as the engineering floor requires.
+- Maths spans go to KaTeX with `trust: false`, `strict: 'ignore'`, `maxSize: 10` and `maxExpand: 1000`. KaTeX's own output (HTML with MathML on the web, MathML in the Artifact) is the one raw-HTML sink, recorded with its justification in `DECISIONS.md`, as the engineering floor requires.
 - The web app's Content Security Policy limits `connect-src` to its own origin and the proxy origin, so script injection, if it ever happened, could not send the proxy key elsewhere.
 
 ---
@@ -1671,7 +1694,7 @@ Written to drop into `PLAN.md` sections 7 and 8.
 | Eval keys (`ANTHROPIC_API_KEY` for the eval proxy and the judge, an eval-only `TUTOR_TOKEN`, `CALL_SIGNING_KEY`) | Local `.env.eval` on the owner's machine only | `node --env-file=.env.eval` for `proxy:eval` and `tutor:eval` | In CI, git, the browser or any Worker environment |
 
 - `.gitignore` excludes `.env`, `.env.eval`, `proxy/.state/` and `.dev.vars` from the first commit; `.env.example`, `.env.eval.example` and `.dev.vars.example` hold dummy values for every secret.
-- **Waiver, recorded in `DECISIONS.md`.** The engineering floor says no credentials in `localStorage`. The tutor token is stored in IndexedDB on the owner's devices because the GitHub Pages front end and the Worker are different sites, which rules out a first-party httpOnly cookie. Compensating controls: the token can only spend on the tutor, within the day and month caps; the web app's CSP limits `connect-src` to its own origin and the proxy; Bertie's output never reaches an HTML sink (section 8.8); rotation is one `wrangler secret put`. The upgrade path, if the app ever has other users: host the front end on Cloudflare Pages with the proxy as a same-origin function and an httpOnly session cookie.
+- **Waiver, recorded in `DECISIONS.md`.** The engineering floor says no credentials in `localStorage`. The tutor token is stored in IndexedDB on the owner's devices because the static web front end (`docs/PLAN.md` 12 decision 13) and the Worker are different sites, which rules out a first-party httpOnly cookie. Compensating controls: the token can only spend on the tutor, within the day and month caps; the web app's CSP limits `connect-src` to its own origin and the proxy; Bertie's output never reaches an HTML sink (section 8.8); rotation is one `wrangler secret put`. The upgrade path, if the app ever has other users: the proxy as a same-origin Pages function beside the front end and an httpOnly session cookie.
 
 ### 10.2 Entry points
 
@@ -1790,7 +1813,7 @@ Each stage is one review gate. Engine prerequisites are named; the engine bluepr
 | T4 Backends and service | `backends/*`, `service.ts`, `stream.ts`, `usage.ts` | T1, T2, T3 | The Artifact backend tested against a fake `claude` runtime implementing `sample.d.ts`, including every error code, consent decline, `modelTierApplied` substitution and tools unavailable; the web backend against the proxy with a fake upstream; abort and supersede behaviour; at most 2 calls in flight |
 | T5 Bertie and the UI | `ui/*` | Engine: lesson player, sheets, motion tokens; the `BERTIE.md` component (its section 12) | Every tutor event in section 7.2 drives the mapped state, at full and reduced motion, with no unknown state name; axe checks clean on the drawer, sheets and marking panel; keyboard paths for every control; Playwright run of the rebuilt reference lesson with a fake backend: hint, diagnosis, Why, chat, Stop, every error copy |
 | T6a Modes, wave 1 | hint, diagnose, why, explain, chat wired end to end | T4, T5 | Each mode works on both targets with a fake backend in CI and with the real ones by hand; `getScreenState` and `compute` tools tested with stub engines |
-| T6b Modes, wave 2 | code_review, mark, recap, practice | T6a; engine: `code-cell` with the runtime policy, `long-form` items, `makeWhere` | Marking evidence verification; Accept and Change recorded, with the self-marked pass label; code guard and solution unlock flow on Pyodide on both targets; practice picks restricted to `tutorParams`, drawn through `makeWhere`, never from the exam reserve |
+| T6b Modes, wave 2 | code_review, mark, recap, practice | T6a; engine: `code-cell` with the runtime policy, `long-form` items, `makeWhere` | Marking evidence verification; Accept and Change recorded, with the self-marked pass label; code guard and solution unlock flow on Pyodide in the web app, and in the Artifact the review follows the drill to the web app; practice picks restricted to `tutorParams`, drawn through `makeWhere`, never from the exam reserve |
 | T7 Evals | Eval set with the paired method-leak scenarios and the mark gold set, judge on `JUDGE_MODEL`, runner in the eval environment, baseline, the judged Artifact tier run | T6b | Judge calibration passed and the owner's 30 replies agree (section 9.4); first full run meets every gate in section 9.5 within the eval caps; the Artifact tier run meets the per-tier gates of 9.6 or its fallback ladder is applied; a fixture without `synthetic` or `redacted` fails CI; measurements recorded: cache hits across modes and chat turns, time to first text per mode, probe false-positive rate; the structured-output caching question settled (section 4.7) |
 | T8 Settings and signals | Tutor settings, usage meters, thumbs, "Add to eval set", content-gap report | T6b | Settings persist on both targets; off switch hides every AI surface (tested); counts appear and contain no text |
 
@@ -1817,4 +1840,4 @@ The tutor does not block the content engine: the lesson player ships with author
 | 13 | Does the owner's API account have the `clear_at` beta (described as limited) and the per-message effort beta? [unverified] | Without `clear_at`, old call blocks are re-read from cache each chat turn (section 4.7); without per-message effort, every mode runs at `medium` | T3 live smoke calls; both have configuration fallbacks |
 | 14 | Do server-side fallback models accept the per-message effort and `clear_at` messages? [unverified: per-message effort is listed for Opus 5 but not Opus 4.8] | A fallback request could fail instead of answering | T3, with `allowed_fallback_models` from `/v1/models`; configuration fallback as in 13 |
 | 15 | Opening Why on an unresolved screen shows `why.then`, which states the result (`CONTENT-FORMAT.md` 3.3) | The learner sees the answer without the reveal being recorded | **Closed** (`docs/PLAN.md` section 6, the Why rule): on an unresolved screen the Why sheet shows the matched diagnosis and `why.shown` only, which passes the leak lint; `why.then` appears after correct or Show solution. Bertie's `why` mode keeps keying on answer status |
-| 16 | Memory headroom for Pyodide plus a tutor call on older phones [unverified] | Code review in the Artifact may be slow on old devices | Measured at `docs/PLAN.md` stage 25 on the owner's iPhone; a load group that fails is removed from the Artifact build through `python.groups` |
+| 16 | Memory headroom for Pyodide plus a tutor call on older phones, in the web app [unverified] | Code review on the phone may be slow on old devices | Measured at `docs/PLAN.md` stage 25 on the owner's iPhone in the web app; a group that fails there needs the web app on a computer |
