@@ -16,6 +16,7 @@ export default defineConfig([
     'node_modules/',
     'test-results/',
     '.workflows/',
+    '.claude/',
   ]),
   js.configs.recommended,
   {
@@ -29,7 +30,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/**/*.tsx'],
+    files: ['src/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: reactHooks.configs.recommended.rules,
   },
