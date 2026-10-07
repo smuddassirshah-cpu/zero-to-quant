@@ -1,0 +1,26 @@
+# Local gates (docs/PLAN.md 7.1, 7.6). Installed by `npm install` through the prepare script.
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{ts,tsx,js,mjs,json,css,html,yml,yaml}'
+      run: npx prettier --check {staged_files}
+    lint:
+      glob: '*.{ts,tsx,js,mjs}'
+      run: npx eslint --max-warnings 0 {staged_files}
+    css:
+      glob: '*.css'
+      run: npx stylelint {staged_files}
+    secrets:
+      run: node tools/ci/gitleaks.ts staged
+
+pre-push:
+  commands:
+    secrets:
+      run: node tools/ci/gitleaks.ts history
+    check:
+      run: npm run check
+    unit:
+      run: npm test
+    audit:
+      run: npm run check:audit
