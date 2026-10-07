@@ -9,7 +9,45 @@ One TypeScript codebase builds two targets:
 
 ## Status
 
-The Blueprint carries the owner's decisions of 7 October 2026 and was approved by him that day. Build stage 1 (scaffold, toolchain and CI) is in progress; `STATE.md` tracks the build stage by stage. Getting-started instructions arrive with stage 1.
+The Blueprint carries the owner's decisions of 7 October 2026 and was approved by him that day. Build stage 1 (scaffold, toolchain and CI) produced the toolchain below and an empty app that boots on both targets; `STATE.md` tracks the build stage by stage.
+
+## Getting started
+
+Prerequisites, at the versions CI uses:
+
+| Tool | Version | How |
+|---|---|---|
+| Node.js and npm | 22.22.0 and 10.9.4 (`.nvmrc`; at least 22.18, whose built-in type stripping runs the tools) | `nvm install` in the repository |
+| Go | 1.24 or later | Builds the pinned gitleaks; Go fetches the toolchain the module asks for |
+| Python | 3.12.15 (`tools/py/.python-version`) | System, `pyenv` or `uv python install`; only the CI packages need it. Another 3.12 patch works locally with `UV_PYTHON=/path/to/python3.12` |
+| uv | 0.8.17 | `python3 -m pip install --require-hashes --only-binary :all: -r tools/py/uv-bootstrap.txt` |
+
+From a clean clone:
+
+```sh
+npm ci                        # exact pins from package-lock.json; installs the git hooks
+npm run setup:gitleaks        # gitleaks 8.30.1 into .zq/bin, verified by Go's checksum database
+npm run check:py              # uv lock --check, then uv sync --locked (tools/py)
+npm run check                 # types, lint, format, CSS, knip, VITE_* names, licences
+npm run test:coverage         # unit tests with the coverage floors
+npm run build                 # both targets, the Artifact page fragment, release budgets
+npm run size                  # entry and stylesheet size limits
+npx playwright install chromium
+npm run test:e2e              # the empty app boots on the dev server, the web build and the Artifact host
+npm run check:secrets         # gitleaks over every commit of every ref
+```
+
+Day to day: `npm run dev` serves the development page at `http://localhost:5173/`; `npm run serve:artifact` serves the built Artifact through the local host emulator at `http://127.0.0.1:4174/`.
+
+The git hooks (pre-commit: format, lint, CSS and staged secrets; pre-push: full-history secrets, every static check, unit tests, `npm audit` and `pip-audit`) refuse to run without lefthook, gitleaks and uv installed. They are early warnings; CI is the gate that decides a merge (`docs/DECISIONS.md` B6).
+
+## Repository settings the owner applies
+
+These live in GitHub's settings, not in the repository, and only the owner can set them:
+
+1. **Branch protection or rulesets** on `main` and on `stage/*`: require a pull request; require the status checks `static`, `unit`, `build` and `secrets` from `ci`; block force pushes and deletions. Two settings wait: `visual-approved` (from `label-guard`) becomes a required check only after stage 1 reaches `main`, because the guard has not run yet ([unverified] whether GitHub reads it from the base or the default branch); and code-owner review on `main` waits for a separate identity for the build sessions (`docs/DECISIONS.md` B5), because the sessions' pull requests are authored by the owner's account and GitHub refuses an author's approval of their own pull request [recalled], so requiring it now would block every merge into `main`. No branch is protected today [measured]. Branch protection on a private repository may need a paid plan [recalled, unverified]; if the settings page does not offer it, the rules stay procedural.
+2. **Identity.** The build sessions' GitHub connection acts as the owner's own account [measured], so GitHub cannot stop a session merging into `main` or applying `visual-approved`; `CLAUDE.md` hard rule 3 forbids both (`docs/DECISIONS.md` B5).
+3. **Actions.** Allow GitHub Actions for the repository; CI uses only GitHub's own actions (`actions/checkout`, `setup-node`, `setup-python`, `setup-go`), which a later session pins to commit SHAs.
 
 ## Where things are
 
