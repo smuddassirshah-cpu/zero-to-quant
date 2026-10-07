@@ -1,0 +1,57 @@
+import rule from '../src/rules/no-empty-catch.ts';
+import { tester } from './tester.ts';
+
+const swallowed = [{ messageId: 'swallowed' }];
+
+tester.run('no-empty-catch', rule, {
+  valid: [
+    'try { f() } catch (e) { throw e }',
+    'try { f() } catch { throw new Error("failed") }',
+    'try { f() } catch { if (retry) { throw new Error("failed") } }',
+    'try { f() } catch { log.warn("failed") }',
+    'try { f() } catch { console.error("failed") }',
+    'try { f() } catch { this.logger.info("failed") }',
+    'try { f() } catch (e) { return e }',
+    'try { f() } catch (e) { setTimeout(() => report(e)) }',
+    'try { f() } catch ({ message }) { show(message) }',
+    'try { f() } catch (e: unknown) { reject(e) }',
+    'try { a() } catch (e) { try { b() } catch { throw e } }',
+    'try { a() } catch { try { b() } catch { throw new Error("both failed") } }',
+    'p.catch((e) => e)',
+    'p.catch((e) => { report(e) })',
+    'p.catch(() => log.error("failed"))',
+    'p.catch(() => { throw new Error("failed") })',
+    'p.catch(function (e) { report(e) })',
+    'p["catch"](({ code }) => code)',
+    'p.then(ok, (e) => e)',
+    'p.then(ok)',
+    'p.then((v) => v, undefined)',
+    'p.catch(handle)',
+    'p?.catch((e) => e)',
+    { code: 'try { f() } catch { audit.warn("failed") }', options: [{ loggers: ['audit'] }] },
+  ],
+  invalid: [
+    { code: 'try { f() } catch {}', errors: swallowed },
+    { code: 'try { f() } catch (e) {}', errors: swallowed },
+    { code: 'try { f() } catch (e) { /* ignored */ }', errors: swallowed },
+    { code: 'try { f() } catch (e) { e = null }', errors: swallowed },
+    { code: 'try { f() } catch { function g() { throw new Error("later") } }', errors: swallowed },
+    { code: 'try { f() } catch { metrics.warn("failed") }', errors: swallowed },
+    { code: 'try { f() } catch { log.debug("failed") }', errors: swallowed },
+    {
+      code: 'try { f() } catch { console.warn("failed") }',
+      options: [{ loggers: ['log'] }],
+      errors: swallowed,
+    },
+    { code: 'try { f() } catch (e) { const g = (e) => e }', errors: swallowed },
+    { code: 'try { f() } catch { p.catch(() => { log.warn("inner") }) }', errors: swallowed },
+    { code: 'p.catch(() => {})', errors: swallowed },
+    { code: 'p.catch(() => undefined)', errors: swallowed },
+    { code: 'p.catch((_e) => {})', errors: swallowed },
+    { code: 'p.catch(async () => {})', errors: swallowed },
+    { code: 'p.catch(function named() {})', errors: swallowed },
+    { code: 'p.catch((a, b) => b)', errors: swallowed },
+    { code: 'p.catch(() => { const g = () => { throw new Error("later") } })', errors: swallowed },
+    { code: 'p.then(ok, () => {})', errors: swallowed },
+  ],
+});
