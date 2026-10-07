@@ -59,6 +59,12 @@ const violations = [
     code: "export const ink = '#ff0000';\n",
     message: "'#ff0000' is a colour literal",
   },
+  {
+    rule: 'zq/layering',
+    file: 'src/engine/__planted_layering.ts',
+    code: "export * from '../screens/today/View.tsx';\n",
+    message: 'engine/ may not import src/screens/today/View.tsx',
+  },
 ];
 
 // An inline directive does not switch a rule off: noInlineConfig reports the directive instead.
