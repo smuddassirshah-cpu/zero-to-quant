@@ -4,7 +4,15 @@ import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { createHost, DEFAULT_PORT, main, parseHostArgs, resolveRequestPath, wrapPage } from './server.ts';
+import {
+  createHost,
+  DEFAULT_PORT,
+  main,
+  parseHostArgs,
+  resolveRequestPath,
+  startupProblem,
+  wrapPage,
+} from './server.ts';
 
 interface Reply {
   readonly status: number;
@@ -42,14 +50,27 @@ function listening(host: Server): Promise<number> {
   });
 }
 
+function folder(name: string, files: Record<string, string>): string {
+  const dir = join(outer, name);
+  for (const [path, text] of Object.entries(files)) {
+    mkdirSync(join(dir, path, '..'), { recursive: true });
+    writeFileSync(join(dir, path), text);
+  }
+  return dir;
+}
+
 beforeAll(async () => {
   mkdirSync(join(root, 'assets'), { recursive: true });
   writeFileSync(join(root, 'index.html'), FRAGMENT);
+  writeFileSync(join(root, 'Index.html'), FRAGMENT);
   for (const name of ['app.js', 'gen.mjs', 'app.css', 'data.json', 'icon.svg', 'core.wasm', 'notes.txt']) {
     writeFileSync(join(root, 'assets', name), `/* ${name} */`);
   }
+  folder('artifact', { '.vite/manifest.json': '{}', 'assets/.env.json': '{}' });
+  folder('outside', { 'secret.js': 'secret' });
   writeFileSync(join(outer, 'secret.js'), 'secret');
   symlinkSync(join(outer, 'secret.js'), join(root, 'assets', 'link.js'));
+  symlinkSync('../outside', join(root, 'lib'));
   server = createHost(root).listen(0, '127.0.0.1');
   port = await listening(server);
 });
@@ -60,8 +81,8 @@ afterAll(() => {
 });
 
 describe('the host', () => {
-  it('wraps the published fragment in a document skeleton at / and /index.html', async () => {
-    for (const path of ['/', '/index.html', '/?route=today']) {
+  it('wraps the published fragment in a document skeleton at /, /index.html and /Index.html', async () => {
+    for (const path of ['/', '/index.html', '/Index.html', '/?route=today']) {
       const reply = await get(path);
       expect(reply.status).toBe(200);
       expect(reply.headers['content-type']).toBe('text/html; charset=utf-8');
@@ -80,7 +101,6 @@ describe('the host', () => {
     ['/assets/app.css', 'text/css; charset=utf-8'],
     ['/assets/data.json', 'application/json; charset=utf-8'],
     ['/assets/icon.svg', 'image/svg+xml'],
-    ['/assets/../assets/app.js', 'text/javascript; charset=utf-8'],
   ])('serves %s as %s', async (path, type) => {
     const reply = await get(path);
     expect(reply).toMatchObject({
@@ -96,7 +116,11 @@ describe('the host', () => {
     ['a missing file', '/assets/missing.js'],
     ['a folder', '/assets'],
     ['a path through a file', '/index.html/app.js'],
-    ['a link', '/assets/link.js'],
+    ['a linked file', '/assets/link.js'],
+    ['a file through a linked folder', '/lib/secret.js'],
+    ['a dot-folder', '/.vite/manifest.json'],
+    ['a dotfile', '/assets/.env.json'],
+    ['a dot-dot segment that stays inside', '/assets/../assets/app.js'],
     ['a traversal', '/../secret.js'],
     ['an encoded traversal', '/%2e%2e/secret.js'],
     ['a deep encoded traversal', '/assets/%2E%2E/%2e%2e/secret.js'],
@@ -139,13 +163,37 @@ describe('the command line', () => {
     expect(() => parseHostArgs(['a', '--port', '12ab'])).toThrow(/Invalid --port/);
   });
 
-  it('refuses a folder without a page, and serves one with a page', async () => {
-    expect(() => main([outer, '--port', '0'])).toThrow(/No index\.html/);
+  it('refuses to start on a folder page.ts has not finished', () => {
+    const vite = folder('vite-left', { 'index.html': FRAGMENT, '.vite/manifest.json': '{}' });
+    const full = folder('full', { 'index.html': '<!DOCTYPE html>\n<html lang="en-GB"><body></body></html>' });
+    const bare = folder('bare', { 'index.html': '<head>\n<html>' });
+    expect(startupProblem(join(outer, 'outside'))).toMatch(/^No index\.html in /);
+    expect(startupProblem(vite)).toMatch(
+      /still holds Vite's \.vite\/ folder: run node tools\/release\/page\.ts/,
+    );
+    expect(startupProblem(full)).toMatch(
+      /is a full document, not the page fragment: run node tools\/release\/page\.ts/,
+    );
+    expect(startupProblem(bare)).toMatch(/is a full document/);
+    const fail = vi.fn();
+    expect(main([vite, '--port', '0'], fail)).toBeUndefined();
+    expect(main(['a', 'b'], fail)).toBeUndefined();
+    expect(fail.mock.calls).toEqual([[startupProblem(vite)], [expect.stringMatching(/^Usage/)]]);
+  });
+
+  it('serves a finished folder, and reports a port in use instead of crashing', async () => {
+    const good = folder('good', { 'index.html': FRAGMENT });
+    expect(startupProblem(good)).toBeUndefined();
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const host = main([root, '--port', '0']);
+    const host = main([good, '--port', '0'], () => undefined);
+    if (host === undefined) throw new Error('The host did not start');
     const started = await listening(host);
+    expect(log).toHaveBeenCalledWith(`Artifact host: http://127.0.0.1:${started}/ serving ${good}`);
+    const message = await new Promise<string>((done) => main([good, '--port', String(started)], done));
     host.close();
-    expect(log).toHaveBeenCalledWith(`Artifact host: http://127.0.0.1:${started}/ serving ${root}`);
     log.mockRestore();
+    expect(message).toBe(
+      `Port ${started} on 127.0.0.1 is already in use: stop that server or pass another --port`,
+    );
   });
 });

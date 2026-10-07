@@ -23,12 +23,18 @@ async function offline(page: Page): Promise<string[]> {
   return errors;
 }
 
+// Errors are read only once the page has loaded and its network has gone quiet.
+async function open(page: Page): Promise<void> {
+  await page.goto('/', { waitUntil: 'load' });
+  await page.waitForLoadState('networkidle');
+}
+
 test('the empty app boots', async ({ page }, testInfo) => {
   const target = BOOT_TARGET[testInfo.project.name];
   if (target === undefined) throw new Error(`No boot target for project ${testInfo.project.name}`);
   const errors = await offline(page);
 
-  await page.goto('/');
+  await open(page);
 
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Zero to Quant');
   await expect(page.locator('#app')).toHaveAttribute('data-zq-boot', target);
@@ -52,7 +58,7 @@ test.describe('the Artifact page', () => {
       if (request.resourceType() === 'script') scripts.push(request.url());
     });
     await page.addInitScript(() => Reflect.deleteProperty(globalThis, 'structuredClone'));
-    await page.goto('/');
+    await open(page);
     await expect(page.locator('#app')).toHaveText(TOO_OLD);
     expect(await page.evaluate(() => Reflect.get(window, '__zqOld') as unknown)).toBe(true);
     expect(scripts).toEqual([]);
@@ -68,7 +74,7 @@ test.describe('the Artifact page', () => {
       await route.fulfill({ response, body });
     });
     await page.addInitScript(() => Reflect.deleteProperty(globalThis, 'structuredClone'));
-    await page.goto('/');
+    await open(page);
     await expect(page.locator('#app')).toHaveText(TOO_OLD);
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatch(/Unexpected token/);
@@ -77,7 +83,7 @@ test.describe('the Artifact page', () => {
   test('says so when the entry script cannot load', async ({ page }) => {
     const errors = await offline(page);
     await page.route('**/assets/app.*.js', (route) => route.fulfill({ status: 404 }));
-    await page.goto('/');
+    await open(page);
     await expect(page.locator('#app')).toHaveText('Zero to Quant could not start. Reload to try again.');
     expect(errors.some((text) => text.includes('dynamically imported module'))).toBe(true);
   });
