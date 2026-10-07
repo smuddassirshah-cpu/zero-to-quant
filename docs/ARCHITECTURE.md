@@ -1593,7 +1593,7 @@ Recomputed by revision 2: no Python, SQLite, KaTeX fonts or library chunks; 103 
 
 **Turnover.** Hashed names cascade: a changed entry chunk changes the import specifiers inside every lazy chunk that imports from it, so an app release renames about 36 files (up to 12 MB). A content-only release renames the page, the manifest and the touched course files only (decision 30). A third-party version change renames no published file except the page, whose import map changes.
 
-**Limits** [our choice], each checked by `tools/release/budgets.ts`, which fails the build and names the largest groups:
+**Limits** [our choice]. `tools/release/budgets.ts` checks the one-release row on every build, failing it and naming the largest groups; the retained-version and peak rows need the previous release's ledger, so `tools/release/artifact-plan.ts` checks them when it writes the publish plan (stage 83; `docs/DECISIONS.md` B7):
 
 | Limit | Files | Size | Why |
 |---|---|---|---|
