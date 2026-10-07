@@ -157,12 +157,52 @@ Details in `spikes/README.md`. Both ran as private Artifacts on the owner's iPho
 
 ### Spike S1 (stage 2)
 
-Published 7 October 2026 (`spikes/README.md`, `spikes/s1/`, `spikes/s1-dbsize/`); results on the owner's iPhone pending. Record each check with device, app version and date, the import-map verdict (section 4.3's design or its named fallback) before stage 4 starts, the MathML verdict with screenshots, and the `db` size probe's result.
+**Device and date.** The owner's iPhone 17 Pro Max, iOS 27.2 (from Settings, General, About), Claude app 1.261002.20 (37091698851), 7 October 2026, 22:19 to 23:07 UTC. The page's user agent reports `iPhone OS 18_7` on that device, so the user agent's OS version is frozen and is no evidence of the OS [measured]. The 6 October records' "iOS 18.7" (section 4 above, `spikes/README.md`) most likely came from the same user agent [inferred]. Every check's result is in `spikes/s1/results/README.md`, from the stored run documents beside it; the probe and its build are `spikes/s1/` and `spikes/s1-dbsize/`.
 
-Two results do not depend on the device:
+**Verdicts** [measured: S1, 7 October 2026, unless tagged otherwise]:
 
-- **`\htmlData` in MathML: no.** KaTeX 0.19.0's MathML output drops `\htmlData`; no element carries `data-term`, while its HTML output does [measured: Chromium in `spikes/s1/tools/test.mjs`, and Node in the archive's review, 7 October 2026]. The fallback of `ARCHITECTURE.md` 14 item 20 applies (`live-formula` in the Artifact highlights a term from its term list); it is written into `ARCHITECTURE.md` with the device results, before stage 23.
-- **The declaration as stored:** `db` with six rules, `user` with the `profile` scope, `sample: {}` [measured: the publish result]. `ARCHITECTURE.md` 6.2.4 declares `downloads: {}` where the capabilities contract 0.2.73 says `downloads: true` [sourced: the `artifact-capabilities` skill]: a conflict for open question 15 (stage 83), reported in the stage 2 report.
+- **Import map: `PLAN.md` 4.3's design stands; the Preact 10.29.8 UMD fallback is not needed.**
+  - The classic bootstrap's `import('preact')` and a module's static bare imports resolve through the page's import map to the locked jsDelivr URLs.
+  - Import-map integrity is enforced: two wrong-hash URLs were refused ("Cannot load script due to integrity mismatch") while the same file with no integrity entry loaded. Resource Timing exposes no sizes for the CDN on this device, so the verdict rests on the two refusals beside the control.
+  - The UMD fallback also works, with integrity, and stays the named fallback.
+- **Module worker: passes.** It imports classic zod, ts-fsrs and fflate by full URL and runs each, so `ARCHITECTURE.md` 14 item 19's main-thread fallback is not needed. A worker has no import map and `import()` takes no integrity, so worker imports are not hash-checked.
+- **cdnjs: KaTeX only.** cdnjs served one candidate byte-identical to npm, KaTeX 0.19.0's `katex.mjs`. Preact, its hooks, both signals packages, `zod/mini` and fflate were not served at the paths tried. jsDelivr stays the host for everything else; the stage 4 lock tool remains the authority.
+- **`zod/mini` costs 92 requests.** On the first, cold load the static imports took 2,783 ms, against 9,393 ms of summed request time for zod's 92 files. Warm loads took 36 to 47 ms. This is a finding for stage 4; any change of library is the owner's decision.
+- **MathML: accepted by the owner.**
+  - KaTeX 0.19.0's MathML output lays out natively, and all 40 specimen formulas render without an error. The owner judged every formula readable and correctly set; the screenshot it sent is `spikes/s1/results/screenshots/iphone-specimen-dark-top.png`, and the rest are requested for the record.
+  - `TexSlots`' binding left no sentinel text, with the TeX annotation rewritten (B20, for the owner). The owner saw the live digits match the maths font, and VoiceOver read the current values. The digits in the swapped `<mn>` look the same as in the `<mtext>` copy.
+- **`\htmlData` in MathML: no.** No element carries `data-term`, while the HTML output does [measured: Chromium and Node, and the device]. `ARCHITECTURE.md` 14 item 20's fallback applies: `live-formula` in the Artifact highlights a term from its term list.
+- **The `db` size probe: no cap through 60 MiB, so the checkpoint of `ASSESSMENT.md` 13.6 is not built.**
+  - 320 documents of 196,608 bytes (62,914,560 bytes) were written, with no `quota_exceeded` and no `resource_exhausted`. One `unavailable` was retried once and accepted. Writes averaged 414 ms (997 ms at most), and every document was then deleted.
+  - Under `PLAN.md` stage 2's rule, a cap at or above 34 MB times one participant means no checkpoint. The probe stopped at its ceiling, so the real cap, if any, is above 60 MiB [measured: no cap below it].
+- **`db` behaviour:**
+  - The declared rule set is in effect: the canary refused the owner's write to `s1canary/zz-not-me`.
+  - Round trips took 200 to 300 ms per call.
+  - `meta/release` reached the open page through `onSnapshot` in real time.
+- **Versions and publishing:**
+  - A publish takes at most 255 `files` entries, and `null` removals count against them: the tool refused 303 entries and published nothing.
+  - Every publish must carry the page: a files-only publish was refused.
+  - After each publish, the host reloaded the page open on the iPhone to the newest version within 1 to 4 s, including between the two batches of one release.
+  - A fresh load serves the added files and not the removed ones. `location.reload()` loads the newest version from the same base path, and `sessionStorage` survives it.
+  - Published files carry `cache-control: private, max-age=31536000, immutable` and gzip.
+  - `platform.version-json-after` and `platform.version-scoping` were skipped by design: the open v1 page they need does not survive a publish.
+- **Platform:**
+  - Pass: gzip compression (6.4 KB on the wire for 62.7 KB of JSON), Web Locks with `steal: true` and across a dedicated worker, IndexedDB in a module worker, inline `style` attributes through `innerHTML`, hash routes with a slash and `hashchange`, Google Fonts, the clipboard, and a file input. An external anchor opened in a browser, so the handoff link of `ASSESSMENT.md` 14.3 can be an anchor.
+  - Info: `navigator.storage.estimate()` reports a 983 MB quota, not persisted.
+  - **Fail, the system back gesture: it does nothing in the frame (no `popstate`).** The app needs its own back control.
+  - `window.open` returned `null` and nothing happened.
+  - The screen wake lock is refused by Feature-Policy.
+- **Capabilities:**
+  - `user` gives an id, the owner's flags and names with the `profile` scope.
+  - `permissions.state()` reported `sample` as "prompt" until the first call, then "granted".
+  - `sample`:
+    - the first call shows the consent dialog;
+    - `onText` streams, each text the previous plus its delta;
+    - all three tiers answered a one-word prompt: quick 631 ms, default 2,043 ms, complex 1,027 ms;
+    - an abort rejects `cancelled` within 1 ms;
+    - one page tool ran and its value reached the reply;
+    - limits: 262,144 prompt bytes, no images, at most 16 tools.
+  - The declaration as stored: `db` with six rules, `user` with the `profile` scope, `sample: {}`. `ARCHITECTURE.md` 6.2.4 declares `downloads: {}` where the capabilities contract 0.2.73 says `downloads: true` [sourced: the `artifact-capabilities` skill]; this conflict goes to open question 15 (stage 83).
 
 ## 5. Dependencies, licences and advisories
 
