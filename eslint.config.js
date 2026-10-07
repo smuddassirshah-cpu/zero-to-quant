@@ -5,6 +5,157 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 import zq from 'eslint-plugin-zq';
 
+// Workspace package name -> repository directory, for zq/layering's resolver.
+const packages = {
+  '@zq/contracts': 'packages/contracts',
+  '@zq/mathcore': 'packages/mathcore',
+  '@zq/models': 'packages/models',
+  '@zq/content-schema': 'packages/content-schema',
+  '@zq/compiler': 'packages/content-compiler',
+  '@zq/graders': 'packages/graders',
+  '@zq/gen': 'packages/gen-kit',
+  'eslint-plugin-zq': 'packages/eslint-plugin-zq',
+};
+
+// The table of docs/ARCHITECTURE.md 4.5. zq/layering takes the first layer whose `files` glob
+// matches, so the most specific layer comes first. Globs: `**`, `*`, `$1` (the importer's first
+// `*` capture) and `$dir` (the importer's directory); extensions and `/index` are ignored.
+const pure = ['packages/contracts/**', 'packages/mathcore/**', 'packages/models/**'];
+const runtime = [...pure, 'packages/content-schema/**', 'packages/graders/**', 'packages/gen-kit/**'];
+const schemas = 'src/widgets/**/schema.ts'; // classic zod, so never in a main-thread bundle
+const mainThread = ['npm:zod', 'npm:zod/v4', 'npm:zod/v4/classic', schemas];
+const views = ['npm:preact', 'npm:preact/**', 'npm:@preact/**', '**/*.css', '**/View.tsx'];
+const widgetEngine = [
+  'src/engine/widgets/api.ts',
+  'src/engine/interaction/**',
+  'src/engine/render/**',
+  'src/engine/motion/**',
+  'src/ui/**',
+  ...pure,
+];
+const shell = [
+  'src/engine/**',
+  'src/widgets/registry.gen.ts',
+  'src/tutor/**',
+  'src/ui/**',
+  'src/platform/types.ts',
+];
+const platform = (name) => ({
+  name: `platform/${name}`,
+  files: [`src/platform/${name}/**`],
+  allow: [`src/platform/${name}/**`, 'src/platform/shared/**', 'src/platform/types.ts', ...runtime],
+});
+const layers = [
+  { name: 'a colocated test', files: ['src/**/*.test.ts', 'src/**/*.test.tsx'], allow: ['**'] },
+  { name: 'entries/', files: ['src/entries/**'], allow: ['**'], deny: [schemas] },
+  {
+    name: 'widgets/**/logic.ts',
+    files: ['src/widgets/**/logic.ts'],
+    allow: [...pure, '$dir/**'],
+    deny: [...views, ...mainThread],
+  },
+  {
+    name: 'widgets/scenes/**/scene.ts',
+    files: ['src/widgets/scenes/**/scene.ts'],
+    allow: [...pure, '$dir/**', 'src/widgets/scene/define.ts', 'src/widgets/primitives/*/logic.ts'],
+    deny: [...views, ...mainThread],
+  },
+  {
+    name: 'widgets/**/schema.ts',
+    files: ['src/widgets/**/schema.ts'],
+    allow: [...pure, '$dir/**', 'npm:zod'],
+    deny: views,
+  },
+  {
+    name: 'widgets/registry.node.gen.ts',
+    files: ['src/widgets/registry.node.gen.ts'],
+    allow: ['src/widgets/**', ...pure],
+    deny: views,
+  },
+  {
+    name: 'widgets/scene/',
+    files: ['src/widgets/scene/**'],
+    allow: [
+      ...widgetEngine,
+      'src/widgets/scene/**',
+      'src/widgets/primitives/**',
+      'src/widgets/inputs/**',
+      'src/widgets/composites/*/*/View.tsx',
+    ],
+    deny: mainThread,
+  },
+  {
+    name: 'widgets/',
+    files: ['src/widgets/**'],
+    allow: [...widgetEngine, 'src/widgets/**'],
+    deny: mainThread,
+  },
+  {
+    name: 'app/',
+    files: ['src/app/**'],
+    allow: ['src/app/**', 'src/screens/**', ...shell, ...runtime],
+    deny: [schemas],
+  },
+  {
+    name: 'screens/',
+    files: ['src/screens/*/**'],
+    allow: ['src/screens/$1/**', 'src/app/**', ...shell, ...runtime],
+    deny: [schemas],
+  },
+  {
+    name: 'tutor/',
+    files: ['src/tutor/**'],
+    allow: ['src/tutor/**', 'src/engine/**', 'src/ui/**', 'src/platform/types.ts', ...runtime],
+    deny: [schemas],
+  },
+  {
+    name: 'engine/',
+    files: ['src/engine/**'],
+    allow: ['src/engine/**', 'src/ui/**', 'src/platform/types.ts', ...runtime],
+    deny: [schemas],
+  },
+  {
+    name: 'ui/',
+    files: ['src/ui/**'],
+    allow: ['src/ui/**', 'src/engine/motion/**', 'packages/contracts/**'],
+  },
+  platform('web'),
+  platform('artifact'),
+  {
+    name: 'platform/',
+    files: ['src/platform/**'],
+    allow: ['src/platform/types.ts', 'src/platform/shared/**', 'src/platform/fake/**', ...runtime],
+  },
+  {
+    name: 'workers/',
+    files: ['src/workers/**'],
+    allow: ['src/workers/**', 'src/engine/progress/fold/**', 'src/engine/rpc.ts', ...runtime],
+  },
+  { name: 'sw/', files: ['src/sw/**'], allow: ['src/sw/**', ...runtime] },
+  { name: 'packages/*', files: ['packages/*/**'], allow: ['packages/**'], deny: ['src/**', 'tools/**'] },
+  {
+    name: 'tools/zq',
+    files: ['tools/zq/**'],
+    allow: [
+      'packages/*/**',
+      'tools/**',
+      'src/widgets/registry.node.gen.ts',
+      'src/widgets/**/logic.ts',
+      'src/widgets/**/schema.ts',
+      'src/widgets/presets/**',
+    ],
+    deny: ['**/View.tsx', '**/*.css'],
+  },
+  { name: 'tools/', files: ['tools/**'], allow: ['**'], deny: ['src/**'] },
+  {
+    name: 'proxy/',
+    files: ['proxy/**'],
+    allow: ['proxy/**', 'packages/*/**', 'src/tutor/context/schema.ts', 'src/tutor/render/anthropic.ts'],
+  },
+  { name: 'tests/', files: ['tests/**'], allow: ['**'] },
+  { name: 'a root config file', files: ['*.config.ts', '*.config.js'], allow: ['packages/*/**', 'tools/**'] },
+];
+
 export default defineConfig([
   globalIgnores([
     'dist/',
@@ -50,6 +201,10 @@ export default defineConfig([
     // widget logic and scene files produce render data.
     files: ['src/**/*.{ts,tsx}'],
     rules: { 'zq/no-forbidden-apis': 'error', 'zq/no-colour-literals': 'error' },
+  },
+  {
+    files: ['{src,packages,tools,proxy,tests}/**/*.{ts,tsx}', '*.config.{ts,js}'],
+    rules: { 'zq/layering': ['error', { layers, packages }] },
   },
   {
     // CLAUDE.md: no eval or new Function anywhere.
