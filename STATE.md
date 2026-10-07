@@ -172,9 +172,9 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 4 | The `db` total size cap [unverified] | Stage 69: the checkpoint is built only if the cap is below 34 MB times the participants | Stage 2's paced probe (then deleted, with the owner's confirmation) |
 | 5 | In the Artifact frame, the single list of `docs/PLAN.md` stage 2 (c): response compression, Web Locks, IndexedDB in a worker, `navigator.storage.estimate()`, **whether an external anchor opens from the frame (the handoff link every drill and live-code screen depends on; otherwise the copyable link)**, file input, inline `style` attributes through `innerHTML`, `version.json` caching despite a query string, version scoping after a republish, `location.reload()`, publishing without the page, `null` removals against 255 paths, the back gesture [unverified] | Stages 4, 69, 70, 83 | Stage 2 |
 | 6 | Which locked files cdnjs serves byte-identically [unverified] | `cdn.lock.json` URLs (jsDelivr otherwise) | Stage 4 |
-| 7 | Can the session platform's GitHub connection act as an identity separate from the owner's? [unverified] | Merge rights: otherwise procedural (`CLAUDE.md`, `label-guard.yml`) | Stage 1 |
-| 8 | The Playwright container tag for 1.63.0 [recalled] | Visual CI | Stage 1 |
-| 9 | `zq/no-inner-html` lists only the `innerHTML` family (`ARCHITECTURE.md` 10.4), while `PLAN.md` 7.2 says it enforces both sinks | Stage 1 extends it to `DOMParser` and `createContextualFragment` outside `src/ui/bertie/markup.ts` (`DECISIONS.md` S2) | Stage 1 |
+| 7 | Can the session platform's GitHub connection act as an identity separate from the owner's? **Closed, no** [measured, stage 1: it authenticates as the owner's account] | Merge rights are procedural (`CLAUDE.md` hard rule 3; `label-guard.yml` refuses other accounts; `docs/DECISIONS.md` B5) | Closed |
+| 8 | The Playwright container tag for 1.63.0: **closed** [measured: `mcr.microsoft.com/playwright:v1.63.0-noble`, digest in `ARCHITECTURE.md` 3.2; `docs/DECISIONS.md` B11] | Visual CI | Closed |
+| 9 | `zq/no-inner-html` and the two sinks: **closed** at stage 1 (`docs/DECISIONS.md` B3) | | Closed |
 | 10 | Scene layer go or revert per family | Stages 27 to 58; more than one family failing stops the build for a re-plan | Stage 14 |
 | 11 | `sys.monitoring` soft-deadline overhead in Pyodide; iPhone memory with pandas and scikit-learn in one worker [unverified] | Drill timeouts; which drills need a computer | Stage 25 |
 | 12 | Cloudflare plan with SQLite-backed Durable Objects, the `new_sqlite_classes` key, the `@cloudflare/vitest-pool-workers` version, the proxy log retention setting [unverified] | The proxy limiter (decision 6 default: the paid plan if the free plan lacks them) | Stage 62 |
@@ -190,6 +190,12 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 22 | The Stage 1 probe Artifacts: **closed**, both deleted by link with the owner's confirmation on 7 October 2026 (D6) | None | Closed |
 | 23 | Which paid spines the learner is told to buy (`docs/CURRICULUM.md` 6.4 item 6: still open; the adopted items add Abbott, Süli and Mayers, Trefethen and Bau, Wilmott, Howison and Dewynne, Glasserman, Vanderbei and AFML) | Paid-book citation checks and course reports' warnings | The owner, before the first paid-book citation check (stage 84) |
 | 24 | The 2.3 re-cut: `stage1-finance-projects.md` still lists the 24 lessons 2.2c moved or retired (`stage2-research-method.md` 0.6), so 2.3 is counted twice in the item file and retired lessons are still examined | `content/curriculum.yaml`, 2.3's papers and hours | Before stage 6 writes `curriculum.yaml` (the item file's revision 2 row already binds content agents to 2.2c's list) |
+| 25 | GitHub Actions pinned by major tag (`actions/checkout@v5`, `setup-node@v5`, `setup-python@v6`, `setup-go@v6`) [recalled majors]; stage 1's session could not read those repositories to pin commit SHAs | Supply chain of CI | The first session that can read them; or the owner |
+| 26 | `label-guard.yml` runs on `pull_request_target`; whether GitHub reads that workflow from the base or the default branch [unverified]. If the default branch, the guard binds only after stage 1 reaches `main` | `visual-approved` enforcement | First visual pull request (stage 5) |
+| 27 | Branch protection or rulesets on a private repository may need a paid plan [recalled, unverified]; settings in `README.md` | Accident guards on `main` and `stage/*` | The owner |
+| 28 | `ZQ_DEV_ROUTES` is read from the environment: the release procedure must check it is unset (`docs/DECISIONS.md` B9) | Development routes in a release build | Stage 83 |
+| 29 | Python CI packages' licences (pillow MIT-CMU, typing_extensions PSF-2.0) are outside the npm licence gate | Licence allow-list coverage | Stage 25, when Pyodide's packages ship on the web app |
+| 30 | `<link rel="icon" href="data:,">` on the web pages needs `img-src data:` in the stage 82 CSP, or the link goes | CSP violation reports | Stage 82 |
 
 ## Pending document edits
 
