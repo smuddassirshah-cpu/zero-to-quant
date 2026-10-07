@@ -34,4 +34,4 @@ The Blueprint carries the owner's decisions of 7 October 2026 and was approved b
 
 ## Licence
 
-Code: MIT (added at build stage 1). The repository is private; the content licence is decided before anything is made public.
+The code is MIT licensed (`LICENSE`): configuration, `packages/`, `src/`, `tools/`, `tests/`, `proxy/` and the generator code in `content/generators/`. The curriculum, lesson content and documentation (the rest of `content/`, `docs/`, `prototype/` and the prose files at the root) are not licensed for reuse until the owner chooses a content licence (`docs/PLAN.md` 12, decision 8). The repository is private and is not made public before that decision.
