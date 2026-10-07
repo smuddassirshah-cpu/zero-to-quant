@@ -1,0 +1,60 @@
+{
+  "name": "zero-to-quant",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18 <25",
+    "npm": ">=10.9"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "prepare": "lefthook install",
+    "dev": "vite --mode dev",
+    "dev:artifact": "vite build --mode artifact --watch",
+    "build": "npm run build:web && npm run build:artifact",
+    "build:web": "vite build --mode web && node tools/release/budgets.ts web dist/web",
+    "build:artifact": "vite build --mode artifact && node tools/release/page.ts dist/artifact && node tools/release/budgets.ts artifact dist/artifact",
+    "serve:web": "vite preview --mode web",
+    "serve:artifact": "node tools/artifact-host/server.ts dist/artifact",
+    "check": "npm run check:types && npm run check:lint && npm run check:format && npm run check:css && npm run check:knip && npm run check:env && npm run check:licences",
+    "check:types": "tsc -b",
+    "check:lint": "eslint --max-warnings 0 .",
+    "check:format": "prettier --check .",
+    "check:css": "stylelint \"**/*.css\"",
+    "check:knip": "knip",
+    "check:env": "node tools/ci/env-names.ts",
+    "check:licences": "node tools/ci/licences.ts",
+    "check:audit": "node tools/ci/audit.ts",
+    "check:secrets": "node tools/ci/gitleaks.ts history",
+    "check:py": "uv lock --check --project tools/py && uv sync --locked --project tools/py",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "size": "size-limit",
+    "setup:gitleaks": "node tools/ci/gitleaks.ts install"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
+    "@size-limit/file": "14.1.0",
+    "@types/node": "22.20.5",
+    "@vitest/coverage-v8": "5.0.3",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-zq": "0.1.0",
+    "knip": "6.39.0",
+    "lefthook": "2.1.17",
+    "prettier": "3.9.9",
+    "size-limit": "14.1.0",
+    "stylelint": "17.16.0",
+    "stylelint-config-standard": "40.0.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}
