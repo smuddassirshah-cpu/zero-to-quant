@@ -208,7 +208,7 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 12 | Cloudflare plan with SQLite-backed Durable Objects, the `new_sqlite_classes` key, the `@cloudflare/vitest-pool-workers` version, the proxy log retention setting [unverified] | The proxy limiter (decision 6 default: the paid plan if the free plan lacks them) | Stage 62 |
 | 13 | Per-key or per-workspace spend limits for the eval key [unverified] | Eval caps | Stage 67 |
 | 14 | Anthropic's API data policy for request content [unverified] | The proxy going live | Stage 82 |
-| 15 | Exact capability declaration keys for `sample` and `downloads` [inferred] | The first live publish | Stage 83, against the `artifact-capabilities` skill |
+| 15 | Exact capability declaration keys: `sample: {}` is accepted [measured, stage 2 publish]; `downloads` is `true` in contract 0.2.73 [sourced: the `artifact-capabilities` skill], where `ARCHITECTURE.md` 6.2.4 has `{}` (a conflict, `docs/DECISIONS.md` section 4) | The first live publish | Stage 83, against the `artifact-capabilities` skill |
 | 16 | The owner's sign-off of draft 3's rounded hair | Bertie's visual baselines | Stage 59 |
 | 17 | Cost of the paid marker and reviewer (decision 10) [unverified] | Content gates of curriculum Stage 1 (item 1.1 onwards) | By the first level gate of curriculum Stage 1 |
 | 18 | The content licence | Any public release (none planned) | Before anything is public |

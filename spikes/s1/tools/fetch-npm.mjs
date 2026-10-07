@@ -5,8 +5,8 @@
 //   must match the SHA-512 below, the registry's own dist.integrity [measured 7 October 2026]. A cached
 //   tarball that does not match is deleted and fetched once more; a fresh one that does not match stops the
 //   run. The mirror is never committed and never published.
-// - Each tarball unpacks into `<name>.partial` and is renamed into place only when tar succeeds, so a folder
-//   that exists is complete; a second run only fills gaps.
+// - Each tarball unpacks into `<name>.partial` and is renamed into place only when tar succeeds; a folder
+//   without package/package.json is removed and unpacked again. A second run only fills gaps.
 
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -30,7 +30,8 @@ const TARBALLS = [
 
 function run(cmd, args) {
   const r = spawnSync(cmd, args, { encoding: 'utf8' });
-  if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} failed: ${r.error?.message ?? r.stderr.trim()}`);
+  // npm pack --json reports its error as JSON on stdout, with stderr empty.
+  if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} failed: ${r.error?.message ?? (r.stderr.trim() || r.stdout.trim() || `exit ${r.status}`)}`);
   return r.stdout;
 }
 
@@ -62,10 +63,11 @@ try {
   fs.mkdirSync(NPM, { recursive: true });
   for (const [spec, name, integrity] of TARBALLS) {
     const dir = path.join(NPM, name);
-    if (fs.existsSync(dir)) {
+    if (fs.existsSync(path.join(dir, 'package', 'package.json'))) {
       console.log(`${spec}: already unpacked`);
       continue;
     }
+    fs.rmSync(dir, { recursive: true, force: true }); // an empty folder, or one an older version of this script left half-written
     const tgz = fetchVerified(spec, name, integrity);
     const partial = `${dir}.partial`;
     fs.rmSync(partial, { recursive: true, force: true });

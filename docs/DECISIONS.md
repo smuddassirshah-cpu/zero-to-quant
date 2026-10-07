@@ -157,10 +157,12 @@ Details in `spikes/README.md`. Both ran as private Artifacts on the owner's iPho
 
 ### Spike S1 (stage 2)
 
-Published 7 October 2026 (`spikes/README.md`, `spikes/s1/`, `spikes/s1-dbsize/`); results on the owner's iPhone pending. Two results do not depend on the device:
+Published 7 October 2026 (`spikes/README.md`, `spikes/s1/`, `spikes/s1-dbsize/`); results on the owner's iPhone pending. Record each check with device, app version and date, the import-map verdict (section 4.3's design or its named fallback) before stage 4 starts, the MathML verdict with screenshots, and the `db` size probe's result.
+
+Two results do not depend on the device:
 
 - **`\htmlData` in MathML: no.** KaTeX 0.19.0's MathML output drops `\htmlData`; no element carries `data-term`, while its HTML output does [measured: Chromium in `spikes/s1/tools/test.mjs`, and Node in the archive's review, 7 October 2026]. The fallback of `ARCHITECTURE.md` 14 item 20 applies (`live-formula` in the Artifact highlights a term from its term list); it is written into `ARCHITECTURE.md` with the device results, before stage 23.
-- **The declaration as stored:** `db` with six rules, `user` with the `profile` scope, `sample: {}` [measured: the publish result]. `ARCHITECTURE.md` 6.2.4 declares `downloads: {}` where the capabilities contract 0.2.73 says `downloads: true` [sourced: the `artifact-capabilities` skill]: a conflict for open question 15 (stage 83), reported in the stage 2 report. Record each check with device, app version and date, the import-map verdict (section 4.3's design or its named fallback) before stage 4 starts, the MathML verdict with screenshots, and the `db` size probe's result.
+- **The declaration as stored:** `db` with six rules, `user` with the `profile` scope, `sample: {}` [measured: the publish result]. `ARCHITECTURE.md` 6.2.4 declares `downloads: {}` where the capabilities contract 0.2.73 says `downloads: true` [sourced: the `artifact-capabilities` skill]: a conflict for open question 15 (stage 83), reported in the stage 2 report.
 
 ## 5. Dependencies, licences and advisories
 
@@ -339,7 +341,7 @@ Each stage adds its decisions here in the format above, numbered B1 onwards, wit
 
 ### B18 The spike S1 source lands in one pull request (stage 2)
 
-- **What.** The probe's source, test runner and lock (about 10,300 lines, plus the 2,398-line ledger `manifest.json`) are archived in `spikes/s1/` and `spikes/s1-dbsize/`, the folders the owner chose, in one pull request into `stage/2`, above `PLAN.md` 11.1's line cap. The npm mirror the tests use is fetched and checked by `tools/fetch-npm.mjs`, never committed.
+- **What.** The probe's source, test runner and lock (about 10,400 lines, plus the 2,398-line ledger `manifest.json` and the review record `REVIEW.md`) are archived in `spikes/s1/` and `spikes/s1-dbsize/`, the folders the owner chose, in one pull request into `stage/2`, above `PLAN.md` 11.1's line cap. The npm mirror the tests use is fetched and checked by `tools/fetch-npm.mjs`, never committed.
 - **Reason.** A spike is measured evidence, not engine code: no later stage imports it, and splitting it by module would review halves of one page whose checks share a harness. It went through a self-review and an adversarial review (17 major, 34 minor and 15 nit findings, all fixed or answered) before it was published; the archive pull request has its own adversarial review.
 - **Rejected.** Sixteen pull requests of 800 lines; leaving the source outside the repository.
 - **Reviewed after publishing.** Three changes postdate the probe's own review and were checked only by the archive's review: `permissions` left out of the declaration (B19), the sticky summary bar kept below the phone's status bar, and the copyable line kept under its prompt.
