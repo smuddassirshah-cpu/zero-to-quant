@@ -5,8 +5,8 @@
 // - The dev server uses `src` as the root and may read only `src/` and `node_modules/`: with the
 //   repository as root, files such as `.dev.vars` and `proxy/.state/` were served [measured in review].
 // - `VITE_BASE` comes from `.env` files through `loadEnv`, as ARCHITECTURE.md 11.4 says.
-import { mkdirSync, readdirSync, renameSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { mkdirSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 
@@ -21,7 +21,10 @@ function isMode(mode: string): mode is Mode {
 
 function webBase(value: string | undefined): string {
   const base = value === undefined || value === '' ? '/' : value;
-  if (!base.startsWith('/') || !base.endsWith('/')) throw new Error(`VITE_BASE must start and end with "/"`);
+  // A leading "//" would be a protocol-relative URL: every script would load from another host.
+  if (!base.startsWith('/') || base.startsWith('//') || !base.endsWith('/')) {
+    throw new Error(`VITE_BASE must be a path that starts and ends with "/"`);
+  }
   return base;
 }
 
@@ -39,18 +42,26 @@ function pageAsIndex(page: string): Plugin {
   };
 }
 
-// Hidden source maps are CI artefacts, never deployed: move them out of the published folder.
+// Hidden source maps are CI artefacts, never deployed: move them out of the published folder,
+// re-basing each map's `sources` on its new location.
 function mapsOutOf(outDir: string, mapsDir: string): Plugin {
   return {
     name: 'zq-maps-out',
     apply: 'build',
+    buildStart() {
+      rmSync(mapsDir, { recursive: true, force: true });
+    },
     closeBundle() {
       for (const entry of readdirSync(outDir, { recursive: true, withFileTypes: true })) {
         if (!entry.isFile() || !entry.name.endsWith('.map')) continue;
         const from = join(entry.parentPath, entry.name);
-        const to = join(mapsDir, from.slice(outDir.length));
+        const to = join(mapsDir, relative(outDir, from));
+        const map = JSON.parse(readFileSync(from, 'utf8')) as { sources?: string[] };
+        if (map.sources)
+          map.sources = map.sources.map((source) => relative(dirname(to), resolve(dirname(from), source)));
         mkdirSync(dirname(to), { recursive: true });
-        renameSync(from, to);
+        writeFileSync(to, JSON.stringify(map));
+        unlinkSync(from);
       }
     },
   };
