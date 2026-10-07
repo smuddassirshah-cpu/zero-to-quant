@@ -10,8 +10,8 @@ import {
   binaryCandidates,
   errorLine,
   gitEnv,
-  hiddenPaths,
-  hidesDiffs,
+  diffAttributes,
+  diffSettings,
   installEnv,
   main,
   plantedFile,
@@ -107,25 +107,30 @@ describe('scan inputs', () => {
       HOME: '/h',
       GIT_INDEX_FILE: 'i',
       GIT_CONFIG_PARAMETERS: "'color.ui'='always'",
-      GIT_CONFIG_COUNT: '9',
-      GIT_CONFIG_KEY_8: 'x',
+      GIT_CONFIG_COUNT: '13',
+      GIT_CONFIG_KEY_12: 'x',
       GIT_EXTERNAL_DIFF: 'cat',
     });
-    expect(env).toMatchObject({ HOME: '/h', GIT_INDEX_FILE: 'i', GIT_CONFIG_COUNT: '8' });
+    expect(env).toMatchObject({ HOME: '/h', GIT_INDEX_FILE: 'i', GIT_CONFIG_COUNT: '10' });
     expect(env).toMatchObject({ GIT_CONFIG_KEY_0: 'color.ui', GIT_CONFIG_VALUE_0: 'never' });
     expect(env).toMatchObject({ GIT_CONFIG_KEY_7: 'diff.external', GIT_CONFIG_VALUE_7: '' });
-    for (const k of ['GIT_CONFIG_PARAMETERS', 'GIT_CONFIG_KEY_8', 'GIT_EXTERNAL_DIFF'])
+    expect(env).toMatchObject({ GIT_CONFIG_KEY_8: 'core.bigFileThreshold', GIT_CONFIG_VALUE_9: 'true' });
+    for (const k of ['GIT_CONFIG_PARAMETERS', 'GIT_CONFIG_KEY_12', 'GIT_EXTERNAL_DIFF'])
       expect(env[k]).toBeUndefined();
   });
 
-  it('finds paths and attribute files that hide diffs', () => {
-    const out = 'a.txt diff unset b.md diff unspecified c.cfg diff hide d diff set'.split(' ');
-    expect(hiddenPaths(`${out.join('\0')}\0`)).toEqual(['a.txt', 'c.cfg']);
-    for (const text of ['x -diff', '*.conf binary', '[attr]bin2 -diff -merge', 'y diff=hide eol=lf']) {
-      expect(hidesDiffs(text)).toBe(true);
-    }
-    for (const text of ['*.sh text eol=lf', 'z !diff', 'linguist-diff=false'])
-      expect(hidesDiffs(text)).toBe(false);
+  it('reads the diff attributes and settings that may hide diffs', () => {
+    const out = 'a.txt diff unset b.md diff unspecified c.cfg diff hide d diff set e.py diff python'.split(
+      ' ',
+    );
+    expect(diffAttributes(`${out.join('\0')}\0`)).toEqual([
+      { path: 'a.txt', value: 'unset' },
+      { path: 'c.cfg', value: 'hide' },
+      { path: 'e.py', value: 'python' },
+    ]);
+    const text = 'x -diff\n*.conf binary\n[attr]bin2 -diff -merge\ny diff=hide eol=lf\n*.py diff=python\n';
+    expect(diffSettings(text)).toEqual(['unset', 'unset', 'unset', 'hide', 'python']);
+    expect(diffSettings('*.sh text eol=lf\nz !diff\nlinguist-diff=false\n')).toEqual([]);
   });
 
   it('spots the ERR line gitleaks logs when git fails', () => {

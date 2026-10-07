@@ -161,7 +161,7 @@ Pending. Record each check with device, app version and date, the import-map ver
 
 ## 5. Dependencies, licences and advisories
 
-A new dependency adds an entry: name and exact version, maintained, last release, licence, why, and the date of the owner's approval. Licence exceptions beyond the allow-lists of `PLAN.md` 7.6, and advisory waivers past a week, are entered here with their reason. `tools/ci/licences.exceptions.json` and `tools/ci/audit-waivers.json` name these entries; an exception that matches nothing or a waiver past its date fails CI. Stage 1 recorded L1, A1, A2 and T1 for the owner's review at its gate.
+A new dependency adds an entry: name and exact version, maintained, last release, licence, why, and the date of the owner's approval. Licence exceptions beyond the allow-lists of `PLAN.md` 7.6, and advisory waivers past a week, are entered here with their reason. `tools/ci/licences.exceptions.json` and `tools/ci/audit-waivers.json` name these entries; an exception that matches nothing or a waiver past its date fails CI. Stage 1 recorded L1, A1, A2, T1 and G1 for the owner's review at its gate.
 
 ### L1 Licence exceptions for four of stylelint's dependencies (stage 1)
 
@@ -190,6 +190,14 @@ A new dependency adds an entry: name and exact version, maintained, last release
 - **Go toolchain floor.** gitleaks v8.30.1's `go.mod` declares go 1.24.11 [measured]. CI pins `setup-go` to go 1.26.8, the toolchain `GOTOOLCHAIN=auto` fetched for this build [measured]; an older local Go fetches a newer toolchain through the module proxy, verified by sum.golang.org.
 - **Why.** `PLAN.md` 7.1 and 7.6 name gitleaks and pip-audit, so they came with the Blueprint's approval; the exact versions are for the owner's review at the stage 1 gate.
 - **Licence scope.** Stage 1's licence gate covers the npm tree only. The Python lock is CI tooling and holds licences outside the development allow-list, pillow 12.3.0 (MIT-CMU) and typing-extensions 4.16.0 (PSF-2.0) [measured, PyPI]; Python packages are checked at stage 25, when Pyodide's packages ship on the web app. No Python licence gate is built before then.
+
+### G1 The label guard checks who applied `visual-approved` and that it postdates the head commit (stage 1; departs from `PLAN.md` 7.1; for B5)
+
+- **What.** `PLAN.md` 7.1 has `label-guard.yml` check the label against the owner's approval review. It checks instead that the latest `labeled` event for `visual-approved` came from the owner's account, applied directly rather than through a GitHub App, after the pull request's head commit arrived. `tools/ci/label-guard.ts` binds the label to the head commit: the label must be later than the earliest `created_at` of that commit's check suites, which GitHub sets and the pusher cannot, and a missing time fails; it also fails if a force-push followed the label. The workflow removes the label on every push and reopening (`synchronize`, `reopened`) and fails that run, so the check stays red until the owner labels the new head. It has no concurrency group, because GitHub cancels a pending run when a newer one joins the group, even without `cancel-in-progress`, which would let a label toggle cancel the run that removes the label.
+- **Why.** The pull requests are opened by the owner's own account [measured: the session platform's GitHub connection authenticates as `smuddassirshah-cpu`], and GitHub refuses an approving review from a pull request's author [recalled], so the review the plan names can never exist.
+- **Where it runs.** On `pull_request_target`, from base-side code only, because on `pull_request` the workflow comes from the pull request's own merge commit, which the pull request could rewrite. Which branch `pull_request_target` reads the workflow from, the base or the default branch, is [unverified]; the guard is binding once it is on `main`.
+- **Limit.** The guard refuses every other account but cannot tell an agent acting through the owner's connection from the owner; that rule stays procedural (`CLAUDE.md` hard rule 3).
+- **Rejected.** The approval review (impossible here); the guard on `pull_request` (rewritable by the pull request it judges); comparing the label with commit dates, which the pusher sets.
 
 ## 6. Build decisions
 
