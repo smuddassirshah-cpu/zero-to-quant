@@ -25,6 +25,7 @@ s1/
   npm/<pkg>-<ver>/package/ the npm tarballs, unpacked: the local CDN mirror for tests (never published, not committed;
                            tools/fetch-npm.mjs recreates it and checks each tarball against the registry's SHA-512)
   manifest.json            dist/manifest.json of the build that was published: the SHA-256 ledger and the publish plan
+  REVIEW.md                the review before publishing: every finding and how it was answered
   probe/                   sources of the main probe page
     harness.js             (harness) UI, registry, runner, result store, db persistence, republish signal
     style.css              (harness) the page's stylesheet
