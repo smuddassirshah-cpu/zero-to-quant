@@ -1,0 +1,76 @@
+<title>Zero to Quant probe</title>
+<style>
+:root { --bg: #FFFFFF; --fg: #000000; --muted: #6B6B6B; --line: #E5E5E5; --ok: #13803B; --bad: #9A5800; --face: #565656; --lip: #262626; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141414; --fg: #FFFFFF; --muted: #8C8C8C; --line: #4B4B4B; --ok: #5ED981; --bad: #F9D25C; --face: #F2F2F2; --lip: #B3B3B3; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #141414; --fg: #FFFFFF; --muted: #8C8C8C; --line: #4B4B4B; --ok: #5ED981; --bad: #F9D25C; --face: #F2F2F2; --lip: #B3B3B3; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 16px/24px system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; }
+main { max-width: 640px; margin: 0 auto; padding-block: 32px 64px; padding-inline: 16px; display: grid; gap: 16px; }
+h1 { font-size: 24px; line-height: 30px; margin: 0; }
+p { margin: 0; color: var(--muted); }
+button { justify-self: start; min-height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: var(--face); color: var(--bg); font: 700 17px/20px system-ui, sans-serif; box-shadow: 0 4px 0 var(--lip); cursor: pointer; }
+button:active { transform: translateY(4px); box-shadow: none; }
+button:disabled { opacity: 0.5; cursor: default; }
+ul { list-style: none; margin: 0; padding: 0; border: 2px solid var(--line); border-radius: 16px; }
+li { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+li:first-child { border-top: 0; }
+li b { font-weight: 600; }
+li span { font: 500 14px/20px ui-monospace, Menlo, monospace; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.ok { color: var(--ok); } .bad { color: var(--bad); }
+#saved { font-size: 14px; }
+</style>
+<main>
+  <h1>Zero to Quant environment probe</h1>
+  <p>Press the button once. It checks what this page can run here (WebAssembly, background workers, Python, the AI tutor and synced storage) and saves the results so the build plan can use them. It asks Claude one short question, which may show a consent prompt.</p>
+  <button id="run" type="button">Run checks</button>
+  <ul id="out" aria-live="polite"></ul>
+  <p id="saved"></p>
+</main>
+<script>
+(function () {
+  const out = document.getElementById('out'), btn = document.getElementById('run'), saved = document.getElementById('saved');
+  const results = {};
+  const row = (k, label) => { const li = document.createElement('li'); li.innerHTML = '<b></b><span>…</span>'; li.querySelector('b').textContent = label; out.append(li); return (v) => { results[k] = v; const s = li.querySelector('span'); s.textContent = v; s.className = /^ok|^yes|^\d/.test(v) ? 'ok' : 'bad'; }; };
+  const tryStep = async (set, fn) => { try { set(await fn()); } catch (e) { set('blocked: ' + (e && (e.code || e.message) || e)); } };
+  btn.addEventListener('click', async () => {
+    btn.disabled = true; out.innerHTML = ''; saved.textContent = '';
+    results.userAgent = navigator.userAgent; results.when = new Date().toISOString();
+    await tryStep(row('wasmMain', 'WebAssembly on the page'), async () => {
+      const b = new Uint8Array([0,97,115,109,1,0,0,0,1,7,1,96,2,127,127,1,127,3,2,1,0,7,7,1,3,97,100,100,0,0,10,9,1,7,0,32,0,32,1,106,11]);
+      const { instance } = await WebAssembly.instantiate(b); return instance.exports.add(2, 3) === 5 ? 'ok' : 'wrong result';
+    });
+    await tryStep(row('fetchJson', 'Fetch a published .json file'), async () => { const r = await fetch('probe.json'); return r.ok ? 'ok ' + (await r.json()).probe : 'status ' + r.status; });
+    await tryStep(row('fetchWasm', 'Fetch a published .wasm file'), async () => { const r = await fetch('mp/micropython-ulab.wasm'); return r.ok ? 'ok ' + r.headers.get('content-type') : 'status ' + r.status; });
+    await tryStep(row('worker', 'Background worker (own file)'), () => new Promise((res, rej) => {
+      const w = new Worker('probe-worker.js'); const t = setTimeout(() => rej(new Error('timeout')), 8000);
+      w.onmessage = (e) => { clearTimeout(t); w.terminate(); res('ok, wasm in worker: ' + e.data.wasm); }; w.onerror = (e) => { clearTimeout(t); rej(new Error(e.message || 'worker error')); }; w.postMessage('ping');
+    }));
+    await tryStep(row('blobWorker', 'Background worker (blob URL)'), () => new Promise((res, rej) => {
+      const u = URL.createObjectURL(new Blob(['onmessage=e=>postMessage(e.data+1)'], { type: 'text/javascript' }));
+      const w = new Worker(u); const t = setTimeout(() => rej(new Error('timeout')), 8000);
+      w.onmessage = (e) => { clearTimeout(t); w.terminate(); res(e.data === 2 ? 'ok' : 'wrong'); }; w.onerror = () => { clearTimeout(t); rej(new Error('worker error')); }; w.postMessage(1);
+    }));
+    await tryStep(row('micropython', 'MicroPython with ulab'), async () => {
+      const { loadMicroPython } = await import(new URL('mp/micropython.mjs', location.href).href);
+      let txt = ''; const mp = await loadMicroPython({ url: new URL('mp/micropython-ulab.wasm', location.href).href, stdout: (l) => { txt += l + ' '; } });
+      mp.runPython('from ulab import numpy as np\nimport math\na = np.array([100.0, 120.0, 90.0, 110.0])\nprint(np.max(a), math.isclose(0.1 + 0.2, 0.3))');
+      return 'ok ' + txt.trim();
+    });
+    await tryStep(row('storage', 'Browser storage'), async () => { localStorage.setItem('zq.probe', '1'); const ls = localStorage.getItem('zq.probe') === '1'; const idb = await new Promise((r) => { try { const q = indexedDB.open('zq-probe'); q.onsuccess = () => { q.result.close(); r(true); }; q.onerror = () => r(false); } catch { r(false); } }); return (ls ? 'ok localStorage' : 'no localStorage') + (idb ? ', IndexedDB' : ', no IndexedDB'); });
+    await tryStep(row('serviceWorker', 'Service worker API'), async () => ('serviceWorker' in navigator) ? 'yes, present' : 'absent');
+    const hasClaude = typeof window.claude === 'object' && window.claude && typeof window.claude.use === 'function';
+    let sample = null, db = null, user = null;
+    await tryStep(row('sampleUse', 'AI tutor capability'), async () => { if (!hasClaude) return 'absent'; sample = await window.claude.use('sample'); return sample ? 'ok' : 'null'; });
+    await tryStep(row('sampleLimits', 'AI tutor limits'), async () => { if (!sample) return 'skipped'; const l = await sample.limits(); return 'ok ' + JSON.stringify({ bytes: l.maxPromptBytes, images: !!l.images, tools: l.tools ? l.tools.maxCount : 0 }); });
+    await tryStep(row('sampleCall', 'AI tutor answers (quick tier)'), async () => { if (!sample) return 'skipped'; const r = await sample('Reply with exactly the word ready.', { modelTier: 'quick', cache: false }); return 'ok "' + r.text.trim().slice(0, 40) + '" tier ' + r.modelTierApplied; });
+    await tryStep(row('dbUse', 'Synced storage capability'), async () => { if (!hasClaude) return 'absent'; db = await window.claude.use('db'); user = await window.claude.use('user'); return db ? 'ok' + (user ? ', user known' : '') : 'null'; });
+    if (db) {
+      try {
+        const id = user ? await user.id() : 'anon';
+        await db.doc('probe/' + String(id).replace(/[^A-Za-z0-9_-]/g, '_')).set(results);
+        saved.textContent = 'Results saved. You can close this page.';
+      } catch (e) { saved.textContent = 'Could not save results (' + (e.code || e.message) + '). A screenshot of this list works too.'; }
+    } else { saved.textContent = 'Synced storage was unavailable, so results were not saved. A screenshot of this list works too.'; }
+    btn.disabled = false;
+  });
+})();
+</script>
