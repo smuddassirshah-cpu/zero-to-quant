@@ -4,13 +4,13 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 
 **Source of truth.** `docs/curriculum.md` for stages, topics, hours and exit tests. This file expands items 0.1 (60 h) and 0.2 (180 h) into courses, levels, lessons, homework, exams and reading.
 
-**Built on.** `docs/design-research.md` sections 5, 8 and 9 (lesson anatomy, curriculum architecture, teaching style); `docs/blueprint/work/widgets-stage0.md` (widget catalogue and generator families); `docs/blueprint/work/content-format.md` revision 2 (ids, schema, screen types, checks, verification); `docs/blueprint/work/assessment.md` draft 2 (assessment ladder, homework, papers, exit parts, earned hours); `docs/blueprint/work/ai-tutor.md` draft 2 (Bertie's availability and tutor fields); `docs/blueprint/work/arch-decision.md` (Python runtime); `docs/blueprint/work/canon-gap.md` section 6 (source ids); the sibling file `docs/curriculum/stage0-precalc-computing.md` (0.3 to 0.5 and the Stage 0 exit papers); `spikes/README.md`; the owner's lesson-creator, maths-teaching, code-craft and project-forge skills.
+**Built on.** `docs/design-research.md` sections 5, 8 and 9 (lesson anatomy, curriculum architecture, teaching style); `docs/blueprint/work/widgets-stage0.md` (widget catalogue and generator families); `docs/CONTENT-FORMAT.md` revision 2 (ids, schema, screen types, checks, verification); `docs/ASSESSMENT.md` draft 2 (assessment ladder, homework, papers, exit parts, earned hours); `docs/AI-TUTOR.md` draft 2 (Bertie's availability and tutor fields); `docs/ARCHITECTURE.md` (Python runtime); `docs/blueprint/work/canon-gap.md` section 6 (source ids); the sibling file `docs/curriculum/stage0-precalc-computing.md` (0.3 to 0.5 and the Stage 0 exit papers); `spikes/README.md`; the owner's lesson-creator, maths-teaching, code-craft and project-forge skills.
 
-**Draft 2** keeps every lesson number, id, level code and section number of draft 1, because `stage0-precalc-computing.md`, `assessment.md` and `content-format.md` cite them. Section 0 lists what changed and why.
+**Draft 2** keeps every lesson number, id, level code and section number of draft 1, because `stage0-precalc-computing.md`, `ASSESSMENT.md` and `CONTENT-FORMAT.md` cite them. Section 0 lists what changed and why.
 
 **Tags.** [our choice] marks a design decision without outside evidence. [check] marks a resource detail (a chapter number, a unit title, a lecture number) that I recall but could not confirm from this environment; confirm it before the content cites it (`checked: false` in `Level.companion` until then). [searched] marks a detail confirmed by a web search on 6 October 2026. khanacademy.org and corbettmaths.com were blocked by this environment's network proxy, so every Khan unit title and Corbettmaths topic name below is [check] unless marked otherwise.
 
-**Answers.** Every numeric and symbolic answer in sections 2, 3 and 7 (lesson hooks, traps and edge cases with a value, all 54 example homework problems, the sample lesson) was recomputed on 6 October 2026 with Python 3.11, `fractions` and SymPy 1.14: exact arithmetic, `solve`, `factor`, `div`, `solve_univariate_inequality`, brute-force enumeration for the digit puzzle and the cash-machine screen, and float runs for the floating-point claims. A second verification pass on the same day (section 9) found one false float claim, one muddled trap and two consistency slips, now fixed. The script is a scratch check, not repository code: `zqverify` replaces it at build stage (content-format.md section 6).
+**Answers.** Every numeric and symbolic answer in sections 2, 3 and 7 (lesson hooks, traps and edge cases with a value, all 54 example homework problems, the sample lesson) was recomputed on 6 October 2026 with Python 3.11, `fractions` and SymPy 1.14: exact arithmetic, `solve`, `factor`, `div`, `solve_univariate_inequality`, brute-force enumeration for the digit puzzle and the cash-machine screen, and float runs for the floating-point claims. A second verification pass on the same day (section 9) found one false float claim, one muddled trap and two consistency slips, now fixed. The script is a scratch check, not repository code: `zqverify` replaces it at build stage (CONTENT-FORMAT.md section 6).
 
 **At a glance.**
 
@@ -26,17 +26,17 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 
 | # | Change | Sections | Source |
 |---|---|---|---|
-| 1 | **Python runs on Pyodide on both targets.** Draft 1 wrote every drill for MicroPython in the Artifact. The owner dropped MicroPython after the iPhone spike; every drill here is standard library only (`needs: []`), so it runs wherever Python loads, and a device that cannot load Pyodide hands the item to the web app with a result code | 1.0 decision 12, 3.0, 3.3, 6 | `arch-decision.md` decision 15; `assessment.md` decision 30; `spikes/README.md` (Python ready at 2.8 s on the owner's iPhone) |
-| 2 | **A conflict with the brief, resolved by measurement.** The brief says Pyodide cannot run in the Artifact and that WebAssembly there was unmeasured. The spike measured both on the owner's iPhone: every probe passed except service workers, and a repackaged Pyodide loaded NumPy and pandas. This file follows the measurement, as the sibling papers do. Nothing in 0.1 or 0.2 depends on the answer, because no drill needs a package | 3.0 | `spikes/README.md`; `content-format.md` 0.3 |
-| 3 | **Mastered at 75%.** Quiz items carry 1 mark each, so a four-item quiz is Mastered at 3 of 4. Draft 1's sample quiz had a 2-mark sort and an 80% bar | 2.0, 7.3 | `assessment.md` decision 26 |
-| 4 | **Widget names follow the reconciliation** that `content-format.md` section 1 adopted: `choice`, `numeric-input`, `expression-input`, `derivation-steps`, `code-cell`, `value-table`, `region-select`, `drag-point`, `sketch-pad`. Composite ids are unchanged | 2 | `content-format.md` 1; `widgets-stage0.md` 15.1 |
+| 1 | **Python runs on Pyodide on both targets.** Draft 1 wrote every drill for MicroPython in the Artifact. The owner dropped MicroPython after the iPhone spike; every drill here is standard library only (`needs: []`), so it runs wherever Python loads, and a device that cannot load Pyodide hands the item to the web app with a result code | 1.0 decision 12, 3.0, 3.3, 6 | `ARCHITECTURE.md` decision 15; `ASSESSMENT.md` decision 30; `spikes/README.md` (Python ready at 2.8 s on the owner's iPhone) |
+| 2 | **A conflict with the brief, resolved by measurement.** The brief says Pyodide cannot run in the Artifact and that WebAssembly there was unmeasured. The spike measured both on the owner's iPhone: every probe passed except service workers, and a repackaged Pyodide loaded NumPy and pandas. This file follows the measurement, as the sibling papers do. Nothing in 0.1 or 0.2 depends on the answer, because no drill needs a package | 3.0 | `spikes/README.md`; `CONTENT-FORMAT.md` 0.3 |
+| 3 | **Mastered at 75%.** Quiz items carry 1 mark each, so a four-item quiz is Mastered at 3 of 4. Draft 1's sample quiz had a 2-mark sort and an 80% bar | 2.0, 7.3 | `ASSESSMENT.md` decision 26 |
+| 4 | **Widget names follow the reconciliation** that `CONTENT-FORMAT.md` section 1 adopted: `choice`, `numeric-input`, `expression-input`, `derivation-steps`, `code-cell`, `value-table`, `region-select`, `drag-point`, `sketch-pad`. Composite ids are unchanged | 2 | `CONTENT-FORMAT.md` 1; `widgets-stage0.md` 15.1 |
 | 5 | **Three widgets are no longer used** (`stat-chart` in lesson 47, `matrix-grid` in lesson 53, `payoff-builder` in lesson 93) and **four move to an earlier wave**: `counting-slots` to W1; `scatter-fit`, `dot-plot-stats` and `complex-plane` to W2. Depth-first content reaches them before 0.3 does | 1.0 decision 16, 8 | `widgets-stage0.md` 13 (waves); `widgets-finance-games.md` (`payoff-builder` is P1) |
 | 6 | **GCSE geometry and statistics live in 0.3** (course S and level C5), as the sibling file decided, pending the owner. Section 4.3 now maps every 0.1 and 0.2 question of the in-app `gcse` paper to its lessons, which closes the sibling's open item 1 | 1.0, 2.3, 4.3 | `stage0-precalc-computing.md` decision 2, 4.4, open item 1 |
-| 7 | **The hours budget maps onto estimate units.** CI requires each topic's estimates to sum to within 10% of its curriculum hours. Each block now names the unit that carries its estimate; the sums are 56.75 of 60 h (94.6%) and 169.5 of 180 h (94.2%). This needs two small schema rules, requested in section 8 | 1.1, 1.2, 5, 8 | `assessment.md` 8.7; `content-format.md` 3.8, 6.7 |
-| 8 | **Reading map carries hours and source ids.** Every row has the hours that become its `Level.companion` entry, and every resource has a `src.*` id (canon-gap.md's where they exist) and a licence, because only CC BY sources may be adapted | 5 | `content-format.md` 3.2 (`Companion`), 9.4; `canon-gap.md` 6 |
+| 7 | **The hours budget maps onto estimate units.** CI requires each topic's estimates to sum to within 10% of its curriculum hours. Each block now names the unit that carries its estimate; the sums are 56.75 of 60 h (94.6%) and 169.5 of 180 h (94.2%). This needs two small schema rules, requested in section 8 | 1.1, 1.2, 5, 8 | `ASSESSMENT.md` 8.7; `CONTENT-FORMAT.md` 3.8, 6.7 |
+| 8 | **Reading map carries hours and source ids.** Every row has the hours that become its `Level.companion` entry, and every resource has a `src.*` id (canon-gap.md's where they exist) and a licence, because only CC BY sources may be adapted | 5 | `CONTENT-FORMAT.md` 3.2 (`Companion`), 9.4; `canon-gap.md` 6 |
 | 9 | **Resource corrections**: Book of Proof's URL (the VCU page, not GitHub); Street-Fighting Mathematics is MIT OCW 18.098, January IAP 2008; The Art of Insight is MIT OCW RES.6-011; Lockdown Math episode 1 is "The simpler quadratic formula"; Welch Labs' series has 13 parts; the MAT page is `maths.ox.ac.uk/r/mat`; recent UKMT papers are free and older ones are sold; Khan's rational functions sit in Precalculus, not Algebra 2 | 5 | Web searches, 6 October 2026 [searched] |
-| 10 | **Sample lesson rewritten to the revision 2 schema**: element references in `widget/kind:name` form, a `tutor` block (`focus`, `notes`, `reps`, `avoid`) on every task screen with no accepted value in it, `why.rep`, the Show solution text, hints that open after the lesson's first Check, Bertie's `surprised` one-shot on the trap reveal | 7 | `content-format.md` 3.5, 3.7, 3.10, decision 17; `ai-tutor.md` 2.2; `bertie.md` 5.3 |
-| 11 | **Topic exit parts** `0.1.exit` and `0.2.exit`, because the schema's `Topic.exit` needs at least one: the topic exam at 70%, with the paper-review time as `estHours` | 4.3 | `content-format.md` 3.2 (`Topic`) |
+| 10 | **Sample lesson rewritten to the revision 2 schema**: element references in `widget/kind:name` form, a `tutor` block (`focus`, `notes`, `reps`, `avoid`) on every task screen with no accepted value in it, `why.rep`, the Show solution text, hints that open after the lesson's first Check, Bertie's `surprised` one-shot on the trap reveal | 7 | `CONTENT-FORMAT.md` 3.5, 3.7, 3.10, decision 17; `AI-TUTOR.md` 2.2; `BERTIE.md` 5.3 |
+| 11 | **Topic exit parts** `0.1.exit` and `0.2.exit`, because the schema's `Topic.exit` needs at least one: the topic exam at 70%, with the paper-review time as `estHours` | 4.3 | `CONTENT-FORMAT.md` 3.2 (`Topic`) |
 | 12 | **Fixes**: lesson 38's trap was written as the correct fact; lesson 76's floating-point edge now names data that fails ($10^9 + 0.1$, $10^9 + 0.2$, $10^9 + 0.3$ give $-1024$); a boundary table with 0.3 and a "considered and left out" list are added | 2.1, 2.2, 2.3 | Second reading; float runs |
 
 ---
@@ -49,8 +49,8 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 |---|---|---|---|---|
 | 1 | Unit of lesson time | **15 minutes per lesson, quiz included** (about 12 minutes of screens and 3 of quiz) | 10 minutes; screens only | Design research 5.8 sets 10 to 15 minutes of screens; the quiz is part of the sitting. Counting the upper end keeps the hours budget honest. The sibling file uses the same unit |
 | 2 | Courses for 0.1 | **Two courses of 21 lessons**: How Numbers Work, then Proportion, Powers and Precision | One course per cover-list word (8 courses of 3 to 6 lessons) | Design research 8.2 sets 20 to 45 lessons per course; eight tiny courses would fragment the course map and the level reviews |
-| 3 | Courses for 0.2 | **Four courses** (34, 20, 33 and 24 lessons): Expressions and Equations; Lines and Linear Systems; Quadratics and Polynomials; Functions and Graphs | Five courses; the curriculum's seven cover words as courses | Four is the schema's ceiling per topic (`content-format.md` 3.1: 1 to 4 courses) and matches the dependency chain: manipulation, then lines, then quadratics, then functions |
-| 4 | Order | **Depth-first in curriculum order** (owner's decision): 0.1 courses W then P; 0.2 courses E, L, Q, F | Interleaving number and algebra | The owner chose depth-first. Spacing still happens: level reviews draw up to 30% of their items from earlier levels (assessment.md 2.4), and the Redo queue returns misses at 7 and 30 days |
+| 3 | Courses for 0.2 | **Four courses** (34, 20, 33 and 24 lessons): Expressions and Equations; Lines and Linear Systems; Quadratics and Polynomials; Functions and Graphs | Five courses; the curriculum's seven cover words as courses | Four is the schema's ceiling per topic (`CONTENT-FORMAT.md` 3.1: 1 to 4 courses) and matches the dependency chain: manipulation, then lines, then quadratics, then functions |
+| 4 | Order | **Depth-first in curriculum order** (owner's decision): 0.1 courses W then P; 0.2 courses E, L, Q, F | Interleaving number and algebra | The owner chose depth-first. Spacing still happens: level reviews draw up to 30% of their items from earlier levels (ASSESSMENT.md 2.4), and the Redo queue returns misses at 7 and 30 days |
 | 5 | Product rule for counting | **Taught in 0.1** (lesson 13), with factor counting as its payoff | Wait for 0.3 counting | GCSE content N5 is Number; counting factors from a prime factorisation needs it; it gives 0.3 a running start |
 | 6 | Sigma notation | **Taught in 0.2** (lesson 16) and used again in Q4 | Leave to 0.3 series | Every statistics and ML formula in Stage 1 uses $\sum$ and subscripts; the variance identity and least squares in Q4 need it |
 | 7 | Optimisation without calculus | **A whole level (Q4)**: revenue, fencing, least squares in one dimension, the variance identity, AM-GM | Optimisation only in 1.3 | Completing the square is the first optimiser a quant meets; "the mean minimises squared error" is the seed of regression and of ML loss functions |
@@ -58,9 +58,9 @@ Blueprint work file, Stage 2 Phase 1. Draft 2, 6 October 2026.
 | 9 | Rational functions and conics | **Rational functions (lesson 99) and circles (lesson 72) in 0.2**; holes, oblique asymptotes and partial fractions (0.3 R3) and the other conics (0.3 R4) stay in 0.3 | All in 0.3 | GCSE Higher needs the circle and its tangent; the Khan Precalculus challenge needs rational functions |
 | 10 | Quant transfer | **One transfer screen per lesson where a true finance, data or interview context exists**, at least one per level | A transfer screen in every lesson | Forced contexts teach nothing; place value meets an FX pip, simultaneous equations meet replication, quadratics meet least squares |
 | 11 | Exams | **Non-calculator** for both topic exams | Calculator allowed | The Stage 0 exit is a GCSE Higher non-calculator paper; exact forms (surds, fractions) test understanding that a calculator hides |
-| 12 | Code in Stage 0 | **One small code drill per homework from the first level**, scaffolded to the learner's 0.4 progress; one project in 0.2. **Standard library only** (`fractions`, `math`, `cmath`, `decimal`), `needs: []` | No code until 1.1; NumPy from 0.2 | 0.4 runs alongside from week 1 (curriculum); checking maths in code from day one is the habit item 1.1 assumes. With no packages, every drill runs on Pyodide in the Artifact and on the web (`arch-decision.md` decision 15) and Python alone was ready in 2.8 s on the owner's iPhone, against 5.1 s with NumPy and pandas (`spikes/README.md`) |
+| 12 | Code in Stage 0 | **One small code drill per homework from the first level**, scaffolded to the learner's 0.4 progress; one project in 0.2. **Standard library only** (`fractions`, `math`, `cmath`, `decimal`), `needs: []` | No code until 1.1; NumPy from 0.2 | 0.4 runs alongside from week 1 (curriculum); checking maths in code from day one is the habit item 1.1 assumes. With no packages, every drill runs on Pyodide in the Artifact and on the web (`ARCHITECTURE.md` decision 15) and Python alone was ready in 2.8 s on the owner's iPhone, against 5.1 s with NumPy and pandas (`spikes/README.md`) |
 | 13 | Sample lesson | **0.1 lesson 1, What a digit is worth** | Equations as balance (0.2 lesson 18); fractions as numbers (0.1 lesson 17) | It is the root of the dependency graph: decimals, standard form, rounding, binary and long multiplication all rest on it, and it is the first lesson the depth-first build ships |
-| 14 | Hours and estimates | **Every block of the hours budget names the unit that carries its estimate** (lesson minutes, set item estimates, paper minutes, companion hours, exit `estHours`, project milestones). Redo and practice papers are spent time only | Leaving the mapping to the build | CI fails a topic whose estimates miss its curriculum hours by more than 10% (`content-format.md` 6.7). The mapping is a content decision, so it is made here |
+| 14 | Hours and estimates | **Every block of the hours budget names the unit that carries its estimate** (lesson minutes, set item estimates, paper minutes, companion hours, exit `estHours`, project milestones). Redo and practice papers are spent time only | Leaving the mapping to the build | CI fails a topic whose estimates miss its curriculum hours by more than 10% (`CONTENT-FORMAT.md` 6.7). The mapping is a content decision, so it is made here |
 | 15 | Quiz marks | **1 mark per quiz item**, 4 items per lesson unless stated, Mastered at 3 of 4 | The schema default (marks equal difficulty) | With the default a quiz of difficulties 2, 2, 3, 3 has 10 marks, and one slip on a difficulty-3 item costs more than one on a difficulty-2 item; the Mastered rule is about slips, not weights |
 | 16 | Widgets the depth-first order pulls forward | **`counting-slots` into wave W1; `scatter-fit`, `dot-plot-stats` (mean and deviation marks only) and `complex-plane` into W2.** `stat-chart`, `matrix-grid` and `payoff-builder` are not used: `graph-explorer` and `value-table` cover those screens | Building 0.2 lessons that wait for wave W3; using `payoff-builder`, a P1 finance widget | `widgets-stage0.md` 13 put these in W3 for 0.3 and statistics. 0.2 reaches them first because content goes depth-first in curriculum order |
 
@@ -162,7 +162,7 @@ Solving time (everything except the 5 hours of videos and reading) is 55 hours, 
 
 Solving time is 164 hours, 91%.
 
-**Why redo and practice papers carry no estimate.** A redo is a second attempt at an item whose first attempt already earned its hours, and a practice paper is assembled on demand from the practice pool (assessment.md 3.2). Counting either as earned would credit the same hours twice. The pace factor absorbs them (assessment.md 8.7), and both stay inside CI's 10% band.
+**Why redo and practice papers carry no estimate.** A redo is a second attempt at an item whose first attempt already earned its hours, and a practice paper is assembled on demand from the practice pool (ASSESSMENT.md 3.2). Counting either as earned would credit the same hours twice. The pace factor absorbs them (ASSESSMENT.md 8.7), and both stay inside CI's 10% band.
 
 ---
 
@@ -170,15 +170,15 @@ Solving time is 164 hours, 91%.
 
 ### 2.0 Conventions for every lesson below
 
-**Ids** follow content-format.md section 4.1: `crs.<course>`, `lvl.<course>.<level>`, `lsn.<course>.<slug>`, `set.<course>.<level>` for homework, `set.<course>.<level>-fluency` for the fluency set, `exm.<topic>` for the topic exam. Libraries use the topic namespaces `num` (0.1) and `alg` (0.2): `skl.num.*`, `mc.num.*`, `gen.num.*`, `drl.num.*`, `skl.alg.*`, `mc.alg.*`, `gen.alg.*`, `drl.alg.*`. Topic ids are `top.number` and `top.algebra`. The `#` column is the lesson's number within its topic; display numbers are computed from position and never stored.
+**Ids** follow CONTENT-FORMAT.md section 4.1: `crs.<course>`, `lvl.<course>.<level>`, `lsn.<course>.<slug>`, `set.<course>.<level>` for homework, `set.<course>.<level>-fluency` for the fluency set, `exm.<topic>` for the topic exam. Libraries use the topic namespaces `num` (0.1) and `alg` (0.2): `skl.num.*`, `mc.num.*`, `gen.num.*`, `drl.num.*`, `skl.alg.*`, `mc.alg.*`, `gen.alg.*`, `drl.alg.*`. Topic ids are `top.number` and `top.algebra`. The `#` column is the lesson's number within its topic; display numbers are computed from position and never stored.
 
 **Display codes.** Courses carry a letter: W (How Numbers Work), P (Proportion, Powers and Precision), E (Expressions and Equations), L (Lines and Linear Systems), Q (Quadratics and Polynomials), F (Functions and Graphs). Level W3 is the third level of course W. The sibling file's letters (S, G, T, C, R, K, B, Y, A) do not clash.
 
 **Every lesson** runs the design research 8.3 sequence: hook on a canvas, free manipulation, the name for what the learner just did, a ladder of 2 to 4 screens adding one constraint each, the trap, the rule stated as a description of the learner's own steps with at least one derived line the learner completes, a transfer screen where a true quant context exists, the summary card, then the quiz. From the owner's skills, every lesson also carries: the "why this exists" frame (`frame.why`), one common trap (a `trap` screen), at least one edge case (`edgeCases`), one worked example with a decision point where the naive route fails (`workedExample`), and derivations the learner completes rather than reads, with `leap` (naive, fails, points to) wherever the step is a creative one. Lessons have 8 to 12 screens, at most 2 without a task (title and summary).
 
-**Widgets.** Names follow `content-format.md` section 1, which adopted `widgets-stage0.md` 15.1: `choice`, `numeric-input`, `expression-input`, `derivation-steps`, `free-response`, `code-cell`, `value-table`, `region-select`, `drag-point`, `sketch-pad`. Every other id is the `widgets-stage0.md` section 14 id. The engine paper fixes final names; a rename is mechanical, because content names widgets only by `type`.
+**Widgets.** Names follow `CONTENT-FORMAT.md` section 1, which adopted `widgets-stage0.md` 15.1: `choice`, `numeric-input`, `expression-input`, `derivation-steps`, `free-response`, `code-cell`, `value-table`, `region-select`, `drag-point`, `sketch-pad`. Every other id is the `widgets-stage0.md` section 14 id. The engine paper fixes final names; a rename is mechanical, because content names widgets only by `type`.
 
-**Quiz item types.** Letters are shorthand in this document only; `content-format.md` 3.4 maps them to check kinds: N numeric (`numeric`), X expression (`expression`), C single choice and M multi-select (`choice`, `select: one` or `many`), O order the steps (`ordering`), S sort or match (`mapping`), I interval or solution set (`interval` or `set`), P point or curve on a graph (`point` or `curve`), T predict the output of code (`output`). Long-form items appear in homework and exams, never in quizzes. Every quiz item carries 1 mark; a four-item quiz is Mastered at 3 of 4 (decision 15; assessment.md decision 26).
+**Quiz item types.** Letters are shorthand in this document only; `CONTENT-FORMAT.md` 3.4 maps them to check kinds: N numeric (`numeric`), X expression (`expression`), C single choice and M multi-select (`choice`, `select: one` or `many`), O order the steps (`ordering`), S sort or match (`mapping`), I interval or solution set (`interval` or `set`), P point or curve on a graph (`point` or `curve`), T predict the output of code (`output`). Long-form items appear in homework and exams, never in quizzes. Every quiz item carries 1 mark; a four-item quiz is Mastered at 3 of 4 (decision 15; ASSESSMENT.md decision 26).
 
 **Choice items stay under the ceiling.** Single and multiple choice must stay at or below 40% of a course's quiz items (design research 10). Counted from the tables below:
 
@@ -191,7 +191,7 @@ Solving time is 164 hours, 91%.
 | Q Quadratics and Polynomials | 132 | 33 | 1 | 26% |
 | F Functions and Graphs | 96 | 25 | 6 | 32% |
 
-**Level review.** Every level ends with a Level review of 8 items at difficulty 2 to 4, interleaved, with up to 30% drawn from due cards of earlier levels of the same course (assessment.md 2.4). The fluency set (practice, generated, about 60 minutes in 0.1 and 75 in 0.2) and the homework follow (section 3).
+**Level review.** Every level ends with a Level review of 8 items at difficulty 2 to 4, interleaved, with up to 30% drawn from due cards of earlier levels of the same course (ASSESSMENT.md 2.4). The fluency set (practice, generated, about 60 minutes in 0.1 and 75 in 0.2) and the homework follow (section 3).
 
 **Columns.** Objective is one measurable sentence. Hook is the puzzle the lesson opens with. Trap is the misconception the trap screen is built around; Edge is the fringe case the lesson must show. Transfer screens are listed under each level table.
 
@@ -642,12 +642,12 @@ Transfer screens: lesson 108 is the method that finds implied volatility in Stag
 
 ### 3.0 Rules for every set
 
-- **Shape.** 7 to 10 items (assessment.md allows 6 to 12), issued when a level's last lesson is done, due in 7 days, no grading before submission, never a gate (assessment.md 2.5). About 2 hours in 0.1 and 2.5 hours in 0.2, as summed item estimates.
+- **Shape.** 7 to 10 items (ASSESSMENT.md allows 6 to 12), issued when a level's last lesson is done, due in 7 days, no grading before submission, never a gate (ASSESSMENT.md 2.5). About 2 hours in 0.1 and 2.5 hours in 0.2, as summed item estimates.
 - **Difficulty.** Every item is at difficulty 3 to 5, with at least two at 5 in every set (design research 8.4 asks for at least one).
-- **Long-form.** At least one item per set is a `long-form` check (content-format.md 3.4) with `genre` proof, derivation or written, a model answer in numbered lines, and a rubric of five points of 2 marks (10 in all, as the schema requires). After submission the learner self-marks each point; Bertie drafts a mark per point with a verbatim quote as evidence (`marking: tutor-draft`, ai-tutor.md 2.7), and the learner accepts or changes every point. A long-form item counts as correct at 6 of 10 (assessment.md 3.6).
-- **Code.** One code drill per set, scaffolded to the learner's 0.4 progress: in W1 and W2 the learner predicts output and edits one line; from W3 they complete a function from a skeleton; from course E they write small functions against visible examples, with hidden tests at submission. Every 0.1 and 0.2 drill uses the Python standard library only (`fractions`, `math`, `cmath`, `decimal`) and declares `needs: []`, so it runs on Pyodide in the Artifact and in the web app alike (arch-decision.md decision 15). On a device that cannot load Python, the item shows "Run this one in the web app" with its drill id and seed, and accepts the pasted result code (assessment.md 2.5).
+- **Long-form.** At least one item per set is a `long-form` check (CONTENT-FORMAT.md 3.4) with `genre` proof, derivation or written, a model answer in numbered lines, and a rubric of five points of 2 marks (10 in all, as the schema requires). After submission the learner self-marks each point; Bertie drafts a mark per point with a verbatim quote as evidence (`marking: tutor-draft`, AI-TUTOR.md 2.7), and the learner accepts or changes every point. A long-form item counts as correct at 6 of 10 (ASSESSMENT.md 3.6).
+- **Code.** One code drill per set, scaffolded to the learner's 0.4 progress: in W1 and W2 the learner predicts output and edits one line; from W3 they complete a function from a skeleton; from course E they write small functions against visible examples, with hidden tests at submission. Every 0.1 and 0.2 drill uses the Python standard library only (`fractions`, `math`, `cmath`, `decimal`) and declares `needs: []`, so it runs on Pyodide in the Artifact and in the web app alike (ARCHITECTURE.md decision 15). On a device that cannot load Python, the item shows "Run this one in the web app" with its drill id and seed, and accepts the pasted result code (ASSESSMENT.md 2.5).
 - **Calculator.** Non-calculator unless an item is marked [calc], matching the exit paper.
-- **Variants.** Generated items are seeded when the set is issued (assessment.md 2.5), so a returning learner sees the same set; the generator families are listed per set. Homework draws from the practice reserve, never from the exam reserve (assessment.md 3.2 rule 5).
+- **Variants.** Generated items are seeded when the set is issued (ASSESSMENT.md 2.5), so a returning learner sees the same set; the generator families are listed per set. Homework draws from the practice reserve, never from the exam reserve (ASSESSMENT.md 3.2 rule 5).
 - **Fluency sets.** Beside each homework set the level has one fluency set (`set.<course>.<level>-fluency`, kind `practice`): 15 to 20 generated items at difficulty 2 and 3 across the level's skills, about 60 minutes in 0.1 and 75 in 0.2, no long-form, no hints. They are where the 85% and 90% outcome bars of section 1 are measured.
 
 ### 3.1 Item 0.1 Number
@@ -927,14 +927,14 @@ Acceptance: every hidden test passes on CPython and Pyodide; the note answers it
 
 ## 4. Topic exam blueprint
 
-Both papers are the `topic` kind of the exam engine (assessment.md 3.1 to 3.8):
+Both papers are the `topic` kind of the exam engine (ASSESSMENT.md 3.1 to 3.8):
 
 - **Conditions.** Timed, no hints, Bertie away app-wide from Start to submission (`away` state), one sitting, no calculator anywhere in the app while the paper is open. Sections share the paper's clock, can be visited in any order, and show a suggested split on the rules screen.
 - **Forms.** 3 forms of equal marks, each within 5 percentage points of the declared difficulty mix; 85% of each form's marks come from generator slots drawing on the exam reserve (the rule asks for 50%), and the reserve holds at least $6 \times 3 \times$ count admissible points per generator slot, so six sittings stay fresh. Held-out items never appear in practice, homework, reviews or Bertie's practice picks.
 - **Difficulty mix by marks:** 20% at difficulty 2, 50% at 3, 20% at 4, 10% at 5. **Long-form** at most 30% of marks (here 7% and 10%). **Pass mark** 70%, computed exactly on fractions.
-- **Timing.** Summed item estimates are 50 minutes (0.1) and 60 minutes (0.2), so the durations follow the 1.5 times rule of assessment.md 3.1.
+- **Timing.** Summed item estimates are 50 minutes (0.1) and 60 minutes (0.2), so the durations follow the 1.5 times rule of ASSESSMENT.md 3.1.
 - **After a fail:** a 3-day cool-down and a remediation set of at most 30 items on the skills below 60%. After a pass: a retention sitting from the reserve is offered 30 days later and never changes completion.
-- **Test out.** Either paper can be sat before its topic's lessons; a pass credits the topic's hours as tested out (assessment.md 7.3).
+- **Test out.** Either paper can be sat before its topic's lessons; a pass credits the topic's hours as tested out (ASSESSMENT.md 7.3).
 
 ### 4.1 `exm.number`: 0.1 Number
 
@@ -1052,9 +1052,9 @@ Totals: Number 12, Ratio 16, Algebra 24, which match the sibling's strand weight
 
 ## 5. Reading and resource map per level
 
-**How to use this map.** The app's lessons and homework are the spine. Outside resources fill three roles: a second explanation when a quiz shows a gap (watch or read), more problems (attempt), and stretch (top-programme material). Every budgeted row becomes a `Level.companion` entry (`src`, `loc`, `exercises`, `hours`, `checked: false` until a person confirms the location), and the planner schedules it as outside work (assessment.md 8.7, 11). Rows marked **stretch** carry no hours: they are optional, so the budget does not depend on them. Budgeted hours sum to 15.0 for 0.1 and 46.75 for 0.2, the external block of section 1.
+**How to use this map.** The app's lessons and homework are the spine. Outside resources fill three roles: a second explanation when a quiz shows a gap (watch or read), more problems (attempt), and stretch (top-programme material). Every budgeted row becomes a `Level.companion` entry (`src`, `loc`, `exercises`, `hours`, `checked: false` until a person confirms the location), and the planner schedules it as outside work (ASSESSMENT.md 8.7, 11). Rows marked **stretch** carry no hours: they are optional, so the budget does not depend on them. Budgeted hours sum to 15.0 for 0.1 and 46.75 for 0.2, the external block of section 1.
 
-**Licences.** Only CC BY sources may be adapted into items (content-format.md 9.4); everything else is cited, never copied. Of the sources below only OpenStax's algebra books (CC BY 4.0) are adaptable; OpenStax Calculus is CC BY-NC-SA 4.0 and OpenIntro Statistics is CC BY-SA 3.0, so both are cite-only [searched].
+**Licences.** Only CC BY sources may be adapted into items (CONTENT-FORMAT.md 9.4); everything else is cited, never copied. Of the sources below only OpenStax's algebra books (CC BY 4.0) are adaptable; OpenStax Calculus is CC BY-NC-SA 4.0 and OpenIntro Statistics is CC BY-SA 3.0, so both are cite-only [searched].
 
 **Resources** (free unless marked paid):
 
@@ -1067,23 +1067,23 @@ Totals: Number 12, Ratio 16, Algebra 24, which match the sibling's strand weight
 | `src.corbettmaths` | Corbettmaths: GCSE videos, Practice Questions, textbook exercises and 5-a-day (the curriculum's UK route) | Copyright, free | https://corbettmaths.com/contents/ |
 | `src.mathsgenie`, `src.pmt` | Maths Genie and Physics and Maths Tutor: past GCSE questions sorted by topic | Copyright, free | https://www.mathsgenie.co.uk, https://www.physicsandmathstutor.com |
 | `src.openstax-prealgebra-2e` | OpenStax, Prealgebra 2e | CC BY 4.0 | https://openstax.org/details/books/prealgebra-2e |
-| `src.openstax-elem-algebra-2e` | OpenStax, Elementary Algebra 2e | CC BY 4.0 | https://openstax.org/details/books/elementary-algebra-2e |
-| `src.openstax-int-algebra-2e` | OpenStax, Intermediate Algebra 2e | CC BY 4.0 | https://openstax.org/details/books/intermediate-algebra-2e |
+| `src.openstax-elementary-algebra-2e` | OpenStax, Elementary Algebra 2e | CC BY 4.0 | https://openstax.org/details/books/elementary-algebra-2e |
+| `src.openstax-intermediate-algebra-2e` | OpenStax, Intermediate Algebra 2e | CC BY 4.0 | https://openstax.org/details/books/intermediate-algebra-2e |
 | `src.openstax-college-algebra-2e` | OpenStax, College Algebra 2e | CC BY 4.0 | https://openstax.org/details/books/college-algebra-2e |
-| `src.openstax-calculus-1` | OpenStax, Calculus Volume 1 (Herman and Strang) | CC BY-NC-SA 4.0 [searched] | https://openstax.org/details/books/calculus-volume-1 |
-| `src.hammack-book-of-proof` | Richard Hammack, Book of Proof, 3rd edition (2018) | CC BY-NC-ND 4.0 [searched] | https://www.people.vcu.edu/~rhammack/BookOfProof/ [searched] |
+| `src.openstax-calculus` | OpenStax, Calculus Volume 1 (Herman and Strang) | CC BY-NC-SA 4.0 [searched] | https://openstax.org/details/books/calculus-volume-1 |
+| `src.hammack-proof-3e` | Richard Hammack, Book of Proof, 3rd edition (2018) | CC BY-NC-ND 4.0 [searched] | https://www.people.vcu.edu/~rhammack/BookOfProof/ [searched] |
 | `src.mcs-2017` | Lehman, Leighton and Meyer, Mathematics for Computer Science (2017 revision), the MIT 6.042J text | CC BY-SA 3.0 [searched] | https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-spring-2015/ |
 | `src.mahajan-street-fighting` | Sanjoy Mahajan, Street-Fighting Mathematics (MIT Press 2010); MIT OCW 18.098, January IAP 2008 | CC BY-NC-SA 3.0 US [searched] | https://ocw.mit.edu/courses/18-098-street-fighting-mathematics-january-iap-2008/ [searched] |
 | `src.mahajan-art-of-insight` | Sanjoy Mahajan, The Art of Insight in Science and Engineering (MIT Press 2014); MIT OCW RES.6-011 | CC BY-NC-SA 4.0 [searched] | https://ocw.mit.edu/courses/res-6-011-the-art-of-insight-in-science-and-engineering-mastering-complexity-fall-2014/ [searched] |
-| `src.python-floating-point` | Python tutorial, "Floating-Point Arithmetic: Issues and Limitations" | PSF licence | https://docs.python.org/3/tutorial/floatingpoint.html |
+| `src.python-docs-float` | Python tutorial, "Floating-Point Arithmetic: Issues and Limitations" | PSF licence | https://docs.python.org/3/tutorial/floatingpoint.html |
 | `src.goldberg-1991` | David Goldberg, "What Every Computer Scientist Should Know About Floating-Point Arithmetic", ACM Computing Surveys 23(1), 1991 | Copyright | Reference only |
 | `src.cs50x` | Harvard CS50x 2026: Week 0, Scratch (binary and representation), Week 1, C (floating-point imprecision, integer overflow) [searched] | CC BY-NC-SA [check] | https://cs50.harvard.edu/x/ |
 | `src.mit-1806` | Gilbert Strang, MIT OCW 18.06 Linear Algebra, Spring 2010, video lectures | CC BY-NC-SA | https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/ |
 | `src.3b1b-lockdown` | 3Blue1Brown, Lockdown Math (2020); episode 1 is "The simpler quadratic formula" [searched] | Copyright, free | https://www.3blue1brown.com/lessons/ldm-quadratic [searched] |
-| `src.3b1b-essence-calculus` | 3Blue1Brown, Essence of Calculus (the curriculum's 1.3 intuition series) | Copyright, free | https://www.3blue1brown.com/topics/calculus |
+| `src.3b1b-calculus` | 3Blue1Brown, Essence of Calculus (the curriculum's 1.3 intuition series) | Copyright, free | https://www.3blue1brown.com/topics/calculus |
 | `src.welch-imaginary` | Welch Labs, Imaginary Numbers Are Real (13 parts [searched]) | Copyright, free | YouTube, Welch Labs channel |
-| `src.openintro-stats-4e` | Diez, Çetinkaya-Rundel and Barr, OpenIntro Statistics, 4th edition | CC BY-SA 3.0 [searched] | https://www.openintro.org/book/os/ |
-| `src.blitzstein-hwang-2e` | Blitzstein and Hwang, Introduction to Probability, 2nd edition (the curriculum's 1.5 text) | Free online, copyright | https://projects.iq.harvard.edu/stat110 [check URL] |
+| `src.openintro-4e` | Diez, Çetinkaya-Rundel and Barr, OpenIntro Statistics, 4th edition | CC BY-SA 3.0 [searched] | https://www.openintro.org/book/os/ |
+| `src.blitzstein-hwang-2019` | Blitzstein and Hwang, Introduction to Probability, 2nd edition (the curriculum's 1.5 text) | Free online, copyright | https://projects.iq.harvard.edu/stat110 [check URL] |
 | `src.numpy-var` | NumPy documentation, `numpy.var` | BSD | https://numpy.org/doc/stable/reference/generated/numpy.var.html |
 | `src.frederick-2005` | Shane Frederick, "Cognitive Reflection and Decision Making", Journal of Economic Perspectives 19(4), 25 to 42, 2005, doi 10.1257/089533005775196732 [searched] | Copyright, free from the journal | https://www.aeaweb.org/articles?id=10.1257/089533005775196732 |
 | `src.tlmaths` | TLMaths (Jack Brown): A-level videos by specification section [searched] | Copyright, free | https://www.tlmaths.com [searched] |
@@ -1093,7 +1093,7 @@ Totals: Number 12, Ratio 16, Algebra 24, which match the sibling's strand weight
 | `src.aops-prealgebra`, `src.aops-intro-algebra` (paid) | Art of Problem Solving: Prealgebra (Patrick, Rusczyk, Boppana) and Introduction to Algebra (Rusczyk); Alcumus (free adaptive problems) | Copyright | https://artofproblemsolving.com |
 | `src.gelfand-shen-algebra` (paid) | I. M. Gelfand and A. Shen, Algebra (Birkhäuser 1993, reprinted) | Copyright | Publisher page |
 | `src.edexcel-pure` (paid) | Pearson Edexcel AS and A level Mathematics, Pure Mathematics Year 1/AS and Year 2 | Copyright | Publisher page |
-| `src.huff-how-to-lie` (paid) | Darrell Huff, How to Lie with Statistics (1954) | Copyright | Any edition |
+| `src.huff-lie` (paid) | Darrell Huff, How to Lie with Statistics (1954) | Copyright | Any edition |
 | `src.shreve-1` (paid) | Steven Shreve, Stochastic Calculus for Finance I: The Binomial Asset Pricing Model (Springer 2004) | Copyright | Publisher page |
 
 Khan unit titles, Corbettmaths topic names, AoPS and Edexcel chapter numbers and OpenStax section numbers below are as I recall them [check each against the live resource before the content cites it]. OpenStax section numbers are recalled from the 2e editions and are consistent with each book's table of contents as I know it; Edexcel Pure Year 2 chapter 10 (Numerical methods) I hold with high confidence; Street-Fighting chapters 1 (Dimensions) and 4 (Pictorial proofs) and OpenIntro section 8.1 (Fitting a line, residuals, and correlation) are confirmed [searched].
@@ -1234,7 +1234,7 @@ Budgeted hours by level: E1 2.25, E2 2.25, E3 2.5, E4 2.5, E5 2.0, E6 2.5, L1 2.
 
 ## 6. Verification approach
 
-Every answer in these two topics is machine-checked twice before it ships (content-format.md section 6): the declared answer, or the TypeScript generator's answer, against an independent Python computation, and then the runtime grader is replayed on the correct answer, its accepted forms and every diagnosed wrong answer. The table says what the independent side and the second check are for each family. "Fraction" means Python's exact `fractions.Fraction`; "probe" means evaluation at 20 random points of the declared domain with mpmath at 50 digits; SymPy runs in CI only.
+Every answer in these two topics is machine-checked twice before it ships (CONTENT-FORMAT.md section 6): the declared answer, or the TypeScript generator's answer, against an independent Python computation, and then the runtime grader is replayed on the correct answer, its accepted forms and every diagnosed wrong answer. The table says what the independent side and the second check are for each family. "Fraction" means Python's exact `fractions.Fraction`; "probe" means evaluation at 20 random points of the declared domain with mpmath at 50 digits; SymPy runs in CI only.
 
 ### 6.1 Item families in 0.1
 
@@ -1255,17 +1255,17 @@ Every answer in these two topics is machine-checked twice before it ships (conte
 | Estimation | 38 | The exact value and each 1-significant-figure rounding | The estimate must be the declared one and must lie within a factor of 2 of the exact value | Numeric within the declared estimate's tolerance |
 | Fermi estimates | 40 | The product of the learner's factor values is recomputed; the reference value carries a cited source | The accepted range (a factor of 3 either side of the reference) must contain the sourced value | Log-range check; factors graded for plausibility only in homework rubric points |
 | Proofs ($\sqrt{2}$, primes, digit sums, $(-a)(-b)$) | 8, 15, 41; homework | Ordering items: the declared order satisfies every `before` pair; numeric claims in the model answer ($30{,}031 = 59 \times 509$) checked as arithmetic claims | Rubric anchoring: every rubric point names model-answer lines, every line is used | Ordering graded per line; long-form self-marked against the rubric with Bertie's suggestion |
-| Binary and floating point | 42 | `int(s, 2)`, `bin(n)` | Python's own float results recorded on CPython and on Pyodide; any difference between the two fails CI, because both targets run Pyodide (`arch-decision.md` decision 15) | Numeric exact; predicted-output items compare text |
+| Binary and floating point | 42 | `int(s, 2)`, `bin(n)` | Python's own float results recorded on CPython and on Pyodide; any difference between the two fails CI, because both targets run Pyodide (`ARCHITECTURE.md` decision 15) | Numeric exact; predicted-output items compare text |
 
 ### 6.2 Item families in 0.2
 
 | Family | Lessons | Independent check (CI) | Second check | Runtime grading and accepted forms |
 |---|---|---|---|---|
-| Expressions: substitute, collect, expand, factorise | 1 to 11 | SymPy `expand`, `factor`, `simplify(a - b) == 0` | Probe at 20 points; for "factorise fully", compare `factor_list` (irreducible factors over the integers and the content) | Compute Engine parse, 8-point probing in the declared domain, plus the structural test for the required form (content-format.md decision 10) |
+| Expressions: substitute, collect, expand, factorise | 1 to 11 | SymPy `expand`, `factor`, `simplify(a - b) == 0` | Probe at 20 points; for "factorise fully", compare `factor_list` (irreducible factors over the integers and the content) | Compute Engine parse, 8-point probing in the declared domain, plus the structural test for the required form (CONTENT-FORMAT.md decision 10) |
 | Algebraic fractions | 12 to 14, 60 | SymPy `cancel`, `together` | The excluded values: every zero of every denominator, including a divisor's numerator, compared with the author's list as a set | Expression equivalence with the domain restriction; excluded values as a set item |
 | Index laws with letters | 15 | SymPy with `positive=True` only where the item states $x > 0$ | Probe at negative points when no assumption is stated, which catches $\sqrt{x^2} = x$ | As expressions |
 | Sigma notation and the variance identity | 16, 76 | SymPy `summation` on symbolic sums | Random integer data sets evaluated both ways with `Fraction` | Numeric or expression |
-| Algebraic proof and "show that" | 17, 22; homework | Derivation chains: every bound line equal to the first (content-format.md 6.8), for example $n(n + 1)(n + 2)(n + 3) + 1 = (n^2 + 3n + 1)^2$ | Rubric anchoring | Ordering items graded per line; long-form self-marked with Bertie's suggestion |
+| Algebraic proof and "show that" | 17, 22; homework | Derivation chains: every bound line equal to the first (CONTENT-FORMAT.md 6.8), for example $n(n + 1)(n + 2)(n + 3) + 1 = (n^2 + 3n + 1)^2$ | Rubric anchoring | Ordering items graded per line; long-form self-marked with Bertie's suggestion |
 | Linear equations, formulae and subjects | 18 to 27 | SymPy `solveset` over the reals; "no solution" and "every $x$" as `EmptySet` and `Reals` | Substitute the answer back with exact arithmetic; for rearrangements, compose the formula with its rearrangement and probe for the identity | Numeric or expression; rearrangements accepted in any equivalent form |
 | Dimensional analysis | 28 | Exponents from a linear system in SymPy `linsolve` | Dimension vectors from `unit-algebra` | Expression for exponents; multi-select for consistency |
 | Inequalities in one variable (linear, compound, absolute value, quadratic) | 29 to 32, 34, 70 | SymPy `solve_univariate_inequality` returning an exact `Interval` or `Union` | Sampling 10,000 points across and at the endpoints; integer lists by enumeration | Interval check with open and closed ends; set notation and interval notation both parsed |
@@ -1292,22 +1292,22 @@ Every answer in these two topics is machine-checked twice before it ships (conte
 
 ### 6.3 Code drills, generators and long-form items
 
-- **Code drills.** Each drill ships `reference.py`, `starter.py`, `tests.py` (the `zqtest` library) and a `wrong/` folder of known-wrong solutions, each naming the misconception it encodes and the test it must fail: for example `count_factors` testing divisors only up to $\frac{n}{2}$ (slow but right, so it must fail the time limit), `solve_quadratic` dividing only the root by $2a$, `bisection` that stops on an asymptote. CI runs every reference, every wrong solution and every mutant on CPython and on Pyodide (content-format.md 6.11); every drill in this file declares `needs: []` (standard library only).
-- **Generators.** Each family above is a TypeScript generator with a Python verifier written from its specification without reading the TypeScript; CI enumerates the whole parameter box and requires agreement on admissibility, difficulty, answer and every misconception value (content-format.md 5.6), plus the tidy-number bounds of widgets-stage0.md 12.2.
+- **Code drills.** Each drill ships `reference.py`, `starter.py`, `tests.py` (the `zqtest` library) and a `wrong/` folder of known-wrong solutions, each naming the misconception it encodes and the test it must fail: for example `count_factors` testing divisors only up to $\frac{n}{2}$ (slow but right, so it must fail the time limit), `solve_quadratic` dividing only the root by $2a$, `bisection` that stops on an asymptote. CI runs every reference, every wrong solution and every mutant on CPython and on Pyodide (CONTENT-FORMAT.md 6.11); every drill in this file declares `needs: []` (standard library only).
+- **Generators.** Each family above is a TypeScript generator with a Python verifier written from its specification without reading the TypeScript; CI enumerates the whole parameter box and requires agreement on admissibility, difficulty, answer and every misconception value (CONTENT-FORMAT.md 5.6), plus the tidy-number bounds of widgets-stage0.md 12.2.
 - **Long-form items.** Never auto-passed or auto-failed. CI checks the model answer (its bindable lines as derivation chains, its numbers as arithmetic claims) and the rubric's anchoring. The learner's mark is their own, with Bertie's per-point suggestion and evidence quote shown beside it.
 
 ---
 
 ## 7. Sample lesson in full: What a digit is worth
 
-**Why this lesson.** It is the root of the whole dependency graph: decimals, written methods, standard form, rounding, bounds, binary and floating point all rest on place value. It is also the first lesson the depth-first build ships, so it doubles as the engine's first real content. It is written at the level of detail an author hands to the YAML stage (content-format.md sections 3.7, 3.10 and 10): every screen, widget configuration in plain words, check, accepted forms, diagnosis, hint ladder, Why?, Show solution text and tutor fields. Copy follows design research 9.2: second person, sentences of at most 20 words, no exclamation marks, a term named only after it has been used.
+**Why this lesson.** It is the root of the whole dependency graph: decimals, written methods, standard form, rounding, bounds, binary and floating point all rest on place value. It is also the first lesson the depth-first build ships, so it doubles as the engine's first real content. It is written at the level of detail an author hands to the YAML stage (CONTENT-FORMAT.md sections 3.7, 3.10 and 10): every screen, widget configuration in plain words, check, accepted forms, diagnosis, hint ladder, Why?, Show solution text and tutor fields. Copy follows design research 9.2: second person, sentences of at most 20 words, no exclamation marks, a term named only after it has been used.
 
 **Rules that apply to every screen here.**
 
-- **Hints** open after the lesson's first Check, anywhere in the lesson (design research 5.5; ai-tutor.md 2.2), and climb Nudge, Point, Step. Show solution appears after two not-yet results on a screen (design research 5.4).
-- **Element references** use `<widget id>/<kind>:<name>` (content-format.md decision 17). The place-value chart's columns are `col:thousands`, `col:hundreds`, `col:tens`, `col:ones`, `col:tenths`, `col:hundredths`, `col:thousandths` and `col:ten-thousandths`; in the money skin the headers read £100, £10, £1, 10p and 1p, but the ids stay the place names.
-- **Bertie's face** follows the lesson player (bertie.md 5.3): `correct` or `notyet` on grading, `surprised` on the trap reveal (screen 6), `celebrate` when the lesson completes. During a problem only the quiet states play.
-- **Tutor fields** carry no value that a screen's check accepts (content-format.md 3.10, the leak lint). On screen 10, where the accepted boxes include ten, one and a tenth, the tutor fields spell numbers in words so that the lint cannot mistake a phrase for an answer.
+- **Hints** open after the lesson's first Check, anywhere in the lesson (design research 5.5; AI-TUTOR.md 2.2), and climb Nudge, Point, Step. Show solution appears after two not-yet results on a screen (design research 5.4).
+- **Element references** use `<widget id>/<kind>:<name>` (CONTENT-FORMAT.md decision 17). The place-value chart's columns are `col:thousands`, `col:hundreds`, `col:tens`, `col:ones`, `col:tenths`, `col:hundredths`, `col:thousandths` and `col:ten-thousandths`; in the money skin the headers read £100, £10, £1, 10p and 1p, but the ids stay the place names.
+- **Bertie's face** follows the lesson player (BERTIE.md 5.3): `correct` or `notyet` on grading, `surprised` on the trap reveal (screen 6), `celebrate` when the lesson completes. During a problem only the quiet states play.
+- **Tutor fields** carry no value that a screen's check accepts (CONTENT-FORMAT.md 3.10, the leak lint). On screen 10, where the accepted boxes include ten, one and a tenth, the tutor fields spell numbers in words so that the lint cannot mistake a phrase for an answer.
 
 ### 7.1 Lesson header
 
@@ -1372,7 +1372,7 @@ Two non-task screens (title and summary), the limit of design research 5.8. Scre
 
 - **Prose:** "The digit 5 can be worth five pounds or five pence. Where it sits decides which."
 - **Art:** `ast.course-art.place-value`.
-- **Bertie:** `idle`. Chat is open with no answer key, as on an explore screen (ai-tutor.md 2.2); hints do not exist yet.
+- **Bertie:** `idle`. Chat is open with no answer key, as on an explore screen (AI-TUTOR.md 2.2); hints do not exist yet.
 
 #### Screen 2: `fewest` (`problem`, the hook, difficulty 1)
 
@@ -1490,7 +1490,7 @@ Two non-task screens (title and summary), the limit of design research 5.8. Scre
 - **Hints:** Nudge: "How many tenths does each number have?" Point: "Compare these two digits first." (highlights the tenths digit on `cards/option:a` and `cards/option:b`). Step: "Write 0.5 as 0.50. Now compare 50 hundredths with 45 hundredths."
 - **Why?** Shown: "0.5 is 5 tenths, which is 50 hundredths; 0.45 is 45 hundredths." Then: "Compare decimals column by column from the left, like words in a dictionary. Length does not matter." `rep`: number line.
 - **Solution:** the number line appears with 0.45 just left of 0.5; text: "0.5 has 5 tenths and 0.45 has 4, so 0.5 is bigger by 0.05."
-- **On the reveal:** Bertie plays `surprised` once. A wrong first try is expected on a trap; a revealed trap is recorded but does not enter the Redo queue (assessment.md 2.2).
+- **On the reveal:** Bertie plays `surprised` once. A wrong first try is expected on a trap; a revealed trap is recorded but does not enter the Redo queue (ASSESSMENT.md 2.2).
 - **Tutor:** focus: "Comparison goes column by column from the left." Notes: "Many adults hold the longer-is-larger belief from reading decimals as whole numbers; it survives into price comparisons." Reps: number line; money (50p against 45p). Avoid: offering "pad with zeros" as a rule before the learner has seen why it works.
 
 #### Screen 7: `order` (`ladder`, difficulty 2)
@@ -1626,7 +1626,7 @@ $$
   3. Compare decimals column by column from the left; length does not matter.
 - **Card** (`crd.num.place-value`, `derivedIn: why-shift`): title "Place value and the shift"; tex: "$305 = 3 \times 100 + 0 \times 10 + 5 \times 1$ and $3.05 = 3 \times 1 + 0 \times \tfrac{1}{10} + 5 \times \tfrac{1}{100}$. Multiplying by 10, 100 or 1,000 moves every digit 1, 2 or 3 columns left; dividing moves them right."
 - **Trap:** "Do not 'add a zero' to multiply by 10: $2.5 \times 10 = 25$, not 2.50."
-- **Bertie:** `celebrate` once the lesson completes, then the recap and practice offers (ai-tutor.md 2.2, end of lesson row).
+- **Bertie:** `celebrate` once the lesson completes, then the recap and practice offers (AI-TUTOR.md 2.2, end of lesson row).
 
 ### 7.3 Lesson quiz (4 items, 1 mark each, no hints, one attempt, Why? after each)
 
@@ -1637,7 +1637,7 @@ $$
 | 3 | `itm.numwork.digit-worth-q3` | "Put in order, smallest first: 2.1, 2.09, 2.101, 2.0999." | O, 3 (`ordering`, exact order) | 2.09, 2.0999, 2.1, 2.101 | 2.1, 2.09, 2.101, 2.0999 (`mc.num.longer-is-larger`: the decimal parts read as 1, 9, 101, 999) | "All have 2 ones. 2.09 and 2.0999 have 0 tenths, so they come first, and 2.0999 has more thousandths. 2.1 and 2.101 differ first in the thousandths." |
 | 4 | `itm.numwork.digit-worth-q4` | "A share price moves from £101.25 to £101.4. Which is true?" Options: a "It rose by 15p"; b "It fell, because 4 is less than 25"; c "It rose by 0.15p"; d "It rose by £1.50" | C, 3 | a | b (`mc.num.longer-is-larger`); c (`mc.num.unit-slip`: "0.15 is in pounds; in pence it is 15p."); d (`mc.num.shift-count`) | "$101.40 - 101.25 = 0.15$ pounds, which is 15p. Compare tenths first: 4 tenths is more than 2." |
 
-**Marks and mastery.** Each item scores 1 mark (decision 15). 3 of 4 on the first completion marks the lesson Mastered (assessment.md decision 26); wrong items join the Redo queue at 7 and 30 days. Every item's `use` is `[quiz, practice, review]`, so a missed item can return as practice.
+**Marks and mastery.** Each item scores 1 mark (decision 15). 3 of 4 on the first completion marks the lesson Mastered (ASSESSMENT.md decision 26); wrong items join the Redo queue at 7 and 30 days. Every item's `use` is `[quiz, practice, review]`, so a missed item can return as practice.
 
 ### 7.4 Verification for this lesson
 
@@ -1664,14 +1664,14 @@ $$
 | # | Item | Effect |
 |---|---|---|
 | O1 | Confirm GCSE geometry and statistics inside 0.3 (`stage0-precalc-computing.md` decision 2) | Nothing in this file changes either way; section 4.3's 52 marks from 0.1 and 0.2 stand. If they move into 0.2 instead, 0.2 gains about 40 h and a fifth course, which the schema's ceiling of 4 courses per topic forbids, so a new topic would be needed |
-| O2 | Banned-word exemption for glossary terms (`content-format.md` 13, item 11) | Not needed here: no 0.1 or 0.2 term contains a banned word |
+| O2 | Banned-word exemption for glossary terms (`CONTENT-FORMAT.md` 13, item 11) | Not needed here: no 0.1 or 0.2 term contains a banned word |
 
 **Requests.**
 
 | # | To | Request | Why |
 |---|---|---|---|
-| R1 | `assessment.md` 8.7 | A practice set authored per level (`ItemSet` kind `practice`: the fluency sets and the lab sets) counts as earned when every slot has been attempted once | CI already counts set estimates (`content-format.md` 3.8), but 8.7's list of earned units names only homework. Without R1 the 31.75 h of fluency sets and 9.5 h of lab drills in 0.1 and 0.2 are estimated but never earned, and the forecast overstates what is left |
-| R2 | `content-format.md` 3.8, 6.7 | Project milestone hours (`Project.milestones[].hours`) join the topic sum CI checks | `prj.alg.root-finder` carries 10 of 0.2's hours; without it the 0.2 estimates fall to 159.5 h (88.6%), outside the 10% band |
+| R1 | `ASSESSMENT.md` 8.7 | A practice set authored per level (`ItemSet` kind `practice`: the fluency sets and the lab sets) counts as earned when every slot has been attempted once | CI already counts set estimates (`CONTENT-FORMAT.md` 3.8), but 8.7's list of earned units names only homework. Without R1 the 31.75 h of fluency sets and 9.5 h of lab drills in 0.1 and 0.2 are estimated but never earned, and the forecast overstates what is left |
+| R2 | `CONTENT-FORMAT.md` 3.8, 6.7 | Project milestone hours (`Project.milestones[].hours`) join the topic sum CI checks | `prj.alg.root-finder` carries 10 of 0.2's hours; without it the 0.2 estimates fall to 159.5 h (88.6%), outside the 10% band |
 | R3 | `widgets-stage0.md` 13 | Move `counting-slots` to wave W1 and `scatter-fit`, `dot-plot-stats` (mean and deviation marks) and `complex-plane` to W2 | Depth-first content reaches lessons 13, 46, 75, 85 to 87 and 105 before any 0.3 lesson |
 | R4 | `widgets-stage0.md` 5.1 | `place-value-chart` exposes `targets()` ids `col:<place>`, `op:times-10`, `op:times-100`, `op:divide-10`, `op:divide-100`, `tray:<place>`, `chip:swap-<place>`, and a `pv-fewest-pieces` predicate with a Python twin | The sample lesson references them (section 7) |
 | R5 | `widgets-stage0.md` 3.2 | `number-line` exposes `span:<from>-<to>`, `token:<value>` and `lens:main` | Same |

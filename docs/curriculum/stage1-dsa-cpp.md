@@ -4,7 +4,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 1, 6 October 2026.
 
 **Source of truth.** `docs/curriculum.md` for stages, topics, hours and exit tests. This file expands items 1.8 Data structures and algorithms (250 h), 1.9 C++ (140 h) and 2.4 Contests (140 h, Stage 2) into courses, levels, lessons, homework, papers, reading and verification; rebuilds the 1.8 and 1.9 exits and the whole Stage 1 exit test in the app; proposes a completion rule for 2.4, whose curriculum entry sets targets but no exit; and writes one lesson in full.
 
-**Built on.** `docs/design-research.md` sections 5, 8, 9 and 10 (lesson anatomy, curriculum architecture, teaching style, critiques); `docs/blueprint/work/widgets-programming.md` (widget ids and modes, the `code` check and its efficiency tests, `problem-workbench`, `contest-arena`, the `cpp-runner` spike; its sections 1.3 to 1.5 are the working outline this file replaces); `docs/blueprint/work/content-format.md` revision 2 (ids, schema, screen types, checks, tutor fields, drills, verification); `docs/blueprint/work/assessment.md` draft 2 (the assessment ladder, paper kinds, exit parts `1.8.exit` and `1.9.exit`, the problem ledger in 11.5, contests in 11.6, the track rule for 1.9, decision 30 on code items and the two targets); `docs/blueprint/work/ai-tutor.md` draft 2 (Bertie's gate, code review, the code guard, the lockout); `docs/blueprint/work/bertie.md` draft 2 (states and who drives them); `docs/blueprint/work/arch-decision.md` (decision 15, Pyodide on both targets); `docs/blueprint/work/canon-gap.md` revision 2 (the resource canon for 1.8, 1.9 and 2.4, G17 on algorithms with proofs, G18 on software construction, P13 for developers, O1 on contest hours); the sibling files `docs/curriculum/stage1-python-tools.md` (1.1 and 1.2, whose lessons 21 and 28 preview recursion and complexity, and whose `recursion-tree`, `complexity-lab` and `sort-lab` modes this file extends), `stage1-probability.md` (indicators, Catalan numbers, optimal stopping), `stage1-linear-algebra.md` (matrix cost, the FFT) and the Stage 0 files; the owner's lesson-creator, maths-teaching, code-craft and project-forge skills.
+**Built on.** `docs/design-research.md` sections 5, 8, 9 and 10 (lesson anatomy, curriculum architecture, teaching style, critiques); `docs/blueprint/work/widgets-programming.md` (widget ids and modes, the `code` check and its efficiency tests, `problem-workbench`, `contest-arena`, the `cpp-runner` spike; its sections 1.3 to 1.5 are the working outline this file replaces); `docs/CONTENT-FORMAT.md` revision 2 (ids, schema, screen types, checks, tutor fields, drills, verification); `docs/ASSESSMENT.md` draft 2 (the assessment ladder, paper kinds, exit parts `1.8.exit` and `1.9.exit`, the problem ledger in 11.5, contests in 11.6, the track rule for 1.9, decision 30 on code items and the two targets); `docs/AI-TUTOR.md` draft 2 (Bertie's gate, code review, the code guard, the lockout); `docs/BERTIE.md` draft 2 (states and who drives them); `docs/ARCHITECTURE.md` (decision 15, Pyodide on both targets); `docs/blueprint/work/canon-gap.md` revision 2 (the resource canon for 1.8, 1.9 and 2.4, G17 on algorithms with proofs, G18 on software construction, P13 for developers, O1 on contest hours); the sibling files `docs/curriculum/stage1-python-tools.md` (1.1 and 1.2, whose lessons 21 and 28 preview recursion and complexity, and whose `recursion-tree`, `complexity-lab` and `sort-lab` modes this file extends), `stage1-probability.md` (indicators, Catalan numbers, optimal stopping), `stage1-linear-algebra.md` (matrix cost, the FFT) and the Stage 0 files; the owner's lesson-creator, maths-teaching, code-craft and project-forge skills.
 
 **Tags.** Decisions sit in tables with the rejected alternative and the reason. [verified] marks an answer, count, output or diagnostic recomputed while writing this draft (section 0.6). [measured] marks a timing taken on the authoring container, never on a learner's device. [recalled] marks a fact from memory that I am confident of and did not verify here. [check] marks a resource detail (a chapter, lecture or problem-set number, a title, a licence, a URL path) to confirm before content cites it (`checked: false` in `Level.companion` until then). [our choice] marks a design decision without outside evidence. [unverified] marks a platform fact not yet measured. [mode to add] marks a widget mode `widgets-programming.md` does not yet list.
 
@@ -14,7 +14,7 @@ Blueprint work file, Stage 2 Phase 1. Draft 1, 6 October 2026.
 |---|---|---|---|---|---|---|---|---|
 | 1.8 Data structures and algorithms | 250 | 5 | 26 | 150 | 37.5 (15.0%) | 26 | `exm.algorithms`: 90 min, 22 items, 80 marks | 242.5 h (97.0%) |
 | 1.9 C++ | 140 | 4 | 16 | 88 | 22.0 (15.7%) | 16 | `exm.cpp`: 90 min, 22 items, 80 marks, compiler-free | 134.5 h (96.1%) |
-| 2.4 Contests | 140 | 4 | 15 | 84 | 21.0 (15.0%) | 15 | No topic exam (`assessment.md` 2.8); three Arena rounds | 137.5 h (98.2%) |
+| 2.4 Contests | 140 | 4 | 15 | 84 | 21.0 (15.0%) | 15 | No topic exam (`ASSESSMENT.md` 2.8); three Arena rounds | 137.5 h (98.2%) |
 | **Total** | **530** | **13** | **57** | **322** | **80.5** | **57** | | **514.5 h** |
 
 Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out mediums solved within 30 minutes) and `1.9.exit` (the 1.7 binomial pricer rewritten in C++ with doctest tests and timed against Python, pasted from the learner's machine) are rebuilt in section 4.4. The Stage 1 exit test, all nine topic exits with the track rule for 1.9, is rebuilt in section 4.5. 2.4 has no curriculum exit; section 4.3 proposes one for the owner.
@@ -29,28 +29,28 @@ Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out me
 |---|---|---|---|---|
 | 1 | Unit of lesson time | **15 minutes per lesson, quiz included**, the unit of every other curriculum file | 10 or 12 minutes | One unit keeps hours tables comparable across the path; algorithm screens with a "be the algorithm" step take the upper end of design research 5.8's 10 to 15 minutes |
 | 2 | 1.8 spine | **Grokking Algorithms, 2nd edition, as the first read (levels AC1 to AH6), then one problem list: the app's Problem Gym, which mirrors the 18 NeetCode 150 categories at NeetCode's counts with original problems, and the real NeetCode 150 on LeetCode as the logged outside list.** CLRS 4th edition is a reference only. MIT 6.006 (Spring 2020) is the lecture and theory thread that canon-gap G17 proposes inside the 250 hours | Striver's A2Z sheet (the curriculum's named alternative); CLRS or Skiena as the spine; 6.006 as the spine | The curriculum names Grokking first and NeetCode 150 as the list that "works well in Python, video solutions"; A2Z is larger and built around C++ and Java. Grokking is a first read, not a course, so the lessons carry the depth a top programme adds (proofs, amortised and expected analysis, lower bounds), and 6.006 is where that depth is taught at MIT |
-| 3 | Language for 1.8 | **Python 3 throughout**, standard library only (`collections`, `heapq`, `bisect`, `itertools`, `functools`); C++ solutions accepted in the web app once 1.9 lesson 62 is done | C++ from the start; pseudocode only | The owner's code-craft skill defaults to Python; researcher interviews are in Python; Pyodide runs every 1.8 drill on both targets because none needs a package (`arch-decision.md` decision 15). Pseudocode cannot be tested |
+| 3 | Language for 1.8 | **Python 3 throughout**, standard library only (`collections`, `heapq`, `bisect`, `itertools`, `functools`); C++ solutions accepted in the web app once 1.9 lesson 62 is done | C++ from the start; pseudocode only | The owner's code-craft skill defaults to Python; researcher interviews are in Python; Pyodide runs every 1.8 drill on both targets because none needs a package (`ARCHITECTURE.md` decision 15). Pseudocode cannot be tested |
 | 4 | Courses for 1.8 | **Five courses: Algorithmic Cost (AC, 23 lessons), Arrays, Hashing and Pointers (AH, 33), Stacks, Lists and Heaps (SQ, 22), Trees and Graphs (TG, 31), Recursion, Dynamic Programming and Greedy (DP, 41)** | One course per NeetCode category (18 courses of 3 to 15 lessons); 6.006's unit order | The brief caps an item at five courses and design research 8.2 sets 20 to 45 lessons each. The order follows dependency: cost and recursion first (every later analysis uses them), then linear structures, then trees and graphs (which need recursion and queues), then dynamic programming (which needs all of them) |
 | 5 | Theory depth | **Interview list plus proofs**: loop invariants, induction, the master theorem, amortised and expected analysis, the comparison lower bound, exchange arguments, cut property, NP-completeness in plain words. Every level's homework has a long-form proof or analysis | The list alone (NeetCode); CLRS-level proofs on every lesson | Interviews at top firms ask "why is it correct?" and "what is the expected cost?"; ML-lab work needs the analysis habit. Full CLRS rigour on every lesson would leave no time for the 150 problems the exit demands |
 | 6 | Problem content | **Every problem is written originally, in our words and numbers, many in a market setting; the NeetCode problem with the same pattern is named as a pointer to its video solution.** No LeetCode or NeetCode statement is copied | Copying statements; linking only | Copyright (`widgets-programming.md` 13.1); a market setting carries the quant transfer; the pointer keeps the curriculum's "video solutions" benefit |
-| 7 | The 150 counter | **In-app verified problems (Problem Gym and homework drills, each counted once) plus self-reported LeetCode problems, shown apart** (`assessment.md` 11.5). The hours plan reaches 168 verified problems: 78 homework drills and 90 Gym problems | Verified problems only; self-report only | The curriculum's 150 may be met on LeetCode; the app cannot see LeetCode, so self-report is labelled as such. A plan with 18 problems of slack absorbs problems left unsolved |
+| 7 | The 150 counter | **In-app verified problems (Problem Gym and homework drills, each counted once) plus self-reported LeetCode problems, shown apart** (`ASSESSMENT.md` 11.5). The hours plan reaches 168 verified problems: 78 homework drills and 90 Gym problems | Verified problems only; self-report only | The curriculum's 150 may be met on LeetCode; the app cannot see LeetCode, so self-report is labelled as such. A plan with 18 problems of slack absorbs problems left unsolved |
 | 8 | Held-out timed bank | **40 original mediums, never shown in practice, homework or Bertie's picks, stratified over 12 pattern groups, each with a reference solution, a brute force, hidden tests and an efficiency test.** The exit window is 5 solved within 30 minutes in the last 9 attempts | 30 mediums (`widgets-programming.md` 0.2's floor); LeetCode's "random medium" | "Fresh" needs unseen problems; 9 attempts per window and resits need more than 30 to stay fresh; 40 allows four windows. LeetCode problems cannot be graded in the app |
 | 9 | Efficiency grading | **A `complexity` test (line budget and time ratio, `widgets-programming.md` 2.2.1) on every drill whose pattern is the point**; the message names the measured exponent | Wall-clock limits alone | A correct $O(n^2)$ two-sum passes every functional test; the exit's "medium" implies the intended complexity |
 | 10 | 1.9 spine | **learncpp.com** (free, kept current), with Stanford CS106L as the lecture parallel and Joshi's *C++ Design Patterns and Derivatives Pricing* (2nd edition) as the pricing-design reference; Stroustrup's *Programming: Principles and Practice Using C++* (3rd edition) as the paid alternative | Stroustrup as spine; Sams (the curriculum rejects it); Meyers first | The curriculum names learncpp or Stroustrup; learncpp is free on every device and has quizzes with solutions; Meyers "comes after a first book" |
-| 11 | C++ standard and toolchain | **C++20; GCC 13 or later or Clang 17 or later on the learner's machine [check Clang's `<format>` support]; `-std=c++20 -Wall -Wextra -O2` for builds, `-fsanitize=address,undefined -g -O1` for checking; doctest for tests; CMake for projects.** C++23 features (`std::expected`, `std::print`) are named, never required | C++17; C++23 | C++20 adds concepts, ranges, `<=>`, `std::span` and `std::format`, all used in lessons. GCC 13.3 compiled every snippet here; Clang 18.1 with libstdc++ 13 lacked `std::expected` and `hardware_destructive_interference_size` [verified], so nothing depends on them |
-| 12 | Where C++ runs | **Never in the Artifact.** Concept screens show build-time recordings: CI compiles and runs every authored snippet on GCC and Clang, with and without sanitisers, and ships outputs, diagnostics and sanitiser reports as data. Drills run in the web app through `cpp-runner` (the W-C spike) or on the learner's machine with paste-verify | C++ drills in the Artifact | `widgets-programming.md` decision 9 and `assessment.md` decision 30; a compiler sysroot needs archives the Artifact cannot serve, and WebAssembly timings misstate native speed |
-| 13 | The 1.9 paper | **Compiler-free**: predict-output, compiles-or-not, find-the-bug, ownership state, layout, complexity and long-form items, plus code-blanks and Parsons items whose every accepted fill CI compiled and tested. It runs on both targets | A web-only paper with live compilation | A paper never splits across targets (`assessment.md` 3.3), and the web compile path is still a spike. Writing whole programs is assessed by homework and the 1.9 exit, on a real compiler |
-| 14 | 1.9 and the tracks | **Every track takes the same 88 lessons; the track rule moves `1.9.exit` to the Stage 2 checklist for traders and researchers** (`assessment.md` 2.9). The developer track's "at least double these hours" is met by canon-gap P13 (150 h) plus a 1.9 developer reading list (section 5.2), not by more 1.9 lessons | Separate track versions of 1.9; doubling 1.9's lessons | The curriculum lets C++ "slip into Stage 2" for two tracks, which is a scheduling rule, not a content cut. P13 is where the developer's systems depth belongs |
+| 11 | C++ standard and toolchain | **C++20; GCC 13 or later or Clang 17 or later on the learner's machine (libc++ 17 marks `<format>` stable [verified: LLVM 17 release notes]); `-std=c++20 -Wall -Wextra -O2` for builds, `-fsanitize=address,undefined -g -O1` for checking; doctest for tests; CMake for projects.** C++23 features (`std::expected`, `std::print`) are named, never required | C++17; C++23 | C++20 adds concepts, ranges, `<=>`, `std::span` and `std::format`, all used in lessons. GCC 13.3 compiled every snippet here; Clang 18.1 with libstdc++ 13 lacked `std::expected` and `hardware_destructive_interference_size` [verified], so nothing depends on them |
+| 12 | Where C++ runs | **Never in the Artifact.** Concept screens show build-time recordings: CI compiles and runs every authored snippet on GCC and Clang, with and without sanitisers, and ships outputs, diagnostics and sanitiser reports as data. Drills run in the web app through `cpp-runner` (the W-C spike) or on the learner's machine with paste-verify | C++ drills in the Artifact | `widgets-programming.md` decision 9 and `ASSESSMENT.md` decision 30; a compiler sysroot needs archives the Artifact cannot serve, and WebAssembly timings misstate native speed |
+| 13 | The 1.9 paper | **Compiler-free**: predict-output, compiles-or-not, find-the-bug, ownership state, layout, complexity and long-form items, plus code-blanks and Parsons items whose every accepted fill CI compiled and tested. It runs on both targets | A web-only paper with live compilation | A paper never splits across targets (`ASSESSMENT.md` 3.3), and the web compile path is still a spike. Writing whole programs is assessed by homework and the 1.9 exit, on a real compiler |
+| 14 | 1.9 and the tracks | **Every track takes the same 88 lessons; the track rule moves `1.9.exit` to the Stage 2 checklist for traders and researchers** (`ASSESSMENT.md` 2.9). The developer track's "at least double these hours" is met by canon-gap P13 (150 h) plus a 1.9 developer reading list (section 5.2), not by more 1.9 lessons | Separate track versions of 1.9; doubling 1.9's lessons | The curriculum lets C++ "slip into Stage 2" for two tracks, which is a scheduling rule, not a content cut. P13 is where the developer's systems depth belongs |
 | 15 | Courses for 1.9 | **Four courses: C++ Foundations (CB, 22), Memory and Ownership (CM, 24), Generic Code and the Standard Library (CL, 21), Performance and the Pricer (CP, 21)** | learncpp's 30 chapters as courses; one course | Four keeps each course inside 20 to 45 lessons and follows the dependency chain the exit needs: a program, then objects that own memory, then the library, then speed and the pricer |
 | 16 | Courses for 2.4 | **Four courses: Contest Craft (KC, 21), Contest Mathematics (KM, 26), Contest Data Structures and Graphs (KS, 19), Contest Techniques: DP and Strings (KD, 18)**, taught from the Competitive Programmer's Handbook and the CSES Problem Set (canon-gap's 2.4 canon) on top of 1.8 | Contests as practice only, no lessons | Rating 1,400 needs techniques 1.8 does not teach: number theory, combinatorics, range-query trees, binary lifting, SCC, bitmask and digit DP, string algorithms |
-| 17 | 2.4 assessment | **No topic exam** (`assessment.md` 2.8 lists 2.4 among topics closed by practice records); **three Arena rounds** (`contest-arena`, 2 hours, 6 problems) mark progress; a completion rule `2.4.exit` is **proposed for the owner** (section 4.3) | A timed topic paper; no completion rule | A contest is the native exam; the curriculum gives targets (one contest a week, rating 1,400 in the first year) but no exit, and `assessment.md` 11.6 keeps the rating a goal |
+| 17 | 2.4 assessment | **No topic exam** (`ASSESSMENT.md` 2.8 lists 2.4 among topics closed by practice records); **three Arena rounds** (`contest-arena`, 2 hours, 6 problems) mark progress; a completion rule `2.4.exit` is **proposed for the owner** (section 4.3) | A timed topic paper; no completion rule | A contest is the native exam; the curriculum gives targets (one contest a week, rating 1,400 in the first year) but no exit, and `ASSESSMENT.md` 11.6 keeps the rating a goal |
 | 18 | Contest cadence and hours | **30 rated contests and 3 Arena rounds inside the 140 hours**, about two in every three weeks of Stage 2; the owner is asked to choose between this and more hours | One contest every week of Stage 2 (53 contests) | 53 contests at 2 hours plus 30 minutes of upsolving is 132.5 hours, leaving 7.5 hours for every lesson, homework set and reading. The curriculum's hours and its cadence conflict; section 0.5 item 4 asks the owner |
 | 19 | 2.4 under canon-gap O1 | **A 36-lesson core** (section 1.3) that a 60-hour trader or researcher version keeps, marked in the tables | Cutting levels at random if O1 is accepted | O1 is proposed at priority 1; marking the core now means accepting it changes data, not content |
-| 20 | When contests start | **Week 1 of Stage 2.** The curriculum's "once you have 100 problems behind you" is met by the Stage 1 exit (150) | Starting contests during 1.8 at 100 problems | `assessment.md` decision 25: no next-stage work before the stage exit. Lessons stay open, so a learner can start early with the recorded override |
-| 21 | Display codes | **Two letters**: AC, AH, SQ, TG, DP (1.8); CB, CM, CL, CP (1.9); KC, KM, KS, KD (2.4) | Single letters | All 26 single letters are used by Stage 0 and Stage 1 files; `stage1-statistics-ts.md` already uses two letters. Ids never depend on display codes (`content-format.md` 4.1) |
-| 22 | Quiz marks | **1 mark per quiz item, 4 items per lesson, Mastered at 3 of 4** | Marks by difficulty | `assessment.md` decision 26 |
+| 20 | When contests start | **Week 1 of Stage 2.** The curriculum's "once you have 100 problems behind you" is met by the Stage 1 exit (150) | Starting contests during 1.8 at 100 problems | `ASSESSMENT.md` decision 25: no next-stage work before the stage exit. Lessons stay open, so a learner can start early with the recorded override |
+| 21 | Display codes | **Two letters**: AC, AH, SQ, TG, DP (1.8); CB, CM, CL, CP (1.9); KC, KM, KS, KD (2.4) | Single letters | All 26 single letters are used by Stage 0 and Stage 1 files; `stage1-statistics-ts.md` already uses two letters. Ids never depend on display codes (`CONTENT-FORMAT.md` 4.1) |
+| 22 | Quiz marks | **1 mark per quiz item, 4 items per lesson, Mastered at 3 of 4** | Marks by difficulty | `ASSESSMENT.md` decision 26 |
 | 23 | The sample lesson | **1.8 lesson 1, "What happens when the input doubles"** (section 7) | Lesson 24 (arrays in memory); 1.9 lesson 1 (source to program) | Every later analysis in 1.8, 1.9 and 2.4 asks how cost grows; the doubling ratio is the most concrete form of that question, and Stage 0 and 1.1 have not asked it (section 0.2) |
-| 24 | The Stage 1 exit | **The nine topic exits as one checklist, with a diagnostic route for "sit the exit test first"** (`assessment.md` 7.2) and the map line's two headline bars shown first | A single Stage 1 paper | The curriculum's Stage 1 has no checklist of its own: the map line summarises the item exits. A single paper would duplicate three finals papers and a ledger |
+| 24 | The Stage 1 exit | **The nine topic exits as one checklist, with a diagnostic route for "sit the exit test first"** (`ASSESSMENT.md` 7.2) and the map line's two headline bars shown first | A single Stage 1 paper | The curriculum's Stage 1 has no checklist of its own: the map line summarises the item exits. A single paper would duplicate three finals papers and a ledger |
 | 25 | Recursion depth in the app | **Recursive drills cap their depth at 500 and say so in the statement; deep inputs ask for an iterative solution** | CPython's default limit of 1,000 | Pyodide runs Python on a WebAssembly stack whose usable depth on a phone is [unverified]; 500 leaves margin until W-B2's spike measures it (open item 6) |
 
 ### 0.2 What these items inherit, and do not repeat
@@ -76,7 +76,7 @@ Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out me
 
 ### 0.3 Conventions for every lesson
 
-**Ids** follow `content-format.md` 4.1. Courses `crs.algcost`, `crs.arrayhash`, `crs.linear`, `crs.treesgraphs`, `crs.dynprog` (1.8); `crs.cppcore`, `crs.cppmemory`, `crs.cppstl`, `crs.cpppricing` (1.9); `crs.contestcraft`, `crs.contestmath`, `crs.contestds`, `crs.contestdp` (2.4). Levels `lvl.<course>.<slug>`, lessons `lsn.<course>.<slug>`, homework `set.<course>.<level-slug>`, practice `set.<course>.<level-slug>-practice`, Problem Gym sets `set.<course>.gym-<level-slug>`, labs `set.cpppricing.lab`, papers `exm.algorithms` and `exm.cpp`, Arena rounds `exm.contests.arena-1` to `-3` (kind `contest`, a request in section 8), projects `prj.alg.order-book` and `prj.cpp.mc-pricer`. Libraries use topic namespaces `alg` (1.8), `cpp` (1.9) and `cp` (2.4): `skl.alg.*`, `mc.cpp.*`, `gen.cp.*`, `drl.alg.*`. Topic ids `top.algorithms`, `top.cpp`, `top.contests`. The `#` column is the lesson's number within its topic.
+**Ids** follow `CONTENT-FORMAT.md` 4.1. Courses `crs.algcost`, `crs.arrayhash`, `crs.linear`, `crs.treesgraphs`, `crs.dynprog` (1.8); `crs.cppcore`, `crs.cppmemory`, `crs.cppstl`, `crs.cpppricing` (1.9); `crs.contestcraft`, `crs.contestmath`, `crs.contestds`, `crs.contestdp` (2.4). Levels `lvl.<course>.<slug>`, lessons `lsn.<course>.<slug>`, homework `set.<course>.<level-slug>`, practice `set.<course>.<level-slug>-practice`, Problem Gym sets `set.<course>.gym-<level-slug>`, labs `set.cpppricing.lab`, papers `exm.algorithms` and `exm.cpp`, Arena rounds `exm.contests.arena-1` to `-3` (kind `contest`, a request in section 8), projects `prj.dsa.order-book` and `prj.cpp.mc-pricer`. Libraries use topic namespaces `dsa` (1.8), `cpp` (1.9) and `cp` (2.4): `skl.dsa.*`, `mc.cpp.*`, `gen.cp.*`, `drl.dsa.*`. The 1.8 namespace was `alg` in this file's first version; it became `dsa` in the curriculum index pass (`docs/CURRICULUM.md` section 8) because `alg` is 0.2 Algebra's namespace in `stage0-number-algebra.md`, and two topics cannot share one (`CONTENT-FORMAT.md` 4.1). Topic ids `top.algorithms`, `top.cpp`, `top.contests`. The `#` column is the lesson's number within its topic.
 
 **Every lesson** runs design research 8.3: a hook on a canvas, free manipulation, the name for what the learner just did, a ladder of 2 to 4 screens each adding one constraint, the trap, the rule stated as a description of the learner's own steps with one derived line the learner completes, a transfer screen where a true quant, ML or engineering context exists, the summary card, and a quiz of 4 items. From the owner's skills each lesson also carries the "why this exists" frame (`frame.why`), one common trap, at least one edge case (`edgeCases`), a worked example with a decision point where the naive route fails (`workedExample`), and a motivated leap on every creative step (`derive` screens with `leap: naive, fails, pointsTo`). In algorithm lessons these take set forms:
 
@@ -89,15 +89,15 @@ Exits: `1.8.exit` (150 problems on the ledger; 5 of the last 9 timed held-out me
 
 **In contest lessons** the hook is a contest-style statement with constraints, and the first screen asks for the target complexity before any idea.
 
-**Widgets** use `widgets-programming.md` section 14's ids and modes: `complexity-lab`, `sort-lab`, `dynamic-array`, `pointer-walk`, `range-query-lab`, `binary-search-lab`, `stack-queue-lab`, `linked-list-lab`, `interval-sweep`, `bit-lab`, `tree-lab`, `heap-lab`, `graph-search`, `shortest-path`, `union-find`, `recursion-tree`, `dp-table`, `counterexample-lab`, `problem-workbench`, `hash-table`, `memory-layout`, `compile-pipeline`, `ownership-lab`, `bench-lab`, `contest-arena`, `number-theory-lab`, the code family (`code-cell`, `code-tracer`, `predict-output`, `parsons`, `code-blanks`, `code-annotator`, `diagnostic-reader`, `float-inspector`, `format-lab`, `setup-checklist`), and the primitives (`array-strip`, `cell-grid`, `node-link`, `stepper`, `value-table`, `code-surface`). Shared inputs keep their shared names (`choice`, `numeric-input`, `expression-input`, `derivation-steps`, `token-tray`, `free-response`, `sim-runner`, `live-formula`, `plot-2d`). Element references in hints use `<widget id>/<kind>:<name>` (`content-format.md` 3.5).
+**Widgets** use `widgets-programming.md` section 14's ids and modes: `complexity-lab`, `sort-lab`, `dynamic-array`, `pointer-walk`, `range-query-lab`, `binary-search-lab`, `stack-queue-lab`, `linked-list-lab`, `interval-sweep`, `bit-lab`, `tree-lab`, `heap-lab`, `graph-search`, `shortest-path`, `union-find`, `recursion-tree`, `dp-table`, `counterexample-lab`, `problem-workbench`, `hash-table`, `memory-layout`, `compile-pipeline`, `ownership-lab`, `bench-lab`, `contest-arena`, `number-theory-lab`, the code family (`code-cell`, `code-tracer`, `predict-output`, `parsons`, `code-blanks`, `code-annotator`, `diagnostic-reader`, `float-inspector`, `format-lab`, `setup-checklist`), and the primitives (`array-strip`, `cell-grid`, `node-link`, `stepper`, `value-table`, `code-surface`). Shared inputs keep their shared names (`choice`, `numeric-input`, `expression-input`, `derivation-steps`, `token-tray`, `free-response`, `sim-runner`, `live-formula`, `plot-2d`). Element references in hints use `<widget id>/<kind>:<name>` (`CONTENT-FORMAT.md` 3.5).
 
 **Runtime.** 1.8 and 2.4 Python drills declare `needs: []` and run in Pyodide on both targets. Lesson screens without live code run everywhere, because their traces and outputs are recorded in CI. C++ follows decision 12. 2.4 problems read standard input and write standard output (`code-cell` `stdout` tests), with time limits scaled by the device calibration of `contest-arena`.
 
-**Bertie** follows `ai-tutor.md` 2.2: hints and lines after the lesson's first Check; Why? and "Explain another way" after a screen resolves; nothing on homework before submission; `away` during papers, timed mediums, Arena rounds and live contests. On code he never writes the learner's code before a pass (the code guard, `ai-tutor.md` 8.2); after a pass, "Review my code" returns the owner's code-craft format at the chosen depth (`ai-tutor.md` 2.8), which is where the complexity statement and the senior-dev paragraph live. Every task screen carries `tutor.focus`; no tutor field holds a value the screen's check accepts. The lesson player plays `surprised` on each trap reveal (`bertie.md` 5.3).
+**Bertie** follows `AI-TUTOR.md` 2.2: hints and lines after the lesson's first Check; Why? and "Explain another way" after a screen resolves; nothing on homework before submission; `away` during papers, timed mediums, Arena rounds and live contests. On code he never writes the learner's code before a pass (the code guard, `AI-TUTOR.md` 8.2); after a pass, "Review my code" returns the owner's code-craft format at the chosen depth (`AI-TUTOR.md` 2.8), which is where the complexity statement and the senior-dev paragraph live. Every task screen carries `tutor.focus`; no tutor field holds a value the screen's check accepts. The lesson player plays `surprised` on each trap reveal (`BERTIE.md` 5.3).
 
-**Quiz item types** (`content-format.md` 3.4; letters are document shorthand, never stored): N numeric, X expression, C single choice, M multi-select, O order the steps or lines, S sort or match, T predict the output of code, K code with tests, E entry graded by behaviour, G reach a target state in an algorithm or simulator widget (a `predicate` such as `moveMatchesAlgorithm`, `isHeap`, `listShape`), R select a set of cells, nodes or edges, P a point on a canvas. Long-form items appear in homework and papers, never in quizzes. C and M stay at or below 40% of each course's quiz items (design research 10); section 2.4 counts them.
+**Quiz item types** (`CONTENT-FORMAT.md` 3.4; letters are document shorthand, never stored): N numeric, X expression, C single choice, M multi-select, O order the steps or lines, S sort or match, T predict the output of code, K code with tests, E entry graded by behaviour, G reach a target state in an algorithm or simulator widget (a `predicate` such as `moveMatchesAlgorithm`, `isHeap`, `listShape`), R select a set of cells, nodes or edges, P a point on a canvas. Long-form items appear in homework and papers, never in quizzes. C and M stay at or below 40% of each course's quiz items (design research 10); section 2.4 counts them.
 
-**Level review.** Every level ends with a Level review of 8 items at difficulty 2 to 4, up to 30% from earlier levels of the same course (`assessment.md` 2.4). Practice set, Gym set (1.8) and homework follow.
+**Level review.** Every level ends with a Level review of 8 items at difficulty 2 to 4, up to 30% from earlier levels of the same course (`ASSESSMENT.md` 2.4). Practice set, Gym set (1.8) and homework follow.
 
 **Columns.** Objective is one measurable sentence. Hook is the opening puzzle, with its answer in brackets where it is a number or a short result. Trap is the misconception the trap screen is built around; Edge is the fringe case the lesson must show. Transfer screens are listed under each level table.
 
@@ -129,13 +129,13 @@ Quiz items: 1,288 (4 per lesson). Section 2.4 gives the single and multiple choi
 | # | Item | Effect |
 |---|---|---|
 | 1 | The `cpp-runner` spike (in-browser Clang or the proxy to Compiler Explorer) has not run [unverified] | Decides whether 1.9 homework drills run in the web app or only on the learner's machine with paste-verify; both are specified, and the 1.9 paper needs neither (decision 13) |
-| 2 | NeetCode 150's category counts (9, 5, 6, 7, 7, 11, 15, 3, 7, 9, 13, 6, 12, 11, 8, 6, 8, 7, summing to 150) are recalled [check against neetcode.io] | Sets the Problem Gym's per-category counts (section 3.4); a change moves Gym problems between levels, not lessons |
+| 2 | NeetCode 150's category counts (9, 5, 6, 7, 7, 11, 15, 3, 7, 9, 13, 6, 12, 11, 8, 6, 8, 7, summing to 150) are recalled; a search on 6 October 2026 agreed on five of them (arrays and hashing 9, two pointers 5, sliding window 6, trees 15, 1-D DP 12) and neetcode.io itself could not be opened from the authoring container [check the other 13 against neetcode.io] | Sets the Problem Gym's per-category counts (section 3.4); a change moves Gym problems between levels, not lessons |
 | 3 | The 1.7 binomial pricer's Python interface is not yet fixed (task in progress elsewhere) | The 1.9 exit compares against it; section 8 request 1 proposes the interface |
 | 4 | **Owner decision:** 2.4 at 140 hours holds about 33 contests, not one a week for all of Stage 2 (decision 18) | Either accept 30 rated contests plus 3 Arena rounds, or raise 2.4 to about 190 hours for 53 contests |
-| 5 | **Owner decision:** the proposed `2.4.exit` (section 4.3) | Without it, 2.4 has no completion state (`assessment.md` 2.12) |
+| 5 | **Owner decision:** the proposed `2.4.exit` (section 4.3) | Without it, 2.4 has no completion state (`ASSESSMENT.md` 2.12) |
 | 6 | Usable recursion depth of Pyodide on the reference phone [unverified] | Decision 25's cap of 500; W-B2 measures it |
-| 7 | Arena round paper kind `contest` is not among `assessment.md` 3.1's kinds | Section 8 request 2 |
-| 8 | Resource details marked [check] in section 5, especially Grokking 2nd edition chapter numbers, 6.006 Spring 2020 lecture numbers, learncpp chapter numbers after its reorganisation, and CSES section names | Confirm before content cites them |
+| 7 | Arena round paper kind `contest` is not among `ASSESSMENT.md` 3.1's kinds | Section 8 request 2 |
+| 8 | Resource details still marked [check] in section 5: 6.006 Spring 2020 problem-set numbers per topic, most learncpp chapter numbers, CPH chapters 24 to 26 and 29, CS106L lecture titles for the pinned quarter. Grokking's chapters, most 6.006 lecture numbers, CPH chapters 1 to 22 and 27, the USACO Guide module levels and the CSES size were confirmed on 6 October 2026 (Verification log) | Confirm the rest before content cites them |
 | 9 | Widget modes marked [mode to add] in section 2: `shortest-path` Floyd-Warshall, `pointer-walk` reach, `bit-lab` C++ precedence, `memory-layout` false-sharing, `range-query-lab` sparse table, `tree-lab` Euler tour and binary lifting, `graph-search` SCC, bridges and 2-SAT, `number-theory-lab` CRT and Grundy, `bench-lab` denormals | The widget owner confirms; until then those screens use primitives |
 
 ### 0.6 What was executed
@@ -191,7 +191,7 @@ All on 6 October 2026, in a scratch folder outside the repository [verified]:
 | Homework | 26 sets at about 2.5 hours (7 items each, 3 of them code drills that count on the ledger) | 65.0 | 26.0% | Homework `set.*` |
 | Exams | `exm.algorithms` (90 min), one practice paper (90 min), reviewing both (60 min) | 4.0 | 1.6% | `exm.algorithms` minutes (1.5); practice paper and review: spent time only |
 | External reading and lectures | Grokking Algorithms, whole book, first read (10.0); MIT 6.006 Spring 2020 selected lectures (12.0); 6.006 problem sets as the theory thread (14.0) | 36.0 | 14.4% | `Level.companion` hours (section 5.1) |
-| Projects or drills | Problem Gym: 90 problems at about 40 minutes (60.0); timed held-out windows for the exit, 9 attempts with debriefs (9.0); the Order Book project (14.0) | 83.0 | 33.2% | Gym sets `set.<course>.gym-*`, kind `practice`; `1.8.exit` `estHours` 9; `prj.alg.order-book` milestone hours 14 |
+| Projects or drills | Problem Gym: 90 problems at about 40 minutes (60.0); timed held-out windows for the exit, 9 attempts with debriefs (9.0); the Order Book project (14.0) | 83.0 | 33.2% | Gym sets `set.<course>.gym-*`, kind `practice`; `1.8.exit` `estHours` 9; `prj.dsa.order-book` milestone hours 14 |
 | **Total** | | **250.0** | 100% | Estimates **242.5 h (97.0%)**; spent-only time 7.5 h |
 
 Solving time (everything except 22 hours of reading and lectures) is 228 hours, 91%, above the curriculum's 60% floor. The ledger plan: 78 homework drills and 90 Gym problems give 168 verified problems against the exit's 150.
@@ -261,7 +261,7 @@ Solving time is 117 hours, 84%. C++ Lab problems are re-solves of Gym problems, 
 | CT-O6 | Solve integer geometry problems exactly: orientation, polygon area, convex hull | Homework KM5 |
 | CT-O7 | Use sparse tables, Fenwick and segment trees with lazy propagation, Euler tours, binary lifting, SCC, bridges, 2-SAT and flows | Homework KS1 to KS3 |
 | CT-O8 | Use bitmask, digit, tree and interval DP, string hashing, prefix and Z functions, tries, meet in the middle and square-root techniques | Homework KD1 to KD3 |
-| CT-O9 | Hold a weekly practice loop: contest, upsolve, log; reach the curriculum's first-year target of a 1,400 rating | Contest log (`assessment.md` 11.6); proposed `2.4.exit` |
+| CT-O9 | Hold a weekly practice loop: contest, upsolve, log; reach the curriculum's first-year target of a 1,400 rating | Contest log (`ASSESSMENT.md` 11.6); proposed `2.4.exit` |
 
 **Prerequisites.** Stage 1 complete, in particular 1.8 (all of it) and, for C++ submissions, 1.9 through lesson 62. 1.5 for expected values and 1.4 for matrices (matrix powers, XOR bases over $\mathrm{GF}(2)$). The curriculum's "100 problems behind you" is met by the Stage 1 exit.
 
@@ -274,7 +274,7 @@ Solving time is 117 hours, 84%. C++ Lab problems are re-solves of Gym problems, 
 | Homework | 15 sets at about 1.5 hours (5 items: 3 or 4 contest problems and 1 long-form proof) | 22.5 | 16.1% | Homework `set.*` |
 | Exams | Three Arena rounds of 2 hours plus 30 minutes of review | 7.5 | 5.4% | `exm.contests.arena-*` minutes plus review (proposed kind `contest`, section 8 request 2) |
 | External reading and lectures | Competitive Programmer's Handbook chapters (5.5); USACO Guide modules and Codeforces EDU lessons (2.25) | 7.75 | 5.5% | `Level.companion` hours (section 5.3) |
-| Projects or drills | 30 rated contests at 2 hours (60.0), each upsolved for 30 minutes (15.0) | 75.0 | 53.6% | Contest log entries (`assessment.md` 11.6), counted as earned when logged |
+| Projects or drills | 30 rated contests at 2 hours (60.0), each upsolved for 30 minutes (15.0) | 75.0 | 53.6% | Contest log entries (`ASSESSMENT.md` 11.6), counted as earned when logged |
 | **Total** | | **140.0** | 100% | Estimates **137.5 h (98.2%)**; spent-only 2.5 h |
 
 **The 60-hour core if canon-gap O1 is accepted** (trader and researcher tracks). Lessons marked ◆ in section 2.3 form the core: all 21 of course KC, 11 of KM (levels KM1 and KM2) and 4 more (lessons 33, 38, 41 and 49), 36 lessons in all. Budget: lessons 9.0 h; 6 level reviews 1.5 h; 6 homework sets 9.0 h; two Arena rounds 5.0 h; reading 3.0 h; 12 contests with upsolving 30.0 h; redo 2.5 h; total 60.0 h. The developer track keeps all 84 lessons and 140 hours.
@@ -462,7 +462,7 @@ Transfer screens: lesson 62 keeps the last $k$ ticks in a ring buffer; lesson 66
 | 73 | `lsn.linear.running-median` The running median | Keep the median of a stream with a max-heap of the lower half and a min-heap of the upper half | Spreads arrive 5, 15, 1, 3, 2, 8: the median after each? (5, 10, 5, 4, 3, 4) | `heap-lab` (median) | Trap: pushing to one heap without rebalancing, so the halves drift apart in size. Edge: even counts average the two tops; Python's `heapq` is a min-heap, so the lower half stores negated values | N, G, C, K |
 | 74 | `lsn.linear.order-book` A limit order book from heaps | Keep the best bid and best ask with two heaps keyed by price and time, cancelling lazily | Bids and asks arrive and some are cancelled. Which order is best after each event? | `heap-lab` (max-trick), `value-table` | Trap: removing a cancelled order from inside a heap (`heapq` cannot find it in $O(\log n)$: mark it and discard it when it reaches the top). Edge: price-time priority needs (price, time) keys with bid prices negated; an order that crosses trades at once; 1.7 teaches the book itself | G, T, C, K |
 
-Transfer screens: lesson 71 finds the day's largest trades; lesson 72 builds a consolidated tape; lesson 74 is the core of the Order Book project (`prj.alg.order-book`, section 3.4).
+Transfer screens: lesson 71 finds the day's largest trades; lesson 72 builds a consolidated tape; lesson 74 is the core of the Order Book project (`prj.dsa.order-book`, section 3.4).
 
 **Level SQ4: Randomised Structures and Streams** (`lvl.linear.random`, 4 lessons)
 
@@ -1127,43 +1127,43 @@ Every course stays under the 40% ceiling. The C++ courses lean on T (predict the
 
 ### 3.0 Rules for every set
 
-- **Shape.** Issued when a level's last lesson is done, due in 7 days, marked on submission (`assessment.md` 2.5). **1.8 sets** hold 7 items in about 2.5 hours: 3 code drills (each a Problem Gym problem that counts once on the ledger when every hidden test passes), 3 auto-marked items (predict, trace, state, numeric or ordering) and 1 long-form item. **1.9 sets** hold 7 items in about 2.5 hours: 2 or 3 C++ drills, 3 or 4 auto-marked items (predict, compiles-or-not, sanitiser reading, layout) and 1 long-form item. **2.4 sets** hold 5 items in about 1.5 hours: 4 contest problems read from standard input, written to standard output, in Python or C++, and 1 long-form proof.
+- **Shape.** Issued when a level's last lesson is done, due in 7 days, marked on submission (`ASSESSMENT.md` 2.5). **1.8 sets** hold 7 items in about 2.5 hours: 3 code drills (each a Problem Gym problem that counts once on the ledger when every hidden test passes), 3 auto-marked items (predict, trace, state, numeric or ordering) and 1 long-form item. **1.9 sets** hold 7 items in about 2.5 hours: 2 or 3 C++ drills, 3 or 4 auto-marked items (predict, compiles-or-not, sanitiser reading, layout) and 1 long-form item. **2.4 sets** hold 5 items in about 1.5 hours: 4 contest problems read from standard input, written to standard output, in Python or C++, and 1 long-form proof.
 - **Difficulty.** Every item at difficulty 3 to 5. Seven-item sets: d3 ×3, d4 ×2, d5 ×2. Five-item sets: d3 ×2, d4 ×2, d5 ×1. At least one item at difficulty 5 in every set.
-- **Long-form.** One per set, a `long-form` check with a 10-point rubric of five points of 2 marks (`content-format.md` 3.4): `genre: proof` for invariants, exchange arguments and induction; `genre: derivation` for expected and amortised costs; `genre: written` for a design rationale or a diagnosis. The learner self-marks with Bertie's per-point suggestion and quoted evidence (`ai-tutor.md` 2.7).
-- **Code drills.** Each ships `drill.yaml`, `reference.py` (or `reference.cpp`), `starter`, `tests` (`zqtest` for Python; doctest for C++) and a `wrong/` folder whose files each name the misconception and the test they must fail (`content-format.md` 3.9). Every 1.8 drill whose pattern is the point carries a `complexity` test (decision 9). Python drills declare `needs: []` and run on both targets; C++ drills run in the web app through `cpp-runner` or locally with a pasted doctest summary (decision 12); 2.4 problems use `stdout` tests with several test cases per input file.
-- **Bertie.** No tutor surface on any item until the set is submitted; after submission he explains, drafts long-form marks, and reviews passing code in the code-craft format (`ai-tutor.md` 2.2, 2.8).
+- **Long-form.** One per set, a `long-form` check with a 10-point rubric of five points of 2 marks (`CONTENT-FORMAT.md` 3.4): `genre: proof` for invariants, exchange arguments and induction; `genre: derivation` for expected and amortised costs; `genre: written` for a design rationale or a diagnosis. The learner self-marks with Bertie's per-point suggestion and quoted evidence (`AI-TUTOR.md` 2.7).
+- **Code drills.** Each ships `drill.yaml`, `reference.py` (or `reference.cpp`), `starter`, `tests` (`zqtest` for Python; doctest for C++) and a `wrong/` folder whose files each name the misconception and the test they must fail (`CONTENT-FORMAT.md` 3.9). Every 1.8 drill whose pattern is the point carries a `complexity` test (decision 9). Python drills declare `needs: []` and run on both targets; C++ drills run in the web app through `cpp-runner` or locally with a pasted doctest summary (decision 12); 2.4 problems use `stdout` tests with several test cases per input file.
+- **Bertie.** No tutor surface on any item until the set is submitted; after submission he explains, drafts long-form marks, and reviews passing code in the code-craft format (`AI-TUTOR.md` 2.2, 2.8).
 - **Variants.** Generator slots are seeded per learner and level; drill families vary their data and constants by seed while the function to write stays fixed.
 
 ### 3.1 Item 1.8 Data structures and algorithms
 
 | Level | Set | Items | Mix | Long-form (five points of 2 marks) | Code drills (ledger problems) | Generators |
 |---|---|---|---|---|---|---|
-| AC1 | `set.algcost.growth` | 7 | d3 ×3, d4 ×2, d5 ×2 | Prove $3n^2 + 10n\log_2 n + 7 = \Theta(n^2)$ with constants, and that $n \log n \ne O(n)$ | `drl.alg.fit-exponent`, `drl.alg.best-pair-gap`, `drl.alg.first-repeat-day` | `gen.alg.loop-count`, `gen.alg.growth-rank`, `gen.alg.doubling-ratio` |
-| AC2 | `set.algcost.recursion` | 7 | as above | Fast exponentiation: correctness by strong induction and the multiplication bound | `drl.alg.hanoi-moves`, `drl.alg.fast-power`, `drl.alg.no-adjacent-ones` | `gen.alg.recurrence-total`, `gen.alg.master-case` |
-| AC3 | `set.algcost.sorting` | 7 | as above | Randomised quicksort's expected comparisons, $2(n + 1)H_n - 4n$ | `drl.alg.count-inversions`, `drl.alg.three-way-quicksort`, `drl.alg.counting-sort` | `gen.alg.sort-trace`, `gen.alg.inversion-count`, `gen.alg.decision-bound` |
-| AC4 | `set.algcost.ordering` | 7 | as above | Why the largest-number comparator is a valid order (it is a key in disguise) | `drl.alg.quickselect`, `drl.alg.largest-number`, `drl.alg.merge-runs` | `gen.alg.select-trace`, `gen.alg.external-runs` |
-| AH1 | `set.arrayhash.hashing` | 7 | as above | Expected empty buckets and colliding pairs by indicators | `drl.alg.two-sum-notional`, `drl.alg.group-anagrams`, `drl.alg.longest-consecutive` | `gen.alg.hash-bucket`, `gen.alg.probe-count`, `gen.alg.load-factor` |
-| AH2 | `set.arrayhash.pointers` | 7 | as above | Why moving the shorter side never discards the best container | `drl.alg.three-sum-closest`, `drl.alg.container-water`, `drl.alg.trap-water` | `gen.alg.pointer-moves`, `gen.alg.pair-grid` |
-| AH3 | `set.arrayhash.windows` | 7 | as above | Exactly $k$ distinct as at-most-$k$ minus at-most-$(k - 1)$, and the window's amortised $O(n)$ | `drl.alg.longest-k-distinct`, `drl.alg.exactly-k-distinct`, `drl.alg.window-maximum` | `gen.alg.window-trace`, `gen.alg.deque-state` |
-| AH4 | `set.arrayhash.prefix` | 7 | as above | Kadane's algorithm: an invariant and its proof | `drl.alg.rect-sum`, `drl.alg.subarray-sum-k`, `drl.alg.product-except-self` | `gen.alg.prefix-query`, `gen.alg.difference-apply` |
-| AH5 | `set.arrayhash.binsearch` | 7 | as above | Binary search on the answer: the invariant, termination and the bounds | `drl.alg.isqrt`, `drl.alg.min-days-bouquets`, `drl.alg.rotated-search` | `gen.alg.bisect-bounds`, `gen.alg.search-trace` |
-| AH6 | `set.arrayhash.intervals` | 7 | as above | Earliest end first is optimal: the exchange argument | `drl.alg.covered-length`, `drl.alg.min-removals`, `drl.alg.peak-overlap` | `gen.alg.interval-merge`, `gen.alg.sweep-count` |
-| SQ1 | `set.linear.stacks` | 7 | as above | The monotonic stack makes at most $2n$ operations | `drl.alg.eval-rpn`, `drl.alg.days-to-higher`, `drl.alg.largest-rectangle` | `gen.alg.stack-trace`, `gen.alg.bracket-check` |
-| SQ2 | `set.linear.lists` | 7 | as above | Floyd's cycle start: why restarting from the head works | `drl.alg.reverse-k-group`, `drl.alg.lru-cache`, `drl.alg.cycle-start` | `gen.alg.list-ops`, `gen.alg.lru-trace` |
-| SQ3 | `set.linear.heaps` | 7 | as above | Heapify in $O(n)$: the sum over levels | `drl.alg.kth-largest-stream`, `drl.alg.merge-k-feeds`, `drl.alg.order-book-heaps` | `gen.alg.heap-array`, `gen.alg.median-trace` |
-| SQ4 | `set.linear.random` | 7 | as above | Reservoir sampling is uniform: induction on the stream | `drl.alg.reservoir-k`, `drl.alg.fisher-yates`, `drl.alg.bloom-size` | `gen.alg.bloom-rate`, `gen.alg.shuffle-count` |
-| TG1 | `set.treesgraphs.binary-trees` | 7 | as above | The diameter recursion: what is returned, what is recorded, and why it is correct | `drl.alg.tree-diameter`, `drl.alg.max-path-sum`, `drl.alg.build-from-traversals` | `gen.alg.traversal-order`, `gen.alg.tree-height` |
-| TG2 | `set.treesgraphs.search-trees` | 7 | as above | Validating a BST with intervals: why it is correct and why the parent check fails | `drl.alg.validate-bst`, `drl.alg.trie-wildcard`, `drl.alg.kth-smallest-bst` | `gen.alg.bst-insert`, `gen.alg.bst-delete` |
-| TG3 | `set.treesgraphs.traversal` | 7 | as above | BFS finds shortest unweighted distances: the layer invariant | `drl.alg.count-islands`, `drl.alg.course-order`, `drl.alg.rotting-grid` | `gen.alg.bfs-layers`, `gen.alg.topo-orders` |
-| TG4 | `set.treesgraphs.weighted` | 7 | as above | Dijkstra's correctness, and the counterexample with a negative edge | `drl.alg.network-delay`, `drl.alg.find-arbitrage`, `drl.alg.cheapest-k-stops` | `gen.alg.dijkstra-trace`, `gen.alg.uf-parent` |
-| TG5 | `set.treesgraphs.techniques` | 7 | as above | The cut property of minimum spanning trees | `drl.alg.floyd-warshall`, `drl.alg.word-ladder`, `drl.alg.alien-order` | `gen.alg.dag-longest`, `gen.alg.mst-weight` |
-| DP1 | `set.dynprog.backtracking` | 7 | as above | Skipping equal neighbours at one depth lists each distinct subset once | `drl.alg.permute-unique`, `drl.alg.n-queens-count`, `drl.alg.combination-sum` | `gen.alg.backtrack-count` |
-| DP2 | `set.dynprog.foundations` | 7 | as above | Loop order: combinations against orderings in coin counting | `drl.alg.coin-ways`, `drl.alg.decode-ways`, `drl.alg.lis-length` | `gen.alg.dp-fill-1d`, `gen.alg.memo-calls` |
-| DP3 | `set.dynprog.two-d` | 7 | as above | The edit-distance recurrence: why three cases are enough | `drl.alg.edit-script`, `drl.alg.max-profit-k`, `drl.alg.matrix-chain` | `gen.alg.dp-fill-2d`, `gen.alg.knapsack-table` |
-| DP4 | `set.dynprog.design` | 7 | as above | Backward induction's cost on a recombining tree, and what path dependence does to it | `drl.alg.rob-tree`, `drl.alg.longest-increasing-path`, `drl.alg.domino-tilings` | `gen.alg.state-design` |
-| DP5 | `set.dynprog.greedy` | 7 | as above | Huffman's greedy choice by exchange | `drl.alg.min-jumps`, `drl.alg.gas-start`, `drl.alg.huffman-cost` | `gen.alg.greedy-counterexample` |
-| DP6 | `set.dynprog.bits-maths` | 7 | as above | Two's complement: why $-x = \lnot x + 1$, and what Python does instead | `drl.alg.count-bits`, `drl.alg.fib-mod`, `drl.alg.add-without-plus` | `gen.alg.bit-ops`, `gen.alg.twos-read` |
-| DP7 | `set.dynprog.method` | 7 | as above | A full method write-up for an unseen medium | `drl.alg.subarrays-divisible`, `drl.alg.stress-finder`, `drl.alg.zero-sum-subset` | `gen.alg.pattern-match` |
+| AC1 | `set.algcost.growth` | 7 | d3 ×3, d4 ×2, d5 ×2 | Prove $3n^2 + 10n\log_2 n + 7 = \Theta(n^2)$ with constants, and that $n \log n \ne O(n)$ | `drl.dsa.fit-exponent`, `drl.dsa.best-pair-gap`, `drl.dsa.first-repeat-day` | `gen.dsa.loop-count`, `gen.dsa.growth-rank`, `gen.dsa.doubling-ratio` |
+| AC2 | `set.algcost.recursion` | 7 | as above | Fast exponentiation: correctness by strong induction and the multiplication bound | `drl.dsa.hanoi-moves`, `drl.dsa.fast-power`, `drl.dsa.no-adjacent-ones` | `gen.dsa.recurrence-total`, `gen.dsa.master-case` |
+| AC3 | `set.algcost.sorting` | 7 | as above | Randomised quicksort's expected comparisons, $2(n + 1)H_n - 4n$ | `drl.dsa.count-inversions`, `drl.dsa.three-way-quicksort`, `drl.dsa.counting-sort` | `gen.dsa.sort-trace`, `gen.dsa.inversion-count`, `gen.dsa.decision-bound` |
+| AC4 | `set.algcost.ordering` | 7 | as above | Why the largest-number comparator is a valid order (it is a key in disguise) | `drl.dsa.quickselect`, `drl.dsa.largest-number`, `drl.dsa.merge-runs` | `gen.dsa.select-trace`, `gen.dsa.external-runs` |
+| AH1 | `set.arrayhash.hashing` | 7 | as above | Expected empty buckets and colliding pairs by indicators | `drl.dsa.two-sum-notional`, `drl.dsa.group-anagrams`, `drl.dsa.longest-consecutive` | `gen.dsa.hash-bucket`, `gen.dsa.probe-count`, `gen.dsa.load-factor` |
+| AH2 | `set.arrayhash.pointers` | 7 | as above | Why moving the shorter side never discards the best container | `drl.dsa.three-sum-closest`, `drl.dsa.container-water`, `drl.dsa.trap-water` | `gen.dsa.pointer-moves`, `gen.dsa.pair-grid` |
+| AH3 | `set.arrayhash.windows` | 7 | as above | Exactly $k$ distinct as at-most-$k$ minus at-most-$(k - 1)$, and the window's amortised $O(n)$ | `drl.dsa.longest-k-distinct`, `drl.dsa.exactly-k-distinct`, `drl.dsa.window-maximum` | `gen.dsa.window-trace`, `gen.dsa.deque-state` |
+| AH4 | `set.arrayhash.prefix` | 7 | as above | Kadane's algorithm: an invariant and its proof | `drl.dsa.rect-sum`, `drl.dsa.subarray-sum-k`, `drl.dsa.product-except-self` | `gen.dsa.prefix-query`, `gen.dsa.difference-apply` |
+| AH5 | `set.arrayhash.binsearch` | 7 | as above | Binary search on the answer: the invariant, termination and the bounds | `drl.dsa.isqrt`, `drl.dsa.min-days-bouquets`, `drl.dsa.rotated-search` | `gen.dsa.bisect-bounds`, `gen.dsa.search-trace` |
+| AH6 | `set.arrayhash.intervals` | 7 | as above | Earliest end first is optimal: the exchange argument | `drl.dsa.covered-length`, `drl.dsa.min-removals`, `drl.dsa.peak-overlap` | `gen.dsa.interval-merge`, `gen.dsa.sweep-count` |
+| SQ1 | `set.linear.stacks` | 7 | as above | The monotonic stack makes at most $2n$ operations | `drl.dsa.eval-rpn`, `drl.dsa.days-to-higher`, `drl.dsa.largest-rectangle` | `gen.dsa.stack-trace`, `gen.dsa.bracket-check` |
+| SQ2 | `set.linear.lists` | 7 | as above | Floyd's cycle start: why restarting from the head works | `drl.dsa.reverse-k-group`, `drl.dsa.lru-cache`, `drl.dsa.cycle-start` | `gen.dsa.list-ops`, `gen.dsa.lru-trace` |
+| SQ3 | `set.linear.heaps` | 7 | as above | Heapify in $O(n)$: the sum over levels | `drl.dsa.kth-largest-stream`, `drl.dsa.merge-k-feeds`, `drl.dsa.order-book-heaps` | `gen.dsa.heap-array`, `gen.dsa.median-trace` |
+| SQ4 | `set.linear.random` | 7 | as above | Reservoir sampling is uniform: induction on the stream | `drl.dsa.reservoir-k`, `drl.dsa.fisher-yates`, `drl.dsa.bloom-size` | `gen.dsa.bloom-rate`, `gen.dsa.shuffle-count` |
+| TG1 | `set.treesgraphs.binary-trees` | 7 | as above | The diameter recursion: what is returned, what is recorded, and why it is correct | `drl.dsa.tree-diameter`, `drl.dsa.max-path-sum`, `drl.dsa.build-from-traversals` | `gen.dsa.traversal-order`, `gen.dsa.tree-height` |
+| TG2 | `set.treesgraphs.search-trees` | 7 | as above | Validating a BST with intervals: why it is correct and why the parent check fails | `drl.dsa.validate-bst`, `drl.dsa.trie-wildcard`, `drl.dsa.kth-smallest-bst` | `gen.dsa.bst-insert`, `gen.dsa.bst-delete` |
+| TG3 | `set.treesgraphs.traversal` | 7 | as above | BFS finds shortest unweighted distances: the layer invariant | `drl.dsa.count-islands`, `drl.dsa.course-order`, `drl.dsa.rotting-grid` | `gen.dsa.bfs-layers`, `gen.dsa.topo-orders` |
+| TG4 | `set.treesgraphs.weighted` | 7 | as above | Dijkstra's correctness, and the counterexample with a negative edge | `drl.dsa.network-delay`, `drl.dsa.find-arbitrage`, `drl.dsa.cheapest-k-stops` | `gen.dsa.dijkstra-trace`, `gen.dsa.uf-parent` |
+| TG5 | `set.treesgraphs.techniques` | 7 | as above | The cut property of minimum spanning trees | `drl.dsa.floyd-warshall`, `drl.dsa.word-ladder`, `drl.dsa.alien-order` | `gen.dsa.dag-longest`, `gen.dsa.mst-weight` |
+| DP1 | `set.dynprog.backtracking` | 7 | as above | Skipping equal neighbours at one depth lists each distinct subset once | `drl.dsa.permute-unique`, `drl.dsa.n-queens-count`, `drl.dsa.combination-sum` | `gen.dsa.backtrack-count` |
+| DP2 | `set.dynprog.foundations` | 7 | as above | Loop order: combinations against orderings in coin counting | `drl.dsa.coin-ways`, `drl.dsa.decode-ways`, `drl.dsa.lis-length` | `gen.dsa.dp-fill-1d`, `gen.dsa.memo-calls` |
+| DP3 | `set.dynprog.two-d` | 7 | as above | The edit-distance recurrence: why three cases are enough | `drl.dsa.edit-script`, `drl.dsa.max-profit-k`, `drl.dsa.matrix-chain` | `gen.dsa.dp-fill-2d`, `gen.dsa.knapsack-table` |
+| DP4 | `set.dynprog.design` | 7 | as above | Backward induction's cost on a recombining tree, and what path dependence does to it | `drl.dsa.rob-tree`, `drl.dsa.longest-increasing-path`, `drl.dsa.domino-tilings` | `gen.dsa.state-design` |
+| DP5 | `set.dynprog.greedy` | 7 | as above | Huffman's greedy choice by exchange | `drl.dsa.min-jumps`, `drl.dsa.gas-start`, `drl.dsa.huffman-cost` | `gen.dsa.greedy-counterexample` |
+| DP6 | `set.dynprog.bits-maths` | 7 | as above | Two's complement: why $-x = \lnot x + 1$, and what Python does instead | `drl.dsa.count-bits`, `drl.dsa.fib-mod`, `drl.dsa.add-without-plus` | `gen.dsa.bit-ops`, `gen.dsa.twos-read` |
+| DP7 | `set.dynprog.method` | 7 | as above | A full method write-up for an unseen medium | `drl.dsa.subarrays-divisible`, `drl.dsa.stress-finder`, `drl.dsa.zero-sum-subset` | `gen.dsa.pattern-match` |
 
 **Example problems, 1.8.** Every answer below was recomputed by brute force or exact arithmetic, and every reference solution was run against a brute force on random inputs (section 0.6). "Checks" lists cases the visible and hidden tests include.
 
@@ -1316,7 +1316,7 @@ def three_sum_closest(nums: list[int], target: int) -> int:
 
 **AH2, example 2 (difficulty 5, long-form proof).** In the container problem, with pointers $i < j$ and $h_i \le h_j$, prove that moving $i$ inwards discards no pair that could be better than the best found.
 
-*Model answer:* (1) The pairs discarded by moving $i$ are $(i, k)$ for $i < k < j$. (2) For each, the width is $k - i < j - i$. (3) The height is $\min(h_i, h_k) \le h_i = \min(h_i, h_j)$. (4) So area$(i, k) <$ width $\times$ height of $(i, j)$, which has already been recorded. (5) Hence the best container is never discarded; each step removes a row of the pair grid, so the algorithm checks $n - 1$ pairs and is $O(n)$.
+*Model answer:* (1) The pairs discarded by moving $i$ are $(i, k)$ for $i < k < j$. (2) For each, the width is $k - i < j - i$. (3) The height is $\min(h_i, h_k) \le h_i = \min(h_i, h_j)$. (4) So area$(i, k) \le (k - i)\,h_i \le (j - i)\,h_i =$ area$(i, j)$, which has already been recorded (equality only when $h_i = 0$, where every such area is 0). (5) Hence the best container is never discarded; each step removes a row of the pair grid, so the algorithm checks $n - 1$ pairs and is $O(n)$.
 *Rubric (10):* 2 for naming the discarded pairs; 2 for width; 2 for height; 2 for the comparison with the recorded pair; 2 for the conclusion and the cost.
 
 **AH3, example 1 (difficulty 4, code).** Write `exactly_k_distinct(a, k)` counting the subarrays with exactly $k$ distinct values, in $O(n)$.
@@ -1530,7 +1530,7 @@ class KthLargest:
 
 **SQ3, example 2 (difficulty 5, long-form derivation).** Show that bottom-up heapify of $n = 2^{h+1} - 1$ items does fewer than $n$ swaps in the worst case, and explain why $n$ pushes can cost $\Theta(n \log n)$.
 
-*Model answer:* (1) Heapify sifts down each internal node from the last parent to the root. (2) A node at height $j$ (distance to the leaves) moves at most $j$ levels, and there are $2^{h - j}$ nodes at height $j$. (3) Total swaps at most $\sum_{j=0}^{h} j \, 2^{h - j} = 2^h \sum_j \frac{j}{2^j} < 2^h \cdot 2 = 2^{h+1} < n + 1$. (4) Pushes instead sift up from the bottom, where most nodes are: pushing values in decreasing order into a min-heap makes every push climb to the root, and the last half of the pushes climb about $h$ levels each, $\Theta(n \log n)$ in total. (5) So build a heap from known data with `heapify`, and keep pushes for streams.
+*Model answer:* (1) Heapify sifts down each internal node from the last parent to the root. (2) A node at height $j$ (distance to the leaves) moves at most $j$ levels, and there are $2^{h - j}$ nodes at height $j$. (3) Total swaps at most $\sum_{j=0}^{h} j \, 2^{h - j} = 2^{h+1} - h - 2 = n - h - 1 < n$ (bounding $\sum_j \frac{j}{2^j}$ by 2 gives only $2^{h+1} = n + 1$, one too many for the strict claim) [verified for $h \le 5$]. (4) Pushes instead sift up from the bottom, where most nodes are: pushing values in decreasing order into a min-heap makes every push climb to the root, and the last half of the pushes climb about $h$ levels each, $\Theta(n \log n)$ in total. (5) So build a heap from known data with `heapify`, and keep pushes for streams.
 *Rubric (10):* 2 for the sift-down structure; 2 for nodes per height; 2 for the sum and its bound; 2 for the push contrast; 2 for the practical rule.
 
 **SQ4, example 1 (difficulty 4, long-form proof).** Reservoir sampling keeps the first $k$ items; item $i > k$ (counted from 1) enters with probability $\frac{k}{i}$, replacing a uniformly chosen reservoir slot. Prove that after $n \ge k$ items every item is in the reservoir with probability $\frac{k}{n}$.
@@ -2062,12 +2062,12 @@ double mean_return(const std::vector<double>& px) {
 }
 ```
 
-*Answer:* (1) `std::accumulate(..., 0)` sums in `int`, truncating each partial sum: on {100, 110, 121} it returns 0 instead of 0.1 [verified]; use `0.0`. (2) `px.size() - 1` wraps to 18,446,744,073,709,551,615 on an empty vector, so the loop reads out of bounds (undefined); guard with `if (px.size() < 2)`. (3) Dividing by `r.size()` when `r` is empty divides by zero (an `int` sum by a `size_t` zero is undefined); return NaN or throw by contract. *Decision point:* the function "works" on long inputs whose mean exceeds 1 in magnitude only by accident; tests with small returns expose bug 1 at once.
+*Answer:* (1) `std::accumulate(..., 0)` sums in `int`, truncating each partial sum: on {100, 110, 121} it returns 0 instead of 0.1 [verified]; use `0.0`. (2) `px.size() - 1` wraps to 18,446,744,073,709,551,615 on an empty vector, so the loop reads out of bounds (undefined); guard with `if (px.size() < 2)`. (3) Dividing by `r.size()` when `r` is empty divides by zero (an `int` sum by a `size_t` zero is undefined); return NaN or throw by contract. *Decision point:* with every return below 1 in magnitude the `int` sum stays at 0 for ever, so the function returns 0 on any realistic price series; only returns above 100% give a non-zero, still truncated, result. One test with ordinary prices exposes bug 1 at once.
 
 **CM1, example 1 (difficulty 4, numeric).** On x86-64 Linux, give `sizeof` and member offsets for `struct A { char side; double px; int qty; };`, `struct B { double px; int qty; char side; };` and `struct C { char a; int b; char c; };`, and reorder `struct T { char side; int64_t ts; bool aggr; double px; int32_t qty; };` to its smallest size.
 
 *Answer:* A: 24 (offsets 0, 8, 16); B: 16 (0, 8, 12); C: 12 (0, 4, 8); T as written: 40; reordered as `int64_t ts; double px; int32_t qty; char side; bool aggr;`: 24 [verified].
-*Working:* each member starts at a multiple of its alignment and the size rounds up to the largest alignment (8). *Decision point:* in A, `px` must start at 8, wasting 7 bytes after `side`, and the struct pads 4 bytes at the end; sorting by decreasing alignment removes both.
+*Working:* each member starts at a multiple of its alignment and the size rounds up to the largest alignment (8). *Decision point:* in A, `px` must start at 8, wasting 7 bytes after `side`, and the struct pads 4 bytes at the end; sorting by decreasing alignment (B) removes the interior gap and leaves 3 bytes of tail padding, 16 bytes in all.
 
 **CM1, example 2 (difficulty 5, long-form diagnosis).** For each report, say what happened and how to fix it: (a) "AddressSanitizer: heap-use-after-free" on a read through `int& first = v[0];` after ten `push_back` calls; (b) "AddressSanitizer: stack-use-after-scope" inside a lambda stored in a `std::function`; (c) "runtime error: signed integer overflow: 1073741824 * 2 cannot be represented in type 'int'".
 
@@ -2309,7 +2309,7 @@ McResult mc_call(double S, double K, double r, double sigma, double T, long n, s
     std::mt19937_64 eng(seed);
     std::normal_distribution<double> z(0.0, 1.0);
     const double drift = (r - 0.5 * sigma * sigma) * T, vol = sigma * std::sqrt(T), disc = std::exp(-r * T);
-    const long m = antithetic ? n / 2 : n;                   // the same number of normal draws either way
+    const long m = antithetic ? n / 2 : n;                   // the same number of payoff evaluations either way
     double sum = 0.0, sum2 = 0.0;
     for (long i = 0; i < m; ++i) {
         const double e = z(eng);
@@ -2373,12 +2373,12 @@ double price_crr(double S0, double K, double r, double sigma, double T, int n, K
 }
 ```
 
-*Checks:* $S_0 = K = 100$, $r = 5\%$, $\sigma = 20\%$, $T = 1$: $n = 1$ gives 12.1623; at $n = 1{,}000$ the call is 10.448584 and the put 5.571527, with call minus put equal to $100 - 100e^{-0.05}$ within $10^{-10}$ (the error was $2.3 \times 10^{-12}$); at $n = 2{,}000$ the call is within $2 \times 10^{-3}$ of 10.450584 [all verified]; bad inputs throw. *Decision point:* $q$ uses $e^{r\Delta t}$, not $1 + r\Delta t$; the simple-interest version passes parity but fails convergence.
+*Checks:* $S_0 = K = 100$, $r = 5\%$, $\sigma = 20\%$, $T = 1$: $n = 1$ gives 12.1623; at $n = 1{,}000$ the call is 10.448584 and the put 5.571527, with call minus put equal to $100 - 100e^{-0.05}$ within $10^{-10}$ (the error was $2.3 \times 10^{-12}$); at $n = 2{,}000$ the call is within $2 \times 10^{-3}$ of 10.450584 [all verified]; bad inputs throw. *Decision point:* $q$ uses $e^{r\Delta t}$, not $1 + r\Delta t$. With $1 + r\Delta t$ in $q$ and $e^{-r\Delta t}$ as the discount, the price still converges (within $2.1 \times 10^{-3}$ of Black-Scholes at $n = 1{,}000$, so a convergence test alone passes it) but call minus put misses $S_0 - Ke^{-rT}$ by $1.25 \times 10^{-4}$, which the $10^{-10}$ parity test catches [verified].
 
 **CP3, example 2 (difficulty 5, code).** Extend the pricer to American options and test it.
 
 *Answer:* the backward loop becomes `v[j] = american ? std::max(cont, pay(S0 * std::pow(u, j) * std::pow(d, i - j))) : cont;` with `cont = disc * (q * v[j + 1] + (1 - q) * v[j])`, the intrinsic value taken at the node's own price.
-*Checks:* the American put at $n = 1{,}000$ is 6.089595 against the European 5.571527; the American call equals the European call exactly for a stock without dividends; with $r = 0$ the American put equals the European put [all verified]. *Decision point:* computing the intrinsic value as `pay(S0)` (the root price) passes the call test, because early exercise is never optimal for that call, and fails the put test.
+*Checks:* the American put at $n = 1{,}000$ is 6.089595 against the European 5.571527; the American call equals the European call exactly for a stock without dividends; with $r = 0$ the American put equals the European put within $10^{-12}$ (rounding can differ in the last bit) [all verified]. *Decision point:* computing the intrinsic value as `pay(S0)` (the root price) passes the call test, because the at-the-money root's intrinsic value is 0 and early exercise of this call is never optimal anyway, and fails the put test, where it returns the European 5.571527.
 
 **CP4, example 1 (difficulty 4, predict and fix).** Two `std::thread`s each run `for (int i = 0; i < 1000000; ++i) ++counter;` on a shared `long counter`. What can the program print, what does ThreadSanitizer say, and what are two fixes?
 
@@ -2414,7 +2414,7 @@ double mc_parallel(int threads, long paths, std::uint64_t seed) {
 }
 ```
 
-*Checks:* two runs with 4 threads and 250,000 paths each returned the same 10.454538; ThreadSanitizer reports nothing [verified]; the hidden test also checks the result is within 4 standard errors of 10.4506. *Decision point:* the partial sums sit in adjacent doubles, so frequent writes would false-share (lesson 88); writing once per thread at the end avoids it.
+*Checks:* two runs with seed 42, 4 threads and 250,000 paths each returned the same 10.454538 (libstdc++); ThreadSanitizer reports nothing [verified]; the hidden test also checks the result is within 4 standard errors of 10.4506. *Decision point:* the partial sums sit in adjacent doubles, so frequent writes would false-share (lesson 88); writing once per thread at the end avoids it.
 
 ### 3.3 Item 2.4 Contests
 
@@ -2658,8 +2658,8 @@ def expected_rolls(n: int) -> int:
 
 **KM4, example 2 (difficulty 5, long-form).** Three games are played side by side; a move is made in one of them: a pile of 5 where a move takes 1 to 3 stones, a pile of 7 where a move takes 1, 3 or 4, and a Nim heap of 3. The player who cannot move loses. Who wins, and with which moves?
 
-*Model answer:* (1) The Sprague-Grundy theorem: a sum of impartial games is losing exactly when the XOR of the components' Grundy values is 0. (2) Take 1 to 3: Grundy value $n \bmod 4$, so the pile of 5 has value 1. (3) Take 1, 3 or 4: values 0, 1, 0, 1, 2, 3, 2, 0, ... so the pile of 7 has value 0 (losing alone). (4) The Nim heap of 3 has value 3; the XOR is $1 \oplus 0 \oplus 3 = 2 \ne 0$, so the first player wins. (5) Winning moves make the XOR 0: reduce the Nim heap from 3 to 1, or take 2 stones from the pile of 5 (to 3 stones, value 3) [verified].
-*Rubric (10):* 2 for the theorem; 2 for each component's value (with the sequence for the second); 2 for the XOR and verdict; 2 for both winning moves.
+*Model answer:* (1) The Sprague-Grundy theorem: a sum of impartial games is losing exactly when the XOR of the components' Grundy values is 0. (2) Take 1 to 3: Grundy value $n \bmod 4$, so the pile of 5 has value 1. (3) Take 1, 3 or 4: values 0, 1, 0, 1, 2, 3, 2, 0, ... so the pile of 7 has value 0 (losing alone). (4) The Nim heap of 3 has value 3; the XOR is $1 \oplus 0 \oplus 3 = 2 \ne 0$, so the first player wins. (5) Winning moves make the XOR 0, and there are four: reduce the Nim heap from 3 to 1; take 2 stones from the pile of 5 (to 3 stones, value 3); or take 1 or 3 stones from the pile of 7 (to 6 or 4 stones, both of value 2, and $1 \oplus 2 \oplus 3 = 0$) [verified by enumerating every move].
+*Rubric (10):* 2 for the theorem; 2 for each component's value (with the sequence for the second); 2 for the XOR and verdict; 2 for the winning moves (1 for one correct move with its check, 2 for all four).
 
 **KM5, example 1 (difficulty 4, contest).** For the polygon with vertices (0, 0), (6, 0), (6, 4), (3, 7), (0, 4), find its area, its boundary lattice points and its interior lattice points.
 
@@ -2762,9 +2762,9 @@ def count_subsets(a: list[int], target: int) -> int:
 
 **Problem Gym** (`set.<course>.gym-<level>`, kind `practice`). 180 original problems: 150 at NeetCode 150's category counts (open item 2) plus 30 quant-flavoured problems (VWAP, rolling statistics, a matching engine step, arbitrage, reservoir sampling, Kendall distance, drawdown durations, as-of joins, order-book replay, settlement netting). Difficulty: 40 easy, 115 medium, 25 hard [our choice]. Each ships a statement, constraints, examples, a reference, a brute force (the stress oracle), hidden tests with edge cases, a `complexity` test where the pattern is the point, a NeetCode pointer for its video solution, and an editorial in `code-annotator` that opens after a pass. 78 problems are homework drills (section 3.1); the other 102 sit in Gym sets after each level, of which the hours plan budgets 90. Every solved problem counts once on the ledger.
 
-**Held-out timed bank** (`pool.alg.timed`, `heldOut: true`). 40 mediums, never served anywhere else, in 12 pattern groups: hashing; two pointers and windows; prefix sums; binary search; stacks and queues; linked lists; heaps; trees; graph search; weighted graphs and union-find; backtracking; dynamic programming and greedy. A timed attempt draws a group the learner has finished, never the same problem twice; the window is the last 9 attempts (section 4.4).
+**Held-out timed bank** (`pool.dsa.timed`, `heldOut: true`). 40 mediums, never served anywhere else, in 12 pattern groups: hashing; two pointers and windows; prefix sums; binary search; stacks and queues; linked lists; heaps; trees; graph search; weighted graphs and union-find; backtracking; dynamic programming and greedy. A timed attempt draws a group the learner has finished, never the same problem twice; the window is the last 9 attempts (section 4.4).
 
-**Order Book project** (`prj.alg.order-book`, 14 hours, after level SQ3; the learner's own repository under the 1.2 rules).
+**Order Book project** (`prj.dsa.order-book`, 14 hours, after level SQ3; the learner's own repository under the 1.2 rules).
 
 | Milestone | Work | Evidence | Hours |
 |---|---|---|---|
@@ -2789,7 +2789,7 @@ def count_subsets(a: list[int], target: int) -> int:
 
 ## 4. Topic exam blueprints and exit tests
 
-Both topic papers use kind `topic` (`assessment.md` 3.1): one clock, 70% to pass, difficulty mix by marks 20/50/20/10 at levels 2/3/4/5, long-form at most 30% of marks, Bertie `away` from Start to submission, a 3-day resit with a remediation set (`assessment.md` 3.8), test-out allowed before the lessons (7.3). A paper's rules screen shows "56 of 80 to pass". 2.4 has no topic paper (`assessment.md` 2.8); its Arena rounds are in section 4.3.
+Both topic papers use kind `topic` (`ASSESSMENT.md` 3.1): one clock, 70% to pass, difficulty mix by marks 20/50/20/10 at levels 2/3/4/5, long-form at most 30% of marks, Bertie `away` from Start to submission, a 3-day resit with a remediation set (`ASSESSMENT.md` 3.8), test-out allowed before the lessons (7.3). A paper's rules screen shows "56 of 80 to pass". 2.4 has no topic paper (`ASSESSMENT.md` 2.8); its Arena rounds are in section 4.3.
 
 ### 4.1 Item 1.8: `exm.algorithms`
 
@@ -2797,49 +2797,49 @@ Both topic papers use kind `topic` (`assessment.md` 3.1): one clock, 70% to pass
 |---|---|
 | Kind | `topic` |
 | When | Unlocks after level DP7's homework is submitted, or at any time as a test-out or diagnostic sitting |
-| Duration | 90 minutes, one clock, the 15-minute pause budget (`assessment.md` 3.4). Summed item estimates 62.5 minutes; 90 is 1.44 times that |
+| Duration | 90 minutes, one clock, the 15-minute pause budget (`ASSESSMENT.md` 3.4). Summed item estimates 62.5 minutes; 90 is 1.44 times that |
 | Items | 22 items, 80 marks; items 1 to 20 short (3 or 4 marks), item 21 a long-form proof (10), item 22 a code item (8) |
-| Runtime | Python standard library only (`needs: []`), so the paper runs on both targets; Python is loaded and warmed before the clock starts (`assessment.md` 3.3) |
+| Runtime | Python standard library only (`needs: []`), so the paper runs on both targets; Python is loaded and warmed before the clock starts (`ASSESSMENT.md` 3.3) |
 | Calculator | The in-app basic calculator, for ratios and logarithms in items 1 to 4 |
 | Aids | None. Item 22's statement lists the allowed imports (`collections`, `heapq`, `bisect`, `itertools`, `functools`, `math`) |
 | Difficulty by marks | d2 16, d3 40, d4 16, d5 8 (20/50/20/10) |
 | Long-form | 10 marks, 12.5% |
 | Pass | 56 of 80 (70%) |
-| Forms | 3 forms of equal marks; 56 marks (70%) come from generator slots, so 3 forms meet `assessment.md` 3.2 rule 3 |
-| Exit role | Closes 1.8 with `1.8.exit` (section 4.4). The paper is not an instrument of `1.8.exit`, because the curriculum's exit line names only the ledger and the timed medium; the topic closes on both (`assessment.md` 2.8) |
+| Forms | 3 forms of equal marks; 56 marks (70%) come from generator slots, so 3 forms meet `ASSESSMENT.md` 3.2 rule 3 |
+| Exit role | Closes 1.8 with `1.8.exit` (section 4.4). The paper is not an instrument of `1.8.exit`, because the curriculum's exit line names only the ledger and the timed medium; the topic closes on both (`ASSESSMENT.md` 2.8) |
 
 | Q | Levels | What it tests | Format | Difficulty, marks | Min | Slot |
 |---|---|---|---|---|---|---|
-| 1 | AC1 | Exact count of the innermost line of a generated nest of up to three loops (dependent, halving, harmonic or pointer), as a formula and as a value at a stated $n$ | X, N | d2, 3 | 1.5 | `gen.alg.loop-count` |
-| 2 | AC1 | From a doubling table of operation counts, name the growth law and predict the count at $4n$ | C, N | d2, 3 | 1.5 | `gen.alg.doubling` |
-| 3 | AC1, SQ2 | Amortised cost: element copies made by a doubling dynamic array, or element transfers of a two-stack queue, over a generated sequence of operations | N | d3, 3 | 2 | `gen.alg.amortised` |
-| 4 | AC2 | Solve a generated divide-and-conquer recurrence: a master-theorem case, or a recursion-tree sum when no case applies | X | d3, 3 | 2 | `gen.alg.recurrence` |
-| 5 | AC3 | Reach the array after one Lomuto partition or one bottom-up merge pass on a generated array | G (`sort-lab`, `moveMatchesAlgorithm`) | d2, 3 | 1.5 | `gen.alg.sort-step` |
-| 6 | AC4 | (a) after quickselect's first partition, the side that recurses and the rank sought there; (b) whether a two-key order needs a stable sort | N, C | d3, 3 | 2 | `gen.alg.select` |
-| 7 | AH1 | Linear probing: the table and the probe count of a final lookup after generated inserts and one deletion with a tombstone | R, N | d3, 3 | 2 | `gen.alg.probing` |
-| 8 | AH2 | Order the lines of a two-pointer solution (a pair sum on sorted prices, or an in-place partition) | O | d2, 3 | 1.5 | `pool.alg.exam-parsons` (12) |
-| 9 | AH3 | The monotonic deque's contents after each step of a sliding-window maximum over generated prices | G (`stack-queue-lab`, deque) | d3, 3 | 2 | `gen.alg.deque` |
-| 10 | AH4, AH6 | (a) answer two range-sum queries from a prefix array, or apply a difference array; (b) the total length of a union of generated intervals | N, N | d3, 3 | 2 | `gen.alg.prefix-intervals` |
-| 11 | AH5 | Fill the three blanks of a binary search on the answer so that it terminates and returns the least feasible value on every input; CI ran each accepted fill against the tests | K (`code-blanks`) | d3, 3 | 2.5 | `pool.alg.exam-blanks` (10) |
-| 12 | SQ1, SQ2 | (a) predict a monotonic stack's next-greater output; (b) predict the list printed by a reversal with one classic pointer bug | T, T | d2, 4 | 1.5 | `gen.alg.stack-list` |
-| 13 | SQ3, SQ4 | (a) the heap array after generated pushes and pops; (b) a reservoir or running-median state after a short stream | G (`heap-lab`, exact array), N | d3, 3 | 2 | `gen.alg.heap-ops` |
-| 14 | TG1, TG2 | (a) one traversal order of a generated tree; (b) the BST after deleting a node with two children | O, G (`tree-lab`) | d3, 3 | 2 | `gen.alg.tree` |
-| 15 | TG3 | BFS distances from a source, or any valid topological order of a generated DAG (`isTopoOrder` accepts every valid order) | N, O | d3, 3 | 2 | `gen.alg.graph` |
-| 16 | TG4 | Dijkstra on a graph with one negative edge: the distance it reports, the true distance, and the algorithm that gives the true one | N, N, C | d4, 3 | 2.5 | `gen.alg.neg-edge` |
-| 17 | TG5 | Union-find with union by rank and path compression (parent array after operations), or Kruskal's tree weight, or the arbitrage cycle from log rates | N or R | d4, 3 | 2.5 | `gen.alg.dsu-mst` |
-| 18 | DP1, DP2 | (a) the number of leaves of a pruned backtracking search; (b) a 1D DP value | N, N | d3, 3 | 2 | `gen.alg.dp1d` |
-| 19 | DP3, DP4 | (a) fill the marked cells of an LCS, edit-distance or knapsack table; (b) select the cells of one optimal reconstruction | N, R (`dp-table`) | d3, 4 | 2.5 | `gen.alg.dp2d` |
-| 20 | DP5 or DP6 | A counterexample to a greedy rule (graded by behaviour: greedy and the reference optimum disagree on it), or a bit-manipulation value | E or N | d3, 3 | 2 | `gen.alg.greedy-cx`, `gen.alg.bits` |
-| 21 | AC2, TG3, TG4 or DP5 | A correctness proof by invariant, induction or exchange | Long-form, 10-point rubric | d4, 10 | 8 | `pool.alg.exam-proofs` (12, none used in homework) |
-| 22 | DP7 and any pattern | An unseen medium in Python with hidden tests and a complexity test | K | d5, 8 | 15 | `pool.alg.exam-mediums` (16, disjoint from `pool.alg.timed`) |
+| 1 | AC1 | Exact count of the innermost line of a generated nest of up to three loops (dependent, halving, harmonic or pointer), as a formula and as a value at a stated $n$ | X, N | d2, 3 | 1.5 | `gen.dsa.loop-count` |
+| 2 | AC1 | From a doubling table of operation counts, name the growth law and predict the count at $4n$ | C, N | d2, 3 | 1.5 | `gen.dsa.doubling` |
+| 3 | AC1, SQ2 | Amortised cost: element copies made by a doubling dynamic array, or element transfers of a two-stack queue, over a generated sequence of operations | N | d3, 3 | 2 | `gen.dsa.amortised` |
+| 4 | AC2 | Solve a generated divide-and-conquer recurrence: a master-theorem case, or a recursion-tree sum when no case applies | X | d3, 3 | 2 | `gen.dsa.recurrence` |
+| 5 | AC3 | Reach the array after one Lomuto partition or one bottom-up merge pass on a generated array | G (`sort-lab`, `moveMatchesAlgorithm`) | d2, 3 | 1.5 | `gen.dsa.sort-step` |
+| 6 | AC4 | (a) after quickselect's first partition, the side that recurses and the rank sought there; (b) whether a two-key order needs a stable sort | N, C | d3, 3 | 2 | `gen.dsa.select` |
+| 7 | AH1 | Linear probing: the table and the probe count of a final lookup after generated inserts and one deletion with a tombstone | R, N | d3, 3 | 2 | `gen.dsa.probing` |
+| 8 | AH2 | Order the lines of a two-pointer solution (a pair sum on sorted prices, or an in-place partition) | O | d2, 3 | 1.5 | `pool.dsa.exam-parsons` (12) |
+| 9 | AH3 | The monotonic deque's contents after each step of a sliding-window maximum over generated prices | G (`stack-queue-lab`, deque) | d3, 3 | 2 | `gen.dsa.deque` |
+| 10 | AH4, AH6 | (a) answer two range-sum queries from a prefix array, or apply a difference array; (b) the total length of a union of generated intervals | N, N | d3, 3 | 2 | `gen.dsa.prefix-intervals` |
+| 11 | AH5 | Fill the three blanks of a binary search on the answer so that it terminates and returns the least feasible value on every input; CI ran each accepted fill against the tests | K (`code-blanks`) | d3, 3 | 2.5 | `pool.dsa.exam-blanks` (10) |
+| 12 | SQ1, SQ2 | (a) predict a monotonic stack's next-greater output; (b) predict the list printed by a reversal with one classic pointer bug | T, T | d2, 4 | 1.5 | `gen.dsa.stack-list` |
+| 13 | SQ3, SQ4 | (a) the heap array after generated pushes and pops; (b) a reservoir or running-median state after a short stream | G (`heap-lab`, exact array), N | d3, 3 | 2 | `gen.dsa.heap-ops` |
+| 14 | TG1, TG2 | (a) one traversal order of a generated tree; (b) the BST after deleting a node with two children | O, G (`tree-lab`) | d3, 3 | 2 | `gen.dsa.tree` |
+| 15 | TG3 | BFS distances from a source, or any valid topological order of a generated DAG (`isTopoOrder` accepts every valid order) | N, O | d3, 3 | 2 | `gen.dsa.graph` |
+| 16 | TG4 | Dijkstra on a graph with one negative edge: the distance it reports, the true distance, and the algorithm that gives the true one | N, N, C | d4, 3 | 2.5 | `gen.dsa.neg-edge` |
+| 17 | TG5 | Union-find with union by rank and path compression (parent array after operations), or Kruskal's tree weight, or the arbitrage cycle from log rates | N or R | d4, 3 | 2.5 | `gen.dsa.dsu-mst` |
+| 18 | DP1, DP2 | (a) the number of leaves of a pruned backtracking search; (b) a 1D DP value | N, N | d3, 3 | 2 | `gen.dsa.dp1d` |
+| 19 | DP3, DP4 | (a) fill the marked cells of an LCS, edit-distance or knapsack table; (b) select the cells of one optimal reconstruction | N, R (`dp-table`) | d3, 4 | 2.5 | `gen.dsa.dp2d` |
+| 20 | DP5 or DP6 | A counterexample to a greedy rule (graded by behaviour: greedy and the reference optimum disagree on it), or a bit-manipulation value | E or N | d3, 3 | 2 | `gen.dsa.greedy-cx`, `gen.dsa.bits` |
+| 21 | AC2, TG3, TG4 or DP5 | A correctness proof by invariant, induction or exchange | Long-form, 10-point rubric | d4, 10 | 8 | `pool.dsa.exam-proofs` (12, none used in homework) |
+| 22 | DP7 and any pattern | An unseen medium in Python with hidden tests and a complexity test | K | d5, 8 | 15 | `pool.dsa.exam-mediums` (16, disjoint from `pool.dsa.timed`) |
 
 **Totals.** 80 marks. d2: $3 + 3 + 3 + 3 + 4 = 16$ (Q1, 2, 5, 8, 12). d3: $12 \times 3 + 4 = 40$ (Q3, 4, 6, 7, 9, 10, 11, 13, 14, 15, 18, 19, 20, with Q19 at 4). d4: $3 + 3 + 10 = 16$ (Q16, 17, 21). d5: 8 (Q22). Generator slots: Q1 to Q7, Q9, Q10 and Q12 to Q20, 56 marks.
 
 **Format mix by marks** (form A, where Q15 asks for distances, Q17 for a parent array and Q20 for a counterexample): numeric and expression 31; widget states, selections and orders (G, R, O) 18; code (K) 11; prediction (T) 4; choice parts (C) 3; behaviour (E) 3; long-form 10. Choice carries under 4% of marks, so a candidate who can recognise an algorithm but not run it does not pass.
 
-**Coverage.** Every form tests 25 of the 26 levels (one of DP5 and DP6 rotates through Q20), above `assessment.md` 3.2's 80% rule. Every DS outcome except DS-O11 (bits, on alternate forms), DS-O12 (homework DP7) and DS-O14 (the ledger) appears on every form.
+**Coverage.** Every form tests 25 of the 26 levels (one of DP5 and DP6 rotates through Q20), above `ASSESSMENT.md` 3.2's 80% rule. Every DS outcome except DS-O11 (bits, on alternate forms), DS-O12 (homework DP7) and DS-O14 (the ledger) appears on every form.
 
-**Code marking (Q22).** 10 hidden tests: 6 functional (including empty, single-element and duplicate inputs), 2 at full size inside the time limit, 2 from the complexity test (a size ladder of $10^4$, $4 \times 10^4$, $1.6 \times 10^5$ whose time ratio must fit the intended class, `widgets-programming.md` 2.2.1). Marks $\lfloor 8p/10 \rfloor$ (`assessment.md` 3.5). An $O(n^2)$ answer passes the 6 functional tests and earns 4 of 8.
+**Code marking (Q22).** 10 hidden tests: 6 functional (including empty, single-element and duplicate inputs), 2 at full size inside the time limit, 2 from the complexity test (a size ladder of $10^4$, $4 \times 10^4$, $1.6 \times 10^5$ whose time ratio must fit the intended class, `widgets-programming.md` 2.2.1). Marks $\lfloor 8p/10 \rfloor$ (`ASSESSMENT.md` 3.5). An $O(n^2)$ answer passes the 6 functional tests and earns 4 of 8.
 
 **Three slots worked in full.**
 
@@ -2867,7 +2867,7 @@ Reference: a sliding window with two monotonic deques (one for the maximum, one 
 | Difficulty by marks | d2 16, d3 40, d4 16, d5 8 |
 | Long-form | 18 marks, 22.5% |
 | Pass | 56 of 80 |
-| Forms | **6 forms**: generated C++ items need a CI build per variant, so generator slots carry 26 marks (32.5%), and `assessment.md` 3.2 rule 3 then asks for at least 5 forms. Rejected: 3 forms with half the marks generated. Only some C++ families vary without changing what they teach (layouts, integer expressions, overload sets, constructor sequences, summation, cache models), and they carry 26 marks; sanitiser reports, multi-file build errors and design reviews are authored, and each generated variant is one more compiled and recorded build in CI |
+| Forms | **6 forms**: generated C++ items need a CI build per variant, so generator slots carry 26 marks (32.5%), and `ASSESSMENT.md` 3.2 rule 3 then asks for at least 5 forms. Rejected: 3 forms with half the marks generated. Only some C++ families vary without changing what they teach (layouts, integer expressions, overload sets, constructor sequences, summation, cache models), and they carry 26 marks; sanitiser reports, multi-file build errors and design reviews are authored, and each generated variant is one more compiled and recorded build in CI |
 | Exit role | Closes 1.9 with `1.9.exit`; on the Trader and Researcher tracks the paper still closes the topic's lessons in Stage 1 and the exit moves to Stage 2 (section 4.5) |
 
 | Q | Levels | What it tests | Format | Difficulty, marks | Min | Slot |
@@ -2897,7 +2897,7 @@ Reference: a sliding window with two monotonic deques (one for the maximum, one 
 
 **Totals.** 80 marks. d2: $3 + 3 + 3 + 3 + 4 = 16$ (Q1, 3, 9, 11, 13). d3: $12 \times 3 + 4 = 40$ (Q2, 4, 5, 6, 7, 8, 10, 12, 14, 15, 16, 17, 18, with Q17 at 4). d4: $3 + 3 + 10 = 16$ (Q19, 20, 21). d5: 8 (Q22). Generator slots Q1, 3, 5, 9, 10, 13, 17 and 19: 26 marks.
 
-**Coverage.** Every form tests all 16 levels. Every CP outcome except CP-O12 (the exit) appears on every form. Pools hold at least 8 items so that 6 forms and six resits stay fresh (`assessment.md` 3.2 rule 4 applied to pools).
+**Coverage.** Every form tests all 16 levels. Every CP outcome except CP-O12 (the exit) appears on every form. Pools hold at least 8 items so that 6 forms and six resits stay fresh (`ASSESSMENT.md` 3.2 rule 4 applied to pools).
 
 **Five slots worked in full** [all verified on GCC 13.3 and Clang 18.1 at `-O2`].
 
@@ -2962,11 +2962,11 @@ Rubric (10, scaled to 8 marks): 2 for naming both baselines with their ratios; 2
 
 Each problem has a reference solution in Python and C++, a brute force, a generator of tests, a checker where answers are not unique, and a Python time limit scaled by the device calibration; a Python reference must pass in under half the limit on the reference phone or the problem is web-only and the round says so on its rules screen [unverified: Pyodide speed on the phone, open item 6's spike measures it]. Rounds are progress markers, not gates: a round with fewer than 3 solved adds its unsolved problems to the upsolve queue and suggests the level whose lessons the misses used.
 
-**Proposed `2.4.exit`** (owner decision, section 0.5 item 5). The curriculum gives targets (one contest a week once 100 problems are solved; a rating of 1,400 in the first year) and no exit; `assessment.md` 11.6 keeps both as goals. Without an exit 2.4 has no completion state. The proposal:
+**Proposed `2.4.exit`** (owner decision, section 0.5 item 5). The curriculum gives targets (one contest a week once 100 problems are solved; a rating of 1,400 in the first year) and no exit; `ASSESSMENT.md` 11.6 keeps both as goals. Without an exit 2.4 has no completion state. The proposal:
 
 | Part | Gate | Confirm | Why this and not the rating |
 |---|---|---|---|
-| `2.4.exit` | (1) 30 contest log entries, each with its upsolve marked done (problems solved during the contest plus at least one more afterwards, or a note that none was within reach); (2) `arena-3` with at least 3 of 6 solved | None. The Codeforces rating stays a goal on the progress page, and on the developer track the planner shows "1,400 target: 1,312 now" from the learner's log | A rating depends on who else enters, moves with rating-system changes, and cannot be read by the Artifact (`assessment.md` 11.6: the API's cross-origin access is unverified). The practice record is what the hours buy and what the app can see. Rejected: rating 1,400 as a gate (it would leave a learner who did every hour "not complete" for reasons outside the curriculum) |
+| `2.4.exit` | (1) 30 contest log entries, each with its upsolve marked done (problems solved during the contest plus at least one more afterwards, or a note that none was within reach); (2) `arena-3` with at least 3 of 6 solved | None. The Codeforces rating stays a goal on the progress page, and on the developer track the planner shows "1,400 target: 1,312 now" from the learner's log | A rating depends on who else enters, moves with rating-system changes, and cannot be read by the Artifact (`ASSESSMENT.md` 11.6: the API's cross-origin access is unverified). The practice record is what the hours buy and what the app can see. Rejected: rating 1,400 as a gate (it would leave a learner who did every hour "not complete" for reasons outside the curriculum) |
 
 ```ts
 // proposed exit data for 2.4; needs 'contest-upsolved' in log-count's enum and kind 'contest' in the paper kinds (section 8)
@@ -2984,15 +2984,15 @@ Each problem has a reference solution in Python and C++, a brute force, a genera
 
 | Part | Curriculum line | Gate (in the app) | Confirm (logged) | Taught in | Runs on |
 |---|---|---|---|---|---|
-| `1.8.exit` | 150 problems solved, and a fresh LeetCode medium finished in 30 minutes more often than not | (1) the problem ledger at 150 (in-app verified and self-reported, shown apart, `assessment.md` 11.5); (2) timed held-out mediums from `pool.alg.timed`: at least 5 solved within 30 minutes in the last 9 timed attempts | None: the app cannot see LeetCode, and its held-out bank is the only source of mediums the learner has certainly not seen | All 26 levels; lesson 148 (stress testing), lessons 149 and 150 (the method and the timed window) | Both (Python); C++ attempts on the web app once 1.9 lesson 62 is done |
+| `1.8.exit` | 150 problems solved, and a fresh LeetCode medium finished in 30 minutes more often than not | (1) the problem ledger at 150 (in-app verified and self-reported, shown apart, `ASSESSMENT.md` 11.5); (2) timed held-out mediums from `pool.dsa.timed`: at least 5 solved within 30 minutes in the last 9 timed attempts | None: the app cannot see LeetCode, and its held-out bank is the only source of mediums the learner has certainly not seen | All 26 levels; lesson 148 (stress testing), lessons 149 and 150 (the method and the timed window) | Both (Python); C++ attempts on the web app once 1.9 lesson 62 is done |
 | `1.9.exit` | Rewrite the 1.7 binomial pricer in C++ with tests and time it against the Python version | `setup-checklist` paste-verify `exit-1.9`: the doctest summary, the prices and timings at three sizes, and the build line, checked against the app's own prices | None | CP3 (lessons 79 to 84) and CP2 (73 to 78) | Paste: both; the build and timings always run on the learner's machine |
 
 ```ts
-// exit data, using assessment.md 2.10's ExitPart; no new instrument kinds
+// exit data, using ASSESSMENT.md 2.10's ExitPart; no new instrument kinds
 { id: '1.8.exit',
   text: '150 problems solved, and a fresh LeetCode medium finished in 30 minutes more often than not',
   gate: [ { kind: 'counter', counter: 'algo-solved', target: 150 },
-          { kind: 'timed-window', pool: 'pool.alg.timed', minutes: 30, solved: 5, of: 9 } ],
+          { kind: 'timed-window', pool: 'pool.dsa.timed', minutes: 30, solved: 5, of: 9 } ],
   confirm: [],
   estHours: 9 }
 
@@ -3006,12 +3006,12 @@ Each problem has a reference solution in Python and C++, a brute force, a genera
 
 **`1.8.exit`: the timed window.**
 
-- **Reading "more often than not".** At least 5 of the last 9 attempts, a majority over a window long enough that one good day does not pass it and one bad day does not fail it [our choice; `assessment.md` 2.9 fixes 5 of 9]. Attempts before the ninth show "4 of 7 so far"; the part is met the first time a window of 9 holds 5 solves, and stays met.
+- **Reading "more often than not".** At least 5 of the last 9 attempts, a majority over a window long enough that one good day does not pass it and one bad day does not fail it [our choice; `ASSESSMENT.md` 2.9 fixes 5 of 9]. Attempts before the ninth show "4 of 7 so far"; the part is met the first time a window of 9 holds 5 solves, and stays met.
 - **An attempt.** `problem-workbench` timed mode: a problem the learner has never been served, drawn so that no two of any 9 consecutive attempts share a pattern group; a 30-minute clock that starts when the statement opens; Bertie `away`; `Run` on the visible examples allowed; submission runs the hidden tests and the complexity test. **Solved** means every hidden test passing, the complexity test included, within the 30 minutes. A submission at minute 34 that passes is recorded as "solved late", counts on the ledger, and is not a solve for the window.
 - **The bank.** 40 mediums in 12 pattern groups (section 3.4), so four full windows stay fresh. When fewer than 9 unseen problems remain, the bank serves the least recently seen and the window screen says "this attempt reuses a problem you saw 41 days ago"; the content plan adds 12 mediums a year [our choice].
 - **Abandoning.** Leaving before submitting records an unsolved attempt: the window measures finishing, and "fresh" means one look.
 - **After each attempt.** The debrief opens Bertie in review mode, the reference solution, the code-craft review of the learner's code, and a 5-minute "what I would do differently" note that the next window's first screen shows. The 9 hours of `estHours` are 9 attempts of 30 minutes plus 30-minute debriefs.
-- **The ledger.** "150 solved: 112 verified in the app, 38 self-reported" (`assessment.md` 11.5). Timed attempts that pass count on the ledger like any other problem. The planner shows the 168-problem plan (decision 7) and the gap.
+- **The ledger.** "150 solved: 112 verified in the app, 38 self-reported" (`ASSESSMENT.md` 11.5). Timed attempts that pass count on the ledger like any other problem. The planner shows the 168-problem plan (decision 7) and the gap.
 
 **`1.9.exit`: the brief.**
 
@@ -3024,7 +3024,7 @@ Each problem has a reference solution in Python and C++, a brute force, a genera
    - one step: $n = 1$ with $S = K = 100$, $T = 1$, $r = 5\%$, $\sigma = 20\%$ gives 12.1623 (lesson 79) [verified];
    - inputs: $d \ge R$, $R \ge u$, $n < 1$ and $\sigma \le 0$ throw `std::invalid_argument`;
    - memory: $n = 20{,}000$ runs (one vector of 160 KB; the full tree would hold about 200 million nodes, 1.6 GB);
-   - if American: the put at $n = 1{,}000$ is 6.089595, above the European 5.571527; the American call equals the European call; with $r = 0$ the American put equals the European put (all [verified]).
+   - if American: the put at $n = 1{,}000$ is 6.089595, above the European 5.571527; the American call equals the European call; with $r = 0$ the American put equals the European put within $10^{-12}$ (all [verified]).
 4. **The timing protocol** (lesson 82). A Release build (`-O2`, sanitisers off), `bench/bench.cpp` timing `price_crr` for the at-the-money call at $N$ = 1,000, 2,000 and 5,000 with 7 repeats each after one warm-up, reporting median, minimum and maximum; the learner's 1.7 Python function timed the same way with `time.perf_counter` in a separate script, stating whether it uses loops or NumPy. Both print the price at each $N$ to 9 decimal places.
 5. **The paste.** Four blocks: the compiler line (`g++ --version` or `clang++ --version`) and the CMake build type; the doctest summary; the C++ timing table; the Python timing table. The README (not pasted) holds a one-paragraph interpretation in the format of `exm.cpp` Q22's model claim.
 
@@ -3045,7 +3045,7 @@ Each problem has a reference solution in Python and C++, a brute force, a genera
 
 ### 4.5 The Stage 1 exit test, rebuilt
 
-The curriculum gives Stage 1 no checklist of its own; its map line reads "University finals at 70% in calculus, linear algebra and probability; 150 algorithm problems solved", and each item has its own exit line. Stage 1 is therefore closed when all nine topics are closed, and a topic is closed by its topic paper together with its exit parts (`assessment.md` 2.8). The stage page shows the map line's two headline bars first (the three finals; 150 problems), then the nine topics.
+The curriculum gives Stage 1 no checklist of its own; its map line reads "University finals at 70% in calculus, linear algebra and probability; 150 algorithm problems solved", and each item has its own exit line. Stage 1 is therefore closed when all nine topics are closed, and a topic is closed by its topic paper together with its exit parts (`ASSESSMENT.md` 2.8). The stage page shows the map line's two headline bars first (the three finals; 150 problems), then the nine topics.
 
 | Topic | Topic paper | Exit part | Gate (in the app) | Confirm (logged) | `estHours` of the exit part | Runs on |
 |---|---|---|---|---|---|---|
@@ -3061,7 +3061,7 @@ The curriculum gives Stage 1 no checklist of its own; its map line reads "Univer
 
 Stage page line: "Stage 1 exit: 6 of 9 topics closed. Finals: 2 of 3 at 70%. Problems: 131 of 150."
 
-**Sit it first: the diagnostic route** (`assessment.md` 7.2). On entering Stage 1, the stage page leads with "Sit the exit test first" when placement puts the learner past the stage's midpoint or the learner says they have studied this material; otherwise it is offered with its time. Every gate a newcomer can sit cold is listed in path order with its time:
+**Sit it first: the diagnostic route** (`ASSESSMENT.md` 7.2). On entering Stage 1, the stage page leads with "Sit the exit test first" when placement puts the learner past the stage's midpoint or the learner says they have studied this material; otherwise it is offered with its time. Every gate a newcomer can sit cold is listed in path order with its time:
 
 | Order | Sitting | Time | What a fail produces |
 |---|---|---|---|
@@ -3076,9 +3076,9 @@ Stage page line: "Stage 1 exit: 6 of 9 topics closed. Finals: 2 of 3 at 70%. Pro
 | 9 | `exm.cpp`; the 1.9 paste if the learner already has a C++ pricer | 1.5 h | By 1.9 level |
 | | **Total** | **about 25 hours**, in at least nine sittings | |
 
-Rules for the route [our choice, within `assessment.md` 7.2]: each sitting is a diagnostic (no cool-down, no XP for a fail, full credit for a pass); a sitting can be taken in any order, but the page recommends path order because a learner who scores below 40% on `exm.python` will not pass the later code items and is told so ("Stop here and start at 1.1, level A1?"); confirm instruments (the real finals) come after their gates, as everywhere; the ledger's self-reported problems count from the first day, so a learner who has 150 LeetCode problems logs them before sitting step 8. A full pass of Stage 1 by diagnostics credits all 1,400 hours as **credited**, never as earned (`assessment.md` 7.4).
+Rules for the route [our choice, within `ASSESSMENT.md` 7.2]: each sitting is a diagnostic (no cool-down, no XP for a fail, full credit for a pass); a sitting can be taken in any order, but the page recommends path order because a learner who scores below 40% on `exm.python` will not pass the later code items and is told so ("Stop here and start at 1.1, level A1?"); confirm instruments (the real finals) come after their gates, as everywhere; the ledger's self-reported problems count from the first day, so a learner who has 150 LeetCode problems logs them before sitting step 8. A full pass of Stage 1 by diagnostics credits all 1,400 hours as **credited**, never as earned (`ASSESSMENT.md` 7.4).
 
-**What the rebuilt test changes.** Nothing in `assessment.md` 2.9's rows except three requests (section 8): `1.4.exit`'s `estHours` as 11 (already requested by `stage1-linear-algebra.md`), the `exit-1.9` check's details above, and a stage-level "headline bars" field so the map line's two bars can be shown without hard-coding them.
+**What the rebuilt test changes.** Nothing in `ASSESSMENT.md` 2.9's rows except three requests (section 8): `1.4.exit`'s `estHours` as 11 (already requested by `stage1-linear-algebra.md`), the `exit-1.9` check's details above, and a stage-level "headline bars" field so the map line's two bars can be shown without hard-coding them.
 
 ---
 
@@ -3090,36 +3090,36 @@ Rules for the route [our choice, within `assessment.md` 7.2]: each sitting is a 
 
 | Id | Resource | Licence and cost | Where | Role |
 |---|---|---|---|---|
-| `src.grokking` | Bhargava, *Grokking Algorithms*, 2nd edition (Manning 2024), 13 chapters [check: chapter list] | Paid | Manning | 1.8 first read (the curriculum's pick) |
-| `src.mit-6006-2020` | MIT 6.006 Introduction to Algorithms, Spring 2020 (Demaine, Ku, Solomon): lecture videos, notes, problem sets with solutions | Free, CC BY-NC-SA 4.0 | https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/ | 1.8 theory thread (canon-gap G17) |
+| `src.grokking` | Bhargava, *Grokking Algorithms*, 2nd edition (Manning 2024), 13 chapters: 1 introduction, 2 selection sort, 3 recursion, 4 quicksort, 5 hash tables, 6 breadth-first search, 7 trees, 8 balanced trees, 9 Dijkstra's algorithm, 10 greedy algorithms, 11 dynamic programming, 12 k-nearest neighbours, 13 where to go next [verified: publisher's contents] | Paid | Manning | 1.8 first read (the curriculum's pick) |
+| `src.mit-6006-2020` | MIT 6.006 Introduction to Algorithms, Spring 2020 (Demaine, Ku, Solomon): lecture videos, notes, problem sets 0 to 8 with solutions [verified: OCW resource listing] | Free, CC BY-NC-SA 4.0 | https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/ | 1.8 theory thread (canon-gap G17) |
 | `src.neetcode150` | NeetCode 150 list and video solutions; problems on LeetCode | Free | https://neetcode.io/practice | The logged outside list; video pointers from Gym problems |
 | `src.clrs-4e` | Cormen, Leiserson, Rivest, Stein, *Introduction to Algorithms*, 4th edition (MIT Press 2022) | Paid | | Reference only (the curriculum's ruling) |
 | `src.mit-6046j-2015` | MIT 6.046J Design and Analysis of Algorithms, Spring 2015 | Free, CC BY-NC-SA | https://ocw.mit.edu/courses/6-046j-design-and-analysis-of-algorithms-spring-2015/ | Stretch: flows, randomised algorithms |
-| `src.learncpp` | learncpp.com, chapters 0 to 28 with quizzes and solutions [check: chapter numbers after the site's reorganisation] | Free to read | https://www.learncpp.com/ | 1.9 spine (the curriculum's pick) |
+| `src.learncpp` | learncpp.com, chapters 0 to 28 with quizzes and solutions (lessons 8.13 and 8.14 on random numbers and chapter 22 on move semantics and smart pointers confirmed; other chapter numbers [check]) | Free to read | https://www.learncpp.com/ | 1.9 spine (the curriculum's pick) |
 | `src.stroustrup-ppp-3e` | Stroustrup, *Programming: Principles and Practice Using C++*, 3rd edition (2024) | Paid | | 1.9 paid alternative |
-| `src.stanford-cs106l` | Stanford CS106L Standard C++ Programming: lecture slides and assignments | Free (public course site) | https://web.stanford.edu/class/cs106l/ [check: the current quarter's path] | Lecture parallel for modern idioms |
+| `src.stanford-cs106l` | Stanford CS106L Standard C++ Programming: lecture slides and assignments | Free (public course site) | https://web.stanford.edu/class/cs106l/ [verified]; past quarters stay at `web.stanford.edu/class/archive/cs/cs106l/cs106l.<term>/`, so content should pin one quarter's lecture numbers [check: which quarter] | Lecture parallel for modern idioms |
 | `src.cppreference` † | cppreference.com | Free, CC BY-SA 3.0 and GFDL [check] | https://en.cppreference.com/ | Reference for `<random>`, `<numeric>`, `<thread>`, `<atomic>` |
 | `src.cpp-core-guidelines` † | Stroustrup and Sutter (eds.), C++ Core Guidelines | Free | https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines | Review checklist (lesson 71) |
-| `src.drepper-memory` † | Drepper, *What Every Programmer Should Know About Memory* (2007), sections 3 and 6 [recalled] | Free PDF | https://www.akkadia.org/drepper/cpumemory.pdf [check] | Caches, for level CP2 |
+| `src.drepper-memory` † | Drepper, *What Every Programmer Should Know About Memory* (2007), sections 3 and 6 [recalled] | Free PDF | https://www.akkadia.org/drepper/cpumemory.pdf [verified] | Caches, for level CP2 |
 | `src.carruth-cppcon-2014` † | Carruth, "Efficiency with Algorithms, Performance with Data Structures", CppCon 2014 [recalled] | Free video | CppCon's YouTube channel [check: link] | Why contiguous data wins |
 | `src.joshi-cpp-2e` | Joshi, *C++ Design Patterns and Derivatives Pricing*, 2nd edition (CUP 2008) | Paid | | Pricing design reference for CM4 and CP3 |
-| `src.laaksonen-cph` | Laaksonen, *Competitive Programmer's Handbook*, 30 chapters [check: chapter numbers of the current PDF] | Free PDF | https://cses.fi/book/book.pdf | 2.4 text |
-| `src.cses` | CSES Problem Set | Free | https://cses.fi/problemset/ | 2.4 problem list |
+| `src.laaksonen-cph` | Laaksonen, *Competitive Programmer's Handbook*, 30 chapters in three parts (chapters 1 to 10 basic techniques, 11 to 20 graph algorithms, 21 to 30 advanced topics; numbers 1 to 22 and 27 confirmed against the book's source, the rest [recalled]) | Free PDF | https://cses.fi/book/book.pdf | 2.4 text |
+| `src.cses` | CSES Problem Set, 400 problems [verified] | Free | https://cses.fi/problemset/ | 2.4 problem list |
 | `src.usaco-guide` | USACO Guide, Silver and Gold modules | Free | https://usaco.guide/ | Topic order and extra problems |
 | `src.codeforces` | Codeforces contests, problemset and EDU courses | Free | https://codeforces.com/ (EDU: https://codeforces.com/edu/courses) | The curriculum's contest site |
 | `src.project-euler` | Project Euler | Free | https://projecteuler.net/ | Maths with code (lesson 20) |
 | `src.kaggle` † | Kaggle competitions | Free | https://www.kaggle.com/competitions | Researcher track (lesson 21) |
-| `src.imc-prosperity` † | IMC Prosperity trading competition (annual) [check: dates and rules each year] | Free | https://prosperity.imc.com/ [check] | Trader track (lesson 21) |
+| `src.imc-prosperity` † | IMC Prosperity trading competition (annual since 2023; Prosperity 4 opens on 14 April) [check: dates and rules each year] | Free | https://prosperity.imc.com/ [verified: IMC's announcement] | Trader track (lesson 21) |
 
 ### 5.1 Item 1.8 (36.0 hours: Grokking 10.0, 6.006 lectures 12.0, 6.006 problem sets 14.0)
 
 | Level | Read, watch or solve | What to do | Hours |
 |---|---|---|---|
-| AC1 How Cost Grows | Grokking ch. 1 (binary search, big O) [check]; 6.006 lectures 1 (algorithms and computation) and 2 (data structures, dynamic arrays) [check] | Read Grokking after lesson 1; watch lecture 2 after lesson 4 and redo its amortised doubling argument on paper | 2.25 |
+| AC1 How Cost Grows | Grokking ch. 1 (binary search, big O); 6.006 lectures 1 (algorithms and computation) and 2 (data structures, dynamic arrays) [recalled] | Read Grokking after lesson 1; watch lecture 2 after lesson 4 and redo its amortised doubling argument on paper | 2.25 |
 | AC2 Recursion and Proof | Grokking ch. 3 (recursion); 6.006 problem set on asymptotics and recurrences (problem set 1) [check] | Do the problem set's recurrence and proof parts after lesson 13, self-mark against the solutions, log wrong parts to the Redo queue | 2.75 |
-| AC3 Sorting | Grokking ch. 2 (selection sort, arrays and linked lists) and ch. 4 (quicksort); 6.006 lecture 3 (sets and sorting) [check] | Trace Grokking's quicksort on the array of lesson 16's hook; watch lecture 3 before lesson 18 | 2.25 |
-| AC4 Selection and Order | 6.006 lecture 5 (linear sorting) [check]; CLRS ch. 9 (medians and order statistics), reference only [check] | Watch lecture 5 before lesson 22; use CLRS 9.2 only if lesson 20's expected-cost argument is unclear | 0.75 |
-| AH1 Arrays and Hash Tables | Grokking ch. 5 (hash tables); 6.006 lecture 4 (hashing) [check]; 6.006 problem set on hashing (problem set 2 or 3) [check] | Read after lesson 25; watch lecture 4 before lesson 26 (universal hashing); do the set's hashing parts | 3.5 |
+| AC3 Sorting | Grokking ch. 2 (selection sort, arrays and linked lists) and ch. 4 (quicksort); 6.006 lecture 3 (sets and sorting) [recalled] | Trace Grokking's quicksort on the array of lesson 16's hook; watch lecture 3 before lesson 18 | 2.25 |
+| AC4 Selection and Order | 6.006 lecture 5 (linear sorting) [recalled]; CLRS 4th edition ch. 9 (medians and order statistics), reference only [recalled] | Watch lecture 5 before lesson 22; use CLRS 9.2 only if lesson 20's expected-cost argument is unclear | 0.75 |
+| AH1 Arrays and Hash Tables | Grokking ch. 5 (hash tables); 6.006 lecture 4 (hashing) [verified]; 6.006 problem set on hashing (problem set 2 or 3) [check] | Read after lesson 25; watch lecture 4 before lesson 26 (universal hashing); do the set's hashing parts | 3.5 |
 | AH2 Two Pointers | None outside the app; NeetCode "Two Pointers" videos sit inside Gym hours | | 0 |
 | AH3 Sliding Windows | None outside the app (NeetCode "Sliding Window") | | 0 |
 | AH4 Prefix Sums | None outside the app | | 0 |
@@ -3127,20 +3127,20 @@ Rules for the route [our choice, within `assessment.md` 7.2]: each sitting is a 
 | AH6 Intervals | None outside the app (NeetCode "Intervals") | | 0 |
 | SQ1 Stacks | None outside the app (NeetCode "Stack") | | 0 |
 | SQ2 Queues and Linked Lists | CLRS 10.1 to 10.2, reference only [check] | Optional | 0 |
-| SQ3 Heaps | 6.006 lecture 8 (binary heaps) [check]; 6.006 problem set on heaps and priority queues [check] | Watch before lesson 71; do the set's heap parts after lesson 73 | 2.75 |
+| SQ3 Heaps | 6.006 lecture 8 (binary heaps) [verified]; 6.006 problem set on heaps and priority queues [check] | Watch before lesson 71; do the set's heap parts after lesson 73 | 2.75 |
 | SQ4 Randomised Structures | CLRS ch. 5 (probabilistic analysis), reference only | Optional, for lesson 75's proof | 0 |
-| TG1 Binary Trees | Grokking ch. 7 (trees) [check: new in the 2nd edition]; 6.006 lecture 6 (binary trees, part 1) [check] | Read after lesson 79; watch before lesson 82 | 1.5 |
-| TG2 Search Trees and Tries | Grokking ch. 8 (balanced trees) [check]; 6.006 lecture 7 (AVL trees) [check]; 6.006 problem set on binary trees and AVL [check] | Watch lecture 7 before lesson 87; do the set's rotation and augmentation parts | 3.5 |
-| TG3 Graphs and Traversal | Grokking ch. 6 (breadth-first search); 6.006 lectures 9 (BFS) and 10 (DFS) [check]; 6.006 problem set on graph search [check] | Watch lecture 9 before lesson 93 and lecture 10 before lesson 95; do the set after lesson 98 | 4.25 |
-| TG4 Weighted Graphs | Grokking ch. 9 (Dijkstra's algorithm); 6.006 lectures 12 (Bellman-Ford) and 13 (Dijkstra) [check]; 6.006 problem set on weighted shortest paths [check] | Read Grokking ch. 9 before lesson 99; watch both lectures; do the set after lesson 102 | 4.25 |
-| TG5 Graph Techniques | CLRS ch. 19 (disjoint sets) and ch. 21 (minimum spanning trees), reference only [check] | Optional, for lessons 104 and 103's proofs | 0 |
+| TG1 Binary Trees | Grokking ch. 7 (trees, new in the 2nd edition) [verified]; 6.006 lecture 6 (binary trees, part 1) [verified] | Read after lesson 79; watch before lesson 82 | 1.5 |
+| TG2 Search Trees and Tries | Grokking ch. 8 (balanced trees) [verified]; 6.006 lecture 7 (binary trees, part 2: AVL) [verified]; 6.006 problem set on binary trees and AVL [check] | Watch lecture 7 before lesson 87; do the set's rotation and augmentation parts | 3.5 |
+| TG3 Graphs and Traversal | Grokking ch. 6 (breadth-first search); 6.006 lectures 9 (BFS) [verified] and 10 (DFS) [recalled]; 6.006 problem set on graph search [check] | Watch lecture 9 before lesson 93 and lecture 10 before lesson 95; do the set after lesson 98 | 4.25 |
+| TG4 Weighted Graphs | Grokking ch. 9 (Dijkstra's algorithm); 6.006 lectures 12 (Bellman-Ford) [verified] and 13 (Dijkstra) [recalled]; 6.006 problem set on weighted shortest paths [check] | Read Grokking ch. 9 before lesson 99; watch both lectures; do the set after lesson 102 | 4.25 |
+| TG5 Graph Techniques | CLRS 4th edition ch. 19 (disjoint sets) and ch. 21 (minimum spanning trees), reference only [recalled] | Optional, for lessons 104 and 103's proofs | 0 |
 | DP1 Backtracking | None outside the app (NeetCode "Backtracking") | | 0 |
-| DP2 From Recursion to DP | Grokking ch. 11 (dynamic programming), first half; 6.006 lecture 15 (recursive algorithms, the SRTBOT framework) [check] | Read after lesson 116; watch lecture 15 and map its six steps to the app's five (state, recurrence, order, base, answer) | 1.5 |
-| DP3 Two-Dimensional DP | Grokking ch. 11, second half (longest common substring and subsequence); 6.006 lecture 16 (DP subproblems) [check]; 6.006 dynamic-programming problem set [check] | Do the set after lesson 126; compare its subproblem definitions with yours before reading the solutions | 3.5 |
-| DP4 Designing DPs | 6.006 lecture 17 (DP part 3) [check] | Watch before lesson 129 | 0.75 |
-| DP5 Greedy Algorithms | Grokking ch. 10 (greedy algorithms, including the set-covering and NP-complete sections) [check] | Read after lesson 134; write one counterexample to a greedy rule from the chapter | 0.75 |
+| DP2 From Recursion to DP | Grokking ch. 11 (dynamic programming), first half; 6.006 lecture 15 (recursive algorithms, the SRTBOT framework; the video is titled "Dynamic Programming, Part 1") [verified] | Read after lesson 116; watch lecture 15 and map its six steps to the app's five (state, recurrence, order, base, answer) | 1.5 |
+| DP3 Two-Dimensional DP | Grokking ch. 11, second half (longest common substring and subsequence); 6.006 lecture 16 (DP subproblems) [recalled]; 6.006 dynamic-programming problem set [check] | Do the set after lesson 126; compare its subproblem definitions with yours before reading the solutions | 3.5 |
+| DP4 Designing DPs | 6.006 lecture 17 (DP part 3) [recalled] | Watch before lesson 129 | 0.75 |
+| DP5 Greedy Algorithms | Grokking ch. 10 (greedy algorithms, including the set-covering and NP-complete sections) [verified: chapter title; sections recalled] | Read after lesson 134; write one counterexample to a greedy rule from the chapter | 0.75 |
 | DP6 Bits and Integer Maths | None outside the app (NeetCode "Bit Manipulation", "Math and Geometry") | | 0 |
-| DP7 Hard Problems and the Method | Grokking ch. 12 (k-nearest neighbours) and ch. 13 (where to go next) [check]; 6.006 lecture 19 (complexity) [check] | Read for orientation; watch lecture 19 before lesson 144 | 1.5 |
+| DP7 Hard Problems and the Method | Grokking ch. 12 (k-nearest neighbours) and ch. 13 (where to go next) [verified]; 6.006 lecture 19 (complexity) [verified] | Read for orientation; watch lecture 19 before lesson 144 | 1.5 |
 | | **Total** | Grokking 10.0; lectures 16 at 0.75 = 12.0; problem sets 7 at 2.0 = 14.0 | **36.0** |
 
 **Stretch, outside the hours.** 6.046J for flows and randomised algorithms (before 2.4's KS3); Skiena's *Algorithm Design Manual* part II as a catalogue; *Elements of Programming Interviews in Python* for interview depth. **Developer track.** Stanford CS106B with Roberts' *Programming Abstractions in C++* (`src.stanford-cs106b` †), read alongside 1.9 rather than 1.8.
@@ -3155,15 +3155,15 @@ Rules for the route [our choice, within `assessment.md` 7.2]: each sitting is a 
 | CB4 First Containers and Tests | learncpp ch. 16 and 17 (`std::vector`, `std::array`) [check] | Do the quizzes; write doctest cases for one quiz solution | 1.5 |
 | CM1 The Memory Model | learncpp ch. 12 (references and pointers) and ch. 19 (dynamic allocation) [check] | Do the quizzes, then run each solution under `-fsanitize=address,undefined` | 1.5 |
 | CM2 Classes and Invariants | learncpp ch. 14 and 15 (classes) and ch. 21 (operator overloading) [check]; CS106L lecture on classes and RAII [check] | Do the quizzes; watch the lecture after lesson 31 | 2.25 |
-| CM3 Copying and Moving | learncpp ch. 22 (move semantics and smart pointers) [check]; CS106L lecture on move semantics [check] | Do the quizzes; watch the lecture before lesson 37 | 2.25 |
-| CM4 Polymorphism and Design | learncpp ch. 20 (lambdas), 23 to 25 (object relationships, inheritance, virtual functions) [check]; Joshi ch. 1 to 3, paid alternative [check] | Do the quizzes; optional: Joshi's payoff-class chapters against lesson 46's design | 1.5 |
+| CM3 Copying and Moving | learncpp ch. 22 (move semantics and smart pointers) [verified]; CS106L lecture on move semantics [check] | Do the quizzes; watch the lecture before lesson 37 | 2.25 |
+| CM4 Polymorphism and Design | learncpp ch. 20 (lambdas), 23 to 25 (object relationships, inheritance, virtual functions) [check]; Joshi ch. 1 to 3 (a simple Monte Carlo model, encapsulation, inheritance and virtual functions), paid alternative [verified] | Do the quizzes; optional: Joshi's payoff-class chapters against lesson 46's design | 1.5 |
 | CL1 Templates | learncpp ch. 26 (class templates) [check]; CS106L lecture on templates and concepts [check] | Do the quizzes; watch the lecture before lesson 49 | 1.75 |
 | CL2 Containers | learncpp ch. 18 (iterators and algorithms, first half) [check]; CS106L lecture on containers and iterators [check] | Do the quizzes; watch the lecture before lesson 52 | 1.75 |
 | CL3 Algorithms | learncpp ch. 18, second half [check]; cppreference's `<algorithm>` page, the "Sorting operations" group | Do the quizzes; read the `std::sort` page's requirement on the comparator before lesson 60 | 0.5 |
-| CL4 Randomness and Numerics | learncpp ch. 8, the random-number lessons (Mersenne Twister, seeding) [check]; cppreference `<random>` | Read before lesson 63; note which distributions the standard leaves implementation-defined | 0.5 |
+| CL4 Randomness and Numerics | learncpp lessons 8.13 and 8.14 (random number generation, Mersenne Twister) [verified]; cppreference `<random>` | Read before lesson 63; note which distributions the standard leaves implementation-defined | 0.5 |
 | CP1 Tools of a C++ Engineer | learncpp ch. 27 (exceptions) [check]; C++ Core Guidelines sections P, I and R (philosophy, interfaces, resource management) | Do the quizzes; use the guidelines as lesson 71's review checklist | 0.5 |
-| CP2 Performance | Drepper sections 3 (CPU caches) and 6 (what programmers can do) [recalled; check section numbers]; Carruth's CppCon 2014 talk [recalled] | Skim Drepper for the cache-line model before lesson 73; watch the talk before lesson 74 | 2.0 |
-| CP3 The Binomial Pricer in C++ | Joshi ch. 8 (trees), paid alternative [check] | Optional: compare Joshi's tree class with your one-vector design | 0 |
+| CP2 Performance | Drepper sections 3 (CPU caches) and 6 (what programmers can do) [recalled: section numbers; URL verified]; Carruth's CppCon 2014 talk [recalled] | Skim Drepper for the cache-line model before lesson 73; watch the talk before lesson 74 | 2.0 |
+| CP3 The Binomial Pricer in C++ | Joshi ch. 8 (trees), paid alternative [verified] | Optional: compare Joshi's tree class with your one-vector design | 0 |
 | CP4 First Contact with Concurrency | cppreference `std::jthread`, `std::mutex`, `std::atomic` pages | Read the three pages' examples before lessons 85 and 86 | 0.5 |
 | | **Total** | learncpp 18.0; CS106L 4 lectures at 0.75 = 3.0; Drepper and Carruth 2.0 | **23.0** |
 
@@ -3175,32 +3175,32 @@ The CS106L lectures' 3.0 hours sit inside the CM2, CM3, CL1 and CL2 rows (0.75 e
 
 | Level | Read, watch or solve | What to do | Hours |
 |---|---|---|---|
-| KC1 How Contests Work | CPH ch. 1 (introduction: input and output, number types, shortening code) [check] | Read before lesson 2; set up the fast-input template it describes in Python and C++ | 0.25 |
-| KC2 Ad Hoc Thinking | CPH ch. 6 (greedy algorithms) [check] | Read after lesson 8; optional: two CSES "Sorting and Searching" problems, in Gym time | 0.25 |
-| KC3 Searching under Contest Limits | CPH ch. 5 (complete search) [check]; Codeforces EDU "Binary search", step 1 [check] | Read before lesson 16; do the EDU step's practice problems | 1.0 |
+| KC1 How Contests Work | CPH ch. 1 (introduction: input and output, number types, shortening code) [verified: chapter] | Read before lesson 2; set up the fast-input template it describes in Python and C++ | 0.25 |
+| KC2 Ad Hoc Thinking | CPH ch. 6 (greedy algorithms) [verified] | Read after lesson 8; optional: two CSES "Sorting and Searching" problems, in Gym time | 0.25 |
+| KC3 Searching under Contest Limits | CPH ch. 5 (complete search) [verified]; Codeforces EDU "Binary search", step 1 [check] | Read before lesson 16; do the EDU step's practice problems | 1.0 |
 | KC4 Practice Discipline and Other Competitions | Project Euler problems 1 to 10; one past IMC Prosperity round's write-up or one Kaggle competition overview, by track | Solve the Euler problems in Python; read the track's competition page before lesson 21 | 0 (inside lessons 20 and 21) |
-| KM1 Primes and Divisibility | CPH ch. 21, sections on primes, factors and the sieve [check] | Read before lesson 23; optional: CSES "Counting Divisors" as upsolving | 0.5 |
-| KM2 Modular Arithmetic | CPH ch. 21, sections on modular arithmetic and solving equations [check] | Read before lesson 29; derive Fermat's inverse from the chapter before lesson 30 | 0.25 |
-| KM3 Counting | CPH ch. 22 (combinatorics) [check] | Read before lesson 33; optional: CSES "Binomial Coefficients" as upsolving | 0.5 |
+| KM1 Primes and Divisibility | CPH ch. 21 (number theory), sections on primes, factors and the sieve [verified: chapter] | Read before lesson 23; optional: CSES "Counting Divisors" as upsolving | 0.5 |
+| KM2 Modular Arithmetic | CPH ch. 21, sections on modular arithmetic and solving equations [verified: chapter] | Read before lesson 29; derive Fermat's inverse from the chapter before lesson 30 | 0.25 |
+| KM3 Counting | CPH ch. 22 (combinatorics) [verified] | Read before lesson 33; optional: CSES "Binomial Coefficients" as upsolving | 0.5 |
 | KM4 Probability and Games | CPH ch. 24 (probability) and 25 (game theory) [check] | Read ch. 25 before lesson 41 (Sprague-Grundy) | 0.5 |
 | KM5 Integer Geometry | CPH ch. 29 (geometry) [check] | Read before lesson 44; check its cross-product orientation test against lesson 44's | 0.5 |
-| KS1 Range Queries | CPH ch. 9 (range queries) [check]; Codeforces EDU "Segment Tree, part 1", step 1 [check] | Read before lesson 50; do the EDU step | 1.25 |
-| KS2 Trees at Scale | CPH ch. 14 (tree algorithms) and 18 (tree queries) [check]; USACO Guide Gold "Euler Tour Technique" and Platinum "Binary Jumping" [check: module levels] | Read before lesson 55; use the guide's problems for upsolving | 1.0 |
-| KS3 Graphs at Scale | CPH ch. 17 (strong connectivity) and 20 (flows and cuts) [check] | Read ch. 17 before lesson 60 and ch. 20 before lesson 65 | 0.5 |
-| KD1 DP Techniques | CPH ch. 7 (dynamic programming) and 10 (bit manipulation, bitmask DP) [check]; USACO Guide Gold "Bitmask DP" [check] | Read ch. 10 before lesson 67; do two of the guide's problems | 1.0 |
+| KS1 Range Queries | CPH ch. 9 (range queries) [verified]; Codeforces EDU "Segment Tree, part 1", step 1 [check] | Read before lesson 50; do the EDU step | 1.25 |
+| KS2 Trees at Scale | CPH ch. 14 (tree algorithms) and 18 (tree queries) [verified]; USACO Guide Gold "Euler Tour Technique" and Platinum "Binary Jumping" [verified] | Read before lesson 55; use the guide's problems for upsolving | 1.0 |
+| KS3 Graphs at Scale | CPH ch. 17 (strong connectivity) and 20 (flows and cuts) [verified] | Read ch. 17 before lesson 60 and ch. 20 before lesson 65 | 0.5 |
+| KD1 DP Techniques | CPH ch. 7 (dynamic programming) and 10 (bit manipulation, bitmask DP) [verified]; USACO Guide Gold "Bitmask DP" [verified] | Read ch. 10 before lesson 67; do two of the guide's problems | 1.0 |
 | KD2 Strings | CPH ch. 26 (string algorithms) [check] | Read before lesson 73 | 0.25 |
-| KD3 Techniques for Hard Constraints | CPH ch. 27 (square root algorithms) [check] | Read before lesson 80 | 0 (inside lesson 80) |
+| KD3 Techniques for Hard Constraints | CPH ch. 27 (square root algorithms) [verified] | Read before lesson 80 | 0 (inside lesson 80) |
 | | **Total** | CPH 5.5; USACO Guide and EDU 2.25 | **7.75** |
 
 CPH hours per row: 0.25, 0.25, 0.5, 0, 0.5, 0.25, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0 = 5.5. USACO Guide and EDU: KC3 0.5, KS1 0.75, KS2 0.5, KD1 0.5 = 2.25.
 
-**Stretch, outside the hours.** Halim and Halim, *Competitive Programming 4*, for breadth; the full CSES Problem Set (300 problems [recalled]) as the long-run list after Stage 2. **Contest problems in the app** are original (decision 6); CSES and Codeforces problems are linked, never copied.
+**Stretch, outside the hours.** Halim and Halim, *Competitive Programming 4*, for breadth; the full CSES Problem Set (400 problems since its 2025 expansion [verified: cses.fi blog]) as the long-run list after Stage 2. **Contest problems in the app** are original (decision 6); CSES and Codeforces problems are linked, never copied.
 
 ---
 
 ## 6. Verification approach
 
-Every answer is machine-checked twice before it ships (`content-format.md` section 6): the declared or generated answer against an independent computation, then the runtime grader replayed on the correct answer, its accepted forms and every diagnosed wrong answer. Three rules are specific to these items:
+Every answer is machine-checked twice before it ships (`CONTENT-FORMAT.md` section 6): the declared or generated answer against an independent computation, then the runtime grader replayed on the correct answer, its accepted forms and every diagnosed wrong answer. Three rules are specific to these items:
 
 1. **Whatever the learner sees run is what CI ran.** Python runs on Pyodide 314.0.7 in Node and on CPython 3.11, and the two recordings must agree (`stage1-python-tools.md` section 6). C++ runs on GCC 13 and Clang 17 or later on x86-64 Linux, each at `-O0` and `-O2` with `-Wall -Wextra`, again with `-fsanitize=address,undefined`, and threaded snippets with `-fsanitize=thread`.
 2. **Algorithm traces are unique by construction.** Every algorithm widget fixes its tie-breaking (Dijkstra and Prim break ties by node id, BFS and DFS visit neighbours in ascending order, quicksort's pivot rule is stated), so a "be the algorithm" state has one correct value, and any state rule that accepts several answers (topological orders, optimal reconstructions) is a predicate, never a stored list.
@@ -3213,11 +3213,11 @@ Every answer is machine-checked twice before it ships (`content-format.md` secti
 | Step counts and doubling ratios | 1 to 7, AC1 homework, exam Q1 to Q3 | `trace-recorder` line-hit counts at $n = 0$ to 64 and at every $n$ an item names | The closed form, checked by SymPy equivalence over $n$ and by exact integers at the named $n$ (lesson 1's 31,626, 126,756, 1,769 and 4,034 came from this check) | `expression` by `cas` equivalence; numeric exact |
 | Recurrences | 12, 13, exam Q4 | Exact evaluation of $T(n)$ for $n = 2^k$, $k \le 20$, by memoised recursion | The master-theorem class or recursion-tree sum, compared by the ratio $T(2n)/T(n)$ at $k = 20$ | Expression; class by choice |
 | Algorithm states (sorts, heaps, deques, trees, graphs, union-find, DP tables) | Every `sort-lab`, `heap-lab`, `stack-queue-lab`, `tree-lab`, `graph-search`, `shortest-path`, `union-find`, `dp-table` screen | A Python reference that logs every step | The widget's JavaScript `algo-trace` service must produce the same event log on 500 generated inputs per family, and each predicate (`moveMatchesAlgorithm`, `isHeap`, `isTopoOrder`, `isValidBST`, `isMST`) accepts every correct state and rejects every seeded wrong state | Predicate on state; reconstructions by predicate |
-| Generators | Every `gen.alg.*` | A TypeScript generator | A Python verifier written from the specification without reading the TypeScript, enumerating the parameter box: admissibility, difficulty, answer and every misconception value agree (`content-format.md` 5.6) | As the family |
+| Generators | Every `gen.dsa.*` | A TypeScript generator | A Python verifier written from the specification without reading the TypeScript, enumerating the parameter box: admissibility, difficulty, answer and every misconception value agree (`CONTENT-FORMAT.md` 5.6) | As the family |
 | Code drills | 78 homework drills, 102 Gym problems, the 12 C++ Lab re-solves | The reference passes every hidden test on both runtimes with `needs: []` | Every `wrong/` file fails the test it names; every kept mutant of the reference fails a hidden test; a brute force agrees with the reference on at least 2,000 random small inputs | `code` check; marks by tests passed |
 | Complexity tests | Every drill whose pattern is the point (decision 9) | Line budget and time ratio on a size ladder (`widgets-programming.md` 2.2.1) | A planted slower solution fails and the reference passes in 50 of 50 runs on the reference device | Pass or fail, with the measured exponent in words |
 | Recursion depth | Recursive drills and lessons (decision 25) | Tests run with the recursion limit set to 600 | Inputs deeper than 500 are generated only for drills that ask for an iterative solution, and the statement says so | As the drill |
-| Held-out banks | `pool.alg.timed` (40), `pool.alg.exam-mediums` (16), `pool.alg.exam-proofs` (12) | Isolation lint: no item of a held-out pool appears in lessons, practice, homework, level reviews, redo variants or Bertie's picks (`assessment.md` 3.2 rule 5) | Pattern-group tags checked so that 9 consecutive window attempts can avoid repeating a group | As code items |
+| Held-out banks | `pool.dsa.timed` (40), `pool.dsa.exam-mediums` (16), `pool.dsa.exam-proofs` (12) | Isolation lint: no item of a held-out pool appears in lessons, practice, homework, level reviews, redo variants or Bertie's picks (`ASSESSMENT.md` 3.2 rule 5) | Pattern-group tags checked so that 9 consecutive window attempts can avoid repeating a group | As code items |
 | Originality | Every problem statement (decision 6) | Titles compared with the NeetCode 150 and CSES title lists; an exact or near match fails the build | A reviewer confirms the statement, numbers and setting are ours; the named NeetCode pointer is a link, never text | Not graded |
 | Probabilistic claims | 17, 20, 25, 63, 75 to 77 | Exact values by `fractions` and enumeration (quicksort's expected comparisons for $n = 4$, expected empty buckets) | Simulation within 4 standard errors for 20 seeds; the linear-probing formula and the simulation are both quoted where they differ (lesson 26) | Numeric with stated tolerance |
 
@@ -3228,7 +3228,7 @@ Every answer is machine-checked twice before it ships (`content-format.md` secti
 | Predict the output | Every `predict-output` and `code-tracer` C++ screen; exam Q3, Q5, Q10, Q12 | Build and run on GCC and on Clang at `-O0` and `-O2` | All four recordings must agree; an item whose output differs between compilers or levels is rewritten, or states the compiler (exam Q3's warning, which GCC gives and Clang 18 did not) | `output` with normalised whitespace |
 | Undefined behaviour | 9, 10, 26, 27, 68, exam Q4 | The sanitiser build must report the stated error kind at the stated line | The item never records an "output" for UB: the screen shows the sanitiser report or the compiler's assumption (the signed-overflow loop: 31 iterations at `-O0`, no end at `-O2` on both compilers) | Set of lines; matching to report kinds |
 | Diagnostics | 2, 3, 17, exam Q1 and Q2 | The recorded first diagnostic of each compiler | The stage (preprocessor, compiler, linker) is derived from which tool printed it, not from its wording | Sort or choice |
-| Layout and sizes | 33, exam Q9 | `sizeof`, `alignof` and `offsetof` printed by the build | `static_assert` of the stated values in the snippet itself, so a platform change fails the build | Numeric exact; the aids card states LP64 |
+| Layout and sizes | 28, exam Q9 | `sizeof`, `alignof` and `offsetof` printed by the build | `static_assert` of the stated values in the snippet itself, so a platform change fails the build | Numeric exact; the aids card states LP64 |
 | Code-blanks and Parsons | Exam Q8; lessons with `code-blanks` | Each accepted fill compiled and run against the item's tests | Each rejected fill's failure recorded (compile error or failing test) and used as its feedback | Token match against the compiled set |
 | Drills (web or local) | CB to CP homework, C++ Lab, `prj.cpp.mc-pricer` | doctest suites pass on GCC and Clang, Release and sanitised builds | `wrong/` files fail their named tests; a sanitiser finding in the reference fails the build | `code` check through `cpp-runner` on the web (open item 1), or paste-verify of the doctest summary |
 | Floating point and randomness | 63 to 67, exam Q16 and Q17 | Recorded on both standard libraries where available (libstdc++; libc++ when the pinned Clang ships it) [check] | Engine outputs (`mt19937`'s 10,000th value 4,123,659,995) are fixed by the standard; distribution outputs are never answers because they are implementation-defined | Numeric; choice |
@@ -3248,7 +3248,7 @@ Every answer is machine-checked twice before it ships (`content-format.md` secti
 
 ### 6.4 Long-form items and what running found
 
-**Long-form items** are never auto-passed or auto-failed. CI evaluates every number in a model answer as arithmetic, runs any code in it, and checks rubric anchoring: every rubric point names the model-answer lines it marks, and every line is used by a point. Learners self-mark against the rubric with Bertie's per-point suggestion (`ai-tutor.md` 2.7), and the result stays provisional until confirmed (`assessment.md` 3.5).
+**Long-form items** are never auto-passed or auto-failed. CI evaluates every number in a model answer as arithmetic, runs any code in it, and checks rubric anchoring: every rubric point names the model-answer lines it marks, and every line is used by a point. Learners self-mark against the rubric with Bertie's per-point suggestion (`AI-TUTOR.md` 2.7), and the result stays provisional until confirmed (`ASSESSMENT.md` 3.5).
 
 **What running found while writing this draft** (all fixed in the text above):
 
@@ -3267,15 +3267,15 @@ Every answer is machine-checked twice before it ships (`content-format.md` secti
 
 ## 7. Sample lesson in full: What happens when the input doubles
 
-**Why this lesson.** It is the root of 1.8's dependency graph and the first question of 1.9 and 2.4 as well. Every later analysis (big O in lesson 3, amortised appends in lesson 4, recurrences in 12 and 13, every complexity test in every drill, the subnormal slowdown in 1.9 lesson 78, contest constraints in 2.4 lesson 2) asks how cost changes when the input grows. The doubling ratio is that question in its most concrete form: run it twice, divide. Stage 0 taught logarithms as counts and 1.1 timed `x in list`, but nothing so far has asked a learner to predict growth from code. It is written at the level an author hands to the YAML stage (`content-format.md` 3.7, 3.10 and 10): every screen, widget configuration in plain words, check, diagnosis, hint ladder, Why?, solution and tutor fields. Copy follows design research 9.2: second person, sentences of at most 20 words, no exclamation marks, a term named only after it has been used. Every count, ratio and recorded output below was computed by running the code [verified]; the two timings are [measured] and are marked as one machine's.
+**Why this lesson.** It is the root of 1.8's dependency graph and the first question of 1.9 and 2.4 as well. Every later analysis (big O in lesson 3, amortised appends in lesson 4, recurrences in 12 and 13, every complexity test in every drill, the subnormal slowdown in 1.9 lesson 78, contest constraints in 2.4 lesson 2) asks how cost changes when the input grows. The doubling ratio is that question in its most concrete form: run it twice, divide. Stage 0 taught logarithms as counts and 1.1 timed `x in list`, but nothing so far has asked a learner to predict growth from code. It is written at the level an author hands to the YAML stage (`CONTENT-FORMAT.md` 3.7, 3.10 and 10): every screen, widget configuration in plain words, check, diagnosis, hint ladder, Why?, solution and tutor fields. Copy follows design research 9.2: second person, sentences of at most 20 words, no exclamation marks, a term named only after it has been used. Every count, ratio and recorded output below was computed by running the code [verified]; the two timings are [measured] and are marked as one machine's.
 
 **What it inherits.** 0.3 lesson 49 counted halvings (1,024 layers from 10 folds); 1.1 lesson 12 counted loop runs; 1.1 lesson 28 showed that `x in list` scans the list. This lesson joins them: it counts a program's work at $n$ and at $2n$ and reads the law from the ratio.
 
 **Rules that apply to every screen here.**
 
-- **Hints** open after the lesson's first Check and climb Nudge, Point, Step; Show solution appears after two not-yet results on a screen (design research 5.4 and 5.5; `ai-tutor.md` 2.2).
+- **Hints** open after the lesson's first Check and climb Nudge, Point, Step; Show solution appears after two not-yet results on a screen (design research 5.4 and 5.5; `AI-TUTOR.md` 2.2).
 - **Element references** use `<widget id>/<kind>:<name>`. Code lines are `code/line:1` onward (on screen 2, the three cards are `codeA`, `codeB` and `codeC`); `value-table` cells are `table/cell:<row>,<col>`; `cell-grid` cells are `grid/cell:<r>,<c>`; race lanes are `race/lane:A`, `race/lane:B`, `race/lane:C`.
-- **Bertie** follows the lesson player (`bertie.md` 5.3): `correct` or `notyet` on grading, `surprised` on the trap reveal (screen 8), `celebrate` at the end.
+- **Bertie** follows the lesson player (`BERTIE.md` 5.3): `correct` or `notyet` on grading, `surprised` on the trap reveal (screen 8), `celebrate` at the end.
 - **Tutor fields** hold no value a screen's check accepts; numbers that are answers are described in words ("the four-fold count").
 - **Runtime.** `needs: []`. No screen runs live code: every program is authored, and its hit counts and outputs are recorded in CI, so the lesson runs identically on both targets with Python never loaded.
 
@@ -3290,32 +3290,32 @@ Every answer is machine-checked twice before it ships (`content-format.md` secti
 | `frame.why` | Data only grows. A backtest that runs in 2 seconds on a year must still run on ten years, and a risk model built for 500 stocks will be asked for 3,000. Knowing how cost grows tells you, before you wait, whether the bigger run takes minutes or days. |
 | `frame.before` | 0.3 lesson 49 counted how many halvings reach 1; 1.1 lesson 28 showed that `x in list` checks the items one by one. Here you use both to predict a program's time on twice the data. |
 | `insight` | The work at $2n$ divided by the work at $n$ settles, as $n$ grows, at a number that names the program: 2 for one pass, 4 for every pair, 8 for every triple, and "one more step" for halving. |
-| `introduces` | `skl.alg.doubling-ratio`, `skl.alg.growth-law`, `skl.alg.hidden-scan` |
+| `introduces` | `skl.dsa.doubling-ratio`, `skl.dsa.growth-law`, `skl.dsa.hidden-scan` |
 | `uses`, `requires` | `skl.pre.log-definition` (0.3 lesson 49); the loop-count and operation-cost skills of 1.1 lessons 12 and 28 (ids as `stage1-python-tools.md` assigns them [check]) |
-| `terms` | `gls.alg.doubling-ratio`, `gls.alg.growth-law`, `gls.alg.linear`, `gls.alg.quadratic`, `gls.alg.cubic`, `gls.alg.logarithmic` |
+| `terms` | `gls.dsa.doubling-ratio`, `gls.dsa.growth-law`, `gls.dsa.linear`, `gls.dsa.quadratic`, `gls.dsa.cubic`, `gls.dsa.logarithmic` |
 | Embargoed terms | "big O", "Theta" and "asymptotic" (lesson 3); "complexity" as a technical word (lesson 3); "amortised" (lesson 4); "n log n" as a name before screen 6 |
 | Common trap | Twice the data means twice the time, even for a loop with a hidden scan inside (screen `dedupe`) |
 | `edgeCases` | Small inputs blur the law: 4 to 8 days multiplies pairs by 4.67, not 4 (`pair-grid`, `exact-ratio`); a halving loop gains one step instead of multiplying (`halving`); a fixed start-up cost makes a linear program's ratio look below 2 (`start-up`); a pass of halving searches grows by a little more than 2 (`search-each`) |
 | `workedExample` | `at: search-each`. Naive: "A loop inside a loop, like version B, so four times the work." Decision: "Ask whether the inner loop's length grows with $n$ or halves." |
 | `est` | 14 minutes: 12 screens (about 10.5 minutes) and a 4-item quiz (about 3.5 minutes) |
 | `needs` | `[]` |
-| `sources` | `src.grokking` (`parallel-reading`: ch. 1, the big O section [check]); `src.mit-6006-2020` (`further`: lecture 1 [check]) |
+| `sources` | `src.grokking` (`parallel-reading`: ch. 1, the big O section; chapter verified, section name [check]); `src.mit-6006-2020` (`further`: lecture 1, Algorithms and Computation [recalled]) |
 | `art` | `ast.course-art.doubling`: Bertie holding a stopwatch beside a stack of paper that is twice as tall as the one beside it |
 
-**Misconceptions this lesson diagnoses** (new library entries, `mc.alg.*`):
+**Misconceptions this lesson diagnoses** (new library entries, `mc.dsa.*`):
 
 | Id | `belief`, as a learner would put it | `correction` |
 |---|---|---|
-| `mc.alg.double-means-double` | "Twice the data always takes twice the time." | Only a single pass doubles; the ratio depends on how the work is built from the input. |
-| `mc.alg.nested-always-square` | "A loop inside a loop always quadruples." | Only if the inner loop's length grows with $n$; an inner loop that halves adds one step. |
-| `mc.alg.log-doubles` | "Halving steps double when the input doubles." | Doubling the input adds one halving. |
-| `mc.alg.one-loop-linear` | "One visible loop means the time doubles." | Built-in operations such as `in` on a list hide a loop of their own. |
-| `mc.alg.fixed-cost-sublinear` | "A ratio below 2 means the program grows more slowly than the data." | A fixed start-up cost drags small-input ratios down; subtract it or measure larger sizes. |
-| `mc.alg.exact-four` | "Pairs multiply by exactly 4." | By $4 + \frac{2}{n-1}$: close to 4 only for large $n$. |
-| `mc.alg.pair-includes-self` | "A day is compared with itself." | A pair is two different days. |
-| `mc.alg.ordered-pairs` | "Day 2 with day 5 and day 5 with day 2 are two comparisons." | One comparison per unordered pair. |
-| `mc.alg.ratio-of-n` | "The doubling ratio is 2 because $n$ doubled." | The ratio divides the two costs, not the two inputs. |
-| `mc.alg.square-for-all` | "Doubling multiplies every nested count by 4." | Each nested level multiplies by 2: triples give 8. |
+| `mc.dsa.double-means-double` | "Twice the data always takes twice the time." | Only a single pass doubles; the ratio depends on how the work is built from the input. |
+| `mc.dsa.nested-always-square` | "A loop inside a loop always quadruples." | Only if the inner loop's length grows with $n$; an inner loop that halves adds one step. |
+| `mc.dsa.log-doubles` | "Halving steps double when the input doubles." | Doubling the input adds one halving. |
+| `mc.dsa.one-loop-linear` | "One visible loop means the time doubles." | Built-in operations such as `in` on a list hide a loop of their own. |
+| `mc.dsa.fixed-cost-sublinear` | "A ratio below 2 means the program grows more slowly than the data." | A fixed start-up cost drags small-input ratios down; subtract it or measure larger sizes. |
+| `mc.dsa.exact-four` | "Pairs multiply by exactly 4." | By $4 + \frac{2}{n-1}$: close to 4 only for large $n$. |
+| `mc.dsa.pair-includes-self` | "A day is compared with itself." | A pair is two different days. |
+| `mc.dsa.ordered-pairs` | "Day 2 with day 5 and day 5 with day 2 are two comparisons." | One comparison per unordered pair. |
+| `mc.dsa.ratio-of-n` | "The doubling ratio is 2 because $n$ doubled." | The ratio divides the two costs, not the two inputs. |
+| `mc.dsa.square-for-all` | "Doubling multiplies every nested count by 4." | Each nested level multiplies by 2: triples give 8. |
 
 **Screen map.**
 
@@ -3346,7 +3346,7 @@ Two non-task screens, the limit of design research 5.8. Screen estimates total 6
 
 #### Screen 2: `backtest` (`problem`, the hook, difficulty 1)
 
-- **Skills:** `skl.alg.doubling-ratio`.
+- **Skills:** `skl.dsa.doubling-ratio`.
 - **Prose:** "A backtest covers one year, 252 trading days. It could be written three ways, and each takes 2 seconds on one year. Next month it must cover two years."
 - **Canvas:** `codeA`, `codeB` and `codeC`, three read-only cards side by side (stacked on phones):
 
@@ -3372,9 +3372,9 @@ for day in days:
 
 | Part and answer | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| B, "about 4 s" | `mc.alg.double-means-double` | "Twice the days gives twice as many rows of comparisons, and each row is twice as long." | The race plays lane B: 31,626 comparisons become 126,756 |
-| C, "about 8 s" | `mc.alg.nested-always-square` | "Each search halves the sorted list. Twice the days adds one step to a search; it does not double it." | The race plays lane C: 1,769 probes become 4,034 |
-| C, "about 4 s" | `mc.alg.log-doubles` (near miss) | "Close. There are twice as many searches, and each is one step longer, so a little more than double." | Lane C, with probes per search shown: 7.0 and 8.0 |
+| B, "about 4 s" | `mc.dsa.double-means-double` | "Twice the days gives twice as many rows of comparisons, and each row is twice as long." | The race plays lane B: 31,626 comparisons become 126,756 |
+| C, "about 8 s" | `mc.dsa.nested-always-square` | "Each search halves the sorted list. Twice the days adds one step to a search; it does not double it." | The race plays lane C: 1,769 probes become 4,034 |
+| C, "about 4 s" | `mc.dsa.double-means-double` (near miss) | "Close. There are twice as many searches, and each is one step longer, so a little more than double." | Lane C, with probes per search shown: 7.0 and 8.0 |
 | A, anything but "about 4 s" | `slip` | "Version A does one step per day. Twice the days, twice the steps." | Lane A |
 
 - **Otherwise:** "For each version, ask how much more work a second year adds."
@@ -3386,7 +3386,7 @@ for day in days:
 
 #### Screen 3: `pair-grid` (`problem`, manipulation, difficulty 1)
 
-- **Skills:** `skl.alg.doubling-ratio`.
+- **Skills:** `skl.dsa.doubling-ratio`.
 - **Prose:** "Count version B's work by hand. A shaded square means one comparison of a day with a later day."
 - **Canvas:** `grid`, a `cell-grid` of 8 by 8 (`select: 'paint'`), rows and columns labelled day 1 to day 8. Only cells above the diagonal are paintable; the diagonal and the cells below it are grey. Part 1 outlines the top-left 4-by-4 corner and locks the rest; part 2 unlocks all eight days and keeps part 1's shading.
 - **Questions and checks:**
@@ -3397,10 +3397,10 @@ for day in days:
 
 | Learner state | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| Tries to paint a diagonal cell | `mc.alg.pair-includes-self` | "A day is not compared with itself. A pair is two different days." | The cell flashes grey and stays unpainted |
-| Paints a cell below the diagonal (part 2 shows a mirrored ghost) | `mc.alg.ordered-pairs` | "Day 2 with day 5 is the same comparison as day 5 with day 2. Each pair is shaded once, above the diagonal." | The ghost folds onto its mirror above the diagonal |
-| Part 3: 2 | `mc.alg.double-means-double` | "The days doubled; the pairs went from 6 to 28." | Count both shaded regions aloud |
-| Part 3: 4 | near miss (`mc.alg.exact-four`) | "Close: 28 over 6 is a bit more than 4. Screen 10 shows why." | None |
+| Tries to paint a diagonal cell | `mc.dsa.pair-includes-self` | "A day is not compared with itself. A pair is two different days." | The cell flashes grey and stays unpainted |
+| Paints a cell below the diagonal (part 2 shows a mirrored ghost) | `mc.dsa.ordered-pairs` | "Day 2 with day 5 is the same comparison as day 5 with day 2. Each pair is shaded once, above the diagonal." | The ghost folds onto its mirror above the diagonal |
+| Part 3: 2 | `mc.dsa.double-means-double` | "The days doubled; the pairs went from 6 to 28." | Count both shaded regions aloud |
+| Part 3: 4 | near miss (`mc.dsa.exact-four`) | "Close: 28 over 6 is a bit more than 4. Screen 10 shows why." | None |
 
 - **Otherwise:** "Start with day 1. How many later days can it meet?"
 - **Reason:** "6 pairs for 4 days, 28 for 8: a factor of 14/3, about 4.67."
@@ -3411,7 +3411,7 @@ for day in days:
 
 #### Screen 4: `ratio` (`problem`, naming the idea, difficulty 1)
 
-- **Skills:** `skl.alg.growth-law`.
+- **Skills:** `skl.dsa.growth-law`.
 - **Prose:** "You just found a **doubling ratio**: the work at $2n$ divided by the work at $n$. Where it settles as $n$ grows names the program's **growth law**. Settling at 2 means the work grows in step with $n$: **linear**. Settling at 4 means it grows like $n^2$: **quadratic**."
 - **Canvas:** `code`, a `code-tracer` in `hits` mode on version B, with line 3's recorded hit counts in a `table`:
 
@@ -3426,7 +3426,7 @@ for day in days:
 
 | Answer | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| 2 or 2.000 | `mc.alg.ratio-of-n` | "That is 2,000 over 1,000, the days. The ratio divides the comparisons." | Highlight `table/cell:2,6` over `table/cell:2,5` |
+| 2 or 2.000 | `mc.dsa.ratio-of-n` | "That is 2,000 over 1,000, the days. The ratio divides the comparisons." | Highlight `table/cell:2,6` over `table/cell:2,5` |
 | 0.250 | `slip` | "That is the small count over the large. Put the work at 2,000 days on top." | Same |
 | 4 or 4.000 | near miss | "Round to three places: the ratio is a little above 4." | None |
 
@@ -3439,7 +3439,7 @@ for day in days:
 
 #### Screen 5: `halving` (`ladder`, difficulty 2)
 
-- **Skills:** `skl.alg.growth-law`.
+- **Skills:** `skl.dsa.growth-law`.
 - **Constraint added:** a loop whose remaining work halves.
 - **Prose:** "Version C's search halves what is left at every step. Here is halving on its own."
 - **Canvas:** `code`, a `code-tracer` in `hits` mode with the recorded run for $n = 252$ (the values of `n` shown: 252, 126, 63, 31, 15, 7, 3, 1, 0; line 3 runs 8 times).
@@ -3457,8 +3457,8 @@ while n > 0:
 
 | Answer | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| 16 (then 32) | `mc.alg.log-doubles` | "Doubling $n$ does not double the halvings. The first step takes 504 to 252, then the old path runs again." | Play $n = 504$: the first value, then the eight values already on screen |
-| 9, then 18 | `mc.alg.log-doubles` (second part) | "Each doubling adds one step: 9, then 10." | Play $n = 1{,}008$ |
+| 16 (then 32) | `mc.dsa.log-doubles` | "Doubling $n$ does not double the halvings. The first step takes 504 to 252, then the old path runs again." | Play $n = 504$: the first value, then the eight values already on screen |
+| 9, then 18 | `mc.dsa.log-doubles` (second part) | "Each doubling adds one step: 9, then 10." | Play $n = 1{,}008$ |
 
 - **Otherwise:** "Write the first value of `n` after one step, then reuse the 252 run."
 - **Reason:** "504 halves to 252 in one step, then follows the 8 steps you saw: 9 in all, and 10 for 1,008."
@@ -3469,7 +3469,7 @@ while n > 0:
 
 #### Screen 6: `search-each` (`ladder`, the worked example, difficulty 3)
 
-- **Skills:** `skl.alg.growth-law`.
+- **Skills:** `skl.dsa.growth-law`.
 - **Constraint added:** a halving loop inside a loop over all $n$.
 - **Prose:** "Version C runs one binary search per day. The searches halve, but there are $n$ of them."
 - **Canvas:** `code`, a `code-tracer` in `hits` mode, recorded for 252 days (line 5 runs 1,769 times); `race`, lane C only, hidden until Check.
@@ -3498,9 +3498,9 @@ for day in days:                     # one search per day
 
 | Answer | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| Part 2: 7,076 | `mc.alg.nested-always-square` | "That holds if each search scans the list. It halves it, so each search grows by one probe, not by a factor of 2." | Lane C plays: 1,769 to 4,034 |
-| Part 2: 3,538 | `mc.alg.double-means-double` | "That doubles the searches but keeps each one 7 probes long. Each is one probe longer on 504 days." | Probes per search shown: 7.0 then 8.0 |
-| Part 3: 8 s | `mc.alg.nested-always-square` | "Four times the work would be 8 s; the work grew 2.28 times." | Lane C |
+| Part 2: 7,076 | `mc.dsa.nested-always-square` | "That holds if each search scans the list. It halves it, so each search grows by one probe, not by a factor of 2." | Lane C plays: 1,769 to 4,034 |
+| Part 2: 3,538 | `mc.dsa.double-means-double` | "That doubles the searches but keeps each one 7 probes long. Each is one probe longer on 504 days." | Probes per search shown: 7.0 then 8.0 |
+| Part 3: 8 s | `mc.dsa.nested-always-square` | "Four times the work would be 8 s; the work grew 2.28 times." | Lane C |
 | Part 3: 4.0 s | near miss | "Close: the searches got longer as well as more numerous." | None |
 
 - **Otherwise:** "Multiply the number of searches by the probes per search, at each size."
@@ -3512,7 +3512,7 @@ for day in days:                     # one search per day
 
 #### Screen 7: `start-up` (`ladder`, the edge case, difficulty 2)
 
-- **Skills:** `skl.alg.growth-law`.
+- **Skills:** `skl.dsa.growth-law`.
 - **Constraint added:** a cost that does not depend on the input.
 - **Prose:** "A colleague times another backtest at 1, 2, 4 and 8 years. This table is constructed for the lesson."
 - **Canvas:** `table`:
@@ -3528,9 +3528,9 @@ for day in days:                     # one search per day
 
 | Option | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| a | `mc.alg.fixed-cost-sublinear` | "The ratios are climbing towards 2. Take away a fixed 1.5 s and the rest is 0.5, 1.0, 2.0 and 4.0: exact doubling." | The plot appears: a straight line meeting the time axis at 1.5 s; the fixed part shades grey |
-| c | `mc.alg.log-doubles` | "A logarithmic program adds the same time per doubling. Here the additions are 0.5, 1.0 and 2.0 s, and they double." | The differences appear between columns |
-| d | `mc.alg.square-for-all` | "Quadratic would multiply the growing part by 4 per doubling; it multiplies by 2." | Same |
+| a | `mc.dsa.fixed-cost-sublinear` | "The ratios are climbing towards 2. Take away a fixed 1.5 s and the rest is 0.5, 1.0, 2.0 and 4.0: exact doubling." | The plot appears: a straight line meeting the time axis at 1.5 s; the fixed part shades grey |
+| c | `mc.dsa.log-doubles` | "A logarithmic program adds the same time per doubling. Here the additions are 0.5, 1.0 and 2.0 s, and they double." | The differences appear between columns |
+| d | `mc.dsa.square-for-all` | "Quadratic would multiply the growing part by 4 per doubling; it multiplies by 2." | Same |
 
 - **Otherwise:** "Look at the differences between columns."
 - **Reason:** "A fixed 1.5 s plus 0.5 s per year: linear, with the fixed part hiding it at small sizes."
@@ -3541,8 +3541,8 @@ for day in days:                     # one search per day
 
 #### Screen 8: `dedupe` (`trap`, difficulty 2)
 
-- **Skills:** `skl.alg.hidden-scan`.
-- **Trap:** `{ mc: mc.alg.one-loop-linear, bait: a }`.
+- **Skills:** `skl.dsa.hidden-scan`.
+- **Trap:** `{ mc: mc.dsa.one-loop-linear, bait: a }`.
 - **Prose:** "A cleaning step removes repeated trade ids. On 20,000 trades it takes 1.1 seconds. Most people get the next question wrong."
 - **Canvas:** `code`, a `code-tracer` in `hits` mode; before Check it shows the code only.
 
@@ -3559,21 +3559,21 @@ for t in trade_ids:
 
 | Option | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| a | `mc.alg.one-loop-linear` | "There is a second loop inside `not in`: it compares `t` with every id already in `seen`, and `seen` grows with the trades." | The tracer expands line 3 into a virtual inner loop [mode to add: hidden-scan hits] and shows its counts: 199,990,000 comparisons at 20,000 trades, 799,980,000 at 40,000 |
-| c | `mc.alg.log-doubles` | "Nothing here halves. Every new id is checked against every id before it." | Same |
-| d | `mc.alg.square-for-all` | "Eight times would need a third loop. Two loops, both growing with $n$, give four times." | Same |
+| a | `mc.dsa.one-loop-linear` | "There is a second loop inside `not in`: it compares `t` with every id already in `seen`, and `seen` grows with the trades." | The tracer expands line 3 into a virtual inner loop [mode to add: hidden-scan hits] and shows its counts: 199,990,000 comparisons at 20,000 trades, 799,980,000 at 40,000 |
+| c | `mc.dsa.log-doubles` | "Nothing here halves. Every new id is checked against every id before it." | Same |
+| d | `mc.dsa.square-for-all` | "Eight times would need a third loop. Two loops, both growing with $n$, give four times." | Same |
 
 - **On reveal:** the lesson player plays Bertie's `surprised` one-shot.
 - **Reason:** "`not in` scans `seen`, so the cleaner compares every pair of ids: four times the work, about 4.4 s."
 - **Hints:** Nudge: "What does `t not in seen` do, step by step?" Point: "1.1 lesson 28 timed this line." (highlights `code/line:3`). Step: "`not in` compares `t` with each id in `seen`. Over the whole run that is every pair of ids, version B's count, so the time quadruples."
-- **Why?** Shown: "The cleaner makes $\frac{n(n-1)}{2}$ comparisons: the pair count again." Then: "On one machine it took 1.06 s and 4.88 s [measured], a little over 4 times because the bigger list fits the cache less well. With a `set`, each lookup is one step (lesson 25) and both sizes ran in under 0.01 s." `rep`: counting.
+- **Why?** Shown: "The cleaner makes $\frac{n(n-1)}{2}$ comparisons: the pair count again." Then: "On one machine it took 1.06 s and 4.88 s [measured], about 4.6 times: the count quadruples, and the bigger list fits the cache less well. With a `set`, each lookup is one step (lesson 25) and both sizes ran in under 0.01 s." `rep`: counting.
 - **Solution:** the virtual inner loop plays; text: "One visible loop, one hidden one. Count the hidden one."
-- **Recording:** a wrong first try on a trap is expected; a revealed trap screen is recorded but does not enter the Redo queue (`assessment.md` 2.2).
+- **Recording:** a wrong first try on a trap is expected; a revealed trap screen is recorded but does not enter the Redo queue (`ASSESSMENT.md` 2.2).
 - **Tutor:** focus: "Built-in operations can hide a loop." Notes: "Learners who did 1.1 lesson 28 may get this right; ask them which other built-ins scan (`list.index`, `list.remove`, `insert(0, x)`)." Reps: counting; the grid from screen 3. Avoid: "hash" before lesson 25.
 
 #### Screen 9: `rule` (`generalise`, difficulty 2)
 
-- **Skills:** `skl.alg.growth-law`.
+- **Skills:** `skl.dsa.growth-law`.
 - **Rule (prose):** "You found the laws by doubling the input and dividing. One pass doubled the work. Every pair multiplied it by about 4. Halving added one step. A pass of halving searches grew a little more than 2 times. In general, work that grows like $n^k$ is multiplied by $2^k$ when $n$ doubles."
 - **Card on the screen:**
 
@@ -3593,8 +3593,8 @@ for t in trade_ids:
 | Answer | Misconception | Feedback line | Show-why |
 |---|---|---|---|
 | Part 1: $2k$ | `slip` | "$(2n)^k$ is $2^k n^k$: the 2 is raised to the power $k$, not multiplied by it." | Expand $(2n)^3$ as $2n \cdot 2n \cdot 2n$ |
-| Part 2: about 5,250,000 | `mc.alg.square-for-all` | "Triples, not pairs: each of three nested choices doubles, so $2^3 = 8$." | The card's cubic row highlights |
-| Part 2: about 2,630,000 | `mc.alg.double-means-double` | "That doubles the triples. Triples grow like $n^3$." | Same |
+| Part 2: about 5,250,000 | `mc.dsa.square-for-all` | "Triples, not pairs: each of three nested choices doubles, so $2^3 = 8$." | The card's cubic row highlights |
+| Part 2: about 2,630,000 | `mc.dsa.double-means-double` | "That doubles the triples. Triples grow like $n^3$." | Same |
 
 - **Otherwise:** "Find $k$ for triples, then use the line you completed."
 - **Reason:** "$2^k$; triples have $k = 3$, so about 8 times: about 10.5 million, and the exact count is 10,586,800."
@@ -3605,7 +3605,7 @@ for t in trade_ids:
 
 #### Screen 10: `exact-ratio` (`derive`, difficulty 3)
 
-- **Skills:** `skl.alg.doubling-ratio`.
+- **Skills:** `skl.dsa.doubling-ratio`.
 - **Prose:** "Your ratios for version B were 4.667, 4.008 and 4.002, never exactly 4. Derive the exact ratio."
 - **Canvas:** `derivation-steps` in fill mode:
   1. Given: "Pairs among $n$ days: $P(n) = \dfrac{n(n-1)}{2}$" (from screen 3's rows: $(n-1) + (n-2) + \dots + 1$).
@@ -3618,9 +3618,9 @@ for t in trade_ids:
 
 | Learner state | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| Line 2 as $2 \cdot \frac{n(n-1)}{2}$ | `mc.alg.double-means-double` | "Replace every $n$ by $2n$, including the one inside $n - 1$." | Substitute $n = 4$: 28 pairs, not 12 |
-| Line 2 as $4 \cdot \frac{n(n-1)}{2}$ | `mc.alg.exact-four` | "That assumes the answer. Replace $n$ by $2n$ inside the formula." | Substitute $n = 4$: 28, not 24 |
-| Line 3 as 4 | `mc.alg.exact-four` | "Divide the two expressions; the $-1$ terms do not cancel." | Evaluate at $n = 4$ |
+| Line 2 as $2 \cdot \frac{n(n-1)}{2}$ | `mc.dsa.double-means-double` | "Replace every $n$ by $2n$, including the one inside $n - 1$." | Substitute $n = 4$: 28 pairs, not 12 |
+| Line 2 as $4 \cdot \frac{n(n-1)}{2}$ | `mc.dsa.exact-four` | "That assumes the answer. Replace $n$ by $2n$ inside the formula." | Substitute $n = 4$: 28, not 24 |
+| Line 3 as 4 | `mc.dsa.exact-four` | "Divide the two expressions; the $-1$ terms do not cancel." | Evaluate at $n = 4$ |
 
 - **Otherwise:** "Substitute $2n$ for $n$ everywhere in line 1."
 - **Reason:** "$P(2n) = n(2n - 1)$ and the ratio is $\frac{2(2n-1)}{n-1}$, which tends to 4."
@@ -3632,7 +3632,7 @@ for t in trade_ids:
 
 #### Screen 11: `universe` (`problem`, `context: quant`, the transfer, difficulty 2)
 
-- **Skills:** `skl.alg.growth-law`.
+- **Skills:** `skl.dsa.growth-law`.
 - **Prose:** "A risk model computes the correlation of every pair of stocks over the same history. For 500 stocks it takes 0.5 seconds. The universe grows to 3,000 stocks."
 - **Question:** "About how long for 3,000 stocks?"
 - **Input:** `numeric-input`, seconds. **Check:** `numeric`, accepted 17 to 19 (the pair counts are 124,750 and 4,498,500, a ratio of 36.06, so 18.03 s).
@@ -3640,9 +3640,9 @@ for t in trade_ids:
 
 | Answer | Misconception | Feedback line | Show-why |
 |---|---|---|---|
-| 3 | `mc.alg.double-means-double` | "That scales the stocks by 6. The work counts pairs of stocks." | Show the two pair counts |
+| 3 | `mc.dsa.double-means-double` | "That scales the stocks by 6. The work counts pairs of stocks." | Show the two pair counts |
 | 36 | `slip` | "36 is the ratio of the pair counts. Multiply the 0.5 s by it." | None |
-| 1 to 1.5 | `mc.alg.log-doubles` | "Nothing halves here; every stock meets every other." | Show the pair counts |
+| 1 to 1.5 | `mc.dsa.log-doubles` | "Nothing halves here; every stock meets every other." | Show the pair counts |
 
 - **Otherwise:** "Count pairs at both sizes, then scale the 0.5 s."
 - **Reason:** "Six times the stocks gives about $6^2 = 36$ times the pairs: about 18 s."
@@ -3657,7 +3657,7 @@ for t in trade_ids:
   1. Double the input and divide the costs: the ratio, read at large $n$, names the growth law: 2 linear, 4 quadratic, 8 cubic, $2^k$ for $n^k$, one more step for logarithmic, a little over 2 for $n \log n$.
   2. Count every basic step, including the loops hidden inside built-ins such as `in` on a list.
   3. Small inputs and fixed start-up costs blur the ratio; read it where they no longer matter.
-- **Notebook card** (`crd.alg.doubling`): "Doubling ratio $= \text{cost}(2n) / \text{cost}(n)$. One pass: 2. Every pair: $4 + \frac{2}{n-1}$, so 4. Triples: 8. $n^k$: $2^k$. Halving: plus one step. $n$ searches that halve: about $2(1 + 1/\log_2 n)$. Hidden scans: `x in list`, `list.index`, `list.remove`, `insert(0, x)`."
+- **Notebook card** (`crd.dsa.doubling`): "Doubling ratio $= \text{cost}(2n) / \text{cost}(n)$. One pass: 2. Every pair: $4 + \frac{2}{n-1}$, so 4. Triples: 8. $n^k$: $2^k$. Halving: plus one step. $n$ searches that halve: about $2(1 + 1/\log_2 n)$. Hidden scans: `x in list`, `list.index`, `list.remove`, `insert(0, x)`."
 - **Common trap line:** "Twice the data is not always twice the time: one hidden scan inside a loop makes it four times."
 - **Bertie:** `celebrate` when the lesson completes.
 
@@ -3665,12 +3665,12 @@ for t in trade_ids:
 
 | # | Item | Type, difficulty | Correct and accepted | Diagnosed wrong answers | Why? |
 |---|---|---|---|---|---|
-| 1 | "A function compares every pair of 1,000 prices: 499,500 comparisons. How many for 2,000 prices?" | Numeric (N), 2 | 1,999,000, exact | 999,000 (`mc.alg.double-means-double`: "That doubles the comparisons; pairs grow faster."); 1,998,000 (`mc.alg.exact-four`: "Close: the ratio is $4 + \frac{2}{999}$, not exactly 4. Count $\frac{2{,}000 \times 1{,}999}{2}$.") | "$\frac{2{,}000 \times 1{,}999}{2} = 1{,}999{,}000$, which is 4.002 times 499,500." |
-| 2 | "A halving loop runs 20 times on $n = 1{,}000{,}000$. How many times on $n = 4{,}000{,}000$?" | Numeric (N), 2 | 22 | 80 (`mc.alg.square-for-all`); 40 (`mc.alg.log-doubles`); 21 (`slip`: "$n$ doubled twice, so two more steps.") | "Each doubling adds one halving: 4,000,000 is 1,000,000 doubled twice, so 22." |
-| 3 | Sort four tables of operation counts at $n$, $2n$ and $4n$ into linear, quadratic, cubic and logarithmic: P 5,000, 10,000, 20,000; Q 4,950, 19,900, 79,800; R 7, 8, 9; S 19,600, 161,700, 1,313,400 | Sort (S), 3; the mark needs all four | P linear; Q quadratic; R logarithmic; S cubic | Q as cubic (`mc.alg.square-for-all`: "Q's ratios are about 4, not 8."); R as linear (`mc.alg.log-doubles`: "R adds one per doubling.") | "Ratios: P 2 and 2; Q 4.02 and 4.01; R plus 1 each time; S 8.25 and 8.12." |
-| 4 | "A colleague times a script on 1,000 rows (1.2 s) and 2,000 rows (1.3 s), and concludes that 1,000,000 rows will take under 2 s. Best reply?" (a) "Agreed: a ratio of 1.08 shows logarithmic growth." (b) "Most of the 1.2 s may be fixed start-up; time larger sizes or count the steps before extrapolating." (c) "It will take $1{,}000 \times 1.2 = 1{,}200$ s, since the rows grow 1,000 times." (d) "It will take $1.2 \times 1{,}000^2$ s, since every script is quadratic." | Single choice (C), 3 | b | a (`mc.alg.fixed-cost-sublinear`); c (`mc.alg.double-means-double`: "That assumes linear growth and scales the fixed part too."); d (`mc.alg.square-for-all`) | "Two small timings cannot separate a fixed cost from growth. Measure at sizes where the growing part dominates, or count the steps." |
+| 1 | "A function compares every pair of 1,000 prices: 499,500 comparisons. How many for 2,000 prices?" | Numeric (N), 2 | 1,999,000, exact | 999,000 (`mc.dsa.double-means-double`: "That doubles the comparisons; pairs grow faster."); 1,998,000 (`mc.dsa.exact-four`: "Close: the ratio is $4 + \frac{2}{999}$, not exactly 4. Count $\frac{2{,}000 \times 1{,}999}{2}$.") | "$\frac{2{,}000 \times 1{,}999}{2} = 1{,}999{,}000$, which is 4.002 times 499,500." |
+| 2 | "A halving loop runs 20 times on $n = 1{,}000{,}000$. How many times on $n = 4{,}000{,}000$?" | Numeric (N), 2 | 22 | 80 (`mc.dsa.log-doubles`: "Each doubling of $n$ adds one halving; it does not double the count."); 40 (`mc.dsa.log-doubles`: "That doubles the count once. Doubling $n$ adds one step, and $n$ doubled twice."); 21 (`slip`: "$n$ doubled twice, so two more steps.") | "Each doubling adds one halving: 4,000,000 is 1,000,000 doubled twice, so 22." |
+| 3 | Sort four tables of operation counts at $n$, $2n$ and $4n$ into linear, quadratic, cubic and logarithmic: P 5,000, 10,000, 20,000; Q 4,950, 19,900, 79,800; R 7, 8, 9; S 19,600, 161,700, 1,313,400 | Sort (S), 3; the mark needs all four | P linear; Q quadratic; R logarithmic; S cubic | Q as cubic (`mc.dsa.square-for-all`: "Q's ratios are about 4, not 8."); R as linear (`mc.dsa.log-doubles`: "R adds one per doubling.") | "Ratios: P 2 and 2; Q 4.02 and 4.01; R plus 1 each time; S 8.25 and 8.12." |
+| 4 | "A colleague times a script on 1,000 rows (1.2 s) and 2,000 rows (1.3 s), and concludes that 1,000,000 rows will take under 2 s. Best reply?" (a) "Agreed: a ratio of 1.08 shows logarithmic growth." (b) "Most of the 1.2 s may be fixed start-up; time larger sizes or count the steps before extrapolating." (c) "It will take $1{,}000 \times 1.2 = 1{,}200$ s, since the rows grow 1,000 times." (d) "It will take $1.2 \times 1{,}000^2$ s, since every script is quadratic." | Single choice (C), 3 | b | a (`mc.dsa.fixed-cost-sublinear`); c (`mc.dsa.double-means-double`: "That assumes linear growth and scales the fixed part too."); d (`mc.dsa.square-for-all`) | "Two small timings cannot separate a fixed cost from growth. Measure at sizes where the growing part dominates, or count the steps." |
 
-**Marks and mastery.** Each item scores 1 mark; 3 of 4 marks the lesson Mastered (`assessment.md` decision 26). Wrong items join the Redo queue at 7 and 30 days. One of the four items is single choice, within the 40% ceiling. Bertie is available on each item once it is graded, for Why? and "Explain another way".
+**Marks and mastery.** Each item scores 1 mark; 3 of 4 marks the lesson Mastered (`ASSESSMENT.md` decision 26). Wrong items join the Redo queue at 7 and 30 days. One of the four items is single choice, within the 40% ceiling. Bertie is available on each item once it is graded, for Why? and "Explain another way".
 
 ### 7.4 Verification for this lesson
 
@@ -3714,15 +3714,45 @@ for t in trade_ids:
 | # | To | Request |
 |---|---|---|
 | 1 | `stage1-finance-projects.md` (1.7) | Keep `price_tree(S0, K, u, d, R, n, kind)` and `price_crr(S0, K, r, sigma, T, n, kind)` with `kind` in {'call', 'put'} and `ValueError` on the drill's invalid inputs: the 1.9 exit mirrors them in C++ and its checker recomputes CRR prices with the same parameters. Name the Pricing Lab's American function `crr_american(S0, K, r, sigma, T, n, kind)` so the C++ `american` flag maps to it |
-| 2 | `assessment.md` 3.1 | Add paper kind `contest`: 120 minutes, problems A to F, ICPC scoring, `pass` read as problems solved over problems set, Bertie away, editorials after; resit rules as `topic` |
-| 3 | `assessment.md` 2.10 | Add `'contest-upsolved'` to `log-count`'s enum; and a way to select an exit part by track (`tracks` on `ExitPart`), so `2.4.exit-core` can serve canon-gap O1's tracks; and an optional stage-level `headline` list of exit parts, so the Stage 1 page can show the map line's two bars first |
-| 4 | `assessment.md` 2.9 | Row `1.8.exit`: name `pool.alg.timed` (40 mediums) and `estHours` 9; row `1.9.exit`: `estHours` 12 and the check details of section 4.4 |
+| 2 | `ASSESSMENT.md` 3.1 | Add paper kind `contest`: 120 minutes, problems A to F, ICPC scoring, `pass` read as problems solved over problems set, Bertie away, editorials after; resit rules as `topic` |
+| 3 | `ASSESSMENT.md` 2.10 | Add `'contest-upsolved'` to `log-count`'s enum; and a way to select an exit part by track (`tracks` on `ExitPart`), so `2.4.exit-core` can serve canon-gap O1's tracks; and an optional stage-level `headline` list of exit parts, so the Stage 1 page can show the map line's two bars first |
+| 4 | `ASSESSMENT.md` 2.9 | Row `1.8.exit`: name `pool.dsa.timed` (40 mediums) and `estHours` 9; row `1.9.exit`: `estHours` 12 and the check details of section 4.4 |
 | 5 | `widgets-programming.md` 6.11 | `exit-1.9`: the checks of section 4.4 (prices at three sizes recomputed, 7 repeats, Release build, no sanitisers); raise the `cpp-toolchain` floor to GCC 13 or Clang 17 (decision 11) |
 | 6 | `widgets-programming.md` | Modes marked [mode to add]: `shortest-path` Floyd-Warshall; `pointer-walk` reach; `bit-lab` C++ precedence; `memory-layout` false sharing; `range-query-lab` sparse table; `tree-lab` Euler tour and binary lifting; `graph-search` SCC, bridges and 2-SAT; `number-theory-lab` CRT and Grundy values; `bench-lab` denormals; `mutant-hunter` C++; `complexity-lab` three-lane race; `code-tracer` hidden-scan hits; `cell-grid` triangle paint (section 7.5) |
 | 7 | `widgets-programming.md` 9.1 | `contest-arena`: ICPC penalty of 20 minutes per rejected submission; the "solved" count as the paper score; web-only problems flagged on the rules screen |
-| 8 | `content-format.md` | Register the `pool.*` id namespace if it is not already one (`pool.alg.timed`, `pool.alg.exam-*`, `pool.cpp.exam-*`), and the new source ids marked † in section 5 |
+| 8 | `CONTENT-FORMAT.md` | Register the `pool.*` id namespace if it is not already one (`pool.dsa.timed`, `pool.dsa.exam-*`, `pool.cpp.exam-*`), and the new source ids marked † in section 5 |
 | 9 | `canon-gap.md` | Add `src.cppreference`, `src.cpp-core-guidelines`, `src.drepper-memory`, `src.carruth-cppcon-2014`, `src.kaggle`, `src.imc-prosperity`; confirm NeetCode 150's category counts (section 0.5 item 2) |
 | 10 | Spikes (`spikes/README.md`) | W-B2: usable recursion depth of Pyodide on the reference phone (decision 25); Pyodide's speed against CPython, which scales contest time limits; W-C: the `cpp-runner` spike, which decides where 1.9 drills run |
-| 11 | Content review | Confirm every [check] in sections 2 and 5: Grokking 2nd edition chapter numbers, 6.006 Spring 2020 lecture and problem-set numbers, learncpp chapter numbers, CPH chapter numbers, CS106L lecture titles, Drepper section numbers, the CMake default-build-type behaviour in lesson 70 |
+| 11 | Content review | Confirm every remaining [check] and [recalled] resource detail in sections 2 and 5: 6.006 Spring 2020 problem-set numbers per topic and lectures 1 to 3, 5, 10, 11, 13, 16 and 17, learncpp chapter numbers other than 8 and 22, CPH chapters 24 to 26 and 29, CS106L lecture titles for one pinned quarter, Drepper section numbers, NeetCode 150's category counts, the CMake default-build-type behaviour in lesson 70 |
 
 **Not executed here** (section 0.6): LeetCode, Codeforces and CSES (no network use), doctest itself (tests were written as plain asserts), Pyodide (CPython 3.11 stood in), and the in-browser C++ paths.
+
+---
+
+## Verification log (source and correctness pass, 6 October 2026)
+
+**How.** Every numbered answer in the section 3 examples, the section 4 worked slots and exit checks, and section 7 was recomputed: the document's Python blocks were extracted and run against their stated checks on CPython 3.11.15 with SymPy 1.14; exact values by `fractions` and enumeration; the C++ predictions, layouts, `mul_fits` (200,000 random pairs against `__builtin_mul_overflow`), the Monte Carlo seeds and the CRR prices were rebuilt on GCC 13.3 and Clang 18.1. Fifteen web searches checked resources; ocw.mit.edu, learncpp.com and neetcode.io could not be opened from the container, so those details rest on search results.
+
+**Answers confirmed unchanged.** All 1.8, 1.9 and 2.4 example answers and checks not listed below, including $\frac{29}{6}$, 367.7 and 499.5, 13,970,034, 149,033,233, 104,766,026, 209,783,453, 142,913,828,922, the max flow of 19 with cut $\{0, 2\}$, 4,686,824, the CRR prices 10.448584104, 10.449583775 and 10.450183638, the put 5.571527, the American put 6.089595, 10.4723 and 10.4499, 10.454538, `mt19937`'s 4,123,659,995, both exam blueprints' mark totals (80; 56 and 26 generator marks; 62.5 and 57.5 minutes), and every count and ratio in the sample lesson (1,769 and 4,034 probes, 31,626 and 126,756 pairs, 36.06, 10,586,800).
+
+**Corrected.**
+
+| Where | Was | Now |
+|---|---|---|
+| KM4 example 2 | Two winning moves | Four: the pile of 7 also wins by taking 1 or 3 stones (to Grundy value 2); rubric point re-anchored |
+| CP3 example 1, decision point | The simple-interest $q$ "passes parity but fails convergence" | The reverse: it converges (within $2.1 \times 10^{-3}$ at $n = 1{,}000$) and misses parity by $1.25 \times 10^{-4}$ |
+| CP3 example 2 and the 1.9 exit tests | American put "equals" the European at $r = 0$ | Equal within $10^{-12}$ (they differ in the last bit); the `pay(S0)` trap's reason now names the zero intrinsic value at the money |
+| SQ3 example 2 | $\dots < 2^{h+1} < n + 1$ (the last step is an equality) | Exact sum $n - h - 1 < n$ |
+| AH2 example 2 | area$(i, k) <$ area$(i, j)$ | $\le$, with equality only when $h_i = 0$ |
+| CM1 example 1, decision point | Reordering "removes both" paddings | Removes the gap; 3 bytes of tail padding remain |
+| CB4 example 2, decision point | Muddled claim about means above 1 | The `int` sum stays 0 whenever every return is below 1 in magnitude |
+| CL4 example 1, code comment | "the same number of normal draws" | "the same number of payoff evaluations" (antithetic uses half the draws) |
+| CP4 example 2 | Seed not stated | Seed 42, libstdc++ |
+| Sample lesson, screen 2 | C "about 4 s" tagged `mc.dsa.log-doubles` | `mc.dsa.double-means-double` (the learner doubled C) |
+| Sample lesson, screen 8 Why? | 4.88 s over 1.06 s called "a little over 4 times" | About 4.6 times |
+| Sample lesson, quiz item 2 | 80 tagged `mc.dsa.square-for-all` | 80 and 40 both tagged `mc.dsa.log-doubles` with feedback that matches how each arises |
+| Section 6.2 | Layout items in lesson 33 | Lesson 28 (lesson 33 is RAII) |
+
+**Hours and coverage.** The three budgets sum to 250, 140 and 140 hours, the 60-hour core to 60, and the reading tables to 36.0, 23.0 and 7.75 hours; lesson counts give 37.5, 22.0 and 21.0 lesson hours. Every concept in the curriculum's 1.8 Cover list (complexity, arrays, hashing, two pointers, stacks, queues, linked lists, binary search, trees, heaps, graphs, recursion, dynamic programming, greedy methods) is taught by a named level; 1.9 and 2.4 have no Cover list. No gap needed filling.
+
+**Citations.** Confirmed: Grokking 2nd edition's 13 chapters; 6.006 Spring 2020 lectures 4, 6, 7, 8, 9, 12, 15 and 19 and problem sets 0 to 8 with solutions; learncpp lessons 8.13 and 8.14 and chapter 22; CPH's three parts and chapters 1 to 22 and 27; USACO Guide module levels (Euler Tour and Bitmask DP in Gold, Binary Jumping in Platinum); CSES now holds 400 problems (was "300"); libc++ 17 marks `<format>` stable (decision 11's [check] closed); Joshi chapters 1 to 3 and 8; the CS106L, Drepper and IMC Prosperity URLs. Five of NeetCode's 18 category counts matched a search summary. Still [check] or [recalled]: 6.006 problem-set numbers per topic and the unconfirmed lecture numbers, other learncpp chapters, CPH chapters 24 to 26 and 29, CS106L lecture titles, Drepper's section numbers, Carruth's talk, CLRS 4th edition chapter numbers, the other 13 NeetCode counts. Nothing was found to be invented.
