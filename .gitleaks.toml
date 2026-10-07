@@ -1,7 +1,10 @@
-# gitleaks configuration (docs/PLAN.md 7.1), read by tools/ci/gitleaks.ts. The default rules stay on; they
-# already include anthropic-api-key and anthropic-admin-api-key. The two proxy secrets get rules of their own
-# because they are random base64url strings with no prefix to recognise. Allowlists are as narrow as the
+# gitleaks configuration (docs/PLAN.md 7.1), read by tools/ci/gitleaks.ts. The default rules stay on. The two
+# proxy secrets get rules of their own because they are random base64url strings with no prefix to recognise,
+# and Anthropic keys a second rule that needs no delimiter after the key. Allowlists are as narrow as the
 # current history needs. The tool ignores `gitleaks:allow` comments and refuses a .gitleaksignore file.
+# Limit: the default config's global allowlist (node_modules/, lockfiles, images, .svg, .pdf, fonts) cannot be
+# overridden, because gitleaks appends an extended config's allowlists to ours (config/config.go, extend), so a
+# file force-added under one of those paths is not scanned.
 title = "Zero to Quant"
 
 [extend]
@@ -21,10 +24,21 @@ regex = '''CALL_SIGNING_KEY["']?\s*(?:=|:|:=|=>)\s*["'`]?([A-Za-z0-9_-]{32,})'''
 secretGroup = 1
 keywords = ["call_signing_key"]
 
+[[rules]]
+id = "zq-anthropic-key"
+description = "Anthropic key (sk-ant-, a kind and version, 80 or more key characters) with nothing required after it, unlike anthropic-api-key; a key split across lines is out of reach of this and every line-based rule"
+regex = '''sk-ant-[a-z]+[0-9]+-[A-Za-z0-9_-]{80,}'''
+keywords = ["sk-ant-"]
+
 [[allowlists]]
-description = "The replace-with-... dummy values of the example env files at cf706c4, still in history"
+description = "The three dummy values of the example env files at cf706c4 that match the proxy secret rules, still in history"
+targetRules = ["zq-tutor-token", "zq-call-signing-key"]
 regexTarget = "secret"
-regexes = ['''^replace-with-[a-z0-9-]+$''']
+regexes = [
+  '''^replace-with-43-or-more-base64url-characters$''',
+  '''^replace-with-32-random-bytes-base64url$''',
+  '''^replace-with-an-eval-only-signing-key$''',
+]
 
 [[allowlists]]
 description = "The invented Stripe-shaped value in the secret-scanning lesson of docs/curriculum/stage1-python-tools.md"

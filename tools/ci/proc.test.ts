@@ -12,6 +12,14 @@ describe('run', () => {
     });
   });
 
+  it('writes input to the child', async () => {
+    const echo = await run(process.execPath, ['-e', 'process.stdin.pipe(process.stdout)'], {
+      capture: true,
+      input: 'a\0b',
+    });
+    expect(echo.stdout).toBe('a\0b');
+  });
+
   it('passes output through when not capturing', async () => {
     expect((await run(process.execPath, ['-e', 'process.exit(0)'])).code).toBe(0);
   });

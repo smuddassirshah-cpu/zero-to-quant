@@ -10,6 +10,8 @@ interface RunOptions {
   readonly env?: NodeJS.ProcessEnv;
   /** Collect stdout and stderr instead of passing them through to the terminal. */
   readonly capture?: boolean;
+  /** Written to the child's stdin, which is otherwise closed (capture) or inherited. */
+  readonly input?: string | undefined;
 }
 
 interface RunResult {
@@ -26,15 +28,21 @@ export type Run = (cmd: string, args: readonly string[], options?: RunOptions) =
 
 export const run: Run = (cmd, args, options = {}) =>
   new Promise((done, fail) => {
+    const stdin = options.input !== undefined ? 'pipe' : options.capture === true ? 'ignore' : 'inherit';
     const child = spawn(cmd, args, {
       cwd: options.cwd ?? repoRoot,
       env: options.env ?? process.env,
-      stdio: options.capture === true ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+      stdio: options.capture === true ? [stdin, 'pipe', 'pipe'] : [stdin, 'inherit', 'inherit'],
     });
     const out: string[] = [];
     const err: string[] = [];
     child.stdout?.setEncoding('utf8').on('data', (chunk: string) => out.push(chunk));
     child.stderr?.setEncoding('utf8').on('data', (chunk: string) => err.push(chunk));
+    // A child that exits before reading its input breaks the pipe; its exit status reports why.
+    child.stdin?.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code !== 'EPIPE') fail(error);
+    });
+    child.stdin?.end(options.input);
     child.on('error', (error: NodeJS.ErrnoException) => {
       if (error.code === 'ENOENT') done({ code: 127, stdout: '', stderr: '', missing: true });
       else fail(error);
