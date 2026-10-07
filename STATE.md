@@ -159,8 +159,27 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-07 | D7 Decision 13 (b): every deployed web build on Cloudflare Pages behind an Access policy admitting only the owner until a content licence exists; GitHub Pages kept as the public-release path | The owner: "CloudFlare is fine"; keeps "no public release" and the phone handoff | n |
 | 2026-10-07 | D8 Decision 14 (b): Zhou chapter 5 joins the Stage 3 exit at 70% cold as exit part `3.3.zhou-ch5` (7 h moved from `3.3.books`); `docs/curriculum.md` gains the checkbox | The owner: "Add in chapter 5"; P2 and PZ6 teach chapter 5 to every learner | n |
 | 2026-10-07 | Blueprint approved by the owner ("Approved. Continue"); stage 1 starts | Phase 2 gate | n |
-| 2026-10-07 | B1 to B13 (stage 1): tools on Node's own type stripping, no `tsx`; colour rule on `.ts` too; the sink rule's two hard-coded exemptions; `zq/layering`; merge rights procedural because the GitHub connection is the owner's account; hooks advisory, CI binding; release budget numbers; the page fragment's two scripts; `ZQ_DEV_ROUTES`; `stage/1` from the Blueprint branch; the Playwright image; no inline lint configuration; every file in a layer | `docs/DECISIONS.md` section 6 | y: B1, B2, B4, B5 (label guard, G1), B6, B7, B8, B10 |
-| 2026-10-07 | L1, A1, A2, T1, G1 (stage 1): four licence exceptions under stylelint; `braces` and `pytest` advisory waivers to 7 November 2026; gitleaks 8.30.1, pip-audit 2.10.1 and the Go floor; the label guard's mechanism | `docs/DECISIONS.md` section 5, for the owner's review | y: G1 |
+| 2026-10-07 | B1 Tools run on Node's own type stripping; no `tsx` | One fewer loader; the checker refuses what Node cannot run | y: `PLAN.md` 4.1, 3.1; `ARCHITECTURE.md` 3.2, 4.6 |
+| 2026-10-07 | B2 `zq/no-colour-literals` on every script file under `src/` | Logic and scenes produce render data too | y: `ARCHITECTURE.md` 10.4 (stricter) |
+| 2026-10-07 | B3 The sink rule's two exemptions are hard-coded, with their APIs | A third sink needs a reviewed rule change | n |
+| 2026-10-07 | B4 Layering through `zq/layering` | Flat-config entries replace each other per file | y: `ARCHITECTURE.md` 4.5, 10.4 mechanism |
+| 2026-10-07 | B5 Merge rights procedural: the GitHub connection is the owner's account; no branch protected yet | GitHub cannot tell a session from the owner | y: `PLAN.md` 7.1 guard mechanism (G1); DoD item not met |
+| 2026-10-07 | B6 Hooks advisory, CI the gate; eight pull requests merged before CI existed | A local hook can be skipped | y: `CLAUDE.md` gating rule 3 for #2, #3, #5 to #10 |
+| 2026-10-07 | B7 Release budget numbers; retained and peak rows at stage 83 | The host's limits with margin; the ledgers first exist at stage 83 | y: `ARCHITECTURE.md` 6.2.5 |
+| 2026-10-07 | B8 Page fragment: `#app`, gate script, bootstrap script | A browser that cannot parse `import()` still shows the gate | y: `ARCHITECTURE.md` 6.2.2 order |
+| 2026-10-07 | B9 `ZQ_DEV_ROUTES=1`; `dev:artifact` a watch build until stage 4 | Preview Artifacts need dev routes; the emulator completes at stage 4 | y: `ARCHITECTURE.md` 6.5, 10.1 until stage 4 |
+| 2026-10-07 | B10 `stage/1` from the Blueprint branch | `main` lacked the documents stage 1 implements | y: `CLAUDE.md` gating rule 2 |
+| 2026-10-07 | B11 Playwright image `v1.63.0-noble` with its digest | A digest cannot move | n |
+| 2026-10-07 | B12 No inline lint configuration anywhere | One comment could add a third sink | n |
+| 2026-10-07 | B13 Every file belongs to a layer; targets normalised | Unlisted folders and `..` escaped | n |
+| 2026-10-07 | B14 Five pull requests over the line cap; no per-pull-request effort records | Units split after the fact, by parallel sessions | y: `PLAN.md` 11.1, `CLAUDE.md` gating rule 3 |
+| 2026-10-07 | B15 JSX settings wait for Preact | knip reports an unlisted `preact` | y: `ARCHITECTURE.md` 4.6 |
+| 2026-10-07 | B16 Files added outside the trees (`tools/ci/`, `tsconfig.node.base.json`, `src/html/dev.html`, Python and CI data files) | Each implements a stage 1 item; nothing moved | y: `PLAN.md` 10, `ARCHITECTURE.md` 4.4; for the owner |
+| 2026-10-07 | L1 Four licence exceptions under stylelint (MIT-0, a legacy `licenses` field) | Development only, permissive | n; for the owner |
+| 2026-10-07 | A1 `braces` 3.0.3 advisory waived to 7 November 2026 | No fix exists; development only | n; for the owner |
+| 2026-10-07 | A2 `pytest` 9.0.2 advisory waived to 7 November 2026 | Pinned to Pyodide's version | n; for the owner |
+| 2026-10-07 | T1 gitleaks 8.30.1, pip-audit 2.10.1, the Go floor; npm-only licence gate until stage 25 | Named in `PLAN.md` 7.1 and 7.6 | n; versions for the owner |
+| 2026-10-07 | G1 The label guard: owner's label after the head commit, reset on every push, on `pull_request_target` | The owner cannot approve his own pull request | y: `PLAN.md` 7.1 |
 
 ## Open questions
 
@@ -192,7 +211,7 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 22 | The Stage 1 probe Artifacts: **closed**, both deleted by link with the owner's confirmation on 7 October 2026 (D6) | None | Closed |
 | 23 | Which paid spines the learner is told to buy (`docs/CURRICULUM.md` 6.4 item 6: still open; the adopted items add Abbott, Süli and Mayers, Trefethen and Bau, Wilmott, Howison and Dewynne, Glasserman, Vanderbei and AFML) | Paid-book citation checks and course reports' warnings | The owner, before the first paid-book citation check (stage 84) |
 | 24 | The 2.3 re-cut: `stage1-finance-projects.md` still lists the 24 lessons 2.2c moved or retired (`stage2-research-method.md` 0.6), so 2.3 is counted twice in the item file and retired lessons are still examined | `content/curriculum.yaml`, 2.3's papers and hours | Before stage 6 writes `curriculum.yaml` (the item file's revision 2 row already binds content agents to 2.2c's list) |
-| 25 | GitHub Actions pinned by major tag (`actions/checkout@v5`, `setup-node@v5`, `setup-python@v6`, `setup-go@v6`) [recalled majors]; stage 1's session could not read those repositories to pin commit SHAs | Supply chain of CI | The first session that can read them; or the owner |
+| 25 | GitHub Actions pinned by major tag (`actions/checkout@v5`, `setup-node@v5`, `setup-python@v6`, `setup-go@v6`; the tags resolve [measured: CI ran them on #11 and #12]); stage 1's sessions could not read those repositories to pin commit SHAs | Supply chain of CI | The first session that can read them; or the owner |
 | 26 | `label-guard.yml` runs on `pull_request_target`: whether GitHub reads that workflow from the base or the default branch, and whether its check lands on the head commit as a required check [unverified]. Two known gaps (`docs/DECISIONS.md` G1): the head-commit binding uses the commit's earliest check suite anywhere in the repository, so a commit pushed elsewhere before the label predates it (fix: the earliest `pull_request` run for this pull request); and a later unrelated event turns the check green after a reset, so the visual job must read the label from the API | `visual-approved` enforcement | Stage 5, the first visual pull request |
 | 27 | Branch protection or rulesets on a private repository may need a paid plan [recalled, unverified]; settings in `README.md` | Accident guards on `main` and `stage/*` | The owner |
 | 28 | `ZQ_DEV_ROUTES` is read from the environment: the release procedure must check it is unset (`docs/DECISIONS.md` B9) | Development routes in a release build | Stage 83 |
@@ -221,24 +240,26 @@ Each with the stage it affects; the stage that closes it records the answer in `
 
 ## Stage 1 record
 
-**Pull requests into `stage/1`** (all merged by the session; smuddassirshah-cpu/zero-to-quant#4 closed as replaced by #6):
+**Pull requests into `stage/1`** (all merged by the session; smuddassirshah-cpu/zero-to-quant#4 closed as replaced by #6). Changed lines are additions plus deletions from `git diff --shortstat` of each merge. Review rounds count the adversarial review and each re-verification by the reviewing session.
 
-| PR | Unit | Changed lines | Review rounds |
-|---|---|---|---|
-| #2 | Workspace, pins, TypeScript projects, Vite modes, empty app, formatter, stylelint, knip, lefthook, env examples, licence, `CODEOWNERS`, template | 6,178 (about 5,900 of them `package-lock.json`) | 2 |
-| #3 | `budgets.ts`, `page.ts`, `.size-limit.json` | 677 | 2 |
-| #5 | Minimal `tools/artifact-host`, Playwright boot tests on three paths | 526 | 2 |
-| #6 | `eslint-plugin-zq`: four rules, `noInlineConfig`, planted test | 1,194 (683 code and config, 511 tests) | 2 |
-| #7 | `zq/layering` and the layer table, residual rule fixes | 815 | 3 |
-| #8 | gitleaks tool, `.gitleaks.toml`, hooks that fail closed | 846 | 2 |
-| #9 | `tools/py` with `uv.lock` | 42 plus the lock | 2 |
-| #10 | Licences, `npm audit`, `pip-audit`, waivers | 983 | 2 |
-| #11 | `ci.yml`, `nightly.yml`, `label-guard.yml`, `VITE_*` check, last scan fixes | 907 | 3; CI green on its first run |
-| docs | `docs/DECISIONS.md` B1 to B13 (with the units' L1, A1, A2, T1, G1), `ARCHITECTURE.md` 3.2, 4.5, 4.6, 6.2.2, 6.2.5, 10.4, 14, `README.md`, this file | | 1 |
+| PR | Unit | Changed lines | Review rounds | Writing session, hours | Reviewing session, hours |
+|---|---|---|---|---|---|
+| #2 | Workspace, pins, TypeScript projects, Vite modes, empty app, formatter, stylelint, knip, lefthook, env examples, licence, `CODEOWNERS`, template | 6,181 (about 5,900 of them `package-lock.json`) | 2 | main session (part of 2.7) | 0.45 |
+| #3 | `budgets.ts`, `page.ts`, `.size-limit.json` | 679 | 1, then the main session's own verification | 0.93 (with #5) | 0.22 (with #5) |
+| #5 | Minimal `tools/artifact-host`, Playwright boot tests on three paths | 527 | 1, then the main session's own verification | with #3 | with #3 |
+| #6 | `eslint-plugin-zq`: four rules, `noInlineConfig`, planted test | 1,197 (683 code and config) | 2 | 1.37 (with #7) | 0.47 (with #7) |
+| #7 | `zq/layering` and the layer table, residual rule fixes | 816 | 2, then the main session's own verification | with #6 | with #6 |
+| #8 | gitleaks tool, `.gitleaks.toml`, hooks that fail closed | 847 | 2 | 2.00 (with #9 to #11) | 0.56 (with #9 to #11) |
+| #9 | `tools/py` with `uv.lock` | 863 (42 without the lock) | 2 | with #8 | with #8 |
+| #10 | Licences, `npm audit`, `pip-audit`, waivers | 984 | 2 | with #8 | with #8 |
+| #11 | `ci.yml`, `nightly.yml`, `label-guard.yml`, `VITE_*` check, last scan fixes | 891 | 3; CI green on its first run | with #8 | with #8 |
+| #12 | Records: `docs/DECISIONS.md` B1 to B16, `ARCHITECTURE.md`, `README.md`, this file | see the pull request | 1 | main session | 0.15 |
 
-**Measured effort** [measured from the session transcripts, first to last tool call, gaps over 15 minutes removed]: about 9 session-hours across the main session and seven sub-sessions, 1.5 AD against the plan's 5. Tokens: about 0.22 million output and 0.32 billion input including cache reads; sub-session output counts look understated by the transcript format [unverified].
+**Measured effort** [measured from the session transcripts, first to last tool call, gaps over 15 minutes removed]: 8.8 session-hours to the stage report across the main session (2.7, which also integrated, verified and wrote the records) and eight sub-sessions, 1.5 AD against the plan's 5. Tokens: 0.24 million output and 0.34 billion input including cache reads; sub-session output counts look understated by the transcript format [unverified]. Pull requests did not record their own hours (`docs/DECISIONS.md` B14).
 
-**Owner actions waiting** (stage report): branch protection or rulesets (`README.md`; open question 27); decisions on A1, A2, L1 and the pins of T1; the superseded and merged remote branches (`stage1/*`), which can be deleted once stage 1 reaches `main`.
+**Tree entries of `PLAN.md` 10 that later stages create**, correctly not built at stage 1: `cdn.lock.json`, `tools/cdn/` and `tools/release/provenance.ts` (stage 4); `content/` (stages 6 and 7); `.github/workflows/pages.yml` (stages 25 and 82); `proxy/` and `.github/workflows/proxy.yml` (stage 62); `releases/` and `tools/release/artifact-plan.ts` (stage 83); `docs/engine/` (stages 10b and 83). Stage 1 added files outside the trees, listed in `docs/DECISIONS.md` B16 for the owner.
+
+**Owner actions waiting** (stage report): branch protection or rulesets (`README.md`; open question 27); decisions on A1, A2, L1, the pins of T1 and the tree additions of B16; the superseded and merged remote branches (`stage1/*`), which can be deleted once stage 1 reaches `main`.
 
 ## Next action
 
