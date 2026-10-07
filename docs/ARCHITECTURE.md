@@ -279,7 +279,7 @@ Fonts: Archivo, Besley and Source Code Pro (SIL Open Font Licence) through Googl
 | `workbox-build` | 7.4.1 | MIT | Peer of `vite-plugin-pwa` 2.0.0 (`^7.4.1`) [measured: peer range]; builds the precache manifest |
 | `@vite-pwa/assets-generator` | 2.0.0 | MIT | App icons from the logo SVG |
 | `esbuild` | 0.28.2 | MIT | Content compiler and the per-topic generator modules (content-format 8.1); its metafile feeds `tools/release/provenance.ts` (6.2.7) |
-| `tsx` | 4.23.15 | MIT | Running TypeScript tools in Node (`zq`, `pyvendor`, `cdn`, release tools) |
+| `tsx` | 4.23.15, **not installed** (stage 1, `docs/DECISIONS.md` B1) | MIT | Was: running TypeScript tools in Node. Node 22.22.0 strips types itself with no warning [measured], so tools and `eslint-plugin-zq` run as `node tools/x.ts` with erasable syntax and explicit `.ts` imports; added only if a tool needs JSX or path aliases |
 | `vitest`, `@vitest/browser`, `@vitest/browser-playwright`, `@vitest/coverage-v8` | 5.0.3 | MIT | Unit and widget tests |
 | `@playwright/test` | 1.63.0 | Apache-2.0 | End-to-end, visual, performance harness |
 | `axe-core` | 4.14.0 | MPL-2.0 | Accessibility checks inside widget tests |
@@ -294,12 +294,13 @@ Fonts: Archivo, Besley and Source Code Pro (SIL Open Font Licence) through Googl
 | `prettier` | 3.9.9 | MIT | Formatting |
 | `stylelint`, `stylelint-config-standard` | 17.16.0, 40.0.0 | MIT | CSS lint; colours only from tokens |
 | `knip` | 6.39.0 | ISC | Unused files, exports and undeclared dependencies |
-| `lefthook` | 2.1.17 | MIT | Pre-commit hooks |
+| `lefthook` | 2.1.17 | MIT | Pre-commit and pre-push hooks; advisory, since a missing binary skips them: CI is the binding gate (`docs/DECISIONS.md` B6) |
+| gitleaks | 8.30.1, built by `go install` from the Go module proxy into `.zq/bin` (stage 1) | MIT | Secret scanning of staged changes and the full history, in CI and the hooks; Go's checksum database verifies the module (`docs/DECISIONS.md` section 5) |
 | `@types/node` | 22.20.5 | MIT | Node types matching the runtime |
 | `yaml` | 2.9.1 | ISC | Content parsing (content-format 2.3) |
 | `wrangler`, `@anthropic-ai/sdk`, `@cloudflare/workers-types` | 4.147.0, 0.131.0, 5.20261006.1 | MIT or Apache-2.0 | Tutor proxy (`AI-TUTOR.md` 6.3) |
 | Python via `uv` 0.8.17 | 3.12 for CI drill runs and `zqverify`, with Pyodide's 3.14 beside it; `tools/py/uv.lock` pins NumPy 2.4.6, pandas 3.0.2, SciPy 1.18.0, statsmodels 0.14.6, scikit-learn 1.8.0, matplotlib 3.10.8, SymPy 1.14.0, pytest and hypothesis (resolves on 3.12 [measured]) | PSF | Learner floor (programming decision 16, raised from 3.11 by the `docs/PLAN.md` review), Pyodide parity, verifier |
-| Playwright container | `mcr.microsoft.com/playwright:v1.63.0-noble` [recalled tag format] | Apache-2.0 | Visual baselines render in one pinned image |
+| Playwright container | `mcr.microsoft.com/playwright:v1.63.0-noble`, index digest `sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27` [measured, MCR tag list and manifest, 7 October 2026] | Apache-2.0 | Visual baselines render in one pinned image |
 
 ### 3.3 Browser support
 
@@ -532,7 +533,7 @@ tests/
 
 ### 4.5 Layering: who may import whom
 
-Enforced by `no-restricted-imports` per directory and by `knip`. A higher row may import any row below it; nothing imports upwards.
+Enforced by `zq/layering`, which encodes this table in `eslint.config.js` (stage 1; it replaces draft 1's `no-restricted-imports` per directory, whose flat-config entries replace each other per file), and by `knip`. A higher row may import any row below it; nothing imports upwards.
 
 | Layer | May import | Must not import |
 |---|---|---|
@@ -552,7 +553,9 @@ Enforced by `no-restricted-imports` per directory and by `knip`. A higher row ma
 
 ### 4.6 TypeScript configuration
 
-`tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `verbatimModuleSyntax`, `isolatedModules`, `moduleResolution: "bundler"`, `module: "esnext"`, `target: "es2022"`, `jsx: "react-jsx"`, `jsxImportSource: "preact"`, `skipLibCheck: false` for our packages. Project references: `src` (DOM libs), `src/workers` (WebWorker lib), `src/sw` (WebWorker and Workbox types), each `packages/*`, `tools` (Node types), `proxy` (Workers types). Path aliases: `@/` for `src/`, `@zq/*` for packages; the same aliases in Vite and Vitest.
+`tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `verbatimModuleSyntax`, `isolatedModules`, `moduleResolution: "bundler"`, `module: "esnext"`, `target: "es2022"`, `skipLibCheck: false` for our packages. Project references: `src` (DOM libs), `src/workers` (WebWorker lib), `src/sw` (WebWorker and Workbox types), each `packages/*`, `tools` (Node types), `proxy` (Workers types). Path aliases: `@/` for `src/`, `@zq/*` for packages; the same aliases in Vite and Vitest.
+
+**Stage 1 additions** (`docs/DECISIONS.md` B1): `erasableSyntaxOnly` and `allowImportingTsExtensions` in the base; `tools`, `tests` and every `packages/*` project extend `tsconfig.node.base.json` (`module` and `moduleResolution` `nodenext`, `.ts` extensions required), because Node runs them directly; `src` keeps `bundler` resolution, which Vite runs. Every project is `composite` with `emitDeclarationOnly` into the ignored `.zq/tsc/`. `jsx: "react-jsx"` and `jsxImportSource: "preact"` are added with Preact's installation (stage 3 or 4), because knip reports an unlisted `preact` before then.
 
 ### 4.7 Threads and shared state
 
@@ -1948,14 +1951,14 @@ typescript-eslint `strict-type-checked` and `stylistic-type-checked`, `eslint-pl
 | `zq/no-raw-timers` | `widgets/`, `screens/`, `engine/player` | `setTimeout`, `setInterval`, `requestAnimationFrame`; use the `Scope` |
 | `zq/no-raw-pointer` | `widgets/composites`, `widgets/presets` | `addEventListener` and `on*` pointer and touch handlers; use the interaction hooks |
 | `zq/no-state-in-render` | `widgets/**/View.tsx` | Reading `api.state.value` in a component body; use `useComputed` |
-| `zq/no-inner-html` | everywhere | `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `dangerouslySetInnerHTML`, except `engine/render/Tex.tsx` |
+| `zq/no-inner-html` | everywhere | `innerHTML` and `outerHTML` (assigned or as object keys), `insertAdjacentHTML`, `dangerouslySetInnerHTML`, `document.write`, `setHTMLUnsafe`, `parseHTMLUnsafe`, `createContextualFragment`, `DOMParser` and `parseFromString`; the two exemptions are hard-coded in the rule: `engine/render/Tex.tsx` (S1) and, for `DOMParser`, `ui/bertie/markup.ts` (S2) |
 | `zq/no-forbidden-apis` | `src/` | `window.open`, `print`, iframes, `navigator.serviceWorker` outside `platform/web` and `sw/`, `eval`, `new Function` |
 | `zq/no-classic-zod` | `src/` except `workers/` and `**/schema.ts` | Importing `zod`; `zod/mini` is allowed |
 | `zq/no-schema-import` | `src/` except `widgets/registry.node.gen.ts` | Importing any `widgets/**/schema.ts` (decision 33; section 4.5) |
-| `zq/no-colour-literals` | `.tsx` | Hex, `rgb()` and `hsl()` literals; colours come from tokens (stylelint enforces the same in CSS) |
+| `zq/no-colour-literals` | `src/**/*.{ts,tsx}` (widened at stage 1, `docs/DECISIONS.md` B2) | Hex, `rgb()` and `hsl()` literals; colours come from tokens (stylelint enforces the same in CSS) |
 | `zq/no-empty-catch` | everywhere | A `catch` that neither rethrows nor logs (engineering floor) |
 | `zq/copy-in-copy-files` | `screens/`, `app/`, `engine/player`, `tutor/ui` | Learner-facing string literals in JSX; they live in `copy.ts`, which the copy lint checks for British spelling, banned filler and voice |
-| `no-restricted-imports` | per directory | The layering of section 4.5 |
+| `zq/layering` | `src`, `packages`, `tools`, `proxy`, `tests` | The layering of section 4.5, with `$1` captures for a screen's own folder |
 
 ### 10.5 Authoring widgets with agents
 
@@ -2104,7 +2107,7 @@ Each stage is one review gate. Engine stages are numbered E0 to E10; content sta
 | 8 | iPhone memory with pandas plus scikit-learn in one worker, in the web app [unverified] | Those drills need the web app on a computer | E8 |
 | 9 | Exact capability declaration keys for `sample` and `downloads` | Wrong declaration at first publish | **Mostly closed**: section 6.2.4 gives the declaration; `db` and `user` are sourced, `sample: {}` and `downloads: {}` inferred; checked against the `artifact-capabilities` skill at E10 |
 | 10 | The total size cap of one Artifact's database [unverified; `ASSESSMENT.md` 13.6] | The checkpoint fallback in assessment 13.6 | The bounded probe of `docs/PLAN.md` stage 2 (paced, up to 60 MB, then deleted) |
-| 11 | The Playwright container tag format for 1.63.0 [recalled] | A different image name | E0 |
+| 11 | The Playwright container tag format for 1.63.0 | **Closed at stage 1** [measured]: `mcr.microsoft.com/playwright:v1.63.0-noble` exists, digest in section 3.2 | |
 | 12 | Whether `version.json` is cached by the Artifact host despite a query string [unverified] | Update notices arrive late | S1 |
 | 13 | `CONTENT-FORMAT.md` sections 12 to 14 against this paper | **Closed in review**: 12.1's compile-time exports, 12.2's `hash32` and `makeWhere`, the runtime-tag change and the C1 to C11 mapping are in sections 0.3, 5.1, 5.3, 5.9 and 13. Section 10.5 (the compiled screen example) was not re-read | |
 | 14 | Whether an open page keeps fetching its own version's files after a republish, and whether `location.reload()` loads the newest version [unverified] | Decides whether garbage collection must keep the previous release (section 6.2.6) and how the update notice reloads | S1; the emulator carries both behaviours until then (section 8.2) |
