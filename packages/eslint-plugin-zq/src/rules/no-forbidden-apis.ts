@@ -3,11 +3,15 @@
 // platform.
 // Decision notes:
 // - Two checks run side by side. The syntactic one works everywhere, `.js` included: `window`,
-//   `self` and `globalThis` when nothing in the file declares them, and a bare `open()`, `print()`,
-//   `eval()` or `Function()` that scope analysis resolves to the global (a local or imported `open`
-//   is fine). Where the type checker is available (`.ts`, `.tsx`) it also refuses `open`, `print`
-//   and `eval` on any `Window` (`parent`, `top`, `document.defaultView`, an alias), `serviceWorker`
-//   on any `Navigator`, and calling or constructing any `FunctionConstructor`.
+//   `self` and `globalThis` when nothing in the file declares them, and a bare `open()`, `print()`
+//   or `eval()` that scope analysis resolves to the global (a local or imported `open` is fine).
+//   Where the type checker is available (`.ts`, `.tsx`) it also refuses `open`, `print`, `eval` and
+//   `Function` on any `Window` (`parent`, `top`, `document.defaultView`, an alias), `serviceWorker`
+//   on any `Navigator`, and calling or constructing anything typed `FunctionConstructor`, checked
+//   with and without TypeScript wrappers, so `new (f.constructor as FunctionConstructor)()` fails.
+// - The global `Function` is refused as a value wherever it appears, called or not
+//   (`Reflect.construct(Function, args)`, passing it on); type positions are fine. Calling an
+//   untyped `f.constructor(...)` is refused by typescript-eslint's `no-unsafe-call`.
 // - Member accesses are refused whether or not they are called, and so is destructuring them.
 // - Embedding elements (`iframe`, `object`, `embed`) are refused in JSX and as the literal tag of
 //   `createElement`, `createElementNS`, `h`, `jsx` or `jsxs` on any receiver, case-insensitively
@@ -29,8 +33,8 @@ import {
 import { repoPath } from '../util/paths.ts';
 
 const GLOBAL_OBJECTS = new Set(['window', 'self', 'globalThis']);
-const WINDOW_MEMBERS = new Set(['open', 'print', 'eval']);
-const BARE = new Set([...WINDOW_MEMBERS, 'Function']);
+const BARE = new Set(['open', 'print', 'eval']);
+const WINDOW_MEMBERS = new Set([...BARE, 'Function']);
 const WINDOW_TYPES = new Set(['Window']);
 const NAVIGATOR_TYPES = new Set(['Navigator', 'WorkerNavigator']);
 const FUNCTION_TYPES = new Set(['FunctionConstructor']);
@@ -68,9 +72,10 @@ const rule: Rule.RuleModule = {
       (node.type === 'Identifier' && node.name === 'navigator' && isGlobal(sourceCode, node)) ||
       (node.type === 'MemberExpression' && propName(node) === 'navigator' && globalObject(node.object)) ||
       hasType(sourceCode, node, NAVIGATOR_TYPES);
-    const isFunctionConstructor = (node: ESNode) =>
-      (node.type === 'MemberExpression' && propName(node) === 'Function' && globalObject(node.object)) ||
-      hasType(sourceCode, node, FUNCTION_TYPES);
+    // The global `Function` itself, or `Function` on a window: refused as values, see `Program`.
+    const functionValue = (node: ESNode) =>
+      (node.type === 'Identifier' && node.name === 'Function' && isGlobal(sourceCode, node)) ||
+      (node.type === 'MemberExpression' && propName(node) === 'Function' && isWindow(node.object));
     const forbid = (node: ESNode, name: string) => {
       context.report({ node, messageId: 'forbidden', data: { name } });
     };
@@ -86,10 +91,30 @@ const rule: Rule.RuleModule = {
       const prefix = node.type === 'NewExpression' ? 'new ' : '';
       if (callee.type === 'Identifier' && BARE.has(callee.name) && isGlobal(sourceCode, callee)) {
         forbid(node, `${prefix}${callee.name}`);
-      } else if (isFunctionConstructor(callee)) forbid(node, `${prefix}Function`);
+      } else if (
+        !functionValue(callee) &&
+        (hasType(sourceCode, node.callee, FUNCTION_TYPES) || hasType(sourceCode, callee, FUNCTION_TYPES))
+      ) {
+        forbid(node, `${prefix}Function`);
+      }
     };
 
     return {
+      Program() {
+        const scope = sourceCode.scopeManager.globalScope;
+        const global = scope?.set.get('Function');
+        const refs = [
+          ...(global?.defs.length === 0 ? global.references : []),
+          ...(scope?.through.filter((r) => r.identifier.name === 'Function') ?? []),
+        ];
+        for (const ref of refs) {
+          const id = ref.identifier as Rule.Node;
+          const typeOnly = (ref as { isValueReference?: boolean }).isValueReference === false;
+          if (typeOnly || (id.parent?.type as string) === 'TSTypeQuery') continue;
+          const constructed = id.parent?.type === 'NewExpression' && id.parent.callee === id;
+          forbid(id, constructed ? 'new Function' : 'Function');
+        }
+      },
       MemberExpression(node) {
         const name = propName(node);
         if (name !== undefined) access(node, name, node.object);

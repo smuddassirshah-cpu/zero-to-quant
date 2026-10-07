@@ -21,6 +21,12 @@ const options = [
       },
       { name: 'screens/', files: ['src/screens/*/**'], allow: ['src/screens/$1/**'] },
       {
+        name: 'widgets/',
+        files: ['src/widgets/**'],
+        allow: ['src/widgets/**', 'src/engine/render/**'],
+        deny: ['src/widgets/**/schema.ts'],
+      },
+      {
         name: 'engine/',
         files: ['src/engine/**'],
         allow: ['src/engine/**', 'packages/contracts/**', 'src/platform/types.ts'],
@@ -45,6 +51,8 @@ const DOTTED = at('src/widgets/a.b/logic.ts');
 const SCREEN = at('src/screens/today/View.tsx');
 const WEB = at('src/platform/web/index.ts');
 const ELSEWHERE = at('src/elsewhere/a.ts');
+const VIEW = at('src/widgets/primitives/slider/View.tsx');
+const dynamic = (layer: string) => [{ messageId: 'dynamic', data: { layer } }];
 const refused = (layer: string, target: string) => [
   { messageId: 'layer', data: { layer, target, note: '' } },
 ];
@@ -85,7 +93,9 @@ tester.run('layering', rule, {
     { code: 'import { c } from "./c.ts"', filename: DOTTED, options },
     { code: 'import { z } from "zod"', filename: SCHEMA, options },
     from(SCREEN)('import { x } from "./load.ts"; import { y } from "../today/copy.ts"'),
-    from(SCREEN)('void import(name)'),
+    from(VIEW)('void import(`../../../engine/render/${name}.ts`)'),
+    from(at('tests/e2e/a.ts'))('void import(name)'),
+    from(at('src/app/a.test.ts'))('void import(`${name}.ts`)'),
     web('import type { T } from "../../engine/t.ts"'),
     web('import { type T, type U } from "../../engine/t.ts"'),
     web('export type { T } from "../../engine/t.ts"'),
@@ -109,10 +119,25 @@ tester.run('layering', rule, {
     engineRefuses('type M = typeof import("../screens/m.ts")', 'src/screens/m.ts'),
     engineRefuses('import { z } from "zod"', 'npm:zod'),
     engineRefuses('import { m } from "@zq/mathcore"', 'packages/mathcore'),
-    { ...engine('void import(name)'), errors: [{ messageId: 'dynamic', data: { layer: 'engine/' } }] },
+    { ...engine('void import(name)'), errors: dynamic('engine/') },
+    { ...engine('void import(`${name}.ts`)'), errors: dynamic('engine/') },
+    { ...from(SCREEN)('void import(name)'), errors: dynamic('screens/') },
+    { ...from(WEB)('void import(`${name}`)'), errors: dynamic('platform/web') },
     {
-      ...engine('void import(`${name}.ts`)'),
-      errors: [{ messageId: 'dynamic', data: { layer: 'engine/' } }],
+      ...from(VIEW)('void import(`./${name}/schema.ts`)'),
+      errors: refused('widgets/', 'src/widgets/primitives/slider/**'),
+    },
+    {
+      ...from(VIEW)('void import("../" + name + "/schema.ts")'),
+      errors: refused('widgets/', 'src/widgets/primitives/**'),
+    },
+    {
+      ...from(LOGIC)('void import(`./${name}.ts`)'),
+      errors: refused('widgets/**/logic.ts', 'src/widgets/primitives/slider/**'),
+    },
+    {
+      ...from(SCHEMA)('void import(`zod/${name}`)'),
+      errors: refused('widgets/**/schema.ts', 'npm:zod/**'),
     },
     { ...engine('import "../../../x.ts"'), errors: problem('outside', '../../../x.ts') },
     { ...engine('import "@/../../x.ts"'), errors: problem('outside', '@/../../x.ts') },

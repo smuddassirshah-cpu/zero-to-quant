@@ -18,14 +18,18 @@
 //   `packages` map does not know.
 // - Type-only imports (`import type`, `export type`, every specifier `type`, TypeScript's
 //   `import('x').T`) are checked too: they may also reach `allowTypes`, and `deny` still applies.
-// - Dynamic `import()`: a template literal or `+` with a static prefix is checked as `<prefix>**`,
-//   matched as a string, so it passes only where the whole directory would; one with no static
-//   prefix is refused in a layer that has a deny list. Vite queries (`?raw`) are dropped.
+// - Dynamic `import()` with a computed specifier: a template literal or `+` with a static prefix
+//   is checked as the directory `<prefix>**`. It must be allowed as a whole (the string itself is
+//   matched against `allow`), and it is refused when it overlaps any `deny` glob, that is when some
+//   path under the prefix could be denied (util/glob.ts `globPrefix`); `!` exceptions are ignored
+//   there, so the check errs towards refusing. A computed specifier with no static prefix is refused
+//   in every layer but those that may import anything (`allow: ['**']`, no `deny`): the test rows.
+//   Vite queries (`?raw`) are dropped before resolving.
 // - Per file, each pattern compiles once; each import is then O(patterns of the layer).
 import path from 'node:path';
 import type { Rule } from 'eslint';
 import { staticString, type ESNode } from '../util/ast.ts';
-import { glob } from '../util/glob.ts';
+import { glob, globPrefix } from '../util/glob.ts';
 import { repoPath } from '../util/paths.ts';
 
 interface Layer {
@@ -153,14 +157,19 @@ const rule: Rule.RuleModule = {
     }));
     const denied = (key: string) =>
       deny.reduce((hit, { negate, regex }) => (regex.test(key) ? !negate : hit), false);
+    const open = deny.length === 0 && layer.allow.includes('**');
+    let overlaps: RegExp[] | undefined;
+    const overlapsDeny = (prefix: string) =>
+      (overlaps ??= (layer.deny ?? [])
+        .filter((p) => !p.startsWith('!'))
+        .map((p) => globPrefix(stripAll(p), tokens))).some((r) => r.test(prefix));
 
-    const check = (source: ESNode | null | undefined, types: boolean, dynamic: boolean) => {
+    const check = (source: ESNode | null | undefined, types: boolean) => {
       if (!source) return;
       const exact = staticString(source);
       const specifier = exact ?? staticPrefix(source);
       if (!specifier) {
-        if (dynamic && deny.length > 0)
-          context.report({ node: source, messageId: 'dynamic', data: { layer: name } });
+        if (!open) context.report({ node: source, messageId: 'dynamic', data: { layer: name } });
         return;
       }
       const resolved = resolveTarget(specifier, file, packages);
@@ -171,8 +180,9 @@ const rule: Rule.RuleModule = {
       const target = exact === undefined ? `${resolved.path}**` : resolved.path;
       const key = exact === undefined ? target : stripAll(target);
       const reached = (list: RegExp[]) => list.some((r) => r.test(key));
+      const blocked = exact === undefined ? overlapsDeny(resolved.path) : denied(key);
       const refused =
-        denied(key) || (!target.startsWith('npm:') && !reached(allow) && !(types && reached(allowTypes)));
+        blocked || (!target.startsWith('npm:') && !reached(allow) && !(types && reached(allowTypes)));
       if (!refused) return;
       const data = { layer: name, target, note: note ?? '' };
       context.report({ node: source, messageId: note ? 'layerNote' : 'layer', data });
@@ -180,19 +190,19 @@ const rule: Rule.RuleModule = {
 
     return {
       ImportDeclaration: (node) => {
-        check(node.source, typeOnly(node), false);
+        check(node.source, typeOnly(node));
       },
       ExportNamedDeclaration: (node) => {
-        check(node.source, typeOnly(node), false);
+        check(node.source, typeOnly(node));
       },
       ExportAllDeclaration: (node) => {
-        check(node.source, typeOnly(node), false);
+        check(node.source, typeOnly(node));
       },
       ImportExpression: (node) => {
-        check(node.source, false, true);
+        check(node.source, false);
       },
       TSImportType: (node: Rule.Node) => {
-        check((node as unknown as { source: ESNode }).source, true, false);
+        check((node as unknown as { source: ESNode }).source, true);
       },
     };
   },

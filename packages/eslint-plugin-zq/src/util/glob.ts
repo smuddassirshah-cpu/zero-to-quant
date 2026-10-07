@@ -49,3 +49,25 @@ export function glob(pattern: string, tokens: Tokens = {}): RegExp {
   if (fixed) cache.set(pattern, regex);
   return regex;
 }
+
+/**
+ * Matches every string that begins some match of `pattern`, so a directory prefix `p` overlaps
+ * the glob when the result accepts `p`. Built right to left: a literal character `c` before the
+ * rest gives `(?:c<rest>)?`, `*` gives `[^/]*<rest>`, a trailing `/**` gives `(?:/.*)?`, and any
+ * other `**` lets every continuation through. O(pattern length).
+ */
+export function globPrefix(pattern: string, tokens: Tokens = {}): RegExp {
+  const parts = pattern.split(PARTS);
+  let source = '';
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i] ?? '';
+    if (part === '**/' || part === '**') source = '.*';
+    else if (part === '/**') source = '(?:/.*)?';
+    else if (part === '*') source = `[^/]*${source}`;
+    else {
+      const text = part === '$1' ? (tokens.cap ?? '') : part === '$dir' ? (tokens.dir ?? '') : part;
+      for (let j = text.length - 1; j >= 0; j--) source = `(?:${escape(text.charAt(j))}${source})?`;
+    }
+  }
+  return new RegExp(`^${source}$`);
+}

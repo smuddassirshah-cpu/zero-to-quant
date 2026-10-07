@@ -12,8 +12,10 @@
 // - A sink method is refused on any access, called or not, so `.call`, `.apply`, `.bind` and
 //   destructuring are covered. `write` and `writeln` count on a document: `document` itself, or
 //   any expression the type checker types as `Document` (`el.ownerDocument`, an alias).
-// - Names are matched statically, `+` of literals folded (`el['inner' + 'HTML']`). Names built at
-//   run time are out of reach of a static rule; review catches them.
+// - Names are matched statically, `+` of literals folded (`el['inner' + 'HTML']`). Accepted
+//   residue, out of reach of a static rule and left to review: names built at run time, a key
+//   template with expressions (`` el[`inner${'HTML'}`] ``), and the setter reached through
+//   `Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML').set.call(el, s)`.
 import type { Rule } from 'eslint';
 import {
   hasType,

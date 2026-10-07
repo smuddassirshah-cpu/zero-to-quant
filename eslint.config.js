@@ -21,8 +21,8 @@ const packages = {
 // matches, so the most specific layer comes first. Globs: `**`, `*`, `$1` (the importer's first
 // `*` capture) and `$dir` (the importer's directory); extensions and a target's `/index` are
 // ignored. `deny` reads in order, last match wins, and `!` re-allows. Every file the rule runs on
-// matches a row: unlisted src/ folders and packages/ files reach a catch-all, while tools/ and
-// proxy/ already end in rows that cover their whole trees.
+// matches a row: an unlisted src/ folder reaches a catch-all, while packages/, tools/ and proxy/
+// end in rows that cover their whole trees.
 const pure = ['packages/contracts/**', 'packages/mathcore/**', 'packages/models/**'];
 const runtime = [...pure, 'packages/content-schema/**', 'packages/graders/**', 'packages/gen-kit/**'];
 const schemas = 'src/widgets/**/schema.ts';
@@ -160,7 +160,6 @@ const layers = [
     note: unlisted,
   },
   { name: 'packages/*', files: ['packages/*/**'], allow: ['packages/**'], deny: ['src/**', 'tools/**'] },
-  { name: 'an unlisted packages/ file', files: ['packages/**'], allow: [], deny: ['npm:**'], note: unlisted },
   {
     name: 'tools/zq',
     files: ['tools/zq/**'],
@@ -230,9 +229,9 @@ export default defineConfig([
     rules: { 'zq/no-empty-catch': 'error', 'zq/no-inner-html': 'error' },
   },
   {
-    // ARCHITECTURE.md 10.4 scopes no-colour-literals to `.tsx`; widened to `src/**/*.ts` because
-    // widget logic and scene files produce render data.
-    files: ['src/**/*.{ts,tsx}'],
+    // ARCHITECTURE.md 10.4 scopes no-colour-literals to `.tsx`; widened to every script under src/
+    // because widget logic and scene files produce render data, and `.js` must not be a way round.
+    files: ['src/**/*.{ts,tsx,js,mjs}'],
     rules: { 'zq/no-forbidden-apis': 'error', 'zq/no-colour-literals': 'error' },
   },
   {
