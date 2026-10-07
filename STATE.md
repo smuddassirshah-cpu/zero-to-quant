@@ -11,6 +11,7 @@ Preview Artifact: not yet created (stage 25 creates it; its URL goes here)
 | Session | Stage | Branch | Started |
 |---|---|---|---|
 | Main session (integration, docs, review fixes) and seven sub-sessions (lint, release and CI units; four adversarial reviewers), `session_01J92GRXudcwDnRYVFX2Sqby` | 1 | `stage/1` | 2026-10-07 11:50 UTC |
+| The same main session with its workflow sub-sessions (probe builders, tester, adversarial reviewers), `session_01J92GRXudcwDnRYVFX2Sqby` | 2 | `stage/2` | 2026-10-07 16:04 UTC |
 
 ## Device-gate queue
 
@@ -23,7 +24,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 | # | Stage | Depends on | AD plan | AD actual | Status | Gate |
 |---|---|---|---|---|---|---|
 | 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
-| 2 | Spike S1 on the owner's iPhone | 1 | 3 | - | pending | - |
+| 2 | Spike S1 on the owner's iPhone | 1 | 3 | - | in progress | - |
 | 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | pending | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
 | 3b | `stats-core` in `@zq/mathcore/stats` | 3a | 12 | - | pending | - |
@@ -181,6 +182,11 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-07 | T1 gitleaks 8.30.1, pip-audit 2.10.1, the Go floor; npm-only licence gate until stage 25 | Named in `PLAN.md` 7.1 and 7.6 | n; versions for the owner |
 | 2026-10-07 | G1 The label guard: owner's label after the head commit, reset on every push, on `pull_request_target` | The owner cannot approve his own pull request | y: `PLAN.md` 7.1 |
 | 2026-10-07 | Stage 1 gate: approved by the owner ("Approved and continue"); A1, A2 (pytest stays at 9.0.2, Pyodide's version), L1, T1 and B16 approved; branch protection to be applied by the owner per `README.md`; the superseded `stage1/*` branches may be deleted once stage 1 reaches `main`; the licence holder is Syed Muddassir Shah | The owner's answers at the gate | n |
+| 2026-10-07 | B17 `stage/2` branched from `stage/1`, not `main` | `main` does not carry stage 1 until the owner merges it | y: `CLAUDE.md` gating rule 2 |
+| 2026-10-07 | B18 The spike S1 source archived in `spikes/s1/` and `spikes/s1-dbsize/` in one pull request; the npm mirror fetched, not committed | Evidence, not engine code; reviewed before publishing | y: `PLAN.md` 11.1 line cap |
+| 2026-10-07 | B19 The probe declares `db` (six rules), `user` (profile) and `sample`; `permissions` is built in and not declared | The capabilities contract 0.2.73 | n |
+| 2026-10-07 | B20 The probe's `TexSlots` binding also rewrites KaTeX's TeX annotation, which repeats the sentinels; proposed for decision 37 | No sentinel text may survive in the tree | y: `ARCHITECTURE.md` decision 37 and 5.11, `PLAN.md` conflict 10; for the owner |
+| 2026-10-07 | B21 Sub-session files read in full by the publishing session count as the session's own for hard rule 2 | Gating rule 4 delegates; the publisher read and hashed every file | y: interpretation of hard rule 2; for the owner |
 
 ## Open questions
 
@@ -202,7 +208,7 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 12 | Cloudflare plan with SQLite-backed Durable Objects, the `new_sqlite_classes` key, the `@cloudflare/vitest-pool-workers` version, the proxy log retention setting [unverified] | The proxy limiter (decision 6 default: the paid plan if the free plan lacks them) | Stage 62 |
 | 13 | Per-key or per-workspace spend limits for the eval key [unverified] | Eval caps | Stage 67 |
 | 14 | Anthropic's API data policy for request content [unverified] | The proxy going live | Stage 82 |
-| 15 | Exact capability declaration keys for `sample` and `downloads` [inferred] | The first live publish | Stage 83, against the `artifact-capabilities` skill |
+| 15 | Exact capability declaration keys: `sample: {}` is accepted [measured, stage 2 publish]; `downloads` is `true` in contract 0.2.73 [sourced: the `artifact-capabilities` skill], where `ARCHITECTURE.md` 6.2.4 has `{}` (a conflict, `docs/DECISIONS.md` section 4) | The first live publish | Stage 83, against the `artifact-capabilities` skill |
 | 16 | The owner's sign-off of draft 3's rounded hair | Bertie's visual baselines | Stage 59 |
 | 17 | Cost of the paid marker and reviewer (decision 10) [unverified] | Content gates of curriculum Stage 1 (item 1.1 onwards) | By the first level gate of curriculum Stage 1 |
 | 18 | The content licence | Any public release (none planned) | Before anything is public |
@@ -264,4 +270,4 @@ Each with the stage it affects; the stage that closes it records the answer in `
 
 ## Next action
 
-Stage 1 approved on 7 October 2026 (the owner: "Approved and continue"). The owner merges the Blueprint (smuddassirshah-cpu/zero-to-quant#1) and then the stage 1 pull request into `main`. Stage 2 (spike S1 on the owner's iPhone) is in progress on `stage/2`.
+Stage 1 approved on 7 October 2026 (the owner: "Approved and continue"). The owner merges the Blueprint (smuddassirshah-cpu/zero-to-quant#1) and then the stage 1 pull request into `main`. Stage 2 (spike S1 on the owner's iPhone) is in progress on `stage/2`: the probe (https://claude.ai/artifact/KfYB1yPs9DfKTakjZZrGFD) and the `db` size probe (https://claude.ai/artifact/DF7mBFRaKCWkrXp14eRgXs) were published on 7 October 2026 and wait for the owner's run on the iPhone. When he says "S1 ready for republish", the session publishes v2 to the same URL and writes the signal (`spikes/s1/CONTRACT.md`, the runbook); after "S1 republish checks done" and his reload and back-gesture checks, it makes the omit-page publish, then reads the results from `ops/s1-run-*` and `status/s1-size`.

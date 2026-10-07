@@ -157,7 +157,12 @@ Details in `spikes/README.md`. Both ran as private Artifacts on the owner's iPho
 
 ### Spike S1 (stage 2)
 
-Pending. Record each check with device, app version and date, the import-map verdict (section 4.3's design or its named fallback) before stage 4 starts, the MathML verdict with screenshots, and the `db` size probe's result.
+Published 7 October 2026 (`spikes/README.md`, `spikes/s1/`, `spikes/s1-dbsize/`); results on the owner's iPhone pending. Record each check with device, app version and date, the import-map verdict (section 4.3's design or its named fallback) before stage 4 starts, the MathML verdict with screenshots, and the `db` size probe's result.
+
+Two results do not depend on the device:
+
+- **`\htmlData` in MathML: no.** KaTeX 0.19.0's MathML output drops `\htmlData`; no element carries `data-term`, while its HTML output does [measured: Chromium in `spikes/s1/tools/test.mjs`, and Node in the archive's review, 7 October 2026]. The fallback of `ARCHITECTURE.md` 14 item 20 applies (`live-formula` in the Artifact highlights a term from its term list); it is written into `ARCHITECTURE.md` with the device results, before stage 23.
+- **The declaration as stored:** `db` with six rules, `user` with the `profile` scope, `sample: {}` [measured: the publish result]. `ARCHITECTURE.md` 6.2.4 declares `downloads: {}` where the capabilities contract 0.2.73 says `downloads: true` [sourced: the `artifact-capabilities` skill]: a conflict for open question 15 (stage 83), reported in the stage 2 report.
 
 ## 5. Dependencies, licences and advisories
 
@@ -326,3 +331,38 @@ Each stage adds its decisions here in the format above, numbered B1 onwards, wit
 - **Rejected.** Folding the CI tools into `tools/release/` (different jobs and owners); one `tsconfig.base.json` for both resolutions (it cannot be `bundler` and `nodenext` at once).
 - **For the owner.** `CLAUDE.md` asks his approval before restructuring the tree; these are additions, listed here and in the stage report for his decision.
 - **Deviation.** Yes, from the trees of `PLAN.md` 10 and `ARCHITECTURE.md` 4.4.
+
+### B17 `stage/2` was branched from `stage/1` (stage 2)
+
+- **What.** `CLAUDE.md` gating rule 2 creates a stage branch from `main`. `main` does not yet carry stage 1 (the owner merges smuddassirshah-cpu/zero-to-quant#1 and the stage 1 pull request), so `stage/2` starts at the head of the approved `stage/1`.
+- **Reason.** Stage 2 depends on stage 1; a branch from today's `main` would lack the toolchain and records it builds on.
+- **Rejected.** Waiting for the merges to start the spike.
+- **Deviation.** Yes, from `CLAUDE.md` gating rule 2, until stage 1 reaches `main`. If stage 1 is merged with a merge commit, the stage 2 pull request into `main` carries only stage 2's commits; after a squash merge, `stage/2` is rebased onto `main` first.
+
+### B18 The spike S1 source lands in one pull request (stage 2)
+
+- **What.** The probe's source, test runner and lock (about 10,400 lines, plus the 2,398-line ledger `manifest.json` and the review record `REVIEW.md`) are archived in `spikes/s1/` and `spikes/s1-dbsize/`, the folders the owner chose, in one pull request into `stage/2`, above `PLAN.md` 11.1's line cap. The npm mirror the tests use is fetched and checked by `tools/fetch-npm.mjs`, never committed.
+- **Reason.** A spike is measured evidence, not engine code: no later stage imports it, and splitting it by module would review halves of one page whose checks share a harness. It went through a self-review and an adversarial review (17 major, 34 minor and 15 nit findings, all fixed or answered) before it was published; the archive pull request has its own adversarial review.
+- **Rejected.** Sixteen pull requests of 800 lines; leaving the source outside the repository.
+- **Reviewed after publishing.** Three changes postdate the probe's own review and were checked only by the archive's review: `permissions` left out of the declaration (B19), the sticky summary bar kept below the phone's status bar, and the copyable line kept under its prompt.
+- **Deviation.** Yes, from `PLAN.md` 11.1 and `CLAUDE.md` gating rule 3, for this pull request.
+
+### B19 The probe declares `db`, `user` and `sample`, not `permissions` (stage 2)
+
+- **Decision.** The probe's declaration is `ARCHITECTURE.md` 6.2.4's rule set plus one canary rule (`s1canary/{self}`, write `interact`), `user` with the `profile` scope, and `sample`. `permissions` is built in on every page and is called without being declared [sourced: the `artifact-capabilities` skill, runtime contract 0.2.73]; the probe's build had listed it and the publishing session removed it before the first publish. The first comment line of the published `caps.js` still names `permissions` among the declared capabilities; the file is left as published.
+- **Rejected.** Declaring `permissions: {}`, which the contract says never to pass.
+- **Deviation.** No.
+
+### B20 The probe's `TexSlots` binding also rewrites KaTeX's TeX annotation (stage 2; departs from `ARCHITECTURE.md` decision 37 and 5.11 and `PLAN.md` conflict 10)
+
+- **What.** KaTeX's MathML output carries an `<annotation encoding="application/x-tex">` that repeats the source, sentinels included (`\text{ZQSLOTk}`). The plan's binding swaps each sentinel `<mtext>` for an `<mn>` and nothing else, so the annotation would keep the sentinel text and a stale formula. The probe's binding (`spikes/s1/probe/mathml.js`) also rewrites the annotation to the TeX with the live values, and its check passes only when no sentinel text is left anywhere in the tree.
+- **Proposal, for the owner.** The binding of decision 37 and 5.11 rewrites the annotation on every change too (or drops it), and its contract test asserts that no sentinel text survives. `ARCHITECTURE.md` changes when the owner accepts it, before the stage that builds `TexSlots` (at the latest stage 12, whose `live-formula` runs on it).
+- **Rejected.** Leaving the annotation, which screen readers and copy may expose.
+- **Deviation.** Yes, from `ARCHITECTURE.md` decision 37 and 5.11 and `PLAN.md` conflict 10, in the probe; proposed for the plan.
+
+### B21 Files written by the stage session's sub-sessions count as its own for hard rule 2 (stage 2; for the owner)
+
+- **What.** `CLAUDE.md` hard rule 2 and `PLAN.md` stage 2 allow probe Artifacts "from files the session wrote itself". The probe's files were written by sub-sessions the stage session ran (gating rule 4) and by its build; the publishing session read every published file in full and checked each against the SHA-256 ledger before publishing (`spikes/s1/CONTRACT.md`, the runbook).
+- **Reason.** Delegation inside a stage is the protocol's own instruction, and the publishing rule's purpose (the publisher has read everything it publishes, and nothing third-party is published) holds.
+- **Rejected.** Rewriting the probe in the main session alone.
+- **Deviation.** An interpretation of hard rule 2, for the owner to confirm or reject at the gate.
