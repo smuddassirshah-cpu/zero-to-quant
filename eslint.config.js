@@ -19,11 +19,22 @@ const packages = {
 
 // The table of docs/ARCHITECTURE.md 4.5. zq/layering takes the first layer whose `files` glob
 // matches, so the most specific layer comes first. Globs: `**`, `*`, `$1` (the importer's first
-// `*` capture) and `$dir` (the importer's directory); extensions and `/index` are ignored.
+// `*` capture) and `$dir` (the importer's directory); extensions and a target's `/index` are
+// ignored. `deny` reads in order, last match wins, and `!` re-allows. Every file the rule runs on
+// matches a row: unlisted src/ folders and packages/ files reach a catch-all, while tools/ and
+// proxy/ already end in rows that cover their whole trees.
 const pure = ['packages/contracts/**', 'packages/mathcore/**', 'packages/models/**'];
 const runtime = [...pure, 'packages/content-schema/**', 'packages/graders/**', 'packages/gen-kit/**'];
-const schemas = 'src/widgets/**/schema.ts'; // classic zod, so never in a main-thread bundle
-const mainThread = ['npm:zod', 'npm:zod/v4', 'npm:zod/v4/classic', schemas];
+const schemas = 'src/widgets/**/schema.ts';
+// Classic zod and widget schemas (classic zod too) never reach a main-thread bundle; zod/mini may.
+const mainThread = [
+  'npm:zod',
+  'npm:zod/v3',
+  'npm:zod/v4',
+  'npm:zod/v4/classic',
+  'npm:zod/v4/classic/**',
+  schemas,
+];
 const views = ['npm:preact', 'npm:preact/**', 'npm:@preact/**', '**/*.css', '**/View.tsx'];
 const widgetEngine = [
   'src/engine/widgets/api.ts',
@@ -44,27 +55,34 @@ const platform = (name) => ({
   name: `platform/${name}`,
   files: [`src/platform/${name}/**`],
   allow: [`src/platform/${name}/**`, 'src/platform/shared/**', 'src/platform/types.ts', ...runtime],
+  allowTypes: ['src/engine/**'],
+  deny: mainThread,
 });
+const unlisted = 'add a layer row for it in eslint.config.js';
 const layers = [
-  { name: 'a colocated test', files: ['src/**/*.test.ts', 'src/**/*.test.tsx'], allow: ['**'] },
-  { name: 'entries/', files: ['src/entries/**'], allow: ['**'], deny: [schemas] },
+  {
+    name: 'a test',
+    files: ['**/*.test.ts', '**/*.test.tsx', 'packages/**/test/**'],
+    allow: ['**'],
+  },
+  { name: 'entries/', files: ['src/entries/**'], allow: ['**'], deny: mainThread },
   {
     name: 'widgets/**/logic.ts',
     files: ['src/widgets/**/logic.ts'],
     allow: [...pure, '$dir/**'],
-    deny: [...views, ...mainThread],
+    deny: [...views, 'npm:**', schemas],
   },
   {
     name: 'widgets/scenes/**/scene.ts',
     files: ['src/widgets/scenes/**/scene.ts'],
     allow: [...pure, '$dir/**', 'src/widgets/scene/define.ts', 'src/widgets/primitives/*/logic.ts'],
-    deny: [...views, ...mainThread],
+    deny: [...views, 'npm:**', schemas],
   },
   {
     name: 'widgets/**/schema.ts',
     files: ['src/widgets/**/schema.ts'],
-    allow: [...pure, '$dir/**', 'npm:zod'],
-    deny: views,
+    allow: [...pure, '$dir/**'],
+    deny: [...views, 'npm:**', '!npm:zod'],
   },
   {
     name: 'widgets/registry.node.gen.ts',
@@ -94,30 +112,31 @@ const layers = [
     name: 'app/',
     files: ['src/app/**'],
     allow: ['src/app/**', 'src/screens/**', ...shell, ...runtime],
-    deny: [schemas],
+    deny: mainThread,
   },
   {
     name: 'screens/',
     files: ['src/screens/*/**'],
     allow: ['src/screens/$1/**', 'src/app/**', ...shell, ...runtime],
-    deny: [schemas],
+    deny: mainThread,
   },
   {
     name: 'tutor/',
     files: ['src/tutor/**'],
     allow: ['src/tutor/**', 'src/engine/**', 'src/ui/**', 'src/platform/types.ts', ...runtime],
-    deny: [schemas],
+    deny: mainThread,
   },
   {
     name: 'engine/',
     files: ['src/engine/**'],
     allow: ['src/engine/**', 'src/ui/**', 'src/platform/types.ts', ...runtime],
-    deny: [schemas],
+    deny: mainThread,
   },
   {
     name: 'ui/',
     files: ['src/ui/**'],
     allow: ['src/ui/**', 'src/engine/motion/**', 'packages/contracts/**'],
+    deny: mainThread,
   },
   platform('web'),
   platform('artifact'),
@@ -125,6 +144,7 @@ const layers = [
     name: 'platform/',
     files: ['src/platform/**'],
     allow: ['src/platform/types.ts', 'src/platform/shared/**', 'src/platform/fake/**', ...runtime],
+    deny: mainThread,
   },
   {
     name: 'workers/',
@@ -132,7 +152,15 @@ const layers = [
     allow: ['src/workers/**', 'src/engine/progress/fold/**', 'src/engine/rpc.ts', ...runtime],
   },
   { name: 'sw/', files: ['src/sw/**'], allow: ['src/sw/**', ...runtime] },
+  {
+    name: 'an unlisted src/ folder',
+    files: ['src/*/**', 'src/*'],
+    allow: ['src/$1/**'],
+    deny: ['npm:**'],
+    note: unlisted,
+  },
   { name: 'packages/*', files: ['packages/*/**'], allow: ['packages/**'], deny: ['src/**', 'tools/**'] },
+  { name: 'an unlisted packages/ file', files: ['packages/**'], allow: [], deny: ['npm:**'], note: unlisted },
   {
     name: 'tools/zq',
     files: ['tools/zq/**'],
@@ -208,7 +236,7 @@ export default defineConfig([
     rules: { 'zq/no-forbidden-apis': 'error', 'zq/no-colour-literals': 'error' },
   },
   {
-    files: ['{src,packages,tools,proxy,tests}/**/*.{ts,tsx}', '*.config.{ts,js}'],
+    files: ['{src,packages,tools,proxy,tests}/**/*.{ts,tsx,js,mjs}', '*.config.{ts,js}'],
     rules: { 'zq/layering': ['error', { layers, packages }] },
   },
   {
