@@ -1,0 +1,33 @@
+# gitleaks configuration (docs/PLAN.md 7.1), read by tools/ci/gitleaks.ts. The default rules stay on; they
+# already include anthropic-api-key and anthropic-admin-api-key. The two proxy secrets get rules of their own
+# because they are random base64url strings with no prefix to recognise. Allowlists are as narrow as the
+# current history needs. The tool ignores `gitleaks:allow` comments and refuses a .gitleaksignore file.
+title = "Zero to Quant"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "zq-tutor-token"
+description = "TUTOR_TOKEN assignment with a value of 32 or more base64url characters"
+regex = '''TUTOR_TOKEN["']?\s*(?:=|:|:=|=>)\s*["'`]?([A-Za-z0-9_-]{32,})'''
+secretGroup = 1
+keywords = ["tutor_token"]
+
+[[rules]]
+id = "zq-call-signing-key"
+description = "CALL_SIGNING_KEY assignment with a value of 32 or more base64url characters"
+regex = '''CALL_SIGNING_KEY["']?\s*(?:=|:|:=|=>)\s*["'`]?([A-Za-z0-9_-]{32,})'''
+secretGroup = 1
+keywords = ["call_signing_key"]
+
+[[allowlists]]
+description = "The replace-with-... dummy values of the example env files at cf706c4, still in history"
+regexTarget = "secret"
+regexes = ['''^replace-with-[a-z0-9-]+$''']
+
+[[allowlists]]
+description = "The invented Stripe-shaped value in the secret-scanning lesson of docs/curriculum/stage1-python-tools.md"
+targetRules = ["stripe-access-token", "generic-api-key"]
+regexTarget = "secret"
+regexes = ['''^sk_live_51HxQ2eZvKYlo2C8fA9b$''']
