@@ -26,7 +26,7 @@ Result on the owner's iPhone (iOS 18.7, Claude app, 6 October 2026): Python 3.14
 
 ## s1 and s1-dbsize (spike S1, stage 2)
 
-The probe of `docs/PLAN.md` stage 2: 44 checks in four modules, every one recording its raw evidence and answering pass, fail, info, inconclusive, error or skipped. `cdn` (7 checks) loads Preact 11.0.0, `@preact/signals`, `zod/mini`, KaTeX, ts-fsrs and fflate from jsDelivr through an import map with integrity, proves a wrong hash is refused against a control, tries the cdnjs copies, runs a module worker importing by full URL, and loads the Preact 10.29.8 UMD fallback with integrity. `mathml` (7) renders the 40-formula specimen with KaTeX's MathML output, measures native layout from bounding boxes, binds the `TexSlots` sentinels and checks `\htmlData`. `platform` (19) covers the single list of stage 2 (c). `caps` (11) measures `user`, `permissions`, the `db` round trip and rule set (with a canary rule only a declared rule set can produce), a `meta/release` change reaching the open page after a republish, and `sample` (consent, limits, streaming, tiers, abort, page tools). `s1-dbsize` is the separate paced size probe: 192 KiB documents every 2 s up to 60 MiB, then it deletes them.
+The probe of `docs/PLAN.md` stage 2: 44 checks in four modules, every one recording its raw evidence and answering pass, fail, info, inconclusive, error or skipped. `cdn` (7 checks) loads Preact 11.0.0, `@preact/signals`, `zod/mini`, KaTeX, ts-fsrs and fflate from jsDelivr through an import map with integrity, checks whether a wrong hash is refused, against a control, tries the cdnjs copies, runs a module worker importing by full URL, and loads the Preact 10.29.8 UMD fallback with integrity. `mathml` (7) renders the 40-formula specimen with KaTeX's MathML output, measures native layout from bounding boxes, binds the `TexSlots` sentinels and checks `\htmlData`. `platform` (19) covers the single list of stage 2 (c). `caps` (11) measures `user`, `permissions`, the `db` round trip and rule set (with a canary rule only a declared rule set can produce), a `meta/release` change reaching the open page after a republish, and `sample` (consent, limits, streaming, tiers, abort, page tools). `s1-dbsize` is the separate paced size probe: 192 KiB documents every 2 s up to 60 MiB, then it deletes them.
 
 Every published file is our own code or data; third-party code loads at run time from the CDN. `s1/CONTRACT.md` is the brief every module follows and the publishing runbook. To rebuild and test locally (Node 22, the repository's `npm ci`, Chromium at `/opt/pw-browsers` or `ZQ_CHROMIUM`):
 
@@ -34,7 +34,7 @@ Every published file is our own code or data; third-party code loads at run time
 cd spikes/s1
 node tools/fetch-npm.mjs      # the eight pinned tarballs, each checked against the registry's SHA-512
 node tools/build.mjs --strict # dist/v1, dist/v2, dist/v3, dist/dbsize and dist/manifest.json
-node tools/test.mjs           # 107 expectations against a fake window.claude, the CDN served from npm/
+node tools/test.mjs           # 109 expectations against a fake window.claude, the CDN served from npm/
 ```
 
 The build is deterministic: `dist/manifest.json` must equal the committed `s1/manifest.json` (SHA-256 `f7ea81f7...`), the ledger of what was published.

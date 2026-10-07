@@ -2,9 +2,11 @@
 //
 // Decision notes:
 // - The tarballs come from the npm registry with `npm pack`, run with an argument list (no shell), and each
-//   must match the SHA-512 below, the registry's own dist.integrity [measured 7 October 2026]; a mismatch
-//   deletes the tarball and stops. The mirror is never committed and never published.
-// - Existing unpacked folders are left alone, so a second run only fills gaps.
+//   must match the SHA-512 below, the registry's own dist.integrity [measured 7 October 2026]. A cached
+//   tarball that does not match is deleted and fetched once more; a fresh one that does not match stops the
+//   run. The mirror is never committed and never published.
+// - Each tarball unpacks into `<name>.partial` and is renamed into place only when tar succeeds, so a folder
+//   that exists is complete; a second run only fills gaps.
 
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -32,21 +34,47 @@ function run(cmd, args) {
   return r.stdout;
 }
 
-fs.mkdirSync(NPM, { recursive: true });
-for (const [spec, name, integrity] of TARBALLS) {
-  const dir = path.join(NPM, name);
-  if (fs.existsSync(path.join(dir, 'package', 'package.json'))) {
-    console.log(`${spec}: already unpacked`);
-    continue;
+const sha512 = file => `sha512-${createHash('sha512').update(fs.readFileSync(file)).digest('base64')}`;
+
+// npm pack into NPM; returns the tarball's path as npm reports it.
+function pack(spec) {
+  const [info] = JSON.parse(run('npm', ['pack', spec, '--pack-destination', NPM, '--json', '--silent']));
+  return path.join(NPM, info.filename);
+}
+
+function fetchVerified(spec, name, integrity) {
+  const cached = path.join(NPM, `${name}.tgz`);
+  if (fs.existsSync(cached)) {
+    if (sha512(cached) === integrity) return cached;
+    console.log(`${spec}: the cached tarball does not match; fetching it again`);
+    fs.rmSync(cached);
   }
-  const tgz = path.join(NPM, `${name}.tgz`);
-  if (!fs.existsSync(tgz)) run('npm', ['pack', spec, '--pack-destination', NPM, '--silent']);
-  const got = `sha512-${createHash('sha512').update(fs.readFileSync(tgz)).digest('base64')}`;
+  const tgz = pack(spec);
+  const got = sha512(tgz);
   if (got !== integrity) {
     fs.rmSync(tgz);
     throw new Error(`${spec}: the tarball's SHA-512 is ${got}, not ${integrity}; it was deleted`);
   }
-  fs.mkdirSync(dir, { recursive: true });
-  run('tar', ['-xzf', tgz, '-C', dir]);
-  console.log(`${spec}: verified and unpacked`);
+  return tgz;
+}
+
+try {
+  fs.mkdirSync(NPM, { recursive: true });
+  for (const [spec, name, integrity] of TARBALLS) {
+    const dir = path.join(NPM, name);
+    if (fs.existsSync(dir)) {
+      console.log(`${spec}: already unpacked`);
+      continue;
+    }
+    const tgz = fetchVerified(spec, name, integrity);
+    const partial = `${dir}.partial`;
+    fs.rmSync(partial, { recursive: true, force: true });
+    fs.mkdirSync(partial);
+    run('tar', ['-xzf', tgz, '-C', partial]);
+    fs.renameSync(partial, dir);
+    console.log(`${spec}: verified and unpacked`);
+  }
+} catch (e) {
+  console.error(`fetch-npm: ${e.message}`);
+  process.exit(1);
 }

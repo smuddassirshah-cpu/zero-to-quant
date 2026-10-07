@@ -66,6 +66,12 @@ const clip = (s, n) => { const t = String(s ?? ''); return t.length > n ? `${t.s
 const domId = s => s.replace(/[^A-Za-z0-9_-]/g, '-');
 const errText = e => (e instanceof Error ? `${e.name}: ${e.message.split('\n')[0]}` : String(e));
 
+// The republish panel's copyable line and the line just above it.
+const quoteAndPrompt = page => page.evaluate(() => {
+  const q = document.querySelector('.rp-text .quote');
+  return { quote: q?.textContent ?? null, prompt: q?.previousElementSibling?.textContent ?? null };
+});
+
 function expectRow(group, id, ok, { kind = '', status = '', want = '', summary = '' } = {}) {
   rows.push({ group, id, kind, status, want, ok: !!ok, summary: String(summary).replace(/\s+/g, ' ') });
   if (!ok) say(`UNEXPECTED ${group} / ${id}: ${status ? `${status}, wanted ${want}. ` : ''}${clip(summary, 400)}`);
@@ -776,6 +782,8 @@ async function probePhase(browser, server) {
     say(`probe v1 loaded, run ${runId}; waiting for the automatic checks`);
     const finished = await page.evaluate(ms => Promise.race([window.__s1harness.autoDone, new Promise(r => setTimeout(() => r(false), ms))]), AUTO_WAIT_MS);
     expectRow(G1, 'auto checks finish in 120 s', finished === true, { summary: finished === true ? 'autoDone resolved' : 'autoDone did not resolve within 120 s' });
+    const readyQuote = await quoteAndPrompt(page);
+    expectRow(G1, 'ready quote sits under its prompt', readyQuote.quote === 'S1 ready for republish' && /tell Claude:$/.test(readyQuote.prompt), { summary: JSON.stringify(readyQuote) });
 
     const cards = await readCards(page);
     const kindOf = Object.fromEntries(cards.map(c => [c.id, c.kind]));
@@ -878,6 +886,8 @@ async function probePhase(browser, server) {
     await page.waitForFunction(ids => { const r = window.__s1harness.document().results; return ids.every(id => r[id]?.trigger === 'republish'); }, repIds, { timeout: 100_000, polling: 300 });
     const panel = await page.textContent('.republish');
     expectRow(G1, 'republish panel says done', panel.includes('S1 republish checks done'), { summary: clip(panel, 200) });
+    const doneQuote = await quoteAndPrompt(page);
+    expectRow(G1, 'done quote sits under its prompt', doneQuote.quote === 'S1 republish checks done' && /Tell Claude:$/.test(doneQuote.prompt), { summary: JSON.stringify(doneQuote) });
 
     // Every v1 result, read back from the db and from the screen.
     const all = cards.map(c => c.id);
@@ -1226,7 +1236,8 @@ async function main() {
   expectRow('build', 'publish plan splits the removals', plan.v2.entries === 1 + manifest.republish.added.length + manifest.republish.changed.length - 1 + removed.length
     && batches.every(b => b.entries <= 255) && nulls.length === removed.length && new Set(nulls).size === removed.length
     && batches[0].nullRemovals[0] === 'data/v1-only.json' && batches[0].nullRemovals[1] === 'bulk/b-001.json'
-    && plan.v1.capabilities.db.rules.some(r => r.path === 's1canary/{self}'), { summary: `v2 ${plan.v2.entries} entries; batches ${batches.map(b => b.entries).join(' + ')}; first removals ${batches[0]?.nullRemovals.slice(0, 2).join(', ')}` });
+    && plan.v1.capabilities.db.rules.some(r => r.path === 's1canary/{self}')
+    && Object.keys(plan.v1.capabilities).sort().join() === 'db,sample,user', { summary: `v2 ${plan.v2.entries} entries; batches ${batches.map(b => b.entries).join(' + ')}; first removals ${batches[0]?.nullRemovals.slice(0, 2).join(', ')}` });
   fs.mkdirSync(COMPARE, { recursive: true });
 
   const exe = chromiumPath();
@@ -1234,7 +1245,7 @@ async function main() {
     expectRow('setup', 'Chromium found', false, { summary: 'Set ZQ_CHROMIUM or install a Chromium under /opt/pw-browsers.' });
     return;
   }
-  const { chromium } = await import(PLAYWRIGHT);
+  const { chromium } = await import(pathToFileURL(PLAYWRIGHT).href);
   const browser = await chromium.launch({ executablePath: exe, args: ['--no-proxy-server'] });
   notes.push(`browser: ${exe}, version ${browser.version()}`);
   const server = await createServer({ root: path.join(DIST, 'v1'), allowBase: DIST, log: line => notes.push(`serve: ${line}`) });

@@ -407,7 +407,7 @@ const problems = [];
 const manifest = { note: 'SHA-256 of every file tools/build.mjs wrote. Deterministic: rebuilding gives the same values.', folders: {} };
 for (const [folder, files] of written) {
   manifest.folders[folder] = [];
-  for (const { path: p, abs } of files.sort((a, b) => a.path.localeCompare(b.path))) {
+  for (const { path: p, abs } of files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0)) /* code units: no locale in the ledger */) {
     const buf = fs.readFileSync(abs);
     if (!ALLOWED_EXT.has(path.extname(p))) problems.push(`${folder}/${p}: extension not allowed`);
     if (buf.length > MAX_FILE_BYTES) problems.push(`${folder}/${p}: ${buf.length} bytes is over 1 MB`);
