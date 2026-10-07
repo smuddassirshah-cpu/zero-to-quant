@@ -1,12 +1,16 @@
-# The visual-approved label must come from the owner, after the pull request's latest push (docs/PLAN.md 7.6;
-# docs/DECISIONS.md G1). Make "label-guard / visual-approved" a required check on main and stage/*.
+# The visual-approved label must come from the owner, after the pull request's head commit arrived
+# (docs/PLAN.md 7.6; docs/DECISIONS.md G1). Make "label-guard / visual-approved" a required check on main and
+# stage/*.
 # - pull_request_target, so the workflow and the guard come from the base side: on pull_request GitHub reads the
 #   workflow from the pull request's merge commit, which the pull request could rewrite. No step checks out or
 #   runs pull request code. pull_request_target reads the workflow from the base branch or from the default
 #   branch [unverified which; recalled that GitHub moved it to the default branch], so the guard binds only once
 #   it is on main.
-# - Every push removes the label (the reset job, the only one that may write), so the owner re-applies it to the
-#   commits he has seen. The guard job runs even when reset fails or is skipped, and fails if reset failed.
+# - A push or a reopening removes the label (the reset job, the only one that may write) and fails this run, so
+#   the check stays red until the owner applies the label again to the commits he has seen.
+# - No concurrency group: GitHub cancels a pending run when a newer one joins its group, even without
+#   cancel-in-progress, which would let a label toggle cancel the run that resets the label. Even if a reset run is
+#   lost, tools/ci/label-guard.ts fails any label older than the head commit's first check suite.
 # - Limit: the session platform's GitHub connection acts as the owner's own account, so this refuses every other
 #   account but may not tell an agent from the owner (tools/ci/label-guard.ts; CLAUDE.md hard rule 3).
 name: label-guard
@@ -17,17 +21,17 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: label-guard-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
-
 env:
   LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'visual-approved') }}
-  ACTION: ${{ github.event.action }}
+  STALE: >-
+    ${{ (github.event.action == 'synchronize' || github.event.action == 'reopened') &&
+    contains(github.event.pull_request.labels.*.name, 'visual-approved') }}
 
 jobs:
   reset:
-    if: github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'visual-approved')
+    if: >-
+      (github.event.action == 'synchronize' || github.event.action == 'reopened') &&
+      contains(github.event.pull_request.labels.*.name, 'visual-approved')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -46,39 +50,44 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
+      checks: read
       contents: read
       issues: read
       pull-requests: read
     env:
       RESET: ${{ needs.reset.result }}
+      ACTION: ${{ github.event.action }}
     steps:
       - name: Removed after new commits
-        if: env.ACTION == 'synchronize' && env.LABELLED == 'true'
+        if: env.STALE == 'true'
         run: |
-          if [ "$RESET" != success ]; then echo "label-guard: removing visual-approved failed ($RESET)"; exit 1; fi
-          echo "label-guard: visual-approved removed because new commits arrived; the owner applies it again."
+          echo "label-guard: visual-approved was removed on $ACTION (reset: $RESET); the owner applies it again."
+          exit 1
       - name: Nothing to check
         if: env.LABELLED != 'true'
         run: echo "visual-approved is not on this pull request."
       - uses: actions/checkout@v5 # pin to a commit SHA (STATE.md open question 25)
-        if: env.LABELLED == 'true' && env.ACTION != 'synchronize'
+        if: env.LABELLED == 'true' && env.STALE != 'true'
         with:
           # The base-side commit this workflow runs from; never the pull request's head or merge commit.
           ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v5 # pin to a commit SHA (STATE.md open question 25)
-        if: env.LABELLED == 'true' && env.ACTION != 'synchronize'
+        if: env.LABELLED == 'true' && env.STALE != 'true'
         with:
           node-version-file: .nvmrc
-      - name: Fetch the issue events
-        if: env.LABELLED == 'true' && env.ACTION != 'synchronize'
+      - name: Fetch the issue events and the head commit's check suites
+        if: env.LABELLED == 'true' && env.STALE != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number }}
-        run: gh api --paginate --slurp "repos/$REPO/issues/$NUMBER/events" > "$RUNNER_TEMP/events.json"
-      - name: The owner applied visual-approved
-        if: env.LABELLED == 'true' && env.ACTION != 'synchronize'
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          gh api --paginate --slurp "repos/$REPO/issues/$NUMBER/events" > "$RUNNER_TEMP/events.json"
+          gh api --paginate --slurp "repos/$REPO/commits/$HEAD_SHA/check-suites" > "$RUNNER_TEMP/suites.json"
+      - name: The owner applied visual-approved after the head commit
+        if: env.LABELLED == 'true' && env.STALE != 'true'
         env:
           OWNER: ${{ github.repository_owner }}
-        run: node tools/ci/label-guard.ts "$RUNNER_TEMP/events.json" "$OWNER"
+        run: node tools/ci/label-guard.ts "$RUNNER_TEMP/events.json" "$OWNER" "$RUNNER_TEMP/suites.json"

@@ -7,13 +7,15 @@
  *   history   every commit of every ref, merge resolutions included (--diff-merges=remerge), every file as
  *             text with no textconv or external diff, so .gitattributes cannot hide a file.
  *   selftest  builds throwaway repositories for each way a key can be planted (a plain file, an evil merge,
- *             a -diff or binary attribute, a textconv driver) and requires both scans to catch or refuse each,
- *             and a clean repository to pass; once under an empty git config and once under a hostile one.
- *             Key-shaped values are assembled at run time, so none sits in this repository.
- * The staged scan cannot read a file whose diff attribute is unset or names a driver (git diff shows no text
- * for it), so it refuses one, and a staged .gitattributes that sets such an attribute. A file git detects as
- * binary by its content is out of the staged scan's reach; the history scan, run before every push and in
- * CI, reads it as text.
+ *             a -diff or binary attribute, a textconv driver, a built-in driver with and without a textconv,
+ *             the root commit) and requires both scans to catch or refuse each, and a clean repository to
+ *             pass; once under an empty git config and once under a hostile one. Interrupted, it still removes
+ *             its repositories. Key-shaped values are assembled at run time, so none sits in this repository.
+ * The staged scan cannot read a file whose diff attribute is unset or names a driver that may textconv (git
+ * diff shows no text for it), so it refuses one, and a staged .gitattributes that sets such an attribute; git's
+ * built-in hunk drivers pass while no config scope gives them a textconv, command or binary setting. A file
+ * git detects as binary by its content is out of the staged scan's reach; the history scan, run before every
+ * push and in CI, reads it as text.
  * Every git and gitleaks child runs with command-scope config that fixes the diff format, because colour or
  * prefix settings in the developer's own config make gitleaks see nothing [measured]. gitleaks exits 0 when git
  * itself fails, logging an ERR line [measured], so any ERR line, or a history scan of no commits, fails the run.
@@ -53,10 +55,32 @@ const HISTORY_DUMMIES = [
   ['replace', 'with', '32', 'random', 'bytes', 'base64url'],
   ['replace', 'with', 'an', 'eval', 'only', 'signing', 'key'],
 ].map((words) => words.join('-'));
-// Each `key=value`; diff.external is set empty. color.diff outranks color.ui, so both are needed [measured].
+// Each `key=value`; diff.external is set empty. color.diff outranks color.ui, so both are needed; a small
+// core.bigFileThreshold makes git diff call files binary, and log.showRoot=false hides the root commit's diff
+// [measured, each].
 const GIT_OVERRIDES = ['color.ui=never', 'color.diff=never', 'core.quotepath=false', 'diff.noprefix=false']
   .concat(['diff.mnemonicprefix=false', 'diff.srcPrefix=a/', 'diff.dstPrefix=b/', 'diff.external='])
+  .concat(['core.bigFileThreshold=1g', 'log.showRoot=true'])
   .map((pair) => pair.split('='));
+// git's built-in hunk-header drivers (userdiff.c): harmless unless configured to textconv, run a command or
+// call files binary, which the staged scan checks before it lets one pass.
+const BUILTIN_DRIVERS = new Set(
+  ['ada', 'bash', 'bibtex', 'cpp', 'csharp', 'css', 'dts', 'elixir', 'fortran', 'fountain', 'golang', 'html']
+    .concat([
+      'java',
+      'kotlin',
+      'markdown',
+      'matlab',
+      'objc',
+      'pascal',
+      'perl',
+      'php',
+      'python',
+      'ruby',
+      'rust',
+    ])
+    .concat(['scheme', 'tex']),
+);
 const HISTORY_LOG = '--all --diff-merges=remerge --text --no-textconv --no-ext-diff';
 
 export interface Deps {
@@ -128,17 +152,19 @@ export function scanArgs(mode: 'staged' | 'history', config: string, report?: st
 }
 
 /** Paths from `git check-attr -z diff` output whose diff is unset (-diff, binary) or names a driver. */
-export function hiddenPaths(checkAttr: string): string[] {
+export function diffAttributes(checkAttr: string): { path: string; value: string }[] {
   const fields = checkAttr.split('\0');
-  const hidden: string[] = [];
+  const set: { path: string; value: string }[] = [];
   for (let i = 0; i + 2 < fields.length; i += 3) {
-    if (fields[i + 2] !== 'unspecified' && fields[i + 2] !== 'set') hidden.push(fields[i] ?? '');
+    const value = fields[i + 2] ?? '';
+    if (value !== 'unspecified' && value !== 'set') set.push({ path: fields[i] ?? '', value });
   }
-  return hidden;
+  return set;
 }
 
-/** Whether .gitattributes text sets -diff, binary or a diff driver, directly or in a macro. */
-export const hidesDiffs = (text: string): boolean => /(?:^|\s)(?:-diff|binary|diff=\S*)(?=\s|$)/m.test(text);
+/** The diff settings in .gitattributes text, macros included: 'unset' for -diff and binary, or a driver name. */
+export const diffSettings = (text: string): string[] =>
+  [...text.matchAll(/(?:^|\s)(?:-diff|binary|diff=(\S*))(?=\s|$)/gm)].map((m) => m[1] ?? 'unset');
 
 /** The first ERR or FTL line of gitleaks' log; gitleaks exits 0 when git fails [measured]. */
 export const errorLine = (stderr: string): string | undefined =>
@@ -185,14 +211,33 @@ async function scanRepo(deps: Deps, bin: string, dir: string, mode: 'staged' | '
   };
   const refuse = (problem: string): Scan => ({ code: 1, rules: [], problem, output: '' });
   if (mode === 'staged') {
+    const plain = new Map<string, boolean>();
+    // A value hides diffs unless it is a built-in driver no config scope gives a textconv, command or binary.
+    const hides = async (value: string): Promise<boolean> => {
+      if (value === 'unset' || !BUILTIN_DRIVERS.has(value)) return true;
+      if (!plain.has(value)) {
+        const key = `^diff\\.${value}\\.(textconv|command|binary)$`;
+        const r = await deps.run('git', ['config', '--get-regexp', key], { cwd: dir, env, capture: true });
+        if (r.code > 1) throw new Error(`git config failed: ${r.stderr.trim()}`);
+        plain.set(value, r.code === 1);
+      }
+      return plain.get(value) !== true;
+    };
     const index = await git(['ls-files', '-z']);
-    const hidden = hiddenPaths(await git(['check-attr', '--cached', '-z', '--stdin', 'diff'], index));
+    const hidden: string[] = [];
+    for (const { path, value } of diffAttributes(
+      await git(['check-attr', '--cached', '-z', '--stdin', 'diff'], index),
+    )) {
+      if (await hides(value)) hidden.push(path);
+    }
     if (hidden.length > 0)
       return refuse(`git shows no diff for ${hidden.join(', ')}: drop its diff attribute`);
     const staged = (await git(['diff', '--cached', '--name-only', '-z', '--diff-filter=ACMR'])).split('\0');
     for (const path of staged.filter((p) => /(?:^|\/)\.gitattributes$/.test(p))) {
-      const text = await git(['show', `:${path}`]);
-      if (hidesDiffs(text)) return refuse(`${path} sets -diff, binary or a diff driver, which hides diffs`);
+      for (const value of diffSettings(await git(['show', `:${path}`]))) {
+        if (await hides(value))
+          return refuse(`${path} sets -diff, binary or a diff driver, which hides diffs`);
+      }
     }
   }
   const config = join(deps.root, '.gitleaks.toml');
@@ -240,6 +285,8 @@ async function install(deps: Deps): Promise<number> {
 type Expect = readonly string[] | 'refused';
 interface Case {
   readonly name: string;
+  /** Files for the root commit, written before it is made. */
+  readonly root?: (dir: string) => void;
   /** Writes and stages the plant; `finish` then commits it, so the history scan sees it. */
   readonly stage: (dir: string, git: (...args: string[]) => Promise<void>, root: string) => Promise<void>;
   readonly finish?: (git: (...args: string[]) => Promise<void>) => Promise<void>;
@@ -248,10 +295,18 @@ interface Case {
 }
 
 const token = () => `TUTOR_TOKEN=${randomBytes(32).toString('base64url')}\n`;
-// The attribute is committed first, so only the check of every index path refuses the staged plant.
-const hiddenBy = (name: string, attributes: string, file: string): Case => ({
+// The attribute is committed first, so only the check of every index path judges the staged plant; `config`
+// is repository config set before it.
+const hiddenBy = (
+  name: string,
+  attributes: string,
+  file: string,
+  staged: Expect = 'refused',
+  config = '',
+): Case => ({
   name,
   stage: async (dir, git) => {
+    if (config !== '') await git('config', ...config.split(' '));
     writeFileSync(join(dir, '.gitattributes'), `${attributes}\n`);
     await git('add', '-A');
     await git('commit', '-q', '-m', 'attributes');
@@ -260,7 +315,7 @@ const hiddenBy = (name: string, attributes: string, file: string): Case => ({
   },
   // Stays on the side branch: git reads attributes from the checked-out tree, so the history scan meets them.
   finish: (git) => git('commit', '-q', '-m', name),
-  staged: 'refused',
+  staged,
   history: ['zq-tutor-token'],
 });
 
@@ -294,6 +349,26 @@ export const CASES: readonly Case[] = [
   hiddenBy('-diff attribute', 'secrets.txt -diff', 'secrets.txt'),
   hiddenBy('binary attribute', '*.conf binary', 'proxy.conf'),
   hiddenBy('textconv driver', '*.cfg diff=hide', 'proxy.cfg'),
+  // A built-in hunk driver passes and is scanned; given a textconv, it is refused like any other driver.
+  hiddenBy('built-in driver', '*.py diff=python', 'proxy.py', ['zq-tutor-token']),
+  hiddenBy(
+    'built-in driver with textconv',
+    '*.py diff=python',
+    'proxy.py',
+    'refused',
+    'diff.python.textconv true',
+  ),
+  {
+    // log.showRoot=false would hide the first commit's diff from the history scan; nothing is staged.
+    name: 'root commit',
+    root: (dir) => {
+      writeFileSync(join(dir, 'root.env'), token());
+    },
+    stage: () => Promise.resolve(),
+    finish: () => Promise.resolve(),
+    staged: [],
+    history: ['zq-tutor-token'],
+  },
   {
     // An attribute for files not yet added: only the check of the staged .gitattributes refuses it.
     name: 'staged .gitattributes',
@@ -323,8 +398,9 @@ export const CASES: readonly Case[] = [
 
 // Everything a developer's config could set to blind the scans; the textconv driver empties proxy.cfg.
 const HOSTILE_CONFIG =
-  '[color]\n ui = always\n diff = always\n[core]\n quotepath = true\n[diff]\n noprefix = true\n' +
-  ' mnemonicprefix = true\n external = true\n[diff "hide"]\n textconv = true\n';
+  '[color]\n ui = always\n diff = always\n[core]\n quotepath = true\n bigFileThreshold = 1\n[diff]\n' +
+  ' noprefix = true\n mnemonicprefix = true\n external = true\n[diff "hide"]\n textconv = true\n' +
+  '[log]\n showRoot = false\n';
 
 function verdict(name: string, mode: string, expect: Expect, got: Scan): string[] {
   if (expect === 'refused') {
@@ -342,6 +418,14 @@ function verdict(name: string, mode: string, expect: Expect, got: Scan): string[
 async function selftest(deps: Deps): Promise<number> {
   const bin = resolveBinary(binaryCandidates(deps.root, deps.env.PATH));
   const work = mkdtempSync(join(tmpdir(), 'zq-gitleaks-selftest-'));
+  // A signal stops the run at its next git call, once the child in flight has finished (removing the work
+  // directory under a running gitleaks lets it recreate the directory for its report [measured]); the finally
+  // block then removes the repositories and the process dies of the same signal, its listener gone.
+  let interrupted: NodeJS.Signals | undefined;
+  const onSignal = (signal: NodeJS.Signals) => {
+    interrupted = signal;
+  };
+  process.once('SIGINT', onSignal).once('SIGTERM', onSignal);
   const hostile = join(work, 'hostile.gitconfig');
   writeFileSync(hostile, HOSTILE_CONFIG);
   const base = { ...deps.env, GIT_CONFIG_NOSYSTEM: '1' };
@@ -367,6 +451,7 @@ async function selftest(deps: Deps): Promise<number> {
         // The repository is built under an empty config; only the scans see the hostile one.
         const buildEnv = gitEnv({ ...pass.env, GIT_CONFIG_GLOBAL: devNull });
         const git = async (...args: string[]) => {
+          if (interrupted !== undefined) throw new Error(`selftest interrupted by ${interrupted}`);
           const r = await deps.run('git', [...identity, ...args], { cwd: dir, env: buildEnv, capture: true });
           if (r.code !== 0)
             throw new Error(`git ${args[0] ?? ''} failed in the selftest: ${r.stderr.trim()}`);
@@ -374,6 +459,7 @@ async function selftest(deps: Deps): Promise<number> {
         mkdirSync(dir);
         await git('init', '-q', '-b', 'main');
         writeFileSync(join(dir, 'README.txt'), 'selftest\n');
+        c.root?.(dir);
         await git('add', '-A');
         await git('commit', '-q', '-m', 'clean');
         // Each plant goes on a side branch, so only a scan of every ref can see it.
@@ -382,6 +468,7 @@ async function selftest(deps: Deps): Promise<number> {
         const staged = await scanRepo(scanDeps, bin, dir, 'staged', `${dir}-staged.json`);
         await (c.finish ?? ((g) => g('commit', '-q', '-m', c.name)))(git);
         if (c.finish === undefined) await git('switch', '-q', 'main');
+        if (interrupted !== undefined) throw new Error(`selftest interrupted by ${interrupted}`);
         const history = await scanRepo(scanDeps, bin, dir, 'history', `${dir}-history.json`);
         failures.push(
           ...verdict(`${pass.label}, ${c.name}`, 'staged', c.staged, staged),
@@ -390,7 +477,9 @@ async function selftest(deps: Deps): Promise<number> {
       }
     }
   } finally {
+    process.off('SIGINT', onSignal).off('SIGTERM', onSignal);
     rmSync(work, { recursive: true, force: true });
+    if (interrupted !== undefined) process.kill(process.pid, interrupted);
   }
   for (const failure of failures) deps.log(`gitleaks selftest: ${failure}`);
   if (failures.length > 0) return 1;
