@@ -161,7 +161,35 @@ Pending. Record each check with device, app version and date, the import-map ver
 
 ## 5. Dependencies, licences and advisories
 
-None yet. A new dependency adds an entry: name and exact version, maintained, last release, licence, why, and the date of the owner's approval. Licence exceptions beyond the allow-lists of `PLAN.md` 7.6, and advisory waivers past a week, are entered here with their reason.
+A new dependency adds an entry: name and exact version, maintained, last release, licence, why, and the date of the owner's approval. Licence exceptions beyond the allow-lists of `PLAN.md` 7.6, and advisory waivers past a week, are entered here with their reason. `tools/ci/licences.exceptions.json` and `tools/ci/audit-waivers.json` name these entries; an exception that matches nothing or a waiver past its date fails CI. Stage 1 recorded L1, A1, A2 and T1 for the owner's review at its gate.
+
+### L1 Licence exceptions for four of stylelint's dependencies (stage 1)
+
+- **What.** Development only, all through `stylelint` 17.16.0: `svg-tags` 1.0.0, whose `license` the lockfile does not record (it declares MIT in the legacy `licenses` array and ships an MIT `LICENSE` file), and `@csstools/css-syntax-patches-for-csstree` 1.1.15, `@csstools/selector-resolve-nested` 4.0.2 and `@csstools/selector-specificity` 6.0.1, which are MIT-0 [measured, `package-lock.json` and the installed packages, 7 October 2026].
+- **Why.** MIT-0 is MIT without the attribution condition, so it asks less of us than MIT; none of the four ships to learners.
+- **Rejected.** Adding MIT-0 to the development allow-list, which would change `PLAN.md` 7.6; replacing stylelint, which `PLAN.md` 4.2 pins.
+
+### A1 Advisory waiver: `braces` 3.0.3, GHSA-vfj7-8cjw-p6xm, until 7 November 2026 (stage 1)
+
+- **What.** npm audit rates it high: stack exhaustion through deeply nested brace patterns. Development only, through `stylelint` 17.16.0 and `micromatch` 4.0.8. No fixed `braces` exists: 3.0.3 is its latest release [measured, npm registry, 7 October 2026].
+- **Why.** Exploitation needs an attacker to choose the glob pattern; stylelint expands only the patterns in our own scripts and config.
+- **Rejected.** Moving stylelint or overriding `braces`, both pin changes the owner approves; failing every pull request on an advisory nobody can fix.
+- **Review.** When `braces` or `micromatch` publishes a fix, or at expiry.
+
+### A2 Advisory waiver: `pytest` 9.0.2, GHSA-6w46-j5rx-g56g (CVE-2025-71176), until 7 November 2026 (stage 1)
+
+- **What.** pytest up to 9.0.2 uses predictable `/tmp/pytest-of-<user>` directories, which lets another local user on a UNIX machine cause a denial of service or possibly gain privileges; 9.0.3 fixes it [measured, PyPI advisory data, 7 October 2026; severity unverified].
+- **Why.** `PLAN.md` 4.2 pins pytest to Pyodide 314.0.7's lock, which has 9.0.2, so drills are graded in CI against the version the web app loads. CI runners and the owner's machine are single-user, and Pyodide has no shared `/tmp`.
+- **Rejected.** pytest 9.0.3 in `tools/py/uv.lock`, which departs from the Pyodide pin and is the owner's call.
+- **Review.** At the owner's stage 1 gate, when Pyodide's lock moves past 9.0.2, or at expiry.
+
+### T1 Stage 1's CI tools outside the npm tree (stage 1)
+
+- **gitleaks v8.30.1.** MIT [measured, the module's `LICENSE`]. Maintained: released 21 February 2026, the latest version on the Go module proxy on 7 October 2026 [measured]. `go install` builds it into the ignored `.zq/bin`; sum.golang.org verifies the module and `tools/ci/gitleaks.ts` checks the binary against its pinned module hash. Never vendored or published.
+- **pip-audit 2.10.1.** Apache-2.0 [measured, PyPI classifier]. Maintained: released 10 June 2026, the latest on PyPI [measured]. In the `dev` group of `tools/py/uv.lock`; it runs in CI and before a push only.
+- **Go toolchain floor.** gitleaks v8.30.1's `go.mod` declares go 1.24.11 [measured]. CI pins `setup-go` to go 1.26.8, the toolchain `GOTOOLCHAIN=auto` fetched for this build [measured]; an older local Go fetches a newer toolchain through the module proxy, verified by sum.golang.org.
+- **Why.** `PLAN.md` 7.1 and 7.6 name gitleaks and pip-audit, so they came with the Blueprint's approval; the exact versions are for the owner's review at the stage 1 gate.
+- **Licence scope.** Stage 1's licence gate covers the npm tree only. The Python lock is CI tooling and holds licences outside the development allow-list, pillow 12.3.0 (MIT-CMU) and typing-extensions 4.16.0 (PSF-2.0) [measured, PyPI]; Python packages are checked at stage 25, when Pyodide's packages ship on the web app. No Python licence gate is built before then.
 
 ## 6. Build decisions
 
