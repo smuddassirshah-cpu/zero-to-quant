@@ -1,0 +1,105 @@
+# Nightly checks on main (docs/ARCHITECTURE.md 8.3; docs/PLAN.md 7.6): advisories, licences and the secret
+# scan, opening an issue on any failure. Stage 1 owns these four; later stages add the rest of the nightly set.
+name: nightly
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5 # pin to a commit SHA
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v5 # pin to a commit SHA
+        with:
+          node-version-file: .nvmrc
+      # npm audit reads the lockfile; no install, so no dependency's install script runs here.
+      - run: npm run check:audit -- --level moderate
+
+  pip-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5 # pin to a commit SHA
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v5 # pin to a commit SHA
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/setup-python@v6 # pin to a commit SHA
+        with:
+          python-version: '3.12'
+      - name: Install uv 0.8.17 by hash
+        run: |
+          python -m pip install --require-hashes --only-binary :all: -r tools/py/uv-bootstrap.txt
+      - name: pip-audit over the Python lock
+        env:
+          UV_PYTHON_DOWNLOADS: never
+        run: node tools/ci/pip-audit.ts
+
+  licences:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5 # pin to a commit SHA
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v5 # pin to a commit SHA
+        with:
+          node-version-file: .nvmrc
+      - run: npm run check:licences
+
+  secrets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5 # pin to a commit SHA
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v5 # pin to a commit SHA
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/setup-go@v6 # pin to a commit SHA
+        with:
+          go-version: '1.24'
+          check-latest: true
+          cache: false
+      - run: npm run setup:gitleaks
+      - run: node tools/ci/gitleaks.ts history
+
+  report:
+    needs: [npm-audit, pip-audit, licences, secrets]
+    if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open an issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RESULTS: >-
+            npm-audit ${{ needs.npm-audit.result }}, pip-audit ${{ needs.pip-audit.result }},
+            licences ${{ needs.licences.result }}, secrets ${{ needs.secrets.result }}
+        run: |
+          gh issue create --repo "$REPO" --title "Nightly checks failed on $(date -u +%F)" \
+            --body "$(printf 'Run: %s\n\nResults: %s\n' "$RUN_URL" "$RESULTS")"

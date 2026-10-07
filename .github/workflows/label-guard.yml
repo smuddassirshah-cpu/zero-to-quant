@@ -1,0 +1,51 @@
+# Fails a pull request whose visual-approved label was not applied by the owner (docs/PLAN.md 7.6). Make
+# "label-guard / visual-approved" a required check on main and stage/*. Limit: the session platform's GitHub
+# connection acts as the owner's own account, so this refuses every other account but may not tell an agent
+# from the owner; see tools/ci/label-guard.ts and CLAUDE.md hard rule 3.
+name: label-guard
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+concurrency:
+  group: label-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  visual-approved:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'visual-approved') }}
+    steps:
+      - name: Nothing to check
+        if: env.LABELLED != 'true'
+        run: echo "visual-approved is not on this pull request."
+      - uses: actions/checkout@v5 # pin to a commit SHA
+        if: env.LABELLED == 'true'
+        with:
+          # The guard runs from the base branch, so a pull request cannot rewrite the check that judges it.
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v5 # pin to a commit SHA
+        if: env.LABELLED == 'true'
+        with:
+          node-version-file: .nvmrc
+      - name: Fetch the issue events
+        if: env.LABELLED == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api --paginate --slurp "repos/$REPO/issues/$NUMBER/events" > "$RUNNER_TEMP/events.json"
+      - name: The owner applied visual-approved
+        if: env.LABELLED == 'true'
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: node tools/ci/label-guard.ts "$RUNNER_TEMP/events.json" "$OWNER"
