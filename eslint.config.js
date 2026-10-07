@@ -195,6 +195,7 @@ export default defineConfig([
     'test-results/',
     '.workflows/',
     '.claude/',
+    'tools/py/.venv/',
   ]),
   {
     // No inline disables or inline configuration of any rule: an exception belongs in this file,
