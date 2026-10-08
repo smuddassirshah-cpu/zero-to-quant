@@ -210,6 +210,7 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B38 One force push of the session's own backup branch without asking | A process slip; later backups use new names | y: `CLAUDE.md` Permissions |
 | 2026-10-08 | B27 revised by the gate review: term sentinels by a render-time KaTeX macro, reserved colours in `@zq/contracts`; no emit rewrite | Same bundles and hashes on both targets; the layering of `ARCHITECTURE.md` 4.5 | y: as B27; for the owner |
 | 2026-10-08 | B39 `stage/3` is cut from `stage/2` at 54cfb68, before #17's fresh review gave its verdict, not from `stage/1` | Stage 3 implements `ARCHITECTURE.md` 5 as stage 2 revised it | y: `CLAUDE.md` gating rules 1 and 2, proposes amending B35; for the owner |
+| 2026-10-08 | B43 Stage 3's package foundation: subpath exports, `zq/layering` package rows, per-package coverage, `zqverify` in `static`, a per-pull-request `browser` job | Units must not edit shared configuration; `dmath`'s bit-identity across engines | y: `ARCHITECTURE.md` 4.5, 4.6, 8.3 |
 
 ## Open questions
 

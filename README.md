@@ -30,6 +30,8 @@ npm run setup:gitleaks        # gitleaks 8.30.1 into .zq/bin, verified by Go's c
 npm run check:py              # uv lock --check, then uv sync --locked (tools/py)
 npm run check                 # types, lint, format, CSS, knip, VITE_* names, licences
 npm run test:coverage         # unit tests with the coverage floors
+npm run test:py               # zqverify, the Python twins, on CPython 3.12
+npm run test:browser          # package tests in Chromium, Firefox and WebKit
 npm run build                 # both targets, the Artifact page fragment, release budgets
 npm run size                  # entry and stylesheet size limits
 npx playwright install chromium

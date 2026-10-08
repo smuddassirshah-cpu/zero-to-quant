@@ -43,6 +43,10 @@ jobs:
         run: |
           npm run check:py
           git diff --exit-code -- tools/py/uv.lock
+      - name: zqverify, the Python twins
+        env:
+          UV_PYTHON_DOWNLOADS: never
+        run: npm run test:py
 
   unit:
     runs-on: ubuntu-24.04
@@ -57,6 +61,27 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run test:coverage
+
+  browser:
+    # vitest.config.ts's browser project: packages/**/*.browser.test.ts in Chromium, Firefox and WebKit, as
+    # the stage 3 row asks of dmath. The image carries the three engines at the revisions Playwright 1.63.0
+    # expects, and `--user 1001` runs it as the hosted runner's user, as Playwright's CI guide shows for its
+    # images [recalled].
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@v5 # pin to a commit SHA (STATE.md open question 25)
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5 # pin to a commit SHA (STATE.md open question 25)
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:browser
 
   build:
     runs-on: ubuntu-24.04
@@ -78,7 +103,7 @@ jobs:
       - name: Release tools against the real dist/artifact (planted-file budget tests)
         env:
           ZQ_REQUIRE_DIST: '1'
-        run: npx vitest run tools/release
+        run: npx vitest run --project node tools/release
 
   secrets:
     runs-on: ubuntu-24.04
