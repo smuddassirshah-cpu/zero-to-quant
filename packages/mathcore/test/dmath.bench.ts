@@ -7,7 +7,7 @@
 //
 // Each row is the median, over 31 rounds, of the mean time a call takes over 4,096 inputs spread across the
 // function's working range, run 20 times a round after a warm-up of the same size.
-import { exp, expm1, log, log1p, tanh } from '@zq/mathcore/dmath';
+import { cos, exp, expm1, log, log1p, pow, sin, tanh } from '@zq/mathcore/dmath';
 
 type Unary = (x: number) => number;
 
@@ -15,12 +15,25 @@ const N = 4096;
 const spread = (lo: number, hi: number): Float64Array =>
   Float64Array.from({ length: N }, (_, i) => lo + ((hi - lo) * i) / N);
 
+const index = Float64Array.from({ length: N }, (_, i) => i);
+const exponents = spread(-30, 30);
+
 const rows: readonly (readonly [string, Float64Array, Unary, Unary])[] = [
   ['exp', spread(-700, 700), exp, Math.exp],
   ['log', spread(1e-3, 1e6), log, Math.log],
   ['log1p', spread(-0.999, 100), log1p, Math.log1p],
   ['expm1', spread(-40, 40), expm1, Math.expm1],
   ['tanh', spread(-25, 25), tanh, Math.tanh],
+  ['sin', spread(-1e6, 1e6), sin, Math.sin],
+  ['cos', spread(-1e6, 1e6), cos, Math.cos],
+  ['sin, |x| >= 1e10', spread(1e10, 1e300), sin, Math.sin],
+  // pow over bases in [1.5, 8.5) and exponents in [-30, 30), both read from the input's index.
+  [
+    'pow',
+    index,
+    (i) => pow(1.5 + (i % 7), exponents[(i * 97) % N] ?? 0),
+    (i) => Math.pow(1.5 + (i % 7), exponents[(i * 97) % N] ?? 0),
+  ],
 ];
 
 let sink = 0;
@@ -43,7 +56,7 @@ for (const [name, xs, f, g] of rows) {
   const ours = nsPerCall(f, xs);
   const engine = nsPerCall(g, xs);
   console.log(
-    `${name.padEnd(6)} dmath ${ours.toFixed(1).padStart(6)} ns   Math ${engine.toFixed(1).padStart(6)} ns   ` +
+    `${name.padEnd(17)} dmath ${ours.toFixed(1).padStart(6)} ns   Math ${engine.toFixed(1).padStart(6)} ns   ` +
       `ratio ${(ours / engine).toFixed(2)}`,
   );
 }

@@ -47,6 +47,8 @@ describe('special values (C99 Annex F)', () => {
     [cos(-0), 1],
     [pow(1, NaN), 1],
     [pow(NaN, -0), 1],
+    [pow(1, Infinity), 1],
+    [pow(1, -Infinity), 1],
     [pow(-1, Infinity), 1],
     [pow(-1, -Infinity), 1],
     [pow(-0, -3), -Infinity],

@@ -15,11 +15,18 @@
 //   port does [sourced: V8 12.4.254, src/base/ieee754.cc, exp], where e_exp.c's reduction gives one ulp
 //   above; pow(x, 0.5) keeps the general path instead of calling sqrt; the unrolled cases of e_rem_pio2.c for
 //   |x| <= 9pi/4 are folded into its medium path, which is accurate on the whole medium range; floating-point
-//   exception flags are not raised. pow follows C99 Annex F, so it differs from Math.pow at pow(1, NaN) = 1
-//   and pow(-1, +-Infinity) = 1, where ECMAScript returns NaN.
+//   exception flags are not raised. pow follows C99 Annex F, so it differs from Math.pow at pow(1, NaN) = 1,
+//   pow(1, +-Infinity) = 1 and pow(-1, +-Infinity) = 1, where ECMAScript returns NaN.
+// - A fix to e_pow.c [our choice]: for |y| > 2^31 it takes IVLN2_H * t as exact, its comments saying that
+//   t = |x| - 1 "has 20 trailing zeros" and IVLN2_H "21 sig. bits" [sourced: FreeBSD release/14.1.0 e_pow.c,
+//   fetched]. IVLN2_H has 24, as its own constant's comment says, and t up to 32, so the product rounds and
+//   y amplifies the loss: up to 532 ulp (4.7e-14 relative) for |1 - x| between about 2^-25 and 2^-20 with a
+//   finite result [measured, adversarial review of 8 October 2026]; V8's Math.pow returns the same bits
+//   there. dmath splits t at its low word first, so the product is exact.
 // - Error, a maximum seen and not a bound: over the 10,000 goldens of test/dmath.goldens.txt, 0.73 ulp, and
-//   1.45 ulp for tanh; over a sweep of 400,000 inputs to exp, log, log1p, expm1 and tanh against mpmath at
-//   40 digits, 0.81 ulp, and 2.03 ulp (2.4e-16 relative) for tanh [measured]. Every function is O(1); sin
+//   1.45 ulp for tanh; over 605,000 further inputs against mpmath at 40 digits or more (400,000 to exp, log,
+//   log1p, expm1 and tanh, 180,000 to sin, cos and pow, and 25,000 to pow near x = 1 with
+//   |y| > 2^31), 0.81 ulp, and 2.03 ulp (2.4e-16 relative) for tanh [measured]. Every function is O(1); sin
 //   and cos above 2^20 pi/2 run the Payne-Hanek reduction over at most 20 words.
 //
 // Licence notice of the ported files, preserved as they require:
@@ -392,8 +399,10 @@ export function pow(x: number, y: number): number {
     if (ix > 0x3ff00000) return hy > 0 ? s * Infinity : s * 0;
     const t = ax - 1;
     const w = t * t * (0.5 - t * (THRD - t * 0.25));
-    const u = IVLN2_H * t;
-    const v = t * IVLN2_L - w * IVLN2;
+    // IVLN2_H has 24 bits and t up to 32, so t is split for u to be exact: a departure from e_pow.c.
+    const tH = withLowZero(t);
+    const u = IVLN2_H * tH;
+    const v = (t - tH) * IVLN2_H + t * IVLN2_L - w * IVLN2;
     t1 = withLowZero(u + v);
     t2 = v - (t1 - u);
   } else {
@@ -486,13 +495,13 @@ const C4 = -2.75573143513906633035e-7;
 const C5 = 2.0875723212981748279e-9;
 const C6 = -1.13596475577881948265e-11;
 
-// sin(x + y) for |x + y| <= pi/4, y the tail of x (k_sin.c; tail false means y is zero).
-function kernelSin(x: number, y: number, tail: boolean): number {
+// sin(x + y) for |x + y| <= pi/4, y the tail of x (k_sin.c, whose iy is hasTail; false means y is zero).
+function kernelSin(x: number, y: number, hasTail: boolean): number {
   const z = x * x;
   const w = z * z;
   const r = S2 + z * (S3 + z * S4) + z * w * (S5 + z * S6);
   const v = z * x;
-  return tail ? x - (z * (0.5 * y - v * r) - y - v * S1) : x + v * (S1 + z * r);
+  return hasTail ? x - (z * (0.5 * y - v * r) - y - v * S1) : x + v * (S1 + z * r);
 }
 
 // cos(x + y) for |x + y| <= pi/4 (k_cos.c).

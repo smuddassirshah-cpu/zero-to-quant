@@ -277,6 +277,15 @@ def pow_cases(rng: random.Random, count: int) -> list[tuple[float, float]]:
     edges += "1.485002aaffb3dp+506 -1.0fbe76c8b4396p+1 1.3a57492f8c705p+446 -1.3450bfed46828p+1"
     hexes = [float.fromhex(h) for h in edges.split()]
     cases += list(zip(hexes[::2], hexes[1::2]))
+    # e_pow.c's branch for |y| > 2^31: x within 2^-21 of 1 with a full significand, 2^31 < |y| < 2^34 and
+    # |y log2(x)| <= 1000, so x^y is a normal double. Drawn by a generator of their own, so the draws below
+    # do not move.
+    near, start = random.Random("dmath:pow:near-one"), len(cases)
+    while len(cases) < start + 64:
+        x = 1 + signed(near, span(near, -32, -22))
+        top = min(2.0**34, 1000 / abs(log2(x)))
+        if top > 2.0**31:
+            cases.append((x, signed(near, near.uniform(2.0**31, top))))
     while len(cases) < count:
         u = rng.random()
         x = span(rng, -1074, 1023)
