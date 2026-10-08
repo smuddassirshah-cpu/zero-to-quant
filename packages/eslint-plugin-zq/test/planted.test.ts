@@ -96,6 +96,24 @@ const violations = [
     code: 'export const grow = (x) => Math.exp(x);\n',
     message: "'Math.exp' may differ between engines",
   },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'content/generators/__planted_self.mjs',
+    code: 'const g = globalThis.globalThis;\nexport const draw = () => g.Math.random();\n',
+    message: "'globalThis' may be used here only through static members",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/dmath__planted_cube.ts',
+    code: 'export const cube = (x: number): number => x ** 3;\n',
+    message: "'**' may differ between engines",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/gen-kit/src/__planted_exp.mjs',
+    code: 'export const grow = (x) => Math.exp(x);\n',
+    message: "'Math.exp' may differ between engines",
+  },
 ];
 
 // An inline directive does not switch a rule off: noInlineConfig reports the directive instead.
@@ -117,7 +135,7 @@ const sinks = [
   },
 ];
 
-// Outside zq/no-nondeterminism's reach: transcendental Math outside a generator, a package's tests.
+// Outside zq/no-nondeterminism's reach: transcendental Math in mathcore outside dmath, a package's tests.
 const clean = [
   {
     file: 'packages/mathcore/src/__planted_exp.ts',

@@ -1,33 +1,39 @@
-// zq/no-nondeterminism (scope in eslint.config.js, ARCHITECTURE.md 10.4): code whose numbers are
-// shown or graded gives the same bits on every engine and every run, so it reads no clock and no
-// unseeded randomness; seeded draws come from @zq/mathcore's Philox (ARCHITECTURE.md decision 14).
+// zq/no-nondeterminism (scope in eslint.config.js, ARCHITECTURE.md 10.4): code whose numbers are shown
+// or graded gives the same bits on every engine and every run, so it reads no clock, no unseeded
+// randomness and nothing of the host; seeded draws come from @zq/mathcore's Philox (ARCHITECTURE.md
+// decision 14).
 // Decision notes:
-// - Refused: `Date` and `Temporal` on any value use (`new Date(0)`, `Date.now`, `Date.UTC`, an
-//   alias, `instanceof Date`), and `performance` on any value use too, since each of its members
-//   reads the clock [our choice: 10.4 names `performance.now`]; `Math.random`,
-//   `crypto.getRandomValues` and `crypto.randomUUID`. Type positions are fine (`d: Date`).
+// - Refused on any value use (`new Date(0)`, `Date.UTC`, an alias, `instanceof Date`): `Date`,
+//   `Temporal`, `performance`, all of whose members read the clock, and Node's `process`, whose `hrtime`
+//   reads the clock and whose `env` differs between runs [our choice: 10.4 names `performance.now`].
+//   Refused as members: `Math.random`, `crypto.getRandomValues`, `crypto.randomUUID` and `crypto.subtle`,
+//   whose `generateKey` is unseeded (hash32 does the hashing here). Type positions are fine (`d: Date`).
 // - Each is found as a global by scope analysis (a local `Date` is fine), as a member or destructured
-//   key of `globalThis`, `window` or `self`, and, where the type checker is available (`.ts`), on
-//   anything typed `Math`, `Crypto`, `Performance`, `DateConstructor` or the global object: an alias,
-//   a parameter, `g.Math` after `const g = globalThis`.
-// - `Math`, `crypto` and the global objects are usable only through static members or a
-//   destructuring with static keys and no rest, so the rule sees every member taken: `Math[k]`,
-//   `Reflect.get(Math, k)`, `const M = Math`, `{ Math } = globalThis` and passing one on are refused.
-// - Option `transcendental`, set for `content/generators/**` (CONTENT-FORMAT.md 5.3), also refuses
-//   the Math functions ECMA-262 21.3.2 leaves implementation-approximated [recalled: the spec could
-//   not be fetched from this session] and `**` on numbers (Number::exponentiate, the same), whose
-//   last bit differs between engines; `dmath` replaces them. `sqrt`, `fround` and the rounding
-//   functions are exact and pass, and so does `**` when an operand is a bigint (a literal, a
-//   `BigInt()` call, or typed so). The option covers the whole generator module, not only `accept`,
-//   `level` and `answer` as 5.3 words it: `build` must be byte-identical on every device (5.4),
-//   `diagnoses` is compared point by point with the Python twin (5.6), and a per-function check would
-//   miss the helpers and module constants those functions read [our choice, reported as a deviation].
-// - Accepted residue, left to review and the cross-engine tests: a source received from code outside
-//   the scope and used other than by a member or a call (`Reflect.construct(D, [])` for a parameter
-//   `D: DateConstructor`); aliases of the global object in `.js`, which has no type checker; `Intl`
-//   and the `toLocale*` methods (locale data differs between engines; 10.4 does not list them); Node's
-//   `crypto` and `perf_hooks`, which zq/layering keeps out (mathcore and logic.ts import no npm or
-//   builtin module).
+//   key of a global object, and, with the type checker (`.ts`), on anything typed `Math`, `Crypto`,
+//   `SubtleCrypto`, `Performance`, `DateConstructor` or the global object: an alias, a parameter.
+// - A global object is `globalThis`, `window`, `self`, `frames`, `top`, `parent`, `opener` or Node's
+//   `global`, read as a global or as a static member of a global object (`globalThis.self`, `window.top`),
+//   since `.js` has no types to see the second. HTML's Window gives `window`, `self`, `frames`, `top` and
+//   `parent` as a WindowProxy, and `opener`'s getter returns one or null [sourced: w3c/webref
+//   ed/idl/html.idl at aee967b; whatwg/html source at efc54f7].
+// - `Math`, `crypto` and the global objects are usable only through static members or a destructuring
+//   with static keys and no rest, so the rule sees every member taken: `Math[k]`, `Reflect.get(Math, k)`,
+//   `const M = Math`, `const g = globalThis.self`, `{ Math } = globalThis` and passing one on are refused.
+// - Option `transcendental` refuses the Math functions that the NOTE of ECMA-262 21.3.2 leaves
+//   implementation-approximated, and `**` on numbers, since Number::exponentiate returns "an
+//   implementation-approximated value" [sourced: tc39/ecma262 spec.html at 6db9135]; `dmath` replaces
+//   them. The other Math functions are exact (`sqrt` returns the Number of the real root) and pass, and
+//   so does `**` with a bigint operand (a literal, a `BigInt()` call, or typed so). The option is set for
+//   dmath, @zq/gen and the whole generator module, not only `accept`, `level` and `answer` as
+//   CONTENT-FORMAT.md 5.3 words it: `build` must be byte-identical on every device (5.4), `diagnoses` is
+//   compared point by point with the Python twin (5.6), and a per-function check would miss the helpers
+//   and module constants those functions read [our choice, reported as a deviation].
+// - Accepted residue, left to review and the cross-engine tests: a source received from outside the
+//   scope and used other than by a member or a call (`Reflect.construct(D, [])` for `D: DateConstructor`),
+//   or a received `NodeJS.Process`, not matched by type since a generator's own `Process` type would be;
+//   in `.js`, a window reached by a call or the DOM (`open()`, `document.defaultView`); `Intl` and the
+//   `toLocale*` methods (locale data differs between engines; 10.4 does not list them); Node's `crypto`
+//   and `perf_hooks` modules, which zq/layering keeps out of mathcore and logic.ts only.
 import type { Rule, Scope } from 'eslint';
 import {
   hasType,
@@ -35,19 +41,37 @@ import {
   keyName,
   patternSource,
   propName,
+  tailName,
   unwrap,
   type ESNode,
   type NodeOf,
 } from '../util/ast.ts';
 
-const CLOCKS = new Set(['Date', 'Temporal', 'performance']);
+// The globals refused on any value use, with the message each gets.
+const REFUSED: ReadonlyMap<string, string> = new Map([
+  ['Date', 'clock'],
+  ['Temporal', 'clock'],
+  ['performance', 'clock'],
+  ['process', 'host'],
+]);
 const RANDOM: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['Math', new Set(['random'])],
-  ['crypto', new Set(['getRandomValues', 'randomUUID'])],
+  ['crypto', new Set(['getRandomValues', 'randomUUID', 'subtle'])],
 ]);
-const KINDS = new Set([...CLOCKS, ...RANDOM.keys()]);
-const GLOBAL_OBJECTS = new Set(['globalThis', 'window', 'self']);
-const GUARDED = [...RANDOM.keys(), ...GLOBAL_OBJECTS];
+const KINDS = new Set([...REFUSED.keys(), ...RANDOM.keys()]);
+const GLOBAL_OBJECTS = new Set([
+  'globalThis',
+  'window',
+  'self',
+  'frames',
+  'top',
+  'parent',
+  'opener',
+  'global',
+]);
+const GUARDED = new Set([...RANDOM.keys(), ...GLOBAL_OBJECTS]);
+// The kind of a typed `SubtleCrypto`: refused on any member, since `crypto.subtle` is.
+const SUBTLE = 'crypto.subtle';
 const TRANSCENDENTAL = new Set(
   [
     'acos acosh asin asinh atan atan2 atanh cbrt cos cosh exp',
@@ -58,6 +82,7 @@ const TRANSCENDENTAL = new Set(
 const TYPES: readonly (readonly [ReadonlySet<string>, string])[] = [
   [new Set(['Math']), 'Math'],
   [new Set(['Crypto']), 'crypto'],
+  [new Set(['SubtleCrypto']), SUBTLE],
   [new Set(['Performance']), 'performance'],
   [new Set(['DateConstructor']), 'Date'],
 ];
@@ -127,7 +152,9 @@ function escapes(node: Rule.Node): boolean {
 const rule: Rule.RuleModule = {
   meta: {
     type: 'problem',
-    docs: { description: 'Refuse clocks, unseeded randomness and, in generators, transcendental Math' },
+    docs: {
+      description: 'Refuse clocks, unseeded randomness, the host process and, where set, transcendental Math',
+    },
     schema: [
       {
         type: 'object',
@@ -137,6 +164,7 @@ const rule: Rule.RuleModule = {
     ],
     messages: {
       clock: "'{{name}}' reads the clock, which deterministic code may not (ARCHITECTURE.md 10.4)",
+      host: "'{{name}}' reads the host process, whose clock and environment differ between runs (ARCHITECTURE.md 10.4)",
       random:
         "'{{name}}' is not seeded: draw from @zq/mathcore's Philox by (seed, stream, index) (ARCHITECTURE.md 10.4)",
       transcendental:
@@ -152,12 +180,17 @@ const rule: Rule.RuleModule = {
     const report = (node: ESNode, messageId: string, name: string) => {
       context.report({ node, messageId, data: { name } });
     };
-    const globalObject = (node: ESNode) => {
+    // A global object's name read as a global or as a static member of a global object, or, with
+    // types, anything typed as one. It recurses only through those names (`globalThis.self.top`).
+    const globalObject = (node: ESNode): boolean => {
       const target = strip(node);
-      return (
-        (target.type === 'Identifier' && GLOBAL_OBJECTS.has(target.name) && isGlobal(sourceCode, target)) ||
-        hasType(sourceCode, target, GLOBAL_TYPES)
-      );
+      const named =
+        target.type === 'Identifier'
+          ? GLOBAL_OBJECTS.has(target.name) && isGlobal(sourceCode, target)
+          : target.type === 'MemberExpression' &&
+            GLOBAL_OBJECTS.has(propName(target) ?? '') &&
+            globalObject(target.object);
+      return named || hasType(sourceCode, target, GLOBAL_TYPES);
     };
     // The watched global a node names syntactically: `Math`, `globalThis.Math`, `window['Date']`.
     const globalName = (node: ESNode): string | undefined => {
@@ -168,27 +201,37 @@ const rule: Rule.RuleModule = {
           : target.type === 'MemberExpression' && globalObject(target.object) && propName(target);
       return name && KINDS.has(name) ? name : undefined;
     };
-    // How a global object is named in a report: as written (`self`, an alias `g`), or `globalThis`.
-    const objectName = (node: ESNode) => {
-      const target = strip(node);
-      return target.type === 'Identifier' ? target.name : 'globalThis';
-    };
+    // How a global object is named in a report: as written (`self`, `window.top`'s `top`, an alias `g`),
+    // or `globalThis` for a pattern.
+    const objectName = (node: ESNode) => tailName(strip(node)) ?? 'globalThis';
     const typedKind = (node: ESNode): string | undefined =>
       hasType(sourceCode, node, TYPED)
         ? TYPES.find(([types]) => hasType(sourceCode, node, types))?.[1]
         : undefined;
+    // `crypto.subtle` written out, which is reported where the member is taken.
+    const subtleOfCrypto = (node: ESNode) => {
+      const target = strip(node);
+      return (
+        target.type === 'MemberExpression' &&
+        propName(target) === 'subtle' &&
+        (globalName(target.object) ?? typedKind(target.object)) === 'crypto'
+      );
+    };
     // `owner.name` (`name` undefined for a dynamic key or a rest), read by a member access or a pattern.
     const member = (node: ESNode, name: string | undefined, owner: ESNode) => {
       if (globalObject(owner)) {
-        if (name === undefined) report(node, 'escape', objectName(owner));
-        else if (CLOCKS.has(name)) report(node, 'clock', name);
+        const refused = name === undefined ? 'escape' : REFUSED.get(name);
+        if (refused !== undefined) report(node, refused, name ?? objectName(owner));
         return;
       }
       const named = globalName(owner);
       const kind = named ?? typedKind(owner);
-      // A clock named outright is reported where it is named: by `Program`, or as a global's member.
-      if (kind === undefined || (named !== undefined && CLOCKS.has(named))) return;
-      if (CLOCKS.has(kind)) report(node, 'clock', name === undefined ? kind : `${kind}.${name}`);
+      // A refused global named outright is reported where it is named: by `Program`, or as a global's
+      // member; so is `crypto.subtle`.
+      if (kind === undefined || (named !== undefined && REFUSED.has(named))) return;
+      if (kind === SUBTLE && subtleOfCrypto(owner)) return;
+      const refused = kind === SUBTLE ? 'random' : REFUSED.get(kind);
+      if (refused !== undefined) report(node, refused, name === undefined ? kind : `${kind}.${name}`);
       else if (name === undefined) report(node, 'escape', kind);
       else if (RANDOM.get(kind)?.has(name)) report(node, 'random', `${kind}.${name}`);
       else if (transcendental && kind === 'Math' && TRANSCENDENTAL.has(name)) {
@@ -231,15 +274,15 @@ const rule: Rule.RuleModule = {
 
     return {
       Program() {
-        for (const name of CLOCKS) for (const id of globalRefs(name)) report(id, 'clock', name);
+        for (const [name, refused] of REFUSED) for (const id of globalRefs(name)) report(id, refused, name);
         for (const name of GUARDED)
           for (const id of globalRefs(name)) if (escapes(id)) report(id, 'escape', name);
       },
       MemberExpression(node) {
         const name = propName(node);
         member(node, name, node.object);
-        // `globalThis.Math` itself, taken as a value.
-        if (name !== undefined && RANDOM.has(name) && globalObject(node.object) && escapes(node)) {
+        // `globalThis.Math` or `window.self` itself, taken as a value.
+        if (name !== undefined && GUARDED.has(name) && globalObject(node.object) && escapes(node)) {
           report(node, 'escape', name);
         }
       },
@@ -247,7 +290,7 @@ const rule: Rule.RuleModule = {
         if (node.parent.type !== 'ObjectPattern') return;
         const owner = patternSource(node.parent) ?? node.parent;
         const name = keyName(node);
-        if (name !== undefined && RANDOM.has(name) && globalObject(owner)) report(node, 'escape', name);
+        if (name !== undefined && GUARDED.has(name) && globalObject(owner)) report(node, 'escape', name);
         else member(node, name, owner);
       },
       // A rest takes every key not named, so it is judged as a dynamic key.

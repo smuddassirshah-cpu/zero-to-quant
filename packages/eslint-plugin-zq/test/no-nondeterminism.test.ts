@@ -23,8 +23,9 @@ tester.run('no-nondeterminism', rule, {
     'rng.random()',
     'const o = { random: 1, Date: 2, now() {} }',
     'x.performance.now()',
-    'crypto.subtle',
     'globalThis.structuredClone(x)',
+    'function f(top) { return top.self.Math.random() }',
+    'node.parent.window.Math.random(); tree.top.Date.now()',
     'let d: Date',
     'type N = typeof Date.now',
     'type M = typeof Math',
@@ -51,6 +52,10 @@ tester.run('no-nondeterminism', rule, {
     fails('crypto.getRandomValues(a)', ['random', 'crypto.getRandomValues']),
     fails('self.crypto.randomUUID()', ['random', 'crypto.randomUUID']),
     fails('const { randomUUID } = crypto', ['random', 'crypto.randomUUID']),
+    fails('crypto.subtle.generateKey(a, true, u)', ['random', 'crypto.subtle']),
+    fails('const { subtle } = globalThis.crypto', ['random', 'crypto.subtle']),
+    fails('process.hrtime.bigint()', ['host', 'process']),
+    fails('const { uptime } = globalThis.process', ['host', 'process']),
     fails('Date.now()', ['clock', 'Date']),
     fails('new Date()', ['clock', 'Date']),
     fails('new Date(0)', ['clock', 'Date']),
@@ -85,6 +90,21 @@ tester.run('no-nondeterminism', rule, {
     fails('const g = globalThis', ['escape', 'globalThis']),
     fails('Reflect.get(window, "Date")', ['escape', 'window']),
     fails('const { ...all } = self', ['escape', 'self']),
+    // A global object reached through its own members, as `.js` files see it without types.
+    fails('const g = globalThis.globalThis', ['escape', 'globalThis']),
+    fails('const { self: s } = globalThis; s.Math.random()', ['escape', 'self']),
+    fails('const { globalThis: g } = globalThis', ['escape', 'globalThis']),
+    fails('use(window?.top)', ['escape', 'top']),
+    fails('const p = parent', ['escape', 'parent']),
+    fails('globalThis.window[k]', ['escape', 'window']),
+    fails('globalThis[k].self.Math.random()', ['escape', 'globalThis']),
+    fails('globalThis.globalThis.Math.random()', ['random', 'Math.random']),
+    fails('window.top.Math.random()', ['random', 'Math.random']),
+    fails('self.self.crypto.getRandomValues(a)', ['random', 'crypto.getRandomValues']),
+    fails('window.parent.performance.now()', ['clock', 'performance']),
+    fails('opener.frames.Date.now()', ['clock', 'Date']),
+    fails('global.Math.random()', ['random', 'Math.random']),
+    fails('const { Math: M } = top.self', ['escape', 'Math']),
     gen('Math.exp(x)', ['transcendental', 'Math.exp']),
     gen('Math.pow(2, k)', ['transcendental', 'Math.pow']),
     gen('const { sin, cos } = Math', ['transcendental', 'Math.sin'], ['transcendental', 'Math.cos']),
@@ -92,7 +112,28 @@ tester.run('no-nondeterminism', rule, {
     gen('2 ** k', ['transcendental', '**']),
     gen('x **= 0.5', ['transcendental', '**=']),
     gen('Math.random() + Math.tanh(x)', ['random', 'Math.random'], ['transcendental', 'Math.tanh']),
+    gen('globalThis.globalThis.Math.exp(1)', ['transcendental', 'Math.exp']),
   ],
+});
+
+// Every function of ECMA-262 21.3.2: the 22 its NOTE leaves implementation-approximated, less `random`,
+// and the 14 exact ones [sourced: tc39/ecma262 spec.html at 6db9135].
+const APPROXIMATED = [
+  'acos acosh asin asinh atan atanh atan2 cbrt cos cosh exp',
+  'expm1 hypot log log1p log2 log10 pow sin sinh tan tanh',
+].flatMap((line) => line.split(' '));
+const EXACT = 'abs ceil clz32 floor fround f16round imul max min round sign sqrt sumPrecise trunc'.split(' ');
+
+it('lists 22 approximated and 14 exact Math functions', () => {
+  expect([APPROXIMATED.length, EXACT.length]).toEqual([22, 14]);
+});
+
+tester.run('no-nondeterminism (each Math function)', rule, {
+  valid: [
+    ...EXACT.map((name) => ({ code: `Math.${name}(x)`, options: GEN })),
+    ...APPROXIMATED.map((name) => `Math.${name}(x)`),
+  ],
+  invalid: APPROXIMATED.map((name) => gen(`Math.${name}(x)`, ['transcendental', `Math.${name}`])),
 });
 
 const typedFails = (code: string, ...errors: [string, string][]) => ({
@@ -137,6 +178,35 @@ typed.run('no-nondeterminism (typed)', rule, {
     typedFails('declare const g: typeof globalThis; export const { Date: D } = g;', ['clock', 'Date']),
     typedFails('declare const g: typeof globalThis; export const v = g[k];', ['escape', 'g']),
     typedFails('const M = Math; export const r = M.random();', ['escape', 'Math'], ['random', 'Math.random']),
+    typedFails(
+      'const g = globalThis.globalThis; export const r = g.Math.random();',
+      ['escape', 'globalThis'],
+      ['random', 'Math.random'],
+    ),
+    typedFails(
+      'const { self: s } = globalThis; export const t = s.Date.now();',
+      ['escape', 'self'],
+      ['clock', 'Date'],
+    ),
+    typedFails(
+      "export const k = crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);",
+      ['random', 'crypto.subtle'],
+    ),
+    typedFails(
+      "declare const s: SubtleCrypto; export const k = s.generateKey('AES-GCM', true, ['encrypt']);",
+      ['random', 'crypto.subtle.generateKey'],
+    ),
+    typedFails('export const k = ({ generateKey }: SubtleCrypto) => generateKey;', [
+      'random',
+      'crypto.subtle.generateKey',
+    ]),
+    typedFails('export const k = (s: SubtleCrypto, m: "digest") => s[m];', ['random', 'crypto.subtle']),
+    typedFails('export const s = (c: Crypto) => c.subtle;', ['random', 'crypto.subtle']),
+    typedFails(
+      "declare const o: { subtle: SubtleCrypto }; export const k = o.subtle.generateKey('AES-GCM', true, []);",
+      ['random', 'crypto.subtle.generateKey'],
+    ),
+    typedFails('export const t = process.uptime();', ['host', 'process']),
     {
       ...typedFails('declare const n: number; export const c = n ** 2;', ['transcendental', '**']),
       options: GEN,
@@ -175,7 +245,17 @@ const members = fc.constantFrom(
     gen: undefined,
   })),
 );
-const owners = fc.constantFrom('$', 'globalThis.$', "window['$']", 'self?.$', '($ as typeof $)');
+const owners = fc.constantFrom(
+  '$',
+  'globalThis.$',
+  "window['$']",
+  'self?.$',
+  '($ as typeof $)',
+  'globalThis.self.$',
+  "window.window['$']",
+  'top?.parent.$',
+  'global.$',
+);
 const forms = fc.constantFrom(
   (o: string, m: string) => `${o}.${m}`,
   (o: string, m: string) => `${o}['${m}']`,
