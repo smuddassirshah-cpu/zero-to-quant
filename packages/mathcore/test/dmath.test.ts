@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
-import { exp, expm1, log, log1p, tanh } from '@zq/mathcore/dmath';
+import { cos, exp, expm1, log, log1p, pow, sin, tanh } from '@zq/mathcore/dmath';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { evaluate, parseGoldens, renderBits, withinTolerance } from './dmath-goldens.ts';
 
 const goldens = parseGoldens(readFileSync(new URL('./dmath.goldens.txt', import.meta.url), 'utf8'));
-const functions = { exp, log, log1p, expm1, tanh };
-const names = Object.keys(functions);
+const functions = { exp, log, log1p, expm1, tanh, sin, cos };
+const names = [...Object.keys(functions), 'pow'];
 
 describe('dmath against 50-digit mpmath references', () => {
   it('reads 10,000 goldens over every function', () => {
@@ -39,6 +39,19 @@ describe('special values (C99 Annex F)', () => {
     [expm1(-0), -0],
     [tanh(-Infinity), -1],
     [tanh(-0), -0],
+    [sin(-0), -0],
+    [sin(Infinity), NaN],
+    [cos(-Infinity), NaN],
+    [cos(-0), 1],
+    [pow(1, NaN), 1],
+    [pow(NaN, -0), 1],
+    [pow(-1, Infinity), 1],
+    [pow(-1, -Infinity), 1],
+    [pow(-0, -3), -Infinity],
+    [pow(-0, 3), -0],
+    [pow(-0, 0.5), 0],
+    [pow(-Infinity, -3), -0],
+    [pow(-8, 1 / 3), NaN],
   ])('special value %#', (got, want) => {
     expect(Object.is(got, want)).toBe(true);
   });
@@ -48,11 +61,14 @@ describe('special values (C99 Annex F)', () => {
 const anyDouble = fc.double();
 
 describe('properties', () => {
-  it('tanh is odd to the bit and stays in [-1, 1]', () => {
+  it('sin and tanh are odd and cos is even, to the bit, and all three stay in [-1, 1]', () => {
     fc.assert(
       fc.property(anyDouble, (x) => {
+        expect(Object.is(sin(-x), -sin(x))).toBe(true);
         expect(Object.is(tanh(-x), -tanh(x))).toBe(true);
-        if (!Number.isNaN(x)) expect(Math.abs(tanh(x))).toBeLessThanOrEqual(1);
+        expect(Object.is(cos(-x), cos(x))).toBe(true);
+        if (Number.isFinite(x))
+          for (const v of [sin(x), cos(x), tanh(x)]) expect(Math.abs(v)).toBeLessThanOrEqual(1);
       }),
     );
   });
@@ -78,6 +94,43 @@ describe('properties', () => {
       fc.property(fc.double({ min: -700, max: 700, noNaN: true }), (x) => {
         expect(Math.abs(log(exp(x)) - x)).toBeLessThanOrEqual(1e-15 * Math.max(1, Math.abs(x)));
       }),
+    );
+  });
+
+  it('pow returns x, x * x and 1 / x for y = 1, 2 and -1, and 1 for y = 0', () => {
+    fc.assert(
+      fc.property(anyDouble, (x) => {
+        expect(Object.is(pow(x, 1), x)).toBe(true);
+        expect(Object.is(pow(x, 2), x * x)).toBe(true);
+        expect(Object.is(pow(x, -1), 1 / x)).toBe(true);
+        expect(pow(x, 0)).toBe(1);
+      }),
+    );
+  });
+
+  // fdlibm: "pow(integer, integer) always returns the correct integer provided it is representable" [sourced].
+  it('pow of integers is exact while the result stays below 2^53', () => {
+    const small = fc.tuple(fc.integer({ min: -3000, max: 3000 }), fc.integer({ min: 0, max: 4 }));
+    const deep = fc.tuple(fc.integer({ min: -10, max: 10 }), fc.integer({ min: 5, max: 15 }));
+    fc.assert(
+      fc.property(fc.oneof(small, deep), ([a, n]) => {
+        expect(pow(a, n)).toBe(Number(BigInt(a) ** BigInt(n)));
+      }),
+    );
+  });
+
+  it('pow agrees with the engine within 1e-15 relative for positive bases and normal results', () => {
+    fc.assert(
+      fc.property(
+        fc.double({ min: 1e-300, max: 1e300, noNaN: true }),
+        fc.double({ min: -64, max: 64 }),
+        (x, y) => {
+          const want = Math.pow(x, y);
+          fc.pre(Number.isFinite(want) && want >= 2.2250738585072014e-308);
+          expect(Math.abs(pow(x, y) - want) / want).toBeLessThanOrEqual(1e-15);
+        },
+      ),
+      { numRuns: 2000 },
     );
   });
 });
