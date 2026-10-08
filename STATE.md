@@ -24,7 +24,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 | # | Stage | Depends on | AD plan | AD actual | Status | Gate |
 |---|---|---|---|---|---|---|
 | 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
-| 2 | Spike S1 on the owner's iPhone | 1 | 3 | 3.1 | awaiting review | - |
+| 2 | Spike S1 on the owner's iPhone | 1 | 3 | 3.3 | awaiting review | - |
 | 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | pending | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
 | 3b | `stats-core` in `@zq/mathcore/stats` | 3a | 12 | - | pending | - |
@@ -189,7 +189,7 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-07 | B21 Sub-session files read in full by the publishing session count as the session's own for hard rule 2 | Gating rule 4 delegates; the publisher read and hashed every file | y: interpretation of hard rule 2; for the owner |
 | 2026-10-07 | S1 results (`docs/DECISIONS.md` section 4): `PLAN.md` 4.3's import-map design stands; MathML accepted; no `db` cap through 60 MiB, so no checkpoint; the back gesture and `\htmlData` in MathML fail, with fallbacks written | The owner's iPhone 17 Pro Max, iOS 27.2, Claude app 1.261002.20 | n; the fallbacks are B23 and B27 |
 | 2026-10-07 | W2 narrowed to worker imports and non-enforcing browsers | Integrity is enforced on the page [measured: S1] | n |
-| 2026-10-08 | B22 `sessionStorage` mirror of the route and pending drafts | The host reloads the open page after a publish | y: `PLAN.md` 7.5, stages 10a, 69 and 74a; for the owner |
+| 2026-10-08 | B22 `sessionStorage` mirror of the route and pending drafts | The host reloads the open page after a publish | y: `PLAN.md` 7.5, stages 4, 10a, 69 and 74a; for the owner |
 | 2026-10-08 | B23 Back or close control on every route but the tab roots; no `history.back()` | The back gesture does nothing in the frame | y: stage 74a, `design-research.md` 7; for the owner |
 | 2026-10-08 | B24 Release procedure: the page in every publish, every intermediate version working | The tool's refusals and the host's reloads | y: `PLAN.md` 8.6, stage 83; for the owner |
 | 2026-10-08 | B25 The emulator models the refusals and the reloads, with two fault injections | The measured behaviour, with the unmeasured cases kept testable | y: stage 4 |
@@ -209,7 +209,7 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B38 One force push of the session's own backup branch without asking | A process slip; later backups use new names | y: `CLAUDE.md` Permissions |
 | 2026-10-08 | B27 revised by the gate review: term sentinels by a render-time KaTeX macro, reserved colours in `@zq/contracts`; no emit rewrite | Same bundles and hashes on both targets; the layering of `ARCHITECTURE.md` 4.5 | y: as B27; for the owner |
 | 2026-10-08 | B41 #17 merged without a review of its own diff; every pull request since gets one | A process slip found by the second gate review | y: `PLAN.md` 11.1, for #17 |
-| 2026-10-08 | B42 Stage 12 builds `TexService`, `Tex` and `TexSlots`; both KaTeX configurations from `katexOptions` in `@zq/contracts` | Stage 12 needed `TexSlots` before stage 23; `zq check` could not import the configuration | y: `PLAN.md` stages 7, 12, 23, 6.5 and 10; for the owner |
+| 2026-10-08 | B42 Stage 12 builds `TexService`, `Tex` and `TexSlots`; both KaTeX configurations from `katexOptions` in `@zq/contracts` | Stage 12 needed `TexSlots` before stage 23; `zq check` could not import the configuration | y: `PLAN.md` stages 3, 7, 12, 23, 6.5 and 10, `ARCHITECTURE.md` 13; for the owner |
 
 ## Open questions
 
@@ -331,13 +331,13 @@ The second fresh review (D9; 3 blocking, 12 non-blocking) is fixed by the second
 **Security.**
 - Inputs: the probe read its own `db` documents and the `sample` replies, which it showed as text.
 - Secrets and endpoints: none in code, config or commits.
-- Dependencies: CDN files only, at exact versions (`spikes/s1/cdn-lock.json`), with SRI on the import-map entries and the UMD scripts; the three worker imports and the cdnjs candidates were not hash-checked (W2). The npm mirror `spikes/s1/npm` is not committed.
+- Dependencies: CDN files only, at exact versions (`spikes/s1/cdn-lock.json`), with SRI on the import-map entries (the cdnjs candidates included) and the UMD scripts; the three worker imports were not hash-checked (W2). The npm mirror `spikes/s1/npm` is not committed.
 - Committed run documents: no viewer id (the own path is stored as `data/users/<own>`), and no answers, code or chat.
 - B33 tightens the KaTeX sink: every strict check but `htmlExtension` stays on, and a refused command is caught through a reserved `errorColor`.
 - The size probe Artifact was deleted with the owner's confirmation. The S1 probe Artifact (https://claude.ai/artifact/KfYB1yPs9DfKTakjZZrGFD) stays as evidence until he confirms its deletion.
 - Process slip (B38): the backup branch `stage2/s1-results-wip` was force-pushed once without asking (`CLAUDE.md` Permissions). Later backups used new names (`stage2/s1-results-r3-wip`).
 
-**Effort** [measured from the transcripts, gaps over 15 minutes removed]: 17.46 agent-hours from 2026-10-07 16:04 UTC to the start of stage 3 (2026-10-08 04:54 UTC), plus 0.73 h for the second gate review and about 0.6 h of the main session's second gate revision, shared with stage 3's first hour: about 18.8 agent-hours, 3.1 AD against the plan's 3. The third gate review (1.28 million subagent tokens over about 34 minutes) and the third revision come on top, and are small. Tokens to the start of stage 3: 0.82 million output and 0.66 billion input including cache.
+**Effort** [measured from the transcripts, gaps over 15 minutes removed]: 17.46 agent-hours from 2026-10-07 16:04 UTC to the start of stage 3 (2026-10-08 04:54 UTC), plus 0.73 h for the second gate review and about 0.6 h of the main session's second gate revision, shared with stage 3's first hour: about 18.8 agent-hours, 3.1 AD against the plan's 3. The third gate review (0.71 h; 1.28 million subagent tokens) and the third revision (about 0.35 h of the main session and 0.17 million tokens of its review) bring the stage to about 19.9 agent-hours, 3.3 AD. Tokens to the start of stage 3: 0.82 million output and 0.66 billion input including cache.
 
 **Deviations** (each in `docs/DECISIONS.md` and the Decisions table above):
 - B17: `stage/2` branched from `stage/1`.
@@ -357,7 +357,7 @@ The second fresh review (D9; 3 blocking, 12 non-blocking) is fixed by the second
 - B38: one force push without asking.
 - B39 (on `stage/3`): stage 3 was cut from `stage/2` at 54cfb68 and started before stage 2's gate, against B35 and gating rule 1, which allows a second stage in progress only from 3a.
 - B41: #17 merged without a review of its own diff.
-- B42: stage 12 builds `TexService`, `Tex` and `TexSlots`; `katexOptions` and `terms(src)` join the reserved colours in `@zq/contracts`, a change to `PLAN.md` 10's tree.
+- B42: stage 12 builds `TexService`, `Tex` and `TexSlots`; `katexOptions` and `terms(src)` join the reserved colours in `@zq/contracts`, a change to `PLAN.md` 10's tree, and stage 3 builds that module.
 - D9: the owner's gate instruction.
 - `spikes/README.md`: its S1 section, which this stage wrote under B18, gives the outcome; the 6 October lines above it are untouched (`spikes/` is the owner's to approve).
 
@@ -366,7 +366,7 @@ The second fresh review (D9; 3 blocking, 12 non-blocking) is fixed by the second
 - B28: waive the version-scoping item (recommended) or have it measured.
 - B35: stage branches from the approved stage branch until `main` catches up.
 - B39 and the start of stage 3 before this gate: keep `stage/3` as cut from `stage/2`, or have it re-cut from `stage/1`.
-- `PLAN.md` 10's tree: `@zq/contracts` gains one KaTeX module (the reserved colours, `terms(src)`, `katexOptions`; B27, B42), or those go elsewhere.
+- `PLAN.md` 10's tree: `@zq/contracts` gains one KaTeX module (the reserved colours, `terms(src)`, `katexOptions`; B27, B42), built by stage 3, or those go elsewhere.
 - D9: confirm the two clauses tagged [our choice] (three failed review rounds stop a stage; the build proceeds on a `PLAN.md` default).
 - B20: `TexSlots`' slot-sentinel annotation, before stage 12.
 - B21: hard rule 2's reading.
@@ -378,4 +378,4 @@ The second fresh review (D9; 3 blocking, 12 non-blocking) is fixed by the second
 
 ## Next action
 
-Stage 2 is `awaiting review` and stops for the owner under gating rule 10: two S1 checks failed. The second gate revision merges into `stage/2` with CI green, and a third fresh-context Fable review judges it (D9); a third "revise" stops the stage for the owner. The owner then clears the gate by accepting the fallbacks and deciding B28; the stage 2 record's "For the owner" list holds every open decision. On his reply, the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`. Stage 3 was cut from `stage/2` at 54cfb68 before this review's verdict (B39 on `stage/3`, a departure from B35 and from gating rule 1's "from stage 3a"; for the owner); if the owner rejects B22, B27, B33 or B42, `stage/3` merges the corrected `stage/2` in.
+Stage 2 is `awaiting review` and stops for the owner under gating rule 10: two S1 checks failed. Three fresh-context Fable reviews ran (D9); the third approved the quality pass with no blocking item, and the third gate revision fixes its 12 non-blocking items. The owner clears the gate by accepting the fallbacks and deciding B28; the stage 2 record's "For the owner" list holds every open decision. On his reply, the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`. Stage 3 was cut from `stage/2` at 54cfb68 before this gate (B39 on `stage/3`, a departure from B35 and from gating rules 1 and 2; for the owner) and is in progress; `stage/3` merges `stage/2` in whenever `stage/2` changes.

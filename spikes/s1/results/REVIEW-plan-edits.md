@@ -185,11 +185,11 @@ Three Fable reviewers and a judge read `stage2/gate-fixes-2` at 9e11ab0 before i
 |---|---|
 | No stage builds `@zq/contracts`' KaTeX module | Stage 3 builds it once the owner accepts its place (B42); stage 3's row, E1, E4 and E5 updated |
 | "The same object" is wrong: KaTeX writes `\gdef` definitions into the `macros` it is given | A fresh options object with copied `macros` per call; `\gdef`, `\xdef` and `\global` are `zq check` errors |
-| `terms(src)` misses anchors a shared macro expands to | A shared macro that expands to `\htmlData` is a `zq check` error, recorded in B42 |
+| `terms(src)` misses anchors a shared macro expands to | `\htmlData` produced by any macro (shared, `\newcommand`, `\renewcommand`, `\def`) is a `zq check` error, recorded in B42 (widened by the review of #21) |
 | The effort line does not add up | 18.8 agent-hours, 3.1 AD |
 | B35 says stage 3 was cut from `stage/1` | B35 says it was to be, and points to B39 |
 | The stage 2 record is a revision behind | Second revision and #20 recorded; CI on #16, #17 and #19; B41 and B42; B20 in order |
-| "With SRI" overstates the probe's hash checks | SRI on the import map and the UMD scripts; worker imports and cdnjs candidates unchecked (W2) |
+| "With SRI" overstates the probe's hash checks | SRI on the import map (the cdnjs candidates included) and the UMD scripts; the worker imports unchecked (W2) |
 | The `--term-binding` sentence breaks ARCH 6.5's bullet | Reordered; the flag is the build-time define `__TERM_BINDING__`, named in 11.4 |
 | B41 cites #18, which shows no review | Corrected; reviews are now posted on their pull requests (#19, #20) |
 | Who implements `DraftStore.mirror` | Stage 4 in the Artifact adapter and the fake, with a conformance test; stage 10a wires `commit` and owns the reload test |
