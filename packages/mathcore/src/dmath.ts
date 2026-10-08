@@ -1,11 +1,13 @@
 // Deterministic exp, log, log1p, expm1, tanh, pow, sin and cos (docs/WIDGETS.md 3; docs/PLAN.md conflict 7):
 // every seeded number shown or graded must come out with the same bits on every engine. Decision notes:
 // - Ported from FreeBSD msun, lib/msun/src at tag release/14.1.0: e_exp.c, e_log.c, e_pow.c, s_log1p.c,
-//   s_expm1.c, s_tanh.c, s_sin.c, s_cos.c, k_sin.c, k_cos.c, e_rem_pio2.c and k_rem_pio2.c, which are Sun's
-//   fdlibm with FreeBSD's C99 fixes [sourced]. Each constant is the C file's literal, less the trailing zeros
-//   Prettier drops, and parses to the hex words its comment gives [measured]; the 2/pi table matches mpmath's
-//   bits of 2/pi [measured]. The scaling step follows musl 1.2.5's src/math/scalbn.c, reduced to the exponents
-//   used here [recalled].
+//   s_expm1.c, s_tanh.c, s_sin.c, s_cos.c, k_sin.c, k_cos.c, e_rem_pio2.c and k_rem_pio2.c, Sun's fdlibm with
+//   FreeBSD's C99 fixes. The constants and most thresholds and special-value lines were checked against quoted
+//   extracts of those files at that tag [sourced]; the rest follows fdlibm as recalled [recalled], and the
+//   goldens check all of it. Each constant is the C file's literal, less the trailing zeros Prettier drops,
+//   and parses to the hex words its comment gives [measured]; the 2/pi table matches mpmath's bits of 2/pi
+//   [measured]. The scaling step follows musl 1.2.5's src/math/scalbn.c, reduced to the exponents used here
+//   [recalled].
 // - Only IEEE-754 + - * / on doubles, int32 bit operations and a DataView for a double's two words; no Math
 //   function. ECMAScript rounds each operation to nearest, ties to even, with no fused multiply-add and no
 //   wider intermediate [sourced: ECMA-262, the Number type], so every engine returns the same bits.
