@@ -12,6 +12,9 @@ Measured on 7 October 2026 on the owner's iPhone 17 Pro Max, iOS 27.2 (from Sett
 | `muyonw26-eo20ft` | v2 | 22:32:35 | v2, the open page reloaded by the host after the first publish batch |
 | `muyoo2d3-s9cuc0` | v2 | 22:32:43 | v2, reloaded again after the second batch; received the signal |
 | `muyotd7h-2qr2y6` | v2 | 22:36:51 | v2, after `platform.reload`; ran the back-gesture check |
+| `muyq3ed6-ovof45` | v2 | 23:12:38 | v2, reopened by the owner after the size probe for the screenshots; automatic checks only (19 pass, 8 info, 1 fail: `mathml.htmldata`), and it is the run `s1-latest.json` names |
+
+**Screenshots** (`screenshots/`, the owner's, from the iPhone's status-bar clock in BST, UTC+1): `iphone-specimen-light-top.png`, `iphone-texslots-light.png` and `iphone-texslots-dark.png` come from run `muyq3ed6` (00:13 BST; 19 pass, 1 fail, 8 info); `iphone-specimen-dark-top.png` comes from a v1 load at 23:23 BST (22:23 UTC; 18 pass, 1 fail, 9 info, before any tapped check), run `muyo87q6` or `muyocrk9`.
 
 ## Every check, by the run that settles it
 
