@@ -9,8 +9,8 @@ interface Golden {
   mean: number | null;
   variance: [number | null, number | null];
   sd: [number | null, number | null];
-  median: number;
-  linear: number[];
+  median: number | null;
+  linear: (number | null)[];
   inclusive: number[];
   gcse: number[];
   quartiles: [number[] | null, number[] | null];
@@ -23,17 +23,22 @@ const golden = readFileSync(new URL('stats.golden.jsonl', import.meta.url), 'utf
 const PS = [0, 0.1, 0.25, 0.37, 0.5, 0.75, 0.9, 1];
 const U = 2 ** -53;
 const KINDS = ['sample', 'population'] as const;
+// The bounds below are first order in u; the 1% margin covers the dropped u² terms and Sum2's γ² ≈ (nu)² for
+// n < 10^6.
+const MARGIN = 1.01;
 
-/** Distance in units in the last place: adjacent doubles are 1 apart, and -0 and 0 are 0 apart. */
-function ulps(a: number, b: number): number {
-  const ordinal = (x: number): bigint => {
-    const view = new DataView(new ArrayBuffer(8));
-    view.setFloat64(0, x);
-    const i = view.getBigInt64(0);
-    return i < 0n ? -(i & 0x7fffffffffffffffn) : i;
-  };
-  const d = ordinal(a) - ordinal(b);
-  return Number(d < 0n ? -d : d);
+/** The derived bound on |variance - reference| for a correctly rounded reference (the parity suite's notes). */
+function varianceSlack(want: number, m: number, n: number, divisor: number): number {
+  return MARGIN * 7 * U * (Math.abs(want) + (n * (2 * U * m) ** 2) / divisor) + Number.MIN_VALUE;
+}
+
+/** The derived bound on |sd - reference| for a correctly rounded reference. */
+function sdSlack(want: number, m: number, n: number, divisor: number): number {
+  const shift = (7 * U * n * (2 * U * m) ** 2) / divisor;
+  return (
+    MARGIN * (5 * U * want + (want > 0 ? Math.min(Math.sqrt(shift), shift / want) : Math.sqrt(shift))) +
+    Number.MIN_VALUE
+  );
 }
 
 const data = fc.array(fc.double({ min: -1e6, max: 1e6, noNaN: true }), { minLength: 1, maxLength: 30 });
@@ -50,10 +55,20 @@ describe('sum and mean', () => {
     expect(S.sum([0.1, 0.1, 0.1]) / 3).toBe(0.10000000000000002);
   });
 
-  it('refuse missing, NaN and infinite values, and an overflowing sum', () => {
+  it('keep every partial: 38 values 54 bits apart outgrow the buffer of 32 and still sum exactly', () => {
+    const spaced = Array.from({ length: 38 }, (_, k) => 2 ** (1023 - 54 * k));
+    expect(S.sum(spaced)).toBe(2 ** 1023);
+    expect(S.sum([...spaced].reverse())).toBe(2 ** 1023);
+    expect(S.sum([...spaced, ...spaced.map((x) => -x), 2 ** -1074])).toBe(2 ** -1074);
+  });
+
+  it('refuse missing, NaN and infinite values, holes, and an overflowing sum', () => {
     expect(() => S.mean([])).toThrow(RangeError);
     for (const bad of [NaN, Infinity, -Infinity]) expect(() => S.sum([1, bad])).toThrow(RangeError);
+    expect(() => S.mean(Array<number>(2))).toThrow('every value must be finite');
     expect(() => S.sum([1.7e308, 1.7e308, -1.7e308])).toThrow('the sum overflows');
+    // The decision notes' choice: the mean of these is 2e-321, but the sum overflows on the way, as in fmean.
+    expect(() => S.mean([1.7e308, 1.7e308, -1.7e308, -1.7e308, 1e-320])).toThrow('the sum overflows');
   });
 
   it('do not depend on order, and the mean lies between the extremes', () => {
@@ -80,22 +95,39 @@ describe('variance and sd', () => {
     expect(S.sd([2, 4, 4, 4, 5, 5, 7, 9], 'population')).toBe(2);
   });
 
-  it('scale by powers of two at both ends of the doubles', () => {
+  it('scale by powers of two at both ends of the doubles, and throw only where the result overflows', () => {
     expect(S.sd([1e300, -1e300], 'population')).toBe(1e300);
     expect(() => S.variance([1e300, -1e300], 'population')).toThrow('the variance overflows');
     expect(S.sd([0, 1e-320], 'population')).toBe(1e-320 / 2);
+    expect(S.sd([-1.7e308, 1.7e308], 'population')).toBe(1.7e308);
+    expect(() => S.sd([-1.7e308, 1.7e308], 'sample')).toThrow('the deviation overflows');
   });
 
-  it('are non-negative, sd is the root, and integer data shifted exactly keeps them within 2 ulp', () => {
-    const ints = fc.array(fc.integer({ min: -(2 ** 20), max: 2 ** 20 }), { minLength: 2, maxLength: 30 });
+  it('are non-negative, sd is the root, and both stay within the derived bound of the exact variance', () => {
+    // k·step + offset is exact (at most 52 significant bits), as is the integer arithmetic below 2^53, so
+    // `exact` is the exact variance rounded once. Dyadic data at 2^40 puts a spread of at most 2^11 nine orders
+    // of magnitude below the offset, where only the correction keeps the variance.
+    const ks = fc.array(fc.integer({ min: -(2 ** 20), max: 2 ** 20 }), { minLength: 2, maxLength: 30 });
+    const offset = (lo: number, hi: number): fc.Arbitrary<number> =>
+      fc.tuple(fc.integer({ min: lo, max: hi }), fc.constantFrom(1, -1)).map(([o, sign]) => sign * o);
+    const frame = fc.oneof(
+      fc.record({ step: fc.constant(1), offset: offset(0, 2 ** 30) }),
+      fc.record({ step: fc.constant(2 ** -10), offset: offset(2 ** 39, 2 ** 40) }),
+    );
     fc.assert(
-      fc.property(ints, fc.integer({ min: -(2 ** 30), max: 2 ** 30 }), (xs, c) => {
-        const shifted = xs.map((x) => x + c);
+      fc.property(ks, frame, (ks, { step, offset }) => {
+        const xs = ks.map((k) => k * step + offset);
+        const n = ks.length;
+        const s = ks.reduce((a, k) => a + k, 0);
+        const q = ks.reduce((a, k) => a + k * k, 0);
+        const m = Math.max(...xs.map(Math.abs));
         for (const kind of KINDS) {
+          const divisor = kind === 'sample' ? n - 1 : n;
+          const exact = ((n * q - s * s) / (n * divisor)) * step * step;
           const v = S.variance(xs, kind);
           expect(v).toBeGreaterThanOrEqual(0);
           expect(S.sd(xs, kind)).toBe(Math.sqrt(v));
-          expect(ulps(S.variance(shifted, kind), v)).toBeLessThanOrEqual(2);
+          expect(Math.abs(v - exact)).toBeLessThanOrEqual(varianceSlack(exact, m, n, divisor));
         }
       }),
     );
@@ -103,6 +135,19 @@ describe('variance and sd', () => {
 });
 
 describe('lerp', () => {
+  it('refuses infinite and NaN ends, and extrapolates for any finite t', () => {
+    for (const [a, b] of [
+      [Infinity, 0],
+      [0, -Infinity],
+      [NaN, 1],
+      [1, NaN],
+      [1.7e308, Infinity],
+    ] as const)
+      expect(() => S.lerp(a, b, 0.5)).toThrow('lerp needs finite ends');
+    expect([S.lerp(1, 3, 2), S.lerp(1, 3, -1)]).toEqual([5, -1]);
+    expect(S.lerp(1, 3, NaN)).toBeNaN();
+  });
+
   it('is exact at the ends, monotone in t, and survives a span beyond the doubles', () => {
     expect(S.lerp(-1.7e308, 1.7e308, 0.5)).toBe(0);
     fc.assert(
@@ -154,10 +199,24 @@ describe('quantiles', () => {
   });
 });
 
-// Tolerances [measured on these goldens, 8 October 2026]: sum, mean and 'inclusive' against NumPy exact;
-// variance and sd within 2 ulp of statistics (measured 2 and 1); against exact Fractions within u·M at quartile
-// positions and n·u·M elsewhere (measured 1 and 0.58n), with u = 2^-53 and M the largest |x|; the median and
-// statistics.quantiles within u·M and 2u·M (measured 1 and 1.88).
+// Tolerances, derived to first order in u = 2^-53 [inferred]; each reference is the exact value rounded once
+// unless named. M is the largest |x|, unit = max(u·M, MIN_VALUE), n the count and D the divisor.
+// - lerp rounds b - a (|b - a| ≤ 2M), the product with t and the sum, so for an exact t it errs by at most
+//   (1 + 4·min(t, 1 - t))·u·M ≤ 3u·M. At a quartile position h is exact; with the reference's rounding that is
+//   4 units. Elsewhere the rounded h moves the interpolant by up to 2M·|Δh|, with |Δh| ≤ (n - 1)u for
+//   'inclusive' and (2n + 1)u for 'gcse' (two roundings): 2n + 2 and 4n + 6 units.
+// - statistics.median rounds (a + b)/2 once (u·M) and lerp at 0.5 errs by 2u·M: 3 units. statistics.quantiles
+//   rounds (a·(4 - δ) + b·δ)/4 to within 1.75u·M: with lerp, 4 units.
+// - The corrected two-pass variance: with m = x̄ + e, Σ(x - m)² - (Σ(x - m))²/n is SS exactly. Rounding x - m
+//   adds 2Σδ(x - m)(x - x̄) with |δ| ≤ u, at most u·(2·SS + n·e²) by Cauchy-Schwarz; the squares, the sums
+//   (Sum2, exactly rounded to first order), the correction, the difference and the division bring it to
+//   u·(6·SS + 7n·e²)/D. With |e| ≤ 2u·M and a correctly rounded reference, the variance is within
+//   7u·V + 7u·n·(2u·M)²/D (varianceSlack). Its root errs by 3u·σ, Math.sqrt and the reference add u·σ each,
+//   and the e term moves it by at most min(√s, s/σ) with s = 7u·n·(2u·M)²/D (sdSlack).
+// - A subnormal result adds MIN_VALUE. On 20,000 fresh sets (stats.case on new seeds and seven adversarial
+//   families, not committed) the largest error was 0.56 of its bound [measured, 8 October 2026]; the review's
+//   cases that broke the earlier fitted tolerances (1.26·n units for 'gcse' at p = 0.37, 1.23 units at a
+//   quartile, 3 ulp for a variance) are in the goldens.
 describe('parity with statistics, NumPy and Fraction (tools/zqverify/stats.py)', () => {
   const attempt = (f: () => number): number | null => {
     try {
@@ -171,36 +230,43 @@ describe('parity with statistics, NumPy and Fraction (tools/zqverify/stats.py)',
   it(`agrees on all ${golden.length} golden data sets`, () => {
     for (const g of golden) {
       const n = g.xs.length;
-      const unit = Math.max(U * Math.max(...g.xs.map(Math.abs)), Number.MIN_VALUE);
-      const near = (got: number, want: number, units: number): void => {
+      const m = Math.max(...g.xs.map(Math.abs));
+      const unit = Math.max(U * m, Number.MIN_VALUE);
+      const within = (got: number, want: number, slack: number): void => {
         expect(
           Math.abs(got - want),
           `${got} against ${want} for ${JSON.stringify(g.xs)}`,
-        ).toBeLessThanOrEqual(units * unit);
+        ).toBeLessThanOrEqual(slack);
+      };
+      const near = (got: number, want: number, units: number): void => {
+        within(got, want, MARGIN * units * unit);
       };
       expect([attempt(() => S.sum(g.xs)), attempt(() => S.mean(g.xs))]).toEqual([g.sum, g.mean]);
       KINDS.forEach((kind, i) => {
-        for (const [f, want] of [
-          [S.variance, g.variance[i] ?? null],
-          [S.sd, g.sd[i] ?? null],
+        const divisor = kind === 'sample' ? n - 1 : n;
+        for (const [f, want, slack] of [
+          [S.variance, g.variance[i] ?? null, varianceSlack],
+          [S.sd, g.sd[i] ?? null, sdSlack],
         ] as const) {
           const got = attempt(() => f(g.xs, kind));
           if (got === null || want === null) expect(got).toBe(want);
-          else expect(ulps(got, want)).toBeLessThanOrEqual(2);
+          else within(got, want, slack(want, m, n, divisor));
         }
       });
-      near(S.median(g.xs), g.median, 1);
+      if (g.median !== null) near(S.median(g.xs), g.median, 3);
       PS.forEach((p, i) => {
-        const units = Number.isInteger(4 * p) ? 1 : n;
-        expect(S.quantile(g.xs, p, 'inclusive')).toBe(g.linear[i]);
-        near(S.quantile(g.xs, p, 'inclusive'), g.inclusive[i] ?? NaN, units);
-        near(S.quantile(g.xs, p, 'gcse'), g.gcse[i] ?? NaN, units);
+        const quartile = Number.isInteger(4 * p);
+        const numpy = g.linear[i];
+        // + 0 maps -0 to 0: a zero's sign follows NumPy's partition and lerp, not a convention.
+        if (numpy !== null) expect(S.quantile(g.xs, p, 'inclusive') + 0).toBe((numpy ?? NaN) + 0);
+        near(S.quantile(g.xs, p, 'inclusive'), g.inclusive[i] ?? NaN, quartile ? 4 : 2 * n + 2);
+        near(S.quantile(g.xs, p, 'gcse'), g.gcse[i] ?? NaN, quartile ? 4 : 4 * n + 6);
       });
       (['inclusive', 'gcse'] as const).forEach((method, i) => {
         const want = g.quartiles[i];
         if (want)
           S.quartiles(g.xs, method).forEach((q, j) => {
-            near(q, want[j] ?? NaN, 2);
+            near(q, want[j] ?? NaN, 4);
           });
       });
     }
