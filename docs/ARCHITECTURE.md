@@ -548,14 +548,14 @@ Enforced by `zq/layering`, which encodes this table in `eslint.config.js` (stage
 | `widgets/scene/` (`SceneView`, `nodes.ts`) | primitives' and inputs' controlled components, the engine layers `widgets/` may import | composites' internals other than their exported controlled component |
 | `ui/` | `engine/motion`, `@zq/contracts` | `engine/` otherwise |
 | `platform/web`, `platform/artifact` | `platform/shared`, packages | `engine/` beyond types |
-| `packages/*` | each other per their manifests | `src/` (the compiler receives widgets through `CompilerRegistry`) |
+| `packages/*` | each other as `zq/layering`'s rows allow (stage 3, `docs/DECISIONS.md` B43): `contracts` imports no package but type-only `preact`, `@preact/signals-core` and `zod`; `mathcore` imports only `contracts`, no npm package and no Node builtin | `src/` (the compiler receives widgets through `CompilerRegistry`); in `contracts` and `mathcore` sources, Node and browser-only globals |
 | `tools/zq` | `packages/*`, `src/widgets/registry.node.gen.ts` and the `logic.ts`, `schema.ts` and preset files it lists | any other part of `src/`, every `View.tsx` and CSS file |
 | `workers/` | `engine/progress/fold`, `engine/rpc`, packages | `ui/`, `widgets/` views, `widgets/**/schema.ts` |
 | anything bundled for the main thread | | `widgets/**/schema.ts` (classic zod, about 92 KB gzipped); `size-limit` on the entry and every cluster chunk catches a leak |
 
 ### 4.6 TypeScript configuration
 
-`tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `verbatimModuleSyntax`, `isolatedModules`, `moduleResolution: "bundler"`, `module: "esnext"`, `target: "es2022"`, `skipLibCheck: false` for our packages. Project references: `src` (DOM libs), `src/workers` (WebWorker lib), `src/sw` (WebWorker and Workbox types), each `packages/*`, `tools` (Node types), `proxy` (Workers types). Path aliases: `@/` for `src/`, `@zq/*` for packages; the same aliases in Vite and Vitest.
+`tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `verbatimModuleSyntax`, `isolatedModules`, `moduleResolution: "bundler"`, `module: "esnext"`, `target: "es2022"`, `skipLibCheck: false` for our packages. Project references: `src` (DOM libs), `src/workers` (WebWorker lib), `src/sw` (WebWorker and Workbox types), each `packages/*`, `tools` (Node types), `proxy` (Workers types). Path alias: `@/` for `src/`, in Vite and Vitest. Packages resolve through npm workspace links and each package's `exports` (`.` for an empty `src/index.ts`, `./*` for `src/*.ts`), so a module is imported by its subpath, `@zq/mathcore/rng` for `src/rng.ts`; `src` references both packages and `mathcore` references `contracts` as projects, so `tsc -b` rechecks a consumer when a package changes. `contracts`' tsconfig adds the DOM lib for the widget and platform contracts of section 5, so a contracts module that `mathcore` imports names no DOM type (stage 3, `docs/DECISIONS.md` B43).
 
 **Stage 1 additions** (`docs/DECISIONS.md` B1): `erasableSyntaxOnly` and `allowImportingTsExtensions` in the base; `tools`, `tests` and every `packages/*` project extend `tsconfig.node.base.json` (`module` and `moduleResolution` `nodenext`, `.ts` extensions required), because Node runs them directly; `src` keeps `bundler` resolution, which Vite runs. Every project is `composite` with `emitDeclarationOnly` into the ignored `.zq/tsc/`. `jsx: "react-jsx"` and `jsxImportSource: "preact"` are added with Preact's installation (stage 3 or 4), because knip reports an unlisted `preact` before then.
 
@@ -1873,7 +1873,8 @@ Each runs on the web build (served with its service worker) and on the Artifact 
 
 | Job | When | Blocks merge | Target time |
 |---|---|---|---|
-| `static` | Every pull request | Yes | 3 min |
+| `static` (with `zqverify` on CPython 3.12, `npm run test:py`, from stage 3) | Every pull request | Yes | 3 min |
+| `browser` (`packages/**/*.browser.test.ts` in Chromium, Firefox and WebKit, from stage 3: `dmath`'s bit-identity, `docs/DECISIONS.md` B43) | Every pull request | Yes | 3 min |
 | `unit` (with coverage: 90% lines and branches for `packages/*`, `engine/player`, `engine/progress`, `engine/widgets`; 80% for the rest of `engine/`) | Every pull request | Yes | 3 min |
 | `widgets` (contract suite for all; browser tests for changed clusters, found from the import graph) | Every pull request | Yes | 6 min |
 | `content` (content-format 6.12) | Pull requests touching `content/`, `packages/content-*`, `packages/graders`, widgets | Yes | per content-format |
@@ -1934,7 +1935,7 @@ The CDN sizes below were taken with zlib 1.3 at level 9 through Python's `gzip`;
 | `npm run dev` | Web dev server, content compiled on the fly, hot reload, development routes |
 | `npm run dev:artifact` | The Artifact build through the host emulator with hot reload |
 | `npm run check` | Every static check |
-| `npm test`, `npm run test:widgets -- <type>`, `npm run test:e2e`, `npm run test:visual` | The test layers |
+| `npm test` (the Node project), `npm run test:browser` (the cross-engine package tests), `npm run test:py` (`zqverify`), `npm run test:widgets -- <type>`, `npm run test:e2e`, `npm run test:visual` | The test layers |
 | `npm run perf -- <type>` | The drag harness for one widget, printing median and P95 at 4x and 6x |
 | `npm run new:widget -- <type> --cluster <c> --tier <t>` | Scaffolds the widget folder with every file, a failing test per contract item, and a registry entry |
 | `npm run new:screen -- <id>` | Scaffolds a screen |
