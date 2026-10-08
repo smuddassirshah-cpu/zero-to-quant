@@ -27,9 +27,10 @@ export function propName(node: ESNode): string | undefined {
   return node.property.type === 'Identifier' ? node.property.name : undefined;
 }
 
-/** The name of an identifier, or of the last property of a member access. */
+/** The name of an identifier, or of the last property of a member access, through any wrapper. */
 export function tailName(node: ESNode): string | undefined {
-  return node.type === 'Identifier' ? node.name : propName(node);
+  const inner = unwrap(node);
+  return inner.type === 'Identifier' ? inner.name : propName(inner);
 }
 
 /** The static key of an object literal or pattern property. */
@@ -38,13 +39,14 @@ export function keyName(node: NodeOf<'Property'>): string | undefined {
 }
 
 const WRAPPERS = new Set([
+  'ChainExpression',
   'TSAsExpression',
   'TSNonNullExpression',
   'TSSatisfiesExpression',
   'TSTypeAssertion',
 ]);
 
-/** `node` without TypeScript's expression wrappers (`as`, `!`, `satisfies`, `<T>`). */
+/** `node` without an optional chain's wrapper (`a?.b`) or TypeScript's (`as`, `!`, `satisfies`, `<T>`). */
 export function unwrap(node: ESNode): ESNode {
   let current = node;
   while (WRAPPERS.has(current.type)) current = (current as unknown as { expression: ESNode }).expression;
@@ -65,11 +67,17 @@ export function isGlobal(sourceCode: SourceCode, node: ESNode): boolean {
   return node.type === 'Identifier' && !findVariable(sourceCode, node)?.defs.length;
 }
 
-/** The expression an object pattern destructures, when it is written beside the pattern. */
+/** `node` without an optional chain's wrapper only, keeping a TypeScript assertion's type for `hasType`. */
+function unchain<T extends ESNode | undefined>(node: T): ESNode | T {
+  return node?.type === 'ChainExpression' ? node.expression : node;
+}
+
+/** The expression an object pattern destructures, when it is written beside the pattern (an optional chain read through). */
 export function patternSource(pattern: Rule.Node): ESNode | undefined {
   const { parent } = pattern;
-  if (parent?.type === 'VariableDeclarator' && parent.id === pattern) return parent.init ?? undefined;
-  if (parent?.type === 'AssignmentExpression' && parent.left === pattern) return parent.right;
+  if (parent?.type === 'VariableDeclarator' && parent.id === pattern)
+    return unchain(parent.init ?? undefined);
+  if (parent?.type === 'AssignmentExpression' && parent.left === pattern) return unchain(parent.right);
   return undefined;
 }
 

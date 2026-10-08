@@ -36,6 +36,9 @@ tester.run('no-inner-html', rule, {
   ],
   invalid: [
     fails('el.innerHTML = s', 'innerHTML'),
+    fails('new (window?.DOMParser)()', 'DOMParser'),
+    fails('const { write } = window?.document', 'document.write'),
+    fails('({ writeln: w } = (self.document as Document))', 'document.writeln'),
     fails('el.outerHTML = s', 'outerHTML'),
     fails('el["innerHTML"] += s', 'innerHTML'),
     fails('el[`outerHTML`] = s', 'outerHTML'),

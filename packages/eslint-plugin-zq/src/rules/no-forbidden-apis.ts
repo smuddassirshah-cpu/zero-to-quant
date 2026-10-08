@@ -3,7 +3,8 @@
 // platform.
 // Decision notes:
 // - Two checks run side by side. The syntactic one works everywhere, `.js` included: `window`,
-//   `self` and `globalThis` when nothing in the file declares them, and a bare `open()`, `print()`
+//   `self` and `globalThis` when nothing in the file declares them (or reached from one another,
+//   `self.window`; an optional chain is read through, `self?.window`), and a bare `open()`, `print()`
 //   or `eval()` that scope analysis resolves to the global (a local or imported `open` is fine).
 //   Where the type checker is available (`.ts`, `.tsx`) it also refuses `open`, `print`, `eval` and
 //   `Function` on any `Window` (`parent`, `top`, `document.defaultView`, an alias), `serviceWorker`
@@ -65,8 +66,11 @@ const rule: Rule.RuleModule = {
     const { sourceCode } = context;
     const file = repoPath(context);
     const workerAllowed = SERVICE_WORKER_DIRS.some((dir) => file.startsWith(dir));
-    const globalObject = (node: ESNode) =>
-      node.type === 'Identifier' && GLOBAL_OBJECTS.has(node.name) && isGlobal(sourceCode, node);
+    const globalObject = (node: ESNode): boolean =>
+      (node.type === 'Identifier' && GLOBAL_OBJECTS.has(node.name) && isGlobal(sourceCode, node)) ||
+      (node.type === 'MemberExpression' &&
+        GLOBAL_OBJECTS.has(propName(node) ?? '') &&
+        globalObject(node.object));
     const isWindow = (node: ESNode) => globalObject(node) || hasType(sourceCode, node, WINDOW_TYPES);
     const isNavigator = (node: ESNode) =>
       (node.type === 'Identifier' && node.name === 'navigator' && isGlobal(sourceCode, node)) ||
@@ -80,9 +84,12 @@ const rule: Rule.RuleModule = {
       context.report({ node, messageId: 'forbidden', data: { name } });
     };
     // `owner.name`, read from `owner` by a member access or a destructuring pattern.
-    const access = (node: ESNode, name: string, owner: ESNode) => {
-      if (WINDOW_MEMBERS.has(name) && isWindow(owner)) forbid(node, `${sourceCode.getText(owner)}.${name}`);
-      else if (name === 'serviceWorker' && !workerAllowed && isNavigator(owner)) {
+    // Checked wrapped (an assertion's type) and unwrapped (`(window as Window)`), named unwrapped.
+    const access = (node: ESNode, name: string, wrapped: ESNode) => {
+      const owner = unwrap(wrapped);
+      const either = (test: (n: ESNode) => boolean) => test(wrapped) || test(owner);
+      if (WINDOW_MEMBERS.has(name) && either(isWindow)) forbid(node, `${sourceCode.getText(owner)}.${name}`);
+      else if (name === 'serviceWorker' && !workerAllowed && either(isNavigator)) {
         context.report({ node, messageId: 'serviceWorker' });
       }
     };
