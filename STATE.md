@@ -19,12 +19,12 @@ Gates waiting for the preview Artifact, oldest first (`PLAN.md` 8.5): none.
 
 ## Stages
 
-Status values: pending / in progress / awaiting review / approved. Gate records the date of the owner's "approved, continue". AD is agent-days (6 session hours): the plan's estimate, then the measured figure from the pull requests. Depends on is `PLAN.md` section 11; "10a to 26" means every engine stage from 10a to 26. Batch 38 also needs batch 37's bases, and batch 58 the widgets it embeds from batches 27 to 57 (`PLAN.md` 11.4). The planned total is about 880 AD before content with the 182 AD contingency, and 480 for stages 84 to 100.
+Status values: pending / in progress / awaiting review / approved. Gate records the date of the owner's "approved, continue" or, under D9, of the fresh reviewer's verdict; a gating-rule-10 stop records the owner's reply. AD is agent-days (6 session hours): the plan's estimate, then the measured figure from the pull requests. Depends on is `PLAN.md` section 11; "10a to 26" means every engine stage from 10a to 26. Batch 38 also needs batch 37's bases, and batch 58 the widgets it embeds from batches 27 to 57 (`PLAN.md` 11.4). The planned total is about 880 AD before content with the 182 AD contingency, and 480 for stages 84 to 100.
 
 | # | Stage | Depends on | AD plan | AD actual | Status | Gate |
 |---|---|---|---|---|---|---|
 | 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
-| 2 | Spike S1 on the owner's iPhone | 1 | 3 | 3.0 | awaiting review | - |
+| 2 | Spike S1 on the owner's iPhone | 1 | 3 | 3.1 | awaiting review | - |
 | 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | pending | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
 | 3b | `stats-core` in `@zq/mathcore/stats` | 3a | 12 | - | pending | - |
@@ -310,6 +310,8 @@ Each with the stage it affects; the stage that closes it records the answer in `
 
 The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking and 12 non-blocking items) went in through the follow-up pull request from `stage2/gate-fixes`; `spikes/s1/results/REVIEW-plan-edits.md` maps each item to its fix.
 
+The second fresh review (D9; 3 blocking, 12 non-blocking) is fixed by the second gate revision, smuddassirshah-cpu/zero-to-quant#19 from `stage2/gate-fixes-2` (B41, B42, the `@zq/contracts` tree line, the effort re-measured), with the `stage/3` item fixed by smuddassirshah-cpu/zero-to-quant#20. The third fresh review approved the quality pass ("approved, continue", no blocking item); its 12 non-blocking items are fixed by the third gate revision from `stage2/gate-fixes-3`. The digest maps each item.
+
 **A gating-rule-10 stop.** Two S1 checks failed (`platform.back-gesture`, `mathml.htmldata`), so the owner clears this gate by accepting their fallbacks: B23's back or close control on every route but the tab roots, and the term list beside a formula as the Artifact default, with B27's sentinels proposed. The fresh review is the quality pass; the Gate date is set on the owner's reply.
 
 **Definition of done (`PLAN.md` 11.3 row 2), item by item.**
@@ -322,26 +324,26 @@ The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking 
 | The `db` cap rule | Yes: no cap, so the checkpoint is not built | 320 documents of 196,608 bytes (60 MiB) written, no `quota_exceeded` or `resource_exhausted`, cleaned up (`dbsize-status-s1-size.json`); 60 MiB is above 34 MB times one participant; `ASSESSMENT.md` 13.6 states the reconciliation with its 30 MB |
 | Each failed check's fallback in `ARCHITECTURE.md` before a dependent stage | Yes | The back gesture: B23, a back control on every non-root route, `zq/no-forbidden-apis` refuses `history.back` and `go` (stage 74a). `\htmlData` in MathML: 14 item 20's term list, with B27's sentinels proposed. `window.open` returns null: the anchor opens a browser, and copyable text is the fallback. The publish refusals and the host's reloads: B24 (release procedure, 6.2.6) and B25 (emulator, 8.2) |
 | The emulator's version-scoping switch set to the measured behaviour | **No**: not met, for the owner | B28: both version-scoping checks were skipped because the host reloaded the open v1 page 16 s before the hand-sent republish signal; the emulator's default is set by inference [inferred from `artifact.d.ts` 0.2.73] pending the owner's waiver (recommended: the design works under either behaviour) or a two-minute measurement with a polling v3 and v4 of the probe |
-| 11.1: CI green, contracts updated, `DECISIONS.md` entries, `STATE.md` updated, `[unverified]` items closed | Yes | CI on #16 and #17; contracts: `ARCHITECTURE.md` 5.11 `TexService.html` `source`, 6.2.6 page roles, 8.2 emulator on contract 0.2.74, 9.2 annotations; B17 to B38 and D9; open questions 1 to 5 closed and 6 partly; what S1 could not settle is tagged and placed: 32 (stage 82), 33 and 38 (stage 25), 34, 36 and 37 |
+| 11.1: CI green, contracts updated, `DECISIONS.md` entries, `STATE.md` updated, `[unverified]` items closed | Yes | CI on #16, #17 and #19; contracts: `ARCHITECTURE.md` 5.11 `TexService.html` `source`, 6.2.6 page roles, 8.2 emulator on contract 0.2.74, 9.2 annotations; B17 to B38, B41, B42 and D9; open questions 1 to 5 closed and 6 partly; what S1 could not settle is tagged and placed: 32 (stage 82), 33 and 38 (stage 25), 34, 36 and 37 |
 
-**Tests.** `npm run check` passes and the pre-push hooks pass: 497 unit tests, gitleaks clean, `npm audit` clean, `pip-audit` with A2's waived advisory. The probe's own Playwright suite (`spikes/s1/tools/test.mjs`) passed before each publish (#15). The plan edits had an initial review by 3 sessions, then three fix-and-verify rounds with 2 verifiers each, and the last round left no major finding; round 3 re-measured the KaTeX and size claims in Node and Python. The fresh Fable gate review then found 6 blocking items, fixed at the gate revision (`REVIEW-plan-edits.md`).
+**Tests.** `npm run check` passes and the pre-push hooks pass: 497 unit tests, gitleaks clean, `npm audit` clean, `pip-audit` with A2's waived advisory. The probe's own Playwright suite (`spikes/s1/tools/test.mjs`) passed before each publish (#15). The plan edits had an initial review by 3 sessions, then three fix-and-verify rounds with 2 verifiers each, and the last round left no major finding; round 3 re-measured the KaTeX and size claims in Node and Python. The fresh Fable gate review then found 6 blocking items, fixed at the gate revision, and the second review's 3 blocking items at the second; the third review approved the quality pass with 12 non-blocking items, fixed at the third (`REVIEW-plan-edits.md`).
 
 **Security.**
 - Inputs: the probe read its own `db` documents and the `sample` replies, which it showed as text.
 - Secrets and endpoints: none in code, config or commits.
-- Dependencies: CDN files only, at exact versions with SRI (`spikes/s1/cdn-lock.json`). The npm mirror `spikes/s1/npm` is not committed.
+- Dependencies: CDN files only, at exact versions (`spikes/s1/cdn-lock.json`), with SRI on the import-map entries and the UMD scripts; the three worker imports and the cdnjs candidates were not hash-checked (W2). The npm mirror `spikes/s1/npm` is not committed.
 - Committed run documents: no viewer id (the own path is stored as `data/users/<own>`), and no answers, code or chat.
 - B33 tightens the KaTeX sink: every strict check but `htmlExtension` stays on, and a refused command is caught through a reserved `errorColor`.
 - The size probe Artifact was deleted with the owner's confirmation. The S1 probe Artifact (https://claude.ai/artifact/KfYB1yPs9DfKTakjZZrGFD) stays as evidence until he confirms its deletion.
 - Process slip (B38): the backup branch `stage2/s1-results-wip` was force-pushed once without asking (`CLAUDE.md` Permissions). Later backups used new names (`stage2/s1-results-r3-wip`).
 
-**Effort** [measured from the transcripts, gaps over 15 minutes removed]: 17.46 agent-hours from 2026-10-07 16:04 UTC to the start of stage 3 (2026-10-08 04:54 UTC), plus 0.73 h for the second gate review and about 0.6 h of the main session's second gate revision, shared with stage 3's first hour: about 18.2 agent-hours, 3.0 AD against the plan's 3. Tokens to the start of stage 3: 0.82 million output and 0.66 billion input including cache.
+**Effort** [measured from the transcripts, gaps over 15 minutes removed]: 17.46 agent-hours from 2026-10-07 16:04 UTC to the start of stage 3 (2026-10-08 04:54 UTC), plus 0.73 h for the second gate review and about 0.6 h of the main session's second gate revision, shared with stage 3's first hour: about 18.8 agent-hours, 3.1 AD against the plan's 3. The third gate review (1.28 million subagent tokens over about 34 minutes) and the third revision come on top, and are small. Tokens to the start of stage 3: 0.82 million output and 0.66 billion input including cache.
 
 **Deviations** (each in `docs/DECISIONS.md` and the Decisions table above):
 - B17: `stage/2` branched from `stage/1`.
-- B20: the probe's annotation rewrite in `TexSlots`.
 - B18: the probe source in one pull request over the cap.
 - B19: no `permissions` in the declaration.
+- B20: the probe's annotation rewrite in `TexSlots`.
 - B21: sub-sessions' files count as the session's own.
 - B22 to B26: mirror, back controls, release procedure, emulator, lease.
 - B27: term sentinels by a render-time macro.
