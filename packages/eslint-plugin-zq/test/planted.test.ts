@@ -1,6 +1,7 @@
-// Stage 1's definition of done: a planted violation of each lint rule fails. Each file is written
-// at a real path and linted with the repository's own eslint.config.js (the type-aware parser
-// needs the files on disk). The two sink files pass only at their exempt paths.
+// Stage 1's definition of done: a planted violation of each lint rule fails; stage 3's: a planted
+// `Math.random` in mathcore fails. Each file is written at a real path and linted with the
+// repository's own eslint.config.js (the type-aware parser needs the files on disk). The two sink
+// files pass only at their exempt paths, and the files outside a rule's reach pass.
 // Hygiene: every planted file starts with MARKER. Stale planted files from a killed run are
 // removed first; a file at a planted path without the marker is real, and the test refuses to
 // run rather than touch it (the sink paths become real files at stages 23 and 59). Cleanup
@@ -77,6 +78,24 @@ const violations = [
     code: "export * from '../screens/today/View.tsx';\n",
     message: 'engine/ may not import src/screens/today/View.tsx',
   },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_random.ts',
+    code: 'export function draw(): number {\n  return Math.random();\n}\n',
+    message: "'Math.random' is not seeded",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'src/widgets/__planted/logic.ts',
+    code: 'export function stamp(): number {\n  return Date.now();\n}\n',
+    message: "'Date' reads the clock",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'content/generators/__planted_exp.mjs',
+    code: 'export const grow = (x) => Math.exp(x);\n',
+    message: "'Math.exp' may differ between engines",
+  },
 ];
 
 // An inline directive does not switch a rule off: noInlineConfig reports the directive instead.
@@ -98,7 +117,19 @@ const sinks = [
   },
 ];
 
-const planted = [...violations, disabled, ...sinks];
+// Outside zq/no-nondeterminism's reach: transcendental Math outside a generator, a package's tests.
+const clean = [
+  {
+    file: 'packages/mathcore/src/__planted_exp.ts',
+    code: 'export const grow = (x: number): number => Math.exp(x);\n',
+  },
+  {
+    file: 'packages/mathcore/test/__planted_clock.ts',
+    code: 'export const elapsed = (start: number): number => performance.now() - start;\n',
+  },
+];
+
+const planted = [...violations, disabled, ...sinks, ...clean];
 const results = new Map<string, Result>();
 const createdFiles: string[] = [];
 const createdDirs: string[] = [];
@@ -162,6 +193,10 @@ describe('planted violations', () => {
   });
 
   it.each(sinks)('$file passes as a justified sink', ({ file }) => {
+    expect(results.get(file)?.messages).toEqual([]);
+  });
+
+  it.each(clean)('$file passes outside the rule', ({ file }) => {
     expect(results.get(file)?.messages).toEqual([]);
   });
 
