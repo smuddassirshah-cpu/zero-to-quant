@@ -201,6 +201,7 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B31 "Use here" takes the lock with `steal: true` (`ASSESSMENT.md` 13.7 aligned) | Measured working in the frame | y: an appendix conflict settled for the owner of the lifecycle |
 | 2026-10-08 | B32 `CONTENT-FORMAT.md` 6.9's rendering check follows `PLAN.md` conflict 10 | `PLAN.md` wins | y: an older appendix conflict |
 | 2026-10-08 | B33 KaTeX's authored configuration: `strict` ignores only `htmlExtension`; `errorColor` reserved and checked | Strict mode refuses `\htmlData` before `trust` [measured: KaTeX 0.19.0, Node]; a refused command renders as text without throwing | y: `PLAN.md` 4.2, 6.5, conflict 10, 7, stage 7; a contradiction inside `PLAN.md` |
+| 2026-10-08 | D9 The owner's standing instruction: gates are judged by a fresh-context Fable reviewer; design and feature decisions, merges into `main`, device gates and rule 10's stops stay his | The owner, in the stage 2 session | y: `CLAUDE.md` gating rule 8, by the owner's instruction |
 | 2026-10-08 | B34 Stage 63 depends on stage 25 for its iPhone check of a declined `sample` consent | The check needs the preview Artifact | y: `PLAN.md` stage 63, 11.1 |
 | 2026-10-08 | `ASSESSMENT.md` 13.6 states `PLAN.md`'s 34 MB as its own 30 MB scaled by $2445/2148$; the checkpoint verdict is unchanged | A figure the two documents gave differently | y: reported, not settled silently |
 

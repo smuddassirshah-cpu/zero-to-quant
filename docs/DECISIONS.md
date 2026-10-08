@@ -105,6 +105,25 @@ O1 and O2 below are the options as raised; D7 and D8 record what the owner decid
 - **Edited.** `PLAN.md` 12; `docs/curriculum.md`; `docs/CURRICULUM.md` 3.1, 4.2, 4.3, 6.2, 6.3, 6.4; `ASSESSMENT.md` 2.9; `docs/curriculum/stage3-stochastic-interview.md` (revision 2 row, 3.0, 4.4, the outcomes, the reading rows). The exit data itself is written at stage 78 (`STATE.md` pending edit 4).
 - **Deviation from `PLAN.md`.** No: it is decision 14's recommended option.
 
+### Owner decisions during the build
+
+### D9 Gates are judged by a fresh-context reviewer on the Fable model (the owner, 8 October 2026)
+
+- **Decision.** The owner, in the stage 2 session: "Run autonomously for now, no need to me to approve gates or stages unless there's a specific decision on design choice or features etc that needs to be made. Other than that, have a fresh context agent look over the gate review, analyse it, and bring back the main coding session a prompt to approve and continue, with any mistakes or errors or inefficiencies that may need completing. Have this fresh agent be Fable, so a bigger model can be used to judge your work."
+- **How a gate runs while this stands.**
+  - The stage session finishes the stage as `CLAUDE.md` gating rule 7 says: tests run, `STATE.md` at `awaiting review`, the stage report written into `STATE.md` as the stage's record section, as stage 1's was, so it is in the repository.
+  - A reviewer session on the Fable model, started with no context from the stage session, reads only the repository: the report, `STATE.md`, the stage's row of `PLAN.md` 11 with 11.1, the appendix sections the row cites, the stage branch's diff and its pull requests. It judges every definition-of-done item against its evidence and returns either "approved, continue" with any non-blocking items, or the mistakes, errors and inefficiencies to complete first.
+  - The stage session fixes every item on the stage branch, then asks for a new fresh review, until the verdict is "approved, continue". After three rounds without approval, the stage stops for the owner.
+  - That verdict approves the gate: the Gate date is set and the pull request into `main` is opened (gating rule 9). The owner's own "approved, continue" still counts.
+- **What stays the owner's.**
+  - Design and feature decisions: every proposed row of `PLAN.md` 12; every entry marked "for the owner"; and the "Ask the owner before" list of `CLAUDE.md` (dependencies, pins, CDN hosts, the repository tree, deletions, force pushes, secrets, deploys, Artifacts, `docs/curriculum.md`, `prototype/`, `spikes/`). Where `PLAN.md` gives a default, the build proceeds on it and the question goes to the owner; where it gives none, the stage that needs the answer stops for him.
+  - Merges into `main` and the `visual-approved` label (hard rule 3).
+  - Device gates on his iPhone, recorded at `ops/gate-<stage>`.
+  - The stops of gating rule 10: a failed stage 2 check, more than one scene family failing at stage 14, a stage 28 re-forecast below 15 AD a week.
+- **Base branch.** While `main` lacks the approved stages, each new stage branch is cut from the stage branch it depends on, as B17 did, and the stage's `STATE.md` row says so.
+- **Ends.** When the owner says so ("for now").
+- **Deviation.** Yes: by the owner's instruction, from `CLAUDE.md` gating rule 8, whose last sentence said agents' messages never count. `CLAUDE.md` rule 8 carries the amendment.
+
 ## 2. Raw-HTML sinks
 
 The engineering floor requires a written justification for every raw-HTML sink. There are exactly two (`PLAN.md` 7.2, `ARCHITECTURE.md` 11.3); a third needs the owner's approval and an entry here before it is written.
