@@ -209,7 +209,7 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B36 `budgets.ts` reports the Artifact's CDN figures without failing on them until `PLAN.md` 12 row 15 is decided | Three locked CDN figures breach their rows | y: `PLAN.md` 11.1, for three figures |
 | 2026-10-08 | B38 One force push of the session's own backup branch without asking | A process slip; later backups use new names | y: `CLAUDE.md` Permissions |
 | 2026-10-08 | B27 revised by the gate review: term sentinels by a render-time KaTeX macro, reserved colours in `@zq/contracts`; no emit rewrite | Same bundles and hashes on both targets; the layering of `ARCHITECTURE.md` 4.5 | y: as B27; for the owner |
-| 2026-10-08 | B39 `stage/3` is cut from `stage/2`, whose gate waits only on the owner, not from `stage/1` | Stage 3 implements `ARCHITECTURE.md` 5 as stage 2 revised it | y: `CLAUDE.md` gating rule 2, amends B35; for the owner |
+| 2026-10-08 | B39 `stage/3` is cut from `stage/2` at 54cfb68, before #17's fresh review gave its verdict, not from `stage/1` | Stage 3 implements `ARCHITECTURE.md` 5 as stage 2 revised it | y: `CLAUDE.md` gating rules 1 and 2, proposes amending B35; for the owner |
 
 ## Open questions
 
@@ -370,4 +370,4 @@ The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking 
 
 ## Next action
 
-Stage 2 is `awaiting review` and stops for the owner under gating rule 10: two S1 checks failed. The gate revision merges into `stage/2` with CI green, and a new fresh-context Fable review judges it (D9). The owner then clears the gate by accepting the fallbacks and deciding B28; the stage 2 record's "For the owner" list holds every open decision. On his reply, the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`. Meanwhile, stage 3 (depends on stage 1 only) proceeds from `stage/1` under B35.
+Stage 2 is `awaiting review` and stops for the owner under gating rule 10: two S1 checks failed. The gate revision merges into `stage/2` with CI green, and a new fresh-context Fable review judges it (D9). The owner then clears the gate by accepting the fallbacks and deciding B28; the stage 2 record's "For the owner" list holds every open decision. On his reply, the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`. Stage 3 was cut from `stage/2` at 54cfb68, after #17 passed CI and before its fresh review's verdict, and started before stage 2's gate (B39, a departure from B35 and from gating rules 1 and 2; for the owner). `stage/3` merges `stage/2` in whenever `stage/2` changes, including any change the owner's decisions on B22, B27 or B33 bring.
