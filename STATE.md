@@ -24,7 +24,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 | # | Stage | Depends on | AD plan | AD actual | Status | Gate |
 |---|---|---|---|---|---|---|
 | 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
-| 2 | Spike S1 on the owner's iPhone | 1 | 3 | - | in progress | - |
+| 2 | Spike S1 on the owner's iPhone | 1 | 3 | 2.5 | awaiting review | - |
 | 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | pending | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
 | 3b | `stats-core` in `@zq/mathcore/stats` | 3a | 12 | - | pending | - |
@@ -293,6 +293,60 @@ Each with the stage it affects; the stage that closes it records the answer in `
 
 **Owner actions waiting** (stage report): branch protection or rulesets (`README.md`; open question 27); decisions on A1, A2, L1, the pins of T1 and the tree additions of B16; the superseded and merged remote branches (`stage1/*`), which can be deleted once stage 1 reaches `main`.
 
+## Stage 2 record
+
+**Built.** The S1 probe (`spikes/s1/`, smuddassirshah-cpu/zero-to-quant#15) and the `db` size probe (`spikes/s1-dbsize/`), both published by this session from files it wrote and read (hard rule 2; B19, B21), run by the owner on his iPhone on 7 October 2026. The results, their verdicts and the plan edits they force went in through smuddassirshah-cpu/zero-to-quant#16:
+- `spikes/s1/results/`: six run documents, the size probe's status, the digest `README.md` and four screenshots;
+- `docs/DECISIONS.md` section 4, "Spike S1";
+- B22 to B34, W2 narrowed, D9;
+- `PLAN.md`, `ARCHITECTURE.md`, `ASSESSMENT.md`, `CONTENT-FORMAT.md`, `WIDGETS.md` and `AI-TUTOR.md` aligned;
+- open questions 1 to 6 closed, 31 to 38 added.
+
+**Definition of done (`PLAN.md` 11.3 row 2), item by item.**
+
+| Item | Met | Evidence |
+|---|---|---|
+| Results with device, app version and date in `DECISIONS.md` | Yes | `docs/DECISIONS.md` section 4, "Spike S1": iPhone 17 Pro Max, iOS 27.2 [sourced: the owner, Settings], Claude app 1.261002.20 (37091698851), 7 October 2026, 22:19 to 23:07 UTC; every check in `spikes/s1/results/README.md` from the stored runs |
+| The import-map result chooses between 4.3's design and its fallback before stage 4 | Yes: 4.3's design | `cdn.bootstrap-map`, `cdn.static-import` and `cdn.integrity-enforced` pass (two wrong-hash URLs refused beside a control); `cdn.module-worker` passes, unhashed (W2 narrowed); the UMD fallback works but is not needed |
+| The MathML verdict with screenshots | Yes: accepted | `mathml.specimen-verdict` (all 40 formulas judged readable and correctly set by the owner) and `mathml.texslots-verdict` (digits match the maths font; VoiceOver reads the current values); `spikes/s1/results/screenshots/`, light and dark |
+| The `db` cap rule | Yes: no cap, so the checkpoint is not built | 320 documents of 196,608 bytes (60 MiB) written, no `quota_exceeded` or `resource_exhausted`, cleaned up (`dbsize-status-s1-size.json`); 60 MiB is above 34 MB times one participant; `ASSESSMENT.md` 13.6 states the reconciliation with its 30 MB |
+| Each failed check's fallback in `ARCHITECTURE.md` before a dependent stage | Yes | The back gesture: B23, a back control on every non-root route, `zq/no-forbidden-apis` refuses `history.back` and `go` (stage 74a). `\htmlData` in MathML: 14 item 20's term list, with B27's sentinels proposed. `window.open` returns null: the anchor opens a browser, and copyable text is the fallback. The publish refusals and the host's reloads: B24 (release procedure, 6.2.6) and B25 (emulator, 8.2) |
+| The emulator's version-scoping switch set to the measured behaviour | By inference, a deviation | B28: both version-scoping checks were skipped because the host reloaded the open v1 page within seconds; the emulator serves a page its own version until reloaded [inferred from `artifact.d.ts` 0.2.73], with two fault injections keeping the other serving testable |
+| 11.1: CI green, contracts updated, `DECISIONS.md` entries, `STATE.md` updated, `[unverified]` items closed | Yes | CI on #16; contracts: `ARCHITECTURE.md` 5.11 `TexService.html` `source`, 6.2.6 page roles, 8.2 emulator, 9.2 annotations, 10.4 exemption; B17 to B34 and D9; open questions 1 to 5 closed and 6 partly; what S1 could not settle is tagged and placed: 32 (stage 82), 33 and 38 (stage 25), 34, 36 and 37 |
+
+**Tests.** `npm run check` passes and the pre-push hooks pass: 497 unit tests, gitleaks clean, `npm audit` clean, `pip-audit` with A2's waived advisory. The probe's own Playwright suite (`spikes/s1/tools/test.mjs`) passed before each publish (#15). Three review rounds of the plan edits (4, 2 and 2 sessions) left no major finding. Round 3 re-measured the KaTeX and size claims in Node and Python.
+
+**Security.**
+- Inputs: the probe read its own `db` documents and the `sample` replies, which it showed as text.
+- Secrets and endpoints: none in code, config or commits.
+- Dependencies: CDN files only, at exact versions with SRI (`spikes/s1/cdn-lock.json`). The npm mirror `spikes/s1/npm` is not committed.
+- Committed run documents: no viewer id (the own path is stored as `data/users/<own>`), and no answers, code or chat.
+- B33 tightens the KaTeX sink: every strict check but `htmlExtension` stays on, and a refused command is caught through a reserved `errorColor`.
+- The size probe Artifact was deleted with the owner's confirmation. The S1 probe Artifact (https://claude.ai/artifact/KfYB1yPs9DfKTakjZZrGFD) stays as evidence until he confirms its deletion.
+- Process slip: the backup branch `stage2/s1-results-wip` was force-pushed once without asking (`CLAUDE.md` Permissions). Later backups used new names (`stage2/s1-results-r3-wip`).
+
+**Effort** [measured from the transcripts since 2026-10-07 16:04 UTC, gaps over 15 minutes removed]: 15.11 agent-hours, 2.52 AD against the plan's 3. The main session accounts for 2.09 h; workflow and sub-sessions account for the rest. Tokens: 0.64 million output and 0.60 billion input including cache.
+
+**Deviations** (each in `docs/DECISIONS.md` and the Decisions table above):
+- B17: `stage/2` branched from `stage/1`.
+- B18: the probe source in one pull request over the cap.
+- B19: no `permissions` in the declaration.
+- B21: sub-sessions' files count as the session's own.
+- B22 to B26: mirror, back controls, release procedure, emulator, lease.
+- B28: version scoping met by inference.
+- B29 to B32: contract 0.2.73, the handoff check at 82, `steal`, 6.9 aligned.
+- B33: KaTeX strict function, a contradiction inside `PLAN.md`.
+- B34: stage 63 on 25.
+- D9: the owner's gate instruction.
+
+**For the owner** (design decisions; the build proceeds on each default meanwhile):
+- B20: annotation rewrite, before stage 12.
+- B21: hard rule 2's reading.
+- B22 to B24: they change learner-facing behaviour.
+- B27: term sentinels, with stage 25's device result.
+- `PLAN.md` 12 row 15: `zod/mini` and KaTeX, before stage 4. Default (a) as locked; recommended (b) `modulepreload` with integrity, and `katex.min.js` as a classic script.
+- Deletion of the S1 probe Artifact and of the backup branches `stage2/s1-results-wip` and `stage2/s1-results-r3-wip`.
+
 ## Next action
 
-Stage 1 approved on 7 October 2026 (the owner: "Approved and continue"). The owner merges the Blueprint (smuddassirshah-cpu/zero-to-quant#1) and then the stage 1 pull request into `main`. Stage 2 (spike S1 on the owner's iPhone) is in progress on `stage/2`: the probe (https://claude.ai/artifact/KfYB1yPs9DfKTakjZZrGFD) and the `db` size probe (https://claude.ai/artifact/DF7mBFRaKCWkrXp14eRgXs) were published on 7 October 2026 and wait for the owner's run on the iPhone. When he says "S1 ready for republish", the session publishes v2 to the same URL and writes the signal (`spikes/s1/CONTRACT.md`, the runbook); after "S1 republish checks done" and his reload and back-gesture checks, it makes the omit-page publish, then reads the results from `ops/s1-run-*` and `status/s1-size`.
+Stage 2 is `awaiting review`. The results (smuddassirshah-cpu/zero-to-quant#16) merge into `stage/2` with CI green. A fresh-context Fable reviewer judges the gate (D9), and every item it raises is fixed on `stage/2` before a new review. On "approved, continue", the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`, which the owner merges after the Blueprint (#1) and stage 1 (#14). Stage 3 is then cut from `stage/2` (D9, base branch).
