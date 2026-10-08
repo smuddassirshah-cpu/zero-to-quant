@@ -12,6 +12,7 @@ Preview Artifact: not yet created (stage 25 creates it; its URL goes here)
 |---|---|---|---|
 | Main session (integration, docs, review fixes) and seven sub-sessions (lint, release and CI units; four adversarial reviewers), `session_01J92GRXudcwDnRYVFX2Sqby` | 1 | `stage/1` | 2026-10-07 11:50 UTC |
 | The same main session with its workflow sub-sessions (probe builders, tester, adversarial reviewers), `session_01J92GRXudcwDnRYVFX2Sqby` | 2 | `stage/2` | 2026-10-07 16:04 UTC |
+| The same main session with its workflow sub-sessions (unit writers, adversarial reviewers), `session_01J92GRXudcwDnRYVFX2Sqby` | 3 | `stage/3` | 2026-10-08 05:00 UTC |
 
 ## Device-gate queue
 
@@ -25,7 +26,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 |---|---|---|---|---|---|---|
 | 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
 | 2 | Spike S1 on the owner's iPhone | 1 | 3 | 2.5 | awaiting review | - |
-| 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | pending | - |
+| 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | in progress (`stage/3`, cut from `stage/2`, B39) | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
 | 3b | `stats-core` in `@zq/mathcore/stats` | 3a | 12 | - | pending | - |
 | 3c | `@zq/models/data` | 3a | 14 | - | pending | - |
@@ -208,6 +209,7 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B36 `budgets.ts` reports the Artifact's CDN figures without failing on them until `PLAN.md` 12 row 15 is decided | Three locked CDN figures breach their rows | y: `PLAN.md` 11.1, for three figures |
 | 2026-10-08 | B38 One force push of the session's own backup branch without asking | A process slip; later backups use new names | y: `CLAUDE.md` Permissions |
 | 2026-10-08 | B27 revised by the gate review: term sentinels by a render-time KaTeX macro, reserved colours in `@zq/contracts`; no emit rewrite | Same bundles and hashes on both targets; the layering of `ARCHITECTURE.md` 4.5 | y: as B27; for the owner |
+| 2026-10-08 | B39 `stage/3` is cut from `stage/2`, whose gate waits only on the owner, not from `stage/1` | Stage 3 implements `ARCHITECTURE.md` 5 as stage 2 revised it | y: `CLAUDE.md` gating rule 2, amends B35; for the owner |
 
 ## Open questions
 

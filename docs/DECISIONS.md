@@ -547,3 +547,11 @@ Each stage adds its decisions here in the format above, numbered B1 onwards, wit
 - **Since.** Later backups use a new branch name (`stage2/s1-results-r3-wip`), never a force push.
 - **For the owner.** Acknowledge it; approve deleting both backup branches.
 - **Deviation.** Yes, from `CLAUDE.md` Permissions.
+
+### B39 `stage/3` is cut from `stage/2`, not from `stage/1` (stage 3; amends B35; for the owner)
+
+- **Decision.** Stage 3 is cut from `stage/2` at 54cfb68, after stage 2's gate revision, although stage 3 depends only on stage 1 and stage 2's gate waits on the owner (gating rule 10). If stage 2 changes again before its gate, `stage/3` merges `stage/2` in; pushed work is never rebased. B35's rule becomes: cut from the newest stage branch whose plan documents the stage builds on, once that branch has passed its fresh review (D9), even when only the owner's decisions remain.
+- **Reason.** Stage 3 implements every contract of `ARCHITECTURE.md` 5, and stage 2 revised several of them: `TexService.html` gained `source` (B33), the reserved KaTeX colours and term-sentinel mapping moved to `@zq/contracts` (B27), and `DraftStore` gained the `sessionStorage` mirror (B22). A branch from `stage/1` would implement superseded contracts.
+- **Rejected.** `stage/1`, for the reason above; waiting for the owner's decisions on stage 2, which stalls the build when none of them blocks stage 3's code.
+- **Risk.** If the owner rejects B22, B27 or B33, the affected types in `@zq/contracts` change; each is a small, local edit.
+- **Deviation.** Yes, from `CLAUDE.md` gating rule 2 and B35.
