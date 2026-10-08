@@ -9,8 +9,8 @@
  * - Each module is imported by its bare specifier from the repository root, through the workspace link and
  *   the package's own `exports`, as a consumer resolves it.
  * - The child is plain Node: no NODE_OPTIONS (so no preloaded shim), Node 22's one browser-named global
- *   (`navigator`) switched off by its flag, and a check that no DOM global exists before the first import.
- *   A module that reads one at import time fails with a ReferenceError naming it.
+ *   (`navigator`) [measured] switched off by its flag, and a check that no DOM global exists before the
+ *   first import. A module that reads one at import time fails with a ReferenceError naming it.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, sep } from 'node:path';

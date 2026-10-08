@@ -59,6 +59,21 @@ const platform = (name) => ({
   deny: mainThread,
 });
 const unlisted = 'add a layer row for it in eslint.config.js';
+// npm packages @zq/contracts may import, and only as types (ARCHITECTURE.md 5.3).
+const contractTypes = ['preact', 'preact/**', '@preact/signals-core', 'zod', 'zod/**'];
+// What the packages that run in both Node and the browser (ARCHITECTURE.md 4.3) may not read: Node's own
+// globals, and the browser's that Node lacks or that differ there. tsc does not catch them, since every
+// packages/* project carries Node's types (tsconfig.node.base.json), nor does tools/ci/plain-node.ts, which
+// imports in Node and sees only what a module reads at import time [measured, adversarial review of
+// 8 October 2026]. Type names such as HTMLElement stay usable in type positions.
+const isomorphic = ['packages/contracts/src/**/*.ts', 'packages/mathcore/src/**/*.ts'];
+const hostGlobals = [
+  'process Buffer global require module exports __dirname __filename setImmediate clearImmediate',
+  'window self document navigator location history localStorage sessionStorage indexedDB',
+  'customElements requestAnimationFrame cancelAnimationFrame getComputedStyle',
+].flatMap((line) => line.split(' '));
+const hostMessage =
+  'This package runs in Node and the browser alike (ARCHITECTURE.md 4.3): receive it as a parameter';
 const layers = [
   {
     name: 'a test',
@@ -159,9 +174,16 @@ const layers = [
     deny: ['npm:**'],
     note: unlisted,
   },
-  // ARCHITECTURE.md 4.3: contracts import no other package; mathcore imports only contracts, and no npm
-  // package or Node builtin, so it runs unchanged in Node and the browser [our choice].
-  { name: 'packages/contracts', files: ['packages/contracts/**'], allow: ['packages/contracts/**'] },
+  // ARCHITECTURE.md 4.5 and 5.3: contracts import no other workspace package, and of npm only the types of
+  // preact, @preact/signals-core and zod (the type-only rule is no-restricted-imports below); mathcore
+  // imports only contracts, and no npm package or Node builtin, so both run unchanged in Node and the
+  // browser (4.3) [our choice: the deny lists].
+  {
+    name: 'packages/contracts',
+    files: ['packages/contracts/**'],
+    allow: ['packages/contracts/**'],
+    deny: ['npm:**', ...contractTypes.map((name) => `!npm:${name}`)],
+  },
   {
     name: 'packages/mathcore',
     files: ['packages/mathcore/**'],
@@ -247,6 +269,38 @@ export default defineConfig([
   {
     files: ['{src,packages,tools,proxy,tests}/**/*.{ts,tsx,js,mjs}', '*.config.{ts,js}'],
     rules: { 'zq/layering': ['error', { layers, packages }] },
+  },
+  {
+    files: isomorphic,
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'no-restricted-globals': ['error', ...hostGlobals.map((name) => ({ name, message: hostMessage }))],
+      'no-restricted-properties': [
+        'error',
+        ...hostGlobals.map((property) => ({ object: 'globalThis', property, message: hostMessage })),
+      ],
+    },
+  },
+  {
+    // zq/layering lets contracts reach these packages; this rule keeps the imports type-only, since a
+    // value import would put a runtime dependency under the shared types (ARCHITECTURE.md 5.3). No other
+    // entry sets this rule, so none replaces it per file (the flat-config problem of 4.5).
+    files: ['packages/contracts/src/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: contractTypes,
+              allowTypeImports: true,
+              message: '@zq/contracts imports npm packages as types only (ARCHITECTURE.md 5.3)',
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     // CLAUDE.md: no eval or new Function anywhere.
