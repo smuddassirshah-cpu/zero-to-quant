@@ -1,6 +1,8 @@
 """The scale goldens are fresh, and the twin's ticks keep the properties the specification states."""
 
-from hypothesis import given, strategies as st
+import math
+
+from hypothesis import assume, given, strategies as st
 
 from zqverify import scale
 
@@ -16,6 +18,25 @@ def test_linear_and_log_ticks() -> None:
     assert scale.log_ticks(1.0, 1000.0, 3) == [1.0, 100.0]
     assert scale.log_ticks(2.0, 3.0, 5) == [2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
     assert scale.log_ticks(1e-300, 1e300, 10) == [float(f"1e{p}") for p in range(-300, 301, 100)]
+
+
+def test_coarser_log_sets_keep_their_decades_and_narrow_domains_go_linear() -> None:
+    decades = [1.0, 10.0, 100.0, 1000.0]
+    assert scale.log_ticks(1.0, 1000.0, 9) == decades
+    assert scale.log_ticks(1.0, 1000.0, 21) == [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0]
+    assert scale.log_ticks(0.1, 1000.0, 11) == [0.1, *decades]
+    assert scale.log_ticks(1.0, 1e6, 15) == [*decades, 1e4, 1e5, 1e6]
+    assert scale.log_ticks(1.0, 1000.0, 100) == [10.0 * k for k in range(1, 101)]
+    assert scale.log_ticks(3.0, 4.0, 1) == [3.0, 4.0]
+    assert scale.log_ticks(3.0, 9.0, 3) == [4.0, 6.0, 8.0]
+    assert scale.log_ticks(math.nextafter(1e6, math.inf), 1e14, 5) == [1e8, 1e10, 1e12, 1e14]
+
+
+def test_candidates_past_the_largest_double_round_to_infinity() -> None:
+    assert scale.rounded(scale.OVERFLOW) == math.inf and scale.rounded(-scale.OVERFLOW) == -math.inf
+    assert scale.linear_ticks(-1e308, 7e307, 3) == [-1e308, -5e307, 0.0, 5e307]
+    assert scale.linear_ticks(-1.8745939238210245e307, 5.929848004911144e307, 1) == [0.0]
+    assert scale.log_ticks(1e306, 1.7e308, 2) == [1e306, 1e308]
 
 
 def test_maps_are_exact_at_the_ends_and_degenerate_sides_take_the_middle() -> None:
@@ -39,3 +60,11 @@ def test_log_ticks_are_increasing_inside_and_bounded(e: float, w: float, c: int)
     ticks = scale.log_ticks(lo, hi, c)
     assert 1 <= len(ticks) <= int(1.59 * max(c, 2)) + 1
     assert all(a < b for a, b in zip(ticks, ticks[1:])) and lo <= ticks[0] and ticks[-1] <= hi
+
+
+@given(st.integers(-300, 280), st.floats(2, 27), st.integers(1, 30), st.sampled_from((0.0, math.inf)))
+def test_wide_log_ticks_start_within_a_decade(p: int, w: float, c: int, side: float) -> None:
+    """Over a hundredfold domain whose powers of ten fit c, the first tick is at most 10 lo."""
+    lo, hi = math.nextafter(float(f"1e{p}"), side), 10.0 ** (p + w)
+    assume(hi >= 100 * lo and sum(lo <= float(f"1e{q}") <= hi for q in range(p - 1, p + 29)) <= c)
+    assert scale.log_ticks(lo, hi, c)[0] <= 10 * lo
