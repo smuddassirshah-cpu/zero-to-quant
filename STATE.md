@@ -187,6 +187,20 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-07 | B19 The probe declares `db` (six rules), `user` (profile) and `sample`; `permissions` is built in and not declared | The capabilities contract 0.2.73 | n |
 | 2026-10-07 | B20 The probe's `TexSlots` binding also rewrites KaTeX's TeX annotation, which repeats the sentinels; proposed for decision 37 | No sentinel text may survive in the tree | y: `ARCHITECTURE.md` decision 37 and 5.11, `PLAN.md` conflict 10; for the owner |
 | 2026-10-07 | B21 Sub-session files read in full by the publishing session count as the session's own for hard rule 2 | Gating rule 4 delegates; the publisher read and hashed every file | y: interpretation of hard rule 2; for the owner |
+| 2026-10-07 | S1 results (`docs/DECISIONS.md` section 4): `PLAN.md` 4.3's import-map design stands; MathML accepted; no `db` cap through 60 MiB, so no checkpoint; the back gesture and `\htmlData` in MathML fail, with fallbacks written | The owner's iPhone 17 Pro Max, iOS 27.2, Claude app 1.261002.20 | n; the fallbacks are B23 and B27 |
+| 2026-10-07 | W2 narrowed to worker imports and non-enforcing browsers | Integrity is enforced on the page [measured: S1] | n |
+| 2026-10-08 | B22 `sessionStorage` mirror of the route and pending drafts | The host reloads the open page after a publish | y: `PLAN.md` 7.5, stages 10a and 74a; for the owner |
+| 2026-10-08 | B23 Back or close control on every route but the tab roots; no `history.back()` | The back gesture does nothing in the frame | y: stage 74a, `design-research.md` 7; for the owner |
+| 2026-10-08 | B24 Release procedure: the page in every publish, every intermediate version working | The tool's refusals and the host's reloads | y: `PLAN.md` 8.6, stage 83; for the owner |
+| 2026-10-08 | B25 The emulator models the refusals and the reloads, with a stale-page fault injection | The measured behaviour, with the unmeasured cases kept testable | y: stage 4 |
+| 2026-10-08 | B26 A paper's lease is owned by the device and tab identity, so a reloaded page re-acquires it | The host reloads mid-paper | y: `ASSESSMENT.md`'s lease design |
+| 2026-10-08 | B27 Term targets in the Artifact's MathML through scoped colour sentinels | `\htmlData` is dropped; the term list alone does not serve in-formula selection | y: `ARCHITECTURE.md` 14 item 20, stage 12; for the owner |
+| 2026-10-08 | B28 The emulator's version-scoping switch set by inference | The host's reload prevented the measurement | y: `PLAN.md` stage 2's definition of done |
+| 2026-10-08 | B29 The stage 4 emulator targets contract 0.2.73 | No live Artifact defines a pin before stage 83 | y: `ARCHITECTURE.md` 8.2's 0.2.69 |
+| 2026-10-08 | B30 The 8 KB handoff fragment is checked in stage 82's iPhone handoff | S1's link had no fragment; stage 82 has the receiver | y: stage 82 |
+| 2026-10-08 | B31 "Use here" takes the lock with `steal: true` (`ASSESSMENT.md` 13.7 aligned) | Measured working in the frame | y: an appendix conflict settled for the owner of the lifecycle |
+| 2026-10-08 | B32 `CONTENT-FORMAT.md` 6.9's rendering check follows `PLAN.md` conflict 10 | `PLAN.md` wins | y: an older appendix conflict |
+| 2026-10-08 | `ASSESSMENT.md` 13.6 states `PLAN.md`'s 34 MB as its own 30 MB scaled by $2445/2148$; the checkpoint verdict is unchanged | A figure the two documents gave differently | y: reported, not settled silently |
 
 ## Open questions
 
@@ -194,12 +208,12 @@ Each with the stage it affects; the stage that closes it records the answer in `
 
 | # | Question | Affects | Closes at |
 |---|---|---|---|
-| 1 | Does the Artifact page honour an import map in its fragment, and does iOS 18.7 enforce import-map `integrity`? [unverified] | Stage 4 onwards: section 4.3's design or the Preact 10.29.8 UMD fallback | Stage 2, before stage 4 starts |
-| 2 | May a module worker in the Artifact import from the CDN hosts? [unverified] | The data worker; if not, its jobs run on the main thread in 8 ms slices | Stage 2 |
-| 3 | Is KaTeX's MathML output in system maths fonts good enough on the iPhone, and does `TexSlots`' sentinel binding hold, with slot digits in the swapped `<mn>` matching the maths font? [unverified] | Stages 15, 23; a rejected look goes to the owner before stage 23 | Stage 2 |
-| 4 | The `db` total size cap [unverified] | Stage 69: the checkpoint is built only if the cap is below 34 MB times the participants | Stage 2's paced probe (then deleted, with the owner's confirmation) |
-| 5 | In the Artifact frame, the single list of `docs/PLAN.md` stage 2 (c): response compression, Web Locks, IndexedDB in a worker, `navigator.storage.estimate()`, **whether an external anchor opens from the frame (the handoff link every drill and live-code screen depends on; otherwise the copyable link)**, file input, inline `style` attributes through `innerHTML`, `version.json` caching despite a query string, version scoping after a republish, `location.reload()`, publishing without the page, `null` removals against 255 paths, the back gesture [unverified] | Stages 4, 69, 70, 83 | Stage 2 |
-| 6 | Which locked files cdnjs serves byte-identically [unverified] | `cdn.lock.json` URLs (jsDelivr otherwise) | Stage 4 |
+| 1 | Does the Artifact page honour an import map in its fragment, and does the owner's iPhone enforce import-map `integrity`? **Closed, yes** [measured: S1, 7 October 2026]: the classic bootstrap and static imports resolve through the map, and two wrong-hash URLs were refused beside a control; `PLAN.md` 4.3's design stands (`docs/DECISIONS.md` section 4, W2 narrowed) | Stage 4 onwards | Closed |
+| 2 | May a module worker in the Artifact import from the CDN hosts? **Closed, yes** [measured: S1]: classic zod, ts-fsrs and fflate by full URL, not hash-checked (W2) | The data worker | Closed |
+| 3 | Is KaTeX's MathML output good enough on the iPhone, and does `TexSlots`' sentinel binding hold? **Closed, yes**: the owner accepted all 40 specimen formulas, the slot digits match the maths font and VoiceOver reads them [measured: S1]; the annotation rewrite is B20, for the owner. `\htmlData` does not survive the MathML output, so term targets use B27's colour sentinels (for the owner) or the term list | Stages 12, 15, 23 | Closed; B20 and B27 open for the owner |
+| 4 | The `db` total size cap. **Closed**: no cap through 60 MiB (320 documents of 192 KiB) [measured: S1], so under `PLAN.md` stage 2's rule the checkpoint of `ASSESSMENT.md` 13.6 is not built; the probe's documents and Artifact are deleted | Stage 69 | Closed |
+| 5 | The single list of `docs/PLAN.md` stage 2 (c). **Closed** [measured: S1]: compression (gzip), Web Locks (with `steal` and across a worker), IndexedDB in a worker, the storage estimate (983 MiB), an external anchor (opens a browser), a file input, inline `style` through `innerHTML`, `location.reload()` (from a page already on the newest version), the publish limits (the page required; `null` removals counted) pass or are recorded; the back gesture fails (B23); version scoping, and `version.json` caching after a publish, could not be measured because the host reloaded the open page after each of S1's publishes (B24, B25, B28); caching for loads is closed (`ARCHITECTURE.md` 14 item 12) | Stages 4, 69, 70, 74a, 83 | Closed |
+| 6 | Which locked files cdnjs serves byte-identically. **Partly closed** [measured: S1]: of 14 guessed URLs only KaTeX's `katex.mjs`; the others failed to load at the paths tried, and the untried files remain | `cdn.lock.json` URLs (jsDelivr otherwise) | Stage 4 (the lock tool checks every file) |
 | 7 | Can the session platform's GitHub connection act as an identity separate from the owner's? **Closed, no** [measured, stage 1: it authenticates as the owner's account] | Merge rights are procedural (`CLAUDE.md` hard rule 3; `label-guard.yml` refuses other accounts; `docs/DECISIONS.md` B5) | Closed |
 | 8 | The Playwright container tag for 1.63.0: **closed** [measured: `mcr.microsoft.com/playwright:v1.63.0-noble`, digest in `ARCHITECTURE.md` 3.2; `docs/DECISIONS.md` B11] | Visual CI | Closed |
 | 9 | `zq/no-inner-html` and the two sinks: **closed** at stage 1 (`docs/DECISIONS.md` B3) | | Closed |
@@ -224,6 +238,13 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 28 | `ZQ_DEV_ROUTES` is read from the environment: the release procedure must check it is unset (`docs/DECISIONS.md` B9) | Development routes in a release build | Stage 83 |
 | 29 | Python CI packages' licences (pillow MIT-CMU, typing_extensions PSF-2.0) are outside the npm licence gate | Licence allow-list coverage | Stage 25, when Pyodide's packages ship on the web app |
 | 30 | `<link rel="icon" href="data:,">` on the web pages needs `img-src data:` in the stage 82 CSP, or the link goes | CSP violation reports | Stage 82 |
+| 31 | `zod/mini` costs 92 CDN requests in the Artifact (the static imports took 2.8 s on the first cold load) and breaks `ARCHITECTURE.md` 9.2's entry budget as locked: keep, preload with integrity, replace, or own validators (`docs/PLAN.md` 12 row 15) | Stage 4 | The owner, before stage 4 |
+| 32 | Does an 8 KB handoff fragment survive the host's link handling? [unverified: S1's external link had no fragment] | Every drill's handoff (`ASSESSMENT.md` 14.3) | Stage 82's iPhone handoff check (B30); the copyable text is the fallback |
+| 33 | Pointer and keyboard interaction on MathML elements in iOS Safari, for B27's term sentinels [unverified] | Composites with `term:` targets | Stage 12's iPhone check, taken in stage 25's preview Artifact (`docs/PLAN.md` 11.1) |
+| 34 | Does the host reload a backgrounded view, a second device and the desktop and web viewers after a publish, and does `location.reload()` bring a page on an older version to the newest? [unverified: S1 measured one foreground page] | The update notice, the Reload button, stale-page cases (B25) | Stage 83's Self-test, with the emulator's fault injection |
+| 35 | B20, the annotation rewrite in `TexSlots`, and B27, the term sentinels: the owner's decisions (default until then: the term list, sentinels off) | Decision 37, 5.11, 14 item 20 | The owner, before stage 12 |
+| 36 | KaTeX's ES module `dist/katex.mjs` is unminified: 148,753 bytes gzipped against `ARCHITECTURE.md` 9.2's 80 KB row; loading `katex.min.js` as a classic script with integrity is the option (`docs/PLAN.md` 12 row 15) | Stage 4 | The owner, with row 15 |
+| 37 | The runtime contract the live Artifact pins (S1 was written against 0.2.73; 0.2.74 exists; the emulator targets 0.2.73, B29) | Stage 83 | Stage 83 |
 
 ## Pending document edits
 

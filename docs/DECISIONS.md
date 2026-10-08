@@ -141,10 +141,10 @@ The engineering floor requires a written justification for every raw-HTML sink. 
 ### W2 Third-party modules in the Artifact without guaranteed subresource integrity
 
 - **Floor rule affected.** Supply-chain integrity of shipped code. Versions stay pinned and the lockfile committed; what cannot be guaranteed is that the browser checks the bytes.
-- **What.** Under D5 the Artifact loads Preact, `@preact/signals`, `zod/mini`, `idb`, `ts-fsrs`, KaTeX, the Compute Engine parser, MiniSearch and, in the data worker, classic zod, ts-fsrs and fflate from cdnjs or jsDelivr. The import map's `integrity` field may not be enforced on iOS 18.7 [unverified; stage 2], and worker imports carry no integrity at all.
+- **What.** Under D5 the Artifact loads Preact, `@preact/signals`, `zod/mini`, `idb`, `ts-fsrs`, KaTeX, the Compute Engine parser, MiniSearch and, in the data worker, classic zod, ts-fsrs and fflate from cdnjs or jsDelivr. The page enforces import-map `integrity` on the owner's iPhone [measured: S1, 7 October 2026], so after stage 2 the waiver covers what remains unchecked: the data worker's imports of classic zod, ts-fsrs and fflate by full URL, which carry no integrity at all, and any browser that does not enforce import-map integrity.
 - **Exposure.** Altered bytes from a CDN could read the viewer's progress, write their `db` subtree and call `sample` on their account; the host's CSP lets them reach no host beyond the listed CDNs [inferred] (`PLAN.md` 7.4).
 - **Compensating controls.** Exact-version URLs only, from `cdn.lock.json` with each file's SHA-384 (never a range, `@latest` or `+esm`); `integrity` on every import-map entry, enforced wherever the browser does; a nightly job that refetches every locked URL, fails on any byte difference and blocks Artifact releases until the file is re-pinned; `tools/release/provenance.ts`; the web app bundles everything and loads nothing from a CDN.
-- **Review.** At stage 2: if the page enforces import-map integrity, this waiver narrows to worker imports; if workers cannot import from the CDN hosts, the data worker's jobs move to the main thread and the worker part lapses. Redone before any Class D release.
+- **Review.** Done at stage 2: integrity is enforced on the page and a module worker imports from the CDN [measured: S1, 7 October 2026], so the waiver narrowed to worker imports and non-enforcing browsers, and the worker part stands. Redone before any Class D release.
 
 ## 4. Spike results
 
@@ -157,7 +157,7 @@ Details in `spikes/README.md`. Both ran as private Artifacts on the owner's iPho
 
 ### Spike S1 (stage 2)
 
-**Device and date.** The owner's iPhone 17 Pro Max, iOS 27.2 (from Settings, General, About), Claude app 1.261002.20 (37091698851), 7 October 2026, 22:19 to 23:07 UTC. The page's user agent reports `iPhone OS 18_7` on that device, so the user agent's OS version is frozen and is no evidence of the OS [measured]. The 6 October records' "iOS 18.7" (section 4 above, `spikes/README.md`) most likely came from the same user agent [inferred]. Every check's result is in `spikes/s1/results/README.md`, from the stored run documents beside it; the probe and its build are `spikes/s1/` and `spikes/s1-dbsize/`.
+**Device and date.** The owner's iPhone 17 Pro Max, iOS 27.2 [sourced: the owner, from Settings, General, About], Claude app 1.261002.20 (37091698851), 7 October 2026, 22:19 to 23:07 UTC. The page's user agent reports `iPhone OS 18_7` on that device, so the user agent's OS version is frozen and is no evidence of the OS [measured]. The 6 October records' "iOS 18.7" (section 4 above, `spikes/README.md`) most likely came from the same user agent [inferred]. Every check's result is in `spikes/s1/results/README.md`, from the stored run documents beside it; the probe and its build are `spikes/s1/` and `spikes/s1-dbsize/`.
 
 **Verdicts** [measured: S1, 7 October 2026, unless tagged otherwise]:
 
@@ -166,29 +166,30 @@ Details in `spikes/README.md`. Both ran as private Artifacts on the owner's iPho
   - Import-map integrity is enforced: two wrong-hash URLs were refused ("Cannot load script due to integrity mismatch") while the same file with no integrity entry loaded. Resource Timing exposes no sizes for the CDN on this device, so the verdict rests on the two refusals beside the control.
   - The UMD fallback also works, with integrity, and stays the named fallback.
 - **Module worker: passes.** It imports classic zod, ts-fsrs and fflate by full URL and runs each, so `ARCHITECTURE.md` 14 item 19's main-thread fallback is not needed. A worker has no import map and `import()` takes no integrity, so worker imports are not hash-checked.
-- **cdnjs: KaTeX only.** cdnjs served one candidate byte-identical to npm, KaTeX 0.19.0's `katex.mjs`. Preact, its hooks, both signals packages, `zod/mini` and fflate were not served at the paths tried. jsDelivr stays the host for everything else; the stage 4 lock tool remains the authority.
-- **`zod/mini` costs 92 requests.** On the first, cold load the static imports took 2,783 ms, against 9,393 ms of summed request time for zod's 92 files. Warm loads took 36 to 47 ms. This is a finding for stage 4; any change of library is the owner's decision.
+- **cdnjs: KaTeX only.** cdnjs served one candidate byte-identical to npm, KaTeX 0.19.0's `katex.mjs`. Preact, its hooks, both signals packages, `zod/mini` and fflate failed to load at the two paths tried for each, with a load error rather than an integrity mismatch, so they are not served there [inferred]; the first full run ran out of its time budget before fflate and KaTeX, and the later runs tried them. jsDelivr stays the host for everything else; the stage 4 lock tool remains the authority.
+- **`zod/mini` costs 92 requests.** On the first, cold load the static imports took 2,783 ms, against 9,393 ms of summed request time for zod's 92 files. Later loads took 36 to 257 ms; the 207 and 257 ms loads were the two pages the host reloaded during the republish. This is a finding for stage 4; any change of library is the owner's decision.
 - **MathML: accepted by the owner.**
   - KaTeX 0.19.0's MathML output lays out natively, and all 40 specimen formulas render without an error. The owner judged every formula readable and correctly set; its screenshots, light and dark, of the sheet (formulas 1 to 5) and of the live slots are in `spikes/s1/results/screenshots/`.
   - `TexSlots`' binding left no sentinel text, with the TeX annotation rewritten (B20, for the owner). The owner saw the live digits match the maths font, and VoiceOver read the current values. The digits in the swapped `<mn>` look the same as in the `<mtext>` copy.
-- **`\htmlData` in MathML: no.** No element carries `data-term`, while the HTML output does [measured: Chromium and Node, and the device]. `ARCHITECTURE.md` 14 item 20's fallback applies: `live-formula` in the Artifact highlights a term from its term list.
+- **`\htmlData` in MathML: no.** No element carries `data-term`, while the HTML output does [measured: Chromium and Node, and the device]. Term targets in the Artifact use B27's colour sentinels inside the MathML, proposed for the owner, with the term list of `ARCHITECTURE.md` 14 item 20 as the floor.
 - **The `db` size probe: no cap through 60 MiB, so the checkpoint of `ASSESSMENT.md` 13.6 is not built.**
   - 320 documents of 196,608 bytes (62,914,560 bytes) were written, with no `quota_exceeded` and no `resource_exhausted`. One `unavailable` was retried once and accepted. Writes averaged 414 ms (997 ms at most), and every document was then deleted. The owner approved deleting the size probe Artifact, and it was deleted on 7 October 2026; its final status is `spikes/s1/results/dbsize-status-s1-size.json`.
   - Under `PLAN.md` stage 2's rule, a cap at or above 34 MB times one participant means no checkpoint. The probe stopped at its ceiling, so the real cap, if any, is above 60 MiB [measured: no cap below it].
 - **`db` behaviour:**
-  - The declared rule set is in effect: the canary refused the owner's write to `s1canary/zz-not-me`.
+  - The declared rule set is in effect: the canary refused the owner's write to `s1canary/zz-not-me`. A refused write rejects `invalid_argument` with "The request was malformed or exceeds a limit.", the same code and message as a malformed or over-limit write.
   - Round trips took 200 to 300 ms per call.
-  - `meta/release` reached the open page through `onSnapshot` in real time.
+  - `meta/release` reached the open page through `onSnapshot` while it was open, about 3 s after the write's timestamp (cross-clock, a hint).
 - **Versions and publishing:**
   - A publish takes at most 255 `files` entries, and `null` removals count against them: the tool refused 303 entries and published nothing.
   - Every publish must carry the page: a files-only publish was refused.
-  - After each publish, the host reloaded the page open on the iPhone to the newest version within 1 to 4 s, including between the two batches of one release.
-  - A fresh load serves the added files and not the removed ones. `location.reload()` loads the newest version from the same base path, and `sessionStorage` survives it.
-  - Published files carry `cache-control: private, max-age=31536000, immutable` and gzip.
-  - `platform.version-json-after` and `platform.version-scoping` were skipped by design: the open v1 page they need does not survive a publish.
+  - After each publish, the host reloaded the page open in the foreground on the iPhone to the newest version, about 4 s and 1 to 2 s after the two publishes (a second-resolution version stamp against the phone's clock), including between the two batches of one release. `artifact.d.ts` 0.2.73 says the other open views reload [sourced]; a backgrounded app, a second device and the desktop and web viewers were not measured [unverified].
+  - A fresh load serves the added files and not the removed ones. `location.reload()` reloaded a page already on the newest version (v2 to v2) from the same base path, with `sessionStorage` intact; from a page on an older version it is [unverified], because the host had already reloaded the probe.
+  - The own files S1 fetched carry `cache-control: private, max-age=31536000, immutable, no-transform` and gzip.
+  - The host's page-design guidance, read on 7 October 2026, says: published changes are delivered to open viewers "automatically at their next quiet moment, with state preserved where possible", and a page with state a viewer would miss registers `window.claude?.hot?.snapshot(...)` and boots through `window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {})`; `hot` is the viewer's own update hook, not a capability behind `claude.use()`, and is absent outside a viewer [sourced].
+  - `platform.version-json-after` and `platform.version-scoping` were skipped by design: the open v1 page they need did not survive the publish. Version scoping before a reload is therefore not measured (B28).
 - **Platform:**
-  - Pass: gzip compression (6.4 KB on the wire for 62.7 KB of JSON), Web Locks with `steal: true` and across a dedicated worker, IndexedDB in a module worker, inline `style` attributes through `innerHTML`, hash routes with a slash and `hashchange`, Google Fonts, the clipboard, and a file input. An external anchor opened in a browser, so the handoff link of `ASSESSMENT.md` 14.3 can be an anchor.
-  - Info: `navigator.storage.estimate()` reports a 983 MB quota, not persisted.
+  - Pass: gzip compression (6.4 KiB on the wire for 62.7 KiB of JSON), Web Locks with `steal: true` and across a dedicated worker, IndexedDB in a module worker, inline `style` attributes through `innerHTML`, hash routes with a slash and `hashchange`, Google Fonts, the clipboard, and a file input (`FileReader` read the first 64 bytes of a 62,511-byte file; a whole backup-sized file was not tried). An external anchor opened in a browser, so the handoff link of `ASSESSMENT.md` 14.3 can be an anchor.
+  - Info: `navigator.storage.estimate()` reports a 983 MiB quota, not persisted.
   - **Fail, the system back gesture: it does nothing in the frame (no `popstate`).** The app needs its own back control.
   - `window.open` returned `null` and nothing happened.
   - The screen wake lock is refused by Feature-Policy.
@@ -406,3 +407,80 @@ Each stage adds its decisions here in the format above, numbered B1 onwards, wit
 - **Reason.** Delegation inside a stage is the protocol's own instruction, and the publishing rule's purpose (the publisher has read everything it publishes, and nothing third-party is published) holds.
 - **Rejected.** Rewriting the probe in the main session alone.
 - **Deviation.** An interpretation of hard rule 2, for the owner to confirm or reject at the gate.
+
+### B22 A synchronous `sessionStorage` mirror of the route and every pending draft (stage 2; for the owner)
+
+- **Decision.** In the Artifact, the current route and every pending draft (a lesson widget's, a homework set's, a paper's answers) are also written synchronously to `sessionStorage`, and the restarted page restores the newer copy. Progress events still count only once in IndexedDB (`ProgressStore.append`) and reach `db` through the outbox. `PLAN.md` 7.5 lists `sessionStorage` where learning records rest, for the session's lifetime, and "Delete my progress" clears it. Built at stage 10a (widget drafts, `DraftStore.mirror`), stage 69 (homework and paper answers, `ProgressStore.draft`) and stage 74a (the route).
+- **Reason.** The host reloaded the open page after each publish [measured: S1, 7 October 2026], and whether `pagehide` or `visibilitychange` fires first is not known; `sessionStorage` survived the reload [measured: S1].
+- **Rejected.** Relying on the debounced draft save and `pagehide` alone; relying on the host's `hot` hook alone, which stays an addition (stage 83 reads its contract).
+- **Deviation.** Yes, from `PLAN.md` 7.5 and the definitions of done of stages 10a, 69 and 74a, which gain the mirror.
+
+### B23 A visible back or close control on every route except the tab roots (stage 2; for the owner)
+
+- **Decision.** Every route except `#/today`, `#/learn`, `#/review` and `#/you` shows a back or close control with an accessible name that navigates to the screen's typed parent route, never through `history.back()` or `history.go()`, which `zq/no-forbidden-apis` refuses from stage 74a. A route test checks it at stage 74a.
+- **Reason.** The system back gesture does nothing in the frame (no `popstate`) [measured: S1, 7 October 2026], and in one run walking back over hash entries fired no `popstate` either.
+- **Rejected.** Back controls on `focus` and `bare` screens only, the earlier design, which left shell screens such as `#/course/:course` without a way back in the Artifact.
+- **Deviation.** Yes, from `PLAN.md` stage 74a's definition of done and `docs/design-research.md` 7's shell, which gains the control on shell screens.
+
+### B24 The Artifact release procedure after S1 (stage 2; for the owner)
+
+- **Decision.** Every publish carries a page, and every intermediate version of a release must boot and play: content files first, under the previous page; then the new page with `version.json`; then garbage-collection publishes that re-send the new page. The publish plan names the page by role (`page: 'previous' | 'new' | 'maintenance'`), and stage 83's planner tests assert each. A release check polls with `cache: 'no-store'` as a fallback to `meta/release`. `PLAN.md` 8.6 and `ARCHITECTURE.md` 6.2.6 follow it, and stage 83 tests every intermediate version in the emulator.
+- **Reason.** The tool refuses a publish without the page and one of more than 255 `files` entries with `null` removals counted, and the host reloaded the open page into each version, between batches too [measured: S1, 7 October 2026].
+- **Rejected.** A plan that publishes removals separately without a page; a plan whose intermediate versions may be broken.
+- **Deviation.** Yes, from `PLAN.md` 8.6 and stage 83's definition of done.
+
+### B25 The host emulator models the tool's refusals and the host's reloads (stage 2)
+
+- **Decision.** Stage 4's emulator refuses a publish without the page or with more than 255 `files` entries (removals counted), and by default reloads every open page within 5 s of a publish. Two per-page fault injections keep the cases S1 did not measure testable: "the host does not reload this page" (end-to-end scenario 17, the stale-page case a backgrounded app, a second device or the desktop and web viewers may still produce [unverified]) and "this page's own-file fetches reach the newest version" (the lazy-chunk failure row and the retained version, since version scoping is unmeasured, B28). The emulator targets contract 0.2.73 (B29).
+- **Reason.** The behaviour S1 measured, with the cases it did not measure kept testable.
+- **Rejected.** A single switch set only to "reload"; deleting the stale-page case.
+- **Deviation.** Yes, from `PLAN.md` stage 4's definition of done, which gains the refusals and the reload model.
+
+### B26 A paper's lease survives the host's reload (stage 2)
+
+- **Decision.** The lease that guards a paper or draft is owned by the device and tab identity kept in `sessionStorage`, so a page reloaded by a publish re-acquires its own lease at once instead of waiting out the 60-second term while the paper's clock runs. Stage 69 builds and tests it, and stage 83's emulator test covers "a paper reloaded by a publish resumes without waiting for its own lease"; the owner key is checked against `db.d.ts`'s `acquire` semantics when the store is built.
+- **Reason.** The host reloads the open page mid-paper [measured: S1, 7 October 2026]; `sessionStorage` survives the reload [measured: S1].
+- **Rejected.** Waiting for the old lease to expire.
+- **Deviation.** Yes, from `ASSESSMENT.md`'s lease design, which gains the owner key.
+
+### B27 Term targets in the Artifact's MathML through scoped colour sentinels (stage 2; for the owner)
+
+- **What.** `\htmlData` term anchors do not survive KaTeX's MathML output [measured: S1, 7 October 2026], and `ARCHITECTURE.md` 14 item 20's named fallback (a term list beside the formula) covers `live-formula`'s highlighting but not the composites that select terms inside a formula (among them equation-workbench, first-step-solver, binomial-expander, sum-visualiser, generating-function, graph-explorer and dependency-graph).
+- **Proposal.** In the Artifact build the compiler rewrites `\htmlData{term=<k>}{...}` to `\textcolor{<sentinel k>}{...}`, from a reserved colour range (`#0a00` followed by two hex digits) that authored colours may not use. After rendering, the binding finds each `mstyle[mathcolor="<sentinel>"]`, removes the colour so the term takes the token colour, and sets `data-term`, `role`, `tabindex` and `aria-label` on it, as `TexSlots` swaps its sentinel `<mtext>`. KaTeX 0.19.0 emits `\textcolor` as a scoped `<mstyle mathcolor>` around exactly the term; `\color` nests into later terms, `\htmlId` is dropped and `\class` is undefined [measured: Node, KaTeX 0.19.0, 8 October 2026].
+- **The annotation.** The sentinel colours also appear in KaTeX's TeX annotation; the binding restores the authored TeX there, or drops the annotation, under the same rule the owner chooses for B20.
+- **Where it is built.** The reserved-colour error in `zq check` at stage 7, the rewrite at stage 23 (emit), the binding at stage 12 with a hand-written sentinel fixture until stage 23 lands.
+- **Unverified.** Pointer and keyboard interaction on MathML elements in iOS Safari; stage 12's iPhone check, taken in stage 25's preview Artifact (`PLAN.md` 11.1), checks it with `live-formula`. If it fails, the term list is the floor, and any Stage 0 interaction that degrades goes to the owner.
+- **Default until the owner decides.** Stage 12 builds the term list, and the sentinel binding stays off.
+- **Rejected.** Each term as its own `<math>` inside a button (it breaks the formula's layout and baseline); term lists everywhere (it loses direct manipulation of the formula on the Artifact).
+- **Deviation.** Yes, from `ARCHITECTURE.md` 14 item 20, decision 37 and the definitions of done of `PLAN.md` stages 7, 12, 23 and 25, which gain the check, the binding, the rewrite and the device check.
+
+### B28 The emulator's version-scoping switch is set by inference, not measurement (stage 2)
+
+- **What.** `PLAN.md` stage 2 asks for "the emulator's version-scoping switch set to the measured behaviour". The two checks that measure version scoping (`platform.version-scoping`, `platform.version-json-after`) were skipped by design: the host reloaded the open v1 page within seconds of each publish, so no page stayed on an older version to fetch from [measured: S1, 7 October 2026].
+- **Decision.** The emulator serves a page its own version's files until it is reloaded [inferred from `artifact.d.ts` 0.2.73, which states this for the publishing view], and reloads open pages by default (B25). The five `version.json` reads S1 made cannot tell version scoping from serving the newest version, so decision 32's `meta/release` signal stays.
+- **Rejected.** Claiming the item measured; holding stage 2 open for a measurement the host's own behaviour prevents.
+- **Deviation.** Yes, from `PLAN.md` stage 2's definition of done: the item is met by inference.
+
+### B29 The stage 4 emulator targets runtime contract 0.2.73 (stage 2)
+
+- **Decision.** The host emulator's fake `window.claude` follows contract 0.2.73, the contract S1 was written against [our choice]; the appendices' "contracts read" lines still record 0.2.69 as what each paper read. The live Artifact's pin is decided at stage 83 against the contract current then (0.2.74 exists [sourced: the publish result, 7 October 2026]; `STATE.md` open question 37).
+- **Rejected.** "The contract the live Artifact is pinned to", which no Artifact defines before stage 83.
+- **Deviation.** Yes, from `ARCHITECTURE.md` 8.2's earlier 0.2.69 target.
+
+### B30 The 8 KB handoff fragment is checked in stage 82's iPhone handoff (stage 2)
+
+- **Decision.** Whether an 8 KB fragment payload survives the host's link handling [unverified: S1's link had no fragment] is checked by stage 82's existing iPhone check, which already runs a handoff from the Artifact with its result code back; the copyable text stays the fallback.
+- **Rejected.** Stage 83, which has no receiving web build of its own.
+- **Deviation.** Yes, from `PLAN.md` stage 82's definition of done, which gains the payload size.
+
+### B31 "Use here" takes the writer lock with `steal: true` (stage 2)
+
+- **Decision.** `ASSESSMENT.md` 13.7 is aligned with `ARCHITECTURE.md` 4.7: "Use here" requests the writer lock with `steal: true`, which S1 measured working in the frame, also against a worker's lock [measured: S1, 7 October 2026].
+- **Rejected.** Asking the holder to release the lock, which an unresponsive tab never does.
+- **Deviation.** A conflict between appendices, settled in favour of the architecture appendix, which owns the lifecycle; reported in the stage 2 report.
+
+### B32 `CONTENT-FORMAT.md` 6.9's rendering check follows `PLAN.md` conflict 10 (stage 2)
+
+- **Decision.** The rendering check renders authored maths with `trust` limited to `\htmlData` with a checked name, and Bertie's with `trust: false`, as `PLAN.md` conflict 10 decides; 6.9 said `trust: false` for every formula, which would reject every authored term anchor.
+- **Rejected.** Leaving the appendix contradicting `PLAN.md`.
+- **Deviation.** A conflict older than S1, settled in favour of `PLAN.md`; reported in the stage 2 report.
