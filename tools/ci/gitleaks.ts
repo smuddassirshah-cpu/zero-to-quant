@@ -109,7 +109,7 @@ export function gitEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   // GIT_CONFIG_PARAMETERS (`git -c`, passed down to hooks) would win over GIT_CONFIG_COUNT [measured]; drop it.
   const out = Object.fromEntries(
     Object.entries(env).filter(
-      ([k]) => !/^GIT_(CONFIG_(COUNT|KEY_\d+|VALUE_\d+|PARAMETERS)|EXTERNAL_DIFF)$/.test(k),
+      ([k]) => !/^GIT_(CONFIG(_(COUNT|KEY_\d+|VALUE_\d+|PARAMETERS))?|EXTERNAL_DIFF)$/.test(k),
     ),
   );
   GIT_OVERRIDES.forEach(([key = '', value = ''], i) => {
@@ -117,6 +117,17 @@ export function gitEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     out[`GIT_CONFIG_VALUE_${i}`] = value;
   });
   return { ...out, GIT_CONFIG_COUNT: String(GIT_OVERRIDES.length) };
+}
+
+/** Variables that tie git to one repository: git's own list (`git rev-parse --local-env-vars`, git 2.43.0
+ *  [measured]) less the config ones `gitEnv` handles, plus `GIT_NAMESPACE` and `GIT_QUARANTINE_PATH`. A pre-push
+ *  hook in a linked worktree exports an absolute `GIT_DIR`, so the selftest's throwaway repositories would be built
+ *  in the real one [measured: stage 3, 8 October 2026, `docs/DECISIONS.md` B40]; the selftest and its tests drop them. */
+const REPO_LOCATORS =
+  /^GIT_(DIR|WORK_TREE|IMPLICIT_WORK_TREE|INDEX_FILE|COMMON_DIR|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|GRAFT_FILE|NO_REPLACE_OBJECTS|REPLACE_REF_BASE|SHALLOW_FILE|NAMESPACE|PREFIX|QUARANTINE_PATH)$/;
+
+export function detachedEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return Object.fromEntries(Object.entries(env).filter(([k]) => !REPO_LOCATORS.test(k)));
 }
 
 export function binaryCandidates(
@@ -428,7 +439,7 @@ async function selftest(deps: Deps): Promise<number> {
   process.once('SIGINT', onSignal).once('SIGTERM', onSignal);
   const hostile = join(work, 'hostile.gitconfig');
   writeFileSync(hostile, HOSTILE_CONFIG);
-  const base = { ...deps.env, GIT_CONFIG_NOSYSTEM: '1' };
+  const base = { ...detachedEnv(deps.env), GIT_CONFIG_NOSYSTEM: '1' };
   const parameters = { GIT_CONFIG_PARAMETERS: "'color.diff'='always'", GIT_EXTERNAL_DIFF: 'true' };
   const passes = [
     { label: 'empty git config', env: { ...base, GIT_CONFIG_GLOBAL: devNull } },
