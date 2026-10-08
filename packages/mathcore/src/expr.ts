@@ -2,35 +2,47 @@
 // 4.3): parse to a tree, print it back, compile it to closures. Decision notes:
 // - Grammar, loosest first: expr = term {(+|-) term}; term = unary {(*|/) unary}; unary = - unary | power;
 //   power = primary [^ unary]; primary = number | name | name(args) | (expr). So -x^2 is -(x^2), 2^-1 is a
-//   half and ^ groups to the right, as in Python, whose own parser the twin (tools/zqverify/expr.py) uses as
-//   the oracle. A comparison < <= > >= == is only the first argument of if [our choice: the grammar's
-//   unstated details, this paragraph and the next].
-// - Numbers: digits with an optional fraction (".5" too, "1." not) and exponent; a literal that rounds to
-//   infinity is an error. Names: ASCII letter, then letters, digits and "_". Function names, if, sum, pi and
-//   e are reserved.
+//   half and ^ groups to the right, as in Python. A comparison < <= > >= == is only the first argument of
+//   if [our choice: the grammar's unstated details, this paragraph and the next].
+// - Numbers: digits with an optional fraction (".5" too, "1." not) and exponent, with at most 20 significant
+//   digits, since ECMA-262 lets an engine round a longer literal either way (RoundMVResult [sourced]); a
+//   literal that rounds to infinity is an error. Names: ASCII letter, then letters, digits and "_". Function
+//   names, if, sum, pi and e are reserved.
+// - A tree is one parse can build: finite numbers that are neither negative nor -0 (a minus is a neg node),
+//   names in the grammar, known functions with their arity. print and compile refuse any other with
+//   RangeError, so a builder (MathJSON, d/dx) writes -1 as neg(num 1), and print's text parses back to it.
 // - No eval, no Function. The only property reads are the caller's scope (own properties, by Object.hasOwn)
-//   and the caller's function table (own properties, checked at compile); the grammar's names live in a Map.
+//   and the caller's function table (own properties, checked at compile); the grammar's names live in a Map
+//   and Sets.
 // - The transcendental functions and ^ come from an ExprFunctions table, so an expression is deterministic
-//   when its table is (dmath's, once dmath covers the list). abs, sign, floor, ceil, min and max are exact in
-//   IEEE-754 and built in.
+//   when its table is (dmath's, once dmath covers the list). abs, sign, floor, ceil, min, max and sqrt are
+//   built in, since ECMA-262 defines each exactly (sec-math.sqrt: the correctly rounded root [sourced]).
 // - Undefined points are NaN (2.3): a / 0; 0 ^ b for b < 0; ln and log10 of x <= 0; any NaN operand, even
-//   where pow or a table function would map it to a number; an if whose comparison has a NaN side; a sum whose
-//   bounds are not safe integers; and any evaluation that would take more than MAX_TERMS sum terms in all.
+//   where pow or a table function would map it to a number; an if whose comparison has a NaN side; a sum
+//   whose bounds are not safe integers; and any evaluation whose sums would cost more than MAX_WORK in all.
 //   Every operation propagates NaN, so a sum refused for the budget makes the whole value NaN.
+// - ^ is the table's pow except where ECMA-262 and C99 Annex F differ, which the language fixes: NaN for a
+//   NaN operand (C99 gives 1 for 1^NaN, both give 1 for NaN^0) and 1 for (+-1)^(+-Infinity) (ECMA-262 gives
+//   NaN; C99, dmath and Python give 1) [our choice]. The two agree on every other special value [sourced:
+//   ECMA-262 Number::exponentiate; recalled: C99 F.9.4.4], so a conforming table changes only rounding.
 // - Untrusted text (the tutor's compute tool, PLAN.md 7.2) is bounded: MAX_LENGTH characters and MAX_DEPTH
-//   nested parentheses, so parse and compile are O(n) with recursion at most n deep, and an evaluation is
-//   O(n * MAX_TERMS) at worst [our choice: the three limits].
+//   nested brackets, so parse and compile are O(n) with recursion at most n deep. A sum costs its term count
+//   times its term's node count (counted at compile), within MAX_WORK per evaluation, so an evaluation visits
+//   at most n + MAX_WORK nodes. AI-TUTOR.md 5.3.2 gives compute 2 s; the costliest node found, the test
+//   table's erf, ran a MAX_WORK budget in about 80 ms in Node 22 here [measured], which leaves a phone
+//   several times slower inside the limit [inferred] [our choice: the limits].
 // - A compiled expression keeps its variables in cells its closures share, so it is not re-entrant: a table
 //   function must not evaluate the same compiled expression.
 
 export const MAX_LENGTH = 1000;
 export const MAX_DEPTH = 32;
-export const MAX_TERMS = 100_000;
+export const MAX_WORK = 1_000_000;
+const MAX_DIGITS = 20;
 
 // prettier-ignore
 const TABLE = [
-  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh', 'exp', 'ln', 'log10', 'sqrt', 'cbrt',
-  'Phi', 'phi', 'erf',
+  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh', 'exp', 'ln', 'log10', 'cbrt', 'Phi',
+  'phi', 'erf',
 ] as const;
 type Unary = (x: number) => number;
 type Binary = (a: number, b: number) => number;
@@ -39,10 +51,14 @@ export type ExprFunctions = Readonly<Record<(typeof TABLE)[number], Unary>> & {
   readonly atan2: Binary;
   readonly pow: Binary;
 };
-type Fn = (typeof TABLE)[number] | 'abs' | 'sign' | 'floor' | 'ceil' | 'atan2' | 'min' | 'max';
+type Fn = (typeof TABLE)[number] | 'abs' | 'sign' | 'floor' | 'ceil' | 'sqrt' | 'atan2' | 'min' | 'max';
 type Rel = '<' | '<=' | '>' | '>=' | '==';
 
-/** A parsed expression; `at` is the offset of its first character, or of its operator. */
+/**
+ * A parsed expression; `at` is the offset of its first character, or of its operator. A num's value is
+ * finite and neither negative nor -0, and names are as parse reads them; print and compile throw RangeError
+ * otherwise.
+ */
 export type Node = Readonly<
   { at: number } & (
     | { kind: 'num'; value: number }
@@ -57,13 +73,15 @@ export type Node = Readonly<
 >;
 
 const ARITY = new Map<string, readonly [number, number]>([
-  ...[...TABLE, 'abs', 'sign', 'floor', 'ceil'].map((name) => [name, [1, 1]] as const),
+  ...[...TABLE, 'abs', 'sign', 'floor', 'ceil', 'sqrt'].map((name) => [name, [1, 1]] as const),
   ['atan2', [2, 2]],
   ['min', [2, Infinity]],
   ['max', [2, Infinity]],
 ]);
 const RESERVED: ReadonlySet<string> = new Set([...ARITY.keys(), 'if', 'sum', 'pi', 'e']);
 const RELS: ReadonlySet<string> = new Set(['<', '<=', '>', '>=', '==']);
+const OPS: ReadonlySet<string> = new Set(['+', '-', '*', '/', '^']);
+const CONSTANTS: ReadonlySet<string> = new Set(['pi', 'e']);
 const isFn = (name: string): name is Fn => ARITY.has(name);
 const isRel = (t: string): t is Rel => RELS.has(t);
 
@@ -71,7 +89,7 @@ export type ParseErrorCode =
   | 'length' // longer than MAX_LENGTH
   | 'depth' // parentheses nested deeper than MAX_DEPTH
   | 'character' // a character outside the grammar
-  | 'number' // a literal that rounds to infinity
+  | 'number' // a literal with more than 20 significant digits, or one that rounds to infinity
   | 'syntax' // a token where the grammar has none
   | 'function' // an unknown function
   | 'arity' // a function with the wrong number of arguments
@@ -109,7 +127,7 @@ interface Token {
 const isDigit = (c: number): boolean => c >= 48 && c <= 57;
 const isLetter = (c: number): boolean => (c | 32) >= 97 && (c | 32) <= 122;
 
-function tokenize(src: string): Token[] {
+function tokenise(src: string): Token[] {
   const out: Token[] = [];
   const digitsFrom = (k: number): number => {
     while (isDigit(src.charCodeAt(k))) k++;
@@ -152,7 +170,7 @@ export function parse(source: string): Node {
   if (source.length > MAX_LENGTH) {
     throw new ParseError('length', MAX_LENGTH, `longer than ${MAX_LENGTH} characters`);
   }
-  const tokens = tokenize(source);
+  const tokens = tokenise(source);
   const end: Token = { t: 'end', v: '', at: source.length };
   let i = 0;
   let depth = 0;
@@ -204,6 +222,9 @@ export function parse(source: string): Node {
     const tok = peek();
     if (tok.t === 'num') {
       i++;
+      if (significant(tok.v) > MAX_DIGITS) {
+        throw new ParseError('number', tok.at, `${tok.v} has more than ${MAX_DIGITS} significant digits`);
+      }
       const value = Number(tok.v);
       if (value === Infinity) throw new ParseError('number', tok.at, `${tok.v} is too large`);
       return { kind: 'num', value, at: tok.at };
@@ -270,15 +291,54 @@ export function parse(source: string): Node {
   return tree;
 }
 
-const LEVEL = { '+': 1, '-': 1, '*': 2, '/': 2, '^': 4 } as const;
-const level = (n: Node): number => (n.kind === 'bin' ? LEVEL[n.op] : n.kind === 'neg' ? 3 : 5);
+/** The digits of a literal's mantissa from its first non-zero digit to its last, as RoundMVResult counts. */
+function significant(literal: string): number {
+  const mantissa = literal.replace(/e.*/i, '').replace('.', '');
+  return /[1-9](?:\d*[1-9])?/.exec(mantissa)?.[0].length ?? 0;
+}
+
+const isName = (name: unknown): boolean =>
+  typeof name === 'string' && /^[A-Za-z][A-Za-z0-9_]*$/.test(name) && !RESERVED.has(name);
+function valid(n: Node): boolean {
+  switch (n.kind) {
+    case 'num':
+      return Number.isFinite(n.value) && (n.value > 0 || Object.is(n.value, 0));
+    case 'const':
+      return CONSTANTS.has(n.name);
+    case 'var':
+      return isName(n.name);
+    case 'neg':
+      return true;
+    case 'bin':
+      return OPS.has(n.op);
+    case 'call': {
+      const arity = ARITY.get(n.fn);
+      return arity !== undefined && n.args.length >= arity[0] && n.args.length <= arity[1];
+    }
+    case 'if':
+      return RELS.has(n.rel);
+    case 'sum':
+      return isName(n.index);
+    default:
+      return false;
+  }
+}
+/** Throws RangeError unless parse could have built this node; print and compile check every node. */
+function check(n: Node): void {
+  if (!valid(n))
+    throw new RangeError(`a ${String((n as { kind?: unknown }).kind)} node that parse does not build`);
+}
+
+const level = (n: Node): number =>
+  n.kind === 'neg' ? 3 : n.kind !== 'bin' ? 5 : n.op === '^' ? 4 : n.op === '*' || n.op === '/' ? 2 : 1;
 
 /**
- * Source text that parses back to the same tree, with the fewest brackets. It can be longer than the text the
- * tree came from (spaces round + and -, numbers in their shortest round-trip form), so near MAX_LENGTH it may
- * not parse again.
+ * Source text that parses back to the same tree, with the fewest brackets; RangeError for a tree parse does
+ * not build. It can be longer than the text the tree came from (spaces round + and -, numbers in their
+ * shortest round-trip form), so near MAX_LENGTH it may not parse again.
  */
 export function print(node: Node): string {
+  check(node);
   const wrap = (n: Node, min: number): string => (level(n) < min ? `(${print(n)})` : print(n));
   switch (node.kind) {
     case 'num':
@@ -290,7 +350,7 @@ export function print(node: Node): string {
       return `-${wrap(node.arg, 3)}`;
     case 'bin': {
       if (node.op === '^') return `${wrap(node.left, 5)}^${wrap(node.right, 3)}`;
-      const l = LEVEL[node.op];
+      const l = level(node);
       return `${wrap(node.left, l)}${l === 1 ? ` ${node.op} ` : node.op}${wrap(node.right, l + 1)}`;
     }
     case 'call':
@@ -328,16 +388,22 @@ const divide = (x: number, y: number): number => (y === 0 ? NaN : x / y);
 const holds = (rel: Rel, x: number, y: number): boolean =>
   rel === '<' ? x < y : rel === '<=' ? x <= y : rel === '>' ? x > y : rel === '>=' ? x >= y : x === y;
 
-/** Compiles a tree to closures over the given function table, which must hold every function it calls. */
+/**
+ * Compiles a tree to closures over the given function table, which must hold every function it calls;
+ * RangeError for a tree parse does not build.
+ */
 export function compile(node: Node, fns: ExprFunctions): Compiled {
   const free = new Map<string, Cell>();
   let budget = 0;
+  let nodes = 0;
   const cell = (name: string, bound: ReadonlyMap<string, Cell>): Cell => {
     let c = bound.get(name) ?? free.get(name);
     if (c === undefined) free.set(name, (c = { v: NaN }));
     return c;
   };
   const build = (n: Node, bound: ReadonlyMap<string, Cell>): Code => {
+    check(n);
+    nodes++;
     const sub = (m: Node): Code => build(m, bound);
     switch (n.kind) {
       case 'num':
@@ -362,7 +428,11 @@ export function compile(node: Node, fns: ExprFunctions): Compiled {
         if (n.op === '/') return () => divide(a(), b());
         const pow = own(fns, 'pow');
         const power = (x: number, y: number): number =>
-          eitherNaN(x, y) || (x === 0 && y < 0) ? NaN : pow(x, y);
+          eitherNaN(x, y) || (x === 0 && y < 0)
+            ? NaN
+            : (x === 1 || x === -1) && !Number.isFinite(y)
+              ? 1
+              : pow(x, y);
         return () => power(a(), b());
       }
       case 'call':
@@ -378,14 +448,17 @@ export function compile(node: Node, fns: ExprFunctions): Compiled {
         const lo = sub(n.lo);
         const hi = sub(n.hi);
         const k: Cell = { v: NaN };
+        const before = nodes;
         const term = build(n.term, new Map(bound).set(n.index, k));
+        const size = nodes - before;
         return () => {
           const a = lo();
           const b = hi();
           if (!Number.isSafeInteger(a) || !Number.isSafeInteger(b)) return NaN;
           const count = Math.max(0, b - a + 1);
-          if (count > budget) return NaN;
-          budget -= count;
+          const cost = count * size;
+          if (cost > budget) return NaN;
+          budget -= cost;
           let total = 0;
           for (let j = 0; j < count; j++) {
             k.v = a + j;
@@ -408,6 +481,8 @@ export function compile(node: Node, fns: ExprFunctions): Compiled {
         return () => Math.floor(a());
       case 'ceil':
         return () => Math.ceil(a());
+      case 'sqrt':
+        return () => Math.sqrt(a());
       case 'min':
         return () => codes.reduce((m, c) => Math.min(m, c()), Infinity);
       case 'max':
@@ -435,7 +510,7 @@ export function compile(node: Node, fns: ExprFunctions): Compiled {
   const names = [...free.keys()];
   const cells = [...free.values()];
   const exec = (): number => {
-    budget = MAX_TERMS;
+    budget = MAX_WORK;
     return root();
   };
   return {
