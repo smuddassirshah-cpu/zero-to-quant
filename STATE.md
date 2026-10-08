@@ -95,7 +95,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 | 60 | Tutor contracts and guards (T0, T1) | 10a, 20 | 6 | - | pending | - |
 | 61 | Context assembly and renderers (T2) | 60 | 5 | - | pending | - |
 | 62 | Tutor proxy (T3), creates the Class C exposure | 61 | 9 | - | pending | - |
-| 63 | Backends and service (T4) | 60, 61, 62 | 5 | - | pending | - |
+| 63 | Backends and service (T4) | 60, 61, 62, 25 | 5 | - | pending | - |
 | 64 | Bertie in the UI (T5) | 59, 63, 9a | 5 | - | pending | - |
 | 65 | Modes, wave 1 (T6a) | 63, 64 | 6 | - | pending | - |
 | 66 | Modes, wave 2 (T6b, C10) | 65, 32 (`code-cell`), 16, 22 | 7 | - | pending | - |
@@ -192,7 +192,7 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B22 `sessionStorage` mirror of the route and pending drafts | The host reloads the open page after a publish | y: `PLAN.md` 7.5, stages 10a, 69 and 74a; for the owner |
 | 2026-10-08 | B23 Back or close control on every route but the tab roots; no `history.back()` | The back gesture does nothing in the frame | y: stage 74a, `design-research.md` 7; for the owner |
 | 2026-10-08 | B24 Release procedure: the page in every publish, every intermediate version working | The tool's refusals and the host's reloads | y: `PLAN.md` 8.6, stage 83; for the owner |
-| 2026-10-08 | B25 The emulator models the refusals and the reloads, with a stale-page fault injection | The measured behaviour, with the unmeasured cases kept testable | y: stage 4 |
+| 2026-10-08 | B25 The emulator models the refusals and the reloads, with two fault injections | The measured behaviour, with the unmeasured cases kept testable | y: stage 4 |
 | 2026-10-08 | B26 A paper's lease is owned by the device and tab identity, so a reloaded page re-acquires it | The host reloads mid-paper | y: `ASSESSMENT.md`'s lease design, `PLAN.md` 8.5, stage 69 |
 | 2026-10-08 | B27 Term targets in the Artifact's MathML through scoped colour sentinels | `\htmlData` is dropped; the term list alone does not serve in-formula selection | y: `ARCHITECTURE.md` 14 item 20, stages 7, 12, 23 and 25; for the owner |
 | 2026-10-08 | B28 The emulator's version-scoping switch set by inference | The host's reload prevented the measurement | y: `PLAN.md` stage 2's definition of done |
@@ -245,9 +245,10 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 32 | Does an 8 KB handoff fragment survive the host's link handling? [unverified: S1's external link had no fragment] | Every drill's handoff (`ASSESSMENT.md` 14.3) | Stage 82's iPhone handoff check (B30); the copyable text is the fallback |
 | 33 | Pointer and keyboard interaction on MathML elements in iOS Safari, for B27's term sentinels [unverified] | Composites with `term:` targets | Stage 12's iPhone check, taken in stage 25's preview Artifact (`docs/PLAN.md` 11.1) |
 | 34 | Does the host reload a backgrounded view, a second device and the desktop and web viewers after a publish, and does `location.reload()` bring a page on an older version to the newest? [unverified: S1 measured one foreground page] | The update notice, the Reload button, stale-page cases (B25) | Stage 83's Self-test, with the emulator's fault injection |
-| 35 | B20, the annotation rewrite in `TexSlots`, and B27, the term sentinels: the owner's decisions (default until then: the term list, sentinels off) | Decision 37, 5.11, 14 item 20 | The owner, before stage 12 |
-| 36 | KaTeX's ES module `dist/katex.mjs` is unminified: 148,753 bytes gzipped [measured: KaTeX 0.19.0 npm tarball, zlib level 9, 8 October 2026] against `ARCHITECTURE.md` 9.2's 80 KB row. Recommended: load `katex.min.js` (75,906 bytes gzipped) as a classic script with integrity, the path S1's UMD check proved (`docs/PLAN.md` 12 row 15) | Stage 4 | The owner, with row 15 |
+| 35 | B20, the annotation rewrite in `TexSlots`: the owner's decision | Decision 37, 5.11 | The owner, before stage 12 |
+| 36 | KaTeX's ES module `dist/katex.mjs` is unminified: 148,753 bytes gzipped [measured: KaTeX 0.19.0 npm tarball, zlib 1.3 level 9 through Python's `gzip`, 8 October 2026] against `ARCHITECTURE.md` 9.2's 80 KB row. Recommended: load `katex.min.js` (75,906 bytes gzipped [measured: KaTeX 0.19.0 npm tarball, zlib 1.3 level 9 through Python's `gzip`, 8 October 2026]) as a classic script with integrity, the path S1's UMD check proved (`docs/PLAN.md` 12 row 15) | Stage 4 | The owner, with row 15 |
 | 37 | The runtime contract the live Artifact pins (S1 was written against 0.2.73; 0.2.74 exists; the emulator targets 0.2.73, B29) | Stage 83 | Stage 83 |
+| 38 | B27, the term sentinels: the owner's decision, taken with stage 12's iPhone check in stage 25's preview build (default until then: the term list, `artifact.termBinding` off) | 14 item 20; composites with `term:` targets | The owner, with stage 25's device result |
 
 ## Pending document edits
 
