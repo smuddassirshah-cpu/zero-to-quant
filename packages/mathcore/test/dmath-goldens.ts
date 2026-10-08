@@ -77,7 +77,7 @@ export function withinTolerance(c: Case, y: number): boolean {
   const ulp = 2 ** (Math.max(1, (view.getUint16(0) >> 4) & 0x7ff) - 1075);
   const ulps = Math.abs((y - ref) / ulp - c.rem / 1000);
   if (Math.abs(ref) >= MIN_NORMAL) return (ulps * ulp) / Math.abs(ref) <= 1e-15;
-  return ulps <= 1 && (y !== 0 || ref !== 0 || Object.is(y, ref));
+  return ulps <= 1 && (y !== 0 || Object.is(y, -0) === (ref < 0 || Object.is(ref, -0)));
 }
 
 export function renderBits(cases: readonly Case[]): string {

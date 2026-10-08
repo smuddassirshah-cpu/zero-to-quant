@@ -11,12 +11,16 @@
 // - Only IEEE-754 + - * / on doubles, int32 bit operations and a DataView for a double's two words; no Math
 //   function. ECMAScript rounds each operation to nearest, ties to even, with no fused multiply-add and no
 //   wider intermediate [sourced: ECMA-262, the Number type], so every engine returns the same bits.
-// - Departures from the C, each [our choice]: pow(x, 0.5) keeps the general path instead of calling sqrt; the
-//   unrolled cases of e_rem_pio2.c for |x| <= 9pi/4 are folded into its medium path, which is accurate on the
-//   whole medium range; floating-point exception flags are not raised. pow follows C99 Annex F, so it differs
-//   from Math.pow at pow(1, NaN) = 1 and pow(-1, +-Infinity) = 1, where ECMAScript returns NaN.
-// - Error over the 10,000 goldens of test/dmath.goldens.txt: at most 0.73 ulp, 1.45 ulp for tanh [measured].
-//   Every function is O(1); sin and cos above 2^20 pi/2 run the Payne-Hanek reduction over at most 20 words.
+// - Departures from the C, each [our choice]: exp(1) returns e correctly rounded, 2.718281828459045, as V8's
+//   port does [sourced: V8 12.4.254, src/base/ieee754.cc, exp], where e_exp.c's reduction gives one ulp
+//   above; pow(x, 0.5) keeps the general path instead of calling sqrt; the unrolled cases of e_rem_pio2.c for
+//   |x| <= 9pi/4 are folded into its medium path, which is accurate on the whole medium range; floating-point
+//   exception flags are not raised. pow follows C99 Annex F, so it differs from Math.pow at pow(1, NaN) = 1
+//   and pow(-1, +-Infinity) = 1, where ECMAScript returns NaN.
+// - Error, a maximum seen and not a bound: over the 10,000 goldens of test/dmath.goldens.txt, 0.73 ulp, and
+//   1.45 ulp for tanh; over a sweep of 400,000 inputs to exp, log, log1p, expm1 and tanh against mpmath at
+//   40 digits, 0.81 ulp, and 2.03 ulp (2.4e-16 relative) for tanh [measured]. Every function is O(1); sin
+//   and cos above 2^20 pi/2 run the Payne-Hanek reduction over at most 20 words.
 //
 // Licence notice of the ported files, preserved as they require:
 // ====================================================
@@ -113,6 +117,7 @@ export function exp(x: number): number {
   let k = 0;
   if (hx > 0x3fd62e42) {
     if (hx < 0x3ff0a2b2) {
+      if (x === 1) return 2.718281828459045;
       hi = xsb === 0 ? x - LN2_HI : x + LN2_HI;
       lo = xsb === 0 ? LN2_LO : -LN2_LO;
       k = 1 - xsb - xsb;

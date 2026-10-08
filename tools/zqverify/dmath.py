@@ -1,11 +1,12 @@
 """Goldens for @zq/mathcore/dmath (docs/PLAN.md stage 3): 10,000 inputs over the domains of exp, log, log1p,
 expm1, tanh, pow, sin and cos, with references from mpmath at 50 significant digits.
 
-Written from the functions' mathematical definitions and C99 Annex F (F.9), not from the TypeScript. Each
-reference is mpmath's value at mp.dps = 50, rounded to the nearest double, ties to even, and stored with the
-remainder (value - double) / ulp(double) in thousandths of an ulp, so the TypeScript test measures its error
-against the 50-digit value, not against a rounded one. Special values (NaN, infinities, signed zeros, the
-domain edges) come from Annex F through `special` and `pow_special`, since mpmath has no signed zero.
+Written from the functions' mathematical definitions and C99 Annex F (F.9), not from the TypeScript; the
+hard cases add fdlibm's branch thresholds, read from the C reference the TypeScript ports. Each reference is
+mpmath's value at mp.dps = 50, rounded to the nearest double, ties to even, and stored with the remainder
+(value - double) / ulp(double) in thousandths of an ulp, so the TypeScript test measures its error against
+the 50-digit value, not against a rounded one. Special values (NaN, infinities, signed zeros, the domain
+edges) come from Annex F through `special` and `pow_special`, since mpmath has no signed zero.
 
 Inputs are drawn by `random.Random` seeded with each function's name, so the file is reproducible. From the
 repository root, rewrite it with:
@@ -198,18 +199,32 @@ EDGES = [0.0, -0.0, INF, -INF, NAN, TINY, -TINY, MIN_NORMAL, -MIN_NORMAL, MAX, -
 NG_WORST = 6381956970095103 * 2.0**797
 
 
+def switch(*high_words: int) -> list[float]:
+    """The first double whose high word is each of these, with its negation: fdlibm tests the high word, so
+    this double and the one below it fall on either side of the branch."""
+    return [s * from_bits(h << 32) for h in high_words for s in (1.0, -1.0)]
+
+
 def hard_cases(name: str) -> list[float]:
-    """The domain edges and branch thresholds of each function, from its definition and IEEE-754 limits."""
+    """IEEE-754 limits and each function's domain edges, plus fdlibm's branch thresholds taken from the C
+    reference [our choice]: a threshold on the high word is centred by `switch`, one on a value by its
+    neighbours."""
     if name in ("exp", "expm1"):
-        cases = around(LOG_MAX, -745.1332191019411, -708.3964185322641, 0.5 * LN2, 1.5 * LN2, 1023.5 * LN2)
+        cases = around(LOG_MAX, -745.1332191019411, -708.3964185322641, 1023.5 * LN2, -1021.5 * LN2)
         cases += around(2.0**-28, -(2.0**-28), 2.0**-54, -(2.0**-54), -56 * LN2, 56.5 * LN2, 19.5 * LN2)
-        cases += around(-1021.5 * LN2)
+        cases += around(*switch(0x3FD62E43, 0x3FF0A2B2, 0x4043687A, 0x40862E42))
         return cases + [-1000.0, 1000.0, -40.0, -38.0, 1e-300, -1e-300]
     if name == "log":
         cases = around(1.0, 2.0, 0.5, math.sqrt(2), math.sqrt(2) / 2, MIN_NORMAL, steps=3)
+        # The reduction's split near sqrt(2), in two binades, and the two switches between e_log.c's final forms.
+        cases += around(*(from_bits(h << 32) for h in (0x3FF6A09C, 0x3FE6A09C, 0x3FF6147A, 0x4006B852)))
         return cases + [1 + 2.0**-20, 1 - 2.0**-20, 2.0**-1074, 2.0**-1050, -2.0, 1e-300, 1e300]
     if name == "log1p":
         cases = around(-1.0, math.sqrt(2) - 1, math.sqrt(2) / 2 - 1, 2.0**-29, 2.0**-54, -(2.0**-29), 2.0**53)
+        cases += around(from_bits(0x3FDA827A << 32), -from_bits(0x3FD2BEC5 << 32))
+        # 1 + x crosses the reduction's split near sqrt(2) 2^k at k = 1 and k = 2 (the differences are exact);
+        # below k = 1 the split lies inside the unreduced range.
+        cases += around(from_bits(0x4006A09E << 32) - 1, from_bits(0x4016A09E << 32) - 1)
         return cases + [-0.5, 0.5, 1e300, -1e-300, 1e-300, -2.0]
     if name == "tanh":
         return around(22.0, -22.0, 1.0, -1.0, 2.0**-28, -(2.0**-28)) + [0.5, -0.5, 20.0, 1e300]
