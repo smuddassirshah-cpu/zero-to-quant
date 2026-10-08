@@ -10,8 +10,10 @@
 //   catches `Object.assign(el, { innerHTML })`, props objects and `Object.defineProperties`; also
 //   as the key argument of `Reflect.set`, `Reflect.defineProperty` and `Object.defineProperty`.
 // - A sink method is refused on any access, called or not, so `.call`, `.apply`, `.bind` and
-//   destructuring are covered. `write` and `writeln` count on a document: `document` itself, or
-//   any expression the type checker types as `Document` (`el.ownerDocument`, an alias).
+//   destructuring are covered, nested destructuring too (`const { document: { write } } = window`).
+//   `write` and `writeln` count on a document: `document` itself, or any expression the type
+//   checker types as `Document` (`el.ownerDocument`, an alias). Optional chains and TypeScript
+//   wrappers are read through (`new (window?.DOMParser)()`, `(el.innerHTML as string) = s`).
 // - Names are matched statically, `+` of literals folded (`el['inner' + 'HTML']`). Accepted
 //   residue, out of reach of a static rule and left to review: names built at run time, a key
 //   template with expressions (`` el[`inner${'HTML'}`] ``), and the setter reached through
@@ -21,10 +23,12 @@ import {
   hasType,
   jsxName,
   keyName,
-  patternSource,
+  climb,
+  patternOrigin,
   propName,
   staticString,
   tailName,
+  unwrap,
   type ESNode,
 } from '../util/ast.ts';
 import { repoPath } from '../util/paths.ts';
@@ -95,7 +99,9 @@ const rule: Rule.RuleModule = {
       if (!allowed.has(name)) context.report({ node, messageId: 'sink', data: { name } });
     };
     const isDocument = (node: ESNode) =>
-      tailName(node) === 'document' || hasType(sourceCode, node, DOCUMENT_TYPES);
+      tailName(node) === 'document' ||
+      (node.type === 'ObjectPattern' && patternOrigin(node as Rule.Node)?.keys.at(-1) === 'document') ||
+      hasType(sourceCode, node, DOCUMENT_TYPES);
     const method = (node: ESNode, name: string, owner: ESNode | undefined) => {
       if (METHODS.has(name)) report(node, name);
       else if (DOCUMENT_METHODS.has(name) && owner && isDocument(owner)) report(node, `document.${name}`);
@@ -105,14 +111,15 @@ const rule: Rule.RuleModule = {
       MemberExpression(node) {
         const name = propName(node);
         if (name === undefined) return;
-        if (PROPERTIES.has(name) && isWriteTarget(node)) report(node, name);
+        if (PROPERTIES.has(name) && isWriteTarget(climb(node))) report(node, name);
         else if (name === 'parseFromString' && allowed.has(name) && !parsesSvg(node)) {
           context.report({ node, messageId: 'svgOnly' });
         } else method(node, name, node.object);
       },
       CallExpression(node) {
         const [, key] = node.arguments;
-        const callee = node.callee.type === 'MemberExpression' ? node.callee : undefined;
+        const unwrapped = unwrap(node.callee);
+        const callee = unwrapped.type === 'MemberExpression' ? unwrapped : undefined;
         const setter = callee && `${tailName(callee.object) ?? ''}.${propName(callee) ?? ''}`;
         const name = setter && KEY_SETTERS.has(setter) ? staticString(key) : undefined;
         if (key && name && KEYS.has(name)) report(key, name);
@@ -128,7 +135,8 @@ const rule: Rule.RuleModule = {
         } else if (name === 'parseFromString' && allowed.has(name)) {
           context.report({ node: node.key, messageId: 'svgOnly' });
         } else {
-          method(node.key, name, patternSource(node.parent));
+          const origin = patternOrigin(node.parent);
+          method(node.key, name, origin?.keys.length === 0 ? origin.source : node.parent);
         }
       },
       JSXAttribute(node: Rule.Node) {

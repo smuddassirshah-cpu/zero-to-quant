@@ -22,7 +22,8 @@
 //   marked (everything below it was marked by the same earlier walk), which keeps the pass O(n).
 //   Function handlers are judged at `Program:exit`, since a named one may be declared later.
 // - A logger call is `<logger>.<method>(...)` where `<logger>` is an identifier or the last
-//   property of a member access (`this.log.warn`), so injected loggers count.
+//   property of a member access (`this.log.warn`), read through optional chains and TypeScript
+//   wrappers (`(log as Logger).warn`, `(p?.catch)(fn)`), so injected loggers count.
 import type { Rule, Scope, SourceCode } from 'eslint';
 import { findVariable, propName, tailName, unwrap, type ESNode, type NodeOf } from '../util/ast.ts';
 
@@ -185,7 +186,7 @@ const rule: Rule.RuleModule = {
       },
       ThrowStatement: mark,
       CallExpression(node) {
-        const { callee } = node;
+        const callee = unwrap(node.callee);
         if (callee.type === 'MemberExpression' && METHODS.has(propName(callee) ?? '')) {
           if (loggerNames.has(tailName(callee.object) ?? '')) mark();
         }

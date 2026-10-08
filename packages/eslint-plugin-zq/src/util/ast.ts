@@ -72,13 +72,47 @@ function unchain<T extends ESNode | undefined>(node: T): ESNode | T {
   return node?.type === 'ChainExpression' ? node.expression : node;
 }
 
-/** The expression an object pattern destructures, when it is written beside the pattern (an optional chain read through). */
-export function patternSource(pattern: Rule.Node): ESNode | undefined {
+/** The expression an object pattern destructures, when it is written beside the pattern: an
+ *  initialiser, an assignment's right side or a parameter's default, an optional chain read through. */
+function patternSource(pattern: Rule.Node): ESNode | undefined {
   const { parent } = pattern;
   if (parent?.type === 'VariableDeclarator' && parent.id === pattern)
     return unchain(parent.init ?? undefined);
   if (parent?.type === 'AssignmentExpression' && parent.left === pattern) return unchain(parent.right);
+  if (parent?.type === 'AssignmentPattern' && parent.left === pattern && parent.parent.type !== 'Property')
+    return unchain(parent.right);
   return undefined;
+}
+
+/** What an object pattern reads, through the patterns it is nested in: `const { window: { open } } = self`
+ *  reads `self`, then its `window`. A nested pattern's default (`{ window: { open } = {} }`) is skipped,
+ *  so the path is the value destructured when it is defined. */
+export function patternOrigin(pattern: Rule.Node): { source: ESNode; keys: string[] } | undefined {
+  const keys: string[] = [];
+  let current = pattern;
+  for (;;) {
+    const source = patternSource(current);
+    if (source) return { source, keys: keys.reverse() };
+    let { parent } = current;
+    if (parent?.type === 'AssignmentPattern' && parent.left === current) {
+      current = parent;
+      parent = parent.parent;
+    }
+    if (parent?.type !== 'Property' || parent.value !== current || parent.parent.type !== 'ObjectPattern')
+      return undefined;
+    const key = keyName(parent);
+    if (key === undefined) return undefined;
+    keys.push(key);
+    current = parent.parent;
+  }
+}
+
+/** The outermost of `node` and the TypeScript wrappers around it (`(el.innerHTML as string) = s`). */
+export function climb(node: Rule.Node): Rule.Node {
+  let current = node;
+  while (current.parent && WRAPPERS.has(current.parent.type) && current.parent.type !== 'ChainExpression')
+    current = current.parent;
+  return current;
 }
 
 interface JsxName {

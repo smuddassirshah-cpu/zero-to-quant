@@ -4,7 +4,8 @@
 // Decision notes:
 // - Two checks run side by side. The syntactic one works everywhere, `.js` included: `window`,
 //   `self` and `globalThis` when nothing in the file declares them (or reached from one another,
-//   `self.window`; an optional chain is read through, `self?.window`), and a bare `open()`, `print()`
+//   `self.window`, or destructured, `const { window: { open } } = self`; optional chains and
+//   TypeScript wrappers are read through, `(self?.window)!`), and a bare `open()`, `print()`
 //   or `eval()` that scope analysis resolves to the global (a local or imported `open` is fine).
 //   Where the type checker is available (`.ts`, `.tsx`) it also refuses `open`, `print`, `eval` and
 //   `Function` on any `Window` (`parent`, `top`, `document.defaultView`, an alias), `serviceWorker`
@@ -23,7 +24,7 @@ import {
   isGlobal,
   jsxName,
   keyName,
-  patternSource,
+  patternOrigin,
   propName,
   staticString,
   tailName,
@@ -70,11 +71,13 @@ const rule: Rule.RuleModule = {
       (node.type === 'Identifier' && GLOBAL_OBJECTS.has(node.name) && isGlobal(sourceCode, node)) ||
       (node.type === 'MemberExpression' &&
         GLOBAL_OBJECTS.has(propName(node) ?? '') &&
-        globalObject(node.object));
+        globalObject(unwrap(node.object)));
     const isWindow = (node: ESNode) => globalObject(node) || hasType(sourceCode, node, WINDOW_TYPES);
     const isNavigator = (node: ESNode) =>
       (node.type === 'Identifier' && node.name === 'navigator' && isGlobal(sourceCode, node)) ||
-      (node.type === 'MemberExpression' && propName(node) === 'navigator' && globalObject(node.object)) ||
+      (node.type === 'MemberExpression' &&
+        propName(node) === 'navigator' &&
+        globalObject(unwrap(node.object))) ||
       hasType(sourceCode, node, NAVIGATOR_TYPES);
     // The global `Function` itself, or `Function` on a window: refused as values, see `Program`.
     const functionValue = (node: ESNode) =>
@@ -90,6 +93,32 @@ const rule: Rule.RuleModule = {
       const either = (test: (n: ESNode) => boolean) => test(wrapped) || test(owner);
       if (WINDOW_MEMBERS.has(name) && either(isWindow)) forbid(node, `${sourceCode.getText(owner)}.${name}`);
       else if (name === 'serviceWorker' && !workerAllowed && either(isNavigator)) {
+        context.report({ node, messageId: 'serviceWorker' });
+      }
+    };
+    // `const { window: { open } } = self` reads `self.window.open`: the type checker types the pattern
+    // itself, and without types the path is read from the source and the keys of the outer patterns.
+    const destructure = (node: ESNode, name: string, pattern: Rule.Node) => {
+      const origin = patternOrigin(pattern);
+      if (origin?.keys.length === 0) {
+        access(node, name, origin.source);
+        return;
+      }
+      const keys = origin?.keys ?? [];
+      const last = keys.at(-1);
+      const globalPath = (path: readonly string[]) =>
+        origin !== undefined &&
+        (globalObject(unwrap(origin.source)) || hasType(sourceCode, origin.source, WINDOW_TYPES)) &&
+        path.every((key) => GLOBAL_OBJECTS.has(key));
+      const label = origin ? [sourceCode.getText(unwrap(origin.source)), ...keys].join('.') : 'Window';
+      if (WINDOW_MEMBERS.has(name) && (globalPath(keys) || hasType(sourceCode, pattern, WINDOW_TYPES))) {
+        forbid(node, `${label}.${name}`);
+      } else if (
+        name === 'serviceWorker' &&
+        !workerAllowed &&
+        ((last === 'navigator' && globalPath(keys.slice(0, -1))) ||
+          hasType(sourceCode, pattern, NAVIGATOR_TYPES))
+      ) {
         context.report({ node, messageId: 'serviceWorker' });
       }
     };
@@ -128,8 +157,7 @@ const rule: Rule.RuleModule = {
       },
       Property(node) {
         const name = keyName(node);
-        const owner = node.parent.type === 'ObjectPattern' ? patternSource(node.parent) : undefined;
-        if (name !== undefined && owner) access(node, name, owner);
+        if (name !== undefined && node.parent.type === 'ObjectPattern') destructure(node, name, node.parent);
       },
       CallExpression(node) {
         invoke(node);
