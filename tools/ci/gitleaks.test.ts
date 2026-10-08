@@ -115,12 +115,13 @@ describe('scan inputs', () => {
       GIT_CONFIG_COUNT: '13',
       GIT_CONFIG_KEY_12: 'x',
       GIT_EXTERNAL_DIFF: 'cat',
+      GIT_CONFIG: 'x',
     });
     expect(env).toMatchObject({ HOME: '/h', GIT_INDEX_FILE: 'i', GIT_CONFIG_COUNT: '10' });
     expect(env).toMatchObject({ GIT_CONFIG_KEY_0: 'color.ui', GIT_CONFIG_VALUE_0: 'never' });
     expect(env).toMatchObject({ GIT_CONFIG_KEY_7: 'diff.external', GIT_CONFIG_VALUE_7: '' });
     expect(env).toMatchObject({ GIT_CONFIG_KEY_8: 'core.bigFileThreshold', GIT_CONFIG_VALUE_9: 'true' });
-    for (const k of ['GIT_CONFIG_PARAMETERS', 'GIT_CONFIG_KEY_12', 'GIT_EXTERNAL_DIFF'])
+    for (const k of ['GIT_CONFIG_PARAMETERS', 'GIT_CONFIG_KEY_12', 'GIT_EXTERNAL_DIFF', 'GIT_CONFIG'])
       expect(env[k]).toBeUndefined();
   });
 
@@ -283,22 +284,33 @@ describe('selftest', () => {
   it(
     'builds its repositories away from a repository the environment names',
     async () => {
-      // A git hook exports GIT_DIR and GIT_INDEX_FILE, absolute inside a worktree; the selftest must not follow them.
+      // A pre-push hook in a linked worktree exports its absolute git directory, which does not end in /.git.
       const named = mkdtempSync(join(tmpdir(), 'zq-gitleaks-named-'));
       dirs.push(named);
       const clean = { ...detachedEnv(process.env), ...identity };
-      spawnSync('git', ['init', '-q', named], { env: clean });
-      const leaky = {
-        ...clean,
-        GIT_DIR: join(named, '.git'),
-        GIT_INDEX_FILE: join(named, '.git', 'index'),
-        GIT_WORK_TREE: named,
-      };
-      const honest = withFake((found) => ({ code: found.length > 0 ? 1 : 0 }));
-      expect(await main(['selftest'], deps(fakeRoot(), honest, leaky).d)).toBe(0);
       const git = (...args: string[]) => spawnSync('git', args, { cwd: named, env: clean, encoding: 'utf8' });
-      expect(git('rev-parse', '--verify', '-q', 'HEAD').status).not.toBe(0);
+      git('init', '-q', '-b', 'main');
+      git(
+        '-c',
+        'user.name=t',
+        '-c',
+        'user.email=t@invalid',
+        'commit',
+        '-q',
+        '--allow-empty',
+        '-m',
+        'sentinel',
+      );
+      git('worktree', 'add', '-q', '--detach', join(named, 'linked'));
+      const gitDir = git('-C', join(named, 'linked'), 'rev-parse', '--absolute-git-dir').stdout.trim();
+      const refs = git('for-each-ref').stdout;
+      expect(refs).toMatch(/refs\/heads\/main/);
+      const leaky = { ...clean, GIT_DIR: gitDir, GIT_INDEX_FILE: join(gitDir, 'index') };
+      const honest = withFake((found) => ({ code: found.length > 0 ? 1 : 0 }));
+      const code = await main(['selftest'], deps(fakeRoot(), honest, leaky).d);
+      expect(git('for-each-ref').stdout).toBe(refs);
       expect(git('config', 'core.bare').stdout.trim()).toBe('false');
+      expect(code).toBe(0);
     },
     SLOW,
   );
