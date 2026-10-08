@@ -8,9 +8,12 @@
 // - Only IEEE-754 + - * / on doubles, int32 bit operations and a DataView for a double's two words; no Math
 //   function. ECMAScript rounds each operation to nearest, ties to even, with no fused multiply-add and no
 //   wider intermediate [sourced: ECMA-262, the Number type], so every engine returns the same bits.
-// - Departure from the C [our choice]: floating-point exception flags are not raised.
-// - Error over the 10,000 goldens of test/dmath.goldens.txt: at most 0.79 ulp, 1.54 ulp for tanh
-//   [measured]. Every function is O(1).
+// - Departures from the C, each [our choice]: exp(1) returns e correctly rounded, 2.718281828459045, as V8's
+//   port does [sourced: V8 12.4.254, src/base/ieee754.cc, exp], where e_exp.c's reduction gives one ulp
+//   above; floating-point exception flags are not raised.
+// - Error, a maximum seen and not a bound: over the 10,000 goldens of test/dmath.goldens.txt, 0.79 ulp, and
+//   1.54 ulp for tanh; over a sweep of 400,000 inputs against mpmath at 40 digits, 0.81 ulp, and 2.03 ulp
+//   (2.4e-16 relative) for tanh [measured]. Every function is O(1).
 //
 // Licence notice of the ported files, preserved as they require:
 // ====================================================
@@ -77,6 +80,7 @@ export function exp(x: number): number {
   let k = 0;
   if (hx > 0x3fd62e42) {
     if (hx < 0x3ff0a2b2) {
+      if (x === 1) return 2.718281828459045;
       hi = xsb === 0 ? x - LN2_HI : x + LN2_HI;
       lo = xsb === 0 ? LN2_LO : -LN2_LO;
       k = 1 - xsb - xsb;
