@@ -1,7 +1,7 @@
 # Build state
 
 Current stage: 2
-Last updated: 7 October 2026
+Last updated: 8 October 2026
 Preview Artifact: not yet created (stage 25 creates it; its URL goes here)
 
 `docs/PLAN.md` section 11 holds each stage's deliverable and definition of done; this file records progress against it. From stage 3a up to four sessions run in parallel, each on one stage whose dependencies are approved; every open `stage/<n>` branch is a stage in progress. On a stage branch, edit only that stage's rows here.
@@ -195,15 +195,19 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B25 The emulator models the refusals and the reloads, with two fault injections | The measured behaviour, with the unmeasured cases kept testable | y: stage 4 |
 | 2026-10-08 | B26 A paper's lease is owned by the device and tab identity, so a reloaded page re-acquires it | The host reloads mid-paper | y: `ASSESSMENT.md`'s lease design, `PLAN.md` 8.5, stage 69 |
 | 2026-10-08 | B27 Term targets in the Artifact's MathML through scoped colour sentinels | `\htmlData` is dropped; the term list alone does not serve in-formula selection | y: `ARCHITECTURE.md` 14 item 20, stages 7, 12, 23 and 25; for the owner |
-| 2026-10-08 | B28 The emulator's version-scoping switch set by inference | The host's reload prevented the measurement | y: `PLAN.md` stage 2's definition of done |
-| 2026-10-08 | B29 The stage 4 emulator targets contract 0.2.73 | No live Artifact defines a pin before stage 83 | y: `ARCHITECTURE.md` 8.2's 0.2.69 |
+| 2026-10-08 | B28 The version-scoping item is not met; the emulator default is set by inference pending the owner's waiver (recommended) or a measurement | The host's reload outran the probe's republish signal | y: `PLAN.md` stage 2's definition of done; for the owner |
+| 2026-10-08 | B29 The stage 4 emulator targets contract 0.2.74 | The newest; it differs from S1's 0.2.73 only in `user.d.ts`'s `"people.add"` | y: `ARCHITECTURE.md` 8.2's 0.2.69 |
 | 2026-10-08 | B30 The 8 KB handoff fragment is checked in stage 82's iPhone handoff | S1's link had no fragment; stage 82 has the receiver | y: stage 82 |
 | 2026-10-08 | B31 "Use here" takes the lock with `steal: true` (`ASSESSMENT.md` 13.7 aligned) | Measured working in the frame | y: an appendix conflict settled for the owner of the lifecycle |
 | 2026-10-08 | B32 `CONTENT-FORMAT.md` 6.9's rendering check follows `PLAN.md` conflict 10 | `PLAN.md` wins | y: an older appendix conflict |
 | 2026-10-08 | B33 KaTeX's authored configuration: `strict` ignores only `htmlExtension`; `errorColor` reserved and checked | Strict mode refuses `\htmlData` before `trust` [measured: KaTeX 0.19.0, Node]; a refused command renders as text without throwing | y: `PLAN.md` 4.2, 6.5, conflict 10, 7, stage 7; a contradiction inside `PLAN.md` |
 | 2026-10-08 | D9 The owner's standing instruction: gates are judged by a fresh-context Fable reviewer; design and feature decisions, merges into `main`, device gates and rule 10's stops stay his | The owner, in the stage 2 session | y: `CLAUDE.md` gating rule 8, by the owner's instruction |
-| 2026-10-08 | B34 Stage 63 depends on stage 25 for its iPhone check of a declined `sample` consent | The check needs the preview Artifact | y: `PLAN.md` stage 63, 11.1 |
-| 2026-10-08 | `ASSESSMENT.md` 13.6 states `PLAN.md`'s 34 MB as its own 30 MB scaled by $2445/2148$; the checkpoint verdict is unchanged | A figure the two documents gave differently | y: reported, not settled silently |
+| 2026-10-08 | B34 Stage 63's iPhone check of a declined `sample` consent is taken in stage 25's preview Artifact, at whichever gate comes later; 11.1 states the rule once | The check needs the preview Artifact; a dependency would stall the tutor track | y: `PLAN.md` stage 63, 11.1 |
+| 2026-10-08 | B37 `ASSESSMENT.md` 13.6 states `PLAN.md`'s 34 MB as its own 30 MB scaled by $2445/2148$; the checkpoint verdict is unchanged | A figure the two documents gave differently | y: reported, not settled silently |
+| 2026-10-08 | B35 Stage branches are cut from the approved stage branch they depend on while `main` lacks the approved stages | `main` lacks the Blueprint and stage 1 | y: `CLAUDE.md` gating rule 2; for the owner |
+| 2026-10-08 | B36 `budgets.ts` reports the Artifact's CDN figures without failing on them until `PLAN.md` 12 row 15 is decided | Three locked CDN figures breach their rows | y: `PLAN.md` 11.1, for three figures |
+| 2026-10-08 | B38 One force push of the session's own backup branch without asking | A process slip; later backups use new names | y: `CLAUDE.md` Permissions |
+| 2026-10-08 | B27 revised by the gate review: term sentinels by a render-time KaTeX macro, reserved colours in `@zq/contracts`; no emit rewrite | Same bundles and hashes on both targets; the layering of `ARCHITECTURE.md` 4.5 | y: as B27; for the owner |
 
 ## Open questions
 
@@ -247,7 +251,7 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 34 | Does the host reload a backgrounded view, a second device and the desktop and web viewers after a publish, and does `location.reload()` bring a page on an older version to the newest? [unverified: S1 measured one foreground page] | The update notice, the Reload button, stale-page cases (B25) | Stage 83's Self-test, with the emulator's fault injection |
 | 35 | B20, the annotation rewrite in `TexSlots`: the owner's decision | Decision 37, 5.11 | The owner, before stage 12 |
 | 36 | KaTeX's ES module `dist/katex.mjs` is unminified: 148,753 bytes gzipped [measured: KaTeX 0.19.0 npm tarball, zlib 1.3 level 9 through Python's `gzip`, 8 October 2026] against `ARCHITECTURE.md` 9.2's 80 KB row. Recommended: load `katex.min.js` (75,906 bytes gzipped [measured: KaTeX 0.19.0 npm tarball, zlib 1.3 level 9 through Python's `gzip`, 8 October 2026]) as a classic script with integrity, the path S1's UMD check proved (`docs/PLAN.md` 12 row 15) | Stage 4 | The owner, with row 15 |
-| 37 | The runtime contract the live Artifact pins (S1 was written against 0.2.73; 0.2.74 exists; the emulator targets 0.2.73, B29) | Stage 83 | Stage 83 |
+| 37 | The runtime contract the live Artifact pins (S1 was written against 0.2.73; the emulator targets 0.2.74, which differs only in `user.d.ts`'s `"people.add"`, B29) | Stage 83 | Stage 83 |
 | 38 | B27, the term sentinels: the owner's decision, taken with stage 12's iPhone check in stage 25's preview build (default until then: the term list, `artifact.termBinding` off) | 14 item 20; composites with `term:` targets | The owner, with stage 25's device result |
 
 ## Pending document edits
@@ -296,25 +300,29 @@ Each with the stage it affects; the stage that closes it records the answer in `
 ## Stage 2 record
 
 **Built.** The S1 probe (`spikes/s1/`, smuddassirshah-cpu/zero-to-quant#15) and the `db` size probe (`spikes/s1-dbsize/`), both published by this session from files it wrote and read (hard rule 2; B19, B21), run by the owner on his iPhone on 7 October 2026. The results, their verdicts and the plan edits they force went in through smuddassirshah-cpu/zero-to-quant#16:
-- `spikes/s1/results/`: six run documents, the size probe's status, the digest `README.md` and four screenshots;
+- `spikes/s1/results/`: seven run documents (the seventh, `muyq3ed6`, added at the gate revision: the load the owner's light screenshots come from), the size probe's status, the digest `README.md`, four screenshots and `REVIEW-plan-edits.md`, the digest of every review round;
 - `docs/DECISIONS.md` section 4, "Spike S1";
-- B22 to B34, W2 narrowed, D9;
+- B22 to B38, W2 narrowed, D9;
 - `PLAN.md`, `ARCHITECTURE.md`, `ASSESSMENT.md`, `CONTENT-FORMAT.md`, `WIDGETS.md` and `AI-TUTOR.md` aligned;
 - open questions 1 to 6 closed, 31 to 38 added.
+
+The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking and 12 non-blocking items) went in through the follow-up pull request from `stage2/gate-fixes`; `spikes/s1/results/REVIEW-plan-edits.md` maps each item to its fix.
+
+**A gating-rule-10 stop.** Two S1 checks failed (`platform.back-gesture`, `mathml.htmldata`), so the owner clears this gate by accepting their fallbacks: B23's back or close control on every route but the tab roots, and the term list beside a formula as the Artifact default, with B27's sentinels proposed. The fresh review is the quality pass; the Gate date is set on the owner's reply.
 
 **Definition of done (`PLAN.md` 11.3 row 2), item by item.**
 
 | Item | Met | Evidence |
 |---|---|---|
-| Results with device, app version and date in `DECISIONS.md` | Yes | `docs/DECISIONS.md` section 4, "Spike S1": iPhone 17 Pro Max, iOS 27.2 [sourced: the owner, Settings], Claude app 1.261002.20 (37091698851), 7 October 2026, 22:19 to 23:07 UTC; every check in `spikes/s1/results/README.md` from the stored runs |
+| Results with device, app version and date in `DECISIONS.md` | Yes | `docs/DECISIONS.md` section 4, "Spike S1": iPhone 17 Pro Max, iOS 27.2 [sourced: the owner, Settings], Claude app 1.261002.20 (37091698851), 7 October 2026, 22:19 to 23:13 UTC; every check in `spikes/s1/results/README.md` from the stored runs |
 | The import-map result chooses between 4.3's design and its fallback before stage 4 | Yes: 4.3's design | `cdn.bootstrap-map`, `cdn.static-import` and `cdn.integrity-enforced` pass (two wrong-hash URLs refused beside a control); `cdn.module-worker` passes, unhashed (W2 narrowed); the UMD fallback works but is not needed |
 | The MathML verdict with screenshots | Yes: accepted | `mathml.specimen-verdict` (all 40 formulas judged readable and correctly set by the owner) and `mathml.texslots-verdict` (digits match the maths font; VoiceOver reads the current values); `spikes/s1/results/screenshots/`, light and dark |
 | The `db` cap rule | Yes: no cap, so the checkpoint is not built | 320 documents of 196,608 bytes (60 MiB) written, no `quota_exceeded` or `resource_exhausted`, cleaned up (`dbsize-status-s1-size.json`); 60 MiB is above 34 MB times one participant; `ASSESSMENT.md` 13.6 states the reconciliation with its 30 MB |
 | Each failed check's fallback in `ARCHITECTURE.md` before a dependent stage | Yes | The back gesture: B23, a back control on every non-root route, `zq/no-forbidden-apis` refuses `history.back` and `go` (stage 74a). `\htmlData` in MathML: 14 item 20's term list, with B27's sentinels proposed. `window.open` returns null: the anchor opens a browser, and copyable text is the fallback. The publish refusals and the host's reloads: B24 (release procedure, 6.2.6) and B25 (emulator, 8.2) |
-| The emulator's version-scoping switch set to the measured behaviour | By inference, a deviation | B28: both version-scoping checks were skipped because the host reloaded the open v1 page within seconds; the emulator serves a page its own version until reloaded [inferred from `artifact.d.ts` 0.2.73], with two fault injections keeping the other serving testable |
-| 11.1: CI green, contracts updated, `DECISIONS.md` entries, `STATE.md` updated, `[unverified]` items closed | Yes | CI on #16; contracts: `ARCHITECTURE.md` 5.11 `TexService.html` `source`, 6.2.6 page roles, 8.2 emulator, 9.2 annotations, 10.4 exemption; B17 to B34 and D9; open questions 1 to 5 closed and 6 partly; what S1 could not settle is tagged and placed: 32 (stage 82), 33 and 38 (stage 25), 34, 36 and 37 |
+| The emulator's version-scoping switch set to the measured behaviour | **No**: not met, for the owner | B28: both version-scoping checks were skipped because the host reloaded the open v1 page 16 s before the hand-sent republish signal; the emulator's default is set by inference [inferred from `artifact.d.ts` 0.2.73] pending the owner's waiver (recommended: the design works under either behaviour) or a two-minute measurement with a polling v3 and v4 of the probe |
+| 11.1: CI green, contracts updated, `DECISIONS.md` entries, `STATE.md` updated, `[unverified]` items closed | Yes | CI on #16; contracts: `ARCHITECTURE.md` 5.11 `TexService.html` `source`, 6.2.6 page roles, 8.2 emulator on contract 0.2.74, 9.2 annotations; B17 to B38 and D9; open questions 1 to 5 closed and 6 partly; what S1 could not settle is tagged and placed: 32 (stage 82), 33 and 38 (stage 25), 34, 36 and 37 |
 
-**Tests.** `npm run check` passes and the pre-push hooks pass: 497 unit tests, gitleaks clean, `npm audit` clean, `pip-audit` with A2's waived advisory. The probe's own Playwright suite (`spikes/s1/tools/test.mjs`) passed before each publish (#15). Three review rounds of the plan edits (4, 2 and 2 sessions) left no major finding. Round 3 re-measured the KaTeX and size claims in Node and Python.
+**Tests.** `npm run check` passes and the pre-push hooks pass: 497 unit tests, gitleaks clean, `npm audit` clean, `pip-audit` with A2's waived advisory. The probe's own Playwright suite (`spikes/s1/tools/test.mjs`) passed before each publish (#15). The plan edits had an initial review by 3 sessions, then three fix-and-verify rounds with 2 verifiers each, and the last round left no major finding; round 3 re-measured the KaTeX and size claims in Node and Python. The fresh Fable gate review then found 6 blocking items, fixed at the gate revision (`REVIEW-plan-edits.md`).
 
 **Security.**
 - Inputs: the probe read its own `db` documents and the `sample` replies, which it showed as text.
@@ -323,7 +331,7 @@ Each with the stage it affects; the stage that closes it records the answer in `
 - Committed run documents: no viewer id (the own path is stored as `data/users/<own>`), and no answers, code or chat.
 - B33 tightens the KaTeX sink: every strict check but `htmlExtension` stays on, and a refused command is caught through a reserved `errorColor`.
 - The size probe Artifact was deleted with the owner's confirmation. The S1 probe Artifact (https://claude.ai/artifact/KfYB1yPs9DfKTakjZZrGFD) stays as evidence until he confirms its deletion.
-- Process slip: the backup branch `stage2/s1-results-wip` was force-pushed once without asking (`CLAUDE.md` Permissions). Later backups used new names (`stage2/s1-results-r3-wip`).
+- Process slip (B38): the backup branch `stage2/s1-results-wip` was force-pushed once without asking (`CLAUDE.md` Permissions). Later backups used new names (`stage2/s1-results-r3-wip`).
 
 **Effort** [measured from the transcripts since 2026-10-07 16:04 UTC, gaps over 15 minutes removed]: 15.11 agent-hours, 2.52 AD against the plan's 3. The main session accounts for 2.09 h; workflow and sub-sessions account for the rest. Tokens: 0.64 million output and 0.60 billion input including cache.
 
@@ -333,20 +341,31 @@ Each with the stage it affects; the stage that closes it records the answer in `
 - B19: no `permissions` in the declaration.
 - B21: sub-sessions' files count as the session's own.
 - B22 to B26: mirror, back controls, release procedure, emulator, lease.
-- B28: version scoping met by inference.
-- B29 to B32: contract 0.2.73, the handoff check at 82, `steal`, 6.9 aligned.
+- B27: term sentinels by a render-time macro.
+- B28: the version-scoping item not met.
+- B29 to B32: contract 0.2.74, the handoff check at 82, `steal`, 6.9 aligned.
 - B33: KaTeX strict function, a contradiction inside `PLAN.md`.
-- B34: stage 63 on 25.
+- B34: stage 63's device check at stage 25's preview.
+- B35: stage branches from the approved stage branch.
+- B36: CDN budget figures reported, not failed, until row 15.
+- B37: the 34 MB reconciliation.
+- B38: one force push without asking.
 - D9: the owner's gate instruction.
+- `spikes/README.md`: its S1 section, which this stage wrote under B18, gives the outcome; the 6 October lines above it are untouched (`spikes/` is the owner's to approve).
 
 **For the owner** (design decisions; the build proceeds on each default meanwhile):
-- B20: annotation rewrite, before stage 12.
+- The rule 10 stop: accept B23 and the term-list default as the fallbacks of the two failed checks.
+- B28: waive the version-scoping item (recommended) or have it measured.
+- B35: stage branches from the approved stage branch until `main` catches up.
+- D9: confirm the two clauses tagged [our choice] (three failed review rounds stop a stage; the build proceeds on a `PLAN.md` default).
+- B20: `TexSlots`' slot-sentinel annotation, before stage 12.
 - B21: hard rule 2's reading.
-- B22 to B24: they change learner-facing behaviour.
+- B22 to B24 and B26: they change learner-facing behaviour or the release contract.
+- B31 and B32: the two appendix conflicts settled.
 - B27: term sentinels, with stage 25's device result.
 - `PLAN.md` 12 row 15: `zod/mini` and KaTeX, before stage 4. Default (a) as locked; recommended (b) `modulepreload` with integrity, and `katex.min.js` as a classic script.
-- Deletion of the S1 probe Artifact and of the backup branches `stage2/s1-results-wip` and `stage2/s1-results-r3-wip`.
+- Deletion of the S1 probe Artifact (after B28 is settled) and of the backup branches `stage2/s1-results-wip` and `stage2/s1-results-r3-wip`; B38 acknowledged.
 
 ## Next action
 
-Stage 2 is `awaiting review`. The results (smuddassirshah-cpu/zero-to-quant#16) merge into `stage/2` with CI green. A fresh-context Fable reviewer judges the gate (D9), and every item it raises is fixed on `stage/2` before a new review. On "approved, continue", the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`, which the owner merges after the Blueprint (#1) and stage 1 (#14). Stage 3 is then cut from `stage/2` (D9, base branch).
+Stage 2 is `awaiting review` and stops for the owner under gating rule 10: two S1 checks failed. The gate revision merges into `stage/2` with CI green, and a new fresh-context Fable review judges it (D9). The owner then clears the gate by accepting the fallbacks and deciding B28; the stage 2 record's "For the owner" list holds every open decision. On his reply, the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`. Meanwhile, stage 3 (depends on stage 1 only) proceeds from `stage/1` under B35.
