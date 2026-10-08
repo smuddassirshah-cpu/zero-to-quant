@@ -9,6 +9,8 @@ This digest records every review round of smuddassirshah-cpu/zero-to-quant#16, w
 | 3 | round 2's 2 verifiers | 23 | 0 | 6 | 17 |
 | 3, verification | round 3's 2 verifiers | 22 | 0 | 7 | 15 |
 | Gate | 3 Fable reviewers and a judge | 18 | 6 | 12 | 0 |
+| Gate 2 | 3 Fable reviewers and a judge | 15 | 3 | 12 | 0 |
+| Gate 3 | 3 Fable reviewers and a judge | 12 | 0 | 12 | 0 |
 
 **Commits.** 395e5a5: PLAN and the appendices, rounds 1 and 2. c616038: B22 to B32, W2 narrowed, STATE open questions 1 to 6 closed and 31 to 37 added. 7978398: B33, B34 and round 2's DECISIONS and STATE residuals. 95157e4: round 3's decisions in PLAN and the appendices. ad076f8: round 3's verification, settled by the main session. 2543174: the stage record. #16 was squash-merged into `stage/2` as b89f21e. 3fda12b: the gate revision's records (STATE, DECISIONS, spikes).
 
@@ -111,7 +113,7 @@ Two verifiers (decisions and evidence; consistency, citations and writing) raise
 | Finding | Severity | Disposition |
 |---|---|---|
 | PLAN 681: a page left behind fails only once a further release removes the retained version | minor | Fixed |
-| STATE 98: the stage 63 row lacks 25 (both verifiers) | 2 minor | Fixed; moot after the gate reverted B34 |
+| STATE 98: the stage 63 row lacks 25 (both verifiers) | 2 minor | Fixed, then reverted with B34 at the gate; STATE's row itself was reverted only at the second gate revision |
 | DECISIONS 434: B25 pairs the tests with the second injection alone (minor here, a nit from the other verifier) | minor | Fixed |
 | ARCH 1363: reserved colour literals in `src/` against `zq/no-colour-literals` | minor | Fixed by an exemption for `src/engine/render/reserved.ts`; at the gate the colours moved to `@zq/contracts` and the exemption went |
 | ARCH 1360: `TexService.html` cannot ask for the untrusted configuration | minor | Fixed: a `source` argument, `authored` or `untrusted` |
@@ -152,3 +154,44 @@ After #16 merged with no review on the pull request, a fresh-context review on t
 | Reviewer 1: a poll from page load would take 10 or more readings | sub-claim | Refuted by the judge: the window was at most 4 s at 125 to 234 ms a fetch, so a handful; the finding stood |
 
 The judge's 11 owner decisions: the rule 10 stop, B28's waiver or measurement, B35, D9's two clauses, B27 and B20, B21, B22 with B24 and B26, row 15, B31 and B32, the deletions with B38, and open questions 15 and 37. The stage 2 record in STATE carries the first ten under "For the owner"; the last two stay among STATE's open questions.
+
+## Second gate review (fresh Fable, after #17)
+
+Three Fable reviewers and a judge read `stage/2` at 54cfb68 on 8 October 2026; the first attempt stopped at a session limit and was run again. Verdict "revise": 3 blocking, 12 non-blocking, no refuted blocking finding. Everything below was fixed in the second gate revision (smuddassirshah-cpu/zero-to-quant#19, from `stage2/gate-fixes-2`), except the `stage/3` item, which is smuddassirshah-cpu/zero-to-quant#20, merged into `stage/3` at 11:50 UTC.
+
+| Finding | Severity | Disposition |
+|---|---|---|
+| STATE's stage 63 row still depends on 25; this digest called it fixed | blocking | STATE row reverted to 60, 61, 62; the row above corrected |
+| STATE's Next action says stage 3 runs from `stage/1`; `stage/3` was cut from `stage/2` before an approving verdict | blocking | Next action states the fact; B39 and the early start in the record's Deviations and "For the owner"; B39's condition on `stage/3` corrected by #20 (merged 11:50 UTC) |
+| PLAN 10 says `@zq/contracts` is "types only" while 6.5 puts a runtime module there | blocking | PLAN 10's tree line names the KaTeX module; B27's Deviation and the record name the tree change, for the owner |
+| DECISIONS gives the S1 window as ending 23:07 | non-blocking | 22:19 to 23:13 UTC, the size probe 22:39 to 23:07 |
+| B25 names contract 0.2.73 | non-blocking | 0.2.74 (B29, revised) |
+| STATE's B27 row names stage 23; PLAN 11.1's iPhone list lacks 9a and 12 | non-blocking | Stages 7, 12 and 25; 9a and 12 added |
+| The record says open question 6 closed, omits B20, cites CI on #16 only | non-blocking | Corrected |
+| The results README overstates muyocrk9's tapped checks and leaves the dark screenshot's run open | non-blocking | 11 of 13 tapped; `muyo87q6` from its 36 ms check |
+| #17 merged without a review of its own diff | non-blocking | B41; every pull request since gets one |
+| The stage's effort was not re-measured | non-blocking | Re-measured to the start of stage 3 and through both gate reviews (STATE) |
+| `zq check` cannot import the authored KaTeX configuration; no stage builds `TexService` before stage 12 needs `TexSlots` | non-blocking | B42: `katexOptions` in `@zq/contracts`' KaTeX module; stage 12 builds `TexService`, `Tex` and `TexSlots`; stage 23 builds `Prose` on them |
+| B27's $k$ is unspecified | non-blocking | $k$ is the term's index in `terms(src)`, distinct term ids in order of first appearance; more than 256 is a `zq check` error; "until stage 23's Artifact output exists" became "until stage 23's content bundles exist" |
+| Row 15 sets no gate for after the decision | non-blocking | Row 15 states the gate each option implies; B36's report mode ends at the decision |
+| Step 4's `path` read of the live page is assumed byte-identical | non-blocking | The previous page comes from the previous tag's rebuild, checked against the ledger; the read is a cross-check, [unverified], settled at stage 83 |
+| `artifact.termBinding` would be on in every later preview | non-blocking | `zq preview --artifact --term-binding`, for stage 12's check only |
+
+## Third gate review (fresh Fable, after #19)
+
+Three Fable reviewers and a judge read `stage2/gate-fixes-2` at 9e11ab0 before its merge, so the review was also #19's own second-session review (recorded on #19). Verdict **"approved, continue"** as the quality pass: no blocking finding, 12 non-blocking. Stage 2 remains a gating-rule-10 stop for the owner. All 12 were fixed in the third gate revision, the pull request from `stage2/gate-fixes-3`.
+
+| Finding | Disposition |
+|---|---|
+| No stage builds `@zq/contracts`' KaTeX module | Stage 3 builds it once the owner accepts its place (B42); stage 3's row, E1, E4 and E5 updated |
+| "The same object" is wrong: KaTeX writes `\gdef` definitions into the `macros` it is given | A fresh options object with copied `macros` per call; `\gdef`, `\xdef` and `\global` are `zq check` errors |
+| `terms(src)` misses anchors a shared macro expands to | `\htmlData` produced by any macro (shared, `\newcommand`, `\renewcommand`, `\def`) is a `zq check` error, recorded in B42 (widened by the review of #21) |
+| The effort line does not add up | 18.8 agent-hours, 3.1 AD |
+| B35 says stage 3 was cut from `stage/1` | B35 says it was to be, and points to B39 |
+| The stage 2 record is a revision behind | Second revision and #20 recorded; CI on #16, #17 and #19; B41 and B42; B20 in order |
+| "With SRI" overstates the probe's hash checks | SRI on the import map (the cdnjs candidates included) and the UMD scripts; the worker imports unchecked (W2) |
+| The `--term-binding` sentence breaks ARCH 6.5's bullet | Reordered; the flag is the build-time define `__TERM_BINDING__`, named in 11.4 |
+| B41 cites #18, which shows no review | Corrected; reviews are now posted on their pull requests (#19, #20) |
+| Who implements `DraftStore.mirror` | Stage 4 in the Artifact adapter and the fake, with a conformance test; stage 10a wires `commit` and owns the reload test |
+| This digest's table and #20 attribution | Rows for gates 2 and 3; #20 named |
+| STATE's Gate legend | The owner's reply or, under D9, the fresh reviewer's verdict; a rule 10 stop records the owner's reply |
