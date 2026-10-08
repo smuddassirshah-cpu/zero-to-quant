@@ -159,6 +159,15 @@ const layers = [
     deny: ['npm:**'],
     note: unlisted,
   },
+  // ARCHITECTURE.md 4.3: contracts import no other package; mathcore imports only contracts, and no npm
+  // package or Node builtin, so it runs unchanged in Node and the browser [our choice].
+  { name: 'packages/contracts', files: ['packages/contracts/**'], allow: ['packages/contracts/**'] },
+  {
+    name: 'packages/mathcore',
+    files: ['packages/mathcore/**'],
+    allow: ['packages/mathcore/**', 'packages/contracts/**'],
+    deny: ['npm:**'],
+  },
   { name: 'packages/*', files: ['packages/*/**'], allow: ['packages/**'], deny: ['src/**', 'tools/**'] },
   {
     name: 'tools/zq',
