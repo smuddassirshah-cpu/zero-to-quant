@@ -7,20 +7,30 @@ without reading the TypeScript (CLAUDE.md hard rule 4). Decision notes:
   [sourced: lines 241 and 244 (multipliers), 255 and 258 (Weyl increments), 295 to 305 (round), 307 to 312
   (key bump), 323 to 334 (ten rounds, the key bumped before every round after the first)]. The SC11 paper
   gives the same values [recalled].
-- hash32 writes a number part as JavaScript's String(n), ECMA-262's Number::toString [sourced: tc39/ecma262
-  spec.html at 6db9135, sec-numeric-types-number-tostring]. That is str(int(n)) below 2^53 but not always
-  above it: String(2 ** 54 + 8) is "18014398509481990" and String(2 ** 64) is "18446744073709552000"
-  [measured: Node 22.22.0]. Python's repr gives the same shortest round-trip digits [recalled: both choose
-  the shortest digits that round to n and, among those, the closest].
+- hash32 takes a number part only when it is a safe integer, |n| <= 2^53 - 1, and writes it as str(int(n)),
+  which is JavaScript's String(n) there. Any other number (a fraction, |n| >= 2^53, NaN, an infinity) is the
+  spec's RangeError, because above 2^53 ECMA-262's normative Number::toString does not always fix the last
+  digit (only its non-normative Note 2 does) [sourced: tc39/ecma262 spec.html at 6db9135,
+  sec-numeric-types-number-tostring].
+- A str holds code points, and json.loads joins an escaped surrogate pair into one code point exactly as
+  JSON.parse's UTF-16 does [measured: CPython 3.12.15 and Node 22.22.0], so a surrogate code point in a str
+  decoded from JSON is one that JavaScript also sees unpaired. hash32 lets the strict UTF-8 codec reject it:
+  UnicodeEncodeError, a ValueError subclass, is raised for exactly U+D800 to U+DFFF and nothing else, which is
+  the spec's rule, at no cost beyond the encoding hash32 does anyway. An explicit check was rejected as a
+  second scan.
 - normal uses correctly rounded ln and cos: mpmath at 50 digits, then rounded to the nearest double through
   Fraction, whose float() rounds correctly [recalled]; the tests check each rounding on the golden inputs
   against a 100-digit reference. The TypeScript uses dmath, so normal goldens carry r for the spec's bound
   of 1e-14 max(1, r).
-- Errors: each RangeError of the spec is ValueError here, as is hash32's error for a non-integer or non-finite
-  number part; a value of a type the TypeScript signatures exclude (a bool, None, a list) is TypeError.
+- Errors: each RangeError of the spec is ValueError here (UnicodeEncodeError for a lone surrogate); a value
+  of a type the TypeScript signatures exclude (a bool, None, a list) is TypeError.
 
 Goldens and the known-answer file live in packages/mathcore/test/. A golden line's `kind` is one of:
-- hash32: `parts` (strings and numbers; -0.0 reads back as -0 in JSON.parse) and the unsigned `hash`;
+- hash32: `parts` (strings and numbers; -0.0 reads back as -0 in JSON.parse) and either the unsigned `hash`
+  or `error`, which is always "RangeError": the TypeScript must throw a RangeError for those parts. Error
+  lines hold number parts that are not safe integers and string parts with a lone surrogate, which the file
+  writes as a \\uXXXX escape that JSON.parse reads back as one unpaired code unit. NaN and the infinities have
+  no JSON form, so the TypeScript tests those RangeErrors directly;
 - draw: `seed`, the stream `path` (rng(path[0]).fork(path[1])...), its `key`, index `j`, draw j's `words` [u, v]
   and `at`, the double's exact hexadecimal (float.hex);
 - int: eight int(lo, hi) calls of size `n` on a fresh stream, each [lo, hi, value, position after];
@@ -39,8 +49,8 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from collections.abc import Iterator, Sequence
-from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
 
@@ -92,26 +102,12 @@ def _integer(x: object, lo: int, hi: int, what: str) -> int:
 
 
 def js_string(n: int | float) -> str:
-    """String(n) for a number part: n must equal a finite integral double, else ValueError."""
+    """String(n) for a number part, which must be a safe integer (|n| <= 2^53 - 1), else ValueError."""
     if isinstance(n, bool) or not isinstance(n, (int, float)):
         raise TypeError(f"a hash32 part must be a str or a number, not {type(n).__name__}")
-    try:
-        x = float(n)
-    except OverflowError:
-        raise ValueError(f"no double equals the part {n}") from None
-    if not x.is_integer() or x != n:
-        raise ValueError(f"the number part {n!r} is not an integral double")
-    if abs(x) < TWO53:
-        return str(int(x))  # every digit is determined below 2^53, and -0 is written 0
-    sign = "-" if x < 0 else ""
-    _, digits, exponent = Decimal(repr(abs(x))).normalize().as_tuple()
-    s = "".join(map(str, digits))
-    k = len(s)
-    point = k + int(exponent)  # Number::toString's n: the value is 0.s times 10^point
-    if point <= 21:
-        return sign + s + "0" * (point - k)
-    mantissa = s if k == 1 else f"{s[0]}.{s[1:]}"
-    return f"{sign}{mantissa}e+{point - 1}"
+    if not (isinstance(n, int) or n.is_integer()) or abs(n) > SAFE:  # NaN fails both tests
+        raise ValueError(f"the number part {n!r} is not a safe integer")
+    return str(int(n))  # -0.0 is written 0
 
 
 def fnv1a32(data: bytes) -> int:
@@ -122,8 +118,8 @@ def fnv1a32(data: bytes) -> int:
 
 
 def hash32(*parts: Part) -> int:
-    """32-bit FNV-1a over the UTF-8 bytes of the parts joined by U+001F. A lone surrogate has no UTF-8 form
-    and raises UnicodeEncodeError, a ValueError."""
+    """32-bit FNV-1a over the UTF-8 bytes of the parts joined by U+001F. A str holds code points, so a surrogate
+    in it is never half of a pair: it has no UTF-8 form and raises UnicodeEncodeError, a ValueError."""
     return fnv1a32(SEPARATOR.join(p if isinstance(p, str) else js_string(p) for p in parts).encode("utf-8"))
 
 
@@ -236,6 +232,7 @@ HASH_CASES: tuple[tuple[Part, ...], ...] = (
     ("π", "ß"),
     ("中文", "", "日本"),
     ("🎲", "\x00"),
+    ("\ud7ff\ue000", "\uffff\U00010000\U0010ffff"),  # the code points either side of the surrogates, and the ends
     (0,),
     (-0.0,),
     (1,),
@@ -248,7 +245,16 @@ HASH_CASES: tuple[tuple[Part, ...], ...] = (
     (TWO32,),
     (SAFE,),
     (-SAFE,),
+    ("lsn.cond.shrinking-sample-space", "s3"),
+    ("gen.dice-sum", 4),
+    ("att.0001", 2, 0),
+    (MASK, "row:3"),
+)
+# Parts that make hash32 a RangeError. Never put a high surrogate directly before a low one in one string here:
+# the file would escape them as a pair, which both JSON readers join into one valid code point.
+HASH_ERRORS: tuple[tuple[Part, ...], ...] = (
     (TWO53,),
+    (-TWO53,),
     (TWO53 + 2,),
     (2**54 + 4,),
     (2**54 + 8,),
@@ -260,10 +266,20 @@ HASH_CASES: tuple[tuple[Part, ...], ...] = (
     (-1e21,),
     (2.0**70,),
     (1e300,),
-    ("lsn.cond.shrinking-sample-space", "s3"),
-    ("gen.dice-sum", 4),
-    ("att.0001", 2, 0),
-    (MASK, "row:3"),
+    (0.5,),
+    (-1.5,),
+    (2**52 - 0.5,),  # the largest double that is a fraction, which a magnitude test alone accepts
+    (5e-324,),
+    ("gen.dice-sum", 4.5),
+    ("\ud800",),
+    ("\udfff",),
+    ("a\ud83c",),  # a high surrogate at the end
+    ("\udfb2a",),  # a low surrogate at the start
+    ("\udfb2\ud83c",),  # low before high is no pair
+    ("\ud83c\U0001f3b2",),  # a high surrogate before a valid pair
+    ("\U0001f3b2\udfb2",),  # a valid pair before a low surrogate
+    ("ok", "\ud800"),
+    ("\ud83c", "\udfb2"),  # a pair split across parts: U+001F stands between its halves
 )
 
 
@@ -300,9 +316,20 @@ def _sequence(rng: Rng) -> list[list[object]]:
     return ops
 
 
+def _range_error(parts: Sequence[Part]) -> str:
+    """The golden `error` for parts that the spec makes a RangeError; a hash here is a bug, so it raises."""
+    try:
+        h = hash32(*parts)
+    except ValueError:
+        return "RangeError"
+    raise AssertionError(f"hash32{tuple(parts)!r} is {h}, where the spec throws RangeError")
+
+
 def goldens() -> Iterator[dict[str, object]]:
     for parts in HASH_CASES:
         yield {"kind": "hash32", "parts": list(parts), "hash": hash32(*parts)}
+    for parts in HASH_ERRORS:
+        yield {"kind": "hash32", "parts": list(parts), "error": _range_error(parts)}
     for seed in SEEDS:
         for path in PATHS:
             rng = stream(seed, path)
@@ -319,9 +346,17 @@ def goldens() -> Iterator[dict[str, object]]:
             yield {"kind": "sequence", **head, "ops": _sequence(stream(seed, path))}
 
 
+SURROGATE = re.compile("[\ud800-\udfff]")
+
+
+def _json_line(case: dict[str, object]) -> str:
+    """The case as one JSON line, text as UTF-8 except surrogates, which UTF-8 cannot hold: those are \\uXXXX."""
+    return SURROGATE.sub(lambda m: f"\\u{ord(m[0]):04x}", json.dumps(case, ensure_ascii=False)) + "\n"
+
+
 def render() -> str:
     """JSON Lines, one case per line, so a changed case is a one-line diff."""
-    return "".join(json.dumps(case, ensure_ascii=False) + "\n" for case in goldens())
+    return "".join(map(_json_line, goldens()))
 
 
 def main() -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Callable
 
@@ -86,37 +87,91 @@ def test_hash32_joins_parts_with_unit_separator() -> None:
         (-0.0, "0"),
         (7.0, "7"),
         (-1, "-1"),
-        (2**53, "9007199254740992"),
-        (2**53 + 2, "9007199254740994"),
-        # From 2^54 the shortest digits can differ from the exact ones; 2^54 + 8 is the first integral double
-        # where they do [measured: Node over [2^54, 2^54 + 2^24); inferred for [2^53, 2^54), where a shorter
-        # candidate is a multiple of 10 at least 2 away and half the spacing is 1]. 2^54 + 4 and 2^54 + 8 are
-        # both 2 from 18014398509481990, a tie that rounds half to even onto 2^54 + 8 only.
-        (2**54 + 4, "18014398509481988"),
-        (2**54 + 8, "18014398509481990"),
-        (2**55, "36028797018963970"),
-        (2**57, "144115188075855870"),
-        (2**59, "576460752303423500"),
-        (2**64, "18446744073709552000"),
-        (123456789012345680, "123456789012345680"),
-        (999999999999999900000.0, "999999999999999900000"),
-        (1e21, "1e+21"),
-        (-1e21, "-1e+21"),
-        (2.0**70, "1.1805916207174113e+21"),
-        (1e300, "1e+300"),
-        (1.5e300, "1.5e+300"),
-        (2.0**1023, "8.98846567431158e+307"),
+        (2**31, "2147483648"),
+        (R.MASK, "4294967295"),
+        (R.SAFE, "9007199254740991"),
+        (-R.SAFE, "-9007199254740991"),
+        (float(R.SAFE), "9007199254740991"),
     ],
 )
-def test_number_parts_are_written_as_javascripts_string(n: int | float, text: str) -> None:
+def test_safe_integer_parts_are_written_as_javascripts_string(n: int | float, text: str) -> None:
     assert R.js_string(n) == text
     assert R.hash32(n) == R.hash32(text)
 
 
-@pytest.mark.parametrize("part", [0.5, -1e-300, math.inf, -math.inf, math.nan, 2**64 + 1, 10**400, "\ud800"])
-def test_hash32_rejects_parts_with_no_integral_double_or_no_utf8(part: object) -> None:
-    with pytest.raises(ValueError):
-        R.hash32("x", part)  # type: ignore[arg-type]
+UNSAFE = [
+    *(sign * n for sign in (1, -1) for n in (2**53, 2**53 + 1, 2**53 + 2, 2**54 + 8, 2**64, 2**64 + 1, 10**400)),
+    *(sign * x for sign in (1.0, -1.0) for x in (2.0**53, 1e21, 2.0**70, 1e300, 2.0**1023, math.inf)),
+    0.5, -1.5, 2**52 - 0.5, 5e-324, -1e-300, math.nan,  # 2^52 - 1/2 is the largest double that is a fraction
+]
+
+
+@pytest.mark.parametrize("part", UNSAFE)
+def test_a_number_part_that_is_not_a_safe_integer_is_a_range_error(part: int | float) -> None:
+    with pytest.raises(ValueError, match="not a safe integer"):
+        R.hash32("x", part)
+
+
+@given(st.one_of(st.integers(-(2**55), 2**55), st.floats()), st.lists(NAME, max_size=2))
+def test_a_number_part_is_accepted_exactly_when_it_is_a_safe_integer(n: int | float, rest: list[str]) -> None:
+    if (isinstance(n, int) or n.is_integer()) and abs(n) <= R.SAFE:
+        assert R.js_string(n) == str(int(n)) and float(R.js_string(n)) == n
+        assert R.hash32(n, *rest) == R.hash32(str(int(n)), *rest)
+    else:
+        with pytest.raises(ValueError):
+            R.hash32(n, *rest)
+
+
+LONE_SURROGATES = [p for p in R.HASH_ERRORS if any(isinstance(x, str) and R.SURROGATE.search(x) for x in p)]
+
+
+@pytest.mark.parametrize("parts", LONE_SURROGATES)
+def test_a_lone_surrogate_is_a_unicode_encode_error_which_is_a_value_error(parts: tuple[str, ...]) -> None:
+    with pytest.raises(UnicodeEncodeError, match="surrogates not allowed"):
+        R.hash32(*parts)
+    assert issubclass(UnicodeEncodeError, ValueError)
+
+
+def test_the_code_points_beside_the_surrogates_hash_as_their_utf8_bytes() -> None:
+    # RFC 3629's encodings of U+D7FF, U+E000, U+FFFF, U+10000 and U+10FFFF, written out by hand.
+    utf8 = b"\xed\x9f\xbf\xee\x80\x80\x1f\xef\xbf\xbf\xf0\x90\x80\x80\xf4\x8f\xbf\xbf"
+    assert R.hash32("\ud7ff\ue000", "\uffff\U00010000\U0010ffff") == R.fnv1a32(utf8)
+
+
+@pytest.mark.parametrize(
+    ("text", "code_points"),
+    [  # JSON.parse in Node 22.22.0 gives the same code points [measured, 8 October 2026]
+        (r'"\ud83c\udfb2"', [0x1F3B2]),
+        (r'"\udfb2\ud83c"', [0xDFB2, 0xD83C]),
+        (r'"\ud83c\ud83c\udfb2"', [0xD83C, 0x1F3B2]),
+        (r'"\ud800"', [0xD800]),
+    ],
+)
+def test_json_joins_an_escaped_surrogate_pair_as_utf16_does(text: str, code_points: list[int]) -> None:
+    """So a surrogate code point left in a decoded str is unpaired in JavaScript too."""
+    assert list(map(ord, json.loads(text))) == code_points
+
+
+def golden_lines() -> list[dict[str, object]]:
+    return [json.loads(line) for line in R.GOLDEN.read_text(encoding="utf-8").splitlines()]
+
+
+def test_every_golden_line_reads_back_as_the_case_it_was_written_from() -> None:
+    assert golden_lines() == list(R.goldens())
+
+
+def test_the_golden_hash32_lines_read_back_as_hashes_and_range_errors() -> None:
+    lines = [case for case in golden_lines() if case["kind"] == "hash32"]
+    assert [case["parts"] for case in lines] == [list(p) for p in R.HASH_CASES + R.HASH_ERRORS]
+    for case in lines:
+        parts = case["parts"]
+        assert isinstance(parts, list)
+        if "hash" in case:
+            assert R.hash32(*parts) == case["hash"]
+        else:
+            assert case["error"] == "RangeError"
+            with pytest.raises(ValueError):
+                R.hash32(*parts)
 
 
 @pytest.mark.parametrize("part", [True, None, b"a", [1]])
@@ -129,12 +184,6 @@ def test_hash32_rejects_parts_of_other_types(part: object) -> None:
 def test_an_integer_part_hashes_as_its_decimal(n: int, rest: list[str]) -> None:
     h = R.hash32(n, *rest)
     assert 0 <= h <= R.MASK and h == R.hash32(str(n), *rest) == R.hash32(float(n), *rest)
-
-
-@given(st.floats(allow_nan=False, allow_infinity=False).filter(float.is_integer))
-def test_the_written_number_reads_back_as_the_same_double(x: float) -> None:
-    text = R.js_string(x)
-    assert float(text) == x and ("e" in text) == (abs(x) >= 1e21)
 
 
 @pytest.mark.parametrize("seed", [-1, R.TWO32, 0.5, math.nan, math.inf])
