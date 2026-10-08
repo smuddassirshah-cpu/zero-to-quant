@@ -9,7 +9,7 @@ import {
   type ParseFailure,
   type ParsedNumber,
 } from '@zq/mathcore/num-parse';
-import { add, neg, rat, terminates, toString, type Rational } from '@zq/mathcore/rational';
+import { add, neg, rat, spell, terminates, type Rational } from '@zq/mathcore/rational';
 
 interface Golden {
   in: string;
@@ -29,7 +29,7 @@ function plain(input: string, units: readonly string[] = []): Record<string, unk
 }
 const spelled = ({ typed, ...r }: ParsedNumber): Record<string, unknown> => ({
   ...r,
-  value: toString(r.value),
+  value: spell(r.value),
   typed: typed && { whole: String(typed.whole), n: String(typed.n), d: String(typed.d) },
 });
 
@@ -217,7 +217,7 @@ describe("the parser's inverse", () => {
     (form: NumForm) =>
     (a: Rational): void => {
       const text = formatNumber(a, form);
-      expect(plain(text), text).toMatchObject({ ok: true, form, value: toString(a) });
+      expect(plain(text), text).toMatchObject({ ok: true, form, value: spell(a) });
     };
 
   it('writes en-GB: grouping commas and a true minus', () => {
