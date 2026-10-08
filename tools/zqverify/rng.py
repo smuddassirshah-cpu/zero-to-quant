@@ -8,12 +8,14 @@ without reading the TypeScript (CLAUDE.md hard rule 4). Decision notes:
   (key bump), 323 to 334 (ten rounds, the key bumped before every round after the first)]. The SC11 paper
   gives the same values [recalled].
 - hash32 writes a number part as JavaScript's String(n), ECMA-262's Number::toString [sourced: tc39/ecma262
-  spec.html at 6db9135, sec-numeric-types-number-tostring]. That is str(int(n)) only below 2^53:
-  String(2 ** 64) is "18446744073709552000". Python's repr gives the same shortest round-trip digits
-  [recalled: both choose the shortest digits that round to n and, among those, the closest].
+  spec.html at 6db9135, sec-numeric-types-number-tostring]. That is str(int(n)) below 2^53 but not always
+  above it: String(2 ** 54 + 8) is "18014398509481990" and String(2 ** 64) is "18446744073709552000"
+  [measured: Node 22.22.0]. Python's repr gives the same shortest round-trip digits [recalled: both choose
+  the shortest digits that round to n and, among those, the closest].
 - normal uses correctly rounded ln and cos: mpmath at 50 digits, then rounded to the nearest double through
-  Fraction, whose float() rounds correctly [recalled]. The TypeScript uses dmath, so normal goldens carry r
-  for the spec's bound of 1e-14 max(1, r).
+  Fraction, whose float() rounds correctly [recalled]; the tests check each rounding on the golden inputs
+  against a 100-digit reference. The TypeScript uses dmath, so normal goldens carry r for the spec's bound
+  of 1e-14 max(1, r).
 - Errors: each RangeError of the spec is ValueError here, as is hash32's error for a non-integer or non-finite
   number part; a value of a type the TypeScript signatures exclude (a bool, None, a list) is TypeError.
 
@@ -23,8 +25,11 @@ Goldens and the known-answer file live in packages/mathcore/test/. A golden line
   and `at`, the double's exact hexadecimal (float.hex);
 - int: eight int(lo, hi) calls of size `n` on a fresh stream, each [lo, hi, value, position after];
 - normal: twelve normal() calls on a fresh stream, each [value, r] in hexadecimal, r = sqrt(-2 ln(1 - u1));
+  each value is compared within the spec's normal tolerance, 1e-14 max(1, r), using the r beside it;
 - sequence: next, at, int and normal calls in turn on one fresh stream, each [name, arguments..., results...,
-  position after], which pins the position rules.
+  position after], which pins the position rules. A normal op, ["normal", value, r, position after], follows
+  the normal rule: its value is compared within 1e-14 max(1, r) using the r it carries. Every other entry of
+  a sequence line, the positions included, is compared exactly.
 From the repository root, rewrite the goldens with:
 
     PYTHONPATH=tools uv run --project tools/py --locked python -m zqverify.rng
@@ -245,6 +250,10 @@ HASH_CASES: tuple[tuple[Part, ...], ...] = (
     (-SAFE,),
     (TWO53,),
     (TWO53 + 2,),
+    (2**54 + 4,),
+    (2**54 + 8,),
+    (2**57,),
+    (2**59,),
     (2**64,),
     (123456789012345680,),
     (1e21,),

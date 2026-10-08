@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
+import mpmath
 import pytest
 from hypothesis import given, strategies as st
+from mpmath import libmp
 
 from zqverify import rng as R
 
@@ -85,6 +88,15 @@ def test_hash32_joins_parts_with_unit_separator() -> None:
         (-1, "-1"),
         (2**53, "9007199254740992"),
         (2**53 + 2, "9007199254740994"),
+        # From 2^54 the shortest digits can differ from the exact ones; 2^54 + 8 is the first integral double
+        # where they do [measured: Node over [2^54, 2^54 + 2^24); inferred for [2^53, 2^54), where a shorter
+        # candidate is a multiple of 10 at least 2 away and half the spacing is 1]. 2^54 + 4 and 2^54 + 8 are
+        # both 2 from 18014398509481990, a tie that rounds half to even onto 2^54 + 8 only.
+        (2**54 + 4, "18014398509481988"),
+        (2**54 + 8, "18014398509481990"),
+        (2**55, "36028797018963970"),
+        (2**57, "144115188075855870"),
+        (2**59, "576460752303423500"),
         (2**64, "18446744073709552000"),
         (123456789012345680, "123456789012345680"),
         (999999999999999900000.0, "999999999999999900000"),
@@ -258,13 +270,51 @@ def test_int_stays_in_range_and_consumes_a_draw(seed: int, lo: int, n: int) -> N
     assert lo <= rng.int(lo, hi) <= hi and rng.position >= 1
 
 
-def test_ln_and_cos_are_correctly_rounded() -> None:
+def _rounded_at_100_digits(f: Callable[[mpmath.mpf], mpmath.mpf], x: float) -> tuple[float, float]:
+    """f(x) at 100 digits, rounded half to even by mpmath's own 53-bit rounding (not rng.py's Fraction route),
+    and the 100-digit value's distance in ulps from the midpoint between that double and its neighbour on the
+    value's side. The 100-digit value is within about 1e-83 ulp of f(x) [recalled: mpmath evaluates log and cos
+    to its working precision], so a distance far above that makes the double the correct rounding of f(x)."""
+    with mpmath.workdps(100):
+        v = f(mpmath.mpf(x))
+        d = libmp.to_float(v._mpf_, rnd=libmp.round_nearest)
+        other = mpmath.mpf(math.nextafter(d, math.inf if v > d else -math.inf))
+        return d, float(abs(v - (d + other) / 2) / abs(other - d))
+
+
+def _box_muller_inputs() -> tuple[list[float], list[float]]:
+    """Every argument the goldens pass to ln and cos, recorded while render() runs."""
+
+    def recording(f: Callable[[float], float], xs: list[float]) -> Callable[[float], float]:
+        def record(x: float) -> float:
+            xs.append(x)
+            return f(x)
+
+        return record
+
+    ln_xs: list[float] = []
+    cos_xs: list[float] = []
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(R, "ln", recording(R.ln, ln_xs))
+        mp.setattr(R, "cos", recording(R.cos, cos_xs))
+        R.render()
+    return ln_xs, cos_xs
+
+
+def test_ln_and_cos_round_correctly_on_every_golden_input_and_a_grid() -> None:
     assert R.ln(1.0) == 0.0 and R.cos(0.0) == 1.0
     assert R.ln(0.5) == -0.6931471805599453 and R.cos(R.TAU / 4) == 6.123233995736766e-17
-    for x in (2.0**-53, 1e-300, 0.1, 0.75, 1 - 2.0**-53):
-        assert abs(R.ln(x) - math.log(x)) <= math.ulp(math.log(x))
-    for x in (0.1, 1.0, 3.0, R.TAU - 2.0**-50, 6.0):
-        assert abs(R.cos(x) - math.cos(x)) <= math.ulp(math.cos(x))
+    golden_ln, golden_cos = _box_muller_inputs()
+    assert len(golden_ln) == len(golden_cos) == 56  # 48 normal values and 8 sequence normals
+    us = [R.SeedSource(5).rng("grid").at(j) for j in range(256)]
+    edges = [2.0**-53, 1e-300, 0.1, 0.75, 1 - 2.0**-53, 1.0, 3.0, R.TAU / 4, R.TAU - 2.0**-50, 6.0]
+    for f, mine, xs in (
+        (mpmath.log, R.ln, golden_ln + edges + [1 - u for u in us]),
+        (mpmath.cos, R.cos, golden_cos + edges + [R.TAU * u for u in us]),
+    ):
+        for x in xs:
+            d, margin = _rounded_at_100_digits(f, x)
+            assert margin > 1e-60 and mine(x) == d, (f, x)
 
 
 def test_box_muller_at_u1_zero_follows_ieee_signed_zeros() -> None:
