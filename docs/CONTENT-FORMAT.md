@@ -1264,7 +1264,7 @@ Replay closes the gap between "the answer is right" and "the app will accept the
 
 ### 6.9 Rendering, widgets and accessibility
 
-- **KaTeX:** every formula renders with `throwOnError: true`, `strict: 'error'`, `trust: false` and the shared macros. KaTeX does not catch letters that should have been a command, which is why the control-character lint exists (section 2.1).
+- **KaTeX:** every formula renders with `throwOnError: true`, `strict: 'error'`, `trust: false` and the shared macros. KaTeX does not catch letters that should have been a command, which is why the control-character lint exists (section 2.1). An authored colour in the reserved term-sentinel range (`#0a00` followed by two hex digits) is an error, because the Artifact build rewrites each `\htmlData{term=<k>}` anchor to a `\textcolor` from that range (`ARCHITECTURE.md` 14 item 20; proposed for the owner, `docs/DECISIONS.md` B27).
 - **Widgets:** each config validates against the widget module's exported schema at its pinned `v`; the check kind is one the widget's `answerTypes` can produce; every recipe named in `show`, `enter` and `after` is one the widget exports; template paths are declared by `exports(config)`.
 - **Storyboard:** Playwright renders every changed screen in each state (section 9.2) in light and dark at 390px and 1280px. Horizontal overflow of the lesson frame at 390px is an error (a display formula too wide for a phone). axe runs on each state; violations are errors.
 - **Assets:** alt text present; SVG passed through a whitelist sanitiser (no scripts, event handlers, external references or `foreignObject`); size under 200 KB.
@@ -1533,7 +1533,7 @@ The file and size budget per release, retained version and peak is `ARCHITECTURE
 
 A full release exceeds 64 MB per publish, so it goes up in several publishes to the same URL (the publish plan of `ARCHITECTURE.md` 6.2.6); later releases republish only changed files, because names are content-addressed. Assets under 8 KB stay inline to keep the file count down.
 
-**Sizes.** The section 10 lesson compiles to about 27 KB of JSON, 7.2 KB gzipped, with `verify`, author notes and authorship stripped [measured; revision 1's lesson, without tutor fields, was 24.7 KB and 6.7 KB]. A 30-lesson course is therefore about 0.8 MB raw and 0.22 MB gzipped before items and recorded code output. Whether the Artifact host compresses responses is still [unverified]; it matters for course bundles (JSON gzips to about a quarter). Pyodide is the web app's: NumPy and pandas are 21 MB of files in the native layout (`ARCHITECTURE.md` 6.4.1). The player loads one course at a time and prefetches the next level's course only when it differs.
+**Sizes.** The section 10 lesson compiles to about 27 KB of JSON, 7.2 KB gzipped, with `verify`, author notes and authorship stripped [measured; revision 1's lesson, without tutor fields, was 24.7 KB and 6.7 KB]. A 30-lesson course is therefore about 0.8 MB raw and 0.22 MB gzipped before items and recorded code output. The Artifact host serves responses gzip-compressed (6.4 KB on the wire for 62.7 KB of JSON [measured: S1, 7 October 2026]), so course bundles travel at about their gzipped size, about a quarter of the raw JSON [inferred]. Pyodide is the web app's: NumPy and pandas are 21 MB of files in the native layout (`ARCHITECTURE.md` 6.4.1). The player loads one course at a time and prefetches the next level's course only when it differs.
 
 **Loading.** The runtime validates a course bundle against the schemas once, on first load, then trusts the cached copy by hash. The web app's service worker caches bundles for offline use; the Artifact has no service worker, so it keeps the current and next course in IndexedDB and treats that cache as disposable.
 
@@ -3158,7 +3158,7 @@ Additions to specific widgets that the worked example needs:
 | # | Item | Status and effect |
 |---|---|---|
 | 1 | Pyodide repackaged for the Artifact on the owner's iPhone | **Measured, not adopted** [measured by the owner, `spikes/README.md`]: Python ready at 2.8 s, NumPy and pandas at 5.1 s, correct result at 6.2 s; the owner's publishing rule (`docs/PLAN.md` revision 2) keeps Python out of the Artifact. Open: memory headroom of the web app on older phones, measured per group at `docs/PLAN.md` stage 25 |
-| 2 | Whether the Artifact host compresses responses | [unverified]. Since revision 2 it matters for course bundles only (no Python in the Artifact); measured at `docs/PLAN.md` stage 2 |
+| 2 | Whether the Artifact host compresses responses | **Closed**: it does, with gzip (6.4 KB on the wire for 62.7 KB of JSON) [measured: S1, 7 October 2026, `docs/DECISIONS.md` section 4]; course bundles, the only large Artifact files since revision 2, travel compressed |
 | 3 | MathLive's size, and that it emits LaTeX without loading Compute Engine's core | [unverified]. If it needs the core, expression screens cost about 1.2 MB more and the preload rule in section 7.3 covers them |
 | 4 | Compute Engine `latex-syntax` under the Artifact's script policy | No `new Function` in that entry [measured by search]; a run inside a published Artifact is still needed [unverified] |
 | 5 | Citation locations in the worked example (Blitzstein and Hwang section 2.2; Stat 110 Lecture 4; Zhou chapter 4) | [recalled]; `checked: false` until confirmed against the books |
