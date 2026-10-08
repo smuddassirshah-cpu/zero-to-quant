@@ -289,9 +289,10 @@ A KaTeX formula whose numbers update from widget variables, with terms linked to
 - **Config** `LiveFormulaConfig { tex, slots, expr, decimals?, format?, links?, toggles? }`.
 - **Answers** `set`, `choice`.
 - **AI hooks** targets `term:<id>`; describe, e.g. "2x + 3 = 11 [t1: 2x] [t2: 3] [t3: 11]".
-- **Accessibility** on the web KaTeX outputs HTML with a hidden MathML copy; in the Artifact it outputs MathML only (arch decision 37), so the formula is the MathML itself. Slots bind by sentinel tokens on both outputs (arch decision 37, `TexSlots`): in the MathML tree each slot is an `<mn>` whose text follows the variable, so screen readers hear the current value; the engine announces key values on commit.
+- **Accessibility** on the web KaTeX outputs HTML with a hidden MathML copy; in the Artifact it outputs MathML only (arch decision 37), so the formula is the MathML itself. Slots bind by sentinel tokens on both outputs (arch decision 37, `TexSlots`): in the MathML tree each slot is an `<mn>` whose text follows the variable, so screen readers hear the current value (VoiceOver did on the owner's iPhone [measured: S1, 7 October 2026, with the TeX annotation also rewritten, `docs/DECISIONS.md` B20]); the engine announces key values on commit.
 - **Reduced motion** no motion of its own.
 - Absorbs `tex-terms`: addressable terms and fixed-width numeric slots; KaTeX never re-renders inside a drag (arch 5.11 `TexSlots`).
+- **Artifact** (spike S1; arch decision 37 and 14 item 20; proposed for the owner, `docs/DECISIONS.md` B27). KaTeX's MathML output drops `\htmlData`, so the web's term anchors do not reach the Artifact [measured: S1, 7 October 2026]. Until the owner decides B27 (with stage 25's device result; B20 before stage 12), the Artifact shows a term list beside the formula, which `docs/PLAN.md` stage 12 builds: each entry of the list carries the term's `data-term`, its `role`, `tabindex` and `aria-label`, so `term:<id>` targets and `set` and `choice` answers bind to the list entries, and focusing an entry lights its mark, and the reverse. Stage 12 also builds the term binding below, behind a build switch that is off by default until the owner decides. The proposed binding: in the Artifact build the compiler rewrites each `\htmlData{term=<k>}{...}` to `\textcolor` with a sentinel colour from a reserved range (`#0a00` followed by two hex digits for $k$), which KaTeX renders as an `<mstyle mathcolor>` around exactly that term [measured: Node, KaTeX 0.19.0, `output: 'mathml'`, 8 October 2026]. After rendering, the term binding removes the sentinel colour, so the term takes its token colour, and sets `data-term`, `role`, `tabindex` and `aria-label` on the `<mstyle>`, which then serves as the term's target, as the anchor's element does on the web. The sentinel colours also stay in KaTeX's TeX annotation [measured: Node, KaTeX 0.19.0, `output: 'mathml'`, 8 October 2026], so the binding restores the authored TeX there, or drops the annotation, under the rule the owner chooses for B20. Taps and keyboard focus on MathML elements in iOS Safari are [unverified]; stage 12's iPhone check, taken in stage 25's preview Artifact, whose preview build turns the switch on for it (`docs/PLAN.md` stages 12 and 25, and 11.1), tests them with this widget, and its result goes to the owner with B20 and B27. If they fail, the term list stays as the floor, and a Stage 0 interaction it degrades goes to the owner. Slots are unaffected. Composites with `term:` targets follow this widget: the term list while the binding is off, and once the owner adopts it, the binding with the list as its floor (their **Artifact** notes); `sequence-lab`'s `term:<n>` (a sequence's terms) and `workspace-sim`'s `term:` (its terminal pane) name no formula term and are unaffected [inferred from their entries].
 
 #### 4.1.7 `value-table`
 
@@ -660,7 +661,7 @@ Maths input, graded by `cas` with one grader on both targets. **Per target** (`d
 - **Config** `ExpressionEntryConfig { keyboard, variables?, placeholder?, prefix? }`.
 - **Answers** `expression`.
 - **AI hooks** targets `field`, `field:<id>`; describe, e.g. "Entered: (x + 3)(x − 2)".
-- **Accessibility** on the web MathLive speaks maths [sourced: MathLive documentation describes its spoken output, not re-checked here], and the plain field is always available as a toggle. In the Artifact the plain field is a native text input, and its MathML preview is read by the system's MathML support [unverified on iOS 18.7: spike S1].
+- **Accessibility** on the web MathLive speaks maths [sourced: MathLive documentation describes its spoken output, not re-checked here], and the plain field is always available as a toggle. In the Artifact the plain field is a native text input, and its MathML preview is read by the system's MathML support [inferred from S1, 7 October 2026: VoiceOver read a KaTeX MathML formula and its live values on the owner's iPhone; the preview itself was not tested].
 - **Reduced motion** no motion of its own.
 - **Modes added** probability keyboard layer (P0, prob-stats 4.2).
 - Both inputs are parsed by the Compute Engine LaTeX parser to MathJSON. On the web MathLive loads lazily, and the plain field takes over if it fails to load (arch 11.6).
@@ -981,6 +982,7 @@ The main function-graph widget.
 - **Accessibility** The equation is live and debounced: "y = 2x − 1". - Handles read as "A at (1, 1)". - Overlays are described in words: "gradient 2: rise 4 over run 2". - Table view.
 - **Reduced motion** stepped, with Play.
 - **Modes added** reflect in $y = x$ toggle (P0, 0.3 sample, curriculum); integer-domain functions drawn as stems (P0, prob-stats 5).
+- **Artifact** (spike S1; proposed for the owner, `docs/DECISIONS.md` B27). `term:<param>` takes `live-formula`'s Artifact term targets (4.1.6): a term list while the term binding is off, and once the owner adopts the binding, targets inside the equation's MathML with the list as their floor.
 
 #### 5.3.3 `equation-workbench`
 
@@ -995,6 +997,7 @@ Symbolic manipulation in which the learner chooses every move and the engine car
 - **Accessibility** MathML for each line. Terms are buttons with spoken labels ("term: 3 x"). The menu uses `role="menu"`. History is a list.
 - **Reduced motion** lines cross-fade.
 - The learner chooses every move; `cas` carries it out exactly.
+- **Artifact** (spike S1; proposed for the owner, `docs/DECISIONS.md` B27). Once the owner adopts `live-formula`'s term binding (4.1.6), each line's terms are targets inside its MathML, so `term:<line>-<k>` and the term buttons stay inside the formula as on the web. Selecting a term is this widget's core move, so while the binding is off, or if the floor of 4.1.6 applies, the degraded interaction goes to the owner (first use 0.1 L35).
 
 #### 5.3.4 `function-machine`
 
@@ -1193,6 +1196,7 @@ Shows why summation formulas are true.
 - **Accessibility** a description and a table of partial sums.
 - **Reduced motion** stepped.
 - Keeps the proofs (Gauss, odd squares, area fill, shift-and-subtract); partial sums move to `series-explorer`.
+- **Artifact** (spike S1; proposed for the owner, `docs/DECISIONS.md` B27). `term:<k>` takes `live-formula`'s Artifact term targets (4.1.6): a term list while the term binding is off, and once the owner adopts the binding, targets inside the formula's MathML with the list as their floor.
 
 #### 5.5.8 `unit-circle`
 
@@ -1279,6 +1283,7 @@ Expanding $(a + b)^n$ by choices.
 - **Accessibility** the `token-tray` model; terms described in words.
 - **Reduced motion** instant.
 - **Modes added** probability mode: terms of $(p + q)^n$ (P0, prob-stats 5).
+- **Artifact** (spike S1; proposed for the owner, `docs/DECISIONS.md` B27). `term:<k>` takes `live-formula`'s Artifact term targets (4.1.6): a term list while the term binding is off, and once the owner adopts the binding, targets inside the formula's MathML with the list as their floor.
 
 #### 5.5.14 `outcome-grid`
 
@@ -2111,6 +2116,7 @@ The multivariable chain rule as a sum over paths of products of partial derivati
 - **Reduced motion** baseline (springs and tweens land at once; show-why plays as a before-and-after pair with Play).
 - **Modes added** Backprop mode extended: neuron operations (affine, ReLU, sigmoid, softmax with cross-entropy) as nodes (P2, ML 5).
 - Drawn by `node-link` in layered layout; backpropagation mode P2.
+- **Artifact** (spike S1; proposed for the owner, `docs/DECISIONS.md` B27). `term:<path>`, a term of the chain-rule sum [inferred], takes `live-formula`'s Artifact term targets (4.1.6): a term list while the term binding is off, and once the owner adopts the binding, targets inside the formula's MathML with the list as their floor.
 
 #### 5.10.22 `gradient-compass`
 
@@ -2518,6 +2524,7 @@ Most interview probability questions with "until" or "first" in them are first-s
 - **Accessibility** Equations as text ("x zero equals 1 plus one half x H plus one half x zero"); states as buttons; walker results announced after each batch.
 - **Reduced motion** Chips appear in place.
 - **Modes added** Continuous-time mode with holding times (P0, 1.5 L161, curriculum).
+- **Artifact** (spike S1; proposed for the owner, `docs/DECISIONS.md` B27). `term:<id>:<k>` takes `live-formula`'s Artifact term targets (4.1.6): a term list while the term binding is off, and once the owner adopts the binding, targets inside the equations' MathML with the list as their floor.
 
 #### 5.12.7 `odds-ledger`
 
@@ -2657,6 +2664,7 @@ $M_X(t) = E[e^{tX}]$: the slope at $t = 0$ is $E[X]$ and the second derivative i
 - **AI hooks** targets `curve:m`, `handle:t`, `tangent`, `parabola`, `term:<k>`, `curve:product`, `cobweb`, `iterate:<k>`; describe, e.g. "MGF of Poisson(2). Tangent at 0: slope 2.00. Curvature toggle on."
 - **Accessibility** Table of $t$ against $M(t)$; readouts announce "slope at zero 2, so E of X is 2".
 - **Reduced motion** Steps jump.
+- **Artifact** (spike S1; proposed for the owner, `docs/DECISIONS.md` B27). `term:<k>` takes `live-formula`'s Artifact term targets (4.1.6): a term list while the term binding is off, and once the owner adopts the binding, targets inside the formula's MathML with the list as their floor.
 
 #### 5.12.17 `order-statistics`
 
