@@ -47,3 +47,6 @@ def test_overflows_and_short_data_are_null() -> None:
     case = stats.case([1e300, -1e300])
     assert case["variance"] == [None, None] and case["sd"] == [1.4142135623730952e300, 1e300]
     assert stats.case([3.0])["variance"] == [None, 0.0]
+    edge = stats.case([-1.7e308, 1.7e308])
+    assert edge["sd"] == [None, 1.7e308] and edge["linear"][:7] == [None] * 7 and edge["quartiles"] == [None, None]
+    assert stats.case([1.7e308, 1.7e308])["median"] is None
