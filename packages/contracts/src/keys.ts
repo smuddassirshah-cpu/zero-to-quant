@@ -1,12 +1,11 @@
 /*
- * The global keys of docs/ARCHITECTURE.md 5.5: the key column of its table, for
- * src/engine/interaction/keymap.ts and the keyboard help sheet in src/ui/.
+ * The global keys of docs/ARCHITECTURE.md 5.5: the key column of its table.
  * Decision notes:
  * - Only the keys are typed. The actions are prose in 5.5 and the doc names no identifiers for them, so
  *   naming them is left to the keymap's own stage.
- * - The type sits here, not in keymap.ts where 5.5 puts the keymap, because the help sheet in src/ui/
- *   needs the same keys and 4.5's table lets ui/ import only `engine/motion` and `@zq/contracts`, not
- *   `engine/interaction` [sourced: ARCHITECTURE.md 4.5] [our choice].
+ * - 5.5 puts the keymap in src/engine/interaction/keymap.ts. The key names are one shared type for that
+ *   keymap and any keyboard help, so they are kept in @zq/contracts as a types-only contract [our choice];
+ *   the main session ratifies the location in docs/DECISIONS.md B45.
  * - Keys are named as the table writes them ('H', not KeyboardEvent.key's 'h'); the keymap maps events
  *   onto them. The rest of 5.5 is behaviour the host, the player and ui/ implement.
  */
