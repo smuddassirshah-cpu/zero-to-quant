@@ -14,7 +14,11 @@
 // - The global `Function` is refused as a value wherever it appears, called or not
 //   (`Reflect.construct(Function, args)`, passing it on); type positions are fine. Calling an
 //   untyped `f.constructor(...)` is refused by typescript-eslint's `no-unsafe-call`.
-// - Member accesses are refused whether or not they are called, and so is destructuring them.
+// - Member accesses are refused whether or not they are called, and so is destructuring them,
+//   nested or by a rest element (`const { ...w } = window` copies `open`). Accepted residue: the
+//   untyped check does not follow a window through aliases, arrays, iteration or object literals
+//   (typed files follow arrays and iteration), and the typed check misses a nested pattern in an
+//   assignment expression (`({ window: { open } } = obj)`).
 // - Embedding elements (`iframe`, `object`, `embed`) are refused in JSX and as the literal tag of
 //   `createElement`, `createElementNS`, `h`, `jsx` or `jsxs` on any receiver, case-insensitively
 //   and with any namespace prefix (`'html:iframe'`) removed.
@@ -24,7 +28,9 @@ import {
   isGlobal,
   jsxName,
   keyName,
+  patternHasType,
   patternOrigin,
+  patternDefault,
   propName,
   staticString,
   tailName,
@@ -98,26 +104,42 @@ const rule: Rule.RuleModule = {
     };
     // `const { window: { open } } = self` reads `self.window.open`: the type checker types the pattern
     // itself, and without types the path is read from the source and the keys of the outer patterns.
-    const destructure = (node: ESNode, name: string, pattern: Rule.Node) => {
+    // The label of what a pattern reads (`self.window`) when `test` holds for it, else undefined:
+    // the pattern's own type, or without types the source and the outer keys (each a global object,
+    // then `tail` if given), then a nested pattern's own default. Not followed without types:
+    // aliases, arrays, iteration and object literals (`const [{ open }] = [window]`).
+    const viaPattern = (
+      pattern: Rule.Node,
+      test: (n: ESNode) => boolean,
+      types: ReadonlySet<string>,
+      tail?: string,
+    ) => {
       const origin = patternOrigin(pattern);
-      if (origin?.keys.length === 0) {
-        access(node, name, origin.source);
-        return;
-      }
-      const keys = origin?.keys ?? [];
-      const last = keys.at(-1);
-      const globalPath = (path: readonly string[]) =>
-        origin !== undefined &&
-        (globalObject(unwrap(origin.source)) || hasType(sourceCode, origin.source, WINDOW_TYPES)) &&
-        path.every((key) => GLOBAL_OBJECTS.has(key));
-      const label = origin ? [sourceCode.getText(unwrap(origin.source)), ...keys].join('.') : 'Window';
-      if (WINDOW_MEMBERS.has(name) && (globalPath(keys) || hasType(sourceCode, pattern, WINDOW_TYPES))) {
-        forbid(node, `${label}.${name}`);
+      if (origin) {
+        const { source, keys } = origin;
+        const path = tail === undefined ? keys : keys.slice(0, -1);
+        const hit =
+          keys.length === 0
+            ? test(source) || test(unwrap(source))
+            : (tail === undefined || keys.at(-1) === tail) &&
+              path.every((key) => GLOBAL_OBJECTS.has(key)) &&
+              (globalObject(unwrap(source)) || hasType(sourceCode, source, WINDOW_TYPES));
+        const label = [sourceCode.getText(unwrap(source)), ...keys].join('.');
+        if (hit || patternHasType(sourceCode, pattern, types)) return label;
+      } else if (patternHasType(sourceCode, pattern, types)) return [...types][0];
+      const fallback = patternDefault(pattern);
+      return fallback && (test(fallback) || test(unwrap(fallback)))
+        ? sourceCode.getText(unwrap(fallback))
+        : undefined;
+    };
+    const destructure = (node: ESNode, name: string, pattern: Rule.Node) => {
+      if (WINDOW_MEMBERS.has(name)) {
+        const owner = viaPattern(pattern, isWindow, WINDOW_TYPES);
+        if (owner) forbid(node, `${owner}.${name}`);
       } else if (
         name === 'serviceWorker' &&
         !workerAllowed &&
-        ((last === 'navigator' && globalPath(keys.slice(0, -1))) ||
-          hasType(sourceCode, pattern, NAVIGATOR_TYPES))
+        viaPattern(pattern, isNavigator, NAVIGATOR_TYPES, 'navigator')
       ) {
         context.report({ node, messageId: 'serviceWorker' });
       }
@@ -158,6 +180,11 @@ const rule: Rule.RuleModule = {
       Property(node) {
         const name = keyName(node);
         if (name !== undefined && node.parent.type === 'ObjectPattern') destructure(node, name, node.parent);
+      },
+      // `const { ...w } = window` copies the window's own operations (`open`, `print`).
+      RestElement(node) {
+        const owner = node.parent.type === 'ObjectPattern' && viaPattern(node.parent, isWindow, WINDOW_TYPES);
+        if (owner) forbid(node, `...${owner}`);
       },
       CallExpression(node) {
         invoke(node);

@@ -24,6 +24,8 @@ import {
   jsxName,
   keyName,
   climb,
+  patternDefault,
+  patternHasType,
   patternOrigin,
   propName,
   staticString,
@@ -99,9 +101,10 @@ const rule: Rule.RuleModule = {
       if (!allowed.has(name)) context.report({ node, messageId: 'sink', data: { name } });
     };
     const isDocument = (node: ESNode) =>
-      tailName(node) === 'document' ||
-      (node.type === 'ObjectPattern' && patternOrigin(node as Rule.Node)?.keys.at(-1) === 'document') ||
-      hasType(sourceCode, node, DOCUMENT_TYPES);
+      node.type === 'ObjectPattern'
+        ? patternOrigin(node as Rule.Node)?.keys.at(-1) === 'document' ||
+          patternHasType(sourceCode, node as Rule.Node, DOCUMENT_TYPES)
+        : tailName(node) === 'document' || hasType(sourceCode, node, DOCUMENT_TYPES);
     const method = (node: ESNode, name: string, owner: ESNode | undefined) => {
       if (METHODS.has(name)) report(node, name);
       else if (DOCUMENT_METHODS.has(name) && owner && isDocument(owner)) report(node, `document.${name}`);
@@ -136,7 +139,8 @@ const rule: Rule.RuleModule = {
           context.report({ node: node.key, messageId: 'svgOnly' });
         } else {
           const origin = patternOrigin(node.parent);
-          method(node.key, name, origin?.keys.length === 0 ? origin.source : node.parent);
+          const owner = origin?.keys.length === 0 ? origin.source : node.parent;
+          method(node.key, name, isDocument(owner) ? owner : (patternDefault(node.parent) ?? owner));
         }
       },
       JSXAttribute(node: Rule.Node) {

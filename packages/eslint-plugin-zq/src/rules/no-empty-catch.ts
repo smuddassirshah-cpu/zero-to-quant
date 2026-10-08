@@ -23,7 +23,8 @@
 //   Function handlers are judged at `Program:exit`, since a named one may be declared later.
 // - A logger call is `<logger>.<method>(...)` where `<logger>` is an identifier or the last
 //   property of a member access (`this.log.warn`), read through optional chains and TypeScript
-//   wrappers (`(log as Logger).warn`, `(p?.catch)(fn)`), so injected loggers count.
+//   wrappers (`(log as Logger).warn`), so injected loggers count. Handler calls are read through
+//   them too (`(p?.catch)(fn)`, `p.catch!(fn)`).
 import type { Rule, Scope, SourceCode } from 'eslint';
 import { findVariable, propName, tailName, unwrap, type ESNode, type NodeOf } from '../util/ast.ts';
 
