@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   BUILD_INFO,
   CASES,
+  detachedEnv,
   EXPECTED_RULES,
   binaryCandidates,
   errorLine,
@@ -43,7 +44,11 @@ function fakeRoot(binary: Buffer | null = Buffer.concat([Buffer.from('ELF'), BUI
 
 const identity = { GIT_CONFIG_GLOBAL: devNull, GIT_CONFIG_NOSYSTEM: '1' };
 
-function deps(root: string, fake: Run, env: NodeJS.ProcessEnv = { ...process.env, ...identity }) {
+function deps(
+  root: string,
+  fake: Run,
+  env: NodeJS.ProcessEnv = { ...detachedEnv(process.env), ...identity },
+) {
   const lines: string[] = [];
   const d: Deps = { root, env, run: fake, log: (line) => lines.push(line) };
   return { d, lines };
@@ -174,7 +179,7 @@ describe('scans of this repository', () => {
 
   it('refuses a staged scan that git would show no diff for, before running gitleaks', async () => {
     const root = fakeRoot();
-    const env = { ...process.env, ...identity };
+    const env = { ...detachedEnv(process.env), ...identity };
     const who = ['-c', 'user.name=t', '-c', 'user.email=t@invalid', '-c', 'commit.gpgsign=false'];
     const git = (...args: string[]) => spawnSync('git', [...who, ...args], { cwd: root, env });
     git('init', '-q');
@@ -271,6 +276,29 @@ describe('selftest', () => {
       );
       expect(await main(['selftest'], noisy.d)).toBe(1);
       expect(noisy.lines).toContain('gitleaks selftest: hostile git config, clean: history scan exited 1');
+    },
+    SLOW,
+  );
+
+  it(
+    'builds its repositories away from a repository the environment names',
+    async () => {
+      // A git hook exports GIT_DIR and GIT_INDEX_FILE, absolute inside a worktree; the selftest must not follow them.
+      const named = mkdtempSync(join(tmpdir(), 'zq-gitleaks-named-'));
+      dirs.push(named);
+      const clean = { ...detachedEnv(process.env), ...identity };
+      spawnSync('git', ['init', '-q', named], { env: clean });
+      const leaky = {
+        ...clean,
+        GIT_DIR: join(named, '.git'),
+        GIT_INDEX_FILE: join(named, '.git', 'index'),
+        GIT_WORK_TREE: named,
+      };
+      const honest = withFake((found) => ({ code: found.length > 0 ? 1 : 0 }));
+      expect(await main(['selftest'], deps(fakeRoot(), honest, leaky).d)).toBe(0);
+      const git = (...args: string[]) => spawnSync('git', args, { cwd: named, env: clean, encoding: 'utf8' });
+      expect(git('rev-parse', '--verify', '-q', 'HEAD').status).not.toBe(0);
+      expect(git('config', 'core.bare').stdout.trim()).toBe('false');
     },
     SLOW,
   );

@@ -119,6 +119,16 @@ export function gitEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   return { ...out, GIT_CONFIG_COUNT: String(GIT_OVERRIDES.length) };
 }
 
+/** Variables that point git at a repository. A git hook exports GIT_DIR and GIT_INDEX_FILE, absolute inside a
+ *  worktree, so the selftest's throwaway repositories would be built in the real one [measured: stage 3,
+ *  8 October 2026, `docs/DECISIONS.md` B40]; the selftest and its tests drop them. */
+const REPO_LOCATORS =
+  /^GIT_(DIR|WORK_TREE|INDEX_FILE|COMMON_DIR|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|NAMESPACE|PREFIX|QUARANTINE_PATH)$/;
+
+export function detachedEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return Object.fromEntries(Object.entries(env).filter(([k]) => !REPO_LOCATORS.test(k)));
+}
+
 export function binaryCandidates(
   root: string,
   pathEnv = '',
@@ -428,7 +438,7 @@ async function selftest(deps: Deps): Promise<number> {
   process.once('SIGINT', onSignal).once('SIGTERM', onSignal);
   const hostile = join(work, 'hostile.gitconfig');
   writeFileSync(hostile, HOSTILE_CONFIG);
-  const base = { ...deps.env, GIT_CONFIG_NOSYSTEM: '1' };
+  const base = { ...detachedEnv(deps.env), GIT_CONFIG_NOSYSTEM: '1' };
   const parameters = { GIT_CONFIG_PARAMETERS: "'color.diff'='always'", GIT_EXTERNAL_DIFF: 'true' };
   const passes = [
     { label: 'empty git config', env: { ...base, GIT_CONFIG_GLOBAL: devNull } },
