@@ -1,15 +1,18 @@
 /*
- * What a widget view receives (docs/ARCHITECTURE.md 5.3, second listing), implemented by
- * src/engine/widgets/host.tsx; everything stateful is the host's.
+ * The view half of the widget contract (docs/ARCHITECTURE.md 5.3): the second listing, what a widget view
+ * receives, implemented by src/engine/widgets/host.tsx; everything stateful is the host's.
  * Decision notes:
  * - preact and @preact/signals-core are imported as types only (5.3; eslint.config.js enforces it).
+ * - `WidgetViewProps`, `WidgetView` and `WidgetModule` come from 5.3's first listing (widget.ts there): they
+ *   name `VNode` and `WidgetApi`, and preact's types bring the DOM lib with them, so they stay out of the
+ *   pure widget.ts that @zq/compiler reads (see its decision notes).
  * - `WidgetServices` carries `cas` and `mathfield`. Its `tex: TexService` (5.11), `python: PythonRuntime`
  *   and `sql: SqlRuntime` (5.9) join with the unit that transcribes 5.9 and 5.11; `TexService` is declared
  *   in src/engine/render, which this package may not import (4.5), so its interface must move here first.
  * - `CasService` is declared in answer.ts, which `GradeCtx` needs without the DOM lib, and re-exported here.
  */
 import type { ReadonlySignal } from '@preact/signals-core';
-import type { Ref } from 'preact';
+import type { Ref, VNode } from 'preact';
 import type { CasService } from './answer.ts';
 import type { ElementId, HighlightStyle, Json, Mark, Scope, SeedSource } from './base.ts';
 import type {
@@ -17,12 +20,24 @@ import type {
   ClusterId,
   MotionMode,
   PresetDef,
+  WidgetLogic,
   WidgetMode,
-  WidgetModule,
   WidgetState,
 } from './widget.ts';
 
 export type { CasService };
+
+export interface WidgetViewProps<C extends BaseConfig, A extends Json, V extends Json> {
+  config: C;
+  api: WidgetApi<A, V>;
+}
+export type WidgetView<C extends BaseConfig, A extends Json, V extends Json> = (
+  props: WidgetViewProps<C, A, V>,
+) => VNode | null;
+export interface WidgetModule<C extends BaseConfig, A extends Json, V extends Json> {
+  logic: WidgetLogic<C, A, V>;
+  View: WidgetView<C, A, V>;
+}
 
 export interface WidgetApi<A extends Json, V extends Json> {
   readonly state: ReadonlySignal<WidgetState<A, V>>; // read through useComputed only (2.5 rule 1)

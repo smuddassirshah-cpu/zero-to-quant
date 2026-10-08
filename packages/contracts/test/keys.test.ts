@@ -1,20 +1,16 @@
-// docs/ARCHITECTURE.md 5.5's global keys, as keys.ts encodes its table.
-import type { GlobalAction, GlobalKey, GlobalKeymap, SingleKey } from '@zq/contracts/keys';
+// docs/ARCHITECTURE.md 5.5's global keys, the key column of its table as keys.ts encodes it.
+import type { GlobalKey, SingleKey } from '@zq/contracts/keys';
 import { describe, expectTypeOf, test } from 'vitest';
+import type { Words } from './types.ts';
 
-type Digit = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+type Digit = Words<'1 2 3 4 5 6 7 8 9'>;
 
 describe('the global keys (5.5)', () => {
-  test('one action per key in the table', () => {
-    expectTypeOf<GlobalKey>().toEqualTypeOf<'Enter' | 'Escape' | 'H' | 'W' | 'D' | 'T' | Digit | '?'>();
-    expectTypeOf<GlobalAction>().toEqualTypeOf<
-      'primary' | 'close' | 'hints' | 'why' | 'describe' | 'table' | 'option' | 'keys'
-    >();
-    expectTypeOf<GlobalKeymap[Digit]>().toEqualTypeOf<'option'>();
-    expectTypeOf<GlobalKeymap['?']>().toEqualTypeOf<'keys'>();
+  test('every key of the table, and no other', () => {
+    expectTypeOf<GlobalKey>().toEqualTypeOf<Words<'Enter Escape H W D T ?'> | Digit>();
   });
 
   test('Enter and Escape are not single-character shortcuts, so the setting never turns them off', () => {
-    expectTypeOf<SingleKey>().toEqualTypeOf<'H' | 'W' | 'D' | 'T' | Digit | '?'>();
+    expectTypeOf<SingleKey>().toEqualTypeOf<Words<'H W D T ?'> | Digit>();
   });
 });

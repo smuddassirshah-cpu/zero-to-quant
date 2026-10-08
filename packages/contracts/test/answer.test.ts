@@ -1,7 +1,7 @@
 // Compile-time tests of docs/ARCHITECTURE.md 5.2 with CONTENT-FORMAT.md 3.2 (ShowStep) and 7.1 (Grade).
 import type { Answer, AnswerType, CasService, Grade, GradeCtx, MotionStep } from '@zq/contracts/answer';
 import type { ShowStep } from '@zq/contracts/answer';
-import type { ElementId, Json, TokenList } from '@zq/contracts/base';
+import type { ElementId, Json, LocalId, TokenList } from '@zq/contracts/base';
 import { describe, expectTypeOf, test } from 'vitest';
 import type { OptionalKeys, RequiredKeys, Words } from './types.ts';
 
@@ -31,14 +31,13 @@ describe('answers, grades and show-why (5.2)', () => {
   });
 
   test('GradeCtx binds predicates, a lazy CAS, a seed and the locale', () => {
-    expectTypeOf<RequiredKeys<GradeCtx>>().toEqualTypeOf<'predicate' | 'cas' | 'seed' | 'locale'>();
-    expectTypeOf<OptionalKeys<GradeCtx>>().toBeNever();
-    expectTypeOf<GradeCtx['predicate']>().toEqualTypeOf<
-      (name: string, args: Record<string, Json>) => boolean
-    >();
-    expectTypeOf<GradeCtx['cas']>().returns.resolves.toEqualTypeOf<CasService>();
-    expectTypeOf<CasService['parse']>().returns.toEqualTypeOf<Json>();
-    expectTypeOf<GradeCtx['locale']>().toEqualTypeOf<'en-GB'>();
+    expectTypeOf<GradeCtx>().toEqualTypeOf<{
+      predicate(name: string, args: Record<string, Json>): boolean;
+      cas(): Promise<CasService>;
+      seed: number;
+      locale: 'en-GB';
+    }>();
+    expectTypeOf<CasService>().toEqualTypeOf<{ parse(latex: string): Json }>();
   });
 
   test('Grade is content-format 7.1 with answerObjects filled by the host', () => {
@@ -61,6 +60,24 @@ describe('answers, grades and show-why (5.2)', () => {
   });
 
   test('ShowStep is a recipe call or a declarative step, never both (content-format 3.2)', () => {
+    expectTypeOf<Extract<ShowStep, { recipe: string }>>().toEqualTypeOf<{
+      widget: LocalId;
+      recipe: string;
+      args?: Record<string, Json>;
+      set?: never;
+      highlight?: never;
+      annotate?: never;
+      ms?: never;
+    }>();
+    expectTypeOf<Exclude<ShowStep, { recipe: string }>>().toEqualTypeOf<{
+      set?: Record<string, number | string>;
+      highlight?: ElementId[];
+      annotate?: { at: ElementId; text: string }[];
+      ms?: number;
+      widget?: never;
+      recipe?: never;
+      args?: never;
+    }>();
     expectTypeOf({ widget: 'grid', recipe: 'flash', args: { cells: ['cell:5,1'] } }).toExtend<ShowStep>();
     expectTypeOf({
       set: { zoom: 2, step: 'b' },

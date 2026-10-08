@@ -1,7 +1,13 @@
 /*
- * The widget contract (docs/ARCHITECTURE.md 5.3, first listing; the lifecycle of 5.4 and the method map
- * of 5.6 are encoded as tests in test/lifecycle.test.ts and test/catalogue.test.ts).
+ * The widget contract (docs/ARCHITECTURE.md 5.3, first listing), without its view half; test/lifecycle.test.ts
+ * and test/catalogue.test.ts check the contract's side of 5.4 and 5.6.
  * Decision notes:
+ * - Pure and Node-safe like `WidgetLogic` itself: this module imports neither preact nor widget-api.ts.
+ *   preact's jsx.d.ts carries `/// <reference lib="dom" />`, so a program that reached it would compile with
+ *   the DOM lib whatever its tsconfig says, and @zq/compiler and tools/zq, which read `WidgetLogic` through
+ *   `CompilerRegistry`, have no DOM (4.3) [measured: tsc 6.0.3, test/node-libs.test.ts]. 5.3's
+ *   `WidgetViewProps`, `WidgetView` and `WidgetModule` name `VNode` and `WidgetApi`, so they live in
+ *   widget-api.ts, the view half, with the registry that loads them.
  * - `ClusterId` has 26 members: 5.3's listing shows 22, but ARCHITECTURE.md decision 8 and 6.4.1 count
  *   26 since revision 2, and WIDGETS.md, which owns clusters, adds `analysis`, `numerics`, `optim` and `dl`
  *   (its decision 19, recorded against this union in its 0.3).
@@ -13,12 +19,11 @@
  *   consistent-type-definitions refuses `type V = { ... }`; `type V = Readonly<{ ... }>` passes all three
  *   [measured: tsc 6.0.3 and ESLint, test/widget.test.ts]. `WidgetState` itself is an interface, as 5.3
  *   writes it, so the host saves a draft as a `{ a, v }` copy.
- * - `prettier-ignore` keeps 5.3's own line layout for its long unions, so they diff against the listing.
+ * - `prettier-ignore` keeps 5.3's own line layout for its long unions; test/drift.test.ts compares every
+ *   declaration with the listing.
  */
-import type { VNode } from 'preact';
 import type { Answer, AnswerType, Grade, MotionStep } from './answer.ts';
 import type { ElementId, Json, LocalId, Mark, SeedSource } from './base.ts';
-import type { WidgetApi } from './widget-api.ts';
 
 export type WidgetTier = 'primitive' | 'input' | 'scene' | 'composite' | 'preset'; // 'scene': 5.14
 // prettier-ignore
@@ -119,18 +124,6 @@ export interface WidgetLogic<C extends BaseConfig, A extends Json, V extends Jso
     value: number | string,
   ): WidgetState<A, V> | null;
   code?(config: C, s: WidgetState<A, V>): { files: { name: string; numbered: string }[] } | null; // programming 2.8
-}
-
-export interface WidgetViewProps<C extends BaseConfig, A extends Json, V extends Json> {
-  config: C;
-  api: WidgetApi<A, V>;
-}
-export type WidgetView<C extends BaseConfig, A extends Json, V extends Json> = (
-  props: WidgetViewProps<C, A, V>,
-) => VNode | null;
-export interface WidgetModule<C extends BaseConfig, A extends Json, V extends Json> {
-  logic: WidgetLogic<C, A, V>;
-  View: WidgetView<C, A, V>;
 }
 
 /** A preset: configuration over a base widget, expanded by the compiler. No view, no state of its own. */

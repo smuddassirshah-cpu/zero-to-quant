@@ -8,11 +8,15 @@
  *   are Node globals too, but AddEventListenerOptions is not [measured: @types/node 22.20.5 declares it
  *   module-local], so `listen` spells out its members, which are lib.dom's exactly (capture, once, passive,
  *   signal), where 5.1 names the DOM type.
- * - `effect`'s callback returns a cleanup or `undefined`, where 5.1 writes `void | (() => void)`:
- *   typescript-eslint's no-invalid-void-type refuses `void` in a union and no file may switch a rule off
- *   (10.4). An inline callback with no `return` still types; a function declared `(): void` needs a
- *   wrapping arrow [measured: tsc 6.0.3].
+ * - `effect` takes the parameter type of @preact/signals-core's own `effect`, a type-only import: 5.1's
+ *   `() => void | (() => void)` plus the `this: { dispose }` form signals adds, so any void-returning
+ *   callback types and the scope passes `fn` straight through. Writing 5.1's union here fails
+ *   typescript-eslint's no-invalid-void-type, which no file may switch off (10.4); the lint-clean
+ *   `() => (() => void) | undefined` refused every function typed `() => void`, a declared `(): void` and
+ *   an expression-bodied arrow calling a void function among them [measured: tsc 6.0.3, ESLint,
+ *   test/base.test.ts]. signals-core 1.14.4 exports no `EffectFn`, hence `Parameters<typeof effect>[0]`.
  */
+import type { effect } from '@preact/signals-core';
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type ContentId = string; // 'lsn.cond.shrinking-sample-space' (content-format 4.1)
@@ -48,7 +52,7 @@ export interface Scope {
     fn: (e: Event) => void,
     opts?: { capture?: boolean; once?: boolean; passive?: boolean; signal?: AbortSignal },
   ): void;
-  effect(fn: () => (() => void) | undefined): void; // a signals effect disposed with the scope; fn may return its cleanup
+  effect(fn: Parameters<typeof effect>[0]): void; // a signals effect disposed with the scope; fn may return its cleanup
   own(dispose: () => void): void; // anything else (observers, workers)
   child(): Scope; // disposed with its parent
   dispose(): void; // idempotent

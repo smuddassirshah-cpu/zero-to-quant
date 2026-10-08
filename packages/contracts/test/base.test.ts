@@ -1,4 +1,5 @@
 // Compile-time tests of docs/ARCHITECTURE.md 5.1: `tsc -b` checks every assertion; vitest runs them as no-ops.
+import type { effect } from '@preact/signals-core';
 import type * as base from '@zq/contracts/base';
 import type { Json, Rng, Scope, Token } from '@zq/contracts/base';
 import { describe, expectTypeOf, test } from 'vitest';
@@ -63,11 +64,13 @@ describe('shared primitives (5.1)', () => {
     expectTypeOf<Scope['dispose']>().toEqualTypeOf<() => void>();
   });
 
-  test('an effect may return its cleanup or nothing', () => {
-    expectTypeOf<EffectFn>().toEqualTypeOf<() => (() => void) | undefined>();
+  test("an effect takes what signals' effect takes: 5.1's cleanup or nothing, void calls included", () => {
+    expectTypeOf<EffectFn>().toEqualTypeOf<Parameters<typeof effect>[0]>();
+    expectTypeOf<() => void>().toExtend<EffectFn>(); // a function declared (): void, or inferred from a void call
     expectTypeOf<() => undefined>().toExtend<EffectFn>();
     expectTypeOf<() => () => void>().toExtend<EffectFn>();
     expectTypeOf<() => number>().not.toExtend<EffectFn>();
+    expectTypeOf<() => Promise<void>>().not.toExtend<EffectFn>();
   });
 
   test('Rng and SeedSource are the contracts @zq/mathcore/rng implements', () => {

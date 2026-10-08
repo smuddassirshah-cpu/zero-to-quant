@@ -1,6 +1,7 @@
-// A sample widget for the contract tests, written against WidgetLogic alone: pick options from a list.
-import type { Json, LocalId, Mark, Rng, SeedSource } from '@zq/contracts/base';
-import type { BaseConfig, Target, WidgetLogic, WidgetState } from '@zq/contracts/widget';
+// A sample widget for the contract tests, written against WidgetLogic alone: pick options from a list. It
+// proves a concrete widget can implement the contract; the tests read its types, never run it.
+import type { Json, LocalId, Mark } from '@zq/contracts/base';
+import type { BaseConfig, Target, WidgetLogic } from '@zq/contracts/widget';
 
 export interface PickerConfig extends BaseConfig {
   options: LocalId[];
@@ -9,17 +10,6 @@ export interface PickerConfig extends BaseConfig {
 // signature would widen keyof V, so tweenable would accept any name (widget.ts, decision notes).
 export type PickerA = Readonly<{ picked: LocalId[] }>;
 export type PickerV = Readonly<{ zoom: number }>;
-export type PickerState = WidgetState<PickerA, PickerV>;
-
-export const config: PickerConfig = {
-  id: 'pick',
-  type: 'picker',
-  v: 1,
-  label: 'Pick the even totals',
-  options: ['two', 'three', 'four'],
-};
-const rng: Rng = { next: () => 0.5, at: () => 0.5, int: (lo) => lo, normal: () => 0, fork: () => rng };
-export const seed: SeedSource = { seed: 7, rng: () => rng };
 
 const strings = (value: Json): LocalId[] =>
   Array.isArray(value) ? value.filter((x) => typeof x === 'string') : [];
