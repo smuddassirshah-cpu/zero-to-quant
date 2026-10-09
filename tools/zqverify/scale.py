@@ -3,7 +3,10 @@
 The specification the TypeScript must meet, in plain words. A linear scale maps the domain [d0, d1] affinely
 onto the range [r0, r1], and inverts; a log scale does the same in log x for a positive domain (the map is the
 same in any base). Where the domain is one value every value maps to the middle of the range; where the range
-is one value every value inverts to the middle of the domain, the geometric middle on a log scale.
+is one value every value inverts to the middle of the domain, the geometric middle on a log scale. Map and
+invert take finite values only, and a log map positive ones only; any other value is refused (null in the
+goldens). Every value taken gives a double: the exact value rounded once, so plus or minus infinity where it
+lies beyond the largest double and 0 where a log invert lies below half the least.
 
 Ticks for a count c, an integer from 1 to 1000, are doubles inside [lo, hi] (the domain's ends in increasing
 order), increasing and without repeats; a one-valued domain has that value as its one tick. "The tick of q"
@@ -18,7 +21,10 @@ below is the double nearest the rational q, kept when it lies in [lo, hi].
   max(c, 2).
 
 Maps are exact Fractions for the linear scale and mpmath at 50 digits for the log scale, each rounded once.
-Cases are drawn by `random.Random` seeded with the module name. From the repository root, rewrite the file with:
+Cases are drawn by `random.Random` seeded with the module name, then fixed edge cases follow: narrow domains
+and ranges whose fractions leave the doubles, reversed sides, the widest log domain and the values refused.
+JSON has no infinities, so a non-finite value is written as the string JavaScript's `Number` reads back.
+From the repository root, rewrite the file with:
 
     PYTHONPATH=tools uv run --project tools/py --locked python -m zqverify.scale
 """
@@ -39,11 +45,19 @@ TEN = Fraction(10)
 FINEST = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 COUNTS = (1, 2, 3, 5, 7, 10, 12, 20, 30, 100)
 OVERFLOW = Fraction(2**1024 - 2**970)  # the least magnitude that rounds to infinity
+MAX, TINY = math.nextafter(math.inf, 0.0), math.nextafter(0.0, 1.0)
+REFUSED = (math.nan, math.inf, -math.inf)
+SPELLED = {math.inf: "Infinity", -math.inf: "-Infinity"}
 mp.mp.dps = 50
 
 
 def rounded(q: Fraction) -> float:
     return (math.inf if q > 0 else -math.inf) if abs(q) >= OVERFLOW else float(q)
+
+
+def encoded(vs: Iterable[float | None]) -> list[float | str | None]:
+    """JSON values: a non-finite float as the string JavaScript's `Number` reads back; None (refused) as null."""
+    return [v if v is None or math.isfinite(v) else SPELLED.get(v, "NaN") for v in vs]
 
 
 def decade(x: Fraction) -> int:
@@ -98,19 +112,26 @@ def log_ticks(lo: float, hi: float, c: int) -> list[float]:
     return [rounded(TEN**p) for p in powers if p % s == 0]
 
 
-def linear(lo: float, hi: float, x: float, a: float, b: float) -> float:
-    """The affine map taking [lo, hi] to [a, b], at x, exactly; the middle of [a, b] for a one-valued [lo, hi]."""
+def linear(lo: float, hi: float, x: float, a: float, b: float) -> float | None:
+    """The affine map taking [lo, hi] to [a, b], at a finite x, exactly rounded; the middle of [a, b] for a
+    one-valued [lo, hi]."""
+    if not math.isfinite(x):
+        return None
     t = Fraction(1, 2) if lo == hi else (Fraction(x) - Fraction(lo)) / (Fraction(hi) - Fraction(lo))
-    return float(Fraction(a) + t * (Fraction(b) - Fraction(a)))
+    return rounded(Fraction(a) + t * (Fraction(b) - Fraction(a)))
 
 
-def log_map(d: tuple[float, float], r: tuple[float, float], x: float) -> float:
+def log_map(d: tuple[float, float], r: tuple[float, float], x: float) -> float | None:
+    if not (math.isfinite(x) and x > 0):
+        return None
     l0, l1, lx = (mp.log(mp.mpf(v)) for v in (*d, x))
     t = mp.mpf(0.5) if d[0] == d[1] else (lx - l0) / (l1 - l0)
     return float(mp.mpf(r[0]) + t * (mp.mpf(r[1]) - mp.mpf(r[0])))
 
 
-def log_invert(d: tuple[float, float], r: tuple[float, float], y: float) -> float:
+def log_invert(d: tuple[float, float], r: tuple[float, float], y: float) -> float | None:
+    if not math.isfinite(y):
+        return None
     l0, l1 = (mp.log(mp.mpf(v)) for v in d)
     t = mp.mpf(0.5) if r[0] == r[1] else (mp.mpf(y) - r[0]) / (mp.mpf(r[1]) - r[0])
     return float(mp.exp(l0 + t * (l1 - l0)))
@@ -128,22 +149,13 @@ def between(d0: float, d1: float, v: float) -> float:
     return float(min(max(x, mp.mpf("1e-300")), mp.mpf("1.7e308")))
 
 
-def case(kind: str, d: tuple[float, float], r: tuple[float, float], c: int, rng: random.Random) -> dict[str, object]:
-    """Ticks, and the maps of both ends and three draws a little beyond them, either way."""
-    u = [rng.uniform(-0.2, 1.2) for _ in range(6)]
-    if kind == "log":  # each invert a normal double: v kept to [0, 1] where extrapolating leaves them
-
-        def fits(v: float) -> bool:
-            return 1e-300 <= log_invert(d, r, r[0] + (r[1] - r[0]) * v) <= 1.7e308
-
-        u[3:] = [v if fits(v) else min(max(v, 0.0), 1.0) for v in u[3:]]
-    ys = [r[0], r[1], *(r[0] + (r[1] - r[0]) * v for v in u[3:])]
+def record(
+    kind: str, d: tuple[float, float], r: tuple[float, float], c: int, xs: list[float], ys: list[float]
+) -> dict[str, object]:
     if kind == "linear":
-        xs = [d[0], d[1], *(inside(*d, v) for v in u[:3])]
         ticks = linear_ticks(min(d), max(d), c)
         maps, inverts = [linear(*d, x, *r) for x in xs], [linear(*r, y, *d) for y in ys]
     else:
-        xs = [d[0], d[1], *(between(*d, v) for v in u[:3])]
         ticks = log_ticks(min(d), max(d), c)
         maps, inverts = [log_map(d, r, x) for x in xs], [log_invert(d, r, y) for y in ys]
     return {
@@ -152,11 +164,48 @@ def case(kind: str, d: tuple[float, float], r: tuple[float, float], c: int, rng:
         "range": r,
         "count": c,
         "ticks": ticks,
-        "x": xs,
-        "map": maps,
-        "y": ys,
-        "invert": inverts,
+        "x": encoded(xs),
+        "map": encoded(maps),
+        "y": encoded(ys),
+        "invert": encoded(inverts),
     }
+
+
+def case(kind: str, d: tuple[float, float], r: tuple[float, float], c: int, rng: random.Random) -> dict[str, object]:
+    """Ticks, and the maps of both ends and three draws a little beyond them, either way."""
+    u = [rng.uniform(-0.2, 1.2) for _ in range(6)]
+    if kind == "log":  # each invert a normal double: v kept to [0, 1] where extrapolating leaves them
+
+        def fits(v: float) -> bool:
+            return 1e-300 <= (log_invert(d, r, r[0] + (r[1] - r[0]) * v) or 0.0) <= 1.7e308
+
+        u[3:] = [v if fits(v) else min(max(v, 0.0), 1.0) for v in u[3:]]
+    ys = [r[0], r[1], *(r[0] + (r[1] - r[0]) * v for v in u[3:])]
+    xs = [*d, *(inside(*d, v) if kind == "linear" else between(*d, v) for v in u[:3])]
+    return record(kind, d, r, c, xs, ys)
+
+
+# (kind, domain, range, values to map, values to invert); each case also maps and inverts its ends and the
+# refused values. The linear ones put the fraction beyond the doubles on narrow domains and ranges, reversed
+# and not, with finite and infinite results; the log ones span the doubles, or one ulp far from 1.
+Edge = tuple[str, tuple[float, float], tuple[float, float], tuple[float, ...], tuple[float, ...]]
+UP1, UP5, UP300 = (math.nextafter(v, math.inf) for v in (1.0, 5.0, 1e300))
+EDGES: tuple[Edge, ...] = (
+    ("linear", (0.0, TINY), (0.0, TINY), (1.0, -1.0, 1e300, MAX, -MAX), (1.0, -1.0, 1e300, MAX, -MAX)),
+    ("linear", (0.0, 1e-300), (0.0, 1e-300), (1e10, -1e10, 1e300, -MAX), (1e10, -1e10, 1e300, -MAX)),
+    ("linear", (1.0, UP1), (0.0, 400.0), (2.0, 0.0, 1e300, -1e300), (1e20, -1e20, MAX)),
+    ("linear", (UP1, 1.0), (300.0, 0.0), (1e300, -1e300, 0.5), (1e300, -1e300)),
+    ("linear", (0.0, TINY), (400.0, 0.0), (1e-300, 1e-320, 1.0, -1.0), (1.0, -1.0, 1e300)),
+    ("linear", (0.0, 1e-300), (5.0, UP5), (1.0, 1e10, -1e10), (6.0, 1e300, -1e300)),
+    ("linear", (-1e308, 0.0), (0.0, 1.0), (1e308, MAX, -MAX), (2.0, 2.7, 1e308, -1.0)),
+    ("linear", (0.0, 1e-323), (5.0, 5.0), (1e10, -MAX), (1.0, -1e300)),
+    ("linear", (0.0, 10.0), (0.0, TINY), (20.0, -5.0), (1.0, -1.0, 1e-320)),
+    ("log", (TINY, MAX), (0.0, 400.0), (1.0, 1e-300, 1e300, 1e-320, 0.0, -1.0), (196.0, 204.0, 600.0, -200.0)),
+    ("log", (MAX, TINY), (400.0, 0.0), (1.0, 1e-300, 1e300, 0.0), (196.0, 204.0, 800.0, -400.0)),
+    ("log", (1e300, UP300), (0.0, 400.0), (1e301, MAX, TINY, 1.0), (4e18, -4e18, 1e20, -1e20)),
+    ("log", (1.0, 1000.0), (0.0, TINY), (10.0, 100.0, 1e6), (1.0, -1.0, 1e-323)),
+    ("log", (5.0, 5.0), (0.0, 1e-323), (1.0, 1e300), (1e10, -1e10, 1.0)),
+)
 
 
 def linear_domain(rng: random.Random, c: int) -> tuple[float, float]:
@@ -216,12 +265,14 @@ def goldens() -> list[dict[str, object]]:
             c = rng.choice(COUNTS)
             d = linear_domain(rng, c) if kind == "linear" else log_domain(rng)
             out.append(case(kind, d, r, c, rng))
+    for kind, d, r, xs, ys in EDGES:
+        out.append(record(kind, d, r, 5, [*d, *xs, *REFUSED], [*r, *ys, *REFUSED]))
     return out
 
 
 def render() -> str:
     """JSON Lines: one case per line, so a changed case is a one-line diff."""
-    return "".join(json.dumps(c) + "\n" for c in goldens())
+    return "".join(json.dumps(c, allow_nan=False) + "\n" for c in goldens())
 
 
 def main() -> None:

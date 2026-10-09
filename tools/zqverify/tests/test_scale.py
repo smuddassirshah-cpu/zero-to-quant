@@ -1,6 +1,7 @@
 """The scale goldens are fresh, and the twin's ticks keep the properties the specification states."""
 
 import math
+from fractions import Fraction
 
 from hypothesis import assume, given, strategies as st
 
@@ -68,3 +69,62 @@ def test_wide_log_ticks_start_within_a_decade(p: int, w: float, c: int, side: fl
     lo, hi = math.nextafter(float(f"1e{p}"), side), 10.0 ** (p + w)
     assume(hi >= 100 * lo and sum(lo <= float(f"1e{q}") <= hi for q in range(p - 1, p + 29)) <= c)
     assert scale.log_ticks(lo, hi, c)[0] <= 10 * lo
+
+
+finite = st.floats(allow_nan=False, allow_infinity=False)
+
+
+@st.composite
+def sides(draw: st.DrawFn) -> tuple[float, float]:
+    """Ends a few doubles apart anywhere, subnormal ones included, or far apart, in either order."""
+    a = draw(finite)
+    b = math.nextafter(a, math.inf, steps=draw(st.integers(0, 4))) if draw(st.booleans()) else draw(finite)
+    assume(math.isfinite(b - a))
+    return (b, a) if draw(st.booleans()) else (a, b)
+
+
+def test_values_that_are_not_finite_or_positive_are_refused() -> None:
+    for v in scale.REFUSED:
+        assert scale.linear(0.0, 10.0, v, 300.0, 0.0) is None and scale.linear(3.0, 3.0, v, 0.0, 1.0) is None
+        assert scale.log_map((1.0, 1000.0), (0.0, 300.0), v) is None
+        assert scale.log_invert((1.0, 1000.0), (0.0, 300.0), v) is None
+    assert scale.log_map((1.0, 1000.0), (0.0, 300.0), 0.0) is None
+    assert scale.log_map((1.0, 1000.0), (0.0, 300.0), -1.0) is None
+
+
+def test_overflowing_fractions_give_signed_infinities_or_finite_values() -> None:
+    up1 = math.nextafter(1.0, math.inf)
+    assert scale.linear(1.0, up1, 1e300, 0.0, 400.0) == math.inf
+    assert scale.linear(up1, 1.0, -1e300, 300.0, 0.0) == -math.inf
+    assert scale.linear(0.0, 1e-300, 1e10, 0.0, 1e-300) == 1e10
+    assert scale.linear(0.0, scale.TINY, 1.0, 400.0, 0.0) == -math.inf
+    assert scale.linear(0.0, scale.TINY, 1e-320, 0.0, 10.0) == 20240.0
+    assert scale.log_invert((scale.TINY, scale.MAX), (0.0, 400.0), 600.0) == math.inf
+    assert scale.log_invert((scale.TINY, scale.MAX), (0.0, 400.0), -200.0) == 0.0
+    assert scale.log_invert((1.0, 1000.0), (0.0, scale.TINY), 1.0) == math.inf
+    assert scale.log_invert((5.0, 5.0), (0.0, 1e-323), 1e10) == 5.0
+
+
+@given(sides(), finite)
+def test_a_side_onto_itself_is_the_identity(d: tuple[float, float], x: float) -> None:
+    assume(d[0] != d[1])
+    assert scale.linear(*d, x, *d) == x
+
+
+@given(sides(), sides(), finite, finite)
+def test_linear_maps_are_monotone_and_signed(
+    d: tuple[float, float], r: tuple[float, float], x: float, y: float
+) -> None:
+    """Monotone in the direction the sides give, constant where one is a single value; and plus or minus
+    infinity, signed as the exact value, where that lies beyond the doubles."""
+    lo, hi = sorted((x, y))
+    a, b = scale.linear(*d, lo, *r), scale.linear(*d, hi, *r)
+    assert a is not None and b is not None
+    if d[0] == d[1] or r[0] == r[1]:
+        assert a == b
+        return
+    assert a == b or (b - a) * math.copysign(1.0, (d[1] - d[0]) * (r[1] - r[0])) > 0
+    exact = Fraction(r[0]) + (Fraction(hi) - Fraction(d[0])) / (Fraction(d[1]) - Fraction(d[0])) * (
+        Fraction(r[1]) - Fraction(r[0])
+    )
+    assert b == (math.inf if exact > 0 else -math.inf) if abs(exact) >= scale.OVERFLOW else math.isfinite(b)

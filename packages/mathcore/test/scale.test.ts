@@ -3,16 +3,18 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { linearScale, logScale, type Scale } from '@zq/mathcore/scale';
 
+/** A golden value: a non-finite one as the string Number reads back; null where the twin refuses it. */
+type Value = number | string;
 interface Golden {
   kind: 'linear' | 'log';
   domain: [number, number];
   range: [number, number];
   count: number;
   ticks: number[];
-  x: number[];
-  map: number[];
-  y: number[];
-  invert: number[];
+  x: Value[];
+  map: (Value | null)[];
+  y: Value[];
+  invert: (Value | null)[];
 }
 
 const golden = readFileSync(new URL('scale.golden.jsonl', import.meta.url), 'utf8')
@@ -22,6 +24,8 @@ const golden = readFileSync(new URL('scale.golden.jsonl', import.meta.url), 'utf
 // The engine's own functions stand in for dmath until it merges; tests are not graded paths.
 const M = { log: Math.log, exp: Math.exp };
 const U = 2 ** -53;
+const MAX = Number.MAX_VALUE;
+const REFUSED = [NaN, Infinity, -Infinity];
 const most = (count: number): number => Math.floor(1.59 * Math.max(count, 2)) + 1;
 const word = new DataView(new ArrayBuffer(8));
 /** x moved n doubles up (n > 0) or down, for x > 0. */
@@ -246,35 +250,201 @@ describe('logScale', () => {
   });
 });
 
-// Tolerances [measured, 8 October 2026]: ticks exactly the Fraction twin's; maps and inverts within 4 units
-// (measured at most 2.6), a unit being u(|a| + |b|)max(1, |t|) for an affine map onto [a, b] at t, u = 2^-53,
-// the log map's included, and the log invert's relative error u(1 + S max(1, |t|)), S = |ln(d1 / d0)|, which
-// exp(tS) cannot beat.
+describe('the value contract', () => {
+  /** Ends a few doubles apart anywhere, subnormal ones included, or far apart, in either order. */
+  const side = fc
+    .tuple(
+      fc.double({ noNaN: true, noDefaultInfinity: true }),
+      fc.oneof(fc.integer({ min: 0, max: 4 }), fc.double({ min: -1e300, max: 1e300, noNaN: true })),
+      fc.boolean(),
+    )
+    .map(([a, w, flip]): [number, number] => {
+      let b = a;
+      if (Number.isInteger(w) && Math.abs(w) <= 4)
+        for (let i = 0; i < w; i++) b += Math.max(Math.abs(b) * 2 ** -52, Number.MIN_VALUE);
+      else b = a + w;
+      return flip ? [b, a] : [a, b];
+    })
+    .filter(([a, b]) => Number.isFinite(b - a));
+  const values = fc.array(fc.double({ noNaN: true, noDefaultInfinity: true }), {
+    minLength: 2,
+    maxLength: 8,
+  });
+  const sign = ([a, b]: readonly [number, number]): number => Math.sign(b - a);
+
+  /** Never NaN, and monotone in the direction the two sides give (constant where one is degenerate). */
+  function monotone(f: (v: number) => number, vs: number[], dir: number): void {
+    const out = [...vs].sort((p, q) => p - q).map(f);
+    out.forEach((v, i) => {
+      expect(Number.isNaN(v)).toBe(false);
+      const prev = out[i - 1] ?? v;
+      expect(v === prev || dir * (v - prev) > 0).toBe(true);
+    });
+  }
+
+  it('refuses a value that is not finite with its own error', () => {
+    const point = linearScale([3, 3], [0, 1]);
+    const log = logScale([1, 1000], [0, 300], M);
+    for (const s of [linearScale([0, 10], [300, 0]), point, log, logScale([5, 5], [2, 2], M)])
+      for (const v of REFUSED) {
+        expect(() => s.map(v)).toThrow(new RangeError('a scale maps finite values only'));
+        expect(() => s.invert(v)).toThrow(new RangeError('a scale inverts finite values only'));
+      }
+    expect(() => log.map(-1)).toThrow(new RangeError('a log scale maps positive values only'));
+  });
+
+  it('maps every finite value to a number, monotone, ends exact, on narrow and wide sides', () => {
+    fc.assert(
+      fc.property(side, side, values, values, (d, r, xs, ys) => {
+        const s = linearScale(d, r);
+        const dir = sign(d) * sign(r);
+        monotone((x) => s.map(x), xs, dir);
+        monotone((y) => s.invert(y), ys, dir);
+        // Exact up to the sign of a zero: lerp(-0, b, 0) is 0.
+        if (d[0] !== d[1] && r[0] !== r[1])
+          for (const [got, want] of [
+            [s.map(d[0]), r[0]],
+            [s.map(d[1]), r[1]],
+            [s.invert(r[0]), d[0]],
+            [s.invert(r[1]), d[1]],
+          ])
+            expect(got === want).toBe(true);
+      }),
+      { numRuns: 2000 },
+    );
+  });
+
+  it('meets lerp without a step where the fraction overflows', () => {
+    // On [0, w], t reaches the largest double at x = w·MAX_VALUE; x walks the doubles across it.
+    fc.assert(
+      fc.property(fc.double({ min: Number.MIN_VALUE, max: 0.5, noNaN: true }), side, (w, r) => {
+        const s = linearScale([0, w], r);
+        const seam = w * MAX;
+        const xs = Array.from({ length: 41 }, (_, i) => nudge(seam, i - 20));
+        monotone((x) => s.map(x), xs, sign(r));
+      }),
+    );
+  });
+
+  it('maps a narrow domain onto itself as the identity, the fraction overflowing or not', () => {
+    fc.assert(
+      fc.property(side, fc.double({ noNaN: true, noDefaultInfinity: true }), ([a, b], x) => {
+        fc.pre(a !== b);
+        const got = linearScale([a, b], [a, b]).map(x);
+        // Within its error of MAX_VALUE a rounding may overflow: [0, 1.5e-323] takes -MAX_VALUE to -Infinity.
+        if (!Number.isFinite(got))
+          expect(got === Math.sign(x) * Infinity && Math.abs(x) > MAX * (1 - 4 * U)).toBe(true);
+        else expect(Math.abs(got - x)).toBeLessThanOrEqual(4 * U * (Math.abs(x) + Math.abs(a) + Math.abs(b)));
+      }),
+      { numRuns: 1000 },
+    );
+    const tiny = linearScale([0, Number.MIN_VALUE], [0, Number.MIN_VALUE]);
+    expect([1, -MAX, MAX].map((x) => tiny.map(x))).toEqual([1, -MAX, MAX]);
+    expect(linearScale([0, 1e-300], [0, 1e-300]).map(1e10)).toBe(1e10);
+  });
+
+  it('gives a signed infinity only beyond the doubles, and finite values past an overflowing fraction', () => {
+    const up1 = nudge(1, 1);
+    const narrow = linearScale([1, up1], [0, 400]);
+    expect([narrow.map(1e300), narrow.map(-1e300), narrow.map(2)]).toEqual([
+      Infinity,
+      -Infinity,
+      400 * 2 ** 52,
+    ]);
+    const reversed = linearScale([up1, 1], [300, 0]);
+    expect([reversed.map(1e300), reversed.map(-1e300)]).toEqual([Infinity, -Infinity]);
+    // Fraction 1e310, range one ulp of 5 wide (2^-50): 2^-50·1e310 is finite.
+    const both = linearScale([0, 1e-300], [5, nudge(5, 1)]);
+    expect(both.map(1e10) / (2 ** -50 * 1e300 * 1e10)).toBeCloseTo(1, 14);
+    expect(linearScale([0, 1e-323], [5, 5]).map(1e10)).toBe(5);
+    const flat = linearScale([0, 10], [0, Number.MIN_VALUE]);
+    expect([flat.invert(1), flat.invert(-1), flat.invert(1e-320)]).toEqual([Infinity, -Infinity, 20240]);
+  });
+
+  it('inverts a log scale across the whole doubles, by thirds where e^a alone leaves them', () => {
+    const wide = logScale([Number.MIN_VALUE, MAX], [0, 400], M);
+    for (const s of [wide, logScale([MAX, Number.MIN_VALUE], [400, 0], M)]) {
+      expect(s.invert(196) / 1.4409230854397906e-14).toBeCloseTo(1, 10);
+      expect(s.invert(204) / 0.06163954403083494).toBeCloseTo(1, 10);
+    }
+    expect([wide.invert(600), wide.invert(-200), wide.map(MAX), wide.map(Number.MIN_VALUE)]).toEqual([
+      Infinity,
+      0,
+      400,
+      0,
+    ]);
+    const flat = logScale([1, 1000], [0, Number.MIN_VALUE], M);
+    expect([flat.invert(1), flat.invert(-1)]).toEqual([Infinity, 0]);
+    expect(logScale([5, 5], [0, 1e-323], M).invert(1e10)).toBe(5);
+    fc.assert(
+      fc.property(side, side, values, ([a, b], r, ys) => {
+        const [d0, d1] = [Math.abs(a) || 1, Math.abs(b) || 1];
+        const s = logScale([d0, d1], r, M);
+        for (const y of ys) expect(Number.isNaN(s.invert(y)) || s.invert(y) < 0).toBe(false);
+        for (const x of ys.map(Math.abs).filter((v) => v > 0)) expect(Number.isNaN(s.map(x))).toBe(false);
+        // Monotone across the middle, where the invert changes the end it starts from; ends exact.
+        const mid = r[0] / 2 + r[1] / 2;
+        const walk = Array.from({ length: 21 }, (_, i) => mid + (i - 10) * U * Math.abs(mid));
+        monotone((y) => s.invert(y), [...ys, ...walk.filter(Number.isFinite)], sign([d0, d1]) * sign(r));
+        if (d0 !== d1 && r[0] !== r[1]) expect([s.invert(r[0]), s.invert(r[1])]).toEqual([d0, d1]);
+      }),
+      { numRuns: 1000 },
+    );
+  });
+});
+
+// Tolerances [measured, 9 October 2026]: ticks exactly the Fraction twin's; refusals and infinities exactly;
+// other maps and inverts within 4 units (measured at most 2.6), a unit being u(|a| + |b|)max(1, |t|) for an
+// affine map onto [a, b] at t, u = 2^-53, the log map's included, and the log invert's relative error
+// u(1 + S max(1, |t|)), S = |ln(d1 / d0)|, which exp(tS) cannot beat.
 describe('parity with the Fraction and mpmath twin (tools/zqverify/scale.py)', () => {
+  /** (v - a) / (b - a) without overflow; 0.5 where a = b. */
+  const at = (v: number, a: number, b: number): number =>
+    a === b ? 0.5 : Number.isFinite(v - a) ? (v - a) / (b - a) : (v / 2 - a / 2) / ((b - a) / 2);
+  /** u(|a| + |b|)max(1, |t|) for the affine value v onto [a, b], computed without overflow. */
+  const unit = (v: number, a: number, b: number): number => {
+    const half = Math.abs(a) / 2 + Math.abs(b) / 2;
+    if (a === b) return 2 * U * half;
+    const gap = Number.isFinite(v - a) ? Math.abs(v - a) : 2 * Math.abs(v / 2 - a / 2);
+    return 2 * U * Math.max(half, (half / Math.abs(b - a)) * gap);
+  };
+  function agrees(got: () => number, want: Value | null, bound: (want: number) => number, why: string): void {
+    if (want === null) {
+      expect(got, why).toThrow(/^a scale (maps|inverts) finite values only$|^a log scale maps positive/);
+      return;
+    }
+    const [g, w] = [got(), Number(want)];
+    // Infinities and zeros exactly, up to the sign of a zero.
+    if (!Number.isFinite(w) || w === 0 || !Number.isFinite(g))
+      expect(g === w, `${why}: ${g}, ${w}`).toBe(true);
+    else expect(Math.abs(g - w), why).toBeLessThanOrEqual(bound(w));
+  }
+
   it(`agrees on all ${golden.length} golden scales`, () => {
     for (const g of golden) {
       const scale: Scale =
         g.kind === 'linear' ? linearScale(g.domain, g.range) : logScale(g.domain, g.range, M);
-      expect(scale.ticks(g.count), JSON.stringify(g.domain)).toEqual(g.ticks);
+      const why = JSON.stringify([g.domain, g.range]);
+      expect(scale.ticks(g.count), why).toEqual(g.ticks);
       const [[d0, d1], [r0, r1]] = [g.domain, g.range];
       // Where d1 / d0 leaves the doubles, |ln d0| + |ln d1| bounds S from above.
       const ln = Math.log(d1 / d0);
       const S = Number.isFinite(ln) ? Math.abs(ln) : Math.abs(Math.log(d0)) + Math.abs(Math.log(d1));
-      const at = (v: number, a: number, b: number): number => (a === b ? 0.5 : (v - a) / (b - a));
       g.x.forEach((x, i) => {
-        const want = g.map[i] ?? NaN;
-        const t = at(want, r0, r1);
-        expect(Math.abs(scale.map(x) - want)).toBeLessThanOrEqual(
-          4 * U * (Math.abs(r0) + Math.abs(r1)) * Math.max(1, Math.abs(t)),
+        agrees(
+          () => scale.map(Number(x)),
+          g.map[i] ?? null,
+          (w) => 4 * unit(w, r0, r1),
+          why,
         );
       });
       g.y.forEach((y, i) => {
-        const [got, want, t] = [scale.invert(y), g.invert[i] ?? NaN, at(y, r0, r1)];
+        const v = Number(y);
         const bound =
           g.kind === 'linear'
-            ? 4 * U * (Math.abs(d0) + Math.abs(d1)) * Math.max(1, Math.abs(t))
-            : 4 * U * Math.abs(want) * (1 + S * Math.max(1, Math.abs(t)));
-        expect(Math.abs(got - want)).toBeLessThanOrEqual(bound);
+            ? (w: number) => 4 * unit(w, d0, d1)
+            : (w: number) => 4 * U * Math.abs(w) * (1 + (S && S * Math.max(1, Math.abs(at(v, r0, r1)))));
+        agrees(() => scale.invert(v), g.invert[i] ?? null, bound, why);
       });
     }
   });

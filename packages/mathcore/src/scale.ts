@@ -10,6 +10,26 @@
 //   being exact [recalled: Goldberg 1991, theorem 4]; elsewhere the log of the ratio; and where the ratio
 //   leaves the normal doubles, a difference of logs, which then exceeds 708 against logs of at most 745
 //   [inferred].
+// - Map and invert check their value first, so stats' errors never surface: a finite value always gives a
+//   number, ±Infinity where the mapped value leaves the doubles (a log invert's 0 below them) or within a
+//   few ulp of Number.MAX_VALUE, where the roundings can overflow as lerp's can [our choice; measured: the
+//   identity on [0, 1.5e-323] maps -MAX_VALUE to -Infinity]. The linear fraction t = (x - d0) / (d1 - d0)
+//   overflows where the span is under 1 and x lies far outside it. There the map computes what lerp computes
+//   for finite t ≥ 2^54, where 1 - t rounds to -t: the range's end on t's side (r1 for positive t) plus s·t,
+//   s = r1 - r0, with t and s·t each rounded once as with an unbounded exponent, from the operands' integer
+//   significands, and the sum brought into the doubles by halving, as lerp does; the invert likewise. The
+//   two paths meet without a step [inferred]. Rejected: clamping t to a finite stand-in, wrong wherever the
+//   range is narrow too ([0, 1e-300] onto itself would map 1e10 to 1.8e8). The log fraction is finite for
+//   every finite x (logs of at most 745 over a span of at least 2^-53). The log invert takes e^a in thirds
+//   where e^a alone leaves the normal doubles, so an end near 2^-1074 or Number.MAX_VALUE does not overflow
+//   or underflow a finite result [inferred].
+// - Monotone: the linear map and invert, as lerp is [measured: no step back over 300,000 random scales, nor
+//   across the overflow seam]. The log invert anchors t < 1/2 at d0 and the rest at d1, for exact ends; the
+//   two evaluations of the middle differ relatively by up to about |ln(d1 / d0)|·u (721 ulp measured over
+//   10^±300), so the d1 branch is held at or past the d0 branch's last value [measured: no step back over
+//   20,000 random domains]. The log map can step back by up to 2 ulp within a factor of 2 of d0, where
+//   Kahan's formula trades it for accuracy [measured: 5 of 820,000 steps near the middle of 20,000 random
+//   domains].
 // - The log scale takes `{ log, exp }` typed to dmath's signatures, so given @zq/mathcore/dmath it is
 //   deterministic; a follow-up makes dmath the default once it merges. Its map is base-free; its ticks are
 //   decimal.
@@ -36,8 +56,8 @@
 //   doubles there collapse, so the list stays strictly increasing. A count is an integer from 1 to 1,000, so
 //   a call makes O(count) string conversions and BigInt operations on numbers of a few thousand bits
 //   [measured: under 1 ms a call at 1,000, Node 22.22.0].
-// - Errors are RangeErrors: a non-finite end or span, a log domain or argument that is not positive, and a
-//   count outside 1 to 1,000.
+// - Errors are RangeErrors: a non-finite end or span, a non-finite value to map or invert, a log domain or
+//   argument that is not positive, and a count outside 1 to 1,000.
 import { lerp } from './stats.ts';
 
 export interface LogExp {
@@ -58,6 +78,7 @@ type Pair = readonly [number, number];
 
 const MOST_TICKS = 1000;
 const MIN_NORMAL = 2.2250738585072014e-308;
+const BELOW_HALF = 0.49999999999999994;
 const MANTISSAS = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 5], [1]] as const;
 const bits = new DataView(new ArrayBuffer(8));
 
@@ -93,9 +114,40 @@ const atLeast = (x: bigint, y: bigint, q: number): boolean =>
 const fraction = (x: number, a: number, b: number): number =>
   Number.isFinite(x - a) ? (x - a) / (b - a) : (x / 2 - a / 2) / ((b - a) / 2);
 
+/** 2^k for an integer k from -1022 to 1023, from its bits. */
+function pow2(k: number): number {
+  bits.setBigUint64(0, BigInt(k + 1023) << 52n);
+  return bits.getFloat64(0);
+}
+
+/** base + s·δ/d where the quotient overflowed (the decision notes above): s, δ and d finite and nonzero, so
+ *  |s·δ/d| > 2^-51, its half is normal and the exponent of that half is at least -157. */
+function beyond(delta: number, d: number, base: number, s: number): number {
+  const [[nx, ex], [nd, ed], [ns, es]] = [dyadic(delta), dyadic(d), dyadic(s)];
+  let half = Number(ns) * (Number(nx) / Number(nd));
+  let e = es + ex - ed - 1;
+  for (; e > 1023; e -= 1023) half *= pow2(1023);
+  half *= pow2(e);
+  const sum = base + 2 * half;
+  return Number.isFinite(sum) ? sum : 2 * (base / 2 + half);
+}
+
+/** The affine map taking a0 to b0 and a1 to b1, at a finite x; the middle of [b0, b1] where a side is one
+ *  value. x - a0 is finite wherever the fraction overflows: |a1 - a0| < 1 then, so |a0| < 2^54. */
+function affine(x: number, [a0, a1]: Pair, [b0, b1]: Pair): number {
+  if (a0 === a1 || b0 === b1) return lerp(b0, b1, 0.5);
+  const t = fraction(x, a0, a1);
+  return Number.isFinite(t) ? lerp(b0, b1, t) : beyond(x - a0, a1 - a0, t > 0 ? b1 : b0, b1 - b0);
+}
+
 function finite(name: string, [a, b]: Pair): Pair {
   if (!Number.isFinite(b - a)) throw new RangeError(`the ${name} must be finite, with a finite span`);
   return [a, b];
+}
+
+function checked(v: number, verb: 'maps' | 'inverts'): number {
+  if (!Number.isFinite(v)) throw new RangeError(`a scale ${verb} finite values only`);
+  return v;
 }
 
 function counted(count: number): number {
@@ -154,8 +206,8 @@ export function linearScale(domain: Pair, range: Pair): Scale {
   return {
     domain: [d0, d1],
     range: [r0, r1],
-    map: (x) => lerp(r0, r1, d1 === d0 ? 0.5 : fraction(x, d0, d1)),
-    invert: (y) => lerp(d0, d1, r1 === r0 ? 0.5 : (y - r0) / (r1 - r0)),
+    map: (x) => affine(checked(x, 'maps'), [d0, d1], [r0, r1]),
+    invert: (y) => affine(checked(y, 'inverts'), [r0, r1], [d0, d1]),
     ticks: (count) => linearTicks(Math.min(d0, d1), Math.max(d0, d1), counted(count)),
   };
 }
@@ -175,16 +227,29 @@ export function logScale(domain: Pair, range: Pair, math: LogExp): Scale {
     return q >= MIN_NORMAL && q < Infinity ? math.log(q) : math.log(x) - math.log(y);
   };
   const span = logRatio(d1, d0);
+  /** v·e^a, taking e^a in thirds where it alone leaves the normal doubles. */
+  const grow = (v: number, a: number): number => {
+    const e = math.exp(a);
+    if (e >= MIN_NORMAL && e < Infinity) return v * e;
+    const c = math.exp(a / 3);
+    return v * c * c * c;
+  };
+  // The last value below t = 1/2, so the branch anchored at d1 never steps back past the one at d0.
+  const middle = grow(d0, BELOW_HALF * span);
   return {
     domain: [d0, d1],
     range: [r0, r1],
     map(x) {
-      if (!(x > 0)) throw new RangeError('a log scale maps positive values only');
+      if (!(checked(x, 'maps') > 0)) throw new RangeError('a log scale maps positive values only');
       return lerp(r0, r1, d0 === d1 ? 0.5 : logRatio(x, d0) / span);
     },
     invert(y) {
-      const t = r1 === r0 ? 0.5 : (y - r0) / (r1 - r0);
-      return t < 0.5 ? d0 * math.exp(t * span) : d1 * math.exp((t - 1) * span);
+      checked(y, 'inverts');
+      if (d0 === d1) return d0;
+      const t = r1 === r0 ? 0.5 : fraction(y, r0, r1);
+      if (t < 0.5) return grow(d0, t * span);
+      const v = grow(d1, (t - 1) * span);
+      return d1 > d0 ? Math.max(v, middle) : Math.min(v, middle);
     },
     ticks: (count) => logTicks(Math.min(d0, d1), Math.max(d0, d1), counted(count)),
   };
