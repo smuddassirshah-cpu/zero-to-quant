@@ -12,6 +12,7 @@ tester.run('no-empty-catch', rule, {
     'try { f() } catch { log.warn("failed") }',
     'try { f() } catch { console.error("failed") }',
     'try { f() } catch { this.logger.info("failed") }',
+    'try { f() } catch { (log as Logger).warn("failed") }',
     'try { f() } catch (e) { return e }',
     'try { f() } catch (e) { setTimeout(() => report(e)) }',
     'try { f() } catch ({ message }) { show(message) }',
@@ -57,6 +58,10 @@ tester.run('no-empty-catch', rule, {
   ],
   invalid: [
     fails('try { f() } catch {}'),
+    fails('(p?.catch)(() => {})'),
+    fails('p.catch!(() => {})'),
+    fails('(p?.then)(ok, () => {})'),
+    fails('(p.catch as C)(() => {})'),
     fails('try { f() } catch (e) {}'),
     fails('try { f() } catch (e) { /* ignored */ }'),
     fails('try { f() } catch (e) { e = null }'),

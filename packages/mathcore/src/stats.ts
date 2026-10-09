@@ -5,7 +5,9 @@
 //   Float64Array that grows as math.fsum's list does: they never overlap, but a low one can exceed half an ulp
 //   of the next (8897893.239287795 under 29892972380160 [measured]), so only the 2,098 bit positions of a
 //   double bound their count [inferred]; random adversarial sums reached 28 [measured]. A sum is O(n) in
-//   index loops, 4 to 7 times faster than for-of over a pushed array [measured: Node 22.22.0, 10,000 values].
+//   index loops. Against for-of over a pushed array it is about 6 times faster on uniform(-100, 100) data, 4
+//   times on 10^9 + uniform(0, 10^-3) and 2 times on ±10^uniform(-20, 20) [measured: Node 22.22.0, 10,000
+//   values, idle machine; 5.9 to 6.6, 3.8 to 4.0 and 2.1 on three runs].
 //   An empty sum is 0; every other statistic needs data. `mean` throws where the sum overflows, as fmean
 //   raises [our choice]: summing the data scaled by 2^-600 would drop its smallest terms, and under
 //   cancellation they are the mean ([1.7e308, 1.7e308, -1.7e308, -1.7e308, 1e-320] has mean 2e-321, the
@@ -19,10 +21,14 @@
 //   test/stats.test.ts derives the bound and takes its tolerances from it [inferred]. Rejected: the exact
 //   partials, 1.1 ms at 10,000 values against Sum2's 0.05 ms [measured: Node 22.22.0], when derive has 2 ms
 //   at 4x throttling (ARCHITECTURE.md 5.14); Welford's update, which rounds at every step; Σx² - (Σx)²/n,
-//   which cancels catastrophically. Data beyond 2^±400 is first scaled by 2^∓600, exact both ways, so no square
-//   or sum overflows and the squares of subnormal data stay normal: a variance or deviation throws only when
-//   it overflows itself, and `sd` keeps the deviation of subnormal data, as statistics.stdev does. ECMA-262
-//   makes Math.sqrt correctly rounded (sec-math.sqrt) [sourced].
+//   which cancels catastrophically. Data beyond 2^±400 is first scaled by 2^∓600, so no square or sum
+//   overflows and the squares of subnormal data stay normal. Scaling up is exact. Scaling down is exact except
+//   for members below 2^-422, which become subnormal or 0: each moves by at most 2^-475 while the spread
+//   exceeds 2^399, so the variance moves by less than 2^-800 of itself, far below its bound [inferred]. A
+//   variance or deviation throws where it overflows, and may also throw within its error bound (a few ulp) of
+//   Number.MAX_VALUE, where statistics can still give MAX_VALUE [measured: variance([a, -a, a], 'sample') with
+//   a = 1.1611502276392735e154; CPython 3.12.15]. `sd` keeps the deviation of subnormal data, as
+//   statistics.stdev does. ECMA-262 makes Math.sqrt correctly rounded (sec-math.sqrt) [sourced].
 // - Quantiles sort a copy, O(n log n) (selection would save little at these sizes), and interpolate between
 //   neighbours at a 0-based position h: 'inclusive' h = (n - 1)p, NumPy's default 'linear' and
 //   statistics.quantiles(method="inclusive"); 'gcse' h = (n + 1)p - 1, the GCSE convention of
@@ -33,10 +39,14 @@
 //   [sourced: NumPy 2.4.6 numpy/lib/_function_base_impl.py, _lerp], so 'inclusive' is bit-identical to
 //   numpy.quantile wherever NumPy's b - a stays finite, up to the sign of a zero: the sort puts -0 before 0
 //   [recalled: ECMA-262 CompareTypedArrayElements; measured: Node 22.22.0] and an end value is returned as
-//   it is, where NumPy's lerp makes the lowest quantile of [-0, 0] a 0 [measured: NumPy 2.4.6]. Where b - a
-//   overflows, lerp halves both ends first.
-// - Errors are RangeErrors: too little data, a NaN or infinite value or lerp end, p outside [0, 1], and an
-//   overflowing sum, variance or deviation.
+//   it is, where NumPy's lerp makes the lowest quantile of [-0, 0] a 0 [measured: NumPy 2.4.6]. Any finite t
+//   extrapolates, as the scales need. Where b - a, its product with t or the sum leaves the doubles, lerp
+//   interpolates the halved ends and doubles the result, which scales each step by a power of two, so the
+//   result is ±Infinity only where the rounded interpolant lies beyond Number.MAX_VALUE, as IEEE-754
+//   arithmetic gives [our choice].
+// - Errors are RangeErrors, for invalid inputs (too little data, a NaN or infinite value, lerp end or t, and p
+//   outside [0, 1]) and for a sum, variance or deviation that overflows. A lerp with valid inputs never
+//   throws: its overflow is the ±Infinity above.
 export type VarianceKind = 'sample' | 'population';
 export type QuantileMethod = 'inclusive' | 'gcse';
 /** An array or a typed array of values. */
@@ -199,15 +209,17 @@ export function sd(xs: Data, kind: VarianceKind): number {
   return unscaled;
 }
 
-/** a + t(b - a), NumPy's form: exact at t = 0 and t = 1, and halved first where b - a overflows. Any t
- * extrapolates, as the scales need, and a NaN t gives NaN; the ends must be finite. */
+/** NumPy's _lerp: a + t(b - a) below t = 0.5 and b - (1 - t)(b - a) from it. */
+const interpolate = (a: number, b: number, t: number): number =>
+  t < 0.5 ? a + (b - a) * t : b - (b - a) * (1 - t);
+
+/** a + t(b - a), exact at t = 0 and t = 1, for finite ends and a finite t; ±Infinity where the result leaves
+ * the doubles, and computed on the halved ends where only a step does. */
 export function lerp(a: number, b: number, t: number): number {
-  const d = b - a;
-  if (!Number.isFinite(d)) {
-    if (!Number.isFinite(a) || !Number.isFinite(b)) throw new RangeError('lerp needs finite ends');
-    return 2 * lerp(a / 2, b / 2, t);
-  }
-  return t < 0.5 ? a + d * t : b - d * (1 - t);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) throw new RangeError('lerp needs finite ends');
+  if (!Number.isFinite(t)) throw new RangeError('lerp needs a finite t');
+  const r = interpolate(a, b, t);
+  return Number.isFinite(r) ? r : 2 * interpolate(a / 2, b / 2, t);
 }
 
 function sorted(xs: Data): Float64Array {

@@ -6,13 +6,15 @@ outside them; `variance` is the sum of squared deviations from the mean divided 
 values) or n ('population'), and `sd` its square root; a quantile sorts the data and interpolates linearly
 between the neighbours at the 0-based position h = (n - 1)p ('inclusive') or h = (n + 1)p - 1 ('gcse'), taking
 the end value where h falls outside [0, n - 1]; the median is the 0.5 quantile. A statistic the data cannot give
-(an overflow, too few values) is recorded as null, and the TypeScript throws.
+(an overflow, too few values) is recorded as null, and the TypeScript throws; it may also throw for a variance
+or deviation within its tolerance of the largest double, which statistics rounds to that double.
 
 Each case records the references the TypeScript test compares with: exactly math.fsum, the clamped fmean and
 numpy.quantile(method="linear"); within the tolerances the test derives, statistics' variances, deviations,
 median and quantiles, and the exact Fraction quantiles of both conventions. A NumPy or statistics median or
 quantile that leaves the doubles in its own arithmetic (NumPy's b - a overflows on [-1.7e308, 1.7e308], and
-statistics.median's a + b on [1.7e308, 1.7e308]) is recorded as null and checked only against the Fractions. Data sets are drawn by `random.Random` seeded with the module name.
+statistics.median's a + b on [1.7e308, 1.7e308]) is recorded as null and checked only against the Fractions.
+Data sets are drawn by `random.Random` seeded with the module name.
 From the repository root, rewrite the file with:
 
     PYTHONPATH=tools uv run --project tools/py --locked python -m zqverify.stats
@@ -68,6 +70,9 @@ FIXED = [
     [-0.010106646676021076, 0.009232663778297238],
     [35672547.274824, -7.324550220499934e-29, 1.167244689349999e-18, 7147531090310.019],
     [3.6779024824843e-23, -2.4841613297240173e-05, -1.5708659099333112e18, -6007820616.431649],
+    # The sample variance and the sample deviation are MAX_VALUE, which the TypeScript may overflow to a throw.
+    [1.1611502276392735e154, -1.1611502276392735e154, 1.1611502276392735e154],
+    [1.5568479229996504e308, -1.5568479229996504e308, 1.5568479229996504e308],
     # A GCSE set of ten, where the conventions differ on the quartiles (drl.pre.summary-stats).
     [3.0, 7.0, 8.0, 12.0, 15.0, 18.0, 21.0, 22.0, 30.0, 41.0],
 ]
