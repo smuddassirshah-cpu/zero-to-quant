@@ -77,3 +77,37 @@ def test_grouped_integers_read_back(n: int) -> None:
 @given(st.text(max_size=30))
 def test_never_raises(text: str) -> None:
     assert num_parse.parse(text, ["£", "bp"])["ok"] in (True, False)
+
+
+
+NARROW = st.sampled_from(["\u00A0", "\u2007", "\u2009", "\u200A", "\u202F"])
+SYNTAX = {"ok": False, "reason": "syntax"}
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["2\u00A0125/250", "1\u202F125/250", "3\u2009100/200", "97\u00A0291/882674", "12\u00A0345/7", "1\u00A0000 / 3",
+     "1\u00A0000/0", "3.2e1\u00A0000", "1e\u22121\u00A0000", "3.2 x 10^1\u00A0000"],
+)
+def test_a_narrow_space_grouping_before_a_slash_or_in_an_exponent_is_syntax(text: str) -> None:
+    assert num_parse.parse(text, []) == SYNTAX
+
+
+@given(st.integers(1000, 10**12), NARROW, st.sampled_from(["", " ", "\u00A0"]), st.integers(0, 10**9))
+def test_a_grouping_before_a_slash_reads_two_ways_so_it_is_syntax(whole: int, space: str, gap: str, d: int) -> None:
+    assert num_parse.parse(f"{whole:,}".replace(",", space) + f"{gap}/{d}", []) == SYNTAX
+    comma = num_parse.parse(f"{whole:,}{gap}/{d}", [])
+    if d == 0:
+        assert comma == {"ok": False, "reason": "zero-denominator"}
+    else:
+        assert (comma["form"], comma["typed"]) == ("fraction", {"whole": "0", "n": str(whole), "d": str(d)})
+
+
+@given(
+    st.integers(1, 999), NARROW, st.integers(0, 999),
+    st.sampled_from(["e", "E", "e-", "E+", " x 10^", "*10^-", "\u00D710^\u2212"]),
+)
+def test_an_exponent_never_groups(k: int, space: str, r: int, mark: str) -> None:
+    assert num_parse.parse(f"3.2{mark}{k}{space}{r:03}", []) == SYNTAX
+    plain = num_parse.parse(f"3.2{mark}{k}{r:03}", [])
+    assert plain.get("form", plain.get("reason")) in ("standard-form", "out-of-range")
