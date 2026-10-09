@@ -11,11 +11,12 @@
 //   save the residue below.
 // - Each is found as a global by scope analysis (a local `Date` is fine), as a member or destructured
 //   key of a global object, and, with the type checker (`.ts`), on anything typed `Math`, `Crypto`,
-//   `SubtleCrypto`, `Performance`, `DateConstructor` or the global object: an alias, a parameter. The
-//   global object's types are `typeof globalThis` and the Window of a TypeScript library file, so a
-//   module's own `interface Window` (a rolling window's `top` and `parent`) is not one; the other types
-//   match by name, since Node's `Performance` and `Crypto` are declared outside the library files
-//   [sourced: @types/node 22.20.5, perf_hooks.d.ts and crypto.d.ts].
+//   `SubtleCrypto`, `Performance`, `DateConstructor` or the global object (`typeof globalThis`, `Window`):
+//   an alias, a parameter, an assertion. A type counts only as the platform declares it: in a TypeScript
+//   library file (`Math`, lib.dom's `Window`), in a package's declarations (@types/node's `Performance`,
+//   `Crypto` and `SubtleCrypto`), or as the checker's own `globalThis`, which has no declaration
+//   [measured: the mathcore project's program, 9 October 2026]. A module's own `interface Window` (a
+//   rolling window's `top`) or `interface Performance` (a portfolio's `sharpe`) is another type.
 // - A global object is `globalThis`, `window`, `self`, `frames`, `top`, `parent`, `opener` or Node's
 //   `global`, read as a global or as a static member of a global object (`globalThis.self`, `window.top`),
 //   since `.js` has no types to see the second. HTML's Window gives `window`, `self`, `frames`, `top` and
@@ -35,7 +36,7 @@
 //   and module constants those functions read [our choice, reported as a deviation].
 // - Accepted residue, left to review and the cross-engine tests: a source received from outside the
 //   scope and used other than by a member or a call (`Reflect.construct(D, [])` for `D: DateConstructor`),
-//   or a received `NodeJS.Process`, not matched by type since a generator's own `Process` type would be;
+//   or a received `NodeJS.Process`, whose type is not among the watched ones (open for review);
 //   in `.js`, a window reached by a call or the DOM (`open()`, `document.defaultView`); `Intl` and the
 //   `toLocale*` methods (locale data differs between engines; 10.4 does not list them), and
 //   `Intl.DateTimeFormat`'s `format()` and `formatToParts()` with no date, which read the clock
@@ -43,10 +44,11 @@
 //   `process`, `perf_hooks` and `crypto` modules imported (`node:process` or `process`), which zq/layering
 //   keeps out of mathcore and logic.ts only, and which pass in content/generators because zq/layering
 //   does not lint content/ until stage 22 adds it [our choice]; a destructuring in a signature with no
-//   body (`type F = ({ random }: Math) => number`), reported though it reads nothing.
+//   body (`type F = ({ random }: Math) => number`), reported though it reads nothing; a mapped type of a
+//   watched type (`Readonly<Window>`, `Partial<Window>`, `Pick<Window, 'Math'>`, `Readonly<Math>`), which
+//   has no symbol to match; an npm package's own type that shares a watched name, taken for the platform's.
 import type { Rule, Scope } from 'eslint';
 import {
-  hasType,
   isGlobal,
   keyName,
   patternOrigin,
@@ -88,16 +90,16 @@ const TRANSCENDENTAL = new Set(
     'expm1 hypot log log10 log1p log2 pow sin sinh tan tanh',
   ].flatMap((line) => line.split(' ')),
 );
-// The type of each watched global, and the global it names; the global object's is `typeof globalThis`.
-const TYPES: readonly (readonly [ReadonlySet<string>, string])[] = [
-  [new Set(['Math']), 'Math'],
-  [new Set(['Crypto']), 'crypto'],
-  [new Set(['SubtleCrypto']), SUBTLE],
-  [new Set(['Performance']), 'performance'],
-  [new Set(['DateConstructor']), 'Date'],
-];
-const TYPED = new Set(TYPES.flatMap(([types]) => [...types]));
-const DATE_TYPES = new Set(['DateConstructor']);
+// The platform's type of each watched global, and the global it names.
+const KIND_OF_TYPE: ReadonlyMap<string, string> = new Map([
+  ['Math', 'Math'],
+  ['Crypto', 'crypto'],
+  ['SubtleCrypto', SUBTLE],
+  ['Performance', 'performance'],
+  ['DateConstructor', 'Date'],
+]);
+const TYPED = new Set(KIND_OF_TYPE.keys());
+const GLOBAL_TYPES = new Set(['globalThis', 'Window']);
 // TypeScript's expression wrappers and an optional chain's end (`self?.Math`), which `outermost` climbs
 // from a use; util/ast.ts's `climb` stops at the chain's end, and its `unwrap` removes them all.
 const WRAPPERS = new Set([
@@ -132,7 +134,11 @@ interface TsType {
   getConstraint(): TsType | undefined;
 }
 interface Services {
-  readonly program: { getTypeChecker(): Checker; isSourceFileDefaultLibrary(file: unknown): boolean };
+  readonly program: {
+    getTypeChecker(): Checker;
+    isSourceFileDefaultLibrary(file: unknown): boolean;
+    isSourceFileFromExternalLibrary(file: unknown): boolean;
+  };
   getTypeAtLocation(node: ESNode): TsType;
 }
 
@@ -145,26 +151,36 @@ function typeServices(sourceCode: SourceCode): Services | undefined {
 }
 
 /**
- * True when the type checker sees `node` as the global object: `typeof globalThis`, or the Window a
- * TypeScript library file declares (a module's own `interface Window` is another type), or a union,
- * intersection, subtype or constrained type parameter of one, walked as util/ast.ts's `hasType` walks.
+ * The first of `names` that the type checker sees `node` as, walking unions, intersections, base types
+ * and constraints as util/ast.ts's `hasType` does, but only as the platform declares it: in a
+ * TypeScript library file or a package's declarations, or as the checker's own `globalThis`, which has
+ * no declaration. A module's own type of the same name is another type. Undefined without types.
  */
-function globalTyped(sourceCode: SourceCode, node: ESNode): boolean {
+function platformType(sourceCode: SourceCode, node: ESNode, names: ReadonlySet<string>): string | undefined {
   const services = typeServices(sourceCode);
-  if (!services) return false;
+  if (!services) return undefined;
   const { program } = services;
-  const fromLibrary = (symbol: TsSymbol) =>
-    symbol.getDeclarations()?.some((d) => program.isSourceFileDefaultLibrary(d.getSourceFile())) === true;
+  const platform = (declaration: { getSourceFile(): unknown }) => {
+    const file = declaration.getSourceFile();
+    return program.isSourceFileDefaultLibrary(file) || program.isSourceFileFromExternalLibrary(file);
+  };
   const seen = new Set<TsType>();
-  const visit = (type: TsType): boolean => {
-    if (seen.has(type)) return false;
+  const visit = (type: TsType): string | undefined => {
+    if (seen.has(type)) return undefined;
     seen.add(type);
     const symbol = type.getSymbol();
     const name = symbol?.getName();
-    if (name === 'globalThis' || (name === 'Window' && symbol && fromLibrary(symbol))) return true;
+    if (symbol && name !== undefined && names.has(name)) {
+      const declarations = symbol.getDeclarations();
+      if (declarations?.length ? declarations.some(platform) : name === 'globalThis') return name;
+    }
     const constraint = type.getConstraint();
-    if (constraint && visit(constraint)) return true;
-    return ((type.isUnionOrIntersection() ? type.types : type.getBaseTypes()) ?? []).some(visit);
+    const parts = (type.isUnionOrIntersection() ? type.types : type.getBaseTypes()) ?? [];
+    for (const part of constraint ? [constraint, ...parts] : parts) {
+      const found = visit(part);
+      if (found !== undefined) return found;
+    }
+    return undefined;
   };
   return visit(services.getTypeAtLocation(node));
 }
@@ -246,7 +262,9 @@ const rule: Rule.RuleModule = {
           : target.type === 'MemberExpression' &&
             GLOBAL_OBJECTS.has(propName(target) ?? '') &&
             globalObject(target.object);
-      return named || globalTyped(sourceCode, target);
+      // An assertion's own type counts as well as its operand's: `(w as Window).top`.
+      const typed = (n: ESNode) => platformType(sourceCode, n, GLOBAL_TYPES) !== undefined;
+      return named || typed(node) || (target !== node && typed(target));
     };
     // The watched global a node names syntactically: `Math`, `globalThis.Math`, `window['Date']`.
     const globalName = (node: ESNode): string | undefined => {
@@ -260,10 +278,10 @@ const rule: Rule.RuleModule = {
     // How a global object is named in a report: as written (`self`, `window.top`'s `top`, an alias `g`),
     // or `globalThis` for a pattern.
     const objectName = (node: ESNode) => tailName(node) ?? 'globalThis';
-    const typedKind = (node: ESNode): string | undefined =>
-      hasType(sourceCode, node, TYPED)
-        ? TYPES.find(([types]) => hasType(sourceCode, node, types))?.[1]
-        : undefined;
+    const typedKind = (node: ESNode): string | undefined => {
+      const type = platformType(sourceCode, node, TYPED);
+      return type === undefined ? undefined : KIND_OF_TYPE.get(type);
+    };
     // `crypto.subtle` written out, which is reported where the member is taken.
     const subtleOfCrypto = (node: ESNode) => {
       const target = unwrap(node);
@@ -307,7 +325,7 @@ const rule: Rule.RuleModule = {
     };
     // A `DateConstructor` from elsewhere (a parameter) called or constructed without a member.
     const construct = (node: NodeOf<'CallExpression' | 'NewExpression'>) => {
-      if (globalName(node.callee) === undefined && hasType(sourceCode, node.callee, DATE_TYPES)) {
+      if (globalName(node.callee) === undefined && typedKind(node.callee) === 'Date') {
         report(node, 'clock', 'Date');
       }
     };

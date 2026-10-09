@@ -37,6 +37,9 @@ tester.run('no-nondeterminism', rule, {
       code: 'let y = 0; y = Math.floor(1.5); const [...xs] = list; function f(...args) { return args }',
       options: GEN,
     },
+    // A nested pattern reads its own key's value, not the global object's member of its name.
+    'const { a: { Date: D } } = globalThis',
+    { code: '(10n as bigint) ** (3n as bigint)', options: GEN },
   ],
   invalid: [
     fails('Math.random()', ['random', 'Math.random']),
@@ -105,6 +108,11 @@ tester.run('no-nondeterminism', rule, {
     fails('opener.frames.Date.now()', ['clock', 'Date']),
     fails('global.Math.random()', ['random', 'Math.random']),
     fails('const { Math: M } = top.self', ['escape', 'Math']),
+    // A global object inside TypeScript's wrappers or an optional chain.
+    fails('(globalThis as any).Math.random()', ['random', 'Math.random']),
+    fails('(globalThis?.self).Math.random()', ['random', 'Math.random']),
+    fails('(window!).Date.now()', ['clock', 'Date']),
+    fails('function f({ random } = Math) { return random }', ['random', 'Math.random'], ['escape', 'Math']),
     gen('Math.exp(x)', ['transcendental', 'Math.exp']),
     gen('Math.pow(2, k)', ['transcendental', 'Math.pow']),
     gen('const { sin, cos } = Math', ['transcendental', 'Math.sin'], ['transcendental', 'Math.cos']),
@@ -152,13 +160,25 @@ typed.run('no-nondeterminism (typed)', rule, {
       options: GEN,
     },
     { code: 'export const sq = (m: Math, x: number) => m.sqrt(x);', filename: TYPED, options: GEN },
-    // A module's own Window, such as a rolling window, is not the platform's.
+    // A module's own Window, Performance, Math or SubtleCrypto is not the platform's.
     {
       code: [
         'interface Window { top: number; bottom: number; parent: Window | null }',
         'export const height = (w: Window): number => w.top - w.bottom;',
         'export const up = (w: Window): Window | null => w.parent;',
       ].join('\n'),
+      filename: TYPED,
+    },
+    {
+      code: [
+        'interface Performance { sharpe: number; drawdown: number }',
+        'export const ratio = (p: Performance): number => p.sharpe / p.drawdown;',
+      ].join('\n'),
+      filename: TYPED,
+    },
+    { code: 'interface Math { random: number }\nexport const r = (m: Math) => m.random;', filename: TYPED },
+    {
+      code: 'interface SubtleCrypto { level: number }\nexport const l = (s: SubtleCrypto) => s.level;',
       filename: TYPED,
     },
   ],
@@ -220,6 +240,22 @@ typed.run('no-nondeterminism (typed)', rule, {
     typedFails('export const t = (w: Window) => w.top;', ['escape', 'top']),
     typedFails('export const r = (w: Window) => w.parent.Math.random();', ['random', 'Math.random']),
     typedFails('export const t = <W extends Window>(w: W) => w.top;', ['escape', 'top']),
+    typedFails('export const t = (w: typeof window) => w.Date.now();', ['clock', 'Date']),
+    // An assertion's type counts.
+    typedFails('export const t = (w: unknown) => (w as Window).top;', ['escape', 'top']),
+    typedFails('declare const w: unknown; export const m = (w as typeof globalThis).Math;', [
+      'escape',
+      'Math',
+    ]),
+    typedFails(
+      'export const { Math: { random } } = globalThis;',
+      ['escape', 'Math'],
+      ['random', 'Math.random'],
+    ),
+    typedFails(
+      "export const k = (crypto.subtle as SubtleCrypto).generateKey('AES-GCM', true, ['encrypt']);",
+      ['random', 'crypto.subtle'],
+    ),
     typedFails('declare global { interface Window { zq: number } }\nexport const t = (w: Window) => w.top;', [
       'escape',
       'top',

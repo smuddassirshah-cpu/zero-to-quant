@@ -114,6 +114,19 @@ const violations = [
     code: 'export const grow = (x) => Math.exp(x);\n',
     message: "'Math.exp' may differ between engines",
   },
+  // Node's own types, in mathcore's Node-only project, are the platform's.
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_node_clock.ts',
+    code: 'export const elapsed = (p: typeof performance, start: number): number => p.now() - start;\n',
+    message: "'performance.now' reads the clock",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_node_random.ts',
+    code: 'export const id = (c: typeof crypto): string => c.randomUUID();\n',
+    message: "'crypto.randomUUID' is not seeded",
+  },
 ];
 
 // An inline directive does not switch a rule off: noInlineConfig reports the directive instead.
@@ -136,7 +149,7 @@ const sinks = [
 ];
 
 // Outside zq/no-nondeterminism's reach: transcendental Math in mathcore outside dmath, a package's tests
-// under both of the rule's rows.
+// under both of the rule's rows, a module's own type named as a platform one.
 const clean = [
   {
     file: 'packages/mathcore/src/__planted_exp.ts',
@@ -149,6 +162,10 @@ const clean = [
   {
     file: 'packages/gen-kit/test/__planted_exp.mjs',
     code: 'export const grow = (x) => Math.exp(x);\n',
+  },
+  {
+    file: 'packages/mathcore/src/__planted_portfolio.ts',
+    code: 'interface Performance {\n  sharpe: number;\n  drawdown: number;\n}\nexport const ratio = (p: Performance): number => p.sharpe / p.drawdown;\n',
   },
 ];
 
