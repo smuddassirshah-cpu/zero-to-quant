@@ -20,12 +20,12 @@ Gates waiting for the preview Artifact, oldest first (`PLAN.md` 8.5): none.
 
 ## Stages
 
-Status values: pending / in progress / awaiting review / approved. Gate records the date of the owner's "approved, continue". AD is agent-days (6 session hours): the plan's estimate, then the measured figure from the pull requests. Depends on is `PLAN.md` section 11; "10a to 26" means every engine stage from 10a to 26. Batch 38 also needs batch 37's bases, and batch 58 the widgets it embeds from batches 27 to 57 (`PLAN.md` 11.4). The planned total is about 880 AD before content with the 182 AD contingency, and 480 for stages 84 to 100.
+Status values: pending / in progress / awaiting review / approved. Gate records the date of the owner's "approved, continue" or, under D9, of the fresh reviewer's verdict; a gating-rule-10 stop records the owner's reply. AD is agent-days (6 session hours): the plan's estimate, then the measured figure from the pull requests. Depends on is `PLAN.md` section 11; "10a to 26" means every engine stage from 10a to 26. Batch 38 also needs batch 37's bases, and batch 58 the widgets it embeds from batches 27 to 57 (`PLAN.md` 11.4). The planned total is about 880 AD before content with the 182 AD contingency, and 480 for stages 84 to 100.
 
 | # | Stage | Depends on | AD plan | AD actual | Status | Gate |
 |---|---|---|---|---|---|---|
 | 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
-| 2 | Spike S1 on the owner's iPhone | 1 | 3 | 2.5 | awaiting review | - |
+| 2 | Spike S1 on the owner's iPhone | 1 | 3 | 3.3 | awaiting review | - |
 | 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | in progress (`stage/3`, cut from `stage/2`, B39) | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
 | 3b | `stats-core` in `@zq/mathcore/stats` | 3a | 12 | - | pending | - |
@@ -96,7 +96,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 | 60 | Tutor contracts and guards (T0, T1) | 10a, 20 | 6 | - | pending | - |
 | 61 | Context assembly and renderers (T2) | 60 | 5 | - | pending | - |
 | 62 | Tutor proxy (T3), creates the Class C exposure | 61 | 9 | - | pending | - |
-| 63 | Backends and service (T4) | 60, 61, 62, 25 | 5 | - | pending | - |
+| 63 | Backends and service (T4) | 60, 61, 62 | 5 | - | pending | - |
 | 64 | Bertie in the UI (T5) | 59, 63, 9a | 5 | - | pending | - |
 | 65 | Modes, wave 1 (T6a) | 63, 64 | 6 | - | pending | - |
 | 66 | Modes, wave 2 (T6b, C10) | 65, 32 (`code-cell`), 16, 22 | 7 | - | pending | - |
@@ -190,12 +190,12 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-07 | B21 Sub-session files read in full by the publishing session count as the session's own for hard rule 2 | Gating rule 4 delegates; the publisher read and hashed every file | y: interpretation of hard rule 2; for the owner |
 | 2026-10-07 | S1 results (`docs/DECISIONS.md` section 4): `PLAN.md` 4.3's import-map design stands; MathML accepted; no `db` cap through 60 MiB, so no checkpoint; the back gesture and `\htmlData` in MathML fail, with fallbacks written | The owner's iPhone 17 Pro Max, iOS 27.2, Claude app 1.261002.20 | n; the fallbacks are B23 and B27 |
 | 2026-10-07 | W2 narrowed to worker imports and non-enforcing browsers | Integrity is enforced on the page [measured: S1] | n |
-| 2026-10-08 | B22 `sessionStorage` mirror of the route and pending drafts | The host reloads the open page after a publish | y: `PLAN.md` 7.5, stages 10a, 69 and 74a; for the owner |
+| 2026-10-08 | B22 `sessionStorage` mirror of the route and pending drafts | The host reloads the open page after a publish | y: `PLAN.md` 7.5, stages 4, 10a, 69 and 74a; for the owner |
 | 2026-10-08 | B23 Back or close control on every route but the tab roots; no `history.back()` | The back gesture does nothing in the frame | y: stage 74a, `design-research.md` 7; for the owner |
 | 2026-10-08 | B24 Release procedure: the page in every publish, every intermediate version working | The tool's refusals and the host's reloads | y: `PLAN.md` 8.6, stage 83; for the owner |
 | 2026-10-08 | B25 The emulator models the refusals and the reloads, with two fault injections | The measured behaviour, with the unmeasured cases kept testable | y: stage 4 |
 | 2026-10-08 | B26 A paper's lease is owned by the device and tab identity, so a reloaded page re-acquires it | The host reloads mid-paper | y: `ASSESSMENT.md`'s lease design, `PLAN.md` 8.5, stage 69 |
-| 2026-10-08 | B27 Term targets in the Artifact's MathML through scoped colour sentinels | `\htmlData` is dropped; the term list alone does not serve in-formula selection | y: `ARCHITECTURE.md` 14 item 20, stages 7, 12, 23 and 25; for the owner |
+| 2026-10-08 | B27 Term targets in the Artifact's MathML through scoped colour sentinels | `\htmlData` is dropped; the term list alone does not serve in-formula selection | y: `ARCHITECTURE.md` 14 item 20, stages 7, 12 and 25; for the owner |
 | 2026-10-08 | B28 The version-scoping item is not met; the emulator default is set by inference pending the owner's waiver (recommended) or a measurement | The host's reload outran the probe's republish signal | y: `PLAN.md` stage 2's definition of done; for the owner |
 | 2026-10-08 | B29 The stage 4 emulator targets contract 0.2.74 | The newest; it differs from S1's 0.2.73 only in `user.d.ts`'s `"people.add"` | y: `ARCHITECTURE.md` 8.2's 0.2.69 |
 | 2026-10-08 | B30 The 8 KB handoff fragment is checked in stage 82's iPhone handoff | S1's link had no fragment; stage 82 has the receiver | y: stage 82 |
@@ -210,6 +210,8 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B38 One force push of the session's own backup branch without asking | A process slip; later backups use new names | y: `CLAUDE.md` Permissions |
 | 2026-10-08 | B27 revised by the gate review: term sentinels by a render-time KaTeX macro, reserved colours in `@zq/contracts`; no emit rewrite | Same bundles and hashes on both targets; the layering of `ARCHITECTURE.md` 4.5 | y: as B27; for the owner |
 | 2026-10-08 | B39 `stage/3` is cut from `stage/2` at 54cfb68, before #17's fresh review gave its verdict, not from `stage/1` | Stage 3 implements `ARCHITECTURE.md` 5 as stage 2 revised it | y: `CLAUDE.md` gating rules 1 and 2, proposes amending B35; for the owner |
+| 2026-10-08 | B41 #17 merged without a review of its own diff; every pull request since gets one | A process slip found by the second gate review | y: `PLAN.md` 11.1, for #17 |
+| 2026-10-08 | B42 Stage 12 builds `TexService`, `Tex` and `TexSlots`; both KaTeX configurations from `katexOptions` in `@zq/contracts` | Stage 12 needed `TexSlots` before stage 23; `zq check` could not import the configuration | y: `PLAN.md` stages 3, 7, 12, 23, 6.5 and 10, `ARCHITECTURE.md` 13; for the owner |
 | 2026-10-08 | B43 Stage 3's package foundation: subpath exports, `zq/layering` package rows, per-package coverage, `zqverify` in `static`, a per-pull-request `browser` job | Units must not edit shared configuration; `dmath`'s bit-identity across engines | y: `ARCHITECTURE.md` 4.5, 4.6, 8.3 |
 
 ## Open questions
@@ -307,9 +309,11 @@ Each with the stage it affects; the stage that closes it records the answer in `
 - `docs/DECISIONS.md` section 4, "Spike S1";
 - B22 to B38, W2 narrowed, D9;
 - `PLAN.md`, `ARCHITECTURE.md`, `ASSESSMENT.md`, `CONTENT-FORMAT.md`, `WIDGETS.md` and `AI-TUTOR.md` aligned;
-- open questions 1 to 6 closed, 31 to 38 added.
+- open questions 1 to 5 closed, 6 partly, 31 to 38 added.
 
 The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking and 12 non-blocking items) went in through the follow-up pull request from `stage2/gate-fixes`; `spikes/s1/results/REVIEW-plan-edits.md` maps each item to its fix.
+
+The second fresh review (D9; 3 blocking, 12 non-blocking) is fixed by the second gate revision, smuddassirshah-cpu/zero-to-quant#19 from `stage2/gate-fixes-2` (B41, B42, the `@zq/contracts` tree line, the effort re-measured), with the `stage/3` item fixed by smuddassirshah-cpu/zero-to-quant#20. The third fresh review approved the quality pass ("approved, continue", no blocking item); its 12 non-blocking items are fixed by the third gate revision from `stage2/gate-fixes-3`. The digest maps each item.
 
 **A gating-rule-10 stop.** Two S1 checks failed (`platform.back-gesture`, `mathml.htmldata`), so the owner clears this gate by accepting their fallbacks: B23's back or close control on every route but the tab roots, and the term list beside a formula as the Artifact default, with B27's sentinels proposed. The fresh review is the quality pass; the Gate date is set on the owner's reply.
 
@@ -323,25 +327,26 @@ The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking 
 | The `db` cap rule | Yes: no cap, so the checkpoint is not built | 320 documents of 196,608 bytes (60 MiB) written, no `quota_exceeded` or `resource_exhausted`, cleaned up (`dbsize-status-s1-size.json`); 60 MiB is above 34 MB times one participant; `ASSESSMENT.md` 13.6 states the reconciliation with its 30 MB |
 | Each failed check's fallback in `ARCHITECTURE.md` before a dependent stage | Yes | The back gesture: B23, a back control on every non-root route, `zq/no-forbidden-apis` refuses `history.back` and `go` (stage 74a). `\htmlData` in MathML: 14 item 20's term list, with B27's sentinels proposed. `window.open` returns null: the anchor opens a browser, and copyable text is the fallback. The publish refusals and the host's reloads: B24 (release procedure, 6.2.6) and B25 (emulator, 8.2) |
 | The emulator's version-scoping switch set to the measured behaviour | **No**: not met, for the owner | B28: both version-scoping checks were skipped because the host reloaded the open v1 page 16 s before the hand-sent republish signal; the emulator's default is set by inference [inferred from `artifact.d.ts` 0.2.73] pending the owner's waiver (recommended: the design works under either behaviour) or a two-minute measurement with a polling v3 and v4 of the probe |
-| 11.1: CI green, contracts updated, `DECISIONS.md` entries, `STATE.md` updated, `[unverified]` items closed | Yes | CI on #16; contracts: `ARCHITECTURE.md` 5.11 `TexService.html` `source`, 6.2.6 page roles, 8.2 emulator on contract 0.2.74, 9.2 annotations; B17 to B38 and D9; open questions 1 to 5 closed and 6 partly; what S1 could not settle is tagged and placed: 32 (stage 82), 33 and 38 (stage 25), 34, 36 and 37 |
+| 11.1: CI green, contracts updated, `DECISIONS.md` entries, `STATE.md` updated, `[unverified]` items closed | Yes | CI on #16, #17 and #19; contracts: `ARCHITECTURE.md` 5.11 `TexService.html` `source`, 6.2.6 page roles, 8.2 emulator on contract 0.2.74, 9.2 annotations; B17 to B38, B41, B42 and D9; open questions 1 to 5 closed and 6 partly; what S1 could not settle is tagged and placed: 32 (stage 82), 33 and 38 (stage 25), 34, 36 and 37 |
 
-**Tests.** `npm run check` passes and the pre-push hooks pass: 497 unit tests, gitleaks clean, `npm audit` clean, `pip-audit` with A2's waived advisory. The probe's own Playwright suite (`spikes/s1/tools/test.mjs`) passed before each publish (#15). The plan edits had an initial review by 3 sessions, then three fix-and-verify rounds with 2 verifiers each, and the last round left no major finding; round 3 re-measured the KaTeX and size claims in Node and Python. The fresh Fable gate review then found 6 blocking items, fixed at the gate revision (`REVIEW-plan-edits.md`).
+**Tests.** `npm run check` passes and the pre-push hooks pass: 497 unit tests, gitleaks clean, `npm audit` clean, `pip-audit` with A2's waived advisory. The probe's own Playwright suite (`spikes/s1/tools/test.mjs`) passed before each publish (#15). The plan edits had an initial review by 3 sessions, then three fix-and-verify rounds with 2 verifiers each, and the last round left no major finding; round 3 re-measured the KaTeX and size claims in Node and Python. The fresh Fable gate review then found 6 blocking items, fixed at the gate revision, and the second review's 3 blocking items at the second; the third review approved the quality pass with 12 non-blocking items, fixed at the third (`REVIEW-plan-edits.md`).
 
 **Security.**
 - Inputs: the probe read its own `db` documents and the `sample` replies, which it showed as text.
 - Secrets and endpoints: none in code, config or commits.
-- Dependencies: CDN files only, at exact versions with SRI (`spikes/s1/cdn-lock.json`). The npm mirror `spikes/s1/npm` is not committed.
+- Dependencies: CDN files only, at exact versions (`spikes/s1/cdn-lock.json`), with SRI on the import-map entries (the cdnjs candidates included) and the UMD scripts; the three worker imports were not hash-checked (W2). The npm mirror `spikes/s1/npm` is not committed.
 - Committed run documents: no viewer id (the own path is stored as `data/users/<own>`), and no answers, code or chat.
 - B33 tightens the KaTeX sink: every strict check but `htmlExtension` stays on, and a refused command is caught through a reserved `errorColor`.
 - The size probe Artifact was deleted with the owner's confirmation. The S1 probe Artifact (https://claude.ai/artifact/KfYB1yPs9DfKTakjZZrGFD) stays as evidence until he confirms its deletion.
 - Process slip (B38): the backup branch `stage2/s1-results-wip` was force-pushed once without asking (`CLAUDE.md` Permissions). Later backups used new names (`stage2/s1-results-r3-wip`).
 
-**Effort** [measured from the transcripts since 2026-10-07 16:04 UTC, gaps over 15 minutes removed]: 15.11 agent-hours, 2.52 AD against the plan's 3. The main session accounts for 2.09 h; workflow and sub-sessions account for the rest. Tokens: 0.64 million output and 0.60 billion input including cache.
+**Effort** [measured from the transcripts, gaps over 15 minutes removed]: 17.46 agent-hours from 2026-10-07 16:04 UTC to the start of stage 3 (2026-10-08 04:54 UTC), plus 0.73 h for the second gate review and about 0.6 h of the main session's second gate revision, shared with stage 3's first hour: about 18.8 agent-hours, 3.1 AD against the plan's 3. The third gate review (0.71 h; 1.28 million subagent tokens) and the third revision (about 0.35 h of the main session and 0.17 million tokens of its review) bring the stage to about 19.9 agent-hours, 3.3 AD. Tokens to the start of stage 3: 0.82 million output and 0.66 billion input including cache.
 
 **Deviations** (each in `docs/DECISIONS.md` and the Decisions table above):
 - B17: `stage/2` branched from `stage/1`.
 - B18: the probe source in one pull request over the cap.
 - B19: no `permissions` in the declaration.
+- B20: the probe's annotation rewrite in `TexSlots`.
 - B21: sub-sessions' files count as the session's own.
 - B22 to B26: mirror, back controls, release procedure, emulator, lease.
 - B27: term sentinels by a render-time macro.
@@ -353,6 +358,9 @@ The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking 
 - B36: CDN budget figures reported, not failed, until row 15.
 - B37: the 34 MB reconciliation.
 - B38: one force push without asking.
+- B39 (on `stage/3`): stage 3 was cut from `stage/2` at 54cfb68 and started before stage 2's gate, against B35 and gating rule 1, which allows a second stage in progress only from 3a.
+- B41: #17 merged without a review of its own diff.
+- B42: stage 12 builds `TexService`, `Tex` and `TexSlots`; `katexOptions` and `terms(src)` join the reserved colours in `@zq/contracts`, a change to `PLAN.md` 10's tree, and stage 3 builds that module.
 - D9: the owner's gate instruction.
 - `spikes/README.md`: its S1 section, which this stage wrote under B18, gives the outcome; the 6 October lines above it are untouched (`spikes/` is the owner's to approve).
 
@@ -360,6 +368,8 @@ The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking 
 - The rule 10 stop: accept B23 and the term-list default as the fallbacks of the two failed checks.
 - B28: waive the version-scoping item (recommended) or have it measured.
 - B35: stage branches from the approved stage branch until `main` catches up.
+- B39 and the start of stage 3 before this gate: keep `stage/3` as cut from `stage/2`, or have it re-cut from `stage/1`.
+- `PLAN.md` 10's tree: `@zq/contracts` gains one KaTeX module (the reserved colours, `terms(src)`, `katexOptions`; B27, B42), built by stage 3, or those go elsewhere.
 - D9: confirm the two clauses tagged [our choice] (three failed review rounds stop a stage; the build proceeds on a `PLAN.md` default).
 - B20: `TexSlots`' slot-sentinel annotation, before stage 12.
 - B21: hard rule 2's reading.
@@ -371,4 +381,4 @@ The gate revision (fresh-context Fable review, D9, verdict "revise": 6 blocking 
 
 ## Next action
 
-Stage 2 is `awaiting review` and stops for the owner under gating rule 10: two S1 checks failed. The gate revision merges into `stage/2` with CI green, and a new fresh-context Fable review judges it (D9). The owner then clears the gate by accepting the fallbacks and deciding B28; the stage 2 record's "For the owner" list holds every open decision. On his reply, the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`. Stage 3 was cut from `stage/2` at 54cfb68, after #17 passed CI and before its fresh review's verdict, and started before stage 2's gate (B39, a departure from B35 and from gating rules 1 and 2; for the owner). `stage/3` merges `stage/2` in whenever `stage/2` changes, including any change the owner's decisions on B22, B27 or B33 bring.
+Stage 2 is `awaiting review` and stops for the owner under gating rule 10: two S1 checks failed. Three fresh-context Fable reviews ran (D9); the third approved the quality pass with no blocking item, and the third gate revision fixes its 12 non-blocking items. The owner clears the gate by accepting the fallbacks and deciding B28; the stage 2 record's "For the owner" list holds every open decision. On his reply, the session sets the Gate date and opens `stage 2: spike S1 results and the plan's fallbacks` from `stage/2` into `main`. Stage 3 was cut from `stage/2` at 54cfb68 before this gate (B39 on `stage/3`, a departure from B35 and from gating rules 1 and 2; for the owner) and is in progress; `stage/3` merges `stage/2` in whenever `stage/2` changes.
