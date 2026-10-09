@@ -410,8 +410,8 @@ src/                                   [TypeScript, TSX, CSS Modules]
 │   ├── motion/                        spring.ts, tween.ts, easing.ts, presets.ts (tokens),
 │   │                                  mode.ts (full, reduced, test), waapi.ts, celebrate.ts
 │   ├── render/                        Svg.tsx, Layer.tsx (memoised static layer), CanvasLayer.tsx,
-│   │                                  Tex.tsx, TexSlots.tsx, scales.ts, tokens.ts (read CSS
-│   │                                  variables for canvas), table-view.tsx
+│   │                                  Tex.tsx, TexSlots.tsx, tokens.ts (read CSS variables for
+│   │                                  canvas), table-view.tsx; scales are @zq/mathcore/scale (B53)
 │   ├── a11y/                          announcer.ts (one polite region), focus.ts, describe-sheet.tsx
 │   ├── player/                        machine.ts (pure reducer), effects.ts (runner), policy.ts
 │   │                                  (item modes), LessonPlayer.tsx, ScreenFrame.tsx, TopBar.tsx,
@@ -475,21 +475,24 @@ src/                                   [TypeScript, TSX, CSS Modules]
 ```
 packages/                              [TypeScript, no DOM unless stated]
 ├── contracts/      @zq/contracts      types: ids, Answer, Grade, ShowStep, widget contract,
-│                                      platform interfaces, events, RPC messages (section 5); one
-│                                      KaTeX module: the reserved colours, terms(src) and the options
-│                                      factory katexOptions, for engine/render and zq check (B27, B33, B42)
+│                                      platform interfaces, events, RPC messages (section 5); the
+│                                      global keys (keys.ts, 5.5); the TexService interface (render.ts,
+│                                      5.11; B45); one KaTeX module: the reserved colours, terms(src) and
+│                                      the options factory katexOptions, for engine/render and zq check
+│                                      (B27, B33, B42)
 ├── mathcore/       @zq/mathcore       pure maths shared by widgets, graders and generators:
 │                                      rng (Philox4x32-10), rational (BigInt), num-parse, expr
-│                                      (calc-linalg 2.3 grammar, no eval), dmath (deterministic exp,
-│                                      log, log1p, expm1, tanh, pow, sin, cos), sample, quad, ode,
-│                                      roots, linalg, stats, units
+│                                      (section 5.15, no eval), dmath (deterministic exp, log, log1p,
+│                                      expm1, tanh, pow, sin, cos), stats, scale (B53); sample, quad,
+│                                      ode, roots, linalg, units
 ├── content-schema/ @zq/content-schema zod schemas and inferred types        (content-format 3.2)
 ├── content-compiler/ @zq/compiler     compile(project, { registry: CompilerRegistry }); the CLI
 │                                      entry is tools/zq (decision 33)        (content-format 8)
 ├── graders/        @zq/graders        pure graders and the predicate registry interface
 │                                      (content-format 7); leak.ts, the candidate-answer extractor
 │                                      shared by the compiler's tutor-field lint and the tutor's leak
-│                                      probe; imports @zq/mathcore only
+│                                      probe; imports @zq/mathcore, and @zq/contracts and
+│                                      @zq/content-schema for types only (B45)
 ├── gen-kit/        @zq/gen            defineGenerator, phrases, exact values  (content-format 5)
 ├── models/         @zq/models         pure domain models shared by widgets, workers, generators and CI: algo, code,
 │                                      data, git, analysis, markets, ml, numerics, optim, research
@@ -497,7 +500,16 @@ packages/                              [TypeScript, no DOM unless stated]
 └── eslint-plugin-zq/                  the custom lint rules (section 10.4)
 ```
 
-`@zq/graders`, `@zq/mathcore` and every widget's `logic.ts` and `schema.ts` run unchanged in Node (compiler, CI replay) and in the browser. A CI test imports all of them in plain Node with no DOM globals defined. The numeric services of `@zq/mathcore` (`linalg`, `quad`, `ode`, `roots`, `units`, `sample`, `stats`) and the `@zq/models` domains `data`, `code`, `algo`, `git` and `analysis` are built in `docs/PLAN.md` stages 3a to 3g, each with Python or `git` parity against the versions in `tools/py/uv.lock`, before the widget batches that use them; `markets`, `ml`, `numerics`, `optim` and `research` are built with their P1 and P2 waves.
+`@zq/graders`, `@zq/mathcore` and every widget's `logic.ts` and `schema.ts` run unchanged in Node (compiler, CI replay) and in the browser. A CI test imports all of them in plain Node with no DOM globals defined. The numeric services of `@zq/mathcore` (`linalg`, `quad`, `ode`, `roots`, `units`, `sample`, `stats`) and the `@zq/models` domains `data`, `code`, `algo`, `git` and `analysis` are built in `docs/PLAN.md` stages 3a to 3g, each with Python or `git` parity against the versions in `tools/py/uv.lock`, before the widget batches that use them; `markets`, `ml`, `numerics`, `optim` and `research` are built with their P1 and P2 waves. Stage 3 builds `stats`' basic statistics; stage 3b's `stats-core` joins them at that subpath (section 14 item 29).
+
+**`@zq/mathcore`'s public API from stage 3** (`docs/DECISIONS.md` B46 to B48, B53 and B54), each module imported by its subpath (B43). The stage 20 graders and the widget batches build on these names; `rng` is section 5.1's.
+
+- `rational`: `Rational` (`{ readonly n: bigint; readonly d: bigint }`, always in lowest terms with a positive denominator); `rat(n, d = 1)`; `add`, `sub`, `mul`, `div`, `neg`, `cmp` (−1, 0 or 1) and `eq`; `spell`, the canonical spelling `n` or `n/d` with an ASCII minus (renamed from `toString`, which broke `String()` on the module namespace); `parse`, which reads `n`, `n/d` (an optional `-` on n, never `+`) or a terminating decimal, non-canonical spellings included; `fromDecimal`; `terminates`; `isRational`; `EXPONENT_LIMIT` (1000). Values are plain objects with no brand, so one that comes back from structured clone, a `db` document or an import is untrusted (`PLAN.md` 7.2) and passes `isRational`, the canonical-form check, at that boundary before use; `terminates` refuses a value that fails it. Callers bound a text's length, as `num-parse` (200 code units) and `NumValue` (200 characters) do, because parsing is quadratic in it: 20,000 digits take 0.76 s and 50,000 digits 6.0 s [measured: the review of smuddassirshah-cpu/zero-to-quant#26]. Errors are `RangeError`s with fixed messages that never echo the text.
+- `num-parse`: `parseNumber(input, units = [])` returns `NumParse`: a `ParsedNumber` `{ ok: true, form, value, unit, places, figures, typed }`, where `typed` is the unsigned, unreduced `{ whole, n, d }` of a fraction or mixed number and null otherwise, or `{ ok: false, reason }` with a `ParseFailure` (`'empty'`, `'too-long'`, `'decimal-comma'`, `'zero-denominator'`, `'out-of-range'`, `'syntax'`); also `NumForm`, `normalise` and `INPUT_LIMIT` (200). Its rules are `CONTENT-FORMAT.md` 7.2's. It reads and classifies; the graders decide. It exports no formatter: numbers shown to a learner go through `engine/render/format.ts` (section 5.11; B47).
+- `dmath`: `exp`, `log`, `log1p`, `expm1`, `tanh`, `sin` and `cos`, each `(x: number) => number`, and `pow(x: number, y: number): number`; bit-identical on every engine and within B46's tolerance of the exact value ($10^{-15}$ relative for a normal result). `pow` follows C99 Annex F where it and ECMAScript differ: `pow(1, NaN)`, `pow(1, ±Infinity)` and `pow(-1, ±Infinity)` are 1, where `Math.pow` gives NaN.
+- `expr`: section 5.15 (B48).
+- `stats`: `sum(xs)`, `mean(xs)`, `variance(xs, kind)` and `sd(xs, kind)` with `kind` `'sample'` or `'population'`, `quantile(xs, p, method)` and `quartiles(xs, method)` with `method` `'inclusive'` or `'gcse'`, `median(xs)` (inclusive) and `lerp(a, b, t)`; `xs` is any array or typed array. The kind and the method have no default, so every caller names its convention. `sum([])` is 0; every other statistic throws a `RangeError` on too little data, a NaN or infinite value or `lerp` end, $p$ outside $[0, 1]$, and an overflowing sum, variance or deviation (B54).
+- `scale`: `linearScale(domain, range)` and `logScale(domain, range, { log, exp })` return a `Scale` with `domain`, `range`, `map(x)`, `invert(y)` and `ticks(count)`, `count` an integer from 1 to 1,000. `logScale` takes its logarithm and exponential (`LogExp`, typed to `dmath`'s signatures) until `dmath` becomes its default (B53, B54).
 
 ### 4.4 `tools/` and `tests/`
 
@@ -580,12 +592,14 @@ Enforced by `zq/layering`, which encodes this table in `eslint.config.js` (stage
 
 ## 5. Contracts
 
-Every type in this section lives in `packages/contracts` (`@zq/contracts`), except where a path says otherwise. Types that another paper owns are referenced, not repeated: `TutorRequest`, `TutorBackend` and the action schemas (`AI-TUTOR.md` 4.1, 5.3, 6.1), the event kinds and `ProgressStore` (`ASSESSMENT.md` 13.2, 13.5), the content schemas and `Grade` (`CONTENT-FORMAT.md` 3.2, 7.1).
+Every type in this section lives in `packages/contracts` (`@zq/contracts`), except where a path says otherwise. Types that another paper owns are referenced here: `TutorRequest`, `TutorBackend` and the action schemas (`AI-TUTOR.md` 4.1, 5.3, 6.1), the event kinds and `ProgressStore` (`ASSESSMENT.md` 13.2, 13.5), the content schemas and `Grade` (`CONTENT-FORMAT.md` 3.2, 7.1). Where a contract needs one in TypeScript, it is transcribed into `@zq/contracts` with a citation of its owning section, which wins on meaning: `Grade` (`CONTENT-FORMAT.md` 7.1 with section 5.2's amendment) and `ShowStep` (the shape of `CONTENT-FORMAT.md` 3.2's schema) are in `answer.ts`, as section 4.3 and `docs/PLAN.md` 10 place them, because `@zq/contracts` may not import `@zq/content-schema` and `WidgetLogic.marks` needs `Grade` (`docs/DECISIONS.md` B45). `packages/contracts/test/drift.test.ts` compares the listings of sections 5.1 to 5.3 headed `// @zq/contracts/src/<module>.ts` with the source, declaration by declaration; a recorded departure is a row in that test, removed in the pull request that brings the listing into line.
 
 ### 5.1 Shared primitives
 
 ```ts
 // @zq/contracts/src/base.ts
+import type { effect } from '@preact/signals-core';                   // type only: Scope.effect takes its parameter type
+
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type ContentId = string;   // 'lsn.cond.shrinking-sample-space' (content-format 4.1)
 export type LocalId = string;     // 'shade', 'grid', 'd': unique inside its parent
@@ -614,8 +628,9 @@ export interface Scope {
   every(fn: () => void, ms: number): () => void;
   frame(fn: (t: number) => void): () => void;                           // one animation frame
   loop(fn: (t: number, dt: number) => boolean): () => void;             // runs each frame while fn returns true
-  listen(target: EventTarget, type: string, fn: (e: Event) => void, opts?: AddEventListenerOptions): void;
-  effect(fn: () => void | (() => void)): void;                          // a signals effect disposed with the scope
+  listen(target: EventTarget, type: string, fn: (e: Event) => void,
+         opts?: { capture?: boolean; once?: boolean; passive?: boolean; signal?: AbortSignal }): void;   // lib.dom's AddEventListenerOptions, spelt out
+  effect(fn: Parameters<typeof effect>[0]): void;                       // a signals effect disposed with the scope; fn may return its cleanup
   own(dispose: () => void): void;                                       // anything else (observers, workers)
   child(): Scope;                                                       // disposed with its parent
   dispose(): void;                                                      // idempotent
@@ -625,22 +640,37 @@ export interface Scope {
 export interface Rng {
   next(): number;                       // uniform on [0, 1) with 53 random bits; advances the counter
   at(index: number): number;            // the draw at an index, without advancing
-  int(lo: number, hi: number): number;  // inclusive, unbiased by rejection on 32-bit words
+  int(lo: number, hi: number): number;  // inclusive, unbiased by rejection on 32-bit words; domain in "Philox draws" item 6
   normal(): number;                     // Box-Muller from two draws
   fork(stream: string): Rng;            // an independent stream
 }
 export interface SeedSource { readonly seed: number; rng(stream: string): Rng }
 ```
 
+**Philox draws** (stage 3) [our choice, except where a source is cited]. The plain-language semantics of `@zq/mathcore/rng`; the TypeScript and the Python twin `tools/zqverify/rng.py` are each written from this text, and neither reads the other.
+
+1. **Block function.** Philox4x32-10 as specified by Salmon, Moraes, Dror and Shaw, "Parallel random numbers: as easy as 1, 2, 3" (SC11, 2011), and implemented as `philox4x32_R` with $R = 10$ in D. E. Shaw Research's Random123: a counter of four unsigned 32-bit words $(c_0, c_1, c_2, c_3)$ and a key of two $(k_0, k_1)$ give four unsigned 32-bit words $(w_0, w_1, w_2, w_3)$. The multipliers, the Weyl key increments and the round structure are the paper's and Random123's [sourced: to be cited with a `loc` by the implementer]. The known-answer vectors are Random123's own `kat_vectors` lines for `philox4x32 10`, fetched and cited with their URL and commit; if they cannot be fetched, the tests say so and the stage report lists it.
+2. **Keys.** A `SeedSource` has an unsigned 32-bit integer `seed`. `seedSource.rng(name)` returns an `Rng` whose key is $(k_0, k_1) = (\text{seed}, \text{hash32}(name))$. `rng.fork(name)` on an `Rng` whose key is $(\text{seed}, s)$ returns a new `Rng` with key $(\text{seed}, \text{hash32}(s, name))$, where $s$ is passed to `hash32` as a number part. A seed that is not an integer in $[0, 2^{32})$ throws `RangeError`. Every new `Rng` starts at position 0.
+3. **Draw $j$.** For an integer $j$ with $0 \le j < 2^{53}$, let $b = \lfloor j / 2 \rfloor$ and $h = j \bmod 2$. Run the block function on the counter $(b \bmod 2^{32}, \lfloor b / 2^{32} \rfloor, 0, 0)$ and the `Rng`'s key; draw $j$'s two words are $u = w_{2h}$ and $v = w_{2h + 1}$. So draws $2b$ and $2b + 1$ share one block, and any draw costs one block whatever its index.
+4. **Uniform.** `rng.at(j)` is $(\lfloor u / 2^5 \rfloor \cdot 2^{26} + \lfloor v / 2^6 \rfloor) / 2^{53}$: 27 bits of $u$ above 26 bits of $v$, the construction of MT19937's `genrand_res53` [recalled]. Every step is exact in IEEE-754 doubles, and the result is a multiple of $2^{-53}$ in $[0, 1)$. An index that is not an integer in $[0, 2^{53})$ throws `RangeError`.
+5. **Position.** An `Rng` has a position, starting at 0. `next()` returns `at(position)` and adds 1 to the position; `at` never moves it.
+6. **Integers.** `int(lo, hi)` takes safe integers with $lo \le hi$ and $n = hi - lo + 1 \le 2^{32}$; anything else throws `RangeError`. Let $L = 2^{32} - (2^{32} \bmod n)$. Repeatedly take the draw at the position, use only its word $u$, and add 1 to the position, until $u < L$; return $lo + (u \bmod n)$. The result is exactly uniform on $\{lo, \dots, hi\}$, and each call consumes at least one draw.
+7. **Normals.** `normal()` takes $u_1 = $ `next()` and then $u_2 = $ `next()`, and returns $\sqrt{-2 \ln(1 - u_1)} \cdot \cos(\tau u_2)$, where $\ln$ and $\cos$ are `dmath.log` and `dmath.cos`, $\sqrt{\ }$ is `Math.sqrt` (correctly rounded by ECMA-262 [sourced: tc39/ecma262 `spec.html` at main `6db9135`, `sec-math.sqrt`, fetched 8 October 2026]; Python's `math.sqrt` is also correctly rounded on IEEE-754 platforms [recalled]), and $\tau$ is the double nearest $2\pi$, `6.283185307179586`. Each operation is one IEEE-754 double operation in the order written: $1 - u_1$ (exact, in $(0, 1]$), $\ln$, $\times (-2)$, $\sqrt{\ }$, $\tau \times u_2$, $\cos$, then the product. The sine half of the Box-Muller pair is discarded, so the draws a call consumes depend only on the sequence of calls.
+8. **`hash32`** is section 5.1's function: 32-bit FNV-1a (offset basis 2166136261, prime 16777619) over the UTF-8 bytes of the parts joined by U+001F. A number part must be a safe integer ($|n| \le 2^{53} - 1$) and is written as `String(n)`, which for a safe integer is its plain decimal digits with a leading `-` when negative and `0` for `-0` (Python: `str(int(n))`). A number part that is not a safe integer (a fraction, NaN, an infinity, or $|n| \ge 2^{53}$) throws `RangeError`, because ECMA-262's normative Number::toString does not always fix the last digit above $2^{53}$ (only its non-normative Note 2 does) [sourced: tc39/ecma262 `spec.html` at main `6db9135`, `sec-numeric-types-number-tostring`, read by unit RT]. A string part containing a lone surrogate (U+D800 to U+DFFF unpaired) throws `RangeError`, because it has no UTF-8 form (`TextEncoder` would silently write U+FFFD instead). The result is unsigned. The constants and round structure of item 1 are cited at Random123 `include/Random123/philox.h`, commit `9545ff6`, lines 241 and 244 (multipliers `0xD2511F53`, `0xCD9E8D57`), 255 and 258 (Weyl increments `0x9E3779B9`, `0xBB67AE85`), 295 to 305 (round), 307 to 312 (key bump) and 323 to 334 (ten rounds, the key bumped before each round after the first) [sourced: unit RT's clone].
+
+Golden draws: the twin writes (doubles as Python `float.hex()` strings, so the TypeScript test needs a hexadecimal-float reader), for a fixed grid of seeds, stream names, fork chains and indices (including $j = 0, 1, 2^{32} - 1, 2^{32}, 2^{32} + 1, 2^{53} - 1$), the 32-bit words, `at(j)` as the exact hexadecimal of its double, a sequence of `int` calls with $n \in \{1, 2, 3, 6, 7, 10, 2^{31} + 1, 2^{32}\}$, a sequence of `normal` calls, and `hash32` on strings with non-ASCII text, empty parts and number parts. The TypeScript's tests must reproduce every golden bit for bit, except `normal`: the twin computes it with correctly rounded $\ln$ and $\cos$ (mpmath at 50 digits, each rounded to a double before the next step) where the TypeScript uses `dmath`, which is within about 1 ulp of correctly rounded, so `normal` goldens are compared within an absolute error of $10^{-14} \max(1, r)$, where $r = \sqrt{-2 \ln(1 - u_1)}$ (a relative bound fails where $\cos$ crosses zero) and the TypeScript records its own `normal` bits in a second golden that the browser project reproduces in every engine. A generator twin that needs `normal` bit for bit (a discrete answer that a last-bit difference could flip) needs a Python port of `dmath`, which is an open item (`ARCHITECTURE.md` 14), not part of stage 3.
+
 **Seeds.** A lesson screen's seed is `hash32(lessonId, screenId)`, so every learner sees the same canvas and the storyboard matches what learners see; a widget config may override it (`seed`). An item instance's seed comes from its generator draw (`{ gen, v, level, seed }`, content-format 4.3). The one hash every paper uses lives in `@zq/mathcore` [our choice]:
 
 ```ts
-/** 32-bit FNV-1a over the UTF-8 bytes of the parts joined by U+001F; numbers as their shortest round-trip decimal (`String(n)`), integers only.
+/** 32-bit FNV-1a over the UTF-8 bytes of the parts joined by U+001F; numbers as their shortest round-trip decimal (`String(n)`), safe integers only.
  *  content-format's hash32(gen.id, seed), assessment's hash32(attemptId, slotIndex, k) and the screen seed above are all this function. */
 export function hash32(...parts: (string | number)[]): number;   // unsigned, 0 to 2^32 - 1
 ```
 
-A non-integer number part is a development error (it throws), so no part's decimal form can differ between engines. Known-answer vectors in E1 fix the bytes.
+A number part that is not a safe integer ($|n| \le 2^{53} - 1$), or a string part with a lone surrogate, is a development error and throws `RangeError`, so no part's bytes can differ between engines: below $2^{53}$ ECMA-262 fixes `String(n)`'s digits, above it only a non-normative note does, and a lone surrogate has no UTF-8 form ("Philox draws" item 8; `docs/DECISIONS.md` B55). Known-answer vectors in E1 fix the bytes.
+
+**`Json` numbers.** `Json`'s `number` admits NaN, both infinities and $-0$, which `JSON.stringify` writes as `null`, `null`, `null` and `0` [measured by unit C1: Node 22.22.0], so a widget state holding one comes back changed after a `DraftStore` round trip. Whether the draft save refuses non-finite numbers as a development error, and whether it normalises $-0$, is open (`STATE.md` open question 47).
 
 ### 5.2 Answers, grades and show-why
 
@@ -666,6 +696,9 @@ export type Answer =
   | { type: 'parts'; parts: Record<LocalId, Answer> };
 export type AnswerType = Answer['type'];
 
+/** LaTeX to MathJSON through the Compute Engine parser. Declared here, so GradeCtx's module names no DOM or Preact type; widget-api.ts re-exports it. */
+export interface CasService { parse(latex: string): Json }
+
 /** Supplied by the engine to @zq/graders for one grading call. */
 export interface GradeCtx {
   predicate(name: string, args: Record<string, Json>): boolean;       // bound to the answering widget's config and state
@@ -684,20 +717,21 @@ export type MotionStep =
   | { k: 'together'; steps: MotionStep[] };
 ```
 
-`Grade` is `CONTENT-FORMAT.md` 7.1's type with one amendment: `answerObjects` is filled by the host from `WidgetLogic.answerObjects`, and graders leave it empty, because only the widget knows its element ids. Authored `ShowStep`s (content-format 3.2) compile to `MotionStep`s in the host: a declarative step becomes `set`, `highlight` and `annotate` steps run together; a widget recipe step calls the widget's `recipes[name]`.
+`Grade` is `CONTENT-FORMAT.md` 7.1's type with one amendment: `answerObjects` is filled by the host from `WidgetLogic.answerObjects`, and graders leave it empty, because only the widget knows its element ids. Authored `ShowStep`s (content-format 3.2) compile to `MotionStep`s in the host: a declarative step becomes `set`, `highlight` and `annotate` steps run together; a widget recipe step calls the widget's `recipes[name]`. A `MotionStep` `highlight` needs a `style` and a `set` an `ease` and `ms`, which a declarative `ShowStep` does not carry (its `ms` is optional), so the defaults the host fills in are open (`STATE.md` open question 46). `Grade` and `ShowStep` are transcribed into `answer.ts` (section 5's introduction); `ShowStep`'s `args` is `Record<string, Json>`, which `CONTENT-FORMAT.md` 3.2's schema adopts at the content-schema stage (`docs/DECISIONS.md` B45).
 
 ### 5.3 The widget contract
 
 A widget is a folder with five source files, two test files and a `states/` folder: `logic.ts` (pure, Node-safe), `schema.ts` (classic zod, build time only: the config schema and the recipe argument schemas), `View.tsx` (Preact), `view.module.css`, `fixtures.ts` (configs and scripted interactions shared by tests, the gallery and the storyboard, typed below), `logic.test.ts`, `view.browser.test.ts`, and `states/v<n>.json` for every past `stateVersion`. The engine's `WidgetHost` turns logic and view into a running instance.
 
 ```ts
-// @zq/contracts/src/widget.ts
+// @zq/contracts/src/widget.ts. Pure and Node-safe: it imports neither preact nor widget-api.ts (preact's types bring the DOM lib; B45).
 export type WidgetTier = 'primitive' | 'input' | 'scene' | 'composite' | 'preset';   // 'scene': section 5.14
 export type ClusterId =
   | 'core' | 'number' | 'algebra' | 'geometry' | 'precalc' | 'computing'
   | 'calculus' | 'linalg' | 'stochastic' | 'probability' | 'statistics' | 'timeseries'
   | 'python' | 'data' | 'tools' | 'algorithms' | 'cpp'
-  | 'finance' | 'projects' | 'interview' | 'ml' | 'research';            // 22 lazy chunks
+  | 'finance' | 'projects' | 'interview' | 'ml' | 'research'
+  | 'analysis' | 'numerics' | 'optim' | 'dl';                            // 26 lazy chunks (decision 8; WIDGETS.md decision 19)
 export type WidgetMode = 'lesson' | 'explore' | 'demonstrate' | 'quiz' | 'practice' | 'review'
                        | 'homework' | 'exam' | 'placement' | 'readonly';
 export type MotionMode = 'full' | 'reduced' | 'test';                  // 'test': every animation lands at once
@@ -759,10 +793,6 @@ export interface WidgetLogic<C extends BaseConfig, A extends Json, V extends Jso
   code?(config: C, s: WidgetState<A, V>): { files: { name: string; numbered: string }[] } | null;   // programming 2.8
 }
 
-export interface WidgetViewProps<C extends BaseConfig, A extends Json, V extends Json> { config: C; api: WidgetApi<A, V> }
-export type WidgetView<C extends BaseConfig, A extends Json, V extends Json> = (props: WidgetViewProps<C, A, V>) => VNode | null;
-export interface WidgetModule<C extends BaseConfig, A extends Json, V extends Json> { logic: WidgetLogic<C, A, V>; View: WidgetView<C, A, V> }
-
 /** A preset: configuration over a base widget, expanded by the compiler. No view, no state of its own. */
 export interface PresetDef<P extends BaseConfig, C extends BaseConfig> {
   type: string; v: number; cluster: ClusterId;
@@ -809,6 +839,13 @@ export type FixtureStep =
 ```ts
 // @zq/contracts/src/widget-api.ts, implemented by src/engine/widgets/host.tsx. What a view receives; everything stateful is the host's.
 // @zq/contracts has type-only dependencies on preact, @preact/signals-core and zod (for WidgetSchemaModule).
+export type { CasService } from './answer.ts';                          // declared in answer.ts (section 5.2), re-exported here
+
+/** The view half of a widget module: these name VNode and WidgetApi, so they live here, not in widget.ts (B45). */
+export interface WidgetViewProps<C extends BaseConfig, A extends Json, V extends Json> { config: C; api: WidgetApi<A, V> }
+export type WidgetView<C extends BaseConfig, A extends Json, V extends Json> = (props: WidgetViewProps<C, A, V>) => VNode | null;
+export interface WidgetModule<C extends BaseConfig, A extends Json, V extends Json> { logic: WidgetLogic<C, A, V>; View: WidgetView<C, A, V> }
+
 export interface WidgetApi<A extends Json, V extends Json> {
   readonly state: ReadonlySignal<WidgetState<A, V>>;   // read through useComputed only (section 2.5 rule 1)
   readonly locked: ReadonlySignal<boolean>;            // evaluating, correct, revealed, graded quiz items, exam review
@@ -833,7 +870,6 @@ export interface ElementProps {
   'data-zq-mark': ReadonlySignal<Mark | undefined>;                     // bound signal: no re-render on grade
   'data-zq-hl': ReadonlySignal<HighlightStyle | undefined>;
 }
-export interface CasService { parse(latex: string): Json }             // LaTeX to MathJSON through the Compute Engine parser
 export interface MathfieldService {                                    // MathLive, lazily loaded, fonts shared with KaTeX, sounds off
   mount(el: HTMLElement, o: { value: string; onInput(latex: string): void }): { set(latex: string): void; focus(): void; destroy(): void };
 }
@@ -847,13 +883,17 @@ export interface WidgetRegistry {
 /** A preset at run time: `expand` is compile-only and is not bundled. */
 export type PresetRuntime = Pick<PresetDef<BaseConfig, BaseConfig>, 'type' | 'v' | 'predicates' | 'recipes' | 'describeAs'>;
 export interface WidgetServices {
-  tex: TexService;                                                      // section 5.11
+  tex: TexService;                                                      // section 5.11; the interface from @zq/contracts/render (B45)
   cas: (() => Promise<CasService>) | null;                              // only when logic.needs includes 'cas'
   mathfield: (() => Promise<MathfieldService>) | null;
   python: PythonRuntime | null;                                         // only for widgets that declare 'python'
   sql: SqlRuntime | null;
 }
 ```
+
+**Answer and view state types** (`docs/DECISIONS.md` B45). `A` and `V` must be JSON with exact keys. An interface is not assignable to `Json`, which has an index signature an interface lacks; an index signature on `V` widens `keyof V`, so `tweenable` would accept any name; and typescript-eslint's `consistent-type-definitions` refuses `type V = { ... }`. Only `type V = Readonly<{ ... }>` passes all three [measured by unit C1: tsc 6.0.3 and ESLint], so widget authors write `A` and `V` that way. `WidgetState`, `BaseConfig` and `Target` are interfaces, so none is assignable to `Json` either [measured by unit C1]: the host saves a draft as a `{ a, v }` copy, and how a config or a target list crosses a `Json` boundary is open (`STATE.md` open question 48). The erased registry types (`WidgetRegistry.load`'s `WidgetModule<BaseConfig, Json, Json>`, `CompilerRegistry.widget`, `PresetRuntime`) accept a concrete widget only through a cast [measured by unit C1], because `keyof Json` is `never` and the function-typed members are contravariant in `C`; the registry generator's cast or erased type is open (open question 49).
+
+**The contracts' homes** (B45). `CasService` is declared in `answer.ts` and re-exported from `widget-api.ts`, so `@zq/graders`, which reads `GradeCtx`, compiles without the DOM lib. `WidgetViewProps`, `WidgetView` and `WidgetModule` live in `widget-api.ts`, because preact's `jsx.d.ts` carries `/// <reference lib="dom" />` and would bring the DOM lib into `@zq/compiler` and `tools/zq` through `widget.ts` [measured by the review of smuddassirshah-cpu/zero-to-quant#27]. `CompilerRegistry` and `WidgetSchemaModule` go in `widget.ts` or another preact-free module, with `zod` as the type-only dependency section 4.5's `packages/*` row and B43 already allow. `TexService`'s interface moves to `@zq/contracts/render`, because `WidgetServices.tex` names it and `@zq/contracts` may not import `src/` (section 4.5); its implementation stays in `src/engine/render` (stage 12). Until that unit (C2, stage 3's second wave), the source's `WidgetServices` carries `cas` and `mathfield` only. `feedback`'s events (`tap`, `snap`, `lift`, `drop`) do not all have a `SoundName` or `HapticName` in section 5.9 (`lift` and `drop` have neither, `tap` no haptic); the mapping is open (`STATE.md` open question 44).
 
 **Primitives are also building blocks.** Beside its `WidgetModule`, every primitive exports controlled components (`<Plot2D>`, `<DragPoint>`, `<Marks>`, `<TokenTray>`) that take signals and callbacks as props. A composite composes them inside its own view with its own single state; a screen widget is always exactly one host and one state, never hosts nested inside hosts.
 
@@ -873,6 +913,8 @@ export function useDrag(id: ElementId, o: {
 export function useRoving(ids: readonly ElementId[], layout: { kind: 'grid'; cols: number } | { kind: 'list' } | { kind: 'tree' }): RovingBinding;
 export function useLiftDrop(ids: readonly ElementId[], slots: readonly ElementId[]): LiftDropBinding;   // tokens: Space lifts, arrows move, Space drops
 ```
+
+No document yet defines `DragBinding`, `RovingBinding` or `LiftDropBinding`; the stage that builds the hooks defines them (`STATE.md` open question 45).
 
 ### 5.4 Lifecycle of a widget instance
 
@@ -903,6 +945,8 @@ export function useLiftDrop(ids: readonly ElementId[], slots: readonly ElementId
 | T | Table view of the focused chart |
 | 1 to 9 | Select option cards in order |
 | ? | Keyboard help sheet |
+
+The table's key column is typed once, as `GlobalKey` and `SingleKey` (the single-character keys, which the setting turns off) in `@zq/contracts/keys`: the shared type for the keymap in `engine/interaction/keymap.ts` and for any keyboard help. The actions stay prose here, and the keymap's stage names them (`docs/DECISIONS.md` B45).
 
 **Widget keys** are those of calc-linalg 2.8 and programming 2.7, implemented by `useDrag`, `useRoving` and `useLiftDrop`: arrows step, Shift steps ten times, Alt a tenth, Home and End go to the limits, E opens the exact-value editor, Space toggles or lifts and drops, Escape cancels.
 
@@ -1355,7 +1399,8 @@ export interface MotionService {
 - **Test mode.** Set by `?motion=test` in development and preview builds only: every spring, tween, animation, stagger and celebration completes in the same frame, which is what makes screenshots deterministic.
 
 ```ts
-// src/engine/render
+// @zq/contracts/src/render.ts: the interface, from unit C2 (B45), because WidgetServices.tex names it and @zq/contracts may
+// not import src/ (section 4.5); the implementation, Tex and TexSlots stay in src/engine/render (stage 12; B42)
 export interface TexService {
   ready(): boolean;
   load(): Promise<void>;                                     // imports KaTeX once: the web chunk, or the locked CDN module in the Artifact
@@ -1384,9 +1429,11 @@ export interface TexService {
 // <Layer> memoises a static SVG group (section 2.5 rule 2).
 // <CanvasLayer draw={(ctx, t) => ...} deps={[...signals]} dprCap={2} />: redraws on the next frame after a dependency changes;
 //   `t` is the design tokens read from CSS variables, refreshed when the theme signal changes.
-// scales.ts: linear and log scales, nice ticks, about 60 lines of our own (widgets-stage0 decision 2).
 // format.ts: every number shown to a learner goes through Intl.NumberFormat('en-GB') with tabular figures; U+2212 for minus.
+//   It is the only formatter of shown numbers: @zq/mathcore/num-parse exports none (B47; section 14 item 30).
 ```
+
+Scales are not here: they are `@zq/mathcore/scale`, about 140 lines of our own (widgets-stage0 decision 2 asked for about 60), because tick labels are numbers a widget shows, which hard rule 4 sends to `@zq/models` or `@zq/mathcore`, and a scene's `derive` and a widget's `logic.ts` may not import `engine/render` (section 4.5; `docs/DECISIONS.md` B53). Their API is in section 4.3.
 
 ### 5.12 App stores
 
@@ -1466,6 +1513,9 @@ export interface SceneDef<C extends BaseConfig, K extends Json, A extends Json, 
   migrate?: WidgetLogic<C, A, V>['migrate'];
   overrides?: Partial<Pick<WidgetLogic<C, A, V>, 'dirty' | 'summarise' | 'marks' | 'predicates' | 'targets' | 'table' | 'tryValue' | 'resolvers' | 'elementMeta'>>;   // at most 3
 }
+
+// src/widgets/scene/define.ts, built with the scene layer (stage 14): a function, so not in @zq/contracts, which is types only;
+// the types above stay in @zq/contracts/src/scene.ts (B45)
 /** Node-safe: imported by registry.node.gen.ts, the compiler and CI. */
 export function defineScene<C extends BaseConfig, K extends Json, A extends Json, V extends Json, D extends Json>(def: SceneDef<C, K, A, V, D>): WidgetLogic<C, A, V> & { readonly scene: SceneDef<C, K, A, V, D> };
 ```
@@ -1496,6 +1546,105 @@ Builders in `src/widgets/scene/build.ts` (`plot2d`, `plot3d`, `marks`, `dragPoin
 **Tests.** Every scene runs the generic contract suite (section 8.1.1) and the generic browser suite over its fixtures, plus the scene suite: every binding resolves for every fixture state; every `writes` path lies in `a` or `v`; `derive` returns equal results on repeated calls and stays within 2 ms P95 at 4x; a render probe shows no static node re-rendering during a drag; templates resolve; generated targets include every `staticTargets` id. A scene has no per-scene browser test file and no CSS. Model functions that `derive` calls live in `@zq/models` or `@zq/mathcore` with unit, property and Python parity tests.
 
 **Limits.** A `scene.ts` above 400 lines, or one needing more than three overrides, becomes a bespoke composite; so does a composite that needs free text or code editing, a clock-driven loop, a service with its own state machine, a gesture no primitive offers, or that fails the frame budget as a scene (`docs/PLAN.md` 3.2 rule 3). The pull request names the reason.
+
+### 5.15 Expressions
+
+Added at stage 3 (`docs/DECISIONS.md` B48). `@zq/mathcore/expr` is calc-linalg 2.3's expression language: the `Expr` strings of widget configs, the tutor's `compute` tool (`AI-TUTOR.md` 5.3.2, untrusted text under `docs/PLAN.md` 7.2) and the core the expression grader builds on (`CONTENT-FORMAT.md` 7.3). This section is its plain-language specification. The TypeScript and the Python twin `tools/zqverify/expr.py` are each written from it, the twin by a session that never reads the TypeScript, and where the two disagree this text decides; a case it does not settle is clarified here first (B51). Every rule is [our choice] unless tagged.
+
+```ts
+// @zq/mathcore/src/expr.ts
+export const MAX_LENGTH = 1000;      // UTF-16 code units of source
+export const MAX_DEPTH = 32;         // nested brackets, a call's included
+export const MAX_WORK = 1_000_000;   // the work budget of one evaluation (rule 5)
+
+/** The functions an expression takes from its caller: dmath's where dmath has them, or any other deterministic set. */
+export type ExprFunctions = Readonly<Record<'sin' | 'cos' | 'tan' | 'asin' | 'acos' | 'atan' | 'sinh' | 'cosh' | 'tanh'
+  | 'exp' | 'ln' | 'log10' | 'cbrt' | 'Phi' | 'phi' | 'erf', (x: number) => number>>
+  & { readonly atan2: (y: number, x: number) => number; readonly pow: (x: number, y: number) => number };
+
+/** The tree parse builds. `at` is the offset of the node's first character, or of its operator. */
+export type Node = Readonly<{ at: number } & (
+  | { kind: 'num'; value: number }                 // finite, not negative and not -0: a minus is a 'neg' node
+  | { kind: 'const'; name: 'pi' | 'e' }
+  | { kind: 'var'; name: string }
+  | { kind: 'neg'; arg: Node }
+  | { kind: 'bin'; op: '+' | '-' | '*' | '/' | '^'; left: Node; right: Node }
+  | { kind: 'call'; fn: string; args: readonly Node[] }   // fn: a function name of rule 2, with its arity
+  | { kind: 'if'; rel: '<' | '<=' | '>' | '>=' | '=='; left: Node; right: Node; then: Node; else: Node }
+  | { kind: 'sum'; index: string; lo: Node; hi: Node; term: Node })>;
+
+export function parse(source: string): Node;          // throws only ParseError
+export function print(node: Node): string;            // text that parses back to the same tree (`at` aside), with the fewest brackets
+export function compile(node: Node, fns: ExprFunctions): Compiled;
+export interface Compiled {
+  readonly free: readonly string[];                   // the free variables (rule 3)
+  run(values: readonly number[]): number;             // values in the order of `free`; the hot path for samplers
+  evaluate(scope: Readonly<Record<string, number>>): number;   // each free variable read from the scope's own properties
+}
+export type ParseErrorCode =
+  | 'length' | 'depth' | 'character' | 'number' | 'syntax' | 'function' | 'arity' | 'reserved' | 'comparison';
+export class ParseError extends Error { readonly code: ParseErrorCode; readonly at: number }   // at: where the source goes wrong
+export class ScopeError extends Error { readonly variable: string }                          // a free variable with no number
+```
+
+**The API.** `parse` throws only `ParseError`: `length` (longer than `MAX_LENGTH`; `at` is `MAX_LENGTH`), `depth`, `character` (a character outside rule 1), `number` (more than 20 significant digits, or a literal whose nearest double is infinite), `syntax` (a token where the grammar has none), `function` (a call on a name that is not a function), `arity`, `reserved` (a function name, `if`, `sum`, `pi` or `e` where a variable or index belongs) and `comparison` (a comparison anywhere but first in `if`, or an `if` without one). `print` and `compile` throw `RangeError` for any tree `parse` cannot build: a `num` that is not finite or is negative or $-0$, a name outside rule 1 or reserved, an unknown function or a wrong argument count, an unknown operator or relation. So a builder (MathJSON, $\frac{d}{dx}$) writes $-1$ as a `neg` of `num` 1, and `print`'s text parses back to the same tree; it can be longer than its source, so near `MAX_LENGTH` it may not parse again. `compile` throws `TypeError` when the table has no own function the tree calls. `run` throws `RangeError` unless it gets exactly one value per free variable. `evaluate` reads each free variable from the scope's own properties (never the prototype), needs a number there (NaN and the infinities included, not a boolean or a string), throws `ScopeError` naming the first free variable, in the order of `free`, that has none, and ignores every other property. A compiled expression keeps its variables in cells its closures share, so it is not re-entrant: a table function must not evaluate the same compiled expression. No `eval` and no `Function` constructor: the only property reads are the caller's scope and the caller's table, both through own properties, and the grammar's names live in a `Map` and `Set`s.
+
+**1. Text.**
+
+- A source is at most 1,000 UTF-16 code units. Its tokens may be separated by any run of space, tab, line feed and carriage return; no other character is white space.
+- A **number** is one or more ASCII digits, optionally followed by `.` and one or more digits, or `.` followed by one or more digits; then optionally `e` or `E`, an optional `+` or `-`, and one or more digits: `2`, `007`, `0.5`, `.5`, `1.5e-3`, `2E+3`. An `e` or `E` that no digits follow (with or without a sign) is not part of the number, so it starts a name and the source is refused (`2e`, `2e+x`). A `.` that no digit follows is a refused character, so `1.` and `1.e5` are refused; `1.5.5` is two numbers side by side, which the grammar refuses. A number has at most 20 significant digits, counted in its digits before the exponent, the point removed, from the first non-zero digit to the last non-zero digit: `100000000000000000000000000` has one, `0.00012345678901234567890e3` has 19, `123456789012345678901` has 21 and is refused, because ECMA-262's RoundMVResult lets an engine round a longer literal either way [sourced: tc39/ecma262 `spec.html` at `6db9135`]. Its value is the double nearest the decimal value (ties to even); a number whose nearest double is infinite (`1e999`) is refused, one that rounds to zero (`1e-999`) is 0.
+- A **name** is an ASCII letter followed by any ASCII letters, ASCII digits and `_`: `x`, `x_1`, `W_t`, `lambda`, `E`, `pi2`. Names are case-sensitive, so `Sin` and `PI` are ordinary variables. `_x`, `__proto__` and any non-ASCII letter or digit (`π`, `x²`, Arabic-Indic or full-width digits) are refused.
+- The other tokens are `+ - * / ^ ( ) ,` and the relations `<=`, `>=`, `==`, `<` and `>`, the two-character ones read first. `=`, `!`, `[`, `.` alone and every other character are refused; `**` is two `*` tokens, which the grammar refuses.
+
+**2. Grammar**, loosest first:
+
+```
+expr    = term { ("+" | "-") term }
+term    = unary { ("*" | "/") unary }
+unary   = "-" unary | power
+power   = primary [ "^" unary ]
+primary = number | name | call | "(" expr ")"
+```
+
+- So `-x^2` is $-(x^2)$, `2^-1` is a half, `2^3^2` is $2^9$, `-2^-2^-1` is $-(2^{-(2^{-1})})$, `1 - 2 - 3` is $(1 - 2) - 3$, `8/4*2` is $(8/4) \cdot 2$, and `2--3` is $2 - (-3)$. Multiplication is always written: two operands are never adjacent, so `2x`, `x y`, `2e` and `0x10` are refused. There is no unary plus: `+1` is refused.
+- Constants: `pi` and `e`, the doubles nearest $\pi$ and $e$.
+- Functions of one argument: `sin cos tan asin acos atan sinh cosh tanh exp ln log10 sqrt cbrt abs sign floor ceil Phi phi erf`. `atan2(y, x)` takes exactly two; `min` and `max` take two or more. A call is a function name, optional white space, `(`, its arguments separated by commas, and `)`. `sin()`, `sin(1, 2)`, `min(1)`, `sin(1,)`, `(sin)(1)` and `sin(1)(2)` are refused.
+- `if(a REL b, then, else)`, with REL one of `<`, `<=`, `>`, `>=` and `==`. The comparison is the bare first argument: brackets round a side are fine (`if((x) < 0, 1, 2)`), brackets round the whole comparison are not (`if((1 < 2), 1, 2)`), and a chain (`if(1 < 2 < 3, 1, 2)`) is refused. A comparison appears nowhere else: `x < 1`, `(1 < 2) + 1`, `if(1 < 2, 1 < 2, 3)` and `if(x, 1, 2)` are refused.
+- `sum(k, lo, hi, term)`: `k` is a bare name, not bracketed and not reserved, the index.
+- Every function name, `if`, `sum`, `pi` and `e` is reserved: it cannot be a variable or an index; a function name, `if` or `sum` without its call is refused (`sin`, `sum + 1`); and a call on any other name is refused (`x(1)`, `pi(1)`, `foo(1)`, `constructor(1)`). Every other name, `constructor`, `prototype` and `toString` among them, is an ordinary variable.
+- Brackets, a call's included, nest at most 32 deep: 32 nested pairs parse and 33 are refused. Nothing else limits nesting, so 999 unary minuses before `1` is a legal source.
+
+**3. Variables.**
+
+- The free variables are the names that are neither constants nor bound by an enclosing sum's index, each listed once, in the order of its first free occurrence in the source. So `sum(y, 1, 2, y*z) + y + z` has the free variables `z` and then `y`.
+- Inside a sum's term, its index is that sum's counter and hides any outer variable or index of the same name; in the sum's `lo` and `hi` the name keeps its outer meaning. So `sum(x, 1, 3, x) + x` with $x = 10$ is 16 and has the free variable `x`, and `sum(k, 1, k, k)` with $k = 4$ is 10.
+
+**4. Values.** Every value is an IEEE-754 double, and every operation gives its correctly rounded result: `+ - * /` and `sqrt` in IEEE arithmetic; `abs`, `sign`, `floor`, `ceil`, `min` and `max` exactly; every other function and `^` as the exact mathematical value rounded to the nearest double (ties to even), where the rules below do not fix it. The TypeScript takes those from its table (`Math` in tests, `dmath` where it has the function), so the two implementations agree there to a tolerance (rule 6). `sqrt` is built in, because ECMA-262 specifies `Math.sqrt` as correctly rounded [sourced: tc39/ecma262 `spec.html` at `6db9135`, `sec-math.sqrt`]. Comparisons are IEEE-754's, so $-0$ equals $+0$.
+
+Undefined points are NaN:
+
+- `a / 0`, for either zero, whatever `a` is;
+- `0 ^ b` for $b < 0$, for either zero, $b = -\infty$ included;
+- `ln x` and `log10 x` for $x \le 0$, so `ln(-0)` is NaN;
+- any operator or function with a NaN operand, even where IEEE or C99 would give a number (`1 ^ NaN` and `NaN ^ 0` are NaN);
+- an `if` whose comparison has a NaN side; otherwise only the chosen branch is evaluated, and the other spends no budget;
+- a sum whose `lo` or `hi` is not an integer of magnitude at most $2^{53} - 1$;
+- a sum the budget refuses (rule 5). NaN propagates through every operator, function and chosen branch, so the whole value is then NaN.
+
+`^`:
+
+- `x ^ 0` is 1 for every non-NaN `x` (a conforming table's value), and $(\pm 1)^{\pm\infty}$ is 1 whatever the table's `pow` returns: C99 Annex F gives 1, ECMA-262 NaN [sourced: tc39/ecma262 `spec.html` at `6db9135`, Number::exponentiate; recalled: C99 F.9.4.4];
+- every other special value is C99 Annex F.9.4.4's [recalled], on which ECMA-262 agrees, so a conforming table changes only rounding: `(-inf)^0.5` is $+\infty$, `(-0)^0.5` is $+0$, `(-0)^3` is $-0$, `2^inf` is $+\infty$, `0.5^inf` is $+0$, `(-2)^0.5` is NaN.
+
+Other special values, from C99 Annex F [recalled]: `sqrt(-0)` is $-0$ and `sqrt` of a negative number is NaN; `asin` and `acos` outside $[-1, 1]$ are NaN; `cbrt` is real for negative arguments (`cbrt(-27)` is $-3$); `sin`, `cos` and `tan` of an infinity are NaN; `atan(±inf)` is $\pm\pi/2$; `tanh(±inf)` is $\pm 1$; `exp(-inf)` is $+0$; `erf(±inf)` is $\pm 1$; `Phi(-inf)` is $+0$ and `Phi(inf)` is 1; `phi(±inf)` is $+0$; `atan2` follows F.9.1.4 (`atan2(±0, -0)` is $\pm\pi$, `atan2(±0, +0)` is $\pm 0$, `atan2(-0, -1)` is $-\pi$). Odd functions keep a zero's sign: `sin`, `tan`, `asin`, `atan`, `sinh`, `tanh`, `cbrt` and `erf` of $-0$ are $-0$. `ceil(-0.5)` is $-0$; `sign(-0)` is $-0$ and `sign(+0)` is $+0$; `abs(-0)` is $+0$. `Phi` is the standard normal distribution function and `phi` its density $e^{-x^2/2}/\sqrt{2\pi}$. `min` and `max` rank $-0$ below $+0$: `min(0, -0)` is $-0$ and `max(-0, 0)` is $+0$.
+
+`sum(k, lo, hi, term)` evaluates `lo`, then `hi`, then adds the term's values for $k = lo, lo + 1, \dots, hi$ in that order, starting from $+0$, each addition rounded; it is $+0$ when $hi < lo$. The counter is computed as $lo + j$ for $j = 0, 1, \dots$, so when `lo` is $-0$ the first $k$ is $+0$.
+
+**5. The work budget.** One evaluation (one `run` or `evaluate` call) may spend 1,000,000. A sum, each time it runs and after its `lo` and `hi` are evaluated, costs its number of terms, $\max(0, hi - lo + 1)$, times the number of nodes in its term; if that is more than what is left, the sum is NaN and spends nothing, otherwise it spends it and adds its terms. A node is each number, constant, variable, unary minus, binary operator, function call, `if` and `sum`: a comparison belongs to its `if` (its two sides are nodes), an index to its `sum`, and a function's name to its call. A nested sum's nodes (the sum, its `lo`, `hi` and term) count in the outer term, and the nested sum pays again for its own terms each time it runs. Examples: `sum(k, 1, 2000, if(k < 0, ` 495 minus signs `k, 1))` has a 500-node term and costs exactly 1,000,000, so it is 2,000, and with 2,001 terms it is NaN. `sum(i, 1, 400, sum(j, 1, 2496, 1))` costs $400 \times 4 + 400 \times 2496 = 1{,}000{,}000$ and is 998,400; with 2,497 it is NaN. The costliest budgeted evaluation found takes about 80 ms in Node 22 [measured], inside the 2 s `compute` limit of `AI-TUTOR.md` 5.3.2 on a phone several times slower [inferred].
+
+**6. The goldens the twin writes.** `packages/mathcore/test/expr.golden.jsonl`, one JSON object per line: `src`, `scope` (the variables given), then either `error` (`"parse"` for a refused source, `"scope"` for a missing variable), or `free` (the free variables in order) and `value` (a number, or the strings `"nan"`, `"inf"` and `"-inf"`) with `exact`, true when the source names none of `sin cos tan asin acos atan sinh cosh tanh exp ln log10 cbrt Phi phi erf atan2` and has no `^`. The parity test (`packages/mathcore/test/expr.twin.test.ts`) needs more than 1,800 goldens, more than 350 of them exact and more than 400 inexact; free variables must match in order, exact cases to the bit, and inexact ones to the bit too except a finite non-zero value, which may differ by a relative $10^{-12}$, so zeros' signs and special values always match.
+
+**Determinism.** An expression is exactly as deterministic as its table. `dmath`'s eight functions cover `exp`, `ln`, `tanh`, `sin`, `cos` and `^` (through `pow`); the rest of the table has no deterministic source yet (section 14 item 23), and the symbolic layer calc-linalg 2.13 asks of `expr` ($\frac{d}{dx}$, Taylor coefficients, LaTeX output) has no stage (`STATE.md` open question 40).
 
 ---
 
@@ -1972,7 +2121,7 @@ typescript-eslint `strict-type-checked` and `stylistic-type-checked`, `eslint-pl
 
 | Rule | Scope | Bans or requires |
 |---|---|---|
-| `zq/no-nondeterminism` | `widgets/**/logic.ts`, `packages/{mathcore,graders,gen-kit}`, `content/generators` | `Math.random`, `Date`, `performance.now`, `crypto.getRandomValues`, transcendental `Math` in generator `accept`, `level` and `answer` (content-format 5.3) |
+| `zq/no-nondeterminism` | `widgets/**/logic.ts`, `packages/{mathcore,graders,gen-kit}` and `content/generators`, each package's `test/` and every `*.test.ts` excepted (stage 3, `docs/DECISIONS.md` B49) | On any value use: `Date`, `Temporal`, `performance` and Node's `process`. As members: `Math.random`, `crypto.getRandomValues`, `crypto.randomUUID` and `crypto.subtle`, and any member of a value typed `SubtleCrypto`. Each is found as a global, through any global object (`globalThis`, `window`, `self`, `frames`, `top`, `parent`, `opener`, Node's `global`, also reached through one another), through destructuring, and through the type checker on aliases and parameters; `Math`, `crypto` and the global objects are usable only through static members, so `Math[k]` and `const M = Math` are refused. With the option `transcendental`, set for the whole generator module, `packages/gen-kit` and `packages/mathcore/src/dmath*`: the 22 implementation-approximated `Math` functions of ECMA-262 21.3.2 and `**` on numbers (bigint operands pass) [sourced: tc39/ecma262 `spec.html` at `6db9135`] (content-format 5.3) |
 | `zq/no-raw-timers` | `widgets/`, `screens/`, `engine/player` | `setTimeout`, `setInterval`, `requestAnimationFrame`; use the `Scope` |
 | `zq/no-raw-pointer` | `widgets/composites`, `widgets/presets` | `addEventListener` and `on*` pointer and touch handlers; use the interaction hooks |
 | `zq/no-state-in-render` | `widgets/**/View.tsx` | Reading `api.state.value` in a component body; use `useComputed` |
@@ -2146,6 +2295,14 @@ Each stage is one review gate. Engine stages are numbered E0 to E10; content sta
 | 20 | MathML quality on the owner's iPhone; slot digits in the swapped `<mn>` against the surrounding maths font; whether `\htmlData` term anchors survive KaTeX's MathML output | **Closed by S1** [measured: S1, 7 October 2026]: KaTeX 0.19.0's MathML lays out natively and the owner accepted all 40 specimen formulas; `TexSlots`' binding left no sentinel text once the TeX annotation was also rewritten (`docs/DECISIONS.md` B20, for the owner); the swapped `<mn>` digits match the maths font, look the same as the `<mtext>` copy, and VoiceOver reads their current values. `\htmlData` does not survive the MathML output, while the HTML output keeps it; no `\html*` command can anchor a term there, since their MathML builder emits the body alone [sourced: KaTeX 0.19.0 `src/functions/html.ts`]. `\textcolor{#0a0001}{b^2}` renders as a scoped `<mstyle mathcolor="#0a0001">` around exactly that term, while `\color` is a switch that nests into later terms, `\htmlId` is dropped and `\class` is undefined [measured: Node, KaTeX 0.19.0, `output: 'mathml'`, 8 October 2026]. **Proposed for the Artifact** (`docs/DECISIONS.md` B27, for the owner): with the runtime flag `artifact.termBinding` on, `TexService`'s authored configuration (in `engine/render`) defines `\htmlData` as a KaTeX function macro that renders `\htmlData{term=<k>}{...}` as `\textcolor{<sentinel colour k>}{...}` and any other attribute as its body alone, the sentinels drawn from a reserved range (`#0a00` followed by two hex digits for $k$) that authored colours may not use. The macro acts at render time, so content bundles, `contentHash`, `answerHash`, tutor context and search are the same on both targets (`docs/PLAN.md` 6.4); the reserved colours (the term range and `errorColor` `#0a0100`), `terms(src)` and the options factory `katexOptions` live in `@zq/contracts`' KaTeX module, which `engine/render` and `tools/zq` may both import (section 4.5; `docs/DECISIONS.md` B42). After rendering, the term binding finds each `mstyle[mathcolor="<sentinel>"]`, removes the `mathcolor` so the term takes the token colour, and sets `data-term`, `role`, `tabindex` and `aria-label` on the `mstyle`, which becomes the term's target, as `TexSlots` swaps its sentinel `<mtext>` (decision 37). With the macro, KaTeX's TeX annotation keeps the authored TeX: `\htmlData{term=ab}{b^2}-4ac` renders an `<mstyle>` with a term-range `mathcolor` around exactly `b^2`, and the annotation reads `\htmlData{term=ab}{b^2}-4ac` [measured: KaTeX 0.19.0 in Node, `output: 'mathml'`, 8 October 2026], so B20, which the owner decides before stage 12, concerns only `TexSlots`' slot sentinels; he decides B27 with stage 25's device result. It serves `live-formula` and every composite with `term:` targets, among them equation-workbench, first-step-solver, binomial-expander, sum-visualiser, generating-function, graph-explorer and dependency-graph (`WIDGETS.md` 4.1.6). Where it is built: the reserved-colour error in `zq check` at `docs/PLAN.md` stage 7; the macro and the binding at stage 12, under the same flag, tested with a hand-written fixture until stage 23's content bundles exist. The reserved-colour check reads KaTeX's output, not the authored text: stage 7's KaTeX render refuses any rendered colour (`mathcolor` or `color`) in the reserved range `#0a00` followed by two hex digits, compared without regard to case, whatever the colour command or spelling, `\textcolor{0a0001}{x}` and `\textcolor{#0A0001}{x}` included [measured: KaTeX 0.19.0 keeps the authored case, 8 October 2026], with a failing fixture for each. `zq check` always renders the authored source with the authored configuration and reads that output; the macro acts only at run time in the Artifact under its flag, so every reserved colour in the checked output is authored. The `errorColor` `#0a0100` (section 11.3, sink S1; `docs/DECISIONS.md` B33) sits outside the term range and is refused in the same way. Pointer and keyboard interaction on MathML elements in iOS Safari (a click, focus through `tabindex`) is [unverified]. **Floor**: if stage 12's iPhone check, taken in stage 25's preview Artifact, fails, `live-formula` lists its linked terms beside the formula, focusing a term in the list lights its mark, and the reverse; a Stage 0 interaction that degrades then goes to the owner. **Default until the owner decides**: stage 12 builds the term list, the named fallback, and builds the macro and the sentinel binding behind the runtime flag `artifact.termBinding`, off by default. With the binding off, each entry of the term list carries the term's `data-term`, its role, `tabindex` and `aria-label`, so `term:<id>` targets and `set` and `choice` answers bind to the list entries [our choice]. A preview built with `zq preview --artifact --term-binding` turns the flag on for stage 12's iPhone check, whose result goes to the owner with B27; no other preview build does | `docs/PLAN.md` stage 12's iPhone check, taken in stage 25's preview Artifact (`docs/PLAN.md` 11.1), with `live-formula`, the first widget built on the binding |
 | 21 | Which locked files cdnjs serves byte-identically | **Partly closed by S1** [measured: S1, 7 October 2026]: of 14 URLs for seven locked entries, only KaTeX 0.19.0's `katex.mjs` matched; the others failed to import with a load error, not on integrity, so jsDelivr's `/npm/` path for the rest (section 6.2.7 item 1). S1 tried two guessed paths per package, and classic zod, ts-fsrs, idb, MiniSearch and the Compute Engine entry were not tried [unverified: cdnjs unreachable from this sandbox] | `tools/cdn/lock.ts` at stage 4, which checks every locked file against cdnjs's listing, the tried ones included |
 | 22 | `zod/mini`'s closure in the Artifact: 92 CDN requests among the static imports, which took 2,783 ms on the first, cold load on the owner's iPhone, zod's requests being 9,393 of the 9,646 ms of summed request time [measured: S1, 7 October 2026]; and 197,653 bytes gzipped file by file, above section 9.2's entry budget [measured: zod 4.6.5 npm tarball, zlib 1.3 level 9 through Python's `gzip`, 8 October 2026] | A slow first visit; the Artifact's entry budget exceeded | The owner's choice among the options of `docs/PLAN.md` 4.3, in `docs/PLAN.md` section 12 row 15 (needed by stage 4; default (a), keep as locked), before stage 4 writes the import map (section 6.2.7 item 7); until then `budgets.ts` reports the Artifact's CDN figures for the entry, the data worker and KaTeX, each as a figure of its own, without failing on them, and our own code keeps its gates (section 9.2; `docs/DECISIONS.md` B36) |
+| 23 | Deterministic `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `log10`, `cbrt`, `erf`, $\Phi$ and $\varphi$: `expr`'s function table names them, and none is among `dmath`'s eight (section 5.15; `docs/DECISIONS.md` B48) | An expression that uses one depends on the engine in its last bits, so it may not feed a graded number | `erf`, $\Phi$ and $\varphi$ with stage 3b's `stats-core`; the rest when a graded path first needs one, added to `dmath` with its goldens |
+| 24 | A Python port of `dmath` for generator twins that need `normal` bit for bit (section 5.1, "Philox draws"; B52) | A generator whose discrete answer a last-bit difference in `normal` could flip cannot be cross-checked exactly | When a generator first needs it, at stage 22 or later |
+| 25 | `content/` has no tsconfig, so a `.gen.ts` generator there fails typed linting with a project-service parse error [measured by unit L]; until then only `.js` and `.mjs` generators get `zq/no-nondeterminism`, without types (B49) | Generators cannot yet be TypeScript | Stage 22, whose first generator brings `content/`'s tsconfig reference |
+| 26 | The `zq/layering` rows of `packages/graders` and `packages/gen-kit` allow Node builtins, and `content/` is outside `zq/layering`'s files, so a grader or a generator could import `node:crypto`'s random or `node:perf_hooks`' clock; nor are those packages and `content/generators` under the isomorphic `no-restricted-globals` row that `contracts` and `mathcore` have (B49) | Nondeterminism through Node modules and host globals that `zq/no-nondeterminism` leaves to other rules | The graders (stage 20) and generator (stage 22) stages deny `node:crypto` and `node:perf_hooks` in their rows, as `mathcore`'s row does, put the packages and `content/generators` under the isomorphic row, and bring `content/` into `zq/layering` |
+| 27 | `packages/models/**` and the scenes' `scene.ts` files are outside `zq/no-nondeterminism`'s scope (B49) | A model or a scene's `derive` that reads the clock passes lint | Candidates for the scope when they exist: `@zq/models`' first domain (stage 3c) and the scene layer (stage 14) |
+| 28 | `Intl` and the `toLocale*` methods read engine locale data, and `Intl.DateTimeFormat().format()` with no argument reads the clock; `zq/no-nondeterminism` accepts them as residue for now (B49). `format.ts` (section 5.11) formats every shown number through `Intl.NumberFormat('en-GB')`, so identical shown numbers across engines rest on their locale data [unverified] | A shown number spelt differently on two engines | The stage that builds `format.ts` tests its output in Chromium, Firefox and WebKit; whether the rule refuses `Intl` in its scope is decided then |
+| 29 | `@zq/mathcore/stats` holds stage 3's basic statistics, and `WIDGETS.md` 3 and `docs/PLAN.md` stage 3b planned `stats-core` at the same subpath (B54) | None, if 3b chooses before it starts | Stage 3b's choice: modules beside `stats.ts` (for example `stats-dist`) or `stats.ts` extended |
+| 30 | `num-parse` reads what the learner types, and `format.ts` spells every number shown, a widget's parse preview included; `formatNumber`, the parser's exact inverse, is a test helper only (B47). `Intl.NumberFormat('en-GB')`'s default stops at three fraction digits and spells no fraction, mixed number or standard form, so how `format.ts` shows each `NumForm` so that `parseNumber` reads it back to the same form and value is open | A preview or a shown answer that the parser would read differently | The stage that builds `format.ts` defines its spelling of each form and tests the round trip through `parseNumber` |
 
 ---
 
