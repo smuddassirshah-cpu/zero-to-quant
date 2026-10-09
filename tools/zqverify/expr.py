@@ -36,7 +36,7 @@ function of INEXACT, so the TypeScript must match to the bit; otherwise it may d
 non-zero values). Hand-picked lines cover every rule of the spec; seeded random lines (`random.Random` seeded with
 the module name) add exact trees, inexact calls kept clear of the tolerance's edges, and one-character mutations of
 valid sources. Every erf call a line makes receives an argument of magnitude at most 2 and every Phi call one of at
-most 2.8, or an infinity or a zero, because the parity test's stand-in table is accurate only there (spec 6); the
+most 2.8, or an infinity, a zero or NaN, because the parity test's stand-in table is accurate only there (spec 6); the
 twin's own erf and Phi are correctly rounded everywhere. From the repository root, rewrite the file with:
 
     PYTHONPATH=tools uv run --project tools/py --locked python -m zqverify.expr
@@ -1035,7 +1035,7 @@ FUNCTION_VALUES = [
     "tan(5e-324)", "asin(5e-324)", "sinh(5e-324)", "tanh(5e-324)", "cos(5e-324)", "sin(1e-8)", "cos(1e-8)",
     "exp(1e-300)", "ln(1.0000000000000002)", "log10(10)", "log10(0.1)", "ln(e)", "exp(ln(2))", "sin(0/0)",
     "cos(0/0)", "tan(0/0)", "asin(0/0)", "acos(0/0)", "atan(0/0)", "sinh(0/0)", "cosh(0/0)", "tanh(0/0)",
-    "exp(0/0)", "cbrt(0/0)", "phi(0/0)", "log10(0/0)",
+    "exp(0/0)", "cbrt(0/0)", "Phi(0/0)", "phi(0/0)", "erf(0/0)", "log10(0/0)",
 ]
 
 
@@ -1050,8 +1050,8 @@ TABLE_RANGE = {"erf": 2.0, "Phi": 2.8}  # spec 6: the parity test's stand-in tab
 
 def within_table(src: str, scope: Mapping[str, object]) -> bool:
     """Whether every erf and Phi call the evaluation of src makes receives an argument the parity test's table
-    meets: magnitude at most TABLE_RANGE, an infinity or a zero (spec 6). A call in a branch not taken receives
-    nothing; NaN has no magnitude, so it is outside."""
+    meets: magnitude at most TABLE_RANGE, or a special value (an infinity, a zero or NaN), which any table meets
+    exactly (spec 6). A call in a branch not taken receives nothing."""
     seen: list[tuple[str, float]] = []
 
     def recorder(name: str) -> Callable[..., float]:
@@ -1066,7 +1066,7 @@ def within_table(src: str, scope: Mapping[str, object]) -> bool:
         Expr(src, table).evaluate(scope)
     except (ParseError, ScopeError):
         return True
-    return all(abs(x) <= TABLE_RANGE[name] or math.isinf(x) for name, x in seen)
+    return all(abs(x) <= TABLE_RANGE[name] or math.isinf(x) or x != x for name, x in seen)
 
 
 # Random lines. Every source the generators build is valid by construction (an expression, an operator and an

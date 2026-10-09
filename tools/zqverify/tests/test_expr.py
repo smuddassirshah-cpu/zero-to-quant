@@ -82,7 +82,8 @@ def test_every_golden_calls_erf_and_phi_inside_the_parity_tables_range() -> None
 @pytest.mark.parametrize(
     ("src", "inside"),
     [("erf(2)", True), ("erf(-2.0000000000000004)", False), ("Phi(2.8)", True), ("Phi(-2.8000000000000003)", False),
-     (f"erf({BIG})", True), (f"Phi({NEG_BIG})", True), ("erf(-0)", True), ("Phi(0/0)", False), ("phi(30)", True),
+     (f"erf({BIG})", True), (f"Phi({NEG_BIG})", True), ("erf(-0)", True), ("Phi(0/0)", True), ("erf(0/0)", True),
+     ("phi(30)", True),
      ("if(1 < 2, 1, erf(3))", True), ("if(1 > 2, 1, erf(3))", False), ("sum(k, 1, 3, Phi(k))", False),
      ("sum(k, 1, 2, Phi(k))", True), ("erf(x)", True), ("sin(", True)],
 )
