@@ -26,8 +26,8 @@ file replaces (CLAUDE.md hard rule 4). Decision notes:
   and the cut keeps mpmath away from exponents of a thousand digits.
 - A sum that cannot pay ends the evaluation with NaN at once. The spec makes that sum NaN, and NaN reaches the top
   through every operator, function, `if` and sum, so what is left cannot change the value.
-- The counter of `sum(k, lo, hi, term)` takes lo itself first (so -0 when lo is -0), then lo + 1 and on: the
-  spec's "k = lo, lo + 1, ..." read literally [our reading; the spec does not say which zero].
+- The counter of `sum(k, lo, hi, term)` is the integer lo + i as a double, so it is +0 when lo is -0: the
+  counter's values are integers, which have no signed zero (spec 4, decided by the main session).
 
 The golden file, packages/mathcore/test/expr.golden.jsonl, holds one JSON object per line: `src` and `scope`, then
 either `error` ("parse" for a refused source, "scope" for a free variable without a number) or `free` (the free
@@ -35,7 +35,9 @@ variables in order of first appearance), `value` (a number, or "nan", "inf", "-i
 function of INEXACT, so the TypeScript must match to the bit; otherwise it may differ by a relative 1e-12 on finite
 non-zero values). Hand-picked lines cover every rule of the spec; seeded random lines (`random.Random` seeded with
 the module name) add exact trees, inexact calls kept clear of the tolerance's edges, and one-character mutations of
-valid sources. From the repository root, rewrite the file with:
+valid sources. Every erf call a line makes receives an argument of magnitude at most 2 and every Phi call one of at
+most 2.8, or an infinity or a zero, because the parity test's stand-in table is accurate only there (spec 6); the
+twin's own erf and Phi are correctly rounded everywhere. From the repository root, rewrite the file with:
 
     PYTHONPATH=tools uv run --project tools/py --locked python -m zqverify.expr
 """
@@ -581,8 +583,8 @@ class Power:
 class Call:
     __slots__ = ("fn", "args", "size")
 
-    def __init__(self, name: str, args: list[Node]) -> None:
-        self.fn, self.args = FUNCTION_TABLE[name], args
+    def __init__(self, fn: Callable[..., float], args: list[Node]) -> None:
+        self.fn, self.args = fn, args
         self.size = 1 + sum(a.size for a in args)
 
     def ev(self, run: _Run) -> float:
@@ -624,7 +626,7 @@ class Sum:
         total = 0.0
         try:
             for i in range(count):
-                env[index] = lo if i == 0 else float(first + i)
+                env[index] = float(first + i)
                 total += term.ev(run)
                 if total != total:
                     break
@@ -647,8 +649,8 @@ def _safe_integer(v: float) -> bool:
 
 
 class _Parser:
-    def __init__(self, toks: list[Token]) -> None:
-        self.toks, self.at, self.depth = toks, 0, 0
+    def __init__(self, toks: list[Token], table: Mapping[str, Callable[..., float]]) -> None:
+        self.toks, self.at, self.depth, self.table = toks, 0, 0, table
         self.free: dict[str, None] = {}
         self.bound: list[str] = []
 
@@ -771,19 +773,20 @@ class _Parser:
             wanted = 2 if name == "atan2" else 1 if name in ONE_ARG else 0
             if (wanted and len(args) != wanted) or (not wanted and len(args) < 2):
                 raise ParseError(f"{name} takes {wanted or 'two or more'} arguments, not {len(args)}")
-            node = Call(name, args)
+            node = Call(self.table[name], args)
         self.close()
         return node
 
 
 class Expr:
-    """A compiled source: its tree, free variables in order of first appearance, and whether it is exact."""
+    """A compiled source: its tree, free variables in order of first appearance, and whether it is exact. `table`
+    maps each function name to its implementation; the golden generator passes one that records arguments."""
 
     __slots__ = ("root", "free", "exact")
 
-    def __init__(self, src: str) -> None:
+    def __init__(self, src: str, table: Mapping[str, Callable[..., float]] = FUNCTION_TABLE) -> None:
         toks = tokens(src)
-        parser = _Parser(toks)
+        parser = _Parser(toks, table)
         self.root = parser.source()
         self.free = list(parser.free)
         self.exact = not any(t == "^" or (k == "name" and t in INEXACT) for k, t, _ in toks)
@@ -1007,10 +1010,11 @@ FUNCTION_VALUES = [
     "cos(0)", "cosh(0)", "exp(0)", f"sin({BIG})", f"cos({NEG_BIG})", f"tan({BIG})", f"sin({NEG_BIG})", f"atan({BIG})",
     f"atan({NEG_BIG})", f"tanh({BIG})", f"tanh({NEG_BIG})", f"exp({NEG_BIG})", f"exp({BIG})", "exp(709)",
     "exp(710)", "exp(-745)", "exp(-746)", "exp(-708)", f"erf({BIG})", f"erf({NEG_BIG})", f"Phi({NEG_BIG})",
-    f"Phi({BIG})", f"phi({BIG})", f"phi({NEG_BIG})", "Phi(0)", "Phi(-0)", "phi(0)", "phi(-0)", "Phi(-10)",
-    "Phi(-20)", "Phi(-30)", "Phi(-37)", "Phi(-40)", "Phi(-45)", "Phi(5)", "Phi(8.3)", "Phi(50)", "Phi(1)",
-    "Phi(-1)", "Phi(1.96)", "phi(30)", "phi(37)", "phi(-1)", "phi(1)", "phi(45)", "erf(0.1)", "erf(-3)",
-    "erf(1e-300)", "erf(5e-324)", "erf(6)", "erf(-6)", "erf(11)", "erf(1)", "ln(0)", "ln(-0)", "ln(-1)", "ln(1)",
+    f"Phi({BIG})", f"phi({BIG})", f"phi({NEG_BIG})", "Phi(0)", "Phi(-0)", "phi(0)", "phi(-0)", "Phi(-2.8)",
+    "Phi(2.8)", "Phi(-2.5)", "Phi(2.75)", "Phi(-2)", "Phi(0.5)", "Phi(1e-300)", "Phi(5e-324)", "Phi(1)",
+    "Phi(-1)", "Phi(1.96)", "phi(30)", "phi(37)", "phi(-1)", "phi(1)", "phi(45)", "erf(0.1)", "erf(-2)",
+    "erf(1e-300)", "erf(5e-324)", "erf(2)", "erf(-1.5)", "erf(1.9999999999999998)", "erf(1)", "erf(-1e-8)",
+    "ln(0)", "ln(-0)", "ln(-1)", "ln(1)",
     f"ln({BIG})", f"ln({NEG_BIG})", "ln(5e-324)", "ln(2)", "ln(1e308)", "ln(0/0)", "log10(0)", "log10(-0)",
     "log10(-1)", "log10(1)", "log10(1000)", "log10(1e-300)", f"log10({BIG})", "log10(5e-324)", "log10(2)",
     "log10(1e22)", "asin(1.0000000000000002)", "acos(-1.0000000000000002)", "asin(1)", "acos(-1)", "acos(1)",
@@ -1031,7 +1035,7 @@ FUNCTION_VALUES = [
     "tan(5e-324)", "asin(5e-324)", "sinh(5e-324)", "tanh(5e-324)", "cos(5e-324)", "sin(1e-8)", "cos(1e-8)",
     "exp(1e-300)", "ln(1.0000000000000002)", "log10(10)", "log10(0.1)", "ln(e)", "exp(ln(2))", "sin(0/0)",
     "cos(0/0)", "tan(0/0)", "asin(0/0)", "acos(0/0)", "atan(0/0)", "sinh(0/0)", "cosh(0/0)", "tanh(0/0)",
-    "exp(0/0)", "cbrt(0/0)", "Phi(0/0)", "phi(0/0)", "erf(0/0)", "log10(0/0)",
+    "exp(0/0)", "cbrt(0/0)", "phi(0/0)", "log10(0/0)",
 ]
 
 
@@ -1039,6 +1043,30 @@ def _fixed() -> list[tuple[str, dict[str, object]]]:
     values = EXACT_VALUES + POWER_VALUES + FUNCTION_VALUES
     ties = [(s, {"x": float(b)}) for b in TIE_BASES for s in ("x^1.25", "x^-1.25", "-x^1.25")]
     return TEXT + GRAMMAR + LIMITS + VARIABLES + [(s, {}) for s in values] + ties
+
+
+TABLE_RANGE = {"erf": 2.0, "Phi": 2.8}  # spec 6: the parity test's stand-in table is accurate only there
+
+
+def within_table(src: str, scope: Mapping[str, object]) -> bool:
+    """Whether every erf and Phi call the evaluation of src makes receives an argument the parity test's table
+    meets: magnitude at most TABLE_RANGE, an infinity or a zero (spec 6). A call in a branch not taken receives
+    nothing; NaN has no magnitude, so it is outside."""
+    seen: list[tuple[str, float]] = []
+
+    def recorder(name: str) -> Callable[..., float]:
+        def call(x: float) -> float:
+            seen.append((name, x))
+            return FUNCTION_TABLE[name](x)
+
+        return call
+
+    table = FUNCTION_TABLE | {name: recorder(name) for name in TABLE_RANGE}
+    try:
+        Expr(src, table).evaluate(scope)
+    except (ParseError, ScopeError):
+        return True
+    return all(abs(x) <= TABLE_RANGE[name] or math.isinf(x) for name, x in seen)
 
 
 # Random lines. Every source the generators build is valid by construction (an expression, an operator and an
@@ -1049,8 +1077,8 @@ _EXACT_ONE = ("abs", "sign", "floor", "ceil", "sqrt")
 _DOMAIN = {
     "sin": (-50.0, 50.0), "cos": (-50.0, 50.0), "tan": (-50.0, 50.0), "asin": (-1.0, 1.0), "acos": (-1.0, 1.0),
     "atan": (-1e3, 1e3), "sinh": (-700.0, 700.0), "cosh": (-700.0, 700.0), "tanh": (-25.0, 25.0),
-    "exp": (-700.0, 700.0), "ln": (1e-6, 1e6), "log10": (1e-6, 1e6), "cbrt": (-1e6, 1e6), "Phi": (-30.0, 8.0),
-    "phi": (-30.0, 30.0), "erf": (-6.0, 6.0),
+    "exp": (-700.0, 700.0), "ln": (1e-6, 1e6), "log10": (1e-6, 1e6), "cbrt": (-1e6, 1e6), "Phi": (-2.8, 2.8),
+    "phi": (-30.0, 30.0), "erf": (-2.0, 2.0),
 }
 _BOUNDED = ("sin", "cos", "tanh", "atan", "erf", "Phi", "phi")  # outputs within [-pi/2, pi/2]
 _OUTER = ("exp", "atan", "tanh", "erf", "sinh", "cosh", "Phi", "phi", "sin")  # condition number at most 2.5 there
@@ -1209,6 +1237,8 @@ def _inexact_case(rng: random.Random) -> tuple[str, dict[str, object]] | None:
         scope[x] = rng.uniform(0.05, 2)
         g = rng.choice(_POSITIVE)
         term = rng.choice((f"{g}(k*{x})", f"{g}(-k*{x})", f"{g}(k/{x})", f"sin(k*{x})^2", f"sqrt(k)*exp(-k*{x})"))
+        if g == "Phi":
+            term = rng.choice((f"Phi({x}/k)", f"Phi(-{x}/k)", f"Phi(k*{x}/30 - 1.4)"))
         if g in ("exp", "cosh") and "-" not in term:
             term = f"1/{term}"
         src = f"sum(k, 1, {rng.randint(1, 30)}, {term})"
@@ -1235,7 +1265,7 @@ def _inexact_case(rng: random.Random) -> tuple[str, dict[str, object]] | None:
     v = value(src, scope)
     if v == v and v != 0 and not 1e-290 < abs(v) < 1e290:
         return None
-    return (src, scope) if _steady(rng, src, scope, v) else None
+    return (src, scope) if _steady(rng, src, scope, v) and within_table(src, scope) else None
 
 
 def _close(v: float, w: float) -> bool:
@@ -1293,6 +1323,9 @@ def goldens() -> tuple[dict[str, object], ...]:
         if exact:
             mutants.append((bent, scope))
     pairs += mutants
+    outside = [src for src, scope in pairs if not within_table(src, scope)]
+    if outside:
+        raise ValueError(f"erf or Phi outside the parity table's range in {outside}")
     return tuple(case(src, scope) for src, scope in pairs)
 
 

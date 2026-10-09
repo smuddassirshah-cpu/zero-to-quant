@@ -72,6 +72,24 @@ def test_every_inexact_golden_rounds_the_same_at_100_digits() -> None:
             assert json.dumps(X.encode(v)) == json.dumps(line["value"]), line["src"]
 
 
+def test_every_golden_calls_erf_and_phi_inside_the_parity_tables_range() -> None:
+    for line in X.goldens():
+        scope = line["scope"]
+        assert isinstance(scope, dict)
+        assert X.within_table(str(line["src"]), scope), line["src"]
+
+
+@pytest.mark.parametrize(
+    ("src", "inside"),
+    [("erf(2)", True), ("erf(-2.0000000000000004)", False), ("Phi(2.8)", True), ("Phi(-2.8000000000000003)", False),
+     (f"erf({BIG})", True), (f"Phi({NEG_BIG})", True), ("erf(-0)", True), ("Phi(0/0)", False), ("phi(30)", True),
+     ("if(1 < 2, 1, erf(3))", True), ("if(1 > 2, 1, erf(3))", False), ("sum(k, 1, 3, Phi(k))", False),
+     ("sum(k, 1, 2, Phi(k))", True), ("erf(x)", True), ("sin(", True)],
+)
+def test_within_table_judges_the_argument_each_call_receives(src: str, inside: bool) -> None:
+    assert X.within_table(src, {}) is inside
+
+
 def test_the_exact_flag_is_syntactic() -> None:
     assert X.parse("sqrt(2) + abs(-1) + floor(x) + min(1, 2) + pi + e + sum(k, 1, 2, k) + if(1 < 2, 3, 4)").exact
     for src in ("2^1", "sin(0)", "erf(0) * 0", "if(1 < 2, 1, x^2)", "atan2(1, 1)", "Phi(0)", "phi(0)", "cbrt(1)"):
@@ -386,10 +404,10 @@ def test_constants_are_the_nearest_doubles() -> None:
         assert X.HALF_PI == X.nearest(X.MP.pi / 2) and X.THREE_QUARTERS_PI == X.nearest(3 * X.MP.pi / 4)
 
 
-def test_the_counter_starts_at_lo_itself() -> None:
-    # The spec's "k = lo, lo + 1, ..." read literally: with lo = -0 the first term sees -0. The spec does not say
-    # this outright (reported as a gap); the test pins the twin's reading.
-    assert same(X.value("sum(k, -0, 0, atan2(k, -1))"), -math.pi)
+def test_the_counter_has_no_signed_zero() -> None:
+    assert same(X.value("sum(k, -0, 0, atan2(k, -1))"), math.pi)  # spec 4: lo = -0 starts the counter at +0
+    assert same(X.value("sum(k, -0, -0, sign(k))"), 0.0)
+    assert same(X.value("sum(k, -1, 0, atan2(k, -1))"), X.value("atan2(-1, -1) + atan2(0, -1)"))  # k reaches +0
     assert X.value("sum(k, -2, 2, k)") == 0 and X.value("sum(k, 1, 4, 1/k)") == 1 + 0.5 + 1 / 3 + 0.25
 
 
