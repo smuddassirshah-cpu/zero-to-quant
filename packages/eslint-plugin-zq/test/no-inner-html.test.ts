@@ -22,6 +22,8 @@ it('exempts exactly the two sinks of docs/DECISIONS.md 2', () => {
 tester.run('no-inner-html', rule, {
   valid: [
     'el.textContent = s',
+    'const { write } = stream?.out',
+    'const { stream: { write } } = obj',
     'const html = el.innerHTML',
     'const { innerHTML } = el',
     'el.insertAdjacentText("beforeend", s)',
@@ -36,6 +38,14 @@ tester.run('no-inner-html', rule, {
   ],
   invalid: [
     fails('el.innerHTML = s', 'innerHTML'),
+    fails('new (window?.DOMParser)()', 'DOMParser'),
+    fails('const { write } = window?.document', 'document.write'),
+    fails('const { document: { write } } = window', 'document.write'),
+    fails('const { a: { write } = document } = {}', 'document.write'),
+    fails('(el.innerHTML as string) = s', 'innerHTML'),
+    fails('el.innerHTML! = s', 'innerHTML'),
+    fails('(Reflect?.set)(el, "innerHTML", s)', 'innerHTML'),
+    fails('({ writeln: w } = (self.document as Document))', 'document.writeln'),
     fails('el.outerHTML = s', 'outerHTML'),
     fails('el["innerHTML"] += s', 'innerHTML'),
     fails('el[`outerHTML`] = s', 'outerHTML'),
@@ -76,9 +86,18 @@ tester.run('no-inner-html', rule, {
 });
 
 typed.run('no-inner-html (typed)', rule, {
-  valid: [{ code: 'declare const out: { write(s: string): void }; out.write("x");', filename: TYPED }],
+  valid: [
+    { code: 'declare const out: { write(s: string): void }; out.write("x");', filename: TYPED },
+    { code: 'export type W = ({ write }: Document) => void;', filename: TYPED },
+  ],
   invalid: [
     { code: 'const d = document; d.write("x");', filename: TYPED, errors: sink('document.write') },
+    { code: 'const { document: { write } } = window;', filename: TYPED, errors: sink('document.write') },
+    {
+      code: 'declare const el: Element; declare const s: string; (el.innerHTML satisfies string) = s;',
+      filename: TYPED,
+      errors: sink('innerHTML'),
+    },
     {
       code: 'declare const el: HTMLElement; el.ownerDocument.writeln("x");',
       filename: TYPED,
