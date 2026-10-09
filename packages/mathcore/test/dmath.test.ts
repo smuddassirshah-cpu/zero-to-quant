@@ -70,10 +70,14 @@ describe('the tolerance rule', () => {
   });
 });
 
-// fdlibm's working range of each function, drawn like tools/zqverify/dmath.py's `span`: the binary exponent
-// uniform, the significand's 52 bits random. A draw from fc.double() is uniform over the bit patterns, so it
-// lands mostly where these functions overflow, underflow or return x [measured, adversarial review of
-// 8 October 2026]; it is kept for the special-value sweep only.
+// fdlibm's working range of each function, drawn like tools/zqverify/dmath.py's `span` from a binary exponent
+// and the significand's 52 bits. Neither draw is uniform: fast-check biases its integers towards their bounds,
+// so about 14% of significands fall below 2^10 [measured, 10,000 samples at seeds 1, 42 and 1234]. exp's
+// exponents, here and in the log(exp(x)) property, start at -30, keeping two binades of its 1 + x shortcut
+// below 2^-28 [our choice], so 5 to 7% of draws reach only that shortcut [measured, 1,000 samples at the same
+// seeds]. A draw from fc.double() ranges over every bit pattern, so it lands mostly where these functions
+// overflow, underflow or return x [measured, adversarial review of 8 October 2026]; it is kept for the
+// special-value sweep only.
 const bitsView = new DataView(new ArrayBuffer(8));
 
 function span(eMin: number, eMax: number, signs: readonly boolean[] = [false, true]): fc.Arbitrary<number> {
@@ -89,7 +93,7 @@ function span(eMin: number, eMax: number, signs: readonly boolean[] = [false, tr
 
 const within = (lo: number, hi: number) => (x: number) => x >= lo && x <= hi;
 const working: Readonly<Record<keyof typeof functions, fc.Arbitrary<number>>> = {
-  exp: span(-60, 9).filter(within(-746, 710)),
+  exp: span(-30, 9).filter(within(-746, 710)),
   expm1: span(-60, 9).filter(within(-746, 710)),
   log: fc.oneof(
     span(-1022, 1023, [false]),
@@ -137,7 +141,7 @@ describe('properties over each working range', () => {
   // exp's relative error becomes an absolute error of at most 2^-52 in log, beside log's own 1 ulp.
   it('log inverts exp within 1e-15 relative to max(1, |x|)', () => {
     fc.assert(
-      fc.property(span(-40, 9).filter(within(-700, 700)), (x) => {
+      fc.property(span(-30, 9).filter(within(-700, 700)), (x) => {
         expect(Math.abs(log(exp(x)) - x)).toBeLessThanOrEqual(1e-15 * Math.max(1, Math.abs(x)));
       }),
       RUNS,

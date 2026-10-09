@@ -62,6 +62,32 @@ def test_special_agrees_with_cpython(name: str, x: float) -> None:
         assert same(want, got)
 
 
+# e_exp.c's and s_expm1.c's constants (FreeBSD release/14.1.0), to show the hard cases sit on their switches.
+INVLN2 = 1.44269504088896338700e00
+LN2_HI = 6.93147180369123816490e-01
+LN2_LO = 1.90821492927058770002e-10
+
+
+def c_k(x: float) -> int:
+    """The C's k = (int)(invln2*x + (x < 0 ? -0.5 : 0.5)), truncated towards zero."""
+    return int(INVLN2 * x + math.copysign(0.5, x))
+
+
+def test_exp_k2_is_the_first_double_with_k_two() -> None:
+    below = math.nextafter(dmath.EXP_K2, 0)
+    assert (c_k(below), c_k(dmath.EXP_K2)) == (1, 2)
+    assert (c_k(-below), c_k(-dmath.EXP_K2)) == (-1, -2)
+
+
+def test_ln2_less_a_quarter_is_where_expm1s_k1_test_first_fails() -> None:
+    def reduced_below(x: float) -> bool:  # s_expm1.c's k = 1 form: hi = x - ln2_hi, lo = ln2_lo, x = hi - lo
+        return (x - LN2_HI) - LN2_LO < -0.25
+
+    switch = dmath.LN2 - 0.25
+    assert switch + 0.25 == dmath.LN2
+    assert reduced_below(math.nextafter(switch, 0)) and not reduced_below(switch)
+
+
 def test_references_hold_at_100_digits() -> None:
     for name, rows in dmath.cases():
         for args in rows:

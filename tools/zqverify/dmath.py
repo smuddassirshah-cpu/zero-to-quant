@@ -75,6 +75,8 @@ def nearest(v: mpmath.mpf) -> float:
 with mpmath.workdps(30):
     LN2 = nearest(mpmath.log(2))
     LOG_MAX = nearest(mpmath.log(MAX))  # the largest x whose exp is finite, within an ulp
+# The double after 1.5 ln2: e_exp.c and s_expm1.c compute k = 2 first here [measured, test_dmath.py].
+EXP_K2 = math.nextafter(1.5 * LN2, INF)
 
 
 def special(name: str, x: float) -> float | None:
@@ -165,18 +167,25 @@ def hard_cases(name: str) -> list[float]:
         cases = around(LOG_MAX, -745.1332191019411, -708.3964185322641, 1023.5 * LN2, -1021.5 * LN2)
         cases += around(2.0**-28, -(2.0**-28), 2.0**-54, -(2.0**-54), -56 * LN2, 56.5 * LN2, 19.5 * LN2)
         cases += around(*switch(0x3FD62E43, 0x3FF0A2B2, 0x4043687A, 0x40862E42))
+        # Past the high-word switch at 0x3ff0a2b2, k = (int)(invln2*x +- 0.5) reaches +-2 at +-1.5 ln2: this
+        # double is the first with k = 2 and its negation the first with k = -2 (EXP_K2, test_dmath.py).
+        cases += around(EXP_K2, -EXP_K2)
+        if name == "expm1":  # s_expm1.c's k = 1 form tests x - ln2 < -0.25; ln2 - 0.25, exact, first fails it
+            cases += around(LN2 - 0.25)
         return cases + [-1000.0, 1000.0, -40.0, -38.0, 1e-300, -1e-300]
     if name == "log":
         cases = around(1.0, 2.0, 0.5, math.sqrt(2), math.sqrt(2) / 2, MIN_NORMAL, steps=3)
         # The reduction's split near sqrt(2), in two binades, and the two switches between e_log.c's final forms.
         cases += around(*(from_bits(h << 32) for h in (0x3FF6A09C, 0x3FE6A09C, 0x3FF6147A, 0x4006B852)))
-        return cases + [1 + 2.0**-20, 1 - 2.0**-20, 2.0**-1074, 2.0**-1050, -2.0, 1e-300, 1e300]
+        # The fast path for |f| < 2^-20: 1 + 2^-20 is the first double above it, 1 - 2^-20 the first in from below.
+        cases += around(1 + 2.0**-20, 1 - 2.0**-20)
+        return cases + [2.0**-1074, 2.0**-1050, -2.0, 1e-300, 1e300]
     if name == "log1p":
         cases = around(-1.0, math.sqrt(2) - 1, math.sqrt(2) / 2 - 1, 2.0**-29, 2.0**-54, -(2.0**-29), 2.0**53)
-        cases += around(from_bits(0x3FDA827A << 32), -from_bits(0x3FD2BEC5 << 32))
-        # 1 + x crosses the reduction's split near sqrt(2) 2^k at k = 1 and k = 2 (the differences are exact);
-        # below k = 1 the split lies inside the unreduced range.
-        cases += around(from_bits(0x4006A09E << 32) - 1, from_bits(0x4016A09E << 32) - 1)
+        cases += around(from_bits(0x3FDA827A << 32), -from_bits(0x3FD2BEC5 << 32), -(2.0**-54))
+        # 1 + x crosses the reduction's split near sqrt(2) 2^k at k = 1, 2, -2, -3 and -4 (each difference is
+        # exact). At k = 0 the split is the 0x3fda827a threshold, and at k = -1 it lies inside the unreduced range.
+        cases += around(*(from_bits((0x3FF6A09E + (k << 20)) << 32) - 1 for k in (1, 2, -2, -3, -4)))
         return cases + [-0.5, 0.5, 1e300, -1e-300, 1e-300, -2.0]
     return around(22.0, -22.0, 1.0, -1.0, 2.0**-28, -(2.0**-28)) + [0.5, -0.5, 20.0, 1e300]  # tanh
 

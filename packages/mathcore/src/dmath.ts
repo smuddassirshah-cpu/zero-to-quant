@@ -11,9 +11,12 @@
 // - Departures from the C, each [our choice]: exp(1) returns e correctly rounded, 2.718281828459045, as V8's
 //   port does [sourced: V8 12.4.254, src/base/ieee754.cc, exp], where e_exp.c's reduction gives one ulp
 //   above; floating-point exception flags are not raised.
-// - Error, a maximum seen and not a bound: over the 10,000 goldens of test/dmath.goldens.txt, 0.79 ulp, and
-//   1.54 ulp for tanh; over a sweep of 400,000 inputs against mpmath at 40 digits, 0.81 ulp, and 2.03 ulp
-//   (2.4e-16 relative) for tanh [measured]. Every function is O(1).
+// - Error, each figure a maximum seen over the set named and not a bound [measured, mpmath at 40 to 60
+//   digits]. Over the 10,000 goldens of test/dmath.goldens.txt: 0.79 ulp, and 1.54 ulp for tanh. The highest
+//   seen so far, across the author's sweep of 400,000 inputs and the adversarial reviews' sweeps of 417,447
+//   (8 October 2026) and 396,740 (9 October 2026): outside tanh, 0.90 ulp, for exp in the first review's
+//   sweep; for tanh, 2.048 ulp (2.4e-16 relative) at the double 0xbfceebc19f0892c0, about -0.24157, also in
+//   the first review's, and a relative error of 2.8e-16 in the second review's. Every function is O(1).
 //
 // Licence notice of the ported files, preserved as they require:
 // ====================================================
