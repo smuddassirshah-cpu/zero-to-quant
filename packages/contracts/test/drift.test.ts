@@ -1,4 +1,4 @@
-// docs/ARCHITECTURE.md 5.1 to 5.13 against src: every exported declaration of the listings headed
+// docs/ARCHITECTURE.md 5.1 to 5.14 against src: every exported declaration of the listings headed
 // `// @zq/contracts/src/<module>.ts` must equal src's once both are printed without comments and with each
 // run of whitespace as one space, each interface member compared on its own (its overloads together), and
 // must live in the module the listing names. So must the listings src transcribes from elsewhere: 5.11's
@@ -17,8 +17,13 @@ const recorded: Record<string, string> = {
   WidgetState: 'changed', // a Readonly alias, so a state is Json (widget.ts); its members are the alias's
   'WidgetState.a': 'missing',
   'WidgetState.v': 'missing',
-  WidgetSchemaModule: 'missing', // needs zod, with the registries' erased types (widget.ts)
-  CompilerRegistry: 'missing',
+  'CompilerRegistry.widget': 'changed', // the erased types accept no concrete widget (widget.ts)
+  'CompilerRegistry.preset': 'changed',
+  'WidgetRegistry.load': 'changed',
+  PresetRuntime: 'changed',
+  AnyWidgetLogic: 'added',
+  AnyPresetDef: 'added',
+  AnyWidgetModule: 'added',
   Grade: 'added', // CONTENT-FORMAT.md 7.1 with 5.2's amendment (answer.ts)
   ShowStep: 'added', // CONTENT-FORMAT.md 3.2's shape (answer.ts)
   CasService: 'in answer.ts', // GradeCtx needs it without the DOM lib; widget-api.ts re-exports it
@@ -38,6 +43,13 @@ const recorded: Record<string, string> = {
   Snapshot: 'added', // no paper defines these three: opaque (events.ts)
   DraftHandle: 'added',
   ImportReport: 'added',
+  PrimType: 'added', // 5.14's comment, from WIDGETS.md 4.1 and 4.2 (scene.ts)
+  Bindable: 'added', // no paper defines these four (scene.ts)
+  MarkType: 'added',
+  SpaceToken: 'added',
+  DeclarativeRecipe: 'added',
+  PathOf: 'changed', // the doc's listing writes `string` with a comment (scene.ts)
+  defineScene: 'missing', // a function: src/widgets/scene/define.ts (scene.ts)
 };
 
 const print = ts.createPrinter({ removeComments: true });
@@ -140,7 +152,7 @@ function drift(all: Listing[], read: (module: string) => string) {
   return { modules, skipped, found };
 }
 
-test('src transcribes 5.1 to 5.13 and the papers it cites, apart from the recorded deviations', () => {
+test('src transcribes 5.1 to 5.14 and the papers it cites, apart from the recorded deviations', () => {
   const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
   const [architecture, assessment, tutor] = ['ARCHITECTURE', 'ASSESSMENT', 'AI-TUTOR'].map((name) =>
     read(`../../../docs/${name}.md`),
@@ -152,7 +164,7 @@ test('src transcribes 5.1 to 5.13 and the papers it cites, apart from the record
   };
   const { modules, skipped, found } = drift(
     [
-      ...listings(section(architecture, '### 5.1 ', '### 5.14 '), (line) =>
+      ...listings(section(architecture, '### 5.1 ', '\n## 6. '), (line) =>
         line === '// src/engine/render' ? 'render' : headed(line),
       ),
       ...listings(section(assessment, '### 13.2 ', '### 13.6 '), () => 'events', true),
@@ -161,7 +173,16 @@ test('src transcribes 5.1 to 5.13 and the papers it cites, apart from the record
     ],
     (module) => read(`../src/${module}.ts`),
   );
-  expect(modules).toEqual(['base', 'answer', 'widget', 'widget-api', 'platform', 'render', 'events']);
+  expect(modules).toEqual([
+    'base',
+    'answer',
+    'widget',
+    'widget-api',
+    'platform',
+    'render',
+    'scene',
+    'events',
+  ]);
   expect(skipped).toEqual([]);
   expect(found).toEqual(recorded);
 });

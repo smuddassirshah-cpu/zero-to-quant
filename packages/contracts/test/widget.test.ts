@@ -5,12 +5,19 @@ import type { HighlightStyle, Json, LocalId, Mark } from '@zq/contracts/base';
 import type { PythonRuntime, SqlRuntime } from '@zq/contracts/platform';
 import type { TexService } from '@zq/contracts/render';
 import type * as w from '@zq/contracts/widget';
-import type { BaseConfig, WidgetLogic } from '@zq/contracts/widget';
+import type {
+  AnyPresetDef,
+  AnyWidgetLogic,
+  BaseConfig,
+  CompilerRegistry,
+  WidgetLogic,
+} from '@zq/contracts/widget';
 import type * as api from '@zq/contracts/widget-api';
-import type { WidgetModule } from '@zq/contracts/widget-api';
+import type { AnyWidgetModule, WidgetModule } from '@zq/contracts/widget-api';
 import type { Ref, VNode } from 'preact';
 import { describe, expectTypeOf, test } from 'vitest';
-import type { PickerA, PickerConfig, PickerV } from './picker.ts';
+import type { ZodType } from 'zod';
+import type { picker, PickerA, PickerConfig, PickerV } from './picker.ts';
 import type { OptionalKeys, RequiredKeys, Words } from './types.ts';
 
 type L = WidgetLogic<BaseConfig, Json, Json>;
@@ -63,12 +70,43 @@ describe('the widget contract (5.3)', () => {
     expectTypeOf<['picked']>().not.toExtend<NonNullable<P['tweenable']>>();
   });
 
-  test('a concrete module is not assignable to the registry erased type without a cast', () => {
+  test("5.3's erased types accept no concrete widget; the registries' Any types accept one without a cast", () => {
     // keyof Json is never (tweenable), and the function-typed properties and View are contravariant in C.
-    expectTypeOf<WidgetLogic<PickerConfig, PickerA, PickerV>>().not.toExtend<L>();
+    type Concrete = WidgetLogic<PickerConfig, PickerA, PickerV>;
+    type Preset = w.PresetDef<BaseConfig & { faces: number }, PickerConfig>;
+    expectTypeOf<Concrete>().not.toExtend<L>();
     expectTypeOf<WidgetModule<PickerConfig, PickerA, PickerV>>().not.toExtend<
       WidgetModule<BaseConfig, Json, Json>
     >();
+    expectTypeOf<Preset>().not.toExtend<w.PresetDef<BaseConfig, BaseConfig>>();
+    expectTypeOf<typeof picker>().toExtend<AnyWidgetLogic>();
+    expectTypeOf<WidgetModule<PickerConfig, PickerA, PickerV>>().toExtend<AnyWidgetModule>();
+    expectTypeOf<Preset>().toExtend<AnyPresetDef>();
+    expectTypeOf<{ logic: typeof picker; schema: w.WidgetSchemaModule }>().toExtend<
+      NonNullable<ReturnType<CompilerRegistry['widget']>>
+    >();
+    // Still a contract: a member missing, or a function of an unrelated config, is refused.
+    expectTypeOf<Omit<Concrete, 'describe'>>().not.toExtend<AnyWidgetLogic>();
+    type Unrelated = Omit<Concrete, 'predicates'> & { predicates: Record<string, (c: number) => boolean> };
+    expectTypeOf<Unrelated>().not.toExtend<AnyWidgetLogic>();
+    expectTypeOf<NonNullable<AnyWidgetLogic['tweenable']>>().toEqualTypeOf<readonly string[]>();
+  });
+
+  test('the compiler registry: schemas are classic zod; all() lists every type@v', () => {
+    expectTypeOf<w.WidgetSchemaModule>().toEqualTypeOf<{
+      config: ZodType;
+      recipeArgs: Record<string, ZodType>;
+    }>();
+    expectTypeOf<CompilerRegistry['widget']>().returns.toEqualTypeOf<
+      { logic: AnyWidgetLogic; schema: w.WidgetSchemaModule } | undefined
+    >();
+    expectTypeOf<CompilerRegistry['preset']>().returns.toEqualTypeOf<AnyPresetDef | undefined>();
+    expectTypeOf<ReturnType<CompilerRegistry['all']>[number]>().toEqualTypeOf<{
+      type: string;
+      v: number;
+      tier: w.WidgetTier;
+      cluster: w.ClusterId;
+    }>();
   });
 
   test('BaseConfig, presets and fixtures', () => {

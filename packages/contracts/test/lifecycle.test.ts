@@ -4,8 +4,8 @@
 import type { Answer, Grade } from '@zq/contracts/answer';
 import type { Json, Scope, SeedSource } from '@zq/contracts/base';
 import type { DraftStore } from '@zq/contracts/platform';
-import type { BaseConfig, Target, WidgetState } from '@zq/contracts/widget';
-import type { PresetRuntime, WidgetApi, WidgetModule, WidgetRegistry } from '@zq/contracts/widget-api';
+import type { Target, WidgetState } from '@zq/contracts/widget';
+import type { AnyWidgetModule, PresetRuntime, WidgetApi, WidgetRegistry } from '@zq/contracts/widget-api';
 import { describe, expectTypeOf, test } from 'vitest';
 import type { picker, PickerA, PickerConfig, PickerV } from './picker.ts';
 
@@ -19,9 +19,7 @@ describe('the lifecycle of a widget instance, its types (5.4)', () => {
   });
 
   test('2 load: the registry resolves a module from its cluster chunk, and a preset runtime', () => {
-    expectTypeOf<WidgetRegistry['load']>().returns.resolves.toEqualTypeOf<
-      WidgetModule<BaseConfig, Json, Json>
-    >();
+    expectTypeOf<WidgetRegistry['load']>().returns.resolves.toEqualTypeOf<AnyWidgetModule>();
     expectTypeOf<WidgetRegistry['preset']>().returns.resolves.toEqualTypeOf<PresetRuntime | null>();
   });
 
