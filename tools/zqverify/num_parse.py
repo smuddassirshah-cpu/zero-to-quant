@@ -12,10 +12,13 @@ The rules this module implements:
 1. Input over 200 UTF-16 code units fails as too-long. Normalise: U+2212 and the dashes U+2010 to U+2015, U+FE58,
    U+FE63 and U+FF0D become "-". A narrow space (U+00A0, U+2007, U+2009, U+200A, U+202F) is removed where it
    separates digit groups as a grouping comma would: a first group of 1 to 3 digits that does not start with 0
-   and does not follow a digit, "." or ",", then one or more times a narrow space and exactly 3 digits not
-   followed by a digit. Every other narrow space is an ordinary space. U+00D7, U+00B7 and
-   U+22C5 become "*"; runs of spaces and tabs become one space; ASCII whitespace is trimmed from the ends.
-   Nothing left: empty.
+   and does not follow a digit, "." or ",", nor an exponent's "e", "E" or "^" with or without a sign after it
+   ("3.2e1 000" does not group), then one or more times a narrow space and exactly 3 digits not followed by a
+   digit. Every other narrow space is an ordinary space. U+00D7, U+00B7 and U+22C5 become "*"; runs of spaces
+   and tabs become one space; ASCII whitespace is trimmed from the ends. Nothing left: empty. A grouping so
+   spelled and then "/", after optional spaces, tabs or narrow spaces, is syntax: "2 125/250" typed with a
+   no-break space reads both as the grouped 2125/250 and as the mixed 2 125/250, which differ. The test is the
+   shape alone, so "12 345/7" (its mixed reading improper) and "1 000/0" are syntax too.
 2. An optional leading "-" or "+", then an optional space. Then at most one listed unit, compared without case,
    longest first: at the start (then an optional space) or else at the end (after an optional space). With no
    unit, a final "%" (after an optional space) makes the form percent.
@@ -53,35 +56,56 @@ DIGITS = "0123456789"
 TO_MINUS = "\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D"
 NARROW = "\u00A0\u2007\u2009\u200A\u202F"
 TO_TIMES = "\u00D7\u00B7\u22C5"
+SIGNS = "+-" + TO_MINUS
 
 
-def grouping_spaces(text: str) -> set[int]:
-    """Indices of the narrow spaces that separate digit groups as a grouping comma would (rule 1)."""
-    drop: set[int] = set()
+def starts_grouping(text: str, i: int) -> bool:
+    """A grouping may start at i: a digit 1 to 9, not inside another number or an exponent (rule 1)."""
+    before, sign_before = (text[i - 1] if i else " "), (text[i - 2] if i > 1 else " ")
+    if before in SIGNS:
+        return text[i] in DIGITS[1:] and sign_before not in "eE^"
+    return text[i] in DIGITS[1:] and before not in DIGITS + ".,eE^"
+
+
+def groupings(text: str) -> list[tuple[int, int]]:
+    """Start and end of each digit grouping spelled with narrow spaces (rule 1)."""
+    runs: list[tuple[int, int]] = []
     i = 0
     while i < len(text):
-        if text[i] in DIGITS[1:] and (i == 0 or text[i - 1] not in DIGITS + ".,"):
-            j = i
-            while j < len(text) and text[j] in DIGITS:
-                j += 1
-            if j - i <= 3:
-                while (
-                    j < len(text)
-                    and text[j] in NARROW
-                    and len(group := text[j + 1 : j + 4]) == 3
-                    and all(c in DIGITS for c in group)
-                    and (j + 4 == len(text) or text[j + 4] not in DIGITS)
-                ):
-                    drop.add(j)
-                    j += 4
-            i = max(j, i + 1)
-        else:
+        if not starts_grouping(text, i):
             i += 1
-    return drop
+            continue
+        j = i
+        while j < len(text) and text[j] in DIGITS:
+            j += 1
+        lead = j
+        if j - i <= 3:
+            while (
+                j < len(text)
+                and text[j] in NARROW
+                and len(group := text[j + 1 : j + 4]) == 3
+                and all(c in DIGITS for c in group)
+                and (j + 4 == len(text) or text[j + 4] not in DIGITS)
+            ):
+                j += 4
+        if j > lead:
+            runs.append((i, j))
+        i = j
+    return runs
+
+
+def grouped_before_slash(text: str) -> bool:
+    """A grouping, then "/" after optional spaces, tabs or narrow spaces: syntax (rule 1)."""
+    for _, end in groupings(text):
+        while end < len(text) and text[end] in " \t" + NARROW:
+            end += 1
+        if text[end : end + 1] == "/":
+            return True
+    return False
 
 
 def normalise(text: str) -> str:
-    drop = grouping_spaces(text)
+    drop = {k for start, end in groupings(text) for k in range(start, end) if text[k] in NARROW}
     out = []
     for i, c in enumerate(text):
         if c in TO_MINUS:
@@ -213,6 +237,8 @@ def parse(raw: str, units: list[str]) -> dict[str, object]:
     text = normalise(raw)
     if not text:
         return {"ok": False, "reason": "empty"}
+    if grouped_before_slash(raw):
+        return {"ok": False, "reason": "syntax"}
     sign = text[0] if text[0] in "+-" else ""
     rest = text[len(sign) :].removeprefix(" ") if sign else text
     unit = None
@@ -252,6 +278,12 @@ EDGES = [
     "-4 / 6", "0/5", "2\u00A01/3", "1\u202F1/2", "2\u20091/3", "1\u00A0234\u00A0567", "12\u2009345.678",
     "0\u00A0500", "1\u00A02345", "1\u00A0000,5", "0.123\u2009456", "1234\u00A0567\u00A0890",
     "1\u00A0234 1/2", "-1\u202F000", "1\u00A0000\u00A0\u00A0000", "1,234\u00A0567", "3.2\u2009\u00D7\u200910^5",
+    # Added after the review of b46c9e0: a narrow-space grouping before "/", and inside an exponent.
+    "2\u00A0125/250", "1\u202F125/250", "3\u2009100/200", "2\u2007125/250", "2\u200A125/250", "12\u00A0345/7",
+    "1\u00A0000 / 3", "1\u00A0000\u00A0/3", "1\u00A0000\t/3", "1\u00A0000/0", "-1\u00A0000/3", "\u22121\u00A0000/3",
+    "1\u00A0000\u00A0000/7", "\u00A31\u00A0000/3", "3/1\u00A0000", "1\u00A0000\u00A01/2", "0\u00A0500/3",
+    "3.2e1\u00A0000", "3.2E1\u00A0000", "1e-1\u00A0000", "1e+1\u00A0000", "1e\u22121\u00A0000", "3.2 x 10^1\u00A0000",
+    "3.2\u00D710^\u22121\u202F000", "1e1\u00A0000/3", "5-1\u00A0000",
 ]
 UNITS = [[], ["\u00A3"], ["bp", "%"], ["outcomes"], ["s", "ms"]]
 PIECES = [
