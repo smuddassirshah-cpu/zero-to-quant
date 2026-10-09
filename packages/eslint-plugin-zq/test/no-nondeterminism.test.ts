@@ -152,6 +152,15 @@ typed.run('no-nondeterminism (typed)', rule, {
       options: GEN,
     },
     { code: 'export const sq = (m: Math, x: number) => m.sqrt(x);', filename: TYPED, options: GEN },
+    // A module's own Window, such as a rolling window, is not the platform's.
+    {
+      code: [
+        'interface Window { top: number; bottom: number; parent: Window | null }',
+        'export const height = (w: Window): number => w.top - w.bottom;',
+        'export const up = (w: Window): Window | null => w.parent;',
+      ].join('\n'),
+      filename: TYPED,
+    },
   ],
   invalid: [
     typedFails('export const r = (m: Math) => m.random();', ['random', 'Math.random']),
@@ -207,6 +216,14 @@ typed.run('no-nondeterminism (typed)', rule, {
       ['random', 'crypto.subtle.generateKey'],
     ),
     typedFails('export const t = process.uptime();', ['host', 'process']),
+    // lib.dom's Window, and the same augmented by a module.
+    typedFails('export const t = (w: Window) => w.top;', ['escape', 'top']),
+    typedFails('export const r = (w: Window) => w.parent.Math.random();', ['random', 'Math.random']),
+    typedFails('export const t = <W extends Window>(w: W) => w.top;', ['escape', 'top']),
+    typedFails('declare global { interface Window { zq: number } }\nexport const t = (w: Window) => w.top;', [
+      'escape',
+      'top',
+    ]),
     {
       ...typedFails('declare const n: number; export const c = n ** 2;', ['transcendental', '**']),
       options: GEN,

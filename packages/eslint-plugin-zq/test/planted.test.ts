@@ -135,7 +135,8 @@ const sinks = [
   },
 ];
 
-// Outside zq/no-nondeterminism's reach: transcendental Math in mathcore outside dmath, a package's tests.
+// Outside zq/no-nondeterminism's reach: transcendental Math in mathcore outside dmath, a package's tests
+// under both of the rule's rows.
 const clean = [
   {
     file: 'packages/mathcore/src/__planted_exp.ts',
@@ -144,6 +145,10 @@ const clean = [
   {
     file: 'packages/mathcore/test/__planted_clock.ts',
     code: 'export const elapsed = (start: number): number => performance.now() - start;\n',
+  },
+  {
+    file: 'packages/gen-kit/test/__planted_exp.mjs',
+    code: 'export const grow = (x) => Math.exp(x);\n',
   },
 ];
 
