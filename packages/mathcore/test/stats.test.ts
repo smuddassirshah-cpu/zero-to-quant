@@ -27,17 +27,18 @@ const KINDS = ['sample', 'population'] as const;
 // n < 10^6.
 const MARGIN = 1.01;
 
-/** The derived bound on |variance - reference| for a correctly rounded reference (the parity suite's notes). */
-function varianceSlack(want: number, m: number, n: number, divisor: number): number {
-  return MARGIN * 7 * U * (Math.abs(want) + (n * (2 * U * m) ** 2) / divisor) + Number.MIN_VALUE;
+// The derived bounds on |variance - reference| and |sd - reference| for a correctly rounded reference, given
+// E, the bound on the mean's error (the parity suite's notes). The products are ordered so that no step
+// overflows where the bound is a double.
+function varianceSlack(want: number, meanBound: number, n: number, divisor: number): number {
+  const shift = meanBound * (meanBound * ((7 * U * n) / divisor));
+  return MARGIN * (7 * U * Math.abs(want) + shift) + Number.MIN_VALUE;
 }
 
-/** The derived bound on |sd - reference| for a correctly rounded reference. */
-function sdSlack(want: number, m: number, n: number, divisor: number): number {
-  const shift = (7 * U * n * (2 * U * m) ** 2) / divisor;
+function sdSlack(want: number, meanBound: number, n: number, divisor: number): number {
+  const root = meanBound * Math.sqrt((7 * U * n) / divisor);
   return (
-    MARGIN * (5 * U * want + (want > 0 ? Math.min(Math.sqrt(shift), shift / want) : Math.sqrt(shift))) +
-    Number.MIN_VALUE
+    MARGIN * (5 * U * want + (want > 0 ? Math.min(root, root * (root / want)) : root)) + Number.MIN_VALUE
   );
 }
 
@@ -95,7 +96,7 @@ describe('variance and sd', () => {
     expect(S.sd([2, 4, 4, 4, 5, 5, 7, 9], 'population')).toBe(2);
   });
 
-  it('scale by powers of two at both ends of the doubles, and throw only where the result overflows', () => {
+  it('scale by powers of two at both ends of the doubles, and throw where the result overflows', () => {
     expect(S.sd([1e300, -1e300], 'population')).toBe(1e300);
     expect(() => S.variance([1e300, -1e300], 'population')).toThrow('the variance overflows');
     expect(S.sd([0, 1e-320], 'population')).toBe(1e-320 / 2);
@@ -127,7 +128,7 @@ describe('variance and sd', () => {
           const v = S.variance(xs, kind);
           expect(v).toBeGreaterThanOrEqual(0);
           expect(S.sd(xs, kind)).toBe(Math.sqrt(v));
-          expect(Math.abs(v - exact)).toBeLessThanOrEqual(varianceSlack(exact, m, n, divisor));
+          expect(Math.abs(v - exact)).toBeLessThanOrEqual(varianceSlack(exact, 2 * U * m, n, divisor));
         }
       }),
     );
@@ -135,7 +136,7 @@ describe('variance and sd', () => {
 });
 
 describe('lerp', () => {
-  it('refuses infinite and NaN ends, and extrapolates for any finite t', () => {
+  it('refuses infinite and NaN ends and t, and extrapolates for any finite t', () => {
     for (const [a, b] of [
       [Infinity, 0],
       [0, -Infinity],
@@ -144,8 +145,20 @@ describe('lerp', () => {
       [1.7e308, Infinity],
     ] as const)
       expect(() => S.lerp(a, b, 0.5)).toThrow('lerp needs finite ends');
+    for (const t of [Infinity, -Infinity, NaN])
+      expect(() => S.lerp(1, 1, t)).toThrow('lerp needs a finite t');
     expect([S.lerp(1, 3, 2), S.lerp(1, 3, -1)]).toEqual([5, -1]);
-    expect(S.lerp(1, 3, NaN)).toBeNaN();
+  });
+
+  it('gives ±Infinity where the result leaves the doubles, and halves the ends where only a step does', () => {
+    expect([S.lerp(0, 1e308, 10), S.lerp(0, 1e308, -10), S.lerp(0, 1e308, 1.8)]).toEqual([
+      Infinity,
+      -Infinity,
+      Infinity,
+    ]);
+    expect(S.lerp(-1e308, 1e308, 2)).toBe(Infinity);
+    // (b - a)t = -2^1024 overflows; the result, -3·2^1022, does not.
+    expect(S.lerp(2 ** 1022, 1.5 * 2 ** 1022, -8)).toBe(-3 * 2 ** 1022);
   });
 
   it('is exact at the ends, monotone in t, and survives a span beyond the doubles', () => {
@@ -210,9 +223,16 @@ describe('quantiles', () => {
 // - The corrected two-pass variance: with m = x̄ + e, Σ(x - m)² - (Σ(x - m))²/n is SS exactly. Rounding x - m
 //   adds 2Σδ(x - m)(x - x̄) with |δ| ≤ u, at most u·(2·SS + n·e²) by Cauchy-Schwarz; the squares, the sums
 //   (Sum2, exactly rounded to first order), the correction, the difference and the division bring it to
-//   u·(6·SS + 7n·e²)/D. With |e| ≤ 2u·M and a correctly rounded reference, the variance is within
-//   7u·V + 7u·n·(2u·M)²/D (varianceSlack). Its root errs by 3u·σ, Math.sqrt and the reference add u·σ each,
-//   and the e term moves it by at most min(√s, s/σ) with s = 7u·n·(2u·M)²/D (sdSlack).
+//   u·(6·SS + 7n·e²)/D. With |e| ≤ E = 2u·M and a correctly rounded reference, the variance is within
+//   7u·V + 7u·n·E²/D (varianceSlack). Its root errs by 3u·σ, Math.sqrt and the reference add u·σ each, and
+//   the e term moves it by at most min(√s, s/σ) with s = 7u·n·E²/D (sdSlack).
+// - The slacks take E·(E·(7u·n/D)) and √s = E·√(7u·n/D), which never overflow where the bound is a double:
+//   data that is not constant spreads over at least u·M/2 (a spread below M/2 keeps every member above M/2,
+//   where doubles lie more than u·M/2 apart), so V ≥ u²M²/(8D) and the e term is at most 224u·n·V. For constant data the mean lies within two
+//   roundings of the value x, so every x - m is the same small multiple of the spacing at x, exact by
+//   Sterbenz's lemma, and for n < 10^7 every square and sum after it is exact: the variance is 0 and E = 0.
+// - Within the slack of MAX_VALUE either side may overflow where the other rounds to MAX_VALUE (the decision
+//   notes): a throw against a number, or a number against a reference that overflows, passes there only.
 // - A subnormal result adds MIN_VALUE. On 20,000 fresh sets (stats.case on new seeds and seven adversarial
 //   families, not committed) the largest error was 0.56 of its bound [measured, 8 October 2026]; the review's
 //   cases that broke the earlier fitted tolerances (1.26·n units for 'gcse' at p = 0.37, 1.23 units at a
@@ -231,6 +251,7 @@ describe('parity with statistics, NumPy and Fraction (tools/zqverify/stats.py)',
     for (const g of golden) {
       const n = g.xs.length;
       const m = Math.max(...g.xs.map(Math.abs));
+      const meanBound = g.xs.every((x) => x === g.xs[0]) ? 0 : 2 * U * m;
       const unit = Math.max(U * m, Number.MIN_VALUE);
       const within = (got: number, want: number, slack: number): void => {
         expect(
@@ -249,8 +270,9 @@ describe('parity with statistics, NumPy and Fraction (tools/zqverify/stats.py)',
           [S.sd, g.sd[i] ?? null, sdSlack],
         ] as const) {
           const got = attempt(() => f(g.xs, kind));
-          if (got === null || want === null) expect(got).toBe(want);
-          else within(got, want, slack(want, m, n, divisor));
+          const edge = got ?? want;
+          if (got !== null && want !== null) within(got, want, slack(want, meanBound, n, divisor));
+          else if (edge !== null) within(Number.MAX_VALUE, edge, slack(edge, meanBound, n, divisor));
         }
       });
       if (g.median !== null) near(S.median(g.xs), g.median, 3);

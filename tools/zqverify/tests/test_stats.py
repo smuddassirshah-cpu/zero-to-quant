@@ -1,6 +1,7 @@
 """The stats goldens are fresh, and the twin's exact definitions agree with statistics computed on Fractions."""
 
 import statistics
+import sys
 from fractions import Fraction
 
 from hypothesis import given, strategies as st
@@ -50,3 +51,11 @@ def test_overflows_and_short_data_are_null() -> None:
     edge = stats.case([-1.7e308, 1.7e308])
     assert edge["sd"] == [None, 1.7e308] and edge["linear"][:7] == [None] * 7 and edge["quartiles"] == [None, None]
     assert stats.case([1.7e308, 1.7e308])["median"] is None
+
+
+def test_the_edge_witnesses_round_to_max_value() -> None:
+    """statistics rounds these to MAX_VALUE, where the TypeScript's own rounding may overflow."""
+    variance, deviation = stats.FIXED[-3], stats.FIXED[-2]
+    assert stats.case(variance)["variance"][0] == sys.float_info.max
+    deviation_case = stats.case(deviation)
+    assert deviation_case["sd"][0] == sys.float_info.max and deviation_case["variance"] == [None, None]
