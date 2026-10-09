@@ -23,11 +23,15 @@
 //   y amplifies the loss: up to 532 ulp (4.7e-14 relative) for |1 - x| between about 2^-25 and 2^-20 with a
 //   finite result [measured, adversarial review of 8 October 2026]; V8's Math.pow returns the same bits
 //   there. dmath splits t at its low word first, so the product is exact.
-// - Error, a maximum seen and not a bound: over the 10,000 goldens of test/dmath.goldens.txt, 0.73 ulp, and
-//   1.45 ulp for tanh; over 605,000 further inputs against mpmath at 40 digits or more (400,000 to exp, log,
-//   log1p, expm1 and tanh, 180,000 to sin, cos and pow, and 25,000 to pow near x = 1 with
-//   |y| > 2^31), 0.81 ulp, and 2.03 ulp (2.4e-16 relative) for tanh [measured]. Every function is O(1); sin
-//   and cos above 2^20 pi/2 run the Payne-Hanek reduction over at most 20 words.
+// - Error, each figure a maximum seen over the set named and not a bound [measured, mpmath at 40 to 60
+//   digits]. Over the 10,000 goldens of test/dmath.goldens.txt: 0.73 ulp, and 1.45 ulp for tanh. Over the
+//   author's 605,000 further inputs (400,000 to exp, log, log1p, expm1 and tanh, 180,000 to sin, cos and pow,
+//   and 25,000 to pow near x = 1 with |y| > 2^31): 0.81 ulp, and 2.03 ulp for tanh. The highest seen so far,
+//   adding the adversarial reviews' sweeps of exp, log, log1p, expm1 and tanh, of 417,447 inputs (8 October
+//   2026) and 396,740 (9 October 2026): outside tanh, 0.90 ulp, for exp in the first review's sweep; for
+//   tanh, 2.048 ulp (2.4e-16 relative) at the double 0xbfceebc19f0892c0, about -0.24157, also in the first
+//   review's, and a relative error of 2.8e-16 in the second review's. Every function is O(1); sin and cos
+//   above 2^20 pi/2 run the Payne-Hanek reduction over at most 20 words.
 //
 // Licence notice of the ported files, preserved as they require:
 // ====================================================

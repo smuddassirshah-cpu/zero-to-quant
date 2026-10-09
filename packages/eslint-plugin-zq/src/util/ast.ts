@@ -27,9 +27,10 @@ export function propName(node: ESNode): string | undefined {
   return node.property.type === 'Identifier' ? node.property.name : undefined;
 }
 
-/** The name of an identifier, or of the last property of a member access. */
+/** The name of an identifier, or of the last property of a member access, through any wrapper. */
 export function tailName(node: ESNode): string | undefined {
-  return node.type === 'Identifier' ? node.name : propName(node);
+  const inner = unwrap(node);
+  return inner.type === 'Identifier' ? inner.name : propName(inner);
 }
 
 /** The static key of an object literal or pattern property. */
@@ -38,13 +39,14 @@ export function keyName(node: NodeOf<'Property'>): string | undefined {
 }
 
 const WRAPPERS = new Set([
+  'ChainExpression',
   'TSAsExpression',
   'TSNonNullExpression',
   'TSSatisfiesExpression',
   'TSTypeAssertion',
 ]);
 
-/** `node` without TypeScript's expression wrappers (`as`, `!`, `satisfies`, `<T>`). */
+/** `node` without an optional chain's wrapper (`a?.b`) or TypeScript's (`as`, `!`, `satisfies`, `<T>`). */
 export function unwrap(node: ESNode): ESNode {
   let current = node;
   while (WRAPPERS.has(current.type)) current = (current as unknown as { expression: ESNode }).expression;
@@ -65,12 +67,89 @@ export function isGlobal(sourceCode: SourceCode, node: ESNode): boolean {
   return node.type === 'Identifier' && !findVariable(sourceCode, node)?.defs.length;
 }
 
-/** The expression an object pattern destructures, when it is written beside the pattern. */
-export function patternSource(pattern: Rule.Node): ESNode | undefined {
+/** `node` without an optional chain's wrapper only, keeping a TypeScript assertion's type for `hasType`. */
+function unchain<T extends ESNode | undefined>(node: T): ESNode | T {
+  return node?.type === 'ChainExpression' ? node.expression : node;
+}
+
+/** The expression an object pattern destructures, when it is written beside the pattern: an
+ *  initialiser, an assignment's right side or a parameter's default, an optional chain read through. */
+function patternSource(pattern: Rule.Node): ESNode | undefined {
   const { parent } = pattern;
-  if (parent?.type === 'VariableDeclarator' && parent.id === pattern) return parent.init ?? undefined;
-  if (parent?.type === 'AssignmentExpression' && parent.left === pattern) return parent.right;
+  if (parent?.type === 'VariableDeclarator' && parent.id === pattern)
+    return unchain(parent.init ?? undefined);
+  if (parent?.type === 'AssignmentExpression' && parent.left === pattern) return unchain(parent.right);
+  if (parent?.type === 'AssignmentPattern' && parent.left === pattern && parent.parent.type !== 'Property')
+    return unchain(parent.right);
   return undefined;
+}
+
+/** What an object pattern reads, through the patterns it is nested in: `const { window: { open } } = self`
+ *  reads `self`, then its `window`. A nested pattern's default (`{ window: { open } = {} }`) is skipped,
+ *  so the path is the value destructured when it is defined. */
+export function patternOrigin(pattern: Rule.Node): { source: ESNode; keys: string[] } | undefined {
+  const keys: string[] = [];
+  let current = pattern;
+  for (;;) {
+    const source = patternSource(current);
+    if (source) return { source, keys: keys.reverse() };
+    let { parent } = current;
+    if (parent?.type === 'AssignmentPattern' && parent.left === current) {
+      current = parent;
+      parent = parent.parent;
+    }
+    if (parent?.type !== 'Property' || parent.value !== current || parent.parent.type !== 'ObjectPattern')
+      return undefined;
+    const key = keyName(parent);
+    if (key === undefined) return undefined;
+    keys.push(key);
+    current = parent.parent;
+  }
+}
+
+/** A nested pattern's own default, `{ a: { open } = window }`, which `patternOrigin` skips. */
+export function patternDefault(pattern: Rule.Node): ESNode | undefined {
+  const { parent } = pattern;
+  return parent?.type === 'AssignmentPattern' && parent.left === pattern && parent.parent.type === 'Property'
+    ? unchain(parent.right)
+    : undefined;
+}
+
+// Signatures with no body: their parameter patterns read nothing at run time.
+const SIGNATURES = new Set([
+  'TSCallSignatureDeclaration',
+  'TSConstructSignatureDeclaration',
+  'TSConstructorType',
+  'TSDeclareFunction',
+  'TSEmptyBodyFunctionExpression',
+  'TSFunctionType',
+  'TSMethodSignature',
+]);
+const PATTERN_PARTS = new Set([
+  'ArrayPattern',
+  'AssignmentPattern',
+  'ObjectPattern',
+  'Property',
+  'RestElement',
+]);
+
+/** `hasType` on a destructuring pattern, false in a signature with no body (`type F = ({ open }: Window) => void`). */
+export function patternHasType(
+  sourceCode: SourceCode,
+  pattern: Rule.Node,
+  names: ReadonlySet<string>,
+): boolean {
+  let current: Rule.Node = pattern;
+  while (current.parent && PATTERN_PARTS.has(current.parent.type)) current = current.parent;
+  return !SIGNATURES.has(current.parent?.type ?? '') && hasType(sourceCode, pattern, names);
+}
+
+/** The outermost of `node` and the TypeScript wrappers around it (`(el.innerHTML as string) = s`). */
+export function climb(node: Rule.Node): Rule.Node {
+  let current = node;
+  while (current.parent && WRAPPERS.has(current.parent.type) && current.parent.type !== 'ChainExpression')
+    current = current.parent;
+  return current;
 }
 
 interface JsxName {
@@ -90,6 +169,7 @@ interface TsType {
   isUnionOrIntersection(): boolean;
   readonly types?: readonly TsType[];
   getBaseTypes(): readonly TsType[] | undefined;
+  getConstraint(): TsType | undefined;
 }
 
 interface TypeServices {
@@ -111,6 +191,8 @@ export function hasType(sourceCode: SourceCode, node: ESNode, names: ReadonlySet
     seen.add(type);
     const name = type.getSymbol()?.getName();
     if (name !== undefined && names.has(name)) return true;
+    const constraint = type.getConstraint();
+    if (constraint && visit(constraint)) return true;
     return ((type.isUnionOrIntersection() ? type.types : type.getBaseTypes()) ?? []).some(visit);
   };
   return visit(services.getTypeAtLocation(node));
