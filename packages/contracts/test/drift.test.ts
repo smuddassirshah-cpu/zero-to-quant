@@ -1,8 +1,8 @@
 // docs/ARCHITECTURE.md 5.1 to 5.13 against src: every exported declaration of the listings headed
 // `// @zq/contracts/src/<module>.ts` must equal src's once both are printed without comments and with each
 // run of whitespace as one space, each interface member compared on its own (its overloads together), and
-// must live in the module the listing names. So must the listings src transcribes from elsewhere: 5.11's
-// TexService (render.ts), ASSESSMENT.md 13.2 and 13.5 (events.ts), and AI-TUTOR.md 4.1 and 6.1 (platform.ts).
+// must live in the module the listing names. So must the listings src transcribes from elsewhere:
+// ASSESSMENT.md 13.2 and 13.5 (events.ts), and AI-TUTOR.md 4.1 and 6.1 (platform.ts).
 // The type tests check meaning; this test stops the transcription drifting. A departure is allowed only where
 // it is recorded below with its reason; when the doc adopts one, its row goes in the same pull request. The
 // fixture cases pin the comparison itself.
@@ -11,9 +11,6 @@ import ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 
 const recorded: Record<string, string> = {
-  'Scope.listen': 'changed', // AddEventListenerOptions is not a Node global (base.ts)
-  'Scope.effect': 'changed', // signals-core's own parameter type; the doc's union fails lint (base.ts)
-  ClusterId: 'changed', // 26 clusters, WIDGETS.md decision 19 (widget.ts)
   WidgetState: 'changed', // a Readonly alias, so a state is Json (widget.ts); its members are the alias's
   'WidgetState.a': 'missing',
   'WidgetState.v': 'missing',
@@ -21,10 +18,6 @@ const recorded: Record<string, string> = {
   CompilerRegistry: 'missing',
   Grade: 'added', // CONTENT-FORMAT.md 7.1 with 5.2's amendment (answer.ts)
   ShowStep: 'added', // CONTENT-FORMAT.md 3.2's shape (answer.ts)
-  CasService: 'in answer.ts', // GradeCtx needs it without the DOM lib; widget-api.ts re-exports it
-  WidgetViewProps: 'in widget-api.ts', // the view half: preact's types bring the DOM lib (widget.ts)
-  WidgetView: 'in widget-api.ts',
-  WidgetModule: 'in widget-api.ts',
   'KeyValue.get': 'changed', // returns Json: the doc's generic fails lint (platform.ts)
   CourseBundle: 'added', // @zq/content-schema's outputs, opaque here (platform.ts)
   ItemBody: 'added',
@@ -152,9 +145,7 @@ test('src transcribes 5.1 to 5.13 and the papers it cites, apart from the record
   };
   const { modules, skipped, found } = drift(
     [
-      ...listings(section(architecture, '### 5.1 ', '### 5.14 '), (line) =>
-        line === '// src/engine/render' ? 'render' : headed(line),
-      ),
+      ...listings(section(architecture, '### 5.1 ', '### 5.14 '), headed),
       ...listings(section(assessment, '### 13.2 ', '### 13.6 '), () => 'events', true),
       ...listings(section(tutor, '### 6.1 ', '### 6.2 '), () => 'platform', true),
       ...listings(section(tutor, '### 4.1 ', '### 4.2 '), () => 'platform', true),
