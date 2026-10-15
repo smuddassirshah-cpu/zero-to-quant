@@ -139,11 +139,20 @@
     return new Promise(res => { let i = 0; const tick = () => { const on = i % 2 === 0; els.forEach(n => n.classList.toggle(cls, on)); i++; if (i < times * 2) setTimeout(tick, ms); else res(); }; tick(); });
   };
 
-  /* Deep merge for state patches (arrays replace, objects merge). */
+  /* Deep merge for state patches (arrays replace, objects merge). A keyed patch for a list of items with ids,
+     { "points": { "p1": { "x": 3 } } }, merges into the item with that id (an unknown id is appended), so explain.canvas,
+     option canvas patches and demonstrate steps can move one item without wiping the list, on every kind. */
+  const isPlain = (v) => v && typeof v === 'object' && !Array.isArray(v);
+  const keyedList = (list, map) => list.map(it => (it && it.id != null && isPlain(map[it.id]) ? merge(it, map[it.id]) : it))
+    .concat(Object.entries(map).filter(([id, v]) => isPlain(v) && !list.some(it => it && it.id === id)).map(([id, v]) => ({ id, ...v })));
   const merge = (base, patch) => {
     if (patch == null) return base;
     const out = { ...base };
-    for (const [k, v] of Object.entries(patch)) out[k] = (v && typeof v === 'object' && !Array.isArray(v) && base[k] && typeof base[k] === 'object' && !Array.isArray(base[k])) ? merge(base[k], v) : v;
+    for (const [k, v] of Object.entries(patch)) {
+      const b = base ? base[k] : undefined;
+      if (isPlain(v) && Array.isArray(b) && Object.values(v).every(isPlain) && b.every(it => isPlain(it) && it.id != null)) out[k] = keyedList(b, v);
+      else out[k] = (isPlain(v) && isPlain(b)) ? merge(b, v) : v;
+    }
     return out;
   };
 

@@ -43,7 +43,11 @@
 
     const pts = new Map(), ints = new Map(), jumps = new Map();
     let dragIds = null; // null: decided per point
-    const isDraggable = (p) => (dragIds ? dragIds.includes(p.id) : (I.state().points || []).some(q => q.drag != null) ? !!p.drag : true);
+    /* A point is a drag handle only when a widget asked for it (enable('drag', { ids })) or the author set drag: true
+       (an explore point, movable without a widget). Never in tap mode or a static copy: then it is a plain dot. */
+    const isDraggable = (p) => !I.isStatic && I.mode() !== 'tap' && (dragIds ? dragIds.includes(p.id) : p.drag === true);
+    const canDrag = () => !I.locked() && (I.mode() === 'drag' || I.mode() == null);
+    const ROW = 16; // interval rows stack this far apart
 
     const mkPoint = (p) => {
       const e = { g: svg('g', { class: 'cv-obj cv-pt', 'data-id': p.id, 'data-tap': '', 'data-label': `Point ${p.label ? C.texOf(p.label).src : p.id}` }), x: p.x };
@@ -54,12 +58,12 @@
       e.g.append(e.hit, e.disc, e.dot, e.knob, e.ring, e.lab);
       ptG.append(e.g);
       C.dragger(e.g, fr.svg, {
-        start: () => !(I.locked() || I.mode() !== 'drag' || !e.drag),
+        start: () => canDrag() && !!e.drag,
         move: (q) => moveTo(p.id, q.x, 'move'),
         end: (q) => moveTo(p.id, q.x, 'end'),
       });
       e.g.addEventListener('keydown', (ev) => {
-        if (I.mode() !== 'drag' || I.locked() || !e.drag) return;
+        if (!canDrag() || !e.drag) return;
         const k = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[ev.key]; if (!k) return;
         ev.preventDefault(); const v = clamp(e.x + k * (snap || step) * (ev.shiftKey ? 10 : 1));
         setX(p.id, v); I.emit('change', { id: p.id, x: v, y: 0, phase: 'end' });
@@ -77,6 +81,7 @@
     /* Label layout, from the target positions: side per label, then tiers so no two labels overlap. Offsets are from
        the point (or from the interval's bar) in px; above-band labels share one row and stack upwards by 18px. */
     const near = (a, b) => Math.abs(a - b) < 1e-9;
+    const rowOf = (iv, k) => (Number.isInteger(iv.row) && iv.row >= 0 ? iv.row : k); // row 0 sits on the axis
     const estW = (t) => { const x = C.texOf(t); return x.tex ? Math.min(80, C.textW(x.src.replace(/\\[a-zA-Z]+|[{}^_]/g, ''), 13) + 14) : C.textW(String(x.src), 13, 600) + 10; };
     const layout = (P2, I2, A2) => {
       const pt = {}, iv = {}, boxes = [];
@@ -106,7 +111,8 @@
         const fa = it.from == null || it.from === '-inf' ? x0 - 12 : sx(it.from), fb = it.to == null || it.to === 'inf' ? x1 + 12 : sx(it.to), w = estW(it.label);
         if (side === 'left' || side === 'right') { iv[it.id] = { side, dy: 0 }; return; }
         const mid = (fa + fb) / 2;
-        items.push({ kind: 'iv', id: it.id, side, band: side === 'below' ? 'below' : 'above', x0: mid - w / 2, x1: mid + w / 2, y: side === 'below' ? 0 : -14 - 12 * k, base: side === 'below' ? 0 : -14 - 12 * k });
+        const row = rowOf(it, k);
+        items.push({ kind: 'iv', id: it.id, side, band: side === 'below' ? 'below' : 'above', x0: mid - w / 2, x1: mid + w / 2, y: side === 'below' ? 0 : -14 - ROW * row, base: side === 'below' ? 0 : -14 - ROW * row });
       });
       let up = 0, down = 0;
       items.sort((a, b) => a.x0 - b.x0).forEach(b => {
@@ -124,7 +130,7 @@
       const P2 = st.points || [], I2 = st.intervals || [], A2 = st.arrows || [];
       lay = layout(P2, I2, A2);
       const anyLabel = P2.some(p => p.label && !(lay.pt[p.id] && lay.pt[p.id].below));
-      const top = 10 + (A2.length ? 66 : 0) + (anyLabel ? 22 + lay.up : 0) + 12 * Math.max(0, I2.length - 1);
+      const top = 10 + (A2.length ? 66 : 0) + (anyLabel ? 22 + lay.up : 0) + ROW * Math.max(0, ...I2.map((iv, k) => rowOf(iv, k)));
       const nextAxis = top + 12; H = nextAxis + (fracLabels ? 48 : 36) + lay.down;
       if (nextAxis !== axisY || H !== fr.h) { axisY = nextAxis; fr.resize(W, H); drawAxis(); }
       if (!axisG.childNodes.length) drawAxis();
@@ -138,7 +144,7 @@
           e = { g: svg('g', { class: 'cv-obj cv-int cv-k' + Math.min(6, (iv.colour || k + 1)), 'data-id': iv.id }), bar: svg('line', { class: 'cv-body' }), a: svg('circle', { class: 'cv-end', r: 5 }), b: svg('circle', { class: 'cv-end', r: 5 }), lab: svg('g'), from: iv.from, to: iv.to };
           e.g.append(e.bar, e.a, e.b, e.lab); intG.append(e.g); ints.set(iv.id, e); e.fresh = true;
         }
-        e.row = k; e.spec = iv;
+        e.row = rowOf(iv, k); e.spec = iv;
       });
       for (const [id, e] of ints) if (!seenI.has(id)) { e.g.remove(); ints.delete(id); }
 
@@ -160,7 +166,7 @@
         let e = pts.get(p.id); if (!e) { e = mkPoint(p); e.fresh = true; }
         pts.set(p.id, e);
         e.from = e.fresh ? p.x : e.x; e.to = p.x; e.spec = p;
-        e.drag = I.mode() !== 'tap' && isDraggable(p);
+        e.drag = isDraggable(p);
         e.g.classList.toggle('cv-handle', e.drag);
         e.g.classList.toggle('cv-k' + Math.min(6, p.colour || 1), !!p.colour);
         const L = lay.pt[p.id];
@@ -173,7 +179,7 @@
       const frame = (t) => {
         for (const e of pts.values()) { e.x = lerp(e.from, e.to, t); paintPoint(e); }
         for (const e of ints.values()) {
-          const iv = e.spec, y = axisY - 12 * e.row;
+          const iv = e.spec, y = axisY - ROW * e.row;
           const f0 = e.fresh ? iv.from : e.from, t0 = e.fresh ? iv.to : e.to;
           const fa = iv.from == null || iv.from === '-inf' ? x0 - 12 : sx(lerp(f0 ?? min, iv.from, t)), fb = iv.to == null || iv.to === 'inf' ? x1 + 12 : sx(lerp(t0 ?? max, iv.to, t));
           attrs(e.bar, { x1: fa, x2: fb, y1: y, y2: y });
@@ -182,8 +188,10 @@
           attrs(e.b, { cx: fb, cy: y, class: 'cv-end' + (open[1] ? ' open' : '') }); e.b.style.display = iv.to == null || iv.to === 'inf' ? 'none' : '';
           if (t === 1) { e.from = iv.from; e.to = iv.to; e.fresh = false; }
           const L = lay.iv[iv.id] || { side: 'above', dy: 0 };
-          e.lab.replaceChildren(!iv.label ? '' : L.side === 'left' ? C.label(fa - 10, y, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'end' })
-            : L.side === 'right' ? C.label(fb + 10, y, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'start' })
+          /* beside a ray's open end there is no room: the label sits above the bar at the drawing's edge instead */
+          const rayL = iv.from == null || iv.from === '-inf', rayR = iv.to == null || iv.to === 'inf';
+          e.lab.replaceChildren(!iv.label ? '' : L.side === 'left' ? (rayL ? C.label(4, y - 14, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'start' }) : C.label(fa - 10, y, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'end' }))
+            : L.side === 'right' ? (rayR ? C.label(W - 4, y - 14, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'end' }) : C.label(fb + 10, y, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'start' }))
             : L.side === 'below' ? C.label((fa + fb) / 2, axisY + belowY() + L.dy, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28 })
             : C.label((fa + fb) / 2, y - 14 + L.dy, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28 }));
         }
