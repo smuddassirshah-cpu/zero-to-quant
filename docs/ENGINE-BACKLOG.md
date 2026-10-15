@@ -70,3 +70,10 @@ Items 1 to 23 are done; the authoring side is in AUTHORING.md sections 3, 4, 5 a
 22. Done: area `setParam` for `shade` and `split`; `format: "percent"` on slider and control readouts.
 23. Done: the slider label has its own row above the value bubble.
 
+
+Raised later (equations level 2):
+
+28. `balance`: a "subtract from both" chip, signed weights and fractional unknown blocks so `x - 3 = 8` and `7 - 3x = 22` can live on the scale.
+29. Validator: report a non-list `hints[].highlight` as an error instead of crashing (one crash stops the manifest being written for everyone).
+30. `plane` axis labels: mixed text and maths loses spaces ("Price $p$ (£)").
+31. `number-line` inside the explanation clone: points still look like draggable handles; render static.
