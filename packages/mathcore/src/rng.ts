@@ -11,8 +11,8 @@
 // - No BigInt: the 32 x 32 multiply is exact in doubles. Math.imul gives the low word. For the high word
 //   each factor splits into 16-bit halves, so each of the four partial products is below 2^32 and exact;
 //   the high word is the top product plus the top halves of the two cross products plus the carry out of
-//   the low 32 bits, (ll >>> 16) + the low halves of the cross products, which is below 3 * 2^16. Every sum
-//   stays below 2^33, so no step rounds [inferred from IEEE-754 binary64's 53-bit significand].
+//   the low 32 bits, ((aLo * mLo) >>> 16) + the low halves of the cross products, which is below 3 * 2^16.
+//   Every sum stays below 2^33, so no step rounds [inferred from IEEE-754 binary64's 53-bit significand].
 // - Draw j uses block floor(j / 2), so a draw costs one block whatever j is. An Rng keeps its last block,
 //   which halves the work of a run of next() calls without changing any value.
 // - at(j) is 27 bits of u above 26 bits of v over 2^53, the construction of MT19937's genrand_res53
