@@ -45,10 +45,10 @@
     if (s && typeof s === 'object') {
       const so = s.streak && typeof s.streak === 'object' ? s.streak : {};
       const current = typeof s.streak === 'number' ? s.streak : (so.current ?? s.currentStreak ?? 0);
-      let done = s.todayDone ?? s.qualifiedToday ?? (s.today && (s.today.qualified ?? s.today.done)) ?? so.todayDone;
+      let done = s.todayQualified ?? s.todayDone ?? s.qualifiedToday ?? (s.today && (s.today.qualified ?? s.today.done)) ?? so.todayDone;
       if (done == null && so.days) done = !!so.days[today];
       if (done == null && so.lastDay) done = so.lastDay === today;
-      const off = (s.settings && s.settings.streakMode === 'off') || so.mode === 'off';
+      const off = !!s.streakOff || (s.settings && s.settings.streakMode === 'off') || so.mode === 'off';
       return { streak: +current || 0, todayDone: !!done, off: !!off, real: true };
     }
     const local = Z.store.get('player.streak', { n: 0, day: null });
@@ -87,7 +87,7 @@
     if (!C || typeof C.next !== 'function') return null;
     try {
       const n = await C.next(course, lessonId);
-      if (!n) return null;
+      if (!n || n.written === false) return null;
       if (typeof n === 'string') return { kind: /^review/.test(n) ? 'review' : /^homework/.test(n) ? 'homework' : 'lesson', id: n, course };
       return { kind: n.kind || n.type || 'lesson', id: n.id || n.lesson, course: n.course || course, name: n.name || n.title, level: n.level };
     } catch (e) { console.error(e); return null; }
@@ -571,7 +571,7 @@
         later(scrollGraded, 140);
         return r;
       }
-      const base = { course, lesson: lessonId, screen: S.i, id: spec.id || 's' + S.i, type: spec.type, ok: !!r.ok, attempt: S.attempts + 1, key: r.key ?? null, revealed: false, skills: skillsOf(spec), difficulty: spec.difficulty || 1, mode: 'lesson' };
+      const base = { course, lesson: lessonId, screen: S.i, id: spec.id || 's' + S.i, type: spec.type, ok: !!r.ok, firstTry: !!r.ok && S.attempts === 0, attempt: S.attempts + 1, key: r.key ?? null, revealed: false, skills: skillsOf(spec), difficulty: spec.difficulty || 1, mode: 'lesson' };
       if (r.ok) {
         S.okChecks++;
         const local = S.attempts === 0 ? XP.first : XP.retry;
@@ -606,7 +606,7 @@
       if (!rm()) { app.classList.add('lsn-revealing'); later(() => app.classList.remove('lsn-revealing'), 700); }
       step.clear(); step.reveal(); step.lock();
       S.results['s' + S.i] = { first: false, xp: 0, revealed: true };
-      st('screenGraded', { course, lesson: lessonId, screen: S.i, id: step.spec.id || 's' + S.i, type: step.spec.type, ok: false, attempt: S.attempts + 1, key: null, revealed: true, skills: skillsOf(step.spec), difficulty: step.spec.difficulty || 1, mode: 'lesson' });
+      st('screenGraded', { course, lesson: lessonId, screen: S.i, id: step.spec.id || 's' + S.i, type: step.spec.type, ok: false, firstTry: false, attempt: S.attempts + 1, key: null, revealed: true, skills: skillsOf(step.spec), difficulty: step.spec.difficulty || 1, mode: 'lesson' });
       setFrame(null);
       chip('rev', 'Solution', step.spec.feedback && step.spec.feedback.correct, 0, 'No XP for this screen. It returns in your Redo queue.');
       S.st = 'rev'; refresh();
@@ -703,11 +703,12 @@
       let finishXP = XP.finish + (perfect ? XP.perfect : 0);
       if (!S.finished) {
         S.finished = true;
-        const qr = st('quizFinished', { course, lesson: lessonId, score: quizOk, items: quizSpec.length, results: quizSpec.map((it, j) => ({ index: j, id: it.id || 'q' + j, ok: S.quiz[j] === 'ok', key: (S.results['q' + j] || {}).key ?? null, skills: it.skills || LSN.skills || [], difficulty: it.difficulty || 2 })) });
-        const lr = st('lessonFinished', { course, lesson: lessonId, secondsSpent: spent, firstTry: [first, GRADED], perfect, xp: S.xp, quiz: [quizOk, quizSpec.length] });
+        const qr = st('quizFinished', { course, lesson: lessonId, score: quizOk, items: quizSpec.length, skills: LSN.skills || [], seconds: 0, results: quizSpec.map((it, j) => ({ index: j, id: it.id || 'q' + j, ok: S.quiz[j] === 'ok', key: (S.results['q' + j] || {}).key ?? null, skills: it.skills || LSN.skills || [], difficulty: it.difficulty || 2, ref: { course, lesson: lessonId, item: it.id || 'q' + j } })) });
+        const unlogged = Math.max(0, Math.round((Date.now() - S.loggedAt) / 1000));
+        S.loggedAt = Date.now();
+        const lr = st('lessonFinished', { course, lesson: lessonId, seconds: stFn('lessonFinished') ? unlogged : spent, secondsSpent: spent, firstTry: [first, GRADED], perfect, xp: S.xp, quiz: [quizOk, quizSpec.length] });
         finishXP = xpOf(lr, finishXP);
-        void qr;
-        logHours();
+        void qr; void spent;
         if (!stFn('summary')) qualifyLocal();
         position.set(course, lessonId, null);
       }

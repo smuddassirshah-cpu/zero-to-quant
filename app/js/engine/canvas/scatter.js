@@ -76,7 +76,7 @@
           o.append(K.washCircle(cx, cy, 11));
           const dragOk = R.active('drag') && (!params.drag || params.drag === true || [].concat(params.drag).includes(p.id));
           if (dragOk) o.append(K.handle(cx, cy, p.id, { r: 6, label: `Point ${p.label || p.id}` }));
-          else { if (R.mode === 'tap') o.append(svg('circle', { cx, cy, r: 9, class: 'cvb-tapbox', fill: 'transparent', stroke: 'none' })); o.append(svg('circle', { cx, cy, r: 4.5, class: 'cvb-dot' })); }
+          else { if (R.mode === 'tap') o.append(svg('circle', { cx, cy, r: 9, class: 'cvb-tapbox', fill: 'transparent', stroke: 'none' })); o.append(svg('circle', { cx, cy, r: 4.5, class: 'cvb-dot cv-body' })); }
           R.tappable(o, p.id, p.label || p.id);
           over.append(o);
           if (p.label) labels.push({ x: cx + 8, y: cy - 11, text: p.label, anchor: 'start' });

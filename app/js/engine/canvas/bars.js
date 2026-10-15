@@ -121,7 +121,7 @@
           const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : ''), params.colour || 1);
           o.append(K.washRect(x(i) - 3, sy(top) - 2, bw + 6, sy(0) - sy(top) + 4, 4));
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-selw' }));
-          o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar' }));
+          o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
           if (params.showValues && (v || sim)) bars.append(K.txt(x(i) + bw / 2, y - 9, proportion && sim ? K.fmt(v, 3) : K.fmt(v, 3), { size: 12, cls: 'cvb-muted' }));
           R.tappable(o, c.id, c.label);

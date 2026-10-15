@@ -71,8 +71,7 @@
     const g = fr.g;
     g.append(svg('rect', { class: 'cv-universe', x: rect.x, y: rect.y, width: rect.w, height: rect.h, rx: 12 }));
     const circG = svg('g', { class: 'cv-circles' }); circ.forEach((c, i) => circG.append(svg('circle', { class: 'cv-set cv-set-' + i, cx: c.x, cy: c.y, r: c.r })));
-    g.append(circG);
-    const regG = svg('g', { class: 'cv-regions' }); g.append(regG);
+    const regG = svg('g', { class: 'cv-regions' }); g.append(regG, circG); // outlines above the region fills
     const labelOf = (i) => { const L = P.labels; return (Array.isArray(L) ? L[i] : L && L[sets[i]]) || sets[i]; };
     const regionName = (mask) => (mask ? (sets.filter((_, i) => mask >> i & 1).map((_, k, a) => a[k]).map(s => labelOf(sets.indexOf(s))).join(' and ') + (mask.toString(2).replace(/0/g, '').length < n ? ' only' : '')) : 'Outside every set');
     const regions = new Map();

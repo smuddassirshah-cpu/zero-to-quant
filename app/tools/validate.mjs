@@ -59,7 +59,7 @@ const checkText = (file, where, s, { copy = true } = {}) => {
     if (/it can be shown/i.test(outside)) err(file, where, 'no "it can be shown": derive it');
     for (const [re, uk] of AMERICAN) { const m = outside.match(re); if (m) err(file, where, `American spelling "${m[0]}": use "${uk}"`); }
   }
-  if (s.includes('—')) err(file, where, 'no em-dashes');
+  if (s.includes('\u2014')) err(file, where, 'no em-dashes');
   const noCode = s.replace(/```[\s\S]*?```/g, '').replace(/`[^`]*`/g, '').replace(/\\\$/g, '');
   const dollars = (noCode.replace(/\$\$/g, '').match(/\$/g) || []).length;
   if ((noCode.match(/\$\$/g) || []).length % 2) err(file, where, 'unbalanced $$...$$');

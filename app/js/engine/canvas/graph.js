@@ -65,7 +65,7 @@
           const [x, y] = pos(n), o = K.obj(n.id, 'cvb-node-o' + (sel.has(n.id) ? ' is-on' : ''), n.colour || null);
           o.append(K.washCircle(x, y, r + 8));
           if (view.current === n.id) o.append(svg('circle', { cx: x, cy: y, r: r + 5, class: 'cvb-ln', style: 'stroke: var(--manip); stroke-width: 3' }));
-          o.append(svg('circle', { cx: x, cy: y, r, class: 'cvb-node cvb-tapbox' + (view.current === n.id ? ' cur' : '') }));
+          o.append(svg('circle', { cx: x, cy: y, r, class: 'cvb-node cvb-tapbox cv-body' + (view.current === n.id ? ' cur' : '') }));
           const vi = visited.indexOf(n.id);
           if (vi >= 0) o.append(svg('circle', { cx: x, cy: y, r: r - 1, class: 'cvb-node-fill', style: 'fill-opacity: 0.14' }));
           if (dist && dist[n.id] != null) {
@@ -73,7 +73,7 @@
             let cp = R.defs.querySelector('#' + CSS.escape(cid)); if (!cp) { cp = svg('clipPath', { id: cid }, [svg('circle')]); R.defs.append(cp); }
             C.attrs(cp.firstChild, { cx: x, cy: y, r: r - 1.5 });
             o.append(svg('rect', { x: x - r, y: y + r - 2 * r * p, width: 2 * r, height: 2 * r * p, class: 'cvb-node-fill', 'clip-path': `url(#${cid})` }));
-            o.append(K.txt(x, y + r + 12, K.fmt(p, 3), { size: 12, weight: 600, halo: true }));
+            o.append(K.txt(x, y + r + 12, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-out' }));
           }
           o.append(K.lab(x, y, n.label ?? n.id, { w: r * 2 + 20, size: 14 }));
           if (vi >= 0 && view.order !== false) {

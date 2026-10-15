@@ -79,7 +79,7 @@
             o.append(K.washRect(mx + c * cw + 3, my + r * cellH + 3, cw - 6, cellH - 6, 5));
             const isEmph = emph.includes(id) || (shown.has(id) && !(prod && id === `${prod.c}-${prod.i}-${prod.j}` && p < 0.6));
             if (isEmph) o.append(svg('rect', { x: mx + c * cw + 3, y: my + r * cellH + 3, width: cw - 6, height: cellH - 6, rx: 5, class: 'cvb-cell-w' }));
-            o.append(svg('rect', { x: mx + c * cw + 1, y: my + r * cellH + 1, width: cw - 2, height: cellH - 2, rx: 5, class: 'cvb-cellbox cvb-tapbox' }));
+            o.append(svg('rect', { x: mx + c * cw + 1, y: my + r * cellH + 1, width: cw - 2, height: cellH - 2, rx: 5, class: 'cvb-cellbox cvb-tapbox cv-body' }));
             const hidden = (hiddenSet.has(m.id) || hiddenSet.has(id)) && !shown.has(id);
             const val = view.values && view.values[id] != null ? view.values[id] : rows[r][c];
             if (hidden) o.append(svg('rect', { x: cx - cw / 2 + 7, y: cy - cellH / 2 + 6, width: cw - 14, height: cellH - 12, rx: 4, class: 'cvb-empty' }));

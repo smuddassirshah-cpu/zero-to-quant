@@ -85,10 +85,9 @@
           const dim = act && (idx < act[0] || idx > act[1]);
           const o = K.obj(id, 'cvb-cell-o' + (sel.has(id) ? ' is-on' : '') + (dim ? ' is-dim' : ''), done.has(idx) ? 3 : 'ink');
           o.append(K.washRect(x - 4, y - 4, cw + 8, ch + 8, 8));
-          if (R.mode === 'tap') o.append(svg('rect', { x, y, width: cw, height: ch, rx: 6, class: 'cvb-selw' }));
           if (linked) {
-            o.append(svg('rect', { x, y, width: cw + 18, height: ch, rx: 6, class: 'cvb-cell cvb-tapbox' }), svg('line', { x1: x + cw, x2: x + cw, y1: y, y2: y + ch, class: 'cvb-ln thin' }), svg('circle', { cx: x + cw + 9, cy: y + ch / 2, r: 3, class: 'cvb-dot' }));
-          } else o.append(svg('rect', { x, y, width: cw, height: ch, rx: 6, class: 'cvb-cell cvb-tapbox' + (cells[k] == null ? ' ghost' : '') }));
+            o.append(svg('rect', { x, y, width: cw + 18, height: ch, rx: 6, class: 'cvb-cell cvb-tapbox cv-body' }), svg('line', { x1: x + cw, x2: x + cw, y1: y, y2: y + ch, class: 'cvb-ln thin' }), svg('circle', { cx: x + cw + 9, cy: y + ch / 2, r: 3, class: 'cvb-dot' }));
+          } else o.append(svg('rect', { x, y, width: cw, height: ch, rx: 6, class: 'cvb-cell cvb-tapbox cv-body' + (cells[k] == null ? ' ghost' : '') }));
           const t = text(cells[k]);
           o.append(t.includes('$') ? K.lab(x + cw / 2, y + ch / 2, t, { w: cw }) : K.txt(x + cw / 2, y + ch / 2, t, { size: t.length > 4 ? 13 : 16, weight: done.has(idx) ? 700 : 500 }));
           if (params.showIndex !== false && !linked) o.append(stack ? K.txt(x - 10, y + ch / 2, String(idx), { anchor: 'end', size: 12, cls: 'cvb-tick' }) : K.txt(x + cw / 2, y + ch + 14, String(idx), { size: 12, cls: 'cvb-tick' }));

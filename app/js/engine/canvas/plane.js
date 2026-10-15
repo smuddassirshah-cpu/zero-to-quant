@@ -79,6 +79,7 @@
     }
     const fo = svg('foreignObject', { x: anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x, y: y - h / 2, width: w, height: h, class: 'cv-fo cvb-fo' + (o.cls ? ' ' + o.cls : '') + (o.halo ? ' cvb-fo-halo' : '') });
     const d = document.createElement('div'); d.className = 'cv-fo-in'; d.style.textAlign = anchor === 'middle' ? 'center' : anchor === 'end' ? 'right' : 'left';
+    d.style.justifyContent = anchor === 'middle' ? 'center' : anchor === 'end' ? 'flex-end' : 'flex-start';
     d.innerHTML = Z.md(s); fo.append(d); return fo;
   };
 
