@@ -1,8 +1,9 @@
-// Parity with the Python twin, tools/zqverify/expr.py, which parses with CPython's own parser and gives each
-// operation its correctly rounded value (mpmath at 50 digits for the table functions and ^). Its goldens
-// (expr.golden.jsonl) hold hand-picked cases, every table function, sqrt, atan2 and ^ over edge arguments
-// (the zeros, +-1, +-inf, NaN), 300 random expressions built from the exact operations only and 1,000 random
-// token strings, nearly all refused; rewrite them with
+// Parity with the Python twin, tools/zqverify/expr.py, written blind from ARCHITECTURE.md 5.15 with its own
+// scanner and parser, which gives each operation its correctly rounded value (mpmath at 50 digits rounded once
+// to the nearest double, with C99 Annex F's special values). Its goldens (expr.golden.jsonl) hold fixed cases
+// from the specification, every function and ^ over edge arguments (the zeros, +-1, +-inf, NaN), random exact
+// trees, random inexact expressions and one-character mutants. Finite erf arguments stay within |x| <= 2 and
+// finite Phi arguments within |x| <= 2.8, where the test table is accurate; rewrite them with
 // `PYTHONPATH=tools uv run --project tools/py --locked python -m zqverify.expr`.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
