@@ -134,32 +134,40 @@
   /* balance: the shortest list of the allowed moves that takes the authored pans to `target` (breadth first over
      unknown counts and weight totals, as the balance canvas does them). Moves are in the widget's set() shape. */
   const balanceMoves = (spec = {}) => {
-    const side = (list) => ({ u: (list || []).filter(i => i.kind === 'unknown').length, w: (list || []).filter(i => i.kind !== 'unknown').reduce((a, i) => a + (+i.value || 0), 0) });
+    const side = (list) => ({ u: +(list || []).filter(i => i.kind === 'unknown').reduce((a, i) => a + (i.coef ?? 1), 0).toFixed(9), w: +(list || []).filter(i => i.kind !== 'unknown').reduce((a, i) => a + (+i.value || 0), 0).toFixed(9) });
     const want = (list) => ({ u: (list || []).filter(t => t === 'unknown').length, w: (list || []).filter(t => typeof t === 'number').reduce((a, v) => a + v, 0) });
     const tgt = spec.target || { left: ['unknown'], right: [] };
     const A = want(tgt.left), B = want(tgt.right);
-    const eq = (p, q) => p.u === q.u && Math.abs(p.w - q.w) < 1e-9;
+    const eq = (p, q) => Math.abs(p.u - q.u) < 1e-9 && Math.abs(p.w - q.w) < 1e-9;
     const done = (L, R) => (eq(L, A) && eq(R, B)) || (eq(L, B) && eq(R, A));
     const allowed = new Set(spec.moves || ['remove-both', 'halve-both']);
     const r6 = (v) => +v.toFixed(9);
-    const next = (L, R) => {
-      const out = [];
-      if (allowed.has('remove-both')) new Set([Math.min(L.w, R.w), L.w, R.w]).forEach(n => { if (n > 1e-9 && L.w >= n - 1e-9 && R.w >= n - 1e-9) out.push([{ op: 'remove-both', n }, { u: L.u, w: r6(L.w - n) }, { u: R.u, w: r6(R.w - n) }]); });
-      if (allowed.has('remove-unknown-both') && L.u && R.u) out.push([{ op: 'remove-both', n: 'x' }, { u: L.u - 1, w: L.w }, { u: R.u - 1, w: R.w }]);
-      const div = (k, op) => { if (k > 1 && L.u % k === 0 && R.u % k === 0) out.push([op === 'halve-both' ? { op } : { op, n: k }, { u: L.u / k, w: r6(L.w / k) }, { u: R.u / k, w: r6(R.w / k) }]); };
+    /* Signed pans (negative weights, coefficients, or after a subtract or add) work on totals, as the canvas does */
+    const signed0 = spec.signed === true || [...(spec.left || []), ...(spec.right || [])].some(i => (i.kind === 'unknown' && i.coef != null && i.coef !== 1) || (i.kind !== 'unknown' && +i.value < 0));
+    const next = (L, R, sg) => {
+      const out = [], S = (l, r) => sg || l.w < -1e-9 || r.w < -1e-9 || !Number.isInteger(l.u) || !Number.isInteger(r.u);
+      if (allowed.has('remove-both')) new Set([Math.min(L.w, R.w), L.w, R.w]).forEach(n => { if (n > 1e-9 && (sg || (L.w >= n - 1e-9 && R.w >= n - 1e-9))) { const l = { u: L.u, w: r6(L.w - n) }, r = { u: R.u, w: r6(R.w - n) }; out.push([{ op: 'remove-both', n }, l, r, S(l, r)]); } });
+      if (allowed.has('remove-unknown-both') && (sg || (L.u >= 1 && R.u >= 1))) { const l = { u: r6(L.u - 1), w: L.w }, r = { u: r6(R.u - 1), w: R.w }; out.push([{ op: 'remove-both', n: 'x' }, l, r, S(l, r)]); }
+      ['subtract-both', 'add-both'].forEach(op => { if (!allowed.has(op)) return; new Set([L.w, R.w]).forEach(v => { if (Math.abs(v) < 1e-9) return; const n = op === 'subtract-both' ? v : -v, d = op === 'subtract-both' ? -n : n; out.push([{ op, n }, { u: L.u, w: r6(L.w + d) }, { u: R.u, w: r6(R.w + d) }, true]); }); });
+      const div = (k, op) => {
+        if (!Number.isFinite(k) || k === 0 || k === 1) return;
+        if (!sg && !(k > 1 && Number.isInteger(L.u / k) && Number.isInteger(R.u / k))) return;
+        const l = { u: r6(L.u / k), w: r6(L.w / k) }, r = { u: r6(R.u / k), w: r6(R.w / k) };
+        out.push([op === 'halve-both' ? { op } : { op, n: k }, l, r, S(l, r)]);
+      };
       if (allowed.has('halve-both')) div(2, 'halve-both');
-      if (allowed.has('divide-both')) new Set([L.u, R.u, 2, 3, 4, 5, 6, 7, 8, 9, 10]).forEach(k => div(k, 'divide-both'));
+      if (allowed.has('divide-both')) new Set([L.u, R.u, 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, -2, -3, -4, -5]).forEach(k => div(k, 'divide-both'));
       return out;
     };
-    const start = [side(spec.left), side(spec.right)];
-    const q = [[start[0], start[1], []]], seen = new Set();
+    const L0 = side(spec.left), R0 = side(spec.right);
+    const q = [[L0, R0, [], signed0]], seen = new Set();
     while (q.length) {
-      const [L, R, path] = q.shift();
+      const [L, R, path, sg] = q.shift();
       if (done(L, R)) return path;
-      const k = `${L.u},${L.w}|${R.u},${R.w}`;
+      const k = `${L.u},${L.w}|${R.u},${R.w}|${sg}`;
       if (seen.has(k) || path.length >= 6) continue;
       seen.add(k);
-      next(L, R).forEach(([m, L2, R2]) => q.push([L2, R2, path.concat([m])]));
+      next(L, R, sg).forEach(([m, L2, R2, sg2]) => q.push([L2, R2, path.concat([m]), sg2]));
     }
     return null;
   };
