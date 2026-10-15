@@ -22,7 +22,8 @@
 //   7.2's nudge.
 // - Accepted: one leading "-" or "+", then an optional space ("+33.1%", "− 5"), 7.2's six forms, and one
 //   listed unit, compared without case and typed before or after the number (a listed "%" is read as that
-//   unit, not as the percent form) [our choice]. A percent's value is the number before its sign ("25%" is
+//   unit, not as the percent form) [our choice]. A unit with more code units than the text never matches,
+//   even where lower-casing would make the two equal ("5İ" against a listed "5i̇") [our choice, 7.2 rule 5]. A percent's value is the number before its sign ("25%" is
 //   25); the grader divides by 100 where the answer is a proportion (7.2). A mixed number's fraction is
 //   proper and non-zero. Anything else fails.
 // - Inputs longer than INPUT_LIMIT characters fail, and exponents are bounded by rational.ts, so a typed
@@ -132,11 +133,10 @@ export function parseNumber(input: string, units: readonly string[] = []): NumPa
   let rest = text.slice(sign.length);
   let unit: string | null = null;
   for (const u of [...units].sort((a, b) => b.length - a.length)) {
+    if (u === '' || u.length > rest.length) continue;
     const key = u.toLowerCase();
-    if (u !== '' && rest.slice(0, u.length).toLowerCase() === key)
-      rest = rest.slice(u.length).replace(/^ /, '');
-    else if (u !== '' && rest.slice(-u.length).toLowerCase() === key)
-      rest = rest.slice(0, -u.length).replace(/ $/, '');
+    if (rest.slice(0, u.length).toLowerCase() === key) rest = rest.slice(u.length).replace(/^ /, '');
+    else if (rest.slice(-u.length).toLowerCase() === key) rest = rest.slice(0, -u.length).replace(/ $/, '');
     else continue;
     unit = u;
     break;
