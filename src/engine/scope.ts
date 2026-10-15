@@ -6,9 +6,12 @@
  *   live, so nothing runs once it is cancelled or its scope disposed: not a callback the platform had queued,
  *   nor an event a disposer dispatches while the scope is being released [our choice].
  * - dispose() first closes the whole subtree (every descendant reads as disposed, every entry dies), then
- *   aborts the signal and releases the entries in reverse order of registration, a child's subtree as one
- *   entry. A throwing disposer does not stop the rest; one error is rethrown as itself, several as an
- *   AggregateError. Registering on a disposed scope throws: it is a development error.
+ *   releases it. Each scope aborts its own signal as its release starts, then runs its entries in reverse
+ *   order of registration, a child's subtree as one entry and an effect's entry taken before its first run.
+ *   So a descendant reads as disposed before its signal aborts, which waits until its parent's release
+ *   reaches it, after the parent's later registrations. A throwing disposer does not stop the rest; one
+ *   error is rethrown as itself, several as an AggregateError. Registering on a disposed scope throws: it
+ *   is a development error.
  * - The one module allowed raw setTimeout, setInterval and requestAnimationFrame (zq/no-raw-timers, 10.4).
  *   Frames come from a FrameSource, the browser's by default, because Node has none; timers use the
  *   globals, which vitest's fake timers replace.
@@ -19,6 +22,7 @@ import type { Scope } from '@zq/contracts/base';
 
 /** Where animation frames come from: requestAnimationFrame in the browser, a fake clock in tests. */
 export interface FrameSource {
+  /** Calls fn later, never before request returns, as requestAnimationFrame does; loop() relies on it. */
   request(fn: (t: number) => void): number;
   cancel(handle: number): void;
 }
@@ -125,15 +129,22 @@ class ScopeNode implements Scope {
   }
 
   effect(fn: EffectFn): void {
-    this.#assertLive();
-    const closed = () => this.#disposed;
-    // A first run that throws registers nothing: signals disposes the effect and rethrows.
-    const stop = effect(function (this: { dispose: () => void }) {
-      return closed() ? undefined : fn.call(this);
+    // The entry comes before the first run, so what that run registers is released before the effect stops.
+    let stop: (() => void) | undefined;
+    const entry = this.#add(() => {
+      stop?.();
     });
-    // A first run that disposed this scope leaves the effect to stop here.
+    const closed = () => this.#disposed;
+    try {
+      stop = effect(function (this: { dispose: () => void }) {
+        return closed() ? undefined : fn.call(this);
+      });
+    } catch (error) {
+      this.#live.delete(entry); // signals has disposed the effect; a throwing first run leaves no entry
+      throw error;
+    }
+    // A first run that disposed this scope released the entry before `stop` existed.
     if (closed()) stop();
-    else this.#live.add(stop);
   }
 
   own(dispose: () => void): void {

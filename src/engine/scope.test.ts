@@ -1,9 +1,21 @@
 // src/engine/scope.ts against docs/ARCHITECTURE.md 5.1, with the stage 3 leak test: no callback after its
-// scope or an ancestor is disposed, and nothing left pending.
+// scope or an ancestor is disposed, every live one still runs, and nothing is left pending or reachable.
 import { signal } from '@preact/signals-core';
+import type { Scope } from '@zq/contracts/base';
 import fc from 'fast-check';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createScope, type FrameSource } from './scope.ts';
+
+// node:v8's queryObjects counts the objects with a constructor's prototype on their chain "in the heap
+// after a full garbage collection, which can be useful for memory leak regression tests" [sourced:
+// @types/node 22.20.5, v8.d.ts; experimental in Node 22]. src/ carries no Node types (src/tsconfig.json), so
+// the module is imported by a computed name and given the one signature used here.
+type Ctor = abstract new (...args: never[]) => unknown;
+const v8 = 'node:v8';
+const { queryObjects } = (await import(v8)) as {
+  queryObjects: (ctor: Ctor, o: { format: 'count' }) => number;
+};
+const reachable = (ctor: Ctor) => queryObjects(ctor, { format: 'count' });
 
 /** Frames on a fake clock. A tick runs the whole batch it took, even an entry cancelled mid-batch (harsher than rAF). */
 class FakeFrames implements FrameSource {
@@ -46,6 +58,16 @@ class FakeTarget implements EventTarget {
     return true;
   }
 }
+
+/** A marker that a callback's closure holds, so `reachable(Held)` counts the callbacks still kept. */
+class Held {
+  readonly mark: string = 'held';
+}
+/** A callback holding a fresh Held. It returns false, so a loop given it ends after its first frame. */
+const holding = () => {
+  const held = new Held();
+  return () => held.mark === '';
+};
 
 let frames: FakeFrames;
 beforeEach(() => {
@@ -204,7 +226,7 @@ describe('listeners, effects and owned disposers', () => {
     expect(log).toEqual(['run 0', 'cleanup', 'run 1', 'cleanup']);
   });
 
-  test("effect passes signals' this through, and a first run that disposes the scope or throws leaves nothing", () => {
+  test("effect passes signals' this through; a first run that throws, or disposes its scope or an ancestor, stops it", () => {
     const scope = createScope(frames);
     const s = signal(0);
     let runs = 0;
@@ -219,15 +241,26 @@ describe('listeners, effects and owned disposers', () => {
         throw new RangeError('first run');
       });
     }).toThrow(RangeError);
-    scope.effect(() => {
-      runs += s.value;
-      scope.dispose();
+    const log: string[] = [];
+    const kid = scope.child();
+    kid.effect(() => {
+      log.push(`own ${s.value}`);
+      kid.dispose();
+      return () => log.push('own cleanup');
     });
+    scope.child().effect(() => {
+      log.push(`ancestor ${s.value}`);
+      scope.dispose();
+      return () => log.push('ancestor cleanup');
+    });
+    // Each cleanup ran before effect() returned, with no signal write to prompt it.
+    expect(log).toEqual(['own 1', 'own cleanup', 'ancestor 1', 'ancestor cleanup']);
     s.value = 5;
-    expect(runs).toBe(2);
+    expect(log).toHaveLength(4);
+    expect(scope.disposed).toBe(true);
   });
 
-  test('dispose aborts the signal, then releases in reverse order of registration, children included', () => {
+  test('dispose aborts the signal, then releases in reverse order; a child aborts as its own release starts', () => {
     const scope = createScope(frames);
     const order: string[] = [];
     scope.signal.addEventListener('abort', () => order.push('abort'));
@@ -243,8 +276,77 @@ describe('listeners, effects and owned disposers', () => {
     expect([scope.disposed, kid.signal.aborted]).toEqual([true, true]);
   });
 
-  test('a child disposed first leaves its parent, and is not released again', () => {
+  test("what an effect's first run registers is released before the effect stops", () => {
     const scope = createScope(frames);
+    const order: string[] = [];
+    scope.own(() => order.push('before'));
+    scope.effect(() => {
+      scope.own(() => order.push('made in the first run'));
+      return () => order.push('effect cleanup');
+    });
+    scope.own(() => order.push('after'));
+    scope.dispose();
+    expect(order).toEqual(['after', 'made in the first run', 'effect cleanup', 'before']);
+  });
+
+  test("a screen's scope disposed under a live root stops all of its subtree and none of the root", () => {
+    const root = createScope(frames);
+    const target = new FakeTarget();
+    const s = signal(0);
+    const heard: string[] = [];
+    const fill = (scope: Scope, name: string) => {
+      scope.later(() => heard.push(`${name} later`), 5);
+      scope.every(() => heard.push(`${name} every`), 5);
+      scope.frame(() => heard.push(`${name} frame`));
+      scope.loop(() => heard.push(`${name} loop`) > 0);
+      scope.listen(target, 'x', () => heard.push(`${name} listen`));
+      scope.listen(target, 'x', () => heard.push(`${name} once`), { once: true });
+      scope.effect(() => {
+        heard.push(`${name} effect ${s.value}`);
+      });
+    };
+    const screen = root.child();
+    fill(root, 'root');
+    fill(screen, 'screen');
+    fill(screen.child(), 'widget');
+    heard.length = 0; // the effects' first runs
+    screen.dispose();
+    vi.advanceTimersByTime(5);
+    frames.tick();
+    target.dispatchEvent(new Event('x'));
+    s.value = 1;
+    expect(heard).toEqual([
+      'root later',
+      'root every',
+      'root frame',
+      'root loop',
+      'root listen',
+      'root once',
+      'root effect 1',
+    ]);
+    expect([vi.getTimerCount(), frames.pending.size, target.listeners.size]).toEqual([1, 1, 1]);
+    root.dispose();
+    expect([vi.getTimerCount(), frames.pending.size, target.listeners.size]).toEqual([0, 0, 0]);
+  });
+
+  // Helpers do the registering, so no frame of a test holds what they make.
+  test('a disposed child leaves its parent, keeps no descendant, and is not released again', () => {
+    const scope = createScope(frames);
+    const node = (Object.getPrototypeOf(scope) as { constructor: Ctor }).constructor;
+    const base = reachable(node);
+    const kept: Scope[] = [];
+    const churn = (keep: boolean) => {
+      for (let i = 0; i < 8; i++) {
+        const kid = scope.child();
+        kid.child().own(() => undefined);
+        kid.dispose();
+        if (keep) kept.push(kid);
+      }
+    };
+    churn(false);
+    expect(reachable(node)).toBe(base); // neither the parent's children nor its entries keep them
+    churn(true);
+    expect(reachable(node)).toBe(base + kept.length); // and a disposed child keeps no descendant
     const kid = scope.child();
     const grandchild = kid.child();
     let releases = 0;
@@ -253,6 +355,50 @@ describe('listeners, effects and owned disposers', () => {
     expect([kid.disposed, grandchild.disposed, scope.disposed]).toEqual([true, true, false]);
     scope.dispose();
     expect(releases).toBe(1);
+  });
+
+  test('fired, finished and cancelled entries keep nothing, nor does a disposed scope still referenced', () => {
+    const scope = createScope(frames);
+    const target = new FakeTarget();
+    const cancelled = () => {
+      scope.later(holding(), 5)();
+      scope.every(holding(), 5)();
+      scope.frame(holding())();
+      scope.loop(holding())();
+      const held = holding();
+      expect(() => {
+        scope.effect(() => {
+          throw new RangeError(String(held()));
+        });
+      }).toThrow(RangeError);
+    };
+    const firing = () => {
+      scope.later(holding(), 5);
+      scope.frame(holding());
+      scope.loop(holding());
+      scope.listen(target, 'x', holding(), { once: true });
+    };
+    const live = () => {
+      scope.every(holding(), 5);
+      scope.listen(target, 'x', holding());
+      scope.own(holding());
+      const held = holding();
+      scope.child().effect(() => {
+        held();
+      });
+    };
+    cancelled();
+    expect(reachable(Held)).toBe(0);
+    firing();
+    expect(reachable(Held)).toBe(4);
+    vi.advanceTimersByTime(5);
+    frames.tick();
+    target.dispatchEvent(new Event('x'));
+    expect(reachable(Held)).toBe(0);
+    live();
+    expect(reachable(Held)).toBe(4);
+    scope.dispose();
+    expect(reachable(Held)).toBe(0);
   });
 });
 
@@ -327,10 +473,22 @@ describe('errors', () => {
 });
 
 // The leak test. Random interleavings of registrations, cancels, children, timer and frame advances,
-// events, signal writes and disposals, against a model of which scopes are disposed.
+// events, signal writes and disposals of sub-scopes, against a model of which scopes are disposed. The root
+// goes last, as the app root outlives every screen's scope (ARCHITECTURE.md 5.4). A callback may itself
+// dispose a sub-scope (`kill`, -1 for none): its own, an ancestor mid-release, or an unrelated one; an owned
+// disposer with an odd `ms` writes the signal while its scope is released. Safety: no callback runs once
+// cancelled or once its scope is dead. Liveness: before the root goes, each registration neither cancelled
+// nor dead has run exactly as often as its triggers say, since a scope live at the end was live throughout.
 type Kind = 'later' | 'every' | 'frame' | 'loop' | 'listen' | 'once' | 'effect' | 'own';
+interface RegOp {
+  op: 'reg';
+  kind: Kind;
+  at: number;
+  ms: number;
+  kill: number;
+}
 type Op =
-  | { op: 'reg'; kind: Kind; at: number; ms: number }
+  | RegOp
   | { op: 'child'; at: number }
   | { op: 'dispose'; at: number }
   | { op: 'cancel'; at: number }
@@ -338,13 +496,21 @@ type Op =
   | { op: 'tick' }
   | { op: 'event' }
   | { op: 'write' };
+/** The model's clocks: ms advanced, frames ticked, events dispatched. */
+interface Clocks {
+  now: number;
+  ticks: number;
+  events: number;
+}
 
-const at = fc.nat(30);
+const at = fc.nat(63);
 const item = <T>(list: readonly T[], i: number): T => {
   const value = list[i];
   if (value === undefined) throw new RangeError(`no item ${i}`);
   return value;
 };
+// fast-check's default size caps an array at 10 items whatever maxLength says [measured, review of
+// 15 October 2026]; 'max' lets the interleavings reach 60 ops.
 const ops = fc.array(
   fc.oneof(
     {
@@ -353,6 +519,7 @@ const ops = fc.array(
         kind: fc.constantFrom<Kind>('later', 'every', 'frame', 'loop', 'listen', 'once', 'effect', 'own'),
         at,
         ms: fc.integer({ min: 1, max: 40 }),
+        kill: fc.oneof({ arbitrary: fc.constant(-1), weight: 4 }, at),
       }),
       weight: 4,
     },
@@ -360,93 +527,167 @@ const ops = fc.array(
     fc.record({ op: fc.constant('advance' as const), ms: fc.integer({ min: 0, max: 60 }) }),
     fc.record({ op: fc.constantFrom('tick' as const, 'event' as const, 'write' as const) }),
   ),
-  { maxLength: 60 },
+  { maxLength: 60, size: 'max' },
 );
 
-test('no callback runs after its scope or an ancestor is disposed, and nothing is left pending', () => {
-  fc.assert(
-    fc.property(ops, (list: Op[]) => {
-      vi.clearAllTimers();
-      const clock = new FakeFrames();
-      const target = new FakeTarget();
-      const s = signal(0);
-      const root = createScope(clock);
-      const scopes = [{ scope: root, parent: -1, disposed: false }];
-      const regs: { scope: number; cancel?: () => void; cancelled: boolean }[] = [];
-      const violations: string[] = [];
-      const owned: number[] = [];
-      let liveEffects = 0;
-      const dead = (i: number): boolean => {
-        const node = scopes[i];
-        return node !== undefined && (node.disposed || dead(node.parent)); // the root's parent is -1
-      };
-      const dispose = (i: number) => {
-        const node = item(scopes, i);
-        node.disposed = true; // before the call, so a callback the release triggers counts as late
-        node.scope.dispose();
-      };
-      for (const step of list) {
-        if (step.op === 'advance') vi.advanceTimersByTime(step.ms);
-        else if (step.op === 'tick') clock.tick();
-        else if (step.op === 'event') target.dispatchEvent(new Event('ping'));
-        else if (step.op === 'write') s.value++;
-        else if (step.op === 'cancel') {
-          const reg = regs[step.at % Math.max(regs.length, 1)];
-          if (reg?.cancel) {
-            reg.cancelled = true;
-            reg.cancel();
-          }
-        } else {
-          const index = step.at % scopes.length;
-          const { scope } = item(scopes, index);
-          if (step.op === 'dispose') dispose(index);
-          else if (dead(index)) expect(() => scope.child()).toThrow(/disposed/);
-          else if (step.op === 'child') scopes.push({ scope: scope.child(), parent: index, disposed: false });
+const RUNS = 1_000;
+// Runs that dispose a sub-scope holding a callback that could still run, then fire a trigger: 294 to 320
+// of 1,000 in eight runs [measured, 15 October 2026], so the floor fails only when a change stops the
+// generator reaching the case.
+const EXERCISED_FLOOR = 200;
+
+test(
+  'no callback runs after its scope or an ancestor is disposed, each live one runs, and nothing is left pending',
+  { timeout: 60_000 }, // about 1 s alone [measured]; the margin is for a loaded machine
+  () => {
+    let exercised = 0;
+    fc.assert(
+      fc.property(ops, (list: Op[]) => {
+        vi.clearAllTimers();
+        const clock = new FakeFrames();
+        const target = new FakeTarget();
+        const s = signal(0);
+        const scopes = [{ scope: createScope(clock), parent: -1, disposed: false }];
+        const regs: {
+          kind: Kind;
+          scope: number;
+          ms: number;
+          from: Clocks;
+          cancel?: () => void;
+          cancelled: boolean;
+          calls: number;
+          seen: number; // an effect's last read of s
+        }[] = [];
+        const violations: string[] = [];
+        const clocks: Clocks = { now: 0, ticks: 0, events: 0 };
+        let liveEffects = 0;
+        const sub = { armed: false, hit: false }; // a sub-scope disposal over pending callbacks, then a trigger
+        const dead = (i: number): boolean => {
+          const node = scopes[i];
+          return node !== undefined && (node.disposed || dead(node.parent)); // the root's parent is -1
+        };
+        const under = (i: number, top: number): boolean =>
+          i >= 0 && (i === top || under(item(scopes, i).parent, top));
+        // Whether a trigger could still run the registration's callback.
+        const pending = (r: (typeof regs)[number]): boolean => {
+          if (r.cancelled || dead(r.scope) || r.kind === 'own') return false;
+          if (r.kind === 'later' || r.kind === 'frame' || r.kind === 'once') return r.calls === 0;
+          return r.kind !== 'loop' || r.calls <= r.ms % 4;
+        };
+        const dispose = (i: number) => {
+          if (i > 0 && !dead(i) && regs.some((r) => under(r.scope, i) && pending(r))) sub.armed = true;
+          const node = item(scopes, i);
+          node.disposed = true; // before the call, so a callback the release triggers counts as late
+          node.scope.dispose();
+        };
+        const disposeSub = (n: number) => {
+          if (scopes.length > 1) dispose(1 + (n % (scopes.length - 1)));
+        };
+        const register = (step: RegOp, index: number, scope: Scope) => {
+          const reg: (typeof regs)[number] = {
+            kind: step.kind,
+            scope: index,
+            ms: step.ms,
+            from: { ...clocks },
+            cancelled: false,
+            calls: 0,
+            seen: -1,
+          };
+          const name = `${step.kind} ${regs.push(reg) - 1}`;
+          const note = () => {
+            reg.calls++;
+            if (reg.cancelled || dead(index)) violations.push(name);
+            if (step.kill >= 0) disposeSub(step.kill);
+          };
+          let left = step.ms % 4;
+          if (step.kind === 'later') reg.cancel = scope.later(note, step.ms);
+          else if (step.kind === 'every') reg.cancel = scope.every(note, step.ms);
+          else if (step.kind === 'frame') reg.cancel = scope.frame(note);
+          else if (step.kind === 'loop')
+            reg.cancel = scope.loop(() => {
+              note();
+              return left-- > 0;
+            });
+          else if (step.kind === 'listen' || step.kind === 'once')
+            scope.listen(target, 'ping', note, { once: step.kind === 'once' });
+          else if (step.kind === 'effect')
+            scope.effect(() => {
+              reg.seen = s.value; // reading s subscribes the effect
+              note();
+              liveEffects++;
+              return () => {
+                liveEffects--;
+              };
+            });
+          else
+            scope.own(() => {
+              reg.calls++;
+              if (!dead(index)) violations.push(`${name} early`);
+              if (step.ms % 2 === 1) s.value++;
+              if (step.kill >= 0) disposeSub(step.kill);
+            });
+        };
+        for (const step of list) {
+          if (step.op === 'advance' || step.op === 'tick' || step.op === 'event' || step.op === 'write') {
+            if (step.op !== 'advance' || step.ms > 0) sub.hit ||= sub.armed;
+            if (step.op === 'advance') {
+              clocks.now += step.ms;
+              vi.advanceTimersByTime(step.ms);
+            } else if (step.op === 'tick') {
+              clocks.ticks++;
+              clock.tick();
+            } else if (step.op === 'event') {
+              clocks.events++;
+              target.dispatchEvent(new Event('ping'));
+            } else s.value++;
+          } else if (step.op === 'cancel') {
+            const reg = regs[step.at % Math.max(regs.length, 1)];
+            if (reg?.cancel) {
+              reg.cancelled = true;
+              reg.cancel();
+            }
+          } else if (step.op === 'dispose') disposeSub(step.at);
           else {
-            const reg: (typeof regs)[number] = { scope: index, cancelled: false };
-            const r = regs.push(reg) - 1;
-            const note = () => {
-              if (reg.cancelled || dead(index)) violations.push(`${step.kind} ${r}`);
-            };
-            let left = step.ms % 4;
-            if (step.kind === 'later') reg.cancel = scope.later(note, step.ms);
-            else if (step.kind === 'every') reg.cancel = scope.every(note, step.ms);
-            else if (step.kind === 'frame') reg.cancel = scope.frame(note);
-            else if (step.kind === 'loop')
-              reg.cancel = scope.loop(() => {
-                note();
-                return left-- > 0;
-              });
-            else if (step.kind === 'listen' || step.kind === 'once')
-              scope.listen(target, 'ping', note, { once: step.kind === 'once' });
-            else if (step.kind === 'effect')
-              scope.effect(() => {
-                if (s.value >= 0) note(); // reading s subscribes the effect
-                liveEffects++;
-                return () => {
-                  liveEffects--;
-                };
-              });
-            else
-              scope.own(() => {
-                if (!dead(index)) violations.push(`own ${r} early`);
-                owned[r] = (owned[r] ?? 0) + 1;
-              });
-            if (step.kind === 'own') owned[r] ??= 0;
+            const index = step.at % scopes.length;
+            const { scope } = item(scopes, index);
+            if (dead(index)) expect(() => scope.child()).toThrow(/disposed/);
+            else if (step.op === 'child')
+              scopes.push({ scope: scope.child(), parent: index, disposed: false });
+            else register(step, index, scope);
           }
         }
-      }
-      dispose(0);
-      const pending = [vi.getTimerCount(), clock.pending.size, target.listeners.size, liveEffects];
-      expect(pending).toEqual([0, 0, 0, 0]);
-      vi.advanceTimersByTime(1_000);
-      clock.tick();
-      target.dispatchEvent(new Event('ping'));
-      s.value++;
-      expect(violations).toEqual([]);
-      expect(owned.filter((n) => n !== 1)).toEqual([]);
-      expect(scopes.every(({ scope }) => scope.disposed && scope.signal.aborted)).toBe(true);
-    }),
-    { numRuns: 1_000 },
-  );
-});
+        const expected = ({ kind, ms, from }: (typeof regs)[number]): number => {
+          const elapsed = clocks.now - from.now;
+          const ticks = clocks.ticks - from.ticks;
+          const events = clocks.events - from.events;
+          if (kind === 'later') return elapsed >= ms ? 1 : 0;
+          if (kind === 'every') return Math.floor(elapsed / ms);
+          if (kind === 'frame') return Math.min(1, ticks);
+          if (kind === 'loop') return Math.min((ms % 4) + 1, ticks);
+          if (kind === 'listen') return events;
+          if (kind === 'once') return Math.min(1, events);
+          return kind === 'effect' ? 1 : 0; // an effect's re-runs are checked through `seen`
+        };
+        const stalled = regs.flatMap((r, i) => {
+          if (r.cancelled || dead(r.scope)) return [];
+          const ok = r.kind === 'effect' ? r.calls >= 1 && r.seen === s.value : r.calls === expected(r);
+          return ok ? [] : [`${r.kind} ${i} ran ${r.calls}`];
+        });
+        expect(stalled).toEqual([]);
+        dispose(0);
+        const left = [vi.getTimerCount(), clock.pending.size, target.listeners.size, liveEffects];
+        expect(left).toEqual([0, 0, 0, 0]);
+        vi.advanceTimersByTime(1_000);
+        clock.tick();
+        target.dispatchEvent(new Event('ping'));
+        s.value++;
+        expect(violations).toEqual([]);
+        expect(regs.filter((r) => r.kind === 'own' && r.calls !== 1)).toEqual([]);
+        expect(scopes.every(({ scope }) => scope.disposed && scope.signal.aborted)).toBe(true);
+        if (sub.hit) exercised++;
+      }),
+      { numRuns: RUNS },
+    );
+    expect(exercised).toBeGreaterThanOrEqual(EXERCISED_FLOOR);
+  },
+);
