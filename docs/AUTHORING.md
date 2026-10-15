@@ -78,6 +78,8 @@ Lesson shape (design-research 8.3): hook (problem or explore), explore, name (ge
 
 `feedback.byKey`: keys are the `key` values the widget can return (option ids, `wrong[]` ids, region ids, token ids, state ids). Each line names the learner's own action, never the rule. At most three sentences.
 
+The engine's end-of-lesson order is: summary card (last progress step), quiz, celebration with the streak moment, Next or Done.
+
 `explain.text`: at most three sentences, refers to what the learner did, with the `explain.canvas` patch showing the annotated state.
 
 ## 3. Widgets
@@ -95,6 +97,8 @@ Each `widget` has `kind` and the fields below. `label` is the accessible name of
 ```
 
 Exactly one `correct`. Every distractor has `why` (one named misconception each). Options may be text, KaTeX, or `{ "image": "art-id" }` for a course art glyph. `shuffle: true` is allowed except when options are ordered (ranges, steps).
+
+Any `choice` or `multi` option, and any `numeric`, `slider` or `tap-regions` `wrong[]` entry, may carry a `canvas` patch: it is applied by Show why after that wrong answer and reverted on Try again. Use it to show the consequence of the misconception on the diagram (highlight the double-counted cell, mark it `×2`).
 
 ### `multi`
 
@@ -154,7 +158,7 @@ The canvas must list the same point ids as draggable.
   "wrong": [ { "id": "double", "set": ["r5c2", "r2c5", "r5c5"] } ] }
 ```
 
-The canvas provides the regions. The question line shows the running count.
+The canvas provides the regions. The question line shows the running count. Optional: `wrong[].flash` (ids to flash on Show why), `countWord` (the noun in the count, default "cells"), `only` (restrict tappable ids).
 
 ### `order`
 
@@ -193,6 +197,8 @@ Any path reaching `target` is correct. An op with `why` is a recorded misstep (i
   "moves": ["remove-both", "halve-both"], "target": { "left": ["unknown"], "right": [4] } }
 ```
 
+`moves` may include `remove-both`, `halve-both`, `divide-both`, `remove-unknown-both`, `remove-item`. Keys returned: `unbalanced`, `unsolved`. For `drag-point` on one-dimensional canvases (number-line, circle) `target` is a number (x or angle) and `wrong[].region` may be `{ "x": [a,b] }` or `{ "angle": [a,b] }`; default `tol` is 0.25.
+
 ### `sketch`
 
 ```json
@@ -212,7 +218,9 @@ The learner drags control points of a curve on the `plane` canvas; graded on sam
 
 ## 4. Canvases
 
-`canvas: { "kind": ..., "params": {...}, "state": {...}, "controls": [...] }`. `params` fix the drawing; `state` is the initial state and the thing `explain.canvas`, `demonstrate.steps[].canvas` and `showWhy` patch. `controls` are explore-only sliders bound to params: `[{ "bind": "p", "min": 0, "max": 1, "step": 0.05, "label": "p" }]`. Ids below are the highlightable element ids.
+The binding reference for every canvas kind is the engine's own documentation: `app/js/engine/canvas/README.md` (grid, tree, venn, number-line, boxes, area, balance, circle, table) and `app/js/engine/canvas/README-B.md` (plane, bars, distribution, scatter, series, walk, matrix, vectors, graph, array, payoff, orderbook). Read the entry for a kind before using it; the table below is the summary and the READMEs win where they differ. Id conventions that differ by kind: grid and area ids are one-based (`r5c1`), table and matrix ids are zero-based (`r0c0`, `A-0-1`), scatter `p{i}` and walk `path{i}` are zero-based, bins are `b{i}`, array `c{i}` uses the displayed index.
+
+`canvas: { "kind": ..., "params": {...}, "state": {...}, "enter": {...}, "controls": [...] }`. `enter` is a state patch applied 350 ms after the screen enters (use it for the "watch the space shrink" moment). Every kind also accepts `state.selected` (the current tap selection), `state.highlight` and `state.caption`. `params` fix the drawing; `state` is the initial state and the thing `explain.canvas`, `demonstrate.steps[].canvas` and `showWhy` patch. `controls` are explore-only sliders bound to params: `[{ "bind": "p", "min": 0, "max": 1, "step": 0.05, "label": "p" }]`; a plain `bind` sets `state.params[name]`, a dotted one such as `strike.c1` sets that state path. Ids below are the highlightable element ids.
 
 | kind | params | state | ids |
 |---|---|---|---|
