@@ -1,43 +1,33 @@
-"""Twin of @zq/mathcore/num-parse: how a typed answer reads as a number (docs/CONTENT-FORMAT.md 7.2).
+"""Goldens for @zq/mathcore/num-parse, the en-GB number parser shared with the graders.
 
-Not yet independent of the TypeScript (CLAUDE.md hard rule 4). The session that wrote num-parse.ts wrote this
-module after it, and the rules below restate that file's decided rules, so the goldens show that two copies of
-one design agree, not that an independent reading of 7.2 agrees. The scanner is this module's own; the top-level
-algorithm follows num-parse.ts step for step [measured: adversarial review of 8 October 2026]. Before the stage 3
-gate a blind twin replaces it, written from 7.2 and a plain list of the decided rules by a session that has not
-read num-parse.ts; it keeps EDGES below [unverified until then].
+Written from docs/CONTENT-FORMAT.md 7.2 alone, by a session that has not read the TypeScript, its tests, its
+golden file or the earlier twin (CLAUDE.md hard rule 4); where the two disagree, 7.2 decides. `parse(text, units)`
+applies the section's nine rules in order and returns a `Number` or a `Failure`; `out` spells either as a golden
+line's `out`.
 
-The rules this module implements:
+Decision notes:
+- Code units. 7.2 measures lengths in UTF-16 code units, so `parse` first rewrites the text with each astral code
+  point split into its surrogate pair (`code_units`); rule 1's length and rule 5's unit lengths and slices then
+  count what JavaScript counts. Rule 5 joins the pairs back before str.lower, Unicode's default mapping on code
+  points, as toLowerCase applies it. A unit with more code units than the text never matches it: 7.2 compares
+  "as many code units of the text as the unit has", which such a text does not have [our choice; 7.2 is silent].
+- A hand-written scanner over indices: no grammar in regular expressions, no eval or exec. Every token of rules 2
+  to 8 is a listed BMP character, and each rule is one left-to-right pass, so a parse is O(n). The one regular
+  expression collapses rule 2.5's runs of spaces and tabs.
+- Rule 2.2's runs. A run's leading digits are forced (fewer would leave a digit where its narrow space must
+  stand), and of its groups only the last can be followed by a digit, so the longest run that satisfies the rule
+  is all of its groups or all but the last. The slash check reads the same runs before any is removed.
+- Rule 7's integer part is a grouped integer wherever one starts, else a plain run of digits: what may follow an
+  integer part (a space, `/`, `.`, an exponent or the end) is never a digit or a comma, so where the grouped
+  reading fails the plain one fails too. The slash and the space after the first integer part tell the three body
+  shapes apart, so "tried in this order" never has to backtrack.
+- Values are exact Fractions, spelt by zqverify.rational.spell, the spelling 7.2's golden paragraph names.
 
-1. Input over 200 UTF-16 code units fails as too-long. Normalise: U+2212 and the dashes U+2010 to U+2015, U+FE58,
-   U+FE63 and U+FF0D become "-". A narrow space (U+00A0, U+2007, U+2009, U+200A, U+202F) is removed where it
-   separates digit groups as a grouping comma would: a first group of 1 to 3 digits that does not start with 0
-   and does not follow a digit, "." or ",", nor an exponent's "e", "E" or "^" with or without a sign after it
-   ("3.2e1 000" does not group), then one or more times a narrow space and exactly 3 digits not followed by a
-   digit. Every other narrow space is an ordinary space. U+00D7, U+00B7 and U+22C5 become "*"; runs of spaces
-   and tabs become one space; ASCII whitespace is trimmed from the ends. Nothing left: empty. A grouping so
-   spelled and then "/", after optional spaces, tabs or narrow spaces, is syntax: "2 125/250" typed with a
-   no-break space reads both as the grouped 2125/250 and as the mixed 2 125/250, which differ. The test is the
-   shape alone, so "12 345/7" (its mixed reading improper) and "1 000/0" are syntax too.
-2. An optional leading "-" or "+", then an optional space. Then at most one listed unit, compared without case,
-   longest first: at the start (then an optional space) or else at the end (after an optional space). With no
-   unit, a final "%" (after an optional space) makes the form percent.
-3. An integer is a run of ASCII digits, or a grouped run: 1 to 3 digits not starting with 0, then one or more
-   groups of a comma and exactly 3 digits. The number is then one of:
-   - mixed: integer, one space, integer, optional space, "/", optional space, integer; the numerator lies
-     strictly between 0 and the denominator;
-   - fraction: integer, optional space, "/", optional space, integer;
-   - decimal: an optional integer, optionally "." and digits (at least one digit in all), then optionally an
-     exponent: "e" or "E" and a signed integer, or an optional space, one of "*", "x", "X", an optional space,
-     "10^" and a signed integer (standard form). An exponent beyond 1000 in size is out-of-range.
-   A zero denominator is zero-denominator; a percent must be an integer or a decimal with no exponent.
-4. Anything else is syntax, unless the text has exactly one comma and reads with that comma as a point, which
-   is decimal-comma. A "-" negates the value; a percent's value is the number before its sign.
-5. places: digits after the point as typed. figures: the digits typed, without commas or leading zeros. typed:
-   for a fraction or a mixed number, its whole part (0 for a fraction), numerator and denominator as typed,
-   unsigned and unreduced; otherwise null.
-
-From the repository root, rewrite the golden file with:
+The golden file holds the fixed cases (every example of 7.2, each typed with every narrow space where the section's
+examples stand a space for one, and the bounds) and random cases drawn by `random.Random` seeded with the module
+name: well-formed numbers of every form with signs, dashes, units and spaces, a third of them mutated by a few
+inserted, deleted or replaced characters. 7.2 names the file and its fields, not a command; from the repository
+root, as for the other twins, rewrite it with:
 
     PYTHONPATH=tools uv run --project tools/py --locked python -m zqverify.num_parse
 """
@@ -46,283 +36,730 @@ from __future__ import annotations
 
 import json
 import random
+import re
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
 
 from zqverify.rational import spell
 
 GOLDEN = Path(__file__).resolve().parents[2] / "packages" / "mathcore" / "test" / "num-parse.golden.jsonl"
-DIGITS = "0123456789"
-TO_MINUS = "\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D"
-NARROW = "\u00A0\u2007\u2009\u200A\u202F"
-TO_TIMES = "\u00D7\u00B7\u22C5"
-SIGNS = "+-" + TO_MINUS
+MAX_LENGTH = 200
+EXPONENT_LIMIT = 1000
+RANDOM_CASES = 1500
+
+REASONS = ("empty", "too-long", "decimal-comma", "zero-denominator", "out-of-range", "syntax")
+FORMS = ("integer", "decimal", "fraction", "mixed", "percent", "standard-form")
+
+DASHES = frozenset([*map(chr, range(0x2010, 0x2016)), "\u2212", "\ufe58", "\ufe63", "\uff0d"])
+NARROW = ("\u00a0", "\u2007", "\u2009", "\u200a", "\u202f")
+NARROW_SET = frozenset(NARROW)
+TIMES = frozenset("\u00d7\u00b7\u22c5")
+BEFORE_SLASH = NARROW_SET | {" ", "\t"}
+ENDS = " \t\n\v\f\r"
+SPACES_AND_TABS = re.compile("[ \t]+")
 
 
-def starts_grouping(text: str, i: int) -> bool:
-    """A grouping may start at i: a digit 1 to 9, not inside another number or an exponent (rule 1)."""
-    before, sign_before = (text[i - 1] if i else " "), (text[i - 2] if i > 1 else " ")
-    if before in SIGNS:
-        return text[i] in DIGITS[1:] and sign_before not in "eE^"
-    return text[i] in DIGITS[1:] and before not in DIGITS + ".,eE^"
+@dataclass(frozen=True)
+class Number:
+    form: str
+    value: Fraction
+    places: int
+    figures: int
+    typed: tuple[int, int, int] | None  # whole, numerator and denominator, for a fraction or a mixed number
+    unit: str | None
 
 
-def groupings(text: str) -> list[tuple[int, int]]:
-    """Start and end of each digit grouping spelled with narrow spaces (rule 1)."""
-    runs: list[tuple[int, int]] = []
-    i = 0
-    while i < len(text):
-        if not starts_grouping(text, i):
+@dataclass(frozen=True)
+class Failure:
+    reason: str
+
+
+SYNTAX = Failure("syntax")
+
+
+def code_units(s: str) -> str:
+    """s with each astral code point as its UTF-16 surrogate pair, so len and slices count code units."""
+    return "".join(c if ord(c) < 0x10000 else _pair(ord(c) - 0x10000) for c in s)
+
+
+def _pair(offset: int) -> str:
+    return chr(0xD800 + (offset >> 10)) + chr(0xDC00 + (offset & 0x3FF))
+
+
+def _lower(units: str) -> str:
+    """Unicode's default lower-casing of a code-unit string; a lone surrogate stays as it is."""
+    return units.encode("utf-16-le", "surrogatepass").decode("utf-16-le", "surrogatepass").lower()
+
+
+def _digit(c: str) -> bool:
+    return len(c) == 1 and "0" <= c <= "9"
+
+
+def _run_end(t: str, i: int) -> int | None:
+    """The end of the rule 2.2 grouping run that starts at i, or None."""
+    if not "1" <= t[i] <= "9":
+        return None
+    before = t[i - 1] if i else ""
+    if _digit(before) or before in (".", ",", "e", "E", "^"):
+        return None
+    if before in ("+", "-") and i >= 2 and t[i - 2] in ("e", "E", "^"):
+        return None
+    j = i + 1
+    while j < len(t) and j - i < 3 and _digit(t[j]):
+        j += 1
+    ends = []
+    while j + 4 <= len(t) and t[j] in NARROW_SET and all(map(_digit, t[j + 1 : j + 4])):
+        j += 4
+        ends.append(j)
+    if ends and j < len(t) and _digit(t[j]):
+        ends.pop()
+    return ends[-1] if ends else None
+
+
+def grouping_runs(t: str) -> list[tuple[int, int]]:
+    """Rule 2.2's runs in the text step 1 leaves, left to right, without overlap, each the longest."""
+    runs, i = [], 0
+    while i < len(t):
+        end = _run_end(t, i)
+        if end is None:
             i += 1
-            continue
-        j = i
-        while j < len(text) and text[j] in DIGITS:
-            j += 1
-        lead = j
-        if j - i <= 3:
-            while (
-                j < len(text)
-                and text[j] in NARROW
-                and len(group := text[j + 1 : j + 4]) == 3
-                and all(c in DIGITS for c in group)
-                and (j + 4 == len(text) or text[j + 4] not in DIGITS)
-            ):
-                j += 4
-        if j > lead:
-            runs.append((i, j))
-        i = j
+        else:
+            runs.append((i, end))
+            i = end
     return runs
 
 
-def grouped_before_slash(text: str) -> bool:
-    """A grouping, then "/" after optional spaces, tabs or narrow spaces: syntax (rule 1)."""
-    for _, end in groupings(text):
-        while end < len(text) and text[end] in " \t" + NARROW:
-            end += 1
-        if text[end : end + 1] == "/":
-            return True
-    return False
-
-
-def normalise(text: str) -> str:
-    drop = {k for start, end in groupings(text) for k in range(start, end) if text[k] in NARROW}
-    out = []
-    for i, c in enumerate(text):
-        if c in TO_MINUS:
-            c = "-"
-        elif i in drop:
-            continue
-        elif c in NARROW or c == "\t":
-            c = " "
-        elif c in TO_TIMES:
-            c = "*"
-        if not (c == " " and out and out[-1] == " "):
-            out.append(c)
-    return "".join(out).strip(" \t\n\r\v\f")
-
-
-class Scan:
-    def __init__(self, text: str) -> None:
-        self.s, self.i = text, 0
-
-    def peek(self, k: int = 0) -> str:
-        return self.s[self.i + k] if self.i + k < len(self.s) else ""
-
-    def take(self, c: str) -> bool:
-        if self.s.startswith(c, self.i):
-            self.i += len(c)
-            return True
-        return False
-
-    def digits(self) -> str:
-        j = self.i
-        while self.peek() and self.peek() in DIGITS:
-            self.i += 1
-        return self.s[j : self.i]
-
-    def integer(self) -> str | None:
-        """Digits with grouping commas removed, or None when no digit is here."""
-        run = self.digits()
-        if not run:
+def normalise(t: str) -> str | None:
+    """Rule 2 on a code-unit string; None where a grouping run stands before a slash (2.2's syntax at once)."""
+    t = "".join("-" if c in DASHES else c for c in t)
+    runs = grouping_runs(t)
+    for _, end in runs:
+        k = end
+        while k < len(t) and t[k] in BEFORE_SLASH:
+            k += 1
+        if t[k : k + 1] == "/":
             return None
-        if len(run) <= 3 and run[0] != "0":
-            while self.peek() == "," and all(self.peek(k) in DIGITS and self.peek(k) for k in (1, 2, 3)):
-                if self.peek(4) and self.peek(4) in DIGITS:
-                    break
-                run += self.s[self.i + 1 : self.i + 4]
-                self.i += 4
-        return run
-
-    def signed(self) -> int | None:
-        sign = -1 if self.take("-") else 1
-        if sign == 1:
-            self.take("+")
-        run = self.digits()
-        return sign * int(run) if run else None
-
-    def done(self) -> bool:
-        return self.i == len(self.s)
+    kept, last = [], 0
+    for start, end in runs:
+        kept += (t[last:start], "".join(c for c in t[start:end] if c not in NARROW_SET))
+        last = end
+    kept.append(t[last:])
+    t = "".join(" " if c in NARROW_SET else "*" if c in TIMES else c for c in "".join(kept))
+    return SPACES_AND_TABS.sub(" ", t).strip(ENDS)
 
 
-def typed(whole: str, n: str, d: str) -> dict[str, str]:
-    return {"whole": str(int(whole)), "n": str(int(n)), "d": str(int(d))}
-
-
-def body(text: str, percent: bool) -> dict[str, object] | str:
-    sc = Scan(text)
-    first = sc.integer()
-    if first is not None:
-        at = sc.i
-        if sc.take(" ") and (num := sc.integer()) is not None:
-            sc.take(" ")
-            if sc.take("/"):
-                sc.take(" ")
-                den = sc.integer()
-                if den is not None and sc.done():
-                    if percent:
-                        return "syntax"
-                    if int(den) == 0:
-                        return "zero-denominator"
-                    if not 0 < int(num) < int(den):
-                        return "syntax"
-                    value = int(first) + Fraction(int(num), int(den))
-                    return {"form": "mixed", "value": value, "places": 0, "figures": 0,
-                            "typed": typed(first, num, den)}
-        sc.i = at
-        sc.take(" ")
-        if sc.take("/"):
-            sc.take(" ")
-            den = sc.integer()
-            if den is None or not sc.done() or percent:
-                return "syntax"
-            if int(den) == 0:
-                return "zero-denominator"
-            value = Fraction(int(first), int(den))
-            return {"form": "fraction", "value": value, "places": 0, "figures": 0,
-                    "typed": typed("0", first, den)}
-        sc.i = at
-    whole = first or ""
-    frac = sc.digits() if sc.take(".") else None
-    if whole + (frac or "") == "":
-        return "syntax"
-    exp = None
-    if sc.peek() in ("e", "E") and sc.peek():
-        sc.i += 1
-        exp = sc.signed()
-        if exp is None:
-            return "syntax"
-    else:
-        at = sc.i
-        sc.take(" ")
-        if sc.peek() and sc.peek() in "*xX":
-            sc.i += 1
-            sc.take(" ")
-            if not sc.take("10^") or (exp := sc.signed()) is None:
-                return "syntax"
-        else:
-            sc.i = at
-    if not sc.done() or (percent and exp is not None):
-        return "syntax"
-    if exp is not None and abs(exp) > 1000:
-        return "out-of-range"
-    value = Fraction(int(whole + (frac or "") or "0"), 10 ** len(frac or "")) * Fraction(10) ** (exp or 0)
-    form = "percent" if percent else "standard-form" if exp is not None else "integer" if frac is None else "decimal"
-    figures = len((whole + (frac or "")).lstrip("0"))
-    return {"form": form, "value": value, "places": len(frac or ""), "figures": figures, "typed": None}
-
-
-def parse(raw: str, units: list[str]) -> dict[str, object]:
-    if len(raw.encode("utf-16-le", "surrogatepass")) // 2 > 200:
-        return {"ok": False, "reason": "too-long"}
-    text = normalise(raw)
-    if not text:
-        return {"ok": False, "reason": "empty"}
-    if grouped_before_slash(raw):
-        return {"ok": False, "reason": "syntax"}
-    sign = text[0] if text[0] in "+-" else ""
-    rest = text[len(sign) :].removeprefix(" ") if sign else text
-    unit = None
-    for u in sorted((u for u in units if u), key=len, reverse=True):
-        if rest[: len(u)].lower() == u.lower():
-            rest = rest[len(u) :].removeprefix(" ")
-        elif len(u) <= len(rest) and rest[-len(u) :].lower() == u.lower():
-            rest = rest[: -len(u)].removesuffix(" ")
-        else:
+def strip_unit(t: str, units: Iterable[str]) -> tuple[str | None, str]:
+    """Rule 5: the unit as listed and the text without it, or None and the text."""
+    for unit in sorted((u for u in units if u), key=lambda u: -len(code_units(u))):
+        spelt = code_units(unit)
+        k, key = len(spelt), _lower(spelt)
+        if len(t) < k:
             continue
-        unit = u
-        break
-    percent = unit is None and rest.endswith("%")
+        if _lower(t[:k]) == key:
+            rest = t[k:]
+            return unit, rest[1:] if rest[:1] == " " else rest
+        if _lower(t[len(t) - k :]) == key:
+            rest = t[: len(t) - k]
+            return unit, rest[:-1] if rest[-1:] == " " else rest
+    return None, t
+
+
+def _integer_part(t: str, i: int) -> tuple[int, int] | None:
+    """Rule 7's integer part at i as (end, value): a grouped integer where one starts, else a plain run."""
+    j = i
+    while j < len(t) and _digit(t[j]):
+        j += 1
+    if j == i:
+        return None
+    k = j
+    if t[i] != "0" and j - i <= 3:
+        while k + 4 <= len(t) and t[k] == "," and all(map(_digit, t[k + 1 : k + 4])):
+            k += 4
+    return k, int(t[i:k].replace(",", ""))
+
+
+def _signed_digits(t: str, i: int) -> tuple[int, int] | None:
+    """An optional sign and one or more digits at i, as (end, value)."""
+    j = i + 1 if t[i : i + 1] in ("+", "-") else i
+    k = j
+    while k < len(t) and _digit(t[k]):
+        k += 1
+    return (k, int(t[i:k])) if k > j else None
+
+
+def _fraction(t: str, percent: bool) -> Number | Failure:
+    """Rule 7's mixed and fraction shapes and their checks, in 7.2's order."""
+    first = _integer_part(t, 0)
+    if first is None:
+        return SYNTAX
+    whole, top = None, first
+    if t[first[0] : first[0] + 1] == " ":
+        second = _integer_part(t, first[0] + 1)
+        if second is not None:
+            whole, top = first, second
+    i = top[0] + (t[top[0] : top[0] + 1] == " ")
+    if t[i : i + 1] != "/":
+        return SYNTAX
+    i += 1 + (t[i + 1 : i + 2] == " ")
+    bottom = _integer_part(t, i)
+    if bottom is None or bottom[0] != len(t) or percent:
+        return SYNTAX
+    w, n, d = 0 if whole is None else whole[1], top[1], bottom[1]
+    if d == 0:
+        return Failure("zero-denominator")
+    if whole is not None and not 0 < n < d:
+        return SYNTAX
+    return Number("fraction" if whole is None else "mixed", w + Fraction(n, d), 0, 0, (w, n, d), None)
+
+
+def _decimal_like(t: str, percent: bool) -> Number | Failure:
+    """Rule 7's decimal-like shape and its checks, in 7.2's order."""
+    head = _integer_part(t, 0)
+    i = head[0] if head else 0
+    digits, places = t[:i].replace(",", ""), 0
+    point = t[i : i + 1] == "."
+    if point:
+        j = i + 1
+        while j < len(t) and _digit(t[j]):
+            j += 1
+        digits, places, i = digits + t[i + 1 : j], j - i - 1, j
+    exponent = None
+    if t[i : i + 1] in ("e", "E"):
+        read = _signed_digits(t, i + 1)
+        if read is None:
+            return SYNTAX
+        i, exponent = read
+    else:
+        k = i + (t[i : i + 1] == " ")
+        if t[k : k + 1] in ("*", "x", "X"):
+            k += 1 + (t[k + 1 : k + 2] == " ")
+            read = _signed_digits(t, k + 3) if t[k : k + 3] == "10^" else None
+            if read is None:
+                return SYNTAX
+            i, exponent = read
+    if i != len(t) or not digits:
+        return SYNTAX
+    if exponent is not None and percent:
+        return SYNTAX
+    if exponent is not None and abs(exponent) > EXPONENT_LIMIT:
+        return Failure("out-of-range")
+    value = Fraction(int(digits), 10**places) * Fraction(10) ** (exponent or 0)
+    form = "percent" if percent else "standard-form" if exponent is not None else "decimal" if point else "integer"
+    return Number(form, value, places, len(digits.lstrip("0")), None, None)
+
+
+def body(t: str, percent: bool) -> Number | Failure:
+    """Rule 7 on the text rules 4 to 6 leave: a slash makes it a mixed number or a fraction, or nothing."""
+    return _fraction(t, percent) if "/" in t else _decimal_like(t, percent)
+
+
+def parse(text: str, units: Sequence[str] = ()) -> Number | Failure:
+    """Read a typed number under 7.2's rules 1 to 9."""
+    typed = code_units(text)
+    if len(typed) > MAX_LENGTH:
+        return Failure("too-long")
+    t = normalise(typed)
+    if t is None:
+        return SYNTAX
+    if not t:
+        return Failure("empty")
+    negative = t[0] == "-"
+    if t[0] in ("-", "+"):
+        t = t[2:] if t[1:2] == " " else t[1:]
+    unit, t = strip_unit(t, units)
+    percent = unit is None and t[-1:] == "%"
     if percent:
-        rest = rest[:-1].removesuffix(" ")
-    read = body(rest, percent)
-    if read == "syntax" and rest.count(",") == 1 and not isinstance(body(rest.replace(",", "."), percent), str):
-        read = "decimal-comma"
-    if isinstance(read, str):
-        return {"ok": False, "reason": read}
-    value = -read["value"] if sign == "-" else read["value"]  # type: ignore[operator]
-    return {"ok": True, **read, "value": spell(value), "unit": unit}
+        t = t[:-2] if t[-2:-1] == " " else t[:-1]
+    read = body(t, percent)
+    if isinstance(read, Failure):
+        if read == SYNTAX and t.count(",") == 1 and isinstance(body(t.replace(",", "."), percent), Number):
+            return Failure("decimal-comma")
+        return read
+    return Number(read.form, -read.value if negative else read.value, read.places, read.figures, read.typed, unit)
 
 
-EDGES = [
-    "11", "-3", "1,000", "0.25", ".25", "305.", "2/3", "-10 / 109", "2 1/3", "25%", "66.7 %", "3.2e5",
-    "3.2 x 10^5", "3.2\u00D710^-3", "3.2\u00B710^4", "\u22125", "\u20135", "1\u202F000", "1\u00A0234.5", "0,5",
-    "1,5", "12,34", "1,00", "0,500", "1,000,000", "12,345.678", "1234,567", "1,0001", "", "   ", "-", "--5",
-    "+5", "abc", "1/0", "2 0/3", "2 4/3", "2 3/3", "0 1/2", "1e1000", "1e1001", "1e-1000", "2.5e+3", "3.2 e5",
-    "10^5", "x10^5", "5.e3", "007", "0.0350", "1200", "1.20e3", "-0", "-.5", ".", "1.2.3", "1/2/3", "1 000",
-    "1  /  2", "1\t1/2", "25 %", "-25%", "1/2%", "1e3%", "0,5%", "12,5e3", "\u00A312.50", "-\u00A35", "\u00A3-5",
-    "12.50 \u00A3", "11 outcomes", "11 OUTCOMES", "250 bp", "250bp", "5 ms", "5s", "\u00A3", "% 5", "5%%",
-    "\uFF15", "\u0665", "1\u00B2", "3.2 * 10^ 5", "3.2 *10^5", "3.2X10^5", "1e", "1e+", "4 1 / 2", "1,000/3",
-    "1,000 1/2", "1" * 201, " 7 ", "7\n", "\n7",
-    # Added after the adversarial review of 8 October 2026: signs, typed parts and narrow spaces.
-    "+33.1%", "+ 5", "- 5", "\u2212 5", "+-5", "-+5", "++5", "+", "+\u00A35", "- \u00A35", "4/6", "2 2/4",
-    "-4 / 6", "0/5", "2\u00A01/3", "1\u202F1/2", "2\u20091/3", "1\u00A0234\u00A0567", "12\u2009345.678",
-    "0\u00A0500", "1\u00A02345", "1\u00A0000,5", "0.123\u2009456", "1234\u00A0567\u00A0890",
-    "1\u00A0234 1/2", "-1\u202F000", "1\u00A0000\u00A0\u00A0000", "1,234\u00A0567", "3.2\u2009\u00D7\u200910^5",
-    # Added after the review of b46c9e0: a narrow-space grouping before "/", and inside an exponent.
-    "2\u00A0125/250", "1\u202F125/250", "3\u2009100/200", "2\u2007125/250", "2\u200A125/250", "12\u00A0345/7",
-    "1\u00A0000 / 3", "1\u00A0000\u00A0/3", "1\u00A0000\t/3", "1\u00A0000/0", "-1\u00A0000/3", "\u22121\u00A0000/3",
-    "1\u00A0000\u00A0000/7", "\u00A31\u00A0000/3", "3/1\u00A0000", "1\u00A0000\u00A01/2", "0\u00A0500/3",
-    "3.2e1\u00A0000", "3.2E1\u00A0000", "1e-1\u00A0000", "1e+1\u00A0000", "1e\u22121\u00A0000", "3.2 x 10^1\u00A0000",
-    "3.2\u00D710^\u22121\u202F000", "1e1\u00A0000/3", "5-1\u00A0000",
+def out(result: Number | Failure) -> dict[str, object]:
+    """A result as a golden line's `out`."""
+    if isinstance(result, Failure):
+        return {"ok": False, "reason": result.reason}
+    typed = None if result.typed is None else dict(zip(("whole", "n", "d"), map(str, result.typed), strict=True))
+    return {
+        "ok": True,
+        "form": result.form,
+        "value": spell(result.value),
+        "places": result.places,
+        "figures": result.figures,
+        "typed": typed,
+        "unit": result.unit,
+    }
+
+
+# Fixed cases. "~" in a text stands for a narrow space: the case is written once for each of the five.
+NO_UNITS: tuple[str, ...] = ()
+POUND = ("£",)
+FIXED: list[tuple[str, tuple[str, ...]]] = [
+    # Rule 1: the length in code units, before anything else.
+    ("1" * 200, NO_UNITS),
+    ("1" * 201, NO_UNITS),
+    (" " * 201, NO_UNITS),
+    ("x" * 201, NO_UNITS),
+    (" " * 199 + "7", NO_UNITS),
+    ("\U0001f600" * 100, NO_UNITS),
+    ("\U0001f600" * 100 + "1", NO_UNITS),
+    ("1" * 199 + "\U0001f600", NO_UNITS),
+    ("1~000/" + " " * 194, NO_UNITS),
+    ("1~000/" + " " * 195, NO_UNITS),
+    # Rule 2.1: every dash and minus, at the start, after a space and in an exponent.
+    *((f"{dash}5", NO_UNITS) for dash in sorted(DASHES)),
+    ("\u2212 5", NO_UNITS),
+    ("1e\u22123", NO_UNITS),
+    ("3.2 \u00d7 10^\u20133", NO_UNITS),
+    ("5\u20133", NO_UNITS),
+    # Rule 2.2: grouping runs, each example of 7.2 and the slash check.
+    ("1~000", NO_UNITS),
+    ("1~234~567", NO_UNITS),
+    ("12~345.5", NO_UNITS),
+    ("1~000,5", NO_UNITS),
+    ("3/1~000", NO_UNITS),
+    ("0~500", NO_UNITS),
+    ("1~2345", NO_UNITS),
+    ("0.123~456", NO_UNITS),
+    ("3.2e1~000", NO_UNITS),
+    ("1e-1~000", NO_UNITS),
+    ("1e\u22121~000", NO_UNITS),
+    ("1E+1~000", NO_UNITS),
+    ("5x10^1~000", NO_UNITS),
+    ("1~000~0000", NO_UNITS),
+    ("2~125/250", NO_UNITS),
+    ("12~345/7", NO_UNITS),
+    ("1~000/0", NO_UNITS),
+    ("1~000/s", ("s",)),
+    ("1~000 /3", NO_UNITS),
+    ("1~000\t/3", NO_UNITS),
+    ("1~000~~/3", NO_UNITS),
+    ("1~000~/~3", NO_UNITS),
+    ("1~000/2~000", NO_UNITS),
+    ("2~1/3", NO_UNITS),
+    ("1~000~1/2", NO_UNITS),
+    ("1~000~000.5", NO_UNITS),
+    ("\u22121~000", NO_UNITS),
+    ("£1~000", POUND),
+    ("1~000%", NO_UNITS),
+    ("1~000,000", NO_UNITS),
+    ("1,000~000", NO_UNITS),
+    ("1234~567", NO_UNITS),
+    (".1~000", NO_UNITS),
+    (",1~000", NO_UNITS),
+    ("1/2~000", NO_UNITS),
+    ("1~000~1~000", NO_UNITS),
+    ("1~0001~000", NO_UNITS),
+    ("1 000", NO_UNITS),
+    ("1~000 1/2", NO_UNITS),
+    ("~5~", NO_UNITS),
+    ("1~000,5/2", NO_UNITS),
+    ("1~000/2,5", NO_UNITS),
+    # Rules 2.3 to 2.6.
+    ("2\u00a01/3", NO_UNITS),
+    ("3.2\u00d710^5", NO_UNITS),
+    ("3.2\u00b710^5", NO_UNITS),
+    ("3.2\u22c510^5", NO_UNITS),
+    ("2\u00d73", NO_UNITS),
+    ("2\t1/3", NO_UNITS),
+    ("2  1/3", NO_UNITS),
+    ("2 \t 1/3", NO_UNITS),
+    ("1 \t/ \t2", NO_UNITS),
+    (" 5 ", NO_UNITS),
+    ("\t5\n", NO_UNITS),
+    ("\r\n5\r\n", NO_UNITS),
+    ("\v5\f", NO_UNITS),
+    ("\u30005", NO_UNITS),
+    ("\ufeff5", NO_UNITS),
+    ("5\u2028", NO_UNITS),
+    ("\u00855", NO_UNITS),
+    ("1\n000", NO_UNITS),
+    ("2\n1/3", NO_UNITS),
+    ("2 \n 1/3", NO_UNITS),
+    ("5\v", NO_UNITS),
+    # Rule 3.
+    ("", NO_UNITS),
+    (" ", NO_UNITS),
+    ("\t\n\r\v\f", NO_UNITS),
+    ("\u00a0", NO_UNITS),
+    ("\u00a0 \u202f", NO_UNITS),
+    ("\u3000", NO_UNITS),
+    # Rule 4.
+    ("+-5", NO_UNITS),
+    ("++5", NO_UNITS),
+    ("£-5", POUND),
+    ("+33.1%", NO_UNITS),
+    ("-£5", POUND),
+    ("+£5", POUND),
+    ("-+5", NO_UNITS),
+    ("--5", NO_UNITS),
+    ("- -5", NO_UNITS),
+    ("5-", NO_UNITS),
+    ("+ 5", NO_UNITS),
+    ("-  5", NO_UNITS),
+    ("-", NO_UNITS),
+    ("+", NO_UNITS),
+    ("- ", NO_UNITS),
+    ("- £ 5", POUND),
+    ("£ -5", POUND),
+    # Rule 5.
+    ("5 ms", ("s", "ms")),
+    ("5ms", ("s", "ms")),
+    ("5s", ("s", "ms")),
+    ("5 MS", ("ms",)),
+    ("Ms 5", ("ms",)),
+    ("ms5", ("m", "ms")),
+    ("5kg", ("KG", "kg")),
+    ("5kg", ("kg", "KG")),
+    ("5 Kg", ("g", "kg")),
+    ("£5£", POUND),
+    ("£5p", ("£", "p")),
+    ("£ 5", POUND),
+    ("5 £", POUND),
+    ("5£", POUND),
+    ("£  5", POUND),
+    ("5", ("", "s")),
+    ("5s", ("", "s")),
+    ("5", ("",)),
+    ("5%", ("",)),
+    ("25%", ("%",)),
+    ("25 %", ("%",)),
+    ("%25", ("%",)),
+    ("2.5%", ("%",)),
+    ("1/4%", ("%",)),
+    ("1e3%", ("%",)),
+    ("£12.50", POUND),
+    ("12.5", POUND),
+    ("£25%", POUND),
+    ("-5 s", ("s",)),
+    ("5 s 1", ("s",)),
+    ("11 outcomes", ("outcomes",)),
+    ("11 Outcomes", ("outcomes",)),
+    ("11", ("outcomes",)),
+    ("250 bp", ("bp", "%")),
+    ("2.5 %", ("bp", "%")),
+    ("5x10^3", ("x",)),
+    ("5x", ("x",)),
+    ("5e3", ("e",)),
+    ("5e", ("e",)),
+    ("£", POUND),
+    ("£%", POUND),
+    ("5\u03c9", ("\u03a9",)),
+    ("5k", ("\u212a",)),
+    ("5SS", ("\u00df",)),
+    ("5\u00df", ("\u00df",)),
+    ("5\u0130", ("\u0130",)),
+    ("5i", ("\u0130",)),
+    ("5\U00010428", ("\U00010400",)),
+    ("5 \u03c3\u03b1\u03c2", ("\u03a3\u0391\u03a3",)),
+    ("5 \u03c3\u03b1\u03c3", ("\u03a3\u0391\u03a3",)),
+    ("5", ("€", "£", "$")),
+    ("5 €", ("$", "€")),
+    ("1/2 s", ("s",)),
+    ("2 1/3 s", ("s",)),
+    ("3.2e5 s", ("s",)),
+    # 7.2 is silent on a unit with more code units than the text: the twin never matches one, so a shorter is tried.
+    ("5\u0130", ("5i\u0307", "\u0130")),
+    ("\u01305", ("i\u03075", "\u0130")),
+    ("5 \u0130", ("5 i\u0307", "\u0130")),
+    ("\u0130", ("i\u0307",)),
+    # Rule 6.
+    ("25%", NO_UNITS),
+    ("25 %", NO_UNITS),
+    ("66.7 %", NO_UNITS),
+    ("-25%", NO_UNITS),
+    ("25%%", NO_UNITS),
+    ("%", NO_UNITS),
+    ("% 25", NO_UNITS),
+    ("25  %", NO_UNITS),
+    (".5%", NO_UNITS),
+    ("5.%", NO_UNITS),
+    ("0%", NO_UNITS),
+    ("1,000%", NO_UNITS),
+    ("1 %", NO_UNITS),
+    # Rule 7: integers, decimals, figures and places.
+    ("11", NO_UNITS),
+    ("-3", NO_UNITS),
+    ("+5", NO_UNITS),
+    ("1,000", NO_UNITS),
+    ("12,345,678", NO_UNITS),
+    ("007", NO_UNITS),
+    ("0", NO_UNITS),
+    ("-0", NO_UNITS),
+    ("0000", NO_UNITS),
+    ("0.25", NO_UNITS),
+    (".25", NO_UNITS),
+    ("305.", NO_UNITS),
+    ("1,000.5", NO_UNITS),
+    ("0.0120", NO_UNITS),
+    ("1200", NO_UNITS),
+    ("0.", NO_UNITS),
+    ("00.00", NO_UNITS),
+    ("-0.0", NO_UNITS),
+    ("1,2345", NO_UNITS),
+    ("01,000", NO_UNITS),
+    ("1,000,00", NO_UNITS),
+    # Rule 7: fractions and mixed numbers.
+    ("2/3", NO_UNITS),
+    ("4/6", NO_UNITS),
+    ("-10 / 109", NO_UNITS),
+    ("007/3", NO_UNITS),
+    ("0/5", NO_UNITS),
+    ("-0/5", NO_UNITS),
+    ("1,000/3", NO_UNITS),
+    ("3/1,000", NO_UNITS),
+    ("1/0", NO_UNITS),
+    ("0/0", NO_UNITS),
+    ("1/0%", NO_UNITS),
+    ("2/3%", NO_UNITS),
+    ("1 /2", NO_UNITS),
+    ("1/ 2", NO_UNITS),
+    ("1 / 2", NO_UNITS),
+    ("1//2", NO_UNITS),
+    ("1/2/3", NO_UNITS),
+    ("/2", NO_UNITS),
+    ("1/", NO_UNITS),
+    ("1.5/2", NO_UNITS),
+    ("1/-2", NO_UNITS),
+    ("1/+2", NO_UNITS),
+    ("2 1/3", NO_UNITS),
+    ("-2 1/3", NO_UNITS),
+    ("0 1/2", NO_UNITS),
+    ("2 1/0", NO_UNITS),
+    ("2 0/3", NO_UNITS),
+    ("2 3/3", NO_UNITS),
+    ("2 4/3", NO_UNITS),
+    ("1 1/2%", NO_UNITS),
+    ("1,000 1/2", NO_UNITS),
+    ("2 1 / 3", NO_UNITS),
+    ("2 1/ 3", NO_UNITS),
+    ("007 01/02", NO_UNITS),
+    ("2 1/3/4", NO_UNITS),
+    ("1 2 3/4", NO_UNITS),
+    ("0 0/1", NO_UNITS),
+    ("2 1/2.5", NO_UNITS),
+    # Rule 7: standard form and the exponent's bound.
+    ("3.2e5", NO_UNITS),
+    ("3.2E5", NO_UNITS),
+    ("3.2e+5", NO_UNITS),
+    ("3.2e-3", NO_UNITS),
+    ("3.2 x 10^5", NO_UNITS),
+    ("3.2x10^5", NO_UNITS),
+    ("3.2X10^5", NO_UNITS),
+    ("3.2 * 10^5", NO_UNITS),
+    ("3.2*10^-3", NO_UNITS),
+    ("5.e3", NO_UNITS),
+    ("5.x10^3", NO_UNITS),
+    ("5. x 10^3", NO_UNITS),
+    ("5 x10^3", NO_UNITS),
+    ("5x 10^3", NO_UNITS),
+    ("3.20e5", NO_UNITS),
+    ("0.00e5", NO_UNITS),
+    ("1,000e3", NO_UNITS),
+    ("5 e3", NO_UNITS),
+    ("5e 3", NO_UNITS),
+    ("5x10^ 3", NO_UNITS),
+    ("5x10 ^3", NO_UNITS),
+    ("5xx10^3", NO_UNITS),
+    ("5x11^3", NO_UNITS),
+    ("5^3", NO_UNITS),
+    ("10^3", NO_UNITS),
+    ("x10^3", NO_UNITS),
+    (".e3", NO_UNITS),
+    ("e5", NO_UNITS),
+    (".", NO_UNITS),
+    ("e1001", NO_UNITS),
+    ("5e", NO_UNITS),
+    ("5e+", NO_UNITS),
+    ("1e5.5", NO_UNITS),
+    ("1e1000", NO_UNITS),
+    ("1e-1000", NO_UNITS),
+    ("-9.5E+1000", NO_UNITS),
+    ("1e0001000", NO_UNITS),
+    ("1e1001", NO_UNITS),
+    ("1e-1001", NO_UNITS),
+    ("1e01001", NO_UNITS),
+    ("0e1001", NO_UNITS),
+    ("1x10^1001", NO_UNITS),
+    ("1 * 10^-1001", NO_UNITS),
+    ("1e1001%", NO_UNITS),
+    ("1e3%", NO_UNITS),
+    ("1e" + "9" * 190, NO_UNITS),
+    # Rule 7: other text.
+    ("abc", NO_UNITS),
+    ("1.2.3", NO_UNITS),
+    ("1..2", NO_UNITS),
+    ("--", NO_UNITS),
+    ("1,2,3", NO_UNITS),
+    ("\u00bd", NO_UNITS),
+    ("\u0663", NO_UNITS),
+    ("\uff11", NO_UNITS),
+    ("0x10", NO_UNITS),
+    ("Infinity", NO_UNITS),
+    ("NaN", NO_UNITS),
+    ("1_000", NO_UNITS),
+    ("\U0001d7d1", NO_UNITS),
+    # Rule 8.
+    ("0,5", NO_UNITS),
+    ("0,500", NO_UNITS),
+    ("12,5%", NO_UNITS),
+    ("1,5e1001", NO_UNITS),
+    (",5", NO_UNITS),
+    ("5,", NO_UNITS),
+    (",", NO_UNITS),
+    ("1,5,5", NO_UNITS),
+    ("1,5/2", NO_UNITS),
+    ("1,00", NO_UNITS),
+    ("1,0000", NO_UNITS),
+    ("1,5e3", NO_UNITS),
+    ("1,5x10^3", NO_UNITS),
+    ("1,5e3%", NO_UNITS),
+    ("-0,5", NO_UNITS),
+    ("£0,50", POUND),
+    ("1,5 1/2", NO_UNITS),
+    ("1,000,5", NO_UNITS),
+    ("12,34", NO_UNITS),
+    ("1,234", NO_UNITS),
+    ("1,5 %", NO_UNITS),
+    (",e5", NO_UNITS),
 ]
-UNITS = [[], ["\u00A3"], ["bp", "%"], ["outcomes"], ["s", "ms"]]
-PIECES = [
-    "1", "2", "0", "7", "05", "123", ",", ".", " ", "/", "-", "e", "%", "\u00A3", "x", "^", "10", "\u2212",
-    "\u00A0", "bp", "+", "\u2009",
-]
 
 
-def wellformed(rng: random.Random) -> str:
-    """A number in one of the forms, with random signs, grouping, spacing and exponent spellings."""
-    whole = rng.randint(0, 10 ** rng.randint(1, 10))
-    grouped = f"{whole:,}".replace(",", rng.choice([",", ",", "\u00A0", "\u202F"]))
-    head = rng.choice(["", "-", "\u2212", "+", "- ", "+ "]) + (grouped if rng.random() < 0.5 else str(whole))
-    point = "." + str(rng.randint(0, 10 ** rng.randint(0, 6))) if rng.random() < 0.6 else ""
-    den = rng.randint(0, 10**6)
-    gap = rng.choice([" ", "\u00A0", "\u2009"])
-    return rng.choice([
-        head + point,
-        head + point + rng.choice(["e", "E", " x 10^", "\u00d710^", " * 10^"]) + str(rng.randint(-40, 40)),
-        head + point + rng.choice(["%", " %"]),
-        head + rng.choice(["/", " / "]) + str(den),
-        f"{head}{gap}{rng.randint(0, den)}/{den}",
-    ])
+def fixed() -> list[tuple[str, tuple[str, ...]]]:
+    """FIXED with each "~" written as each narrow space in turn."""
+    return [(text.replace("~", s), units) for text, units in FIXED for s in (NARROW if "~" in text else ("~",))]
+
+
+# Random cases: the pieces a typed number is made of, and the noise that breaks one.
+SIGNS = ("", "", "", "", "-", "+", "- ", "\u2212", "\u2013", "\uff0d", "\u2212 ", "+ ")
+UNIT_LISTS: tuple[tuple[str, ...], ...] = (
+    NO_UNITS,
+    NO_UNITS,
+    NO_UNITS,
+    POUND,
+    ("%",),
+    ("s", "ms"),
+    ("bp", "%"),
+    ("outcomes",),
+    ("£", "$"),
+    ("m", "km", "cm"),
+    ("x",),
+)
+SPACES = ("", "", "", " ", "\t", "  ", *NARROW)
+NOISE = (
+    *"0123456789 ,./%eE+-x^*£s\t",
+    *NARROW,
+    "\u2212",
+    "\u00d7",
+    "\n",
+    "\u3000",
+    "10^",
+    "1,000",
+    "\U0001f600",
+    "\u00a0000",
+)
+
+
+def _digits(rng: random.Random, lo: int, hi: int) -> str:
+    return "".join(rng.choice("0123456789") for _ in range(rng.randint(lo, hi)))
+
+
+def _integer_text(rng: random.Random) -> str:
+    r = rng.random()
+    if r < 0.5:
+        return str(rng.randint(0, 10 ** rng.randint(1, 9)))
+    if r < 0.6:
+        return "0" * rng.randint(1, 3) + _digits(rng, 1, 4)
+    sep = "," if r < 0.8 else rng.choice(NARROW)
+    groups = (f"{rng.randint(0, 999):03d}" for _ in range(rng.randint(1, 3)))
+    return str(rng.randint(1, 999)) + "".join(sep + g for g in groups)
+
+
+def _mantissa(rng: random.Random) -> str:
+    kind = rng.randrange(4)
+    if kind == 0:
+        return _integer_text(rng)
+    if kind == 1:
+        return f"{_integer_text(rng)}.{_digits(rng, 0, 6)}"
+    if kind == 2:
+        return f".{_digits(rng, 1, 6)}"
+    return f"{_integer_text(rng)}."
+
+
+def _exponent(rng: random.Random) -> str:
+    mark = rng.choice(("e", "E", "x10^", " x 10^", "*10^", " * 10^", "\u00d710^", " \u00d7 10^", "X10^", "\u22c510^"))
+    size = rng.choice((rng.randint(0, 30), rng.randint(990, 1010)))
+    return mark + rng.choice(("", "", "+", "-", "\u2212")) + "0" * rng.choice((0, 0, 0, 2)) + str(size)
+
+
+def _well_formed(rng: random.Random) -> str:
+    shape = rng.randrange(6)
+    if shape == 0:
+        return _integer_text(rng)
+    if shape == 1:
+        return _mantissa(rng)
+    if shape == 2:
+        return f"{_integer_text(rng)}{rng.choice(SPACES)}/{rng.choice(SPACES)}{_integer_text(rng)}"
+    if shape == 3:
+        d = rng.randint(0, 60)
+        return f"{_integer_text(rng)}{rng.choice(SPACES)} {rng.randint(0, d + 1)}/{d}"
+    if shape == 4:
+        return _mantissa(rng) + rng.choice(("%", " %", "\u00a0%"))
+    return _mantissa(rng) + _exponent(rng)
+
+
+def _mutate(rng: random.Random, text: str) -> str:
+    for _ in range(rng.randint(1, 3)):
+        i = rng.randint(0, len(text))
+        op = rng.randrange(4)
+        if op == 0:
+            text = text[:i] + rng.choice(NOISE) + text[i:]
+        elif op == 1:
+            text = text[:i] + text[i + 1 :]
+        elif op == 2:
+            text = text[:i] + rng.choice(NOISE) + text[i + 1 :]
+        else:
+            text = text.replace(".", ",", 1) if rng.randrange(2) else text.replace(",", ".", 1)
+    return text
+
+
+def _random_case(rng: random.Random) -> tuple[str, tuple[str, ...]]:
+    units = rng.choice(UNIT_LISTS)
+    text = _well_formed(rng)
+    if units and rng.random() < 0.6:
+        unit = rng.choice(units)
+        unit = unit.upper() if rng.random() < 0.2 else unit
+        gap = rng.choice(("", " "))
+        text = f"{unit}{gap}{text}" if rng.randrange(2) else f"{text}{gap}{unit}"
+    text = rng.choice(SIGNS) + text
+    if rng.random() < 0.15:
+        text = rng.choice(SPACES) + text + rng.choice(("", " ", "\n", "\t", "\u202f"))
+    if rng.random() < 0.35:
+        text = _mutate(rng, text)
+    if rng.random() < 0.03:
+        text = text + " " * (MAX_LENGTH - len(code_units(text)) + rng.randint(-1, 1))
+    return text, units
+
+
+def cases() -> list[tuple[str, tuple[str, ...]]]:
+    """Every golden case once, in a reproducible order."""
+    rng = random.Random("zqverify.num_parse")
+    drawn = fixed() + [_random_case(rng) for _ in range(RANDOM_CASES)]
+    return list(dict.fromkeys(drawn))
 
 
 def goldens() -> list[dict[str, object]]:
-    rng = random.Random("zqverify.num_parse")
-    inputs = [(text, units) for text in EDGES for units in UNITS[:1]]
-    inputs += [(text, units) for text in EDGES for units in UNITS[1:] if any(u and u in text for u in units)]
-    inputs += [(wellformed(rng), rng.choice(UNITS)) for _ in range(500)]
-    for _ in range(1500):
-        text = "".join(rng.choice(PIECES) for _ in range(rng.randint(1, 8)))
-        inputs.append((text, rng.choice(UNITS)))
-    return [{"in": text, "units": units, "out": parse(text, units)} for text, units in inputs]
+    return [{"in": text, "units": list(units), "out": out(parse(text, units))} for text, units in cases()]
 
 
 def render() -> str:
     """JSON Lines: one case per line, so a changed case is a one-line diff."""
-    return "".join(json.dumps(case) + "\n" for case in goldens())
+    return "".join(json.dumps(line) + "\n" for line in goldens())
 
 
 def main() -> None:
