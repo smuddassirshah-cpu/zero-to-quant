@@ -128,9 +128,9 @@ One object, saved to `localStorage['zq.state']`, versioned (`v: 1`). `ZQ.state` 
   homework: { '<course>/homework-1': { assignedAt, due, submitted, score, items, selfMarks } },
   exams: { 'topic-1.5': { attempts: [{ at, score, passed, bySkill }] } },
   skills: { '<skill>': { mp, elo: 1200, seen, correct, lastAt } },
-  redo: [ { id, kind: 'screen'|'quiz'|'homework', ref: { course, lesson, screen }, due, interval: 7|30, misses } ],
+  redo: [ { id, kind: 'screen'|'quiz'|'homework'|'exam', ref: { course, lesson, screen } | { course, lesson, item } | { exam, item }, due, interval: 7|30, misses } ],
   notebook: [ { course, lesson, name, tex, note, at } ],
-  drills: { '<id>': { verified, code, at } },
+  drills: { '<id>': { verified, code, at, draft, draftAt } },   // draft: unverified code (drills.draft), keyed by drill id or item path
   warmup: { history: [ { date, score } ] },
   hours: [ { date, block: 'main'|'build'|'review'|'mental', minutes, source } ],
   streak: { current, best, lastDay, restDays, restEarnedAt, days: { 'YYYY-MM-DD': true } },
@@ -146,6 +146,9 @@ Rules the mutators enforce (from `design-research.md` 6.2, 8.2, 5.7):
 - Redo: a wrong screen or item is queued for 7 days; a correct redo re-queues at 30 days; a correct 30-day redo leaves the queue. A wrong redo resets to 7 days.
 - Streak: a day qualifies on 3 graded problems or 1 finished lesson, quiz, review or homework. One rest day is earned per 7 qualifying days, at most 2 held, applied automatically to a missed day.
 - Hours: lesson, quiz, review and homework time is logged to `main`; drills to `build`; redo and practice to `review`; warm-up to `mental`. Manual entries are allowed from You.
+- Practice and weekly problems: `practiceResult({ results: [{ id, ok, skills, difficulty }], source })` updates the Elo skill scores and the streak's problem count only (no XP, no MP).
+- Exams: `examFinished` queues every missed item that has an id for redo, kind `exam`, ref `{ exam, item }`; `ZQ.select.resolve` returns that exam item without hints.
+- Drill drafts: `drills.draft(id, code)` keeps unverified code in the document (so Export carries it); `drills.draft(id)` reads it and `drills.draft(id, null)` clears it. The drill screen keys by drill id; the code widget keys by item path (`course/lesson/item`, `exam/item`).
 - Export produces the JSON document; import replaces it after validation of `v`.
 
 ## 7. Lesson player (`engine/player.js`)
@@ -167,7 +170,7 @@ Per screen:
 
 The same player renders level reviews, homework, redo sessions, practice sets and exams in "set mode": a list of items with dot progress, no hints, one attempt per item, and the timer and flagging that `exam.js` already has. Exams keep their own screen (`exam.js`) for the start card, timer, flag list and result, but render each item through `player.renderItem(item, host, { mode: 'exam' })`.
 
-Test hook: `window.ZQ.test = { current(): { screenIndex, kind }, answerCorrect(): applies the authored answer to the widget, check(), continue() }`. The playthrough script uses it.
+Test hook: `window.ZQ.test = { current(): { screenIndex, kind }, answerCorrect(): applies the authored answer to the widget, check(), continue() }`. The playthrough script uses it. The same four calls exist in set mode: `runSet` (level reviews, practice, redo) and the set page around it, the homework page and the exam screen each install `ZQ.test`, where `current().kind` is `loading`, `start` (continue() begins), `item` (answerCorrect, check, continue), `submit` (homework: continue() submits) or `done`. On homework and exam pages check() grades the shown item without marking it; the marks come on submit as for the learner. Every widget has an authored correct answer the hook can apply, including `balance` (the shortest sequence of the allowed moves to the target) and `sketch` (the control points on the target curve).
 
 ## 8. Widgets (`engine/widgets/`)
 
@@ -276,7 +279,7 @@ All screens keep their current layout and CSS and drop their fixtures.
 ## 11. Tools
 
 - `tools/validate.mjs` (node, no dependencies): loads `curriculum.json`, every course, lesson, review, homework, exam and drill file; checks the schema and the semantic rules in `AUTHORING.md` section 7; prints one line per problem with the file and path; exits non-zero on any error; `--summary` prints lesson counts per course and the list of mapped-but-unwritten lessons.
-- `tools/playthrough.mjs` (Playwright, Chromium at `/opt/pw-browsers/chromium`): starts the static server, opens every lesson, drives `ZQ.test` to answer every screen correctly and finish the quiz, asserts zero console errors and that the completion screen is reached; also opens every other route once. `--lesson <course>/<lesson>` runs one.
+- `tools/playthrough.mjs` (Playwright, Chromium at `/opt/pw-browsers/chromium`): starts the static server, opens every lesson, drives `ZQ.test` to answer every screen correctly and finish the quiz, asserts zero console errors and that the completion screen is reached; also opens every other route once. `--lesson <course>/<lesson>` runs one. `--sets` plays every written level review and homework, `--exams` every exam, through the set-mode hook, answering every item correctly and asserting the recorded result is full marks (and the exam passed); `--set <course>/<id>` and `--exam <id>` pick one; `--all` runs lessons, routes, sets and exams.
 
 ## 12. Build phases and file ownership
 

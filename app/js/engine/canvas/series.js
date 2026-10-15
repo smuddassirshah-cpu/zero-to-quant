@@ -14,8 +14,12 @@
     const n = Math.max(1, ...list.map((s) => (s.values || s.ohlc || []).length));
     const dates = params.x === 'dates' ? (params.dates || []).map((d) => new Date(d + (String(d).length <= 10 ? 'T00:00:00Z' : ''))) : null;
     const fmtPct = (v, st) => K.fmtTick(v * 100, st * 100) + '%';
-    const fmtY = params.format === 'pct' ? fmtPct : params.format === 'money' ? (v, st) => (v < 0 ? '−' : '') + (params.currency || '$') + K.fmtTick(Math.abs(v), st) : null;
-    const fmtVal = (v) => (params.format === 'pct' ? K.fmt(v * 100, 1) + '%' : params.format === 'money' ? (v < 0 ? '−' : '') + (params.currency || '$') + K.fmt(Math.abs(v), 2) : K.fmt(v, 2));
+    const fmtY = params.format === 'pct' ? fmtPct : params.format === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || params.currency || '$') + K.fmtTick(Math.abs(v), st) : null;
+    /* Marker {value} labels. `decimals` fixes the places and keeps trailing zeros; `money: "£"` is format money with
+       that currency and two places unless `decimals` says otherwise */
+    const money = params.money || (params.format === 'money' ? params.currency || '$' : null), dec = params.decimals ?? (params.money ? 2 : null);
+    const num = (v, dp) => (dec != null ? Math.abs(v).toLocaleString('en-GB', { minimumFractionDigits: dec, maximumFractionDigits: dec }) : K.fmt(Math.abs(v), dp));
+    const fmtVal = (v) => (params.format === 'pct' ? (v < 0 ? '−' : '') + num(v * 100, 1) + '%' : money ? (v < 0 ? '−' : '') + money + num(v, 2) : (v < 0 ? '−' : '') + num(v, 2));
     const valuesOf = (s) => (s.values || (s.ohlc ? s.ohlc.map((c) => c[3]) : []));
     const yRange = (() => {
       if (params.y) return params.y;

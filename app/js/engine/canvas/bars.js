@@ -55,6 +55,14 @@
       const t = C.niceTicks(0, m * 1.08, 5); return t[t.length - 1] >= m * 1.02 ? t[t.length - 1] : m * 1.15;
     };
     const fmtY = proportion ? (v, st) => K.fmtTick(v, st) : (v, st) => K.fmtTick(v, st);
+    /* Value labels (showValues): `decimals` fixes the places and keeps trailing zeros; `money: "£"` prefixes the
+       currency (two places unless `decimals` says otherwise) */
+    const fmtV = (v) => {
+      const fixed = (x, d) => Math.abs(x).toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+      if (params.money) return (v < 0 ? '−' : '') + params.money + fixed(v, params.decimals ?? 2);
+      if (params.decimals != null) return (v < 0 ? '−' : '') + fixed(v, params.decimals);
+      return K.fmt(v, 3);
+    };
 
     /* Run controls, built once and kept across redraws */
     const chips = [];
@@ -123,7 +131,7 @@
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-selw' }));
           o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
-          if (params.showValues && (v || sim)) vals.append(K.txt(x(i) + bw / 2, y - 9, proportion && sim ? K.fmt(v, 3) : K.fmt(v, 3), { size: 12, cls: 'cvb-muted' }));
+          if (params.showValues && (v || sim)) vals.append(K.txt(x(i) + bw / 2, y - 9, fmtV(v), { size: 12, cls: 'cvb-muted' }));
           R.tappable(o, c.id, c.label);
           bars.append(o);
         });
@@ -157,6 +165,9 @@
         /* Current heights by category id: proportions or counts as drawn. */
         values: () => Object.fromEntries(cats.map((c, i) => [c.id, heights(R.state)[i]])),
         counts: () => Object.fromEntries(cats.map((c, i) => [c.id, tally(Math.round(R.state.ran || 0))[i]])),
+        /* Explore controls: bind a category (its label or id, or "values.<label>") to move that bar's height */
+        setParam: (name, v) => { const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); },
+        getParam: (name) => { const i = catIndex(String(name).replace(/^values\./, '')); return i >= 0 ? heights(R.state)[i] : undefined; },
       }),
     };
     return K.make(host, params, ctx, def);

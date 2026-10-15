@@ -22,7 +22,7 @@ Authoring reference for the canvas kinds built on `_base.js` by E3. The lesson s
 - `highlight(ids, on = true)`, `flash(ids)` (amber, twice at 150ms, for show-why), `unflash()`, `mark(ids, cls, on)`, `unmark(cls?)` for the graded classes `is-correct`, `is-notyet`, `is-reveal`, `is-dim` (an amber cross badge comes with `is-notyet`), `lock(on)`, `clone(host)`, `on('change', fn)`, `enable(mode, opts)`, `destroy()`.
 - `enable('tap', { max, only })`: elements become buttons with `aria-pressed`; Space toggles, arrow keys move focus spatially, Enter is left to the player. Emits `{ selected, id, on }`.
 - `enable('drag', { ids })`: emits `{ id, x, y, phase: 'move' | 'end' }` (x, y in canvas units). Drag canvases expose `points()` and `place(id, pos, { instant })`.
-- Explore controls (`canvas.controls`) call `setParam(name, value)`: number-line moves the point with that id, circle accepts `angle`.
+- Explore controls (`canvas.controls`) call `setParam(name, value)`: number-line moves the point with that id, circle accepts `angle`, area takes `split`, `split.rows`, `split.cols`, `grid`, `grid.rows`, `grid.cols` and `shade`. A control without `start` opens at the bound value's current value, read with `getParam(name)` when the canvas has it (number-line: the point's x; area: the current split, grid or fractional shade), else from the state; with `start` it opens there and applies it to the canvas. `format: "fraction"` writes the readout as a fraction (0.375 reads 3/8).
 - Created with `ctx.static` or `ctx.mode: 'static'` (the explanation modal), a canvas has no interaction and no timed fades.
 
 ---
@@ -94,9 +94,11 @@ One to three sets in a universe; each region is its exact shape.
 
 **params**: `min` (0), `max` (10), `step` (1, tick spacing), `snap` (defaults to `step`), `labels` (true; a number k labels every k-th tick; or `[{ "x": 0.5, "text": "half" }]`; `false` for none; labels thin out automatically so they never collide), `format: "decimal" | "fraction"`, `ends: false` removes the axis arrowheads.
 
-**state**: `points: [{ "id": "p1", "x": 2.5, "label": "a", "colour": 2, "drag": true }]`, `intervals: [{ "id": "i1", "from": 1, "to": 3, "open": [false, true], "label": "" }]` (`from` or `to` null makes a ray; later intervals stack above the first), `arrows: [{ "id": "j1", "from": -2, "to": 1, "label": "+3" }]` (jumps drawn as arcs).
+**state**: `points: [{ "id": "p1", "x": 2.5, "label": "a", "colour": 2, "drag": true, "labelPos": "above" }]`, `intervals: [{ "id": "i1", "from": 1, "to": 3, "open": [false, true], "label": "", "labelPos": "above" }]` (`from` or `to` null makes a ray; later intervals stack above the first), `arrows: [{ "id": "j1", "from": -2, "to": 1, "label": "+3" }]` (jumps drawn as arcs). `points`, `intervals` and `arrows` also take keyed patches: `{ "points": { "p1": { "x": 3 } } }` changes `p1` only (an id not yet listed is added).
 
-**ids**: the point, interval and arrow ids. **events**: drag (`{ id, x, y: 0, phase }`, snapped). Draggable points: those listed by `enable('drag', { ids })`, else those with `drag: true`, else all. Arrow keys move a focused point by `snap` (Shift: ten times).
+**labels**: `labelPos` is `above`, `below` (under the tick labels), `left` or `right` (beside the point, raised clear of the axis; for an interval, beside its ends). Without it a point label goes above, or to the side away from a jump arrow that starts or ends at the point (below when arrows leave both ways). Labels that would overlap each other or an arrow's label are stacked 18px apart, and the drawing grows to fit.
+
+**ids**: the point, interval and arrow ids. **events**: drag (`{ id, x, y: 0, phase }`, snapped); tap on points (`enable('tap')`, as the tap-regions widget does: points become buttons and their ids are the region ids). Draggable points: those listed by `enable('drag', { ids })`, else those with `drag: true`, else all (never in tap mode). Arrow keys move a focused point by `snap` (Shift: ten times). **methods**: `points()`, `place(id, x)`, `setParam(id, x)`, `getParam(id)`.
 
 ```json
 { "kind": "number-line", "params": { "min": -5, "max": 5, "step": 1 },
@@ -126,7 +128,14 @@ Fraction and multiplication area models, geometric probability.
 
 **params**: `shape: "rect" | "square" | "circle"`, `grid: [rows, cols]` (a circle uses `sectors: n`), `size: [w, h]` (rectangle proportions, default 3 by 2), `colSizes`, `rowSizes` (unequal widths for area models such as 30 + 4), `labels: { "top", "bottom", "left", "right" }`, `colLabels`, `rowLabels`.
 
-**state**: `shade` as cell ids, a fraction (`0.375`: whole cells in reading order when it lands on whole cells, else a strip from the left or a sector from twelve o'clock; changes between fractions animate), `{ "rows": k }`, `{ "cols": k }`, or `{ "<set>": any of those }` to overlay up to three shadings (set 1 a solid wash, sets 2 and 3 hatched), `split: [rows, cols]` (dashed cut lines; for a circle `[n]` radii), `point: [x, y]` or a list (unit coordinates, y up; a circle uses -1 to 1).
+**state**: `shade` as cell ids, a fraction (`0.375`: whole cells in reading order when it lands on whole cells, else a strip from the left or a sector from twelve o'clock; changes between fractions animate), `{ "rows": k }`, `{ "cols": k }`, or `{ "<set>": any of those }` to overlay up to three shadings (set 1 a solid wash, sets 2 and 3 hatched), `split: [rows, cols]` (dashed cut lines; for a circle `[n]` radii), `grid: [rows, cols]` (or `n` columns; for a circle `[n]` sectors: re-cuts the shape, rebuilding the cells, so a fractional `shade` lands on the new cells and the cell ids follow the new grid), `point: [x, y]` or a list (unit coordinates, y up; a circle uses -1 to 1). Grid lines inside a shading are redrawn over it in a darker tone of the shading's colour so the cuts stay legible.
+
+**controls** (the learner re-cuts): bind `grid.cols` (or `grid`, `grid.rows`) to change the pieces, `split.rows` / `split.cols` (or `split`, the columns) to draw cut lines, `shade` to set a fractional shading; add `"format": "fraction"` to the `shade` control for a 3/8 readout.
+
+```json
+{ "kind": "area", "params": { "shape": "rect", "grid": [1, 2], "size": [4, 2] }, "state": { "shade": 0.5 },
+  "controls": [{ "bind": "grid.cols", "min": 2, "max": 12, "step": 2, "label": "Pieces" }, { "bind": "shade", "min": 0, "max": 1, "step": 0.125, "label": "Shaded", "format": "fraction" }] }
+```
 
 **ids**: cells `c{i}{j}` one-based from the top left (`c{i}-{j}` when either index is 10 or more), circle sectors `c1{j}` clockwise from twelve o'clock, points `pt1`, `pt2`. **events**: tap (cells).
 
@@ -182,6 +191,6 @@ An HTML table in the canvas wrapper.
 
 ## Canvas-bound widgets
 
-- **tap-regions** (`answer`, `max`, `wrong: [{ "id", "set", "flash" }]`, `countWord`): works on any canvas with tap mode (grid, tree, venn, area, boxes, table, and E4's tappable kinds). Keys: a matching `wrong[]` id, else the first wrongly selected id, else the first missed answer id. `showWhy` flashes the extra ids of the matched set (or `flash`), else the wrong picks.
-- **balance** (`moves: ["remove-both", "remove-unknown-both", "halve-both", "divide-both", "remove-item"]`, `target: { "left": ["unknown"], "right": [4] }`): chips under the canvas and a live equation. Keys: `unbalanced`, `unsolved`. A target matches either way round; weights compare by total.
-- **drag-point** (`points: [{ "id", "target", "tol" }]`, `wrong: [{ "id", "region": { "x": [a, b], "y": [c, d] } | { "angle": [a, b] }, "canvas": {patch} }]`): targets are `[x, y]`, or a number on number-line (x) and circle (angle). Default `tol` 0.25. Keys: a `wrong[]` id whose region holds a point, else the first point off target.
+- **tap-regions** (`answer`, `max`, `wrong: [{ "id", "set", "flash" }]`, `countWord`): works on any canvas with tap mode (grid, tree, venn, area, boxes, table, number-line points, and E4's tappable kinds). Keys: a matching `wrong[]` id, else the first wrongly selected id, else the first missed answer id. `showWhy` flashes the extra ids of the matched set (or `flash`), else the wrong picks. Count mode: `{ "count": 3, "among": ["c11", "c12", "c13", "c14"] }` with no `answer` is correct when exactly `count` regions are selected, all within `among` when given; keys are a matching `wrong[]` id, else the first pick outside `among`, else `too-few` or `too-many`; the count reads "2 of 3 shaded" (with `countWord`); reveal selects the first `count` of `among`.
+- **balance** (`moves: ["remove-both", "remove-unknown-both", "halve-both", "divide-both", "remove-item"]`, `target: { "left": ["unknown"], "right": [4] }`): chips under the canvas and a live equation. Keys: `unbalanced`, `unsolved`. A target matches either way round; weights compare by total. The test hook's correct answer is the shortest list of the allowed moves (at most six) that reaches the target (`ZQ.grade.balanceMoves`), so the target must be reachable with them.
+- **drag-point** (`points: [{ "id", "target", "tol" }]`, `wrong: [{ "id", "region": { "x": [a, b], "y": [c, d] } | { "angle": [a, b] }, "canvas": {patch} }]`): targets are `[x, y]`, or a number on number-line (x) and circle (angle). Default `tol` 0.25. Keys: a `wrong[]` id whose region holds a point, else the first point off target (its point id, which `byKey` may use).

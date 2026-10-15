@@ -34,3 +34,10 @@ Raised later (ratio level 1):
 
 22. `area` canvas: `setParam` for `shade` fraction and `split`, with a `format: "percent"` option on slider readouts.
 23. Slider widget: the value bubble overlaps the label near the minimum.
+
+Raised later (ratio level 3):
+
+24. `place` widget on a `boxes` canvas: grade the learner's own drag of items into containers (`mode: "boxes"`, answer as `{ container: [itemIds] }`).
+25. `plane`: a `labelSide` (`above`|`below`) or offset on function labels.
+26. `plane`: `canvas.controls` able to drive a point's coordinate (`bind: "points.p1.x"`).
+27. `canvas.controls[].start`: also apply the start value to the canvas on mount so they never disagree.

@@ -400,12 +400,13 @@ Payoff or profit and loss at expiry against the price of the underlying.
 
 **Display and keys**
 - `unitLabel`: `%` is a suffix, `£`, `$` and `€` are prefixes, and a word is a suffix after a space.
+- `format: "fraction"` writes the value as a fraction in lowest terms (0.375 reads 3/8), on the thumb and at the ends.
 - Snap ticks show when there are 20 steps or fewer.
 - Arrow keys step; Shift+arrow steps ten times.
 
 **Grading**
 - `grade()`: `ok` when |value − answer| ≤ `tol`. `key` is the first `wrong[]` range (inclusive) that holds the value, else null.
-- Without `answer` it is an explore control and `grade()` is always ok. The player can render `canvas.controls` entries with this widget.
+- Without `answer` it is an explore control and `grade()` is always ok. The player renders `canvas.controls` entries as plain range inputs with the same binding rules (a canvas `setParam` wins when the kind has one), the same `format`, and `start`: given, the control opens there and applies it to the canvas; left out, it opens at the bound value's current value (`state.params`, `params.params` or the dotted state path), else at `min`.
 - `reveal()` animates the thumb and the bound canvas to the answer over 600 ms, in hint indigo.
 
 ## Widget: sketch
@@ -427,6 +428,6 @@ Payoff or profit and loss at expiry against the price of the underlying.
 **Feedback**
 - `markGraded` recolours the curve.
 - `showWhy()` highlights the span between control points with the worst error.
-- `reveal()` moves the points onto the target and shows the dashed target.
+- `reveal()` moves the points onto the target and shows the dashed target. `answer()` (the test hook's correct answer) puts the same points on the target curve, so a sketch whose reveal leaves the band also fails the playthrough.
 
 **Advice for authors:** use at least 5 control points for a kinked target. A smooth curve through 4 points cannot follow a kink within a small band.
