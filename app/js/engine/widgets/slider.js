@@ -1,7 +1,8 @@
 /* slider widget (design-research 5.3 no. 5): 4px track, 24px thumb in the manipulable blue, 44px hit area,
    value label above the thumb, optional snap ticks; arrow keys step and Shift+arrow steps ten times.
    spec: { kind: 'slider', min, max, step, start, bind, label, unitLabel, format, answer, tol, wrong: [{ id, from, to }] }
-   format: "fraction" shows the value as a fraction in lowest terms (0.375 reads 3/8), on the thumb and the ends.
+   format: "fraction" shows the value as a fraction in lowest terms (0.375 reads 3/8), "percent" as a percentage
+   (0.375 reads 37.5%), on the thumb and the ends.
    bind drives the canvas live: "p" sets state.params.p; a dotted path such as "strike.c1" sets state.strike.c1.
    Without `answer` it is an explore control (grade() is always ok), which is how canvas.controls entries render. */
 (function () {
@@ -13,7 +14,7 @@
     const dp = (() => { const s = String(+step.toFixed(10)); const i = s.indexOf('.'); return i < 0 ? 0 : s.length - i - 1; })();
     const unit = spec.unitLabel || '';
     const fmt = (v) => {
-      if (spec.format === 'fraction') { const f = Z.grade.fmtFrac(+(+v).toFixed(10)).replace('-', '−'); return unit ? `${f} ${unit}` : f; }
+      if (spec.format === 'fraction' || spec.format === 'percent') { const f = Z.grade.fmtAs(+(+v).toFixed(10), spec.format).replace('-', '−'); return unit ? `${f} ${unit}` : f; }
       let n = (+v).toFixed(dp); if (/^-0(\.0+)?$/.test(n)) n = n.slice(1);
       n = n.replace('-', '−');
       if (Math.abs(v) >= 1000) n = (v < 0 ? '−' : '') + Math.abs(+v).toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp });

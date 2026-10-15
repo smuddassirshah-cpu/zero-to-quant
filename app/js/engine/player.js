@@ -157,7 +157,7 @@
         /* Explore controls: each slider drives canvas.setParam(bind, v) (else state.params[bind], or the state path for a
            dotted bind). `start` sets the opening value and is applied to the canvas; without it the slider opens at the
            bound value's current value (a number-line point's x, an area split, a param), else at min. */
-        const shown = (c, v) => (c.format === 'fraction' ? G().fmtFrac(v) : G().fmtNum(v));
+        const shown = (c, v) => G().fmtAs(v, c.format);
         const drive = (c, v) => {
           if (!canvas) return;
           try {

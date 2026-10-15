@@ -9,7 +9,8 @@
      loadScript(url, ms)           lazy script loader with a timeout; one promise per url
      maths()                       Promise<{ mathlive: bool, ce: ComputeEngine|null }> for the expression widget, 6 s budget
      exprEqual(ce, a, b)           symbolic equivalence after simplify, with a 5-point numeric second opinion
-     fmtNum(v), fmtFrac(v)         a number for display; fmtFrac writes 0.375 as 3/8 (slider and control format "fraction")
+     fmtNum(v), fmtFrac(v), fmtAs(v, format)   a number for display; fmtFrac writes 0.375 as 3/8; fmtAs applies a slider
+                                   or control `format`: "fraction" (3/8) or "percent" (37.5%)
      correctValue(spec)            the authored answer in the shape the widget's set() takes (test hook)
      balanceMoves(spec)            the moves that take the authored pans to the balance target
      sketchPoints(spec)            the sketch control points placed on the target curve
@@ -51,6 +52,8 @@
     if (Number.isInteger(v)) return String(v);
     return String(+v.toFixed(6));
   };
+  /* Readout formats for sliders and explore controls: "fraction" (3/8), "percent" (0.375 -> 37.5%), else the number */
+  const fmtAs = (v, format) => (format === 'fraction' ? fmtFrac(v) : format === 'percent' ? fmtNum(+(v * 100).toFixed(4)) + '%' : fmtNum(v));
   /* A number as a fraction a/b in lowest terms (denominator up to maxDen), else fmtNum: 0.375 -> "3/8", 2 -> "2" */
   const fmtFrac = (v, maxDen = 100) => {
     if (!Number.isFinite(v)) return '';
@@ -250,5 +253,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, normExpr, loadScript, maths, exprEqual, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, exprEqual, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();
