@@ -6,9 +6,8 @@ from __future__ import annotations
 
 import dataclasses
 import json
-from fractions import Fraction
-
 import string
+from fractions import Fraction
 
 import pytest
 from hypothesis import assume, example, given, strategies as st
