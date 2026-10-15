@@ -6,8 +6,9 @@
  * - `WidgetViewProps`, `WidgetView` and `WidgetModule` come from 5.3's first listing (widget.ts there): they
  *   name `VNode` and `WidgetApi`, and preact's types bring the DOM lib with them, so they stay out of the
  *   pure widget.ts that @zq/compiler reads (see its decision notes).
- * - `WidgetServices.tex` is `TexService` from render.ts: 5.11 declares it in src/engine/render, which this
- *   package may not import (4.5). `python` and `sql` are 5.9's runtimes from platform.ts.
+ * - `WidgetServices.tex` is `TexService` from render.ts, where 5.11's listing puts it (B45): src/engine/render,
+ *   which implements it, is outside what this package may import (4.5). `python` and `sql` are 5.9's
+ *   runtimes from platform.ts.
  * - `CasService` is declared in answer.ts, which `GradeCtx` needs without the DOM lib, and re-exported here.
  */
 import type { ReadonlySignal } from '@preact/signals-core';
