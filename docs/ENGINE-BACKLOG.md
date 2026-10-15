@@ -127,3 +127,9 @@ Raised later (functions level 2):
 
 46. Derive captions and plane point labels: document `(expr).toFixed(2)` and ternaries, and add `fixed(v, d)` and `money(v)` helpers.
 47. `plane`: tap mode on points (`enable('tap')`) so tap-regions can ask "which point is (−2, 4)?".
+
+Raised later (functions level 3):
+
+48. Validator: accept an `explore` screen whose interaction is a `drag: true` point (or document the controls plus derive pattern).
+49. `plane` tangent on a piecewise-linear function at a corner: use one-sided slope or suppress; `length` in pixel units option.
+50. `series` `drawdown`: a `money` label option (absolute fall) for cumulative P&L that starts at zero.
