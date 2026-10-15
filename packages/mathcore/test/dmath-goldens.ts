@@ -3,9 +3,18 @@
 // result whose bits differ from its correctly rounded reference, so with the goldens it records the bits of
 // all 10,000 results. A NaN is compared as NaN: ECMAScript leaves a NaN's bit pattern to the engine [sourced:
 // ECMA-262, NumericToRawBytes].
-import { exp, expm1, log, log1p, tanh } from '@zq/mathcore/dmath';
+import { cos, exp, expm1, log, log1p, pow, sin, tanh } from '@zq/mathcore/dmath';
 
-const FUNCTIONS: Readonly<Record<string, (...args: number[]) => number>> = { exp, log, log1p, expm1, tanh };
+const FUNCTIONS: Readonly<Record<string, (...args: number[]) => number>> = {
+  exp,
+  log,
+  log1p,
+  expm1,
+  tanh,
+  pow,
+  sin,
+  cos,
+};
 
 export interface Case {
   readonly fn: string;
