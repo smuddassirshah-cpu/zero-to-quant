@@ -5,6 +5,7 @@ import noColourLiterals from './rules/no-colour-literals.ts';
 import noEmptyCatch from './rules/no-empty-catch.ts';
 import noForbiddenApis from './rules/no-forbidden-apis.ts';
 import noInnerHtml from './rules/no-inner-html.ts';
+import noNondeterminism from './rules/no-nondeterminism.ts';
 
 const plugin = {
   meta: { name: 'eslint-plugin-zq', version: '0.1.0' },
@@ -14,6 +15,7 @@ const plugin = {
     'no-empty-catch': noEmptyCatch,
     'no-forbidden-apis': noForbiddenApis,
     'no-inner-html': noInnerHtml,
+    'no-nondeterminism': noNondeterminism,
   },
 } satisfies ESLint.Plugin;
 

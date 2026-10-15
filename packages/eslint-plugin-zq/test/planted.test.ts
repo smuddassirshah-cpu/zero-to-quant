@@ -1,6 +1,7 @@
-// Stage 1's definition of done: a planted violation of each lint rule fails. Each file is written
-// at a real path and linted with the repository's own eslint.config.js (the type-aware parser
-// needs the files on disk). The two sink files pass only at their exempt paths.
+// Stage 1's definition of done: a planted violation of each lint rule fails; stage 3's: a planted
+// `Math.random` in mathcore fails. Each file is written at a real path and linted with the
+// repository's own eslint.config.js (the type-aware parser needs the files on disk). The two sink
+// files pass only at their exempt paths, and the files outside a rule's reach pass.
 // Hygiene: every planted file starts with MARKER. Stale planted files from a killed run are
 // removed first; a file at a planted path without the marker is real, and the test refuses to
 // run rather than touch it (the sink paths become real files at stages 23 and 59). Cleanup
@@ -77,6 +78,67 @@ const violations = [
     code: "export * from '../screens/today/View.tsx';\n",
     message: 'engine/ may not import src/screens/today/View.tsx',
   },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_random.ts',
+    code: 'export function draw(): number {\n  return Math.random();\n}\n',
+    message: "'Math.random' is not seeded",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'src/widgets/__planted/logic.ts',
+    code: 'export function stamp(): number {\n  return Date.now();\n}\n',
+    message: "'Date' reads the clock",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'content/generators/__planted_exp.mjs',
+    code: 'export const grow = (x) => Math.exp(x);\n',
+    message: "'Math.exp' may differ between engines",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'content/generators/__planted_self.mjs',
+    code: 'const g = globalThis.globalThis;\nexport const draw = () => g.Math.random();\n',
+    message: "'globalThis' may be used here only through static members",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/dmath__planted_cube.ts',
+    code: 'export const cube = (x: number): number => x ** 3;\n',
+    message: "'**' may differ between engines",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/gen-kit/src/__planted_exp.mjs',
+    code: 'export const grow = (x) => Math.exp(x);\n',
+    message: "'Math.exp' may differ between engines",
+  },
+  // Node's own types, in mathcore's Node-only project, are the platform's.
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_node_clock.ts',
+    code: 'export const elapsed = (p: typeof performance, start: number): number => p.now() - start;\n',
+    message: "'performance.now' reads the clock",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_node_random.ts',
+    code: 'export const id = (c: typeof crypto): string => c.randomUUID();\n',
+    message: "'crypto.randomUUID' is not seeded",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_node_process.ts',
+    code: 'export const t = (p: NodeJS.Process): bigint => p.hrtime.bigint();\n',
+    message: "'process.hrtime' reads the host process",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_node_pid.ts',
+    code: 'export const id = (p: typeof process): number => p.pid;\n',
+    message: "'process.pid' reads the host process",
+  },
 ];
 
 // An inline directive does not switch a rule off: noInlineConfig reports the directive instead.
@@ -98,7 +160,37 @@ const sinks = [
   },
 ];
 
-const planted = [...violations, disabled, ...sinks];
+// Outside zq/no-nondeterminism's reach: transcendental Math in mathcore outside dmath, a package's tests
+// under both of the rule's rows, a module's own type named as a platform one, and one that a workspace
+// package exports, imported by the package's name.
+const clean = [
+  {
+    file: 'packages/mathcore/src/__planted_exp.ts',
+    code: 'export const grow = (x: number): number => Math.exp(x);\n',
+  },
+  {
+    file: 'packages/mathcore/test/__planted_clock.ts',
+    code: 'export const elapsed = (start: number): number => performance.now() - start;\n',
+  },
+  {
+    file: 'packages/gen-kit/test/__planted_exp.mjs',
+    code: 'export const grow = (x) => Math.exp(x);\n',
+  },
+  {
+    file: 'packages/contracts/src/__planted_window.ts',
+    code: 'export interface Performance {\n  sharpe: number;\n  now: number;\n}\nexport interface Window {\n  top: number;\n  parent: number;\n}\n',
+  },
+  {
+    file: 'packages/mathcore/src/__planted_window_use.ts',
+    code: "import type { Performance, Window } from '@zq/contracts/__planted_window';\nexport const score = (p: Performance, w: Window): number => p.sharpe + p.now + w.top + w.parent;\n",
+  },
+  {
+    file: 'packages/mathcore/src/__planted_portfolio.ts',
+    code: 'interface Performance {\n  sharpe: number;\n  drawdown: number;\n}\nexport const ratio = (p: Performance): number => p.sharpe / p.drawdown;\n',
+  },
+];
+
+const planted = [...violations, disabled, ...sinks, ...clean];
 const results = new Map<string, Result>();
 const createdFiles: string[] = [];
 const createdDirs: string[] = [];
@@ -162,6 +254,10 @@ describe('planted violations', () => {
   });
 
   it.each(sinks)('$file passes as a justified sink', ({ file }) => {
+    expect(results.get(file)?.messages).toEqual([]);
+  });
+
+  it.each(clean)('$file passes outside the rule', ({ file }) => {
     expect(results.get(file)?.messages).toEqual([]);
   });
 

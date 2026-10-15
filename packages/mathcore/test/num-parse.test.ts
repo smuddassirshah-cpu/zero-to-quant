@@ -337,7 +337,14 @@ describe("the parser's inverse", () => {
 
 describe('parity with tools/zqverify/num_parse.py', () => {
   it(`agrees on all ${golden.length} golden inputs`, () => {
+    expect(golden.length).toBeGreaterThanOrEqual(1500);
     for (const g of golden) expect(plain(g.in, g.units), JSON.stringify(g.in)).toEqual(g.out);
+  });
+
+  it('never matches a unit longer than the text', () => {
+    expect(parseNumber('5\u0130', ['5i\u0307', '\u0130'])).toMatchObject({ ok: true, unit: '\u0130' });
+    expect(parseNumber('\u01305', ['i\u03075', '\u0130'])).toMatchObject({ ok: true, unit: '\u0130' });
+    expect(parseNumber('5', ['55'])).toMatchObject({ ok: true, unit: null });
   });
 
   it('normalises as 7.2 says', () => {
