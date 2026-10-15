@@ -37,7 +37,7 @@
       base.append(svg('line', { class: 'cv-tick', x1: X(c * 0.95), y1: Y(s * 0.95), x2: X(c * 1.05), y2: Y(s * 1.05) }));
       if (P.tickLabels === false) continue;
       const tx = angleText(t), rr = 1.0 + (tx.tex ? 0.19 : 0.15);
-      const onAxis = t % 90 === 0, b = onAxis ? a + 0.17 : a; // labels on an axis sit just beside it
+      const onAxis = t % 90 === 0, b = onAxis ? a + (t % 360 === 0 ? -0.17 : 0.17) : a; // labels on an axis sit just beside it (0 below, clear of quadrant one)
       const lx = X(Math.cos(b) * rr), ly = Y(Math.sin(b) * rr);
       base.append(C.label(lx, ly, tx.s, { tex: tx.tex, w: 46, h: 34, cls: 'cv-muted cv-ticklabel', size: 12 }));
     }
