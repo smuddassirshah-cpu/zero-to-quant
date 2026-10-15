@@ -1,0 +1,118 @@
+{
+  "id": "rolling-mean",
+  "name": "Rolling mean",
+  "course": "numpy-pandas",
+  "skills": [
+    "pd-time"
+  ],
+  "difficulty": 4,
+  "fn": "rolling_mean",
+  "returns": "a list of floats",
+  "brief": "A rolling mean averages the last few values and moves along one step at a time. Traders use it to smooth a price series and to build trend signals. pandas does it with `.rolling(window).mean()`; here you build it by hand so you know what that line computes.\n\nWrite `rolling_mean(values, window)`. It returns the mean of every run of `window` consecutive values, in order.",
+  "definition": "With values $x_0, \\dots, x_{n-1}$ and window $w$, the mean ending at position $i$ is\n\n$$m_i = \\dfrac{1}{w} \\sum_{j=i-w+1}^{i} x_j, \\quad i = w - 1, \\dots, n - 1$$\n\nThat gives $n - w + 1$ means. Return an empty list when $w > n$. The window is always at least 1.",
+  "constraints": [
+    "$O(n)$ time. Recomputing each window from scratch is $O(nw)$ and runs out of time on the long test.",
+    "Standard library only. NumPy and pandas are not loaded.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Keep a running sum of the current window. When the window moves one step, add the new value and subtract the one that just left.",
+  "starter": "def rolling_mean(values, window):\n    \"\"\"Mean of each full window of values,\n    in order.\"\"\"\n    # Your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "rolling_mean([1, 2, 3, 4, 5], 2)",
+      "expect": "[1.5, 2.5, 3.5, 4.5]",
+      "note": "Four windows of two: (1, 2), (2, 3), (3, 4) and (4, 5).",
+      "compare": "isclose"
+    },
+    {
+      "call": "rolling_mean([10, 20, 30], 3)",
+      "expect": "[20.0]",
+      "note": "One window holds all three values.",
+      "compare": "isclose"
+    },
+    {
+      "call": "rolling_mean([4, 8], 3)",
+      "expect": "[]",
+      "note": "There is no full window of 3, so the list is empty.",
+      "compare": "isclose"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Window of one",
+      "call": "rolling_mean([3.0, 1.0, 4.0, 1.0, 5.0], 1)",
+      "expect": "[3.0, 1.0, 4.0, 1.0, 5.0]",
+      "compare": "isclose",
+      "why": "A window of 1 holds one value, so each mean is the value itself."
+    },
+    {
+      "name": "Window as long as the list",
+      "call": "rolling_mean([2.0, 4.0, 9.0], 3)",
+      "expect": "[5.0]",
+      "compare": "isclose",
+      "why": "There is exactly one full window, so return a list with one mean."
+    },
+    {
+      "name": "Window too long",
+      "call": "rolling_mean([2.0, 4.0], 3)",
+      "expect": "[]",
+      "compare": "isclose",
+      "why": "There is no full window of 3 in two values. Return an empty list."
+    },
+    {
+      "name": "Empty list",
+      "call": "rolling_mean([], 2)",
+      "expect": "[]",
+      "compare": "isclose",
+      "why": "No values means no windows. Return an empty list."
+    },
+    {
+      "name": "Negative values",
+      "call": "rolling_mean([-2.0, 4.0, -6.0, 8.0], 2)",
+      "expect": "[1.0, -1.0, 1.0]",
+      "compare": "isclose",
+      "why": "Each window holds the last `window` values only. Drop the oldest as the newest comes in."
+    },
+    {
+      "name": "Not a cumulative mean",
+      "call": "rolling_mean([1.0, 2.0, 3.0, 4.0, 10.0, 1.0], 3)",
+      "expect": "[2.0, 3.0, 5.666666666666667, 5.0]",
+      "compare": "isclose",
+      "why": "Average the last 3 values, not every value so far. The window moves along."
+    },
+    {
+      "name": "Daily closes",
+      "call": "rolling_mean([101.25, 99.8, 102.4, 97.15, 98.6, 103.9, 100.05, 104.2], 5)",
+      "expect": "[99.84, 100.37, 100.42, 100.78]",
+      "compare": "isclose",
+      "why": "Return one mean per full window, in order, as floats."
+    },
+    {
+      "name": "Long series, sampled",
+      "call": "rolling_mean(_walk(100000, 5, 100, 0.001), 1000)[::24750]",
+      "show": "rolling_mean(prices, 1000)[::24750]",
+      "note": "100,000 prices, window 1,000; five means are checked",
+      "expect": "[99.059348140087, 103.73541867035227, 102.43849010535179, 103.95877955833286, 108.5990428203002]",
+      "compare": "isclose",
+      "why": "This test has 100,000 values and a window of 1,000. Summing every window afresh takes about $10^8$ steps; a running sum takes $10^5$."
+    },
+    {
+      "name": "Long series, length",
+      "call": "len(rolling_mean(_walk(100000, 5, 100, 0.001), 1000))",
+      "show": "len(rolling_mean(prices, 1000))",
+      "note": "100,000 prices, window 1,000",
+      "expect": "99001",
+      "compare": "equal",
+      "why": "There are $n - w + 1 = 99{,}001$ full windows. A window starts at every position that leaves room for 1,000 values."
+    }
+  ],
+  "how": "Submit runs 9 hidden tests, two of them on 100,000 values with a window of 1,000. Lists are compared element by element, and each float counts when it is within a relative 1e-9 of the expected value.",
+  "where": "Prepares 1.1 level 3, time series in pandas: the same computation `.rolling()` performs.",
+  "solution": "def rolling_mean(values, window):\n    if window > len(values):\n        return []\n    total = sum(values[:window])\n    out = [total / window]\n    for i in range(window, len(values)):\n        # The new value comes in, the oldest leaves\n        total += values[i] - values[i - window]\n        out.append(total / window)\n    return out\n",
+  "notes": [
+    "The first window is summed once. After that each step costs one addition and one subtraction.",
+    "`values[i - window]` is the value that just left the window.",
+    "This is what pandas computes for `.rolling(window).mean()`, without the leading `NaN` values."
+  ],
+  "prelude": "def _walk(n, seed, start, step):\n    # Seeded random walk from an integer LCG, so every Python makes the same prices\n    x = seed\n    p = start\n    out = []\n    for _ in range(n):\n        x = (x * 1103515245 + 12345) % 2147483648\n        p = p * (1 + step * ((x % 2001 - 1000) / 1000))\n        out.append(p)\n    return out\n"
+}

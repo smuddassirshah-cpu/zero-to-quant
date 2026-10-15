@@ -1,0 +1,125 @@
+{
+  "id": "cumulative-pnl",
+  "name": "Cumulative P&L",
+  "course": "numpy-pandas",
+  "skills": [
+    "pd-time"
+  ],
+  "difficulty": 3,
+  "fn": "cumulative_pnl",
+  "returns": "a list of floats",
+  "brief": "A backtest turns a list of positions into profit and loss. The one rule that matters: a day earns what you held going into it, never what you decided at its close.\n\nWrite `cumulative_pnl(positions, prices)`. Both lists have one entry per day. `positions[t]` is the number of shares held after the close of day $t$. Return the running total of P&L for every day.",
+  "definition": "The P&L on day $t \\ge 1$ is the position held into the day times the price move:\n\n$$\\text{pnl}_t = q_{t-1} \\, (P_t - P_{t-1})$$\n\nThe cumulative P&L on day $t$ is the sum of $\\text{pnl}_1$ to $\\text{pnl}_t$, and it is 0 on day 0. Return a list as long as `prices`, or an empty list when there are no prices.",
+  "constraints": [
+    "$O(n)$ time. Re-summing every day from the start is $O(n^2)$ and runs out of time on the long test.",
+    "No trading costs. Positions may be negative (short) or fractional.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Start the total at 0.0 and the output at `[0.0]`. For each later day, add `positions[t - 1] * (prices[t] - prices[t - 1])` to the total and append it.",
+  "starter": "def cumulative_pnl(positions, prices):\n    \"\"\"Running total of daily P&L. positions[t]\n    is the holding after the close of day t.\"\"\"\n    # Your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "cumulative_pnl([1, 1, 1], [100, 102, 101])",
+      "expect": "[0.0, 2.0, 1.0]",
+      "note": "Holding one share: up 2, then down 1.",
+      "compare": "isclose"
+    },
+    {
+      "call": "cumulative_pnl([0, 10, 10], [50, 51, 53])",
+      "expect": "[0.0, 0.0, 20.0]",
+      "note": "The 10 shares are bought at the close of day 1, so the move from 50 to 51 earns nothing.",
+      "compare": "isclose"
+    },
+    {
+      "call": "cumulative_pnl([-5, -5], [20, 18])",
+      "expect": "[0.0, 10.0]",
+      "note": "Short 5 shares while the price falls by 2.",
+      "compare": "isclose"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Empty lists",
+      "call": "cumulative_pnl([], [])",
+      "expect": "[]",
+      "compare": "isclose",
+      "why": "No prices means no days. Return an empty list."
+    },
+    {
+      "name": "Single day",
+      "call": "cumulative_pnl([10], [100.0])",
+      "expect": "[0.0]",
+      "compare": "isclose",
+      "why": "The first day has no move yet, so the list is just `[0.0]`."
+    },
+    {
+      "name": "Never trades",
+      "call": "cumulative_pnl([0, 0, 0, 0], [100.0, 105.0, 98.0, 110.0])",
+      "expect": "[0.0, 0.0, 0.0, 0.0]",
+      "compare": "isclose",
+      "why": "Holding nothing earns nothing, whatever the price does."
+    },
+    {
+      "name": "No look-ahead",
+      "call": "cumulative_pnl([0, 5, 0, 5, 0], [100.0, 104.0, 101.0, 107.0, 103.0])",
+      "expect": "[0.0, 0.0, -15.0, -15.0, -35.0]",
+      "compare": "isclose",
+      "why": "Day $t$ earns what you held at the close of day $t - 1$. Using `positions[t]` trades on a price you had not seen."
+    },
+    {
+      "name": "Short position",
+      "call": "cumulative_pnl([-3, -3, -3], [50.0, 47.0, 49.0])",
+      "expect": "[0.0, 9.0, 3.0]",
+      "compare": "isclose",
+      "why": "A short position gains when the price falls: $-3 \\times (47 - 50) = 9$."
+    },
+    {
+      "name": "Long to short",
+      "call": "cumulative_pnl([2, -2, -2, 0], [10.0, 12.0, 11.0, 9.0])",
+      "expect": "[0.0, 4.0, 6.0, 10.0]",
+      "compare": "isclose",
+      "why": "Flip the sign of the position when it flips. Each day uses the previous close."
+    },
+    {
+      "name": "Fractional shares",
+      "call": "cumulative_pnl([0.5, 1.5, 1.5], [20.0, 22.0, 21.0])",
+      "expect": "[0.0, 1.0, -0.5]",
+      "compare": "isclose",
+      "why": "Positions can be fractions. Multiply, do not round."
+    },
+    {
+      "name": "Daily closes",
+      "call": "cumulative_pnl([100, 100, -50, -50, 0, 200, 200, 0], [101.25, 99.8, 102.4, 97.15, 98.6, 103.9, 100.05, 104.2])",
+      "expect": "[0.0, -145.00000000000028, 115.00000000000057, 377.50000000000057, 305.00000000000114, 305.00000000000114, -465.00000000000057, 365.00000000000057]",
+      "compare": "isclose",
+      "why": "Keep a running total and append it every day, starting with 0.0 on the first day."
+    },
+    {
+      "name": "Long series, final total",
+      "call": "cumulative_pnl([((i * 7919) % 11) - 5 for i in range(100000)], _walk(100000, 3, 100, 0.002))[-1]",
+      "show": "cumulative_pnl(positions, prices)[-1]",
+      "note": "100,000 days of a seeded random walk and changing positions",
+      "expect": "-46.353417887695116",
+      "compare": "isclose",
+      "why": "This test has 100,000 days. Re-summing from the start each day takes about $5 \\times 10^9$ steps; a running total takes $10^5$."
+    },
+    {
+      "name": "Long series, length",
+      "call": "len(cumulative_pnl([1] * 100000, _walk(100000, 3, 100, 0.002)))",
+      "show": "len(cumulative_pnl(positions, prices))",
+      "note": "100,000 days",
+      "expect": "100000",
+      "compare": "equal",
+      "why": "Return one total per day, including the 0.0 on the first day."
+    }
+  ],
+  "how": "Submit runs 10 hidden tests, the last on 100,000 days. Lists are compared element by element, and each float counts when it is within a relative 1e-9 of the expected value.",
+  "where": "Builds toward 1.1 level 3, time series in pandas, and the backtests of topic 2.5.",
+  "solution": "def cumulative_pnl(positions, prices):\n    if not prices:\n        return []\n    total = 0.0\n    out = [total]\n    for t in range(1, len(prices)):\n        # Yesterday's holding earns today's move\n        total += positions[t - 1] * (prices[t] - prices[t - 1])\n        out.append(total)\n    return out\n",
+  "notes": [
+    "`positions[t - 1]` is what you held through day $t$. Using `positions[t]` is look-ahead bias: it trades on a close you had not seen.",
+    "A running `total` adds one day at a time, so the whole list costs $O(n)$.",
+    "In pandas this is `(positions.shift(1) * prices.diff()).cumsum()`."
+  ],
+  "prelude": "def _walk(n, seed, start, step):\n    # Seeded random walk from an integer LCG, so every Python makes the same prices\n    x = seed\n    p = start\n    out = []\n    for _ in range(n):\n        x = (x * 1103515245 + 12345) % 2147483648\n        p = p * (1 + step * ((x % 2001 - 1000) / 1000))\n        out.append(p)\n    return out\n"
+}

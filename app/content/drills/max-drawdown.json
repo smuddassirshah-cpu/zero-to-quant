@@ -1,0 +1,125 @@
+{
+  "id": "max-drawdown",
+  "name": "Maximum drawdown",
+  "course": "py-found",
+  "skills": [
+    "pf-idioms",
+    "pf-functions"
+  ],
+  "difficulty": 3,
+  "fn": "max_drawdown",
+  "returns": "a float",
+  "brief": "Maximum drawdown is the worst fall from a high to a later low. Risk reports quote it beside volatility. It is the loss you would have sat through if you bought at the top.\n\nWrite `max_drawdown(prices)`. It takes prices in time order and returns the maximum drawdown as a fraction from 0 to 1.",
+  "definition": "The drawdown on day $t$ compares the price with the highest price so far:\n\n$$D_t = 1 - \\dfrac{P_t}{\\max\\limits_{s \\le t} P_s}$$\n\nThe maximum drawdown is $\\max_t D_t$. Return `0.0` for an empty list or a single price. Every price is a positive float.",
+  "constraints": [
+    "$O(n)$ time, where $n$ is the number of prices. One pass is enough.",
+    "$0 \\le n \\le 200{,}000$.",
+    "Standard library only. NumPy and pandas are not loaded.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Walk the list once and carry two numbers: the highest price so far, and the largest drawdown so far. Each new price either raises the peak or is measured against it.",
+  "starter": "def max_drawdown(prices):\n    \"\"\"Return the maximum drawdown\n    of prices, as a fraction.\"\"\"\n    # Your code here\n    return 0.0\n",
+  "examples": [
+    {
+      "call": "max_drawdown([100, 120, 90, 110])",
+      "expect": "0.25",
+      "note": "The peak is 120 and the lowest later price is 90, so $1 - \\tfrac{90}{120} = 0.25$.",
+      "compare": "isclose"
+    },
+    {
+      "call": "max_drawdown([50, 40, 60, 30, 70])",
+      "expect": "0.5",
+      "note": "The fall from 50 to 40 is 0.2. Then the new high of 60 falls to 30, which is $1 - \\tfrac{30}{60} = 0.5$.",
+      "compare": "isclose"
+    },
+    {
+      "call": "max_drawdown([100, 90, 95])",
+      "expect": "0.1",
+      "note": "The fall from 100 to 90 is 0.1. The rise to 95 does not change it.",
+      "compare": "isclose"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Empty list",
+      "call": "max_drawdown([])",
+      "expect": "0.0",
+      "compare": "isclose",
+      "why": "With no prices there is nothing to fall from. Return `0.0` before you read `prices[0]`."
+    },
+    {
+      "name": "Single price",
+      "call": "max_drawdown([100.0])",
+      "expect": "0.0",
+      "compare": "isclose",
+      "why": "One price has no later low, so its drawdown is `0.0`."
+    },
+    {
+      "name": "Rising prices",
+      "call": "max_drawdown([100.0, 101.0, 103.5, 110.0, 125.0])",
+      "expect": "0.0",
+      "compare": "isclose",
+      "why": "Prices that only rise never fall from a high. Measure each price against the highest price so far, not the overall high."
+    },
+    {
+      "name": "Falling prices",
+      "call": "max_drawdown([100.0, 90.0, 80.0, 50.0])",
+      "expect": "0.5",
+      "compare": "isclose",
+      "why": "The first price is the peak and every later price sits below it. Make sure the first day counts."
+    },
+    {
+      "name": "Crash, then recovery",
+      "call": "max_drawdown([100.0, 50.0, 75.0, 100.0, 120.0])",
+      "expect": "0.5",
+      "compare": "isclose",
+      "why": "A recovery does not undo the loss. Keep the largest drawdown, not the latest one."
+    },
+    {
+      "name": "New high after a drawdown",
+      "call": "max_drawdown([100.0, 80.0, 120.0, 60.0, 130.0])",
+      "expect": "0.5",
+      "compare": "isclose",
+      "why": "After 120 the peak is 120, not 100. Move the peak up whenever the price makes a new high."
+    },
+    {
+      "name": "Smaller second drawdown",
+      "call": "max_drawdown([100.0, 70.0, 100.0, 110.0, 99.0])",
+      "expect": "0.3",
+      "compare": "isclose",
+      "why": "The second fall, 110 to 99, is smaller than the first. Keep the largest drawdown seen so far."
+    },
+    {
+      "name": "Daily closes",
+      "call": "max_drawdown([101.25, 99.8, 102.4, 97.15, 98.6, 103.9, 100.05, 104.2])",
+      "expect": "0.05126953125",
+      "compare": "isclose",
+      "why": "Return a fraction of the peak, $1 - P_t / \\text{peak}$, not a percentage or a price gap. Do not round."
+    },
+    {
+      "name": "Fall on the last day",
+      "call": "max_drawdown([80.0, 100.0, 125.0, 75.0])",
+      "expect": "0.4",
+      "compare": "isclose",
+      "why": "The worst fall comes on the final price. Check that your loop reaches the last element."
+    },
+    {
+      "name": "Long series",
+      "call": "max_drawdown(_walk(200000, 20261006, 100, 0.001))",
+      "show": "max_drawdown(prices)",
+      "note": "200,000 prices from a seeded random walk",
+      "expect": "0.4099895680221377",
+      "compare": "isclose",
+      "why": "This test has 200,000 prices. A loop inside a loop takes about $2 \\times 10^{10}$ steps here; one pass takes $2 \\times 10^{5}$."
+    }
+  ],
+  "how": "Submit runs 10 hidden tests, from an empty list to 200,000 prices. A float counts when it is within a relative 1e-9 of the expected value, so `0.30000000000000004` counts as `0.3`.",
+  "where": "Part of the 1.1 exit project: returns, annualised volatility and maximum drawdown from a CSV of daily prices.",
+  "solution": "def max_drawdown(prices):\n    # Highest price so far\n    peak = 0.0\n    # Largest drawdown so far\n    worst = 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, 1 - p / peak)\n    return worst\n",
+  "notes": [
+    "`peak` holds the highest price so far, so each price is measured against the right high.",
+    "`worst` keeps the largest drawdown, so a later recovery cannot erase it.",
+    "Each price is read once: $O(n)$ time and $O(1)$ extra memory. Starting `peak` at `0.0` is safe because every price is positive."
+  ],
+  "prelude": "def _walk(n, seed, start, step):\n    # Seeded random walk from an integer LCG, so every Python makes the same prices\n    x = seed\n    p = start\n    out = []\n    for _ in range(n):\n        x = (x * 1103515245 + 12345) % 2147483648\n        p = p * (1 + step * ((x % 2001 - 1000) / 1000))\n        out.append(p)\n    return out\n"
+}

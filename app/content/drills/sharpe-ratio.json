@@ -1,0 +1,116 @@
+{
+  "id": "sharpe-ratio",
+  "name": "Sharpe ratio",
+  "course": "numpy-pandas",
+  "skills": [
+    "np-broadcast"
+  ],
+  "difficulty": 3,
+  "fn": "sharpe_ratio",
+  "returns": "a float, or None",
+  "brief": "The Sharpe ratio is return per unit of risk: the average excess return divided by its spread, scaled to a year. It is the first number anyone asks about a backtest.\n\nWrite `sharpe_ratio(returns, rf=0.0, periods=252)`. It takes periodic returns, an annual risk-free rate and the number of periods in a year.",
+  "definition": "Subtract the risk-free rate per period from every return, $x_t = r_t - \\tfrac{r_f}{k}$, where $k$ is `periods`. With the mean $\\bar x$ and the sample standard deviation $s$ of the $x_t$,\n\n$$\\text{Sharpe} = \\dfrac{\\bar x}{s} \\sqrt{k}$$\n\nReturn `None` when there are fewer than two returns or when $s = 0$.",
+  "constraints": [
+    "Use the sample standard deviation, dividing by $n - 1$.",
+    "Standard library only. NumPy and pandas are not loaded.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Build the list of excess returns first. Then compute the mean and the sample standard deviation of that list, check for zero, and scale by `math.sqrt(periods)`.",
+  "starter": "import math\n\n\ndef sharpe_ratio(returns, rf=0.0, periods=252):\n    \"\"\"Annualised Sharpe ratio of periodic returns.\n    rf is an annual rate.\"\"\"\n    # Your code here\n    return None\n",
+  "examples": [
+    {
+      "call": "sharpe_ratio([0.01, 0.02, -0.01])",
+      "expect": "6.928203230275509",
+      "note": "The mean is about 0.00667 and $s \\approx 0.01528$. Their ratio times $\\sqrt{252}$ is about 6.93.",
+      "compare": "isclose"
+    },
+    {
+      "call": "sharpe_ratio([0.02, 0.02])",
+      "expect": "None",
+      "note": "Both returns are the same, so there is no spread and no ratio.",
+      "compare": "isclose"
+    },
+    {
+      "call": "sharpe_ratio([0.01, 0.03], periods=12)",
+      "expect": "4.898979485566357",
+      "note": "Monthly returns: the mean 0.02 over $s \\approx 0.01414$, times $\\sqrt{12}$.",
+      "compare": "isclose"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Empty list",
+      "call": "sharpe_ratio([])",
+      "expect": "None",
+      "compare": "isclose",
+      "why": "With no returns there is no ratio. Return `None`."
+    },
+    {
+      "name": "One return",
+      "call": "sharpe_ratio([0.01])",
+      "expect": "None",
+      "compare": "isclose",
+      "why": "One return has no spread. Return `None` when there are fewer than two."
+    },
+    {
+      "name": "No spread",
+      "call": "sharpe_ratio([0.25, 0.25, 0.25, 0.25])",
+      "expect": "None",
+      "compare": "isclose",
+      "why": "Every return is the same, so the standard deviation is 0 and the ratio is undefined. Return `None`, do not divide by zero."
+    },
+    {
+      "name": "Sample standard deviation",
+      "call": "sharpe_ratio([0.01, 0.03])",
+      "expect": "22.44994432064365",
+      "compare": "isclose",
+      "why": "Divide the squared deviations by $n - 1$. Here that is 1, so $s \\approx 0.01414$."
+    },
+    {
+      "name": "Losing strategy",
+      "call": "sharpe_ratio([-0.01, 0.005, -0.02, 0.0])",
+      "expect": "-8.949008088202394",
+      "compare": "isclose",
+      "why": "A negative average excess return gives a negative ratio. Keep the sign."
+    },
+    {
+      "name": "Risk-free rate",
+      "call": "sharpe_ratio([0.001, 0.002, -0.0005, 0.0015], rf=0.05)",
+      "expect": "11.780879239100047",
+      "compare": "isclose",
+      "why": "Subtract the daily risk-free rate, $0.05 / 252$, from every return before the mean and spread."
+    },
+    {
+      "name": "Monthly returns",
+      "call": "sharpe_ratio([0.02, -0.01, 0.03, 0.01, -0.005], rf=0.0, periods=12)",
+      "expect": "1.8631770102243563",
+      "compare": "isclose",
+      "why": "Use the `periods` you are given. Monthly data scales by $\\sqrt{12}$."
+    },
+    {
+      "name": "Monthly with a rate",
+      "call": "sharpe_ratio([0.02, -0.01, 0.03, 0.01, -0.005], rf=0.03, periods=12)",
+      "expect": "1.3456278407175908",
+      "compare": "isclose",
+      "why": "With monthly data the risk-free rate per period is $0.03 / 12$, not $0.03 / 252$."
+    },
+    {
+      "name": "Long series",
+      "call": "sharpe_ratio(_returns(_walk(50001, 47, 100, 0.01)), rf=0.04)",
+      "show": "sharpe_ratio(returns, rf=0.04)",
+      "note": "50,000 daily returns from a seeded random walk",
+      "expect": "-0.45592498977949325",
+      "compare": "isclose",
+      "why": "This test has 50,000 returns. One pass for the mean and one for the spread is enough."
+    }
+  ],
+  "how": "Submit runs 9 hidden tests. A float counts when it is within a relative 1e-9 of the expected value; where the ratio is undefined, only `None` counts.",
+  "where": "Builds toward 1.1 level 1, NumPy arrays: the same sums vectorised over a whole array.",
+  "solution": "import math\n\n\ndef sharpe_ratio(returns, rf=0.0, periods=252):\n    # Excess return each period over the risk-free rate\n    xs = [r - rf / periods for r in returns]\n    n = len(xs)\n    if n < 2:\n        return None\n    mean = sum(xs) / n\n    var = sum((x - mean) ** 2 for x in xs) / (n - 1)\n    if var == 0:\n        return None\n    return mean / math.sqrt(var) * math.sqrt(periods)\n",
+  "notes": [
+    "`rf / periods` turns the annual rate into a rate per period before it is subtracted.",
+    "The ratio of a mean to a standard deviation scales with $\\sqrt{k}$, because the mean grows with $k$ and the deviation with $\\sqrt{k}$.",
+    "Checking `var == 0` before dividing returns `None` instead of raising `ZeroDivisionError`."
+  ],
+  "prelude": "def _walk(n, seed, start, step):\n    # Seeded random walk from an integer LCG, so every Python makes the same prices\n    x = seed\n    p = start\n    out = []\n    for _ in range(n):\n        x = (x * 1103515245 + 12345) % 2147483648\n        p = p * (1 + step * ((x % 2001 - 1000) / 1000))\n        out.append(p)\n    return out\n\n\ndef _returns(prices):\n    return [b / a - 1 for a, b in zip(prices, prices[1:])]\n"
+}

@@ -108,12 +108,12 @@
 
     /* ---------- Redo queue ---------- */
     const all = S().redo.list().sort((a, b) => a.due - b.due);
-    const now = Date.now();
-    const due = all.filter(r => r.due <= now), later = all.filter(r => r.due > now);
+    const dueIds = new Set(S().redo.due().map(r => r.id));
+    const due = all.filter(r => dueIds.has(r.id)), later = all.filter(r => !dueIds.has(r.id));
     const shown = due.concat(later).slice(0, 8);
     const redoRow = (r, i) => {
       const c = course(r.ref && r.ref.course);
-      const isDue = r.due <= now;
+      const isDue = dueIds.has(r.id);
       return `<li class="rv-q ${isDue ? '' : 'is-later'}" data-track="${esc(trackOf(r.ref && r.ref.course))}">
         <span class="rv-tag" aria-hidden="true">${esc(c ? c.topic : '·')}</span>
         <div class="rv-q-body">
@@ -130,7 +130,7 @@
           <span class="t-overline rv-ov">${I('review', 'xs')}Redo queue</span>
           <h2 class="t-h1" id="rv-redo-h" tabindex="-1">${due.length ? `${plural(due.length, 'problem', 'problems')} due today` : all.length ? 'Nothing due today' : 'Queue clear'}</h2>
         </div>
-        <span class="rv-time">${I('clock', 'xs')}<span class="tnum">${due.length ? `About ${due.length * 2} min` : `${plural(all.length, 'item', 'items')} waiting`}</span></span>
+        ${all.length ? `<span class="rv-time">${I('clock', 'xs')}<span class="tnum">${due.length ? `About ${due.length * 2} min` : `${plural(all.length, 'item', 'items')} waiting`}</span></span>` : ''}
       </div>
       <p class="t-body secondary rv-redo-why">Each one is a problem you missed. It comes back after 7 days and again after 30. A right answer earns mastery points; XP only counts activity.</p>
       ${shown.length ? `<ol class="rv-qs">${shown.map(redoRow).join('')}</ol>` : `<p class="t-body rv-empty">${I('check', 'sm')}<span>No problems are waiting. Missed screens, quiz items and homework items land here.</span></p>`}
@@ -153,8 +153,8 @@
         const answered = draft && Array.isArray(draft.values) ? draft.values.filter(v => !empty(v)).length : 0;
         const base = { cid, id, track: trackOf(cid), over: `${esc(courseName(cid))} · <span class="rv-nw">Level ${esc(lv.n)}</span>`, title: `Homework ${esc(lv.n)}${lv.name ? ' · ' + esc(lv.name) : ''}`, href: `#homework/${cid}/${id}` };
         if (h.submitted) {
-          const pct = h.items ? Math.round((h.score / h.items) * 100) : 0;
-          return row({ ...base, status: `${I('check', 'xs')}<span>Marked · ${h.score} of ${h.items} right (${pct}%) · ${esc(dayDate(h.submittedAt || h.due))}</span>`, btn: 'See marks' });
+          const R = store.get(`hw.result.${cid}/${id}`, null);
+          return row({ ...base, status: `${I('check', 'xs')}<span>Marked · ${h.score} of ${h.items} items right${R ? `, ${R.marks} of ${R.total} marks` : ''} · ${esc(dayDate(h.submittedAt || h.due))}</span>`, btn: 'See marks' });
         }
         const overdue = h.due < Date.now();
         return row({ ...base, status: `${I('clock', 'xs')}<span>${overdue ? `Overdue since ${esc(dayDate(h.due))}` : `${esc(whenDue(h.due))}, in ${plural(Math.max(0, daysFrom(h.due)), 'day', 'days')}`}${answered ? ` · ${answered} answered` : ''}</span>`, btn: answered ? 'Continue' : 'Open' });
@@ -232,7 +232,7 @@
             </section>
           </div>
           <div class="rv-col">
-            <section class="card rv-card" aria-labelledby="rv-pr-h" data-sec="practice">
+            <section class="card rv-card" aria-labelledby="rv-pr-h" data-sec="practice" data-track="prob">
               <div class="rv-card-h"><h2 class="t-h2" id="rv-pr-h">Practice</h2><span class="t-caption muted">Mastery of the skills you have met</span></div>
               ${practiceHTML}
             </section>
@@ -284,7 +284,7 @@
           : unlocked ? `Unlocked: every course has a mastered lesson. ${doc.minutes} min, pass mark ${Math.round(doc.pass * 100)}%.`
           : `Sit it early to test out. ${doc.minutes} min, pass mark ${Math.round(doc.pass * 100)}%. ${ready}% ready, from your mastery map.`;
         return `<li class="rv-ex" data-track="${esc(t.track)}">
-          <span class="rv-ring" role="img" aria-label="${ready}% ready"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="22" class="rv-ring-t"/><circle cx="28" cy="28" r="22" class="rv-ring-f" stroke-dasharray="${(ringC * ready / 100).toFixed(2)} ${ringC.toFixed(2)}" transform="rotate(-90 28 28)"/></svg><span class="tnum" aria-hidden="true">${passed ? I('check', 'sm') : ready + '%'}</span></span>
+          <span class="rv-ring" role="img" aria-label="${ready}% ready"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="22" class="rv-ring-t"/><circle cx="28" cy="28" r="22" class="rv-ring-f" ${ready ? '' : 'opacity="0"'} stroke-dasharray="${(ringC * ready / 100).toFixed(2)} ${ringC.toFixed(2)}" transform="rotate(-90 28 28)"/></svg><span class="tnum" aria-hidden="true">${passed ? I('check', 'sm') : ready + '%'}</span></span>
           <div class="rv-ex-body"><span class="t-overline rv-deep">${esc(t.id)} ${esc(t.name)}</span><h3 class="t-h2">Topic exam</h3>
             <p class="t-caption secondary">${esc(note)}</p></div>
           <a class="btn secondary" href="#exam/${esc(id)}">${at.length ? 'Sit again' : 'Sit exam'}</a></li>`;
@@ -386,11 +386,11 @@
       summary(items, res, out);
     };
     const summary = (items, res, out) => {
-      const right = res.filter(r => r && r.ok).length;
+      const nRight = res.filter(r => r && r.ok).length;
       col.innerHTML = `<section class="hw-sum">
         <span class="t-overline hw-deep">${esc(cfg.over || '')}</span>
         <h1 class="t-complete">${esc(cfg.doneTitle || 'Set complete')}</h1>
-        <div class="hw-score-big"><span class="t-stat tnum" data-count>${right}</span><span class="t-h2 secondary">of ${items.length} right</span></div>
+        <div class="hw-score-big"><span class="t-stat tnum" data-count>${nRight}</span><span class="t-h2 secondary">of ${items.length} right</span></div>
         <div class="hw-badges">${(out.badges || []).map(([v, l], k) => `<div class="hw-badge hw-in" style="animation-delay:${200 + k * 80}ms"><span class="t-h1 tnum">${v}</span><span class="t-caption muted">${esc(l)}</span></div>`).join('')}</div>
         ${out.note ? `<div class="hw-redo">${I('replay', 'sm')}<span>${out.note}</span></div>` : ''}
         <h2 class="t-h2 hw-res-h">Problem by problem</h2>
@@ -400,7 +400,7 @@
           <span class="t-label tnum hw-res-m">${ok ? 'Right' : r ? 'Not right' : 'Skipped'}</span><span></span></div></li>`; }).join('')}</ol>
       </section>`;
       setActs(`${cfg.again ? `<button type="button" class="btn secondary hw-sec" data-again>${esc(cfg.again)}</button>` : ''}<button type="button" class="btn hw-primary" data-back>Back to Review</button>`);
-      right.innerHTML = `${I('check', 'xs')}<span>${right} of ${items.length} right</span>`;
+      right.innerHTML = `${I('check', 'xs')}<span>${nRight} of ${items.length} right</span>`;
       Z.sound('complete');
     };
     let items0 = [];
@@ -483,7 +483,8 @@
       record: (items, res, seconds) => {
         logReview(seconds, 'practice');
         const wrong = items.filter((it, j) => res[j] && !res[j].ok).map(it => it.source.split(' · ').slice(-1)[0]);
-        return { badges: [[Math.round(seconds / 60) + ' min', 'logged to Review'], [res.filter(r => r && r.ok).length, 'right first time']],
+        const skills = new Set(items.flatMap(it => it.skills || []));
+        return { badges: [[seconds < 60 ? 'Under 1 min' : Math.round(seconds / 60) + ' min', 'logged to Review'], [skills.size, skills.size === 1 ? 'skill practised' : 'skills practised']],
           note: wrong.length ? `Worth a second look: ${Z.esc(listAnd([...new Set(wrong)]))}.` : 'Every problem right. The next set leans on other skills.' };
       },
       partial: (items, res, seconds) => logReview(seconds, 'practice'),
@@ -778,8 +779,10 @@
       }
     };
     root.addEventListener('click', onClick);
+    window.ZQHomework = { handles: () => handles.slice(), items: () => items.slice(), go, submit };
     return () => {
       alive = false;
+      if (window.ZQHomework && window.ZQHomework.go === go) delete window.ZQHomework;
       if (handles.length && !(rec() && rec().submitted)) { try { persist(); } catch (e) { console.error(e); } }
       root.removeEventListener('click', onClick); clearTimeout(saveT);
       handles.forEach(h => { try { h && h.destroy(); } catch (e) { console.error(e); } });

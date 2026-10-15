@@ -1,0 +1,127 @@
+{
+  "id": "daily-returns",
+  "name": "Daily returns",
+  "course": "py-found",
+  "skills": [
+    "pf-idioms",
+    "pf-functions"
+  ],
+  "difficulty": 2,
+  "fn": "daily_returns",
+  "returns": "a list of floats",
+  "brief": "A return is the change in price as a fraction of the price before it. Returns, not prices, are what every risk number is built from.\n\nWrite `daily_returns(prices)`. It takes closing prices in time order and returns a list with one return for each day after the first.",
+  "definition": "The simple return on day $t$ compares the close with the close the day before:\n\n$$r_t = \\dfrac{P_t}{P_{t-1}} - 1$$\n\nSo $n$ prices give $n - 1$ returns. Return an empty list for fewer than two prices. Every price is positive.",
+  "constraints": [
+    "$O(n)$ time, where $n$ is the number of prices.",
+    "Do not change the list you are given.",
+    "Standard library only. NumPy and pandas are not loaded.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Pair each price with the one before it. `zip(prices, prices[1:])` gives those pairs, yesterday first.",
+  "starter": "def daily_returns(prices):\n    \"\"\"Return the simple daily returns of prices,\n    one fewer than there are prices.\"\"\"\n    # Your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "daily_returns([100, 110, 99])",
+      "expect": "[0.1, -0.1]",
+      "note": "From 100 to 110 is $+0.1$. From 110 to 99 is $\\tfrac{99}{110} - 1 = -0.1$.",
+      "compare": "isclose"
+    },
+    {
+      "call": "daily_returns([40, 50])",
+      "expect": "[0.25]",
+      "note": "Two prices give one return.",
+      "compare": "isclose"
+    },
+    {
+      "call": "daily_returns([80])",
+      "expect": "[]",
+      "note": "One price gives no returns.",
+      "compare": "isclose"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Empty list",
+      "call": "daily_returns([])",
+      "expect": "[]",
+      "compare": "isclose",
+      "why": "With no prices there are no returns. Return an empty list."
+    },
+    {
+      "name": "Single price",
+      "call": "daily_returns([100.0])",
+      "expect": "[]",
+      "compare": "isclose",
+      "why": "One price has nothing before it, so there are no returns yet."
+    },
+    {
+      "name": "Two prices",
+      "call": "daily_returns([100.0, 105.0])",
+      "expect": "[0.05]",
+      "compare": "isclose",
+      "why": "Two prices give one return: $\\tfrac{105}{100} - 1 = 0.05$, a fraction, not 5."
+    },
+    {
+      "name": "Flat prices",
+      "call": "daily_returns([50.0, 50.0, 50.0])",
+      "expect": "[0.0, 0.0]",
+      "compare": "isclose",
+      "why": "A price that does not move has a return of exactly 0."
+    },
+    {
+      "name": "Falling prices",
+      "call": "daily_returns([200.0, 150.0, 120.0])",
+      "expect": "[-0.25, -0.2]",
+      "compare": "isclose",
+      "why": "Divide by the day before, not by the first price. 150 to 120 is a fall of $\\tfrac{30}{150} = 0.2$."
+    },
+    {
+      "name": "Up then down",
+      "call": "daily_returns([10.0, 20.0, 10.0])",
+      "expect": "[1.0, -0.5]",
+      "compare": "isclose",
+      "why": "A rise of 1.0 then a fall of 0.5 brings the price back. Returns are not symmetric."
+    },
+    {
+      "name": "Whole-number prices",
+      "call": "daily_returns([3, 4, 6])",
+      "expect": "[0.3333333333333333, 0.5]",
+      "compare": "isclose",
+      "why": "With integer prices, `4 / 3` is still a float in Python 3. Make sure nothing rounds it."
+    },
+    {
+      "name": "Daily closes",
+      "call": "daily_returns([101.25, 99.8, 102.4, 97.15, 98.6])",
+      "expect": "[-0.014320987654321016, 0.02605210420841692, -0.05126953125, 0.01492537313432824]",
+      "compare": "isclose",
+      "why": "Return every day after the first, in order, without rounding."
+    },
+    {
+      "name": "Input left alone",
+      "call": "(lambda p: (daily_returns(p), p)[1])([100.0, 110.0, 99.0])",
+      "show": "daily_returns(p); p",
+      "note": "Calls your function, then returns the list it was given",
+      "expect": "[100.0, 110.0, 99.0]",
+      "compare": "isclose",
+      "why": "Your function changed the list it was given. Build a new list instead of popping or overwriting prices."
+    },
+    {
+      "name": "Long series",
+      "call": "daily_returns(_walk(100000, 11, 100, 0.002))[-3:]",
+      "show": "daily_returns(prices)[-3:]",
+      "note": "100,000 prices from a seeded random walk; the last three returns are checked",
+      "expect": "[0.00042600000000009893, -0.0008780000000001067, 0.0004159999999999537]",
+      "compare": "isclose",
+      "why": "This test has 100,000 prices. Check that you return one value per day after the first, in order."
+    }
+  ],
+  "how": "Submit runs 10 hidden tests, from an empty list to 100,000 prices. Lists are compared element by element, and each float counts when it is within a relative 1e-9 of the expected value.",
+  "where": "Part of the 1.1 exit project: returns, annualised volatility and maximum drawdown from a CSV of daily prices.",
+  "solution": "def daily_returns(prices):\n    # Each pair is (yesterday, today)\n    return [today / yesterday - 1\n            for yesterday, today in zip(prices, prices[1:])]\n",
+  "notes": [
+    "`zip(prices, prices[1:])` pairs every price with the one after it and stops at the shorter list, so the last price has no partner.",
+    "Dividing by `yesterday` measures each move against the price it started from.",
+    "A list comprehension builds a new list, so the input is never changed."
+  ],
+  "prelude": "def _walk(n, seed, start, step):\n    # Seeded random walk from an integer LCG, so every Python makes the same prices\n    x = seed\n    p = start\n    out = []\n    for _ in range(n):\n        x = (x * 1103515245 + 12345) % 2147483648\n        p = p * (1 + step * ((x % 2001 - 1000) / 1000))\n        out.append(p)\n    return out\n"
+}

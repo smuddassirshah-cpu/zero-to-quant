@@ -1,0 +1,119 @@
+{
+  "id": "log-returns",
+  "name": "Log returns",
+  "course": "py-found",
+  "skills": [
+    "pf-modules",
+    "pf-idioms"
+  ],
+  "difficulty": 2,
+  "fn": "log_returns",
+  "returns": "a list of floats",
+  "brief": "Simple returns do not add up over time: a fall of 0.5 then a rise of 1.0 leaves you where you started, yet they sum to 0.5. Log returns fix that, so researchers use them to add returns across days.\n\nWrite `log_returns(prices)`. It takes closing prices in time order and returns one log return for each day after the first.",
+  "definition": "The log return on day $t$ is the natural log of the price ratio:\n\n$$\\ell_t = \\ln \\dfrac{P_t}{P_{t-1}}$$\n\nThey add up: $\\ell_1 + \\dots + \\ell_n = \\ln \\tfrac{P_n}{P_0}$. Return an empty list for fewer than two prices. Every price is positive.",
+  "constraints": [
+    "$O(n)$ time, where $n$ is the number of prices.",
+    "Use the `math` module. NumPy is not loaded.",
+    "All tests share a 5-second time limit."
+  ],
+  "hint": "Import `math` at the top. Pair each price with the one before it and take `math.log` of today over yesterday.",
+  "starter": "import math\n\n\ndef log_returns(prices):\n    \"\"\"Return the daily log returns of prices.\"\"\"\n    # Your code here\n    return []\n",
+  "examples": [
+    {
+      "call": "log_returns([100, 110])",
+      "expect": "[0.09531017980432487]",
+      "note": "$\\ln \\tfrac{110}{100} = \\ln 1.1 \\approx 0.0953$, a little below the simple return of 0.1.",
+      "compare": "isclose"
+    },
+    {
+      "call": "log_returns([100, 50, 100])",
+      "expect": "[-0.6931471805599453, 0.6931471805599453]",
+      "note": "Down by half, then back. The two log returns cancel exactly.",
+      "compare": "isclose"
+    },
+    {
+      "call": "log_returns([7])",
+      "expect": "[]",
+      "note": "One price gives no returns.",
+      "compare": "isclose"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Empty list",
+      "call": "log_returns([])",
+      "expect": "[]",
+      "compare": "isclose",
+      "why": "With no prices there are no returns. Return an empty list."
+    },
+    {
+      "name": "Single price",
+      "call": "log_returns([100.0])",
+      "expect": "[]",
+      "compare": "isclose",
+      "why": "One price has nothing before it, so there are no returns yet."
+    },
+    {
+      "name": "Flat prices",
+      "call": "log_returns([50.0, 50.0])",
+      "expect": "[0.0]",
+      "compare": "isclose",
+      "why": "A price that does not move has a log return of $\\ln 1 = 0$."
+    },
+    {
+      "name": "Doubling",
+      "call": "log_returns([10.0, 20.0, 40.0])",
+      "expect": "[0.6931471805599453, 0.6931471805599453]",
+      "compare": "isclose",
+      "why": "Each doubling is $\\ln 2 \\approx 0.693$. Log returns of equal moves are equal."
+    },
+    {
+      "name": "Natural log",
+      "call": "log_returns([1.0, 10.0])",
+      "expect": "[2.302585092994046]",
+      "compare": "isclose",
+      "why": "`math.log10` gives 1.0 here. Returns use the natural log, `math.log`, so the answer is $\\ln 10$."
+    },
+    {
+      "name": "Ratio, not difference",
+      "call": "log_returns([100.0, 95.0, 104.5])",
+      "expect": "[-0.051293294387550536, 0.09531017980432487]",
+      "compare": "isclose",
+      "why": "Take the log of today over yesterday, not of the price difference."
+    },
+    {
+      "name": "Daily closes",
+      "call": "log_returns([101.25, 99.8, 102.4, 97.15, 98.6])",
+      "expect": "[-0.014424522669230258, 0.025718529287989202, -0.052630536781958316, 0.014815085785140522]",
+      "compare": "isclose",
+      "why": "Return one log return for each day after the first, in order, without rounding."
+    },
+    {
+      "name": "They add up",
+      "call": "sum(log_returns([101.25, 99.8, 102.4, 97.15, 98.6]))",
+      "show": "sum(log_returns(closes))",
+      "note": "The sum of your log returns",
+      "expect": "-0.026521444378058846",
+      "compare": "isclose",
+      "why": "The log returns should sum to $\\ln(98.6 / 101.25)$. Check you used the natural log of each ratio."
+    },
+    {
+      "name": "Long series",
+      "call": "log_returns(_walk(100000, 23, 100, 0.002))[-3:]",
+      "show": "log_returns(prices)[-3:]",
+      "note": "100,000 prices from a seeded random walk; the last three returns are checked",
+      "expect": "[-0.0007062493353607602, 0.0018123566890106335, 0.0002559672375914094]",
+      "compare": "isclose",
+      "why": "This test has 100,000 prices. Check that you return one value per day after the first, in order."
+    }
+  ],
+  "how": "Submit runs 9 hidden tests, including one that sums your returns. Lists are compared element by element, and each float counts when it is within a relative 1e-9 of the expected value.",
+  "where": "Part of the 1.1 exit project: returns, annualised volatility and maximum drawdown from a CSV of daily prices.",
+  "solution": "import math\n\n\ndef log_returns(prices):\n    # ln(today / yesterday) for each consecutive pair\n    return [math.log(today / yesterday)\n            for yesterday, today in zip(prices, prices[1:])]\n",
+  "notes": [
+    "`math.log` with one argument is the natural log, base $e$.",
+    "`zip(prices, prices[1:])` gives each (yesterday, today) pair once.",
+    "Summing the result gives $\\ln(P_n / P_0)$, the log of the total move."
+  ],
+  "prelude": "def _walk(n, seed, start, step):\n    # Seeded random walk from an integer LCG, so every Python makes the same prices\n    x = seed\n    p = start\n    out = []\n    for _ in range(n):\n        x = (x * 1103515245 + 12345) % 2147483648\n        p = p * (1 + step * ((x % 2001 - 1000) / 1000))\n        out.append(p)\n    return out\n"
+}
