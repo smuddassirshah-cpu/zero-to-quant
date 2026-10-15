@@ -376,7 +376,7 @@
   /* ---------- Derived numbers for the screens ---------- */
   const weeklySplit = (h) => {
     // 9 / 3 / 2 / 1 at 15 h (curriculum weekly rhythm). Mental stays at 1 h; the rest share 9 : 3 : 2 in half hours.
-    const rest = Math.max(0, h - 1), raw = [9, 3, 2].map(w => rest * w / 7);
+    const rest = Math.max(0, h - 1), raw = [9, 3, 2].map(w => rest * w / 14);
     const halves = raw.map(v => Math.floor(v * 2)); let left = rest * 2 - halves.reduce((a, b) => a + b, 0);
     raw.map((v, i) => [v * 2 - Math.floor(v * 2), i]).sort((a, b) => b[0] - a[0] || a[1] - b[1]).forEach(([, i]) => { if (left > 0) { halves[i]++; left--; } });
     const [main, build, review] = halves.map(v => v / 2);

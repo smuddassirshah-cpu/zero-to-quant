@@ -160,7 +160,8 @@
 
   /* ---------- Events ---------- */
   const listeners = {};
-  const on = (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); };
+  const on = (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); return () => off(ev, fn); };
+  const off = (ev, fn) => { if (listeners[ev]) listeners[ev] = listeners[ev].filter(f => f !== fn); };
   const emit = (ev, data) => (listeners[ev] || []).forEach(fn => fn(data));
 
   /* ---------- Shell (header on desktop, floating tab bar on mobile) ---------- */
@@ -298,7 +299,7 @@
   /* One object: screens receive it as Z, and state.js, content.js and the engine attach ZQ.state, ZQ.content,
      ZQ.widgets and ZQ.canvas to it, so Z.state is the same as window.ZQ.state. */
   const api = Object.assign(window.ZQ || {}, { $, $$, h, esc, icon, bolt, spark, mark, logo, tex, md, mathify, sound, haptic, countUp, burst, wait, toast, sheet, streakSheet, weekStrip,
-    go, on, emit, store, settings, setSetting, reducedMotion, screen, screens, params: () => params.slice(), refreshShell });
+    go, on, off, emit, store, settings, setSetting, reducedMotion, screen, screens, params: () => params.slice(), refreshShell });
   window.ZQ = api;
 
   const boot = async () => {
