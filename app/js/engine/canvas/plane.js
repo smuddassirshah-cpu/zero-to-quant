@@ -81,7 +81,7 @@
     const fo = svg('foreignObject', { x: anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x, y: y - h / 2, width: w, height: h, class: 'cv-fo cvb-fo' + (o.cls ? ' ' + o.cls : '') + (o.halo ? ' cvb-fo-halo' : '') });
     const d = document.createElement('div'); d.className = 'cv-fo-in'; d.style.textAlign = anchor === 'middle' ? 'center' : anchor === 'end' ? 'right' : 'left';
     d.style.justifyContent = anchor === 'middle' ? 'center' : anchor === 'end' ? 'flex-end' : 'flex-start';
-    d.innerHTML = Z.md(s); fo.append(d); return fo;
+    d.innerHTML = `<span>${Z.md(s)}</span>`; fo.append(d); return fo; // one inline run: a flex box would drop the spaces around the maths
   };
 
   /* An id-bearing object: <g class="cv-obj" data-id=..> with a colour class setting --c for its marks. */
@@ -654,7 +654,9 @@
             if (lx == null) { // last visible sample
               for (let i = pts.length - 4; i >= 0; i--) { const p = pts[i]; if (Number.isFinite(p[1]) && p[1] >= py1 + 6 && p[1] <= py0 - 6) { lx = sx.invert(p[0]); ly = p[1]; break; } }
             } else ly = sy(f(lx));
-            if (lx != null && Number.isFinite(ly)) labels.push({ x: sx(lx), y: ly - 12, text: fd.label, id });
+            /* labelSide "above" (default) or "below" the curve, and labelOffset [dx, dy] in px to nudge it */
+            const off = Array.isArray(fd.labelOffset) ? fd.labelOffset : [0, 0];
+            if (lx != null && Number.isFinite(ly)) labels.push({ x: sx(lx) + (+off[0] || 0), y: ly + (fd.labelSide === 'below' ? 14 : -12) + (+off[1] || 0), text: fd.label, id });
           }
         }
 

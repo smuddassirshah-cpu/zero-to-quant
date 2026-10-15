@@ -114,7 +114,7 @@
       if (canvas.getParam) { const v = canvas.getParam(bind); if (v != null) return +v; }
       const st = canvas.get ? canvas.get() || {} : {};
       const path = String(bind).split('.');
-      if (path.length > 1) { let o = st; for (const k of path) o = o == null ? undefined : o[k]; return o == null ? NaN : +o; }
+      if (path.length > 1) { let o = st; for (const k of path) o = o == null ? undefined : Array.isArray(o) ? o.find(it => it && it.id === k) : o[k]; return o == null ? NaN : +o; } // points.p1.x finds the item by id
       const p = cspec.params || {};
       const v = (st.params || {})[bind] ?? (p.params || {})[bind] ?? st[bind];
       return v == null || typeof v === 'object' ? NaN : +v;
@@ -161,7 +161,8 @@
         const drive = (c, v) => {
           if (!canvas) return;
           try {
-            if (canvas.setParam) canvas.setParam(c.bind, v);
+            const listPath = /^(points|intervals|arrows|markers|vectors|segments|pointers)\./.test(String(c.bind)); // an item by id: points.p1.x
+            if (canvas.setParam && !listPath) canvas.setParam(c.bind, v);
             else if (String(c.bind).includes('.')) canvas.set(String(c.bind).split('.').reduceRight((acc, k) => ({ [k]: acc }), v), { instant: true });
             else canvas.set({ params: { [c.bind]: v } }, { instant: true });
           } catch (err) { console.error(err); }

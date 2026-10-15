@@ -2,7 +2,13 @@
    MathLive's <math-field> with the virtual keyboard off by default and a keyboard toggle; the CortexJS Compute
    Engine decides equivalence (isEqual after simplify, with a 5-point numeric second opinion for one variable).
    Both load lazily on the first expression widget with a 6 s budget. If either fails, the widget falls back to a
-   plain text field compared, after normExpr, against the answer and the authored accept[] forms. */
+   plain text field compared, after normExpr, against the answer and the authored accept[] forms.
+   form: "expanded" | "factorised" | "simplified" also asks for a shape, judged on the Compute Engine's canonical
+   MathJSON of the input: expanded has no sum inside a product or power (an Add of monomials, or one monomial);
+   factorised is a Multiply with a sum among its factors, or a power of a sum (a leading minus is allowed);
+   simplified has no more nodes than its own simplify(). An equal answer in the wrong shape returns key "form".
+   Without the engine the text fallback already demands a normalised match with answer or accept[], which authors
+   write in the asked form. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -80,6 +86,23 @@
       const n = G().normExpr(inputAscii || inputLatex);
       return !!n && (n === G().normExpr(target));
     };
+    /* The shape check on canonical MathJSON */
+    const FORM_LINE = { expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.' };
+    const head = (j) => (Array.isArray(j) ? j[0] : null);
+    const args = (j) => (Array.isArray(j) ? j.slice(1) : []);
+    const hasSum = (j) => head(j) === 'Add' || head(j) === 'Subtract' || args(j).some(hasSum);
+    const size = (j) => (Array.isArray(j) ? 1 + args(j).reduce((a, x) => a + size(x), 0) : 1);
+    const unNeg = (j) => (head(j) === 'Negate' ? args(j)[0] : j);
+    const isSumLike = (j) => head(j) === 'Add' || head(j) === 'Subtract';
+    const formOk = (L) => {
+      if (!spec.form || !ce) return true;
+      let e; try { e = ce.parse(L); } catch { return true; }
+      const j = e.json;
+      if (spec.form === 'expanded') return isSumLike(j) ? args(j).every(t => !hasSum(t)) : !hasSum(j);
+      if (spec.form === 'factorised') { const r = unNeg(j); return (head(r) === 'Multiply' && args(r).some(f => isSumLike(f) || (head(f) === 'Power' && isSumLike(args(f)[0])))) || (head(r) === 'Power' && isSumLike(args(r)[0])); }
+      if (spec.form === 'simplified') { try { return size(j) <= size(e.simplify().json); } catch { return true; } }
+      return true;
+    };
     const acceptText = () => 'Accepted: any expression equal to ' + G().inline('$' + spec.answer + '$') + (spec.accept && spec.accept.length ? ', for example ' + spec.accept.slice(0, 2).map(a => `<code class="lsn-ic">${Z.esc(a)}</code>`).join(' or ') : '') + '.';
     const showAccept = () => { acc.innerHTML = acceptText(); acc.hidden = false; };
 
@@ -92,10 +115,12 @@
       grade() {
         const L = latex(), A = ascii();
         if (!L.trim()) return { ok: false, key: null };
-        const ok = forms().some(f => equal(L, A, f));
-        let key = null;
-        if (!ok) { const w = (spec.wrong || []).find(x => x.tex && equal(L, A, x.tex)); key = w ? w.id : null; }
-        return { ok, key, detail: { latex: L, ascii: A, engine: ce ? 'compute-engine' : 'text' } };
+        const same = forms().some(f => equal(L, A, f));
+        const shaped = same && formOk(L);
+        let key = null, line;
+        if (same && !shaped) { key = 'form'; line = FORM_LINE[spec.form]; }
+        else if (!same) { const w = (spec.wrong || []).find(x => x.tex && equal(L, A, x.tex)); key = w ? w.id : null; }
+        return { ok: shaped, key, line, detail: { latex: L, ascii: A, engine: ce ? 'compute-engine' : 'text', form: spec.form || null } };
       },
       lock() { locked = true; lockNow(true); },
       unlock() { locked = false; lockNow(false); mark(null); acc.hidden = true; },
