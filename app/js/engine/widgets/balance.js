@@ -1,6 +1,9 @@
 /* balance widget (docs/AUTHORING.md 3, design-research 5.3 no. 12): operation chips under the balance canvas.
    spec.moves lists the chips: "remove-both" (with a number field), "remove-unknown-both", "halve-both",
-   "divide-both" (with a number field), and "remove-item" (no chip: tapping a block removes it from its pan alone). The value is the list of moves; the pans live in the canvas.
+   "divide-both" (with a number field), "subtract-both" and "add-both" (each with a number field, for signed pans such
+   as x - 3 = 8 or 7 - 3x = 22: the pans keep their totals and may go negative), and "remove-item" (no chip: tapping a
+   block removes it from its pan alone). The value is the list of moves; the pans live in the canvas.
+   Unknown blocks may carry `coef` (-1, 0.5, -3) and weights may be negative; target "unknown" means a total of 1x.
    grade: the pans match spec.target ({ left: ["unknown"], right: [4] }, either way round, weights compared by total);
    key "unbalanced" when the beam is not level (a single item was removed), else "unsolved".
    reveal animates the pans to the target in hint indigo. answer() returns the moves that reach the target
@@ -26,6 +29,8 @@
       'remove-unknown-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="remove-unknown-both">Take away ${Z.tex(x)} from both</button></div>`,
       'halve-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="halve-both">Halve both</button></div>`,
       'divide-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="divide-both">Divide both by</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Divide both pans by" placeholder="k" data-for="divide-both"></label></div>`,
+      'subtract-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="subtract-both">Subtract</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Amount to subtract from both pans" placeholder="n" data-for="subtract-both"></label><span class="t-label">from both</span></div>`,
+      'add-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="add-both">Add</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Amount to add to both pans" placeholder="n" data-for="add-both"></label><span class="t-label">to both</span></div>`,
     };
     const el = Z.h(`<div class="wd-bal">
       <p class="wd-bal-eq" aria-live="polite"></p>
@@ -45,12 +50,14 @@
       cv.on('change', (e) => { if (e && e.selected && e.selected.length && !locked) { const id = e.selected[0]; cv.set({ selected: [] }, { instant: true }); cv.removeItem(id); } });
     } else cv.enable('balance');
 
+    /* A pan as n (total coefficient of x, each unknown block counting its coef, default 1) and w (total weight) */
     const side = (list) => {
-      const n = list.filter(i => i.kind === 'unknown').length, w = list.filter(i => i.kind === 'weight').reduce((s, i) => s + (+i.value || 0), 0);
-      const terms = [];
-      if (n) terms.push(n === 1 ? x : `${n}${x}`);
-      if (w || !n) terms.push(Z.canvas.fmtNum(w, 3));
-      return { n, w, tex: terms.join(' + ') };
+      const n = +list.filter(i => i.kind === 'unknown').reduce((s, i) => s + (i.coef ?? 1), 0).toFixed(10), w = +list.filter(i => i.kind === 'weight').reduce((s, i) => s + (+i.value || 0), 0).toFixed(10);
+      const num = (v) => { const f = Z.grade.fmtFrac(Math.abs(v), 12), m = f.match(/^(\d+)\/(\d+)$/); return m ? `\\tfrac{${m[1]}}{${m[2]}}` : f; };
+      let tex = '';
+      if (n) tex = (n < 0 ? '-' : '') + (Math.abs(n) === 1 ? '' : num(n)) + x;
+      if (w || !n) tex += (tex ? (w < 0 ? ' - ' : ' + ') : w < 0 ? '-' : '') + Z.canvas.fmtNum(Math.abs(w), 3);
+      return { n, w, tex };
     };
     const showEq = () => { const st = cv.get(); eq.innerHTML = Z.tex(`${side(st.left || []).tex} ${cv.isLevel && !cv.isLevel() ? '\\neq' : '='} ${side(st.right || []).tex}`); };
     const say = (t) => { msg.hidden = !t; msg.textContent = t || ''; };
@@ -65,6 +72,7 @@
       else if (op === 'remove-unknown-both') { r = cv.removeBoth(x); if (!r.ok) say(REASON[r.reason]?.(0, x) || ''); }
       else if (op === 'halve-both') { r = cv.halveBoth(); if (!r.ok) say(REASON[r.reason]?.() || ''); }
       else if (op === 'divide-both') { const { v } = numFor(op); r = Number.isFinite(v) ? cv.divideBoth(v) : { ok: false, reason: 'bad-number' }; if (!r.ok) say(REASON[r.reason]?.() || ''); }
+      else if (op === 'subtract-both' || op === 'add-both') { const { v } = numFor(op); r = Number.isFinite(v) && cv.subtractBoth ? (op === 'add-both' ? cv.addBoth(v) : cv.subtractBoth(v)) : { ok: false, reason: 'bad-number' }; if (!r.ok) say(REASON[r.reason]?.() || ''); }
       if (r && r.ok) say('');
     };
     el.addEventListener('click', (e) => { const b = e.target.closest('[data-op]'); if (b) run(b.dataset.op); });
@@ -80,6 +88,8 @@
         if (m.op === 'remove-both') cv.removeBoth(m.n);
         else if (m.op === 'halve-both') cv.halveBoth();
         else if (m.op === 'divide-both') cv.divideBoth(m.n);
+        else if (m.op === 'subtract-both') cv.subtractBoth(m.n);
+        else if (m.op === 'add-both') cv.addBoth(m.n);
         else if (m.op === 'remove-item') cv.removeItem(m.id);
       }
       showEq();

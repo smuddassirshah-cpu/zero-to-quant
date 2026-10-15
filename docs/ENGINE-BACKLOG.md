@@ -85,3 +85,9 @@ Raised later (equations level 1):
 34. `place`: tokens with identical text are interchangeable (`same: ["t1","t2"]` or grade by text when `byText: true`).
 35. `area`: optional text label per piece or region (`labels: {"c11": "3n"}`).
 36. `boxes`: coins default to a face label, and a `bag`/`sealed` item kind.
+
+Raised later (equations level 3):
+
+37. `number-line` intervals: wider row spacing or a per-interval `row` offset; `labelPos: "right"` on rays to infinity is clipped.
+38. Keyed patches (`{"points": {"id": {...}}}`) in `explain.canvas` or option `canvas` patches wipe the array: apply keyed merging in `ZQ.canvas.merge` (or in `create`'s patch path) for every kind, not only in each canvas's own update.
+39. `number-line` points default to a static look unless `drag: true`; in tap mode and static clones never draw the drag handle.
