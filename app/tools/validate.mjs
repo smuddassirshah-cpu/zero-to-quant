@@ -70,6 +70,8 @@ const checkText = (file, where, s, { copy = true } = {}) => {
 };
 
 /* ---------- File loading ---------- */
+/* A malformed file (a half-written one, or a field of the wrong type) is one error line, never a crash */
+const guard = (file, fn) => { try { fn(); } catch (e) { err(file, '', `could not be checked (a field has the wrong shape): ${String(e.message || e).split('\n')[0]}`); } };
 const readJSON = (file) => {
   let text;
   try { text = fs.readFileSync(file, 'utf8'); } catch { return { missing: true }; }
@@ -223,7 +225,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       } else if (!Array.isArray(w.answer) || !w.answer.length) err(file, `${where}.answer`, 'list the region ids that make up the answer (or give count, with optional among)');
       const known = regionIds(canvas);
       if (known) (w.answer || []).forEach(id => { if (!known.has(id)) err(file, `${where}.answer`, `region "${id}" is not on the ${canvas.kind} canvas`); });
-      if (known) (w.among || []).forEach(id => { if (!known.has(id)) err(file, `${where}.among`, `region "${id}" is not on the ${canvas.kind} canvas`); });
+      if (known && Array.isArray(w.among)) w.among.forEach(id => { if (!known.has(id)) err(file, `${where}.among`, `region "${id}" is not on the ${canvas.kind} canvas`); });
       else if (!canvas) err(file, where, 'tap-regions needs a canvas');
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       (known || new Set()).forEach(k => keys.add(k));
@@ -632,7 +634,7 @@ Object.keys(C.courses || {}).forEach(cid => {
       const lf = path.join(dir, `${l}.json`), lr = readJSON(lf);
       if (lr.missing) { unwritten.push(l); return; }
       written.push(l); manifest.push(`courses/${cid}/${l}.json`);
-      if (lr.data) checkLesson(lf, cid, l, lr.data, D).forEach(s => usedSkills.add(s));
+      if (lr.data) guard(lf, () => checkLesson(lf, cid, l, lr.data, D).forEach(s => usedSkills.add(s)));
     });
     [['review', `review-${i + 1}`], ['homework', `homework-${i + 1}`]].forEach(([kind, expect]) => {
       if (lv[kind] !== expect) err(file, `${at}.${kind}`, `${kind} is "${expect}"`);
@@ -640,7 +642,7 @@ Object.keys(C.courses || {}).forEach(cid => {
       const sf = path.join(dir, `${id}.json`), sr = readJSON(sf);
       if (sr.missing) { if (kind === 'review') reviewsMissing++; else homeworkMissing++; return; }
       manifest.push(`courses/${cid}/${id}.json`);
-      if (sr.data) checkSet(sf, kind, cid, id, i + 1, sr.data, D);
+      if (sr.data) guard(sf, () => checkSet(sf, kind, cid, id, i + 1, sr.data, D));
     });
   });
   listJSON(dir).forEach(f => { if (!referenced.has(f)) err(path.join(dir, f), '', 'file is not referenced by course.json'); });
@@ -658,7 +660,7 @@ listJSON(examDir).forEach(f => {
   if (!/^(topic-\d+\.\d+|stage-\d+)$/.test(id)) { err(file, '', 'exam files are topic-<topic>.json or stage-<n>.json'); return; }
   const r = readJSON(file); if (!r.data) return;
   manifest.push(`exams/${f}`);
-  checkExam(file, id, r.data, cur);
+  guard(file, () => checkExam(file, id, r.data, cur));
 });
 
 /* Drills */
@@ -673,7 +675,7 @@ listJSON(drillDir).filter(f => f !== 'index.json').forEach(f => {
   const id = f.replace(/\.json$/, ''), file = path.join(drillDir, f);
   const r = readJSON(file); if (!r.data) return;
   manifest.push(`drills/${f}`);
-  checkDrill(file, id, r.data, cur);
+  guard(file, () => checkDrill(file, id, r.data, cur));
   if (!listed.has(id)) warn(file, '', 'drill is not listed in drills/index.json');
   listed.delete(id);
 });

@@ -77,3 +77,11 @@ Raised later (equations level 2):
 29. Validator: report a non-list `hints[].highlight` as an error instead of crashing (one crash stops the manifest being written for everyone).
 30. `plane` axis labels: mixed text and maths loses spaces ("Price $p$ (£)").
 31. `number-line` inside the explanation clone: points still look like draggable handles; render static.
+
+Raised later (equations level 1):
+
+32. `balance`: allow `state.params.x` (the unknown's value) to be patched by controls and explanation patches.
+33. `expression` widget: a `form: "expanded"|"factorised"|"simplified"` requirement (accept only when the input's canonical form matches that shape), so expand and factorise tasks can use free entry.
+34. `place`: tokens with identical text are interchangeable (`same: ["t1","t2"]` or grade by text when `byText: true`).
+35. `area`: optional text label per piece or region (`labels: {"c11": "3n"}`).
+36. `boxes`: coins default to a face label, and a `bag`/`sealed` item kind.
