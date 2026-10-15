@@ -97,6 +97,13 @@ const ENGINE = (() => {
   } catch { return null; }
 })();
 
+/* A canvas the learner can work without a widget: points with drag: true (plane, number-line), vectors in state.drag,
+   or a simulation's run chips (bars, walk) */
+const authorMovable = (c) => {
+  const st = isObj(c && c.state) ? c.state : {}, p = isObj(c && c.params) ? c.params : {};
+  return (Array.isArray(st.points) && st.points.some(q => isObj(q) && q.drag === true)) || (Array.isArray(st.drag) && st.drag.length > 0) || isObj(p.sim);
+};
+
 /* ---------- Canvas ids ---------- */
 const range = (a, b) => Array.from({ length: Math.max(0, b - a + 1) }, (_, i) => a + i);
 const regionIds = (canvas) => {
@@ -455,7 +462,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     }
     if (s.type === 'explore') {
       if (!s.canvas) err(file, `${at}.canvas`, 'an explore screen needs a canvas');
-      else if (!(s.canvas.controls || []).length && !(s.widget && CANVAS_BOUND.has(s.widget.kind))) err(file, `${at}.canvas`, 'an explore screen needs an interactive canvas (controls or a canvas-bound widget)');
+      else if (!(s.canvas.controls || []).length && !(s.widget && CANVAS_BOUND.has(s.widget.kind)) && !authorMovable(s.canvas)) err(file, `${at}.canvas`, 'an explore screen needs an interactive canvas (controls or a canvas-bound widget)');
       if (!s.widget) err(file, `${at}.widget`, 'an explore screen ends with one observation question');
       else checkFeedback(file, `${at}.feedback`, s.feedback, keys);
       checkHints(file, `${at}.hints`, s.hints, s.canvas, false);

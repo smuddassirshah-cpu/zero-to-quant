@@ -70,6 +70,25 @@ Items 1 to 23 are done; the authoring side is in AUTHORING.md sections 3, 4, 5 a
 22. Done: area `setParam` for `shade` and `split`; `format: "percent"` on slider and control readouts.
 23. Done: the slider label has its own row above the value bubble.
 
+Second pass (items 24 to 39):
+
+24. Done: `place` `mode: "boxes"` grades the items the learner drags into a boxes canvas's containers (`answer: { container: [itemIds] }`, optional `ordered`); validator checks containers and items.
+25. Done: plane function `labelSide` (`above`, `below`) and `labelOffset: [dx, dy]`.
+26. Done: controls bind `points.p1.x` (any list item by id, on any kind); the slider opens at the point's value.
+27. Done (in pass 1, confirmed): a control's `start` is applied to the canvas on mount; without it the control reads the canvas.
+28. Done: balance `subtract-both` and `add-both` chips, negative weights and `coef` on unknowns (signed pans collapse to totals; divide by any non-zero number); solver and validator understand them.
+29. Done: validator type checks for `hints[].highlight`, `among`, list answers, `options` and the other list fields, plus the per-file guard; a bad shape is one error line.
+30. Done: mixed text and maths labels in plane and the Canvases B kit keep their spaces.
+31. Done: number-line points in the explanation copy are plain dots (see 39).
+32. Done: balance `state.params.x` is patchable and a control can bind `x`; the beam re-tilts.
+33. Done: `expression` `form` (`expanded`, `factorised`, `simplified`) on the Compute Engine's canonical MathJSON, key `form`; without the engine the normalised `accept[]` match stands.
+34. Done: `place` `byText: true` and `same` groups make tokens interchangeable, in assign and order modes.
+35. Done: area text on a piece, `labels` or `state.labels` keyed by cell id.
+36. Done: coins show H or T unless labelled; a `bag` (alias `sealed`) item kind.
+37. Done: number-line interval rows 16px apart with `row`; a side label on a ray sits above it at the edge.
+38. Done: keyed list patches in `ZQ.canvas.merge`, so explain, option and step patches merge by id on every kind.
+39. Done: number-line points are plain dots unless `drag: true` or a drag-point widget lists them; never handles in tap mode or a static copy.
+
 
 Raised later (equations level 2):
 

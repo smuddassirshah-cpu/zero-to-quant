@@ -62,7 +62,7 @@ Screen types and what they require:
 | type | Purpose | Requires |
 |---|---|---|
 | `title` | lesson name, one framing sentence, optional canvas in a static state | `prose`; no widget |
-| `explore` | free manipulation, then one observation question | `canvas` with an interactive mode, `widget` |
+| `explore` | free manipulation, then one observation question | `canvas` with an interactive mode (`controls`, a canvas-bound widget, points with `drag: true`, vectors in `state.drag`, or a `sim`), `widget` |
 | `problem` | a graded task | `question`, `widget`, `feedback` |
 | `ladder` | same canvas, one new constraint | as `problem`; reuse the previous canvas kind |
 | `demonstrate` | animated step-through | `steps: [{ "caption": "...", "canvas": {state patch} }]`, 3 to 6 steps; no widget |
@@ -123,6 +123,8 @@ Same as `choice`, several `correct`. The question line must say "Select all that
 
 Graded by symbolic equivalence; `accept` is the fallback list of forms (plain text as a learner would type).
 
+`"form": "expanded" | "factorised" | "simplified"` also asks for a shape, for expand and factorise tasks with free entry. Expanded: no bracketed sum left inside a product or power (`2x + 6`, not `2(x + 3)`). Factorised: a product with a bracketed sum among its factors, or a power of one (`2(x + 3)`, `(x + 1)^2`, a leading minus allowed). Simplified: like terms collected and fractions cancelled (`5x`, not `3x + 2x`). An equal answer in the wrong shape returns the key `form` (give it a `byKey` line; the default line says what to do). Without the maths engine the text fallback accepts only `answer` and `accept[]`, so write every accepted form in the asked shape.
+
 ### `slider`
 
 ```json
@@ -150,6 +152,16 @@ The canvas must list the same point ids as draggable. On a number-line or circle
 ```
 
 `mode: "order"` uses one slot and grades the token sequence against `order: ["t1", "t2"]`.
+
+Interchangeable tokens: with `"byText": true` tokens with the same text count as the same token (two `$x$` chips can go either way round); `"same": [["t1", "t2"]]` (or one list) names groups by id instead.
+
+`mode: "boxes"` places the items of the screen's `boxes` canvas: the learner drags them between containers, with no tokens or slots of its own.
+
+```json
+{ "kind": "place", "mode": "boxes", "answer": { "hand": ["b2", "b3"] }, "ordered": false }
+```
+
+`answer` maps each container id that matters to the item ids it must hold (any order; `"ordered": true` for a row whose order matters); items not listed may be anywhere. Keys: the first item out of place (its item id).
 
 ### `tap-regions`
 
@@ -205,7 +217,14 @@ Any path reaching `target` is correct. An op with `why` is a recorded misstep (i
   "moves": ["remove-both", "halve-both"], "target": { "left": ["unknown"], "right": [4] } }
 ```
 
-`moves` may include `remove-both`, `halve-both`, `divide-both`, `remove-unknown-both`, `remove-item`. Keys returned: `unbalanced`, `unsolved`. The `target` must be reachable from the starting pans with the listed moves (at most six): the playthrough's correct answer is the shortest such sequence, found by the engine. For `drag-point` on one-dimensional canvases (number-line, circle) `target` is a number (x or angle) and `wrong[].region` may be `{ "x": [a,b] }` or `{ "angle": [a,b] }`; default `tol` is 0.25.
+`moves` may include `remove-both`, `halve-both`, `divide-both`, `remove-unknown-both`, `subtract-both`, `add-both`, `remove-item`. Keys returned: `unbalanced`, `unsolved`.
+
+Signed pans, for `x - 3 = 8` or `7 - 3x = 22`: a weight may have a negative `value` (drawn dashed, lifting its pan) and an unknown block may carry `"coef"` (`-1`, `0.5`, `-3`; drawn as `−x`, `½x`, `−3x`). `subtract-both` and `add-both` take any amount, `divide-both` any non-zero number (negatives too), and after each move a pan shows one unknown block (the total coefficient) and one weight block (the total). A target `"unknown"` means $1x$ alone.
+
+```json
+{ "kind": "balance", "left": [ { "id": "w7", "kind": "weight", "value": 7 }, { "id": "x", "kind": "unknown", "coef": -3 } ], "right": [ { "id": "w22", "kind": "weight", "value": 22 } ],
+  "moves": ["subtract-both", "divide-both"], "target": { "left": ["unknown"], "right": [-5] } }
+``` The `target` must be reachable from the starting pans with the listed moves (at most six): the playthrough's correct answer is the shortest such sequence, found by the engine. For `drag-point` on one-dimensional canvases (number-line, circle) `target` is a number (x or angle) and `wrong[].region` may be `{ "x": [a,b] }` or `{ "angle": [a,b] }`; default `tol` is 0.25.
 
 ### `sketch`
 
@@ -228,7 +247,7 @@ The learner drags control points of a curve on the `plane` canvas; graded on sam
 
 The binding reference for every canvas kind is the engine's own documentation: `app/js/engine/canvas/README.md` (grid, tree, venn, number-line, boxes, area, balance, circle, table) and `app/js/engine/canvas/README-B.md` (plane, bars, distribution, scatter, series, walk, matrix, vectors, graph, array, payoff, orderbook). Read the entry for a kind before using it; the table below is the summary and the READMEs win where they differ. Id conventions that differ by kind: grid and area ids are one-based (`r5c1`), table and matrix ids are zero-based (`r0c0`, `A-0-1`), scatter `p{i}` and walk `path{i}` are zero-based, bins are `b{i}`, array `c{i}` uses the displayed index.
 
-`canvas: { "kind": ..., "params": {...}, "state": {...}, "enter": {...}, "controls": [...] }`. `enter` is a state patch applied 350 ms after the screen enters (use it for the "watch the space shrink" moment). Every kind also accepts `state.selected` (the current tap selection), `state.highlight` and `state.caption`. `params` fix the drawing; `state` is the initial state and the thing `explain.canvas`, `demonstrate.steps[].canvas` and `showWhy` patch. `controls` are explore-only sliders bound to params: `[{ "bind": "p", "min": 0, "max": 1, "step": 0.05, "label": "p", "start": 0.5, "format": "fraction" }]`. Where the canvas has its own binds (number-line: a point id moves that point; circle: `angle`; area: `split`, `split.rows`, `split.cols`, `grid`, `grid.rows`, `grid.cols`, `shade`) they are used; otherwise a plain `bind` sets `state.params[name]` and a dotted one such as `strike.c1` sets that state path. `start` is optional: given, it is the slider's opening value and it is applied to the canvas when the screen opens; left out, the slider opens at the bound value's current value (the point's x, the current split, the param), else at `min`. `format: "fraction"` shows the readout as a fraction (0.375 reads 3/8), `"percent"` as a percentage (37.5%). A bars canvas binds a category label to move that bar. Ids below are the highlightable element ids.
+`canvas: { "kind": ..., "params": {...}, "state": {...}, "enter": {...}, "controls": [...] }`. `enter` is a state patch applied 350 ms after the screen enters (use it for the "watch the space shrink" moment). Every kind also accepts `state.selected` (the current tap selection), `state.highlight` and `state.caption`. `params` fix the drawing; `state` is the initial state and the thing `explain.canvas`, `demonstrate.steps[].canvas` and `showWhy` patch. `controls` are explore-only sliders bound to params: `[{ "bind": "p", "min": 0, "max": 1, "step": 0.05, "label": "p", "start": 0.5, "format": "fraction" }]`. Where the canvas has its own binds (number-line: a point id moves that point; circle: `angle`; area: `split`, `split.rows`, `split.cols`, `grid`, `grid.rows`, `grid.cols`, `shade`) they are used; otherwise a plain `bind` sets `state.params[name]` and a dotted one such as `strike.c1` sets that state path. A control can also move one item of a list by id: `"bind": "points.p1.x"` (plane, number-line, any kind with `points`). `start` is optional: given, it is the slider's opening value and it is applied to the canvas when the screen opens; left out, the slider opens at the bound value's current value (the point's x, the current split, the param), else at `min`. `format: "fraction"` shows the readout as a fraction (0.375 reads 3/8), `"percent"` as a percentage (37.5%). A bars canvas binds a category label to move that bar. Ids below are the highlightable element ids.
 
 `derive` links values and captions to the state, re-evaluated after every patch, drag and control: `"derive": { "p2.x": "0.8 * p1.x", "caption": "Change: {{round((p1.x / 50 - 1) * 100, 1)}}%" }`. A target is an item property by id (`p2.x`), `values.<label>` on bars, `params.<name>`, `caption` or another state key; an expression uses item ids (`p1.x`), param names, top-level numbers, `values`, and `abs min max sqrt pow exp log floor ceil round(v, places) pi`; a string target fills each `{{expression}}`. Details in README-B ("Linked state").
 
@@ -237,12 +256,12 @@ The binding reference for every canvas kind is the engine's own documentation: `
 | `grid` | `rows`, `cols`, `rowLabel`, `colLabel`, `rowHeads[]`, `colHeads[]`, `cells` (`"sum"`, `"pair"`, `"product"`, or a 2D array of strings), `compact` | `shade: { "<setName>": [ids] }` (sets are drawn with series slots in order), `outline: "row5"|"col3"|"cross5"|[ids]`, `dim: [ids]`, `mark: { "<id>": "✓" }` | `r{i}c{j}` |
 | `tree` | `levels: [{ "label": "First draw", "branches": [{ "id": "a", "label": "Red", "p": "3/5" }, ...] }]` or an explicit `nodes` tree with `children`, `leaves: { "<path>": "value" }` | `highlight: [paths]`, `shade: [paths]`, `show: "p"|"none"` , `collapse: [paths]` | branch paths like `a`, `a-b` |
 | `venn` | `sets: ["A","B"]` or three, `labels`, `values: { "A": 20, "AB": 5, "B": 10, "none": 15 }`, `mode: "count"|"prob"` | `shade: [regions]`, `show: true|false` | `A`, `B`, `AB`, `C`, `AC`, `BC`, `ABC`, `none` |
-| `number-line` | `min`, `max`, `step`, `labels` | `points: [{ "id": "p1", "x": 2.5, "label": "", "labelPos": "above" }]`, `intervals: [{ "id": "i1", "from": 1, "to": 3, "open": [false,true], "labelPos": "below" }]`, `arrows`; `labelPos` is `above`, `below`, `left` or `right` (default: above, or the side away from a jump arrow at that point; close labels stack); keyed patches `{ "points": { "p1": { "x": 3 } } }` work | point and interval ids; points are tappable for `tap-regions` |
-| `boxes` | `containers: [{ "id": "urn", "label": "Urn", "items": [{ "id": "b1", "kind": "ball", "colour": 1, "label": "" }] }]`, `itemKind: ball|card|coin|slot` | `draw: ["b1"]`, `move: { "b1": "hand" }`, `face: { "c1": "up" }`, `highlight` | item and container ids |
-| `area` | `shape: "rect"|"square"|"circle"`, `grid: [rows, cols]` (a circle: `sectors`), `labels` | `shade: [cells or fraction]`, `split`, `grid` (re-cuts the shape into a new grid), `point`; controls bind `split`, `grid` or `shade` | `c{i}{j}`, `c{i}-{j}` when either index is 10 or more |
-| `balance` | `left`, `right` item lists as in the widget | `left`, `right` | item ids |
+| `number-line` | `min`, `max`, `step`, `labels` | `points: [{ "id": "p1", "x": 2.5, "label": "", "labelPos": "above", "drag": true }]` (a point is a plain dot unless `drag: true` or a drag-point widget moves it), `intervals: [{ "id": "i1", "from": 1, "to": 3, "open": [false,true], "labelPos": "below", "row": 1 }]` (`row` 0 sits on the axis, rows stack 16px apart; a side label on a ray goes above it at the edge), `arrows`; `labelPos` is `above`, `below`, `left` or `right` (default: above, or the side away from a jump arrow at that point; close labels stack); keyed patches `{ "points": { "p1": { "x": 3 } } }` work | point and interval ids; points are tappable for `tap-regions` |
+| `boxes` | `containers: [{ "id": "urn", "label": "Urn", "items": [{ "id": "b1", "kind": "ball", "colour": 1, "label": "" }] }]`, `itemKind: ball|card|coin|slot|bag` (`bag`, alias `sealed`: a closed sack showing only its label, such as `"?"`; a coin shows H or T unless it has a `label`) | `draw: ["b1"]`, `move: { "b1": "hand" }`, `face: { "c1": "up" }`, `highlight` | item and container ids |
+| `area` | `shape: "rect"|"square"|"circle"`, `grid: [rows, cols]` (a circle: `sectors`), `labels` (edges `top`, `bottom`, `left`, `right`, and text on a piece keyed by cell id: `{ "c11": "$3n$" }`; also `state.labels`) | `shade: [cells or fraction]`, `split`, `grid` (re-cuts the shape into a new grid), `point`; controls bind `split`, `grid` or `shade` | `c{i}{j}`, `c{i}-{j}` when either index is 10 or more |
+| `balance` | `left`, `right` item lists as in the widget (signed weights and `coef` allowed), `x` | `left`, `right`, `params: { "x": 4 }` (the unknown's value: patchable, and a control can bind `x`) | item ids |
 | `circle` | `radius`, `showSin`, `showCos`, `showTan`, `degrees: true|false`, `ticks` | `angle`, `shade: "arc"|"sector"` | `angle`, `sin`, `cos`, `pt` |
-| `plane` | `x: [min,max]`, `y: [min,max]`, `grid`, `functions: [{ "id": "f", "expr": "x^2", "label": "f(x)", "domain": [a,b] }]`, `params: { "a": 1 }` (usable in expr) | `points: [{ "id": "p1", "x": 1, "y": 1, "drag": true, "snap": 0.5, "label": "" }]`, `segments`, `tangent: { "f": "f", "x": 1 }`, `area: { "f": "f", "from": 0, "to": 2 }`, `riemann: { "f": "f", "from": 0, "to": 2, "n": 4, "rule": "left" }`, `vectors`, `params`, `highlight` | function, point, segment ids |
+| `plane` | `x: [min,max]`, `y: [min,max]`, `grid`, `functions: [{ "id": "f", "expr": "x^2", "label": "f(x)", "domain": [a,b], "labelSide": "above|below", "labelOffset": [dx, dy] }]`, `params: { "a": 1 }` (usable in expr) | `points: [{ "id": "p1", "x": 1, "y": 1, "drag": true, "snap": 0.5, "label": "" }]`, `segments`, `tangent: { "f": "f", "x": 1 }`, `area: { "f": "f", "from": 0, "to": 2 }`, `riemann: { "f": "f", "from": 0, "to": 2, "n": 4, "rule": "left" }`, `vectors`, `params`, `highlight` | function, point, segment ids |
 | `bars` | `categories: [...]` or `bins: { "min", "max", "width" }`, `yLabel`, `exact: [{ "x": "7", "y": 0.1667 }]`, `sim: { "trials": [10,100,1000], "outcome": "d6()+d6()", "seed": 7 }`, `showValues` with `decimals` or `money: "£"` | `values: {cat: v}`, `highlight`, `ran: n` | category ids (`x7`) |
 | `distribution` | `family`, `params: {...}`, `x: [min,max]`, `showMean`, `showSd` | `shade: { "from": a, "to": b }`, `params` | `mean`, `shade`, `x{k}` for pmf bars |
 | `scatter` | `points: [[x,y],...]`, `x`, `y` labels, `fit: true` | `line: { "m": 1, "b": 0 }`, `residuals: true`, `highlight` | `p{i}`, `line` |
@@ -256,7 +275,7 @@ The binding reference for every canvas kind is the engine's own documentation: `
 | `orderbook` | `bids: [[price, size]]`, `asks: [[price, size]]`, `depth` | `order: { "side": "buy", "size": 300 }`, `highlight: ["ask0"]`, `fills` | `bid{i}`, `ask{i}`, `spread` |
 | `table` | `columns`, `rows`, `align` | `highlight: { "rows": [], "cols": [], "cells": [] }` | `r{i}`, `c{j}`, `r{i}c{j}` |
 
-Every canvas accepts `state.highlight: [ids]` and `state.caption: "text"`.
+Every canvas accepts `state.highlight: [ids]` and `state.caption: "text"`. Every patch (`state`, `explain.canvas`, `demonstrate.steps[].canvas`, a wrong answer's `canvas`) may change one item of a list by id: `{ "points": { "p2": { "x": 3 } } }` merges into `p2` and keeps the rest of the list.
 
 Two rendering limits to write around:
 
@@ -300,8 +319,8 @@ Errors:
 1. JSON parses; required fields present; ids kebab-case; lesson `id` matches the filename; `course` matches the folder.
 2. Screens 8 to 12; at most one `title`; at most two non-task screens; `summary.ideas` has exactly 3; `quiz` has 3 to 5 items.
 3. Every `problem`, `ladder`, `trap`, `transfer`, `derive` screen has `question`, `widget`, `feedback.correct`, `feedback.generic` and 1 to 3 hints in rung order.
-4. Widget kinds and canvas kinds are known; required widget fields exist; `choice` has exactly one correct and every distractor has `why`; `multi` has at least one correct; `numeric` has a numeric `answer` and `tol`; `tap-regions` has `answer`, or `count` (a whole number no larger than `among`), and its `answer` and `among` ids exist in the canvas (for `grid`, `venn`, `area` with `c{i}{j}` or `c{i}-{j}` from 10 up, `table`, and `number-line` point ids); `drag-point` targets are `[x, y]`, or a bare number on a number-line or circle; `order` answer is a permutation of line ids; `place` slots accept known tokens; `manipulate` target is reachable from start; `code` has at least 3 tests.
-5. Every `feedback.byKey` key is a key the widget can produce (this includes `too-few` and `too-many` for a `tap-regions` in count mode, and point ids for `drag-point`); every `hints[].highlight` id is a plausible id for the canvas kind.
+4. Widget kinds and canvas kinds are known; required widget fields exist; `choice` has exactly one correct and every distractor has `why`; `multi` has at least one correct; `numeric` has a numeric `answer` and `tol`; `tap-regions` has `answer`, or `count` (a whole number no larger than `among`), and its `answer` and `among` ids exist in the canvas (for `grid`, `venn`, `area` with `c{i}{j}` or `c{i}-{j}` from 10 up, `table`, and `number-line` point ids); `drag-point` targets are `[x, y]`, or a bare number on a number-line or circle; list fields (`options`, `among`, `tokens`, `slots`, `lines`, `points`, `wrong`, `hints[].highlight` and list answers) are lists, and a field of the wrong shape is one error, never a crash; `expression` `form` is `expanded`, `factorised` or `simplified`; `place` in `boxes` mode names containers and items on its boxes canvas; `balance` `moves` are known and the `target` is reachable with them (the engine's own solver); `order` answer is a permutation of line ids; `place` slots accept known tokens; `manipulate` target is reachable from start; `code` has at least 3 tests.
+5. Every `feedback.byKey` key is a key the widget can produce (this includes `form` for an `expression` with `form`, item ids for `place` in `boxes` mode, `too-few` and `too-many` for a `tap-regions` in count mode, and point ids for `drag-point`); every `hints[].highlight` id is a plausible id for the canvas kind.
 6. `difficulty` 1 to 5 and within the range for the context; quiz items 2 to 3; review 2 to 4; homework 3 to 5 with one 5; exams at the ramp within ±10%.
 7. `skills` exist in the course; every course skill is used by at least one lesson.
 8. Copy rules: no `!` in prose, question or feedback; no emoji; no "it can be shown"; no American spellings from a fixed list (color, center, favorite, analyze, optimize, behavior, modeling, labeled, math class... the validator ships the list).

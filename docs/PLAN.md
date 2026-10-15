@@ -202,15 +202,15 @@ The kinds, with grading rules. Specs are in `AUTHORING.md`.
 | `choice` | one option | the chosen option's `correct`; `key` = option id |
 | `multi` | set of options | exact set match; `key` = first wrong or missing option id |
 | `numeric` | text | parses integers, decimals, fractions `a/b`, percentages if `unit` is `%`; `abs` or `rel` tolerance; `key` = the matching `wrong[]` entry id |
-| `expression` | MathLive field (fallback: text) | symbolic equivalence via Compute Engine `isEqual` after `simplify`; fallback compares normalised strings against `accept[]`; `key` from `wrong[]` by the same test |
+| `expression` | MathLive field (fallback: text) | symbolic equivalence via Compute Engine `isEqual` after `simplify`, and with `form` the canonical shape (expanded, factorised, simplified; key `form`); fallback compares normalised strings against `accept[]`; `key` from `wrong[]` by the same test |
 | `slider` | number | within `answer ± tol`; `key` from `wrong[]` ranges |
 | `drag-point` | point or points on the canvas | each within `tol` of its target (canvas units); `key` from `wrong[]` regions |
-| `place` | mapping token -> slot | exact mapping, or `order` of tokens in one slot; `key` = first misplaced token |
+| `place` | mapping token -> slot, or items in the containers of a `boxes` canvas (`mode: "boxes"`) | exact mapping (tokens with the same text interchangeable under `byText`, or a `same` group), or `order` of tokens in one slot, or each named container's items; `key` = first misplaced token or item |
 | `tap-regions` | set of canvas region ids | exact set match; `key` from `wrong[]` sets, else first wrong region id |
 | `order` | permutation of lines | exact order; per-line marks after grading |
 | `table` | cell values | every editable cell within tolerance |
 | `manipulate` | path through the authored state graph | reaching a `target` state; `key` from the state's `why` |
-| `balance` | moves on the pans | pans level with the unknown alone on one side (authored `target`) |
+| `balance` | moves on the pans (signed pans: subtract or add any amount, divide by any non-zero number) | pans level with the unknown alone on one side (authored `target`) |
 | `sketch` | control points | every sampled x within the tolerance band of the target curve |
 | `code` | source | hidden tests pass (Pyodide worker, reused from `drill.js`) |
 

@@ -87,6 +87,11 @@
         intervals: [{ id: 'i1', from: 6, to: 8, label: 'interval', labelPos: 'below' }], arrows: [{ id: 'j1', from: 2, to: 5, label: '+3' }] } } },
   ];
   const WIDGET_EXTRAS = [
+    { name: 'balance (signed)', kind: 'balance', item: { question: 'Solve $7 - 3x = 22$ on the scale.', canvas: { kind: 'balance', params: { left: [{ id: 'w7', kind: 'weight', value: 7 }, { id: 'x', kind: 'unknown', coef: -3 }], right: [{ id: 'w22', kind: 'weight', value: 22 }] } },
+      widget: { kind: 'balance', left: [{ id: 'w7', kind: 'weight', value: 7 }, { id: 'x', kind: 'unknown', coef: -3 }], right: [{ id: 'w22', kind: 'weight', value: 22 }], moves: ['subtract-both', 'add-both', 'divide-both'], target: { left: ['unknown'], right: [-5] } } } },
+    { name: 'place (boxes)', kind: 'place', item: { question: 'Put the sealed bag and the tails coin in the hand.', canvas: { kind: 'boxes', params: { containers: [{ id: 'urn', kind: 'urn', label: 'Urn', items: [{ id: 'c1', kind: 'coin' }, { id: 'c2', kind: 'coin', face: 'T' }, { id: 'g1', kind: 'bag', label: '?' }] }, { id: 'hand', kind: 'hand', label: 'Hand' }] } },
+      widget: { kind: 'place', mode: 'boxes', answer: { hand: ['g1', 'c2'] } } } },
+    { name: 'expression (factorised)', kind: 'expression', item: { question: 'Factorise $2x + 6$.', widget: { kind: 'expression', answer: '2(x+3)', accept: ['2(x+3)'], form: 'factorised' } } },
     { name: 'tap-regions (count)', kind: 'tap-regions', item: { question: 'Shade any 3 of the 4 parts.', canvas: { kind: 'area', params: { shape: 'rect', grid: [1, 4], size: [4, 1] }, state: {} },
       widget: { kind: 'tap-regions', count: 3, among: ['c11', 'c12', 'c13', 'c14'], countWord: 'parts' } } },
     { name: 'tap-regions (number-line points)', kind: 'tap-regions', item: { question: 'Tap the two numbers above 4.', canvas: { kind: 'number-line', params: { min: 0, max: 6, step: 1 }, state: { points: [{ id: 'p1', x: 1, label: 'a' }, { id: 'p2', x: 3, label: 'b' }, { id: 'p3', x: 4.5, label: 'c' }, { id: 'p4', x: 5.5, label: 'd' }] } },

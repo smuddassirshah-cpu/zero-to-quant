@@ -31,7 +31,8 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - `grid`: true (gridlines at the ticks), a number (grid step) or false.
 - `xLabel`, `yLabel`. Defaults are `$x$` and `$y$`.
 - `height` in px (default 360). `equal: true` sizes the frame so units are square.
-- `functions: [{ id, expr, label, domain: [a, b], colour, dashed, endpoints: ["closed"|"open"|null, ...], labelAt: x }]`.
+- `functions: [{ id, expr, label, domain: [a, b], colour, dashed, endpoints: ["closed"|"open"|null, ...], labelAt: x, labelSide: "above"|"below", labelOffset: [dx, dy] }]`. `labelSide` puts the label above (default) or below the curve; `labelOffset` nudges it in px. Labels still move apart if they would overlap.
+- Mixed text and maths in a label or axis title (`"Price $p$ (£)"`) keeps its spaces.
   - `expr` uses `x`, numbers, `+ - * / ^`, `sin cos tan exp ln log sqrt abs min max floor ceil pi e`, and any name in `params`.
   - Paths break at NaN, at asymptotes and at jumps.
 - `params: { a: 1 }` are the expression parameters.
@@ -53,6 +54,7 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 
 **modes and events**
 - `drag` (on points with `drag: true`): `{ type: "drag", id, x, y, phase }`.
+- Controls: `"bind": "points.p1.x"` (or `.y`) moves that point from an explore slider, which opens at the point's current value.
 - `slider`: no events; the slider writes `state.params`.
 - `sketch`: started with `enable('sketch', { control, xRange, target, band, start, snap, reset })`. Each control point moves vertically. Emits `{ type: "sketch", points, phase }`.
 

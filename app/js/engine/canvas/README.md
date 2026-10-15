@@ -6,7 +6,7 @@ Authoring reference for the canvas kinds built on `_base.js` by E3. The lesson s
 "canvas": { "kind": "grid", "params": { }, "state": { } }
 ```
 
-`params` fix the drawing. `state` is the starting state, and it is what `explain.canvas`, `demonstrate.steps[].canvas`, `wrong[].canvas` and hints patch. Patches merge: objects merge key by key, arrays replace.
+`params` fix the drawing. `state` is the starting state, and it is what `explain.canvas`, `demonstrate.steps[].canvas`, `wrong[].canvas` and hints patch. Patches merge: objects merge key by key, arrays replace, and an object patch for a list of items with ids is keyed: `{ "points": { "p2": { "x": 3 } } }` merges into `p2` and keeps the rest (in `ZQ.canvas.merge`, so it holds for every kind and for the explanation copy).
 
 ## Keys every kind accepts in state
 
@@ -98,7 +98,7 @@ One to three sets in a universe; each region is its exact shape.
 
 **labels**: `labelPos` is `above`, `below` (under the tick labels), `left` or `right` (beside the point, raised clear of the axis; for an interval, beside its ends). Without it a point label goes above, or to the side away from a jump arrow that starts or ends at the point (below when arrows leave both ways). Labels that would overlap each other or an arrow's label are stacked 18px apart, and the drawing grows to fit.
 
-**ids**: the point, interval and arrow ids. **events**: drag (`{ id, x, y: 0, phase }`, snapped); tap on points (`enable('tap')`, as the tap-regions widget does: points become buttons and their ids are the region ids). Draggable points: those listed by `enable('drag', { ids })`, else those with `drag: true`, else all (never in tap mode). Arrow keys move a focused point by `snap` (Shift: ten times). **methods**: `points()`, `place(id, x)`, `setParam(id, x)`, `getParam(id)`.
+**ids**: the point, interval and arrow ids. **events**: drag (`{ id, x, y: 0, phase }`, snapped); tap on points (`enable('tap')`, as the tap-regions widget does: points become buttons and their ids are the region ids). A point is drawn as a drag handle, and can be dragged, only when `enable('drag', { ids })` lists it (the drag-point widget) or it has `drag: true` (an explore point, movable without a widget); every other point, every point in tap mode and every point in a static copy (the Why? modal) is a plain dot. Intervals take `row` (0 on the axis, then 16px apart; default the interval's index); a `left` or `right` label on a ray (`from` or `to` null) sits above the bar at the drawing's edge. Arrow keys move a focused point by `snap` (Shift: ten times). **methods**: `points()`, `place(id, x)`, `setParam(id, x)`, `getParam(id)`.
 
 ```json
 { "kind": "number-line", "params": { "min": -5, "max": 5, "step": 1 },
@@ -109,7 +109,7 @@ One to three sets in a universe; each region is its exact shape.
 
 Containers and items for counting and drawing without replacement.
 
-**params**: `containers: [{ "id": "urn", "label": "Urn", "kind": "urn" | "bag" | "box" | "hand" | "row", "items": [{ "id": "b1", "kind": "ball" | "card" | "coin" | "slot", "colour": 1, "label": "1", "face": "up" }], "capacity": 3, "slots": 3, "cols": 3 }]`, `itemKind` (default for items, `"ball"`). `colour` is a series slot 1 to 6 (0 for a plain item). A `row` draws `slots` dashed places that fill left to right.
+**params**: `containers: [{ "id": "urn", "label": "Urn", "kind": "urn" | "bag" | "box" | "hand" | "row", "items": [{ "id": "b1", "kind": "ball" | "card" | "coin" | "slot" | "bag", "colour": 1, "label": "1", "face": "up" }], "capacity": 3, "slots": 3, "cols": 3 }]`, `itemKind` (default for items, `"ball"`). A coin shows its face, H or T, unless it has a `label`. An item of kind `bag` (alias `sealed`) is a closed sack showing only its label (`"?"`, `"n"`), for a bag of counters whose contents stay hidden. `colour` is a series slot 1 to 6 (0 for a plain item). A `row` draws `slots` dashed places that fill left to right.
 
 **state**: `draw: [ids]` (move to the container whose kind is `hand`; without one, drawn items lift above the containers), `move: { "<item>": "<container>" }` (key order is arrival order), `face: { "<card>": "up" | "down", "<coin>": "H" | "T" }` (flips animate).
 
@@ -137,6 +137,8 @@ Fraction and multiplication area models, geometric probability.
   "controls": [{ "bind": "grid.cols", "min": 2, "max": 12, "step": 2, "label": "Pieces" }, { "bind": "shade", "min": 0, "max": 1, "step": 0.125, "label": "Shaded", "format": "fraction" }] }
 ```
 
+**text on a piece**: `labels` (params) and `state.labels` also take cell ids, `{ "c11": "$3n$", "c12": "4" }`, drawn centred on the cell (on a circle, along the sector's middle); the state wins.
+
 **ids**: cells `c{i}{j}` one-based from the top left (`c{i}-{j}` when either index is 10 or more), circle sectors `c1{j}` clockwise from twelve o'clock, points `pt1`, `pt2`. **events**: tap (cells).
 
 ```json
@@ -148,11 +150,11 @@ Fraction and multiplication area models, geometric probability.
 
 Two-pan scale. The beam tilts by clamp(k × (right − left), ±15°) on the spring-physical easing.
 
-**params**: `left`, `right` (item lists as in the widget: `{ "id": "x1", "kind": "unknown", "label": "x" }`, `{ "id": "w3", "kind": "weight", "value": 3 }`), `x` (the hidden value of an unknown; default: the value that balances the starting pans), `k` (degrees per unit, default 3), `unknownLabel` ("x").
+**params**: `left`, `right` (item lists as in the widget: `{ "id": "x1", "kind": "unknown", "label": "x" }`, `{ "id": "w3", "kind": "weight", "value": 3 }`), `x` (the hidden value of an unknown; default: the value that balances the starting pans), `k` (degrees per unit, default 3), `unknownLabel` ("x"), `signed` (true forces signed pans). Signed pans: a weight may be negative (dashed, it lifts its pan) and an unknown may carry `coef` (`-1`, `0.5`, `-3`, labelled `−x`, `½x`, `−3x`); then every move works on the pan totals and each pan collapses to one unknown block and one weight block.
 
-**state**: `left`, `right` (current pans; setting them restarts the move list; both empty means back to params).
+**state**: `left`, `right` (current pans; setting them restarts the move list; both empty means back to params), `params: { "x": 4 }` (the unknown's value; patches, explanations and a control bound to `x` change it and the beam re-tilts).
 
-**ids**: item ids, `beam`, `left`, `right` (the pans). **operations** (for the balance widget; each returns `{ ok, reason }` and emits `{ op, moves, left, right }`): `removeBoth(n)`, `removeBoth("x")` (one unknown from each pan), `halveBoth()`, `divideBoth(k)`, `removeItem(id)`; also `moves()`, `isLevel()`, `tilt()`, `reset()`. Reasons: `not-enough`, `no-unknown`, `uneven`, `bad-number`, `locked`.
+**ids**: item ids, `beam`, `left`, `right` (the pans). **operations** (for the balance widget; each returns `{ ok, reason }` and emits `{ op, moves, left, right }`): `removeBoth(n)`, `removeBoth("x")` (one unknown from each pan), `halveBoth()`, `divideBoth(k)`, `subtractBoth(n)`, `addBoth(n)`, `removeItem(id)`; also `moves()`, `isLevel()`, `tilt()`, `reset()`, `setParam("x", v)`, `getParam("x")`. Reasons: `not-enough`, `no-unknown`, `uneven`, `bad-number`, `locked`.
 
 ```json
 { "kind": "balance", "params": { "left": [{ "id": "x1", "kind": "unknown" }, { "id": "x2", "kind": "unknown" }, { "id": "w3", "kind": "weight", "value": 3 }], "right": [{ "id": "w11", "kind": "weight", "value": 11 }] }, "state": {} }
@@ -192,5 +194,6 @@ An HTML table in the canvas wrapper.
 ## Canvas-bound widgets
 
 - **tap-regions** (`answer`, `max`, `wrong: [{ "id", "set", "flash" }]`, `countWord`): works on any canvas with tap mode (grid, tree, venn, area, boxes, table, number-line points, and E4's tappable kinds). Keys: a matching `wrong[]` id, else the first wrongly selected id, else the first missed answer id. `showWhy` flashes the extra ids of the matched set (or `flash`), else the wrong picks. Count mode: `{ "count": 3, "among": ["c11", "c12", "c13", "c14"] }` with no `answer` is correct when exactly `count` regions are selected, all within `among` when given; keys are a matching `wrong[]` id, else the first pick outside `among`, else `too-few` or `too-many`; the count reads "2 of 3 shaded" (with `countWord`); reveal selects the first `count` of `among`.
-- **balance** (`moves: ["remove-both", "remove-unknown-both", "halve-both", "divide-both", "remove-item"]`, `target: { "left": ["unknown"], "right": [4] }`): chips under the canvas and a live equation. Keys: `unbalanced`, `unsolved`. A target matches either way round; weights compare by total. The test hook's correct answer is the shortest list of the allowed moves (at most six) that reaches the target (`ZQ.grade.balanceMoves`), so the target must be reachable with them.
+- **place** in `mode: "boxes"` (`answer: { "<container>": [itemIds] }`, `ordered`): the learner drags the canvas's items between containers; correct when every named container holds exactly its listed items. Keys: the first item out of place. `reveal` moves the items there in hint indigo.
+- **balance** (`moves: ["remove-both", "remove-unknown-both", "halve-both", "divide-both", "subtract-both", "add-both", "remove-item"]`, `target: { "left": ["unknown"], "right": [4] }`): chips under the canvas and a live equation. Keys: `unbalanced`, `unsolved`. A target matches either way round; weights compare by total. The test hook's correct answer is the shortest list of the allowed moves (at most six) that reaches the target (`ZQ.grade.balanceMoves`), so the target must be reachable with them.
 - **drag-point** (`points: [{ "id", "target", "tol" }]`, `wrong: [{ "id", "region": { "x": [a, b], "y": [c, d] } | { "angle": [a, b] }, "canvas": {patch} }]`): targets are `[x, y]`, or a number on number-line (x) and circle (angle). Default `tol` 0.25. Keys: a `wrong[]` id whose region holds a point, else the first point off target (its point id, which `byKey` may use).
