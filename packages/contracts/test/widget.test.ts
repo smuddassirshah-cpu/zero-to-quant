@@ -2,6 +2,8 @@
 import type { ReadonlySignal } from '@preact/signals-core';
 import type { MotionStep } from '@zq/contracts/answer';
 import type { HighlightStyle, Json, LocalId, Mark } from '@zq/contracts/base';
+import type { PythonRuntime, SqlRuntime } from '@zq/contracts/platform';
+import type { TexService } from '@zq/contracts/render';
 import type * as w from '@zq/contracts/widget';
 import type { BaseConfig, WidgetLogic } from '@zq/contracts/widget';
 import type * as api from '@zq/contracts/widget-api';
@@ -90,7 +92,7 @@ describe('the view API (5.3)', () => {
       | Words<'change commit view announce feedback el'>
     >();
     expectTypeOf<OptionalKeys<Api>>().toBeNever();
-    expectTypeOf<Api['state']>().toEqualTypeOf<ReadonlySignal<{ a: PickerA; v: PickerV }>>();
+    expectTypeOf<Api['state']>().toEqualTypeOf<ReadonlySignal<Readonly<{ a: PickerA; v: PickerV }>>>();
     expectTypeOf<Api['theme']>().toEqualTypeOf<ReadonlySignal<'light' | 'dark'>>();
     expectTypeOf<Api['feedback']>().parameter(0).toEqualTypeOf<Words<'tap snap lift drop'>>();
     expectTypeOf<Api['view']>().returns.toBeVoid();
@@ -110,8 +112,11 @@ describe('the view API (5.3)', () => {
       (props: { config: PickerConfig; api: Api }) => VNode | null
     >();
     expectTypeOf<api.WidgetServices>().toEqualTypeOf<{
+      tex: TexService;
       cas: (() => Promise<api.CasService>) | null;
       mathfield: (() => Promise<api.MathfieldService>) | null;
+      python: PythonRuntime | null;
+      sql: SqlRuntime | null;
     }>();
     expectTypeOf<api.MathfieldService['mount']>().parameter(0).toEqualTypeOf<HTMLElement>();
   });

@@ -11,14 +11,14 @@
  * - `ClusterId` has 26 members: 5.3's listing shows 22, but ARCHITECTURE.md decision 8 and 6.4.1 count
  *   26 since revision 2, and WIDGETS.md, which owns clusters, adds `analysis`, `numerics`, `optim` and `dl`
  *   (its decision 19, recorded against this union in its 0.3).
- * - Two members of the listing are not here. `WidgetSchemaModule` types its schemas as zod's `ZodType`, and
- *   zod is not yet a dependency of this package; `CompilerRegistry`, which reads it, belongs to the second
- *   contracts unit of stage 3.
+ * - Two members of the listing are not here: `WidgetSchemaModule`, which types its schemas as zod's
+ *   `ZodType`, and `CompilerRegistry`, which reads it. They follow in the second part of stage 3's second
+ *   contracts unit, with zod as a dependency and the registries' erased types.
  * - `A` and `V` must be JSON with exact keys. An interface is not assignable to `Json` (no implicit index
  *   signature), an index signature widens `keyof V` so `tweenable` accepts any name, and the lint rule
  *   consistent-type-definitions refuses `type V = { ... }`; `type V = Readonly<{ ... }>` passes all three
- *   [measured: tsc 6.0.3 and ESLint, test/widget.test.ts]. `WidgetState` itself is an interface, as 5.3
- *   writes it, so the host saves a draft as a `{ a, v }` copy.
+ *   [measured: tsc 6.0.3 and ESLint, test/widget.test.ts]. `WidgetState` is such an alias too, where 5.3
+ *   writes an interface, so a state is the `Json` that `DraftStore.put` and `migrate` take.
  * - `prettier-ignore` keeps 5.3's own line layout for its long unions; test/drift.test.ts compares every
  *   declaration with the listing.
  */
@@ -49,10 +49,7 @@ export interface BaseConfig {
 }
 
 /** a: answer state, graded, saved and restored. v: view state (zoom, step, time cursor), which show-why may tween. Both JSON. */
-export interface WidgetState<A extends Json, V extends Json> {
-  a: A;
-  v: V;
-}
+export type WidgetState<A extends Json, V extends Json> = Readonly<{ a: A; v: V }>;
 
 // prettier-ignore
 export interface Target {

@@ -3,6 +3,7 @@
 // src/engine/widgets/host.tsx's own tests check when it is built (stage 10a); a types-only package cannot.
 import type { Answer, Grade } from '@zq/contracts/answer';
 import type { Json, Scope, SeedSource } from '@zq/contracts/base';
+import type { DraftStore } from '@zq/contracts/platform';
 import type { BaseConfig, Target, WidgetState } from '@zq/contracts/widget';
 import type { PresetRuntime, WidgetApi, WidgetModule, WidgetRegistry } from '@zq/contracts/widget-api';
 import { describe, expectTypeOf, test } from 'vitest';
@@ -43,10 +44,10 @@ describe('the lifecycle of a widget instance, its types (5.4)', () => {
     expectTypeOf<NonNullable<P['marks']>>().parameter(2).toEqualTypeOf<Grade>();
   });
 
-  test('9 leave: the scope disposes what the instance owned; the final draft is a JSON copy', () => {
+  test('9 leave: the scope disposes what the instance owned; the final draft is the state itself', () => {
     expectTypeOf<Api['scope']>().toEqualTypeOf<Scope>();
-    // DraftStore.put takes Json, and WidgetState is an interface, so the host saves { a, v }.
-    expectTypeOf<S>().not.toExtend<Json>();
-    expectTypeOf<{ a: PickerA; v: PickerV }>().toExtend<Json>();
+    // DraftStore.put takes Json, and WidgetState is a Readonly alias, so a state is Json as it stands.
+    expectTypeOf<S>().toExtend<Json>();
+    expectTypeOf<S>().toExtend<Parameters<DraftStore['put']>[1]>();
   });
 });

@@ -1,5 +1,6 @@
 // docs/DECISIONS.md B43: a contracts module that a no-DOM package imports (@zq/mathcore, @zq/graders, and
-// @zq/compiler through widget.ts) names no DOM type. They are compiled with packages/mathcore/tsconfig.json's
+// @zq/compiler through widget.ts and platform.ts's Manifest; the workers through events.ts) names no
+// DOM type. They are compiled with packages/mathcore/tsconfig.json's
 // options (Node's libraries, no DOM) and must produce no diagnostic, pull in no other contracts module, and
 // reach no `/// <reference lib="dom" />` through a dependency's declarations (preact's jsx.d.ts has one).
 import { basename } from 'node:path';
@@ -8,7 +9,7 @@ import ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 
 const here = (path: string) => fileURLToPath(new URL(path, import.meta.url));
-const pure = ['base.ts', 'answer.ts', 'widget.ts', 'keys.ts'];
+const pure = ['base.ts', 'answer.ts', 'widget.ts', 'keys.ts', 'events.ts', 'platform.ts', 'render.ts'];
 
 function compile(names: string[]) {
   const read = ts.readConfigFile(here('../../mathcore/tsconfig.json'), (path) => ts.sys.readFile(path));

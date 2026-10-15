@@ -6,15 +6,17 @@
  * - `WidgetViewProps`, `WidgetView` and `WidgetModule` come from 5.3's first listing (widget.ts there): they
  *   name `VNode` and `WidgetApi`, and preact's types bring the DOM lib with them, so they stay out of the
  *   pure widget.ts that @zq/compiler reads (see its decision notes).
- * - `WidgetServices` carries `cas` and `mathfield`. Its `tex: TexService` (5.11), `python: PythonRuntime`
- *   and `sql: SqlRuntime` (5.9) join with the unit that transcribes 5.9 and 5.11; `TexService` is declared
- *   in src/engine/render, which this package may not import (4.5), so its interface must move here first.
+ * - `WidgetServices.tex` is `TexService` from render.ts, where 5.11's listing puts it (B45): src/engine/render,
+ *   which implements it, is outside what this package may import (4.5). `python` and `sql` are 5.9's
+ *   runtimes from platform.ts.
  * - `CasService` is declared in answer.ts, which `GradeCtx` needs without the DOM lib, and re-exported here.
  */
 import type { ReadonlySignal } from '@preact/signals-core';
 import type { Ref, VNode } from 'preact';
 import type { CasService } from './answer.ts';
 import type { ElementId, HighlightStyle, Json, Mark, Scope, SeedSource } from './base.ts';
+import type { PythonRuntime, SqlRuntime } from './platform.ts';
+import type { TexService } from './render.ts';
 import type {
   BaseConfig,
   ClusterId,
@@ -82,8 +84,10 @@ export type PresetRuntime = Pick<
   PresetDef<BaseConfig, BaseConfig>,
   'type' | 'v' | 'predicates' | 'recipes' | 'describeAs'
 >;
-/** Services the host injects; 5.3 also lists tex, python and sql (see the decision notes). */
 export interface WidgetServices {
+  tex: TexService; // section 5.11
   cas: (() => Promise<CasService>) | null; // only when logic.needs includes 'cas'
   mathfield: (() => Promise<MathfieldService>) | null;
+  python: PythonRuntime | null; // only for widgets that declare 'python'
+  sql: SqlRuntime | null;
 }
