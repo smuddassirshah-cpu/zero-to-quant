@@ -9,9 +9,6 @@ import ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 
 const recorded: Record<string, string> = {
-  'Scope.listen': 'changed', // AddEventListenerOptions is not a Node global (base.ts)
-  'Scope.effect': 'changed', // signals-core's own parameter type; the doc's union fails lint (base.ts)
-  ClusterId: 'changed', // 26 clusters, WIDGETS.md decision 19 (widget.ts)
   'WidgetServices.tex': 'missing', // TexService is declared in src/engine/render (widget-api.ts)
   'WidgetServices.python': 'missing', // 5.9's types, with the second contracts unit
   'WidgetServices.sql': 'missing',
@@ -19,10 +16,6 @@ const recorded: Record<string, string> = {
   CompilerRegistry: 'missing', // the second contracts unit
   Grade: 'added', // CONTENT-FORMAT.md 7.1 with 5.2's amendment (answer.ts)
   ShowStep: 'added', // CONTENT-FORMAT.md 3.2's shape (answer.ts)
-  CasService: 'in answer.ts', // GradeCtx needs it without the DOM lib; widget-api.ts re-exports it
-  WidgetViewProps: 'in widget-api.ts', // the view half: preact's types bring the DOM lib (widget.ts)
-  WidgetView: 'in widget-api.ts',
-  WidgetModule: 'in widget-api.ts',
 };
 
 const print = ts.createPrinter({ removeComments: true });

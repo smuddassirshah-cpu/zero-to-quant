@@ -1049,7 +1049,7 @@ All actions are non-destructive by construction:
 | Element ids | `targets(): { id, label, role }[]`, ids in `kind:name` form, prefixed with the widget's content id (`grid/`) on multi-widget screens; the compiler checks content references against the static `targets(config)` (`CONTENT-FORMAT.md` 12.1) |
 | Hidden truths | `secret(): string \| null`: true parameters, planted leaks; sent only inside `<answer>` |
 | Highlight and notes | `highlight(ids, style)`, `annotate(id, text)`, `clearTutor()` |
-| Chips | `tryable(): { control, label, range?, options? }[]` and `tryValue(control, value)` |
+| Chips | `tryable(): Tryable[]` and `tryValue(control, value)`; `Tryable` is `ARCHITECTURE.md` 5.3's `{ control, label, range?, step?, options? }`, which owns the shape (stage 3, `docs/DECISIONS.md` B45) |
 | Ghosts | `preview(patch): 'shown' \| 'refused'`, through the engine guard |
 | Action log | The engine keeps the last 20 `summary` strings from `change` and `commit` events (Stage 0 1.1) |
 | Code | `code()` from the programming catalogue |
