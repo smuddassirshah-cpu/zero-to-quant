@@ -432,38 +432,55 @@ describe('untrusted text', () => {
     expect(value('-'.repeat(MAX_LENGTH - 1) + '1')).toBe(-1);
   });
 
-  it('spends at most MAX_WORK node visits on the costliest terms, well inside the compute limit', () => {
-    const size = (n: Node): number =>
-      1 +
-      (n.kind === 'neg'
-        ? size(n.arg)
-        : n.kind === 'bin'
-          ? size(n.left) + size(n.right)
-          : n.kind === 'call'
-            ? n.args.reduce((t, a) => t + size(a), 0)
-            : 0);
+  it('charges the costliest terms their nodes, so they run at most MAX_WORK node visits', () => {
+    // A term's nodes, and the table calls among them (a table function, or ^), counted apart from compile's
+    // own count. The terms hold no if or sum.
+    const TABLE: ReadonlySet<string> = new Set(Object.keys(MATH));
+    const count = (n: Node): readonly [number, number] => {
+      const kids: readonly Node[] =
+        n.kind === 'neg' ? [n.arg] : n.kind === 'bin' ? [n.left, n.right] : n.kind === 'call' ? n.args : [];
+      const fromTable = (n.kind === 'call' && TABLE.has(n.fn)) || (n.kind === 'bin' && n.op === '^');
+      return kids.map(count).reduce(([a, b], [c, d]) => [a + c, b + d], [1, fromTable ? 1 : 0]);
+    };
+    // Every function of the table counts its calls and returns 1, so the check is exact and fast. Time per
+    // node is the table's, measured in expr.ts's notes and not tested: the 1 s bound this test once had failed
+    // at 1,047 to 1,900 ms under coverage at load averages of 8 to 20 on a shared 4-core machine [measured].
+    let calls = 0;
+    const tally = (): number => {
+      calls++;
+      return 1;
+    };
+    const counting = Object.fromEntries(Object.keys(MATH).map((f) => [f, tally])) as Record<
+      keyof ExprFunctions,
+      typeof tally
+    >;
     const chain = (unit: string, sep: string): string =>
       Array.from({ length: Math.floor(960 / (unit.length + sep.length)) }, () => unit).join(sep);
-    const terms = [chain('k', '*'), chain('erf(.5)', '+'), chain('Phi(.5)', '+'), chain('k^k', '+')];
-    terms.push(
-      chain('cbrt(k)', '+'),
-      chain('atan2(k, k)', '+'),
+    // erf is the test table's costliest node; sin at 1e9 and pow, dmath's [measured: expr.ts's notes].
+    const terms = [
+      ...['erf(.5)', 'Phi(.5)', 'sin(1e9)', '1.5^1023.9', 'k^k', 'cbrt(k)', 'atan2(k, k)'].map((u) =>
+        chain(u, '+'),
+      ),
+      chain('k', '*'),
       `max(${chain('k', ',')})`,
       '-'.repeat(959) + 'k',
-    );
-    let slowest = 0;
+    ];
     for (const term of terms) {
-      const hi = Math.floor(MAX_WORK / size(parse(term)));
-      const src = `sum(k, 1, ${hi}, ${term})`;
-      expect(src.length).toBeLessThanOrEqual(MAX_LENGTH);
-      const c = compile(parse(src), MATH);
-      const start = performance.now();
-      expect(c.run([]), src.slice(0, 40)).not.toBeNaN();
-      slowest = Math.max(slowest, performance.now() - start);
+      const [nodes, perTerm] = count(parse(term));
+      const hi = Math.floor(MAX_WORK / nodes);
+      const rest = MAX_WORK - hi * nodes;
+      // The first sum spends `fill` one-node terms; with fill = rest, the second costs what is left exactly.
+      const src = (fill: number): string => `sum(j,1,${fill},1)+sum(k,1,${hi},${term})`;
+      expect(src(rest + 1).length).toBeLessThanOrEqual(MAX_LENGTH);
+      calls = 0;
+      expect(compile(parse(src(rest)), counting).run([]), term.slice(0, 20)).not.toBeNaN();
+      expect(calls, term.slice(0, 20)).toBe(hi * perTerm);
+      calls = 0;
+      expect(compile(parse(src(rest + 1)), counting).run([])).toBeNaN();
+      expect(calls).toBe(0);
     }
-    // AI-TUTOR.md 5.3.2 gives compute 2 s; the slowest, erf(.5) repeated, took about 80 ms in Node 22 here
-    // [measured], and the bound leaves room for an instrumented run on a slow runner.
-    expect(slowest).toBeLessThan(1000);
+    // The notes' times were measured at this budget, so a larger one needs measuring again.
+    expect(MAX_WORK).toBeLessThanOrEqual(1_000_000);
   });
 
   it('never reads or writes Object.prototype', () => {

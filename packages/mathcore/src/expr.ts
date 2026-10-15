@@ -28,9 +28,11 @@
 // - Untrusted text (the tutor's compute tool, PLAN.md 7.2) is bounded: MAX_LENGTH characters and MAX_DEPTH
 //   nested brackets, so parse and compile are O(n) with recursion at most n deep. A sum costs its term count
 //   times its term's node count (counted at compile), within MAX_WORK per evaluation, so an evaluation visits
-//   at most n + MAX_WORK nodes. AI-TUTOR.md 5.3.2 gives compute 2 s; the costliest node found, the test
-//   table's erf, ran a MAX_WORK budget in about 80 ms in Node 22 here [measured], which leaves a phone
-//   several times slower inside the limit [inferred] [our choice: the limits].
+//   at most n + MAX_WORK nodes; the tests count that, not time it. AI-TUTOR.md 5.3.2 gives compute 2 s. A
+//   MAX_WORK budget of the costliest nodes found took, in Node 22.22.0: 67 to 111 ms of erf with the test
+//   table, 109 to 200 ms of dmath's sin at 1e9 or 4e15 (the Payne-Hanek reduction) and 66 to 138 ms of dmath's
+//   pow [measured: here at a load average of 10, and by the adversarial review of 8 October 2026]. That leaves
+//   a phone several times slower inside the limit [inferred] [our choice: the limits].
 // - A compiled expression keeps its variables in cells its closures share, so it is not re-entrant: a table
 //   function must not evaluate the same compiled expression.
 
