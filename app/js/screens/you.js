@@ -410,26 +410,6 @@
       const shellAv = root.closest('.shell') && root.closest('.shell').querySelector('.shell-header .avatar');
       if (shellAv) shellAv.setAttribute('aria-current', 'page');
 
-      const views = { map: false, cal: false };
-      const paint = {
-        head: () => { $('[data-card="head"]').innerHTML = headerHTML(); },
-        hours: () => { const f = $('[data-log]'); const keep = f ? { block: f.block.value, date: f.date.value } : null; $('[data-card="hours"]').innerHTML = hoursHTML(); if (keep) { const g = $('[data-log]'); g.block.value = keep.block; g.date.value = keep.date; } },
-        drills: () => { $('[data-card="drills"]').innerHTML = drillsHTML(); },
-        map: () => { $('[data-card="map"]').innerHTML = mapHTML(); $('[data-card="maptable"]').innerHTML = mapTable(); },
-        cal: () => { $('[data-card="cal"]').innerHTML = calHTML(); setView('cal', views.cal); },
-        exams: () => {
-          const rows = examRows();
-          $('[data-ex-sub]').textContent = rows.length ? `${rows.filter(e => e.passed).length} passed, ${rows.filter(e => !e.passed).length} not passed. Open one to see marks by skill.` : 'Your topic and stage exams appear here.';
-          $('[data-card="exams"]').innerHTML = examsHTML();
-        },
-        settings: () => { $('[data-card="settings"]').innerHTML = settingsHTML(); },
-      };
-      const paintAll = () => Object.values(paint).forEach(f => f());
-      paintAll();
-      /* Pass marks come from the exam files; fetch the ones in the history, then fill them in */
-      const examIds = Array.from(new Set(examRows().map(e => e.id)));
-      if (examIds.length) Promise.all(examIds.map(id => Promise.resolve(C.exam(id)).then(d => { if (d) examDocs[id] = d; }).catch(() => null))).then(() => { if ($('[data-card="exams"]')) paint.exams(); });
-
       /* ---------- Tooltips and roving focus for the two heatmaps ---------- */
       const tipFor = (chart) => chart.querySelector('.yu-tip');
       const showTip = (cell) => {
@@ -475,6 +455,7 @@
         if (next && next !== cell) { cell.tabIndex = -1; next.tabIndex = 0; next.focus(); }
       });
 
+      const views = { map: false, cal: false };
       /* ---------- Table views ---------- */
       const setView = (which, on) => {
         views[which] = on;
@@ -489,6 +470,25 @@
         const lg = card.querySelector('.yu-legend'); if (lg) lg.hidden = on;
         const kh = card.querySelector('[data-keyhelp]'); if (kh) kh.hidden = on;
       };
+
+      const paint = {
+        head: () => { $('[data-card="head"]').innerHTML = headerHTML(); },
+        hours: () => { const f = $('[data-log]'); const keep = f ? { block: f.block.value, date: f.date.value } : null; $('[data-card="hours"]').innerHTML = hoursHTML(); if (keep) { const g = $('[data-log]'); g.block.value = keep.block; g.date.value = keep.date; } },
+        drills: () => { $('[data-card="drills"]').innerHTML = drillsHTML(); },
+        map: () => { $('[data-card="map"]').innerHTML = mapHTML(); $('[data-card="maptable"]').innerHTML = mapTable(); },
+        cal: () => { $('[data-card="cal"]').innerHTML = calHTML(); setView('cal', views.cal); },
+        exams: () => {
+          const rows = examRows();
+          $('[data-ex-sub]').textContent = rows.length ? `${rows.filter(e => e.passed).length} passed, ${rows.filter(e => !e.passed).length} not passed. Open one to see marks by skill.` : 'Your topic and stage exams appear here.';
+          $('[data-card="exams"]').innerHTML = examsHTML();
+        },
+        settings: () => { $('[data-card="settings"]').innerHTML = settingsHTML(); },
+      };
+      const paintAll = () => Object.values(paint).forEach(f => f());
+      paintAll();
+      /* Pass marks come from the exam files; fetch the ones in the history, then fill them in */
+      const examIds = Array.from(new Set(examRows().map(e => e.id)));
+      if (examIds.length) Promise.all(examIds.map(id => Promise.resolve(C.exam(id)).then(d => { if (d) examDocs[id] = d; }).catch(() => null))).then(() => { if ($('[data-card="exams"]')) paint.exams(); });
 
       /* ---------- Sheets ---------- */
       const examSheet = (e) => {
