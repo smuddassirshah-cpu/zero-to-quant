@@ -49,7 +49,23 @@ def test_ulp() -> None:
 
 
 # CPython's math module follows Annex F where it returns, and raises ValueError at a pole or a domain error.
-@pytest.mark.parametrize("name", ["exp", "log", "log1p", "expm1", "tanh"])
+@pytest.mark.parametrize("x", GRID)
+@pytest.mark.parametrize("y", GRID)
+def test_pow_special_agrees_with_cpython(x: float, y: float) -> None:
+    want = dmath.pow_special(x, y)
+    try:
+        got = math.pow(x, y)
+    except ValueError:
+        assert want is not None and (math.isnan(want) or math.isinf(want))
+        return
+    except OverflowError:
+        assert want is None
+        return
+    if want is not None:
+        assert same(want, got)
+
+
+@pytest.mark.parametrize("name", ["exp", "log", "log1p", "expm1", "tanh", "sin", "cos"])
 @pytest.mark.parametrize("x", [*GRID, -1.5, -math.inf])
 def test_special_agrees_with_cpython(name: str, x: float) -> None:
     want = dmath.special(name, x)
