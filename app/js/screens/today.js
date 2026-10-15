@@ -285,14 +285,16 @@
       const when = h.due ? (h.overdue ? `Overdue, it was due ${esc(shortDate(h.due))}` : `Due ${esc(shortDate(h.due))}`) : 'No due date';
       return dueRow('clipboard', `${n ? 'Homework ' + n + ' · ' : 'Homework · '}${esc(cname)}`, when, 'review');
     };
-    const weekly = typeof sum.weeklyProbs === 'number' ? sum.weeklyProbs : null; // shown once ZQ.state counts the weekly problems
+    /* Weekly probability problems, once ZQ.select.weeklyStatus() reports the feature active (a 1.5 lesson finished) */
+    let weekly = null;
+    try { const ws = ZQ.select && ZQ.select.weeklyStatus ? ZQ.select.weeklyStatus() : null; if (ws && ws.eligible) weekly = ws; } catch (e) { console.error(e); }
     P.due = `<section class="card zt-due" data-part="due" aria-labelledby="zt-due-h">
         <h2 class="t-h2" id="zt-due-h">Due</h2>
         <ul>
           ${sum.redoDue ? dueRow('review', plural(sum.redoDue, 'redo problem', 'redo problems'), `About ${sum.redoMinutes} minutes`, 'review')
             : dueRow('check', 'Redo queue clear', sum.redoTotal ? `Nothing due today. ${plural(sum.redoTotal, 'problem comes', 'problems come')} back later.` : 'Nothing due today', 'review')}
           ${sum.homeworkOpen.slice(0, 2).map(hwRow).join('')}
-          ${weekly != null ? dueRow('star', 'Weekly probability problems', `${weekly} of 3 left this week`, 'review') : ''}
+          ${weekly ? dueRow('star', `Weekly probability problems: ${weekly.done} of ${weekly.total}`, weekly.done >= weekly.total ? 'Done for this week. Three new ones arrive on Monday.' : 'About 2 minutes each', 'practice/weekly') : ''}
         </ul>
       </section>`;
 

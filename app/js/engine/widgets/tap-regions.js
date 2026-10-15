@@ -5,7 +5,11 @@
    markGraded: on a correct answer the selection turns green; otherwise wrong picks turn amber with a cross and right
    picks dim to grey, while missed cells stay neutral. reveal selects the answer in hint indigo. showWhy flashes the
    extra ids of the matched wrong[] set (the double-counted cells) or the wrongly selected ids.
-   The player shows the running count in the question line; ctx.countEl or ctx.count are honoured when given. */
+   Count mode ({ count: k, among: [ids] }): ok when exactly k regions are selected, all of them in `among` when it is
+   given ("shade any 3 of the 4"); `answer` may be omitted. Keys: a matching wrong[] set, else the first selected id
+   outside `among`, else "too-few" or "too-many". reveal selects the first k of `among` (else the first k tappable).
+   The player shows the running count in the question line ("2 of 3 shaded" in count mode); ctx.countEl or ctx.count
+   are honoured when given. `countWord` replaces the noun in the count. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -15,16 +19,21 @@
     const el = Z.h('<div class="wd-tap"><p class="t-caption wd-tap-msg" hidden></p></div>');
     host.append(el);
     const msg = el.querySelector('.wd-tap-msg');
-    const answer = (spec.answer || []).map(String);
+    const count = Number.isInteger(spec.count) && spec.count > 0 ? spec.count : null;
+    const among = Array.isArray(spec.among) ? spec.among.map(String) : null;
     const word = spec.countWord || (cv && cv.kind === 'grid' ? 'shaded' : 'selected');
     if (!cv || typeof cv.enable !== 'function') {
       msg.hidden = false; msg.textContent = 'This task needs its diagram, which could not be drawn.';
       return { el, value: () => [], grade: () => ({ ok: false, key: null, detail: null }) };
     }
     cv.enable('tap', { max: spec.max || null, only: spec.only || null });
+    /* The answer set: authored, or in count mode the first k of `among` (else of the tappable ids) */
+    const tappable = () => Array.from(cv.el.querySelectorAll('[data-tap]')).map(n => n.dataset.id).filter(id => !spec.only || spec.only.includes(id));
+    const answer = (spec.answer && spec.answer.length) || !count ? (spec.answer || []).map(String) : (among || tappable()).slice(0, count);
+    const inAmong = (id) => !among || among.includes(id);
     const sel = () => ((cv.get() || {}).selected || []).map(String);
     const showCount = (n, text) => {
-      const t = text || `${n} ${word}`;
+      const t = text || (count ? `${n} of ${count} ${word}` : `${n} ${word}`);
       if (ctx.countEl) { ctx.countEl.hidden = false; ctx.countEl.textContent = t; }
       if (ctx.count && text) ctx.count(t); // the player keeps the live count itself; only the reveal text is pushed
     };
@@ -40,7 +49,9 @@
     const unmark = () => { if (cv.unmark) cv.unmark(); else cv.el.querySelectorAll(GRADED.map(c => '.' + c).join(',')).forEach(n => n.classList.remove(...GRADED)); };
     const unflash = () => { if (cv.unflash) cv.unflash(); else cv.el.querySelectorAll('.is-flash').forEach(n => n.classList.remove('is-flash')); };
     const sameSet = (a, b) => { const A = new Set(a), B = new Set(b); return A.size === B.size && [...A].every(x => B.has(x)); };
-    const split = (s) => ({ wrong: s.filter(x => !answer.includes(x)), hit: s.filter(x => answer.includes(x)), missing: answer.filter(x => !s.includes(x)) });
+    const split = (s) => (count
+      ? { wrong: s.filter(x => !inAmong(x)), hit: s.filter(inAmong), missing: [] }
+      : { wrong: s.filter(x => !answer.includes(x)), hit: s.filter(x => answer.includes(x)), missing: answer.filter(x => !s.includes(x)) });
 
     return {
       el,
@@ -51,8 +62,9 @@
       dirty: () => sel().length > 0,
       grade() {
         const s = sel(), d = split(s);
-        if (sameSet(s, answer)) return { ok: true, key: null, detail: d };
+        if (count ? s.length === count && !d.wrong.length : sameSet(s, answer)) return { ok: true, key: null, detail: d };
         const w = (spec.wrong || []).find(x => sameSet((x.set || []).map(String), s));
+        if (count) return { ok: false, key: w ? w.id : d.wrong[0] ?? (s.length < count ? 'too-few' : 'too-many'), detail: d };
         return { ok: false, key: w ? w.id : d.wrong[0] ?? d.missing[0] ?? null, detail: d };
       },
       lock() { cv.lock && cv.lock(true); },
@@ -68,11 +80,11 @@
         cv.set({ selected: answer.slice() });
         mark(answer, 'is-reveal');
         cv.lock && cv.lock(true);
-        showCount(answer.length, `${answer.length} ${answer.length === 1 ? 'region' : word === 'shaded' ? 'cells' : 'regions'}`);
+        showCount(answer.length, count ? `${answer.length} of ${count} ${word}` : `${answer.length} ${answer.length === 1 ? 'region' : word === 'shaded' ? 'cells' : 'regions'}`);
       },
       showWhy(key) {
         const w = (spec.wrong || []).find(x => x.id === key);
-        const ids = w ? (w.flash || (w.set || []).filter(x => !answer.includes(String(x)))).map(String) : split(sel()).wrong;
+        const ids = w ? (w.flash || (w.set || []).filter(x => (count ? !inAmong(String(x)) : !answer.includes(String(x))))).map(String) : split(sel()).wrong;
         if (!ids.length) return false;
         if (cv.flash) cv.flash(ids); else return false;
         return true;

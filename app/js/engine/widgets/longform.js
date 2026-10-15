@@ -2,7 +2,9 @@
    Phase 1: a textarea for the working (maths in $...$ is previewed). The first Check does not grade: grade()
    returns { pending: true } and the widget opens the self-marking panel (the working locks, the model answer and
    the rubric appear, one tick box per criterion, points summing to 10). Phase 2: Check grades the self-mark;
-   ok when it is 7 or more. Spec fields: prompt (optional, shown above), model (markdown with KaTeX), rubric[]. */
+   ok when it is 7 or more. Spec fields: prompt (optional, shown above), model (markdown with KaTeX), rubric[].
+   The help line names the button that opens the marking: "Check" in set mode, "Mark my answer" in exam mode (the
+   homework page, which renders items in exam mode, has a Mark my answer button under each written item). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -15,7 +17,7 @@
       <div class="wd-long-write">
         <label class="t-label" for="">Your working</label>
         <textarea class="wd-long-ta" rows="8" spellcheck="true" placeholder="Write each step and the reason for it."></textarea>
-        <p class="t-caption muted">Wrap maths in dollar signs to typeset it in the preview. Check opens the model answer so you can mark your own work.</p>
+        <p class="t-caption muted">Wrap maths in dollar signs to typeset it in the preview. ${ctx.mode === 'exam' ? 'Mark my answer' : 'Check'} opens the model answer so you can mark your own work.</p>
         <div class="wd-long-prev" hidden><span class="t-overline muted">Preview</span><div class="t-body wd-long-prev-b"></div></div>
       </div>
       <div class="wd-long-mark" hidden>

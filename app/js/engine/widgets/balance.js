@@ -3,7 +3,8 @@
    "divide-both" (with a number field), and "remove-item" (no chip: tapping a block removes it from its pan alone). The value is the list of moves; the pans live in the canvas.
    grade: the pans match spec.target ({ left: ["unknown"], right: [4] }, either way round, weights compared by total);
    key "unbalanced" when the beam is not level (a single item was removed), else "unsolved".
-   reveal animates the pans to the target in hint indigo. */
+   reveal animates the pans to the target in hint indigo. answer() returns the moves that reach the target
+   (ZQ.grade.balanceMoves: breadth first over the allowed moves), which set() replays on the canvas. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -90,7 +91,8 @@
       el,
       value: () => (cv.moves ? cv.moves() : []),
       set(v) { replay(Array.isArray(v) ? v : v && v.moves); ctx.change && ctx.change({ moves: cv.moves() }); },
-      answer: () => null,
+      /* The authored target reached by the allowed moves (the test hook applies it through set) */
+      answer: () => Z.grade.balanceMoves({ ...spec, left: spec.left || (cv.params || {}).left, right: spec.right || (cv.params || {}).right }),
       ready: () => cv.moves().length > 0,
       dirty: () => cv.moves().length > 0,
       grade() {

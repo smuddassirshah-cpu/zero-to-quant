@@ -22,3 +22,10 @@ Raised later (number-sense level 3):
 15. `number-line`: accept keyed patches for `points` (`{"points": {"p1": {...}}}`), as README-B describes for other kinds, without throwing.
 16. `grid` canvas: honour `countWord`.
 17. Document in AUTHORING.md: a bare £ inside `$...$` renders italic; write `\text{£}`; grid cell text cannot hold KaTeX (use Unicode superscripts).
+
+Raised later (ratio level 2):
+
+18. `bars` `showValues` and `series` marker value labels: a `decimals` or `money: "£"` option so labels keep trailing zeros.
+19. `bars.setParam` (or dotted `bind` in `canvas.controls`) so an explore slider can move a bar's height.
+20. Linked canvas state: a `derive` block on a canvas (`"derive": { "p2.x": "0.8 * p1.x", "caption": "Change: {{(p1.x/50-1)*100}}%" }`) evaluated on every change, so explore screens can show a live computed label or a dependent point. Design and implement on number-line, plane and bars at least.
+21. README-B: document `null` gaps in a series and a marker with explicit `y` to fill them.

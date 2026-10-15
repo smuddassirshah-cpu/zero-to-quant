@@ -6,7 +6,7 @@
        (skills[*].lastAt), measured against a Leitner interval of 1, 3, 7 or 30 days chosen by the skill's correct
        count. No two consecutive items come from the same lesson when that can be avoided.
    ZQ.select.redoSession()   the due redo entries (ZQ.state.redo.due()), oldest due first, resolved to their items: a
-       lesson screen, a quiz item, a review item or a homework item, by ref. Entries whose source cannot be found are left
+       lesson screen, a quiz item, a review item, a homework item or an exam item ({ exam, item }, from examFinished), by ref. Entries whose source cannot be found are left
        out (and stay in the queue).
    ZQ.select.weeklyProbs()   three probability problems a week from the topic 1.5 pools, once any 1.5 lesson is finished.
        The week's picks are kept in ZQ.state.flags.weeklyProbs = { week, done, ids }, so they stay fixed for the week.
@@ -14,7 +14,8 @@
    ZQ.select.resolve(ref, kind), ZQ.select.source(ref, kind), ZQ.select.pool({ course, topic }), ZQ.select.interval(skill)
 
    Every async call resolves to an array of items in the AUTHORING.md item format, each with ref, skills, uid and a
-   source label attached. Nothing here writes learner state except the weekly flag. */
+   source label attached. Nothing here writes learner state except the weekly flag; the screens that run these sets
+   record practice and weekly answers with ZQ.state.practiceResult (Elo and the streak count) and redos with redo.result. */
 (function () {
   'use strict';
   const Z = window.ZQ = window.ZQ || {};
@@ -167,7 +168,9 @@
       const E = await safe(C().exam(ref.exam)); if (!E) return null;
       const all = (E.items || []).concat(...(E.parts || []).map(p => p.items || []));
       const it = findIn(all, ref.item); if (!it) return null;
-      return Object.assign({}, it, { ref, uid: `${ref.exam}/${ref.item}`, source: source(ref, kind), group: ref.exam, skills: it.skills || [] });
+      const out = Object.assign({}, it, { ref, uid: `${ref.exam}/${ref.item}`, source: source(ref, kind), group: ref.exam, skills: it.skills || [] });
+      delete out.hints; // set mode has none
+      return out;
     }
     if (!ref.course || !ref.lesson) return null;
     const D = await loadSet(ref.course, ref.lesson);

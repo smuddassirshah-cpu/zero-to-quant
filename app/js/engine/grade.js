@@ -9,8 +9,12 @@
      loadScript(url, ms)           lazy script loader with a timeout; one promise per url
      maths()                       Promise<{ mathlive: bool, ce: ComputeEngine|null }> for the expression widget, 6 s budget
      exprEqual(ce, a, b)           symbolic equivalence after simplify, with a 5-point numeric second opinion
+     fmtNum(v), fmtFrac(v)         a number for display; fmtFrac writes 0.375 as 3/8 (slider and control format "fraction")
      correctValue(spec)            the authored answer in the shape the widget's set() takes (test hook)
-     inline(s), prose(s)           copy to HTML: KaTeX, **bold**, *italic*, `code`, fenced code blocks
+     balanceMoves(spec)            the moves that take the authored pans to the balance target
+     sketchPoints(spec)            the sketch control points placed on the target curve
+     inline(s), prose(s)           copy to HTML: KaTeX, **bold**, *italic*, `code`, fenced code blocks; prose turns a
+                                   single newline into <br> outside maths only
      patchCanvas(canvas, patch)    applies a state patch and returns a function that reverts it */
 (function () {
   'use strict';
@@ -46,6 +50,13 @@
     if (!Number.isFinite(v)) return '';
     if (Number.isInteger(v)) return String(v);
     return String(+v.toFixed(6));
+  };
+  /* A number as a fraction a/b in lowest terms (denominator up to maxDen), else fmtNum: 0.375 -> "3/8", 2 -> "2" */
+  const fmtFrac = (v, maxDen = 100) => {
+    if (!Number.isFinite(v)) return '';
+    if (Number.isInteger(v)) return String(v);
+    for (let d = 2; d <= maxDen; d++) { const n = Math.round(v * d); if (Math.abs(n / d - v) < 1e-9) return `${n}/${d}`; }
+    return fmtNum(v);
   };
 
   /* ---------- Expressions ---------- */
@@ -117,6 +128,45 @@
     const path = []; for (let s = target; s != null; s = prev[s]) path.unshift(s);
     return path;
   };
+  /* balance: the shortest list of the allowed moves that takes the authored pans to `target` (breadth first over
+     unknown counts and weight totals, as the balance canvas does them). Moves are in the widget's set() shape. */
+  const balanceMoves = (spec = {}) => {
+    const side = (list) => ({ u: (list || []).filter(i => i.kind === 'unknown').length, w: (list || []).filter(i => i.kind !== 'unknown').reduce((a, i) => a + (+i.value || 0), 0) });
+    const want = (list) => ({ u: (list || []).filter(t => t === 'unknown').length, w: (list || []).filter(t => typeof t === 'number').reduce((a, v) => a + v, 0) });
+    const tgt = spec.target || { left: ['unknown'], right: [] };
+    const A = want(tgt.left), B = want(tgt.right);
+    const eq = (p, q) => p.u === q.u && Math.abs(p.w - q.w) < 1e-9;
+    const done = (L, R) => (eq(L, A) && eq(R, B)) || (eq(L, B) && eq(R, A));
+    const allowed = new Set(spec.moves || ['remove-both', 'halve-both']);
+    const r6 = (v) => +v.toFixed(9);
+    const next = (L, R) => {
+      const out = [];
+      if (allowed.has('remove-both')) new Set([Math.min(L.w, R.w), L.w, R.w]).forEach(n => { if (n > 1e-9 && L.w >= n - 1e-9 && R.w >= n - 1e-9) out.push([{ op: 'remove-both', n }, { u: L.u, w: r6(L.w - n) }, { u: R.u, w: r6(R.w - n) }]); });
+      if (allowed.has('remove-unknown-both') && L.u && R.u) out.push([{ op: 'remove-both', n: 'x' }, { u: L.u - 1, w: L.w }, { u: R.u - 1, w: R.w }]);
+      const div = (k, op) => { if (k > 1 && L.u % k === 0 && R.u % k === 0) out.push([op === 'halve-both' ? { op } : { op, n: k }, { u: L.u / k, w: r6(L.w / k) }, { u: R.u / k, w: r6(R.w / k) }]); };
+      if (allowed.has('halve-both')) div(2, 'halve-both');
+      if (allowed.has('divide-both')) new Set([L.u, R.u, 2, 3, 4, 5, 6, 7, 8, 9, 10]).forEach(k => div(k, 'divide-both'));
+      return out;
+    };
+    const start = [side(spec.left), side(spec.right)];
+    const q = [[start[0], start[1], []]], seen = new Set();
+    while (q.length) {
+      const [L, R, path] = q.shift();
+      if (done(L, R)) return path;
+      const k = `${L.u},${L.w}|${R.u},${R.w}`;
+      if (seen.has(k) || path.length >= 6) continue;
+      seen.add(k);
+      next(L, R).forEach(([m, L2, R2]) => q.push([L2, R2, path.concat([m])]));
+    }
+    return null;
+  };
+  /* sketch: the control points (evenly spaced over xRange, as the plane canvas places them) on the target curve */
+  const sketchPoints = (spec = {}) => {
+    const n = spec.control || 5, r = spec.xRange || [-5, 5], C = Z() && Z().cvb;
+    if (!C || !C.fnOf) return null;
+    const f = C.fnOf(String(spec.target), []);
+    return Array.from({ length: n }, (_, i) => { const x = +(r[0] + (r[1] - r[0]) * i / (n - 1)).toFixed(6); return [x, f(x, {})]; });
+  };
   const correctValue = (spec = {}) => {
     switch (spec.kind) {
       case 'choice': return (spec.options || []).find(o => o.correct)?.id ?? null;
@@ -131,10 +181,12 @@
         return out;
       }
       case 'manipulate': return manipulatePath(spec);
-      case 'tap-regions': return (spec.answer || []).slice();
+      case 'tap-regions': return spec.count != null && !(spec.answer || []).length ? (spec.among || []).slice(0, spec.count) : (spec.answer || []).slice();
       case 'slider': return spec.answer;
       case 'drag-point': return Object.fromEntries((spec.points || []).map(p => [p.id, p.target]));
       case 'code': return spec.solution ?? null;
+      case 'balance': return balanceMoves(spec);
+      case 'sketch': return sketchPoints(spec);
       case 'longform': return { text: 'Model answer followed.', ticks: (spec.rubric || []).map((_, i) => i), marked: true };
       default: return null;
     }
@@ -149,18 +201,19 @@
     .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
     .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\w)/g, '$1<i>$2</i>');
   /* Inline copy: text with $maths$ and $$display$$. Punctuation that follows a formula stays on its line. */
-  const inline = (s) => {
+  const inline = (s, { br = false } = {}) => {
     const src = String(s ?? '');
+    const text = (t) => (br ? styleText(t).replace(/\n/g, '<br>') : styleText(t)); // line breaks only outside maths: KaTeX SVG keeps its newlines
     let out = '', last = 0;
     const re = /\$\$([^$]+)\$\$|\$([^$]+)\$([.,:;?)]?)/g;
     let m;
     while ((m = re.exec(src))) {
-      out += styleText(src.slice(last, m.index));
+      out += text(src.slice(last, m.index));
       if (m[1] != null) out += tex(m[1], true);
       else out += `<span class="lsn-nw">${tex(m[2], false)}${esc(m[3] || '')}</span>`;
       last = re.lastIndex;
     }
-    return out + styleText(src.slice(last));
+    return out + text(src.slice(last));
   };
   const codeBlock = (code, lang) => `<div class="lsn-code" data-lang="${esc(lang || '')}"><button type="button" class="link-btn lsn-copy" aria-label="Copy code">Copy</button><pre class="t-code"><code>${esc(code.replace(/\n$/, ''))}</code></pre></div>`;
   /* Block copy: paragraphs split on blank lines, fenced code blocks, display maths. */
@@ -169,7 +222,7 @@
     const parts = src.split(/```([\w+-]*)\n([\s\S]*?)```/g);
     let out = '';
     for (let i = 0; i < parts.length; i += 3) {
-      parts[i].split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).forEach(p => { out += `<p class="${cls}">${inline(p).replace(/\n/g, '<br>')}</p>`; });
+      parts[i].split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).forEach(p => { out += `<p class="${cls}">${inline(p, { br: true })}</p>`; });
       if (i + 2 < parts.length) out += codeBlock(parts[i + 2], parts[i + 1]);
     }
     return out;
@@ -197,5 +250,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, normExpr, loadScript, maths, exprEqual, correctValue, manipulatePath, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, normExpr, loadScript, maths, exprEqual, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();

@@ -4,7 +4,8 @@
    messages ({ type: 'init', indexURL } then { type: 'run', id, code, spec }). Each test is wrapped by a small
    harness appended to the learner's code, so one worker spec covers every compare mode (isclose, equal, fraction):
    the harness returns 1.0 for a pass and prints the actual value after a marker, which the widget reads back.
-   grade() returns a Promise; results are cached per source text. Results show per test. */
+   grade() returns a Promise; results are cached per source text. Results show per test. Drafts: with ctx.draftKey the
+   source is saved with ZQ.state.drills.draft(key, code) as you type and restored when the item opens again. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -197,8 +198,16 @@ __ZQ_CASES = ${JSON.stringify(cases.map(c => [c.call, String(c.expect), c.compar
     </div>`);
     host.append(el);
     const runBtn = el.querySelector('.wd-run'), pyEl = el.querySelector('.wd-py'), res = el.querySelector('.wd-res'), edHost = el.querySelector('.wd-ed');
-    let alive = true, busy = false, cache = null, locked = false;
-    const ed = Editor(edHost, { value: spec.starter || '', label: 'Code editor', onInput: () => { ctx.change && ctx.change({ code: ed.value }); }, onRun: () => runExamples() });
+    let alive = true, busy = false, cache = null, locked = false, saveT = 0, quiet = false;
+    /* Drafts: with ctx.draftKey (the player passes course/lesson/item or exam/item) the source is kept with
+       ZQ.state.drills.draft(key, code), 400ms after the last keystroke, and reopens from there */
+    const D = Z.state && Z.state.drills && typeof Z.state.drills.draft === 'function' && ctx.draftKey ? Z.state.drills : null;
+    const draft = (v) => { try { return D ? D.draft(ctx.draftKey, v) : null; } catch (e) { console.error(e); return null; } };
+    const saved = D ? draft() : null;
+    const ed = Editor(edHost, { value: typeof saved === 'string' && saved.trim() ? saved : spec.starter || '', label: 'Code editor', onInput: () => {
+      if (D && !quiet) { clearTimeout(saveT); saveT = setTimeout(() => draft(ed.value === (spec.starter || '') ? null : ed.value), 400); }
+      ctx.change && ctx.change({ code: ed.value });
+    }, onRun: () => runExamples() });
     const sync = (s = Py.status) => {
       if (!alive) return;
       const txt = { idle: 'Python not loaded', loading: 'Loading Python', restarting: 'Restarting Python', ready: 'Python ready', running: 'Running', unavailable: 'Python is not available here' }[s] || '';
@@ -252,7 +261,7 @@ __ZQ_CASES = ${JSON.stringify(cases.map(c => [c.call, String(c.expect), c.compar
     return {
       el,
       value: () => ed.value,
-      set(v) { ed.set(String(v ?? '')); cache = null; },
+      set(v) { quiet = true; ed.set(String(v ?? '')); quiet = false; cache = null; },
       answer: () => spec.solution ?? null,
       ready: () => !busy && ed.value.trim() !== '' && (Py.status === 'ready' || Py.status === 'unavailable'),
       dirty: () => ed.value !== (spec.starter || ''),
@@ -274,10 +283,10 @@ __ZQ_CASES = ${JSON.stringify(cases.map(c => [c.call, String(c.expect), c.compar
       lock() { locked = true; ed.readOnly(true); sync(); },
       unlock() { locked = false; ed.readOnly(false); el.classList.remove('is-ok', 'is-bad'); sync(); },
       markGraded(r) { el.classList.toggle('is-ok', !!r.ok); el.classList.toggle('is-bad', !r.ok); },
-      reveal() { if (spec.solution) ed.set(spec.solution); locked = true; ed.readOnly(true); el.classList.add('wd-rev'); sync(); },
-      reset() { ed.set(spec.starter || ''); res.innerHTML = ''; cache = null; locked = false; ed.readOnly(false); el.classList.remove('is-ok', 'is-bad', 'wd-rev'); sync(); },
+      reveal() { quiet = true; if (spec.solution) ed.set(spec.solution); quiet = false; locked = true; ed.readOnly(true); el.classList.add('wd-rev'); sync(); },
+      reset() { clearTimeout(saveT); if (D) draft(null); quiet = true; ed.set(spec.starter || ''); quiet = false; res.innerHTML = ''; cache = null; locked = false; ed.readOnly(false); el.classList.remove('is-ok', 'is-bad', 'wd-rev'); sync(); },
       focus() { ed.ta.focus({ preventScroll: true }); },
-      destroy() { alive = false; unsub(); },
+      destroy() { alive = false; unsub(); if (D && saveT) { clearTimeout(saveT); draft(ed.value === (spec.starter || '') ? null : ed.value); } },
     };
   });
 })();

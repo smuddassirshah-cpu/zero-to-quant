@@ -2,7 +2,8 @@
    spec: { kind: 'sketch', control: 5, target: 'max(x - 100, 0)', xRange: [80, 120], band: 2, start, snap,
            wrong: [{ id, expr, band }] }
    grade() samples 20 x values evenly across xRange (both ends included) and needs every one within `band`
-   (y units) of the target. `key` is the first wrong[] entry the whole curve matches within its band, else null. */
+   (y units) of the target. `key` is the first wrong[] entry the whole curve matches within its band, else null.
+   answer() puts every control point on the target curve, for the test hook. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -31,6 +32,8 @@
     return {
       el,
       value: points,
+      /* The control points placed on the target curve (the same points reveal() moves to) */
+      answer: () => points().map(([x]) => [x, target(x)]),
       set(v) { if (Array.isArray(v) && v.length) canvas.set({ sketch: { points: v.map((p) => p.slice()) } }, { instant: true }); },
       grade() {
         const e = errors(target);

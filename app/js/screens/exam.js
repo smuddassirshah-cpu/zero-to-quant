@@ -5,7 +5,9 @@
    and a finish-early path. A stage exam runs each paper in turn, then the checks the app cannot mark as self-ticks.
    The result: count-up, pass stamp, per-skill breakdown, per-paper marks and every question with its marking and worked
    explanation. Recorded once with ZQ.state.examFinished({ id, score, items, passed, bySkill, results, seconds }).
-   Test hook while a paper is open: window.ZQExam = { handles(), go(i), setRemaining(s), submit(), part() }.
+   Misses join the redo queue with ref { exam, item } (examFinished; ZQ.select.resolve reads them back).
+   Test hooks: window.ZQ.test from the start card to the result (current, answerCorrect, check, continue), and while a
+   paper is open window.ZQExam = { handles(), go(i), setRemaining(s), submit(), part() }.
    Every class carries the exm- prefix. */
 (function () {
   'use strict';
@@ -71,6 +73,18 @@
       const title = stage ? (doc.name || `Stage ${doc.stage} exit test`) : 'Topic exam';
       const names = Object.assign(skillNames(), doc.skills || {});
       const A = { results: [], used: [], flags: [], handles: [], ticks: new Set(), t0: Date.now() };
+      /* Test hook (docs/PLAN.md 7): kind 'start' on the start card, between papers and on the checks page (continue()
+         begins, or ticks every check and shows the result), 'item' in a paper (check() grades the shown question without
+         marking it; continue() moves on and submits after the last), 'done' on the result page. */
+      let T = { kind: 'loading' };
+      const hook = {
+        current: () => (T.kind === 'item' ? T.cur() : { kind: T.kind, phase: 'exam', state: T.kind === 'done' ? 'done' : 'read', screenIndex: -1, ...(T.info || {}) }),
+        answerCorrect: () => (T.answer ? T.answer() : false),
+        check: async () => (T.check ? T.check() : null),
+        continue: async () => { if (T.go) await T.go(); },
+      };
+      window.ZQ.test = hook;
+      cleanups.push(() => { if (window.ZQ.test === hook) delete window.ZQ.test; });
 
       /* ---------- Start card ---------- */
       const intro = () => {
@@ -104,6 +118,7 @@
           </main></div></div>`;
         root.querySelector('.exm-close').addEventListener('click', () => Z.go('review'));
         root.querySelector('.exm-begin').addEventListener('click', () => paper(0));
+        T = { kind: 'start', go: () => paper(0) };
       };
 
       /* ---------- Between papers ---------- */
@@ -123,6 +138,7 @@
           </main></div></div>`;
         root.querySelector('.exm-close').addEventListener('click', confirmLeave);
         root.querySelector('.exm-begin').addEventListener('click', () => paper(next));
+        T = { kind: 'start', go: () => paper(next) };
       };
 
       /* ---------- The checks the app cannot mark ---------- */
@@ -141,6 +157,7 @@
         root.querySelector('.exm-close').addEventListener('click', confirmLeave);
         root.querySelectorAll('[data-chk]').forEach(cb => cb.addEventListener('change', () => { if (cb.checked) A.ticks.add(+cb.dataset.chk); else A.ticks.delete(+cb.dataset.chk); }));
         root.querySelector('.exm-begin').addEventListener('click', finish);
+        T = { kind: 'start', go: () => { checks.forEach((c, i) => A.ticks.add(i)); finish(); } };
       };
       const dialogOpen = () => !!document.querySelector('.scrim');
       function confirmLeave() {
@@ -357,6 +374,13 @@
           setRemaining: (s) => { S.offset = MINUTES * 60 - s - (performance.now() - S.t0) / 1000; updateTime(); },
           submit: () => submit(false),
         };
+        T = {
+          kind: 'item',
+          cur: () => ({ kind: S.over ? 'loading' : 'item', phase: 'exam', state: isAns(S.cur) ? 'engaged' : 'idle', screenIndex: S.cur, total: N, paper: pi }),
+          answer: () => { const h = local[S.cur]; if (!h) return false; const ok = h.answerCorrect(); renderChrome(); return ok; },
+          check: async () => { const h = local[S.cur]; return h ? h.step.grade() : null; },
+          go: () => (S.cur < N - 1 ? go(S.cur + 1) : submit(false)),
+        };
         show(true);
         updateTime();
         announce(`${stage ? `Part ${pi + 1} started` : 'Exam started'}. ${MINUTES} minutes. Question 1 of ${N}.`);
@@ -377,8 +401,9 @@
         let out = {};
         try {
           out = ZQ.state.examFinished({ id: doc.id, score, items: total, passed, bySkill, seconds,
-            results: rows.map(({ it, r }) => ({ id: it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [] })) }) || {};
+            results: rows.map(({ it, r }) => ({ id: it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null ? { exam: doc.id, item: it.id } : null })) }) || {};
         } catch (e) { console.error(e); }
+        T = { kind: 'done', info: { score, total, passed } };
         cleanups.push(mountResult(root, Z, { doc, stage, title, over, track, names, rows, bySkill, paperScores, checks, ticks: A.ticks, checksOk, score, total, passed, seconds, xp: out.xp || 0, mp: out.mp || 0, timeUp: !!A.timeUp,
           minutes: papers.reduce((a, p) => a + (p.minutes || 0), 0) }));
       }

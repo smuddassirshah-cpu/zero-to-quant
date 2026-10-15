@@ -6,7 +6,8 @@
                                                        'quiz', 'done' or a screen index. Returns cleanup().
    ZQ.player.renderItem(item, host, { mode, onGraded }) one item for reviews, homework, redo, practice and exams.
    ZQ.player.runSet(host, { title, items, mode, hints: false, onDone }) a list with dot progress, one try each.
-   window.ZQ.test while a lesson is mounted: current(), answerCorrect(), check(), continue() (see the bottom).
+   window.ZQ.test while a lesson is mounted: current(), answerCorrect(), check(), continue() (see the bottom). runSet
+   installs the same four calls for its set (current().phase is 'set'; kind is 'item' until the last Finish, then 'done').
 
    Learner state goes through ZQ.state mutators when they exist (screenGraded, lessonFinished, quizFinished,
    notebook.add, hours.log, lessonPosition.get/set, summary). Every call is guarded, and without ZQ.state the
@@ -105,6 +106,21 @@
     return (r.key != null && fb.byKey && fb.byKey[r.key]) || r.line || fb.generic || 'Look again at what the question asks.';
   };
 
+  /* The current value of a control's bind on a canvas: canvas.getParam(bind) when the canvas has it, else the state path
+     for a dotted bind, else state.params[bind], params.params[bind] or state[bind] */
+  const boundValue = (canvas, bind, cspec = {}) => {
+    if (!canvas || bind == null) return NaN;
+    try {
+      if (canvas.getParam) { const v = canvas.getParam(bind); if (v != null) return +v; }
+      const st = canvas.get ? canvas.get() || {} : {};
+      const path = String(bind).split('.');
+      if (path.length > 1) { let o = st; for (const k of path) o = o == null ? undefined : o[k]; return o == null ? NaN : +o; }
+      const p = cspec.params || {};
+      const v = (st.params || {})[bind] ?? (p.params || {})[bind] ?? st[bind];
+      return v == null || typeof v === 'object' ? NaN : +v;
+    } catch { return NaN; }
+  };
+
   /* ---------- Screen builder: lesson screens, quiz items and set items ---------- */
   function buildScreen(spec, o) {
     const mode = o.mode || 'lesson';
@@ -138,12 +154,31 @@
         if (!Z.canvas) cvHost.append(Z.h(`<div class="cv cv-missing t-caption">Canvas "${Z.esc(spec.canvas.kind)}" is not available.</div>`));
       } catch (e) { console.error('Canvas ' + spec.canvas.kind + ' failed', e); canvas = null; cvHost.innerHTML = `<div class="cv cv-missing t-caption">Canvas "${Z.esc(spec.canvas.kind)}" could not be drawn.</div>`; }
       if (spec.canvas.controls && spec.canvas.controls.length) {
-        const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${c.min ?? 0}" max="${c.max ?? 1}" step="${c.step ?? 0.01}" value="${c.start ?? c.value ?? c.min ?? 0}" data-i="${i}"><output class="tnum">${c.start ?? c.value ?? c.min ?? 0}</output></label>`).join('')}</div>`);
+        /* Explore controls: each slider drives canvas.setParam(bind, v) (else state.params[bind], or the state path for a
+           dotted bind). `start` sets the opening value and is applied to the canvas; without it the slider opens at the
+           bound value's current value (a number-line point's x, an area split, a param), else at min. */
+        const shown = (c, v) => (c.format === 'fraction' ? G().fmtFrac(v) : G().fmtNum(v));
+        const drive = (c, v) => {
+          if (!canvas) return;
+          try {
+            if (canvas.setParam) canvas.setParam(c.bind, v);
+            else if (String(c.bind).includes('.')) canvas.set(String(c.bind).split('.').reduceRight((acc, k) => ({ [k]: acc }), v), { instant: true });
+            else canvas.set({ params: { [c.bind]: v } }, { instant: true });
+          } catch (err) { console.error(err); }
+        };
+        const opening = (c) => {
+          if (c.start != null || c.value != null) return +(c.start ?? c.value);
+          const cur = boundValue(canvas, c.bind, spec.canvas);
+          return Number.isFinite(cur) ? Math.min(c.max ?? 1, Math.max(c.min ?? 0, cur)) : +(c.min ?? 0);
+        };
+        const vals = spec.canvas.controls.map(opening);
+        const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${c.min ?? 0}" max="${c.max ?? 1}" step="${c.step ?? 0.01}" value="${vals[i]}" data-i="${i}"><output class="tnum">${shown(c, vals[i])}</output></label>`).join('')}</div>`);
+        spec.canvas.controls.forEach((c, i) => { if (c.start != null || c.value != null) drive(c, vals[i]); });
         ctl.addEventListener('input', (e) => {
           const r = e.target.closest('input'); if (!r || !canvas) return;
           const c = spec.canvas.controls[+r.dataset.i], v = +r.value;
-          r.nextElementSibling.textContent = G().fmtNum(v);
-          try { if (canvas.setParam) canvas.setParam(c.bind, v); else canvas.set({ params: { [c.bind]: v } }); } catch (err) { console.error(err); }
+          r.nextElementSibling.textContent = shown(c, v);
+          drive(c, v);
         });
       }
     }
@@ -159,16 +194,18 @@
 
     const listeners = [];
     const count = (text) => { if (!countEl) return; countEl.hidden = text == null || text === ''; countEl.textContent = text ?? ''; };
+    /* tap-regions running count: "3 shaded", "2 of 3 shaded" in count mode, with the authored countWord */
+    const tapCount = (n) => { const word = w.countWord || (spec.canvas && spec.canvas.kind === 'grid' ? 'shaded' : 'selected'); return Number.isInteger(w.count) ? `${n} of ${w.count} ${word}` : `${n} ${word}`; };
     if (w) {
       try {
-        widget = Z.widgets ? Z.widgets.create(wHost, w, { canvas, rng, reducedMotion: Z.reducedMotion(), mode: mode === 'quiz' ? 'set' : mode, count, screen: spec }) : null;
+        widget = Z.widgets ? Z.widgets.create(wHost, w, { canvas, rng, reducedMotion: Z.reducedMotion(), mode: mode === 'quiz' ? 'set' : mode, count, screen: spec, draftKey: o.draftKey || null }) : null;
         if (!Z.widgets) wHost.append(Z.h(`<div class="wd wd-missing t-caption">Widget "${Z.esc(w.kind)}" is not available.</div>`));
       } catch (e) { console.error('Widget ' + w.kind + ' failed', e); widget = null; wHost.innerHTML = `<div class="wd wd-missing t-caption">Widget "${Z.esc(w.kind)}" could not be drawn.</div>`; }
       if (widget) widget.onChange((d) => {
-        if (w.kind === 'tap-regions') { const v = widget.value(); const n = Array.isArray(v) ? v.length : 0; count(`${n} ${spec.canvas && spec.canvas.kind === 'grid' ? 'shaded' : 'selected'}`); }
+        if (w.kind === 'tap-regions') { const v = widget.value(); const n = Array.isArray(v) ? v.length : 0; count(tapCount(n)); }
         listeners.forEach(f => f(d));
       });
-      if (widget && w.kind === 'tap-regions') count(`0 ${spec.canvas && spec.canvas.kind === 'grid' ? 'shaded' : 'selected'}`);
+      if (widget && w.kind === 'tap-regions') count(tapCount(0));
     }
 
     /* Canvas states: initial (with the optional enter patch), reset, reveal, explanation */
@@ -218,7 +255,7 @@
       },
       mark(r) { if (!widget) return; widget.markGraded(r); if (!r.ok && !r.final && widget.showWhy) { try { widget.showWhy(r.key); } catch (e) { console.error(e); } } },
       clear() { widget && widget.unlock(); },
-      reset() { widget && widget.reset(); resetCanvas(); if (w && w.kind === 'tap-regions') count(`0 ${spec.canvas && spec.canvas.kind === 'grid' ? 'shaded' : 'selected'}`); },
+      reset() { widget && widget.reset(); resetCanvas(); if (w && w.kind === 'tap-regions') count(tapCount(0)); },
       reveal() {
         if (!widget) return;
         widget.reveal();
@@ -494,7 +531,7 @@
       if (matchMedia('(min-width: 768px)').matches && step.focusInput) step.focusInput();
       step.enter && step.enter(later);
     };
-    const ctxFor = (key, mode) => ({ mode, key, into, pointEl, rng: rngFrom(hash(course + '/' + lessonId + '/' + key)) });
+    const ctxFor = (key, mode) => ({ mode, key, into, pointEl, rng: rngFrom(hash(course + '/' + lessonId + '/' + key)), draftKey: `${course}/${lessonId}/${key}` });
     const titleStep = (spec) => {
       const meta = info.level && info.n ? `Level ${info.level} · Lesson ${info.n}` : (info.name || 'Lesson');
       const el = h(`<section class="lsn-step lsn-title">
@@ -916,7 +953,9 @@
 
   /* ---------- One item, for set mode and exams ---------- */
   function renderItem(item, host, { mode = 'set', onGraded, key } = {}) {
-    const step = buildScreen(item, { mode, key: key || item.id || 'item', pointEl: () => {}, into: () => {} });
+    const ref = item.ref || {};
+    const draftKey = ref.exam ? `${ref.exam}/${ref.item}` : ref.course && ref.lesson ? `${ref.course}/${ref.lesson}/${ref.item ?? 's' + ref.screen}` : null;
+    const step = buildScreen(item, { mode, key: key || item.id || 'item', pointEl: () => {}, into: () => {}, draftKey });
     host.append(step.el);
     Z.mathify(step.el);
     step.enter((fn, ms) => setTimeout(fn, ms));
@@ -1003,11 +1042,30 @@
       else if (/^[1-9]$/.test(e.key) && !/INPUT|TEXTAREA/.test(e.target.tagName || '') && cur && (st0 === 'idle' || st0 === 'engaged')) cur.pick && cur.pick(+e.key - 1);
     };
     document.addEventListener('keydown', onKey);
+    /* Test hook in set mode (docs/PLAN.md 7), the same calls as the lesson's: current(), answerCorrect(), check(), continue() */
+    const hook = {
+      current: () => ({ screenIndex: i, kind: alive ? 'item' : 'done', phase: 'set', state: st0, total: items.length, mode, title }),
+      answerCorrect: () => {
+        if (!alive || !cur || !(st0 === 'idle' || st0 === 'engaged')) return false;
+        const ok = cur.answerCorrect();
+        st0 = cur.ready() ? 'engaged' : 'idle'; sync();
+        return ok;
+      },
+      check: async () => {
+        if (st0 !== 'engaged') return null;
+        await doCheck();
+        return results[i] || (cur && cur.result()) || { pending: true, ok: false, key: null };
+      },
+      continue: () => { if (alive && (st0 === 'ok' || st0 === 'no')) onPrimary(); return new Promise(r => setTimeout(r, 60)); },
+      results: () => results.slice(),
+    };
+    window.ZQ.test = hook;
     if (items.length) show(0);
     return {
       results: () => results.slice(),
       current: () => cur,
-      destroy() { alive = false; document.removeEventListener('keydown', onKey); if (cur) cur.destroy(); wrap.remove(); },
+      hook,
+      destroy() { alive = false; document.removeEventListener('keydown', onKey); if (window.ZQ.test === hook) delete window.ZQ.test; if (cur) cur.destroy(); wrap.remove(); },
     };
   }
 

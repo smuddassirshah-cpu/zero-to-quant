@@ -164,7 +164,7 @@
 
   /* ---------- Redo queue ---------- */
   const redoAdd = ({ id, kind = 'screen', ref = {}, skills = [], difficulty = 2 } = {}) => {
-    const rid = id || (kind === 'screen' ? `${ref.course}/${ref.lesson}#${ref.screen}` : `${ref.course}/${ref.lesson}/${ref.item}`);
+    const rid = id || (ref.exam ? `${ref.exam}/${ref.item}` : kind === 'screen' ? `${ref.course}/${ref.lesson}#${ref.screen}` : `${ref.course}/${ref.lesson}/${ref.item}`);
     const due = now() + REDO_FIRST * DAY;
     const ex = doc.redo.find(r => r.id === rid);
     if (ex) { ex.interval = REDO_FIRST; ex.due = due; ex.misses = (ex.misses || 0) + 1; changed('redo'); return ex; }
@@ -294,7 +294,21 @@
     return { xp, mp, redo, qualified };
   };
 
-  /* bySkill: { skill: [correct, total] }. results (optional): per-item { id, ok, difficulty, skills } for exact Elo updates. */
+  /* Practice and weekly problems (ZQ.select sets): each result moves the skill scores (Elo) and counts toward the day's
+     3 graded problems for the streak. No XP and no MP: practice repeats content already scored elsewhere. */
+  const practiceResult = ({ results = [], source = 'practice' } = {}) => {
+    let qualified = false;
+    (results || []).forEach(x => {
+      if (!x) return;
+      rate(x.skills || [], !!x.ok, x.difficulty || 2);
+      if (countProblem()) qualified = true;
+    });
+    changed('skills');
+    return { source, items: (results || []).length, qualified };
+  };
+
+  /* bySkill: { skill: [correct, total] }. results (optional): per-item { id, ok, difficulty, skills } for exact Elo updates.
+     Each missed result with an id joins the redo queue as kind 'exam' with ref { exam, item } (ZQ.select.resolve reads it). */
   const examFinished = ({ id, score = 0, passed = false, bySkill = {}, items = 0, results, seconds = 0 } = {}) => {
     const rec = doc.exams[id] || (doc.exams[id] = { attempts: [] });
     const passedBefore = rec.attempts.some(a => a.passed);
@@ -310,9 +324,11 @@
     const xp = passed && !passedBefore ? (String(id).startsWith('stage-') ? XP.stageExam : XP.topicExam) : 0;
     doc.xp += xp; doc.mp += mp;
     rec.attempts.push({ at: now(), score, items, passed: !!passed, bySkill });
+    const redo = (Array.isArray(results) ? results : []).filter(x => x && !x.ok && (x.id != null || (x.ref && x.ref.item != null)))
+      .map(x => redoAdd({ kind: 'exam', ref: x.ref && x.ref.exam ? x.ref : { exam: id, item: x.id }, skills: x.skills || [], difficulty: x.difficulty || 3 }));
     logSeconds('main', seconds, 'exam');
     changed('exams');
-    return { xp, mp };
+    return { xp, mp, redo };
   };
 
   const notebookAdd = (card = {}) => {
@@ -325,9 +341,29 @@
   };
 
   const drillVerified = (id, code) => {
-    doc.drills[id] = { verified: true, code: String(code || ''), at: now() };
+    const prev = doc.drills[id] || {};
+    doc.drills[id] = { ...prev, verified: true, code: String(code || ''), at: now() };
     changed('drills');
     return doc.drills[id];
+  };
+  /* Unverified code, kept in the document so Export carries it: draft(id) reads it, draft(id, code) saves it, and
+     draft(id, null) clears it. A drill's id is its file id; a code item in a lesson, set or exam uses its item path
+     (course/lesson/item or exam/item). A draft-only record has verified: false. */
+  const drillDraft = (id, code) => {
+    if (id == null) return null;
+    const rec = doc.drills[id];
+    if (code === undefined) return rec && typeof rec.draft === 'string' ? rec.draft : null;
+    if (code === null || code === '') {
+      if (!rec) return null;
+      delete rec.draft; delete rec.draftAt;
+      if (!rec.verified && !rec.code) delete doc.drills[id];
+    } else {
+      const r = rec || (doc.drills[id] = { verified: false, code: '', at: null });
+      if (r.draft === String(code)) return r.draft;
+      r.draft = String(code); r.draftAt = now();
+    }
+    changed('drills');
+    return code ?? null;
   };
 
   const warmupRecord = (score, seconds = 120) => {
@@ -455,12 +491,12 @@
     streak: ns('streak', { touch, rollover: () => { const r = rollover(); if (r) changed('streak'); return r; }, get: () => doc.streak }),
     redo: ns('redo', { add: redoAdd, due: redoDue, result: redoResult, list: () => doc.redo.slice() }),
     notebook: ns('notebook', { add: notebookAdd, list: () => doc.notebook.slice() }),
-    drills: ns('drills', { verified: drillVerified, get: (id) => (id == null ? doc.drills : doc.drills[id] || null) }),
+    drills: ns('drills', { verified: drillVerified, draft: drillDraft, get: (id) => (id == null ? doc.drills : doc.drills[id] || null) }),
     warmup: ns('warmup', { record: warmupRecord, list: () => doc.warmup.history.slice() }),
     hours: ns('hours', { log: logHours, list: () => doc.hours.slice() }),
     lessonPosition: { set: positionSet, get: positionGet },
     lesson: (course, lesson) => doc.lessons[lessonId(course, lesson)] || null,
-    screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished,
+    screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult,
     summary, weeklySplit,
     export: exportDoc, import: importDoc, reset, flush,
     dates, rules: { XP, MASTERY, REDO_FIRST, REDO_SECOND, REST_EVERY, REST_MAX, QUALIFY_PROBLEMS, K, ELO_START, BLOCKS, TRACKS, GOALS, itemRating, mpFor },

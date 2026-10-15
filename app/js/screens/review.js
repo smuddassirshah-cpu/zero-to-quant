@@ -4,8 +4,10 @@
      #review/<course>/<reviewId>     a level review, run through ZQ.player.runSet, recorded with reviewFinished
      #homework/<course>/<hwId>       a homework set: items rendered by ZQ.player.renderItem in exam mode (nothing marked
                                      until you submit), the long-form item self-marked against its rubric, homeworkSubmitted
-     #practice  and  #practice/weekly   a practice set of 8 from ZQ.select.practiceSet, or the week's 3 probability problems
+     #practice  and  #practice/weekly   a practice set of 8 from ZQ.select.practiceSet, or the week's 3 probability problems;
+                                     each answer goes to ZQ.state.practiceResult (skill scores and the streak count only)
      #redo                           every due redo item, oldest first, each result recorded with ZQ.state.redo.result
+   Each page installs window.ZQ.test (current, answerCorrect, check, continue) for tools/playthrough.mjs.
    Learner state is read through ZQ.state and changed only through its mutators. Every selector carries the rv- (hub),
    rvs- (set pages) or hw- (homework) prefix. */
 (function () {
@@ -53,6 +55,8 @@
   };
   const logReview = (seconds, source) => { const m = seconds / 60; if (m >= 0.1) { try { S().hours.log({ block: 'review', minutes: m, source }); } catch (e) { console.error(e); } } };
   const resultRow = (r) => ({ id: r.item.id, ok: !!r.ok, difficulty: r.item.difficulty || 2, skills: r.item.skills || [], ref: r.item.ref });
+  /* Practice and weekly answers move skill scores and the streak's problem count (no XP, no MP) */
+  const practiced = (res, source) => { try { S().practiceResult({ results: (res || []).filter(Boolean).map(resultRow), source }); } catch (e) { console.error(e); } };
 
   /* Every level whose lessons are all finished gets its homework, if the file is written (assigned lazily here) */
   const assignDue = () => {
@@ -371,9 +375,19 @@
       setActs(`<button type="button" class="btn hw-primary" data-start>Start</button>`);
       Z.mathify(col);
     };
+    /* Test hook around the set (docs/PLAN.md 7): 'loading', then 'start' (continue() presses Start) or 'empty'; runSet
+       installs its own hook while the items run; 'done' on the summary */
+    let phase = 'loading';
+    const hook = {
+      current: () => ({ kind: phase, phase: 'set', state: 'read', screenIndex: -1, total: items0.length }),
+      answerCorrect: () => false, check: async () => null,
+      continue: () => { if (phase === 'start') start(items0); return Promise.resolve(); },
+    };
+    window.ZQ.test = hook;
     const start = (items) => {
       col.innerHTML = ''; setActs('');
       t0 = Date.now();
+      phase = 'running';
       run = ZQ.player.runSet(col, { title: cfg.setTitle || cfg.title, items, mode: 'set', track: cfg.track || 'prob', onDone: (res) => done(items, res) });
       host._run = run;
     };
@@ -383,6 +397,7 @@
       const seconds = Math.round((Date.now() - t0) / 1000);
       const out = cfg.record(items, res, seconds) || {};
       if (run) { run.destroy(); run = null; }
+      phase = 'done'; window.ZQ.test = hook;
       summary(items, res, out);
     };
     const summary = (items, res, out) => {
@@ -409,9 +424,10 @@
       if (e.target.closest('[data-start]')) { start(items0); return; }
       if (e.target.closest('[data-again]')) { Z.go(location.hash.slice(1)); }
     });
-    Promise.resolve(cfg.load()).then(items => { items0 = items || []; intro(items0); }).catch(e => { console.error(e); if (alive) { col.innerHTML = `<p class="t-body">This set could not be loaded: ${esc(e.message)}</p>`; setActs('<button type="button" class="btn hw-primary" data-back>Back to Review</button>'); } });
+    Promise.resolve(cfg.load()).then(items => { items0 = items || []; phase = items0.length ? 'start' : 'empty'; intro(items0); }).catch(e => { console.error(e); if (alive) { col.innerHTML = `<p class="t-body">This set could not be loaded: ${esc(e.message)}</p>`; setActs('<button type="button" class="btn hw-primary" data-back>Back to Review</button>'); } });
     return () => {
       alive = false;
+      if (window.ZQ.test === hook) delete window.ZQ.test;
       /* Leaving part way records what was answered, so a redo or review is never lost */
       if (run && !finished) {
         const res = run.results().filter(Boolean);
@@ -467,11 +483,12 @@
       load: () => ZQ.select.weeklyProbs(),
       record: (items, res, seconds) => {
         const n = res.filter(Boolean).length;
+        practiced(res, 'weekly');
         const st = ZQ.select.weeklyRecord(Math.max(done0, n));
         logReview(seconds, 'weekly');
         return { badges: [[`${st.done} of ${st.total}`, 'done this week'], [res.filter(r => r && r.ok).length, 'right first time']], note: 'Three new problems arrive on Monday.' };
       },
-      partial: (items, res, seconds) => { ZQ.select.weeklyRecord(Math.max(done0, res.filter(Boolean).length)); logReview(seconds, 'weekly'); },
+      partial: (items, res, seconds) => { practiced(res, 'weekly'); ZQ.select.weeklyRecord(Math.max(done0, res.filter(Boolean).length)); logReview(seconds, 'weekly'); },
     } : {
       title: 'Practice set', sub: 'From the lessons you have finished', over: 'Practice', heading: 'A mixed practice set', track: 'prob', perItem: 1.5,
       lede: 'Problems from the quizzes and reviews of lessons you have finished. The set leans on your weakest skills and the ones you have not seen for a while.',
@@ -481,13 +498,14 @@
       doneTitle: 'Practice done', setTitle: 'Practice', again: 'New set',
       load: () => ZQ.select.practiceSet({ n: PRACTICE_N }),
       record: (items, res, seconds) => {
+        practiced(res, 'practice');
         logReview(seconds, 'practice');
         const wrong = items.filter((it, j) => res[j] && !res[j].ok).map(it => it.source.split(' · ').slice(-1)[0]);
         const skills = new Set(items.flatMap(it => it.skills || []));
         return { badges: [[seconds < 60 ? 'Under 1 min' : Math.round(seconds / 60) + ' min', 'logged to Review'], [skills.size, skills.size === 1 ? 'skill practised' : 'skills practised']],
           note: wrong.length ? `Worth a second look: ${Z.esc(listAnd([...new Set(wrong)]))}.` : 'Every problem right. The next set leans on other skills.' };
       },
-      partial: (items, res, seconds) => logReview(seconds, 'practice'),
+      partial: (items, res, seconds) => { practiced(res, 'practice'); logReview(seconds, 'practice'); },
     });
   }
   function mountLevelReview(root, Z, cid, id) {
@@ -780,8 +798,35 @@
     };
     root.addEventListener('click', onClick);
     window.ZQHomework = { handles: () => handles.slice(), items: () => items.slice(), go, submit };
+    /* Test hook (docs/PLAN.md 7): kind 'loading', 'start' (the intro), 'item' (screenIndex is the item), 'submit' (the
+       review page), then 'done' once marked. check() grades the shown item without marking it (a long-form item's first
+       check opens its self-marking and returns { pending }); continue() moves on and submits after the last item. */
+    const hook = {
+      current: () => {
+        const R = result();
+        if (R) return { kind: 'done', phase: 'homework', state: 'done', screenIndex: -1, total: items.length, right: R.right, marks: R.marks, of: R.total };
+        if (!doc) return { kind: 'loading', phase: 'homework', state: 'read', screenIndex: -1, total: 0 };
+        if (typeof view === 'number') return { kind: 'item', phase: 'homework', state: answered(view) ? 'engaged' : 'idle', screenIndex: view, total: items.length };
+        return { kind: view === 'intro' ? 'start' : 'submit', phase: 'homework', state: 'read', screenIndex: -1, total: items.length };
+      },
+      answerCorrect: () => { const h = typeof view === 'number' && handles[view]; if (!h) return false; const ok = h.answerCorrect(); persist(); return ok; },
+      check: async () => {
+        const h = typeof view === 'number' && handles[view]; if (!h) return null;
+        const r = await h.step.grade();
+        if (r && r.pending) { const row = itemsEl.querySelectorAll('.hw-item')[view].querySelector('[data-mark-row]'); if (row) row.hidden = true; persist(); }
+        return r;
+      },
+      continue: async () => {
+        if (result()) return;
+        if (view === 'intro') go(0);
+        else if (typeof view === 'number' && view < items.length - 1) go(view + 1);
+        else await submit();
+      },
+    };
+    window.ZQ.test = hook;
     return () => {
       alive = false;
+      if (window.ZQ.test === hook) delete window.ZQ.test;
       if (window.ZQHomework && window.ZQHomework.go === go) delete window.ZQHomework;
       if (handles.length && !(rec() && rec().submitted)) { try { persist(); } catch (e) { console.error(e); } }
       root.removeEventListener('click', onClick); clearTimeout(saveT);

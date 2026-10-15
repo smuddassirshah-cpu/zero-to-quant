@@ -15,8 +15,8 @@
    which evaluates `call`, compares with `expect` (isclose: element by element for lists, within rel 1e-9 or abs 1e-12;
    fraction: a Fraction equal to it; equal: ==) and prints the actual value after a marker.
 
-   Learner state: the draft is kept per drill in ZQ.store 'drill.<id>.code' (400ms debounce; ZQ.state has no draft
-   mutator), attempts in 'drill.<id>.state'. A pass records ZQ.state.drills.verified(id, code) and logs the time on the
+   Learner state: the draft is kept per drill with ZQ.state.drills.draft(id, code) (400ms debounce; it is in the state
+   document, so Export carries it), attempts in ZQ.store 'drill.<id>.state'. A pass records ZQ.state.drills.verified(id, code) and logs the time on the
    drill to the build block with ZQ.state.hours.log({ block: 'build', minutes, source: 'drill:<id>' }); leaving logs the
    rest. Drills earn no XP (docs/PLAN.md 6 lists none).
    Spec: docs/design-research.md 2.10 and 2.11, 3, 4.5, 4.8, 4.9, 5.1, 5.3 #10, 5.4, 5.5, 9.2, 10.
@@ -339,9 +339,14 @@ if not callable(globals().get(${py(P.fn)})):
   });
   const leaveTarget = () => cameFrom || 'drill';
 
+  /* The draft lives in the state document (ZQ.state.drills.draft), so Export carries it. A draft from before that, in
+     ZQ.store 'drill.<id>.code', is still read once and moves across on the next save. */
   const store = (Z) => ({
-    code: (id) => Z.store.get(`drill.${id}.code`, null),
-    setCode: (id, v) => Z.store.set(`drill.${id}.code`, v),
+    code: (id) => { const d = Z.state && Z.state.drills && Z.state.drills.draft ? Z.state.drills.draft(id) : null; return d != null ? d : Z.store.get(`drill.${id}.code`, null); },
+    setCode: (id, v) => {
+      if (Z.state && Z.state.drills && Z.state.drills.draft) { Z.state.drills.draft(id, v); if (Z.store.get(`drill.${id}.code`, null) != null) Z.store.set(`drill.${id}.code`, null); }
+      else Z.store.set(`drill.${id}.code`, v);
+    },
     state: (id) => Z.store.get(`drill.${id}.state`, null) || {},
     setState: (id, v) => Z.store.set(`drill.${id}.state`, v),
   });
