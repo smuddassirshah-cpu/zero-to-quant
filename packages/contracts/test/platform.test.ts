@@ -1,21 +1,40 @@
 // Compile-time tests of docs/ARCHITECTURE.md 5.9 and 5.11 with the papers' types they name: ASSESSMENT.md 13.2 and
 // 13.5 (events.ts), AI-TUTOR.md 4.1, 6.1 and 6.4. test/drift.test.ts pins the transcription; these pin meaning.
-import type { Json } from '@zq/contracts/base';
+import type { ContentId, Json } from '@zq/contracts/base';
 import type {
+  AttemptContext,
   DraftHandle,
+  Envelope,
   Ev,
   EventDraft,
   EventKind,
   ImportReport,
   ProgressStore,
+  Snapshot,
 } from '@zq/contracts/events';
-import type { Snapshot } from '@zq/contracts/events';
 import type * as p from '@zq/contracts/platform';
 import type { TexService } from '@zq/contracts/render';
 import { describe, expectTypeOf, test } from 'vitest';
 import type { Words } from './types.ts';
 
 type Of<K extends EventKind> = Extract<EventDraft, { k: K }>;
+/** The opaque types, by name. */
+interface O {
+  CourseBundle: p.CourseBundle;
+  ItemBody: p.ItemBody;
+  Glossary: p.Glossary;
+  NotebookCards: p.NotebookCards;
+  Snapshot: Snapshot;
+  DraftHandle: DraftHandle;
+  ImportReport: ImportReport;
+}
+/** Each opaque type a JSON value, a plain object or another opaque type would satisfy; never, when all are opaque. */
+type NotOpaque = {
+  [A in keyof O]:
+    | ([Json] extends [O[A]] ? `Json is ${A}` : never)
+    | ([Record<string, Json>] extends [O[A]] ? `an object is ${A}` : never)
+    | { [B in Exclude<keyof O, A>]: [O[B]] extends [O[A]] ? `${B} is ${A}` : never }[Exclude<keyof O, A>];
+}[keyof O];
 
 describe('platform adapters (5.9)', () => {
   test('Platform carries every adapter; only the tutor and C++ may be absent', () => {
@@ -30,9 +49,7 @@ describe('platform adapters (5.9)', () => {
   });
 
   test("content-schema's outputs are opaque: no value but one the platform returns has the type", () => {
-    expectTypeOf<Record<string, never>>().not.toExtend<p.CourseBundle>();
-    expectTypeOf<p.CourseBundle>().not.toExtend<p.ItemBody>();
-    expectTypeOf<p.Glossary>().not.toExtend<p.NotebookCards>();
+    expectTypeOf<NotOpaque>().toEqualTypeOf<never>();
     expectTypeOf<p.ContentSource['course']>().returns.resolves.toEqualTypeOf<p.CourseBundle>();
   });
 
@@ -81,17 +98,62 @@ describe('platform adapters (5.9)', () => {
 });
 
 describe('the progress log (ASSESSMENT.md 13.2, 13.5)', () => {
-  test("the table's kinds, one draft per kind", () => {
+  test("the table's kinds, one draft per kind (test/drift.test.ts checks their order and lists)", () => {
     expectTypeOf<EventKind>().toEqualTypeOf<
       Words<'att lsn hw exam mark ment weekly out proj paste time prior set plan import'>
     >();
     expectTypeOf<EventDraft['k']>().toEqualTypeOf<EventKind>();
-    expectTypeOf<Of<'att'>['ctx']>().toEqualTypeOf<
+    expectTypeOf<AttemptContext>().toEqualTypeOf<
       Words<'lesson quiz practice review redo homework exam check placement weekly timed'>
     >();
-    expectTypeOf<Of<'att'>['marks']>().toEqualTypeOf<[number, number]>();
-    expectTypeOf<Of<'exam'>['op']>().toEqualTypeOf<Words<'start pause resume hidden section leave submit'>>();
-    expectTypeOf<Of<'import'>['have']>().toEqualTypeOf<Record<string, number>>();
+  });
+
+  test("each kind's payload: the table's typed fields, optional only where a paper says so", () => {
+    expectTypeOf<Of<'att'>>().toEqualTypeOf<{
+      k: 'att';
+      ctx: AttemptContext;
+      ref: Json;
+      try: number;
+      ans: Json;
+      verdict: Json;
+      marks: [number, number];
+      ms: number;
+      hints: number;
+      skills: ContentId[];
+      d: Json;
+      mc?: ContentId;
+      snap?: Json;
+      xp: number;
+      mp: number;
+    }>();
+    expectTypeOf<Of<'lsn'>>().toEqualTypeOf<{
+      k: 'lsn';
+      rev: number;
+      op: 'start' | 'screen' | 'complete';
+      perfect?: boolean;
+    }>();
+    expectTypeOf<Of<'hw'>>().toEqualTypeOf<{ k: 'hw'; op: 'issue' | 'submit'; rev: number }>();
+    expectTypeOf<Of<'exam'>>().toEqualTypeOf<{
+      k: 'exam';
+      op: Words<'start pause resume hidden section leave submit'>;
+    }>();
+    expectTypeOf<Of<'mark'>>().toEqualTypeOf<{ k: 'mark' }>();
+    expectTypeOf<Of<'ment'>>().toEqualTypeOf<{ k: 'ment' }>();
+    expectTypeOf<Of<'weekly'>>().toEqualTypeOf<{ k: 'weekly'; op: 'assign' | 'rate' }>();
+    expectTypeOf<Of<'out'>>().toEqualTypeOf<{ k: 'out'; op: 'create' | 'edit' | 'delete' }>();
+    expectTypeOf<Of<'proj'>>().toEqualTypeOf<{ k: 'proj'; op: 'create' | 'update' }>();
+    expectTypeOf<Of<'paste'>>().toEqualTypeOf<{ k: 'paste' }>();
+    expectTypeOf<Of<'time'>>().toEqualTypeOf<{
+      k: 'time';
+      ctx: Json;
+      ref: Json;
+      ms: number;
+      kind: 'solving' | 'reading';
+    }>();
+    expectTypeOf<Of<'prior'>>().toEqualTypeOf<{ k: 'prior' }>();
+    expectTypeOf<Of<'set'>>().toEqualTypeOf<{ k: 'set' }>();
+    expectTypeOf<Of<'plan'>>().toEqualTypeOf<{ k: 'plan'; op: 'accept' | 'adjust' | 'override' }>();
+    expectTypeOf<Of<'import'>>().toEqualTypeOf<{ k: 'import'; have: Record<string, number> }>();
     expectTypeOf<{ k: 'lsn'; rev: number; op: 'finish' }>().not.toExtend<EventDraft>();
   });
 
@@ -106,16 +168,15 @@ describe('the progress log (ASSESSMENT.md 13.2, 13.5)', () => {
       app: 'a1',
       v: 1,
     } as const;
+    expectTypeOf<Ev>().toEqualTypeOf<Envelope & EventDraft>();
     expectTypeOf({ ...envelope, k: 'lsn', rev: 3, op: 'complete', perfect: true } as const).toExtend<Ev>();
     expectTypeOf({ ...envelope, v: 2, k: 'mark' } as const).not.toExtend<Ev>();
     expectTypeOf<EventDraft>().toExtend<Json>();
-    expectTypeOf<Ev>().not.toExtend<Json>(); // 13.2's Envelope is an interface (see the report)
+    expectTypeOf<Ev>().not.toExtend<Json>(); // 13.2's Envelope is an interface: no implicit index signature
   });
 
   test('the store: snapshots, drafts and import reports are opaque until their stages define them', () => {
-    expectTypeOf<Record<string, never>>().not.toExtend<Snapshot>();
-    expectTypeOf<Snapshot>().not.toExtend<DraftHandle>();
-    expectTypeOf<DraftHandle>().not.toExtend<ImportReport>();
+    expectTypeOf<NotOpaque>().toEqualTypeOf<never>();
     expectTypeOf<ProgressStore['load']>().returns.resolves.toEqualTypeOf<{
       snapshot?: Snapshot;
       events: Ev[];
