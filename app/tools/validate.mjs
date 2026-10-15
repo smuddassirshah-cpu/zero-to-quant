@@ -11,6 +11,7 @@
    js/content.js reads so the app never requests a file that is not there. */
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -86,6 +87,16 @@ const ART = (() => {
   try { const src = fs.readFileSync(path.join(APP, 'js', 'art.js'), 'utf8'); const body = src.slice(src.indexOf('const art = {')); return new Set([...body.matchAll(/^\s{4}([a-z]+): \(\)/gm)].map(m => m[1])); } catch { return null; }
 })();
 
+/* ---------- The engine's grading helpers (js/engine/grade.js), loaded in a sandbox for checks that need them ---------- */
+const ENGINE = (() => {
+  try {
+    const src = fs.readFileSync(path.join(APP, 'js', 'engine', 'grade.js'), 'utf8');
+    const ctx = { window: {}, document: { addEventListener() {} }, console };
+    vm.createContext(ctx); vm.runInContext(src, ctx);
+    return ctx.window.ZQ && ctx.window.ZQ.grade;
+  } catch { return null; }
+})();
+
 /* ---------- Canvas ids ---------- */
 const range = (a, b) => Array.from({ length: Math.max(0, b - a + 1) }, (_, i) => a + i);
 const regionIds = (canvas) => {
@@ -153,6 +164,14 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
   if (!WIDGETS.has(w.kind)) { err(file, `${where}.kind`, `unknown widget kind "${w.kind}"`); return null; }
   if (w.kind === 'longform' && !ctx.allowLongform) err(file, `${where}.kind`, 'longform belongs in homework and exams');
   const keys = new Set();
+  /* Shapes first, so a field of the wrong type is one error line and never a crash further down */
+  const LISTS = ['options', 'among', 'tokens', 'slots', 'lines', 'points', 'wrong', 'tests', 'examples', 'moves', 'rubric', 'order', 'same'];
+  const badShape = LISTS.filter(f => w[f] != null && !Array.isArray(w[f]));
+  if (['tap-regions', 'order'].includes(w.kind) && w.answer != null && !Array.isArray(w.answer)) badShape.push('answer');
+  if (w.kind === 'expression' && w.accept != null && !Array.isArray(w.accept)) badShape.push('accept');
+  if (w.kind === 'place' && w.mode === 'boxes' && w.answer != null && (!isObj(w.answer) || Object.values(w.answer).some(v => !Array.isArray(v)))) badShape.push('answer');
+  if (badShape.length) { badShape.forEach(f => err(file, `${where}.${f}`, f === 'answer' && w.kind === 'place' ? 'answer must map each container id to a list of item ids' : `${f} must be a list`)); keys.add('*'); return keys; }
+  if (['options', 'tokens', 'slots', 'lines', 'points', 'wrong'].some(f => (w[f] || []).some(x => !isObj(x)))) { err(file, where, 'every entry of options, tokens, slots, lines, points and wrong is an object'); keys.add('*'); return keys; }
   const ids = (arr, label) => { const seen = new Set(); (arr || []).forEach((x, i) => { if (!x || x.id == null) err(file, `${where}.${label}[${i}].id`, 'required field missing'); else if (seen.has(x.id)) err(file, `${where}.${label}[${i}].id`, `duplicate id "${x.id}"`); else seen.add(x.id); }); return seen; };
   const tol = (t, at) => { if (!isObj(t) || (typeof t.abs !== 'number' && typeof t.rel !== 'number')) err(file, at, 'tol must be { "abs": x } or { "rel": r }'); };
   const text = (s, at) => checkText(file, at, s);
@@ -185,6 +204,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       if (!Array.isArray(w.accept) || !w.accept.length) warn(file, `${where}.accept`, 'list the accepted plain-text forms for the fallback grader');
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       checkText(file, `${where}.answer`, `$${w.answer || ''}$`, { copy: false });
+      if (w.form != null) { if (!['expanded', 'factorised', 'simplified'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised" or "simplified"'); keys.add('form'); }
       break;
     case 'slider':
       ['min', 'max', 'step'].forEach(f => { if (typeof w[f] !== 'number') err(file, `${where}.${f}`, 'must be a number'); });
@@ -205,6 +225,20 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       break;
     case 'place': {
+      if (w.mode === 'boxes') {
+        /* items dragged into the containers of a boxes canvas */
+        if (!canvas || canvas.kind !== 'boxes') err(file, where, 'place mode "boxes" needs a boxes canvas');
+        const conts = (canvas && Array.isArray((canvas.params || {}).containers) ? canvas.params.containers : []).filter(isObj);
+        const cids = new Set(conts.map(c => c.id)), iids = new Set(conts.flatMap(c => (Array.isArray(c.items) ? c.items : []).filter(isObj).map(i => i.id)));
+        if (!isObj(w.answer) || !Object.keys(w.answer).length) err(file, `${where}.answer`, 'answer maps container ids to the item ids each must hold');
+        else Object.entries(w.answer).forEach(([c, list]) => {
+          if (canvas && !cids.has(c)) err(file, `${where}.answer`, `container "${c}" is not on the boxes canvas`);
+          list.forEach(id => { if (canvas && !iids.has(id)) err(file, `${where}.answer.${c}`, `item "${id}" is not on the boxes canvas`); });
+        });
+        iids.forEach(k => keys.add(String(k)));
+        break;
+      }
+      if (w.same != null && !w.same.every(g => typeof g === 'string' || (Array.isArray(g) && g.every(t => typeof t === 'string')))) err(file, `${where}.same`, 'same is a list of token ids, or a list of such lists');
       const tokens = ids(w.tokens, 'tokens');
       tokens.forEach(k => keys.add(String(k)));
       if (!tokens.size) err(file, `${where}.tokens`, 'at least one token');
@@ -257,10 +291,18 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       if (!seen.has(w.target)) err(file, `${where}.target`, 'target is not reachable from start');
       break;
     }
-    case 'balance':
+    case 'balance': {
       req(file, where, w, ['left', 'right', 'target']);
+      const MOVES = ['remove-both', 'remove-unknown-both', 'halve-both', 'divide-both', 'subtract-both', 'add-both', 'remove-item'];
+      (w.moves || []).forEach(m => { if (!MOVES.includes(m)) err(file, `${where}.moves`, `unknown move "${m}" (${MOVES.join(', ')})`); });
+      /* The target must be reachable with the listed moves: the engine's own solver (js/engine/grade.js) decides */
+      if (Array.isArray(w.left) && Array.isArray(w.right) && isObj(w.target) && ENGINE && ENGINE.balanceMoves) {
+        let path = null; try { path = ENGINE.balanceMoves(w); } catch { path = null; }
+        if (!path) err(file, `${where}.target`, 'the target cannot be reached from the pans with the listed moves (at most six)');
+      }
       keys.add('*');
       break;
+    }
     case 'sketch':
       req(file, where, w, ['target', 'xRange', 'band']);
       if (w.control != null && (typeof w.control !== 'number' || w.control < 2)) err(file, `${where}.control`, 'control must be a number of points, at least 2');
@@ -334,6 +376,8 @@ const checkHints = (file, where, hints, canvas, required) => {
   if (!Array.isArray(hints) || hints.length < 1 || hints.length > 3) { err(file, where, '1 to 3 hints'); return; }
   let last = -1;
   hints.forEach((h, i) => {
+    if (!isObj(h)) { err(file, `${where}[${i}]`, 'a hint is an object { rung, text, highlight }'); return; }
+    if (h.highlight != null && !Array.isArray(h.highlight)) { err(file, `${where}[${i}].highlight`, 'highlight must be a list of ids'); h = { ...h, highlight: [] }; }
     const r = RUNGS.indexOf(h.rung);
     if (r < 0) err(file, `${where}[${i}].rung`, 'rung is nudge, point or step');
     else if (r <= last) err(file, `${where}[${i}].rung`, 'hints must be in rung order nudge, point, step');

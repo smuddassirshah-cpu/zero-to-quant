@@ -1,18 +1,21 @@
 /* boxes canvas: containers (urn, bag, box, hand, row of slots) holding items (ball, card, coin, slot) for counting and
    drawing without replacement. state.draw moves items to the hand, state.move to any container, state.face turns cards
-   and coins. Drag mode lets the learner place items in containers and emits { id, container }. Ids: item ids, container
+   and coins (a coin shows H or T unless it has a label). Item kinds: ball, card, coin, slot, and bag (alias sealed: a
+   closed sack showing only its label, for "a bag of n counters"). Drag mode lets the learner place items in
+   containers and emits { id, container }. Ids: item ids, container
    ids, and row slots <container>-<k> (one-based). Params and state: engine/canvas/README.md. */
 (function () {
   'use strict';
   const Z = window.ZQ, C = Z.canvas, { svg, attrs, lerp } = C;
 
-  const SIZE = { ball: [26, 26], coin: [28, 28], card: [26, 36], slot: [28, 36] };
+  const SIZE = { ball: [26, 26], coin: [28, 28], card: [26, 36], slot: [28, 36], bag: [32, 34] };
+  const KIND = (k) => (k === 'sealed' ? 'bag' : k); // "sealed" is an alias of "bag": a closed bag whose contents are hidden
 
   function boxes(host, params, ctx = {}) {
     const P = params || {};
     const conts = (P.containers || []).map(c => ({ kind: 'box', ...c, items: c.items || [] }));
     const items = new Map();
-    conts.forEach(c => c.items.forEach(it => items.set(it.id, { kind: P.itemKind || 'ball', ...it, home: c.id })));
+    conts.forEach(c => c.items.forEach(it => { const v = { kind: P.itemKind || 'ball', ...it, home: c.id }; v.kind = KIND(v.kind); items.set(it.id, v); }));
     const total = items.size;
     const kinds = new Set([...items.values()].map(i => i.kind));
     const maxSz = [...kinds].reduce((m, k) => [Math.max(m[0], (SIZE[k] || SIZE.ball)[0]), Math.max(m[1], (SIZE[k] || SIZE.ball)[1])], [0, 0]);
@@ -80,10 +83,15 @@
       const flip = svg('g', { class: 'cv-flip' });
       if (it.kind === 'card') {
         flip.append(svg('rect', { class: 'cv-body', x: -w / 2, y: -h / 2, width: w, height: h, rx: 4 }), svg('g', { class: 'cv-back' }, [svg('rect', { x: -w / 2 + 3, y: -h / 2 + 3, width: w - 6, height: h - 6, rx: 2 })]), C.label(0, 0.5, it.label ?? '', { cls: 'cv-itext', size: 13 }));
+      } else if (it.kind === 'bag') {
+        /* a sealed bag: a tied sack, its label (often "?" or "n") on the front */
+        flip.append(svg('path', { class: 'cv-body', d: `M${-w * 0.16} ${-h / 2 + 6}C${-w / 2} ${-h * 0.2} ${-w / 2} ${h / 2} ${-w * 0.3} ${h / 2}H${w * 0.3}C${w / 2} ${h / 2} ${w / 2} ${-h * 0.2} ${w * 0.16} ${-h / 2 + 6}Z` }),
+          svg('path', { class: 'cv-bagtie', d: `M${-w * 0.2} ${-h / 2 + 2}L${w * 0.2} ${-h / 2 + 8}M${w * 0.2} ${-h / 2 + 2}L${-w * 0.2} ${-h / 2 + 8}` }),
+          C.label(0, h * 0.12, it.label ?? '', { cls: 'cv-itext', size: 12, tex: 'auto', w: w, h: 20 }));
       } else if (it.kind === 'slot') {
         flip.append(svg('rect', { class: 'cv-body', x: -w / 2, y: -h / 2, width: w, height: h, rx: 5 }), C.label(0, 0.5, it.label ?? '', { cls: 'cv-itext' }));
       } else {
-        flip.append(svg('circle', { class: 'cv-body', r: w / 2 }), C.label(0, 0.5, it.kind === 'coin' ? '' : (it.label ?? ''), { cls: 'cv-itext', size: it.kind === 'coin' ? 13 : 12 }));
+        flip.append(svg('circle', { class: 'cv-body', r: w / 2 }), C.label(0, 0.5, it.label ?? '', { cls: 'cv-itext', size: it.kind === 'coin' ? 13 : 12 }));
       }
       grp.append(svg('circle', { class: 'cv-hit', r: Math.max(w, h) / 2 + 6 }), flip);
       itemG.append(grp);
@@ -128,7 +136,7 @@
     const paintItem = (e) => { if (e.pos) attrs(e.grp, { transform: `translate(${e.pos.x} ${e.pos.y})` }); attrs(e.flip, { transform: `scale(${e.scale} 1)` }); };
     const paintFace = (e, f) => {
       e.grp.classList.toggle('is-down', f === 'down');
-      if (e.it.kind === 'coin' && e.text) e.text.textContent = f;
+      if (e.it.kind === 'coin' && e.text && e.it.label == null) e.text.textContent = f; // a coin shows its face, H or T, unless it has a label
     };
 
     const anim = C.animator();

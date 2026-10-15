@@ -97,3 +97,9 @@ Raised later (equations level 4):
 40. `balance`: more than one unknown kind (`unknown` items with their own `label` and hidden `value`).
 41. `plane`: function `labelPos` (above, below) and offset; falling lines overlap their label today. (Same as 25; keep one.)
 42. `boxes`: remove the empty band above containers when there is no `hand` container.
+
+Raised later (functions level 1):
+
+43. `plane`: a `vline`/`hline` primitive (`x = a`, `y = b`) with ids; `on: "f"` respects the function's `domain`.
+44. `plane`: `equal: true` ignored when `height` is given; honour both.
+45. `number-line`: `colour` (series slot) on intervals and points.

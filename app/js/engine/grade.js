@@ -185,7 +185,7 @@
       case 'numeric': return spec.unit === '%' ? fmtNum(spec.answer * 100) : fmtNum(+spec.answer);
       case 'expression': return spec.answer;
       case 'order': return (spec.answer || []).slice();
-      case 'place': return spec.mode === 'order' ? (spec.order || []).slice() : Object.fromEntries((spec.slots || []).map(s => [s.id, (s.accepts || []).slice()]));
+      case 'place': return spec.mode === 'boxes' ? JSON.parse(JSON.stringify(spec.answer || {})) : spec.mode === 'order' ? (spec.order || []).slice() : Object.fromEntries((spec.slots || []).map(s => [s.id, (s.accepts || []).slice()]));
       case 'table': {
         const out = {};
         (spec.rows || []).forEach((row, i) => row.forEach((c, j) => { if (c && typeof c === 'object' && c.edit) out[`r${i}c${j}`] = fmtNum(+c.answer); }));
