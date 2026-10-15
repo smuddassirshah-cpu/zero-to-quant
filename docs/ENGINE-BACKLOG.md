@@ -122,3 +122,8 @@ Raised later (functions level 1):
 43. `plane`: a `vline`/`hline` primitive (`x = a`, `y = b`) with ids; `on: "f"` respects the function's `domain`.
 44. `plane`: `equal: true` ignored when `height` is given; honour both.
 45. `number-line`: `colour` (series slot) on intervals and points.
+
+Raised later (functions level 2):
+
+46. Derive captions and plane point labels: document `(expr).toFixed(2)` and ternaries, and add `fixed(v, d)` and `money(v)` helpers.
+47. `plane`: tap mode on points (`enable('tap')`) so tap-regions can ask "which point is (−2, 4)?".
