@@ -26,7 +26,7 @@ Status values: pending / in progress / awaiting review / approved. Gate records 
 |---|---|---|---|---|---|---|
 | 1 | Scaffold, toolchain and CI | none | 5 | 1.5 | approved | 2026-10-07 |
 | 2 | Spike S1 on the owner's iPhone | 1 | 3 | 3.3 | awaiting review | - |
-| 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | in progress (`stage/3`, cut from `stage/2`, B39) | - |
+| 3 | Contracts, maths core, deterministic maths | 1 | 8 | - | in progress (`stage/3`, cut from `stage/2`, B39; wave 1 in review and merging, the stage 3 record below) | - |
 | 3a | Numerics in `@zq/mathcore` | 3 | 10 | - | pending | - |
 | 3b | `stats-core` in `@zq/mathcore/stats` | 3a | 12 | - | pending | - |
 | 3c | `@zq/models/data` | 3a | 14 | - | pending | - |
@@ -213,6 +213,20 @@ Running log. One line each: date, decision, reason, `PLAN.md` deviation y/n. Ful
 | 2026-10-08 | B41 #17 merged without a review of its own diff; every pull request since gets one | A process slip found by the second gate review | y: `PLAN.md` 11.1, for #17 |
 | 2026-10-08 | B42 Stage 12 builds `TexService`, `Tex` and `TexSlots`; both KaTeX configurations from `katexOptions` in `@zq/contracts` | Stage 12 needed `TexSlots` before stage 23; `zq check` could not import the configuration | y: `PLAN.md` stages 3, 7, 12, 23, 6.5 and 10, `ARCHITECTURE.md` 13; for the owner |
 | 2026-10-08 | B43 Stage 3's package foundation: subpath exports, `zq/layering` package rows, per-package coverage, `zqverify` in `static`, a per-pull-request `browser` job | Units must not edit shared configuration; `dmath`'s bit-identity across engines | y: `ARCHITECTURE.md` 4.5, 4.6, 8.3 |
+| 2026-10-08 | B44 Wave 1's line budgets: D, E, N and N2's scales split at module boundaries; #27 (1,081), #29 (928) and #30 (1,071) over about 800, and the blind `expr` twin's branch (1,864) not yet opened | Each is one module whose growth is its tests and review fixes | y: `PLAN.md` 11.1 |
+| 2026-10-08 | B45 Contracts part 1: empty barrel, 26 clusters, inline `listen` options, `effect` on signals-core's parameter, `CasService` and the view types moved, `Grade` and `ShowStep` transcribed, `@zq/contracts/keys` ratified, the `V` pattern; `TexService`'s interface to `@zq/contracts/render`; `defineScene` in `src/widgets/scene/define.ts` | Measured tool and type-system facts; no-DOM consumers stay DOM-free | y: `ARCHITECTURE.md` 4.3, 5, 5.1, 5.3, 5.5 and `CONTENT-FORMAT.md` 3.2, now aligned |
+| 2026-10-08 | B46 `dmath` ported from FreeBSD msun 14.1.0 (fdlibm): `exp(1)` as V8, `pow` fixed for $|y| > 2^{31}$, Annex F `pow`, tolerance $10^{-15}$ relative, 50-digit goldens and a bits file; the Artifact reading for the owner | Same bits on every engine (`PLAN.md` conflict 7) | y: `PLAN.md` 11.1 for #29; 4.3's reading for the owner |
+| 2026-10-08 | B47 `num-parse`'s rules written into `CONTENT-FORMAT.md` 7.2: grouping, decimal comma, a leading `+`, units, typed parts, narrow spaces grouping only and never before `/` or in an exponent (#33), no second formatter | One reading of a typed number for graders, previews and the twin | y: 7.2's literal narrow-space wording, amended |
+| 2026-10-08 | B48 `expr`: grammar details, NaN rules, `MAX_LENGTH` 1,000, `MAX_DEPTH` 32, `MAX_WORK` $10^6$, the function table; `sqrt` built in (correctly rounded by ECMA-262); semantics in `ARCHITECTURE.md` 5.15 | A blind twin and untrusted `compute` text need it | y: `PLAN.md` 11.1 for #30 |
+| 2026-10-08 | B49 `zq/no-nondeterminism` as built: clocks, `process`, `crypto.subtle`, escapes through global objects; transcendental `Math` and `**` across the generator module, `@zq/gen` and `dmath` | 5.4's byte-identical `build` and 5.6's twin comparison | y: `ARCHITECTURE.md` 10.4, `CONTENT-FORMAT.md` 5.3, now aligned |
+| 2026-10-08 | B50 #24 fixes the stage 1 lint rules: optional chains, wrappers, nested globals and patterns, rest copies, constraints | The security floor's lint; found building unit L | y: stage 3 edits stage 1 code |
+| 2026-10-08 | B51 Blind twins: `num_parse.py` and `expr.py` were written by their TypeScript's author; NT, ET and ST rewrite `num-parse`, `expr`, the statistics wrappers and `scale` from the documents; from wave 2 twins are written blind first | Hard rule 4 | y: hard rule 4, until NT, ET and ST land |
+| 2026-10-08 | B52 The rng specification copied into `ARCHITECTURE.md` 5.1 as "Philox draws" | The TypeScript and the twin are each written from it | n |
+| 2026-10-08 | B53 Scales in `@zq/mathcore/scale`, not `engine/render`; `PLAN.md` 10's tree for the owner | `PLAN.md` contradicts itself; layering and hard rule 4 | y: `PLAN.md` 10; for the owner |
+| 2026-10-08 | B54 Statistics: exact `sum`, clamped `mean`, corrected two-pass variance on Sum2, derived tolerances, `inclusive` and `gcse` quantiles, `lerp`'s finite $t$; scales: exact 1-2-5 steps, log ticks, injected `log` and `exp`, ratio logs; both specified in `ARCHITECTURE.md` 5.16 | Stated conventions within derive's 2 ms | n (departs from the unit notes) |
+| 2026-10-08 | B55 The rng twin: 55 Random123 known answers; `hash32` takes safe integers only and refuses lone surrogates, both `RangeError` | RT's three questions; ECMA-262 fixes `String(n)`'s digits only below $2^{53}$ | n |
+| 2026-10-08 | L2 Random123's known-answer lines kept with their BSD-3-Clause notice | Copied data needs its notice | n |
+| 2026-10-08 | L3 Sun's fdlibm notice in `dmath.ts`, a licence outside `PLAN.md` 7.6's named list | A permissive notice, kept as it requires | n; for the owner |
 
 ## Open questions
 
@@ -258,6 +272,18 @@ Each with the stage it affects; the stage that closes it records the answer in `
 | 36 | KaTeX's ES module `dist/katex.mjs` is unminified: 148,753 bytes gzipped [measured: KaTeX 0.19.0 npm tarball, zlib 1.3 level 9 through Python's `gzip`, 8 October 2026] against `ARCHITECTURE.md` 9.2's 80 KB row. Recommended: load `katex.min.js` (75,906 bytes gzipped [measured: KaTeX 0.19.0 npm tarball, zlib 1.3 level 9 through Python's `gzip`, 8 October 2026]) as a classic script with integrity, the path S1's UMD check proved (`docs/PLAN.md` 12 row 15) | Stage 4 | The owner, with row 15 |
 | 37 | The runtime contract the live Artifact pins (S1 was written against 0.2.73; the emulator targets 0.2.74, which differs only in `user.d.ts`'s `"people.add"`, B29) | Stage 83 | Stage 83 |
 | 38 | B27, the term sentinels: the owner's decision, taken with stage 12's iPhone check in stage 25's preview build (default until then: the term list, `artifact.termBinding` off) | 14 item 20; composites with `term:` targets | The owner, with stage 25's device result |
+| 39 | The `odds` form: `WIDGETS.md` 4.2.2 lists odds among `numeric-input`'s probability forms, a mode it marks P0 (prob-stats 4.2), while `CONTENT-FORMAT.md` 3.2's `NumForm` has none and its 13 item 10 adds `odds` when the first odds screen is written; `num-parse` does not read it (B47) | `numeric-input`, the stage 20 graders, `NumForm` | The owner, when 4.2.2's widget is built (stage 15) |
+| 40 | `expr`'s symbolic layer has no stage in `PLAN.md` 11: calc-linalg 2.13's $\frac{d}{dx}$ with light simplification, Taylor coefficients to order 12 and LaTeX output; the `compute` tool's `expr.simplify`, `expr.differentiate` and `expr.series` (`AI-TUTOR.md` 5.3.2); and `CONTENT-FORMAT.md` 7.3's `antiderivative` relation, which needs $\frac{d}{dx}$ (B48). Proposed: stage 3a, about 1 AD more [our estimate] | Stage 21 (C4), the tutor's `compute`, the calculus widgets | The owner |
+| 41 | The `dmath` port in the Artifact: is our TypeScript port of fdlibm "our own sources" under `PLAN.md` 4.3 (B46 reads it so) or "third-party code"; accept Sun's notice as a licence exception (L3); and does a third-party notices file join `PLAN.md` 10's tree, or does the notice stay only in `dmath.ts` | Every graded number in the Artifact; the release's provenance | The owner, before stage 83 |
+| 42 | `dmath`'s speed on the budget phone and the owner's iPhone (`WIDGETS.md` 9.2 item 5): measured only in Node (1.0 to 2.8 times `Math`) and Chromium 1194 (1.8 to 5.4) [measured, B46] | Whether `ml-core` training loops can use `dmath` | The committed bench, `packages/mathcore/test/dmath.bench.ts`, on both phones; stage 25's preview or the first device gate after stage 3 |
+| 43 | `PLAN.md` 10's tree puts scales in `src/engine/render` while its 11.3 row 3 puts them in `@zq/mathcore`; stage 3 builds `@zq/mathcore/scale` (B53). The one-line tree change: `render/`'s line drops "scales" and `mathcore`'s gains `scale` | `PLAN.md` 10 | The owner |
+| 44 | `WidgetApi.feedback`'s events (`tap`, `snap`, `lift`, `drop`) against `ARCHITECTURE.md` 5.9's `SoundName` and `HapticName`: `lift` and `drop` have neither, `tap` no haptic (B45) | Feedback sounds and haptics | The stage that builds `feedback` (10a) |
+| 45 | `DragBinding`, `RovingBinding` and `LiftDropBinding`, which `useDrag`, `useRoving` and `useLiftDrop` return, are defined by no document (B45) | The interaction hooks | The stage that builds them (10a) |
+| 46 | The defaults a declarative `ShowStep` leaves to the host: a `highlight`'s `style`, a `set`'s `ease` and `ms`, and which widget a `set` names (`ARCHITECTURE.md` 5.2; B45) | Show-why animations | Stage 10a, with `MotionStep`'s compiler |
+| 47 | `Json`'s `number` admits NaN, the infinities and $-0$, which `JSON.stringify` writes as `null`, `null`, `null` and `0` [measured by C1]: does the draft save refuse non-finite numbers as a development error, and is $-0$ normalised (`ARCHITECTURE.md` 5.1, 5.4) | Widget state after a `DraftStore` round trip | Stage 10a (drafts) |
+| 48 | `BaseConfig`, `Target` and `WidgetState` are interfaces, so none is assignable to `Json` [measured by C1]: the host saves a `{ a, v }` copy; how a config or a target list crosses a `Json` boundary, or whether they become `Readonly` type aliases (`ARCHITECTURE.md` 5.3) | Drafts, the tutor's context, the compiler's emit | Unit C2 (stage 3, wave 2) or stage 10a |
+| 49 | The erased registry types (`WidgetRegistry.load`'s `WidgetModule<BaseConfig, Json, Json>`, `CompilerRegistry.widget`, `PresetRuntime`) accept a concrete widget only through a cast [measured by C1]: a stated cast in the registry generator, or a separate erased type | The generated registries | Unit C2 or stage 10a |
+| 50 | `AI-TUTOR.md` 4.1's `ScreenCtx.tryable` lacks `ARCHITECTURE.md` 5.3's `step?`, which `AI-TUTOR.md` 5.5 now cites; whether the tutor's context carries a control's step | Chips that suggest values off a control's step | Stage 61 (context assembly) |
 
 ## Pending document edits
 
@@ -378,6 +404,35 @@ The second fresh review (D9; 3 blocking, 12 non-blocking) is fixed by the second
 - B27: term sentinels, with stage 25's device result.
 - `PLAN.md` 12 row 15: `zod/mini` and KaTeX, before stage 4. Default (a) as locked; recommended (b) `modulepreload` with integrity, and `katex.min.js` as a classic script.
 - Deletion of the S1 probe Artifact (after B28 is settled) and of the backup branches `stage2/s1-results-wip` and `stage2/s1-results-r3-wip`; B38 acknowledged.
+
+## Stage 3 record
+
+**Wave 1** (8 October 2026): units built by sub-sessions of the main session, each with a self-review, an adversarial review by a second session posted on its pull request, and a fix. Changed lines exclude goldens, fixtures and the lockfile [measured: `git diff --numstat` against `stage/3`, 9 October 2026]; B44 records the splits and the three pull requests over about 800 lines.
+
+| Unit | What | Branch | PR | Changed lines | State |
+|---|---|---|---|---|---|
+| Foundation | Package foundation: subpath exports, layering rows, `zqverify`, the browser job (B43) | `stage3/foundation` | #22 | see the pull request | merged |
+| Stage 2 merge | `stage/2`'s gate revisions (#19, #21) | `stage3/merge-stage2` | #23 | see the pull request | merged |
+| Lint fix | Stage 1's lint rules read optional chains, wrappers and nested patterns (B50) | `stage3/ast-chain` | #24 | 283 | merged after three review rounds |
+| RT | Blind Python twin of `rng` and `hash32`, Random123 known answers, golden draws (B55, L2) | `stage3/rng-twin` | #25 | 748 | merged at 0fb6abd |
+| N, part 1 | BigInt rationals with a `fractions.Fraction` twin (B47) | `stage3/rational` | #26 | 614 | merged |
+| C1 | `@zq/contracts` for 5.1 to 5.6, with the drift test (B45) | `stage3/contracts-a` | #27 | 1,081 | reviewed twice, fixed at c16a152; merged at c7c40ba |
+| N2, part 1 | Basic statistics (B54) | `stage3/stats` | #28 | 768 | reviewed twice; second fix at 6404c16; merged at ccaa17d |
+| D, part 1 | `dmath`: `exp`, `log`, `log1p`, `expm1`, `tanh` and the harness (B46) | `stage3/dmath` | #29 | 928 | reviewed twice, fixed at cc9ff14 and 5d3ba2a; merged at 3186812 |
+| E, part 1 | The expression compiler without `eval` (B48) | `stage3/expr` | #30 | 1,071 | merged at 607f04c |
+| L | `zq/no-nondeterminism` (B49) | `stage3/lint` | #31 | 770 | reviewed three times, fixed at 3f9e5e6 and 7e4dc07, which took #24's change (B50); the review of 7e4dc07 asks for two minor fixes; open |
+| N, part 2 | `num-parse` (B47) | `stage3/numbers` | #32 | 791 | merged at db37756 |
+| N, part 3 | `num-parse`: a narrow-space group before `/` or in an exponent fails as `syntax` (B47) | `stage3/numbers-2` | #33 | 223 | reviewed; merged at 41c83f0 |
+| D, part 2 | `dmath`: `pow`, `sin`, `cos` (B46) | `stage3/dmath-2` | #35 | 769 | reviewed, fixed at 4b7d396; #29's second fixes merged in at d279b20; open |
+| E, part 2 | The blind `expr` twin (unit ET, B51) and its parity goldens | `stage3/expr-twin` | #? | 1,864 | the same-author twin (684 at 6ea7274) replaced by ET's at 82f5f25; the main session's two rulings at c99e780; not opened yet, over budget (B44) |
+| N2, part 2 | Linear and log scales (B53, B54) | `stage3/scale-ts` | #34 | 707 | reviewed and fixed on `stage3/scale` (15e3b86, 6c78d44); split from 6c78d44 without the same-author twin, which stays on `stage3/scale` unmerged for ST; open |
+| Docs | Wave 1's docs and decisions: B44 to B55, L2, L3; `ARCHITECTURE.md` 4.2, 4.3, 5, 5.1, 5.3, 5.5, 5.11, 5.14, 5.15, 5.16, 10.4, 14; `CONTENT-FORMAT.md` 3.2, 5.3, 7.2; `WIDGETS.md` 9.2; `AI-TUTOR.md` 5.5; the seven adopted rows out of `drift.test.ts` in its merge of `stage/3` | `stage3/docs-wave1` | #? | documents and 7 test rows | reviewed once (fix first); fixed |
+
+**Owed before stage 3's gate.**
+- Blind twins (B51), each by a session that reads only the documents: NT (`num-parse`, from `CONTENT-FORMAT.md` 7.2) and ST (the statistics wrappers and `scale`, from `ARCHITECTURE.md` 5.16, both written after the docs pull request merges); ET (`expr`, from 5.15) is written, on `stage3/expr-twin`, and owes its pull request and review.
+- Wave 2: C2 (`packages/contracts/src/` for the rest of `ARCHITECTURE.md` 5, sections 5.7 to 5.14, as `PLAN.md`'s stage 3 row asks for all of section 5's types: `SceneDef`, `CompilerRegistry`, `WidgetSchemaModule`, `WidgetServices`' `tex`, `python` and `sql`, the RPC message types (5.13), the event envelope (`ASSESSMENT.md`'s event model) and `TexService`'s interface in `@zq/contracts/render`; the reserved KaTeX colours and term-sentinel mapping (B27, B33) wait for the owner's acceptance of B42's module in `PLAN.md` 10's tree), R (the `rng` TypeScript from 5.1's "Philox draws", against #25's goldens; needs `dmath`'s `log` and `cos`, so it builds on #35), S (`src/engine/scope.ts` and `src/engine/rpc.ts` with their tests: the scope leak test, rpc ids, cancellation through `AbortSignal`, rejection).
+- Code follow-ups the docs record: `rational.ts`' decision notes name `db` documents and imports as `isRational`'s boundaries, where those carry the spelling (re-review of #26, nit 2; `ARCHITECTURE.md` 4.3); `dmath` becomes `logScale`'s default once #34 merges (its `log` and `exp` merged in #29; B54); a browser test for the statistics and scale goldens in Chromium, Firefox and WebKit; the typed RuleTester's 5 s timeout under load (`packages/eslint-plugin-zq/test/tester.ts`, a stage 1 file).
+- Open questions 39 to 50 above; 40, 41 and 43 are the owner's.
 
 ## Next action
 

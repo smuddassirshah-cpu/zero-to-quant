@@ -173,6 +173,84 @@ describe('parseNumber', () => {
     for (const [input, out] of cases) expect(plain(input), input).toMatchObject(out);
   });
 
+  const narrow = fc.constantFrom('\u00A0', '\u2007', '\u2009', '\u200A', '\u202F');
+  const syntax = { ok: false, reason: 'syntax' };
+
+  it('refuses a narrow-space grouping before "/", where it also reads as a mixed number', () => {
+    const cases: [string, Record<string, unknown>][] = [
+      ['2\u00A0125/250', syntax],
+      ['1\u202F125/250', syntax],
+      ['3\u2009100/200', syntax],
+      ['97\u00A0291/882674', syntax],
+      ['12\u00A0345/7', syntax],
+      ['1\u00A0000 / 3', syntax],
+      ['1\u00A0000\u00A0/3', syntax],
+      ['1\u00A0000/0', syntax],
+      ['\u22121\u00A0000\u00A0000/7', syntax],
+      ['2 125/250', { form: 'mixed', value: '5/2' }],
+      ['2\u00A01/3', { form: 'mixed', value: '7/3' }],
+      ['1\u00A0000', { form: 'integer', value: '1000' }],
+      ['1,000/3', { form: 'fraction', value: '1000/3' }],
+      ['3/1\u00A0000', { form: 'fraction', value: '3/1000' }],
+      ['1\u00A0000\u00A01/2', { form: 'mixed', value: '2001/2' }],
+    ];
+    for (const [input, out] of cases) expect(plain(input), input).toMatchObject(out);
+    fc.assert(
+      fc.property(
+        fc.bigInt({ min: 1000n, max: 10n ** 12n }),
+        narrow,
+        fc.constantFrom('', '-', '\u2212', '+ '),
+        fc.constantFrom('', ' ', '\u00A0', ' \t'),
+        fc.bigInt({ min: 0n, max: 10n ** 9n }),
+        (whole, space, sign, gap, d) => {
+          const text = (sep: string): string =>
+            `${sign}${group(whole.toString()).replaceAll(',', sep)}${gap}/${d}`;
+          expect(parseNumber(text(space)), text(space)).toEqual(syntax);
+          expect(plain(text(',')), text(',')).toMatchObject(
+            d === 0n ? { reason: 'zero-denominator' } : { form: 'fraction', typed: { n: String(whole) } },
+          );
+        },
+      ),
+    );
+    fc.assert(
+      fc.property(
+        fc.bigInt({ min: 1n, max: 10n ** 6n }),
+        narrow,
+        fc.integer({ min: 1, max: 99 }),
+        (w, space, n) => {
+          const d = BigInt(n) + 1n;
+          expect(plain(`${w}${space}${n}/${d}`)).toMatchObject({
+            form: 'mixed',
+            value: spell(add(rat(w), rat(BigInt(n), d))),
+          });
+        },
+      ),
+    );
+  });
+
+  it('never groups by a narrow space inside an exponent', () => {
+    for (const input of ['3.2e1\u00A0000', '3.2E1\u00A0000', '1e\u22121\u00A0000', '3.2 x 10^1\u00A0000'])
+      expect(parseNumber(input), input).toEqual(syntax);
+    expect(plain('3.2e1000')).toMatchObject({ form: 'standard-form' });
+    fc.assert(
+      fc.property(
+        fc.nat({ max: 999_999 }),
+        fc.option(fc.nat({ max: 999 })),
+        fc.constantFrom('e', 'E', ' x 10^', '\u00D710^', '*10^'),
+        fc.constantFrom('', '-', '+', '\u2212'),
+        fc.integer({ min: 1, max: 999 }),
+        narrow,
+        fc.nat({ max: 999 }),
+        (a, b, mark, sign, k, space, r) => {
+          const text = (sep: string): string =>
+            `${a}${b === null ? '' : `.${b}`}${mark}${sign}${k}${sep}${String(r).padStart(3, '0')}`;
+          expect(parseNumber(text(space)), text(space)).toEqual(syntax);
+          expect(plain(text('')), text('')).not.toEqual(syntax);
+        },
+      ),
+    );
+  });
+
   it('fails with the reason a grader nudges on', () => {
     const cases: [string, ParseFailure][] = [
       ['', 'empty'],

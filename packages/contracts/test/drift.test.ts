@@ -1,19 +1,17 @@
 // docs/ARCHITECTURE.md 5.1 to 5.14 against src: every exported declaration of the listings headed
 // `// @zq/contracts/src/<module>.ts` must equal src's once both are printed without comments and with each
 // run of whitespace as one space, each interface member compared on its own (its overloads together), and
-// must live in the module the listing names. So must the listings src transcribes from elsewhere: 5.11's
-// TexService (render.ts), ASSESSMENT.md 13.2 and 13.5 (events.ts), and AI-TUTOR.md 4.1 and 6.1 (platform.ts).
+// must live in the module the listing names. So must the listings src transcribes from elsewhere:
+// ASSESSMENT.md 13.2 and 13.5 (events.ts), and AI-TUTOR.md 4.1 and 6.1 (platform.ts).
 // The type tests check meaning; this test stops the transcription drifting. A departure is allowed only where
-// it is recorded below with its reason; when the doc adopts one, its row goes in the same pull request. The
-// fixture cases pin the comparison itself.
+// it is recorded below with its reason; when the doc adopts one, its row goes in the same pull request. A
+// second test holds the unions src reads off the papers' tables (13.2's kinds and payload lists, AI-TUTOR.md
+// 6.4's codes) to the tables' values, in order. The fixture cases pin the comparison itself.
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { describe, expect, test } from 'vitest';
 
 const recorded: Record<string, string> = {
-  'Scope.listen': 'changed', // AddEventListenerOptions is not a Node global (base.ts)
-  'Scope.effect': 'changed', // signals-core's own parameter type; the doc's union fails lint (base.ts)
-  ClusterId: 'changed', // 26 clusters, WIDGETS.md decision 19 (widget.ts)
   WidgetState: 'changed', // a Readonly alias, so a state is Json (widget.ts); its members are the alias's
   'WidgetState.a': 'missing',
   'WidgetState.v': 'missing',
@@ -26,10 +24,6 @@ const recorded: Record<string, string> = {
   AnyWidgetModule: 'added',
   Grade: 'added', // CONTENT-FORMAT.md 7.1 with 5.2's amendment (answer.ts)
   ShowStep: 'added', // CONTENT-FORMAT.md 3.2's shape (answer.ts)
-  CasService: 'in answer.ts', // GradeCtx needs it without the DOM lib; widget-api.ts re-exports it
-  WidgetViewProps: 'in widget-api.ts', // the view half: preact's types bring the DOM lib (widget.ts)
-  WidgetView: 'in widget-api.ts',
-  WidgetModule: 'in widget-api.ts',
   'KeyValue.get': 'changed', // returns Json: the doc's generic fails lint (platform.ts)
   CourseBundle: 'added', // @zq/content-schema's outputs, opaque here (platform.ts)
   ItemBody: 'added',
@@ -152,21 +146,44 @@ function drift(all: Listing[], read: (module: string) => string) {
   return { modules, skipped, found };
 }
 
+/** The alias `name` declares in `file`. */
+const aliasOf = (file: ts.SourceFile, name: string) =>
+  file.statements.find(
+    (s): s is ts.TypeAliasDeclaration => ts.isTypeAliasDeclaration(s) && s.name.text === name,
+  );
+
+/** The string literals of `type` in source order, through an alias of `file`; undefined for any other type. */
+function literals(file: ts.SourceFile, type: ts.TypeNode): string[] | undefined {
+  if (ts.isTypeReferenceNode(type)) {
+    const alias = aliasOf(file, type.typeName.getText(file));
+    return alias && literals(file, alias.type);
+  }
+  const parts = ts.isUnionTypeNode(type) ? [...type.types] : [type];
+  const text = (t: ts.TypeNode): t is ts.LiteralTypeNode & { literal: ts.StringLiteral } =>
+    ts.isLiteralTypeNode(t) && ts.isStringLiteral(t.literal);
+  return parts.every(text) ? parts.map((t) => t.literal.text) : undefined;
+}
+const union = (file: ts.SourceFile, name: string) => {
+  const alias = aliasOf(file, name);
+  return alias && literals(file, alias.type);
+};
+
+const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+const source = (module: string) =>
+  ts.createSourceFile(`${module}.ts`, read(`../src/${module}.ts`), ts.ScriptTarget.Latest, true);
+const [architecture, assessment, tutor] = ['ARCHITECTURE', 'ASSESSMENT', 'AI-TUTOR'].map((name) =>
+  read(`../../../docs/${name}.md`),
+) as [string, string, string];
+const section = (text: string, from: string, to: string) => {
+  const [start, end] = [text.indexOf(from), text.indexOf(to, text.indexOf(from))];
+  expect([start, end].every((i) => i >= 0)).toBe(true);
+  return text.slice(start, end);
+};
+
 test('src transcribes 5.1 to 5.14 and the papers it cites, apart from the recorded deviations', () => {
-  const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
-  const [architecture, assessment, tutor] = ['ARCHITECTURE', 'ASSESSMENT', 'AI-TUTOR'].map((name) =>
-    read(`../../../docs/${name}.md`),
-  ) as [string, string, string];
-  const section = (text: string, from: string, to: string) => {
-    const [start, end] = [text.indexOf(from), text.indexOf(to, text.indexOf(from))];
-    expect([start, end].every((i) => i >= 0)).toBe(true);
-    return text.slice(start, end);
-  };
   const { modules, skipped, found } = drift(
     [
-      ...listings(section(architecture, '### 5.1 ', '\n## 6. '), (line) =>
-        line === '// src/engine/render' ? 'render' : headed(line),
-      ),
+      ...listings(section(architecture, '### 5.1 ', '\n## 6. '), headed),
       ...listings(section(assessment, '### 13.2 ', '### 13.6 '), () => 'events', true),
       ...listings(section(tutor, '### 6.1 ', '### 6.2 '), () => 'platform', true),
       ...listings(section(tutor, '### 4.1 ', '### 4.2 '), () => 'platform', true),
@@ -185,6 +202,52 @@ test('src transcribes 5.1 to 5.14 and the papers it cites, apart from the record
   ]);
   expect(skipped).toEqual([]);
   expect(found).toEqual(recorded);
+});
+
+test("the unions src reads off 13.2's and 6.4's tables hold the tables' values, in order", () => {
+  const events = source('events');
+  const rows = [
+    ...section(assessment, '### 13.2 ', '### 13.3 ').matchAll(/^\| `(\w+)` \| (.*) \| [^|]* \|$/gm),
+  ];
+  const listed = Object.fromEntries(
+    rows.flatMap(([, kind, payload = '']) =>
+      [...payload.matchAll(/`(\w+)` \(([^)]*)\)/g)].map(([, field, values = '']) => [
+        `${kind}.${field}`,
+        values.split(/, | or /),
+      ]),
+    ),
+  );
+  const draft = aliasOf(events, 'EventDraft')?.type;
+  const kinds: (string | undefined)[] = [];
+  const typed: Record<string, string[]> = {}; // each payload field src types as a union of literals
+  for (const member of draft && ts.isUnionTypeNode(draft) ? draft.types : []) {
+    const fields = ts.isTypeLiteralNode(member) ? member.members.filter(ts.isPropertySignature) : [];
+    const k = fields.find((f) => f.name.getText(events) === 'k')?.type;
+    const [kind] = (k && literals(events, k)) ?? [];
+    kinds.push(kind);
+    for (const f of fields) {
+      const values = f.type && f.name.getText(events) !== 'k' && literals(events, f.type);
+      if (values) typed[`${kind}.${f.name.getText(events)}`] = values;
+    }
+  }
+  expect(union(events, 'EventKind')).toEqual(rows.map(([, k]) => k));
+  expect(kinds).toEqual(rows.map(([, k]) => k));
+  expect(Object.keys(typed)).toEqual([
+    'att.ctx',
+    'lsn.op',
+    'hw.op',
+    'exam.op',
+    'weekly.op',
+    'out.op',
+    'proj.op',
+    'time.kind',
+    'plan.op',
+  ]);
+  expect(typed).toEqual(Object.fromEntries(Object.keys(typed).map((key) => [key, listed[key]])));
+  const codes = [...section(tutor, '### 6.4 ', '### 6.5 ').matchAll(/^\| ([^|]*) \|/gm)].flatMap(
+    ([, cell = '']) => [...cell.matchAll(/`(\w+)`/g)].map(([, code]) => code),
+  );
+  expect(union(source('platform'), 'TutorErrorCode')).toEqual(codes);
 });
 
 describe('the comparison, on a fixture document', () => {
