@@ -1,0 +1,180 @@
+/* Canvases: diagram styles (docs/PLAN.md section 9, design-research 2.6).
+   Colours only through tokens.css custom properties.
+
+   Cascade order, so learner and grading states always win over a kind's own colours:
+   1. @layer cv-shared: defaults for every canvas (text, captions, handles).
+   2. @layer cv-kinds: each kind's own drawing and its series shading, namespaced .cv-<kind>.
+   3. Unlayered: the shared state rules (.is-on, .is-correct, .is-notyet, .is-dim, .is-reveal, .is-flash, .cv-hl),
+      written as `.cv .cv-obj.<state> .cv-body` (four classes).
+   Kind rules added later should go inside `@layer cv-kinds { ... }`; unlayered kind rules must stay at three classes
+   or fewer so the state rules still win.
+   E3 owns everything above the "Canvases B" marker at the end; E4 appends its kinds below that marker. */
+
+@layer cv-shared, cv-kinds;
+
+/* =========================================================================================
+   Shared defaults
+   ========================================================================================= */
+@layer cv-shared {
+  .cv {
+    --cv-ms: 600ms;
+    --cv-bg: var(--bg-canvas);
+    --cv-wash: color-mix(in srgb, var(--pear-200) 60%, transparent);
+    --cv-wash-blend: multiply;
+    --cv-on-manip: var(--bg-surface);
+    --sk: var(--s1);
+    position: relative; max-width: var(--col); margin: 0 auto;
+  }
+  .modal .cv, .sheet .cv { --cv-bg: var(--bg-raised); }
+
+  .cv-svg { display: block; width: 100%; height: auto; margin: 0 auto; overflow: visible; font-family: var(--font-sans); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .cv-svg text { font-family: var(--font-sans); font-size: 13px; font-weight: 500; fill: var(--ink); font-variant-numeric: tabular-nums; }
+  .cv-svg text.cv-muted, .cv-svg .cv-muted text { fill: var(--text-muted); }
+  .cv-svg text.cv-halo { paint-order: stroke; stroke: var(--cv-bg); stroke-width: 4px; stroke-linejoin: round; }
+  .cv-fo { overflow: visible; pointer-events: none; }
+  .cv-fo-in { display: flex; align-items: center; height: 100%; color: var(--ink); font: 500 13px/1 var(--font-sans); white-space: nowrap; }
+  .cv-fo-in .katex { font-size: 1.05em; }
+  .cv-fo.cv-muted .cv-fo-in { color: var(--text-muted); }
+  .cv-caption { margin: 10px 0 0; color: var(--text-2); text-align: center; }
+  .cv-caption .katex { font-size: 1.05em; }
+  .cv-missing { padding: 16px; border: 2px dashed var(--line); border-radius: var(--r-md); text-align: center; color: var(--text-muted); }
+
+  .cv-obj { transition: opacity var(--cv-ms) var(--ease-morph); }
+  .cv-obj .cv-body { transition: fill var(--d-base) var(--ease-standard), stroke var(--d-base) var(--ease-standard), stroke-width var(--d-base) var(--ease-standard); }
+  .cv-obj text { transition: fill var(--d-base) var(--ease-standard), opacity var(--d-micro); }
+  .cv-obj:focus { outline: none; }
+  .cv-tap .cv-obj[data-tap] { cursor: pointer; }
+  .cv-tap.cv-locked .cv-obj[data-tap] { cursor: default; }
+  .cv-drag .cv-handle { cursor: grab; touch-action: none; }
+  .cv-drag .cv-handle:active { cursor: grabbing; }
+  .cv-drag.cv-locked .cv-handle { cursor: default; }
+
+  /* Series slots for kinds that shade sets in order */
+  .cv-k1, .cv-sh1 { --sk: var(--s1); } .cv-k2, .cv-sh2 { --sk: var(--s2); } .cv-k3, .cv-sh3 { --sk: var(--s3); }
+  .cv-k4, .cv-sh4 { --sk: var(--s4); } .cv-k5, .cv-sh5 { --sk: var(--s5); } .cv-k6, .cv-sh6 { --sk: var(--s6); }
+
+  /* Movable handles (design-research 2.6): manipulable blue, 2px white ring, 1px ink outline, 44px hit area */
+  .cv-handle .cv-hit { fill: transparent; stroke: none; }
+  .cv-handle .cv-knob { fill: var(--manip); stroke: var(--bg-surface); stroke-width: 2; transition: fill var(--d-base); }
+  .cv-handle .cv-knob-ring { fill: none; stroke: var(--ink); stroke-width: 1; transition: stroke var(--d-base), stroke-width var(--d-base); }
+  .cv-handle .cv-hl-disc { fill: var(--cv-wash); stroke: var(--ink); stroke-width: 2; opacity: 0; transition: opacity var(--d-base); }
+
+  /* Highlight shapes drawn by a kind (grid unions, the grid's point box) */
+  .cv-hlshape, .cv-point { pointer-events: none; }
+  .cv-hl-main, .cv-point-box { fill: var(--cv-wash); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; mix-blend-mode: var(--cv-wash-blend); }
+  .cv-hl-ring, .cv-point-ring { fill: none; stroke: var(--pear-400); stroke-width: 2; stroke-opacity: 0; stroke-linejoin: round; }
+  .cv-hlshape.pulse .cv-hl-ring, .cv-point .cv-point-ring { animation: cv-ring 700ms var(--ease-standard) 2; }
+  .cv-static .cv-point .cv-point-ring { animation: none; }
+  .cv-point { transition: opacity 300ms var(--ease-standard); }
+  .cv-point.out { opacity: 0; }
+
+  /* Not-yet badge */
+  .cv-badge { pointer-events: none; }
+  g.cv-badge { animation: cv-pop 500ms var(--spring-bounce) both; transform-box: fill-box; transform-origin: center; }
+  .cv-badge circle { fill: var(--amber-lip); }
+  .cv-badge path { fill: none; stroke: var(--on-accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .cv-badge-check circle { fill: var(--green-strong); }
+  span.cv-badge { position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--amber-lip); color: var(--on-accent); animation: cv-pop 500ms var(--spring-bounce) both; }
+  span.cv-badge .icon { width: 11px; height: 11px; stroke-width: 3.2; }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cv { --cv-wash: color-mix(in srgb, var(--pear-300) 24%, transparent); --cv-wash-blend: normal; }
+}
+:root[data-theme="dark"] .cv { --cv-wash: color-mix(in srgb, var(--pear-300) 24%, transparent); --cv-wash-blend: normal; }
+@keyframes cv-ring { 0% { stroke-width: 2; stroke-opacity: 0.9; } 100% { stroke-width: 30; stroke-opacity: 0; } }
+@keyframes cv-pop { from { transform: scale(0.6); opacity: 0; } }
+
+/* =========================================================================================
+   Shared states (unlayered, four classes): selection, grading, flash, highlight, focus
+   ========================================================================================= */
+.cv.cv-instant, .cv.cv-instant * { transition: none !important; }
+.cv .cv-obj:focus-visible .cv-body { stroke: var(--focus); stroke-width: 3; }
+.cv.cv-tap .cv-obj[data-tap]:hover:not(.is-on) .cv-body { stroke: var(--line-control); }
+
+.cv .cv-obj.is-on .cv-body { fill: var(--manip); stroke: var(--manip); }
+.cv .cv-obj.is-on text { fill: var(--cv-on-manip); }
+.cv .cv-obj.is-on .cv-fo-in { color: var(--cv-on-manip); }
+
+.cv .cv-obj.is-correct .cv-body { fill: var(--green-face); stroke: var(--green-strong); }
+.cv .cv-obj.is-correct text { fill: var(--ink-fixed); }
+.cv .cv-obj.is-correct .cv-fo-in { color: var(--ink-fixed); }
+.cv .cv-obj.is-notyet .cv-body { fill: var(--amber-fill); stroke: var(--amber-frame); }
+.cv .cv-obj.is-notyet text { fill: var(--ink); }
+.cv .cv-obj.is-notyet .cv-fo-in { color: var(--ink); }
+.cv .cv-obj.is-dim .cv-body { fill: var(--bg-sunken); stroke: var(--line); }
+.cv .cv-obj.is-dim text { fill: var(--text-muted); }
+.cv .cv-obj.is-dim .cv-fo-in { color: var(--text-muted); }
+.cv .cv-obj.is-reveal .cv-body { fill: var(--hint-wash); stroke: var(--hint); transition-duration: 600ms; transition-timing-function: var(--ease-morph); }
+.cv .cv-obj.is-reveal text { fill: var(--ink); }
+.cv .cv-obj.is-reveal .cv-fo-in { color: var(--ink); }
+.cv .cv-obj.is-flash .cv-body { fill: var(--amber-face); stroke: var(--amber-lip); transition: none; }
+.cv .cv-obj.is-flash text { fill: var(--ink-fixed); opacity: 1; }
+.cv .cv-obj.is-flash .cv-fo-in { color: var(--ink-fixed); }
+
+.cv .cv-obj.cv-hl .cv-body { fill: var(--cv-wash); stroke: var(--ink); stroke-width: 2; }
+.cv .cv-obj.cv-hl text { fill: var(--ink); }
+.cv .cv-obj.cv-hl-on { filter: drop-shadow(0 0 4px var(--pear-400)) drop-shadow(0 0 8px var(--pear-400)); }
+
+.cv .cv-handle:focus-visible .cv-knob-ring { stroke: var(--focus); stroke-width: 3; }
+.cv .cv-handle.is-correct .cv-knob-ring { stroke: var(--green-strong); stroke-width: 3; }
+.cv .cv-handle.is-notyet .cv-knob-ring { stroke: var(--amber-frame); stroke-width: 3; }
+.cv .cv-handle.is-reveal .cv-knob { fill: var(--hint); }
+.cv .cv-handle.is-reveal .cv-knob-ring { stroke: var(--hint); stroke-width: 3; }
+.cv .cv-handle.cv-hl .cv-hl-disc { opacity: 1; }
+
+/* =========================================================================================
+   Kinds (E3): grid, tree, venn, number-line, boxes, area, balance, circle, table
+   ========================================================================================= */
+@layer cv-kinds {
+  /* ---------- grid ---------- */
+  .cv-grid .cv-body { fill: var(--bg-surface); stroke: var(--line); stroke-width: 2; }
+  .cv-grid .cv-ring { fill: none; stroke: none; stroke-width: 2; }
+  .cv-grid .cv-ctext { font-weight: 600; }
+  .cv-grid .cv-head { font-weight: 700; }
+  .cv-grid .cv-cell { transition: opacity 420ms var(--ease-morph); transform-box: fill-box; transform-origin: center; }
+  .cv-grid.cv-tap .cv-cell:active { transform: scale(0.96); }
+  .cv-grid.cv-tap.cv-locked .cv-cell:active { transform: none; }
+  .cv-grid.text-marked .cv-ctext { opacity: 0; }
+  .cv-grid.text-marked :is(.is-on, .is-shaded, .is-correct, .is-notyet, .is-dim, .is-reveal, .is-flash, .cv-hl) .cv-ctext { opacity: 1; }
+  .cv-grid .is-shaded .cv-body { fill: color-mix(in srgb, var(--sk) 18%, var(--bg-surface)); stroke: var(--sk); }
+  .cv-grid .cv-rg1 .cv-ring { stroke: var(--s1); } .cv-grid .cv-rg2 .cv-ring { stroke: var(--s2); }
+  .cv-grid .cv-rg3 .cv-ring { stroke: var(--s3); } .cv-grid .cv-rg4 .cv-ring { stroke: var(--s4); }
+  .cv-grid .cv-rg5 .cv-ring { stroke: var(--s5); } .cv-grid .cv-rg6 .cv-ring { stroke: var(--s6); }
+  .cv-grid :is(.is-on, .is-correct, .is-notyet, .is-dim, .is-reveal, .is-flash) .cv-ring { stroke: none; }
+  .cv-grid .cv-cell.is-out { opacity: 0.2; }
+  .cv-grid.is-peek .cv-cell.is-out { opacity: 1; }
+  .cv-grid .cv-cell.is-out:is(.is-flash, .cv-hl) { opacity: 1; }
+  .cv-grid .cv-outline { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 6 4; stroke-linejoin: round; opacity: 0; pointer-events: none; transition: opacity 300ms var(--ease-standard); }
+  .cv-grid .cv-outline.on { opacity: 1; }
+  .cv-grid .cv-mark { pointer-events: none; transform-box: fill-box; transform-origin: center; }
+  .cv-grid .cv-mark.pop { animation: cv-pop 500ms var(--spring-bounce) both; }
+  .cv-grid .cv-mark rect { fill: var(--ink); }
+  .cv-grid .cv-mark text { fill: var(--bg-canvas); font-weight: 800; }
+  .cv-grid .tone-notyet rect { fill: var(--amber-face); }
+  .cv-grid .tone-notyet text { fill: var(--ink-fixed); }
+  .cv-grid .tone-correct rect { fill: var(--green-strong); }
+  .cv-grid .tone-correct text { fill: var(--on-strong); }
+  .cv-grid .tone-hint rect { fill: var(--hint); }
+  .cv-grid .tone-hint text { fill: var(--bg-canvas); }
+
+  /* ---------- tree ---------- */
+  .cv-tree .cv-hit { stroke: transparent; stroke-width: 18; }
+  .cv-tree .cv-wash { stroke: var(--cv-wash); stroke-width: 12; stroke-linecap: round; opacity: 0; transition: opacity var(--d-base); }
+  .cv-tree .cv-line { stroke: var(--ink); stroke-width: 2; stroke-linecap: round; transition: stroke var(--d-base), stroke-width var(--d-base); }
+  .cv-tree .cv-pill .cv-body { fill: var(--bg-surface); stroke: var(--line-strong); stroke-width: 1.5; }
+  .cv-tree .cv-pill text, .cv-tree .cv-val text, .cv-tree .cv-val .cv-fo-in { font-weight: 600; }
+  .cv-tree .cv-root .cv-body { fill: var(--ink); stroke: none; }
+  .cv-tree .cv-branch.is-hidden { pointer-events: none; }
+  .cv-tree .cv-q { font-weight: 700; fill: var(--text-muted); }
+  .cv-tree .is-shaded .cv-line { stroke: var(--sk); stroke-width: 3; }
+  .cv-tree .is-shaded .cv-pill .cv-body { fill: color-mix(in srgb, var(--sk) 18%, var(--bg-surface)); stroke: var(--sk); }
+  .cv-tree .cv-branch.cv-hl .cv-wash { opacity: 1; }
+  .cv-tree .cv-branch.cv-hl .cv-line { stroke: var(--ink); stroke-width: 3.5; }
+  .cv-tree .cv-branch.is-on .cv-line { stroke: var(--manip); stroke-width: 3; }
+  .cv-tree .cv-branch.is-correct .cv-line { stroke: var(--green-strong); stroke-width: 3; }
+  .cv-tree .cv-branch.is-notyet .cv-line { stroke: var(--amber-frame); stroke-width: 3; }
+  .cv-tree .cv-branch.is-reveal .cv-line { stroke: var(--hint); stroke-width: 3; }
+  .cv-tree .cv-branch.is-dim .cv-line { stroke: var(--line-strong); }
+  .cv-tree .cv-branch.is-flash .cv-line { stroke: var(--amber-lip); stroke-width: 3.5; }
+  .cv-tree.cv-tap .cv-branch:hover:not(.is-on) .cv-line { stroke-width: 3; }
+}

@@ -1,0 +1,222 @@
+/* Answer widgets (docs/PLAN.md section 8): choice, multi, numeric, expression, order, place, table, code,
+   manipulate, longform. Every colour comes from tokens.css, so both themes follow. Spec: design-research 2.4,
+   2.10 (lip-token: 2px border plus a 4px bottom edge), 4.5 (graded states), 5.3 (interaction catalogue).
+   Graded classes shared by every widget: .correct/.ok (green), .wrong/.bad (amber), .wd-rev (hint indigo, never
+   green, so a revealed answer never reads as a success), .dim (unchosen after a correct answer). */
+
+.wd-missing { padding: 16px; border: 2px dashed var(--line); border-radius: var(--r-md); color: var(--text-muted); text-align: center; }
+.wd-accept { margin: 12px 0 0; color: var(--text-2); animation: rise var(--d-enter) var(--ease-enter) both; }
+.wd-accept .katex { font-size: 1.1em; }
+.lsn-ic { padding: 1px 5px; border-radius: var(--r-xs); background: var(--bg-sunken); font: 400 0.92em/1 var(--font-mono); white-space: nowrap; }
+.wd-help { margin: 8px 0 0; color: var(--text-2); }
+
+/* ---------- Option cards: choice and multi (design-research 5.3 no. 1, graded states 4.5) ---------- */
+.wd-opts.wd-cols-1 { grid-template-columns: minmax(0, 1fr); }
+.wd-opts.wd-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wd-opts .opt .katex { font-size: 1.12em; }
+.wd-opts.wd-cols-1 .opt { justify-content: flex-start; text-align: left; }
+.wd-opts .opt[aria-disabled="true"] { cursor: default; }
+.wd-opts .opt[aria-disabled="true"]:hover { background: var(--bg-surface); }
+.wd-opts .opt.correct[aria-disabled="true"]:hover { background: var(--green-fill); }
+.wd-opts .opt.wrong[aria-disabled="true"]:hover { background: var(--amber-fill); }
+.wd-opts .opt.wd-rev { border-color: var(--hint); background: var(--hint-wash); color: var(--ink); }
+.wd-opts .opt.dim { opacity: 1; border-color: var(--opt-dim-line); }
+.wd-opt-img { display: grid; place-items: center; }
+.wd-opt-img .art { width: 96px; height: 60px; }
+/* Multi: a square check in front of the text */
+.wd-multi .opt { justify-content: flex-start; gap: 12px; text-align: left; }
+.wd-check { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border: 2px solid var(--line-control); border-radius: 5px; background: var(--bg-surface); transition: background-color var(--d-base), border-color var(--d-base); }
+.wd-check .icon { width: 14px; height: 14px; stroke-width: 3; opacity: 0; color: var(--on-strong); transition: opacity var(--d-micro); }
+.wd-multi .opt.selected .wd-check, .wd-multi .opt.correct .wd-check { border-color: var(--manip); background: var(--manip); }
+.wd-multi .opt.selected .wd-check .icon, .wd-multi .opt.correct .wd-check .icon, .wd-multi .opt.wrong .wd-check .icon { opacity: 1; }
+.wd-multi .opt.correct .wd-check { border-color: var(--green-strong); background: var(--green-strong); }
+.wd-multi .opt.wrong .wd-check { border-color: var(--amber-lip); background: var(--amber-lip); }
+.wd-multi .opt.wd-rev .wd-check { border-color: var(--hint); background: var(--hint); }
+.wd-multi .opt.wd-rev .wd-check .icon { opacity: 1; }
+
+/* ---------- Numeric ---------- */
+.wd-num { max-width: 300px; }
+.wd-num .wd-pre { margin-right: -2px; }
+.field.wd-rev { border-color: var(--hint); background: var(--hint-wash); }
+.field input:read-only { cursor: default; }
+
+/* ---------- Expression (MathLive) ---------- */
+.wd-expr { max-width: 460px; }
+.wd-expr-field { height: auto; min-height: 60px; padding: 4px 6px 4px 14px; }
+.wd-expr-load { flex: 1; color: var(--text-muted); }
+.wd-expr.is-loading .wd-expr-field { border-style: dashed; }
+.wd-mf { flex: 1; min-width: 0; display: block; padding: 6px 0; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 22px;
+  --caret-color: var(--manip); --selection-background-color: var(--manip-wash); --contains-highlight-background-color: transparent; --primary-color: var(--manip); }
+.wd-mf::part(virtual-keyboard-toggle), .wd-mf::part(menu-toggle) { display: none; }
+.wd-mf:focus-within { outline: 0; }
+.wd-expr-txt { flex: 1; min-width: 0; height: 48px; border: 0; outline: 0; background: transparent; font: 500 20px/24px var(--font-mono); }
+.wd-kb { flex: none; color: var(--icon); }
+.wd-kb[aria-pressed="true"] { color: var(--manip); background: var(--manip-wash); }
+.wd-expr-note { margin: 8px 0 0; color: var(--text-2); }
+
+/* ---------- Lipped tokens and chips (lip-token, design-research 2.10) ---------- */
+.wd-tok, .wd-chip { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px;
+  border: 2px solid var(--line-strong); border-bottom-width: 6px; border-radius: var(--r-sm); background: var(--bg-surface); color: var(--ink);
+  font: 600 16px/22px var(--font-sans); text-align: left; -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none;
+  transition: transform var(--d-press) var(--ease-standard), border-color var(--d-base), background-color var(--d-base), box-shadow var(--d-base); }
+.wd-chip { cursor: pointer; }
+.wd-chip:hover:not(:disabled) { background: var(--bg-hover); }
+.wd-chip:active:not(:disabled) { transform: translateY(4px); border-bottom-width: 2px; margin-bottom: 4px; }
+.wd-chip:disabled { cursor: default; border-bottom-width: 2px; margin-top: 4px; color: var(--text-disabled); }
+.wd-tok.is-lifted { z-index: 3; transform: scale(1.03); border-bottom-width: 2px; margin-bottom: 4px; border-color: var(--manip); background: var(--manip-wash); box-shadow: var(--e2); }
+.wd-tok.is-dragging { transition: none; cursor: grabbing; }
+.wd-tok.ok { border-color: var(--green-strong); background: var(--green-fill); }
+.wd-tok.bad { border-color: var(--amber-frame); background: var(--amber-fill); }
+.wd-tok.wd-rev { border-color: var(--hint); background: var(--hint-wash); }
+.wd-tok.dim { border-color: var(--opt-dim-line); color: var(--text-muted); }
+.wd-tok .katex { font-size: 1.05em; }
+.wd-order-help { margin: 10px 0 0; color: var(--text-muted); }
+
+/* ---------- Order the steps ---------- */
+.wd-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.wd-line { display: flex; width: 100%; min-height: 56px; padding: 10px 14px 10px 10px; cursor: grab; }
+.wd-lines.is-locked .wd-line { cursor: default; }
+.wd-grip { flex: none; display: grid; grid-template-columns: repeat(2, 3px); gap: 3px; padding: 0 4px; opacity: 0.55; }
+.wd-grip i { width: 3px; height: 3px; border-radius: 50%; background: var(--ink); }
+.wd-grip i:nth-child(3) { grid-column: 1 / 3; justify-self: center; }
+.wd-line-n { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-sunken); color: var(--text-2); font: 700 12px/1 var(--font-sans); }
+.wd-line-tx { flex: 1; min-width: 0; font-weight: 500; }
+.wd-line-tx .katex-display { margin: 4px 0; text-align: left; }
+.wd-line-mark { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; }
+.wd-line-mark:empty { display: none; }
+.wd-line.ok .wd-line-mark { background: var(--green-strong); color: var(--on-strong); animation: pop 500ms var(--spring-bounce) both; }
+.wd-line.bad .wd-line-mark { background: var(--amber-lip); color: #fff; animation: pop 500ms var(--spring-bounce) both; }
+.wd-line-mark .icon { width: 14px; height: 14px; stroke-width: 3; }
+.wd-line.ok { border-color: var(--green-strong); background: var(--green-fill); }
+.wd-line.bad { border-color: var(--amber-frame); background: var(--amber-fill); }
+.wd-line.wd-rev .wd-line-n { background: var(--hint); color: var(--bg-surface); }
+
+/* ---------- Place: tokens into slots ---------- */
+.wd-place { display: grid; gap: 16px; }
+.wd-slots { display: grid; gap: 10px; }
+.wd-slotrow { display: grid; grid-template-columns: minmax(96px, auto) minmax(0, 1fr); gap: 12px; align-items: center; }
+.wd-place-order .wd-slotrow { grid-template-columns: minmax(0, 1fr); }
+.wd-slot { min-height: 64px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; border: 2px dashed var(--line-control); border-radius: var(--r-sm);
+  transition: border-color var(--d-base), background-color var(--d-base); }
+.wd-slot:has(.wd-tok) { border-style: solid; border-color: var(--line); }
+.wd-slot-ph { color: var(--text-muted); padding: 0 6px; }
+.wd-bank { min-height: 64px; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; border-radius: var(--r-md); background: var(--bg-sunken); }
+.wd-place .is-target { border-color: var(--manip) !important; border-style: solid; background: var(--manip-wash); }
+.wd-place.has-sel .wd-slot, .wd-place.has-sel .wd-bank { cursor: pointer; }
+.wd-tok-mark { display: none; }
+.wd-tok.ok .wd-tok-mark, .wd-tok.bad .wd-tok-mark { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: #fff; }
+.wd-tok.ok .wd-tok-mark { background: var(--green-strong); color: var(--on-strong); }
+.wd-tok.bad .wd-tok-mark { background: var(--amber-lip); }
+.wd-tok-mark .icon { width: 11px; height: 11px; stroke-width: 3.2; }
+
+/* ---------- Table ---------- */
+.wd-tablewrap { overflow-x: auto; }
+.wd-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 2px solid var(--line); border-radius: var(--r-md); overflow: hidden; font: 500 16px/22px var(--font-sans); font-variant-numeric: tabular-nums; }
+.wd-table th, .wd-table td { padding: 10px 14px; text-align: center; border-bottom: 1px solid var(--line); }
+.wd-table tr:last-child > * { border-bottom: 0; }
+.wd-table thead th { background: var(--bg-sunken); font-weight: 700; }
+.wd-table tbody th { font-weight: 600; }
+.wd-td-edit { padding: 6px !important; }
+.wd-td-edit input { width: 100%; min-width: 72px; height: 42px; padding: 0 10px; border: 2px solid var(--line-control); border-radius: var(--r-xs); background: var(--bg-surface); text-align: center; font: 500 17px/22px var(--font-sans); font-variant-numeric: tabular-nums; outline: none; }
+.wd-td-edit input:focus { border-color: var(--manip); box-shadow: 0 0 0 3px var(--manip-wash); }
+.wd-td-edit.ok input { border-color: var(--green-strong); background: var(--green-fill); }
+.wd-td-edit.bad input { border-color: var(--amber-frame); background: var(--amber-fill); }
+.wd-td-edit.wd-rev input { border-color: var(--hint); background: var(--hint-wash); }
+
+/* ---------- Code editor (from drill.css, wd- prefix) ---------- */
+.wd-code { display: grid; gap: 8px; }
+.wd-code-head { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.wd-py { flex: 1; color: var(--text-muted); }
+.wd-py[data-s="ready"] { color: var(--green-text); }
+.wd-py[data-s="unavailable"] { color: var(--amber-text); }
+.wd-run { min-height: 40px; padding: 0 16px; font-size: 15px; }
+.wd-ed { --wd-lines: 8; position: relative; height: calc(var(--wd-lines) * 22px + 24px); min-height: 160px; display: flex; border-radius: var(--r-md); background: var(--bg-sunken); overflow: hidden;
+  transition: box-shadow var(--d-micro) var(--ease-standard); }
+.wd-ed:focus-within { box-shadow: 0 0 0 2px var(--focus); }
+.wd-code.is-ok .wd-ed { box-shadow: 0 0 0 2px var(--green-strong); }
+.wd-code.is-bad .wd-ed { box-shadow: 0 0 0 2px var(--amber-frame); }
+.wd-code.wd-rev .wd-ed { box-shadow: 0 0 0 2px var(--hint); }
+.wd-gut { flex: none; width: 44px; overflow: hidden; padding: 12px 10px 12px 0; text-align: right; color: var(--text-muted); user-select: none; font: 400 14px/22px var(--font-mono); font-variant-numeric: tabular-nums; }
+.wd-gut-in > span { display: block; }
+.wd-gut-in > span.cur { color: var(--ink); }
+.wd-ed-main { position: relative; flex: 1; min-width: 0; }
+.wd-hl, .wd-ta { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 12px 16px 12px 4px; border: 0; border-radius: 0;
+  font: 400 14px/22px var(--font-mono); font-feature-settings: "zero" 1; font-variant-ligatures: none; font-kerning: none; letter-spacing: 0; text-rendering: auto;
+  tab-size: 4; white-space: pre; overflow-wrap: normal; word-break: normal; text-align: left; }
+.wd-hl { overflow: hidden; pointer-events: none; color: var(--ink); background: transparent; }
+.wd-hl code { display: block; font: inherit; will-change: transform; }
+.wd-ta { resize: none; overflow: auto; background: transparent; color: transparent; -webkit-text-fill-color: transparent; caret-color: var(--ink); outline: none; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.wd-ta::selection { background: color-mix(in srgb, var(--manip) 30%, transparent); }
+.wd-hl .tok-kw { color: var(--code-keyword); }
+.wd-hl .tok-bi { color: var(--code-deep); }
+.wd-hl .tok-str { color: var(--fin-deep); }
+.wd-hl .tok-num { color: var(--prob-deep); }
+.wd-hl .tok-com, .wd-hl .tok-doc { color: var(--text-muted); }
+.wd-code-keys, .wd-code-how { margin: 0; color: var(--text-muted); }
+.wd-code-keys kbd { padding: 0 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; font: 600 11px/16px var(--font-sans); }
+.wd-res:empty { display: none; }
+.wd-res { display: grid; gap: 8px; padding: 12px 14px; border: 2px solid var(--line); border-radius: var(--r-md); animation: rise var(--d-enter) var(--ease-enter) both; }
+.wd-res-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.wd-res-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.wd-res-row { display: flex; gap: 10px; align-items: flex-start; }
+.wd-res-ic { flex: none; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; display: grid; place-items: center; }
+.wd-res-row.ok .wd-res-ic { background: var(--green-strong); color: var(--on-strong); }
+.wd-res-row.bad .wd-res-ic { background: var(--amber-lip); color: #fff; }
+.wd-res-ic .icon { width: 12px; height: 12px; stroke-width: 3; }
+.wd-res-b { min-width: 0; display: grid; gap: 2px; }
+.wd-res-h { font: 400 15px/20px var(--font-sans); overflow-wrap: anywhere; }
+.wd-res-err, .wd-res-out { margin: 4px 0 0; padding: 8px 10px; border-radius: var(--r-xs); background: var(--bg-sunken); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 19px; }
+.wd-res-err { color: var(--amber-text); }
+
+/* ---------- Manipulate ---------- */
+.wd-man { display: grid; gap: 14px; }
+.wd-man-stage { display: grid; place-items: center; min-height: 92px; padding: 12px 16px; border: 2px solid var(--line); border-radius: var(--r-md); transition: border-color var(--d-base), background-color var(--d-base); }
+.wd-man-stage.correct { border-color: var(--green-strong); background: var(--green-fill); }
+.wd-man-stage.wrong { border-color: var(--amber-frame); background: var(--amber-fill); }
+.wd-man-stage.wd-rev { border-color: var(--hint); background: var(--hint-wash); }
+.wd-man-eq { font-size: 1.25em; }
+.wd-man-eq .katex-display { margin: 0; }
+.wd-man-path { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; color: var(--text-muted); font-size: 13px; }
+.wd-man-path li { padding: 2px 8px; border-radius: var(--r-pill); background: var(--bg-sunken); }
+.wd-man-path li + li::before { content: ""; display: inline-block; width: 0; height: 0; margin: 0 8px 1px -2px; border: 4px solid transparent; border-left-color: var(--text-muted); vertical-align: middle; }
+.wd-man-path li.cur { color: var(--ink); background: var(--manip-wash); }
+.wd-man-ops { display: flex; flex-wrap: wrap; gap: 8px; }
+.wd-man-end { margin: 0; color: var(--text-muted); }
+.wd-man-foot { display: flex; justify-content: flex-end; min-height: 32px; }
+
+/* ---------- Long form with a self-marked rubric (from review.css hw-*) ---------- */
+.wd-long { display: grid; gap: 16px; }
+.wd-long-write { display: grid; gap: 8px; }
+.wd-long-ta { width: 100%; min-height: 180px; padding: 12px 14px; border: 2px solid var(--line-control); border-radius: var(--r-sm); background: var(--bg-surface); font: 400 16px/24px var(--font-sans); resize: vertical; outline: none; }
+.wd-long-ta:focus { border-color: var(--manip); box-shadow: 0 0 0 3px var(--manip-wash); }
+.wd-long-write .t-caption { margin: 0; }
+.wd-long-prev { padding: 10px 14px; border-radius: var(--r-md); background: var(--bg-sunken); }
+.wd-long-prev-b p, .wd-long-mine-b p { margin: 4px 0 0; }
+.wd-long-mark { display: grid; gap: 16px; animation: rise var(--d-enter) var(--ease-enter) both; }
+.wd-long-mine { padding: 12px 16px; border-radius: var(--r-md); background: var(--bg-sunken); }
+.wd-long-model { display: grid; gap: 10px; padding: 18px 20px; border: 2px solid var(--hint); border-radius: var(--r-md); scroll-margin-top: 16px; }
+.wd-long-model h3 { margin: 0; color: var(--hint); }
+.wd-long-model-b p { margin: 0 0 8px; }
+.wd-rubric { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: 12px; }
+.wd-rubric legend { padding: 0; margin: 0 0 12px; }
+.wd-rubric > p { margin: 0; }
+.wd-rbs { display: grid; gap: 8px; }
+.wd-rb { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 2px solid var(--line); border-radius: var(--r-sm); cursor: pointer; transition: border-color var(--d-base), background-color var(--d-base); }
+.wd-rb input { position: absolute; opacity: 0; pointer-events: none; }
+.wd-rb .t-body { flex: 1; }
+.wd-rb-pts { flex: none; color: var(--text-muted); }
+.wd-box { flex: none; width: 24px; height: 24px; border: 2px solid var(--line-control); border-radius: 6px; display: grid; place-items: center; color: transparent; transition: background-color var(--d-base), border-color var(--d-base); }
+.wd-box .icon { width: 16px; height: 16px; stroke-width: 3; }
+.wd-rb:has(input:checked) { border-color: var(--manip); background: var(--manip-wash); }
+.wd-rb input:checked + .wd-box { background: var(--manip); border-color: var(--manip); color: var(--on-strong); }
+.wd-rb input:focus-visible + .wd-box { outline: 2px solid var(--focus); outline-offset: 2px; }
+.wd-rb:has(input:disabled) { cursor: default; }
+.wd-score { display: flex; align-items: baseline; justify-content: flex-end; gap: 8px; }
+.wd-long.is-ok .wd-score .t-stat { color: var(--green-text); }
+.wd-long.is-bad .wd-score .t-stat { color: var(--amber-text); }
+
+@media (max-width: 767px) {
+  .wd-opts.wd-cols-2 .opt { min-height: 56px; }
+  .wd-slotrow { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .wd-gut { width: 36px; padding-right: 8px; }
+}

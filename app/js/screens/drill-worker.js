@@ -1,8 +1,9 @@
 /* Python runner for the code drill (#drill). A module Web Worker, so the page can terminate it when a run
-   passes the 5-second limit. It loads the vendored Pyodide, defines the grader, then runs one submission per
+   passes the 5-second limit. It loads Pyodide from the jsDelivr CDN, defines the grader, then runs one submission per
    message and streams one JSON event per test back to the page.
 
-   Messages in:  { type: 'init', indexURL }   indexURL is the vendor/pyodide/ folder, absolute, ending in '/'
+   Messages in:  { type: 'init', indexURL }   indexURL (optional) is a local vendor/pyodide/ folder, absolute, ending in '/',
+                                              tried only when the CDN is unreachable
                  { type: 'run', id, code, spec }
                    spec = { fn, compare: 'isclose' | 'fraction', prelude, tests: [{ prices } | { gen } | { args }, expected] }
                    args and a string expected are Python source, evaluated after the prelude (lambdas for events, Fraction values)
@@ -119,14 +120,25 @@ def drl_run(code, spec_json, emit):
     emit(json.dumps({'kind': 'done', 'ms': (time.perf_counter() - start) * 1000}))
 `;
 
+/* Pyodide comes from the jsDelivr CDN (docs/PLAN.md section 3). A local copy (vendor/pyodide/, passed by the page as
+   indexURL) is used only when the CDN cannot be reached and that copy actually exists. */
+const CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
+const reachable = async (url) => { try { const r = await fetch(url, { method: 'HEAD' }); return r.ok; } catch { return false; } };
+const pickIndexURL = async (local) => {
+  if (await reachable(CDN + 'pyodide.mjs')) return CDN;
+  if (local && await reachable(local + 'pyodide.mjs')) return local;
+  throw new Error('Python could not be loaded: the Pyodide CDN is unreachable and there is no local copy in vendor/pyodide.');
+};
+
 self.onmessage = async (e) => {
   const m = e.data || {};
   if (m.type === 'init') {
     const t0 = performance.now();
     try {
       if (typeof WebAssembly !== 'object') throw new Error('This browser has no WebAssembly support.');
-      const { loadPyodide } = await import(m.indexURL + 'pyodide.mjs'); // this Pyodide build needs a module worker
-      py = await loadPyodide({ indexURL: m.indexURL, stdout: () => {}, stderr: () => {} });
+      const indexURL = await pickIndexURL(m.indexURL);
+      const { loadPyodide } = await import(indexURL + 'pyodide.mjs'); // this Pyodide build needs a module worker
+      py = await loadPyodide({ indexURL, stdout: () => {}, stderr: () => {} });
       py.runPython(GRADER);
       runFn = py.globals.get('drl_run');
       const version = py.runPython('import sys\n"%d.%d" % sys.version_info[:2]');

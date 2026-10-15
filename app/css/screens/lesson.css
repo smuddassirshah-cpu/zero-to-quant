@@ -1,5 +1,7 @@
-/* Lesson player (#lesson, #lesson-quiz, #lesson-complete).
-   Spec: docs/design-research.md 2.10, 2.11, 4.5 to 4.9 and 5. Every selector carries the lsn- prefix. */
+/* Lesson player chrome (js/engine/player.js): #lesson/<course>/<lesson>, its quiz and its celebration, plus the
+   set-mode frame (.lsn-set) used by reviews, homework and practice. Widget styles live in css/widgets.css and
+   canvas styles in css/canvases.css. Spec: docs/design-research.md 2.10, 2.11, 4.5 to 4.9 and 5.
+   Every selector carries the lsn- prefix. */
 
 .lsn { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg-canvas); color: var(--ink); overflow: hidden;
   /* Labels on fixed fills (spec 2.4: ink on green, amber and gold faces; white on the strong check badge). Same in both themes. */
@@ -98,11 +100,6 @@
 .lsn-cap { color: var(--text-muted); transition: color var(--d-base); }
 .lsn-cap.lsn-cap-on { color: var(--ink); font-weight: 600; }
 .lsn-so { flex: none; min-height: 44px; margin: -6px 0; padding: 0 2px; }
-.lsn-accept { margin: 12px 0 0; color: var(--text-2); animation: rise var(--d-enter) var(--ease-enter) both; }
-.lsn-accept .katex { font-size: 1.1em; }
-.lsn-num { max-width: 300px; }
-.field.lsn-rev { border-color: var(--hint); background: var(--hint-wash); }
-.lsn-help-line { margin: 8px 0 0; color: var(--text-2); }
 
 /* Title screen */
 .lsn-title { padding-top: 4vh; }
@@ -112,43 +109,6 @@
 .lsn-title h1 { margin: 0 0 16px; }
 .lsn-title .t-prose { margin: 0 0 20px; }
 .lsn-meta { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--text-muted); }
-
-/* ---------- Two-dice grid ---------- */
-.lsn-dg { --cell-gap: 6px; display: grid; grid-template-columns: 18px 20px minmax(0, 1fr); grid-template-rows: 18px 24px auto; column-gap: 4px; row-gap: 2px; max-width: 420px; margin: 0 auto; }
-.lsn-dg.compact { max-width: 344px; }
-.lsn-dg-x { grid-column: 3; grid-row: 1; text-align: center; color: var(--text-muted); }
-.lsn-dg-y { grid-column: 1; grid-row: 3; display: grid; place-items: center; color: var(--text-muted); }
-.lsn-dg-y > span { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; }
-.lsn-dg-ch { grid-column: 3; grid-row: 2; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--cell-gap); text-align: center; font: 700 14px/24px var(--font-sans); }
-.lsn-dg-rh { grid-column: 2; grid-row: 3; display: grid; grid-template-rows: repeat(6, minmax(0, 1fr)); gap: var(--cell-gap); align-items: center; text-align: center; font: 700 14px/1 var(--font-sans); }
-.lsn-cells { grid-column: 3; grid-row: 3; position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--cell-gap); }
-.lsn-cell { position: relative; aspect-ratio: 1; min-width: 0; margin: 0; padding: 0; display: grid; place-items: center;
-  border: 2px solid var(--line); border-radius: var(--r-xs); background: var(--bg-surface); color: var(--ink);
-  font: 600 12px/1 var(--font-sans); font-variant-numeric: tabular-nums; -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--d-base) var(--ease-standard), border-color var(--d-base) var(--ease-standard), opacity 420ms var(--ease-morph); }
-button.lsn-cell { cursor: pointer; }
-button.lsn-cell:hover { background: var(--bg-hover); }
-button.lsn-cell:active { transform: scale(0.96); }
-.lsn-cell > span { opacity: 0; transition: opacity var(--d-micro); white-space: nowrap; }
-.lsn-cell.is-on { background: var(--manip); border-color: var(--manip); color: var(--bg-surface); }
-button.lsn-cell.is-on:hover { background: var(--manip); }
-.lsn-cell.is-a { background: color-mix(in srgb, var(--s2) 20%, var(--bg-surface)); border-color: var(--s2); }
-.lsn-cell.is-on > span, .lsn-cell.is-a > span, .lsn-cell.g-ok > span, .lsn-cell.g-bad > span, .lsn-cell.g-kept > span, .lsn-cell.is-rev > span { opacity: 1; }
-.lsn-cell.is-out { opacity: 0.2; }
-.lsn-dg.is-peek .lsn-cell.is-out { opacity: 1; }
-.lsn-cell.g-ok { background: var(--green-face); border-color: var(--green-strong); color: var(--lsn-on-fill); }
-.lsn-cell.g-bad { background: var(--amber-fill); border-color: var(--amber-frame); color: var(--ink); }
-.lsn-cell.g-kept { background: var(--bg-sunken); border-color: var(--line); color: var(--text-muted); }
-.lsn-cell.is-rev { background: var(--hint-wash); border-color: var(--hint); color: var(--ink); }
-.lsn-cell.is-flash { background: var(--amber-face); border-color: var(--amber-lip); color: var(--lsn-on-fill); opacity: 1; transition: none; }
-.lsn-cell.is-flash > span { opacity: 1; }
-.lsn-cell.is-twice { border-color: var(--amber-lip); box-shadow: 0 0 0 2px var(--amber-frame); }
-.lsn-x { position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--amber-lip); color: var(--lsn-on-strong); animation: pop 500ms var(--spring-bounce) both; }
-.lsn-x .icon { width: 11px; height: 11px; stroke-width: 3.2; }
-.lsn-twice { position: absolute; top: -9px; right: -9px; min-width: 22px; height: 20px; padding: 0 5px; border-radius: var(--r-pill); background: var(--amber-face); color: var(--lsn-on-fill); font: 800 11px/20px var(--font-sans); animation: pop 500ms var(--spring-bounce) both; }
-.lsn-dg-ov { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 1; }
-.lsn-dg-b { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 6 4; stroke-linejoin: round; opacity: 0; transition: opacity 300ms var(--ease-standard); }
-.lsn-dg-b.on { opacity: 1; }
 
 /* Hint "Point": pear wash at 60% and a 2px ink ring that pulses twice */
 .lsn-pt { position: absolute; z-index: 2; pointer-events: none; border-radius: 8px; background: color-mix(in srgb, var(--pear-200) 60%, transparent);
@@ -166,87 +126,9 @@ button.lsn-cell.is-on:hover { background: var(--manip); }
 }
 :root[data-theme="dark"] .lsn-pt, :root[data-theme="dark"] .lsn-pointed::after { background: color-mix(in srgb, var(--pear-300) 24%, transparent); mix-blend-mode: normal; }
 
-/* ---------- Options ---------- */
-.lsn-opts.lsn-cols-1 { grid-template-columns: minmax(0, 1fr); }
-.lsn-opts.lsn-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.lsn-opts .opt .katex { font-size: 1.12em; }
-.lsn-opts .opt[aria-disabled="true"] { cursor: default; }
-.lsn-opts .opt[aria-disabled="true"]:hover { background: var(--bg-surface); }
-.lsn-opts .opt.correct[aria-disabled="true"]:hover { background: var(--green-fill); }
-.lsn-opts .opt.wrong[aria-disabled="true"]:hover { background: var(--amber-fill); }
-.lsn-opts .opt.lsn-rev { border-color: var(--hint); background: var(--hint-wash); color: var(--ink); }
-.lsn-opts .opt.dim { opacity: 1; border-color: var(--lsn-dim-line); }
-
 /* Show solution: the answer objects animate to the solved state over 600ms (spec 4.5) */
-.lsn.lsn-revealing .lsn-cell, .lsn.lsn-revealing .opt, .lsn.lsn-revealing .field, .lsn.lsn-revealing .lsn-slot, .lsn.lsn-revealing .lsn-tc {
+.lsn.lsn-revealing .opt, .lsn.lsn-revealing .field, .lsn.lsn-revealing .wd-tok, .lsn.lsn-revealing .wd-man-stage, .lsn.lsn-revealing .wd-td-edit input {
   transition-property: background-color, border-color, color, opacity; transition-duration: 600ms; transition-timing-function: var(--ease-morph); }
-
-/* ---------- Derivation ---------- */
-.lsn-deriv { display: grid; grid-template-columns: auto auto minmax(0, 1fr); column-gap: 10px; row-gap: 12px; align-items: center; padding: 16px 20px; border: 2px solid var(--line); border-radius: var(--r-md); }
-.lsn-dl { display: contents; }
-.lsn-dlhs { justify-self: end; }
-.lsn-drhs { display: inline-flex; align-items: center; white-space: nowrap; }
-.lsn-dnote { justify-self: start; padding-left: 10px; color: var(--text-muted); }
-.lsn-dnote-m { color: var(--ink); font-weight: 600; }
-.lsn-slot { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 120px; min-height: 56px; margin-left: 6px; padding: 4px 10px;
-  border: 2px dashed var(--line-control); border-radius: var(--r-sm); transition: border-color var(--d-base), background-color var(--d-base); }
-.lsn-slot.on { border-style: solid; border-color: var(--manip); background: var(--manip-wash); }
-.lsn-slot.ok { border-color: var(--green-strong); background: var(--green-fill); }
-.lsn-slot.bad { border-color: var(--amber-frame); background: var(--amber-fill); }
-.lsn-slot.rev { border-style: solid; border-color: var(--hint); background: var(--hint-wash); }
-.lsn-slot-q { color: var(--text-muted); font: 700 20px/1 var(--font-sans); }
-.lsn-yours { margin: 16px 0 0; padding: 12px 16px; border-radius: var(--r-md); background: var(--bg-sunken); animation: rise var(--d-enter) var(--ease-enter) both; }
-.lsn-yours p { margin: 0; }
-.lsn-yours .katex-display { margin: 8px 0 0; }
-
-/* ---------- Simulation ---------- */
-.lsn-simwrap { margin-top: 24px; }
-.lsn-sim { display: grid; gap: 16px; padding: 16px; border: 2px solid var(--line); border-radius: var(--r-md); }
-.lsn-filter { justify-self: start; margin: 0; padding: 4px 12px; border-radius: var(--r-pill); background: var(--bg-sunken); }
-.lsn-sim-btns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.lsn-sim-btns .btn { min-height: 44px; padding: 0 8px; font-size: 16px; }
-.lsn-sim-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.lsn-sim-last { display: flex; align-items: center; gap: 8px; }
-.lsn-dice { display: inline-flex; gap: 4px; }
-.lsn-die { width: 28px; height: 28px; display: block; }
-.lsn-die rect { fill: var(--bg-surface); stroke: var(--line-control); stroke-width: 2; transition: stroke var(--d-micro); }
-.lsn-die circle { fill: var(--ink); }
-.lsn-sim-last.kept .lsn-die rect { stroke: var(--s2); }
-.lsn-sim-tag { color: var(--text-muted); min-width: 84px; }
-.lsn-sim-last.kept .lsn-sim-tag { color: var(--ink); font-weight: 700; }
-.lsn-sim-stats { display: flex; gap: 18px; margin: 0; }
-.lsn-sim-stats > div { display: grid; text-align: right; border-radius: 8px; }
-.lsn-sim-stats dt { font: 500 12px/16px var(--font-sans); color: var(--text-muted); }
-.lsn-sim-stats dd { margin: 0; font: 700 18px/24px var(--font-sans); }
-.lsn-share-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.lsn-share-v { font: 700 16px/20px var(--font-sans); }
-.lsn-share-track { position: relative; height: 20px; margin-top: 26px; border-radius: 6px; background: var(--bg-sunken); }
-.lsn-share-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 6px; background: var(--s2); transition: width 120ms linear; }
-.lsn-share-target { position: absolute; top: -6px; bottom: -6px; left: 36.3636%; width: 1.5px; margin-left: -0.75px; background: repeating-linear-gradient(to bottom, var(--ink) 0 6px, transparent 6px 10px); }
-.lsn-share-lab { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); padding-bottom: 2px; font-size: 14px; line-height: 1; white-space: nowrap; }
-.lsn-share-axis { display: flex; justify-content: space-between; margin-top: 6px; color: var(--text-muted); }
-.lsn-trace { width: 100%; height: 120px; display: block; }
-.lsn-tr-grid { stroke: var(--grid); stroke-width: 1; }
-.lsn-tr-axis { stroke: var(--axis); stroke-width: 1.5; }
-.lsn-tr-target { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 6 4; }
-.lsn-tr-line { fill: none; stroke: var(--s2); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.lsn-tr-tick { font: 500 11px/1 var(--font-sans); fill: var(--text-muted); font-variant-numeric: tabular-nums; }
-.lsn-trace-cap { margin: -8px 0 0; color: var(--text-muted); }
-
-/* ---------- Two stocks ---------- */
-.lsn-tf { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); gap: 8px; max-width: 440px; margin: 0 auto; align-items: center; }
-.lsn-tf-h { text-align: center; color: var(--text-muted); font-weight: 600; }
-.lsn-tf-r { text-align: right; padding-right: 4px; }
-.lsn-tc { position: relative; display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 104px; padding: 10px 8px;
-  border: 2px solid var(--line); border-radius: var(--r-sm); background: var(--bg-surface); text-align: center;
-  transition: opacity 420ms var(--ease-morph), background-color var(--d-base), border-color var(--d-base); }
-.lsn-tc-g { display: inline-flex; align-items: center; gap: 2px; font: 700 15px/20px var(--font-sans); }
-.lsn-arr { width: 16px; height: 16px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.lsn-tc-n { color: var(--text-2); }
-.lsn-tc.is-out { opacity: 0.2; }
-.lsn-tc.is-a { background: color-mix(in srgb, var(--s2) 20%, var(--bg-surface)); border-color: var(--s2); }
-.lsn-tc.is-flash { background: var(--amber-face); border-color: var(--amber-lip); color: var(--lsn-on-fill); transition: none; }
-.lsn-tc.is-flash .lsn-tc-n { color: var(--lsn-on-fill); }
 
 /* ---------- Summary ---------- */
 .lsn-sum .t-lesson-title { margin: 0; }
@@ -325,6 +207,40 @@ button.lsn-cell.is-on:hover { background: var(--manip); }
 .lsn-report { grid-template-columns: 1fr; }
 .lsn-report .opt { justify-content: flex-start; min-height: 52px; text-align: left; }
 
+/* ---------- Engine blocks: headings, code, canvas slot, controls, demonstrate stepper ---------- */
+.lsn-h { margin: 0 0 12px; }
+.lsn-step > .lsn-code { margin: -8px 0 24px; }
+.lsn-code { position: relative; border-radius: var(--r-md); background: var(--bg-sunken); }
+.lsn-code pre { margin: 0; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); }
+.lsn-code code { font: inherit; }
+.lsn-copy { position: absolute; top: 6px; right: 10px; min-height: 32px; padding: 0 4px; font-size: 13px; color: var(--text-2); }
+.lsn-canvas { margin: 0 0 4px; }
+.lsn-canvas + .lsn-q, .lsn-canvas + .lsn-widget, .lsn-controls + .lsn-q, .lsn-demo + .lsn-q { margin-top: 20px; }
+.lsn-q + .lsn-cbar { margin-top: 4px; }
+.lsn-canvas .cv-missing { display: grid; place-items: center; min-height: 120px; padding: 16px; border: 2px dashed var(--line); border-radius: var(--r-md); color: var(--text-muted); text-align: center; }
+.lsn-widget { margin-top: 0; }
+.lsn-cbar + .lsn-widget { margin-top: 0; }
+.lsn-controls { display: grid; gap: 4px; margin: 12px 0 0; }
+.lsn-ctl { display: grid; grid-template-columns: minmax(64px, auto) minmax(0, 1fr) 56px; align-items: center; gap: 12px; }
+.lsn-ctl output { text-align: right; font: 700 15px/20px var(--font-sans); }
+.lsn-demo { display: grid; gap: 10px; margin: 12px 0 0; }
+.lsn-demo-cap { margin: 0; min-height: 48px; animation: rise var(--d-enter) var(--ease-enter) both; }
+.lsn-stepper { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.lsn-stepper .btn.round { min-height: 44px; width: 44px; }
+.lsn-load { display: grid; place-items: center; height: 100%; color: var(--text-muted); }
+.lsn-ideas .lsn-idea-p { margin: 2px 0 0; }
+.lsn-why-b .t-prose { margin: 0 0 12px; }
+.lsn-why-cv { margin-top: 4px; pointer-events: none; }
+.lsn-why-cv:empty { display: none; }
+.lsn-nextline { display: inline-flex; align-items: center; gap: 8px; margin: 0; color: var(--text-2); animation: rise var(--d-enter) var(--ease-enter) both; }
+
+/* ---------- Set mode (reviews, homework, practice): items, dots, verdict, buttons, no frame ---------- */
+.lsn-set { max-width: var(--col); margin: 0 auto; display: grid; gap: 8px; }
+.lsn-set-body > .lsn-step > .t-prose { margin: 0 0 24px; }
+.lsn-set-foot { padding: 16px 0 0; }
+.lsn-set .lsn-verdict { position: static; width: 100%; max-width: var(--col); }
+.lsn-set .lsn-actions .lsn-primary { flex: 1; }
+
 /* ---------- Medium: verdict chip sits above the buttons ---------- */
 @media (min-width: 768px) and (max-width: 1199px) {
   .lsn-scroll { padding-top: 64px; }
@@ -358,14 +274,6 @@ button.lsn-cell.is-on:hover { background: var(--manip); }
   .lsn-verdict { max-width: none; }
   .lsn-chip { padding: 0; border: 0; background: none; }
   .lsn-chip.is-ok, .lsn-chip.is-no, .lsn-chip.is-rev { background: none; }
-  .lsn-dg { --cell-gap: 4px; max-width: none; }
-  .lsn-dg.compact { max-width: 340px; }
-  .lsn-opts.lsn-cols-3 { grid-template-columns: 1fr; }
-  .lsn-deriv { grid-template-columns: auto minmax(0, 1fr); padding: 14px 12px; row-gap: 6px; }
-  .lsn-dnote { grid-column: 2; padding: 0 0 6px; }
-  .lsn-slot { min-width: 104px; }
-  .lsn-sim { padding: 12px; }
-  .lsn-sim-stats { gap: 14px; }
   .lsn-title { padding-top: 2vh; }
   .lsn-title-art { width: 152px; height: 100px; }
   .lsn-title-art .art { width: 124px; height: 78px; }

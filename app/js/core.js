@@ -1,5 +1,9 @@
-/* Zero to Quant prototype runtime: screen registry and router, icons, maths, sound, motion helpers, shell.
-   Screens register with ZQ.screen({...}) from js/screens/*.js. Routes are plain hash tokens (#today, #lesson). */
+/* Zero to Quant runtime: screen registry and router, icons, maths, sound, motion helpers, shell.
+   Screens register with ZQ.screen({...}) from js/screens/*.js. A route is a hash: the first segment names the screen
+   and the rest are params, so #lesson/conditional/l3-shrinking/quiz renders the 'lesson' screen with
+   params ['conditional', 'l3-shrinking', 'quiz'] (render(mount, ZQ, params); ZQ.params() returns them too).
+   Learner state is ZQ.state (js/state.js) and content is ZQ.content (js/content.js); the first route waits for
+   ZQ.content.ready, and a learner who has not finished setup is sent to #setup. */
 (function () {
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -68,16 +72,22 @@
   const md = (s) => String(s).replace(/\$\$([^$]+)\$\$/g, (_, m) => tex(m, true))
     .replace(/\$([^$]+)\$([.,:;?]?)/g, (_, m, p) => '<span style="white-space:nowrap">' + tex(m, false) + p + '</span>'); // punctuation stays with its formula
 
-  /* ---------- Settings: theme, motion, sound ---------- */
+  /* ---------- Settings: theme, motion, sound. Kept in ZQ.state.settings once state.js has loaded. ---------- */
   const settings = {
     theme: store.get('theme', 'system'), motion: store.get('motion', 'system'), sound: store.get('sound', false), haptics: store.get('haptics', true),
   };
+  const syncSettings = () => { const S = window.ZQ && window.ZQ.state; if (S) ['theme', 'motion', 'sound', 'haptics'].forEach(k => { if (S.settings[k] !== undefined) settings[k] = S.settings[k]; }); };
   const applySettings = () => {
     const r = document.documentElement;
     if (settings.theme === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', settings.theme);
     if (settings.motion === 'reduced') r.setAttribute('data-motion', 'reduced'); else r.removeAttribute('data-motion');
   };
-  const setSetting = (k, v) => { settings[k] = v; store.set(k, v); applySettings(); emit('settings', settings); };
+  const setSetting = (k, v) => {
+    settings[k] = v;
+    const S = window.ZQ && window.ZQ.state;
+    if (S) S.settings.set({ [k]: v }); else store.set(k, v);
+    applySettings(); emit('settings', settings);
+  };
   const reducedMotion = () => settings.motion === 'reduced' || (settings.motion === 'system' && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   /* ---------- Sound: synthesised, off by default ---------- */
@@ -155,58 +165,90 @@
 
   /* ---------- Shell (header on desktop, floating tab bar on mobile) ---------- */
   const TABS = [['today', 'Today', 'today'], ['learn', 'Learn', 'learn'], ['review', 'Review', 'review'], ['you', 'You', 'you']];
+  const summary = () => (window.ZQ && window.ZQ.state ? window.ZQ.state.summary()
+    : { streak: 0, best: 0, todayQualified: false, restDays: 0, mp: 0, initial: '?', week: Array(7).fill('future'), lessonsDone: 0, streakOff: false });
+  const restSlots = (n) => `<span class="rest-slots">${[0, 1].map(i => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
+  const pillInner = (L) => `${L.streak}${bolt(L.todayQualified)}${restSlots(L.restDays)}`;
   const shell = (tab) => {
-    const L = window.ZQData.learner;
+    const L = summary();
     const wrap = h(`<div class="shell">
       <header class="shell-header"><div class="in">${logo()}
         <nav aria-label="Main">${TABS.slice(0, 3).map(([id, n]) => `<a href="#${id}" ${tab === id ? 'aria-current="page"' : ''}>${n}</a>`).join('')}</nav>
         <div class="right">
-          <button class="streak-pill" data-streak aria-label="Streak ${L.streak} days">${L.streak}${bolt(L.todayDone)}<span class="rest-slots">${[0, 1].map(i => `<i class="${i < L.restDays ? 'on' : ''}"></i>`).join('')}</span></button>
-          <span class="mp-chip" title="Mastery points">${icon('target', 'sm')} ${L.mp}</span>
-          <a class="avatar" href="#you" aria-label="You" ${tab === 'you' ? 'aria-current="page"' : ''}>${L.initial}</a>
+          <button class="streak-pill" data-streak aria-label="Streak ${L.streak} days">${pillInner(L)}</button>
+          <span class="mp-chip" data-mp title="Mastery points">${icon('target', 'sm')} ${L.mp}</span>
+          <a class="avatar" data-avatar href="#you" aria-label="You" ${tab === 'you' ? 'aria-current="page"' : ''}>${esc(L.initial)}</a>
         </div></div></header>
       <main class="shell-main" id="main"></main>
       <nav class="tabbar" aria-label="Main">${TABS.map(([id, n, ic]) => `<a href="#${id}" ${tab === id ? 'aria-current="page"' : ''}>${icon(ic)}<span>${n}</span></a>`).join('')}</nav>
     </div>`);
     wrap.querySelector('[data-streak]').addEventListener('click', () => streakSheet());
-    if ((store.get('you.prefs', {}) || {}).streakMode === 'off') wrap.querySelector('[data-streak]').hidden = true; // streak switched off on You
+    if (L.streakOff) wrap.querySelector('[data-streak]').hidden = true; // streak switched off on You
     return wrap;
+  };
+  /* Keep the header in step with the state without re-rendering the screen */
+  const refreshShell = () => {
+    const head = document.querySelector('#app .shell-header'); if (!head) return;
+    const L = summary();
+    const pill = head.querySelector('[data-streak]'), mp = head.querySelector('[data-mp]'), av = head.querySelector('[data-avatar]');
+    if (pill) { pill.innerHTML = pillInner(L); pill.setAttribute('aria-label', `Streak ${L.streak} days`); pill.hidden = !!L.streakOff; }
+    if (mp) mp.innerHTML = `${icon('target', 'sm')} ${L.mp}`;
+    if (av) av.textContent = L.initial;
   };
 
   /* Streak sheet (shared): count, rest days, week strip, stats */
-  const weekStrip = (week = window.ZQData.learner.week) => {
+  const weekStrip = (week, todayDone) => {
+    const L = summary();
+    if (!week) week = L.week;
+    if (todayDone === undefined) todayDone = L.todayQualified;
     const labels = ['M', 'T', 'W', 'Th', 'F', 'S', 'Su'];
     return `<div class="week">${week.map((s, i) => {
-      const lit = s === 'lit' || (s === 'today' && window.ZQData.learner.todayDone);
+      const lit = s === 'lit' || (s === 'today' && todayDone);
       const cls = lit ? 'lit' : s === 'rest' ? 'rest' : s === 'missed' ? 'missed' : '';
       const glyph = s === 'rest' ? `<svg viewBox="0 0 24 24"><path d="${P.rest}" style="stroke:var(--pear-600);fill:none"/></svg>` : `<svg viewBox="0 0 24 24"><path d="${BOLT_PATH}"/></svg>`;
       return `<div class="day ${s === 'today' ? 'today' : ''}"><span class="dot ${cls}">${glyph}</span><span>${labels[i]}</span></div>`;
     }).join('')}</div>`;
   };
   const streakSheet = () => {
-    const L = window.ZQData.learner;
+    const L = summary();
+    const left = Math.max(0, 3 - (L.problemsToday || 0));
     sheet(`<div style="display:grid;gap:20px">
-      <div style="display:flex;align-items:center;gap:12px;padding-right:48px"><span class="t-stat">${L.streak}</span>${bolt(L.todayDone, 'xl')}<span class="t-h2">day streak</span></div>
-      <p class="t-body secondary" style="margin:0">${L.todayDone ? 'Today counts. Come back tomorrow to make it ' + (L.streak + 1) + '.' : 'Finish one lesson or three problems today to keep it going.'}</p>
-      ${weekStrip()}
+      <div style="display:flex;align-items:center;gap:12px;padding-right:48px"><span class="t-stat">${L.streak}</span>${bolt(L.todayQualified, 'xl')}<span class="t-h2">day streak</span></div>
+      <p class="t-body secondary" style="margin:0">${L.todayQualified ? 'Today counts. Come back tomorrow to make it ' + (L.streak + 1) + '.'
+        : `Finish one lesson, or ${left === 3 ? 'three problems' : left === 1 ? 'one more problem' : left + ' more problems'}, today to keep it going.`}</p>
+      ${weekStrip(L.week, L.todayQualified)}
       <div class="card pad" style="display:flex;gap:12px;align-items:center"><span class="rest-slots" style="transform:scale(1.4);transform-origin:left">${[0, 1].map(i => `<i class="${i < L.restDays ? 'on' : ''}"></i>`).join('')}</span>
         <span class="t-body" style="margin-left:12px">${L.restDays} of 2 rest days held. One is earned every 7 days you study. A rest day keeps your streak if you miss a day.</span></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="card pad"><div class="t-overline muted">Longest streak</div><div class="t-h1 tnum">${L.bestStreak} days</div></div>
-        <div class="card pad"><div class="t-overline muted">Lessons complete</div><div class="t-h1 tnum">186</div></div>
+        <div class="card pad"><div class="t-overline muted">Longest streak</div><div class="t-h1 tnum">${L.best} ${L.best === 1 ? 'day' : 'days'}</div></div>
+        <div class="card pad"><div class="t-overline muted">Lessons complete</div><div class="t-h1 tnum">${L.lessonsDone.toLocaleString('en-GB')}</div></div>
       </div></div>`, { label: 'Streak' });
   };
 
   /* ---------- Screen registry and router ---------- */
   const screens = [];
   const screen = (def) => { screens.push(def); if (booted) route(); };
-  let booted = false, cleanup = null;
+  let booted = false, cleanup = null, params = [];
   const app = () => $('#app');
   const go = (id) => { if (location.hash === '#' + id) route(); else location.hash = id; };
+  /* '#lesson/a/b' -> screen 'lesson', params ['a', 'b']. An id that matches a screen exactly wins, so ids may hold '/'. */
+  const resolve = (hash) => {
+    const full = decodeURIComponent((hash || '').replace(/^#/, '')) || 'today';
+    const exact = screens.find(s => s.id === full);
+    if (exact) return { def: exact, params: [] };
+    const [head, ...rest] = full.split('/');
+    const def = screens.find(s => s.id === head);
+    if (def) return { def, params: rest.filter(p => p !== '') };
+    return { def: screens.find(s => s.id === 'today') || screens[0], params: [] };
+  };
   const route = () => {
-    const id = (location.hash || '#today').slice(1) || 'today';
-    const def = screens.find(s => s.id === id) || screens.find(s => s.id === 'today') || screens[0];
+    if (!booted) return;
+    const r = resolve(location.hash);
+    const def = r.def;
     if (!def) return;
+    const S = window.ZQ && window.ZQ.state;
+    if (S && !S.flags.setupDone && def.id !== 'setup' && def.id !== 'system' && screens.some(s => s.id === 'setup')) { location.replace('#setup'); return; }
+    params = r.params;
     if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { console.error(e); } }
     cleanup = null;
     document.querySelectorAll('.scrim, .sheet, .modal, .toast').forEach(n => n.remove());
@@ -214,20 +256,20 @@
     document.title = (def.title ? def.title + ' · ' : '') + 'Zero to Quant';
     let mount = root;
     if (def.shell) { const s = shell(def.tab || def.id); root.append(s); mount = s.querySelector('#main'); }
-    try { cleanup = def.render(mount, api) || null; } catch (e) { console.error(e); mount.innerHTML = `<p style="padding:24px">This screen failed to render: ${esc(e.message)}</p>`; }
+    try { cleanup = def.render(mount, api, params.slice()) || null; } catch (e) { console.error(e); mount.innerHTML = `<p style="padding:24px">This screen failed to render: ${esc(e.message)}</p>`; }
     mathify(root);
     window.scrollTo(0, 0);
     protoNav.refresh(def.id);
   };
 
-  /* ---------- Prototype navigator (not part of the product) ---------- */
+  /* ---------- Screens navigator: a small panel on the left edge listing every non-hidden screen ---------- */
   const protoNav = {
     el: null,
     mount() {
       this.el = h(`<div class="proto">
-        <button class="proto-tab" aria-label="Prototype screens" aria-expanded="false">${icon('grid', 'sm')}</button>
+        <button class="proto-tab" aria-label="Screens" aria-expanded="false">${icon('grid', 'sm')}</button>
         <div class="proto-panel" hidden>
-          <div class="proto-head"><b>Prototype</b><span>Zero to Quant mockups, Stage 1</span></div>
+          <div class="proto-head"><b>Screens</b><span>Every route in this app</span></div>
           <div class="proto-list"></div>
           <div class="proto-set">
             <label>Theme <select id="proto-theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
@@ -253,13 +295,25 @@
     },
   };
 
-  const api = { $, $$, h, esc, icon, bolt, spark, mark, logo, tex, md, mathify, sound, haptic, countUp, burst, wait, toast, sheet, streakSheet, weekStrip,
-    go, on, emit, store, settings, setSetting, reducedMotion, data: () => window.ZQData };
-  window.ZQ = { ...api, screen, screens };
+  /* One object: screens receive it as Z, and state.js, content.js and the engine attach ZQ.state, ZQ.content,
+     ZQ.widgets and ZQ.canvas to it, so Z.state is the same as window.ZQ.state. */
+  const api = Object.assign(window.ZQ || {}, { $, $$, h, esc, icon, bolt, spark, mark, logo, tex, md, mathify, sound, haptic, countUp, burst, wait, toast, sheet, streakSheet, weekStrip,
+    go, on, emit, store, settings, setSetting, reducedMotion, screen, screens, params: () => params.slice(), refreshShell });
+  window.ZQ = api;
 
-  const boot = () => {
+  const boot = async () => {
+    syncSettings();
     applySettings();
     if (!$('#app')) document.body.prepend(h('<div id="app"></div>'));
+    on('state', refreshShell);
+    on('state', (e) => { if (e && (e.what === 'settings' || e.what === 'import' || e.what === 'reset')) { syncSettings(); applySettings(); } });
+    try {
+      if (api.content && api.content.ready) await api.content.ready;
+    } catch (e) {
+      console.error(e);
+      app().innerHTML = `<p style="padding:24px;max-width:40em">The course content did not load: ${esc(e.message)}. Start the app with <code>app/run.sh</code> and open <code>http://localhost:8080</code>.</p>`;
+      return;
+    }
     protoNav.mount();
     booted = true;
     window.addEventListener('hashchange', route);
