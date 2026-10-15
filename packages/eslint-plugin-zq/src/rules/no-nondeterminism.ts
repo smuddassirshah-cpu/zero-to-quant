@@ -11,12 +11,14 @@
 //   save the residue below.
 // - Each is found as a global by scope analysis (a local `Date` is fine), as a member or destructured
 //   key of a global object, and, with the type checker (`.ts`), on anything typed `Math`, `Crypto`,
-//   `SubtleCrypto`, `Performance`, `DateConstructor` or the global object (`typeof globalThis`, `Window`):
-//   an alias, a parameter, an assertion. A type counts only as the platform declares it: in a TypeScript
-//   library file (`Math`, lib.dom's `Window`), in a package's declarations (@types/node's `Performance`,
-//   `Crypto` and `SubtleCrypto`), or as the checker's own `globalThis`, which has no declaration
-//   [measured: the mathcore project's program, 9 October 2026]. A module's own `interface Window` (a
-//   rolling window's `top`) or `interface Performance` (a portfolio's `sharpe`) is another type.
+//   `SubtleCrypto`, `Performance`, `DateConstructor`, Node's `Process` or the global object (`typeof
+//   globalThis`, `Window`): an alias, a parameter, an assertion. A type counts only as the platform
+//   declares it: in a TypeScript library file (`Math`, lib.dom's `Window`), in a package's declaration
+//   files (@types/node's `Performance`, `Crypto`, `SubtleCrypto` and `NodeJS.Process`), or as the
+//   checker's own `globalThis`, which has no declaration [measured: the mathcore project's program, 9
+//   October 2026]. A module's own `interface Window` (a rolling window's `top`) or `interface
+//   Performance` (a portfolio's `sharpe`) is another type, and so is one a workspace package exports,
+//   whose `.ts` source TypeScript also marks external when it is imported by the package's name.
 // - A global object is `globalThis`, `window`, `self`, `frames`, `top`, `parent`, `opener` or Node's
 //   `global`, read as a global or as a static member of a global object (`globalThis.self`, `window.top`),
 //   since `.js` has no types to see the second. HTML's Window gives `window`, `self`, `frames`, `top` and
@@ -35,8 +37,7 @@
 //   compared point by point with the Python twin (5.6), and a per-function check would miss the helpers
 //   and module constants those functions read [our choice, reported as a deviation].
 // - Accepted residue, left to review and the cross-engine tests: a source received from outside the
-//   scope and used other than by a member or a call (`Reflect.construct(D, [])` for `D: DateConstructor`),
-//   or a received `NodeJS.Process`, whose type is not among the watched ones (open for review);
+//   scope and used other than by a member or a call (`Reflect.construct(D, [])` for `D: DateConstructor`);
 //   in `.js`, a window reached by a call or the DOM (`open()`, `document.defaultView`); `Intl` and the
 //   `toLocale*` methods (locale data differs between engines; 10.4 does not list them), and
 //   `Intl.DateTimeFormat`'s `format()` and `formatToParts()` with no date, which read the clock
@@ -46,7 +47,8 @@
 //   does not lint content/ until stage 22 adds it [our choice]; a destructuring in a signature with no
 //   body (`type F = ({ random }: Math) => number`), reported though it reads nothing; a mapped type of a
 //   watched type (`Readonly<Window>`, `Partial<Window>`, `Pick<Window, 'Math'>`, `Readonly<Math>`), which
-//   has no symbol to match; an npm package's own type that shares a watched name, taken for the platform's.
+//   has no symbol to match; a type of a watched name in an npm package's declaration files, taken for the
+//   platform's.
 import type { Rule, Scope } from 'eslint';
 import {
   isGlobal,
@@ -97,6 +99,7 @@ const KIND_OF_TYPE: ReadonlyMap<string, string> = new Map([
   ['SubtleCrypto', SUBTLE],
   ['Performance', 'performance'],
   ['DateConstructor', 'Date'],
+  ['Process', 'process'],
 ]);
 const TYPED = new Set(KIND_OF_TYPE.keys());
 const GLOBAL_TYPES = new Set(['globalThis', 'Window']);
@@ -122,9 +125,12 @@ interface Checker {
   getNumberType(): unknown;
   isTypeAssignableTo(source: unknown, target: unknown): boolean;
 }
+interface TsFile {
+  readonly isDeclarationFile: boolean;
+}
 interface TsSymbol {
   getName(): string;
-  getDeclarations(): readonly { getSourceFile(): unknown }[] | undefined;
+  getDeclarations(): readonly { getSourceFile(): TsFile }[] | undefined;
 }
 interface TsType {
   getSymbol(): TsSymbol | undefined;
@@ -136,8 +142,8 @@ interface TsType {
 interface Services {
   readonly program: {
     getTypeChecker(): Checker;
-    isSourceFileDefaultLibrary(file: unknown): boolean;
-    isSourceFileFromExternalLibrary(file: unknown): boolean;
+    isSourceFileDefaultLibrary(file: TsFile): boolean;
+    isSourceFileFromExternalLibrary(file: TsFile): boolean;
   };
   getTypeAtLocation(node: ESNode): TsType;
 }
@@ -153,16 +159,21 @@ function typeServices(sourceCode: SourceCode): Services | undefined {
 /**
  * The first of `names` that the type checker sees `node` as, walking unions, intersections, base types
  * and constraints as util/ast.ts's `hasType` does, but only as the platform declares it: in a
- * TypeScript library file or a package's declarations, or as the checker's own `globalThis`, which has
- * no declaration. A module's own type of the same name is another type. Undefined without types.
+ * TypeScript library file or a package's declaration files, or as the checker's own `globalThis`, which
+ * has no declaration. A module's own type of the same name is another type. Undefined without types.
  */
 function platformType(sourceCode: SourceCode, node: ESNode, names: ReadonlySet<string>): string | undefined {
   const services = typeServices(sourceCode);
   if (!services) return undefined;
   const { program } = services;
-  const platform = (declaration: { getSourceFile(): unknown }) => {
+  // A workspace package's `.ts` source imported by its name is external too (node_modules/@zq links to
+  // packages/), so an external file counts only when it is a declaration file.
+  const platform = (declaration: { getSourceFile(): TsFile }) => {
     const file = declaration.getSourceFile();
-    return program.isSourceFileDefaultLibrary(file) || program.isSourceFileFromExternalLibrary(file);
+    return (
+      program.isSourceFileDefaultLibrary(file) ||
+      (file.isDeclarationFile && program.isSourceFileFromExternalLibrary(file))
+    );
   };
   const seen = new Set<TsType>();
   const visit = (type: TsType): string | undefined => {

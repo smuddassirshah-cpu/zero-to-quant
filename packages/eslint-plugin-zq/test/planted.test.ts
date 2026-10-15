@@ -127,6 +127,18 @@ const violations = [
     code: 'export const id = (c: typeof crypto): string => c.randomUUID();\n',
     message: "'crypto.randomUUID' is not seeded",
   },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_node_process.ts',
+    code: 'export const t = (p: NodeJS.Process): bigint => p.hrtime.bigint();\n',
+    message: "'process.hrtime' reads the host process",
+  },
+  {
+    rule: 'zq/no-nondeterminism',
+    file: 'packages/mathcore/src/__planted_node_pid.ts',
+    code: 'export const id = (p: typeof process): number => p.pid;\n',
+    message: "'process.pid' reads the host process",
+  },
 ];
 
 // An inline directive does not switch a rule off: noInlineConfig reports the directive instead.
@@ -149,7 +161,8 @@ const sinks = [
 ];
 
 // Outside zq/no-nondeterminism's reach: transcendental Math in mathcore outside dmath, a package's tests
-// under both of the rule's rows, a module's own type named as a platform one.
+// under both of the rule's rows, a module's own type named as a platform one, and one that a workspace
+// package exports, imported by the package's name.
 const clean = [
   {
     file: 'packages/mathcore/src/__planted_exp.ts',
@@ -162,6 +175,14 @@ const clean = [
   {
     file: 'packages/gen-kit/test/__planted_exp.mjs',
     code: 'export const grow = (x) => Math.exp(x);\n',
+  },
+  {
+    file: 'packages/contracts/src/__planted_window.ts',
+    code: 'export interface Performance {\n  sharpe: number;\n  now: number;\n}\nexport interface Window {\n  top: number;\n  parent: number;\n}\n',
+  },
+  {
+    file: 'packages/mathcore/src/__planted_window_use.ts',
+    code: "import type { Performance, Window } from '@zq/contracts/__planted_window';\nexport const score = (p: Performance, w: Window): number => p.sharpe + p.now + w.top + w.parent;\n",
   },
   {
     file: 'packages/mathcore/src/__planted_portfolio.ts',

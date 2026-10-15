@@ -181,6 +181,7 @@ typed.run('no-nondeterminism (typed)', rule, {
       code: 'interface SubtleCrypto { level: number }\nexport const l = (s: SubtleCrypto) => s.level;',
       filename: TYPED,
     },
+    { code: 'interface Process { pid: number }\nexport const id = (p: Process) => p.pid;', filename: TYPED },
   ],
   invalid: [
     typedFails('export const r = (m: Math) => m.random();', ['random', 'Math.random']),
@@ -243,6 +244,16 @@ typed.run('no-nondeterminism (typed)', rule, {
     typedFails('export const t = (w: typeof window) => w.Date.now();', ['clock', 'Date']),
     // An assertion's type counts.
     typedFails('export const t = (w: unknown) => (w as Window).top;', ['escape', 'top']),
+    typedFails('export const t = (w: Window) => (w as any).top;', ['escape', 'top']),
+    // Node's declaration files, which the default project loads only through a reference.
+    typedFails(
+      "/// <reference types='node' />\ndeclare const p: import('node:perf_hooks').Performance; export const t = p.now();",
+      ['clock', 'performance.now'],
+    ),
+    typedFails('/// <reference types="node" />\nexport const t = (p: NodeJS.Process) => p.hrtime.bigint();', [
+      'host',
+      'process.hrtime',
+    ]),
     typedFails('declare const w: unknown; export const m = (w as typeof globalThis).Math;', [
       'escape',
       'Math',
