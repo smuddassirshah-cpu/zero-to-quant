@@ -14,19 +14,19 @@
         const n = Math.max(0, Math.round(pick(p, ['n'], 10))), q = K.clamp(pick(p, ['p'], 0.5), 0, 1);
         const lc = (k) => K.lgamma(n + 1) - K.lgamma(k + 1) - K.lgamma(n - k + 1);
         const f = (k) => (k < 0 || k > n || k !== Math.round(k) ? 0 : q === 0 ? +(k === 0) : q === 1 ? +(k === n) : Math.exp(lc(k) + k * Math.log(q) + (n - k) * Math.log(1 - q)));
-        return { discrete: true, f, lo: 0, hi: n, mean: n * q, sd: Math.sqrt(n * q * (1 - q)), range: [-0.5, n + 0.5], tex: `\\text{Bin}(${n}, ${K.fmt(q, 3)})` };
+        return { discrete: true, f, lo: 0, hi: n, mean: n * q, sd: Math.sqrt(n * q * (1 - q)), range: [-0.8, n + 0.8], tex: `\\text{Bin}(${n}, ${K.fmt(q, 3)})` };
       }
       case 'geometric': {
         const q = K.clamp(pick(p, ['p'], 0.3), 1e-6, 1);
         const f = (k) => (k < 1 || k !== Math.round(k) ? 0 : Math.pow(1 - q, k - 1) * q);
         const hi = Math.max(5, Math.ceil(Math.log(0.005) / Math.log(Math.max(1e-9, 1 - q))));
-        return { discrete: true, f, lo: 1, hi, mean: 1 / q, sd: Math.sqrt(1 - q) / q, range: [0.5, Math.min(hi, 60) + 0.5], tex: `\\text{Geo}(${K.fmt(q, 3)})` };
+        return { discrete: true, f, lo: 1, hi, mean: 1 / q, sd: Math.sqrt(1 - q) / q, range: [0.2, Math.min(hi, 60) + 0.8], tex: `\\text{Geo}(${K.fmt(q, 3)})` };
       }
       case 'poisson': {
         const l = Math.max(1e-9, pick(p, ['lambda', 'λ', 'mu', 'rate'], 3));
         const f = (k) => (k < 0 || k !== Math.round(k) ? 0 : Math.exp(k * Math.log(l) - l - K.lgamma(k + 1)));
         const hi = Math.ceil(l + 4.5 * Math.sqrt(l) + 3);
-        return { discrete: true, f, lo: 0, hi, mean: l, sd: Math.sqrt(l), range: [-0.5, hi + 0.5], tex: `\\text{Pois}(${K.fmt(l, 3)})` };
+        return { discrete: true, f, lo: 0, hi, mean: l, sd: Math.sqrt(l), range: [-0.8, hi + 0.8], tex: `\\text{Pois}(${K.fmt(l, 3)})` };
       }
       case 'uniform': {
         let a = pick(p, ['a', 'min'], 0), b = pick(p, ['b', 'max'], 1); if (b <= a) b = a + 1e-6;
@@ -86,7 +86,7 @@
       kind: 'distribution', aria: params.aria || 'Probability distribution',
       modes: ['drag', 'slider'],
       size: () => ({ w: W, h: H }),
-      init: () => ({ shade: null, params: {}, highlight: [], showMean: params.showMean ?? false, showSd: params.showSd ?? false }),
+      init: () => ({ shade: null, params: { ...(params.params || {}) }, highlight: [], showMean: params.showMean ?? false, showSd: params.showSd ?? false }),
       render(view, R) {
         const { F, range, yMax, sx, sy, ml, mr } = geom(view);
         const g = R.F.g, x0 = ml, x1 = W - mr, base = sy(0), top = sy(yMax);
@@ -157,12 +157,26 @@
           over.append(o);
         }
 
-        /* Shaded probability label */
+        /* Shaded probability label: above the marks under it, else in a free top corner, on a backing pill */
         if (hasShade && shadeMid && view.showProb !== false) {
           const v = prob(F, sh.from, sh.to), text = view.probLabel || probTex(F, sh.from, sh.to, v);
-          const cx = (shadeMid[0] + shadeMid[1]) / 2, w = K.tw(text.replace(/\\le|\\ge/g, '<')) + 30;
-          const lx = K.clamp(cx, x0 + w / 2, x1 - w / 2), ly = Math.max(top + (showMean ? 60 : 12), shadeTopY - 18);
-          const o = K.obj('prob', 'cvb-prob'); o.append(K.lab(lx, ly, text, { halo: true, w: w + 20, cls: 'cvb-strong' })); over.append(o);
+          const w = K.tw(text.replace(/\\(le|ge|text)/g, ' ')) * 1.12 + 8;
+          const reserved = top + 12 + (showMean ? 26 : 0) + (showSd ? 26 : 0);
+          const marksTop = (a, b) => {
+            let m = base;
+            if (F.discrete) { for (let k = Math.ceil(sx.invert(a) - 0.5); k <= Math.floor(sx.invert(b) + 0.5); k++) m = Math.min(m, sy(F.f(k))); }
+            else for (let i = 0; i <= 30; i++) { const x = sx.invert(a + (b - a) * i / 30); m = Math.min(m, sy(F.f(x))); }
+            for (const ov of [].concat(view.overlay || [])) { const G = family(ov.family, ov.params, K); for (let i = 0; i <= 30; i++) { const x = sx.invert(a + (b - a) * i / 30); m = Math.min(m, sy(G.f(G.discrete ? Math.round(x) : x))); } }
+            return m;
+          };
+          const cx = K.clamp((shadeMid[0] + shadeMid[1]) / 2, x0 + w / 2 + 4, x1 - w / 2 - 4);
+          const cands = [cx, x0 + w / 2 + 8, x1 - w / 2 - 4];
+          let lx = cands[1], ly = top + 12, found = false;
+          for (const c of cands) { const yy = marksTop(c - w / 2, c + w / 2) - 18; if (yy >= reserved) { lx = c; ly = Math.min(yy, base - 40); found = true; break; } }
+          if (!found) { ly = top + 12; lx = Math.abs(cands[1] - (showMean ? sx(F.mean) : -1e9)) > Math.abs(cands[2] - (showMean ? sx(F.mean) : -1e9)) ? cands[1] : cands[2]; }
+          const o = K.obj('prob', 'cvb-prob');
+          o.append(svg('rect', { x: lx - w / 2 - 6, y: ly - 12, width: w + 12, height: 24, rx: 12, class: 'cvb-pill' }), K.lab(lx, ly, text, { w: w + 20, cls: 'cvb-strong' }));
+          over.append(o);
         }
 
         /* Drag handles on the shade bounds */

@@ -1,5 +1,6 @@
 /* table canvas: a static or highlightable data table, rendered as an HTML table inside the canvas wrapper (not SVG).
-   Ids, one-based over the body rows: r{i} a row, c{j} a column (its header and every cell), r{i}c{j} a cell.
+   Ids are zero-based over the body rows and the columns, as E2's table widget and the matrix canvas use:
+   r{i} a row, c{j} a column (its header and every cell), r{i}c{j} a cell; r0c0 is the first body cell.
    Cells listed in params.editable, or written as { "edit": true, ... }, hold an <input>; cells() returns those inputs
    (each with data-id) for the table widget to drive. Params and state: engine/canvas/README.md. */
 (function () {
@@ -19,16 +20,16 @@
     const html = (v) => (v == null ? '' : typeof v === 'number' ? Z.esc(C.fmtNum(v, 4)) : Z.md(Z.esc(String(v)).replace(/&#39;/g, "'")));
     if (columns.length) {
       const thead = document.createElement('thead'), tr = document.createElement('tr');
-      columns.forEach((c, k) => { const th = document.createElement('th'); th.scope = 'col'; th.className = 'cv-obj'; th.dataset.id = `c${k + 1}`; th.dataset.col = `c${k + 1}`; th.style.textAlign = alignOf(k + 1); th.innerHTML = html(c); tr.append(th); });
+      columns.forEach((c, k) => { const th = document.createElement('th'); th.scope = 'col'; th.className = 'cv-obj'; th.dataset.id = `c${k}`; th.dataset.col = `c${k}`; th.style.textAlign = alignOf(k + 1); th.innerHTML = html(c); tr.append(th); });
       thead.append(tr); tbl.append(thead);
     }
     const tbody = document.createElement('tbody'), inputs = [];
     rows.forEach((row, i) => {
-      const tr = document.createElement('tr'); tr.className = 'cv-obj'; tr.dataset.id = `r${i + 1}`;
+      const tr = document.createElement('tr'); tr.className = 'cv-obj'; tr.dataset.id = `r${i}`;
       row.forEach((v, j) => {
-        const id = `r${i + 1}c${j + 1}`, td = document.createElement(j === 0 && P.rowHeads ? 'th' : 'td');
+        const id = `r${i}c${j}`, td = document.createElement(j === 0 && P.rowHeads ? 'th' : 'td');
         if (td.tagName === 'TH') td.scope = 'row';
-        td.className = 'cv-obj cv-td'; td.dataset.id = id; td.dataset.col = `c${j + 1}`; td.dataset.row = `r${i + 1}`; td.style.textAlign = alignOf(j + 1);
+        td.className = 'cv-obj cv-td'; td.dataset.id = id; td.dataset.col = `c${j}`; td.dataset.row = `r${i}`; td.style.textAlign = alignOf(j + 1);
         const edit = editable.has(id) || (v && typeof v === 'object' && v.edit);
         if (edit) {
           const inp = document.createElement('input'); inp.className = 'cv-in'; inp.type = 'text'; inp.dataset.id = id; inp.autocomplete = 'off'; inp.spellcheck = false;
@@ -65,7 +66,26 @@
         else resolve(id).forEach(n => { if (n.tagName !== 'TR') n.innerHTML = html(v); });
       }
     };
-    const I = C.instance({ kind: 'table', factory: table, params, ctx, fr, draw, resolve, highlightIds: toIds });
+    /* Highlight: one ring around the union of the highlighted cells (edges only where a neighbour is not highlighted) */
+    const pos = (n) => { const tr = n.parentElement; return [tr.parentElement.tagName === 'THEAD' ? 0 : [...tbody.children].indexOf(tr) + 1, [...tr.children].indexOf(n)]; };
+    const hlSet = new Set();
+    const paintRing = () => {
+      const keys = new Set([...hlSet].map(n => pos(n).join(',')));
+      q('th, td').forEach(n => { if (!hlSet.has(n)) { n.classList.remove('cv-hl', 'cv-hl-on'); ['--hl-t', '--hl-b', '--hl-l', '--hl-r'].forEach(v => n.style.removeProperty(v)); } });
+      for (const n of hlSet) {
+        const [r, c] = pos(n); n.classList.add('cv-hl');
+        n.style.setProperty('--hl-t', keys.has(`${r - 1},${c}`) ? 0 : 1); n.style.setProperty('--hl-b', keys.has(`${r + 1},${c}`) ? 0 : 1);
+        n.style.setProperty('--hl-l', keys.has(`${r},${c - 1}`) ? 0 : 1); n.style.setProperty('--hl-r', keys.has(`${r},${c + 1}`) ? 0 : 1);
+      }
+    };
+    const onHighlight = (ids, on, { instant }) => {
+      const els = (ids || []).flatMap(resolve).filter(n => n.tagName !== 'TR');
+      if (!on) { if (!ids || !ids.length) hlSet.clear(); else els.forEach(n => hlSet.delete(n)); paintRing(); return true; }
+      els.forEach(n => hlSet.add(n)); paintRing();
+      if (!instant && !I.isStatic) els.forEach(n => C.pulse(n));
+      return true;
+    };
+    const I = C.instance({ kind: 'table', factory: table, params, ctx, fr, draw, resolve, highlightIds: toIds, onHighlight });
     const api = I.api;
     api.cells = () => inputs.slice();
     api.input = (id) => inputs.find(x => x.dataset.id === id) || null;

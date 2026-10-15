@@ -70,6 +70,10 @@
           const o = K.obj(L.id, '', L.colour); o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (L.dashed ? ' cvb-dash' : '') })); plot.append(o);
           if (L.label) { const lx = xr[1] - (xr[1] - xr[0]) * 0.02; labels.push({ x: sx(lx), y: sy(L.l.m * lx + L.l.b) + (L.l.m >= 0 ? 16 : -16), text: L.label, anchor: 'end' }); }
         }
+        /* line handles first so point handles stay on top where they overlap */
+        if (view.line && R.active('drag') && params.dragLine !== false) {
+          lineEnds().forEach((x, i) => over.append(K.handle(sx(x), sy(view.line.m * x + view.line.b), 'l' + i, { r: 6, shape: 'diamond', label: i ? 'Line right end' : 'Line left end' })));
+        }
         const sel = new Set(view.selected || []);
         for (const p of pts) {
           const o = K.obj(p.id, sel.has(p.id) ? 'is-on' : '', p.colour || 1), cx = sx(p.x), cy = sy(p.y);
@@ -80,9 +84,6 @@
           R.tappable(o, p.id, p.label || p.id);
           over.append(o);
           if (p.label) labels.push({ x: cx + 8, y: cy - 11, text: p.label, anchor: 'start' });
-        }
-        if (view.line && R.active('drag') && params.dragLine !== false) {
-          lineEnds().forEach((x, i) => over.append(K.handle(sx(x), sy(view.line.m * x + view.line.b), 'l' + i, { r: 6, shape: 'diamond', label: i ? 'Line right end' : 'Line left end' })));
         }
         if (resid && view.showSSE) {
           const t = (params.sseLabel || 'Sum of squared residuals') + ' ' + K.fmt(sse, 3);

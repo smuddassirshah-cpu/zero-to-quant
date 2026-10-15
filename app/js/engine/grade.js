@@ -18,6 +18,8 @@
 
   /* ---------- Numbers ---------- */
   const parseNum = (s, { percent = false } = {}) => {
+    const mixed = String(s ?? '').trim().replace(/[−–]/g, '-').match(/^(-?\d+)\s+(\d+)\/(\d+)$/); // mixed number 1 1/2
+    if (mixed) return +mixed[3] ? (+mixed[1] + Math.sign(+mixed[1] || 1) * (+mixed[2] / +mixed[3])) / (percent ? 100 : 1) : NaN;
     let v = String(s ?? '').trim().replace(/[\s ]+/g, '').replace(/[−–]/g, '-').replace(/^[£$€]/, '').replace(/^(-)[£$€]/, '$1');
     if (!v) return NaN;
     if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(v)) v = v.replace(/,/g, ''); // 1,000 and 12,345.6
@@ -26,10 +28,6 @@
     let n = NaN, m;
     if ((m = v.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/))) n = +m[2] ? +m[1] / +m[2] : NaN;
     else if (/^-?(\d+\.?\d*|\.\d+)(e-?\d+)?$/i.test(v)) n = parseFloat(v);
-    if (!Number.isFinite(n)) {
-      const mm = String(s ?? '').trim().match(/^(-?\d+)\s+(\d+)\/(\d+)$/); // mixed number 1 1/2
-      if (mm && +mm[3]) n = +mm[1] + Math.sign(+mm[1] || 1) * (+mm[2] / +mm[3]);
-    }
     if (!Number.isFinite(n)) return NaN;
     if (pct || percent) n /= 100;
     return n;

@@ -28,7 +28,8 @@
     })();
     const labelW = Math.max(0, ...list.filter((s) => s.label).map((s) => K.tw(s.label) + 22));
     const ml = K.yMargin(yRange[0], yRange[1], H - 60, fmtY), mt = 26, mb = params.xLabel ? 46 : 30, mr = Math.max(14, Math.min(150, labelW));
-    const sx = C.scale([0, n - 1], [ml, W - mr]), sy = C.scale(yRange, [H - mb, mt]);
+    const hasCandles = list.some((s) => s.ohlc && (params.candles || s.candles)), padI = hasCandles ? 0.7 : 0;
+    const sx = C.scale([-padI, n - 1 + padI], [ml, W - mr]), sy = C.scale(yRange, [H - mb, mt]);
     const fmtX = dates
       ? (i) => { const d = dates[Math.round(i)]; if (!d) return ''; const span = (dates[dates.length - 1] - dates[0]) / 864e5; return span > 300 ? MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2) : d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
       : (i) => K.fmt(i + (params.indexFrom || 0), 2);
@@ -45,7 +46,7 @@
       render(view, R) {
         const g = R.F.g, x0 = ml, x1 = W - mr, y0 = H - mb, y1 = mt;
         const xt = K.ticksFor(0, n - 1, x1 - x0, { minGap: 56, fmtF: (v) => fmtX(v) });
-        xt.ticks = xt.ticks.filter((v) => Number.isInteger(v));
+        xt.ticks = xt.ticks.filter((v) => Number.isInteger(v) && v >= 0 && v <= n - 1);
         K.chartAxes(g, sx, sy, { yLabel: params.yLabel, xLabel: params.xLabel, fmtY, fmtX: (v) => fmtX(v), xTicks: xt, baseline: params.baseline ?? (yRange[0] < 0 && yRange[1] > 0 ? 0 : null) });
         const back = svg('g'), plot = svg('g', { 'clip-path': R.clipRect(x0 - 1, y1 - 4, x1 - x0 + 2, y0 - y1 + 8) }), over = svg('g');
         g.append(back, plot, over);

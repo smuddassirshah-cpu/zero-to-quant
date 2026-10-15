@@ -66,7 +66,8 @@
   /* Text. Plain strings become <text>; '$...$' alone is KaTeX through ZQ.canvas.label; mixed text and maths go through ZQ.md. */
   const txt = (x, y, s, o = {}) => svg('text', {
     x, y, 'text-anchor': o.anchor || 'middle', 'dominant-baseline': o.baseline || 'central',
-    class: 'cvb-t' + (o.cls ? ' ' + o.cls : '') + (o.halo ? ' cvb-halo' : ''), 'font-size': o.size || 13, 'font-weight': o.weight || null,
+    class: 'cvb-t' + (o.cls ? ' ' + o.cls : '') + (o.halo ? ' cvb-halo' : ''),
+    style: `font-size:${o.size || 13}px` + (o.weight ? `;font-weight:${o.weight}` : ''),
   }, [String(s)]);
   const lab = (x, y, s, o = {}) => {
     s = String(s ?? '');
@@ -194,7 +195,7 @@
     gg.append(arrow(px0, ax, px1 + 6, ax, { cls: 'cvb-axis', head: 8 }));
     gg.append(arrow(ay, py0, ay, py1 - 6, { cls: 'cvb-axis', head: 8 }));
     const below = ax + 14 > py0 + 18 ? ax - 12 : ax + 14;
-    const yAt0 = sx.domain[0] <= 0 && sx.domain[1] >= 0, xAt0 = sy.domain[0] <= 0 && sy.domain[1] >= 0;
+    const origin = sx.domain[0] <= 0 && sx.domain[1] >= 0 && sy.domain[0] <= 0 && sy.domain[1] >= 0, yAt0 = origin, xAt0 = origin;
     const boxes = [];
     for (const v of xt.ticks) {
       const x = sx(v); if ((yAt0 && Math.abs(x - ay) < 2) || x > px1 - 14) continue;
@@ -210,7 +211,7 @@
       gg.append(txt(ay - 7, y, t, { anchor: 'end', cls: 'cvb-tick', size: 12, halo: true }));
       boxes.push(boxOf({ x: ay - 7, y, text: t, anchor: 'end', h: 14 }));
     }
-    if (yAt0 && xAt0 && sx.domain[0] < 0 && sy.domain[0] < 0) gg.append(txt(ay - 7, ax + 12, '0', { anchor: 'end', cls: 'cvb-tick', size: 12, halo: true }));
+    if (origin && sx.domain[0] < 0 && sy.domain[0] < 0) gg.append(txt(ay - 7, ax + 12, '0', { anchor: 'end', cls: 'cvb-tick', size: 12, halo: true }));
     const xl = o.xLabel ?? '$x$', yl = o.yLabel ?? '$y$';
     gg.append(lab(px1 + 2, ax - 14, xl, { anchor: 'end', cls: 'cvb-axlab', halo: true }));
     gg.append(lab(ay + 10, py1 - 2, yl, { anchor: 'start', cls: 'cvb-axlab', halo: true }));
@@ -559,7 +560,7 @@
       modes: ['drag', 'slider', 'sketch'],
       size: () => size,
       listKeys: ['points', 'vectors', 'segments'],
-      init: () => ({ points: [], segments: [], vectors: [], params: {}, highlight: [], showTarget: false }),
+      init: () => ({ points: [], segments: [], vectors: [], params: { ...(params.params || {}) }, highlight: [], showTarget: false }),
       render(view, R) {
         const { m, sx, sy } = geom(R);
         const g = R.F.g, fns = evaluator(view);

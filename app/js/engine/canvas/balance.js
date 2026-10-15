@@ -19,12 +19,12 @@
     const mass = (l) => sumW(l) + nX(l) * xVal;
     const tiltOf = (l, r) => Math.max(-15, Math.min(15, k * (mass(r) - mass(l))));
 
-    const W = 540, H = 318, px = 270, py = 108, arm = 190, drop = 108, B = 32, gap = 4, perRow = 4;
+    const W = 540, H = 290, px = 270, py = 80, arm = 190, drop = 108, B = 32, gap = 4, perRow = 4;
     const fr = C.frame(host, W, H, { label: P.label || 'Balance scale' });
     const g = fr.g;
     g.append(
-      svg('rect', { class: 'cv-stand', x: px - 7, y: py, width: 14, height: 196, rx: 3 }),
-      svg('rect', { class: 'cv-stand', x: px - 56, y: 298, width: 112, height: 10, rx: 5 }),
+      svg('rect', { class: 'cv-stand', x: px - 7, y: py, width: 14, height: 192, rx: 3 }),
+      svg('rect', { class: 'cv-stand', x: px - 56, y: 270, width: 112, height: 10, rx: 5 }),
     );
     const strings = svg('g', { class: 'cv-strings' });
     const beam = svg('g', { class: 'cv-obj cv-beam', 'data-id': 'beam' }, [svg('rect', { class: 'cv-body', x: px - arm - 6, y: py - 5, width: 2 * arm + 12, height: 10, rx: 5 })]);
@@ -59,6 +59,8 @@
     const anim = C.animator();
     const draw = (st, prev, { instant, ms, patch }) => {
       if (!internal && ('left' in patch || 'right' in patch)) moves = [];
+      /* both pans empty (a reset that cleared unknown keys) means: back to the authored pans */
+      if (Array.isArray(st.left) && Array.isArray(st.right) && !st.left.length && !st.right.length) { I.setQuiet({ left: L0, right: R0 }); st = I.state(); }
       const Ls = norm(st.left, 'l'), Rs = norm(st.right, 'r');
       const want = new Map();
       for (const [side, list] of [['left', Ls], ['right', Rs]]) {

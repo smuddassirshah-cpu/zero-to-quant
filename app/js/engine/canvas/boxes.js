@@ -55,7 +55,7 @@
     g.append(contG, itemG);
     const shapePath = (c, x0, y0, w, h) => {
       if (c.kind === 'urn') { const a = x0 + w * 0.3, b = x0 + w * 0.7; return `M${a} ${y0}L${a} ${y0 + 10}C${a} ${y0 + 24} ${x0} ${y0 + 20} ${x0} ${y0 + 40}L${x0} ${y0 + h - 16}Q${x0} ${y0 + h} ${x0 + 16} ${y0 + h}L${x0 + w - 16} ${y0 + h}Q${x0 + w} ${y0 + h} ${x0 + w} ${y0 + h - 16}L${x0 + w} ${y0 + 40}C${x0 + w} ${y0 + 20} ${b} ${y0 + 24} ${b} ${y0 + 10}L${b} ${y0}`; }
-      if (c.kind === 'bag') { const a = x0 + w * 0.4, b = x0 + w * 0.6; return `M${a} ${y0 + 14}C${x0 - w * 0.04} ${y0 + 30} ${x0} ${y0 + h} ${x0 + w / 2} ${y0 + h}C${x0 + w} ${y0 + h} ${x0 + w * 1.04} ${y0 + 30} ${b} ${y0 + 14}Z`; }
+      if (c.kind === 'bag') { const a = x0 + w * 0.38, b = x0 + w * 0.62, r = 20; return `M${a} ${y0 + 14}C${x0 + w * 0.1} ${y0 + 22} ${x0} ${y0 + h * 0.4} ${x0} ${y0 + h - r}Q${x0} ${y0 + h} ${x0 + r} ${y0 + h}L${x0 + w - r} ${y0 + h}Q${x0 + w} ${y0 + h} ${x0 + w} ${y0 + h - r}C${x0 + w} ${y0 + h * 0.4} ${x0 + w * 0.9} ${y0 + 22} ${b} ${y0 + 14}Z`; }
       if (c.kind === 'box') return `M${x0} ${y0}L${x0} ${y0 + h - 6}Q${x0} ${y0 + h} ${x0 + 6} ${y0 + h}L${x0 + w - 6} ${y0 + h}Q${x0 + w} ${y0 + h} ${x0 + w} ${y0 + h - 6}L${x0 + w} ${y0}`;
       return '';
     };

@@ -47,7 +47,7 @@
       kind: 'payoff', aria: params.aria || 'Option payoff diagram',
       modes: ['drag', 'slider', 'tap'],
       size: () => ({ w: W, h: H }),
-      init: () => ({ strike: {}, premium: {}, spot: null, highlight: [], pl: params.pl ?? true }),
+      init: () => ({ strike: Object.fromEntries(baseLegs.map((l) => [l.id, +(l.strike ?? l.price ?? 0)])), premium: Object.fromEntries(baseLegs.map((l) => [l.id, +(l.premium || 0)])), spot: null, highlight: [], pl: params.pl ?? true }),
       prepare(patch) { if (patch.params) { if (patch.params.spot != null) patch.spot = patch.params.spot; for (const l of baseLegs) if (patch.params[l.id] != null) patch.strike = { ...(patch.strike || {}), [l.id]: patch.params[l.id] }; } return patch; },
       render(view, R) {
         const g = R.F.g, pl = view.pl ?? params.pl ?? true, legs = legsOf(view);
@@ -75,18 +75,21 @@
         plot.append(comb);
         if (params.label) { const lx = range[1] - (range[1] - range[0]) * 0.03; labels.push({ x: sx(lx), y: sy(total(legs, lx, pl)) - 14, text: params.label, anchor: 'end' }); }
         /* strike ticks and the kinks they make */
+        const seenK = new Set();
         legs.filter((l) => l.type !== 'stock' && l.strike >= range[0] && l.strike <= range[1]).forEach((l) => {
+          const dup = seenK.has(l.strike); seenK.add(l.strike);
           const x = sx(l.strike), o = K.obj('strike-' + l.id, '', 'ink');
           o.append(svg('line', { x1: x, x2: x, y1: y0 - 5, y2: y0 + 5, class: 'cvb-ln thin' }));
           const yk = sy(total(legs, l.strike, pl));
           o.append(svg('circle', { cx: x, cy: yk, r: 3.5, class: 'cvb-dot' }));
           over.append(o);
-          if (view.kinkLabels !== false) labels.push({ x, y: yk + 16, text: (l.strikeLabel || 'K') + ' = ' + K.fmt(l.strike, 2), anchor: 'middle' });
+          fixed.push({ x0: x - 6, x1: x + 6, y0: yk - 6, y1: yk + 6 });
+          if (view.kinkLabels !== false && !dup) labels.push({ x, y: yk + 18, text: (l.strikeLabel || 'K') + ' = ' + K.fmt(l.strike, 2), anchor: 'middle' });
         });
         /* breakevens on the zero line */
-        if (view.breakeven !== false && zero > y1 && zero < y0) breakevens(legs, pl).forEach((b) => {
+        if ((view.breakeven ?? pl) && zero > y1 && zero < y0) breakevens(legs, pl).forEach((b) => {
           const o = K.obj('breakeven', '', 'ink'); o.append(K.washCircle(sx(b), zero, 11), svg('circle', { cx: sx(b), cy: zero, r: 5, class: 'cvb-be' }));
-          over.append(o); labels.push({ x: sx(b), y: zero - 15, text: K.fmt(b, 2), anchor: 'middle' });
+          over.append(o); fixed.push({ x0: sx(b) - 7, x1: sx(b) + 7, y0: zero - 7, y1: zero + 7 }); labels.push({ x: sx(b), y: zero - 16, text: K.fmt(b, 2), anchor: 'middle' });
         });
         /* spot */
         if (view.spot != null && view.spot >= range[0] && view.spot <= range[1]) {

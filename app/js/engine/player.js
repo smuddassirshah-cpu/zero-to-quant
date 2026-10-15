@@ -332,6 +332,8 @@
       if (p && typeof p === 'object') ['xp', 'checks', 'okChecks', 'anyCheck', 'results', 'quiz'].forEach(k => { if (p[k] != null) S[k] = p[k]; });
       if (p && p.spent) S.t0 = Date.now() - p.spent * 1000;
       S.anyCheck = true;
+      // Opening .../done directly shows the celebration; it records the finish only when the quiz was really played
+      if (start === 'done' && !(p && p.phase === 'quiz' && (p.q || 0) >= quizSpec.length)) S.finished = true;
     }
 
     const before = daySummary();

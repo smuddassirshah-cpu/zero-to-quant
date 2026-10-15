@@ -33,7 +33,7 @@
           const o = K.obj(e.id, 'cvb-edge-o', e.colour || null);
           let d, lx, ly, hx, hy, tx, ty;
           if (e.from === e.to) {
-            const ang = Math.atan2(ay - centre[1], ax - centre[0]) || -Math.PI / 2, ux = Math.cos(ang), uy = Math.sin(ang);
+            const dcx = ax - centre[0], dcy = ay - centre[1], ang = Math.hypot(dcx, dcy) < 1 ? -Math.PI / 2 : Math.atan2(dcy, dcx), ux = Math.cos(ang), uy = Math.sin(ang);
             const p1 = [ax + r * Math.cos(ang - 0.5), ay + r * Math.sin(ang - 0.5)], p2 = [ax + r * Math.cos(ang + 0.5), ay + r * Math.sin(ang + 0.5)];
             const c1 = [ax + (r + 42) * Math.cos(ang - 0.7), ay + (r + 42) * Math.sin(ang - 0.7)], c2 = [ax + (r + 42) * Math.cos(ang + 0.7), ay + (r + 42) * Math.sin(ang + 0.7)];
             d = `M${p1[0]},${p1[1]}C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
@@ -73,7 +73,7 @@
             let cp = R.defs.querySelector('#' + CSS.escape(cid)); if (!cp) { cp = svg('clipPath', { id: cid }, [svg('circle')]); R.defs.append(cp); }
             C.attrs(cp.firstChild, { cx: x, cy: y, r: r - 1.5 });
             o.append(svg('rect', { x: x - r, y: y + r - 2 * r * p, width: 2 * r, height: 2 * r * p, class: 'cvb-node-fill', 'clip-path': `url(#${cid})` }));
-            o.append(K.txt(x, y + r + 12, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-out' }));
+            o.append(K.txt(x, y + r + 12, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-outink' }));
           }
           o.append(K.lab(x, y, n.label ?? n.id, { w: r * 2 + 20, size: 14 }));
           if (vi >= 0 && view.order !== false) {

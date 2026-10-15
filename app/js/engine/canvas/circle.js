@@ -37,9 +37,9 @@
       base.append(svg('line', { class: 'cv-tick', x1: X(c * 0.95), y1: Y(s * 0.95), x2: X(c * 1.05), y2: Y(s * 1.05) }));
       if (P.tickLabels === false) continue;
       const tx = angleText(t), rr = 1.0 + (tx.tex ? 0.19 : 0.15);
-      const lx = X(c * rr), ly = Y(s * rr);
-      const onAxis = Math.abs(s) < 1e-9 || Math.abs(c) < 1e-9;
-      base.append(C.label(lx + (onAxis && Math.abs(s) < 1e-9 ? 0 : 0), ly + (onAxis && Math.abs(c) < 1e-9 ? 0 : 0), tx.s, { tex: tx.tex, w: 46, h: 34, cls: 'cv-muted cv-ticklabel', size: 12 }));
+      const onAxis = t % 90 === 0, b = onAxis ? a + 0.17 : a; // labels on an axis sit just beside it
+      const lx = X(Math.cos(b) * rr), ly = Y(Math.sin(b) * rr);
+      base.append(C.label(lx, ly, tx.s, { tex: tx.tex, w: 46, h: 34, cls: 'cv-muted cv-ticklabel', size: 12 }));
     }
     g.append(base);
 
@@ -65,14 +65,15 @@
       const px = X(c), py = Y(s);
       attrs(radG.firstChild, { x1: cx, y1: cy, x2: px, y2: py });
       attrs(pt, { transform: `translate(${px} ${py})` });
-      pt.setAttribute('aria-valuenow', C.fmtNum(toDeg2(dAng), 2));
+      pt.setAttribute('aria-valuenow', C.fmtNum(dAng, 2));
       /* cos along the x-axis, sin from the axis up to the point */
       cosG.style.display = show.cos ? '' : 'none'; sinG.style.display = show.sin ? '' : 'none';
       attrs(cosG.firstChild, { x1: cx, y1: cy, x2: px, y2: cy });
       attrs(sinG.firstChild, { x1: px, y1: cy, x2: px, y2: py });
       const vals = P.values;
       lbl(cosG.lastChild, (cx + px) / 2, cy + (s >= 0 ? 16 : -16), '\\cos\\theta' + (vals ? ' = ' + fmtv(c) : ''));
-      lbl(sinG.lastChild, px + (c >= 0 ? 10 : -10), (cy + py) / 2, '\\sin\\theta' + (vals ? ' = ' + fmtv(s) : ''), c >= 0 ? 'start' : 'end');
+      const inside = show.tan || shadeMode === 'arc', out = (c >= 0) !== inside; // keep the sine label clear of the arc and the tangent
+      lbl(sinG.lastChild, px + (out ? 10 : -10), (cy + py) / 2, '\\sin\\theta' + (vals ? ' = ' + fmtv(s) : ''), out ? 'start' : 'end');
       cosG.lastChild.style.display = Math.abs(c) < 0.12 ? 'none' : ''; sinG.lastChild.style.display = Math.abs(s) < 0.12 ? 'none' : '';
       /* tangent: the segment of x = 1 from the axis to where the radius line meets it */
       const t = s / c, okT = show.tan && Math.abs(c) > 1e-6 && Math.abs(t) <= 1.35;
@@ -82,11 +83,11 @@
         lbl(tanG.lastChild, X(1) + 8, (cy + Y(t)) / 2, '\\tan\\theta' + (vals ? ' = ' + fmtv(t) : ''), 'start');
       }
       /* angle mark and label */
-      const r0 = 30, sweep = ((dAng % 360) + 360) % 360 === 0 && dAng !== 0 ? 359.99 : dAng;
+      const r0 = 24, sweep = ((dAng % 360) + 360) % 360 === 0 && dAng !== 0 ? 359.99 : dAng;
       const big = Math.abs(sweep) > 180 ? 1 : 0, dir = sweep >= 0 ? 0 : 1, ea = sweep * Math.PI / 180;
       attrs(angleG.firstChild, { d: Math.abs(sweep) < 0.5 ? '' : `M${cx + r0} ${cy}A${r0} ${r0} 0 ${big} ${dir} ${cx + r0 * Math.cos(ea)} ${cy - r0 * Math.sin(ea)}` });
-      const mid = ea / 2, at = angleText(toDeg2(dAng));
-      angleG.lastChild.replaceChildren(Math.abs(sweep) < 8 ? '' : C.label(cx + 50 * Math.cos(mid), cy - 50 * Math.sin(mid), P.angleLabel === 'theta' ? '\\theta' : at.tex ? at.s : at.s.replace('°', '^\\circ'), { tex: true, w: 60, h: 34, cls: 'cv-halo' }));
+      const mid = ea / 2, at = angleText(dAng);
+      angleG.lastChild.replaceChildren(Math.abs(sweep) < 8 ? '' : C.label(cx + 46 * Math.cos(mid), cy - 46 * Math.sin(mid), P.angleLabel === 'theta' ? '\\theta' : at.tex ? at.s : at.s.replace('°', '^\\circ'), { tex: true, w: 60, h: 34, cls: 'cv-halo' }));
       /* arc or sector shading from 0 to the angle */
       const sw = Math.max(-359.99, Math.min(359.99, dAng)), e2 = sw * Math.PI / 180, bg = Math.abs(sw) > 180 ? 1 : 0, dr = sw >= 0 ? 0 : 1;
       const end = `${X(Math.cos(e2))} ${Y(Math.sin(e2))}`;
@@ -95,11 +96,10 @@
       /* optional coordinate label at the point */
       ptLab.replaceChildren(P.coords ? C.label(px + (c >= 0 ? 14 : -14), py + (s >= 0 ? -16 : 16), `(${fmtv(c)}, ${fmtv(s)})`, { tex: true, w: 120, h: 26, anchor: c >= 0 ? 'start' : 'end', cls: 'cv-halo' }) : '');
     };
-    const toDeg2 = (d) => (deg ? d : d); // display angle stays in degrees internally; angleText converts
     const anim = C.animator();
     const draw = (st, prev, { instant, ms }) => {
       shadeMode = st.shade || null;
-      const target = toDeg(st.angle ?? 0);
+      const target = toDeg(st.angle ?? (deg ? 30 : Math.PI / 6));
       if (instant) { anim.stop(); paint(target); return; }
       const from = cur; anim.run(ms, (t) => paint(lerp(from, target, t)));
     };
@@ -129,7 +129,7 @@
     const api = I.api;
     api.points = () => { const a = cur * Math.PI / 180; return { pt: { x: Math.cos(a), y: Math.sin(a), angle: I.state().angle } }; };
     api.place = (id, pos, { instant = false } = {}) => api.set({ angle: typeof pos === 'number' ? pos : fromDeg(((Math.atan2(pos[1], pos[0]) * 180 / Math.PI) + 360) % 360) }, { instant });
-    api.param = (name, v) => { if (name === 'angle') api.set({ angle: v }, { instant: true }); };
+    api.setParam = api.param = (name, v) => { if (name === 'angle') api.set({ angle: v }, { instant: true }); };
     if (P.drag) pt.classList.add('cv-handle');
     api.set({}, { instant: true });
     return api;

@@ -15,7 +15,8 @@
    - lock(on) stops tap and drag input while the player evaluates.
    - Drag canvases emit 'change' with { id, x, y, phase: 'move' | 'end' } in canvas units and expose
      points() -> { id: { x, y } } and place(id, pos, { instant }) where pos is a number (1D) or [x, y].
-   - ctx.static is set on clones: no interaction and no timed fades. */
+   - ctx.static (or ctx.mode 'static', as the player's explanation modal passes) means a still copy: no interaction, no timed fades.
+   - Explore controls call canvas.setParam(name, value) when it exists. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -43,8 +44,9 @@
   const texOf = (v) => {
     if (v == null) return { tex: false, src: '' };
     const s = String(v).trim();
-    let m = s.match(/^\$(.+)\$$/); if (m) return { tex: true, src: m[1] };
+    let m = s.match(/^\$([^$]+)\$$/); if (m) return { tex: true, src: m[1] };
     m = s.match(/^(-?)(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/); if (m) return { tex: true, src: `${m[1]}\\dfrac{${m[2]}}{${m[3]}}` };
+    if (/\$[^$]+\$/.test(s)) return { tex: true, md: true, src: s }; // text with inline maths
     if (s.includes('\\')) return { tex: true, src: s };
     return { tex: false, src: s };
   };
@@ -58,11 +60,12 @@
   /* Text with KaTeX: foreignObject holding a rendered formula, sized to its box. Plain text uses <text>.
      tex: 'auto' decides with texOf(), so "3/5" renders as a fraction and "Red" as text. */
   const label = (x, y, text, { anchor = 'middle', cls = '', size = 13, tex = false, w = 80, h = 24, baseline = 'middle' } = {}) => {
-    if (tex === 'auto') { const t = texOf(text); tex = t.tex; text = t.src; if (tex && /frac/.test(text)) h = Math.max(h, 36); }
+    let md = false;
+    if (tex === 'auto') { const t = texOf(text); tex = t.tex; md = !!t.md; text = t.src; if (tex && /frac/.test(text)) h = Math.max(h, 36); }
     if (!tex) return svg('text', { x, y, 'text-anchor': anchor, 'dominant-baseline': baseline, class: 'cv-label ' + cls, 'font-size': size }, [String(text)]);
     const fo = svg('foreignObject', { x: anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x, y: y - h / 2, width: w, height: h, class: 'cv-fo ' + cls });
     const div = document.createElement('div'); div.className = 'cv-fo-in'; div.style.textAlign = anchor === 'middle' ? 'center' : anchor === 'end' ? 'right' : 'left'; div.style.justifyContent = anchor === 'middle' ? 'center' : anchor === 'end' ? 'flex-end' : 'flex-start';
-    div.innerHTML = Z.tex(text); fo.append(div); return fo;
+    div.innerHTML = md ? `<span>${Z.md(text)}</span>` : Z.tex(text); fo.append(div); return fo;
   };
 
   /* Linear scales: scale([d0, d1], [r0, r1]) -> fn with .invert */
@@ -264,7 +267,7 @@
     const em = emitter(), timers = new Set(), marks = new Map();
     let state = JSON.parse(JSON.stringify(o.defaults || {}));
     let mode = null, modeOpts = {}, locked = false, hlIds = [], instT = 0;
-    const isStatic = !!ctx.static;
+    const isStatic = !!(ctx.static || ctx.mode === 'static');
     wrap.classList.add('cv-' + o.kind);
     if (isStatic) wrap.classList.add('cv-static');
     const all = (id) => Array.from(wrap.querySelectorAll(`[data-id="${CSS.escape(String(id))}"]`));

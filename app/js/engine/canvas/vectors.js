@@ -21,7 +21,7 @@
       modes: ['drag', 'slider'],
       size: () => ({ w: W, h: H }),
       listKeys: ['vectors'],
-      init: () => ({ vectors: base.map((v) => ({ ...v })), show: [], scale: {}, drag: null, basis: null, highlight: [] }),
+      init: () => ({ vectors: base.map((v) => ({ ...v })), show: [], scale: Object.fromEntries(base.map((v) => [v.id, 1])), drag: null, basis: null, highlight: [] }),
       render(view, R) {
         const g = R.F.g, vs = view.vectors || [], byId = Object.fromEntries(vs.map((v) => [v.id, v]));
         const show = new Set([].concat(view.show || []));
@@ -53,7 +53,7 @@
           const independent = dirs.length >= 2 && Math.abs(dirs[0][0] * dirs[1][1] - dirs[0][1] * dirs[1][0]) > 1e-9;
           const o = K.obj('span', '', byId[ids[0]] ? byId[ids[0]].slot : 1);
           if (independent) o.append(svg('rect', { x: x0, y: y1, width: x1 - x0, height: y0 - y1, class: 'cvb-span' }));
-          else if (dirs.length && (dirs[0][0] || dirs[0][1])) { const d = dirs[0], L = (xr[1] - xr[0] + yr[1] - yr[0]) * 2; const p = `M${sx(-d[0] * L)},${sy(-d[1] * L)}L${sx(d[0] * L)},${sy(d[1] * L)}`; o.append(svg('path', { d: p, class: 'cvb-ln', 'stroke-width': 16, opacity: 0.16 }), svg('path', { d: p, class: 'cvb-ln thin cvb-dash' })); }
+          else if (dirs.length && (dirs[0][0] || dirs[0][1])) { const d = dirs[0], L = (xr[1] - xr[0] + yr[1] - yr[0]) * 2; const p = `M${sx(-d[0] * L)},${sy(-d[1] * L)}L${sx(d[0] * L)},${sy(d[1] * L)}`; o.append(svg('path', { d: p, class: 'cvb-ln', style: 'stroke-width: 16px; opacity: 0.16' }), svg('path', { d: p, class: 'cvb-ln thin cvb-dash' })); }
           plot.append(o);
         }
         /* sum by the parallelogram */
@@ -105,6 +105,8 @@
           const lt = k !== 1 && v.label ? (/^\$.*\$$/.test(v.label) ? `$${K.fmt(k, 3)}${v.label.slice(1, -1)}$` : K.fmt(k, 3) + v.label) : v.label;
           if (lt) { const dx = h[0] - t[0], dy = h[1] - t[1], L = Math.hypot(dx, dy) || 1; labels.push({ x: sx(h[0]) + (dx / L) * 10 + (dy / L) * 10, y: sy(h[1]) - (dy / L) * 10 + (dx / L) * 10, text: params.showCoords ? `${lt} (${K.fmt(h[0], 2)}, ${K.fmt(h[1], 2)})` : lt, anchor: dx >= 0 ? 'start' : 'end' }); }
         }
+        /* the projection sits along the vector it projects onto, so lift it above the vectors */
+        ['perp', 'proj'].forEach((id) => { const el = plot.querySelector(`[data-id="${id}"]`); if (el) plot.append(el); });
         K.placeLabels(labels, [], { x0, x1, y0: y1, y1: y0 });
         for (const l of labels) over.append(K.lab(l.x, l.y, l.text, { anchor: l.anchor, halo: true, cls: 'cvb-strong' }));
       },

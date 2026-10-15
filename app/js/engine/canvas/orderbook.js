@@ -45,7 +45,8 @@
       render(view, R) {
         const g = R.F.g, w = walk(view.order), p = view._p ?? Infinity, sel = new Set(view.selected || []);
         const consumed = {}; let curId = null, takenSoFar = 0;
-        w.fills.forEach((f, k) => { const frac = K.clamp(p - k, 0, 1); consumed[f.id] = f.qty * frac; takenSoFar += f.qty * frac; if (frac > 0 && frac < 1) curId = f.id; });
+        const whole = [...B, ...A].every((l) => Number.isInteger(l[1])) && Number.isInteger(+(view.order && view.order.size) || 0);
+        w.fills.forEach((f, k) => { const frac = K.clamp(p - k, 0, 1); consumed[f.id] = whole ? Math.round(f.qty * frac) : f.qty * frac; takenSoFar += f.qty * frac; if (frac > 0 && frac < 1) curId = f.id; });
         g.append(K.txt(cx - priceW / 2 - 8, 12, params.bidLabel || 'Bid size', { anchor: 'end', size: 12, cls: 'cvb-tick' }), K.txt(cx, 12, 'Price', { size: 12, cls: 'cvb-tick' }), K.txt(cx + priceW / 2 + 8, 12, params.askLabel || 'Ask size', { anchor: 'start', size: 12, cls: 'cvb-tick' }));
         const row = (side, i, lvl) => {
           const id = side + i, y = rowY(id), best = i === 0, o = K.obj(id, 'cvb-level' + (sel.has(id) ? ' is-on' : ''), side === 'bid' ? 'cvb-cbid' : 'cvb-cask');
@@ -57,18 +58,18 @@
             const xr = cx - priceW / 2 - 6;
             o.append(svg('rect', { x: xr - bw(rest), y: y + 5, width: bw(rest), height: rowH - 10, rx: 3, class: 'cvb-size' + (best ? ' best' : '') }));
             if (taken) o.append(svg('rect', { x: xr - bw(size), y: y + 5, width: bw(taken), height: rowH - 10, rx: 3, class: 'cvb-size filled' }));
-            o.append(K.txt(xr - bw(size) - 6, y + rowH / 2, fmtS(rest), { anchor: 'end', size: 13, weight: best ? 700 : 500 }));
+            o.append(K.txt(xr - bw(size) - 6, y + rowH / 2, fmtS(rest), { anchor: 'end', size: 13, weight: best ? 700 : 500, cls: 'cvb-outink' }));
           } else {
             const xl = cx + priceW / 2 + 6;
             o.append(svg('rect', { x: xl + bw(taken), y: y + 5, width: bw(rest), height: rowH - 10, rx: 3, class: 'cvb-size' + (best ? ' best' : '') }));
             if (taken) o.append(svg('rect', { x: xl, y: y + 5, width: bw(taken), height: rowH - 10, rx: 3, class: 'cvb-size filled' }));
-            o.append(K.txt(xl + bw(size) + 6, y + rowH / 2, fmtS(rest), { anchor: 'start', size: 13, weight: best ? 700 : 500 }));
+            o.append(K.txt(xl + bw(size) + 6, y + rowH / 2, fmtS(rest), { anchor: 'start', size: 13, weight: best ? 700 : 500, cls: 'cvb-outink' }));
           }
           o.append(svg('rect', { x: cx - priceW / 2 + 4, y: y + 2, width: priceW - 8, height: rowH - 4, rx: 4, class: 'cvb-tapbox cvb-pricebox cv-body' }));
           o.append(K.txt(cx, y + rowH / 2, fmtP(lvl[0]), { size: 14, weight: best ? 700 : 500, cls: 'cvb-price' + (best ? ' cvb-c' : '') }));
           if (taken && view.fills !== false) {
             const t = (w.side === 'sell' ? 'sold ' : 'bought ') + fmtS(Math.round(taken * 1000) / 1000);
-            o.append(side === 'ask' ? K.txt(cx - priceW / 2 - 8, y + rowH / 2, t, { anchor: 'end', size: 12, cls: 'cvb-strong' }) : K.txt(cx + priceW / 2 + 8, y + rowH / 2, t, { anchor: 'start', size: 12, cls: 'cvb-strong' }));
+            o.append(side === 'ask' ? K.txt(cx - priceW / 2 - 8, y + rowH / 2, t, { anchor: 'end', size: 12, cls: 'cvb-strong cvb-outink' }) : K.txt(cx + priceW / 2 + 8, y + rowH / 2, t, { anchor: 'start', size: 12, cls: 'cvb-strong cvb-outink' }));
           }
           R.tappable(o, id, `${side === 'bid' ? 'Bid' : 'Ask'} ${fmtS(size)} at ${fmtP(lvl[0])}`);
           g.append(o);
@@ -77,7 +78,7 @@
         A.forEach((l, i) => row('ask', i, l));
         /* spread row */
         const sy = top + A.length * rowH, so = K.obj('spread', '', 'ink');
-        so.append(K.washRect(4, sy + 1, W - 8, rowH - 2, 4), svg('rect', { x: 4, y: sy + 2, width: W - 8, height: rowH - 4, rx: 4, class: 'cvb-spreadrow' }));
+        so.append(svg('rect', { x: 4, y: sy + 2, width: W - 8, height: rowH - 4, rx: 4, class: 'cvb-spreadrow' }), K.washRect(4, sy + 1, W - 8, rowH - 2, 4));
         if (A.length && B.length) so.append(K.txt(cx, sy + rowH / 2, (params.spreadLabel || 'Spread') + ' ' + K.fmt(A[0][0] - B[0][0], dp + 2) + (params.showMid ? '   mid ' + fmtP((A[0][0] + B[0][0]) / 2) : ''), { size: 13, weight: 600, cls: 'cvb-muted' }));
         g.append(so);
         B.forEach((l, i) => row('bid', i, l));

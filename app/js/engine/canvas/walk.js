@@ -47,7 +47,7 @@
       modes: ['slider', 'tap'],
       size: () => ({ w: W, h: H }),
       skip: ['run'],
-      init: () => ({ run: 0, showMean: false, highlight: [], params: {}, reveal: 1 }),
+      init: () => ({ run: 0, showMean: false, highlight: [], params: Object.fromEntries(['p', 'mu', 'sigma', 'steps', 'paths', 'start', 'step'].filter((k) => typeof params[k] === 'number').map((k) => [k, params[k]])), reveal: 1 }),
       hlIds: (view) => (view.highlight || []).map((h) => (typeof h === 'number' ? 'path' + h : String(h))),
       animate(prev, next, a, R) {
         if (a.instant) { a.show(next); return; }
@@ -63,20 +63,20 @@
         for (const a of B.out) for (const v of a) { if (v < lo) lo = v; if (v > hi) hi = v; }
         if (bar.lo != null) lo = Math.min(lo, bar.lo); if (bar.hi != null) hi = Math.max(hi, bar.hi);
         let yr = params.y;
-        if (!yr) { const pad = (hi - lo || 2) * 0.1; const t = C.niceTicks(lo - pad, hi + pad, 5), st = t[1] - t[0] || 1; yr = [Math.floor((lo - pad) / st) * st, Math.ceil((hi + pad) / st) * st]; seen = seen && !view._fresh ? [Math.min(seen[0], yr[0]), Math.max(seen[1], yr[1])] : yr; yr = seen; }
+        if (!yr) { const pad = (hi - lo || 2) * 0.1; const t = C.niceTicks(lo - pad, hi + pad, 8), st = t[1] - t[0] || 1; yr = [Math.floor((lo - pad) / st) * st, Math.ceil((hi + pad) / st) * st]; seen = seen && !view._fresh ? [Math.min(seen[0], yr[0]), Math.max(seen[1], yr[1])] : yr; yr = seen; }
         const ml = K.yMargin(yr[0], yr[1], H - 60), mt = 26, mb = params.xLabel ? 46 : 30, mr = 70;
         const sx = C.scale([0, B.steps], [ml, W - mr]), sy = C.scale(yr, [H - mb, mt]);
         const x0 = ml, x1 = W - mr, y0 = H - mb, y1 = mt;
         K.chartAxes(g, sx, sy, { yLabel: params.yLabel ?? (B.model === 'normal' ? 'Value' : 'Position'), xLabel: params.xLabel ?? 'Step', baseline: B.start >= yr[0] && B.start <= yr[1] ? B.start : null });
         const plot = svg('g', { 'clip-path': R.clipRect(x0, y1 - 3, x1 - x0 + 3, y0 - y1 + 6) }), over = svg('g');
         g.append(plot, over);
-        const fixed = [];
+        const right = [];
         /* barriers */
         [['barrier-down', bar.lo], ['barrier-up', bar.hi]].forEach(([id, v]) => {
           if (v == null) return; const y = sy(v), o = K.obj(id, '', 'ink');
           o.append(K.washPath(`M${x0},${y}L${x1},${y}`), svg('line', { x1: x0, x2: x1, y1: y, y2: y, class: 'cvb-ln thin cvb-dash' }));
           over.append(o); const t = (id === 'barrier-up' ? params.upLabel : params.downLabel) || K.fmt(v, 3);
-          over.append(K.txt(x1 + 6, y, t, { anchor: 'start', size: 12, cls: 'cvb-strong', halo: true })); fixed.push(K.boxOf({ x: x1 + 6, y, text: t, anchor: 'start' }));
+          right.push({ y, text: t });
         });
         const reveal = K.clamp(view.reveal ?? 1, 0, 1), upto = reveal * B.steps;
         const em = new Set(def.hlIds(view));
@@ -97,8 +97,7 @@
         if (view.showMean) {
           const o = K.obj('mean', '', 'ink'), d = `M${sx(0)},${sy(B.start)}L${sx(B.steps)},${sy(B.start + B.drift * B.steps)}`;
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln thin cvb-dash' })); plot.append(o);
-          const t = params.meanLabel || 'mean'; const y = K.clamp(sy(B.start + B.drift * B.steps), y1 + 8, y0 - 8);
-          over.append(K.txt(x1 + 6, y, t, { anchor: 'start', size: 12, cls: 'cvb-strong', halo: true }));
+          right.push({ y: K.clamp(sy(B.start + B.drift * B.steps), y1 + 8, y0 - 8), text: params.meanLabel || 'mean' });
         }
         if (view.showSpread) {
           const o = K.obj('spread', '', 'muted'); let up = '', dn = '';
@@ -107,7 +106,9 @@
         }
         /* end label of the bold path */
         const main = B.out[params.bold ?? 0];
-        if (main && params.label) { const yl = K.clamp(sy(main[Math.min(main.length - 1, Math.round(upto))]), y1 + 8, y0 - 8); over.append(K.txt(x1 + 6, yl, params.label, { anchor: 'start', size: 12, cls: 'cvb-strong', halo: true })); }
+        if (main && params.label) right.push({ y: K.clamp(sy(main[Math.min(main.length - 1, Math.round(upto))]), y1 + 8, y0 - 8), text: params.label });
+        K.spread(right, 15, y1 + 6, y0 - 6);
+        for (const l of right) over.append(K.txt(x1 + 6, l.y, l.text, { anchor: 'start', size: 12, cls: 'cvb-strong', halo: true }));
         if (view.showHits && (bar.lo != null || bar.hi != null) && B.paths > 1) {
           const t = view.hitsLabel ? String(view.hitsLabel).replace('{hits}', hits).replace('{paths}', B.paths) : `${hits} of ${B.paths} paths hit`;
           over.append(K.txt(x0 + 6, y1 + 10, t, { anchor: 'start', cls: 'cvb-strong', halo: true }));

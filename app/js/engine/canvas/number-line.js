@@ -113,7 +113,8 @@
         e.drag = isDraggable(p);
         e.g.classList.toggle('cv-handle', e.drag);
         e.g.classList.toggle('cv-k' + Math.min(6, p.colour || 1), !!p.colour);
-        e.lab.replaceChildren(p.label ? C.label(0, -22, p.label, { tex: 'auto', cls: 'cv-halo', w: 70, h: 30 }) : '');
+        const touched = A2.some(a => Math.abs(a.from - p.x) < 1e-9 || Math.abs(a.to - p.x) < 1e-9); // a jump starts or ends here: label to the left
+        e.lab.replaceChildren(p.label ? (touched ? C.label(-9, -15, p.label, { tex: 'auto', cls: 'cv-halo', w: 70, h: 30, anchor: 'end' }) : C.label(0, -22, p.label, { tex: 'auto', cls: 'cv-halo', w: 70, h: 30 })) : '');
         if (e.drag && I.mode() === 'drag' && !I.isStatic) { e.g.setAttribute('tabindex', '0'); e.g.setAttribute('role', 'slider'); e.g.setAttribute('aria-label', p.label || p.id); e.g.setAttribute('aria-valuenow', p.x); }
         else ['tabindex', 'role', 'aria-label', 'aria-valuenow'].forEach(a => e.g.removeAttribute(a));
       });
@@ -155,7 +156,7 @@
     const api = I.api;
     api.points = () => Object.fromEntries((I.state().points || []).map(p => [p.id, { x: p.x, y: 0 }]));
     api.place = (id, pos, { instant = false } = {}) => api.set({ points: (I.state().points || []).map(p => (p.id === id ? { ...p, x: typeof pos === 'number' ? pos : pos[0] } : p)) }, { instant });
-    api.param = (name, v) => { if ((I.state().points || []).some(p => p.id === name)) api.place(name, v, { instant: true }); };
+    api.setParam = api.param = (name, v) => { if ((I.state().points || []).some(p => p.id === name)) api.place(name, v, { instant: true }); };
     api.set({}, { instant: true });
     return api;
   }

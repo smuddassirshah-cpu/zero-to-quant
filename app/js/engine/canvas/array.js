@@ -79,7 +79,7 @@
         }
         const order = [...Array(n).keys()];
         if (dragView) { order.splice(order.indexOf(dragView.i), 1); order.push(dragView.i); }
-        const cellsG = svg('g'); g.append(cellsG);
+        const idxG = svg('g'), cellsG = svg('g'); g.append(idxG, cellsG);
         for (const k of order) {
           const [x, y] = P(k), idx = k + from, id = 'c' + idx;
           const dim = act && (idx < act[0] || idx > act[1]);
@@ -90,7 +90,7 @@
           } else o.append(svg('rect', { x, y, width: cw, height: ch, rx: 6, class: 'cvb-cell cvb-tapbox cv-body' + (cells[k] == null ? ' ghost' : '') }));
           const t = text(cells[k]);
           o.append(t.includes('$') ? K.lab(x + cw / 2, y + ch / 2, t, { w: cw }) : K.txt(x + cw / 2, y + ch / 2, t, { size: t.length > 4 ? 13 : 16, weight: done.has(idx) ? 700 : 500 }));
-          if (params.showIndex !== false && !linked) o.append(stack ? K.txt(x - 10, y + ch / 2, String(idx), { anchor: 'end', size: 12, cls: 'cvb-tick' }) : K.txt(x + cw / 2, y + ch + 14, String(idx), { size: 12, cls: 'cvb-tick' }));
+          if (params.showIndex !== false && !linked) { const [gx, gy] = G.pos(k); idxG.append(stack ? K.txt(gx - 10, gy + ch / 2, String(idx), { anchor: 'end', size: 12, cls: 'cvb-tick' }) : K.txt(gx + cw / 2, gy + ch + 14, String(idx), { size: 12, cls: 'cvb-tick' })); }
           if (R.active('drag') && !stack && !linked) { o.dataset.drag = String(k); o.classList.add('cvb-handle'); o.setAttribute('tabindex', '0'); o.setAttribute('role', 'button'); o.setAttribute('aria-label', `Cell ${idx}, value ${t}`); }
           R.tappable(o, id, `Cell ${idx}, value ${t}`);
           cellsG.append(o);

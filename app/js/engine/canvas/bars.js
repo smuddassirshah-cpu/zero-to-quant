@@ -115,7 +115,7 @@
           cats.forEach((c, i) => { if (i % every) return; g.append(K.lab(x(i) + bw / 2, H - mb + 15, c.label, { cls: 'cvb-tick', size: 12, h: 22 })); });
         }
         const sel = new Set(view.selected || []);
-        const bars = svg('g');
+        const bars = svg('g'), vals = svg('g');
         cats.forEach((c, i) => {
           const v = hs[i] || 0, y = sy(Math.max(0, v)), h = Math.max(0, sy(0) - y);
           const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : ''), params.colour || 1);
@@ -123,11 +123,11 @@
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-selw' }));
           o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
-          if (params.showValues && (v || sim)) bars.append(K.txt(x(i) + bw / 2, y - 9, proportion && sim ? K.fmt(v, 3) : K.fmt(v, 3), { size: 12, cls: 'cvb-muted' }));
+          if (params.showValues && (v || sim)) vals.append(K.txt(x(i) + bw / 2, y - 9, proportion && sim ? K.fmt(v, 3) : K.fmt(v, 3), { size: 12, cls: 'cvb-muted' }));
           R.tappable(o, c.id, c.label);
           bars.append(o);
         });
-        g.append(bars);
+        g.append(bars, vals);
         /* exact value lines over each bar: dashed ink */
         if (exact.length && view.showExact !== false) {
           const eg = K.obj('exact', 'cvb-exact-g', 'ink');

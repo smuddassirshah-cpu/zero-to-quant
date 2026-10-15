@@ -44,7 +44,7 @@
       unlock() { canvas.lock(false); unmarkAll(); canvas.highlight(null, false); },
       markGraded(res) { unmarkAll(); if (res) canvas.mark('sketch', res.ok ? 'is-correct' : 'is-notyet'); },
       reveal() {
-        unmarkAll(); canvas.mark('sketch', 'is-reveal');
+        unmarkAll(); canvas.highlight(null, false); canvas.mark('sketch', 'is-reveal');
         const pts = points().map(([x]) => [x, target(x)]);
         return canvas.set({ sketch: { points: pts }, showTarget: true });
       },

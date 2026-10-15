@@ -33,7 +33,6 @@
   .cv-svg text.cv-halo { paint-order: stroke; stroke: var(--cv-bg); stroke-width: 4px; stroke-linejoin: round; }
   .cv-fo { overflow: visible; pointer-events: none; }
   .cv-fo-in { display: flex; align-items: center; height: 100%; color: var(--ink); font: 500 13px/1 var(--font-sans); white-space: nowrap; }
-  .cv-fo-in .katex { font-size: 1.05em; }
   .cv-fo.cv-muted .cv-fo-in { color: var(--text-muted); }
   .cv-caption { margin: 10px 0 0; color: var(--text-2); text-align: center; }
   .cv-caption .katex { font-size: 1.05em; }
@@ -165,6 +164,7 @@
   .cv-tree .cv-pill text, .cv-tree .cv-val text, .cv-tree .cv-val .cv-fo-in { font-weight: 600; }
   .cv-tree .cv-root .cv-body { fill: var(--ink); stroke: none; }
   .cv-tree .cv-branch.is-hidden { pointer-events: none; }
+  .cv-tree .cv-branch, .cv-tree .cv-val { transition: none; } /* positions and fades are driven per frame */
   .cv-tree .cv-q { font-weight: 700; fill: var(--text-muted); }
   .cv-tree .is-shaded .cv-line { stroke: var(--sk); stroke-width: 3; }
   .cv-tree .is-shaded .cv-pill .cv-body { fill: color-mix(in srgb, var(--sk) 18%, var(--bg-surface)); stroke: var(--sk); }
@@ -206,7 +206,7 @@
   /* ---------- boxes ---------- */
   .cv-boxes .cv-cont > .cv-body { fill: color-mix(in srgb, var(--bg-sunken) 70%, transparent); stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; }
   .cv-boxes .cv-cont-box > .cv-body { fill: none; }
-  .cv-boxes .cv-tray { fill: none; stroke: var(--line-control); stroke-width: 1.5; stroke-dasharray: 6 4; }
+  .cv-boxes .cv-cont > .cv-tray { fill: none; stroke: var(--line-control); stroke-width: 1.5; stroke-dasharray: 6 4; }
   .cv-boxes .cv-rim { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
   .cv-boxes .cv-slot .cv-body { fill: none; stroke: var(--line-control); stroke-width: 1.5; stroke-dasharray: 5 3; }
   .cv-boxes .cv-item .cv-hit { fill: transparent; }
@@ -251,7 +251,6 @@
   .cv-balance .cv-blk-weight .cv-body { fill: var(--bg-surface); stroke: var(--ink); stroke-width: 2; }
   .cv-balance .cv-blk-unknown .cv-body { fill: color-mix(in srgb, var(--s1) 22%, var(--bg-surface)); stroke: var(--s1); stroke-width: 2; }
   .cv-balance .cv-wlab { font-weight: 700; }
-  .cv-balance .cv-xlab .cv-fo-in .katex { font-size: 1.3em; }
 
   /* ---------- circle ---------- */
   .cv-circle .cv-axisline { stroke: var(--axis); stroke-width: 1.5; }
@@ -290,6 +289,9 @@
 }
 
 /* Kind state details that must beat the shared state rules (unlayered, later, four or more classes) */
+/* KaTeX's stylesheet is unlayered, so formula sizes inside drawings are set here */
+.cv.cv-balance .cv-xlab .katex { font-size: 1.6em; }
+.cv .cv-fo-in > span { white-space: nowrap; }
 .cv.cv-number-line .cv-int.cv-hl .cv-body, .cv.cv-number-line .cv-int.is-on .cv-body { stroke-width: 5; }
 .cv.cv-number-line .cv-int.cv-hl .cv-body { stroke: var(--ink); }
 .cv.cv-venn .cv-region.cv-hl .cv-body { stroke-width: 2.5; }
@@ -300,19 +302,220 @@
 .cv.cv-circle .cv-seg.cv-hl .cv-body, .cv.cv-circle .cv-radius.cv-hl .cv-body { stroke: var(--ink); stroke-width: 5; }
 .cv.cv-circle .cv-anglemark.cv-hl .cv-body { fill: none; stroke-width: 3; }
 .cv.cv-circle .cv-arcshade.cv-hl .cv-body { fill: none; stroke: var(--pear-400); stroke-width: 8; }
+.cv.cv-table .cv-tbl .cv-hl { background: var(--cv-wash); box-shadow: inset 0 calc(var(--hl-t, 1) * 2px) 0 var(--ink), inset 0 calc(var(--hl-b, 1) * -2px) 0 var(--ink), inset calc(var(--hl-l, 1) * 2px) 0 0 var(--ink), inset calc(var(--hl-r, 1) * -2px) 0 0 var(--ink); }
+.cv.cv-table .cv-tbl .cv-hl-on { background: color-mix(in srgb, var(--pear-400) 45%, transparent); }
 .cv.cv-table .cv-tbl .is-on { background: var(--manip); color: var(--cv-on-manip); }
-.cv.cv-table .cv-tbl .is-correct { background: var(--green-fill); box-shadow: inset 0 0 0 2px var(--green-strong); }
-.cv.cv-table .cv-tbl .is-notyet { background: var(--amber-fill); box-shadow: inset 0 0 0 2px var(--amber-frame); }
+.cv.cv-table .cv-tbl .is-correct { color: var(--ink); background: var(--green-fill); box-shadow: inset 0 0 0 2px var(--green-strong); }
+.cv.cv-table .cv-tbl .is-notyet { color: var(--ink); background: var(--amber-fill); box-shadow: inset 0 0 0 2px var(--amber-frame); }
 .cv.cv-table .cv-tbl .is-dim { background: var(--bg-sunken); color: var(--text-muted); }
-.cv.cv-table .cv-tbl .is-reveal { background: var(--hint-wash); box-shadow: inset 0 0 0 2px var(--hint); transition-duration: 600ms; }
+.cv.cv-table .cv-tbl .is-reveal { color: var(--ink); background: var(--hint-wash); box-shadow: inset 0 0 0 2px var(--hint); transition-duration: 600ms; }
 .cv.cv-table .cv-tbl .is-flash { background: var(--amber-face); color: var(--ink-fixed); transition: none; }
-.cv.cv-table .cv-tbl .cv-hl { background: var(--cv-wash); box-shadow: inset 0 0 0 2px var(--ink); }
-.cv.cv-table .cv-tbl .cv-hl-on { box-shadow: inset 0 0 0 2px var(--ink), 0 0 0 4px var(--pear-400); }
 .cv.cv-table .cv-tbl .is-correct .cv-in { border-color: var(--green-strong); background: var(--green-fill); }
 .cv.cv-table .cv-tbl .is-notyet .cv-in { border-color: var(--amber-frame); background: var(--amber-fill); }
 .cv.cv-table .cv-tbl .is-reveal .cv-in { border-color: var(--hint); background: var(--hint-wash); }
 
 /* =========================================================================================
+   Canvas-bound widgets (E3): tap-regions, balance, drag-point. Their controls sit under the canvas.
+   ========================================================================================= */
+.wd-tap-msg, .wd-drag-msg { margin: 8px 0 0; color: var(--text-muted); }
+.wd-bal { display: grid; gap: 12px; margin-top: 4px; }
+.wd-bal-eq { margin: 0; min-height: 30px; text-align: center; color: var(--ink); }
+.wd-bal-eq .katex { font-size: 1.35em; }
+.wd-bal-ops { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 12px; }
+.wd-bal-op { display: inline-flex; align-items: center; gap: 8px; }
+.wd-bal-op .btn { min-height: 48px; padding: 0 16px; font-size: 16px; }
+.wd-bal-op .btn .katex { font-size: 1.1em; }
+.wd-bal-op .t-label { color: var(--text-2); }
+.wd-bal-n.field { width: 76px; height: 48px; padding: 0 10px; }
+.wd-bal-n.field input { width: 100%; font-size: 18px; text-align: center; }
+.wd-bal-msg { margin: 0; text-align: center; color: var(--amber-text); }
+
+/* =========================================================================================
    Canvases B (E4): plane, bars, distribution, scatter, series, walk, matrix, vectors, graph, array, payoff, orderbook
    Append below this line. Put kind rules inside @layer cv-kinds { ... } (see the header).
    ========================================================================================= */
+
+/* ===== Canvases B (E4) ===== */
+/* plane, bars, distribution, scatter, series, walk, matrix, vectors, graph, array, payoff, orderbook; widgets slider, sketch.
+   Marks read their colour from --c, set by a slot class on the id-bearing group (.cvb-c1 to .cvb-c6, .cvb-cm manipulable,
+   .cvb-ci ink), so graded classes on a group (is-correct, is-notyet, is-reveal, is-flash) recolour its lines by overriding --c.
+   Tappable and answer bodies also carry .cv-body, so E3's shared state rules above apply to them unchanged. */
+@layer cv-kinds {
+.cvb { --cvb-bid: #1BAF7A; --cvb-ask: #E34948; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cvb { --cvb-bid: #2DBE89; --cvb-ask: #F26B66; } }
+:root[data-theme="dark"] .cvb { --cvb-bid: #2DBE89; --cvb-ask: #F26B66; }
+.cvb .cvb-svg { touch-action: none; }
+.cvb.cv-static .cvb-svg { touch-action: auto; }
+
+/* Colour slots */
+.cvb .cvb-c1 { --c: var(--s1); } .cvb .cvb-c2 { --c: var(--s2); } .cvb .cvb-c3 { --c: var(--s3); }
+.cvb .cvb-c4 { --c: var(--s4); } .cvb .cvb-c5 { --c: var(--s5); } .cvb .cvb-c6 { --c: var(--s6); }
+.cvb .cvb-ci { --c: var(--ink); } .cvb .cvb-cm { --c: var(--manip); } .cvb .cvb-ch { --c: var(--hint); }
+.cvb .cvb-cneg { --c: var(--div-neg); } .cvb .cvb-cpos { --c: var(--div-pos); } .cvb .cvb-cmu { --c: var(--text-muted); }
+.cvb .cvb-cbid { --c: var(--cvb-bid); } .cvb .cvb-cask { --c: var(--cvb-ask); }
+/* Graded and revealed answer objects (applied by widgets; never applied to series by the engine) */
+.cvb .cv-obj.is-correct { --c: var(--green-strong); }
+.cvb .cv-obj.is-notyet { --c: var(--amber-text); }
+.cvb .cv-obj.is-reveal { --c: var(--hint); }
+.cvb .cv-obj.is-flash { --c: var(--amber-lip); }
+.cvb .cv-obj.is-dim { opacity: 0.3; }
+.cvb .cv-obj { transition: opacity var(--d-base) var(--ease-standard); }
+
+/* Text */
+.cvb .cvb-t { fill: var(--ink); font-family: var(--font-sans); font-size: 13px; }
+.cvb .cvb-t.cvb-tick { fill: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cvb .cvb-t.cvb-muted { fill: var(--text-2); }
+.cvb .cvb-t.cvb-strong, .cvb .cvb-strong .cv-fo-in { font-weight: 600; }
+.cvb .cvb-t.cvb-c { fill: var(--c); }
+.cvb .cvb-halo { paint-order: stroke; stroke: var(--cv-bg); stroke-width: 4px; stroke-linejoin: round; }
+.cvb .cvb-fo { overflow: visible; pointer-events: none; }
+.cvb .cvb-fo .cv-fo-in { font: 13px/26px var(--font-sans); color: var(--ink); white-space: nowrap; }
+.cvb .cvb-fo .cv-fo-in .katex { font-size: 1.12em; }
+.cvb .cvb-fo-halo .cv-fo-in { text-shadow: 0 0 3px var(--cv-bg), 0 0 3px var(--cv-bg), 0 0 2px var(--cv-bg); }
+.cvb .cvb-axlab .cv-fo-in, .cvb .cvb-t.cvb-axlab { color: var(--text-2); fill: var(--text-2); }
+
+/* Geometry ink */
+.cvb .cvb-grid { stroke: var(--grid); stroke-width: 1; }
+.cvb .cvb-axis { stroke: var(--axis); stroke-width: 1.5; fill: none; }
+.cvb .cvb-axis.thin { stroke-width: 1; }
+.cvb .cvb-axes .cvb-head { fill: var(--axis); }
+.cvb .cvb-ln { fill: none; stroke: var(--c, var(--ink)); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cvb .cvb-ln.thin { stroke-width: 1.5; }
+.cvb .cvb-ln.bold { stroke-width: 3; }
+.cvb .cvb-ln.faint { stroke-width: 1.5; opacity: 0.45; }
+.cvb .cvb-dash { stroke-dasharray: 6 4; stroke-linecap: butt; }
+.cvb .cvb-head { fill: var(--c, var(--ink)); }
+.cvb .cvb-dot { fill: var(--c, var(--ink)); stroke: var(--cv-bg); stroke-width: 1.5; }
+.cvb .cvb-dot.open, .cvb .cvb-end.open { fill: var(--cv-bg); stroke: var(--c, var(--ink)); stroke-width: 2; }
+.cvb .cvb-end { fill: var(--c); stroke: var(--c); stroke-width: 2; }
+.cvb .cvb-fill { fill: var(--c, var(--ink)); }
+.cvb .cvb-wash-f { fill: var(--c, var(--ink)); fill-opacity: 0.2; stroke: none; }
+.cvb .cvb-rect-f { fill: var(--c); fill-opacity: 0.22; stroke: var(--c); stroke-width: 1; }
+.cvb .cvb-pill { fill: var(--cv-bg); fill-opacity: 0.92; stroke: var(--line); stroke-width: 1; }
+.cvb .cvb-band { fill: var(--hint); fill-opacity: 0.12; stroke: none; }
+.cvb .cvb-target { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 6 4; }
+
+/* Movable handles: manipulable blue, 2px white ring, 1px ink outline, 44px hit area */
+.cvb .cvb-handle { cursor: grab; outline: none; }
+.cvb.cvb-dragging .cvb-handle, .cvb.cvb-dragging .cvb-svg { cursor: grabbing; }
+.cvb .cvb-hit { fill: transparent; stroke: none; }
+.cvb .cvb-hd { fill: var(--manip); stroke: #FFFFFF; stroke-width: 2; }
+.cvb .cvb-hd-o { fill: var(--ink); stroke: none; }
+.cvb .cv-obj.is-correct .cvb-hd { fill: var(--green-strong); }
+.cvb .cv-obj.is-notyet .cvb-hd { fill: var(--amber-face); }
+.cvb .cv-obj.is-reveal .cvb-hd { fill: var(--hint); }
+.cvb .cvb-handle:focus-visible .cvb-hd-o { fill: var(--focus); }
+.cvb .cvb-handle:focus-visible .cvb-hit { stroke: var(--focus); stroke-width: 2; stroke-dasharray: 3 3; }
+.cvb [data-tap] { cursor: pointer; outline: none; }
+.cvb [data-tap]:focus-visible .cvb-tapbox { stroke: var(--focus); stroke-width: 2.5; }
+.cvb.cvb-static [data-tap], .cvb.cvb-static .cvb-handle { cursor: default; pointer-events: none; }
+
+/* Highlight (hint rung 2): pear wash, then a 2px ink ring while pulsing */
+.cvb .cvb-hlw { fill: none; stroke: none; pointer-events: none; }
+.cvb .cv-hl > .cvb-hlw { fill: var(--cv-wash); }
+.cvb .cv-hl > .cvb-hlw.ln { fill: none; stroke: var(--cv-wash); stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+.cvb .cv-hl-on > .cvb-hlw { stroke: var(--ink); stroke-width: 2; stroke-opacity: 1; }
+.cvb .cv-hl-on > .cvb-hlw.ln { stroke: var(--cv-wash); stroke-width: 18; }
+.cvb .cv-hl-on .cvb-ln { stroke-width: 3; }
+.cvb .cvb-hlw { transition: fill-opacity var(--d-hover), stroke-width var(--d-hover); }
+
+/* Tap selection: the body fills manipulable blue (E3 shared rule); rows and columns take a light manipulable wash */
+.cvb .cvb-selw { fill: transparent; }
+.cvb .cv-obj.is-on > .cvb-selw { fill: var(--manip-wash); }
+
+/* Chip rows under a chart (bars sim, walk run): lipped chips */
+.cvb .cvb-extra:empty { display: none; }
+.cvb .cvb-extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.cvb .cvb-chip { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border: 2px solid var(--line); border-bottom-width: 4px; border-radius: var(--r-pill);
+  background: var(--bg-surface); color: var(--ink); font: 600 14px/18px var(--font-sans); cursor: pointer; transition: transform var(--d-press) var(--ease-standard), border-bottom-width var(--d-press); }
+.cvb .cvb-chip:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px; }
+.cvb .cvb-chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.cvb .cvb-chip:disabled { color: var(--text-disabled); cursor: default; }
+.cvb .cvb-chip.quiet { border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 3px; padding: 0 6px; }
+.cvb .cvb-count { margin-left: auto; font: 600 14px/18px var(--font-sans); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.cvb.cvb-static .cvb-extra button { display: none; }
+
+/* plane */
+.cv-plane .cvb-sketch .cvb-ln { stroke: var(--c); }
+/* bars */
+.cv-bars .cvb-bar { fill: var(--c); }
+.cv-bars .cvb-exact { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; }
+/* distribution */
+.cv-distribution .cvb-bar { fill: var(--c); fill-opacity: 0.35; }
+.cv-distribution .cvb-bar.on { fill-opacity: 1; }
+/* series */
+.cv-series .cvb-shade { fill: var(--c); fill-opacity: 0.1; }
+.cv-series .cvb-window { fill: var(--manip); fill-opacity: 0.07; stroke: var(--manip); stroke-width: 1.5; }
+.cv-series .cvb-candle.up { fill: var(--cv-bg); stroke: var(--cvb-bid); }
+.cv-series .cvb-candle.dn { fill: var(--cvb-ask); stroke: var(--cvb-ask); }
+.cv-series .cvb-wick.up { stroke: var(--cvb-bid); } .cv-series .cvb-wick.dn { stroke: var(--cvb-ask); }
+/* walk */
+.cv-walk .cvb-path { fill: none; stroke: var(--c); stroke-width: 1; opacity: 0.22; stroke-linejoin: round; }
+.cv-walk .cvb-path.main { stroke-width: 2.5; opacity: 1; }
+.cv-walk .cv-hl .cvb-path, .cv-walk .cvb-path.em { stroke-width: 2.5; opacity: 1; }
+/* matrix */
+.cv-matrix .cvb-cellbox { fill: transparent; stroke: none; }
+.cv-matrix .cvb-row-w { fill: var(--s1); fill-opacity: 0.16; }
+.cv-matrix .cvb-col-w { fill: var(--s2); fill-opacity: 0.16; }
+.cv-matrix .cvb-cell-w { fill: var(--cv-wash); }
+.cv-matrix .cvb-pivot { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.cv-matrix .cvb-bracket { fill: none; stroke: var(--ink); stroke-width: 2; }
+.cv-matrix .cvb-empty { fill: none; stroke: var(--line-strong); stroke-width: 1.5; stroke-dasharray: 4 3; }
+/* vectors */
+.cv-vectors .cvb-basis { stroke: var(--c); stroke-width: 1; opacity: 0.45; }
+.cv-vectors .cvb-span { fill: var(--c); fill-opacity: 0.12; stroke: none; }
+.cv-vectors .cvb-ra { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+/* graph */
+.cv-graph .cvb-node { fill: var(--cv-bg); stroke: var(--c, var(--ink)); stroke-width: 2; }
+.cv-graph .cvb-node.cur { stroke-width: 3.5; }
+.cv-graph .cvb-node-fill { fill: var(--s1); fill-opacity: 0.35; }
+.cv-graph .cvb-edge { fill: none; stroke: var(--c, var(--text-2)); stroke-width: 1.5; }
+.cv-graph .cvb-visit { fill: var(--ink); }
+.cv-graph .cvb-visit-t { fill: var(--cv-bg); font-size: 11px; font-weight: 700; }
+.cv-graph .cvb-wpill { fill: var(--cv-bg); stroke: var(--line); stroke-width: 1; }
+/* array */
+.cv-array .cvb-cell { fill: var(--cv-bg); stroke: var(--c, var(--ink)); stroke-width: 2; }
+.cv-array .cvb-cell.ghost { stroke: var(--line-strong); stroke-dasharray: 4 3; }
+.cv-array .cvb-range { fill: var(--s1); fill-opacity: 0.14; }
+.cv-array .cvb-ptr .cvb-t { fill: var(--c); font-weight: 600; }
+/* payoff */
+.cv-payoff .cvb-zero { stroke: var(--axis); stroke-width: 1.5; }
+.cv-payoff .cvb-be { fill: var(--cv-bg); stroke: var(--ink); stroke-width: 2; }
+/* orderbook */
+.cv-orderbook .cvb-size { fill: var(--c); fill-opacity: 0.28; }
+.cv-orderbook .cvb-size.best { fill-opacity: 0.55; }
+.cv-orderbook .cvb-size.filled { fill: var(--manip); fill-opacity: 0.85; }
+.cv-orderbook .cvb-rowline { stroke: var(--grid); stroke-width: 1; }
+.cv-orderbook .cvb-spreadrow { fill: var(--bg-sunken); }
+.cv-orderbook .cvb-pricebox { fill: transparent; stroke: none; }
+
+}
+
+/* Unlayered on purpose: inside a selected or graded group, text that sits outside the filled body stays ink. */
+.cv.cvb .cv-obj:is(.is-on, .is-correct, .is-notyet, .is-dim, .is-reveal, .is-flash, .cv-hl) text.cvb-out { fill: var(--text-muted); }
+.cv.cvb .cv-obj:is(.is-on, .is-correct, .is-notyet, .is-dim, .is-reveal, .is-flash, .cv-hl) text.cvb-outink { fill: var(--ink); }
+.cv.cvb.cv-orderbook .cv-obj.is-on .cvb-pricebox { fill: var(--manip); }
+/* A selected bar keeps an ink outline so it reads apart from series blue. */
+.cv.cvb.cv-bars .cv-obj.is-on .cvb-bar, .cv.cvb.cv-scatter .cv-obj.is-on .cvb-dot { stroke: var(--ink); stroke-width: 2; }
+
+/* Slider widget (design-research 5.3 no. 5) */
+.wd-slider { position: relative; padding: 30px 14px 4px; }
+.wd-slider .wd-sl-label { display: block; margin: 0 0 4px -14px; font: 600 14px/18px var(--font-sans); color: var(--text-2); position: absolute; top: 0; left: 14px; }
+.wd-slider .wd-sl-track { position: relative; height: 44px; }
+.wd-slider input[type=range] { position: relative; z-index: 1; display: block; margin: 0; }
+.wd-slider .wd-sl-ticks { position: absolute; left: 12px; right: 12px; top: 50%; height: 12px; margin-top: 6px; pointer-events: none; }
+.wd-slider .wd-sl-ticks i { position: absolute; top: 0; width: 1px; height: 6px; background: var(--line-strong); }
+.wd-slider .wd-sl-val { position: absolute; top: -26px; transform: translateX(-50%); padding: 2px 8px; border-radius: var(--r-xs); background: var(--bg-sunken);
+  font: 700 14px/20px var(--font-sans); color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; }
+.wd-slider .wd-sl-ends { display: flex; justify-content: space-between; margin: -6px -2px 0; font: 12px/16px var(--font-sans); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.wd-slider.is-correct .wd-sl-val { background: var(--green-chip); }
+.wd-slider.is-notyet .wd-sl-val { background: var(--amber-chip); }
+.wd-slider.is-reveal .wd-sl-val { background: var(--hint-wash); color: var(--hint); }
+.wd-slider.is-correct input[type=range]::-webkit-slider-thumb { background: var(--green-strong); }
+.wd-slider.is-notyet input[type=range]::-webkit-slider-thumb { background: var(--amber-face); }
+.wd-slider.is-reveal input[type=range]::-webkit-slider-thumb { background: var(--hint); }
+.wd-slider input[type=range]:disabled { cursor: default; }
+.wd-slider input[type=range]:focus-visible { outline: none; }
+.wd-slider input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1px var(--ink), 0 0 0 5px var(--focus); }
+/* Sketch widget: the curve lives on the plane canvas; this is only its instruction line */
+.wd-sketch { font: 14px/20px var(--font-sans); color: var(--text-2); }
