@@ -16,7 +16,8 @@
    - Drag canvases emit 'change' with { id, x, y, phase: 'move' | 'end' } in canvas units and expose
      points() -> { id: { x, y } } and place(id, pos, { instant }) where pos is a number (1D) or [x, y].
    - ctx.static (or ctx.mode 'static', as the player's explanation modal passes) means a still copy: no interaction, no timed fades.
-   - Explore controls call canvas.setParam(name, value) when it exists. */
+   - Explore controls call canvas.setParam(name, value) when it exists (and getParam(name) for their opening value).
+   - canvas.derive (any kind, applied by create()): linked values and live captions; see attachDerive below. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -376,6 +377,72 @@
     };
   };
 
+  /* Linked state: canvas.derive maps a target to an expression, re-evaluated after every state change and learner
+     interaction, so one value follows another or a caption reads a live number.
+       "derive": { "p2.x": "0.8 * p1.x", "values.7": "10 - values['3']", "params.b": "2 * a",
+                   "caption": "Change: {{round((p1.x / 50 - 1) * 100, 1)}}%" }
+     Targets: "<id>.<prop>" for an item with that id in any state list (points, intervals, arrows, markers, vectors,
+     segments, pointers...), "values.<key>" (bars), "params.<name>", "caption" or any other state key or dotted path.
+     Expressions are arithmetic over: item ids (p1.x, p1.y), state.params and params.params names, top-level numeric
+     state keys (angle, ran), `values` (bars heights by label and id), and abs, min, max, sqrt, pow, exp, log, floor,
+     ceil, round(v, places), pi. A caption (or any string target) fills each {{expression}}. */
+  const DERIVE_FN = { abs: Math.abs, min: Math.min, max: Math.max, sqrt: Math.sqrt, pow: Math.pow, exp: Math.exp, log: Math.log, ln: Math.log, floor: Math.floor, ceil: Math.ceil, sign: Math.sign, pi: Math.PI, round: (v, d = 0) => +(+v).toFixed(d) };
+  const deriveCache = {};
+  const deriveExpr = (src) => {
+    if (deriveCache[src]) return deriveCache[src];
+    if (/[;`{}]|=>|\bfunction\b|\bnew\b|\bthis\b|(^|[^=!<>])=(?!=)/.test(src)) throw new Error('derive: not an expression: ' + src);
+    // eslint-disable-next-line no-new-func
+    const f = new Function('S', 'with (S) { return (' + src + '); }');
+    return (deriveCache[src] = f);
+  };
+  const attachDerive = (inst, spec) => {
+    const rules = Object.entries(spec.derive || {});
+    if (!rules.length || !inst || !inst.set) return;
+    const rawSet = inst.set.bind(inst);
+    const scope = () => {
+      const st = inst.get ? inst.get() : {}, S = Object.assign({}, DERIVE_FN);
+      Object.entries(st).forEach(([k, v]) => { if (typeof v === 'number') S[k] = v; });
+      Object.assign(S, (spec.params || {}).params || {}, st.params || {});
+      const vals = Object.assign({}, st.values || {}); try { if (typeof inst.values === 'function') Object.assign(vals, inst.values() || {}); } catch { /* no heights */ }
+      S.values = vals;
+      Object.values(st).forEach(v => { if (Array.isArray(v)) v.forEach(it => { if (it && typeof it === 'object' && it.id != null && /^[A-Za-z_$][\w$]*$/.test(it.id)) S[it.id] = it; }); });
+      return S;
+    };
+    const evalOne = (expr, S) => {
+      if (typeof expr !== 'string') return expr;
+      if (expr.includes('{{')) return expr.replace(/\{\{([^}]+)\}\}/g, (_, e) => { const v = deriveExpr(e.trim())(S); return typeof v === 'number' ? fmtNum(v, 4) : String(v); });
+      return deriveExpr(expr)(S);
+    };
+    const patchFor = () => {
+      const st = inst.get(), S = scope(), patch = {};
+      for (const [target, expr] of rules) {
+        let v; try { v = evalOne(expr, S); } catch (e) { console.warn(e.message || e); continue; }
+        if (typeof v === 'number' && !Number.isFinite(v)) continue;
+        const [head, ...rest] = target.split('.');
+        const listKey = rest.length ? Object.keys(st).find(k => Array.isArray(st[k]) && st[k].some(it => it && it.id === head)) : null;
+        if (listKey) {
+          const list = (patch[listKey] || st[listKey]).map(it => (it && it.id === head ? setPath({ ...it }, rest, v) : it));
+          const before = st[listKey].find(it => it && it.id === head);
+          if (JSON.stringify(getPath(before, rest)) !== JSON.stringify(v)) patch[listKey] = list;
+        } else if (JSON.stringify(getPath(st, [head, ...rest])) !== JSON.stringify(v)) {
+          setPath(patch, [head, ...rest], v);
+        }
+      }
+      return patch;
+    };
+    let busy = false;
+    const apply = () => {
+      if (busy) return;
+      busy = true;
+      try { const p = patchFor(); if (Object.keys(p).length) rawSet(p, { instant: true }); } catch (e) { console.error(e); } finally { busy = false; }
+    };
+    inst.set = (patch, o) => { const r = rawSet(patch, o); apply(); return r; };
+    if (inst.on) inst.on('change', () => apply());
+    apply();
+  };
+  const getPath = (o, path) => path.reduce((a, k) => (a == null ? undefined : a[k]), o);
+  const setPath = (o, path, v) => { let cur = o; path.slice(0, -1).forEach(k => { cur[k] = cur[k] && typeof cur[k] === 'object' ? { ...cur[k] } : {}; cur = cur[k]; }); cur[path[path.length - 1]] = v; return o; };
+
   /* Registry */
   const kinds = {};
   const register = (kind, factory) => { kinds[kind] = factory; };
@@ -385,6 +452,7 @@
     const inst = f(host, spec.params || {}, { ...ctx, Z, initial: spec.state || {} });
     if (spec.state) inst.set(spec.state, { instant: true });
     if (spec.state && spec.state.caption && inst.caption) inst.caption(spec.state.caption);
+    if (spec.derive && !(ctx.static || ctx.mode === 'static')) attachDerive(inst, spec);
     return inst;
   };
 

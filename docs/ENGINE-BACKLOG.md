@@ -41,3 +41,32 @@ Raised later (ratio level 3):
 25. `plane`: a `labelSide` (`above`|`below`) or offset on function labels.
 26. `plane`: `canvas.controls` able to drive a point's coordinate (`bind: "points.p1.x"`).
 27. `canvas.controls[].start`: also apply the start value to the canvas on mount so they never disagree.
+
+## Integration pass: status
+
+Items 1 to 23 are done; the authoring side is in AUTHORING.md sections 3, 4, 5 and 7 and the two canvas READMEs.
+
+1. Done: `tap-regions` `count` and `among` (keys `too-few`, `too-many`), "2 of 3" count line; validator rule.
+2. Done: validator area ids `c{i}-{j}` from 10 up (and circle sectors), bare number `drag-point` targets on number-line and circle, `tol` optional.
+3. Done: area `setParam`/`getParam` for `split`, `grid`, `shade`; `state.grid` re-cuts; control and slider `format: "fraction"`.
+4. Done: number-line `labelPos` on points and intervals, labels moved off jump arrows and stacked when close.
+5. Done: area grid lines redrawn over each shading in a darker tone of its colour.
+6. Done: controls open at the bound value (via `getParam` or the state) without `start`; `start` is applied to the canvas; documented.
+7. Done: `ZQ.test` in `runSet` and the set page, the homework page and the exam screen; playthrough `--sets`, `--exams`, `--all`.
+8. Done: number-line points are tappable (`enable('tap')`), so `tap-regions` takes point ids.
+9. Done: `ZQ.state.practiceResult`, called from review.js for practice and weekly sets.
+10. Done: `examFinished` queues misses as kind `exam`, ref `{ exam, item }`; `select.resolve` returns the item without hints.
+11. Done: longform help line names "Mark my answer" in exam mode (homework) and "Check" in set mode.
+12. Done: Today shows "Weekly probability problems: n of 3" linking to #practice/weekly when `weeklyStatus().eligible`.
+13. Done: `prose()` turns newlines into `<br>` outside maths only; number-sense level 3 files use `\sqrt` and `\sqrt[3]` again.
+14. Done: validator accepts drag-point point ids as `byKey` keys.
+15. Done: number-line keyed patches for `points`, `intervals` and `arrows`.
+16. Done: `countWord` honoured on every canvas, grid included (the player's count line).
+17. Done: AUTHORING.md section 4 notes `\text{£}` in maths and Unicode in grid cell text.
+18. Done: bars `decimals` and `money` for value labels; series `decimals` and `money` for `{value}` labels.
+19. Done: bars `setParam`/`getParam` by category label or id, and dotted control binds now set the state path on any kind.
+20. Done: `canvas.derive` (engine-wide in `ZQ.canvas.create`): linked values and `{{expression}}` captions; validator checks the expressions.
+21. Done: README-B documents `null` gaps in a series and marker `y`.
+22. Done: area `setParam` for `shade` and `split`; `format: "percent"` on slider and control readouts.
+23. Done: the slider label has its own row above the value bubble.
+

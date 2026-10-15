@@ -9,6 +9,7 @@ Authors write `canvas: { "kind", "params", "state", "controls" }` (AUTHORING.md 
 - **`state.caption: "text"`** shows under the drawing. It may contain `$...$` maths.
 - **Labels.** A label string with no `$` is plain text. A label that is entirely `$...$` is KaTeX. Mixed text and maths (`"slope of $f$"`) also works.
 - **Series colours.** Series take slots 1 to 6 in order. Set `colour: 1..6` on a series, function, vector or leg to pick a slot. Learner-movable things are always manipulable blue.
+- **Linked state (`derive`).** Any canvas may carry `"derive": { "<target>": "<expression>" }` beside `params` and `state`. After every change (a patch, a drag, a control) each target is set from its expression: `"p2.x": "0.8 * p1.x"` (an item's property, by id), `"values.7": "10 - values['3']"` (bars), `"params.b": "2 * a"`, `"caption": "Change: {{round((p1.x / 50 - 1) * 100, 1)}}%"` (a string fills each `{{expression}}`). Expressions see item ids (`p1.x`), param names, top-level numbers (`angle`, `ran`), `values` (bar heights by label and id) and `abs min max sqrt pow exp log floor ceil round(v, places) pi`. It is engine-wide (`ZQ.canvas.create`), so it works on number-line, plane, bars and every other kind.
 - **Keyed list patches.** Lists with ids (`points`, `vectors`, `segments`, `markers`, `pointers`) can be patched by id: `{ "points": { "p1": { "x": 2 } } }` changes only `p1`. Sending an array replaces the whole list.
 - **`state.params` overrides params.** In `plane` and `distribution` it overrides the expression or family parameters (`params.params`). In `walk` it overrides top-level numbers (`p`, `mu`, `sigma`, `steps`, `paths`, `start`). This is what a bound slider writes.
 - **Interactive modes.** A widget calls `canvas.enable(mode, opts)`. The modes each kind supports are listed below. Elements the author marks as movable (`"drag": true` on a plane point, `state.drag` on vectors) move without `enable`. Clones made for the Why? modal are always static.
@@ -71,6 +72,7 @@ Bar chart or histogram. It can draw dashed exact-value lines and fill itself fro
 **params**
 - `categories: [2, 3, ...]` or `[{ id, label, value }]`. Alternatively `bins: { min, max, width }`.
 - `yLabel`, `xLabel`, `height`, `colour`, `showValues`, `yMax`.
+- Value labels (`showValues`): `decimals: 2` fixes the places and keeps trailing zeros (0.50, not 0.5); `money: "£"` prefixes the currency and uses two places unless `decimals` says otherwise (£12.50).
 - `exact: [{ x: "7", y: 0.1667 }]`. `x` is a category label or id; for bins it is any value inside the bin.
 - `exactLabel` (default "exact"; false hides it).
 - `proportion`: plot proportions. Defaults to true when `exact` is given.
@@ -84,7 +86,9 @@ Bar chart or histogram. It can draw dashed exact-value lines and fill itself fro
 
 **ids:** `x{label}` for categories (`x7`, `xHeads`), `b{i}` for bins (0-based), `exact`, `exact-x7`.
 
-**sim:** a Run 10 / Run 100 / Run 1,000 / Reset chip row and an "n trials" count sit under the chart. A run fills the bars over at most 1,200 ms and emits `{ type: "run", ran, added }`. Methods: `run(n)`, `reset()`, `values()`, `counts()`.
+**sim:** a Run 10 / Run 100 / Run 1,000 / Reset chip row and an "n trials" count sit under the chart. A run fills the bars over at most 1,200 ms and emits `{ type: "run", ran, added }`. Methods: `run(n)`, `reset()`, `values()`, `counts()`, `setParam(category, v)`, `getParam(category)`.
+
+**controls:** bind a category's label or id (or `"values.<label>"`) to move that bar's height: `"controls": [{ "bind": "7", "min": 0, "max": 10, "step": 1, "label": "Sevens" }]`. Set `yMax` so the scale stays put while the bar moves.
 
 **modes:** `tap` (on bars) and `slider`.
 
@@ -162,12 +166,13 @@ One or more time series, with optional candles.
 - `series: [{ id, label, values: [...], ohlc: [[o, h, l, c], ...], colour, dashed, thin }]`.
 - `x`: `"index"` or `"dates"`. With `"dates"`, `dates` holds ISO dates, one per value.
 - `candles: true` draws the `ohlc` arrays as candles.
-- `format`: `"pct"` (values are fractions), `"money"` (with `currency`, default `$`) or none.
+- `format`: `"pct"` (values are fractions), `"money"` (with `currency`, default `$`) or none. `money: "£"` is the same as `format: "money"` with that currency, and its `{value}` labels keep two places (£12.50). `decimals: n` fixes the places of `{value}` labels in any format, keeping trailing zeros.
+- A `null` in `values` leaves a gap: the line lifts and starts again at the next number (use it for a missing day or a series that starts late).
 - `y: [min, max]`, `baseline` (for example 0 for returns), `yLabel`, `xLabel`, `indexFrom`, `height`, `drawdownLabel`.
 - Each series is labelled directly at its line end; there is no legend.
 
 **state**
-- `markers: [{ id, i, series, label, below, colour }]`. `i` is an index or an ISO date. `label` may contain `{value}`.
+- `markers: [{ id, i, series, label, below, colour, y }]`. `i` is an index or an ISO date. `label` may contain `{value}`. A marker sits on its series' value at `i`; give `y` to place it explicitly, which you must do where that value is `null` (a marker on a gap is otherwise skipped).
 - `shade: [{ id, from, to, label, tone: "neg"|"pos"|"neutral" }]`.
 - `drawdown: true` finds and shades the maximum drawdown of the first series, labelled `Max drawdown −x%`.
 - `window`: `{ from, to, label }`, or `[from, to]`. A slider can bind to `window.to`.
@@ -400,7 +405,8 @@ Payoff or profit and loss at expiry against the price of the underlying.
 
 **Display and keys**
 - `unitLabel`: `%` is a suffix, `£`, `$` and `€` are prefixes, and a word is a suffix after a space.
-- `format: "fraction"` writes the value as a fraction in lowest terms (0.375 reads 3/8), on the thumb and at the ends.
+- `format: "fraction"` writes the value as a fraction in lowest terms (0.375 reads 3/8), `format: "percent"` as a percentage (0.375 reads 37.5%), on the thumb and at the ends.
+- The label sits on its own row above the value bubble, so the bubble never covers it at the left end.
 - Snap ticks show when there are 20 steps or fewer.
 - Arrow keys step; Shift+arrow steps ten times.
 

@@ -292,7 +292,18 @@ const checkCanvas = (file, where, c) => {
   if (!CANVASES.has(c.kind)) err(file, `${where}.kind`, `unknown canvas kind "${c.kind}"`);
   if (c.params != null && !isObj(c.params)) err(file, `${where}.params`, 'must be an object');
   if (c.state != null && !isObj(c.state)) err(file, `${where}.state`, 'must be an object');
-  (c.controls || []).forEach((k, i) => { if (!k.bind) err(file, `${where}.controls[${i}].bind`, 'required'); });
+  (c.controls || []).forEach((k, i) => {
+    if (!k.bind) err(file, `${where}.controls[${i}].bind`, 'required');
+    if (k.format != null && !['fraction', 'percent'].includes(k.format)) err(file, `${where}.controls[${i}].format`, 'format is "fraction" or "percent"');
+  });
+  if (c.derive != null) {
+    if (!isObj(c.derive)) err(file, `${where}.derive`, 'derive maps a target ("p2.x", "caption") to an expression');
+    else Object.entries(c.derive).forEach(([t, e]) => {
+      if (typeof e !== 'string' && typeof e !== 'number') { err(file, `${where}.derive.${t}`, 'must be an expression string or a number'); return; }
+      const parts = typeof e === 'string' ? (e.includes('{{') ? [...e.matchAll(/\{\{([^}]+)\}\}/g)].map(m => m[1]) : [e]) : [];
+      parts.forEach(x => { if (/[;`{}]|=>|\bfunction\b|\bnew\b|\bthis\b|(^|[^=!<>])=(?!=)/.test(x)) err(file, `${where}.derive.${t}`, `not an expression: ${x}`); else { try { new Function('S', 'with (S) { return (' + x + '); }'); } catch (er) { err(file, `${where}.derive.${t}`, `does not parse: ${x}`); } } });
+    });
+  }
   if (c.state && typeof c.state.caption === 'string') checkText(file, `${where}.state.caption`, c.state.caption);
 };
 
