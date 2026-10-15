@@ -21,11 +21,13 @@
 //   choice]. A string that fails but parses with its one comma read as a point fails as `decimal-comma`,
 //   7.2's nudge.
 // - Accepted: one leading "-" or "+", then an optional space ("+33.1%", "− 5"), 7.2's six forms, and one
-//   listed unit, compared without case and typed before or after the number (a listed "%" is read as that
-//   unit, not as the percent form) [our choice]. A unit with more code units than the text never matches,
-//   even where lower-casing would make the two equal ("5İ" against a listed "5i̇") [our choice, 7.2 rule 5]. A percent's value is the number before its sign ("25%" is
-//   25); the grader divides by 100 where the answer is a proportion (7.2). A mixed number's fraction is
-//   proper and non-zero. Anything else fails.
+//   listed unit, typed before or after the number (a listed "%" is read as that unit, not as the percent
+//   form) [our choice]. A unit is compared without regard to ASCII case only: A to Z map to a to z and no
+//   other character changes, because Unicode's default lower-casing differs between versions (Node 22.22
+//   has Unicode 16.0, CPython 3.12 has 15.0) and so between engines and the twin [our choice, 7.2 rule 5].
+//   A unit with more code units than the text never matches. A percent's value is the number before its
+//   sign ("25%" is 25); the grader divides by 100 where the answer is a proportion (7.2). A mixed number's
+//   fraction is proper and non-zero. Anything else fails.
 // - Inputs longer than INPUT_LIMIT characters fail, and exponents are bounded by rational.ts, so a typed
 //   string cannot make a large BigInt [our choice: 200 is NumValue's own limit, CONTENT-FORMAT.md 3.2].
 import { EXPONENT_LIMIT, add, fromDecimal, neg, rat, type Rational } from './rational.ts';
@@ -123,6 +125,10 @@ function body(text: string, percent: boolean): Body {
   };
 }
 
+/** Maps A to Z to a to z and leaves every other code unit as it is: the same in every engine (7.2 rule 5). */
+const asciiLower = (s: string): string =>
+  s.replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+
 /** Reads a typed number. `units` lists the unit spellings the field accepts ("£", "bp", "outcomes"). */
 export function parseNumber(input: string, units: readonly string[] = []): NumParse {
   if (input.length > INPUT_LIMIT) return { ok: false, reason: 'too-long' };
@@ -134,9 +140,9 @@ export function parseNumber(input: string, units: readonly string[] = []): NumPa
   let unit: string | null = null;
   for (const u of [...units].sort((a, b) => b.length - a.length)) {
     if (u === '' || u.length > rest.length) continue;
-    const key = u.toLowerCase();
-    if (rest.slice(0, u.length).toLowerCase() === key) rest = rest.slice(u.length).replace(/^ /, '');
-    else if (rest.slice(-u.length).toLowerCase() === key) rest = rest.slice(0, -u.length).replace(/ $/, '');
+    const key = asciiLower(u);
+    if (asciiLower(rest.slice(0, u.length)) === key) rest = rest.slice(u.length).replace(/^ /, '');
+    else if (asciiLower(rest.slice(-u.length)) === key) rest = rest.slice(0, -u.length).replace(/ $/, '');
     else continue;
     unit = u;
     break;

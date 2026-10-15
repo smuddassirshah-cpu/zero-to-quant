@@ -347,6 +347,16 @@ describe('parity with tools/zqverify/num_parse.py', () => {
     expect(parseNumber('5', ['55'])).toMatchObject({ ok: true, unit: null });
   });
 
+  it('compares units without regard to ASCII case only', () => {
+    expect(parseNumber('12 BP', ['bp'])).toMatchObject({ ok: true, unit: 'bp' });
+    expect(parseNumber('Outcomes 3', ['outcomes'])).toMatchObject({ ok: true, unit: 'outcomes' });
+    // Unicode 16.0 pairs (U+A7CB and U+0264), the Kelvin sign against k, and Greek capitals stay distinct.
+    expect(parseNumber('5\uA7CB', ['\u0264'])).toEqual({ ok: false, reason: 'syntax' });
+    expect(parseNumber('5\u212A', ['k'])).toEqual({ ok: false, reason: 'syntax' });
+    expect(parseNumber('5\u03A3', ['\u03C3'])).toEqual({ ok: false, reason: 'syntax' });
+    expect(parseNumber('5\u03C3', ['\u03C3'])).toMatchObject({ ok: true, unit: '\u03C3' });
+  });
+
   it('normalises as 7.2 says', () => {
     expect(normalise(' \u2212 1\u202F000 \t\u00B7  2 ')).toBe('- 1000 * 2');
     expect(normalise('2\u00A01/3\u2009')).toBe('2 1/3');
