@@ -91,3 +91,9 @@ Raised later (equations level 3):
 37. `number-line` intervals: wider row spacing or a per-interval `row` offset; `labelPos: "right"` on rays to infinity is clipped.
 38. Keyed patches (`{"points": {"id": {...}}}`) in `explain.canvas` or option `canvas` patches wipe the array: apply keyed merging in `ZQ.canvas.merge` (or in `create`'s patch path) for every kind, not only in each canvas's own update.
 39. `number-line` points default to a static look unless `drag: true`; in tap mode and static clones never draw the drag handle.
+
+Raised later (equations level 4):
+
+40. `balance`: more than one unknown kind (`unknown` items with their own `label` and hidden `value`).
+41. `plane`: function `labelPos` (above, below) and offset; falling lines overlap their label today. (Same as 25; keep one.)
+42. `boxes`: remove the empty band above containers when there is no `hand` container.

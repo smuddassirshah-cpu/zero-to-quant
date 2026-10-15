@@ -3,12 +3,70 @@
    mode "order": one slot, graded on the token sequence against order[].
    Pointer: drag a lipped token onto a slot or back to the bank, or tap a token then tap where it goes.
    Keyboard: Space lifts the focused token, arrows choose the target (bank or a slot), Space drops, Escape cancels.
-   Key on a wrong answer: the first misplaced token. */
+   Key on a wrong answer: the first misplaced token.
+   Interchangeable tokens: `byText: true` treats tokens with the same text as the same token, and `same: [["t1", "t2"]]`
+   (or one list) names groups that are; either slot or position then accepts any member of the group.
+   mode "boxes": no tokens or slots of its own; the learner drags the items of the screen's `boxes` canvas into its
+   containers. `answer: { "<container>": [itemIds] }` lists what each named container must hold (in any order; with
+   `ordered: true` in that order); key = the first item out of place. Items left out of `answer` may be anywhere. */
 (function () {
   'use strict';
   const Z = window.ZQ;
 
+  /* mode "boxes": place the items of a boxes canvas into its containers */
+  const boxesMode = (host, spec, ctx) => {
+    const cv = ctx.canvas;
+    const el = Z.h('<div class="wd-drag"><p class="t-caption wd-drag-msg" hidden></p></div>');
+    host.append(el);
+    const msg = el.querySelector('.wd-drag-msg');
+    if (!cv || typeof cv.contents !== 'function') { msg.hidden = false; msg.textContent = 'This task needs its boxes diagram, which could not be drawn.'; return { el, value: () => ({}), grade: () => ({ ok: false, key: null, detail: null }) }; }
+    const want = spec.answer || {};
+    const ids = spec.items || null;
+    cv.enable('drag', ids ? { ids } : {});
+    const start = cv.contents();
+    let moved = false;
+    cv.on('change', (e) => { if (e && e.phase === 'end') { moved = true; ctx.change && ctx.change({ id: e.id, container: e.container }); } });
+    const contents = () => cv.contents();
+    const where = () => { const w = {}; Object.entries(contents()).forEach(([c, list]) => list.forEach(id => { w[id] = c; })); return w; };
+    const misplaced = () => {
+      const c = contents(), w = where();
+      for (const [cid, list] of Object.entries(want)) {
+        const have = c[cid] || [];
+        const extra = have.find(id => !list.includes(id)); if (extra) return extra;
+        const miss = list.find(id => w[id] !== cid); if (miss) return miss;
+        if (spec.ordered) { const i = list.findIndex((id, k) => have[k] !== id); if (i >= 0) return list[i]; }
+      }
+      return null;
+    };
+    const mark = (list, cls) => { if (list.length && cv.mark) cv.mark(list, cls); };
+    const placeAll = (v, o) => Object.entries(v || {}).forEach(([cid, list]) => (list || []).forEach(id => cv.place(id, cid, o)));
+    return {
+      el,
+      value: () => contents(),
+      set(v) { placeAll(v); moved = true; ctx.change && ctx.change({ set: true }); },
+      answer: () => JSON.parse(JSON.stringify(want)),
+      ready: () => moved,
+      dirty: () => moved,
+      grade() { const k = misplaced(); return { ok: !k, key: k, detail: { contents: contents() } }; },
+      lock() { cv.lock && cv.lock(true); },
+      unlock() { cv.lock && cv.lock(false); cv.unmark && cv.unmark(); },
+      markGraded(res) {
+        cv.unmark && cv.unmark();
+        const w = where(), named = Object.entries(want).flatMap(([cid, list]) => list.map(id => [id, cid]));
+        const inNamed = Object.entries(contents()).filter(([cid]) => cid in want).flatMap(([cid, list]) => list.map(id => [id, cid]));
+        const good = named.filter(([id, cid]) => w[id] === cid).map(([id]) => id);
+        const bad = inNamed.filter(([id, cid]) => !(want[cid] || []).includes(id)).map(([id]) => id);
+        mark(good, res && res.ok ? 'is-correct' : 'is-dim'); mark(bad, 'is-notyet');
+      },
+      reveal() { cv.unmark && cv.unmark(); placeAll(want); mark(Object.values(want).flat(), 'is-reveal'); cv.lock && cv.lock(true); },
+      reset() { cv.unmark && cv.unmark(); cv.lock && cv.lock(false); cv.set({ move: null, draw: [] }, { instant: true }); placeAll(start, { instant: true }); moved = false; },
+      focus() { const n = cv.el.querySelector('.cv-handle[tabindex="0"]'); if (n) n.focus({ preventScroll: true }); },
+      destroy() { if (cv.enable) cv.enable(null); },
+    };
+  };
+
   Z.widgets.register('place', (host, spec, ctx) => {
+    if (spec.mode === 'boxes') return boxesMode(host, spec, ctx);
     const tokens = spec.tokens || [];
     const mode = spec.mode === 'order' ? 'order' : 'assign';
     const slots = mode === 'order' ? (spec.slots && spec.slots.length ? spec.slots.slice(0, 1) : [{ id: 'seq', label: '' }]) : (spec.slots || []);
@@ -125,23 +183,42 @@
     };
     el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
 
+    /* Interchangeable tokens: a group key per token (its text with byText, its `same` group, else its own id) */
+    const groups = Array.isArray(spec.same) && spec.same.length ? (Array.isArray(spec.same[0]) ? spec.same : [spec.same]) : [];
+    const gkey = (id) => {
+      if (spec.byText) return 't:' + String((tokById[id] || {}).text ?? id).replace(/\s+/g, ' ').trim();
+      const g = groups.findIndex(list => list.includes(id)); return g >= 0 ? 'g:' + g : 'i:' + id;
+    };
     const strip = () => el.querySelectorAll('.wd-tok').forEach(n => { n.classList.remove('ok', 'bad', 'wd-rev', 'dim'); n.querySelector('.wd-tok-mark').innerHTML = ''; });
     const home = Object.fromEntries(tokens.map(t => [t.id, 'bank']));
     if (mode === 'assign') slots.forEach(s => (s.accepts || []).forEach(id => { home[id] = s.id; }));
+    /* Per token, right or not: a slot (or a position) takes a token whose group it still needs */
+    const verdicts = () => {
+      const v = value(), out = {};
+      if (mode === 'order') { const want = spec.order || []; v.forEach((id, k) => { out[id] = want[k] != null && gkey(want[k]) === gkey(id); }); return out; }
+      const need = {};
+      tokens.forEach(t => { const h = home[t.id]; need[h] = need[h] || {}; need[h][gkey(t.id)] = (need[h][gkey(t.id)] || 0) + 1; });
+      const where = {}; tokens.forEach(t => { where[t.id] = 'bank'; });
+      Object.entries(v).forEach(([sl, list]) => list.forEach(id => { where[id] = sl; }));
+      [...el.querySelectorAll('.wd-tok')].map(n => n.dataset.id).forEach(id => {
+        const n = need[where[id]] || {}, k = gkey(id);
+        if (n[k] > 0) { n[k]--; out[id] = true; } else out[id] = false;
+      });
+      return out;
+    };
     const misplaced = () => {
       const v = value();
       if (mode === 'order') {
-        const want = spec.order || [];
-        const i = v.findIndex((id, k) => id !== want[k]);
+        const want = spec.order || [], ok = verdicts();
+        const i = v.findIndex(id => !ok[id]);
         if (i >= 0) return v[i];
         if (v.length < want.length) return want[v.length];
         return null;
       }
-      const where = {}; tokens.forEach(t => { where[t.id] = 'bank'; });
-      Object.entries(v).forEach(([s, list]) => list.forEach(id => { where[id] = s; }));
+      const ok = verdicts();
       // order of checking: tokens in the order they appear on screen
       const seen = [...el.querySelectorAll('.wd-tok')].map(n => n.dataset.id);
-      return seen.find(id => where[id] !== home[id]) || null;
+      return seen.find(id => !ok[id]) || null;
     };
     const setValue = (v) => {
       [...el.querySelectorAll('.wd-tok')].forEach(n => bank.append(n));
@@ -164,10 +241,10 @@
       unlock() { locked = false; strip(); el.classList.remove('is-locked'); el.querySelectorAll('.wd-tok').forEach(n => n.setAttribute('aria-disabled', 'false')); },
       markGraded(res) {
         strip();
-        const v = value();
+        const v = value(), ok = verdicts();
         const where = {};
-        if (mode === 'order') v.forEach((id, i) => { where[id] = (spec.order || [])[i] === id; });
-        else Object.entries(v).forEach(([s, list]) => list.forEach(id => { where[id] = home[id] === s; }));
+        if (mode === 'order') v.forEach((id) => { where[id] = ok[id]; });
+        else Object.values(v).forEach(list => list.forEach(id => { where[id] = ok[id]; }));
         Object.entries(where).forEach(([id, ok]) => { const n = tokEl(id); n.classList.add(res.ok || ok ? 'ok' : 'bad'); n.querySelector('.wd-tok-mark').innerHTML = Z.icon(res.ok || ok ? 'check' : 'cross'); });
       },
       reveal() { setValue(correct()); strip(); locked = true; el.classList.add('is-locked'); el.querySelectorAll('.wd-slot .wd-tok').forEach(n => n.classList.add('wd-rev')); el.querySelectorAll('.wd-bank .wd-tok').forEach(n => n.classList.add('dim')); },
