@@ -45,6 +45,11 @@ def test_the_committed_goldens_are_fresh() -> None:
     assert X.GOLDEN.read_text(encoding="utf-8") == X.render()
 
 
+def test_no_golden_line_repeats() -> None:
+    keys = [json.dumps([line["src"], line["scope"]]) for line in X.goldens()]
+    assert len(keys) == len(set(keys))
+
+
 def test_the_goldens_have_the_spec_shape_and_the_parity_tests_counts() -> None:
     lines = [json.loads(line) for line in X.GOLDEN.read_text(encoding="utf-8").splitlines()]
     for line in lines:
@@ -166,6 +171,11 @@ def test_round_ratio_is_fractions_correctly_rounded_float(num: int, den: int, ex
     except OverflowError:
         expected = INF
     assert same(X.round_ratio(negative, num, den, exp2), -expected if negative else expected)
+
+
+def test_a_source_must_be_a_str() -> None:
+    with pytest.raises(TypeError):
+        X.parse(1)
 
 
 def test_length_limit() -> None:
@@ -397,6 +407,36 @@ def test_power_rounds_an_exact_half_ulp_to_even() -> None:
         assert X.power(float(base), 1.25) == float(w**5)  # int to float rounds half to even [recalled]
     assert X.value("(2^-860)^1.25") == 0.0 and X.value("(2^-430)^2.5") == 0.0  # exactly 2^-1075
     assert X.value("(2^-859)^1.25") == 5e-324
+    assert same(X.value("(2^860)^-1.25"), 0.0) and same(X.value("-(2^860)^-1.25"), -0.0)  # 2^-1075 again
+
+
+@pytest.mark.parametrize(
+    ("odd", "f", "y", "m", "g", "exact"),
+    [
+        (1, 860, -1.25, 1, -1075, True),  # a negative exponent: (2^860)^-1.25 is the subnormal half 2^-1075
+        (1, 860, -1.25, 1, -1074, False),
+        (3, 0, -0.5, 1, 0, False),  # a negative exponent needs both odd parts to be 1
+        (1, -860, 1.25, 1, -1075, True),
+        (1553**4, 0, 1.25, 1553**5, 0, True),
+        (1553**4, 4, 1.25, 1553**5, 0, False),  # the powers of two disagree
+        (1553**4, 0, 1.25, 1553**5 + 2, 0, False),
+        (3, 0, 0.5, 1, 0, False),  # 3 is not a perfect square
+        (5**4, 0, 0.25, 5, 0, True),  # a denominator of 4: two square roots
+        (9, 0, 1 / 64, 1, 0, False),  # a denominator of 64: no odd w >= 3 has w^64 < 2^53
+        (9, 0, 35 / 2, 2**54 - 1, 0, False),  # num 35: w^35 >= 3^35 > 2^54 can be no midpoint
+    ],
+)
+def test_is_exact_power_on_every_exit(odd: int, f: int, y: float, m: int, g: int, exact: bool) -> None:
+    num, den = y.as_integer_ratio()
+    truth = (odd * Fraction(2) ** f) ** num == (m * Fraction(2) ** g) ** den  # a^(num/den) = c iff a^num = c^den
+    assert X._is_exact_power(odd, f, y, m, g) is exact is truth
+
+
+def test_nearest_refuses_mpmaths_infinities_and_nan() -> None:
+    for v in (X.MP.inf, X.MP.ninf, X.MP.nan):
+        with pytest.raises(ValueError):
+            X.nearest(v)
+    assert same(X.nearest(X.MP.mpf(0)), 0.0) and X.nearest(X.MP.mpf(-2.5)) == -2.5
 
 
 def test_constants_are_the_nearest_doubles() -> None:
@@ -464,3 +504,11 @@ def test_the_twin_uses_no_eval_and_no_platform_maths() -> None:
                         "mpmath"}
     used = {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute) and getattr(n.value, "id", "") == "math"}
     assert used <= {"inf", "nan", "isfinite", "isinf", "copysign", "ldexp", "isqrt"}  # exact operations only
+    floats_raised = [
+        n.lineno
+        for n in ast.walk(tree)
+        if isinstance(n, ast.BinOp)
+        and isinstance(n.op, ast.Pow)
+        and any(isinstance(side, ast.Constant) and isinstance(side.value, float) for side in (n.left, n.right))
+    ]
+    assert not floats_raised  # a float ** is the platform's pow; the twin's own is power()

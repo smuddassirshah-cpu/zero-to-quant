@@ -17,10 +17,12 @@ file replaces (CLAUDE.md hard rule 4). Decision notes:
 - `^`: an integer power whose exact value has at most 4,096 bits is computed exactly. Otherwise mpmath, and a
   result within 2^-100 ulp of a half-ulp boundary is tested for an exact tie: for y = a/2^k the base's odd part
   must be a 2^k-th power, so `(w^4)^1.25` for an odd w near 2^10.7 is exactly halfway between two doubles, which
-  169 bits of exp(y ln x) cannot settle alone. Elsewhere a near tie closer than mpmath's error is assumed not to
-  occur: a transcendental value at a double is never an exact tie, and the hardest elementary-function cases in
-  double precision need about 120 bits [recalled: Lefevre and Muller's searches]; for `^` off its exact ties and
-  for erf and Phi no such table exists, so there it is [inferred].
+  169 bits of exp(y ln x) cannot settle alone. A near tie that is not exact keeps the side mpmath's value lies
+  on; that value lands exactly on the half only if a^y lies within about 2^-115 ulp of it. Elsewhere a near tie
+  closer than mpmath's error is assumed not to occur: a transcendental value at a double is never an exact tie,
+  and the hardest elementary-function cases in double precision need about 120 bits [recalled: Lefevre and
+  Muller's searches]; for `^` off its exact ties and for erf and Phi no such table exists, so there it is
+  [inferred].
 - Functions far into a tail return their limit without mpmath (`exp` beyond 1000, `tanh` beyond 40, `erf` beyond
   10, `Phi` and `phi` beyond 40, `sinh` and `cosh` beyond 1000): each limit is the correctly rounded value there,
   and the cut keeps mpmath away from exponents of a thousand digits.
@@ -129,13 +131,12 @@ def round_ratio(negative: bool, num: int, den: int = 1, exp2: int = 0) -> float:
 
 
 def nearest(v: mpmath.mpf) -> float:
-    """The double nearest an mpmath value, ties to even."""
-    sign, man, exp, _ = v._mpf_
-    if man:
-        return round_ratio(bool(sign), int(man), 1, int(exp))
-    if exp == 0:
-        return 0.0
-    return NAN if v != v else (-INF if sign else INF)
+    """The double nearest a finite mpmath value, ties to even. Every caller passes an argument at which its
+    function is finite, so mpmath's inf and nan (the values with a negative bit count) mean a bug here."""
+    sign, man, exp, bc = v._mpf_
+    if bc < 0:
+        raise ValueError(f"mpmath returned {v} where a finite value was due")
+    return round_ratio(bool(sign), int(man), 1, int(exp))
 
 
 def _odd_part(a: float) -> tuple[int, int]:
@@ -342,15 +343,7 @@ def _magnitude_power(a: float, y: float, negative: bool) -> float:
         if abs(rest - half) << 100 <= 1 << below and not y.is_integer():
             if _is_exact_power(odd, f, y, 2 * q + 1, unit - 1):
                 return round_ratio(negative, q + (q & 1), 1, unit)
-            if rest == half:
-                with MP.workdps(100):
-                    return round_ratio(negative, *_mpf_parts(MP.power(MP.mpf(a), MP.mpf(y))))
     return round_ratio(negative, man, 1, exp)
-
-
-def _mpf_parts(v: mpmath.mpf) -> tuple[int, int, int]:
-    _, man, exp, _ = v._mpf_
-    return int(man), 1, int(exp)
 
 
 def _is_exact_power(odd: int, f: int, y: float, m: int, g: int) -> bool:
@@ -362,7 +355,7 @@ def _is_exact_power(odd: int, f: int, y: float, m: int, g: int) -> bool:
     if odd == 1:
         return m == 1 and f * num == g * den
     k = den.bit_length() - 1
-    if k > 5 or num > 64:  # 3^(2^k) < 2^53 needs k <= 5, and w^num < 2^55 with w >= 3 needs num <= 34
+    if k > 5 or num > 34:  # w >= 3 odd: w^(2^k) < 2^53 needs k <= 5, and w^num = m < 2^54 needs num <= 34
         return False
     w = odd
     for _ in range(k):
@@ -891,7 +884,7 @@ GRAMMAR = [
             "min(1,2)", "min(3,1,2)", "max(1,2,3,4,5)", "atan2(1)", "atan2(1,2,3)", "atan2(1, 1)", "min(,1)",
             "min(1,,2)", "max()", "max(1)", "sqrt(4)", "sqrt 4", "abs(-3)", "abs(1, 2)", "if(1<2,3)",
             "if(1<2,3,4,5)", "if(1<2,3,4)", "sum(k,1,3)", "sum(k,1,3,k,1)", "sum(k,1,3,k)", "sin(1", "sin 1)",
-            "sin(1))", "min(1, 2", "pi(1)", "foo(1)", "constructor(1)", "e(1)", "pi", "e", "pi + e", "sum",
+            "sin(1))", "min(1, 2", "pi(1)", "foo(1)", "constructor(1)", "e(1)", "pi + e", "sum",
             "sum + 1", "if", "if + 1", "Phi", "PHI(0)", "Sin(0)", "log(10)", "ln(e)", "log10 (100)", "pi*2", "e^2",
             "e*pi", "min", "atan2", "sin^2(1)", "sin(1)^2", "sum(k, 1, 2, k)(1)", "if(1<2,1,2)(3)", "pi(1+1)",
             "if((1 < 2), 1, 2)", "if(1 < 2 < 3, 1, 2)", "(1 < 2) + 1", "if(1 <= 1, 1, 2)", "if(1 == 1, 1, 2)",
@@ -984,13 +977,13 @@ EXACT_VALUES = [
     "max(-0, 0)", "min(-0, 0)", "max(0, -0)", "min(1, 0/0)", "max(0/0, 1)", "min(1, 2, 0/0, 3)", f"min({BIG}, 1)",
     f"max({NEG_BIG}, -1e308)", "min(3, 1, 2)", "max(1, 3, 2)", "min(-0, -0)", "max(-0, -0)", "min(0, 0, -0, 0)",
     "max(-0, -0, 0, -0)", "min(0/0, 0/0)", f"max({BIG}, {NEG_BIG})", "min(5e-324, -0)", "0/0*0", "-(0/0)",
-    "0/0 - 0/0", f"0/0 + {BIG}", "pi", "e", "-pi", "pi/2", "2*pi", "e*e", "pi - 3", "e - 2.718281828459045",
+    "0/0 - 0/0", f"0/0 + {BIG}", "pi", "-pi", "pi/2", "2*pi", "e*e", "pi - 3", "e - 2.718281828459045",
     "if(pi > 3.14159, 1, 2)", "1/x", "sum(k, 1, 4, k/3)", "sum(k, 1, 20, 1/k)", "sum(k, 1, 30, k*0.1)",
 ]
 
 POWER_VALUES = [
     "1^(0/0)", "(0/0)^0", "(0/0)^1", "0^-1", "(-0)^-1", f"0^{NEG_BIG}", f"(-0)^{NEG_BIG}", "0^-0.5", "0^0",
-    "(-0)^0", "0^-0", f"{BIG}^0", f"{NEG_BIG}^0", "(0/0)^0", f"1^{BIG}", f"(-1)^{BIG}", f"1^{NEG_BIG}",
+    "(-0)^0", "0^-0", f"{BIG}^0", f"{NEG_BIG}^0", f"1^{BIG}", f"(-1)^{BIG}", f"1^{NEG_BIG}",
     f"(-1)^{NEG_BIG}", "(-1)^0.5", "1^0.5", "1^-3", "(-1)^3", "(-1)^2", "(-1)^1e300", "(-1)^9007199254740991",
     "(-1)^9007199254740993", "(-1)^-3", f"{NEG_BIG}^0.5", "(-0)^0.5", "(-0)^3", "(-0)^2", f"(-0)^{BIG}", f"0^{BIG}",
     "0^3", "0^0.5", "(-0)^1", "(-0)^9007199254740991", "(-0)^1e300", f"2^{BIG}", f"0.5^{BIG}", f"2^{NEG_BIG}",
@@ -998,7 +991,8 @@ POWER_VALUES = [
     f"{NEG_BIG}^3", f"{NEG_BIG}^-3", f"{NEG_BIG}^-2", f"{NEG_BIG}^2", f"{BIG}^-1", f"{BIG}^0.5", f"{NEG_BIG}^-0.5",
     f"{BIG}^{BIG}", f"{BIG}^{NEG_BIG}", f"{NEG_BIG}^{BIG}", f"{NEG_BIG}^{NEG_BIG}", "(-8)^(1/3)", "2^0.5", "2^1024",
     "2^1023", "2^-1074", "2^-1075", "2^-1074.5", "(-2)^-1075", "(-2)^-1074", "(-2)^-1073", "(2^-860)^1.25",
-    "(2^-859)^1.25", "(2^-430)^2.5", "10^308", "10^309", "10^-323", "10^-324", "3^40", "3^34", "(-3)^33",
+    "(2^860)^-1.25", "(2^-859)^1.25", "(2^-430)^2.5", "10^308", "10^309", "10^-323", "10^-324", "3^40", "3^34",
+    "(-3)^33",
     "1.0000000000000002^4503599627370496", "0.9999999999999999^4503599627370496", "1.5^1e300", "0.5^1e300",
     "(-1.5)^1e300", "(-1.5)^9007199254740991", "2^0.1", "4^0.5", "8^(1/3)", "10^-1", "10^22", "10^23", "7^-2",
     "(-7)^-3", "2^-1022", "2^-1023", "0.1^2", "1.1^1000", "(1+2^-52)^(2^52)", "e^1", "e^-1", "pi^2",
@@ -1026,14 +1020,14 @@ FUNCTION_VALUES = [
     f"atan2(1, {BIG})", f"atan2(-1, {BIG})", f"atan2({BIG}, 1)", f"atan2({NEG_BIG}, 1)", f"atan2({BIG}, {NEG_BIG})",
     f"atan2({NEG_BIG}, {BIG})", f"atan2({BIG}, {BIG})", f"atan2({NEG_BIG}, {NEG_BIG})", f"atan2({BIG}, 0)",
     f"atan2({NEG_BIG}, -0)", f"atan2(0, {NEG_BIG})", f"atan2(-0, {BIG})", "atan2(0/0, 1)", "atan2(1, 0/0)",
-    "atan2(1, 1)", "atan2(1, 2)", "atan2(-1, -1)", "atan2(5e-324, 1e308)", "atan2(-5e-324, 1e308)",
+    "atan2(1, 2)", "atan2(-1, -1)", "atan2(5e-324, 1e308)", "atan2(-5e-324, 1e308)",
     "atan2(1e308, 5e-324)", "atan2(5e-324, -1e308)", "atan2(-5e-324, -1e308)", "sinh(710)", "sinh(711)",
     "cosh(710)", "cosh(711)", "sinh(-711)", "cosh(-711)", f"sinh({BIG})", f"cosh({NEG_BIG})", f"sinh({NEG_BIG})",
     f"cosh({BIG})", "tanh(20)", "tanh(-20)", "tanh(1e-300)", "sinh(1e-300)", "sinh(1)", "cosh(1)", "tanh(1)",
     "tanh(0.5)", "sin(1)", "cos(1)", "tan(1)", "exp(1)", "exp(-1)", "sin(1e22)", "sin(1e300)", "cos(1e300)",
     "tan(1e300)", "sin(pi)", "cos(pi/2)", "tan(pi/2)", "sin(pi/6)", "cos(pi)", "tan(pi/4)", "sin(5e-324)",
     "tan(5e-324)", "asin(5e-324)", "sinh(5e-324)", "tanh(5e-324)", "cos(5e-324)", "sin(1e-8)", "cos(1e-8)",
-    "exp(1e-300)", "ln(1.0000000000000002)", "log10(10)", "log10(0.1)", "ln(e)", "exp(ln(2))", "sin(0/0)",
+    "exp(1e-300)", "ln(1.0000000000000002)", "log10(10)", "log10(0.1)", "exp(ln(2))", "sin(0/0)",
     "cos(0/0)", "tan(0/0)", "asin(0/0)", "acos(0/0)", "atan(0/0)", "sinh(0/0)", "cosh(0/0)", "tanh(0/0)",
     "exp(0/0)", "cbrt(0/0)", "Phi(0/0)", "phi(0/0)", "erf(0/0)", "log10(0/0)",
 ]
@@ -1183,7 +1177,7 @@ def _exact_case(rng: random.Random) -> tuple[str, dict[str, object]]:
 
 def _uniform(rng: random.Random, f: str) -> float:
     lo, hi = _DOMAIN[f]
-    return 10.0 ** rng.uniform(-6, 6) if f in ("ln", "log10") else rng.uniform(lo, hi)
+    return power(10.0, rng.uniform(-6, 6)) if f in ("ln", "log10") else rng.uniform(lo, hi)
 
 
 def _inexact_call(rng: random.Random, f: str, x: str, y: str, scope: dict[str, object]) -> str:
@@ -1197,10 +1191,6 @@ def _inexact_call(rng: random.Random, f: str, x: str, y: str, scope: dict[str, o
         if lo <= v <= hi or rng.random() < 0.04:
             break
     return f"{f}({arg})"
-
-
-def _margin(v: float, c: float) -> bool:
-    return abs(v - c) > 1e-6 * max(1.0, abs(v))
 
 
 def _inexact_case(rng: random.Random) -> tuple[str, dict[str, object]] | None:
@@ -1246,9 +1236,7 @@ def _inexact_case(rng: random.Random) -> tuple[str, dict[str, object]] | None:
         v = value(inner, scope)
         if v != v or math.isinf(v):
             return None
-        bound_ = v + rng.choice((-1, 1)) * max(1e-3, abs(v) * rng.uniform(0.01, 0.5))
-        if not _margin(v, bound_):
-            return None
+        bound_ = v + rng.choice((-1, 1)) * max(1e-3, abs(v) * rng.uniform(0.01, 0.5))  # clear of v by 1e-3 or 1%
         src = f"if({inner} {rng.choice(('<', '<=', '>', '>='))} {_num_text(bound_)}, {c}, {x})"
     elif style == 13:
         v = value(inner, scope) * 10
