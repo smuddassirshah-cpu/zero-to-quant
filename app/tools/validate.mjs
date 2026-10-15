@@ -103,10 +103,16 @@ const regionIds = (canvas) => {
     subsets(L).forEach(x => ids.add(x)); if (named.every(x => x.length === 1)) subsets(named).forEach(x => ids.add(x));
     return ids;
   }
-  if (canvas.kind === 'area' && Array.isArray(p.grid)) {
-    const [r, c] = p.grid, ids = new Set();
-    range(0, r).forEach(i => range(0, c).forEach(j => ids.add(`c${i}${j}`)));
+  if (canvas.kind === 'area' && (Array.isArray(p.grid) || (p.shape === 'circle' && p.sectors))) {
+    /* one-based from the top left, c{i}{j}, or c{i}-{j} when either index is 10 or more; circle sectors are c1{j} */
+    const [r, c] = p.shape === 'circle' ? [1, p.sectors || p.grid[1]] : p.grid, ids = new Set();
+    const st = canvas.state || {}, g2 = st.grid != null ? [].concat(st.grid) : null; // a re-cut grid in the state
+    const [R2, C2] = g2 ? (p.shape === 'circle' ? [1, +g2[g2.length - 1]] : g2.length > 1 ? [+g2[0], +g2[1]] : [r, +g2[0]]) : [r, c];
+    range(1, R2).forEach(i => range(1, C2).forEach(j => ids.add(i >= 10 || j >= 10 ? `c${i}-${j}` : `c${i}${j}`)));
     return ids;
+  }
+  if (canvas.kind === 'number-line' && Array.isArray((canvas.state || {}).points)) {
+    return new Set(canvas.state.points.map(q => q && q.id).filter(Boolean)); // tap mode on points
   }
   if (canvas.kind === 'table' && Array.isArray(p.rows)) {
     const r = p.rows.length, c = Array.isArray(p.columns) ? p.columns.length : (p.rows[0] || []).length, ids = new Set();
@@ -119,7 +125,7 @@ const regionIds = (canvas) => {
 const PLAUSIBLE = {
   grid: /^(r\d+c\d+|row\d+|col\d+|cross\d+)$/,
   venn: /^(A|B|C|AB|AC|BC|ABC|none|[A-Za-z]{1,3})$/,
-  area: /^(c\d+|shade|split|point)$/,
+  area: /^(c\d+(-\d+)?|pt\d+|shade|split|point)$/,
   table: /^(r\d+|c\d+|r\d+c\d+)$/,
   matrix: /^[A-Za-z][A-Za-z0-9]*(-(r\d+|c\d+|\d+-\d+))?$/,
   walk: /^(path\d+|barrier-up|barrier-down)$/,
@@ -186,7 +192,14 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       break;
     case 'drag-point':
       if (!Array.isArray(w.points) || !w.points.length) err(file, `${where}.points`, 'at least one point');
-      (w.points || []).forEach((p, i) => { if (!p.id) err(file, `${where}.points[${i}].id`, 'required'); if (!Array.isArray(p.target) || p.target.length !== 2) err(file, `${where}.points[${i}].target`, 'must be [x, y]'); if (typeof p.tol !== 'number') err(file, `${where}.points[${i}].tol`, 'must be a number'); });
+      (w.points || []).forEach((p, i) => {
+        if (!p.id) err(file, `${where}.points[${i}].id`, 'required');
+        const oneD = canvas && (canvas.kind === 'number-line' || canvas.kind === 'circle');
+        if (oneD && typeof p.target === 'number') { /* a bare number: x on a number line, the angle on a circle */ }
+        else if (!Array.isArray(p.target) || p.target.length !== 2) err(file, `${where}.points[${i}].target`, oneD ? 'must be a number (or [x, y])' : 'must be [x, y]');
+        if (p.tol != null && typeof p.tol !== 'number') err(file, `${where}.points[${i}].tol`, 'must be a number (default 0.25)');
+        if (p.id) keys.add(String(p.id)); // the key when this point is off target and in no wrong[] region
+      });
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       break;
     case 'place': {
@@ -201,9 +214,16 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       break;
     }
     case 'tap-regions': {
-      if (!Array.isArray(w.answer) || !w.answer.length) err(file, `${where}.answer`, 'list the region ids that make up the answer');
+      const countMode = w.count != null;
+      if (countMode) {
+        if (!Number.isInteger(w.count) || w.count < 1) err(file, `${where}.count`, 'count must be a whole number, at least 1');
+        if (w.among != null && (!Array.isArray(w.among) || !w.among.length)) err(file, `${where}.among`, 'among must list region ids');
+        else if (Array.isArray(w.among) && Number.isInteger(w.count) && w.count > w.among.length) err(file, `${where}.count`, `count ${w.count} is more than the ${w.among.length} regions in among`);
+        ['too-few', 'too-many'].forEach(k => keys.add(k));
+      } else if (!Array.isArray(w.answer) || !w.answer.length) err(file, `${where}.answer`, 'list the region ids that make up the answer (or give count, with optional among)');
       const known = regionIds(canvas);
       if (known) (w.answer || []).forEach(id => { if (!known.has(id)) err(file, `${where}.answer`, `region "${id}" is not on the ${canvas.kind} canvas`); });
+      if (known) (w.among || []).forEach(id => { if (!known.has(id)) err(file, `${where}.among`, `region "${id}" is not on the ${canvas.kind} canvas`); });
       else if (!canvas) err(file, where, 'tap-regions needs a canvas');
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       (known || new Set()).forEach(k => keys.add(k));

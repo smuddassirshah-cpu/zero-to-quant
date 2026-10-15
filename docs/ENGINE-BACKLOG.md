@@ -29,3 +29,8 @@ Raised later (ratio level 2):
 19. `bars.setParam` (or dotted `bind` in `canvas.controls`) so an explore slider can move a bar's height.
 20. Linked canvas state: a `derive` block on a canvas (`"derive": { "p2.x": "0.8 * p1.x", "caption": "Change: {{(p1.x/50-1)*100}}%" }`) evaluated on every change, so explore screens can show a live computed label or a dependent point. Design and implement on number-line, plane and bars at least.
 21. README-B: document `null` gaps in a series and a marker with explicit `y` to fill them.
+
+Raised later (ratio level 1):
+
+22. `area` canvas: `setParam` for `shade` fraction and `split`, with a `format: "percent"` option on slider readouts.
+23. Slider widget: the value bubble overlaps the label near the minimum.

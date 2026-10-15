@@ -74,6 +74,25 @@
       rubric: [{ points: 4, text: 'Writes both as a joint probability over a marginal' }, { points: 3, text: 'Names the different denominators' }, { points: 3, text: 'Gives an example where they differ' }] },
   };
 
+  /* Variants worth seeing on their own: drawn after the one-per-kind samples. Canvas variants render through
+     ZQ.player.renderItem so their explore controls (canvas.controls) work as in a lesson. */
+  const CANVAS_EXTRAS = [
+    { name: 'area (re-cut)', about: 'Explore controls bound to grid.cols, split.rows and shade (fraction readout): the half stays shaded as the cuts change', spec: { kind: 'area',
+      params: { shape: 'rect', grid: [1, 2], size: [4, 2] }, state: { shade: 0.5, split: [1, 1] },
+      controls: [{ bind: 'grid.cols', min: 2, max: 12, step: 2, label: 'Pieces across' }, { bind: 'split.rows', min: 1, max: 4, step: 1, label: 'Cuts down' }, { bind: 'shade', min: 0, max: 1, step: 0.125, label: 'Shaded', format: 'fraction' }] } },
+    { name: 'area (circle, 12 sectors)', about: 'Grid lines stay visible inside the shading', spec: { kind: 'area', params: { shape: 'circle', sectors: 12 }, state: { shade: { a: ['c11', 'c12', 'c13'], b: ['c13', 'c14'] } } } },
+    { name: 'number-line (labels)', about: 'labelPos above, below, left and right; close points stacked; labels kept clear of jump arrows', spec: { kind: 'number-line',
+      params: { min: 0, max: 10, step: 1 },
+      state: { points: [{ id: 'a', x: 2, label: 'start' }, { id: 'b', x: 5, label: 'end' }, { id: 'c', x: 7, label: '$x$' }, { id: 'd', x: 7.5, label: 'close', colour: 2 }, { id: 'e', x: 9, label: 'below', labelPos: 'below' }, { id: 'f', x: 0.5, label: 'right', labelPos: 'right', colour: 3 }],
+        intervals: [{ id: 'i1', from: 6, to: 8, label: 'interval', labelPos: 'below' }], arrows: [{ id: 'j1', from: 2, to: 5, label: '+3' }] } } },
+  ];
+  const WIDGET_EXTRAS = [
+    { name: 'tap-regions (count)', kind: 'tap-regions', item: { question: 'Shade any 3 of the 4 parts.', canvas: { kind: 'area', params: { shape: 'rect', grid: [1, 4], size: [4, 1] }, state: {} },
+      widget: { kind: 'tap-regions', count: 3, among: ['c11', 'c12', 'c13', 'c14'], countWord: 'parts' } } },
+    { name: 'tap-regions (number-line points)', kind: 'tap-regions', item: { question: 'Tap the two numbers above 4.', canvas: { kind: 'number-line', params: { min: 0, max: 6, step: 1 }, state: { points: [{ id: 'p1', x: 1, label: 'a' }, { id: 'p2', x: 3, label: 'b' }, { id: 'p3', x: 4.5, label: 'c' }, { id: 'p4', x: 5.5, label: 'd' }] } },
+      widget: { kind: 'tap-regions', answer: ['p3', 'p4'], countWord: 'tapped' } } },
+  ];
+
   const pretty = (o) => JSON.stringify(o, null, 2);
 
   ZQ.screen({
@@ -183,6 +202,15 @@
         } catch (e) { console.error(`Canvas ${kind} failed`, e); host.innerHTML = `<p class="t-body ds-warn">${icon('flag', 'sm')}<span>This canvas threw: ${esc(e.message)}</span></p>`; }
       });
       Object.keys(CANVAS_SAMPLES).filter(k => !canvasKinds.includes(k)).forEach(k => cg.append(missing(k + ' (not registered)', 'renderer')));
+      CANVAS_EXTRAS.forEach(x => {
+        const el = card(x.name, x.about, x.spec);
+        cg.append(el);
+        try {
+          const h = Z.player.renderItem({ id: 'ds-x', canvas: JSON.parse(JSON.stringify(x.spec)) }, el.querySelector('.ds-card-b'), { mode: 'set', key: 'ds-' + x.name });
+          Z.mathify(el);
+          cleanups.push(() => { try { h.destroy(); } catch (e) { /* gone */ } });
+        } catch (e) { console.error(`Canvas ${x.name} failed`, e); }
+      });
 
       /* Widgets */
       const wg = root.querySelector('[data-gal="widget"]');
@@ -195,8 +223,10 @@
           Z.mathify(host);
         } catch (e) { console.error(`Widget ${kind} failed`, e); host.innerHTML = `<p class="t-body ds-warn">${icon('flag', 'sm')}<span>This widget threw: ${esc(e.message)}</span></p>`; }
       };
-      widgetKinds.forEach(kind => {
-        const item = WIDGET_SAMPLES[kind];
+      const variants = WIDGET_EXTRAS.filter(x => widgetKinds.includes(x.kind));
+      widgetKinds.concat(variants.map(x => x.name)).forEach(name => {
+        const extra = variants.find(x => x.name === name);
+        const kind = name, item = extra ? extra.item : WIDGET_SAMPLES[kind];
         if (!item) { wg.append(missing(kind, 'item')); return; }
         const lazy = kind === 'code';
         const el = card(kind, null, item.widget || item, `<div class="ds-acts">

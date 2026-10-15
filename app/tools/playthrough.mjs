@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 /* Playthrough (docs/PLAN.md section 11): plays every written lesson with its authored answers, then opens every
    other route once, and fails on any check that is not correct, any lesson that does not reach its completion
-   screen, and any console error.
+   screen, and any console error. With --sets it also plays every written level review and homework, and with
+   --exams every exam, through the set-mode test hook (window.ZQ.test), answering each item correctly.
 
    Usage (from the repository root or anywhere):
      node app/tools/playthrough.mjs                        every written lesson, then every route
+     node app/tools/playthrough.mjs --all                  lessons, routes, every review and homework, every exam
+     node app/tools/playthrough.mjs --sets                 every written level review and homework only
+     node app/tools/playthrough.mjs --exams                every exam in content/exams only (combine with --sets)
+     node app/tools/playthrough.mjs --set number-sense/review-1   one review or homework (repeatable)
+     node app/tools/playthrough.mjs --exam topic-1.5       one exam (repeatable)
      node app/tools/playthrough.mjs --lesson conditional/l3-shrinking     one lesson (add --routes for the routes too)
      node app/tools/playthrough.mjs --routes-only          only the routes
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
@@ -14,7 +20,10 @@
    Needs Playwright (the globally installed package is found too) and Chromium at /opt/pw-browsers/chromium, else
    Playwright's own. Starts `python3 -m http.server` on a free port serving app/. A fresh browser profile is used, setup
    is completed through its form, then each lesson opens at #lesson/<course>/<lesson> and is driven through
-   window.ZQ.test: answerCorrect(), check(), continue(), until current().kind is 'done'.
+   window.ZQ.test: answerCorrect(), check(), continue(), until current().kind is 'done'. Sets and exams use the same
+   four calls: current().kind is 'start' (continue() begins), 'item' (answer, check, continue), 'submit', then 'done';
+   a review must be recorded with every item right, a homework marked with every item right, an exam passed with
+   every question right.
 
    --local-cdn <dir>: for machines without access to cdn.jsdelivr.net. <dir> holds unpacked npm tarballs:
      <dir>/pyodide-0.27.7/package/...                      for /pyodide/v0.27.7/full/...
@@ -39,7 +48,7 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000 };
+const opt = { lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], all: false };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
@@ -49,10 +58,18 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--no-routes') opt.routes = false;
   else if (a === '--routes-only') { opt.routes = true; opt.lessonsOn = false; }
   else if (a === '--headed') opt.headed = true;
+  else if (a === '--sets') opt.sets = true;
+  else if (a === '--exams') opt.exams = true;
+  else if (a === '--set') { opt.setIds.push(next()); opt.sets = true; }
+  else if (a === '--exam') { opt.examIds.push(next()); opt.exams = true; }
+  else if (a === '--all') opt.all = true;
   else if (a === '--help' || a === '-h') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('*/')[0].replace(/^#!.*\n\/\* ?/, '')); process.exit(0); }
   else die(`unknown argument ${a} (try --help)`);
 }
-if (opt.routes == null) opt.routes = opt.lessons.length === 0;
+const onlySets = !opt.all && (opt.sets || opt.exams);
+if (opt.all) { opt.sets = true; opt.exams = true; }
+if (onlySets && !opt.lessons.length) opt.lessonsOn = false;
+if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets;
 if (opt.localCdn && !fs.existsSync(opt.localCdn)) die(`--local-cdn: ${opt.localCdn} does not exist`);
 if (opt.shots) fs.mkdirSync(opt.shots, { recursive: true });
 function die(msg) { console.error('playthrough: ' + msg); process.exit(2); }
@@ -84,7 +101,18 @@ const writtenLessons = () => {
       if (fs.existsSync(path.join(CONTENT, 'courses', c, l + '.json'))) out.push(`${c}/${l}`);
     }));
   }
-  return { lessons: out, courses: order.filter(c => fs.existsSync(path.join(CONTENT, 'courses', c, 'course.json'))) };
+  /* Written level reviews and homework, in course order: { route, id, kind } */
+  const sets = [];
+  for (const c of order) {
+    const cf = path.join(CONTENT, 'courses', c, 'course.json');
+    if (!fs.existsSync(cf)) continue;
+    (readJSON(cf).levels || []).forEach(lv => {
+      if (lv.review && fs.existsSync(path.join(CONTENT, 'courses', c, lv.review + '.json'))) sets.push({ id: `${c}/${lv.review}`, kind: 'review', route: `review/${c}/${lv.review}` });
+      if (lv.homework && fs.existsSync(path.join(CONTENT, 'courses', c, lv.homework + '.json'))) sets.push({ id: `${c}/${lv.homework}`, kind: 'homework', route: `homework/${c}/${lv.homework}` });
+    });
+  }
+  const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^(topic|stage)-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')).sort() : [];
+  return { lessons: out, courses: order.filter(c => fs.existsSync(path.join(CONTENT, 'courses', c, 'course.json'))), sets, exams };
 };
 
 /* ---------- Static server on a free port ---------- */
@@ -115,9 +143,13 @@ const cdnFile = (u) => {
 /* ---------- Run ---------- */
 const main = async () => {
   const { chromium } = await loadPlaywright();
-  const { lessons: allLessons, courses } = writtenLessons();
+  const { lessons: allLessons, courses, sets: allSets, exams: allExams } = writtenLessons();
   const lessons = opt.lessonsOn ? (opt.lessons.length ? opt.lessons : allLessons) : [];
   for (const l of opt.lessons) if (!allLessons.includes(l)) die(`--lesson ${l}: no such written lesson (the file must exist and be listed in its course.json)`);
+  for (const x of opt.setIds) if (!allSets.some(s2 => s2.id === x)) die(`--set ${x}: no such written review or homework (the file must exist and be named in its course.json)`);
+  for (const x of opt.examIds) if (!allExams.includes(x)) die(`--exam ${x}: no such exam in content/exams`);
+  const sets = opt.setIds.length ? allSets.filter(s2 => opt.setIds.includes(s2.id)) : opt.sets ? allSets : [];
+  const exams = opt.examIds.length ? opt.examIds : opt.exams ? allExams : [];
   const { proc, base } = await startServer();
   const browser = await chromium.launch({ headless: !opt.headed, ...(fs.existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {}) });
   const failures = [], consoleErrors = [];
@@ -172,7 +204,7 @@ const main = async () => {
     await shot('setup-3');
     await page.click('[data-next]');
     await page.waitForFunction(() => window.ZQ && ZQ.state && ZQ.state.flags.setupDone === true, null, { timeout: opt.timeout });
-    console.log(`setup done. ${lessons.length} lesson${lessons.length === 1 ? '' : 's'} to play.`);
+    console.log(`setup done. ${lessons.length} lesson${lessons.length === 1 ? '' : 's'}${sets.length ? `, ${sets.length} review and homework set${sets.length === 1 ? '' : 's'}` : ''}${exams.length ? `, ${exams.length} exam${exams.length === 1 ? '' : 's'}` : ''} to play.`);
 
     /* Lessons */
     for (const id of lessons) {
@@ -219,6 +251,75 @@ const main = async () => {
         console.log(`FAIL ${id}  threw`);
       }
       fails.forEach(f => failures.push(`#lesson/${id}: ${f}`));
+    }
+
+    /* Reviews, homework and exams through the set-mode hook. Each page installs window.ZQ.test on mount; wait for a hook
+       that is past 'loading', then: 'start' and 'submit' -> continue(); 'item' -> answerCorrect(), check() (a pending
+       long-form check is answered and checked again), continue(); until 'done'. */
+    const playSet = async (route, label, verify) => {
+      where = '#' + route;
+      const fails = [];
+      const t0 = Date.now();
+      let checks = 0;
+      try {
+        await page.evaluate(() => { delete window.ZQ.test; });
+        await go(route);
+        await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
+        let guard = 0, last = '', same = 0;
+        while (true) {
+          const c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind === 'done') break;
+          if (c.kind === 'empty') { fails.push('the set has no items'); break; }
+          const key = `${c.kind}:${c.screenIndex}:${c.state}:${c.paper ?? ''}`;
+          same = key === last ? same + 1 : 0; last = key;
+          if (same >= 4) { fails.push(`stuck at ${c.kind} ${c.screenIndex} (state ${c.state})`); break; }
+          if (++guard > 400) { fails.push('more than 400 steps without reaching the end'); break; }
+          if (opt.shots && same === 0) await shot(`${label}-${c.kind}-${String(c.screenIndex).padStart(2, '0')}`);
+          if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
+            const applied = await page.evaluate(() => ZQ.test.answerCorrect());
+            let r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null, pending: !!r.pending } : null; });
+            if (r && r.pending) {
+              await page.evaluate(() => ZQ.test.answerCorrect());
+              r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null, pending: !!r.pending } : null; });
+            }
+            checks++;
+            if (!r) fails.push(`item ${c.screenIndex + 1}${c.paper != null ? ` (paper ${c.paper + 1})` : ''}: ${applied === false ? 'answerCorrect() could not apply the authored answer' : 'nothing to check'}`);
+            else if (!r.ok) fails.push(`item ${c.screenIndex + 1}${c.paper != null ? ` (paper ${c.paper + 1})` : ''}: not correct, key ${JSON.stringify(r.key)}`);
+          }
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(120);
+        }
+        const v = await verify();
+        if (v.fail) fails.push(v.fail);
+        await shot(`${label}-done`);
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} ${label}  ${checks} items, ${v.note || ''}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log(`FAIL ${label}  threw`);
+      }
+      fails.forEach(f => failures.push(`#${route}: ${f}`));
+    };
+    for (const st of sets) {
+      await playSet(st.route, st.id, async () => {
+        if (st.kind === 'review') {
+          const r = await page.evaluate((k) => ZQ.state.reviews[k] || null, st.id);
+          if (!r) return { fail: 'the review was not recorded' };
+          return { fail: r.score !== r.items || !r.items ? `recorded ${r.score} of ${r.items}` : null, note: `recorded ${r.score} of ${r.items}` };
+        }
+        const h = await page.evaluate((k) => ZQ.state.homework[k] || null, st.id);
+        if (!h || !h.submitted) return { fail: 'the homework was not submitted' };
+        const c = await page.evaluate(() => ZQ.test.current());
+        const note = `marked ${h.score} of ${h.items} right, ${c.marks} of ${c.of} marks`;
+        return { fail: h.score !== h.items || !h.items ? note : null, note };
+      });
+    }
+    for (const ex of exams) {
+      await playSet(`exam/${ex}`, ex, async () => {
+        const c = await page.evaluate(() => ZQ.test.current());
+        if (c.kind !== 'done') return { fail: 'the result page was not reached' };
+        const note = `scored ${c.score} of ${c.total}, ${c.passed ? 'passed' : 'not passed'}`;
+        return { fail: !c.passed || c.score !== c.total || !c.total ? note : null, note };
+      });
     }
 
     /* Every other route once */
