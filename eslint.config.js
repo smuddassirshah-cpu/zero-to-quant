@@ -74,6 +74,18 @@ const hostGlobals = [
 ].flatMap((line) => line.split(' '));
 const hostMessage =
   'This package runs in Node and the browser alike (ARCHITECTURE.md 4.3): receive it as a parameter';
+// zq/no-nondeterminism (ARCHITECTURE.md 10.4): code whose numbers are shown or graded. A package's own
+// tests are left out: nothing graded runs there, and the dmath speed test reads the clock [our choice].
+// Transcendental Math is refused too in dmath, which replaces it, in @zq/gen, whose helpers a generator's
+// `build` calls, and in the whole generator module (the rule's decision notes give why).
+const deterministic = ['src/widgets/**/logic.ts', 'packages/{mathcore,graders,gen-kit}/**/*.{ts,tsx,js,mjs}'];
+const generators = 'content/generators/**/*.{ts,js,mjs}';
+const exactOnly = [
+  generators,
+  'packages/gen-kit/**/*.{ts,tsx,js,mjs}',
+  'packages/mathcore/src/dmath*.{ts,js,mjs}',
+];
+const tests = ['packages/*/test/**', '**/*.test.ts'];
 const layers = [
   {
     name: 'a test',
@@ -265,6 +277,16 @@ export default defineConfig([
     // because widget logic and scene files produce render data, and `.js` must not be a way round.
     files: ['src/**/*.{ts,tsx,js,mjs}'],
     rules: { 'zq/no-forbidden-apis': 'error', 'zq/no-colour-literals': 'error' },
+  },
+  {
+    files: [...deterministic, generators],
+    ignores: tests,
+    rules: { 'zq/no-nondeterminism': 'error' },
+  },
+  {
+    files: exactOnly,
+    ignores: tests,
+    rules: { 'zq/no-nondeterminism': ['error', { transcendental: true }] },
   },
   {
     files: ['{src,packages,tools,proxy,tests}/**/*.{ts,tsx,js,mjs}', '*.config.{ts,js}'],
