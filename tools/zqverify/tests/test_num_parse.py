@@ -8,8 +8,10 @@ import dataclasses
 import json
 from fractions import Fraction
 
+import string
+
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import assume, example, given, strategies as st
 
 from zqverify import num_parse, rational
 from zqverify.num_parse import FORMS, NARROW, REASONS, Failure, Number, code_units, normalise, out, parse
@@ -240,12 +242,13 @@ UNITS: list[tuple[str, tuple[str, ...], str, Fraction]] = [
     ("250 bp", ("bp", "%"), "bp", Fraction(250)),
     ("2 1/3 s", ("s",), "s", Fraction(7, 3)),
     ("5x", ("x",), "x", Fraction(5)),
-    ("5\u03c9", ("\u03a9",), "\u03a9", Fraction(5)),
-    ("5k", ("\u212a",), "\u212a", Fraction(5)),
+    ("12 BP", ("bp",), "bp", Fraction(12)),
+    ("12 bp", ("BP",), "BP", Fraction(12)),
     ("5\u00df", ("\u00df",), "\u00df", Fraction(5)),
     ("5\u0130", ("\u0130",), "\u0130", Fraction(5)),
-    ("5\U00010428", ("\U00010400",), "\U00010400", Fraction(5)),
-    ("5 \u03c3\u03b1\u03c2", ("\u03a3\u0391\u03a3",), "\u03a3\u0391\u03a3", Fraction(5)),
+    ("5\u212a", ("\u212a",), "\u212a", Fraction(5)),
+    ("5\ua7cb", ("\ua7cb",), "\ua7cb", Fraction(5)),
+    ("5\U00010400", ("\U00010400",), "\U00010400", Fraction(5)),
     ("5 €", ("$", "€"), "€", Fraction(5)),
 ]
 
@@ -269,8 +272,38 @@ def test_rule_5_one_unit_only_and_nothing_else_is_tried() -> None:
     assert number("25%", ("%",)).form == "integer" and number("2.5 %", ("bp", "%")).form == "decimal"
 
 
+NO_ASCII_CASE_PAIR = [
+    ("5\ua7cb", ("\u0264",)),
+    ("5\u0264", ("\ua7cb",)),
+    ("5k", ("\u212a",)),
+    ("5\u212a", ("k",)),
+    ("5\u212a", ("K",)),
+    ("5\u03c3", ("\u03a3",)),
+    ("5\u03a3", ("\u03c3",)),
+    ("5\u03c9", ("\u03a9",)),
+    ("5\u00e9", ("\u00c9",)),
+    ("5\u0131", ("I",)),
+    ("5\U00010428", ("\U00010400",)),
+    ("5 \u03c3\u03b1\u03c2", ("\u03a3\u0391\u03a3",)),
+]
+
+
+@pytest.mark.parametrize(("text", "units"), NO_ASCII_CASE_PAIR)
+def test_rule_5_no_case_pair_outside_ascii_matches(text: str, units: tuple[str, ...]) -> None:
+    assert reason(text, units) == "syntax"
+
+
+def test_rule_5_compares_code_units_so_a_lone_or_cut_surrogate_is_itself() -> None:
+    assert reason("5\ud800") == reason("\udc005") == "syntax"
+    assert number("5\ud800", ("\ud800",)).unit == "\ud800"
+    assert number("\udc005", ("\udc00",)).unit == "\udc00"
+    assert reason("5\U0001f600", ("\ude00",)) == reason("\U0001f6005", ("\ud83d",)) == "syntax"
+    assert reason("5\ud83d", ("\U0001f600",)) == "syntax"
+    assert number("5\U0001f600", ("\U0001f600",)).unit == "\U0001f600"
+
+
 def test_rule_5_a_unit_longer_than_the_text_never_matches() -> None:
-    """7.2 is silent here, so this is the twin's reading: the text lacks the unit's number of code units."""
+    """7.2 rule 5: the text lacks the unit's number of code units, so a shorter unit is tried."""
     assert number("5\u0130", ("5i\u0307", "\u0130")).unit == "\u0130"
     assert number("\u01305", ("i\u03075", "\u0130")).unit == "\u0130"
     assert reason("\u0130", ("i\u0307",)) == "syntax"
@@ -500,7 +533,12 @@ def plain_numbers(draw: st.DrawFn) -> tuple[str, Fraction]:
     return f"{a} {n}/{d}", int(a) + Fraction(n, d)
 
 
-@given(TEXTS, st.lists(st.sampled_from(UNIT_NAMES) | st.text(max_size=3), max_size=3))
+@given(
+    TEXTS | plain_numbers().map(lambda case: case[0]),
+    st.lists(st.sampled_from(UNIT_NAMES) | st.text(max_size=3), max_size=3),
+)
+@example("4/6", [])
+@example("-2 1/3", ["s"])
 def test_every_text_reads_or_fails_with_one_of_the_six_reasons(text: str, units: list[str]) -> None:
     result = parse(text, units)
     if isinstance(result, Failure):
@@ -514,6 +552,19 @@ def test_every_text_reads_or_fails_with_one_of_the_six_reasons(text: str, units:
         w, n, d = result.typed
         assert abs(result.value) == w + Fraction(n, d) and d > 0 and result.figures == 0
         assert w == 0 if result.form == "fraction" else 0 < n < d
+
+
+@given(plain_numbers(), st.text(string.ascii_letters, min_size=1, max_size=4), st.booleans())
+def test_a_listed_ascii_unit_matches_in_any_ascii_case(case: tuple[str, Fraction], unit: str, swap: bool) -> None:
+    result = number(f"{case[0]} {unit.swapcase() if swap else unit}", (unit,))
+    assert (result.unit, result.value) == (unit, case[1])
+
+
+@given(st.characters(min_codepoint=0x80).filter(lambda c: c.swapcase() != c))
+def test_a_cased_letter_outside_ascii_never_matches_its_other_case(c: str) -> None:
+    other = c.swapcase()
+    assume(c not in other)
+    assert reason("5" + other, (c,)) == "syntax"
 
 
 @given(st.text(min_size=TOO_LONG, max_size=TOO_LONG + 40))

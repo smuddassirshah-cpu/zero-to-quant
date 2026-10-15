@@ -8,9 +8,9 @@ line's `out`.
 Decision notes:
 - Code units. 7.2 measures lengths in UTF-16 code units, so `parse` first rewrites the text with each astral code
   point split into its surrogate pair (`code_units`); rule 1's length and rule 5's unit lengths and slices then
-  count what JavaScript counts. Rule 5 joins the pairs back before str.lower, Unicode's default mapping on code
-  points, as toLowerCase applies it. A unit with more code units than the text never matches it: 7.2 compares
-  "as many code units of the text as the unit has", which such a text does not have [our choice; 7.2 is silent].
+  count what JavaScript counts. Rule 5 compares code units after mapping A to Z to a to z and nothing else, so no
+  engine's Unicode version enters, and a lone surrogate, or the half of a pair a unit's window cuts, compares as
+  itself. A unit with more code units than the text never matches it.
 - A hand-written scanner over indices: no grammar in regular expressions, no eval or exec. Every token of rules 2
   to 8 is a listed BMP character, and each rule is one left-to-right pass, so a parse is O(n). The one regular
   expression collapses rule 2.5's runs of spaces and tabs.
@@ -26,8 +26,7 @@ Decision notes:
 The golden file holds the fixed cases (every example of 7.2, each typed with every narrow space where the section's
 examples stand a space for one, and the bounds) and random cases drawn by `random.Random` seeded with the module
 name: well-formed numbers of every form with signs, dashes, units and spaces, a third of them mutated by a few
-inserted, deleted or replaced characters. 7.2 names the file and its fields, not a command; from the repository
-root, as for the other twins, rewrite it with:
+inserted, deleted or replaced characters. From the repository root, rewrite it with the command 7.2 names:
 
     PYTHONPATH=tools uv run --project tools/py --locked python -m zqverify.num_parse
 """
@@ -37,6 +36,7 @@ from __future__ import annotations
 import json
 import random
 import re
+import string
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from fractions import Fraction
@@ -59,6 +59,7 @@ TIMES = frozenset("\u00d7\u00b7\u22c5")
 BEFORE_SLASH = NARROW_SET | {" ", "\t"}
 ENDS = " \t\n\v\f\r"
 SPACES_AND_TABS = re.compile("[ \t]+")
+ASCII_LOWER = str.maketrans(string.ascii_uppercase, string.ascii_lowercase)
 
 
 @dataclass(frozen=True)
@@ -88,9 +89,9 @@ def _pair(offset: int) -> str:
     return chr(0xD800 + (offset >> 10)) + chr(0xDC00 + (offset & 0x3FF))
 
 
-def _lower(units: str) -> str:
-    """Unicode's default lower-casing of a code-unit string; a lone surrogate stays as it is."""
-    return units.encode("utf-16-le", "surrogatepass").decode("utf-16-le", "surrogatepass").lower()
+def _fold(units: str) -> str:
+    """Rule 5's case rule on a code-unit string: A to Z become a to z, and every other code unit stays."""
+    return units.translate(ASCII_LOWER)
 
 
 def _digit(c: str) -> bool:
@@ -154,13 +155,13 @@ def strip_unit(t: str, units: Iterable[str]) -> tuple[str | None, str]:
     """Rule 5: the unit as listed and the text without it, or None and the text."""
     for unit in sorted((u for u in units if u), key=lambda u: -len(code_units(u))):
         spelt = code_units(unit)
-        k, key = len(spelt), _lower(spelt)
+        k, key = len(spelt), _fold(spelt)
         if len(t) < k:
             continue
-        if _lower(t[:k]) == key:
+        if _fold(t[:k]) == key:
             rest = t[k:]
             return unit, rest[1:] if rest[:1] == " " else rest
-        if _lower(t[len(t) - k :]) == key:
+        if _fold(t[len(t) - k :]) == key:
             rest = t[: len(t) - k]
             return unit, rest[:-1] if rest[-1:] == " " else rest
     return None, t
@@ -463,7 +464,31 @@ FIXED: list[tuple[str, tuple[str, ...]]] = [
     ("1/2 s", ("s",)),
     ("2 1/3 s", ("s",)),
     ("3.2e5 s", ("s",)),
-    # 7.2 is silent on a unit with more code units than the text: the twin never matches one, so a shorter is tried.
+    # Case: A to Z against a to z only, so no pair outside ASCII matches, whatever Unicode version maps it.
+    ("12 BP", ("bp",)),
+    ("12 bp", ("BP",)),
+    ("bP 12", ("Bp",)),
+    ("5K", ("k",)),
+    ("5\ua7cb", ("\u0264",)),
+    ("5\u0264", ("\ua7cb",)),
+    ("5\ua7cb", ("\ua7cb",)),
+    ("5\u212a", ("k",)),
+    ("5\u212a", ("K",)),
+    ("5\u212a", ("\u212a",)),
+    ("5\u03c3", ("\u03a3",)),
+    ("5\u03a3", ("\u03c3",)),
+    ("5\u00e9", ("\u00c9",)),
+    ("5\U00010400", ("\U00010400",)),
+    # Lone surrogates in the text and in a unit, and unit windows that cut an astral pair.
+    ("5\ud800", NO_UNITS),
+    ("\udc005", NO_UNITS),
+    ("5\ud800", ("\ud800",)),
+    ("\udc005", ("\udc00",)),
+    ("5\U0001f600", ("\ude00",)),
+    ("\U0001f6005", ("\ud83d",)),
+    ("5\ud83d", ("\U0001f600",)),
+    ("5\U0001f600", ("\U0001f600",)),
+    # A unit with more code units than the text never matches, so a shorter one is tried.
     ("5\u0130", ("5i\u0307", "\u0130")),
     ("\u01305", ("i\u03075", "\u0130")),
     ("5 \u0130", ("5 i\u0307", "\u0130")),
