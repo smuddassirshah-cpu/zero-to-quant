@@ -5,7 +5,8 @@
    grid (the cells are rebuilt; a fractional shade then lands on the new cells), state.split draws dashed cut lines.
    Explore controls bind to them through setParam: "split" (the number of columns cut, or sectors on a circle),
    "split.rows", "split.cols", "grid" (columns, or sectors), "grid.rows", "grid.cols", and "shade" (a fraction). Grid lines inside shaded cells
-   are drawn again over the shading so they stay visible. Params and state: engine/canvas/README.md. */
+   are drawn again over the shading so they stay visible. Text on a piece: labels keyed by cell id, in params.labels
+   or state.labels ({ "c11": "3n" }). Params and state: engine/canvas/README.md. */
 (function () {
   'use strict';
   const Z = window.ZQ, C = Z.canvas, { svg, attrs, lerp } = C;
@@ -47,7 +48,8 @@
     g.append(defs);
 
     const cellG = svg('g', { class: 'cv-acells' }), shadeG = svg('g', { class: 'cv-shades' }), lineG = svg('g', { class: 'cv-alines' }), inG = svg('g', { class: 'cv-ainner' }), splitG = svg('g', { class: 'cv-split' }), ptG = svg('g', { class: 'cv-apoints' }), labG = svg('g', { class: 'cv-alabels' });
-    g.append(cellG, shadeG, lineG, inG, splitG, ptG, labG);
+    const cellLabG = svg('g', { class: 'cv-acelllabels' });
+    g.append(cellG, shadeG, lineG, inG, splitG, cellLabG, ptG, labG);
     const cells = new Map();
     let order = [], n = 0, gridKey = '';
     /* Cells and grid lines for rows x cols (a circle: sectors); called again when state.grid re-cuts the shape */
@@ -143,6 +145,19 @@
           else { for (let j = 1; j < c; j++) splitG.append(svg('line', { class: 'cv-splitline', x1: ox + w * j / c, x2: ox + w * j / c, y1: oy, y2: oy + h })); for (let i = 1; i < r; i++) splitG.append(svg('line', { class: 'cv-splitline', y1: oy + h * i / r, y2: oy + h * i / r, x1: ox, x2: ox + w })); }
           if (!instant) splitG.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' });
         }
+      }
+      /* text on a piece: params.labels and state.labels keyed by cell id ({ "c11": "3n" }); the state wins */
+      const pieceText = Object.assign({}, ...[L, st.labels || {}].map(m => Object.fromEntries(Object.entries(m || {}).filter(([k]) => cells.has(k)))));
+      const ptKey = JSON.stringify(pieceText) + gridKey;
+      if (cellLabG.dataset.key !== ptKey) {
+        cellLabG.dataset.key = ptKey;
+        cellLabG.replaceChildren(...Object.entries(pieceText).filter(([, t]) => t != null && t !== '').map(([cid, t]) => {
+          const c = cells.get(cid);
+          let x, y;
+          if (shape === 'circle') { const a = (ang(c.j - 1) + ang(c.j)) / 2; x = ccx + R * 0.62 * Math.cos(a); y = ccy + R * 0.62 * Math.sin(a); }
+          else { const b = cellBox(c.i, c.j); x = b.x + b.w / 2; y = b.y + b.h / 2; }
+          return C.label(x, y, t, { tex: 'auto', cls: 'cv-halo cv-alabel', w: 90, h: 30 });
+        }));
       }
       /* points: [x, y] or [[x, y], ...] or [{ id, x, y }] in unit coordinates, y up */
       const raw = st.point == null ? [] : Array.isArray(st.point) && typeof st.point[0] === 'number' ? [st.point] : [].concat(st.point);
