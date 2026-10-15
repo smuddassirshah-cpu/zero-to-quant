@@ -6,10 +6,16 @@
 //   included, and every widget's parse preview reads a typed number the same way.
 // - Normalisation is 7.2's: U+2212 and the dashes become "-", "×" and "·" (and the dot operator U+22C5)
 //   become "*". A thin or no-break space is removed only where a comma would group digits (a first group of
-//   1 to 3 digits, then groups of exactly 3, as in 1,000); anywhere else it is an ordinary space, so 2 1/3
-//   typed with a no-break space stays a mixed number [our choice, adversarial review of 8 October 2026].
-//   Runs of spaces and tabs collapse to one space and ASCII whitespace is trimmed [our choice]. Lengths are
-//   UTF-16 code units, JavaScript's own.
+//   1 to 3 digits, then groups of exactly 3, as in 1,000), and never inside another number or an exponent
+//   (after "e", "E" or "^" and an optional sign, so "3.2e1 000" fails); anywhere else it is an ordinary
+//   space, so 2 1/3 typed with a no-break space stays a mixed number [our choice, adversarial review of 8
+//   October 2026]. Runs of spaces and tabs collapse to one space and ASCII whitespace is trimmed [our
+//   choice]. Lengths are UTF-16 code units, JavaScript's own.
+// - A run grouped by narrow spaces and then "/" (after an optional space) fails as `syntax`: "2 125/250"
+//   typed with a no-break space reads as the grouped 2125/250 and as the mixed 2 125/250, both valid and
+//   different, and a nudge costs no attempt where a wrong value does (B47) [our choice, review of 9 October
+//   2026]. The test is the shape alone, so "12 345/7" fails too, though its mixed reading is improper, and
+//   so does "1 000/0", which is `syntax`, not `zero-denominator`.
 // - Grouping commas: a first group of 1 to 3 digits not starting with 0, then groups of exactly 3 (7.2's "a
 //   comma between digit groups of three"); "0,500" is therefore a decimal comma, not five hundred [our
 //   choice]. A string that fails but parses with its one comma read as a point fails as `decimal-comma`,
@@ -59,14 +65,20 @@ const INT = String.raw`(?:[1-9]\d{0,2}(?:,\d{3})+|\d+)`;
 const MIXED = new RegExp(String.raw`^(${INT}) (${INT}) ?/ ?(${INT})$`);
 const FRACTION = new RegExp(String.raw`^(${INT}) ?/ ?(${INT})$`);
 const DECIMAL = new RegExp(String.raw`^(${INT})?(?:\.(\d*))?(?:[eE]([+-]?\d+)| ?[*xX] ?10\^([+-]?\d+))?$`);
-const NARROW = /[\u00A0\u2007\u2009\u200A\u202F]/g;
-// A digit grouping spelled with narrow spaces: the shape of a grouped INT, not inside another number.
-const NARROW_GROUPED = new RegExp(String.raw`(?<![\d.,])[1-9]\d{0,2}(?:${NARROW.source}\d{3})+(?!\d)`, 'g');
+const DASHES = String.raw`\u2010-\u2015\u2212\uFE58\uFE63\uFF0D`;
+const NARROWS = String.raw`\u00A0\u2007\u2009\u200A\u202F`;
+const DASH = new RegExp(`[${DASHES}]`, 'g');
+const NARROW = new RegExp(`[${NARROWS}]`, 'g');
+// A digit grouping spelled with narrow spaces: the shape of a grouped INT, not inside another number or an
+// exponent. The sign class takes the raw dashes too, so the slash test below can run before normalising.
+const RUN = String.raw`(?<![\d.,]|[eE^][-+${DASHES}]?)[1-9]\d{0,2}(?:[${NARROWS}]\d{3})+(?!\d)`;
+const NARROW_GROUPED = new RegExp(RUN, 'g');
+const GROUPED_SLASH = new RegExp(String.raw`${RUN}[ \t${NARROWS}]*/`);
 
 /** CONTENT-FORMAT.md 7.2's normalisation; runs of spaces collapsed, ASCII whitespace trimmed. */
 export const normalise = (text: string): string =>
   text
-    .replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
+    .replace(DASH, '-')
     .replace(NARROW_GROUPED, (run) => run.replace(NARROW, ''))
     .replace(NARROW, ' ')
     .replace(/[\u00D7\u00B7\u22C5]/g, '*')
@@ -115,6 +127,7 @@ export function parseNumber(input: string, units: readonly string[] = []): NumPa
   if (input.length > INPUT_LIMIT) return { ok: false, reason: 'too-long' };
   const text = normalise(input);
   if (text === '') return { ok: false, reason: 'empty' };
+  if (GROUPED_SLASH.test(input)) return { ok: false, reason: 'syntax' };
   const sign = /^[-+] ?/.exec(text)?.[0] ?? '';
   let rest = text.slice(sign.length);
   let unit: string | null = null;
