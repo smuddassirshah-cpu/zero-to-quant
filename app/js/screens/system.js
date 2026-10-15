@@ -212,7 +212,9 @@
           const out = el.querySelector('.ds-out');
           if (e.target.closest('[data-load]')) { e.target.closest('[data-load]').hidden = true; el.querySelectorAll('[data-fill], [data-check], [data-reset]').forEach(b => { b.hidden = false; }); mountWidget(el, kind, item); }
           else if (e.target.closest('[data-reset]')) mountWidget(el, kind, item);
-          else if (e.target.closest('[data-fill]') && el._h) { const ok = el._h.answerCorrect(); out.textContent = ok === false ? 'This widget could not apply its answer.' : 'Answer applied.'; }
+          else if (e.target.closest('[data-fill]') && el._h) { const ok = el._h.answerCorrect();
+            if (ok === false) { el._h.reveal(); out.className = 't-caption ds-out is-no'; out.textContent = 'This widget has no way to apply its authored answer (answerCorrect returned false), so it shows the solution instead.'; }
+            else { out.className = 't-caption ds-out'; out.textContent = 'Answer applied.'; } }
           else if (e.target.closest('[data-check]') && el._h) {
             out.textContent = 'Checking…';
             try {
