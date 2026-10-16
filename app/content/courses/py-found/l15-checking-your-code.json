@@ -967,7 +967,7 @@
     {
       "id": "q-edge",
       "difficulty": 3,
-      "prose": "`annualised_vol(returns)` uses `statistics.stdev`. A colleague adds an edge-case test.",
+      "prose": "`vol(returns)` is `statistics.stdev(returns) * math.sqrt(252)`. A colleague adds an edge-case test.",
       "question": "Which assert is a correct edge-case test?",
       "widget": {
         "kind": "choice",
@@ -975,32 +975,32 @@
         "options": [
           {
             "id": "right",
-            "text": "`assert math.isclose(annualised_vol([0.004, 0.004]), 0.0, abs_tol=1e-12)`",
+            "text": "`assert vol([0.004, 0.004]) < 1e-12`",
             "correct": true
           },
           {
             "id": "one",
-            "text": "`assert annualised_vol([0.004]) == 0.0`",
+            "text": "`assert vol([0.004]) == 0.0`",
             "why": "With one return `stdev` raises `StatisticsError`, so this assert never gets to compare."
           },
           {
             "id": "eq",
-            "text": "`assert annualised_vol([0.01, -0.01]) == 0.2245`",
+            "text": "`assert vol([0.01, -0.01]) == 0.2245`",
             "why": "0.2245 is rounded, and `==` demands every digit. Use `math.isclose` with the exact value."
           },
           {
             "id": "pos",
-            "text": "`assert annualised_vol([0.01, -0.01]) > 0`",
+            "text": "`assert vol([0.01, -0.01]) > 0`",
             "why": "True, but it would also pass with `pstdev` or 365 days. A test should pin the value."
           }
         ]
       },
       "feedback": {
-        "correct": "Identical returns have zero spread, checked with a tolerance.",
+        "correct": "Identical returns have zero spread, so the vol is 0.",
         "generic": "Not quite right. A good test fails on wrong code and passes on right code."
       },
       "explain": {
-        "text": "Two equal returns are the smallest valid input, and their volatility is exactly 0. `abs_tol` is needed because a relative tolerance around 0 accepts nothing but exact zero."
+        "text": "Two equal returns are the smallest valid input, and their volatility is 0. Comparing with a tiny bound, or `math.isclose(..., 0.0, abs_tol=1e-12)`, keeps the test safe from float error."
       }
     }
   ]

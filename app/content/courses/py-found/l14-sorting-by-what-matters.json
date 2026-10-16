@@ -112,16 +112,31 @@
     {
       "type": "problem",
       "difficulty": 1,
-      "prose": "To compute returns, the closes must be in time order. A first attempt sorts the date strings.\n\n```python\ndates = [\"30/03/2026\", \"02/04/2026\", \"27/03/2026\", \"01/04/2026\", \"31/03/2026\"]\nprint(sorted(dates))\n```",
+      "prose": "To compute returns, the closes must be in time order. A first attempt sorts three of the date strings.\n\n```python\ndates = [\"30/03/2026\", \"02/04/2026\", \"27/03/2026\"]\nprint(sorted(dates))\n```",
       "canvas": {
-        "kind": "array",
+        "kind": "table",
         "params": {
-          "cells": [
-            "30/03/2026",
-            "02/04/2026",
-            "27/03/2026",
-            "01/04/2026",
-            "31/03/2026"
+          "columns": [
+            "Position",
+            "Text in the list"
+          ],
+          "rows": [
+            [
+              "0",
+              "30/03/2026"
+            ],
+            [
+              "1",
+              "02/04/2026"
+            ],
+            [
+              "2",
+              "27/03/2026"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
           ]
         },
         "state": {
@@ -135,12 +150,12 @@
         "options": [
           {
             "id": "time",
-            "text": "`['27/03/2026', '30/03/2026', '31/03/2026', '01/04/2026', '02/04/2026']`",
+            "text": "`['27/03/2026', '30/03/2026', '02/04/2026']`",
             "why": "You expected `sorted` to read them as dates. It sees text and compares it character by character."
           },
           {
             "id": "right",
-            "text": "`['01/04/2026', '02/04/2026', '27/03/2026', '30/03/2026', '31/03/2026']`",
+            "text": "`['02/04/2026', '27/03/2026', '30/03/2026']`",
             "correct": true
           },
           {
@@ -162,38 +177,37 @@
         },
         {
           "rung": "point",
-          "text": "The first characters are `3`, `0`, `2`, `0`, `3`. Which come first?",
+          "text": "The first characters are `3`, `0` and `2`. Which comes first?",
           "highlight": [
-            "c1",
-            "c3"
+            "r1c1"
           ]
         },
         {
           "rung": "step",
-          "text": "`0` comes before `2` and `3`, so both April dates go first. Then `27`, `30`, `31`."
+          "text": "`0` comes before `2` and `3`, so the April date goes first. Then `27`, then `30`."
         }
       ],
       "feedback": {
         "correct": "Text sorts by its first character, and here that is the day.",
         "generic": "Not quite right. Compare the strings character by character, as a dictionary would.",
         "byKey": {
-          "time": "You expected `sorted` to read them as dates. It sees text, and `'01/04'` beats `'27/03'` on the first character."
+          "time": "You expected `sorted` to read them as dates. It sees text, and `'02/04'` beats `'27/03'` on the first character."
         }
       },
       "explain": {
-        "text": "Text compares from the left, so the day decides the order before the month is read. The April dates jump ahead of March. We need Python to see dates, not text.",
+        "text": "Text compares from the left, so the day decides the order before the month is read. The April date jumps ahead of March. We need Python to see dates, not text.",
         "canvas": {
-          "cells": [
-            "01/04/2026",
-            "02/04/2026",
-            "27/03/2026",
-            "30/03/2026",
-            "31/03/2026"
-          ],
-          "highlight": [
-            "c0",
-            "c1"
-          ]
+          "values": {
+            "r0c1": "02/04/2026",
+            "r1c1": "27/03/2026",
+            "r2c1": "30/03/2026"
+          },
+          "highlight": {
+            "cells": [
+              "r0c1"
+            ]
+          },
+          "caption": "After sorted(dates): April first"
         }
       }
     },
@@ -644,7 +658,7 @@
     {
       "type": "ladder",
       "difficulty": 2,
-      "prose": "Each pair is a date and that day's return. A risk check wants the two worst days.\n\n```python\ndays = [(\"30/03\", 0.012), (\"31/03\", 0.0128), (\"01/04\", -0.0263), (\"02/04\", 0.0331)]\nworst = sorted(days, key=lambda day: day[1])[:2]\nprint([d for d, r in worst])\n```",
+      "prose": "Each pair is a date and that day's return. A risk check wants the two worst days.\n\n```python\ndays = [(\"30/03\", 0.012), (\"31/03\", 0.0128),\n        (\"01/04\", -0.0263), (\"02/04\", 0.0331)]\nworst = sorted(days, key=lambda day: day[1])[:2]\nprint([d for d, r in worst])\n```",
       "canvas": {
         "kind": "table",
         "params": {
@@ -744,25 +758,25 @@
       "type": "generalise",
       "difficulty": 2,
       "prose": "`sorted(items, key=f)` orders the items by $f(\\text{item})$ and hands back the items themselves. You sorted rows by their date and days by their return. Returns then come from neighbouring closes: $$r_t = \\frac{P_t}{P_{t-1}} - 1$$",
-      "question": "Which line lists the rows newest first?",
+      "question": "`row_date(row)` returns `to_date(row[\"Date\"])`. Which line lists the rows newest first?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "right",
-            "text": "`sorted(rows, key=lambda row: to_date(row[\"Date\"]), reverse=True)`",
+            "text": "`sorted(rows, key=row_date, reverse=True)`",
             "correct": true
           },
           {
             "id": "text",
-            "text": "`sorted(rows, key=lambda row: row[\"Date\"], reverse=True)`",
+            "text": "`sorted(rows, key=lambda r: r[\"Date\"], reverse=True)`",
             "why": "That sorts the date text, so the day still decides the order before the month."
           },
           {
             "id": "minus",
-            "text": "`sorted(rows, key=lambda row: -row[\"Date\"])`",
-            "why": "You cannot negate text. `reverse=True` is how to flip the order."
+            "text": "`sorted(rows, key=lambda r: -row_date(r))`",
+            "why": "A date cannot be negated, so this raises `TypeError`. `reverse=True` is how to flip the order."
           },
           {
             "id": "rev",
@@ -776,7 +790,7 @@
         "generic": "Not quite right. Keep the date key and flip the order."
       },
       "explain": {
-        "text": "The key decides what is compared and `reverse=True` flips the result. Many vendor files arrive newest first, so check the order before computing a single return."
+        "text": "The key decides what is compared and `reverse=True` flips the result. A key can be any function name, not only a `lambda`. Many vendor files arrive newest first, so check the order before computing a single return."
       }
     },
     {
