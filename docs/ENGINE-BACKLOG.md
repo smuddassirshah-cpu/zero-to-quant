@@ -283,3 +283,10 @@ Raised later (terminal level 1):
 98. Canvas captions: render inline code (backticks) and bold like prose.
 99. `graph`: shrink node labels to fit or auto-size `nodeRadius` to the longest label.
 100. `grid`: optional per-row horizontal offset (`rowOffsets`) for staggered layouts such as keyboards.
+
+Raised later (terminal level 2):
+
+101. Validator: a `generalise` screen in a programming course may satisfy the formula rule with a fenced code block instead of KaTeX.
+102. `boxes`: a wide labelled `card` (file-name width) item kind.
+103. `graph`: add and remove nodes and edges through state (`nodes`/`edges` patches) with enter and exit animation.
+104. Inline renderer: `$` and `*` inside backticks are literal (parse code spans first); captions render code spans.
