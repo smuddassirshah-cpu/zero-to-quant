@@ -1,0 +1,416 @@
+{
+  "id": "homework-1",
+  "course": "numpy-pandas",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-annual-vol",
+      "difficulty": 4,
+      "skills": [
+        "np-arrays",
+        "np-broadcast"
+      ],
+      "title": "Volatility from prices",
+      "prose": "Given a price series, return its annualised volatility: the sample standard deviation (`ddof=1`) of the daily simple returns, times $\\sqrt{252}$. Return a single float.",
+      "question": "Complete `annualised_vol` without a loop.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef annualised_vol(prices):\n    prices = np.asarray(prices, dtype=float)\n    returns = ...\n    vol = ...\n    return float(vol)\n",
+        "solution": "import numpy as np\n\ndef annualised_vol(prices):\n    prices = np.asarray(prices, dtype=float)\n    returns = prices[1:] / prices[:-1] - 1\n    vol = np.std(returns, ddof=1) * np.sqrt(252)\n    return float(vol)\n",
+        "tests": [
+          {
+            "call": "annualised_vol([250.00, 252.50, 247.45, 249.92, 254.92])",
+            "expect": "0.27495615224274855",
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol([100.00, 101.00, 100.00])",
+            "expect": "0.2233880598242266",
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol([40.00, 40.00, 40.00, 40.00])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol(100 * np.cumprod(1 + np.random.default_rng(4).normal(0.0, 0.015, 252)))",
+            "expect": "0.237597258558349",
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol(np.array([12.10, 12.35, 11.98, 12.40, 12.62, 12.50]))",
+            "expect": "0.41453691746339555",
+            "compare": "isclose"
+          }
+        ],
+        "examples": [
+          {
+            "call": "annualised_vol([250.00, 252.50, 247.45, 249.92, 254.92])",
+            "expect": "0.27495615224274855",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each answer is accepted within a relative 1e-9. The first run loads NumPy, which takes a few seconds."
+      },
+      "feedback": {
+        "correct": "Returns, sample deviation, $\\sqrt{252}$: about 27.50% for the first example.",
+        "generic": "Some tests failed. Check the returns, `ddof=1` and the square root of 252.",
+        "byKey": {
+          "test-1": "The first answer is about 0.2750. About 0.238 means `ddof` is missing; above 4 means you used 252, not its root.",
+          "error": "Your code stopped with an error. Check that both `...` lines are replaced."
+        }
+      },
+      "explain": {
+        "text": "Two lines: slices for the returns, then the sample standard deviation scaled by $\\sqrt{252}$.\n\n```python\nreturns = prices[1:] / prices[:-1] - 1\nvol = np.std(returns, ddof=1) * np.sqrt(252)\n```"
+      }
+    },
+    {
+      "id": "h-max-drawdown",
+      "difficulty": 5,
+      "skills": [
+        "np-arrays",
+        "np-broadcast"
+      ],
+      "title": "Maximum drawdown",
+      "prose": "The **maximum drawdown** is the largest fall from a running peak, as a fraction of that peak. `np.maximum.accumulate(prices)` gives the running peak: for 100, 120, 90 it is 100, 120, 120. For 100, 120, 90, 110, 80, 130 the drawdown is $1 - 80/120 = 1/3$. A series that never falls has drawdown 0.0.",
+      "question": "Complete `max_drawdown` without a loop.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef max_drawdown(prices):\n    prices = np.asarray(prices, dtype=float)\n    peak = np.maximum.accumulate(prices)\n    # fall from the peak, as a fraction, for every day\n    \n    return float(worst)\n",
+        "solution": "import numpy as np\n\ndef max_drawdown(prices):\n    prices = np.asarray(prices, dtype=float)\n    peak = np.maximum.accumulate(prices)\n    # fall from the peak, as a fraction, for every day\n    drawdown = 1 - prices / peak\n    worst = drawdown.max()\n    return float(worst)\n",
+        "tests": [
+          {
+            "call": "max_drawdown([100.00, 120.00, 90.00, 110.00, 80.00, 130.00])",
+            "expect": "1/3",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown([50.00, 55.00, 60.00])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown([80.00, 60.00])",
+            "expect": "0.25",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown([100.00, 90.00, 95.00, 85.50, 120.00, 108.00])",
+            "expect": "0.14500000000000002",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown([42.00])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown(100 * np.cumprod(1 + np.random.default_rng(6).normal(0.0, 0.02, 500)))",
+            "expect": "0.4031173441116833",
+            "compare": "isclose"
+          }
+        ],
+        "examples": [
+          {
+            "call": "max_drawdown([100.00, 120.00, 90.00, 110.00, 80.00, 130.00])",
+            "expect": "1/3",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each answer is accepted within a relative 1e-9. The first run loads NumPy, which takes a few seconds."
+      },
+      "feedback": {
+        "correct": "Running peak, fall as a fraction, then the largest.",
+        "generic": "Some tests failed. The drawdown is measured from the highest price so far, not the first or the overall highest.",
+        "byKey": {
+          "test-1": "The answer is 1/3: from 120 down to 80. Measure each fall from the running peak, then take the largest.",
+          "error": "Your code stopped with an error. Check that `worst` is defined."
+        }
+      },
+      "explain": {
+        "text": "`peak` is the running maximum, so `1 - prices / peak` is each day's fall from the best price so far. Its largest value is the maximum drawdown. Dividing by the overall maximum would let a later peak judge earlier days.\n\n```python\nworst = (1 - prices / np.maximum.accumulate(prices)).max()\n```"
+      }
+    },
+    {
+      "id": "h-final-prices",
+      "difficulty": 4,
+      "skills": [
+        "np-arrays",
+        "np-broadcast"
+      ],
+      "title": "Many paths at once",
+      "prose": "Simulate many price paths at once. Make `rng = np.random.default_rng(seed)` and draw every return in one call: `rng.normal(0.0, sigma, (n_paths, n_days))`, one row per path. Return each path's final price: `start` grown by $(1 + r)$ over all its days.",
+      "question": "Complete `final_prices` without a loop.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef final_prices(start, n_days, n_paths, sigma, seed):\n    rng = np.random.default_rng(seed)\n    returns = ...   # shape (n_paths, n_days)\n    finals = ...    # one price per path\n    return finals\n",
+        "solution": "import numpy as np\n\ndef final_prices(start, n_days, n_paths, sigma, seed):\n    rng = np.random.default_rng(seed)\n    returns = rng.normal(0.0, sigma, (n_paths, n_days))   # shape (n_paths, n_days)\n    finals = start * np.prod(1 + returns, axis=1)          # one price per path\n    return finals\n",
+        "tests": [
+          {
+            "call": "np.round(final_prices(100.0, 5, 3, 0.01, 42), 4).tolist()",
+            "expect": "[98.9776, 97.6547, 103.3589]"
+          },
+          {
+            "call": "np.round(final_prices(250.0, 20, 2, 0.02, 7), 4).tolist()",
+            "expect": "[219.674, 206.0287]"
+          },
+          {
+            "call": "final_prices(100.0, 252, 1000, 0.01, 1).shape",
+            "expect": "(1000,)"
+          },
+          {
+            "call": "np.round(final_prices(80.0, 10, 4, 0.0, 3), 4).tolist()",
+            "expect": "[80.0, 80.0, 80.0, 80.0]"
+          },
+          {
+            "call": "float(np.round(final_prices(100.0, 252, 1000, 0.01, 1).mean(), 4))",
+            "expect": "99.2563",
+            "compare": "isclose"
+          }
+        ],
+        "examples": [
+          {
+            "call": "np.round(final_prices(100.0, 5, 3, 0.01, 42), 4).tolist()",
+            "expect": "[98.9776, 97.6547, 103.3589]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Prices are compared after rounding to 4 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "feedback": {
+        "correct": "One draw call, then a product along each row.",
+        "generic": "Some tests failed. Draw with shape (n_paths, n_days) and multiply along axis 1.",
+        "byKey": {
+          "test-1": "Your first test should give 3 prices. If you got 5, you multiplied along `axis=0`, across paths.",
+          "error": "Your code stopped with an error. Check the draw's shape: a tuple, `(n_paths, n_days)`."
+        }
+      },
+      "explain": {
+        "text": "Each row is one path, so `np.prod(1 + returns, axis=1)` compounds along the days and leaves one growth factor per path. Multiplying by `start` broadcasts the start price over all paths."
+      }
+    },
+    {
+      "id": "h-square-trap",
+      "difficulty": 4,
+      "skills": [
+        "np-broadcast"
+      ],
+      "prose": "```python\nR = np.array([[1.0, 2.0], [3.0, 5.0]])\nprint(R - R.mean(axis=1))\n```\nThe intent was each row minus its own mean.",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[[-0.5 -2. ] [ 1.5  1. ]]`",
+            "correct": true
+          },
+          {
+            "id": "meant",
+            "text": "`[[-0.5  0.5] [-1.   1. ]]`",
+            "why": "That is what was meant. The row means, 1.5 and 4.0, line up with the columns, so 4.0 comes off column 1."
+          },
+          {
+            "id": "error",
+            "text": "A `ValueError`",
+            "why": "`(2, 2)` and `(2,)` do line up from the right, so nothing stops it. A square array hides this bug."
+          },
+          {
+            "id": "cols",
+            "text": "`[[-1.  -1.5] [ 1.   1.5]]`",
+            "why": "That subtracts the column means, `R.mean(axis=0)`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It runs, and it is wrong.",
+        "generic": "Not quite right. Line `(2,)` up with the columns: 1.5 goes down column 0 and 4.0 down column 1."
+      },
+      "explain": {
+        "text": "The row means are `[1.5, 4.0]`. As a 1-D array they line up with the columns, so column 0 loses 1.5 and column 1 loses 4.0. On a square array no error warns you; `keepdims=True` gives the intended result."
+      }
+    },
+    {
+      "id": "h-inplace",
+      "difficulty": 3,
+      "skills": [
+        "np-arrays"
+      ],
+      "prose": "```python\nprices = np.array([100, 101, 99])\nprices *= 1.01\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "error",
+            "text": "An error: float results cannot be stored back into the integer array",
+            "correct": true
+          },
+          {
+            "id": "new",
+            "text": "`prices` becomes `[101.   102.01  99.99]`",
+            "why": "That is `prices = prices * 1.01`, which builds a new float array. `*=` writes into the existing integer array."
+          },
+          {
+            "id": "cut",
+            "text": "`prices` becomes `[101 102  99]`",
+            "why": "You expected NumPy to cut the fractions, as when storing one value. In-place arithmetic refuses instead."
+          },
+          {
+            "id": "same",
+            "text": "`prices` is unchanged",
+            "why": "NumPy does not skip the operation silently. It raises an error."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "In-place arithmetic will not change the dtype.",
+        "generic": "Not quite right. `*=` must store floats in an integer array."
+      },
+      "explain": {
+        "text": "`prices *= 1.01` must write floats into an integer array, and NumPy raises a `UFuncTypeError` rather than cut them. Build price arrays from floats, `100.0`, to avoid it."
+      }
+    },
+    {
+      "id": "h-big-moves",
+      "difficulty": 3,
+      "skills": [
+        "np-arrays"
+      ],
+      "prose": "```python\nr = np.array([0.012, -0.025, 0.004, 0.031, -0.008, -0.022, 0.001, 0.019])\nprint((np.abs(r) > 0.02).mean())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.375,
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "For example 0.25",
+        "label": "Value printed",
+        "accept": "0.375: 3 of 8 days moved more than 2%.",
+        "wrong": [
+          {
+            "id": "ups",
+            "value": 0.125,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "count",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "downs",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three big moves out of eight days.",
+        "generic": "Not quite right. Count the days whose size of move exceeds 0.02, either way.",
+        "byKey": {
+          "ups": "You counted only the rise of 0.031. `np.abs` makes the falls count too.",
+          "count": "That is the count. `.mean()` divides it by 8.",
+          "downs": "You counted only the falls. `np.abs` counts rises and falls."
+        }
+      },
+      "explain": {
+        "text": "`np.abs(r)` drops the signs, so −0.025, 0.031 and −0.022 all exceed 0.02. The mean of the mask is $3/8 = 0.375$."
+      }
+    },
+    {
+      "id": "h-weighted",
+      "difficulty": 3,
+      "skills": [
+        "np-arrays",
+        "np-broadcast"
+      ],
+      "prose": "A portfolio holds three stocks with weights 0.5, 0.3 and 0.2. Today they returned 2%, −1% and 5%.\n\n```python\nw = np.array([0.5, 0.3, 0.2])\nr = np.array([0.02, -0.01, 0.05])\nprint((w * r).sum())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.017,
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "For example 0.01",
+        "label": "Portfolio return",
+        "accept": "0.017: 0.010 − 0.003 + 0.010.",
+        "wrong": [
+          {
+            "id": "plain",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "sum",
+            "value": 0.06,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.5(0.02) + 0.3(-0.01) + 0.2(0.05) = 0.017$.",
+        "generic": "Not quite right. Multiply each weight by its return, then add.",
+        "byKey": {
+          "plain": "That is the plain average of the returns. The weights are not equal.",
+          "sum": "You added the returns without weights."
+        }
+      },
+      "explain": {
+        "text": "`w * r` is `[0.010, -0.003, 0.010]`, each stock's contribution. They add to 0.017, a 1.7% portfolio return."
+      }
+    },
+    {
+      "id": "h-debug-vol",
+      "difficulty": 5,
+      "skills": [
+        "np-arrays",
+        "np-broadcast"
+      ],
+      "title": "Debug a volatility script",
+      "kind": "longform",
+      "prompt": "A colleague's volatility script will not run.\n\n```python\nimport numpy as np\nprices = [250.00, 252.50, 247.45, 249.92, 254.92]\nreturns = prices[1:] / prices[:-1] - 1      # line 3\nvol = np.std(returns) * 252                  # line 4\n```\n\n(a) What happens at line 3, and why? Give the fix. (b) Once line 3 runs, line 4 still has two mistakes. Name each, give the fix, and say by what factor each changes the answer. (c) Give the corrected annualised volatility as a percentage to two decimal places, with your working. (d) For a returns array `R` of shape (252, 4), one column per stock, the colleague writes `R.std(axis=1, ddof=1) * np.sqrt(252)`. What shape comes out, what does it measure, and what is the fix?",
+      "model": "**(a)** Line 3 raises `TypeError: unsupported operand type(s) for /: 'list' and 'list'`. `prices` is a plain list, and lists do no arithmetic: slicing works, division does not. Fix: `prices = np.array([250.00, 252.50, 247.45, 249.92, 254.92])`. The returns are then 0.01, −0.02, 0.009982 and 0.020006.\n\n**(b)** First, `np.std` divides by $n = 4$ because `ddof` defaults to 0. A volatility estimated from data is the sample standard deviation, so use `ddof=1`, dividing by $n - 1 = 3$. That raises the answer by $\\sqrt{4/3} \\approx 1.155$. Second, multiplying by 252 scales a standard deviation as if it grew with time. Variances of independent daily returns add over 252 days, so the standard deviation grows with $\\sqrt{252} \\approx 15.87$. Multiplying by 252 makes the answer $252 / \\sqrt{252} = \\sqrt{252} \\approx 15.87$ times too big.\n\n**(c)** The mean return is 0.004997. The squared deviations add to 0.00090001, so the sample variance is $0.00090001 / 3 = 0.00030000$ and the daily volatility is 0.017321. Annualised: $0.017321 \\times \\sqrt{252} = 0.2750$, so **27.50%**. The script's version, once line 3 runs, gives $0.015000 \\times 252 = 3.78$, or 378%.\n\n```python\nprices = np.array([250.00, 252.50, 247.45, 249.92, 254.92])\nreturns = prices[1:] / prices[:-1] - 1\nvol = np.std(returns, ddof=1) * np.sqrt(252)   # 0.2750\n```\n\n**(d)** `axis=1` uses up the 4 stocks, so the result has shape (252,): for each day, the spread of returns across the four stocks. That is not any stock's volatility. Use `R.std(axis=0, ddof=1) * np.sqrt(252)`, which uses up the 252 days and gives shape (4,), one annualised volatility per stock.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "(a) Says line 3 raises a TypeError because `prices` is a list, and converts it with `np.array`."
+        },
+        {
+          "points": 2,
+          "text": "(b) Names the missing `ddof=1`: `np.std` divides by n, the sample estimate by n − 1, a factor of $\\sqrt{4/3} \\approx 1.155$."
+        },
+        {
+          "points": 2,
+          "text": "(b) Replaces 252 with `np.sqrt(252)`, explaining that variance, not standard deviation, adds over days, and that 252 is about 15.87 times too big."
+        },
+        {
+          "points": 2,
+          "text": "(c) Gives 27.50% (0.2750), with the sample daily volatility 0.0173 and the $\\sqrt{252}$ scaling shown."
+        },
+        {
+          "points": 2,
+          "text": "(d) Says `axis=1` gives shape (252,), a per-day spread across stocks, and fixes it with `axis=0` for shape (4,)."
+        }
+      ]
+    }
+  ]
+}

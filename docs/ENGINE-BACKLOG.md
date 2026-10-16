@@ -386,3 +386,7 @@ Raised later (py-found level 4):
 
 139. Inline code and table cells: `white-space: pre-wrap` so padded output keeps its spaces.
 140. `code` widget: a per-test `argv` list in script mode so `sys.argv` code can be graded.
+
+Raised later (py-found level 2):
+
+141. A `refs` canvas kind (or `graph` with patchable edges): names as labels pointing at objects, re-pointed by a state patch, for aliasing and mutation lessons.

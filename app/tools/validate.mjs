@@ -350,8 +350,12 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       const codeCase = (t, at) => {
         if (!t || typeof t !== 'object') { err(file, at, 'each case is an object'); return; }
         const out = t.compare === 'stdout' || (t.call == null && t.expect != null && t.compare == null);
-        if (t.compare && !['isclose', 'equal', 'fraction', 'stdout'].includes(t.compare)) err(file, `${at}.compare`, 'compare is isclose, equal, fraction or stdout');
-        if (out) {
+        if (t.compare && !['isclose', 'equal', 'fraction', 'stdout', 'raises'].includes(t.compare)) err(file, `${at}.compare`, 'compare is isclose, equal, fraction, stdout or raises');
+        if (t.setup != null && typeof t.setup !== 'string') err(file, `${at}.setup`, 'setup is a line of Python run before call ("prices = [100, 90]")');
+        if (t.compare === 'raises') {
+          if (typeof t.expect !== 'string' || !/^[A-Za-z_][\w.]*$/.test(t.expect.trim())) err(file, `${at}.expect`, 'a raises case names the exception: "ValueError"');
+          if (t.call != null && typeof t.call !== 'string') err(file, `${at}.call`, 'call is a Python expression');
+        } else if (out) {
           if (typeof t.expect !== 'string') err(file, `${at}.expect`, 'a stdout case needs expect: the printed text, as a string ("Return: 5.00%\\n")');
           if (t.call != null) err(file, `${at}.call`, 'a stdout case has no call (it compares what the whole program prints)');
         } else if (t.call == null || t.expect == null) err(file, at, 'each test needs call and expect (or compare: "stdout" with expect)');
@@ -366,6 +370,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       {
         const all = [...(Array.isArray(w.tests) ? w.tests : []), ...(Array.isArray(w.examples) ? w.examples : [])].filter(t => t && typeof t === 'object');
         const script = all.some(t => t.compare === 'stdout' || t.stdin != null || (t.call == null && t.expect != null));
+        // a raises case with no call checks the whole program, which needs script mode (it is on whenever such a case exists)
         if (!script && !all.some(t => typeof t.call === 'string' && /printed\s*:=/.test(t.call)) && all.some(t => typeof t.call === 'string' && /\bprinted\b/.test(t.call) && !/_getframe/.test(t.call))) err(file, `${where}.tests`, 'printed is only defined when a case uses compare: "stdout" or stdin (script mode)');
       }
       if (!w.how) warn(file, `${where}.how`, 'say how it is checked');
