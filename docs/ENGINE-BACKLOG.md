@@ -290,3 +290,10 @@ Raised later (terminal level 2):
 102. `boxes`: a wide labelled `card` (file-name width) item kind.
 103. `graph`: add and remove nodes and edges through state (`nodes`/`edges` patches) with enter and exit animation.
 104. Inline renderer: `$` and `*` inside backticks are literal (parse code spans first); captions render code spans.
+
+Raised later (counting level 3):
+
+105. `expression` widget in lesson quiz mode: the playthrough's `answerCorrect()` must wait for the maths editor loader (or the widget must accept a value while loading) so quiz items are not reported stuck.
+106. README-B `vectors`: document drag on heads (origin-based vectors only) and add `points` with labels (A, B, O, M) and `labelPos` for vector labels.
+107. `vectors`: tap mode on arrows.
+108. Document the derive function set (it already includes acos, atan2, hypot and others) in AUTHORING.md and README-B.
