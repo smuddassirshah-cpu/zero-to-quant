@@ -193,3 +193,8 @@ Raised later (exp-log level 3):
 73. `drag-point` on plane: per-axis tolerance (`tol: [dx, dy]`).
 74. `plane` `labelSide: "below"` appears ignored; `labelOffset` uneven. Verify and fix.
 75. README-B: document `hlines` and `vlines`.
+
+Raised later (trig level 1):
+
+76. `plane` geometry: `polygons` (filled, with ids and vertex labels), `angles` (arc markers at a vertex with a label), segment `labelPos`/offset, `axes: false` to hide axes and ticks. This is the triangle kit.
+77. `area`: a diagonal across a piece (`split: "diag"` on a cell).
