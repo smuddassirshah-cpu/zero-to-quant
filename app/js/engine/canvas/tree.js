@@ -50,10 +50,10 @@
     const pBox = (p) => { const t = pTex(p); return t.tex ? texBox(t.src) : { w: C.textW(t.src, 13) + 6, h: 16 }; };
     const valW = anyValue ? Math.min(130, Math.max(40, ...all.filter(n => n.value != null).map(n => { const t = C.texOf(n.value); return t.tex ? texBox(t.src).w + 12 : C.textW(t.src, 13, 600) + 16; }))) : 0;
     let W, H, colPos, top, band;
+    const spOf = (n) => (n <= 2 ? 80 : n <= 4 ? 60 : n <= 6 ? 50 : n <= 8 ? 42 : 34); // leaf spacing for n leaves shown
     if (!tb) {
       W = 540; top = (hasHead ? 26 : 8) + 6;
-      const sp = Lf <= 2 ? 80 : Lf <= 4 ? 60 : Lf <= 6 ? 50 : Lf <= 8 ? 42 : 34;
-      band = Lf * sp; H = top + band + 6;
+      band = Lf * spOf(Lf); H = top + band + 6;
       const maxLast = Math.max(30, ...all.filter(n => n.depth === D).map(pillW));
       const x0 = 14, xD = W - 8 - valW - maxLast / 2;
       colPos = (d) => (d === 0 ? x0 : x0 + 22 + (xD - x0 - 22) * d / D);
@@ -104,10 +104,14 @@
       const kids = (n) => (col.has(n.path) ? [] : n.children);
       const leaves = []; const dfs = (n) => { const k = kids(n); if (!k.length && n !== root) leaves.push(n); k.forEach(dfs); }; dfs(root);
       const nL = Math.max(1, leaves.length);
+      /* the drawing is sized by the leaves (left to right) or the depth (top to bottom) actually shown */
+      const b = tb ? band : nL * spOf(nL);
       const pos = new Map();
-      leaves.forEach((n, i) => { const t = (i + 0.5) / nL; pos.set(n, tb ? { x: 12 + band * t, y: colPos(n.depth) } : { x: colPos(n.depth), y: top + band * t }); });
+      leaves.forEach((n, i) => { const t = (i + 0.5) / nL; pos.set(n, tb ? { x: 12 + b * t, y: colPos(n.depth) } : { x: colPos(n.depth), y: top + b * t }); });
+      const dShown = Math.max(1, ...leaves.map(n => n.depth));
+      vis.H = tb ? top + dShown * 96 + 20 + (anyValue ? 30 : 0) + 6 : top + b + 6;
       const place = (n) => {
-        const k = kids(n); if (!k.length) return pos.get(n) || { x: colPos(0), y: top + band / 2 };
+        const k = kids(n); if (!k.length) return pos.get(n) || { x: colPos(0), y: top + b / 2 };
         const ps = k.map(place), a = ps[0], b = ps[ps.length - 1];
         const p = tb ? { x: (a.x + b.x) / 2, y: colPos(n.depth) } : { x: colPos(n.depth), y: (a.y + b.y) / 2 };
         pos.set(n, p); return p;
@@ -163,6 +167,7 @@
       for (const n of all) { const e = el.get(n.path); for (let k = 1; k <= 6; k++) e.g.classList.toggle('cv-sh' + k, slot.get(n.path) === k); e.g.classList.toggle('is-shaded', slot.has(n.path)); if (e.val) e.val.classList.toggle('is-shaded', slot.has(n.path)); }
       const showP = st.show !== 'none', unknown = new Set(st.unknown || []), showVals = st.values !== false;
       const next = layout(st.collapse);
+      if (next.H && next.H !== fr.h) fr.resize(W, next.H);
       const from = cur;
       if (instant) { anim.stop(); cur = next; paint(next, showP, unknown, showVals); return; }
       anim.run(ms, (t) => {
