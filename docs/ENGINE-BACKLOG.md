@@ -173,3 +173,8 @@ Raised later (quadratics level 3):
 62. Why? modal static clones must run `derive` after the explain patch (derived points, segments, captions stale otherwise).
 63. Slider readout decimals: a `decimals` option independent of `step`; `money()` in derive uses a thousands separator.
 64. Prose renderer: KaTeX inside `**bold**` (render maths first, then bold).
+
+Raised later (exp-log level 2):
+
+65. `drag-point` on plane: a `tolX` (x-only tolerance) and a target given as `{ "on": "f", "x": 12.3 }` so dragging along a steep curve is gradable.
+66. `series` and `plane`: `yScale: "log"` option (log-price charts).
