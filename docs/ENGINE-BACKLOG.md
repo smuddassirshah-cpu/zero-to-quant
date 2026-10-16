@@ -414,3 +414,8 @@ Raised later (git level 3):
 
 149. `graph`: lane/row labels (`lanes: [{ "y": 0.3, "label": "local" }]`) and a `dashed` node style for fetched-but-unmerged commits.
 150. A small simulated shell for `sh` scripts (or `code` with `language: "sh"` running a tiny POSIX subset in JS) so loop scripts can be written for real; until then shell is prediction-only.
+
+Raised later (git level 2):
+
+151. `ZQ.canvas.merge`: a keyed patch with `null` removes that item from the list (works in explain clones too).
+152. `graph`: per-node `r` and pill-shaped label nodes (same family as 99 and 117).

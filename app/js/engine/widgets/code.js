@@ -188,12 +188,23 @@ def __zq_judge(_call, _exp, _cmp, _ns, _setup=''):
     _e = eval(_exp, _ns)
     if _cmp == 'fraction':
         return 1.0 if isinstance(_a, _F) and _a == _e else 0.0
-    if _cmp == 'isclose':
+    # arrays, Series and nested lists compare element by element (item 143): tolist() first
+    def _flat(_v):
+        return _v.tolist() if hasattr(_v, 'tolist') and not isinstance(_v, (int, float, complex, str)) else _v
+    def _close(_x, _y):
+        _x, _y = _flat(_x), _flat(_y)
+        if isinstance(_x, (list, tuple)) or isinstance(_y, (list, tuple)):
+            return isinstance(_x, (list, tuple)) and isinstance(_y, (list, tuple)) and len(_x) == len(_y) and all(_close(_p, _q) for _p, _q in zip(_x, _y))
         try:
-            return 1.0 if _m.isclose(float(_a), float(_e), rel_tol=1e-9, abs_tol=1e-12) else 0.0
+            return _m.isclose(float(_x), float(_y), rel_tol=1e-9, abs_tol=1e-12)
         except Exception:
-            return 1.0 if _a == _e else 0.0
-    return 1.0 if _a == _e else 0.0
+            return _x == _y
+    if _cmp == 'isclose':
+        return 1.0 if _close(_a, _e) else 0.0
+    try:
+        return 1.0 if bool(_flat(_a) == _flat(_e)) else 0.0
+    except Exception:
+        return 0.0
 `;
   /* The harness: one function the worker calls per case, returning 1.0 for a pass */
   const harness = (cases) => `
@@ -205,8 +216,12 @@ def __zq_case(_i):
 __ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [String(c.call ?? ''), String(c.expect ?? ''), c.compare || 'equal', c.setup == null ? '' : String(c.setup)])))})
 `;
   /* Script mode harness: the learner's source runs once per case in a fresh namespace (see the header) */
+  /* The worker loads packages from the imports it can see (loadPackagesFromImports); in script mode the learner's code is
+     a string, so its import lines are repeated, never run, under if False */
+  const importsOf = (src) => String(src).split('\n').map(l => l.match(/^\s*(?:import\s+([\w.]+(?:\s*,\s*[\w.]+)*)|from\s+([\w.]+)\s+import\b)/)).filter(Boolean)
+    .flatMap(m => (m[1] ? m[1].split(',') : [m[2]]).map(x => x.trim())).filter(x => x && !x.startsWith('.'));
   const scriptHarness = (src, cases) => `
-import sys as _zs, io as _zio, linecache as _zlc
+${importsOf(src).length ? 'if False:\n' + [...new Set(importsOf(src))].map(x => '    import ' + x).join('\n') + '\n' : ''}import sys as _zs, io as _zio, linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 _zlc.cache['solution.py'] = (len(__ZQ_SRC), None, __ZQ_SRC.splitlines(True), 'solution.py')
 __ZQ_CODE = compile(__ZQ_SRC, 'solution.py', 'exec')
@@ -319,7 +334,11 @@ def __zq_case(_i):
       const code = script ? scriptHarness(ed.value, cases) : ed.value + harness(cases);
       const rows = cases.map(c => ({ call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
       let loadErr = null, loaded = '';
-      const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, TEST_MS * Math.max(1, cases.length),
+      /* item 143: spec.budget (ms) is added to the run's limit; code importing numpy, pandas or scipy gets 30 s on top
+         without one, so the first package load is not charged against the 5 s per case */
+      const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib)\b/m.test(ed.value);
+      const limit = TEST_MS * Math.max(1, cases.length) + (spec.budget != null ? Math.max(0, +spec.budget || 0) : heavy ? 30000 : 0);
+      const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, limit,
         (d) => {
           if (d.kind === 'error') { loadErr = d.error; loaded = String(d.stdout || ''); }
           if (d.kind === 'loaded') loaded = String(d.stdout || '');

@@ -1,0 +1,1678 @@
+{
+  "id": "l10-matching-rows",
+  "course": "sql",
+  "title": "Matching rows across tables",
+  "minutes": 15,
+  "objectives": [
+    "Join two tables with an inner join on a key",
+    "Predict the row count of a join, and spot one that multiplies rows",
+    "Chain three tables and read a query plan"
+  ],
+  "skills": [
+    "sql-join"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which close goes with which trade?",
+      "prose": "Trades 1 and 4 are both in Barclays, on different days. To value a trade we need the close of its stock on the day it was done.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "id",
+              "date",
+              "ticker",
+              "qty"
+            ],
+            "rows": [
+              [
+                "1",
+                "2026-03-02",
+                "BARC",
+                "1000"
+              ],
+              [
+                "2",
+                "2026-03-02",
+                "SHEL",
+                "200"
+              ],
+              [
+                "3",
+                "2026-03-03",
+                "AZN",
+                "50"
+              ],
+              [
+                "4",
+                "2026-03-03",
+                "BARC",
+                "-400"
+              ],
+              [
+                "5",
+                "2026-03-04",
+                "BP",
+                "1500"
+              ],
+              [
+                "6",
+                "2026-03-04",
+                "HSBA",
+                "600"
+              ],
+              [
+                "7",
+                "2026-03-04",
+                "SHEL",
+                "-100"
+              ]
+            ],
+            "align": [
+              "right",
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "trades"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "BARC",
+                "2026-03-02",
+                "2.48"
+              ],
+              [
+                "BARC",
+                "2026-03-03",
+                "2.53"
+              ],
+              [
+                "BARC",
+                "2026-03-04",
+                "2.51"
+              ],
+              [
+                "SHEL",
+                "2026-03-02",
+                "27.10"
+              ],
+              [
+                "SHEL",
+                "2026-03-03",
+                "26.85"
+              ],
+              [
+                "SHEL",
+                "2026-03-04",
+                "27.40"
+              ]
+            ],
+            "align": [
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "prices: Barclays and Shell"
+          }
+        },
+        "active": "right"
+      },
+      "question": "Tap the close that values trade 1 and the close that values trade 4.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c2",
+          "r1c2"
+        ],
+        "only": [
+          "r0c2",
+          "r1c2",
+          "r2c2",
+          "r3c2",
+          "r4c2",
+          "r5c2"
+        ],
+        "countWord": "closes",
+        "wrong": [
+          {
+            "id": "ticker-only",
+            "set": [
+              "r0c2",
+              "r1c2",
+              "r2c2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On which date was each Barclays trade done?"
+        },
+        {
+          "rung": "point",
+          "text": "Trade 1 was on 2 March and trade 4 on 3 March.",
+          "highlight": [
+            "left:r0c1",
+            "left:r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Tap the BARC close for 2026-03-02 and the BARC close for 2026-03-03."
+        }
+      ],
+      "feedback": {
+        "correct": "£2.48 for trade 1 and £2.53 for trade 4.",
+        "generic": "Not quite right. Match each trade on both its ticker and its date.",
+        "byKey": {
+          "ticker-only": "You matched on the ticker alone. Each trade happened on one day, so it needs that day's close only.",
+          "r2c2": "That is the 4 March close. Neither Barclays trade happened that day.",
+          "r3c2": "That is a Shell close. Trades 1 and 4 are in BARC.",
+          "r4c2": "That is a Shell close. Trades 1 and 4 are in BARC.",
+          "r5c2": "That is a Shell close. Trades 1 and 4 are in BARC.",
+          "r0c2": "You missed trade 1, done on 2 March.",
+          "r1c2": "You missed trade 4, done on 3 March."
+        }
+      },
+      "explain": {
+        "text": "Each trade met the price row with the same ticker and the same date. Pairing rows across two tables like this is a **join**. SQL writes the matching rule after the word `ON`.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "rows": [
+                0,
+                3
+              ]
+            }
+          },
+          "right": {
+            "highlight": {
+              "cells": [
+                "r0c2",
+                "r1c2"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "JOIN ... ON",
+      "prose": "SQL can do the matching. `JOIN ... ON` pairs each row on the left with every row on the right where `ON` is true. `t` and `s` are short names for the tables.\n\n```sql\nSELECT t.id, s.name\nFROM trades AS t\nJOIN securities AS s\n  ON t.ticker = s.ticker;\n```",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "id",
+              "date",
+              "ticker",
+              "qty"
+            ],
+            "rows": [
+              [
+                "1",
+                "2026-03-02",
+                "BARC",
+                "1000"
+              ],
+              [
+                "2",
+                "2026-03-02",
+                "SHEL",
+                "200"
+              ],
+              [
+                "3",
+                "2026-03-03",
+                "AZN",
+                "50"
+              ],
+              [
+                "4",
+                "2026-03-03",
+                "BARC",
+                "-400"
+              ],
+              [
+                "5",
+                "2026-03-04",
+                "BP",
+                "1500"
+              ],
+              [
+                "6",
+                "2026-03-04",
+                "HSBA",
+                "600"
+              ],
+              [
+                "7",
+                "2026-03-04",
+                "SHEL",
+                "-100"
+              ]
+            ],
+            "align": [
+              "right",
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "trades: 7 rows"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "name",
+              "sector"
+            ],
+            "rows": [
+              [
+                "AZN",
+                "AstraZeneca",
+                "Health"
+              ],
+              [
+                "BARC",
+                "Barclays",
+                "Banks"
+              ],
+              [
+                "BP",
+                "BP",
+                "Energy"
+              ],
+              [
+                "HSBA",
+                "HSBC",
+                "Banks"
+              ],
+              [
+                "SHEL",
+                "Shell",
+                "Energy"
+              ],
+              [
+                "VOD",
+                "Vodafone",
+                "Telecoms"
+              ]
+            ],
+            "align": "left"
+          },
+          "state": {
+            "caption": "securities: 6 rows"
+          }
+        }
+      },
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "accept": "7: one row per trade.",
+        "wrong": [
+          {
+            "id": "companies",
+            "value": 6
+          },
+          {
+            "id": "cross",
+            "value": 42
+          },
+          {
+            "id": "distinct",
+            "value": 5
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many companies can one trade's ticker match?"
+        },
+        {
+          "rung": "point",
+          "text": "Every ticker appears once in `securities`.",
+          "highlight": [
+            "right:c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each of the 7 trades finds exactly one company, so there is one row per trade."
+        }
+      ],
+      "feedback": {
+        "correct": "One row per trade.",
+        "generic": "Not quite right. Count how many companies each trade matches.",
+        "byKey": {
+          "companies": "That is the number of companies. Each trade finds one company, so there is one row per trade.",
+          "cross": "That is every trade paired with every company. `ON` keeps only the pairs with the same ticker.",
+          "distinct": "Barclays and Shell are traded twice each, and each trade keeps its own row."
+        }
+      },
+      "explain": {
+        "text": "Each trade's ticker matches one company, because `ticker` is the primary key of `securities`. So the join gives one row per trade: 7. This is an **inner join**: only pairs that satisfy `ON` survive.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "cols": [
+                2
+              ]
+            }
+          },
+          "right": {
+            "highlight": {
+              "cols": [
+                0
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write a join",
+      "prose": "Now write one. The starter builds the three tables, and Run examples prints the rows of your query.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "name",
+            "sector"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "AstraZeneca",
+              "Health"
+            ],
+            [
+              "BARC",
+              "Barclays",
+              "Banks"
+            ],
+            [
+              "BP",
+              "BP",
+              "Energy"
+            ],
+            [
+              "HSBA",
+              "HSBC",
+              "Banks"
+            ],
+            [
+              "SHEL",
+              "Shell",
+              "Energy"
+            ],
+            [
+              "VOD",
+              "Vodafone",
+              "Telecoms"
+            ]
+          ],
+          "align": "left"
+        },
+        "state": {}
+      },
+      "question": "Return the trade `id`, the company `name` and its `sector` for every trade, sorted by id.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT *\n        FROM trades\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "solution": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT t.id, s.name, s.sector\n        FROM trades AS t\n        JOIN securities AS s\n          ON t.ticker = s.ticker\n        ORDER BY t.id\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "examples": [
+          {
+            "call": "make_db().execute(query()).fetchall()[:2]",
+            "expect": "[(1, 'Barclays', 'Banks'), (2, 'Shell', 'Energy')]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[(1, 'Barclays', 'Banks'), (2, 'Shell', 'Energy'), (3, 'AstraZeneca', 'Health'), (4, 'Barclays', 'Banks'), (5, 'BP', 'Energy'), (6, 'HSBC', 'Banks'), (7, 'Shell', 'Energy')]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO trades VALUES (8, '2026-03-04', 'VOD', 3000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(1, 'Barclays', 'Banks'), (2, 'Shell', 'Energy'), (3, 'AstraZeneca', 'Health'), (4, 'Barclays', 'Banks'), (5, 'BP', 'Energy'), (6, 'HSBC', 'Banks'), (7, 'Shell', 'Energy'), (8, 'Vodafone', 'Telecoms')]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"UPDATE securities SET name = 'Shell plc' WHERE ticker = 'SHEL'\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(1, 'Barclays', 'Banks'), (2, 'Shell plc', 'Energy'), (3, 'AstraZeneca', 'Health'), (4, 'Barclays', 'Banks'), (5, 'BP', 'Energy'), (6, 'HSBC', 'Banks'), (7, 'Shell plc', 'Energy')]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"DELETE FROM trades WHERE id = 3\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(1, 'Barclays', 'Banks'), (2, 'Shell', 'Energy'), (4, 'Barclays', 'Banks'), (5, 'BP', 'Energy'), (6, 'HSBC', 'Banks'), (7, 'Shell', 'Energy')]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each runs your query, some after changing rows, and compares the rows exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which column do the two tables share?"
+        },
+        {
+          "rung": "point",
+          "text": "Join with `JOIN securities AS s ON t.ticker = s.ticker`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Select `t.id, s.name, s.sector` and finish with `ORDER BY t.id`."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven rows, one per trade, each with its company.",
+        "generic": "Not quite right. Compare your first two rows with the example.",
+        "byKey": {
+          "test-3": "Test 3 renames Shell. Take the name from `securities` through the join, not from fixed text."
+        }
+      },
+      "explain": {
+        "text": "`ON t.ticker = s.ticker` sends each trade to its company. The prefixes `t.` and `s.` say which table each column comes from; `ticker` alone would be ambiguous."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Half a key",
+      "prose": "Now join trades to prices to fetch each trade's close. A first attempt matches on the ticker only. Every ticker has three closes in `prices`.\n\n```sql\nSELECT t.id, p.date, p.close\nFROM trades AS t\nJOIN prices AS p\n  ON t.ticker = p.ticker;\n```",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "id",
+              "date",
+              "ticker",
+              "qty"
+            ],
+            "rows": [
+              [
+                "1",
+                "2026-03-02",
+                "BARC",
+                "1000"
+              ],
+              [
+                "2",
+                "2026-03-02",
+                "SHEL",
+                "200"
+              ],
+              [
+                "3",
+                "2026-03-03",
+                "AZN",
+                "50"
+              ],
+              [
+                "4",
+                "2026-03-03",
+                "BARC",
+                "-400"
+              ],
+              [
+                "5",
+                "2026-03-04",
+                "BP",
+                "1500"
+              ],
+              [
+                "6",
+                "2026-03-04",
+                "HSBA",
+                "600"
+              ],
+              [
+                "7",
+                "2026-03-04",
+                "SHEL",
+                "-100"
+              ]
+            ],
+            "align": [
+              "right",
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "trades"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "BARC",
+                "2026-03-02",
+                "2.48"
+              ],
+              [
+                "BARC",
+                "2026-03-03",
+                "2.53"
+              ],
+              [
+                "BARC",
+                "2026-03-04",
+                "2.51"
+              ],
+              [
+                "SHEL",
+                "2026-03-02",
+                "27.10"
+              ],
+              [
+                "SHEL",
+                "2026-03-03",
+                "26.85"
+              ],
+              [
+                "SHEL",
+                "2026-03-04",
+                "27.40"
+              ]
+            ],
+            "align": [
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "prices: Barclays and Shell"
+          }
+        }
+      },
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "accept": "21: each of the 7 trades pairs with 3 closes.",
+        "wrong": [
+          {
+            "id": "one-each",
+            "value": 7,
+            "canvas": {
+              "left": {
+                "highlight": {
+                  "rows": [
+                    0
+                  ]
+                }
+              },
+              "right": {
+                "highlight": {
+                  "rows": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": "prices",
+            "value": 18
+          },
+          {
+            "id": "cross",
+            "value": 126
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many BARC rows does trade 1 meet?"
+        },
+        {
+          "rung": "point",
+          "text": "Trade 1 matches all three BARC closes, not just one.",
+          "highlight": [
+            "right:r0",
+            "right:r1",
+            "right:r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each of the 7 trades matches 3 closes: $7 \\times 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven trades times three closes each.",
+        "generic": "Not quite right. Count the closes one trade matches, then multiply.",
+        "byKey": {
+          "one-each": "You expected one close per trade. With only the ticker in `ON`, trade 1 matches all three BARC closes.",
+          "prices": "That is the number of price rows. Each trade pairs with the three closes of its stock: $7 \\times 3$.",
+          "cross": "That would be every trade with every price. `ON` still requires the tickers to match."
+        }
+      },
+      "explain": {
+        "text": "`ticker` is only half of the key of `prices`. Each trade matches all three closes of its stock, so 7 trades become $7 \\times 3 = 21$ rows. A sum of trade values over this result would be three times too big.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "rows": [
+                0
+              ]
+            }
+          },
+          "right": {
+            "highlight": {
+              "rows": [
+                0,
+                1,
+                2
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The missing ON",
+      "prose": "A colleague counts the rows of a join but forgets the `ON` line:\n\n```sql\nSELECT COUNT(*)\nFROM trades\nJOIN securities;\n```",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "id",
+              "date",
+              "ticker",
+              "qty"
+            ],
+            "rows": [
+              [
+                "1",
+                "2026-03-02",
+                "BARC",
+                "1000"
+              ],
+              [
+                "2",
+                "2026-03-02",
+                "SHEL",
+                "200"
+              ],
+              [
+                "3",
+                "2026-03-03",
+                "AZN",
+                "50"
+              ],
+              [
+                "4",
+                "2026-03-03",
+                "BARC",
+                "-400"
+              ],
+              [
+                "5",
+                "2026-03-04",
+                "BP",
+                "1500"
+              ],
+              [
+                "6",
+                "2026-03-04",
+                "HSBA",
+                "600"
+              ],
+              [
+                "7",
+                "2026-03-04",
+                "SHEL",
+                "-100"
+              ]
+            ],
+            "align": [
+              "right",
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "trades: 7 rows"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "name",
+              "sector"
+            ],
+            "rows": [
+              [
+                "AZN",
+                "AstraZeneca",
+                "Health"
+              ],
+              [
+                "BARC",
+                "Barclays",
+                "Banks"
+              ],
+              [
+                "BP",
+                "BP",
+                "Energy"
+              ],
+              [
+                "HSBA",
+                "HSBC",
+                "Banks"
+              ],
+              [
+                "SHEL",
+                "Shell",
+                "Energy"
+              ],
+              [
+                "VOD",
+                "Vodafone",
+                "Telecoms"
+              ]
+            ],
+            "align": "left"
+          },
+          "state": {
+            "caption": "securities: 6 rows"
+          }
+        }
+      },
+      "question": "What does SQLite return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "seven",
+            "text": "7",
+            "why": "You expected SQL to match the tickers by itself. It never guesses: with no `ON`, every pair of rows is kept."
+          },
+          {
+            "id": "cross",
+            "text": "42",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "13",
+            "why": "You added the row counts. A join pairs rows, so the counts multiply: $7 \\times 6$."
+          },
+          {
+            "id": "error",
+            "text": "An error: `JOIN` needs `ON`",
+            "why": "SQLite accepts a join with no `ON` and keeps every pair. That is why the slip is easy to miss."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Without `ON`, which pairs of rows are kept?"
+        },
+        {
+          "rung": "point",
+          "text": "Trade 1 pairs with all six companies, and so does every other trade.",
+          "highlight": [
+            "right:c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "7 trades, each paired with 6 companies: $7 \\times 6$."
+        }
+      ],
+      "feedback": {
+        "correct": "Every trade with every company: 42 rows.",
+        "generic": "Not quite right. With no condition, which pairs survive?",
+        "byKey": {
+          "seven": "You expected SQL to match the tickers on its own. With no `ON`, it keeps every pair of rows."
+        }
+      },
+      "explain": {
+        "text": "With no `ON`, every trade pairs with every company: $7 \\times 6 = 42$ rows. This is a **cross join**, and any sum over it is inflated. Compare the row count with what you expect after every join."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The whole key",
+      "prose": "Back to trades and prices. The primary key of `prices` is the pair `(ticker, date)`.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "id",
+              "date",
+              "ticker",
+              "qty"
+            ],
+            "rows": [
+              [
+                "1",
+                "2026-03-02",
+                "BARC",
+                "1000"
+              ],
+              [
+                "2",
+                "2026-03-02",
+                "SHEL",
+                "200"
+              ],
+              [
+                "3",
+                "2026-03-03",
+                "AZN",
+                "50"
+              ],
+              [
+                "4",
+                "2026-03-03",
+                "BARC",
+                "-400"
+              ],
+              [
+                "5",
+                "2026-03-04",
+                "BP",
+                "1500"
+              ],
+              [
+                "6",
+                "2026-03-04",
+                "HSBA",
+                "600"
+              ],
+              [
+                "7",
+                "2026-03-04",
+                "SHEL",
+                "-100"
+              ]
+            ],
+            "align": [
+              "right",
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "trades"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "BARC",
+                "2026-03-02",
+                "2.48"
+              ],
+              [
+                "BARC",
+                "2026-03-03",
+                "2.53"
+              ],
+              [
+                "BARC",
+                "2026-03-04",
+                "2.51"
+              ],
+              [
+                "SHEL",
+                "2026-03-02",
+                "27.10"
+              ],
+              [
+                "SHEL",
+                "2026-03-03",
+                "26.85"
+              ],
+              [
+                "SHEL",
+                "2026-03-04",
+                "27.40"
+              ]
+            ],
+            "align": [
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "prices: Barclays and Shell"
+          }
+        }
+      },
+      "question": "Which `ON` gives exactly one close per trade?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "both",
+            "text": "`ON t.ticker = p.ticker AND t.date = p.date`",
+            "correct": true
+          },
+          {
+            "id": "date",
+            "text": "`ON t.date = p.date`",
+            "why": "You joined on the date alone. Each trade then pairs with all six closes of its day: 42 rows."
+          },
+          {
+            "id": "ticker",
+            "text": "`ON t.ticker = p.ticker`",
+            "why": "That is half the key. Each trade pairs with three closes: 21 rows."
+          },
+          {
+            "id": "id",
+            "text": "`ON t.id = p.ticker`",
+            "why": "You joined on the wrong column. A trade id is a number and never equals a ticker, so no rows come back."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which columns make up the key of `prices`?"
+        },
+        {
+          "rung": "point",
+          "text": "One close is fixed by a ticker and a date together.",
+          "highlight": [
+            "right:c0",
+            "right:c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Name both key columns in `ON`, joined with `AND`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both key columns: one close per trade.",
+        "generic": "Not quite right. `ON` must name the whole key of `prices`."
+      },
+      "explain": {
+        "text": "The key of `prices` is `(ticker, date)`, so `ON` names both columns. Each trade then meets exactly one close, and the join keeps 7 rows.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "cols": [
+                1,
+                2
+              ]
+            }
+          },
+          "right": {
+            "highlight": {
+              "cols": [
+                0,
+                1
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Three tables",
+      "prose": "Joins chain: each `JOIN` adds one table with its own `ON`. Value every trade at that day's close: the quantity times the close, in pounds. A sale has a negative quantity, so its value is negative.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty"
+          ],
+          "rows": [
+            [
+              "1",
+              "2026-03-02",
+              "BARC",
+              "1000"
+            ],
+            [
+              "2",
+              "2026-03-02",
+              "SHEL",
+              "200"
+            ],
+            [
+              "3",
+              "2026-03-03",
+              "AZN",
+              "50"
+            ],
+            [
+              "4",
+              "2026-03-03",
+              "BARC",
+              "-400"
+            ],
+            [
+              "5",
+              "2026-03-04",
+              "BP",
+              "1500"
+            ],
+            [
+              "6",
+              "2026-03-04",
+              "HSBA",
+              "600"
+            ],
+            [
+              "7",
+              "2026-03-04",
+              "SHEL",
+              "-100"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return `id`, `name` and `ROUND(qty * close, 2)` for every trade, sorted by id.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT *\n        FROM trades\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "solution": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT t.id, s.name, ROUND(t.qty * p.close, 2)\n        FROM trades AS t\n        JOIN securities AS s\n          ON t.ticker = s.ticker\n        JOIN prices AS p\n          ON t.ticker = p.ticker AND t.date = p.date\n        ORDER BY t.id\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "examples": [
+          {
+            "call": "make_db().execute(query()).fetchall()[0]",
+            "expect": "(1, 'Barclays', 2480.0)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[(1, 'Barclays', 2480.0), (2, 'Shell', 5420.0), (3, 'AstraZeneca', 5575.0), (4, 'Barclays', -1012.0), (5, 'BP', 6525.0), (6, 'HSBC', 5214.0), (7, 'Shell', -2740.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO trades VALUES (8, '2026-03-03', 'VOD', 3000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(1, 'Barclays', 2480.0), (2, 'Shell', 5420.0), (3, 'AstraZeneca', 5575.0), (4, 'Barclays', -1012.0), (5, 'BP', 6525.0), (6, 'HSBC', 5214.0), (7, 'Shell', -2740.0), (8, 'Vodafone', 2100.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"UPDATE prices SET close = 4.40 WHERE ticker = 'BP' AND date = '2026-03-04'\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(1, 'Barclays', 2480.0), (2, 'Shell', 5420.0), (3, 'AstraZeneca', 5575.0), (4, 'Barclays', -1012.0), (5, 'BP', 6600.0), (6, 'HSBC', 5214.0), (7, 'Shell', -2740.0)]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(make_db().execute(query()).fetchall())",
+            "expect": "7",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each runs your query, some after changing rows, and compares the rows exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which two tables does `trades` need, and on which columns?"
+        },
+        {
+          "rung": "point",
+          "text": "`securities` joins on the ticker; `prices` on the ticker and the date.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add `JOIN securities AS s ON t.ticker = s.ticker`, then `JOIN prices AS p ON t.ticker = p.ticker AND t.date = p.date`."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven values, from £2,480.00 for trade 1 to −£2,740.00 for trade 7.",
+        "generic": "Not quite right. Compare your first row with the example.",
+        "byKey": {
+          "test-4": "Test 4 counts your rows, and there should be 7. Name both columns of the key of `prices` in its `ON`."
+        }
+      },
+      "explain": {
+        "text": "Trade 1 bought 1,000 Barclays at £2.48: £2,480.00. Trade 4 sold 400 at £2.53: −£1,012.00. Both `ON` lines name the whole key of the table they add, so each trade stays one row."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Reading a query plan",
+      "prose": "A real `prices` table holds 2,000 tickers over five years: 2,520,000 rows. `EXPLAIN QUERY PLAN` shows how SQLite will find BP's closes. Without an index it plans a `SCAN`. After `CREATE INDEX idx_ticker ON prices (ticker)` it plans a `SEARCH`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Plan",
+            "Rows read"
+          ],
+          "rows": [
+            [
+              "`SCAN prices`",
+              "?"
+            ],
+            [
+              "`SEARCH prices USING INDEX idx_ticker (ticker=?)`",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Plans for `WHERE ticker = 'BP'`"
+        }
+      },
+      "question": "About how many rows does each plan read to find BP's closes?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Scan: 2,520,000. Search: about 1,260",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Both read 2,520,000",
+            "why": "An index is a sorted list of tickers with row positions. The search jumps to BP's rows and skips the rest."
+          },
+          {
+            "id": "one",
+            "text": "Scan: 2,520,000. Search: 1",
+            "why": "BP has one close per day for five years, so 1,260 rows match. The index finds all of them."
+          },
+          {
+            "id": "half",
+            "text": "Scan: 1,260,000. Search: about 1,260",
+            "why": "A scan cannot stop early. BP's rows could be anywhere, so it reads every row."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a scan do with each row?"
+        },
+        {
+          "rung": "point",
+          "text": "A scan reads every row; a search through an index reads only the matches.",
+          "highlight": [
+            "r0c0",
+            "r1c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "BP has 1,260 closes, one per day for five years. The scan reads all 2,520,000 rows."
+        }
+      ],
+      "feedback": {
+        "correct": "The scan reads everything; the search reads only BP.",
+        "generic": "Not quite right. Which plan reads every row?"
+      },
+      "explain": {
+        "text": "`SCAN` reads every row; `SEARCH ... USING INDEX` jumps straight to the matches. A join does one lookup per trade, so an index on the join key turns millions of reads into thousands. A primary key gets an index automatically.",
+        "canvas": {
+          "values": {
+            "r0c1": "2,520,000",
+            "r1c1": "about 1,260"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The join pattern",
+      "prose": "You matched rows on the whole key, then chained a third table. When each `ON` names the whole primary key of the table it adds, every left row meets at most one partner.\n\n```sql\nSELECT ...\nFROM trades AS t\nJOIN securities AS s\n  ON t.ticker = s.ticker\nJOIN prices AS p\n  ON t.ticker = p.ticker\n AND t.date = p.date;\n```",
+      "question": "`trades` has 7 rows, and every trade has a company and a close. How many rows does the pattern return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "seven",
+            "text": "7",
+            "correct": true
+          },
+          {
+            "id": "21",
+            "text": "21",
+            "why": "That is the count with only the ticker in the second `ON`. Here it names the whole key."
+          },
+          {
+            "id": "42",
+            "text": "42",
+            "why": "That is every trade with every company. The first `ON` keeps only matching tickers."
+          },
+          {
+            "id": "756",
+            "text": "756",
+            "why": "That is $7 \\times 6 \\times 18$, every combination. Each `ON` keeps only the matching rows."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One row per trade: a full-key join never multiplies rows.",
+        "generic": "Not quite right. How many partners does each `ON` allow?"
+      },
+      "explain": {
+        "text": "Each `ON` names a whole primary key, so each trade meets one company and one close. The result keeps one row per trade: 7."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Sector exposure of the book",
+      "prose": "The desk's exposure is what its holdings are worth now. Value every trade at the latest close, 4 March, whatever day it was done, then total by sector. The date in `ON` is now fixed rather than taken from the trade.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty"
+          ],
+          "rows": [
+            [
+              "1",
+              "2026-03-02",
+              "BARC",
+              "1000"
+            ],
+            [
+              "2",
+              "2026-03-02",
+              "SHEL",
+              "200"
+            ],
+            [
+              "3",
+              "2026-03-03",
+              "AZN",
+              "50"
+            ],
+            [
+              "4",
+              "2026-03-03",
+              "BARC",
+              "-400"
+            ],
+            [
+              "5",
+              "2026-03-04",
+              "BP",
+              "1500"
+            ],
+            [
+              "6",
+              "2026-03-04",
+              "HSBA",
+              "600"
+            ],
+            [
+              "7",
+              "2026-03-04",
+              "SHEL",
+              "-100"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return `sector` and `ROUND(SUM(qty * close), 2)` for each sector, sorted by sector.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT *\n        FROM trades\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "solution": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT s.sector, ROUND(SUM(t.qty * p.close), 2)\n        FROM trades AS t\n        JOIN securities AS s\n          ON t.ticker = s.ticker\n        JOIN prices AS p\n          ON p.ticker = t.ticker AND p.date = '2026-03-04'\n        GROUP BY s.sector\n        ORDER BY s.sector\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "examples": [
+          {
+            "call": "make_db().execute(query()).fetchall()[0]",
+            "expect": "('Banks', 6720.0)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[('Banks', 6720.0), ('Energy', 9265.0), ('Health', 5490.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO trades VALUES (8, '2026-03-04', 'VOD', 3000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('Banks', 6720.0), ('Energy', 9265.0), ('Health', 5490.0), ('Telecoms', 2160.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"UPDATE prices SET close = 9.00 WHERE ticker = 'HSBA' AND date = '2026-03-04'\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('Banks', 6906.0), ('Energy', 9265.0), ('Health', 5490.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"UPDATE prices SET close = 2.00 WHERE ticker = 'BARC' AND date = '2026-03-02'\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('Banks', 6720.0), ('Energy', 9265.0), ('Health', 5490.0)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each runs your query, some after changing rows, and compares the rows exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which close values a trade done on 2 March, for exposure today?"
+        },
+        {
+          "rung": "point",
+          "text": "Join `prices` with `ON p.ticker = t.ticker AND p.date = '2026-03-04'`.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Join `securities` for the sector, then `GROUP BY s.sector` and `ORDER BY s.sector`."
+        }
+      ],
+      "feedback": {
+        "correct": "Banks £6,720.00, Energy £9,265.00, Health £5,490.00.",
+        "generic": "Not quite right. Compare your first row with the example.",
+        "byKey": {
+          "test-4": "Test 4 changes an old Barclays close, which exposure should ignore. Value every trade at the 2026-03-04 close."
+        }
+      },
+      "explain": {
+        "text": "Barclays nets 1,000 − 400 = 600 shares at £2.51, and HSBC 600 at £8.69: Banks £6,720.00. Fixing the date in `ON` still names the whole key, so each trade meets one close. Taking the trade's own date instead would give trade values, not today's exposure."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`JOIN ... ON` pairs each left row with every right row where `ON` is true. An inner join keeps only those pairs.",
+      "Name the right table's whole key in `ON`: `t.ticker = p.ticker AND t.date = p.date`. Half a key or no `ON` multiplies rows.",
+      "An index on the join key lets SQLite `SEARCH` instead of `SCAN`, so each lookup reads only the matching rows."
+    ],
+    "formula": {
+      "name": "Rows from a join",
+      "tex": "\\text{rows} = \\sum_{\\text{left rows}} (\\text{right rows where ON is true})",
+      "note": "With no `ON` every term is the full right table: $7 \\times 6 = 42$."
+    },
+    "trap": "A join without `ON`, or on half a key, runs without error and quietly multiplies rows and totals."
+  },
+  "quiz": [
+    {
+      "id": "q-comma",
+      "difficulty": 2,
+      "prose": "`trades` has 7 rows and `prices` has 18.\n\n```sql\nSELECT *\nFROM trades, prices;\n```",
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 126,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "accept": "126: every trade with every price, $7 \\times 18$.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 25
+          },
+          {
+            "id": "seven",
+            "value": 7
+          },
+          {
+            "id": "eighteen",
+            "value": 18
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A comma with no condition is a cross join: $7 \\times 18$.",
+        "generic": "Not quite right. With no condition, which pairs are kept?",
+        "byKey": {
+          "sum": "You added the counts. Every trade pairs with every price, so they multiply.",
+          "seven": "You expected one price per trade. Nothing here says which price goes with which trade.",
+          "eighteen": "Each of the 18 prices pairs with all 7 trades, not just one."
+        }
+      },
+      "explain": {
+        "text": "Listing two tables with a comma and no `WHERE` keeps every pair: $7 \\times 18 = 126$ rows. It is the same cross join as `JOIN` without `ON`."
+      }
+    },
+    {
+      "id": "q-inflated",
+      "difficulty": 3,
+      "prose": "A P&L report joins 40 trades to a `prices` table holding 5 days per ticker, with `ON t.ticker = p.ticker` only. It then sums `qty * close`.",
+      "question": "How does the result compare with the right total?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "five",
+            "text": "It sums 200 rows: each trade counted once per day, against five different closes",
+            "correct": true
+          },
+          {
+            "id": "right",
+            "text": "It is correct: SQL picks the matching close",
+            "why": "You expected SQL to find the right day. With only the ticker in `ON`, each trade meets all five closes."
+          },
+          {
+            "id": "forty",
+            "text": "It sums 40 rows but at the wrong closes",
+            "why": "The join does not choose one close per trade. Each trade appears five times."
+          },
+          {
+            "id": "error",
+            "text": "SQLite raises an error for the duplicate rows",
+            "why": "Duplicate rows are legal in a result. The query runs and the number is wrong."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "40 trades times 5 closes: 200 rows.",
+        "generic": "Not quite right. How many closes does each trade meet?"
+      },
+      "explain": {
+        "text": "Half the key lets each trade meet all five closes, so 40 trades become 200 rows. The total mixes five days of prices and is roughly five times too large."
+      }
+    },
+    {
+      "id": "q-wrong-col",
+      "difficulty": 3,
+      "prose": "Someone joins on the wrong column:\n\n```sql\nSELECT t.id\nFROM trades AS t\nJOIN securities AS s\n  ON t.ticker = s.name;\n```\n\nUse this lesson's tables.",
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "accept": "1: only trade 5, because BP's name equals its ticker.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0
+          },
+          {
+            "id": "seven",
+            "value": 7
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only BP, whose name is also BP.",
+        "generic": "Not quite right. Compare each traded ticker with every company name.",
+        "byKey": {
+          "zero": "Almost. Look at BP: its name and its ticker are both BP.",
+          "seven": "A ticker such as BARC never equals a name such as Barclays, so most trades find nothing."
+        }
+      },
+      "explain": {
+        "text": "A ticker equals a name only for BP, so only trade 5 survives. A wrong-column join often returns a few plausible rows, which makes it harder to spot than an empty result."
+      }
+    },
+    {
+      "id": "q-plan",
+      "difficulty": 2,
+      "prose": "`EXPLAIN QUERY PLAN` for a join prints two lines:\n\n```text\nSCAN t\nSEARCH p USING INDEX idx_ticker (ticker=?)\n```",
+      "question": "What does SQLite do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Reads every trade, and for each one looks up its prices through the index",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Reads every row of both tables",
+            "why": "Only `SCAN` reads a whole table. `SEARCH` jumps to matching rows."
+          },
+          {
+            "id": "none",
+            "text": "Uses an index on both tables",
+            "why": "Only `p` is searched through an index. `t` is scanned."
+          },
+          {
+            "id": "prices",
+            "text": "Reads every price, then looks up each trade",
+            "why": "The scan is on `t`, the trades. The prices are the side that is searched."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One scan of trades, one index lookup per trade.",
+        "generic": "Not quite right. Which table is scanned, and which searched?"
+      },
+      "explain": {
+        "text": "`SCAN t` reads the trades once. For each trade, `SEARCH p USING INDEX` jumps to the prices with that ticker."
+      }
+    }
+  ]
+}
