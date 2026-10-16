@@ -71,9 +71,16 @@
       attrs(cosG.firstChild, { x1: cx, y1: cy, x2: px, y2: cy });
       attrs(sinG.firstChild, { x1: px, y1: cy, x2: px, y2: py });
       const vals = P.values;
-      lbl(cosG.lastChild, (cx + px) / 2, cy + (s >= 0 ? 16 : -16), '\\cos\\theta' + (vals ? ' = ' + fmtv(c) : ''));
+      /* the cos label sits on the side of the axis away from the sine; when the angle mark sweeps over that side near the
+         centre (angles past 90 degrees, or in the fourth quadrant the long way round), it starts clear of the mark */
+      const sw0 = dAng, above = s < 0, markThere = above ? (sw0 >= 90 || sw0 <= -270) : (sw0 <= -90 || sw0 >= 270);
+      if (markThere && c > 0) lbl(cosG.lastChild, cx + 34, cy + (s >= 0 ? 16 : -16), '\\cos\\theta' + (vals ? ' = ' + fmtv(c) : ''), 'start');
+      else if (markThere && c < 0) lbl(cosG.lastChild, cx - 34, cy + (s >= 0 ? 16 : -16), '\\cos\\theta' + (vals ? ' = ' + fmtv(c) : ''), 'end');
+      else lbl(cosG.lastChild, (cx + px) / 2, cy + (s >= 0 ? 16 : -16), '\\cos\\theta' + (vals ? ' = ' + fmtv(c) : ''));
       const inside = show.tan || shadeMode === 'arc', out = (c >= 0) !== inside; // keep the sine label clear of the arc and the tangent
-      lbl(sinG.lastChild, px + (out ? 10 : -10), (cy + py) / 2, '\\sin\\theta' + (vals ? ' = ' + fmtv(s) : ''), out ? 'start' : 'end');
+      /* a short sine segment (a small angle) puts its label outside the circle, off the axis, so it never touches the rim */
+      const shortS = out && Math.abs(s) < 0.35;
+      lbl(sinG.lastChild, shortS ? (c >= 0 ? X(1) + 12 : X(-1) - 12) : px + (out ? 10 : -10), shortS ? py + (s >= 0 ? -14 : 14) : (cy + py) / 2, '\\sin\\theta' + (vals ? ' = ' + fmtv(s) : ''), shortS ? (c >= 0 ? 'start' : 'end') : out ? 'start' : 'end');
       cosG.lastChild.style.display = Math.abs(c) < 0.12 ? 'none' : ''; sinG.lastChild.style.display = Math.abs(s) < 0.12 ? 'none' : '';
       /* tangent: the segment of x = 1 from the axis to where the radius line meets it */
       const t = s / c, okT = show.tan && Math.abs(c) > 1e-6 && Math.abs(t) <= 1.35;
