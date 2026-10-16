@@ -167,3 +167,9 @@ Raised later (exp-log level 1):
 59. `bars` `setParam`: accept free parameter names (stored in `state.params`) so a `derive` block can drive every bar from one control.
 60. Validator: for object categories `{id, label}` accept the element id as `id` as well as `x{label}`.
 61. README-B: a `functions` patch by id keeps `domain` from params unless given again (document, or merge the domain).
+
+Raised later (quadratics level 3):
+
+62. Why? modal static clones must run `derive` after the explain patch (derived points, segments, captions stale otherwise).
+63. Slider readout decimals: a `decimals` option independent of `step`; `money()` in derive uses a thousands separator.
+64. Prose renderer: KaTeX inside `**bold**` (render maths first, then bold).
