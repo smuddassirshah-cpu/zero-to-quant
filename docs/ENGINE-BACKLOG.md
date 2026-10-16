@@ -402,3 +402,10 @@ Raised later (numpy-pandas level 1):
 142. Done by the orchestrator: `drill-worker.js` now calls `loadPackagesFromImports(code)` before each run, so numpy and pandas load on first use.
 143. `code` tests: a per-item `budget` (ms) so the first NumPy run is not charged against the 5 s case limit; `compare: "isclose"` element-wise for arrays and nested lists.
 144. `matrix` canvas: scale to the column width when the matrices are wide.
+
+Raised later (git level 1):
+
+145. Table cells and captions: render backticks and bold (same as 98 and 104).
+146. Fenced blocks: no Copy button on output-only blocks (` ```text ` or no `$` prompt), or place it so it never overlaps the first line.
+147. Table cells: keep leading spaces (`white-space: pre-wrap`, same as 139).
+148. README-B `series`: marker `i` and `shade` `from`/`to` are 0-based array indices even with `indexFrom: 1`.
