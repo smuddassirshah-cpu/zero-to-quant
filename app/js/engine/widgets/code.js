@@ -165,16 +165,25 @@
     };
   })();
 
-  /* The harness: one function the worker calls per case, returning 1.0 for a pass */
-  const harness = (cases) => `
-
-def __zq_case(_i):
+  /* One judge for both harnesses: setup (item 136) runs first; compare "raises" (item 137) passes when the call raises
+     the named exception (or a subclass of it); the others compare values. It prints the marker and the actual value. */
+  const JUDGE = `
+def __zq_judge(_call, _exp, _cmp, _ns, _setup=''):
     import math as _m
     from fractions import Fraction as _F
-    _call, _exp, _cmp = __ZQ_CASES[_i]
-    _a = eval(_call, globals())
+    if _setup:
+        exec(_setup, _ns)
+    if _cmp == 'raises':
+        try:
+            _a = eval(_call, _ns)
+        except Exception as _x:
+            print(${JSON.stringify(MARK)} + 'raised ' + type(_x).__name__, end='')
+            return 1.0 if _exp.strip().strip(chr(34) + chr(39)) in [_k.__name__ for _k in type(_x).__mro__] else 0.0
+        print(${JSON.stringify(MARK)} + 'no error, the value was ' + repr(_a), end='')
+        return 0.0
+    _a = eval(_call, _ns)
     print(${JSON.stringify(MARK)} + repr(_a), end='')
-    _e = eval(_exp, globals())
+    _e = eval(_exp, _ns)
     if _cmp == 'fraction':
         return 1.0 if isinstance(_a, _F) and _a == _e else 0.0
     if _cmp == 'isclose':
@@ -183,8 +192,15 @@ def __zq_case(_i):
         except Exception:
             return 1.0 if _a == _e else 0.0
     return 1.0 if _a == _e else 0.0
+`;
+  /* The harness: one function the worker calls per case, returning 1.0 for a pass */
+  const harness = (cases) => `
+${JUDGE}
+def __zq_case(_i):
+    _call, _exp, _cmp, _setup = __ZQ_CASES[_i]
+    return __zq_judge(_call, _exp, _cmp, globals(), _setup)
 
-__ZQ_CASES = ${JSON.stringify(cases.map(c => [c.call, String(c.expect), c.compare || 'equal']))}
+__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [String(c.call ?? ''), String(c.expect ?? ''), c.compare || 'equal', c.setup == null ? '' : String(c.setup)])))})
 `;
   /* Script mode harness: the learner's source runs once per case in a fresh namespace (see the header) */
   const scriptHarness = (src, cases) => `
@@ -192,8 +208,8 @@ import sys as _zs, io as _zio, linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 _zlc.cache['solution.py'] = (len(__ZQ_SRC), None, __ZQ_SRC.splitlines(True), 'solution.py')
 __ZQ_CODE = compile(__ZQ_SRC, 'solution.py', 'exec')
-__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [c.call == null ? '' : String(c.call), String(c.expect ?? ''), c.compare || (c.call == null ? 'stdout' : 'equal'), c.stdin == null ? '' : String(c.stdin), !!c.exact])))})
-
+__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [c.call == null ? '' : String(c.call), String(c.expect ?? ''), c.compare || (c.call == null ? 'stdout' : 'equal'), c.stdin == null ? '' : String(c.stdin), !!c.exact, c.setup == null ? '' : String(c.setup)])))})
+${JUDGE}
 def __zq_norm(_t):
     _ls = [_l.rstrip() for _l in _t.replace('\\r\\n', '\\n').split('\\n')]
     while _ls and not _ls[0]: _ls.pop(0)
@@ -203,7 +219,7 @@ def __zq_norm(_t):
 def __zq_case(_i):
     import math as _m
     from fractions import Fraction as _F
-    _call, _exp, _cmp, _stdin, _exact = __ZQ_CASES[_i]
+    _call, _exp, _cmp, _stdin, _exact, _setup = __ZQ_CASES[_i]
     _feed = _zio.StringIO(_stdin)
     _out = _zio.StringIO()
     def _input(prompt=''):
@@ -218,9 +234,12 @@ def __zq_case(_i):
         exec(__ZQ_CODE, _ns)
     except SystemExit:
         pass
-    except BaseException:
+    except BaseException as _x:
         _zs.stdout, _zs.stdin = _old
         print(_out.getvalue(), end='')
+        if _cmp == 'raises' and not _call and isinstance(_x, Exception):
+            print(${JSON.stringify(MARK)} + 'raised ' + type(_x).__name__, end='')
+            return 1.0 if _exp.strip().strip(chr(34) + chr(39)) in [_k.__name__ for _k in type(_x).__mro__] else 0.0
         raise
     finally:
         _zs.stdout, _zs.stdin = _old
@@ -232,19 +251,12 @@ def __zq_case(_i):
         if _exact:
             return 1.0 if _txt == _exp else 0.0
         return 1.0 if __zq_norm(_txt) == __zq_norm(_exp) else 0.0
-    _a = eval(_call, _ns)
-    print(${JSON.stringify(MARK)} + repr(_a), end='')
-    _e = eval(_exp, _ns)
-    if _cmp == 'fraction':
-        return 1.0 if isinstance(_a, _F) and _a == _e else 0.0
-    if _cmp == 'isclose':
-        try:
-            return 1.0 if _m.isclose(float(_a), float(_e), rel_tol=1e-9, abs_tol=1e-12) else 0.0
-        except Exception:
-            return 1.0 if _a == _e else 0.0
-    return 1.0 if _a == _e else 0.0
+    if _cmp == 'raises' and not _call:
+        print(${JSON.stringify(MARK)} + 'no error: the program ran to the end', end='')
+        return 0.0
+    return __zq_judge(_call, _exp, _cmp, _ns, _setup)
 `;
-  const isOut = (c) => c.compare === 'stdout' || (c.call == null && c.expect != null);
+  const isOut = (c) => c.compare === 'stdout' || (c.call == null && c.expect != null && c.compare == null);
   const cleanTb = (tb) => String(tb || '').split('\n').filter((ln, i, all) => !/__zq_case|<string>/.test(ln) && !(/^\s{4}\S/.test(ln) && /__zq_case|<string>/.test(all[i - 1] || ''))).join('\n');
 
   Z.widgets.register('code', (host, spec, ctx) => {
@@ -292,18 +304,18 @@ def __zq_case(_i):
     };
     const row = (r, label) => `<li class="wd-res-row ${r.ok ? 'ok' : 'bad'}">
         <span class="wd-res-ic" aria-hidden="true">${Z.icon(r.ok ? 'check' : 'cross', 'xs')}</span>
-        <div class="wd-res-b"><div class="wd-res-h"><b>${label}</b> ${r.out ? (r.stdin ? 'what it prints with this input' : 'what it prints') : `<code class="lsn-ic">${Z.esc(r.call)}</code>`}</div>
-        ${r.out ? outRow(r) : `${r.error ? pre(cleanTb(r.error), 'wd-res-err') : `<div class="t-caption">Expected <code class="lsn-ic">${Z.esc(r.expect)}</code>, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>`}
+        <div class="wd-res-b"><div class="wd-res-h"><b>${label}</b> ${r.out ? (r.stdin ? 'what it prints with this input' : 'what it prints') : r.call ? `${r.setup ? `<code class="lsn-ic">${Z.esc(r.setup)}</code> then ` : ''}<code class="lsn-ic">${Z.esc(r.call)}</code>` : 'the whole program'}</div>
+        ${r.out ? outRow(r) : `${r.error ? pre(cleanTb(r.error), 'wd-res-err') : r.raises ? `<div class="t-caption">Expected it to raise <code class="lsn-ic">${Z.esc(r.expect)}</code>, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>` : `<div class="t-caption">Expected <code class="lsn-ic">${Z.esc(r.expect)}</code>, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>`}
         ${r.stdout ? pre(r.stdout) : ''}`}</div></li>`;
     const render = (title, rows, cases, extra = '') => {
       const n = rows.filter(r => r.ok).length;
       res.innerHTML = `<div class="wd-res-top"><span class="t-label">${title}</span><span class="t-caption">${n} of ${cases.length} passed</span></div>${extra}<ol class="wd-res-list">${rows.map((r, i) => row(r, (title === 'Examples' ? 'Example ' : 'Test ') + (i + 1))).join('')}</ol>`;
     };
     /* Run a list of cases; resolves to { rows, error } */
-    const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null);
+    const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null || (c.compare === 'raises' && c.call == null));
     const runCases = (cases) => new Promise((resolve) => {
       const code = script ? scriptHarness(ed.value, cases) : ed.value + harness(cases);
-      const rows = cases.map(c => ({ call: c.call, expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
+      const rows = cases.map(c => ({ call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
       let loadErr = null, loaded = '';
       const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, TEST_MS * Math.max(1, cases.length),
         (d) => {
