@@ -77,6 +77,19 @@
   /* Variants worth seeing on their own: drawn after the one-per-kind samples. Canvas variants render through
      ZQ.player.renderItem so their explore controls (canvas.controls) work as in a lesson. */
   const CANVAS_EXTRAS = [
+    { name: 'pair (circle and sine)', about: 'Two canvases side by side; derive reads the circle and moves the point on the sine curve', spec: { kind: 'pair', active: 'right',
+      left: { kind: 'circle', params: { values: false }, state: { angle: 30 } },
+      right: { kind: 'plane', params: { x: [0, 6.3], y: [-1.2, 1.2], functions: [{ id: 's', expr: 'sin(x)' }] }, state: { points: [{ id: 'P', x: 0, y: 0, label: 'P' }] } },
+      derive: { 'right:P.x': 'angle * pi / 180', 'right:P.y': 'sin(angle * pi / 180)', caption: 'sin {{angle}}° = {{fixed(sin(angle * pi / 180), 3)}}' },
+      controls: [{ bind: 'left:angle', min: 0, max: 360, step: 15, label: 'Angle' }] } },
+    { name: 'plane (geometry)', about: 'axes: false, a filled polygon with vertex labels, a right-angle mark and an angle arc', spec: { kind: 'plane',
+      params: { x: [0, 6], y: [0, 4], axes: false, equal: true },
+      state: { points: [{ id: 'A', x: 1, y: 0.6 }, { id: 'B', x: 5, y: 0.6 }, { id: 'C', x: 1, y: 3.4 }], polygons: [{ id: 'tri', points: ['A', 'B', 'C'], vertexLabels: ['A', 'B', 'C'], colour: 2 }],
+        angles: [{ id: 'r', at: 'A', from: 'B', to: 'C', right: true }, { id: 'th', at: 'B', from: 'A', to: 'C', label: '$\\theta$' }], segments: [{ id: 'h', from: 'B', to: 'C', label: 'hypotenuse', labelOffset: [10, -12] }] } } },
+    { name: 'area (signed pieces)', about: '(x + 5)(x − 2): the −2 strip is subtracted (hatched); a diagonal halves one piece', spec: { kind: 'area',
+      params: { shape: 'rect', grid: [2, 2], size: [4, 3], colSizes: [3, 1.5], rowSizes: [3, -1], colLabels: ['$x$', '$5$'], rowLabels: ['$x$', '$-2$'], labels: { c11: '$x^2$', c12: '$5x$', c21: '$-2x$', c22: '$-10$' } },
+      state: { shade: { a: ['c11', 'c12'] }, diagonal: { c12: '\\' } } } },
+    { name: 'series (log scale)', about: 'yScale: "log" with price-labelled ticks', spec: { kind: 'series', params: { series: [{ id: 'px', label: 'Price', values: [10, 14, 21, 30, 46, 70, 100, 150, 230, 340, 500] }], yScale: 'log', money: '£' }, state: {} } },
     { name: 'area (re-cut)', about: 'Explore controls bound to grid.cols, split.rows and shade (fraction readout): the half stays shaded as the cuts change', spec: { kind: 'area',
       params: { shape: 'rect', grid: [1, 2], size: [4, 2] }, state: { shade: 0.5, split: [1, 1] },
       controls: [{ bind: 'grid.cols', min: 2, max: 12, step: 2, label: 'Pieces across' }, { bind: 'split.rows', min: 1, max: 4, step: 1, label: 'Cuts down' }, { bind: 'shade', min: 0, max: 1, step: 0.125, label: 'Shaded', format: 'fraction' }] } },
