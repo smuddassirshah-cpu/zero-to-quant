@@ -297,3 +297,9 @@ Raised later (counting level 3):
 106. README-B `vectors`: document drag on heads (origin-based vectors only) and add `points` with labels (A, B, O, M) and `labelPos` for vector labels.
 107. `vectors`: tap mode on arrows.
 108. Document the derive function set (it already includes acos, atan2, hypot and others) in AUTHORING.md and README-B.
+
+Raised later (first-python level 1), high priority for the programming courses:
+
+109. `code` widget: a `compare: "stdout"` test mode (`{ "stdin": "250\n", "expect": "Return: 5.00%\n" }`, exact or whitespace-normalised) that re-runs the learner's code per test with the given stdin, so `input()` works and printed output is graded; "Run examples" shows what the code printed. Then replace the `_getframe` trick in first-python level 1 tests (l1, l3, l4, review-1, homework-1) with the new mode.
+110. `code` widget: show stdout from Run examples under the editor.
+111. `boxes`: card width sized to its label (or a `wide` item kind), shared with item 102.
