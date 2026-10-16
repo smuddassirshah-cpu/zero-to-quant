@@ -9,7 +9,7 @@ Authors write `canvas: { "kind", "params", "state", "controls" }` (AUTHORING.md 
 - **`state.caption: "text"`** shows under the drawing. It may contain `$...$` maths.
 - **Labels.** A label string with no `$` is plain text. A label that is entirely `$...$` is KaTeX. Mixed text and maths (`"slope of $f$"`) also works.
 - **Series colours.** Series take slots 1 to 6 in order. Set `colour: 1..6` on a series, function, vector or leg to pick a slot. Learner-movable things are always manipulable blue.
-- **Linked state (`derive`).** Any canvas may carry `"derive": { "<target>": "<expression>" }` beside `params` and `state`. After every change (a patch, a drag, a control) each target is set from its expression: `"p2.x": "0.8 * p1.x"` (an item's property, by id), `"values.7": "10 - values['3']"` (bars), `"params.b": "2 * a"`, `"caption": "Change: {{round((p1.x / 50 - 1) * 100, 1)}}%"` (a string fills each `{{expression}}`). Expressions see item ids (`p1.x`), param names, top-level numbers (`angle`, `ran`), `values` (bar heights by label and id) and `abs min max sqrt pow exp log floor ceil round(v, places) fixed(v, places) money(v, symbol) pi`. `fixed(3.5, 2)` is "3.50"; `money(10.5)` is "£10.50" (`money(v, "$")` for dollars); `(expr).toFixed(2)` and ternaries (`p1.x > 3 ? "high" : "low"`) work as in JavaScript. A plane explore screen often pairs points with `drag: true` and a `derive` caption: the validator accepts that as the screen's interaction. It is engine-wide (`ZQ.canvas.create`), so it works on number-line, plane, bars and every other kind.
+- **Linked state (`derive`).** Any canvas may carry `"derive": { "<target>": "<expression>" }` beside `params` and `state`. After every change (a patch, a drag, a control) each target is set from its expression: `"p2.x": "0.8 * p1.x"` (an item's property, by id), `"values.7": "10 - values['3']"` (bars), `"params.b": "2 * a"`, `"caption": "Change: {{round((p1.x / 50 - 1) * 100, 1)}}%"` (a string fills each `{{expression}}`). Expressions see item ids (`p1.x`), param names, top-level numbers (`angle`, `ran`), `values` (bar heights by label and id) and `abs min max sqrt pow exp log floor ceil round(v, places) fixed(v, places) money(v, symbol) pi`. Also `sin cos tan asin acos atan atan2 hypot ln log10 e`. `fixed(3.5, 2)` is "3.50"; `money(1234.5)` is "£1,234.50" (`money(v, "$")` for dollars); negative numbers, in captions and from these helpers, print with the minus sign −; `(expr).toFixed(2)` and ternaries (`p1.x > 3 ? "high" : "low"`) work as in JavaScript. A plane explore screen often pairs points with `drag: true` and a `derive` caption: the validator accepts that as the screen's interaction. It is engine-wide (`ZQ.canvas.create`), so it works on number-line, plane, bars and every other kind, runs again in the Why? copy on the explained state, and on a `pair` reads both sides (README.md, "pair").
 - **Keyed list patches.** Lists with ids (`points`, `vectors`, `segments`, `markers`, `pointers`) can be patched by id: `{ "points": { "p1": { "x": 2 } } }` changes only `p1`. Sending an array replaces the whole list.
 - **`state.params` overrides params.** In `plane` and `distribution` it overrides the expression or family parameters (`params.params`). In `walk` it overrides top-level numbers (`p`, `mu`, `sigma`, `steps`, `paths`, `start`). This is what a bound slider writes.
 - **Interactive modes.** A widget calls `canvas.enable(mode, opts)`. The modes each kind supports are listed below. Elements the author marks as movable (`"drag": true` on a plane point, `state.drag` on vectors) move without `enable`. Clones made for the Why? modal are always static.
@@ -33,8 +33,13 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - `height` in px (default 360). `equal: true` sizes the frame so units are square.
 - `functions: [{ id, expr, label, domain: [a, b], colour, dashed, endpoints: ["closed"|"open"|null, ...], labelAt: x, labelSide: "above"|"below", labelOffset: [dx, dy] }]`. `labelSide` (alias `labelPos`) puts the label above (default) or below the curve; `labelOffset` nudges it in px.
 - `equal: true` gives square units. With `height` as well, the height stays and the shorter range widens about its centre.
-- `vlines: [{ id, x, label, colour, dashed }]` and `hlines: [{ id, y, ... }]` (in params or state) draw the reference lines x = a and y = b across the plot, dashed unless `dashed: false`; their ids are highlightable. Labels still move apart if they would overlap.
+- `vlines: [{ id, x, label, colour, dashed }]` and `hlines: [{ id, y, label, colour, dashed }]` (in params or state, patchable by id) draw the reference lines x = a and y = b across the plot, dashed unless `dashed: false`; their ids are highlightable. Labels still move apart if they would overlap.
 - Mixed text and maths in a label or axis title (`"Price $p$ (£)"`) keeps its spaces.
+- `labelAnchor: "start" | "end"` (default end) sets which end of the label sits at the curve point. Every label (functions, points, segments, polygons, angles) keeps clear of every curve and of the axes, moving up or down (below first for `labelSide: "below"`).
+- A `functions` entry in a state patch merges by id: `{ "functions": [{ "id": "f", "expr": "2*x" }] }` keeps the authored `domain`, `label` and colour unless it gives them again.
+- Expressions: `-x^2` is $-(x^2)$ (a unary minus before a power applies to the whole power), and `e` is Euler's number (`e^x` equals `exp(x)`).
+- `axes: false` draws no axes, ticks or grid: a geometry figure.
+- `yScale: "log"` (a positive `y` range): log-price charts, ticks at 1, 2 and 5 times powers of ten; `money: "£"` labels them as prices (£10, £20, £50). Points and functions use the same scale; areas under curves are for linear scales.
   - `expr` uses `x`, numbers, `+ - * / ^`, `sin cos tan exp ln log sqrt abs min max floor ceil pi e`, and any name in `params`.
   - Paths break at NaN, at asymptotes and at jumps.
 - `params: { a: 1 }` are the expression parameters.
@@ -43,7 +48,9 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - `points: [{ id, x, y, drag, snap, snapX, on: "f", lockX, lockY, label, labelPos: "ne"|"n"|..., colour, open }]`.
   - `on` keeps a dragged point on function `f`, inside f's `domain`.
   - `label` may contain `{x}` and `{y}`, which are filled with the current coordinates.
-- `segments: [{ id, from: [x, y] | pointId, to, dashed, arrow, label, colour }]`.
+- `segments: [{ id, from: [x, y] | pointId, to, dashed, arrow, label, labelOffset: [dx, dy], colour }]`. The label sits at the midpoint, nudged by `labelOffset` (default 8 right, 10 up; a negative dx anchors it at its end).
+- `polygons: [{ id, points: [[x, y] | pointId, ...], colour, label, vertexLabels: ["A", "B", "C"], dashed }]`: a filled shape (a light series wash) with its vertices labelled just outside it.
+- `angles: [{ id, at, from, to, label, right, radius }]`: an arc between the rays at → from and at → to (the smaller angle), or a square mark with `right: true`; the label sits on the bisector; `radius` in px (default 22).
 - `tangent: { f, x: number | pointId, label: "slope" | "text {slope}", length, lengthPx, side, dashed }`. It can also be an array of these. `length` is in x units, `lengthPx` in pixels along the line. At a corner (the one-sided slopes differ, as on `abs(x)` at 0) no tangent is drawn unless `side: "left"` or `"right"` picks one.
 - `area: { id, f, g, from, to, label: "auto" | "text {value}", colour }`. `g` is an optional lower curve. It can also be an array.
 - `riemann: { id, f, from, to, n, rule: "left"|"right"|"mid"|"trap", showSum, sumLabel }`.
@@ -58,6 +65,8 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - `drag` (on points with `drag: true`): `{ type: "drag", id, x, y, phase }`.
 - `tap` (on points without `drag`): points become buttons, so `tap-regions` can ask "which point is (−2, 4)?" with point ids as the answer.
 - Controls: `"bind": "points.p1.x"` (or `.y`) moves that point from an explore slider, which opens at the point's current value.
+- `tap` also works on points without `drag`, for tap-regions.
+- drag-point targets on a plane: `[x, y]`, or `{ "on": "f", "x": 12.3 }` (graded on x alone, for a steep curve), with `tol` a radius, `tol: [dx, dy]` per axis, or `tolX` for x alone.
 - `slider`: no events; the slider writes `state.params`.
 - `sketch`: started with `enable('sketch', { control, xRange, target, band, start, snap, reset })`. Each control point moves vertically. Emits `{ type: "sketch", points, phase }`.
 
@@ -84,7 +93,8 @@ Bar chart or histogram. It can draw dashed exact-value lines and fill itself fro
 - `sim: { trials: [10, 100, 1000], outcome: "d6()+d6()", seed: 7 }`. `outcome` is a `ZQ.sim.outcome` expression.
 
 **state**
-- `values: { "7": 6 }`, keyed by category label or id.
+- `values: { "7": 6 }`, keyed by category label or id. An object category `{ id, label }` keeps its own `id` (not `x{label}`).
+- `params: { k: 7 }`: free parameters. `setParam(name, v)` with a name that is no category writes here, so one control and a `derive` block can drive every bar: `"derive": { "values.a": "k", "values.b": "10 - k" }`.
 - `ran: n` is the number of simulated trials. Trials are the first `n` outcomes of the seeded stream, so Run 10 then Run 100 shows trials 1 to 110, the same every time.
 - `params: { trials: n }` is an alias for `ran`, for a slider.
 - `showExact: false`, `selected`, `highlight`.
@@ -179,6 +189,7 @@ One or more time series, with optional candles.
 **state**
 - `markers: [{ id, i, series, label, below, colour, y }]`. `i` is an index or an ISO date. `label` may contain `{value}`. A marker sits on its series' value at `i`; give `y` to place it explicitly, which you must do where that value is `null` (a marker on a gap is otherwise skipped).
 - `shade: [{ id, from, to, label, tone: "neg"|"pos"|"neutral" }]`.
+- `yScale: "log"` in params: a log-price chart (positive values), ticks at 1, 2 and 5 times powers of ten in the money format.
 - `drawdown: true` finds and shades the maximum drawdown of the first series, labelled `Max drawdown −x%`. `drawdown: "money"` measures the absolute fall instead, labelled in the money format (`Max drawdown −£90.00`), for cumulative P&L that starts at zero; `"abs"` gives the plain number.
 - `window`: `{ from, to, label }`, or `[from, to]`. A slider can bind to `window.to`.
 - `reveal`: 0 to 1. Animating it draws the lines from left to right.

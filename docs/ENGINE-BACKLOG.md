@@ -100,6 +100,36 @@ Second pass (items 24 to 39):
 49. Done: plane tangent at a corner is not drawn unless `side` picks a one-sided slope; `lengthPx` gives a length in pixels.
 50. Done: series `drawdown: "money"` (and `"abs"`) labels the absolute fall; no division by a zero peak.
 
+Third pass (items 51 to 77):
+
+51. Done: area signed pieces: a negative `colSizes` or `rowSizes` entry makes its strip subtracted (hatched, dashed edge).
+52. Done: area `colLabels`, `rowLabels` and edge `labels` patchable through state.
+53. Done: area `state.move: { from, to }` (or a list) slides a copy of a piece to another cell, its place left empty.
+54. Done: `ZQ.canvas.compile` wraps a unary minus before a power, so `-x^2` is -(x^2) (it compiled to a syntax error and drew nothing).
+55. Done: payoff leg labels keep clear of the bold combined line (the line is an obstacle in label placement).
+56. Done: derived numbers in captions and table cells print negatives with the minus sign U+2212.
+57. Done: plane function `labelAnchor`; every label keeps clear of every curve and of the axes.
+58. Done: `\pounds` (and `\text{£}`, rewritten to it) draws the pound sign in the prose face (core.js tex(), CSS).
+59. Done: bars `setParam` with a non-category name writes `state.params`, so one control and `derive` drive every bar.
+60. Done: validator knows object category ids (`id`, else `x{label}`) on bars.
+61. Done: documented that a `functions` patch by id keeps the authored `domain` (the merge already kept it).
+62. Done: `derive` runs in the Why? copy on the explained state (static canvases derive too).
+63. Done: slider and control `decimals`; `money()` groups thousands.
+64. Done: `inline()` sets maths aside first, so `**bold $x$ text**` renders bold around the formula.
+65. Done: drag-point `tolX` and targets `{ "on": "f", "x": n }` (graded on x) on a plane.
+66. Done: `yScale: "log"` on series and plane, ticks at 1, 2, 5 times powers of ten, price-labelled with `money`.
+67. Done: validator accepts `arc` and `radius` as circle ids.
+68. Done: circle `drag: true` (params or state) drags without a widget, so explore screens work with `derive` captions; the validator counts it as interactive.
+69. Done: `canvas: { kind: "pair", left, right, active, stack }` with patches by side, `left:` / `right:` ids, controls and `derive` across both, a pair Why? copy, validator support and a gallery sample.
+70. Done: circle README (and AUTHORING) note that a radians `tol` of 0.25 is about 14 degrees; give 0.02.
+71. Done: derive functions `sin cos tan asin acos atan atan2 hypot ln log10 e` join the set.
+72. Done: `ZQ.canvas.compile` maps a free `e` to Math.E (it was left undefined, so `e^x` drew nothing).
+73. Done: drag-point `tol: [dx, dy]` per axis.
+74. Done: verified plane `labelSide: "below"` (placement now tries below first) and `labelOffset` applied as given.
+75. Done: README-B documents `hlines` and `vlines` (pass 2), now with their patchable fields.
+76. Done: plane geometry kit: `polygons` with `vertexLabels`, `angles` (arcs and right-angle squares), segment `labelOffset`, `axes: false`.
+77. Done: area `state.diagonal` per cell and half-cell shade ids (`c11/ul`, `c11/lr`, `c11/ur`, `c11/ll`).
+
 
 Raised later (equations level 2):
 
@@ -209,3 +239,10 @@ Raised later (series level 2):
 80. `derive`: evaluate rules in dependency order (or iterate to a fixed point, at most 3 passes) so a caption can read another derived value.
 81. `table` canvas: shrink or scroll horizontally at narrow widths instead of clipping; the player's column is 540px so tables over about 7 columns need a compact mode.
 82. `plane`: clip points and segments to the plot area; move the x-axis title clear of marks near y = 0.
+
+Raised later (counting level 1):
+
+83. `tree` `collapse`: size the drawing by the leaves actually shown, not the full tree.
+84. `place` `mode: "boxes"`: count as a canvas-bound widget on explore screens; add `free: true` (any arrangement accepted) and grading by `count` per container.
+85. `boxes` `box` container: a `fill: "top"|"bottom"` option.
+86. Verdict chip: wrap long inline KaTeX instead of overflowing.

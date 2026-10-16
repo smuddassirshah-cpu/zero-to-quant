@@ -258,6 +258,7 @@ All canvases are SVG, theme-aware through CSS custom properties from `tokens.css
 | `payoff` | option payoff and P&L against the underlying: calls, puts, spreads, strikes, premiums, breakevens | legs, range, strike, premium | slider (strike), drag (strike) |
 | `orderbook` | bid and ask ladder with sizes, spread, a market order walking the book | bids, asks, order animation | tap (levels) |
 | `table` | static or editable data table with highlights | columns, rows, editable cells | table widget |
+| `pair` | two canvases side by side (a circle beside its sine graph); `derive` reads across both | `left`, `right` canvases, `active` side | the active side's modes; ids prefixed `left:` / `right:` |
 
 `sim` blocks run with the seeded RNG from `engine/sim.js` so a lesson replays identically. Trials animate the chart over at most 1,200ms with a Run 10 / 100 / 1,000 control rendered by the canvas.
 

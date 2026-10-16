@@ -137,6 +137,8 @@ Fraction and multiplication area models, geometric probability.
   "controls": [{ "bind": "grid.cols", "min": 2, "max": 12, "step": 2, "label": "Pieces" }, { "bind": "shade", "min": 0, "max": 1, "step": 0.125, "label": "Shaded", "format": "fraction" }] }
 ```
 
+**signed pieces**: a negative entry in `colSizes` or `rowSizes` lays the strip out by its size and marks its pieces subtracted (hatched over any shading, dashed edge), so $(x + 5)(x - 2)$ is `colSizes: [3, 1.5]`, `rowSizes: [3, -1]`. **edge labels**: `state.colLabels`, `state.rowLabels` and `state.labels` (`top`, `bottom`, `left`, `right`) patch them; give a starting value in params so the drawing keeps room. **diagonals**: `state.diagonal: { "c11": "/" }` (bottom left to top right) or `"\\"`, dashed; shade ids `"c11/ul"`, `"c11/lr"`, `"c11/ur"`, `"c11/ll"` fill the triangle on that side. **moving a piece**: `state.move: { "id": "m1", "from": "c12", "to": "c31" }` (or a list) slides a copy of the piece (its first shading's colour and its text) to the `to` cell over about 700 ms, leaving its own place empty, for rearrangements such as the difference of two squares.
+
 **text on a piece**: `labels` (params) and `state.labels` also take cell ids, `{ "c11": "$3n$", "c12": "4" }`, drawn centred on the cell (on a circle, along the sector's middle); the state wins.
 
 **ids**: cells `c{i}{j}` one-based from the top left (`c{i}-{j}` when either index is 10 or more), circle sectors `c1{j}` clockwise from twelve o'clock, points `pt1`, `pt2`. **events**: tap (cells).
@@ -164,11 +166,11 @@ Two-pan scale. The beam tilts by clamp(k × (right − left), ±15°) on the spr
 
 The unit circle.
 
-**params**: `degrees` (true; false means `angle` is in radians and tick labels read π/6 and so on), `showSin` (true), `showCos` (true), `showTan` (false), `ticks` (common angles; `"quadrants"`, `false`, or a list), `tickLabels` (true), `values` (show "cos θ = 0.5"), `coords` (label the point "(0.5, 0.87)"), `angleLabel: "theta"` (label the angle θ instead of its value), `snap` (degrees, default 1; common angles pull within 3°).
+**params**: `drag` (true, or `state.drag`: the point drags without a widget, for an explore screen with a `derive` caption), `degrees` (true; false means `angle` is in radians and tick labels read π/6 and so on), `showSin` (true), `showCos` (true), `showTan` (false), `ticks` (common angles; `"quadrants"`, `false`, or a list), `tickLabels` (true), `values` (show "cos θ = 0.5"), `coords` (label the point "(0.5, 0.87)"), `angleLabel: "theta"` (label the angle θ instead of its value), `snap` (degrees, default 1; common angles pull within 3°).
 
 **state**: `angle` (default 30° or π/6), `shade: "arc" | "sector"`.
 
-**ids**: `angle`, `pt`, `radius`, `cos`, `sin`, `tan`, `arc`. **events**: drag on `pt`: `{ id: "pt", angle, x: cos, y: sin, phase }`. A drag-point target is the angle (a number).
+**ids**: `angle`, `pt`, `radius`, `cos`, `sin`, `tan`, `arc`. **events**: drag on `pt`: `{ id: "pt", angle, x: cos, y: sin, phase }`. A drag-point target is the angle (a number). With `degrees: false` the default `tol` of 0.25 is about 14°: give `tol: 0.02` (about 1°).
 
 ```json
 { "kind": "circle", "params": { "values": true }, "state": { "angle": 60, "shade": "sector" } }
@@ -182,6 +184,8 @@ An HTML table in the canvas wrapper.
 
 **state**: `highlight` as ids or `{ "rows": [0], "cols": [2], "cells": ["r1c1"] }` (one ring around the union), `shade: [ids]` or `{ "<set>": [ids] }`, `values: { "r1c1": "0.5" }` (fills inputs or replaces cell text).
 
+Numbers print with the minus sign (−3), as does text that starts with a negative number ("-0.5 kg" reads −0.5 kg).
+
 **ids**: zero-based, as E2's table widget: `r{i}` a body row, `c{j}` a column (header and cells), `r{i}c{j}` a cell; `r0c0` is the first body cell. **methods**: `cells()` returns the editable inputs (each with `data-id`), `input(id)`. **events**: tap (non-editable cells).
 
 ```json
@@ -190,6 +194,23 @@ An HTML table in the canvas wrapper.
 ```
 
 ---
+
+## pair
+
+Two canvases side by side (stacked below 480px, or always with `stack: true`), for a circle beside its sine graph, a tree beside its table, before beside after.
+
+```json
+{ "kind": "pair", "active": "right",
+  "left": { "kind": "circle", "params": { "values": false }, "state": { "angle": 30 } },
+  "right": { "kind": "plane", "params": { "x": [0, 6.3], "y": [-1.2, 1.2], "functions": [{ "id": "s", "expr": "sin(x)" }] }, "state": { "points": [{ "id": "P", "x": 0, "y": 0 }] } },
+  "derive": { "right:P.x": "angle * pi / 180", "right:P.y": "sin(angle * pi / 180)", "caption": "sin {{angle}}° = {{fixed(sin(angle * pi / 180), 3)}}" },
+  "controls": [{ "bind": "left:angle", "min": 0, "max": 360, "step": 15, "label": "Angle" }] }
+```
+
+- **state** patches take `{ "left": {...}, "right": {...}, "caption": "..." }`; any other key goes to the `active` side (default `left`), which is also the side canvas-bound widgets (tap-regions, drag-point, sketch, balance) drive.
+- **ids** carry a prefix: `left:pt`, `right:P` in hints, `highlight`, marks and `explain.canvas`; an unprefixed id reaches both sides. A tap-regions answer on the active side uses its plain ids.
+- **derive** reads both sides (ids directly, or `left.p1` and `right.p1` when they share an id) and writes `left:` or `right:` targets; a plain target writes the active side, and `caption` the pair's caption.
+- **controls** bind `left:angle`, `right:a`, `right:points.P.x`; unprefixed binds reach the active side. The Why? copy is a pair too, with derive run on the explained state.
 
 ## Canvas-bound widgets
 
