@@ -133,3 +133,9 @@ Raised later (functions level 3):
 48. Validator: accept an `explore` screen whose interaction is a `drag: true` point (or document the controls plus derive pattern).
 49. `plane` tangent on a piecewise-linear function at a corner: use one-sided slope or suppress; `length` in pixel units option.
 50. `series` `drawdown`: a `money` label option (absolute fall) for cumulative P&L that starts at zero.
+
+Raised later (quadratics level 1):
+
+51. `area`: signed pieces (negative strips drawn dashed or hatched, subtracted from the total) so (x + 5)(x − 2) stays on the area model.
+52. `area`: `colLabels`/`rowLabels` patchable through state.
+53. `area`: animate a piece moving (`move: { from: "c12", to: "c31" }`) for the difference-of-squares rearrangement.
