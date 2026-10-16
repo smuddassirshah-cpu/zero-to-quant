@@ -1,0 +1,1208 @@
+{
+  "id": "l3-staging-area",
+  "course": "git",
+  "title": "Choosing what goes in",
+  "minutes": 13,
+  "objectives": [
+    "Stage exactly the changes you mean to commit",
+    "Read git status as two comparisons",
+    "Keep data, outputs and secrets out with .gitignore"
+  ],
+  "skills": [
+    "gt-commits"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You fixed a bug in `returns.py`. You also started a new chart in `plot.py`, which does not run yet. And you jotted ideas in `notes.txt`. You want the next commit to hold the bug fix and nothing else.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "work",
+              "label": "Working folder",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": [
+                {
+                  "id": "ret",
+                  "label": "returns.py"
+                },
+                {
+                  "id": "plot",
+                  "label": "plot.py"
+                },
+                {
+                  "id": "notes",
+                  "label": "notes.txt"
+                }
+              ]
+            },
+            {
+              "id": "stage",
+              "label": "Staging area",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": []
+            },
+            {
+              "id": "repo",
+              "label": "Repository",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": []
+            }
+          ],
+          "label": "Working folder, staging area and repository"
+        },
+        "state": {
+          "caption": "Each card is a change to a file. The files themselves stay in your working folder."
+        }
+      },
+      "question": "Drag the cards to where they should be just before you type `git commit`.",
+      "widget": {
+        "kind": "place",
+        "mode": "boxes",
+        "answer": {
+          "work": [
+            "plot",
+            "notes"
+          ],
+          "stage": [
+            "ret"
+          ],
+          "repo": []
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A commit takes exactly what is in the staging area."
+        },
+        {
+          "rung": "point",
+          "text": "This is the only finished change.",
+          "highlight": [
+            "ret"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Stage returns.py alone. The unfinished chart and the notes stay in the working folder."
+        }
+      ],
+      "feedback": {
+        "correct": "Only the fix is staged, so only the fix is committed.",
+        "generic": "Not quite right. Stage the fix and nothing else.",
+        "byKey": {
+          "plot": "plot.py does not run yet. Staging it would put a broken chart into the same commit as the fix.",
+          "notes": "Your notes are not part of the fix. Leave them in the working folder.",
+          "ret": "The fix has to be staged for the commit to hold it. Nothing goes to the repository before the commit."
+        }
+      },
+      "explain": {
+        "text": "`git add returns.py` stages the fix alone, so the commit holds that and nothing else. The chart can get its own commit once it works. The staging area is how you choose what a commit contains.",
+        "canvas": {
+          "move": {
+            "ret": "stage"
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Behind the cards, each place keeps its own copy of every file it knows. The table shows which version sits where. `git status` works by comparing the places in pairs.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "File",
+            "Working folder",
+            "Staging area",
+            "Last commit"
+          ],
+          "rows": [
+            [
+              "returns.py",
+              "v2",
+              "v2",
+              "v1"
+            ],
+            [
+              "plot.py",
+              "v2",
+              "v1",
+              "v1"
+            ],
+            [
+              "README.md",
+              "v1",
+              "v1",
+              "v1"
+            ],
+            [
+              "notes.txt",
+              "v1",
+              "–",
+              "–"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Which version of each file sits in each place. – means the file is not there."
+        }
+      },
+      "question": "Tap every file whose staging area version differs from its last commit version.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "untracked",
+            "set": [
+              "r0c0",
+              "r3c0"
+            ]
+          },
+          {
+            "id": "working",
+            "set": [
+              "r0c0",
+              "r1c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the last two columns, row by row."
+        },
+        {
+          "rung": "point",
+          "text": "These are the two columns to compare.",
+          "highlight": [
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only returns.py has v2 staged against v1 committed. For notes.txt both columns are empty, so they agree."
+        }
+      ],
+      "feedback": {
+        "correct": "Only returns.py has a staged version the last commit lacks.",
+        "generic": "Not quite right. Compare only the Staging area and Last commit columns.",
+        "byKey": {
+          "untracked": "notes.txt is in neither place, so those two columns agree. Git lists it separately, as untracked.",
+          "working": "plot.py's staged version is still v1, like its last commit. Its v2 is only in the working folder.",
+          "r1c0": "plot.py's staged version is still v1, like its last commit. Its v2 is only in the working folder.",
+          "r2c0": "README.md is v1 in every place. Nothing differs.",
+          "r3c0": "notes.txt is in neither place, so those two columns agree."
+        }
+      },
+      "explain": {
+        "text": "Only returns.py has a staged version, v2, that differs from its last commit, v1. `git status` lists exactly such files under **Changes to be committed**. They are what the next commit would change.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c2",
+              "r0c3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The second comparison is between the working folder and the staging area. A difference there is an edit you have saved but not staged.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "File",
+            "Working folder",
+            "Staging area",
+            "Last commit"
+          ],
+          "rows": [
+            [
+              "returns.py",
+              "v2",
+              "v2",
+              "v1"
+            ],
+            [
+              "plot.py",
+              "v2",
+              "v1",
+              "v1"
+            ],
+            [
+              "README.md",
+              "v1",
+              "v1",
+              "v1"
+            ],
+            [
+              "notes.txt",
+              "v1",
+              "–",
+              "–"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Which version of each file sits in each place. – means the file is not there."
+        }
+      },
+      "question": "Tap every file `git status` lists under Changes not staged for commit.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "untracked-too",
+            "set": [
+              "r1c0",
+              "r3c0"
+            ]
+          },
+          {
+            "id": "staged-too",
+            "set": [
+              "r0c0",
+              "r1c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the Working folder and Staging area columns."
+        },
+        {
+          "rung": "point",
+          "text": "These are the two columns to compare.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "plot.py is v2 in the folder but v1 staged. notes.txt differs too, but Git has never tracked it."
+        }
+      ],
+      "feedback": {
+        "correct": "plot.py has an edit that is not staged.",
+        "generic": "Not quite right. Compare the working folder with the staging area, for tracked files only.",
+        "byKey": {
+          "untracked-too": "notes.txt differs too, but Git has never tracked it. It goes under Untracked files instead.",
+          "staged-too": "returns.py is v2 in the folder and v2 staged. Nothing about it is unstaged.",
+          "r0c0": "returns.py is v2 in the folder and v2 staged. Nothing about it is unstaged.",
+          "r3c0": "notes.txt was never added, so Git lists it under Untracked files instead.",
+          "r2c0": "README.md is v1 everywhere. Nothing differs."
+        }
+      },
+      "explain": {
+        "text": "plot.py is v2 in your folder but v1 in the staging area, so its edit is **not staged**. notes.txt is in the folder only, so it is **untracked**. Two comparisons and one leftover give the three headings of `git status`.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r1c1",
+              "r1c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Here is what `git status` prints for this table:\n\n```sh\n$ git status\nChanges to be committed:\n        modified:   returns.py\nChanges not staged for commit:\n        modified:   plot.py\nUntracked files:\n        notes.txt\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "File",
+            "Working folder",
+            "Staging area",
+            "Last commit"
+          ],
+          "rows": [
+            [
+              "returns.py",
+              "v2",
+              "v2",
+              "v1"
+            ],
+            [
+              "plot.py",
+              "v2",
+              "v1",
+              "v1"
+            ],
+            [
+              "README.md",
+              "v1",
+              "v1",
+              "v1"
+            ],
+            [
+              "notes.txt",
+              "v1",
+              "–",
+              "–"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Which version of each file sits in each place. – means the file is not there.",
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      },
+      "question": "`README.md` is not in the output. Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "All three of its versions match, so there is nothing to report",
+            "correct": true
+          },
+          {
+            "id": "untracked",
+            "text": "Git has stopped tracking it",
+            "why": "A tracked file stays tracked. Git simply lists only files with a difference."
+          },
+          {
+            "id": "never",
+            "text": "It was never added",
+            "why": "It is v1 in the last commit, so it was added and committed earlier."
+          },
+          {
+            "id": "hidden",
+            "text": "Git hides files that end in .md",
+            "why": "Git treats every file alike. Its name has nothing to do with it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read README.md's row across all three places."
+        },
+        {
+          "rung": "point",
+          "text": "This is README.md's row.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "v1, v1, v1. Neither comparison finds a difference, and it is tracked."
+        }
+      ],
+      "feedback": {
+        "correct": "No difference, so no line in the report.",
+        "generic": "Not quite right. Compare README.md's three versions."
+      },
+      "explain": {
+        "text": "README.md is v1 in every place, so neither comparison finds anything. `git status` lists only differences. A tracked file that matches its last commit is called **clean**.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "You stage the sign fix in `returns.py`. Then you spot a typo in the same file, fix it and save. Then you commit:\n\n```sh\n$ git add returns.py\n$ # fix the typo, save the file\n$ git commit -m \"Fix sign error in returns\"\n```",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "work",
+              "label": "Working folder",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": [
+                {
+                  "id": "e2",
+                  "label": "typo fix"
+                }
+              ]
+            },
+            {
+              "id": "stage",
+              "label": "Staging area",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": [
+                {
+                  "id": "e1",
+                  "label": "sign fix"
+                }
+              ]
+            },
+            {
+              "id": "repo",
+              "label": "Repository",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": []
+            }
+          ],
+          "label": "Working folder, staging area and repository"
+        },
+        "state": {
+          "caption": "Both cards are changes to returns.py."
+        }
+      },
+      "question": "Drag each change to where it is after the commit.",
+      "widget": {
+        "kind": "place",
+        "mode": "boxes",
+        "answer": {
+          "work": [
+            "e2"
+          ],
+          "stage": [],
+          "repo": [
+            "e1"
+          ]
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When was the typo fix made: before or after `git add`?"
+        },
+        {
+          "rung": "point",
+          "text": "This change was made after the file was staged.",
+          "highlight": [
+            "e2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "git add copied returns.py with the sign fix only. The commit records that copy. The typo fix stays in the working folder."
+        }
+      ],
+      "feedback": {
+        "correct": "The commit holds the sign fix. The typo fix is still unstaged.",
+        "generic": "Not quite right. A commit holds the file as it was when you staged it.",
+        "byKey": {
+          "e2": "You expected the commit to take the typo fix too. `git add` copied returns.py at that moment; the later fix was never staged.",
+          "e1": "The sign fix was staged, so the commit takes it into the repository."
+        }
+      },
+      "explain": {
+        "text": "`git add` copies the file as it is at that moment. The commit recorded that copy, so the typo fix is not in it. Most people expect the commit to take the file as it is now.",
+        "canvas": {
+          "move": {
+            "e1": "repo"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Straight after that commit, the versions of `returns.py` look like this. v2 has the sign fix; v3 also has the typo fix.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "File",
+            "Working folder",
+            "Staging area",
+            "Last commit"
+          ],
+          "rows": [
+            [
+              "returns.py",
+              "v3",
+              "v2",
+              "v2"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Which version of each file sits in each place. – means the file is not there."
+        }
+      },
+      "question": "What does `git status` report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "unstaged",
+            "text": "Changes not staged for commit: modified: `returns.py`",
+            "correct": true
+          },
+          {
+            "id": "clean",
+            "text": "nothing to commit, working tree clean",
+            "why": "You assumed the commit took the typo fix. It is only in your working folder, v3."
+          },
+          {
+            "id": "staged",
+            "text": "Changes to be committed: modified: `returns.py`",
+            "why": "The staging area and the last commit both hold v2 now. Nothing is waiting to be committed."
+          },
+          {
+            "id": "both",
+            "text": "Both headings list `returns.py`",
+            "why": "That was true just before the commit. The commit made the staging area and the last commit agree."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Do the two comparisons: staged against committed, then working against staged."
+        },
+        {
+          "rung": "point",
+          "text": "These two columns differ.",
+          "highlight": [
+            "r0c1",
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Staged v2 equals committed v2: nothing to commit. Working v3 differs from staged v2: an unstaged change."
+        }
+      ],
+      "feedback": {
+        "correct": "The typo fix is an unstaged change.",
+        "generic": "Not quite right. Compare the columns in pairs."
+      },
+      "explain": {
+        "text": "Staged and committed both hold v2, so nothing is waiting to be committed. The folder holds v3, so returns.py has an unstaged change. Run `git add returns.py` and commit again.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c1",
+              "r0c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Back to the bug fix. This time you type `git add .` out of habit, so the broken `plot.py` is staged too. `git status` suggests a command to unstage.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "work",
+              "label": "Working folder",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": []
+            },
+            {
+              "id": "stage",
+              "label": "Staging area",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": [
+                {
+                  "id": "ret",
+                  "label": "returns.py"
+                },
+                {
+                  "id": "plot",
+                  "label": "plot.py"
+                }
+              ]
+            },
+            {
+              "id": "repo",
+              "label": "Repository",
+              "kind": "box",
+              "cols": 1,
+              "capacity": 3,
+              "items": []
+            }
+          ],
+          "label": "Working folder, staging area and repository"
+        },
+        "state": {
+          "caption": "Each card is a change to a file. The files themselves stay in your working folder."
+        }
+      },
+      "question": "Which command takes `plot.py` out of the staging area and keeps your edits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "unstage",
+            "text": "`git restore --staged plot.py`",
+            "correct": true
+          },
+          {
+            "id": "restore",
+            "text": "`git restore plot.py`",
+            "why": "Without --staged, restore works on your working folder copy, not the staging area. plot.py would stay staged."
+          },
+          {
+            "id": "commit",
+            "text": "`git commit -m \"Fix returns\"`, then fix the chart later",
+            "why": "That puts the broken chart into the bug fix's commit. Unstage it first."
+          },
+          {
+            "id": "rm",
+            "text": "`git rm plot.py`",
+            "why": "git rm removes a file from the project and stages that removal. You want the file kept, just not staged."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You want to change the staging area, not the file. Which option says staged?"
+        },
+        {
+          "rung": "point",
+          "text": "This card should go back.",
+          "highlight": [
+            "plot"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`git restore --staged plot.py` moves the change back to the working folder. Your edits to plot.py are untouched."
+        }
+      ],
+      "feedback": {
+        "correct": "--staged undoes the `git add` and leaves your file alone.",
+        "generic": "Not quite right. You need to undo the staging, not the edit."
+      },
+      "explain": {
+        "text": "`git restore --staged plot.py` undoes the `git add` for that file. Its change goes back to the working folder, untouched. Now only the fix is staged.",
+        "canvas": {
+          "move": {
+            "plot": "work"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Some files should never be committed: data you can download again, files Python makes for itself, outputs your script draws. A file called `.gitignore` lists them, one pattern per line:\n\n```\nprices.csv\n__pycache__/\n*.png\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "~/stage0"
+          ],
+          "rows": [
+            [
+              ".gitignore"
+            ],
+            [
+              "README.md"
+            ],
+            [
+              "returns.py"
+            ],
+            [
+              "prices.csv"
+            ],
+            [
+              "__pycache__/"
+            ],
+            [
+              "chart.png"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "A new repository with no commits yet"
+        }
+      },
+      "question": "Tap every name `git status` lists as untracked.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0",
+          "r1c0",
+          "r2c0"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "self",
+            "set": [
+              "r1c0",
+              "r2c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which names match a line of `.gitignore`?"
+        },
+        {
+          "rung": "point",
+          "text": "Each of these matches a pattern.",
+          "highlight": [
+            "r3c0",
+            "r4c0",
+            "r5c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "prices.csv, __pycache__/ and chart.png are ignored. Everything else is untracked, .gitignore itself included."
+        }
+      ],
+      "feedback": {
+        "correct": "Three files are untracked; the other three are ignored.",
+        "generic": "Not quite right. Remove the names that match a pattern, and keep the rest.",
+        "byKey": {
+          "self": "You left out .gitignore itself. It is a file like any other, and you should commit it so the rules travel with the project.",
+          "r3c0": "prices.csv matches the first line exactly, so Git ignores it.",
+          "r4c0": "__pycache__/ matches the second line. Python rebuilds it whenever it runs your code.",
+          "r5c0": "chart.png matches *.png. The star stands for any name."
+        }
+      },
+      "explain": {
+        "text": "The three ignored names disappear from `git status`, so `git add .` can never stage them by mistake. The data can be downloaded again and the chart redrawn. Commit `.gitignore` itself, so the rules travel with the project.",
+        "canvas": {
+          "shade": [
+            "r3c0",
+            "r4c0",
+            "r5c0"
+          ],
+          "caption": "Shaded: ignored"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Here is what you found. `git add` copies a file, as it is right now, into the staging area. `git commit` records the staging area and nothing else. `git status` reports two comparisons:\n\n```\nstaging area  vs last commit    ->  Changes to be committed\nworking folder vs staging area ->  Changes not staged\nnever added, not ignored       ->  Untracked files\n```",
+      "question": "You edit a file after `git add`. What must you do for the commit to include the edit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "again",
+            "text": "Run `git add` on the file again",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: the file is already staged",
+            "why": "You treated staging as a link to the file. It is a copy taken at the moment of `git add`."
+          },
+          {
+            "id": "status",
+            "text": "Run `git status`",
+            "why": "`git status` only reports. It changes nothing."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What did the commit hold when you fixed the typo after staging?"
+        },
+        {
+          "rung": "step",
+          "text": "It held the copy made by `git add`. A new `git add` makes a new copy."
+        }
+      ],
+      "feedback": {
+        "correct": "Stage it again, so the staged copy includes the edit.",
+        "generic": "Not quite right. Recall the typo fix that was left behind."
+      },
+      "explain": {
+        "text": "You saw the typo fix left out because it came after `git add`. Staging again replaces the staged copy with the current file. Then the commit holds both fixes."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "Your backtest's Sharpe ratio fell from 1.10 to 0.40 in one commit. That commit added 5 bp trading costs in `backtest.py` and switched to a 50-day signal in `signal.py`. Which change did the damage?",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Commit",
+            "Message",
+            "Sharpe ratio"
+          ],
+          "rows": [
+            [
+              "2f0c6d8",
+              "Add 20-day moving-average signal",
+              "1.10"
+            ],
+            [
+              "c3d91b4",
+              "Add costs and switch to a 50-day signal",
+              "0.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Oldest at the top"
+        }
+      },
+      "question": "Which way of committing would have let the history answer that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "Stage and commit `backtest.py`, then stage and commit `signal.py`",
+            "correct": true
+          },
+          {
+            "id": "dot",
+            "text": "`git add .` and one commit, as before",
+            "why": "That is what happened. One commit holding both changes cannot tell you which one moved the Sharpe ratio."
+          },
+          {
+            "id": "noadd",
+            "text": "Two `git commit` commands in a row, one message each",
+            "why": "Without `git add`, nothing is staged, so neither command makes a commit."
+          },
+          {
+            "id": "long",
+            "text": "One commit with a longer message naming both changes",
+            "why": "A clear message helps, but both changes still share one snapshot. You cannot run the backtest on one without the other."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "To blame one change, you need a snapshot with that change alone."
+        },
+        {
+          "rung": "point",
+          "text": "This one commit holds both changes.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two commits, one change each. Run the backtest on each and see which one moves the Sharpe ratio."
+        }
+      ],
+      "feedback": {
+        "correct": "One change per commit makes each result traceable.",
+        "generic": "Not quite right. You need a commit that holds one change alone."
+      },
+      "explain": {
+        "text": "With two commits you could run the backtest on each and see which one moved the Sharpe ratio. Costs of 5 bp alone should lower it only a little. Staging one change at a time is what makes each result traceable.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`git add` copies a file as it is at that moment. Later edits need another `git add`.",
+      "`git status` compares staged with committed, then working with staged, and lists untracked files last.",
+      "`.gitignore` keeps data, outputs and secrets out of `git status`, so they are never staged by mistake."
+    ],
+    "formula": {
+      "name": "Reading git status",
+      "tex": "\\text{staged} \\ne \\text{committed} \\Rightarrow \\text{to be committed}, \\quad \\text{working} \\ne \\text{staged} \\Rightarrow \\text{not staged}",
+      "note": "A file can appear under both headings at once."
+    },
+    "trap": "Editing after `git add` and committing records the old staged copy, not the file as it is now."
+  },
+  "quiz": [
+    {
+      "id": "q-status-plot",
+      "difficulty": 2,
+      "prose": "The versions of `plot.py`:",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "File",
+            "Working folder",
+            "Staging area",
+            "Last commit"
+          ],
+          "rows": [
+            [
+              "plot.py",
+              "v3",
+              "v3",
+              "v2"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Under which heading does `git status` list `plot.py`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "staged",
+            "text": "Changes to be committed",
+            "correct": true
+          },
+          {
+            "id": "unstaged",
+            "text": "Changes not staged for commit",
+            "why": "The working folder and the staging area both hold v3. Nothing is unstaged."
+          },
+          {
+            "id": "both",
+            "text": "Both headings",
+            "why": "Only one pair differs: staged v3 against committed v2."
+          },
+          {
+            "id": "none",
+            "text": "Neither: it is clean",
+            "why": "Its staged v3 differs from its committed v2, so there is a change waiting."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Staged v3 differs from committed v2.",
+        "generic": "Not quite right. Compare the columns in pairs."
+      },
+      "explain": {
+        "text": "Working and staged agree, so nothing is unstaged. Staged v3 differs from committed v2, so plot.py is under Changes to be committed."
+      }
+    },
+    {
+      "id": "q-add-twice",
+      "difficulty": 3,
+      "prose": "You run `git add signal.py`, edit `signal.py` again, run `git add signal.py` again, then commit.",
+      "question": "What does the commit hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "both",
+            "text": "`signal.py` with both edits",
+            "correct": true
+          },
+          {
+            "id": "first",
+            "text": "`signal.py` with the first edit only",
+            "why": "That would be true without the second `git add`. It replaced the staged copy with the current file."
+          },
+          {
+            "id": "two",
+            "text": "Two commits, one per `git add`",
+            "why": "`git add` never makes a commit. One `git commit` makes one commit."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The second `git add` staged the file with both edits.",
+        "generic": "Not quite right. Track what the staged copy holds after each step."
+      },
+      "explain": {
+        "text": "Each `git add` replaces the staged copy with the file as it is then. The second one copied the file with both edits. The commit records that copy."
+      }
+    },
+    {
+      "id": "q-star-csv",
+      "difficulty": 2,
+      "prose": "A project's `.gitignore` holds one line, `*.csv`. The project has `prices.csv` at the top and `data/prices_2024.csv` in a folder.",
+      "question": "Which of them does Git ignore?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "both",
+            "text": "Both files",
+            "correct": true
+          },
+          {
+            "id": "top",
+            "text": "Only `prices.csv`",
+            "why": "You expected the pattern to apply to the top folder only. A pattern with no slash matches in every folder."
+          },
+          {
+            "id": "none",
+            "text": "Neither, because there is no file called *.csv",
+            "why": "The star stands for any name. It is a pattern, not a file name."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A pattern with no slash matches at any depth.",
+        "generic": "Not quite right. Think about what the star matches, and where."
+      },
+      "explain": {
+        "text": "`*.csv` matches any name ending in .csv, in any folder of the project. So both price files are ignored. Write `/prices.csv` to ignore only the top one."
+      }
+    },
+    {
+      "id": "q-keep-out",
+      "difficulty": 3,
+      "prose": "A backtest project holds the files below. You are writing its `.gitignore`.",
+      "question": "Which should Git ignore? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "csv",
+            "text": "`prices.csv`, 40 MB downloaded from your data vendor",
+            "correct": true
+          },
+          {
+            "id": "env",
+            "text": "`.env`, holding your data vendor's API key",
+            "correct": true
+          },
+          {
+            "id": "out",
+            "text": "`results/equity.png`, drawn each time the backtest runs",
+            "correct": true
+          },
+          {
+            "id": "py",
+            "text": "`backtest.py`, the strategy code",
+            "why": "This is the work itself. Ignoring it would leave the history empty."
+          },
+          {
+            "id": "req",
+            "text": "`requirements.txt`, the list of packages to install",
+            "why": "Another machine needs this to run your code. It is small and written by you, so commit it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Data, secrets and outputs stay out; code and setup files go in.",
+        "generic": "Not quite right. Keep out what can be rebuilt or must stay private."
+      },
+      "explain": {
+        "text": "Data can be downloaded again and outputs redrawn, so neither belongs in the history. A key in a commit stays readable in every later copy of it. Code and the package list are what someone needs to rerun the work."
+      }
+    }
+  ]
+}

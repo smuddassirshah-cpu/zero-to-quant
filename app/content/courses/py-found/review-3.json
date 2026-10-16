@@ -1,0 +1,399 @@
+{
+  "id": "review-3",
+  "course": "py-found",
+  "level": 3,
+  "items": [
+    {
+      "id": "r-from-math",
+      "difficulty": 2,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "```python\nfrom math import sqrt\n\nprint(math.sqrt(2.25))\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`NameError: name 'math' is not defined`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`1.5`",
+            "why": "You read `from math import sqrt` as importing the module too. It creates only the name `sqrt`, so write `sqrt(2.25)`."
+          },
+          {
+            "id": "c",
+            "text": "`ImportError: cannot import name 'sqrt'`",
+            "why": "`math` does have `sqrt`, so the first line works. The last line fails."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Only `sqrt` exists, not `math`.",
+        "generic": "Not quite right. Which name does the import line create?"
+      },
+      "explain": {
+        "text": "`from math import sqrt` creates `sqrt` alone. `sqrt(2.25)` would print 1.5; `math.sqrt` needs `import math`."
+      }
+    },
+    {
+      "id": "r-sum-strings",
+      "difficulty": 2,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "`rows` came from `csv.DictReader` over a price file.\n\n```python\ntotal = sum(row[\"close\"] for row in rows)\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`TypeError: unsupported operand type(s) for +: 'int' and 'str'`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`total` is the sum of the closes",
+            "why": "You treated the closes as numbers. `csv` gives text, and `sum` cannot add text to its starting 0."
+          },
+          {
+            "id": "c",
+            "text": "`total` is all the closes joined into one string",
+            "why": "`sum` starts from the number 0, and `0 + '101.20'` is an error. It never joins strings."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`sum` starts at 0 and cannot add a string to it.",
+        "generic": "Not quite right. What type is each close, and what does `sum` start from?"
+      },
+      "explain": {
+        "text": "Every value from `csv` is a string. `sum` starts at 0, and `0 + '101.20'` raises `TypeError`. Write `sum(float(row[\"close\"]) for row in rows)`."
+      }
+    },
+    {
+      "id": "r-own-attr",
+      "difficulty": 2,
+      "skills": [
+        "pf-classes"
+      ],
+      "prose": "```python\nclass Position:\n    def __init__(self, ticker, qty, avg_price):\n        self.ticker = ticker\n        self.qty = qty\n        self.avg_price = avg_price\n\np = Position(\"VOD\", 100, 0.72)\nq = Position(\"VOD\", 100, 0.72)\np.qty += 50\nprint(p.qty, q.qty)\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`150 100`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`150 150`",
+            "why": "You expected two equal positions to share their data. Each `Position(...)` call makes a new object with its own `qty`."
+          },
+          {
+            "id": "c",
+            "text": "`100 100`",
+            "why": "`p.qty += 50` changes the `qty` stored on `p`. It does take effect."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Two separate objects, each with its own `qty`.",
+        "generic": "Not quite right. How many objects did the code make?"
+      },
+      "explain": {
+        "text": "`self.qty = qty` in `__init__` puts a separate `qty` on each object. Changing `p.qty` leaves `q` alone. Only data in the class body is shared."
+      }
+    },
+    {
+      "id": "r-string-count",
+      "difficulty": 3,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "The closes in `rows` are `'101.20'`, `'99.80'`, `'100.40'`, `'98.75'` and `'102.50'`, straight from `csv`.\n\n```python\nprint(sum(1 for row in rows if row[\"close\"] > \"100\"))\n```",
+      "question": "What number does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "5",
+        "wrong": [
+          {
+            "id": "numbers",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All five pass, because the comparison is between strings.",
+        "generic": "Not quite right. Compare each close with `\"100\"` as text, character by character.",
+        "byKey": {
+          "numbers": "You compared amounts: three closes are above £100. These are strings, and `'99.80'` and `'98.75'` beat `'100'` because `'9'` comes after `'1'`."
+        }
+      },
+      "explain": {
+        "text": "Text compares character by character. `'9'` beats `'1'`, and `'100.40'` beats `'100'` because it is longer with the same start. So all 5 pass; `float(row[\"close\"]) > 100` gives the true count, 3."
+      }
+    },
+    {
+      "id": "r-swallow",
+      "difficulty": 3,
+      "skills": [
+        "pf-classes"
+      ],
+      "prose": "```python\ndef closes(rows):\n    out = []\n    for row in rows:\n        try:\n            out.append(float(row[\"Close\"]))\n        except:\n            pass\n    return out\n```\n\nThe file's header is `date,close`, and every close is a valid number.",
+      "question": "What does `closes(rows)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Every close as a float",
+            "why": "The key is spelt `\"Close\"`, but the header says `close`. Every lookup raises `KeyError`."
+          },
+          {
+            "id": "c",
+            "text": "A `KeyError` traceback",
+            "why": "The bare `except` catches the `KeyError` on every row and throws it away. Nothing is reported."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Every row raised `KeyError`, and the bare `except` hid it.",
+        "generic": "Not quite right. Compare the key in the code with the header."
+      },
+      "explain": {
+        "text": "Keys are case-sensitive, so `row[\"Close\"]` raises `KeyError` on every row. The bare `except` swallows it, leaving an empty list and no message. With `except ValueError:` the typo would stop the program at once."
+      }
+    },
+    {
+      "id": "r-avg-close",
+      "difficulty": 3,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "A price file has a `close` column among others. Use `csv.DictReader` and the `statistics` module.",
+      "question": "Write `average_close(text)`: the mean close in the file, rounded to 2 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\n\n\ndef average_close(text):\n    ...\n",
+        "solution": "import csv\nfrom statistics import mean\n\n\ndef average_close(text):\n    closes = [float(row[\"close\"]) for row in csv.DictReader(text.splitlines())]\n    return round(mean(closes), 2)\n",
+        "tests": [
+          {
+            "call": "average_close(\"date,close\\n2024-03-11,101.20\\n2024-03-12,102.50\\n2024-03-13,99.80\\n2024-03-14,100.40\\n2024-03-15,103.10\\n\")",
+            "expect": "101.4",
+            "compare": "equal"
+          },
+          {
+            "call": "average_close(\"date,open,close,volume\\n2024-03-11,0.71,0.72,1200000\\n2024-03-12,0.72,0.75,900000\\n2024-03-13,0.75,0.74,1100000\\n\")",
+            "expect": "0.74",
+            "compare": "equal"
+          },
+          {
+            "call": "average_close(\"date,close\\n2024-03-11,26.40\\n\")",
+            "expect": "26.4",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests, each a whole file as one string. The mean is compared after rounding to 2 places.",
+        "examples": [
+          {
+            "call": "average_close(\"date,close\\n2024-03-11,101.20\\n2024-03-12,102.50\\n2024-03-13,99.80\\n2024-03-14,100.40\\n2024-03-15,103.10\\n\")",
+            "expect": "101.4",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The five closes average £101.40.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 has `open` before `close`, and expects 0.74. Read the column by its name, `row[\"close\"]`."
+        }
+      },
+      "explain": {
+        "text": "Convert each `row[\"close\"]` with `float`, then `mean` from `statistics` does the rest. The five closes sum to £507.00, so the mean is £101.40."
+      }
+    },
+    {
+      "id": "r-safe-return",
+      "difficulty": 3,
+      "skills": [
+        "pf-classes"
+      ],
+      "prose": "A return from a price of £0.00 is meaningless. Return `None` for it, but let every other error through.",
+      "question": "Write `safe_return(p0, p1)`: `p1 / p0 - 1`, or `None` when `p0` is zero. Catch only `ZeroDivisionError`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def safe_return(p0, p1):\n    ...\n",
+        "solution": "def safe_return(p0, p1):\n    try:\n        return p1 / p0 - 1\n    except ZeroDivisionError:\n        return None\n",
+        "tests": [
+          {
+            "call": "safe_return(100.00, 105.00)",
+            "expect": "0.05",
+            "compare": "isclose"
+          },
+          {
+            "call": "safe_return(0.00, 101.20)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "safe_return(250.00, 240.00)",
+            "expect": "-0.04",
+            "compare": "isclose"
+          },
+          {
+            "call": "exec('try: got = safe_return(\"100\", 105.00)\\nexcept TypeError: got = \"TypeError\"', globals()) or got",
+            "expect": "'TypeError'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Test 4 passes text for `p0`, a bug that must raise `TypeError` rather than return `None`.",
+        "examples": [
+          {
+            "call": "safe_return(100.00, 105.00)",
+            "expect": "0.05",
+            "compare": "isclose"
+          },
+          {
+            "call": "safe_return(0.00, 101.20)",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Zero gives `None`, and a real bug still raises.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 passes `p0 = 0.00` and expects `None`. Catch the `ZeroDivisionError` and return `None`.",
+          "test-4": "Test 4 expects `TypeError` for a text price. A bare `except` returned `None` and hid the bug."
+        }
+      },
+      "explain": {
+        "text": "Only division by zero is expected, so only `ZeroDivisionError` is caught. Text instead of a number is a bug elsewhere, and the `TypeError` makes it visible."
+      }
+    },
+    {
+      "id": "r-csv-shadow",
+      "difficulty": 4,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "You save a script as `csv.py`. It contains:\n\n```python\nimport csv\n\nrows = list(csv.DictReader(open(\"prices.csv\")))\n```",
+      "question": "What happens when you run `python csv.py`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "An `AttributeError` saying the module `csv` has no attribute `DictReader`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It reads `prices.csv` as normal",
+            "why": "Python searches the script's folder first, so `import csv` finds your own `csv.py`, not the standard module."
+          },
+          {
+            "id": "c",
+            "text": "`ModuleNotFoundError: No module named 'csv'`",
+            "why": "Python does find a module named `csv`: your file. The failure comes when it looks inside for `DictReader`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`import csv` imported your own file, which has no `DictReader`.",
+        "generic": "Not quite right. Which `csv.py` does Python find first?"
+      },
+      "explain": {
+        "text": "The script's folder is searched before the standard library, so `import csv` loads your file. Your file defines no `DictReader`, hence the `AttributeError`. Rename the script, say to `read_prices.py`."
+      }
+    },
+    {
+      "id": "r-buy",
+      "difficulty": 4,
+      "skills": [
+        "pf-classes"
+      ],
+      "prose": "Buying more shares changes the average price: $\\bar{p}_{\\text{new}} = \\dfrac{q\\,\\bar{p} + q'\\,p'}{q + q'}$, for $q'$ more shares at $p'$.",
+      "question": "Add `buy(self, qty, price)` to `Position`. It updates `self.qty` and `self.avg_price` and returns nothing.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class Position:\n    def __init__(self, ticker, qty, avg_price):\n        self.ticker = ticker\n        self.qty = qty\n        self.avg_price = avg_price\n\n    def buy(self, qty, price):\n        ...\n",
+        "solution": "class Position:\n    def __init__(self, ticker, qty, avg_price):\n        self.ticker = ticker\n        self.qty = qty\n        self.avg_price = avg_price\n\n    def buy(self, qty, price):\n        cost = self.qty * self.avg_price + qty * price\n        self.qty = self.qty + qty\n        self.avg_price = cost / self.qty\n",
+        "tests": [
+          {
+            "call": "(p := Position(\"SHEL\", 100, 26.00), p.buy(50, 27.50), p.qty)[-1]",
+            "expect": "150",
+            "compare": "equal"
+          },
+          {
+            "call": "(p := Position(\"SHEL\", 100, 26.00), p.buy(50, 27.50), p.avg_price)[-1]",
+            "expect": "26.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "(p := Position(\"AZN\", 40, 104.20), p.buy(10, 101.50), p.buy(50, 100.00), p.avg_price)[-1]",
+            "expect": "101.83",
+            "compare": "isclose"
+          },
+          {
+            "call": "(p := Position(\"AZN\", 40, 104.20), p.buy(10, 101.50), p.buy(50, 100.00), p.qty)[-1]",
+            "expect": "100",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each makes a position, calls `buy`, then reads `qty` or `avg_price`.",
+        "examples": [
+          {
+            "call": "(p := Position(\"SHEL\", 100, 26.00), p.buy(50, 27.50), p.avg_price)[-1]",
+            "expect": "26.5",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "100 at £26.00 and 50 at £27.50 average to £26.50.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 expects 26.5. Work out the total cost with the old quantity before you change `self.qty`. A plain average of the two prices ignores how many shares each bought."
+        }
+      },
+      "explain": {
+        "text": "Total cost is $100 \\times 26.00 + 50 \\times 27.50 = 3975$ for 150 shares, so the average is £26.50. Compute the cost before updating `self.qty`, or the old shares are counted at the new size."
+      }
+    }
+  ]
+}

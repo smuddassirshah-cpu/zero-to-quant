@@ -1,0 +1,467 @@
+{
+  "id": "homework-4",
+  "course": "py-found",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h4-period",
+      "difficulty": 4,
+      "skills": [
+        "pf-idioms",
+        "pf-functions"
+      ],
+      "prose": "A risk report states when the worst fall began and ended, not just its depth. Track the position of the running peak as you go.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                104.0,
+                98.8,
+                101.0,
+                97.76
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 200
+        },
+        "state": {
+          "markers": [],
+          "caption": "Example: the worst fall runs from 03/03 to 06/03",
+          "drawdown": true
+        }
+      },
+      "question": "Write `drawdown_period(dates, prices)` that returns `(peak_date, trough_date, depth)` for the maximum drawdown. If prices never fall, return the first date twice and `0.0`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def drawdown_period(dates, prices):\n    # return (peak_date, trough_date, depth) for the maximum drawdown\n    pass\n\nprint(drawdown_period([\"02/03\", \"03/03\", \"04/03\", \"05/03\", \"06/03\"],\n                      [100.0, 104.0, 98.8, 101.0, 97.76]))\n",
+        "solution": "def drawdown_period(dates, prices):\n    # return (peak_date, trough_date, depth) for the maximum drawdown\n    peak_i = 0\n    best = (dates[0], dates[0], 0.0)\n    for i, p in enumerate(prices):\n        if p > prices[peak_i]:\n            peak_i = i\n        depth = (prices[peak_i] - p) / prices[peak_i]\n        if depth > best[2]:\n            best = (dates[peak_i], dates[i], depth)\n    return best\n\nprint(drawdown_period([\"02/03\", \"03/03\", \"04/03\", \"05/03\", \"06/03\"],\n                      [100.0, 104.0, 98.8, 101.0, 97.76]))\n",
+        "tests": [
+          {
+            "call": "drawdown_period(['02/03', '03/03', '04/03', '05/03', '06/03'], [100.0, 104.0, 98.8, 101.0, 97.76])[:2]",
+            "expect": "('03/03', '06/03')",
+            "compare": "equal"
+          },
+          {
+            "call": "drawdown_period(['02/03', '03/03', '04/03', '05/03', '06/03'], [100.0, 104.0, 98.8, 101.0, 97.76])[2]",
+            "expect": "0.06",
+            "compare": "isclose"
+          },
+          {
+            "call": "drawdown_period(['02/03', '03/03', '04/03', '05/03', '06/03', '09/03', '10/03', '11/03', '12/03', '13/03'], [100.0, 96.0, 92.0, 97.0, 110.0, 104.5, 99.0, 103.0, 108.0, 112.0])[:2]",
+            "expect": "('06/03', '10/03')",
+            "compare": "equal"
+          },
+          {
+            "call": "drawdown_period(['a', 'b', 'c'], [100.0, 101.0, 102.5])",
+            "expect": "('a', 'a', 0.0)",
+            "compare": "equal"
+          },
+          {
+            "call": "drawdown_period(['a', 'b', 'c', 'd'], [50.0, 40.0, 60.0, 45.0])[:2]",
+            "expect": "('c', 'd')",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Dates are compared exactly; the depth within a relative $10^{-9}$.",
+        "examples": [
+          {
+            "call": "drawdown_period(['02/03', '03/03', '04/03', '05/03', '06/03'], [100.0, 104.0, 98.8, 101.0, 97.76])[:2]",
+            "expect": "('03/03', '06/03')",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "You kept the peak's position as well as its value.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-3": "Test 3 expects the fall from 6 March to 10 March. Other dates usually mean the overall high and low were used, ignoring their order.",
+          "test-4": "Test 4 has prices that only rise. Return the first date twice and 0.0."
+        }
+      },
+      "explain": {
+        "text": "Keep `peak_i`, the index of the running peak, and record the dates whenever a deeper drawdown appears. On the ten-day path the peak is £110.00 on 6 March and the trough £99.00 on 10 March. Starting `best` at the first date with depth 0 covers a path that never falls."
+      }
+    },
+    {
+      "id": "h4-worst-days",
+      "difficulty": 4,
+      "skills": [
+        "pf-idioms",
+        "pf-modules"
+      ],
+      "prose": "A risk check lists the worst days in a vendor file. A day's return belongs to the later of its two dates. The file can arrive in any order, with UK dates.",
+      "question": "Write `worst_days(csv_text, n)` that returns the dates of the `n` worst daily returns, worst first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nimport io\nfrom datetime import datetime\n\nCSV = \"\"\"Date,Close\n05/02/2026,412.60\n04/02/2026,405.30\n03/02/2026,409.85\n02/02/2026,401.20\n30/01/2026,398.75\n29/01/2026,404.10\n28/01/2026,400.00\n\"\"\"\n\ndef worst_days(csv_text, n):\n    pass  # replace this line\n\nprint(worst_days(CSV, 2))\n",
+        "solution": "import csv\nimport io\nfrom datetime import datetime\n\nCSV = \"\"\"Date,Close\n05/02/2026,412.60\n04/02/2026,405.30\n03/02/2026,409.85\n02/02/2026,401.20\n30/01/2026,398.75\n29/01/2026,404.10\n28/01/2026,400.00\n\"\"\"\n\ndef worst_days(csv_text, n):\n    rows = sorted(csv.DictReader(io.StringIO(csv_text)),\n                  key=lambda row: datetime.strptime(row[\"Date\"], \"%d/%m/%Y\"))\n    days = []\n    for before, after in zip(rows, rows[1:]):\n        r = float(after[\"Close\"]) / float(before[\"Close\"]) - 1\n        days.append((after[\"Date\"], r))\n    days = sorted(days, key=lambda day: day[1])\n    return [date for date, r in days[:n]]\n\nprint(worst_days(CSV, 2))\n",
+        "tests": [
+          {
+            "call": "worst_days(\"Date,Close\\n05/02/2026,412.60\\n04/02/2026,405.30\\n03/02/2026,409.85\\n02/02/2026,401.20\\n30/01/2026,398.75\\n29/01/2026,404.10\\n28/01/2026,400.00\\n\", 2)",
+            "expect": "['30/01/2026', '04/02/2026']",
+            "compare": "equal"
+          },
+          {
+            "call": "worst_days(\"Date,Close\\n05/02/2026,412.60\\n04/02/2026,405.30\\n03/02/2026,409.85\\n02/02/2026,401.20\\n30/01/2026,398.75\\n29/01/2026,404.10\\n28/01/2026,400.00\\n\", 1)",
+            "expect": "['30/01/2026']",
+            "compare": "equal"
+          },
+          {
+            "call": "worst_days(\"Date,Close\\n02/01/2026,249.90\\n29/12/2025,250.00\\n05/01/2026,255.00\\n31/12/2025,247.45\\n30/12/2025,252.50\\n\", 2)",
+            "expect": "['31/12/2025', '02/01/2026']",
+            "compare": "equal"
+          },
+          {
+            "call": "worst_days(\"Date,Close\\n03/03/2026,99.00\\n02/03/2026,100.00\\n\", 3)",
+            "expect": "['03/03/2026']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on different files and compares the list of dates exactly.",
+        "examples": [
+          {
+            "call": "worst_days(CSV, 2)",
+            "expect": "['30/01/2026', '04/02/2026']",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Sorted by date, paired, then sorted by return.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects 30 January, then 4 February. Wrong dates usually mean the rows were sorted as text, or the returns largest first.",
+          "test-3": "Test 3 is shuffled across New Year. Sort by real dates before pairing."
+        }
+      },
+      "explain": {
+        "text": "Two sorts do two jobs: by date, so neighbours are consecutive days, then by return, so the worst come first. On the share's file the worst days are 30 January (−1.32%) and 4 February (−1.11%). Test 4 asks for more days than exist, and the slice simply stops."
+      }
+    },
+    {
+      "id": "h4-reuse",
+      "difficulty": 4,
+      "skills": [
+        "pf-idioms"
+      ],
+      "prose": "`closes` is a generator that yields each close of a file, oldest first.\n\n```python\nc = closes(rows)\npeak = max(c)\nreturns = [b / a - 1 for a, b in zip(c, list(c)[1:])]\nprint(statistics.stdev(returns))\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`StatisticsError`: `returns` is empty",
+            "correct": true
+          },
+          {
+            "id": "works",
+            "text": "It prints the daily standard deviation",
+            "why": "You expected `c` to replay. `max(c)` used every close, so `zip` and `list` find nothing."
+          },
+          {
+            "id": "peak",
+            "text": "It prints 0, as every return is measured from the peak",
+            "why": "The returns are never computed. The generator is spent before the list is built."
+          },
+          {
+            "id": "type",
+            "text": "`TypeError`: you cannot `zip` a generator",
+            "why": "`zip` takes any iterable, generators included. This one is simply empty."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`max` used up the generator, so no returns were made.",
+        "generic": "Not quite right. What is left in `c` after `max(c)`?"
+      },
+      "explain": {
+        "text": "`max(c)` pulled every close, so `zip(c, list(c)[1:])` is empty and `returns` is `[]`. `stdev` needs two values and raises `StatisticsError`. Build `prices = list(closes(rows))` once and use the list twice."
+      }
+    },
+    {
+      "id": "h4-weekly",
+      "difficulty": 4,
+      "skills": [
+        "pf-functions"
+      ],
+      "prose": "A fund reports only weekly returns. Their sample standard deviation is 2.5%. A year has 52 weeks.",
+      "question": "What is its annualised volatility?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 18.03,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "%",
+        "label": "Annualised volatility",
+        "accept": "18.03%: $2.5\\% \\times \\sqrt{52} \\approx 18.03\\%$.",
+        "wrong": [
+          {
+            "id": "d252",
+            "value": 39.69,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "x52",
+            "value": 130,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The same rule with 52 periods: $2.5\\% \\times 7.21$.",
+        "generic": "Not quite right. Scale by the square root of the number of periods in a year.",
+        "byKey": {
+          "d252": "You used 252, the number of trading days. These are weekly returns, so a year has 52 of them.",
+          "x52": "You multiplied by 52. Only the variance grows with the number of periods."
+        }
+      },
+      "explain": {
+        "text": "Variances of independent weeks add, so the yearly variance is $52\\sigma^2$ and the volatility is $\\sqrt{52}\\,\\sigma \\approx 7.21 \\times 2.5\\% \\approx 18.03\\%$. The 252 in the daily rule is just the number of periods."
+      }
+    },
+    {
+      "id": "h4-big-n",
+      "difficulty": 3,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "You have 1,000 daily returns. `statistics.pstdev` gives 0.0120.",
+      "question": "About what does `statistics.stdev` give?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "0.0120: they differ by about 0.05%",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "0.0134: about 12% more",
+            "why": "That is the gap for 5 returns, $\\sqrt{5/4}$. With 1,000 the factor is $\\sqrt{1000/999}$."
+          },
+          {
+            "id": "double",
+            "text": "0.0240",
+            "why": "The factor is $\\sqrt{n/(n-1)}$, never 2 for more than two values."
+          },
+          {
+            "id": "less",
+            "text": "0.0119: a little less",
+            "why": "Dividing by $n - 1$ makes the result larger, not smaller."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sqrt{1000/999} \\approx 1.0005$: the choice hardly matters for long samples.",
+        "generic": "Not quite right. Work out $\\sqrt{n/(n-1)}$ for $n = 1000$."
+      },
+      "explain": {
+        "text": "`stdev` is `pstdev` times $\\sqrt{n/(n-1)}$. For $n = 1000$ that is about 1.0005, so 0.0120 becomes 0.012006. The choice matters on short samples, like a strategy's first weeks."
+      }
+    },
+    {
+      "id": "h4-tool",
+      "difficulty": 5,
+      "skills": [
+        "pf-modules",
+        "pf-functions"
+      ],
+      "prose": "Finish the tool. `python summary.py prices.csv` summarises a file of daily closes; `python summary.py weekly.csv 52` uses 52 periods a year to annualise. The file may be in any order, with UK dates. The helpers from this level are in the starter. In this browser `sys.argv` is `['']`, so the guard prints its usage line.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "summary.txt"
+          ],
+          "rows": [
+            [
+              "Days                10"
+            ],
+            [
+              "Total return     4.03%"
+            ],
+            [
+              "Annual vol      29.04%"
+            ],
+            [
+              "Max drawdown     3.56%"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "What main(['summary.py', 'prices.csv']) writes for the February file"
+        }
+      },
+      "question": "Write `read_closes(path)` and `main(argv)`. `main` writes the four lines to `summary.txt`, one per line, and returns them as a list.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nimport io\nimport math\nimport statistics\nimport sys\nfrom datetime import datetime\n\ndef daily_returns(closes):\n    return [today / yesterday - 1 for yesterday, today in zip(closes, closes[1:])]\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\ndef format_row(label, value):\n    return f\"{label:<14}{value:>8.2%}\"\n\ndef read_closes(path):\n    pass  # the closes in date order; dates are dd/mm/yyyy\n\ndef main(argv):\n    pass  # read argv, build the four lines, write summary.txt, return the lines\n\nif __name__ == \"__main__\":\n    if len(sys.argv) < 2:\n        print(\"Usage: python summary.py prices.csv [periods]\")\n    else:\n        main(sys.argv)\n",
+        "solution": "import csv\nimport io\nimport math\nimport statistics\nimport sys\nfrom datetime import datetime\n\ndef daily_returns(closes):\n    return [today / yesterday - 1 for yesterday, today in zip(closes, closes[1:])]\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\ndef format_row(label, value):\n    return f\"{label:<14}{value:>8.2%}\"\n\ndef read_closes(path):\n    with open(path) as f:\n        rows = list(csv.DictReader(f))\n    rows = sorted(rows, key=lambda row: datetime.strptime(row[\"Date\"], \"%d/%m/%Y\"))\n    return [float(row[\"Close\"]) for row in rows]\n\ndef main(argv):\n    path = argv[1]\n    periods = int(argv[2]) if len(argv) > 2 else 252\n    closes = read_closes(path)\n    vol = statistics.stdev(daily_returns(closes)) * math.sqrt(periods)\n    lines = [\n        f\"{'Days':<14}{len(closes):>8}\",\n        format_row(\"Total return\", closes[-1] / closes[0] - 1),\n        format_row(\"Annual vol\", vol),\n        format_row(\"Max drawdown\", max_drawdown(closes)),\n    ]\n    with open(\"summary.txt\", \"w\") as f:\n        for line in lines:\n            f.write(line + \"\\n\")\n    return lines\n\nif __name__ == \"__main__\":\n    if len(sys.argv) < 2:\n        print(\"Usage: python summary.py prices.csv [periods]\")\n    else:\n        main(sys.argv)\n",
+        "tests": [
+          {
+            "call": "(open('h1.csv', 'w').write(\"Date,Close\\n13/02/2026,187.25\\n12/02/2026,184.05\\n11/02/2026,185.60\\n10/02/2026,181.10\\n09/02/2026,183.35\\n06/02/2026,178.90\\n05/02/2026,176.20\\n04/02/2026,179.45\\n03/02/2026,182.70\\n02/02/2026,180.00\\n\"), main(['summary.py', 'h1.csv']))[1]",
+            "expect": "['Days                10', 'Total return     4.03%', 'Annual vol      29.04%', 'Max drawdown     3.56%']",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('h1.csv', 'w').write(\"Date,Close\\n13/02/2026,187.25\\n12/02/2026,184.05\\n11/02/2026,185.60\\n10/02/2026,181.10\\n09/02/2026,183.35\\n06/02/2026,178.90\\n05/02/2026,176.20\\n04/02/2026,179.45\\n03/02/2026,182.70\\n02/02/2026,180.00\\n\"), main(['summary.py', 'h1.csv']), open('summary.txt').read())[2]",
+            "expect": "'Days                10\\nTotal return     4.03%\\nAnnual vol      29.04%\\nMax drawdown     3.56%\\n'",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('h2.csv', 'w').write(\"Date,Close\\n03/02/2026,182.70\\n11/02/2026,185.60\\n13/02/2026,187.25\\n04/02/2026,179.45\\n05/02/2026,176.20\\n02/02/2026,180.00\\n06/02/2026,178.90\\n12/02/2026,184.05\\n09/02/2026,183.35\\n10/02/2026,181.10\\n\"), main(['summary.py', 'h2.csv']))[1]",
+            "expect": "['Days                10', 'Total return     4.03%', 'Annual vol      29.04%', 'Max drawdown     3.56%']",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('h3.csv', 'w').write(\"Date,Close\\n13/02/2026,105.60\\n06/02/2026,101.20\\n30/01/2026,103.80\\n23/01/2026,99.10\\n16/01/2026,102.40\\n09/01/2026,100.00\\n\"), main(['summary.py', 'h3.csv', '52']))[1]",
+            "expect": "['Days                 6', 'Total return     5.60%', 'Annual vol      27.26%', 'Max drawdown     3.22%']",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('h3.csv', 'w').write(\"Date,Close\\n13/02/2026,105.60\\n06/02/2026,101.20\\n30/01/2026,103.80\\n23/01/2026,99.10\\n16/01/2026,102.40\\n09/01/2026,100.00\\n\"), read_closes('h3.csv'))[1]",
+            "expect": "[100.0, 102.4, 99.1, 103.8, 101.2, 105.6]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each writes a CSV file, then calls `main` with a list in place of `sys.argv` (or `read_closes` directly) and compares the lines, or the text of `summary.txt`, exactly.",
+        "examples": [
+          {
+            "call": "(open('h1.csv', 'w').write(\"Date,Close\\n13/02/2026,187.25\\n12/02/2026,184.05\\n11/02/2026,185.60\\n10/02/2026,181.10\\n09/02/2026,183.35\\n06/02/2026,178.90\\n05/02/2026,176.20\\n04/02/2026,179.45\\n03/02/2026,182.70\\n02/02/2026,180.00\\n\"), main(['summary.py', 'h1.csv']))[1]",
+            "expect": "['Days                10', 'Total return     4.03%', 'Annual vol      29.04%', 'Max drawdown     3.56%']",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A working tool: arguments, sorted data, four numbers, a file.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 compares your four lines exactly. Check the order of the lines, the labels, and the widths 14 and 8.",
+          "test-2": "Test 2 reads `summary.txt` back. Each line needs its own `\"\\n\"`.",
+          "test-3": "Test 3's file is shuffled. Sort the rows by their real dates, not by reversing them.",
+          "test-4": "Test 4 passes `'52'` as `argv[2]`. Annualise with `math.sqrt(int(argv[2]))` when it is given."
+        }
+      },
+      "explain": {
+        "text": "`main` reads its arguments from the list it is given, so a test can pass any list; the guard passes `sys.argv`, or prints a usage line when no file is given. `read_closes` sorts by real dates, so a shuffled or newest-first file gives the same answer. The weekly file uses $\\sqrt{52}$ in place of $\\sqrt{252}$."
+      }
+    },
+    {
+      "id": "h4-debug",
+      "difficulty": 4,
+      "skills": [
+        "pf-functions",
+        "pf-idioms"
+      ],
+      "prose": "A colleague's script summarises a fund from a vendor file. It reports annualised volatility of 412% and a maximum drawdown of 0%. The fund fell about 9% from its high during the period, and its vendor sends files newest first with UK dates.",
+      "question": "Explain the most likely cause of each wrong number, and write one test per cause that would have caught it.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Diagnose the 412% volatility and the 0% drawdown. For each, name the bug, show the arithmetic or reasoning that points to it, and give one `assert` with a hand-worked value that fails on the buggy code.",
+        "model": "**The 412% volatility.** The daily standard deviation was multiplied by 252, not $\\sqrt{252}$. A daily sd of about 1.63% gives $1.63\\% \\times 252 \\approx 411\\%$, but $1.63\\% \\times 15.87 \\approx 25.9\\%$. Variances of independent days add, so only the variance scales with 252.\n\n*Test:* `assert math.isclose(annualised_vol([0.01, -0.01]), math.sqrt(0.0002 * 252))`. The value is worked out by hand: mean 0, squared distances 0.0002 over $n - 1 = 1$. The bug gives 3.56 and fails.\n\n**The 0% drawdown.** The fund fell over the period, so a drawdown of 0 means the closes were processed in the wrong order. The vendor file is newest first; read top to bottom, a falling fund looks like a rising one, and a rising path has no drawdown. Sorting the date text would not fix it either, because `dd/mm/yyyy` sorts by day first.\n\n*Test:* a `sort_rows` or `read_closes` test with a newest-first file that crosses a month end, for example 27/03 to 02/04, asserting the first close is the oldest. And `assert math.isclose(max_drawdown([50.0, 40.0, 60.0, 45.0]), 0.25)`.\n\n**A second cause to rule out.** If `max_drawdown` calls `max(dd, default=0.0)` on a generator that something else already consumed, it returns 0 silently. Build the list of closes once with `list(...)`.\n\n**Order of work.** Write each test first, watch it fail on the current code, then fix the function until it passes. Keep the script lines under `if __name__ == \"__main__\":` so pytest can import the functions.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Identifies multiplying by 252 instead of $\\sqrt{252}$ as the volatility bug"
+          },
+          {
+            "points": 1,
+            "text": "Supports it with arithmetic: about 1.6% daily times 252 is about 410%"
+          },
+          {
+            "points": 2,
+            "text": "Identifies wrong date order (newest first, or dates sorted as text) as the drawdown bug"
+          },
+          {
+            "points": 1,
+            "text": "Explains why a falling fund read backwards shows no drawdown"
+          },
+          {
+            "points": 2,
+            "text": "Gives a volatility assert with a hand-worked expected value and `math.isclose`"
+          },
+          {
+            "points": 2,
+            "text": "Gives a test for date order or for `max_drawdown` with a known answer"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model and tick the rubric.",
+        "generic": "Compare your answer with the model and tick the rubric."
+      },
+      "explain": {
+        "text": "Both numbers are impossible for a fund that fell 9%: no fund has 412% vol, and a fall means a drawdown. Each points to one specific bug, and each bug is caught by one assert with a value worked out by hand."
+      }
+    },
+    {
+      "id": "h4-import",
+      "difficulty": 3,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "`summary.py` ends with `main(sys.argv)`, with no guard. A test file runs `from summary import max_drawdown`, and you run `pytest test_summary.py`.",
+      "question": "What is the best fix?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Move the call under `if __name__ == \"__main__\":`",
+            "correct": true
+          },
+          {
+            "id": "copy",
+            "text": "Copy `max_drawdown` into the test file",
+            "why": "That tests a copy, not the code you ship. The two will drift apart."
+          },
+          {
+            "id": "try",
+            "text": "Wrap `main(sys.argv)` in `try`/`except`",
+            "why": "That hides the failure, but `main` still runs on every import, reading files and writing `summary.txt`."
+          },
+          {
+            "id": "argv",
+            "text": "Pass a price file to pytest on the command line",
+            "why": "pytest reads its arguments as test paths. The script should not run at all on import."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Guard the script lines; the import then only defines functions.",
+        "generic": "Not quite right. The problem is that importing runs `main`."
+      },
+      "explain": {
+        "text": "Importing runs every top-level line, so `main(sys.argv)` ran inside pytest with pytest's arguments. Under the guard it runs only when you start the file yourself."
+      }
+    }
+  ]
+}

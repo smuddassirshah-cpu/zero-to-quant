@@ -1,0 +1,1114 @@
+{
+  "id": "l3-masks",
+  "course": "numpy-pandas",
+  "title": "Selecting with a condition",
+  "minutes": 13,
+  "objectives": [
+    "Filter an array with a Boolean mask.",
+    "Count, combine and replace with masks: `sum`, `mean`, `&` and `np.where`."
+  ],
+  "skills": [
+    "np-arrays"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The losing days",
+      "prose": "Seven daily returns for one stock, in %.\n\n```python\nreturns = np.array([0.8, -1.2, 0.0, 2.1, -0.4, 0.3, -2.5])\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ]
+        },
+        "state": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ],
+          "caption": "returns, in %"
+        }
+      },
+      "question": "Tap every losing day.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c1",
+          "c4",
+          "c6"
+        ],
+        "countWord": "picked",
+        "wrong": [
+          {
+            "id": "flat",
+            "set": [
+              "c1",
+              "c2",
+              "c4",
+              "c6"
+            ],
+            "flash": [
+              "c2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A losing day has a return below 0."
+        },
+        {
+          "rung": "point",
+          "text": "Check the 0.0 day carefully.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "−1.2, −0.4 and −2.5 are below 0. The 0.0 day is flat, not a loss."
+        }
+      ],
+      "feedback": {
+        "correct": "Three losing days: −1.2, −0.4 and −2.5.",
+        "generic": "Not quite right. Pick a day only when its return is below 0.",
+        "byKey": {
+          "flat": "You counted the 0.0 day. A flat day is not a loss: 0.0 is not below 0.",
+          "c2": "You counted the 0.0 day. A flat day is not a loss: 0.0 is not below 0.",
+          "c0": "0.8 is a gain. A losing day has a return below 0."
+        }
+      },
+      "explain": {
+        "text": "You asked one question of every day: is this return below 0? Three days answer yes. NumPy can ask that question of the whole array at once.",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c4",
+            "c6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A question for every element",
+      "prose": "Comparing an array with a number asks your question of every element.\n\n```python\nprint(returns < 0)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ]
+        },
+        "state": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ],
+          "caption": "returns < 0"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mask",
+            "text": "`[False  True False False  True False  True]`",
+            "correct": true
+          },
+          {
+            "id": "values",
+            "text": "`[-1.2 -0.4 -2.5]`",
+            "why": "That is `returns[returns < 0]`. The comparison alone gives one True or False per day."
+          },
+          {
+            "id": "one",
+            "text": "`True`",
+            "why": "A comparison on an array is checked element by element, so you get seven answers, not one."
+          },
+          {
+            "id": "count",
+            "text": "`3`",
+            "why": "That counts the losing days, `(returns < 0).sum()`. The comparison itself keeps all seven answers."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many elements does `returns` have? How many answers will the comparison give?"
+        },
+        {
+          "rung": "point",
+          "text": "Ask the question of the first cell: is 0.8 below 0?",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Seven answers, one per day: False for 0.8, True for −1.2, and so on."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven answers, True on the losing days.",
+        "generic": "Not quite right. The comparison answers once per element, True or False."
+      },
+      "explain": {
+        "text": "The result is an array of seven Booleans, True where the day lost money. An array of True and False like this is a **Boolean mask**.",
+        "canvas": {
+          "cells": [
+            "False",
+            "True",
+            "False",
+            "False",
+            "True",
+            "False",
+            "True"
+          ],
+          "highlight": [
+            "c1",
+            "c4",
+            "c6"
+          ],
+          "caption": "returns < 0"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Keep what is True",
+      "prose": "Putting the mask in square brackets keeps the elements where it is True.\n\n```python\nlosses = returns[returns < 0]\nprint(losses.mean())\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ]
+        },
+        "state": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ],
+          "highlight": [
+            "c1",
+            "c4",
+            "c6"
+          ],
+          "caption": "returns[returns < 0]"
+        }
+      },
+      "question": "What does it print? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1.37,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "For example -0.50",
+        "label": "Average losing return, in %",
+        "accept": "−1.37: (−1.2 − 0.4 − 2.5) / 3 = −1.3667.",
+        "wrong": [
+          {
+            "id": "all-days",
+            "value": -0.59,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "sum",
+            "value": -4.1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "mean-all",
+            "value": -0.13,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which elements survive the mask?"
+        },
+        {
+          "rung": "point",
+          "text": "Three days survive. Average only those.",
+          "highlight": [
+            "c1",
+            "c4",
+            "c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add −1.2, −0.4 and −2.5, then divide by 3."
+        }
+      ],
+      "feedback": {
+        "correct": "The average losing day is −1.37%.",
+        "generic": "Not quite right. Average only the three elements the mask keeps.",
+        "byKey": {
+          "all-days": "You divided by all seven days. The mask kept three, so divide by 3.",
+          "sum": "That is the total of the losses. `.mean()` divides by how many there are.",
+          "mean-all": "That is the mean of all seven returns. The mask keeps only the losing days."
+        }
+      },
+      "explain": {
+        "text": "`returns[returns < 0]` is a new, shorter array: −1.2, −0.4 and −2.5. Its mean is $-4.1 / 3 = -1.37$. The mask decides which elements stay; the rest are dropped.",
+        "canvas": {
+          "cells": [
+            "−1.2",
+            "−0.4",
+            "−2.5"
+          ],
+          "highlight": [],
+          "caption": "losses: mean −1.37"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "True counts as one",
+      "prose": "Arithmetic on a mask treats True as 1 and False as 0.\n\n```python\nprint((returns < 0).mean())\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "False",
+            "True",
+            "False",
+            "False",
+            "True",
+            "False",
+            "True"
+          ]
+        },
+        "state": {
+          "cells": [
+            "False",
+            "True",
+            "False",
+            "False",
+            "True",
+            "False",
+            "True"
+          ],
+          "caption": "returns < 0"
+        }
+      },
+      "question": "What does it print? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4286,
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "For example 0.1234",
+        "label": "Value printed",
+        "accept": "0.4286: 3 True values out of 7.",
+        "wrong": [
+          {
+            "id": "count",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "loss-mean",
+            "value": -1.3667,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "winners",
+            "value": 0.5714,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "of-six",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Replace each True with 1 and each False with 0."
+        },
+        {
+          "rung": "point",
+          "text": "Three cells are True. How many cells are there in all?",
+          "highlight": [
+            "c1",
+            "c4",
+            "c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The mean of three 1s and four 0s is $3/7$."
+        }
+      ],
+      "feedback": {
+        "correct": "3 losing days out of 7: 0.4286.",
+        "generic": "Not quite right. Count the True values and divide by the number of days.",
+        "byKey": {
+          "count": "That is `(returns < 0).sum()`, the count. `.mean()` divides it by 7.",
+          "loss-mean": "That is the mean of the losing returns. Here the mean is taken of the mask itself.",
+          "winners": "That is the share of days that did not lose. Count the True values: 3.",
+          "of-six": "You left out a day. There are 7 days, including the flat one."
+        }
+      },
+      "explain": {
+        "text": "The mean of the mask is the share of days where the condition holds: $3/7 = 0.4286$. So `mask.sum()` counts the days and `mask.mean()` gives their share.",
+        "canvas": {
+          "cells": [
+            "0",
+            "1",
+            "0",
+            "0",
+            "1",
+            "0",
+            "1"
+          ],
+          "highlight": [
+            "c1",
+            "c4",
+            "c6"
+          ],
+          "caption": "mean = 3/7"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Two conditions",
+      "prose": "You want the moderate losses: below 0 but above −2.\n\n```python\nmid = returns[returns < 0 and returns > -2]\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ]
+        },
+        "state": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ],
+          "caption": "below 0 and above −2"
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "meant",
+            "text": "It gives `[-1.2 -0.4]`",
+            "why": "That is what you meant. Python's `and` needs one True or False for the whole array, so NumPy refuses.",
+            "canvas": {
+              "highlight": [
+                "c1",
+                "c4"
+              ]
+            }
+          },
+          {
+            "id": "error",
+            "text": "It stops with a `ValueError`: the truth value of an array is ambiguous",
+            "correct": true
+          },
+          {
+            "id": "first",
+            "text": "It gives `[-1.2 -0.4 -2.5]`",
+            "why": "You expected the second condition to be skipped. `and` asks for a single True or False, so it raises an error."
+          },
+          {
+            "id": "empty",
+            "text": "It gives an empty array",
+            "why": "No element is filtered at all. The line stops before indexing with a `ValueError`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`and` is plain Python. What does it need on each side?"
+        },
+        {
+          "rung": "point",
+          "text": "`and` asks whether its left side is true as a whole. Is an array of seven Booleans true or false?",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2",
+            "c3",
+            "c4",
+            "c5",
+            "c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Seven answers cannot become one, so NumPy raises a `ValueError` and asks which you meant."
+        }
+      ],
+      "feedback": {
+        "correct": "`and` wants one truth value, and an array has seven.",
+        "generic": "Not quite right. Think about what Python's `and` does with a whole array.",
+        "byKey": {
+          "meant": "That is what you meant, but `and` needs one True or False for the whole array. NumPy raises a `ValueError`.",
+          "first": "`and` does not skip anything here. It needs a single True or False, so it raises an error."
+        }
+      },
+      "explain": {
+        "text": "`and` asks if the whole left side is true, and seven Booleans have no single answer. Combine masks element by element with `&`, each condition in brackets.\n\n```python\nmid = returns[(returns < 0) & (returns > -2)]\n```",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c4"
+          ],
+          "caption": "(returns < 0) & (returns > -2)"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Masks combine",
+      "prose": "`&` means both conditions, element by element. `|` means either.\n\n```python\nmid = returns[(returns < 0) & (returns > -2)]\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ]
+        },
+        "state": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ],
+          "caption": "(returns < 0) & (returns > -2)"
+        }
+      },
+      "question": "Tap every element `mid` keeps.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c1",
+          "c4"
+        ],
+        "countWord": "picked",
+        "wrong": [
+          {
+            "id": "either",
+            "set": [
+              "c0",
+              "c1",
+              "c2",
+              "c3",
+              "c4",
+              "c5",
+              "c6"
+            ]
+          },
+          {
+            "id": "losses",
+            "set": [
+              "c1",
+              "c4",
+              "c6"
+            ],
+            "flash": [
+              "c6"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A cell is kept only when both brackets are True for it."
+        },
+        {
+          "rung": "point",
+          "text": "−2.5 is below 0, but is it above −2?",
+          "highlight": [
+            "c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep −1.2 and −0.4: below 0 and above −2. −2.5 fails the second test."
+        }
+      ],
+      "feedback": {
+        "correct": "Only −1.2 and −0.4 pass both tests.",
+        "generic": "Not quite right. Keep a day only when it is below 0 and also above −2.",
+        "byKey": {
+          "either": "That is `|`, either condition. Every day is either below 0 or above −2. `&` needs both.",
+          "losses": "You kept −2.5. It is below 0 but not above −2, so `&` drops it.",
+          "c6": "−2.5 is below −2, so the second condition is False for it."
+        }
+      },
+      "explain": {
+        "text": "`&` is True only where both masks are True: −1.2 and −0.4. The brackets matter: `&` binds tighter than `<`, so without them the line fails.",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Choosing element by element",
+      "prose": "`np.where(mask, a, b)` takes `a` where the mask is True and `b` where it is False. Here it turns returns into a signal.\n\n```python\nsignal = np.where(returns > 0, 1, -1)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ]
+        },
+        "state": {
+          "cells": [
+            "0.8",
+            "−1.2",
+            "0.0",
+            "2.1",
+            "−0.4",
+            "0.3",
+            "−2.5"
+          ],
+          "caption": "np.where(returns > 0, 1, -1)"
+        }
+      },
+      "question": "How many elements of `signal` are −1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Number of −1s",
+        "accept": "4: the three losses and the flat day.",
+        "wrong": [
+          {
+            "id": "flat",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ask `returns > 0` of each day. False gives −1."
+        },
+        {
+          "rung": "point",
+          "text": "What does the 0.0 day give?",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.0 > 0 is False, so the flat day gets −1 as well as the three losses."
+        }
+      ],
+      "feedback": {
+        "correct": "The flat day gets −1 too: four in all.",
+        "generic": "Not quite right. Every day where `returns > 0` is False gets −1.",
+        "byKey": {
+          "flat": "You skipped the flat day. `0.0 > 0` is False, so `np.where` takes −1 there."
+        }
+      },
+      "explain": {
+        "text": "`np.where` keeps the shape: seven days in, seven signals out. The flat day fails `returns > 0`, so it gets −1 with the three losses.",
+        "canvas": {
+          "cells": [
+            "1",
+            "−1",
+            "−1",
+            "1",
+            "−1",
+            "1",
+            "−1"
+          ],
+          "highlight": [
+            "c1",
+            "c2",
+            "c4",
+            "c6"
+          ],
+          "caption": "signal"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Masks in one place",
+      "prose": "Everything we did, in five lines. For a mask $m$, the share of True values is $\\frac{1}{n}\\sum m_t$.\n\n```python\nmask = returns < 0         # one True or False per element\nlosses = returns[mask]     # keep the True positions\ncount = mask.sum()         # True counts as 1\nshare = mask.mean()        # fraction of elements\nboth = (a < 0) & (a > -2)  # & with brackets, never and\n```",
+      "question": "Which line counts the days with a return above 1%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(returns > 1).sum()`",
+            "correct": true
+          },
+          {
+            "id": "len",
+            "text": "`len(returns > 1)`",
+            "why": "The mask has one entry per day, True or False, so `len` gives 7 whatever the data."
+          },
+          {
+            "id": "values",
+            "text": "`returns[returns > 1]`",
+            "why": "That gives the returns themselves, not how many there are."
+          },
+          {
+            "id": "share",
+            "text": "`(returns > 1).mean()`",
+            "why": "That is the share of days, 1 in 7, not the count."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Summing the mask counts the True values.",
+        "generic": "Not quite right. Build the mask, then add up its True values."
+      },
+      "explain": {
+        "text": "`returns > 1` is True on one day, 2.1, so `(returns > 1).sum()` is 1. `len` would count every day, True or False."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Filter the losses",
+      "prose": "Return the returns of the losing days only, in their original order. A flat day, exactly 0, is not a loss. If no day lost, return an empty array.",
+      "question": "Complete `losing_days` with a mask, no loop.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef losing_days(returns):\n    returns = np.asarray(returns, dtype=float)\n    mask = ...\n    return returns[mask]\n",
+        "solution": "import numpy as np\n\ndef losing_days(returns):\n    returns = np.asarray(returns, dtype=float)\n    mask = returns < 0\n    return returns[mask]\n",
+        "tests": [
+          {
+            "call": "np.round(losing_days([0.8, -1.2, 0.0, 2.1, -0.4, 0.3, -2.5]), 6).tolist()",
+            "expect": "[-1.2, -0.4, -2.5]"
+          },
+          {
+            "call": "np.round(losing_days([0.5, 0.0, 1.0]), 6).tolist()",
+            "expect": "[]"
+          },
+          {
+            "call": "np.round(losing_days([-0.01, -0.02]), 6).tolist()",
+            "expect": "[-0.01, -0.02]"
+          },
+          {
+            "call": "np.round(losing_days(np.array([0.0, 0.0, -0.003, 0.0])), 6).tolist()",
+            "expect": "[-0.003]"
+          },
+          {
+            "call": "len(losing_days(np.linspace(-1.0, 1.0, 101)))",
+            "expect": "50"
+          },
+          {
+            "call": "np.round(losing_days(np.random.default_rng(5).normal(0.0, 0.01, 8)), 6).tolist()",
+            "expect": "[-0.008019, -0.013244, -0.002484, -0.005526, -0.007848]"
+          }
+        ],
+        "examples": [
+          {
+            "call": "np.round(losing_days([0.8, -1.2, 0.0, 2.1, -0.4, 0.3, -2.5]), 6).tolist()",
+            "expect": "[-1.2, -0.4, -2.5]"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Arrays are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which comparison is True exactly on the losing days?"
+        },
+        {
+          "rung": "point",
+          "text": "A flat day must give False, so use a strict comparison."
+        },
+        {
+          "rung": "step",
+          "text": "Write `mask = returns < 0`."
+        }
+      ],
+      "feedback": {
+        "correct": "One comparison, one index: no loop.",
+        "generic": "Some tests failed. Check the flat days: 0.0 must not appear in the result.",
+        "byKey": {
+          "test-1": "The answer is −1.2, −0.4, −2.5. If 0.0 appears, use `<` rather than `<=`.",
+          "error": "Your code stopped with an error. Check that `mask` is a comparison, not `...`."
+        }
+      },
+      "explain": {
+        "text": "`returns < 0` is True on the losing days only, so `returns[mask]` keeps them in order. With `<=` the flat days would slip in as losses."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A strategy's hit rate",
+      "prose": "A backtest produced one P&L per trade, in pounds. Its **hit rate** is winning trades over winning plus losing trades. Flat trades, exactly 0, count as neither. With no winning or losing trade at all, return 0.0. For 120.50, −40.00, 0.00, 75.25 the hit rate is 2/3.",
+      "question": "Complete `hit_rate` with masks.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef hit_rate(pnl):\n    pnl = np.asarray(pnl, dtype=float)\n    wins = ...\n    losses = ...\n    # flat trades count as neither; no trades at all gives 0.0\n    \n    return rate\n",
+        "solution": "import numpy as np\n\ndef hit_rate(pnl):\n    pnl = np.asarray(pnl, dtype=float)\n    wins = (pnl > 0).sum()\n    losses = (pnl < 0).sum()\n    # flat trades count as neither; no trades at all gives 0.0\n    rate = 0.0\n    if wins + losses > 0:\n        rate = wins / (wins + losses)\n    return rate\n",
+        "tests": [
+          {
+            "call": "float(hit_rate([120.50, -40.00, 0.00, 75.25]))",
+            "expect": "2/3",
+            "compare": "isclose"
+          },
+          {
+            "call": "float(hit_rate([120.50, -40.00, 0.00, 75.25, -10.00, 0.00, 33.10]))",
+            "expect": "0.6",
+            "compare": "isclose"
+          },
+          {
+            "call": "float(hit_rate([10.00, 20.00]))",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "float(hit_rate([-5.00, -1.00]))",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "float(hit_rate([0.00, 0.00, 0.00]))",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "float(hit_rate([]))",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "float(hit_rate(np.round(np.random.default_rng(11).normal(5.0, 40.0, 500), 2)))",
+            "expect": "0.578",
+            "compare": "isclose"
+          }
+        ],
+        "examples": [
+          {
+            "call": "float(hit_rate([120.50, -40.00, 0.00, 75.25]))",
+            "expect": "2/3",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Each answer is accepted within a relative 1e-9. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two masks: one for wins, one for losses. Summing a mask counts it."
+        },
+        {
+          "rung": "point",
+          "text": "`(pnl > 0).sum()` counts the wins. Flat trades fail both `> 0` and `< 0`."
+        },
+        {
+          "rung": "step",
+          "text": "Set `rate = 0.0`, then `if wins + losses > 0: rate = wins / (wins + losses)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Flat trades left out, and no division by zero.",
+        "generic": "Some tests failed. Check the flat trades and the case with no wins or losses.",
+        "byKey": {
+          "test-1": "For 120.50, −40.00, 0.00, 75.25 the rate is 2/3. If you got 0.5, you divided by every trade, flat ones included.",
+          "error": "Your code stopped with an error. Check that `rate` is set on every path, including when there are no trades."
+        }
+      },
+      "explain": {
+        "text": "Summing a mask counts it, so two masks give the wins and the losses. Dividing by `len(pnl)` instead would count flat trades as misses and understate the strategy.\n\n```python\nwins = (pnl > 0).sum()\nlosses = (pnl < 0).sum()\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A comparison on an array gives a Boolean mask: one True or False per element.",
+      "`returns[mask]` keeps the elements where the mask is True; `mask.sum()` counts them and `mask.mean()` gives their share.",
+      "Combine masks with `&` and `|`, each condition in brackets. `np.where(mask, a, b)` picks from `a` or `b` element by element."
+    ],
+    "formula": {
+      "name": "Share of losing days",
+      "tex": "\\hat{p} = \\dfrac{1}{n}\\sum_{t=1}^{n} \\mathbf{1}[r_t < 0]",
+      "note": "`(returns < 0).mean()`: True counts as 1 and False as 0."
+    },
+    "trap": "`and` and `or` need one True or False, so on arrays they raise a `ValueError`. Use `&` and `|` with brackets."
+  },
+  "quiz": [
+    {
+      "id": "q-filter",
+      "difficulty": 2,
+      "prose": "```python\nx = np.array([3, -1, 4, -1, 5])\nprint(x[x > 3])\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[4 5]`",
+            "correct": true
+          },
+          {
+            "id": "mask",
+            "text": "`[False False  True False  True]`",
+            "why": "That is `x > 3`, the mask. Indexing with it keeps the values."
+          },
+          {
+            "id": "equal",
+            "text": "`[3 4 5]`",
+            "why": "You kept 3. `3 > 3` is False, so it is dropped."
+          },
+          {
+            "id": "index",
+            "text": "`[2 4]`",
+            "why": "Those are the positions where the mask is True. Indexing returns the values there."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "4 and 5 are the only values above 3.",
+        "generic": "Not quite right. Keep each value for which `x > 3` is True."
+      },
+      "explain": {
+        "text": "`x > 3` is True at positions 2 and 4, so `x[x > 3]` keeps the values there: 4 and 5. A strict `>` drops the 3."
+      }
+    },
+    {
+      "id": "q-count",
+      "difficulty": 2,
+      "prose": "```python\nx = np.array([3, -1, 4, -1, 5])\nprint((x < 0).sum())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "2: two True values.",
+        "wrong": [
+          {
+            "id": "values",
+            "value": -2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "len",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two True values, each counted as 1.",
+        "generic": "Not quite right. Count the elements below 0.",
+        "byKey": {
+          "values": "You added the negative values. Summing the mask adds 1 for each True.",
+          "len": "That counts every element. Summing the mask counts only the True ones."
+        }
+      },
+      "explain": {
+        "text": "`x < 0` is True twice, at the two −1s. Summing the mask adds 1 for each True, so it prints 2."
+      }
+    },
+    {
+      "id": "q-where",
+      "difficulty": 3,
+      "prose": "```python\nx = np.array([3, -1, 4, -1, 5])\nprint(np.where(x > 0, x, 0))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[3 0 4 0 5]`",
+            "correct": true
+          },
+          {
+            "id": "drop",
+            "text": "`[3 4 5]`",
+            "why": "`np.where` keeps the shape. It replaces the False positions instead of dropping them."
+          },
+          {
+            "id": "swap",
+            "text": "`[ 0 -1  0 -1  0]`",
+            "why": "You swapped the choices. The second argument is used where the mask is True."
+          },
+          {
+            "id": "mask",
+            "text": "`[1 0 1 0 1]`",
+            "why": "That would be `np.where(x > 0, 1, 0)`. Here the True positions take `x` itself."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Positives kept, negatives replaced by 0.",
+        "generic": "Not quite right. Take `x` where the mask is True and 0 where it is False."
+      },
+      "explain": {
+        "text": "Where `x > 0` is True, `np.where` takes `x`; elsewhere it takes 0. The result has five elements, like `x`."
+      }
+    },
+    {
+      "id": "q-brackets",
+      "difficulty": 3,
+      "prose": "`x = np.array([3, -1, 4, -1, 5])`. You want the values from 0 to 4 inclusive.",
+      "question": "Which line works?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`x[(x >= 0) & (x <= 4)]`",
+            "correct": true
+          },
+          {
+            "id": "noparen",
+            "text": "`x[x >= 0 & x <= 4]`",
+            "why": "Without brackets, `&` runs before the comparisons, and the line raises a `ValueError`."
+          },
+          {
+            "id": "and",
+            "text": "`x[(x >= 0) and (x <= 4)]`",
+            "why": "`and` needs one True or False for the whole array, so it raises a `ValueError`."
+          },
+          {
+            "id": "chain",
+            "text": "`x[0 <= x <= 4]`",
+            "why": "A chained comparison uses `and` underneath, so it raises the same `ValueError`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`&` with each condition in brackets.",
+        "generic": "Not quite right. Combine two masks with `&`, and bracket each one."
+      },
+      "explain": {
+        "text": "`(x >= 0) & (x <= 4)` combines two masks element by element and keeps 3 and 4. Python's `and`, and the chained form that uses it, need a single truth value."
+      }
+    }
+  ]
+}

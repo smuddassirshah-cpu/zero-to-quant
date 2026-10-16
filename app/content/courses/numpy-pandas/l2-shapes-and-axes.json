@@ -1,0 +1,1069 @@
+{
+  "id": "l2-shapes-and-axes",
+  "course": "numpy-pandas",
+  "title": "Shapes and axes",
+  "minutes": 14,
+  "objectives": [
+    "Reshape arrays and add up along a chosen axis.",
+    "Compute running totals, compounded growth and a sample standard deviation."
+  ],
+  "skills": [
+    "np-arrays"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Rows, then columns",
+      "prose": "Four days of P&L, in pounds, for three traders. Each row is a day and each column a trader. Move the sliders: `pnl[i, j]` picks row `i`, column `j`.\n\n```python\npnl = np.array([[120, -40, 15], [-60, 80, 25],\n                [30, 10, -45], [90, -20, 5]])\n```",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "P",
+              "rows": [
+                [
+                  120,
+                  -40,
+                  15
+                ],
+                [
+                  -60,
+                  80,
+                  25
+                ],
+                [
+                  30,
+                  10,
+                  -45
+                ],
+                [
+                  90,
+                  -20,
+                  5
+                ]
+              ],
+              "label": "pnl"
+            }
+          ]
+        },
+        "state": {
+          "params": {
+            "i": 0,
+            "j": 0
+          },
+          "highlight": [
+            "P-0-0"
+          ]
+        },
+        "controls": [
+          {
+            "bind": "i",
+            "min": 0,
+            "max": 3,
+            "step": 1,
+            "start": 0,
+            "label": "$i$ (row)"
+          },
+          {
+            "bind": "j",
+            "min": 0,
+            "max": 2,
+            "step": 1,
+            "start": 0,
+            "label": "$j$ (column)"
+          }
+        ],
+        "derive": {
+          "highlight": "['P-' + i + '-' + j]",
+          "caption": "pnl[{{i}}, {{j}}] = {{[[120, -40, 15], [-60, 80, 25], [30, 10, -45], [90, -20, 5]][i][j]}}"
+        }
+      },
+      "question": "Find `pnl[3, 1]`. What is it, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -20,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "£",
+        "placeholder": "Pounds",
+        "label": "pnl[3, 1] in pounds",
+        "accept": "−20: row 3, column 1.",
+        "wrong": [
+          {
+            "id": "from-one",
+            "value": 30,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the row slider to 3 and the column slider to 1, then read the caption."
+        }
+      ],
+      "feedback": {
+        "correct": "Row 3 is the last day, and column 1 the middle trader.",
+        "generic": "Not quite right. The first index picks the row and the second the column, both from 0.",
+        "byKey": {
+          "from-one": "That is row 2, column 0: you counted from 1. Row 3 is the fourth row."
+        }
+      },
+      "explain": {
+        "text": "`pnl[3, 1]` is row 3, the fourth day, and column 1, the second trader: −£20. The first index always picks the row.",
+        "canvas": {
+          "params": {
+            "i": 3,
+            "j": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The shape",
+      "prose": "Every array has a **shape**: its length along each direction, or **axis**. `pnl` is a 2-D array with two axes.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "P",
+              "rows": [
+                [
+                  120,
+                  -40,
+                  15
+                ],
+                [
+                  -60,
+                  80,
+                  25
+                ],
+                [
+                  30,
+                  10,
+                  -45
+                ],
+                [
+                  90,
+                  -20,
+                  5
+                ]
+              ],
+              "label": "pnl"
+            }
+          ]
+        },
+        "state": {
+          "highlight": {
+            "P": {
+              "rows": [
+                0
+              ]
+            }
+          },
+          "caption": "pnl"
+        }
+      },
+      "question": "What is `pnl.shape`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(4, 3)`",
+            "correct": true
+          },
+          {
+            "id": "swapped",
+            "text": "`(3, 4)`",
+            "why": "You gave the columns first. The shape lists rows first, the same order as `pnl[i, j]`."
+          },
+          {
+            "id": "size",
+            "text": "`12`",
+            "why": "That is `pnl.size`, the number of elements. The shape keeps the two lengths apart."
+          },
+          {
+            "id": "flat",
+            "text": "`(4,)`",
+            "why": "That is a 1-D array of 4 elements. Each row here holds 3 more."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many rows are there, and how many numbers in each row?"
+        },
+        {
+          "rung": "point",
+          "text": "The first row is washed. Count its numbers, then count the rows.",
+          "highlight": [
+            "P-r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4 rows of 3. The shape lists rows first: `(4, 3)`."
+        }
+      ],
+      "feedback": {
+        "correct": "4 days by 3 traders.",
+        "generic": "Not quite right. Count the rows first, then the numbers in a row.",
+        "byKey": {
+          "swapped": "You gave the columns first. The shape is (rows, columns), like `pnl[i, j]`."
+        }
+      },
+      "explain": {
+        "text": "Axis 0 runs down the 4 rows and axis 1 across the 3 columns. So `pnl.shape` is `(4, 3)`, and `pnl.size` is 12.",
+        "canvas": {
+          "highlight": {
+            "P": {
+              "cols": [
+                0
+              ],
+              "rows": [
+                0
+              ]
+            }
+          },
+          "caption": "axis 0: 4 rows; axis 1: 3 columns"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Adding along an axis",
+      "prose": "`pnl.sum(axis=0)` returns `[180  30   0]`: one total per trader.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "P",
+              "rows": [
+                [
+                  120,
+                  -40,
+                  15
+                ],
+                [
+                  -60,
+                  80,
+                  25
+                ],
+                [
+                  30,
+                  10,
+                  -45
+                ],
+                [
+                  90,
+                  -20,
+                  5
+                ]
+              ],
+              "label": "pnl"
+            }
+          ]
+        },
+        "state": {
+          "caption": "pnl.sum(axis=0) = [180, 30, 0]"
+        }
+      },
+      "question": "Tap the four cells that add up to its first element, 180.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "P-0-0",
+          "P-1-0",
+          "P-2-0",
+          "P-3-0"
+        ],
+        "countWord": "picked",
+        "wrong": [
+          {
+            "id": "row",
+            "set": [
+              "P-0-0",
+              "P-0-1",
+              "P-0-2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The result has 3 numbers, one per trader. Which cells belong to the first trader?"
+        },
+        {
+          "rung": "point",
+          "text": "The first trader is column 0.",
+          "highlight": [
+            "P-c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Tap the whole first column: 120 − 60 + 30 + 90 = 180."
+        }
+      ],
+      "feedback": {
+        "correct": "Column 0 adds to 180.",
+        "generic": "Not quite right. One total per trader means adding each column.",
+        "byKey": {
+          "row": "You added along row 0. `axis=0` runs down the rows, so it adds up a column.",
+          "P-0-1": "That cell belongs to trader 1. The first total comes from column 0 only."
+        }
+      },
+      "explain": {
+        "text": "`axis=0` runs down the rows, so the sum walks down each column: 120 − 60 + 30 + 90 = 180. Axis 0, the 4 days, is used up, leaving one number per trader.",
+        "canvas": {
+          "highlight": {
+            "P": {
+              "cols": [
+                0
+              ]
+            }
+          },
+          "caption": "axis=0: down the rows, one total per column"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The other axis",
+      "prose": "Now the desk wants one total per day.\n\n```python\nprint(pnl.sum(axis=1))\n```",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "P",
+              "rows": [
+                [
+                  120,
+                  -40,
+                  15
+                ],
+                [
+                  -60,
+                  80,
+                  25
+                ],
+                [
+                  30,
+                  10,
+                  -45
+                ],
+                [
+                  90,
+                  -20,
+                  5
+                ]
+              ],
+              "label": "pnl"
+            }
+          ]
+        },
+        "state": {
+          "caption": "pnl.sum(axis=1)"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "cols",
+            "text": "`[180  30   0]`",
+            "why": "That is `axis=0`, one total per trader. `axis=1` runs across each row instead."
+          },
+          {
+            "id": "rows",
+            "text": "`[95 45 -5 75]`",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "`210`",
+            "why": "That is `pnl.sum()` with no axis: every element added together."
+          },
+          {
+            "id": "first",
+            "text": "`[ 95  45  -5]`",
+            "why": "You stopped after three days. There is one total for each of the 4 rows."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`axis=1` is the second axis. Which direction does it run?"
+        },
+        {
+          "rung": "point",
+          "text": "Axis 1 runs across a row, from trader to trader.",
+          "highlight": [
+            "P-r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add each row: 120 − 40 + 15 = 95, then the next three rows."
+        }
+      ],
+      "feedback": {
+        "correct": "One total per day: 95, 45, −5 and 75.",
+        "generic": "Not quite right. `axis=1` adds across each row, giving one number per day.",
+        "byKey": {
+          "cols": "That is `axis=0`. `axis=1` uses up the columns and leaves one total per day."
+        }
+      },
+      "explain": {
+        "text": "`axis=1` runs across the columns, so each row collapses to its total. The 3 traders are used up and 4 day totals are left. The axis you name is the one that disappears.",
+        "canvas": {
+          "highlight": {
+            "P": {
+              "rows": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          },
+          "caption": "axis=1: across each row, one total per day"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Same elements, new shape",
+      "prose": "`np.arange(6)` is `[0 1 2 3 4 5]`. `reshape(2, 3)` pours the same six elements into 2 rows of 3.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  "?",
+                  "?",
+                  "?"
+                ],
+                [
+                  "?",
+                  "?",
+                  "?"
+                ]
+              ],
+              "label": "np.arange(6).reshape(2, 3)"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the cell where the element 3 lands.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "M-1-0"
+        ],
+        "max": 1,
+        "countWord": "picked"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "NumPy fills a row completely before starting the next."
+        },
+        {
+          "rung": "point",
+          "text": "Row 0 takes 0, 1 and 2. Where does the next element go?",
+          "highlight": [
+            "M-r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "3 starts row 1, in column 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Row 0 is 0, 1, 2; row 1 starts with 3.",
+        "generic": "Not quite right. Fill row 0 left to right with 0, 1, 2, then carry on.",
+        "byKey": {
+          "M-1-1": "You filled down the columns: 0, 1 in column 0, then 2, 3. NumPy fills row by row.",
+          "M-0-2": "That cell holds 2. Counting from 0, row 0 takes 0, 1 and 2, so 3 starts row 1.",
+          "M-0-0": "That cell holds 0, the first element. 3 comes after a full row of three."
+        }
+      },
+      "explain": {
+        "text": "`reshape` keeps the order and fills row by row: 0, 1, 2 across row 0, then 3, 4, 5 across row 1. The shape must hold exactly six elements: `reshape(4, 2)` would raise a `ValueError`.",
+        "canvas": {
+          "rows": {
+            "M": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                3,
+                4,
+                5
+              ]
+            ]
+          },
+          "highlight": [
+            "M-1-0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Which standard deviation",
+      "prose": "Five daily returns, in %. We want the **sample standard deviation**, estimated from data.\n\n```python\nr = np.array([1.0, -0.5, 2.0, 0.5, -1.0])\nprint(np.std(r))\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1.0",
+            "−0.5",
+            "2.0",
+            "0.5",
+            "−1.0"
+          ]
+        },
+        "state": {
+          "cells": [
+            "1.0",
+            "−0.5",
+            "2.0",
+            "0.5",
+            "−1.0"
+          ],
+          "caption": "mean 0.4; squared deviations add to 5.7"
+        }
+      },
+      "question": "What does it print, to three decimal places?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "pop",
+            "text": "`1.068`",
+            "correct": true
+          },
+          {
+            "id": "sample",
+            "text": "`1.194`",
+            "why": "You expected the sample estimate, which divides by $n - 1 = 4$. `np.std` divides by $n = 5$ unless you pass `ddof=1`."
+          },
+          {
+            "id": "var",
+            "text": "`1.140`",
+            "why": "That is the variance, $5.7 / 5$, before the square root."
+          },
+          {
+            "id": "mean",
+            "text": "`0.400`",
+            "why": "That is the mean return, not the spread around it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The squared deviations add to 5.7. What does `np.std` divide them by?"
+        },
+        {
+          "rung": "point",
+          "text": "There are 5 returns, and `np.std` has a parameter `ddof` that defaults to 0.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2",
+            "c3",
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`np.std` divides by $n - \\text{ddof} = 5$: $\\sqrt{5.7 / 5} = 1.068$."
+        }
+      ],
+      "feedback": {
+        "correct": "`np.std` divides by $n$: $\\sqrt{5.7/5} = 1.068$.",
+        "generic": "Not quite right. Find what `np.std` divides 5.7 by when `ddof` is left out.",
+        "byKey": {
+          "sample": "You expected the sample estimate. `np.std` divides by $n$, not $n - 1$, unless you pass `ddof=1`."
+        }
+      },
+      "explain": {
+        "text": "`np.std` divides by $n - \\text{ddof}$, and `ddof` defaults to 0: $\\sqrt{5.7/5} = 1.068$. The sample estimate needs `np.std(r, ddof=1)`, which gives $\\sqrt{5.7/4} = 1.194$. pandas' `.std()` uses `ddof=1`, so the two libraries disagree unless you say.",
+        "canvas": {
+          "caption": "ddof=0: 1.068;  ddof=1: 1.194"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Running products",
+      "prose": "A stock rises 10%, then falls 10%. `1 + r` turns each return into a growth factor.\n\n```python\nr = np.array([0.10, -0.10])\nprint(np.cumprod(1 + r))\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1.10",
+            "0.90"
+          ]
+        },
+        "state": {
+          "cells": [
+            "1.10",
+            "0.90"
+          ],
+          "caption": "1 + r"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[1.1  0.99]`",
+            "correct": true
+          },
+          {
+            "id": "back",
+            "text": "`[1.1 1. ]`",
+            "why": "You expected the fall to undo the rise. A 10% fall from 1.10 loses 0.11, more than the 0.10 gained."
+          },
+          {
+            "id": "sum",
+            "text": "`[0.1 0. ]`",
+            "why": "That is `np.cumsum(r)`: adding the returns, not compounding them."
+          },
+          {
+            "id": "last",
+            "text": "`0.99`",
+            "why": "`cumprod` keeps every running product, one per element. A single number would be `np.prod(1 + r)`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`cumprod` multiplies as it goes and keeps each running product."
+        },
+        {
+          "rung": "point",
+          "text": "The first running product is 1.10. Multiply it by the next cell.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1.10 × 0.90 = 0.99. So the output has two elements: 1.1 and 0.99."
+        }
+      ],
+      "feedback": {
+        "correct": "1.10, then 1.10 × 0.90 = 0.99.",
+        "generic": "Not quite right. Multiply the growth factors one after another and keep each result.",
+        "byKey": {
+          "back": "You expected the fall to undo the rise. 10% of 1.10 is 0.11, more than the 0.10 gained."
+        }
+      },
+      "explain": {
+        "text": "`np.cumprod(1 + r)` is the value of £1 after each day: £1.10, then £0.99. `np.cumsum` does the same with sums, which suits P&L in pounds. Returns compound, so they need products.",
+        "canvas": {
+          "cells": [
+            "1.10",
+            "0.99"
+          ],
+          "highlight": [
+            "c1"
+          ],
+          "caption": "np.cumprod(1 + r)"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The axis disappears",
+      "prose": "An aggregation over axis $k$ removes that axis from the shape.\n\n```python\npnl.shape          # (4, 3)\npnl.sum(axis=0)    # shape (3,): one per column\npnl.sum(axis=1)    # shape (4,): one per row\nnp.std(x, ddof=1)  # sample standard deviation\n```",
+      "question": "`returns` has shape (252, 5): 252 days and 5 stocks. Which line gives each stock's mean daily return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`returns.mean(axis=0)`",
+            "correct": true
+          },
+          {
+            "id": "rows",
+            "text": "`returns.mean(axis=1)`",
+            "why": "That averages across the 5 stocks on each day, giving 252 numbers."
+          },
+          {
+            "id": "all",
+            "text": "`returns.mean()`",
+            "why": "That gives one number: the mean of all 1,260 returns."
+          },
+          {
+            "id": "two",
+            "text": "`returns.mean(axis=2)`",
+            "why": "There is no axis 2 in a 2-D array, so NumPy raises an `AxisError`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Axis 0, the days, disappears: 5 means remain.",
+        "generic": "Not quite right. Name the axis you want to use up: the 252 days."
+      },
+      "explain": {
+        "text": "We want to use up the days, axis 0, and keep the stocks. `returns.mean(axis=0)` has shape `(5,)`, one mean per stock."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The desk's running P&L",
+      "prose": "`pnl` has one row per day and one column per trader, in pounds. The desk's P&L for a day is that row's total. Return the desk's cumulative P&L: its running total, one number per day. For the 4 × 3 array above that is 95, 140, 135, 210.",
+      "question": "Complete `desk_pnl` without a loop.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef desk_pnl(pnl):\n    pnl = np.asarray(pnl, dtype=float)\n    daily = ...     # one total per day\n    running = ...   # running total of daily\n    return running\n",
+        "solution": "import numpy as np\n\ndef desk_pnl(pnl):\n    pnl = np.asarray(pnl, dtype=float)\n    daily = pnl.sum(axis=1)     # one total per day\n    running = np.cumsum(daily)  # running total of daily\n    return running\n",
+        "tests": [
+          {
+            "call": "np.round(desk_pnl([[120, -40, 15], [-60, 80, 25], [30, 10, -45], [90, -20, 5]]), 6).tolist()",
+            "expect": "[95.0, 140.0, 135.0, 210.0]"
+          },
+          {
+            "call": "np.round(desk_pnl([[250.50, -75.25]]), 6).tolist()",
+            "expect": "[175.25]"
+          },
+          {
+            "call": "np.round(desk_pnl([[10.0], [-20.0], [5.5]]), 6).tolist()",
+            "expect": "[10.0, -10.0, -4.5]"
+          },
+          {
+            "call": "np.round(desk_pnl([[-100.0, 40.0, 60.0], [0.0, 0.0, 0.0], [12.5, -2.5, 30.0]]), 6).tolist()",
+            "expect": "[0.0, 0.0, 40.0]"
+          },
+          {
+            "call": "np.round(desk_pnl(np.arange(12.0).reshape(3, 4)), 6).tolist()",
+            "expect": "[6.0, 28.0, 66.0]"
+          },
+          {
+            "call": "desk_pnl(np.ones((5, 2))).shape",
+            "expect": "(5,)"
+          }
+        ],
+        "examples": [
+          {
+            "call": "np.round(desk_pnl([[120, -40, 15], [-60, 80, 25], [30, 10, -45], [90, -20, 5]]), 6).tolist()",
+            "expect": "[95.0, 140.0, 135.0, 210.0]"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Arrays are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two steps: collapse the traders, then keep a running total over the days."
+        },
+        {
+          "rung": "point",
+          "text": "Each day's total uses up the columns: that is `axis=1`."
+        },
+        {
+          "rung": "step",
+          "text": "Write `daily = pnl.sum(axis=1)` and `running = np.cumsum(daily)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Row totals, then a running total: one number per day.",
+        "generic": "Some tests failed. Your result needs one number per day, so its shape is (days,).",
+        "byKey": {
+          "test-1": "The answer is 95, 140, 135, 210. If you got 180, 30, 0, you summed with `axis=0`.",
+          "error": "Your code stopped with an error. Check that both `...` lines are replaced."
+        }
+      },
+      "explain": {
+        "text": "`axis=1` collapses the traders, leaving one total per day. `np.cumsum` then turns daily P&L into the running P&L a risk report plots.\n\n```python\nnp.cumsum(pnl.sum(axis=1))\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Volatility for a risk report",
+      "prose": "`returns` holds daily returns as decimals: one row per day, one column per stock. A risk report quotes each stock's **annualised volatility**: the sample standard deviation of its daily returns times $\\sqrt{252}$, for 252 trading days a year.",
+      "question": "Complete `annual_vols`: one number per stock.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef annual_vols(returns):\n    returns = np.asarray(returns, dtype=float)\n    # sample standard deviation of each column, times sqrt(252)\n    vols = ...\n    return vols\n",
+        "solution": "import numpy as np\n\ndef annual_vols(returns):\n    returns = np.asarray(returns, dtype=float)\n    # sample standard deviation of each column, times sqrt(252)\n    vols = np.std(returns, axis=0, ddof=1) * np.sqrt(252)\n    return vols\n",
+        "tests": [
+          {
+            "call": "np.round(annual_vols([[0.01, 0.02], [-0.01, 0.00], [0.02, -0.02], [0.00, 0.01]]), 6).tolist()",
+            "expect": "[0.204939, 0.271109]"
+          },
+          {
+            "call": "np.round(annual_vols([[0.012], [-0.008], [0.004], [0.010], [-0.015]]), 6).tolist()",
+            "expect": "[0.185671]"
+          },
+          {
+            "call": "np.round(annual_vols(np.random.default_rng(3).normal(0.0, 0.01, (60, 3))), 6).tolist()",
+            "expect": "[0.174278, 0.17234, 0.154292]"
+          },
+          {
+            "call": "np.round(annual_vols([[0.005, 0.0], [0.005, 0.0], [0.005, 0.0]]), 6).tolist()",
+            "expect": "[0.0, 0.0]"
+          },
+          {
+            "call": "annual_vols(np.ones((20, 4))).shape",
+            "expect": "(4,)"
+          }
+        ],
+        "examples": [
+          {
+            "call": "np.round(annual_vols([[0.01, 0.02], [-0.01, 0.00], [0.02, -0.02], [0.00, 0.01]]), 6).tolist()",
+            "expect": "[0.204939, 0.271109]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Arrays are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two choices to get right: which axis, and which standard deviation."
+        },
+        {
+          "rung": "point",
+          "text": "Each stock is a column, so use up the days: `axis=0`. The sample estimate needs `ddof=1`."
+        },
+        {
+          "rung": "step",
+          "text": "Write `vols = np.std(returns, axis=0, ddof=1) * np.sqrt(252)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Column by column, sample estimate, scaled by $\\sqrt{252}$.",
+        "generic": "Some tests failed. Check the axis, `ddof=1`, and that you multiply by the square root of 252.",
+        "byKey": {
+          "test-1": "Compare your numbers with the expected ones. About 0.87 times too small means `ddof` is missing; 15.9 times too big means you used 252, not its square root.",
+          "error": "Your code stopped with an error. Check that `vols` is replaced and that `np.sqrt` is spelled out."
+        }
+      },
+      "explain": {
+        "text": "`axis=0` gives one standard deviation per stock, and `ddof=1` makes it the sample estimate. Daily variance adds up over 252 days, so volatility grows with $\\sqrt{252} \\approx 15.87$, not with 252.\n\n```python\nnp.std(returns, axis=0, ddof=1) * np.sqrt(252)\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A 2-D array has shape `(rows, columns)`, and `pnl[i, j]` picks row `i`, column `j`. `reshape` refills the same elements row by row.",
+      "An aggregation with `axis=k` collapses axis `k`: on shape (4, 3), `axis=0` gives 3 numbers and `axis=1` gives 4.",
+      "`np.cumsum` keeps running totals and `np.cumprod` running products, one per element."
+    ],
+    "formula": {
+      "name": "Sample standard deviation",
+      "tex": "s = \\sqrt{\\dfrac{1}{n-1}\\sum_{i=1}^{n}(x_i - \\bar{x})^2}",
+      "note": "`np.std(x, ddof=1)`. Plain `np.std(x)` divides by $n$."
+    },
+    "trap": "`np.std` divides by $n$ unless you pass `ddof=1`. pandas' `.std()` divides by $n - 1$, so the two disagree on the same data."
+  },
+  "quiz": [
+    {
+      "id": "q-shape-after",
+      "difficulty": 2,
+      "prose": "```python\nx = np.zeros((3, 5))\nprint(x.sum(axis=0).shape)\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(5,)`",
+            "correct": true
+          },
+          {
+            "id": "kept",
+            "text": "`(3,)`",
+            "why": "You kept axis 0. The axis you name is the one that disappears."
+          },
+          {
+            "id": "same",
+            "text": "`(3, 5)`",
+            "why": "A sum along an axis collapses it, so the shape loses one length."
+          },
+          {
+            "id": "scalar",
+            "text": "`()`",
+            "why": "That is the shape of `x.sum()` with no axis: a single number."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Axis 0, the 3, is used up; 5 remain.",
+        "generic": "Not quite right. Remove the length of the axis you sum over."
+      },
+      "explain": {
+        "text": "`x` has shape `(3, 5)`. Summing over axis 0 removes the 3, so the result has shape `(5,)`: one total per column."
+      }
+    },
+    {
+      "id": "q-reshape",
+      "difficulty": 2,
+      "prose": "```python\nprint(np.arange(6).reshape(4, 2))\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pad",
+            "text": "It prints 4 rows of 2, padded with zeros",
+            "why": "NumPy never invents elements to fill a shape."
+          },
+          {
+            "id": "error",
+            "text": "It stops with a `ValueError`",
+            "correct": true
+          },
+          {
+            "id": "trim",
+            "text": "It prints 3 rows of 2 and ignores the fourth",
+            "why": "NumPy does not shrink the shape you asked for. It refuses instead."
+          },
+          {
+            "id": "swap",
+            "text": "It prints 2 rows of 4",
+            "why": "You swapped the numbers. `reshape(4, 2)` asks for 4 rows of 2."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "6 elements cannot fill 4 × 2 = 8 places.",
+        "generic": "Not quite right. Compare the number of elements with rows times columns."
+      },
+      "explain": {
+        "text": "A reshape keeps every element and adds none, so the new shape must hold exactly 6. $4 \\times 2 = 8$, so NumPy raises a `ValueError`. `reshape(3, 2)` or `reshape(2, 3)` would work."
+      }
+    },
+    {
+      "id": "q-sample-sd",
+      "difficulty": 3,
+      "prose": "```python\nx = np.array([2, 4, 4, 4, 5, 5, 7, 9])\nprint(np.std(x, ddof=1))\n```\nThe mean is 5 and the squared deviations add to 32.",
+      "question": "What does it print, to three decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.138,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 1.234",
+        "label": "Value printed",
+        "accept": "2.138: $\\sqrt{32/7}$.",
+        "wrong": [
+          {
+            "id": "pop",
+            "value": 2.0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "var",
+            "value": 4.571,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sqrt{32 / 7} = 2.138$.",
+        "generic": "Not quite right. With `ddof=1`, divide 32 by $n - 1 = 7$, then take the square root.",
+        "byKey": {
+          "pop": "That divides by $n = 8$, which is `ddof=0`. Here `ddof=1`, so divide by 7.",
+          "var": "That is the sample variance, $32/7$. Take its square root."
+        }
+      },
+      "explain": {
+        "text": "With `ddof=1`, NumPy divides by $n - 1 = 7$: $\\sqrt{32/7} = 2.138$. Plain `np.std(x)` divides by 8 and gives exactly 2."
+      }
+    },
+    {
+      "id": "q-cumsum",
+      "difficulty": 2,
+      "prose": "Three trades' P&L in pounds.\n\n```python\nprint(np.cumsum(np.array([5, -2, 3])))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[5 3 6]`",
+            "correct": true
+          },
+          {
+            "id": "total",
+            "text": "`6`",
+            "why": "That is `np.sum`. `cumsum` keeps every running total, one per element."
+          },
+          {
+            "id": "same",
+            "text": "`[ 5 -2  3]`",
+            "why": "Those are the trades themselves. Each element of `cumsum` adds everything up to that point."
+          },
+          {
+            "id": "prod",
+            "text": "`[  5 -10 -30]`",
+            "why": "That is `np.cumprod`, running products. `cumsum` adds."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "5, then 5 − 2 = 3, then 3 + 3 = 6.",
+        "generic": "Not quite right. Add the trades one at a time and keep each total."
+      },
+      "explain": {
+        "text": "The running totals are 5, 3 and 6, so the P&L after the last trade is £6. The last element of `np.cumsum` always equals `np.sum`."
+      }
+    }
+  ]
+}

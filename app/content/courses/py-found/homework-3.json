@@ -1,0 +1,416 @@
+{
+  "id": "homework-3",
+  "course": "py-found",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-log-returns",
+      "difficulty": 3,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "Log returns add up over time, which makes them handy for risk work. The log return from $p_{t-1}$ to $p_t$ is $\\ln(p_t / p_{t-1})$.",
+      "question": "Write `log_returns(closes)`: the list of daily log returns, each rounded to 6 places. Use the `math` module.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def log_returns(closes):\n    ...\n",
+        "solution": "import math\n\n\ndef log_returns(closes):\n    out = []\n    for i in range(1, len(closes)):\n        out.append(round(math.log(closes[i] / closes[i - 1]), 6))\n    return out\n",
+        "tests": [
+          {
+            "call": "log_returns([100.0, 101.2, 99.8, 100.4, 103.1])",
+            "expect": "[0.011929, -0.013931, 0.005994, 0.026537]",
+            "compare": "equal"
+          },
+          {
+            "call": "log_returns([100.00, 200.00, 100.00])",
+            "expect": "[0.693147, -0.693147]",
+            "compare": "equal"
+          },
+          {
+            "call": "log_returns([101.20])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(log_returns([100.0, 101.2, 99.8, 100.4, 103.1]))",
+            "expect": "0.030529",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each return is compared after rounding to 6 places.",
+        "examples": [
+          {
+            "call": "log_returns([100.00, 200.00, 100.00])",
+            "expect": "[0.693147, -0.693147]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four log returns, and they add up to the log of the whole move.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects log returns. Simple returns such as 0.012 mean you skipped `math.log`; a `NameError` means `import math` is missing.",
+          "test-2": "Test 2 doubles then halves the price. The log returns are equal and opposite, $\\pm 0.693147$."
+        }
+      },
+      "explain": {
+        "text": "The returns sum to $\\ln(103.10 / 100.00) = 0.030529$, the log of the whole move. That is why log returns are added, not multiplied. Simple returns of +100% and −50% do not cancel; log returns do."
+      }
+    },
+    {
+      "id": "h-date-format",
+      "difficulty": 3,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "A broker's file stamps each fill like `2024-03-15 16:30`.",
+      "question": "Which format string makes `datetime.strptime` read it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`\"%Y-%m-%d %H:%M\"`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`\"%Y-%d-%m %H:%M\"`",
+            "why": "You swapped day and month. In `2024-03-15` the month comes before the day."
+          },
+          {
+            "id": "c",
+            "text": "`\"%y-%m-%d %H:%M\"`",
+            "why": "`%y` is a two-digit year such as 24. A four-digit year needs `%Y`."
+          },
+          {
+            "id": "d",
+            "text": "`\"%Y-%m-%d %H:%m\"`",
+            "why": "`%m` is the month in every position. Minutes are `%M`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Year, month, day, then hours and minutes.",
+        "generic": "Not quite right. Match each field to its code: `%Y`, `%m`, `%d`, `%H`, `%M`."
+      },
+      "explain": {
+        "text": "`%Y` is the four-digit year, `%m` the month, `%d` the day, `%H` the hour and `%M` the minute. The dashes, space and colon must match the text exactly."
+      }
+    },
+    {
+      "id": "h-raise-flow",
+      "difficulty": 3,
+      "skills": [
+        "pf-classes"
+      ],
+      "prose": "```python\ndef parse(text):\n    return float(text)\n\n\ndef total(raw):\n    s = 0.0\n    for p in raw:\n        try:\n            s += parse(p)\n        except ValueError:\n            print(\"skip\", p)\n    return s\n\n\nprint(total([\"1.50\", \"x\", \"2.25\"]))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`skip x`, then `3.75`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`skip x`, then `1.5`",
+            "why": "You expected the loop to end at the error. The `except` handles it and the loop moves on to `'2.25'`."
+          },
+          {
+            "id": "c",
+            "text": "A `ValueError` traceback from `parse`",
+            "why": "The error raised in `parse` travels out to `total`, where `except ValueError` catches it."
+          },
+          {
+            "id": "d",
+            "text": "`3.75` only",
+            "why": "The `except` block prints before the loop continues."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The error from `parse` was caught in `total`, and the loop carried on.",
+        "generic": "Not quite right. Follow the `ValueError` out of `parse`."
+      },
+      "explain": {
+        "text": "`parse(\"x\")` raises inside `parse`, which has no `try`. The exception travels to the caller, where `except ValueError` prints `skip x`. The total is $1.50 + 2.25 = 3.75$."
+      }
+    },
+    {
+      "id": "h-load-closes",
+      "difficulty": 4,
+      "skills": [
+        "pf-modules",
+        "pf-classes"
+      ],
+      "prose": "A vendor file has UK dates, is out of order, and some closes are blank or `n/a`. `d.strftime(\"%Y-%m-%d\")` writes a date back as text.",
+      "question": "Write `load_closes(text)`: return `(date, close)` tuples sorted by date, with the date as `YYYY-MM-DD` text and the close a float. Skip rows whose close raises `ValueError`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nfrom datetime import datetime\n\n\ndef load_closes(text):\n    ...\n",
+        "solution": "import csv\nfrom datetime import datetime\n\n\ndef load_closes(text):\n    pairs = []\n    for row in csv.DictReader(text.splitlines()):\n        when = datetime.strptime(row[\"date\"], \"%d/%m/%Y\")\n        try:\n            close = float(row[\"close\"])\n        except ValueError:\n            continue\n        pairs.append((when, close))\n    pairs.sort()\n    return [(when.strftime(\"%Y-%m-%d\"), close) for when, close in pairs]\n",
+        "tests": [
+          {
+            "call": "load_closes(\"date,close\\n01/03/2024,102.00\\n28/02/2024,100.00\\n04/03/2024,n/a\\n29/02/2024,100.40\\n05/03/2024,\\n06/03/2024,103.10\\n\")",
+            "expect": "[('2024-02-28', 100.0), ('2024-02-29', 100.4), ('2024-03-01', 102.0), ('2024-03-06', 103.1)]",
+            "compare": "equal"
+          },
+          {
+            "call": "load_closes(\"date,close\\n02/01/2025,250.00\\n31/12/2024,240.00\\n\")",
+            "expect": "[('2024-12-31', 240.0), ('2025-01-02', 250.0)]",
+            "compare": "equal"
+          },
+          {
+            "call": "load_closes(\"date,close\\n05/03/2024,n/a\\n\")",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = load_closes(\"day,close\\\\n05/03/2024,103.10\\\\n\")\\nexcept KeyError: got = \"KeyError\"', globals()) or got",
+            "expect": "'KeyError'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Test 4 has a wrong header, `day`, which is a bug and must raise `KeyError`, not be skipped.",
+        "examples": [
+          {
+            "call": "load_closes(\"date,close\\n01/03/2024,102.00\\n28/02/2024,100.00\\n04/03/2024,n/a\\n29/02/2024,100.40\\n05/03/2024,\\n06/03/2024,103.10\\n\")",
+            "expect": "[('2024-02-28', 100.0), ('2024-02-29', 100.4), ('2024-03-01', 102.0), ('2024-03-06', 103.1)]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four good days, in date order, with the bad closes skipped.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `[('2024-02-28', 100.0), ('2024-02-29', 100.4), ('2024-03-01', 102.0), ('2024-03-06', 103.1)]`. Parse the UK dates before sorting, and write them back with `strftime`.",
+          "test-4": "Test 4 expects `KeyError` for a file whose header says `day`. A bare `except` skipped every row instead of reporting the bug."
+        }
+      },
+      "explain": {
+        "text": "Parse the date, then try `float` on the close and skip only on `ValueError`. Sorting `(datetime, close)` pairs puts 28 February before 1 March. A missing column raises `KeyError`, which is a bug in the file, so it should stop the program."
+      }
+    },
+    {
+      "id": "h-repr-str",
+      "difficulty": 4,
+      "skills": [
+        "pf-classes"
+      ],
+      "prose": "```python\nclass Position:\n    def __init__(self, ticker, qty):\n        self.ticker = ticker\n        self.qty = qty\n\n    def __str__(self):\n        return f\"{self.ticker} x{self.qty}\"\n\n\np = Position(\"VOD\", 100)\nprint(p)\nprint([p])\n```",
+      "question": "What do the two `print` lines show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`VOD x100`, then something like `[<__main__.Position object at 0x7f...>]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`VOD x100`, then `[VOD x100]`",
+            "why": "You expected the list to use `__str__`. A list shows each item with `__repr__`, which this class does not define."
+          },
+          {
+            "id": "c",
+            "text": "Both show `<__main__.Position object at 0x7f...>`",
+            "why": "`print(p)` calls `__str__`, which this class defines. Only the list falls back to the default."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`print(p)` uses `__str__`; the list uses `__repr__`.",
+        "generic": "Not quite right. Which method does each display call?"
+      },
+      "explain": {
+        "text": "`print(p)` asks for `__str__`, so it shows `VOD x100`. A list shows its items with `__repr__`, and this class has only the default. Define `__repr__` and both displays are readable."
+      }
+    },
+    {
+      "id": "h-paths",
+      "difficulty": 4,
+      "skills": [
+        "pf-modules"
+      ],
+      "prose": "Each day a price moves 1% up or down with equal chance. After 20 days it ends above £100.00 only with 11 or more up days. The exact chance is $\\tfrac{1}{2^{20}}\\sum_{k=11}^{20} \\binom{20}{k} \\approx 0.4119$. Estimate it by simulation.",
+      "question": "Write `share_above(paths, days, seed)`: seed once, simulate `paths` paths from £100.00, each move `random.choice([0.99, 1.01])`, path by path. Return the fraction ending above £100.00.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\n\ndef share_above(paths, days, seed):\n    ...\n",
+        "solution": "import random\n\n\ndef share_above(paths, days, seed):\n    random.seed(seed)\n    above = 0\n    for _ in range(paths):\n        price = 100.0\n        for _ in range(days):\n            price *= random.choice([0.99, 1.01])\n        if price > 100.0:\n            above += 1\n    return above / paths\n",
+        "tests": [
+          {
+            "call": "share_above(1000, 20, 1)",
+            "expect": "0.407",
+            "compare": "isclose"
+          },
+          {
+            "call": "share_above(2000, 20, 7)",
+            "expect": "0.4085",
+            "compare": "isclose"
+          },
+          {
+            "call": "share_above(1000, 1, 3)",
+            "expect": "0.502",
+            "compare": "isclose"
+          },
+          {
+            "call": "share_above(10, 0, 1)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "share_above(500, 20, 5) == share_above(500, 20, 5)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests with fixed seeds, so draw the moves in the stated order: all of path 1, then all of path 2.",
+        "examples": [
+          {
+            "call": "share_above(1000, 20, 1)",
+            "expect": "0.407",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Seed 1 gives 0.407, close to the exact 0.4119.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 0.407. Seed once before all the paths, start each path at 100.0, and divide with `/`.",
+          "test-4": "Test 4 has 0 days, so every path stays at exactly £100.00. That is not above £100.00, so the answer is 0.0."
+        }
+      },
+      "explain": {
+        "text": "With 20 moves, 10 ups and 10 downs leave $100 \\times 0.9999^{10} \\approx 99.90$, just below the start. So a path needs 11 ups, and the share converges to 0.4119 as paths grow. Seed 1 with 1,000 paths gives 0.407."
+      }
+    },
+    {
+      "id": "h-book-dates",
+      "difficulty": 5,
+      "skills": [
+        "pf-classes"
+      ],
+      "prose": "A trade blotter records each fill with a UK date. A trade for zero shares is an input error.",
+      "question": "Write `Trade(day, ticker, qty, price)`, parsing `day` (`dd/mm/yyyy`) and raising `ValueError` if `qty` is 0. Write `Book` with `add`, `net(ticker)` and `history()`: `(YYYY-MM-DD, ticker, qty)` tuples in date order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from datetime import datetime\n\n\nclass Trade:\n    def __init__(self, day, ticker, qty, price):\n        ...\n\n\nclass Book:\n    def __init__(self):\n        ...\n\n    def add(self, trade):\n        ...\n\n    def net(self, ticker):\n        ...\n\n    def history(self):\n        ...\n",
+        "solution": "from datetime import datetime\n\n\nclass Trade:\n    def __init__(self, day, ticker, qty, price):\n        if qty == 0:\n            raise ValueError(\"a trade needs a non-zero quantity\")\n        self.when = datetime.strptime(day, \"%d/%m/%Y\")\n        self.ticker = ticker\n        self.qty = qty\n        self.price = price\n\n\nclass Book:\n    def __init__(self):\n        self.trades = []\n\n    def add(self, trade):\n        self.trades.append(trade)\n\n    def net(self, ticker):\n        total = 0\n        for t in self.trades:\n            if t.ticker == ticker:\n                total += t.qty\n        return total\n\n    def history(self):\n        rows = sorted((t.when, t.ticker, t.qty) for t in self.trades)\n        return [(when.strftime(\"%Y-%m-%d\"), ticker, qty) for when, ticker, qty in rows]\n",
+        "tests": [
+          {
+            "call": "(b := Book(), b.add(Trade(\"01/03/2024\", \"VOD\", 1000, 0.72)), b.add(Trade(\"28/02/2024\", \"AZN\", 40, 104.20)), b.add(Trade(\"15/03/2024\", \"VOD\", -400, 0.75)), b.add(Trade(\"29/02/2024\", \"BARC\", -500, 1.85)), b.history())[-1]",
+            "expect": "[('2024-02-28', 'AZN', 40), ('2024-02-29', 'BARC', -500), ('2024-03-01', 'VOD', 1000), ('2024-03-15', 'VOD', -400)]",
+            "compare": "equal"
+          },
+          {
+            "call": "(b := Book(), b.add(Trade(\"01/03/2024\", \"VOD\", 1000, 0.72)), b.add(Trade(\"28/02/2024\", \"AZN\", 40, 104.20)), b.add(Trade(\"15/03/2024\", \"VOD\", -400, 0.75)), b.add(Trade(\"29/02/2024\", \"BARC\", -500, 1.85)), b.net(\"VOD\"))[-1]",
+            "expect": "600",
+            "compare": "equal"
+          },
+          {
+            "call": "(b := Book(), b.add(Trade(\"01/03/2024\", \"VOD\", 1000, 0.72)), b.add(Trade(\"28/02/2024\", \"AZN\", 40, 104.20)), b.add(Trade(\"15/03/2024\", \"VOD\", -400, 0.75)), b.add(Trade(\"29/02/2024\", \"BARC\", -500, 1.85)), b.net(\"LLOY\"))[-1]",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = Trade(\"01/03/2024\", \"VOD\", 0, 0.72)\\nexcept ValueError: got = \"ValueError\"', globals()) or got",
+            "expect": "'ValueError'",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = Trade(\"2024-03-01\", \"VOD\", 100, 0.72)\\nexcept ValueError: got = \"ValueError\"', globals()) or got",
+            "expect": "'ValueError'",
+            "compare": "equal"
+          },
+          {
+            "call": "(a := Book(), c := Book(), a.add(Trade(\"01/03/2024\", \"VOD\", 100, 0.72)), c.history())[-1]",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "Book().history()",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Tests 4 and 5 pass when `Trade(...)` raises `ValueError`; test 6 checks that two books keep separate trades.",
+        "examples": [
+          {
+            "call": "(b := Book(), b.add(Trade(\"01/03/2024\", \"VOD\", 1000, 0.72)), b.add(Trade(\"28/02/2024\", \"AZN\", 40, 104.20)), b.add(Trade(\"15/03/2024\", \"VOD\", -400, 0.75)), b.add(Trade(\"29/02/2024\", \"BARC\", -500, 1.85)), b.history())[-1]",
+            "expect": "[('2024-02-28', 'AZN', 40), ('2024-02-29', 'BARC', -500), ('2024-03-01', 'VOD', 1000), ('2024-03-15', 'VOD', -400)]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Trades come back in date order, zero-quantity trades are refused, and each book keeps its own list.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 adds trades out of order. Sort `(when, ticker, qty)` tuples by the parsed date before formatting, so 28 February comes first.",
+          "test-4": "Test 4 expects `ValueError` for a zero quantity. Check `qty == 0` in `__init__` and raise.",
+          "test-6": "Test 6 checks a second book is empty. Create the list in `__init__`, not in the class body."
+        }
+      },
+      "explain": {
+        "text": "Parsing the date in `__init__` means a bad date fails at once, where it was typed. Sorting tuples whose first item is a `datetime` gives true date order, which text sorting of UK dates would not. Raising on zero quantity keeps a meaningless trade out of every total."
+      }
+    },
+    {
+      "id": "h-review",
+      "difficulty": 5,
+      "skills": [
+        "pf-modules",
+        "pf-classes"
+      ],
+      "title": "Reviewing a positions module",
+      "kind": "longform",
+      "prompt": "A colleague asks you to review `positions.py` before it goes into the daily risk report. The file it reads has the header `ticker,qty,avg_price`.\n\n```python\nimport csv\n\n\nclass Position:\n    history = []\n\n    def __init__(self, ticker, qty, avg_price):\n        self.ticker = ticker\n        self.qty = qty\n        self.avg_price = avg_price\n\n    def value(self, price):\n        self.history.append(price)\n        return self.qty * price\n\n\ndef load(text):\n    out = []\n    for row in csv.DictReader(text.splitlines()):\n        try:\n            out.append(Position(row[\"ticker\"], row[\"qty\"], row[\"avg_price\"]))\n        except:\n            pass\n    return out\n\n\ndef biggest(positions):\n    return max(p.avg_price for p in positions)\n```\n\n(a) Find four bugs. For each, say what happens when the code runs. (b) Write the corrected module, with type hints and a `__repr__`. (c) Say which bugs give no error message, and which one is the most dangerous, and why.",
+      "model": "**(a) The bugs, and what each does when it runs.**\n\n1. *`history = []` in the class body* (line 5). It runs once, so every `Position` shares one list. Calling `value` on any position appends to the same list, so each position's history holds every other position's prices too. No error is raised.\n2. *`qty` and `avg_price` stored as text* (line 18). `csv` returns strings and `Position(...)` stores them unconverted. The first call to `value` computes `'150' * 27.00` and raises `TypeError: can't multiply sequence by non-int of type 'float'`.\n3. *The bare `except`* (line 19). Any error while building a position is swallowed: a misspelt column such as `row[\"avg\"]` raises `KeyError` on every row, and `load` silently returns `[]`. It also hides problem 2 in any code placed inside the `try` later.\n4. *`biggest` compares text* (line 24). Because `avg_price` is a string, `max` compares character by character: `'99.80'` beats `'104.20'`. It returns the wrong position's price, still as text, with no error.\n\n**(b) Corrected module.**\n\n```python\nimport csv\n\n\nclass Position:\n    def __init__(self, ticker: str, qty: int, avg_price: float) -> None:\n        self.ticker = ticker\n        self.qty = qty\n        self.avg_price = avg_price\n        self.history = []\n\n    def value(self, price: float) -> float:\n        self.history.append(price)\n        return self.qty * price\n\n    def __repr__(self) -> str:\n        return f\"Position({self.ticker}, {self.qty} @ £{self.avg_price:.2f})\"\n\n\ndef load(text: str) -> list:\n    out = []\n    for row in csv.DictReader(text.splitlines()):\n        try:\n            qty = int(row[\"qty\"])\n            avg = float(row[\"avg_price\"])\n        except ValueError:\n            continue  # a bad number on this row: skip it\n        out.append(Position(row[\"ticker\"], qty, avg))\n    return out\n\n\ndef biggest(positions: list) -> float:\n    return max(p.avg_price for p in positions)\n```\n\nThe list moves into `__init__`, the fields are converted with `int` and `float` as they are read, the `try` wraps only the conversions and names `ValueError`, and `biggest` now compares numbers. A `KeyError` from a wrong header now stops the program with a traceback, which is what we want.\n\n**(c) The silent bugs.** Bugs 1, 3 and 4 give no error message. Bug 3 is the most dangerous: it turns a broken file into an empty portfolio, and every total computed from it is a confident £0.00. Bug 4 is close behind, because the wrong answer looks like a real price. Bug 2 is the least dangerous, because its `TypeError` appears the first time `value` runs.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Finds the shared `history` list in the class body and explains that every position appends to one list."
+        },
+        {
+          "points": 2,
+          "text": "Finds that `qty` and `avg_price` stay as strings, and names the `TypeError` from `value` (or the wrong `max`)."
+        },
+        {
+          "points": 2,
+          "text": "Finds the bare `except` and explains that it hides errors such as a `KeyError` from a wrong column name, returning `[]`."
+        },
+        {
+          "points": 1,
+          "text": "Finds that `biggest` compares text, so `'99.80'` beats `'104.20'`."
+        },
+        {
+          "points": 2,
+          "text": "Gives a corrected module: list in `__init__`, `int` and `float` conversions, `except ValueError` around only the conversions, type hints and a `__repr__`."
+        },
+        {
+          "points": 1,
+          "text": "Names the silent bugs and argues which is most dangerous, such as the bare `except` turning a broken file into an empty portfolio."
+        }
+      ]
+    }
+  ]
+}

@@ -376,3 +376,8 @@ Raised later (py-found level 1):
 134. `number-line` (and any kind with `setParam`): unknown control names fall back to `state.params`.
 135. Prose code blocks: wrap long lines or scroll horizontally; never run under the Copy button.
 136. `code` tests: a per-test `setup` line (run before `call`) so tests read cleanly.
+
+Raised later (py-found level 3):
+
+137. `code` tests: `compare: "raises"` with `expect` the exception name.
+138. `tree` canvas: honour `params.label` as a title.

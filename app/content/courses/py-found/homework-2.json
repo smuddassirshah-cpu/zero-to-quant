@@ -1,0 +1,487 @@
+{
+  "id": "homework-2",
+  "course": "py-found",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-latest",
+      "difficulty": 3,
+      "skills": [
+        "pf-collections"
+      ],
+      "title": "Today's prices from history",
+      "prose": "`history` maps each ticker to its closes, oldest first. Return a new dictionary of each ticker's latest close. Skip a ticker whose list is empty, and do not change `history`.",
+      "question": "Complete `latest_prices`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def latest_prices(history):\n    latest = {}\n    # latest[ticker] = last close, skipping empty lists\n    return latest\n",
+        "solution": "def latest_prices(history):\n    latest = {}\n    for ticker, closes in history.items():\n        if len(closes) > 0:\n            latest[ticker] = closes[-1]\n    return latest\n",
+        "tests": [
+          {
+            "call": "latest_prices({\"BP\": [4.80, 4.85, 4.91], \"VOD\": [0.72, 0.74]})",
+            "expect": "{'BP': 4.91, 'VOD': 0.74}",
+            "compare": "equal"
+          },
+          {
+            "call": "latest_prices({\"NEW\": [], \"BP\": [4.85]})",
+            "expect": "{'BP': 4.85}",
+            "compare": "equal"
+          },
+          {
+            "call": "latest_prices({})",
+            "expect": "{}",
+            "compare": "equal"
+          },
+          {
+            "call": "list(latest_prices({\"VOD\": [0.72], \"AZN\": [118.50], \"BP\": [4.85]}))",
+            "expect": "['VOD', 'AZN', 'BP']",
+            "compare": "equal"
+          },
+          {
+            "call": "(h := {\"BP\": [4.80, 4.85]}, latest_prices(h), h)[2]",
+            "expect": "{'BP': [4.8, 4.85]}",
+            "compare": "equal"
+          },
+          {
+            "call": "latest_prices({\"SHEL\": [27.30, 27.10, 26.95]})",
+            "expect": "{'SHEL': 26.95}",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, including an empty list and an empty dictionary.",
+        "examples": [
+          {
+            "call": "latest_prices({\"BP\": [4.80, 4.85, 4.91], \"VOD\": [0.72, 0.74]})",
+            "expect": "{'BP': 4.91, 'VOD': 0.74}",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All six tests passed, the empty list skipped.",
+        "generic": "Some tests failed. Loop over `history.items()` and take `closes[-1]` only when the list is not empty.",
+        "byKey": {
+          "test-2": "Test 2 has a ticker with no closes. `closes[-1]` raises `IndexError` there: check `len(closes) > 0` first."
+        }
+      },
+      "explain": {
+        "text": "`.items()` hands back each ticker with its list, and the length check skips a listing with no closes yet.\n\n```python\ndef latest_prices(history):\n    latest = {}\n    for ticker, closes in history.items():\n        if len(closes) > 0:\n            latest[ticker] = closes[-1]\n    return latest\n```"
+      }
+    },
+    {
+      "id": "h-snapshot",
+      "difficulty": 3,
+      "skills": [
+        "pf-collections",
+        "pf-functions"
+      ],
+      "prose": "Before closing out BP, a trader saves the book twice.\n\n```python\nbook = {\"BP\": 300, \"VOD\": 1000}\nsnapshot = book\nbackup = dict(book)\nbook[\"BP\"] = 0\nprint(snapshot[\"BP\"], backup[\"BP\"])\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`0 300`",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "`300 300`",
+            "why": "You treated `snapshot = book` as a copy. It is a second label, so it sees BP set to 0."
+          },
+          {
+            "id": "neither",
+            "text": "`0 0`",
+            "why": "`dict(book)` builds a new dictionary, so the later change does not reach `backup`."
+          },
+          {
+            "id": "swap",
+            "text": "`300 0`",
+            "why": "You swapped them: `snapshot` is the label, `backup` is the copy."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The label sees the change; the copy does not.",
+        "generic": "Not quite right. Which line builds a new dictionary?"
+      },
+      "explain": {
+        "text": "`snapshot = book` adds a label to the same dictionary, so it shows BP at 0. `dict(book)` built a separate copy before the change, so `backup` still holds 300."
+      }
+    },
+    {
+      "id": "h-pnl",
+      "difficulty": 4,
+      "skills": [
+        "pf-collections",
+        "pf-idioms"
+      ],
+      "title": "P&L per ticker",
+      "prose": "Each fill is `(ticker, qty, price)`: shares bought (negative for sold) at a £ price. Marked at today's close, a fill makes `qty * (close - price)`. Return a dictionary of total P&L per ticker, in first-filled order. Every ticker has a close.",
+      "question": "Complete `pnl_by_ticker`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def pnl_by_ticker(fills, closes):\n    pnl = {}\n    # add qty * (close - price) to each ticker's total\n    return pnl\n",
+        "solution": "def pnl_by_ticker(fills, closes):\n    pnl = {}\n    for ticker, qty, price in fills:\n        gain = qty * (closes[ticker] - price)\n        pnl[ticker] = pnl.get(ticker, 0.0) + gain\n    return pnl\n",
+        "tests": [
+          {
+            "call": "pnl_by_ticker([(\"BP\", 500, 4.80), (\"BP\", -200, 4.90), (\"VOD\", 1000, 0.70)], {\"BP\": 4.85, \"VOD\": 0.72})[\"BP\"]",
+            "expect": "35.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "pnl_by_ticker([(\"BP\", 500, 4.80), (\"BP\", -200, 4.90), (\"VOD\", 1000, 0.70)], {\"BP\": 4.85, \"VOD\": 0.72})[\"VOD\"]",
+            "expect": "20.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(pnl_by_ticker([(\"BP\", 500, 4.80), (\"BP\", -200, 4.90), (\"VOD\", 1000, 0.70)], {\"BP\": 4.85, \"VOD\": 0.72}))",
+            "expect": "['BP', 'VOD']",
+            "compare": "equal"
+          },
+          {
+            "call": "pnl_by_ticker([], {\"BP\": 4.85})",
+            "expect": "{}",
+            "compare": "equal"
+          },
+          {
+            "call": "pnl_by_ticker([(\"AZN\", -20, 120.00)], {\"AZN\": 118.50})[\"AZN\"]",
+            "expect": "30.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "pnl_by_ticker([(\"SHEL\", 40, 27.30), (\"SHEL\", -40, 27.50)], {\"SHEL\": 26.00})[\"SHEL\"]",
+            "expect": "8.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on single tickers' totals and the key order. Totals are compared with `math.isclose`.",
+        "examples": [
+          {
+            "call": "pnl_by_ticker([(\"BP\", 500, 4.80), (\"BP\", -200, 4.90), (\"VOD\", 1000, 0.70)], {\"BP\": 4.85, \"VOD\": 0.72})[\"BP\"]",
+            "expect": "35.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "pnl_by_ticker([(\"BP\", 500, 4.80), (\"BP\", -200, 4.90), (\"VOD\", 1000, 0.70)], {\"BP\": 4.85, \"VOD\": 0.72})[\"VOD\"]",
+            "expect": "20.0",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All six tests passed: every fill marked to the close and summed per ticker.",
+        "generic": "Some tests failed. Check BP in the example: 500 × 0.05 + (−200) × (−0.05) = £35.00.",
+        "byKey": {
+          "test-1": "Test 1 has two BP fills. Add each fill's P&L to BP's running total, and keep the sign of `qty`: a sale above the close is a gain."
+        }
+      },
+      "explain": {
+        "text": "Bought 500 BP at £4.80 and sold 200 at £4.90, marked at £4.85: £25.00 + £10.00 = £35.00. The sale gains because we sold above today's close. VOD makes 1,000 × £0.02 = £20.00.\n\n```python\ndef pnl_by_ticker(fills, closes):\n    pnl = {}\n    for ticker, qty, price in fills:\n        gain = qty * (closes[ticker] - price)\n        pnl[ticker] = pnl.get(ticker, 0.0) + gain\n    return pnl\n```"
+      }
+    },
+    {
+      "id": "h-commission",
+      "difficulty": 3,
+      "skills": [
+        "pf-functions",
+        "pf-collections"
+      ],
+      "title": "Commission with defaults",
+      "prose": "Write `commission(notional, venue=\"LSE\", minimum=1.50)`. Look the venue's rate up in `FEES`, with 0.0015 for any unlisted venue. Charge `notional * rate`, but never less than `minimum`.",
+      "question": "Complete `commission`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "FEES = {\"LSE\": 0.0010, \"TQ\": 0.0005, \"CBOE\": 0.0008}\n\ndef commission(notional, venue, minimum):\n    # defaults: venue \"LSE\", minimum 1.50\n    # unlisted venues pay a rate of 0.0015\n    return 0.0\n",
+        "solution": "FEES = {\"LSE\": 0.0010, \"TQ\": 0.0005, \"CBOE\": 0.0008}\n\ndef commission(notional, venue=\"LSE\", minimum=1.50):\n    rate = FEES.get(venue, 0.0015)\n    return max(notional * rate, minimum)\n",
+        "tests": [
+          {
+            "call": "commission(20000.00)",
+            "expect": "20.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "commission(20000.00, \"TQ\")",
+            "expect": "10.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "commission(500.00)",
+            "expect": "1.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "commission(20000.00, venue=\"AQX\")",
+            "expect": "30.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "commission(500.00, minimum=0.00)",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "commission(minimum=5.00, notional=4000.00, venue=\"CBOE\")",
+            "expect": "5.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "commission(100000.00, \"XLON\", 25.00)",
+            "expect": "150.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, called with positional and keyword arguments. Fees are compared with `math.isclose`.",
+        "examples": [
+          {
+            "call": "commission(20000.00)",
+            "expect": "20.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "commission(20000.00, \"TQ\")",
+            "expect": "10.0",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All seven tests passed, keyword calls and unlisted venues included.",
+        "generic": "Some tests failed. Give `venue` and `minimum` defaults, look the rate up with `get`, and apply the minimum with `max`.",
+        "byKey": {
+          "test-1": "Test 1 calls `commission(20000.00)` alone. Give `venue` and `minimum` defaults in the `def` line.",
+          "test-3": "Test 3 is a £500.00 trade: 0.001 × 500 = £0.50, below the £1.50 minimum. Return `max(notional * rate, minimum)`.",
+          "test-4": "Test 4 trades on AQX, which is not listed. Use `FEES.get(venue, 0.0015)`."
+        }
+      },
+      "explain": {
+        "text": "Defaults make `commission(20000.00)` mean LSE with a £1.50 minimum, and keywords let a caller change just one. `get` handles any venue the schedule does not list.\n\n```python\nFEES = {\"LSE\": 0.0010, \"TQ\": 0.0005, \"CBOE\": 0.0008}\n\ndef commission(notional, venue=\"LSE\", minimum=1.50):\n    rate = FEES.get(venue, 0.0015)\n    return max(notional * rate, minimum)\n```"
+      }
+    },
+    {
+      "id": "h-net-value",
+      "difficulty": 5,
+      "skills": [
+        "pf-functions",
+        "pf-collections"
+      ],
+      "title": "Net, then value",
+      "prose": "Return a tuple `(book, value)`. `book` nets the `(ticker, qty)` trades, leaving out flat tickers. `value` is the book's £ value at `prices`, or `None` if any open ticker has no price; a flat ticker needs no price. Do not change `prices`.",
+      "question": "Complete `net_and_value`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def net_and_value(trades, prices):\n    \"\"\"Return (net book, £ value or None).\"\"\"\n    book = {}\n    value = 0.0\n    return book, value\n",
+        "solution": "def net_and_value(trades, prices):\n    book = {}\n    for ticker, qty in trades:\n        book[ticker] = book.get(ticker, 0) + qty\n    open_book = {}\n    for ticker, qty in book.items():\n        if qty != 0:\n            open_book[ticker] = qty\n    value = 0.0\n    for ticker, qty in open_book.items():\n        if ticker not in prices:\n            return open_book, None\n        value = value + qty * prices[ticker]\n    return open_book, value\n",
+        "tests": [
+          {
+            "call": "isinstance(net_and_value([(\"BP\", 500), (\"VOD\", 1000), (\"BP\", -200)], {\"BP\": 4.85, \"VOD\": 0.72}), tuple)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "net_and_value([(\"BP\", 500), (\"VOD\", 1000), (\"BP\", -200)], {\"BP\": 4.85, \"VOD\": 0.72})[0]",
+            "expect": "{'BP': 300, 'VOD': 1000}",
+            "compare": "equal"
+          },
+          {
+            "call": "net_and_value([(\"BP\", 500), (\"VOD\", 1000), (\"BP\", -200)], {\"BP\": 4.85, \"VOD\": 0.72})[1]",
+            "expect": "2175.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "net_and_value([(\"TSCO\", 100)], {\"BP\": 4.85})",
+            "expect": "({'TSCO': 100}, None)",
+            "compare": "equal"
+          },
+          {
+            "call": "net_and_value([(\"TSCO\", 100), (\"TSCO\", -100), (\"BP\", 10)], {\"BP\": 4.85})[0]",
+            "expect": "{'BP': 10}",
+            "compare": "equal"
+          },
+          {
+            "call": "net_and_value([(\"TSCO\", 100), (\"TSCO\", -100), (\"BP\", 10)], {\"BP\": 4.85})[1]",
+            "expect": "48.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "net_and_value([], {})",
+            "expect": "({}, 0.0)",
+            "compare": "equal"
+          },
+          {
+            "call": "(p := {\"BP\": 4.85}, net_and_value([(\"BP\", 1), (\"XYZ\", 1)], p), p)[2]",
+            "expect": "{'BP': 4.85}",
+            "compare": "equal"
+          },
+          {
+            "call": "net_and_value([(\"AZN\", -20), (\"BP\", 300)], {\"AZN\": 118.50, \"BP\": 4.85})[1]",
+            "expect": "-915.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests on both parts of the tuple. They include a missing price, a ticker that goes flat and no trades.",
+        "examples": [
+          {
+            "call": "net_and_value([(\"BP\", 500), (\"VOD\", 1000), (\"BP\", -200)], {\"BP\": 4.85, \"VOD\": 0.72})[0]",
+            "expect": "{'BP': 300, 'VOD': 1000}",
+            "compare": "equal"
+          },
+          {
+            "call": "net_and_value([(\"TSCO\", 100)], {\"BP\": 4.85})",
+            "expect": "({'TSCO': 100}, None)",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All nine tests passed: netted, flat tickers dropped, and an honest `None` when a price is missing.",
+        "generic": "Some tests failed. Net first, drop the zeros, then value only what is still open.",
+        "byKey": {
+          "test-1": "Test 1 wants a tuple. `return book, value` builds one.",
+          "test-4": "Test 4 holds TSCO with no price. The value is unknown, so return the book with `None`, not a partial total.",
+          "test-5": "Test 5 trades TSCO and then flattens it. A flat ticker must leave the book, and then it needs no price."
+        }
+      },
+      "explain": {
+        "text": "Three steps in order: net with `get`, keep the non-zero positions, then value them, leaving early with `None` at the first missing price. Dropping flat tickers first is what lets a flattened TSCO go unpriced.\n\n```python\ndef net_and_value(trades, prices):\n    book = {}\n    for ticker, qty in trades:\n        book[ticker] = book.get(ticker, 0) + qty\n    open_book = {}\n    for ticker, qty in book.items():\n        if qty != 0:\n            open_book[ticker] = qty\n    value = 0.0\n    for ticker, qty in open_book.items():\n        if ticker not in prices:\n            return open_book, None\n        value = value + qty * prices[ticker]\n    return open_book, value\n```"
+      }
+    },
+    {
+      "id": "h-review-module",
+      "difficulty": 5,
+      "skills": [
+        "pf-functions",
+        "pf-collections"
+      ],
+      "title": "Review a colleague's position code",
+      "kind": "longform",
+      "prompt": "A colleague's module keeps a position book and values it.\n\n```python\ndef add_trade(ticker, qty, book={}):\n    book[ticker] = book[ticker] + qty\n    return book\n\ndef total_value(book, prices):\n    tickers = list(book)\n    tickers = tickers.sort()\n    total = 0\n    for t in tickers:\n        if prices[t] in prices:\n            total = total + book[t] * prices[t]\n    return total\n```\n\n(a) What happens on the first call, `add_trade(\"BP\", 100)`? Give the fix. (b) With that fix in, `a = add_trade(\"BP\", 100)` then `b = add_trade(\"VOD\", 50)`. What does `print(a)` show, and why? (c) Name the two bugs in `total_value` and what each one does. (d) Write corrected versions of both functions with docstrings. `total_value` should return `None` when a held ticker has no price.",
+      "model": "**(a)** It stops with `KeyError: 'BP'`. The book starts empty, so `book[ticker]` reads a key that is not there yet. Use `book.get(ticker, 0) + qty`, which treats a new ticker as 0 shares.\n\n**(b)** With `get` in place, `print(a)` shows `{'BP': 100, 'VOD': 50}`. The default `{}` is built once, when `def` runs, so both calls that leave `book` out update the same dictionary. `a` and `b` are one object. Use `book=None` and make a new dictionary inside the call.\n\n**(c)** Two bugs.\n\n1. `tickers = tickers.sort()`: `.sort()` sorts in place and returns `None`, so `tickers` becomes `None` and `for t in tickers` stops with `TypeError: 'NoneType' object is not iterable`. Use `sorted(book)`, or no sort at all.\n2. `if prices[t] in prices`: this asks whether a price, such as 4.85, is a key of `prices`. `in` on a dictionary checks keys, so it is `False`. Nothing is ever added, and the book is valued at 0. And `prices[t]` itself raises `KeyError` for a ticker with no price. The test should be `t in prices`.\n\nA third, quieter problem: skipping a ticker with no price would return a total that is too small. An unknown price makes the whole value unknown, so return `None`.\n\n**(d)**\n\n```python\ndef add_trade(ticker, qty, book=None):\n    \"\"\"Add qty to book[ticker] and return the book.\n\n    Changes the book it is given; starts a new one if none is passed.\n    \"\"\"\n    if book is None:\n        book = {}\n    book[ticker] = book.get(ticker, 0) + qty\n    return book\n\ndef total_value(book, prices):\n    \"\"\"Return the £ value of book, or None if a ticker has no price.\"\"\"\n    total = 0.0\n    for t in sorted(book):\n        if t not in prices:\n            return None\n        total = total + book[t] * prices[t]\n    return total\n```\n\n`total_value({\"BP\": 500, \"VOD\": 1000}, {\"BP\": 4.85, \"VOD\": 0.72})` now returns 3145.0, and a book holding a ticker with no price returns `None`. Two calls to `add_trade` without a book give `{'BP': 100}` and `{'VOD': 50}`.",
+      "rubric": [
+        {
+          "points": 1,
+          "text": "(a) Says the first call raises `KeyError: 'BP'` because the key is not there yet, and fixes it with `book.get(ticker, 0) + qty`"
+        },
+        {
+          "points": 2,
+          "text": "(b) States `{'BP': 100, 'VOD': 50}` and explains that the default dictionary is built once, at `def`, and shared by both calls"
+        },
+        {
+          "points": 2,
+          "text": "(c) Finds that `tickers.sort()` returns `None`, so the loop raises `TypeError`, and uses `sorted(book)`"
+        },
+        {
+          "points": 2,
+          "text": "(c) Finds that `prices[t] in prices` tests a price against the keys, so nothing is added (and a missing price raises `KeyError`); the test should be `t in prices`"
+        },
+        {
+          "points": 2,
+          "text": "(d) Gives a working `add_trade` with `book=None`, a fresh dictionary inside, `get` for new tickers, and a docstring"
+        },
+        {
+          "points": 1,
+          "text": "(d) Gives a working `total_value` that returns `None` as soon as a held ticker has no price"
+        }
+      ]
+    },
+    {
+      "id": "h-limit-check",
+      "difficulty": 4,
+      "skills": [
+        "pf-functions",
+        "pf-collections"
+      ],
+      "prose": "A pre-trade check against position limits.\n\n```python\ndef check(limits, ticker, qty):\n    if ticker not in limits:\n        return None\n    if abs(qty) > limits[ticker]:\n        return False\n    return True\n\nprint(check({\"BP\": 500}, \"BP\", -600),\n      check({\"BP\": 500}, \"VOD\", 10))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`False None`",
+            "correct": true
+          },
+          {
+            "id": "sign",
+            "text": "`True None`",
+            "why": "You compared −600 with 500 directly. `abs(-600)` is 600, which is over the limit."
+          },
+          {
+            "id": "keyerror",
+            "text": "`False`, then a `KeyError`",
+            "why": "The first `if` returns `None` for VOD before `limits[ticker]` is ever read."
+          },
+          {
+            "id": "fallthrough",
+            "text": "`False True`",
+            "why": "The first `return` ends the call for VOD; it never reaches `return True`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Over the limit gives `False`; no limit at all gives `None`.",
+        "generic": "Not quite right. Follow each call to the first `return` it reaches."
+      },
+      "explain": {
+        "text": "For BP, `abs(-600)` is 600, above 500, so the call returns `False`. For VOD the first test is true, so it returns `None` at once and the lookup never runs. `None` here means no limit is set, which differs from a failed check."
+      }
+    },
+    {
+      "id": "h-count-times",
+      "difficulty": 3,
+      "skills": [
+        "pf-collections",
+        "pf-idioms"
+      ],
+      "prose": "```python\ntrades = [\"BP\", \"VOD\", \"BP\", \"BP\", \"AZN\", \"VOD\"]\ncounts = {}\nfor t in trades:\n    counts[t] = counts.get(t, 0) + 1\nseen = set(trades)\nprint(counts[\"BP\"] * len(seen))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "9: BP traded 3 times, and 3 different tickers.",
+        "wrong": [
+          {
+            "id": "list",
+            "value": 18,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "once",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "3 BP trades times 3 different tickers.",
+        "generic": "Not quite right. Count BP's trades, then the different tickers.",
+        "byKey": {
+          "list": "You used the list's length, 6. The set holds each ticker once: 3.",
+          "once": "You counted BP once. `counts[\"BP\"]` is 3, one per BP trade."
+        }
+      },
+      "explain": {
+        "text": "`counts` ends as `{\"BP\": 3, \"VOD\": 2, \"AZN\": 1}` and `seen` holds 3 tickers, so the product is 9."
+      }
+    }
+  ]
+}
