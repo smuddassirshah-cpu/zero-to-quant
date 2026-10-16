@@ -316,3 +316,11 @@ Raised later (first-python level 2):
 116. `table` canvas: inline code in cells (`mode: "code"` monospaced listing with line numbers).
 117. `graph`: node `shape` (circle, diamond, rect) and multi-line labels; tap mode on edges.
 118. `table` widget: grade text cells (`answer: "True"`, case-insensitive) as well as numbers.
+
+Raised later (first-python level 3):
+
+119. `array`: cells size to their text (dates, `102.50`).
+120. Code widget: a fresh working directory per run in the Pyodide file system (files must not persist between runs).
+121. Code widget `isclose`: require a real number, not a number-like string.
+122. Player: hide "Start over" when the screen has no interactive canvas (choice and code screens with static diagrams).
+123. AUTHORING.md section 3: document `compare: "stdout"`, `stdin` and `printed` once item 109 lands.
