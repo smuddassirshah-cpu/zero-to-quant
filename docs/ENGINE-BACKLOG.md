@@ -186,3 +186,10 @@ Raised later (trig level 2):
 69. A screen may hold two canvases side by side (`canvases: [...]` or a `pair` kind), or a built-in "unrolling" view on circle (angle to sine graph).
 70. `circle` README: note that `drag-point` default `tol` 0.25 is about 14° in radians; recommend 0.02.
 71. `derive` functions: add `sin`, `cos`, `tan`, `sqrt`, `abs`, `ln`, `exp`, `pi` to the derive function set.
+
+Raised later (exp-log level 3):
+
+72. `ZQ.canvas.compile`: map `e` to Math.E in function expressions (README-B says it is supported).
+73. `drag-point` on plane: per-axis tolerance (`tol: [dx, dy]`).
+74. `plane` `labelSide: "below"` appears ignored; `labelOffset` uneven. Verify and fix.
+75. README-B: document `hlines` and `vlines`.
