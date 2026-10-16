@@ -24,6 +24,8 @@
    four calls: current().kind is 'start' (continue() begins), 'item' (answer, check, continue), 'submit', then 'done';
    a review must be recorded with every item right, a homework marked with every item right, an exam passed with
    every question right.
+   A screen with a code widget is checked only after its Python status reads ready; if Python cannot load (no CDN
+   access without --local-cdn) that is a failure, and an answer that applies with nothing to check is a failure too.
 
    --local-cdn <dir>: for machines without access to cdn.jsdelivr.net. <dir> holds unpacked npm tarballs:
      <dir>/pyodide-0.27.7/package/...                      for /pyodide/v0.27.7/full/...
@@ -207,6 +209,16 @@ const main = async () => {
     console.log(`setup done. ${lessons.length} lesson${lessons.length === 1 ? '' : 's'}${sets.length ? `, ${sets.length} review and homework set${sets.length === 1 ? '' : 's'}` : ''}${exams.length ? `, ${exams.length} exam${exams.length === 1 ? '' : 's'}` : ''} to play.`);
 
     /* Lessons */
+    /* Item 112: a code screen is checked only once Python is ready (or has failed to load, which is a failure) */
+    const waitPython = async () => {
+      if (!(await page.evaluate(() => !!document.querySelector('.wd-py')))) return null;
+      try {
+        await page.waitForFunction(() => ![...document.querySelectorAll('.wd-py')].some(e => ['idle', 'loading', 'restarting', 'running'].includes(e.dataset.s)), null, { timeout: Math.max(opt.timeout, 90000) });
+      } catch { return 'Python did not become ready within 90 s'; }
+      const bad = await page.evaluate(() => [...document.querySelectorAll('.wd-py')].some(e => e.dataset.s === 'unavailable'));
+      return bad ? 'Python could not load, so the code tests did not run (pass --local-cdn without CDN access)' : null;
+    };
+
     for (const id of lessons) {
       where = `#lesson/${id}`;
       const fails = [];
@@ -224,6 +236,8 @@ const main = async () => {
           if (++guard > 200) { fails.push('more than 200 steps without reaching the end'); break; }
           if (opt.shots && same === 0) await shot(`${id}-${c.phase}-${String(c.screenIndex).padStart(2, '0')}-${c.kind}`);
           if (c.state === 'idle' || c.state === 'engaged') {
+            const py = await waitPython();
+            if (py) { fails.push(`${c.phase} ${c.screenIndex} (${c.kind}): ${py}`); break; }
             const applied = await page.evaluate(() => ZQ.test.answerCorrect());
             const r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null, pending: !!r.pending } : null; });
             if (r && r.pending) { // long-form: the first check opens the self-marking, the second grades it
@@ -236,6 +250,9 @@ const main = async () => {
               if (!r.ok) fails.push(`${c.phase} ${c.screenIndex} (${c.kind}): not correct, key ${JSON.stringify(r.key)}`);
             } else if (c.state === 'idle' && applied === false && c.kind !== 'title' && c.kind !== 'demonstrate' && c.kind !== 'generalise') {
               fails.push(`${c.phase} ${c.screenIndex} (${c.kind}): answerCorrect() could not apply the authored answer`);
+            } else if (applied !== false) {
+              // the answer applied but there was nothing to check: never reveal and move on silently
+              fails.push(`${c.phase} ${c.screenIndex} (${c.kind}): the authored answer applied but check() had nothing to grade (the screen never became ready)`);
             }
             const after = await page.evaluate(() => ZQ.test.current());
             if (after.phase === 'lesson' && ['no', 'idle', 'engaged'].includes(after.state)) await page.evaluate(() => ZQ.test.reveal()); // so Continue can move on
@@ -276,6 +293,8 @@ const main = async () => {
           if (++guard > 400) { fails.push('more than 400 steps without reaching the end'); break; }
           if (opt.shots && same === 0) await shot(`${label}-${c.kind}-${String(c.screenIndex).padStart(2, '0')}`);
           if (c.kind === 'item' && (c.state === 'idle' || c.state === 'engaged')) {
+            const py = await waitPython();
+            if (py) { fails.push(`item ${c.screenIndex + 1}: ${py}`); break; }
             const applied = await page.evaluate(() => ZQ.test.answerCorrect());
             let r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null, pending: !!r.pending } : null; });
             if (r && r.pending) {
