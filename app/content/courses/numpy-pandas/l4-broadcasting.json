@@ -1,0 +1,1356 @@
+{
+  "id": "l4-broadcasting",
+  "course": "numpy-pandas",
+  "title": "Stretching to fit",
+  "minutes": 14,
+  "objectives": [
+    "Predict the result of combining two arrays of different shapes.",
+    "Simulate reproducible random returns with a seeded generator."
+  ],
+  "skills": [
+    "np-broadcast",
+    "np-arrays"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Three numbers, twelve cells",
+      "prose": "Daily returns in %: four days (rows) and three stocks (columns). `m` holds each stock's mean return. We want `R - m`.\n\n```python\nR = np.array([[2.5, 2.5, 1.0], [2.0, -0.5, -1.5],\n              [0.5, 2.0, 2.0], [1.0, 0.0, 0.5]])\nm = R.mean(axis=0)   # [1.5, 1.0, 0.5]\n```",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  2.5,
+                  2.5,
+                  1
+                ],
+                [
+                  2,
+                  -0.5,
+                  -1.5
+                ],
+                [
+                  0.5,
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  0,
+                  0.5
+                ]
+              ],
+              "label": "R"
+            },
+            {
+              "id": "m",
+              "rows": [
+                [
+                  1.5,
+                  1,
+                  0.5
+                ]
+              ],
+              "label": "m"
+            }
+          ],
+          "ops": [
+            "−"
+          ]
+        },
+        "state": {
+          "caption": "R has 12 elements, m has 3"
+        }
+      },
+      "question": "Tap every element of `R` that `m[0]`, 1.5, is subtracted from.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "R-0-0",
+          "R-1-0",
+          "R-2-0",
+          "R-3-0"
+        ],
+        "countWord": "picked",
+        "wrong": [
+          {
+            "id": "row",
+            "set": [
+              "R-0-0",
+              "R-0-1",
+              "R-0-2"
+            ]
+          },
+          {
+            "id": "one",
+            "set": [
+              "R-0-0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`m` has one number per stock. Which stock does `m[0]` belong to?"
+        },
+        {
+          "rung": "point",
+          "text": "Stock 0 is column 0, and it has a return on every day.",
+          "highlight": [
+            "R-c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Tap the whole first column: `m[0]` is taken from stock 0 on all four days."
+        }
+      ],
+      "feedback": {
+        "correct": "`m[0]` meets every day of stock 0.",
+        "generic": "Not quite right. `m[0]` is stock 0's mean, and stock 0 is a column.",
+        "byKey": {
+          "row": "You lined `m` up with a row. `m` has 3 elements, one per column, so `m[0]` meets column 0 on every row.",
+          "one": "`m[0]` is not used up after one cell. It is subtracted from stock 0 on all four days."
+        }
+      },
+      "explain": {
+        "text": "`m` has one number per column, so NumPy reuses it on every row: 1.5 comes off each day of stock 0. The 3 numbers of `m` stretch to cover all 12 cells.",
+        "canvas": {
+          "highlight": {
+            "R": {
+              "cols": [
+                0
+              ]
+            },
+            "m": {
+              "cols": [
+                0
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "One copy per day",
+      "prose": "Move the slider through the days. Each row of `R - m` is that day's row of `R` minus the same `m`.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  2.5,
+                  2.5,
+                  1
+                ],
+                [
+                  2,
+                  -0.5,
+                  -1.5
+                ],
+                [
+                  0.5,
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  0,
+                  0.5
+                ]
+              ],
+              "label": "R"
+            },
+            {
+              "id": "m",
+              "rows": [
+                [
+                  1.5,
+                  1,
+                  0.5
+                ]
+              ],
+              "label": "m"
+            },
+            {
+              "id": "D",
+              "rows": [
+                [
+                  1,
+                  1.5,
+                  0.5
+                ],
+                [
+                  0.5,
+                  -1.5,
+                  -2
+                ],
+                [
+                  -1,
+                  1,
+                  1.5
+                ],
+                [
+                  -0.5,
+                  -1,
+                  0
+                ]
+              ],
+              "label": "R − m"
+            }
+          ],
+          "ops": [
+            "−",
+            "="
+          ]
+        },
+        "state": {
+          "params": {
+            "day": 0
+          },
+          "hidden": [
+            "D"
+          ],
+          "cell": [
+            "D-0-0",
+            "D-0-1",
+            "D-0-2"
+          ],
+          "highlight": [
+            "R-r0",
+            "m-r0",
+            "D-r0"
+          ]
+        },
+        "controls": [
+          {
+            "bind": "day",
+            "min": 0,
+            "max": 3,
+            "step": 1,
+            "start": 0,
+            "label": "Day"
+          }
+        ],
+        "derive": {
+          "cell": "['D-' + day + '-0', 'D-' + day + '-1', 'D-' + day + '-2']",
+          "highlight": "['R-r' + day, 'm-r0', 'D-r' + day]",
+          "caption": "Row {{day}}: R[{{day}}] − m"
+        }
+      },
+      "question": "Fill in all four rows in your head. What does each column of `R - m` add up to?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0, in every column",
+            "correct": true
+          },
+          {
+            "id": "means",
+            "text": "1.5, 1.0 and 0.5: the means",
+            "why": "Subtracting the mean from every day removes it. What is left averages 0, so it adds to 0."
+          },
+          {
+            "id": "same",
+            "text": "The same totals as the columns of `R`",
+            "why": "Each of the 4 rows lost a copy of `m`, so each column total fell by 4 times its mean."
+          },
+          {
+            "id": "mixed",
+            "text": "Different numbers in each column",
+            "why": "Add column 0: 1.0 + 0.5 − 1.0 − 0.5. Then try the others."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Column 0 of `R - m` reads 1.0, 0.5, −1.0, −0.5 as you move the slider. Add them."
+        }
+      ],
+      "feedback": {
+        "correct": "Each column now averages 0, so it adds to 0.",
+        "generic": "Not quite right. Add up one column of `R - m` across the four days."
+      },
+      "explain": {
+        "text": "Every row lost the same `m`, so each column lost 4 copies of its own mean. What is left is each stock's return minus its average: it adds to 0. This is **demeaning**.",
+        "canvas": {
+          "hidden": [],
+          "highlight": {
+            "D": {
+              "cols": [
+                0,
+                1,
+                2
+              ]
+            }
+          },
+          "caption": "R − m: every column adds to 0"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Stretching to fit",
+      "prose": "NumPy compared the shapes from the right: (4, 3) and (3,). The 3s match, so `m` was stretched down all 4 rows. This is **broadcasting**.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  2.5,
+                  2.5,
+                  1
+                ],
+                [
+                  2,
+                  -0.5,
+                  -1.5
+                ],
+                [
+                  0.5,
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  0,
+                  0.5
+                ]
+              ],
+              "label": "R"
+            },
+            {
+              "id": "m",
+              "rows": [
+                [
+                  1.5,
+                  1,
+                  0.5
+                ]
+              ],
+              "label": "m"
+            }
+          ],
+          "ops": [
+            "−"
+          ]
+        },
+        "state": {
+          "highlight": [
+            "R-1-2"
+          ]
+        }
+      },
+      "question": "What is `(R - m)[1, 2]`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -2,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example -0.5",
+        "label": "(R − m)[1, 2]",
+        "accept": "−2.0: −1.5 − 0.5.",
+        "wrong": [
+          {
+            "id": "row-index",
+            "value": -2.5,
+            "tol": {
+              "abs": 0.001
+            },
+            "canvas": {
+              "highlight": [
+                "R-1-2",
+                "m-0-1"
+              ]
+            }
+          },
+          {
+            "id": "sign",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "raw",
+            "value": -1.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Row 1, column 2 of `R` holds −1.5. Which element of `m` sits above column 2?"
+        },
+        {
+          "rung": "point",
+          "text": "Column 2 pairs with `m[2]`.",
+          "highlight": [
+            "m-0-2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "−1.5 − 0.5 = −2.0."
+        }
+      ],
+      "feedback": {
+        "correct": "−1.5 − 0.5 = −2.0.",
+        "generic": "Not quite right. Take `R[1, 2]` and subtract the element of `m` in the same column.",
+        "byKey": {
+          "row-index": "You subtracted `m[1]`, matching the row number. `m` lines up with the columns, so column 2 gets `m[2]` = 0.5.",
+          "sign": "That is `m - R`. We subtract `m` from `R`.",
+          "raw": "That is `R[1, 2]` before anything is subtracted."
+        }
+      },
+      "explain": {
+        "text": "Column 2 always pairs with `m[2]` = 0.5, whatever the row. So `(R - m)[1, 2]` is $-1.5 - 0.5 = -2.0$: stock 2 had a bad day, 2 points under its average.",
+        "canvas": {
+          "highlight": [
+            "R-1-2",
+            "m-0-2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Which shapes fit",
+      "prose": "Line two shapes up from the right. Each pair must be equal, or one of them must be 1. A 1, or a missing axis, is stretched.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  2.5,
+                  2.5,
+                  1
+                ],
+                [
+                  2,
+                  -0.5,
+                  -1.5
+                ],
+                [
+                  0.5,
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  0,
+                  0.5
+                ]
+              ],
+              "label": "R  (4, 3)"
+            }
+          ]
+        },
+        "state": {
+          "caption": "R.shape is (4, 3)"
+        }
+      },
+      "question": "Select all that apply: which shapes can be added to `R`?",
+      "widget": {
+        "kind": "multi",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "s3",
+            "text": "`(3,)`",
+            "correct": true
+          },
+          {
+            "id": "s13",
+            "text": "`(1, 3)`",
+            "correct": true
+          },
+          {
+            "id": "s41",
+            "text": "`(4, 1)`",
+            "correct": true
+          },
+          {
+            "id": "s4",
+            "text": "`(4,)`",
+            "why": "From the right, 4 meets 3. They differ and neither is 1, so it fails."
+          },
+          {
+            "id": "s31",
+            "text": "`(3, 1)`",
+            "why": "The 1 is fine against 3, but then 3 meets 4. That pair fails."
+          },
+          {
+            "id": "s34",
+            "text": "`(3, 4)`",
+            "why": "That is `R` turned on its side. 4 meets 3 and 3 meets 4: both pairs fail."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write each shape under `(4, 3)`, right-aligned."
+        },
+        {
+          "rung": "point",
+          "text": "`(4,)` puts its 4 under the 3. Is that allowed?"
+        },
+        {
+          "rung": "step",
+          "text": "Keep a shape when each pair is equal or holds a 1: `(3,)`, `(1, 3)` and `(4, 1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "`(3,)`, `(1, 3)` and `(4, 1)` all stretch to `(4, 3)`.",
+        "generic": "Not quite right. Compare the last lengths first, then the ones before."
+      },
+      "explain": {
+        "text": "`(3,)` and `(1, 3)` are rows, stretched down the 4 days. `(4, 1)` is a column, stretched across the 3 stocks. `(4,)` fails, because its 4 lines up with the 3 columns."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Each day's mean",
+      "prose": "Now remove each day's average across the stocks, to see which stock beat the market that day.\n\n```python\nprint(R - R.mean(axis=1))\n```",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  2.5,
+                  2.5,
+                  1
+                ],
+                [
+                  2,
+                  -0.5,
+                  -1.5
+                ],
+                [
+                  0.5,
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  0,
+                  0.5
+                ]
+              ],
+              "label": "R  (4, 3)"
+            },
+            {
+              "id": "c",
+              "rows": [
+                [
+                  2,
+                  0,
+                  1.5,
+                  0.5
+                ]
+              ],
+              "label": "R.mean(axis=1)  (4,)"
+            }
+          ],
+          "ops": [
+            "−"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "meant",
+            "text": "Each row minus its own mean",
+            "why": "That is what you meant. The 4 day means line up with the 3 columns, not the rows, so NumPy refuses."
+          },
+          {
+            "id": "error",
+            "text": "A `ValueError`: shapes (4, 3) and (4,) do not broadcast",
+            "correct": true
+          },
+          {
+            "id": "cols",
+            "text": "Each column minus its stock's mean",
+            "why": "That would be `R - R.mean(axis=0)`. Here the 4 day means are compared with the 3 columns."
+          },
+          {
+            "id": "first3",
+            "text": "The first 3 day means come off the 3 columns",
+            "why": "NumPy never drops an element. 4 against 3 is a mismatch, so it stops."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What shape does `R.mean(axis=1)` have? Line it up from the right with `(4, 3)`."
+        },
+        {
+          "rung": "point",
+          "text": "A 1-D array lines up with the last axis, the 3 columns.",
+          "highlight": [
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`(4,)` against `(4, 3)`: 4 meets 3, so broadcasting fails with a `ValueError`."
+        }
+      ],
+      "feedback": {
+        "correct": "4 means cannot line up with 3 columns.",
+        "generic": "Not quite right. A 1-D array always lines up with the last axis.",
+        "byKey": {
+          "meant": "That is what you meant, but `(4,)` lines up with the 3 columns. NumPy raises a `ValueError`."
+        }
+      },
+      "explain": {
+        "text": "`R.mean(axis=1)` has shape `(4,)`, and a 1-D array always lines up with the columns. Keep the axis to make it a column, shape `(4, 1)`.\n\n```python\nR - R.mean(axis=1, keepdims=True)\n```",
+        "canvas": {
+          "caption": "(4, 3) against (4,): 3 meets 4"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A column stretches across",
+      "prose": "`keepdims=True` keeps the averaged axis with length 1, so the day means form a column.\n\n```python\nc = R.mean(axis=1, keepdims=True)   # shape (4, 1)\nX = R - c\n```",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  2.5,
+                  2.5,
+                  1
+                ],
+                [
+                  2,
+                  -0.5,
+                  -1.5
+                ],
+                [
+                  0.5,
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  0,
+                  0.5
+                ]
+              ],
+              "label": "R  (4, 3)"
+            },
+            {
+              "id": "c",
+              "rows": [
+                [
+                  2
+                ],
+                [
+                  0
+                ],
+                [
+                  1.5
+                ],
+                [
+                  0.5
+                ]
+              ],
+              "label": "c  (4, 1)"
+            }
+          ],
+          "ops": [
+            "−"
+          ]
+        },
+        "state": {
+          "highlight": [
+            "R-0-2"
+          ]
+        }
+      },
+      "question": "What is `X[0, 2]`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.5",
+        "label": "X[0, 2]",
+        "accept": "−1.0: 1.0 − 2.0.",
+        "wrong": [
+          {
+            "id": "stock-mean",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "other-day",
+            "value": -0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "raw",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which element of `c` sits beside row 0?"
+        },
+        {
+          "rung": "point",
+          "text": "`c` is a column: row 0 of `R` pairs with `c[0]`, the first day's mean.",
+          "highlight": [
+            "c-0-0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1.0 − 2.0 = −1.0."
+        }
+      ],
+      "feedback": {
+        "correct": "1.0 − 2.0 = −1.0: stock 2 lagged that day.",
+        "generic": "Not quite right. Subtract the mean of row 0, the first day.",
+        "byKey": {
+          "stock-mean": "You subtracted stock 2's mean, 0.5. Here each row loses its own day's mean.",
+          "other-day": "You used the mean of row 2, 1.5. Row 0 pairs with `c[0]`, which is 2.0.",
+          "raw": "That is `R[0, 2]` before subtracting the day's mean."
+        }
+      },
+      "explain": {
+        "text": "`c` has shape `(4, 1)`: the 1 stretches across the 3 stocks, so every cell in row 0 loses 2.0. Stock 2 made 1.0 on a day the stocks averaged 2.0, so it lagged by 1.0.",
+        "canvas": {
+          "highlight": {
+            "R": {
+              "rows": [
+                0
+              ]
+            },
+            "c": {
+              "rows": [
+                0
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Randomness you can repeat",
+      "prose": "Simulated prices need random returns. A **seed** fixes where the random stream starts. The chart shows `100 * np.cumprod(1 + rng.normal(0, 0.01, 60))` for two seeds.\n\n```python\nrng1 = np.random.default_rng(7)\nrng2 = np.random.default_rng(7)\nprint(rng1.normal() == rng2.normal())\n```",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "s7",
+              "label": "seed 7",
+              "values": [
+                100,
+                100,
+                100.3,
+                100.03,
+                99.13,
+                98.68,
+                97.7,
+                97.76,
+                99.07,
+                98.59,
+                97.97,
+                98.45,
+                98.81,
+                98.91,
+                97.99,
+                97.96,
+                98.64,
+                97.32,
+                96.87,
+                95.03,
+                93.8,
+                92.08,
+                91.86,
+                90.7,
+                90.94,
+                91.08,
+                90.91,
+                88.63,
+                88.15,
+                88.11,
+                88.21,
+                86.86,
+                86.44,
+                85.59,
+                84.9,
+                85.8,
+                85.11,
+                85.08,
+                85.84,
+                85.33,
+                85.24,
+                85.33,
+                85.39,
+                84.34,
+                84.41,
+                85.55,
+                84.23,
+                84.95,
+                85.05,
+                84.51,
+                86.2,
+                86.86,
+                85.81,
+                85.88,
+                86.37,
+                86.21,
+                86.8,
+                86.74,
+                87.32,
+                88.58,
+                87.98
+              ]
+            },
+            {
+              "id": "s8",
+              "label": "seed 8",
+              "values": [
+                100,
+                98.26,
+                96.95,
+                95.63,
+                95.29,
+                93.09,
+                92.91,
+                92.02,
+                92.85,
+                93.73,
+                95.04,
+                95.77,
+                95.72,
+                96.54,
+                97.99,
+                97.35,
+                97.95,
+                97.91,
+                99.32,
+                98.48,
+                98.19,
+                98.54,
+                98.8,
+                97.18,
+                97.53,
+                97.41,
+                97.18,
+                97.03,
+                97.24,
+                95.47,
+                96.96,
+                96.12,
+                93.97,
+                93.89,
+                95.26,
+                94.76,
+                96.23,
+                97.73,
+                96.89,
+                94.5,
+                93.33,
+                94.44,
+                93.67,
+                92.26,
+                91.02,
+                91.02,
+                91,
+                91.79,
+                92.7,
+                91.84,
+                91.69,
+                90.65,
+                90.72,
+                89.67,
+                88.6,
+                90.48,
+                90.51,
+                91.09,
+                93.4,
+                94.14,
+                94.03
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "candles": false
+        },
+        "state": {
+          "caption": "60 simulated days from £100.00"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "true",
+            "text": "`True`",
+            "correct": true
+          },
+          {
+            "id": "false",
+            "text": "`False`",
+            "why": "You expected fresh randomness each time. The same seed starts the same stream, so the first draws match."
+          },
+          {
+            "id": "either",
+            "text": "Sometimes `True`, sometimes `False`",
+            "why": "A seeded generator gives the same numbers on every run and every machine."
+          },
+          {
+            "id": "error",
+            "text": "A `TypeError`: random numbers cannot be compared",
+            "why": "Each call returns an ordinary float, and floats compare with `==`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both generators were given the same seed. Where does each stream start?"
+        },
+        {
+          "rung": "point",
+          "text": "Seed 7 always produces the path labelled seed 7 on the chart.",
+          "highlight": [
+            "s7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Same seed, same stream: the first draw is the same number, so `==` gives `True`."
+        }
+      ],
+      "feedback": {
+        "correct": "Same seed, same numbers.",
+        "generic": "Not quite right. The seed fixes the whole stream of numbers."
+      },
+      "explain": {
+        "text": "`default_rng(7)` starts the same stream every time, so both first draws are equal. That is why a backtest's simulation can be rerun and checked. A different seed, such as 8, gives a different path.",
+        "canvas": {
+          "highlight": [
+            "s7"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The broadcasting rule",
+      "prose": "Line the shapes up from the right. Each pair must be equal, or one of them must be 1, and the 1 is stretched. For example $(4, 3)$ with $(4, 1)$ gives $(4, 3)$.\n\n```python\nR - R.mean(axis=0)                  # each column minus its mean\nR - R.mean(axis=1, keepdims=True)   # each row minus its mean\n```",
+      "question": "What is the shape of `np.ones((5, 1)) + np.ones((1, 4))`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(5, 4)`",
+            "correct": true
+          },
+          {
+            "id": "error",
+            "text": "A `ValueError`",
+            "why": "1 against 4 and 5 against 1 both contain a 1, so both pairs stretch."
+          },
+          {
+            "id": "col",
+            "text": "`(5, 1)`",
+            "why": "The 1 in `(5, 1)` stretches to 4, so the result is wider than either input."
+          },
+          {
+            "id": "row",
+            "text": "`(1, 4)`",
+            "why": "The 1 in `(1, 4)` stretches to 5, so the result has 5 rows."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A column and a row stretch into a 5 × 4 grid.",
+        "generic": "Not quite right. Each 1 stretches to match the other shape's length."
+      },
+      "explain": {
+        "text": "From the right: 1 meets 4, so the column stretches to 4 wide; 5 meets 1, so the row stretches to 5 tall. Two small arrays make a full $(5, 4)$ table."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Standardise each stock",
+      "prose": "To compare stocks with different volatility, analysts **standardise** each column: subtract the column's mean, then divide by its sample standard deviation (`ddof=1`). Each column of the result has mean 0 and standard deviation 1.",
+      "question": "Complete `standardise` with broadcasting, no loop.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef standardise(R):\n    R = np.asarray(R, dtype=float)\n    mean = ...   # one per column\n    sd = ...     # one per column, ddof=1\n    return (R - mean) / sd\n",
+        "solution": "import numpy as np\n\ndef standardise(R):\n    R = np.asarray(R, dtype=float)\n    mean = R.mean(axis=0)          # one per column\n    sd = R.std(axis=0, ddof=1)     # one per column, ddof=1\n    return (R - mean) / sd\n",
+        "tests": [
+          {
+            "call": "np.round(standardise([[2.5, 2.5, 1.0], [2.0, -0.5, -1.5], [0.5, 2.0, 2.0], [1.0, 0.0, 0.5]]), 6).tolist()",
+            "expect": "[[1.095445, 1.019049, 0.339683], [0.547723, -1.019049, -1.358732], [-1.095445, 0.679366, 1.019049], [-0.547723, -0.679366, 0.0]]"
+          },
+          {
+            "call": "np.round(standardise([[1.0], [3.0]]), 6).tolist()",
+            "expect": "[[-0.707107], [0.707107]]"
+          },
+          {
+            "call": "np.round(standardise([[0.01, 100.0], [0.03, 300.0], [0.02, 200.0]]), 6).tolist()",
+            "expect": "[[-1.0, -1.0], [1.0, 1.0], [0.0, 0.0]]"
+          },
+          {
+            "call": "np.round(standardise(np.random.default_rng(2).normal(0.0, 0.02, (50, 3))).std(axis=0, ddof=1), 6).tolist()",
+            "expect": "[1.0, 1.0, 1.0]"
+          },
+          {
+            "call": "np.round(standardise(np.random.default_rng(2).normal(0.0, 0.02, (50, 3))).mean(axis=0), 6).tolist()",
+            "expect": "[0.0, 0.0, 0.0]"
+          },
+          {
+            "call": "standardise(np.ones((6, 2)) + np.arange(12.0).reshape(6, 2)).shape",
+            "expect": "(6, 2)"
+          }
+        ],
+        "examples": [
+          {
+            "call": "np.round(standardise([[1.0], [3.0]]), 6).tolist()",
+            "expect": "[[-0.707107], [0.707107]]"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Arrays are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each stock is a column. Which axis do the means use up?"
+        },
+        {
+          "rung": "point",
+          "text": "`R.mean(axis=0)` has shape (3,), which broadcasts down the rows."
+        },
+        {
+          "rung": "step",
+          "text": "Write `mean = R.mean(axis=0)` and `sd = R.std(axis=0, ddof=1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Column means and sample deviations, stretched down the rows.",
+        "generic": "Some tests failed. Check the axis and `ddof=1`.",
+        "byKey": {
+          "test-1": "Compare the first column with yours. If every column has a different scale, check `axis=0`; if values are about 13% too big, add `ddof=1`.",
+          "error": "Your code stopped with an error. A shapes message means a mean or deviation was taken over the wrong axis."
+        }
+      },
+      "explain": {
+        "text": "`R.mean(axis=0)` and `R.std(axis=0, ddof=1)` both have shape `(3,)`, so they broadcast down every row. Each stock is now measured in its own standard deviations.\n\n```python\n(R - R.mean(axis=0)) / R.std(axis=0, ddof=1)\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A seeded price path",
+      "prose": "Simulate a price path. Make `rng = np.random.default_rng(seed)` and draw all `n` daily returns at once with `rng.normal(0.0, sigma, n)`. Return the `n` prices after each day: the start price grown by $(1 + r)$ day by day.",
+      "question": "Complete `random_walk` without a loop.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef random_walk(start, n, sigma, seed):\n    rng = np.random.default_rng(seed)\n    returns = ...   # n draws, mean 0, sd sigma\n    prices = ...    # price after each day\n    return prices\n",
+        "solution": "import numpy as np\n\ndef random_walk(start, n, sigma, seed):\n    rng = np.random.default_rng(seed)\n    returns = rng.normal(0.0, sigma, n)    # n draws, mean 0, sd sigma\n    prices = start * np.cumprod(1 + returns)  # price after each day\n    return prices\n",
+        "tests": [
+          {
+            "call": "np.round(random_walk(100.0, 5, 0.01, 42), 4).tolist()",
+            "expect": "[100.3047, 99.2616, 100.0065, 100.9471, 98.9776]"
+          },
+          {
+            "call": "np.round(random_walk(250.0, 3, 0.02, 7), 4).tolist()",
+            "expect": "[250.0062, 251.4999, 250.121]"
+          },
+          {
+            "call": "np.round(random_walk(100.0, 1, 0.01, 0), 4).tolist()",
+            "expect": "[100.1257]"
+          },
+          {
+            "call": "np.round(random_walk(12.5, 4, 0.0, 3), 4).tolist()",
+            "expect": "[12.5, 12.5, 12.5, 12.5]"
+          },
+          {
+            "call": "random_walk(100.0, 252, 0.01, 1).shape",
+            "expect": "(252,)"
+          },
+          {
+            "call": "np.round(random_walk(100.0, 252, 0.01, 1)[-1], 4)",
+            "expect": "np.float64(77.0428)"
+          },
+          {
+            "call": "bool((random_walk(50.0, 10, 0.03, 9) == random_walk(50.0, 10, 0.03, 9)).all())",
+            "expect": "True"
+          }
+        ],
+        "examples": [
+          {
+            "call": "np.round(random_walk(100.0, 5, 0.01, 42), 4).tolist()",
+            "expect": "[100.3047, 99.2616, 100.0065, 100.9471, 98.9776]"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Prices are compared after rounding to 4 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two lines: the draws, then the compounding."
+        },
+        {
+          "rung": "point",
+          "text": "`rng.normal(0.0, sigma, n)` gives the returns. `np.cumprod(1 + returns)` grows £1 day by day."
+        },
+        {
+          "rung": "step",
+          "text": "Write `prices = start * np.cumprod(1 + returns)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Seeded draws, compounded: the same path on every run.",
+        "generic": "Some tests failed. Draw all `n` returns in one call, then compound them with `np.cumprod`.",
+        "byKey": {
+          "test-1": "For seed 42 the first price is 100.3047. If yours differs, draw with `rng.normal(0.0, sigma, n)` from the seeded `rng`.",
+          "error": "Your code stopped with an error. Check that both `...` lines are replaced."
+        }
+      },
+      "explain": {
+        "text": "The seed fixes the draws, so the path is the same on every run and every machine. `np.cumprod(1 + returns)` compounds them, and `start *` broadcasts the start price across the path.\n\n```python\nstart * np.cumprod(1 + rng.normal(0.0, sigma, n))\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A 1-D array lines up with the last axis: `R - R.mean(axis=0)` subtracts each column's mean from every row.",
+      "Shapes are compared from the right. Each pair must be equal or contain a 1, and the 1 is stretched.",
+      "`np.random.default_rng(seed)` gives random numbers you can reproduce: the same seed gives the same stream."
+    ],
+    "formula": {
+      "name": "Broadcasting",
+      "tex": "(4, 3) \\oplus (3,) \\to (4, 3), \\qquad (4, 3) \\oplus (4, 1) \\to (4, 3)",
+      "note": "Each pair of lengths, from the right, is equal or contains a 1."
+    },
+    "trap": "`R - R.mean(axis=1)` lines the row means up with the columns. Keep the axis: `R.mean(axis=1, keepdims=True)`."
+  },
+  "quiz": [
+    {
+      "id": "q-shape",
+      "difficulty": 2,
+      "prose": "```python\nprint((np.ones((3, 1)) * np.ones(4)).shape)\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(3, 4)`",
+            "correct": true
+          },
+          {
+            "id": "error",
+            "text": "A `ValueError`",
+            "why": "From the right, 1 meets 4: a 1 stretches, so it works."
+          },
+          {
+            "id": "col",
+            "text": "`(3, 1)`",
+            "why": "The 1 stretches to 4, so the result is 4 wide."
+          },
+          {
+            "id": "flat",
+            "text": "`(4,)`",
+            "why": "The `(3, 1)` column adds a first axis of 3, so the result is 2-D."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A column of 3 times a row of 4: a 3 × 4 grid.",
+        "generic": "Not quite right. Line the shapes up from the right and stretch each 1."
+      },
+      "explain": {
+        "text": "`(4,)` is treated as `(1, 4)`. Against `(3, 1)` both 1s stretch, giving shape `(3, 4)`."
+      }
+    },
+    {
+      "id": "q-add-row",
+      "difficulty": 2,
+      "prose": "```python\nprint(np.array([[1, 2], [3, 4]]) + np.array([10, 20]))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[[11 22] [13 24]]`",
+            "correct": true
+          },
+          {
+            "id": "rows",
+            "text": "`[[11 12] [23 24]]`",
+            "why": "You added 10 to row 0 and 20 to row 1. A 1-D array lines up with the columns."
+          },
+          {
+            "id": "error",
+            "text": "A `ValueError`",
+            "why": "`(2,)` matches the last length, 2, so it broadcasts down the rows."
+          },
+          {
+            "id": "flat",
+            "text": "`[11 22 13 24]`",
+            "why": "Broadcasting keeps the 2-D shape of the larger array."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "10 goes down column 0 and 20 down column 1.",
+        "generic": "Not quite right. The 1-D array is reused on each row."
+      },
+      "explain": {
+        "text": "`[10, 20]` lines up with the columns and is reused on both rows: 1 + 10, 2 + 20, then 3 + 10, 4 + 20."
+      }
+    },
+    {
+      "id": "q-which-fails",
+      "difficulty": 3,
+      "prose": "`A` has shape `(2, 3)`.",
+      "question": "Which line raises a `ValueError`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "s2",
+            "text": "`A + np.ones(2)`",
+            "correct": true
+          },
+          {
+            "id": "s3",
+            "text": "`A + np.ones(3)`",
+            "why": "`(3,)` matches the last length of `(2, 3)`, so it stretches down the rows."
+          },
+          {
+            "id": "s21",
+            "text": "`A + np.ones((2, 1))`",
+            "why": "`(2, 1)` is a column: 1 meets 3 and 2 meets 2. It works."
+          },
+          {
+            "id": "s13",
+            "text": "`A + np.ones((1, 3))`",
+            "why": "`(1, 3)` is a row: 3 meets 3 and 1 stretches to 2. It works."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`(2,)` meets the 3 columns and fails.",
+        "generic": "Not quite right. Compare each shape with `(2, 3)` from the right."
+      },
+      "explain": {
+        "text": "A 1-D array lines up with the last axis. `np.ones(2)` has length 2 against 3 columns, so it fails. To add one number per row, use shape `(2, 1)`."
+      }
+    },
+    {
+      "id": "q-stream",
+      "difficulty": 2,
+      "prose": "```python\nrng = np.random.default_rng(1)\na = rng.integers(0, 10, 3)\nb = rng.integers(0, 10, 3)\nprint((a == b).all())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "false",
+            "text": "`False`",
+            "correct": true
+          },
+          {
+            "id": "true",
+            "text": "`True`",
+            "why": "You expected the seed to repeat each call. One generator moves on: `b` takes the next numbers in the stream."
+          },
+          {
+            "id": "error",
+            "text": "A `ValueError`",
+            "why": "`(a == b).all()` turns the mask into one True or False, so nothing is ambiguous."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`b` continues the stream after `a`.",
+        "generic": "Not quite right. The seed fixes where the stream starts, not each call."
+      },
+      "explain": {
+        "text": "The seed sets the start of one stream. `a` takes its first three numbers, `[4 5 7]`, and `b` the next three, `[9 0 1]`. Only a fresh `default_rng(1)` would repeat `a`."
+      }
+    }
+  ]
+}

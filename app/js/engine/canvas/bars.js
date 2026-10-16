@@ -54,6 +54,12 @@
       const m = Math.max(...hs, ...exact.map((e) => e.y * (sim ? 1.6 : 1.1)), proportion ? 0.05 : 1);
       const t = C.niceTicks(0, m * 1.08, 5); return t[t.length - 1] >= m * 1.02 ? t[t.length - 1] : m * 1.15;
     };
+    /* item 133: negative values hang below a zero baseline; the axis runs down to a nice tick under the lowest bar */
+    const yBot = (hs) => {
+      if (params.yMin != null) return Math.min(0, params.yMin);
+      const m = Math.min(0, ...hs); if (m >= 0) return 0;
+      const t = C.niceTicks(m * 1.08, 0, 4); return t[0] <= m * 1.02 ? t[0] : m * 1.15;
+    };
     const fmtY = proportion ? (v, st) => K.fmtTick(v, st) : (v, st) => K.fmtTick(v, st);
     /* Value labels (showValues): `decimals` fixes the places and keeps trailing zeros; `money: "£"` prefixes the
        currency (two places unless `decimals` says otherwise) */
@@ -104,15 +110,15 @@
       },
       render(view, R) {
         if (!chips.length && sim && !R.static) buildControls(R);
-        const g = R.F.g, hs = heights(view), top = view._yMax ?? yTop(view, hs);
+        const g = R.F.g, hs = heights(view), top = view._yMax ?? yTop(view, hs), bot = yBot(hs);
         const yLabel = params.yLabel ?? (proportion ? 'Proportion' : 'Count');
-        const ml = K.yMargin(0, top, H - 70, fmtY), mt = 26, mb = params.xLabel ? 46 : 30, mr = 12;
-        const sy = C.scale([0, top], [H - mb, mt]);
+        const ml = K.yMargin(bot, top, H - 70, fmtY), mt = 26, mb = params.xLabel ? 46 : 30, mr = 12;
+        const sy = C.scale([bot, top], [H - mb, mt]);
         const pw = W - ml - mr, n = cats.length;
         const band = pw / Math.max(1, n), gap = binned ? 0 : Math.min(14, band * 0.22);
         const x = (i) => ml + i * band + gap / 2, bw = Math.max(1, band - gap);
         const xAxisTicks = binned ? null : { ticks: [], step: 1 };
-        K.chartAxes(g, { range: [ml, W - mr], domain: [0, 1] }, sy, { yLabel, xLabel: params.xLabel, fmtY, noX: true, xTicks: xAxisTicks });
+        K.chartAxes(g, { range: [ml, W - mr], domain: [0, 1] }, sy, { yLabel, xLabel: params.xLabel, fmtY, noX: true, xTicks: xAxisTicks, baseline: 0 });
         /* category labels or bin edges */
         const every = Math.max(1, Math.ceil(Math.max(...cats.map((c) => K.tw(c.label, 12))) / (band - 4)));
         if (binned) {
@@ -125,13 +131,13 @@
         const sel = new Set(view.selected || []);
         const bars = svg('g'), vals = svg('g');
         cats.forEach((c, i) => {
-          const v = hs[i] || 0, y = sy(Math.max(0, v)), h = Math.max(0, sy(0) - y);
+          const v = hs[i] || 0, y = sy(Math.max(0, v)), h = Math.abs(sy(Math.min(0, v)) - y);
           const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : ''), ((view.colours || {})[c.id] ?? (view.colours || {})[c.label]) || c.colour || params.colour || 1); // per-category colour (series slot), patchable through state.colours
-          o.append(K.washRect(x(i) - 3, sy(top) - 2, bw + 6, sy(0) - sy(top) + 4, 4));
-          if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-selw' }));
+          o.append(K.washRect(x(i) - 3, sy(top) - 2, bw + 6, sy(bot) - sy(top) + 4, 4));
+          if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(bot) - sy(top), class: 'cvb-selw' }));
           o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
-          if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
-          if (params.showValues && (v || sim)) vals.append(K.txt(x(i) + bw / 2, y - 9, fmtV(v), { size: 12, cls: 'cvb-muted' }));
+          if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(bot) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
+          if (params.showValues && (v || sim)) vals.append(K.txt(x(i) + bw / 2, v < 0 ? sy(v) + 11 : y - 9, fmtV(v), { size: 12, cls: 'cvb-muted' }));
           R.tappable(o, c.id, c.label);
           bars.append(o);
         });
