@@ -1,0 +1,399 @@
+{
+  "id": "homework-2",
+  "course": "terminal",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw-climb-path",
+      "difficulty": 3,
+      "skills": [
+        "tm-files"
+      ],
+      "prose": "Your home folder holds Downloads and projects. You are in ~/projects/backtest/results and want a relative path, without `~`, to Downloads.",
+      "question": "Build the path that follows `ls`.",
+      "widget": {
+        "kind": "place",
+        "mode": "order",
+        "byText": true,
+        "tokens": [
+          {
+            "id": "u1",
+            "text": "`../`"
+          },
+          {
+            "id": "u2",
+            "text": "`../`"
+          },
+          {
+            "id": "u3",
+            "text": "`../`"
+          },
+          {
+            "id": "u4",
+            "text": "`../`"
+          },
+          {
+            "id": "d",
+            "text": "`Downloads`"
+          },
+          {
+            "id": "r",
+            "text": "`results/`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "path",
+            "label": "`ls`"
+          }
+        ],
+        "order": [
+          "u1",
+          "u2",
+          "u3",
+          "d"
+        ]
+      },
+      "feedback": {
+        "correct": "`ls ../../../Downloads`: three steps up to ana, then down.",
+        "generic": "Not quite right. Count the levels from results up to your home folder.",
+        "byKey": {
+          "r": "You stepped into results, which is where you already are. Paths start here, so climb first."
+        }
+      },
+      "explain": {
+        "text": "results to backtest is one `../`, backtest to projects two, projects to ana three. Downloads then steps down. `ls ~/Downloads` is shorter and works from anywhere."
+      }
+    },
+    {
+      "id": "hw-keep-header",
+      "difficulty": 4,
+      "skills": [
+        "tm-shell"
+      ],
+      "prose": "all_prices.csv holds daily closes for 500 tickers, with one header line. You want nvda.csv to hold the header and every NVDA row, then check its size.",
+      "question": "Put the commands in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "head",
+            "text": "`head -n 1 all_prices.csv > nvda.csv`"
+          },
+          {
+            "id": "grep",
+            "text": "`grep NVDA all_prices.csv >> nvda.csv`"
+          },
+          {
+            "id": "wc",
+            "text": "`wc -l nvda.csv`"
+          }
+        ],
+        "answer": [
+          "head",
+          "grep",
+          "wc"
+        ]
+      },
+      "feedback": {
+        "correct": "Header first with `>`, rows added with `>>`, then count.",
+        "generic": "Not quite right. The file must start with the header.",
+        "byKey": {
+          "grep": "You added the rows first. The head line uses `>`, which would then wipe them and leave only the header.",
+          "wc": "You counted before the file was complete."
+        }
+      },
+      "explain": {
+        "text": "`>` starts nvda.csv with the header line, and `>>` adds the NVDA rows below it. grep alone would have dropped the header. wc -l then shows one more line than there are NVDA days."
+      }
+    },
+    {
+      "id": "hw-sort-onto-itself",
+      "difficulty": 5,
+      "skills": [
+        "tm-shell"
+      ],
+      "prose": "prices.csv has 7 lines. You want it sorted in place, so you run:\n\n```sh\n$ sort prices.csv > prices.csv\n$ wc -l prices.csv\n```",
+      "question": "What number does `wc -l` print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Line count",
+        "accept": "0: the file is now empty",
+        "wrong": [
+          {
+            "id": "sorted",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-header",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The file is empty.",
+        "generic": "Not quite right. Ask when the shell empties the file named after `>`.",
+        "byKey": {
+          "sorted": "You expected sort to read the file and then write it back. The shell empties prices.csv before sort even starts, so sort reads nothing.",
+          "no-header": "Nothing was filtered out. The shell emptied the whole file before sort read it."
+        }
+      },
+      "explain": {
+        "text": "The shell sets up `> prices.csv` first, emptying the file, and only then runs sort. sort reads an empty file and writes nothing. Write to a new name, `sort prices.csv > sorted.csv`, then check it before replacing the original."
+      }
+    },
+    {
+      "id": "hw-stray-space",
+      "difficulty": 4,
+      "skills": [
+        "tm-shell",
+        "tm-files"
+      ],
+      "prose": "In a folder holding prices.csv, trades.csv, notes.txt and a folder called charts, you mean to delete the CSV files. Your thumb slips:\n\n```sh\n$ rm * .csv\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "right",
+            "text": "prices.csv, trades.csv and notes.txt are deleted; charts survives; rm complains about .csv",
+            "correct": true
+          },
+          {
+            "id": "csv-only",
+            "text": "Only the two CSV files are deleted",
+            "why": "The space splits the pattern into two arguments. A star on its own matches every name."
+          },
+          {
+            "id": "all",
+            "text": "Everything is deleted, charts included",
+            "why": "Plain rm refuses folders, so charts survives. Every file goes, though."
+          },
+          {
+            "id": "error",
+            "text": "Nothing: rm stops at the error",
+            "why": "rm deletes what it can, then reports the name it could not find."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A lone star matched every name.",
+        "generic": "Not quite right. Read the line as two separate arguments: `*`, then .csv."
+      },
+      "explain": {
+        "text": "With the space, rm received two arguments: a lone star, which matches every name, and .csv. It deleted all three files, refused the folder charts, and reported that .csv does not exist. No undo: this is why you run `ls *.csv` before `rm *.csv`."
+      }
+    },
+    {
+      "id": "hw-wc-code",
+      "difficulty": 4,
+      "skills": [
+        "tm-shell"
+      ],
+      "prose": "`wc -l` does not really count lines. It counts newline characters, the invisible end-of-line marks, written `\"\\n\"` in Python. A last line with no newline after it is not counted. Finish the function so it gives the same number as `wc -l`.",
+      "question": "Complete `wc_l(text)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def wc_l(text):\n    count = 0\n    for ch in text:\n        # add 1 to count when ch is a newline, \"\\n\"\n        pass\n    return count\n",
+        "examples": [
+          {
+            "call": "wc_l(\"date,close\\n2024-03-01,179.66\\n\")",
+            "expect": "2"
+          },
+          {
+            "call": "wc_l(\"a\\nb\")",
+            "expect": "1"
+          }
+        ],
+        "tests": [
+          {
+            "call": "wc_l(\"date,close\\n2024-03-01,179.66\\n\")",
+            "expect": "2"
+          },
+          {
+            "call": "wc_l(\"\")",
+            "expect": "0"
+          },
+          {
+            "call": "wc_l(\"one line, no newline\")",
+            "expect": "0"
+          },
+          {
+            "call": "wc_l(\"a\\nb\\nc\")",
+            "expect": "2"
+          },
+          {
+            "call": "wc_l(\"\\n\\n\\n\")",
+            "expect": "3"
+          },
+          {
+            "call": "wc_l(\"date,ticker,close\\n\" + \"2024-03-01,AAPL,179.66\\n\" * 6)",
+            "expect": "7"
+          },
+          {
+            "call": "wc_l(\"x\\n\" * 2516)",
+            "expect": "2516"
+          }
+        ],
+        "solution": "def wc_l(text):\n    count = 0\n    for ch in text:\n        if ch == \"\\n\":\n            count += 1\n    return count\n",
+        "how": "Check runs 7 hidden tests, including an empty file and a last line with no newline. Each result must equal the expected whole number."
+      },
+      "feedback": {
+        "correct": "Your function counts newlines, exactly as wc -l does.",
+        "generic": "Not quite right. Count only the newline characters."
+      },
+      "explain": {
+        "text": "Inside the loop, `if ch == \"\\n\": count += 1` adds one per newline. A file whose last line lacks a newline gets one fewer than you might expect. `text.count(\"\\n\")` does the same in one step."
+      }
+    },
+    {
+      "id": "hw-wc-words",
+      "difficulty": 4,
+      "skills": [
+        "tm-shell"
+      ],
+      "prose": "The manual for wc includes these lines:\n\n```sh\n-l    count lines\n-w    count words: runs of characters\n      between spaces, tabs or newlines\n-c    count bytes\n```\n\nshort.csv holds two lines, `date,ticker,close` and `2024-03-01,AAPL,179.66`.",
+      "question": "What number does `wc -w short.csv` print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Word count",
+        "accept": "2: each line has no spaces, so each is one word",
+        "wrong": [
+          {
+            "id": "commas",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "lines-plus",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two words: no spaces, so each line is one word.",
+        "generic": "Not quite right. The manual says what separates words.",
+        "byKey": {
+          "commas": "You split on commas. wc only splits on spaces, tabs and newlines, so each CSV line is one word.",
+          "lines-plus": "You counted something extra. With no spaces, each line is exactly one word."
+        }
+      },
+      "explain": {
+        "text": "wc splits words at spaces, tabs and newlines only. A CSV line has none, so each line is one word: 2 in total. Reading the manual line saved a wrong guess of 6."
+      }
+    },
+    {
+      "id": "hw-windows-mate",
+      "difficulty": 3,
+      "skills": [
+        "tm-setup",
+        "tm-shell"
+      ],
+      "prose": "A teammate on Windows types your pipeline `grep AAPL prices.csv | wc -l` into PowerShell and gets an error.",
+      "question": "What is the best advice?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "right",
+            "text": "Install WSL or Git Bash, which provide grep and wc, and run it there",
+            "correct": true
+          },
+          {
+            "id": "slashes",
+            "text": "Change every / to a backslash",
+            "why": "There is no path in this pipeline. The problem is that grep and wc are missing."
+          },
+          {
+            "id": "python",
+            "text": "Put `python3` in front of the pipeline",
+            "why": "python3 runs Python scripts. It does not supply grep or wc."
+          },
+          {
+            "id": "caps",
+            "text": "Type the commands in capitals",
+            "why": "Capitals do not help. The tools themselves are missing."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "WSL or Git Bash gives Windows the same tools.",
+        "generic": "Not quite right. Ask what PowerShell is missing."
+      },
+      "explain": {
+        "text": "PowerShell lacks the Unix tools grep, head and wc, and their option letters. WSL or Git Bash provides them, so the pipeline runs unchanged. Paths are the other difference: C:\\Users\\sam rather than /Users/sam."
+      }
+    },
+    {
+      "id": "hw-project-setup",
+      "difficulty": 5,
+      "skills": [
+        "tm-shell",
+        "tm-files"
+      ],
+      "kind": "longform",
+      "title": "Set up a dataset, safely",
+      "prompt": "Your terminal has just opened, and you do not know which folder it is in. ~/Downloads holds spx.csv: daily S&P 500 closes, one header line, then one line per day, dates written as 2023-01-03. Write the commands, one per line, each with a short reason, to: (1) make a folder ~/projects/spx; (2) copy spx.csv into it, keeping the original; (3) find how many trading days the file holds; (4) save the header and the 2023 rows into spx_2023.csv inside the project; (5) check how many 2023 days you have. Then (6) name one mistake with `>` and one with `rm -r` that would lose data here, and how you would avoid each.",
+      "model": "**Commands.**\n\n```sh\n$ mkdir ~/projects/spx\n$ cd ~/projects/spx\n$ cp ~/Downloads/spx.csv .\n$ wc -l spx.csv\n$ head -n 1 spx.csv > spx_2023.csv\n$ grep 2023- spx.csv >> spx_2023.csv\n$ wc -l spx_2023.csv\n```\n\n**Reasons.** `mkdir` with a `~` path works from any starting folder, so I do not need to know where the terminal opened. `cd` puts me in the project, so later names are short and point where I mean. `cp`, not `mv`, keeps the download; the dot means this folder. `wc -l` counts lines, so the number of trading days is that count minus 1 for the header. `head -n 1 ... >` starts the new file with the header, because grep alone would drop it. `grep 2023-` keeps lines containing 2023-, which only the 2023 dates do; `>>` adds them below the header rather than wiping it. The final `wc -l`, minus 1, is the number of 2023 trading days, about 250.\n\n**Mistake with >.** Writing `grep 2023- spx.csv > spx.csv` empties spx.csv before grep reads it, so the data is gone. Using `>` on the grep line, instead of `>>`, wipes the header I just wrote. I avoid both by writing to a new file name and using `>>` to add.\n\n**Mistake with rm -r.** Tidying up with `rm -r data` or `rm -r spx` from the wrong folder deletes the wrong thing, with no Bin and no undo. Before any `rm -r` I run `pwd` and `ls` on the exact name I am about to delete.",
+      "rubric": [
+        {
+          "points": 1,
+          "text": "Makes the folder with a path that works from any starting folder, such as `~/projects/spx`"
+        },
+        {
+          "points": 1,
+          "text": "Copies with `cp`, not `mv`, so the original download stays"
+        },
+        {
+          "points": 2,
+          "text": "Uses `wc -l` and subtracts 1 for the header to get the number of trading days"
+        },
+        {
+          "points": 2,
+          "text": "Writes the header with `>` first, then adds the 2023 rows with `>>`, in that order"
+        },
+        {
+          "points": 1,
+          "text": "Chooses search text, such as `2023-`, that matches only 2023 dates"
+        },
+        {
+          "points": 1,
+          "text": "Checks the result with `wc -l` and subtracts the header"
+        },
+        {
+          "points": 1,
+          "text": "Names a real `>` mistake (redirecting onto the input file, or `>` instead of `>>`) and a fix"
+        },
+        {
+          "points": 1,
+          "text": "Names the `rm -r` wrong-folder risk and checks `pwd` and `ls` first"
+        }
+      ]
+    }
+  ]
+}

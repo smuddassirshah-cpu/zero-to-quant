@@ -276,3 +276,10 @@ Raised later (counting level 2):
 94. `tree`: `compact: true` with narrower leaf spacing so a 16-leaf tree fits the column.
 95. `graph`: `state.labels` to relabel nodes; a `ring` layout with a `rotate` patch (seats round a table).
 96. `grid` `shade`: optional `colour` slot per named set.
+
+Raised later (terminal level 1):
+
+97. `tree`: a `current` node marker (like graph's) and a labelled root (`rootLabel`).
+98. Canvas captions: render inline code (backticks) and bold like prose.
+99. `graph`: shrink node labels to fit or auto-size `nodeRadius` to the longest label.
+100. `grid`: optional per-row horizontal offset (`rowOffsets`) for staggered layouts such as keyboards.

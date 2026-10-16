@@ -1,0 +1,1045 @@
+{
+  "id": "l7-looking-inside",
+  "course": "terminal",
+  "title": "Looking inside files",
+  "minutes": 13,
+  "objectives": [
+    "Read and search files with `cat`, `head` and `grep`.",
+    "Count lines with `wc -l`, and send output into a file with `>`.",
+    "Join two commands with a pipe, `|`."
+  ],
+  "skills": [
+    "tm-shell"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You only want Apple's rows from a small price file. A command called `grep` searches a file line by line for some text:\n\n```sh\n$ grep AAPL prices.csv\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "date,ticker,close"
+            ],
+            [
+              "2024-03-01,AAPL,179.66"
+            ],
+            [
+              "2024-03-01,MSFT,415.50"
+            ],
+            [
+              "2024-03-04,AAPL,175.10"
+            ],
+            [
+              "2024-03-04,MSFT,414.92"
+            ],
+            [
+              "2024-03-05,AAPL,170.12"
+            ],
+            [
+              "2024-03-05,MSFT,402.65"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv: one line per row"
+        }
+      },
+      "question": "Tap the lines you expect it to print.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c0",
+          "r3c0",
+          "r5c0"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "header",
+            "set": [
+              "r0c0",
+              "r1c0",
+              "r3c0",
+              "r5c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which lines contain the text AAPL?"
+        },
+        {
+          "rung": "point",
+          "text": "Each of these lines has AAPL in it.",
+          "highlight": [
+            "r1c0",
+            "r3c0",
+            "r5c0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "grep prints the three lines that contain AAPL.",
+        "generic": "Not quite right. Keep every line that contains AAPL, and nothing else.",
+        "byKey": {
+          "header": "The header line has no AAPL in it. grep prints only the lines that contain the text.",
+          "r0c0": "The header line has no AAPL in it, so grep skips it.",
+          "r2c0": "That is a Microsoft line. It does not contain AAPL.",
+          "r4c0": "That is a Microsoft line. It does not contain AAPL.",
+          "r6c0": "That is a Microsoft line. It does not contain AAPL."
+        }
+      },
+      "explain": {
+        "text": "grep printed the three lines containing AAPL, in the order they appear in the file. The header was dropped because it does not contain AAPL. The file itself is unchanged: grep only reads.",
+        "canvas": {
+          "shade": [
+            "r1c0",
+            "r3c0",
+            "r5c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "grep does not know about columns. It looks for the text anywhere in each line. Try a piece of a date instead of a ticker:\n\n```sh\n$ grep 03-04 prices.csv\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "date,ticker,close"
+            ],
+            [
+              "2024-03-01,AAPL,179.66"
+            ],
+            [
+              "2024-03-01,MSFT,415.50"
+            ],
+            [
+              "2024-03-04,AAPL,175.10"
+            ],
+            [
+              "2024-03-04,MSFT,414.92"
+            ],
+            [
+              "2024-03-05,AAPL,170.12"
+            ],
+            [
+              "2024-03-05,MSFT,402.65"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv: one line per row"
+        }
+      },
+      "question": "Tap the lines this prints.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r3c0",
+          "r4c0"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "one",
+            "set": [
+              "r3c0"
+            ]
+          },
+          {
+            "id": "one-b",
+            "set": [
+              "r4c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which lines contain the characters 03-04 somewhere?"
+        },
+        {
+          "rung": "point",
+          "text": "Both rows from 4 March contain it.",
+          "highlight": [
+            "r3c0",
+            "r4c0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Both lines from 4 March contain 03-04.",
+        "generic": "Not quite right. Look for 03-04 anywhere in each line.",
+        "byKey": {
+          "one": "You stopped at the Apple line. The Microsoft line from the same day contains 03-04 too.",
+          "one-b": "You picked only the Microsoft line. The Apple line from the same day contains 03-04 too."
+        }
+      },
+      "explain": {
+        "text": "grep matched 03-04 inside the date, so both rows from 4 March came out. It would also match 03-04 in a price or a name. Pick search text that can only appear where you mean it.",
+        "canvas": {
+          "shade": [
+            "r3c0",
+            "r4c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "To print a whole file, use `cat prices.csv`. A big file floods the screen, though. `head` prints only the start. Here is the output of `head spx.csv`, a file of 2,517 lines of daily S&P 500 closes.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "head spx.csv"
+          ],
+          "rows": [
+            [
+              "date,close"
+            ],
+            [
+              "2014-01-02,1831.98"
+            ],
+            [
+              "2014-01-03,1831.37"
+            ],
+            [
+              "2014-01-06,1826.77"
+            ],
+            [
+              "2014-01-07,1837.88"
+            ],
+            [
+              "2014-01-08,1837.49"
+            ],
+            [
+              "2014-01-09,1838.13"
+            ],
+            [
+              "2014-01-10,1842.37"
+            ],
+            [
+              "2014-01-13,1819.20"
+            ],
+            [
+              "2014-01-14,1838.88"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many lines did `head` print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Lines printed",
+        "accept": "10: the header and nine rows",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 2517,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-header",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the lines in the output, top to bottom."
+        },
+        {
+          "rung": "point",
+          "text": "The header is a line too.",
+          "highlight": [
+            "r0c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One header line plus nine price lines."
+        }
+      ],
+      "feedback": {
+        "correct": "head prints the first 10 lines.",
+        "generic": "Not quite right. Count every line of output, the header included.",
+        "byKey": {
+          "all": "That is the whole file, which cat would print. head stops early.",
+          "no-header": "You left out the header. head counts every line, and the header is the first."
+        }
+      },
+      "explain": {
+        "text": "head printed 10 lines, the header and nine days, then stopped. That is enough to see the columns and the date format. To scroll through a long file page by page, `less spx.csv` opens it; press q to quit.",
+        "canvas": {
+          "highlight": [
+            "r0c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "`wc -l` counts the lines in a file. The name is short for word count, and the `-l` asks for lines only. Back to the small file:\n\n```sh\n$ wc -l prices.csv\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "date,ticker,close"
+            ],
+            [
+              "2024-03-01,AAPL,179.66"
+            ],
+            [
+              "2024-03-01,MSFT,415.50"
+            ],
+            [
+              "2024-03-04,AAPL,175.10"
+            ],
+            [
+              "2024-03-04,MSFT,414.92"
+            ],
+            [
+              "2024-03-05,AAPL,170.12"
+            ],
+            [
+              "2024-03-05,MSFT,402.65"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv: one line per row"
+        }
+      },
+      "question": "What number does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Line count",
+        "accept": "7",
+        "wrong": [
+          {
+            "id": "rows",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "days",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "wc counts lines, not rows of prices."
+        },
+        {
+          "rung": "point",
+          "text": "Is the header a line?",
+          "highlight": [
+            "r0c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One header line plus six price lines."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven lines: one header and six rows.",
+        "generic": "Not quite right. Count every line in the file.",
+        "byKey": {
+          "rows": "You left out the header. wc does not know it is special; it is still a line.",
+          "days": "You counted trading days. wc counts lines, and each day has two."
+        }
+      },
+      "explain": {
+        "text": "wc prints `7 prices.csv`: seven lines, then the file name. The header is one of them. So the file holds 7 − 1 = 6 price rows.",
+        "canvas": {
+          "highlight": [
+            "r0c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "So far every output went to the screen. The `>` sign sends it into a file instead. Nothing appears on screen:\n\n```sh\n$ grep AAPL prices.csv > aapl.csv\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "date,ticker,close"
+            ],
+            [
+              "2024-03-01,AAPL,179.66"
+            ],
+            [
+              "2024-03-01,MSFT,415.50"
+            ],
+            [
+              "2024-03-04,AAPL,175.10"
+            ],
+            [
+              "2024-03-04,MSFT,414.92"
+            ],
+            [
+              "2024-03-05,AAPL,170.12"
+            ],
+            [
+              "2024-03-05,MSFT,402.65"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv: one line per row"
+        }
+      },
+      "question": "Tap the lines that end up in aapl.csv.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c0",
+          "r3c0",
+          "r5c0"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "header",
+            "set": [
+              "r0c0",
+              "r1c0",
+              "r3c0",
+              "r5c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would grep have printed on the screen?"
+        },
+        {
+          "rung": "point",
+          "text": "These are the lines grep prints.",
+          "highlight": [
+            "r1c0",
+            "r3c0",
+            "r5c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The file gets exactly what would have gone to the screen."
+        }
+      ],
+      "feedback": {
+        "correct": "aapl.csv holds the three AAPL lines, and no header.",
+        "generic": "Not quite right. The file receives exactly what grep would have printed.",
+        "byKey": {
+          "header": "You kept the header. grep never printed it, because it has no AAPL, so it is not in aapl.csv either.",
+          "r0c0": "You kept the header. grep never printed it, so it is not in aapl.csv either."
+        }
+      },
+      "explain": {
+        "text": "`>` caught grep's output and wrote it to aapl.csv. The header did not contain AAPL, so the new file has none. A spreadsheet would read the first price row as column names: that is the edge case to remember.",
+        "canvas": {
+          "shade": [
+            "r1c0",
+            "r3c0",
+            "r5c0"
+          ],
+          "highlight": [
+            "r0c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "The bar `|` is a **pipe**. It feeds one command's output straight into the next command, with no file in between:\n\n```sh\n$ grep AAPL prices.csv | wc -l\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "date,ticker,close"
+            ],
+            [
+              "2024-03-01,AAPL,179.66"
+            ],
+            [
+              "2024-03-01,MSFT,415.50"
+            ],
+            [
+              "2024-03-04,AAPL,175.10"
+            ],
+            [
+              "2024-03-04,MSFT,414.92"
+            ],
+            [
+              "2024-03-05,AAPL,170.12"
+            ],
+            [
+              "2024-03-05,MSFT,402.65"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv: one line per row"
+        }
+      },
+      "question": "What number does this print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Line count",
+        "accept": "3",
+        "wrong": [
+          {
+            "id": "file",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "header",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does wc receive: the file, or grep's output?"
+        },
+        {
+          "rung": "point",
+          "text": "grep's output is these three lines.",
+          "highlight": [
+            "r1c0",
+            "r3c0",
+            "r5c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "wc counts the lines it receives: three."
+        }
+      ],
+      "feedback": {
+        "correct": "wc counted the three lines grep passed it.",
+        "generic": "Not quite right. wc only sees what grep sends it.",
+        "byKey": {
+          "file": "You counted the whole file. After a pipe, wc sees only grep's output.",
+          "header": "You added the header. grep dropped it, so wc never sees it."
+        }
+      },
+      "explain": {
+        "text": "grep picked three lines and the pipe handed them to wc. wc counted 3. Reading left to right, each command works on what the one before produced.",
+        "canvas": {
+          "shade": [
+            "r1c0",
+            "r3c0",
+            "r5c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "You want one file holding both tickers' rows. You run:\n\n```sh\n$ grep AAPL prices.csv > picks.csv\n$ grep MSFT prices.csv > picks.csv\n$ wc -l picks.csv\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "date,ticker,close"
+            ],
+            [
+              "2024-03-01,AAPL,179.66"
+            ],
+            [
+              "2024-03-01,MSFT,415.50"
+            ],
+            [
+              "2024-03-04,AAPL,175.10"
+            ],
+            [
+              "2024-03-04,MSFT,414.92"
+            ],
+            [
+              "2024-03-05,AAPL,170.12"
+            ],
+            [
+              "2024-03-05,MSFT,402.65"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv: one line per row"
+        }
+      },
+      "question": "How many lines are in picks.csv?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Lines in picks.csv",
+        "accept": "3: only the MSFT lines",
+        "wrong": [
+          {
+            "id": "append",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "file",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What happens to what was already in picks.csv when the second command runs?"
+        },
+        {
+          "rung": "point",
+          "text": "These are the lines the second grep writes.",
+          "highlight": [
+            "r2c0",
+            "r4c0",
+            "r6c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`>` empties the file before writing. The AAPL lines are wiped and replaced."
+        }
+      ],
+      "feedback": {
+        "correct": "Only the MSFT lines survive.",
+        "generic": "Not quite right. Ask what `>` does to a file that already exists.",
+        "byKey": {
+          "append": "You expected `>` to add to the file. It empties the file first, so the AAPL lines were lost.",
+          "file": "picks.csv never held the whole file, and the header was never in it.",
+          "none": "The second grep wrote three lines after emptying the file. It is not empty."
+        }
+      },
+      "explain": {
+        "text": "Each `>` starts the file afresh, so the second command wiped the AAPL lines. To add to the end of a file, use `>>` instead. The second line should have been `grep MSFT prices.csv >> picks.csv`.",
+        "canvas": {
+          "shade": [
+            "r2c0",
+            "r4c0",
+            "r6c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Every command so far reads lines and prints lines. That is why they snap together:\n\n```sh\n$ cat prices.csv        # all of it\n$ head prices.csv       # first 10 lines\n$ grep AAPL prices.csv  # lines with AAPL\n$ grep AAPL prices.csv | wc -l\n$ grep AAPL prices.csv > a.csv\n$ grep MSFT prices.csv >> a.csv\n```\n\nA pipe passes output to a command. `>` writes it to a file, replacing it, and `>>` adds to the end.",
+      "question": "Which command saves the number of AAPL rows into count.txt?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "right",
+            "text": "`grep AAPL prices.csv | wc -l > count.txt`",
+            "correct": true
+          },
+          {
+            "id": "two-gt",
+            "text": "`grep AAPL prices.csv > wc -l > count.txt`",
+            "why": "The first `>` sends grep's output to a file named wc. Use a pipe to pass output to a command."
+          },
+          {
+            "id": "pipe-file",
+            "text": "`grep AAPL prices.csv | count.txt`",
+            "why": "A pipe needs a command on its right. count.txt is a file, so the shell cannot run it."
+          },
+          {
+            "id": "reversed",
+            "text": "`wc -l | grep AAPL prices.csv > count.txt`",
+            "why": "You put the counting first. Commands run left to right, so wc would have nothing to count."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which sign passes output to a command, and which to a file?"
+        },
+        {
+          "rung": "step",
+          "text": "First grep picks the lines, then a pipe passes them to wc, then `>` saves the number."
+        }
+      ],
+      "feedback": {
+        "correct": "Pick, pipe to count, then save.",
+        "generic": "Not quite right. A pipe feeds a command; `>` feeds a file."
+      },
+      "explain": {
+        "text": "grep picks, `|` passes to wc, and `>` writes wc's number into count.txt. A pipe always has a command on its right. A `>` always has a file on its right."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "Before a backtest, you check how much history you have. spx.csv holds daily S&P 500 closes, one header line then one line per trading day.\n\n```sh\n$ wc -l spx.csv\n2517 spx.csv\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "head spx.csv"
+          ],
+          "rows": [
+            [
+              "date,close"
+            ],
+            [
+              "2014-01-02,1831.98"
+            ],
+            [
+              "2014-01-03,1831.37"
+            ],
+            [
+              "2014-01-06,1826.77"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "The first lines of spx.csv"
+        }
+      },
+      "question": "How many trading days does the file cover?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2516,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Trading days",
+        "accept": "2516",
+        "wrong": [
+          {
+            "id": "lines",
+            "value": 2517,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "years",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "wc counted every line. Is every line a day?"
+        },
+        {
+          "rung": "point",
+          "text": "This line is not a day.",
+          "highlight": [
+            "r0c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take the header away: 2517 − 1."
+        }
+      ],
+      "feedback": {
+        "correct": "2516 trading days.",
+        "generic": "Not quite right. Take the header line off the count.",
+        "byKey": {
+          "lines": "You kept the header in the count. It is a line, but not a trading day.",
+          "years": "That is roughly the number of years. The question asks for days."
+        }
+      },
+      "explain": {
+        "text": "2517 lines minus one header line leaves 2516 days. At about 252 trading days a year, that is close to ten years. One `wc -l` told you that without opening the file.",
+        "canvas": {
+          "highlight": [
+            "r0c0"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`cat` prints a whole file, `head` the first 10 lines, and `less` lets you scroll.",
+      "`grep` keeps the lines that contain some text, and `wc -l` counts lines, header included.",
+      "A pipe `|` feeds output to a command; `>` writes it to a file, replacing what was there."
+    ],
+    "formula": {
+      "name": "A first pipeline",
+      "tex": "\\texttt{grep AAPL prices.csv | wc -l}",
+      "note": "Read left to right: pick the lines, then count them."
+    },
+    "trap": "`>` empties the file before writing. Use `>>` to add to the end."
+  },
+  "quiz": [
+    {
+      "id": "q-less",
+      "difficulty": 2,
+      "prose": "A file of tick data has two million lines. You want to scroll through it and quit when you are done.",
+      "question": "Which command fits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "right",
+            "text": "`less ticks.csv`",
+            "correct": true
+          },
+          {
+            "id": "cat",
+            "text": "`cat ticks.csv`",
+            "why": "cat prints all two million lines at once. You cannot scroll back through most of them."
+          },
+          {
+            "id": "head",
+            "text": "`head ticks.csv`",
+            "why": "head shows the first 10 lines and stops. You cannot scroll further."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "less lets you page through and quit with q.",
+        "generic": "Not quite right. Which command lets you scroll?"
+      },
+      "explain": {
+        "text": "less shows one screen at a time. Space goes down a page, and q quits back to the prompt."
+      }
+    },
+    {
+      "id": "q-short-head",
+      "difficulty": 2,
+      "prose": "prices.csv has 7 lines: a header and six rows. You run:\n\n```sh\n$ head prices.csv\n```",
+      "question": "How many lines does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Lines printed",
+        "accept": "7: the whole file",
+        "wrong": [
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rows",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A short file comes out whole.",
+        "generic": "Not quite right. head prints at most 10 lines.",
+        "byKey": {
+          "ten": "head prints up to 10 lines. This file only has 7, so it cannot invent more.",
+          "rows": "head does not skip the header. It prints every line, up to 10."
+        }
+      },
+      "explain": {
+        "text": "head prints the first 10 lines, or the whole file if it is shorter. Here that is all 7."
+      }
+    },
+    {
+      "id": "q-case",
+      "difficulty": 3,
+      "prose": "prices.csv holds the tickers in capitals, such as AAPL. You run:\n\n```sh\n$ grep aapl prices.csv\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "right",
+            "text": "Nothing: no line contains aapl in lower case",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "The three AAPL lines",
+            "why": "You expected grep to ignore case. It matches the letters exactly as typed."
+          },
+          {
+            "id": "error",
+            "text": "An error message",
+            "why": "Finding nothing is not an error. grep just prints no lines."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "grep matches case exactly.",
+        "generic": "Not quite right. Compare aapl with AAPL letter by letter."
+      },
+      "explain": {
+        "text": "grep treats a and A as different characters. No line contains aapl, so nothing prints. The next lesson shows the option that ignores case."
+      }
+    },
+    {
+      "id": "q-two-greps",
+      "difficulty": 3,
+      "prose": "Using the same prices.csv as in the lesson, you run:\n\n```sh\n$ grep 2024-03-05 prices.csv | grep MSFT\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "right",
+            "text": "`2024-03-05,MSFT,402.65`",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Both lines from 5 March",
+            "why": "The second grep only keeps lines containing MSFT, so the Apple line is dropped."
+          },
+          {
+            "id": "all-msft",
+            "text": "All three MSFT lines",
+            "why": "The second grep only sees what the first passed on: the two lines from 5 March."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Each grep narrows the lines further.",
+        "generic": "Not quite right. The second grep only sees the first one's output."
+      },
+      "explain": {
+        "text": "The first grep keeps the two lines from 5 March. The pipe passes them on, and the second grep keeps the MSFT one."
+      }
+    }
+  ]
+}
