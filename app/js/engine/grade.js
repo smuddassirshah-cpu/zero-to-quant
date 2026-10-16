@@ -134,37 +134,47 @@
   /* balance: the shortest list of the allowed moves that takes the authored pans to `target` (breadth first over
      unknown counts and weight totals, as the balance canvas does them). Moves are in the widget's set() shape. */
   const balanceMoves = (spec = {}) => {
-    const side = (list) => ({ u: +(list || []).filter(i => i.kind === 'unknown').reduce((a, i) => a + (i.coef ?? 1), 0).toFixed(9), w: +(list || []).filter(i => i.kind !== 'unknown').reduce((a, i) => a + (+i.value || 0), 0).toFixed(9) });
-    const want = (list) => ({ u: (list || []).filter(t => t === 'unknown').length, w: (list || []).filter(t => typeof t === 'number').reduce((a, v) => a + v, 0) });
+    /* A pan is { u: { label: total coefficient }, w: total weight }; several unknown kinds stay apart */
+    const all = [...(spec.left || []), ...(spec.right || [])];
+    const X = (all.find(i => i.kind === 'unknown') || {}).label || 'x';
+    const r6 = (v) => +v.toFixed(9);
+    const side = (list) => { const u = {}; (list || []).filter(i => i.kind === 'unknown').forEach(i => { const l = i.label || X; u[l] = r6((u[l] || 0) + (i.coef ?? 1)); }); return { u, w: r6((list || []).filter(i => i.kind !== 'unknown').reduce((a, i) => a + (+i.value || 0), 0)) }; };
+    const want = (list) => { const u = {}; (list || []).filter(t => typeof t === 'string').forEach(t => { const l = t === 'unknown' ? X : t; u[l] = (u[l] || 0) + 1; }); return { u, w: (list || []).filter(t => typeof t === 'number').reduce((a, v) => a + v, 0) }; };
     const tgt = spec.target || { left: ['unknown'], right: [] };
     const A = want(tgt.left), B = want(tgt.right);
-    const eq = (p, q) => Math.abs(p.u - q.u) < 1e-9 && Math.abs(p.w - q.w) < 1e-9;
+    const eqU = (p, q) => [...new Set([...Object.keys(p), ...Object.keys(q)])].every(k => Math.abs((p[k] || 0) - (q[k] || 0)) < 1e-9);
+    const eq = (p, q) => eqU(p.u, q.u) && Math.abs(p.w - q.w) < 1e-9;
     const done = (L, R) => (eq(L, A) && eq(R, B)) || (eq(L, B) && eq(R, A));
     const allowed = new Set(spec.moves || ['remove-both', 'halve-both']);
-    const r6 = (v) => +v.toFixed(9);
+    const mapU = (u, f) => Object.fromEntries(Object.entries(u).map(([k, v]) => [k, r6(f(v, k))]).filter(([, v]) => Math.abs(v) > 1e-9));
     /* Signed pans (negative weights, coefficients, or after a subtract or add) work on totals, as the canvas does */
-    const signed0 = spec.signed === true || [...(spec.left || []), ...(spec.right || [])].some(i => (i.kind === 'unknown' && i.coef != null && i.coef !== 1) || (i.kind !== 'unknown' && +i.value < 0));
+    const signed0 = spec.signed === true || all.some(i => (i.kind === 'unknown' && i.coef != null && i.coef !== 1) || (i.kind !== 'unknown' && +i.value < 0));
+    const isInt = (u) => Object.values(u).every(Number.isInteger);
     const next = (L, R, sg) => {
-      const out = [], S = (l, r) => sg || l.w < -1e-9 || r.w < -1e-9 || !Number.isInteger(l.u) || !Number.isInteger(r.u);
+      const out = [], S = (l, r) => sg || l.w < -1e-9 || r.w < -1e-9 || !isInt(l.u) || !isInt(r.u);
       if (allowed.has('remove-both')) new Set([Math.min(L.w, R.w), L.w, R.w]).forEach(n => { if (n > 1e-9 && (sg || (L.w >= n - 1e-9 && R.w >= n - 1e-9))) { const l = { u: L.u, w: r6(L.w - n) }, r = { u: R.u, w: r6(R.w - n) }; out.push([{ op: 'remove-both', n }, l, r, S(l, r)]); } });
-      if (allowed.has('remove-unknown-both') && (sg || (L.u >= 1 && R.u >= 1))) { const l = { u: r6(L.u - 1), w: L.w }, r = { u: r6(R.u - 1), w: R.w }; out.push([{ op: 'remove-both', n: 'x' }, l, r, S(l, r)]); }
+      if (allowed.has('remove-unknown-both')) new Set([...Object.keys(L.u), ...Object.keys(R.u)]).forEach(lab => {
+        if (!sg && !((L.u[lab] || 0) >= 1 && (R.u[lab] || 0) >= 1)) return;
+        const dec = (u) => { const o = { ...u, [lab]: r6((u[lab] || 0) - 1) }; if (Math.abs(o[lab]) < 1e-9) delete o[lab]; return o; };
+        const l = { u: dec(L.u), w: L.w }, r = { u: dec(R.u), w: R.w }; out.push([{ op: 'remove-both', n: lab }, l, r, S(l, r)]);
+      });
       ['subtract-both', 'add-both'].forEach(op => { if (!allowed.has(op)) return; new Set([L.w, R.w]).forEach(v => { if (Math.abs(v) < 1e-9) return; const n = op === 'subtract-both' ? v : -v, d = op === 'subtract-both' ? -n : n; out.push([{ op, n }, { u: L.u, w: r6(L.w + d) }, { u: R.u, w: r6(R.w + d) }, true]); }); });
       const div = (k, op) => {
         if (!Number.isFinite(k) || k === 0 || k === 1) return;
-        if (!sg && !(k > 1 && Number.isInteger(L.u / k) && Number.isInteger(R.u / k))) return;
-        const l = { u: r6(L.u / k), w: r6(L.w / k) }, r = { u: r6(R.u / k), w: r6(R.w / k) };
+        if (!sg && !(k > 1 && isInt(mapU(L.u, v => v / k)) && isInt(mapU(R.u, v => v / k)))) return;
+        const l = { u: mapU(L.u, v => v / k), w: r6(L.w / k) }, r = { u: mapU(R.u, v => v / k), w: r6(R.w / k) };
         out.push([op === 'halve-both' ? { op } : { op, n: k }, l, r, S(l, r)]);
       };
       if (allowed.has('halve-both')) div(2, 'halve-both');
-      if (allowed.has('divide-both')) new Set([L.u, R.u, 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, -2, -3, -4, -5]).forEach(k => div(k, 'divide-both'));
+      if (allowed.has('divide-both')) new Set([...Object.values(L.u), ...Object.values(R.u), 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, -2, -3, -4, -5]).forEach(k => div(k, 'divide-both'));
       return out;
     };
-    const L0 = side(spec.left), R0 = side(spec.right);
-    const q = [[L0, R0, [], signed0]], seen = new Set();
+    const key = (P) => Object.keys(P.u).sort().map(k => `${k}:${P.u[k]}`).join(';') + '/' + P.w;
+    const q = [[side(spec.left), side(spec.right), [], signed0]], seen = new Set();
     while (q.length) {
       const [L, R, path, sg] = q.shift();
       if (done(L, R)) return path;
-      const k = `${L.u},${L.w}|${R.u},${R.w}|${sg}`;
+      const k = `${key(L)}|${key(R)}|${sg}`;
       if (seen.has(k) || path.length >= 6) continue;
       seen.add(k);
       next(L, R, sg).forEach(([m, L2, R2, sg2]) => q.push([L2, R2, path.concat([m]), sg2]));

@@ -139,3 +139,9 @@ Raised later (quadratics level 1):
 51. `area`: signed pieces (negative strips drawn dashed or hatched, subtracted from the total) so (x + 5)(x − 2) stays on the area model.
 52. `area`: `colLabels`/`rowLabels` patchable through state.
 53. `area`: animate a piece moving (`move: { from: "c12", to: "c31" }`) for the difference-of-squares rearrangement.
+
+Raised later (functions level 4):
+
+54. `ZQ.canvas.compile`: `-x^2` compiles to `-x**2` which JavaScript rejects; wrap unary minus before a power (`(-x)**2` is wrong; want `-(x**2)`), or document `-(x^2)`.
+55. `payoff`: leg labels may overlap the bold combined line; place labels away from it.
+56. Derived numbers in tables and captions: render negatives with a proper minus sign (U+2212).

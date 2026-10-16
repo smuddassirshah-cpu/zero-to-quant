@@ -4,6 +4,8 @@
    as x - 3 = 8 or 7 - 3x = 22: the pans keep their totals and may go negative), and "remove-item" (no chip: tapping a
    block removes it from its pan alone). The value is the list of moves; the pans live in the canvas.
    Unknown blocks may carry `coef` (-1, 0.5, -3) and weights may be negative; target "unknown" means a total of 1x.
+   Several unknown kinds: unknowns with their own `label` (y) and hidden `value`; "remove-unknown-both" shows one chip
+   per label, and a target names an unknown by its label (["unknown", "y"] is x + y).
    grade: the pans match spec.target ({ left: ["unknown"], right: [4] }, either way round, weights compared by total);
    key "unbalanced" when the beam is not level (a single item was removed), else "unsolved".
    reveal animates the pans to the target in hint indigo. answer() returns the moves that reach the target
@@ -22,11 +24,14 @@
 
   Z.widgets.register('balance', (host, spec, ctx) => {
     const cv = ctx.canvas;
-    const x = (spec.left || []).concat(spec.right || []).find(i => i.kind === 'unknown')?.label || 'x';
+    const all = (spec.left || (cv && cv.params || {}).left || []).concat(spec.right || (cv && cv.params || {}).right || []);
+    const x = all.find(i => i.kind === 'unknown')?.label || 'x';
+    const labels = [...new Set(all.filter(i => i.kind === 'unknown').map(i => i.label || x))]; // several unknown kinds: x, y, ...
+    if (!labels.length) labels.push(x);
     const moves = spec.moves || ['remove-both', 'halve-both'];
     const chip = {
       'remove-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="remove-both">Take away</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Amount to take away from both pans" placeholder="n" data-for="remove-both"></label><span class="t-label">from both</span></div>`,
-      'remove-unknown-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="remove-unknown-both">Take away ${Z.tex(x)} from both</button></div>`,
+      'remove-unknown-both': labels.map(lab => `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="remove-unknown-both" data-label="${Z.esc(lab)}">Take away ${Z.tex(lab)} from both</button></div>`).join(''),
       'halve-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="halve-both">Halve both</button></div>`,
       'divide-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="divide-both">Divide both by</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Divide both pans by" placeholder="k" data-for="divide-both"></label></div>`,
       'subtract-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="subtract-both">Subtract</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Amount to subtract from both pans" placeholder="n" data-for="subtract-both"></label><span class="t-label">from both</span></div>`,
@@ -50,13 +55,15 @@
       cv.on('change', (e) => { if (e && e.selected && e.selected.length && !locked) { const id = e.selected[0]; cv.set({ selected: [] }, { instant: true }); cv.removeItem(id); } });
     } else cv.enable('balance');
 
-    /* A pan as n (total coefficient of x, each unknown block counting its coef, default 1) and w (total weight) */
+    /* A pan as n ({ label: total coefficient }, each unknown block counting its coef, default 1) and w (total weight) */
     const side = (list) => {
-      const n = +list.filter(i => i.kind === 'unknown').reduce((s, i) => s + (i.coef ?? 1), 0).toFixed(10), w = +list.filter(i => i.kind === 'weight').reduce((s, i) => s + (+i.value || 0), 0).toFixed(10);
+      const n = {}; list.filter(i => i.kind === 'unknown').forEach(i => { const lab = i.label || x; n[lab] = +((n[lab] || 0) + (i.coef ?? 1)).toFixed(10); });
+      const w = +list.filter(i => i.kind === 'weight').reduce((s, i) => s + (+i.value || 0), 0).toFixed(10);
       const num = (v) => { const f = Z.grade.fmtFrac(Math.abs(v), 12), m = f.match(/^(\d+)\/(\d+)$/); return m ? `\\tfrac{${m[1]}}{${m[2]}}` : f; };
       let tex = '';
-      if (n) tex = (n < 0 ? '-' : '') + (Math.abs(n) === 1 ? '' : num(n)) + x;
-      if (w || !n) tex += (tex ? (w < 0 ? ' - ' : ' + ') : w < 0 ? '-' : '') + Z.canvas.fmtNum(Math.abs(w), 3);
+      labels.concat(Object.keys(n).filter(l => !labels.includes(l))).forEach(lab => { const c = n[lab]; if (!c) return; tex += (tex ? (c < 0 ? ' - ' : ' + ') : c < 0 ? '-' : '') + (Math.abs(c) === 1 ? '' : num(c)) + lab; });
+      const any = Object.values(n).some(c => c);
+      if (w || !any) tex += (tex ? (w < 0 ? ' - ' : ' + ') : w < 0 ? '-' : '') + Z.canvas.fmtNum(Math.abs(w), 3);
       return { n, w, tex };
     };
     const showEq = () => { const st = cv.get(); eq.innerHTML = Z.tex(`${side(st.left || []).tex} ${cv.isLevel && !cv.isLevel() ? '\\neq' : '='} ${side(st.right || []).tex}`); };
@@ -65,22 +72,23 @@
     showEq();
 
     const numFor = (op) => { const inp = el.querySelector(`[data-for="${op}"]`); const v = Z.widgets.parseNum(inp ? inp.value : ''); return { inp, v }; };
-    const run = (op) => {
+    const run = (op, label) => {
       if (locked) return;
       let r;
       if (op === 'remove-both') { const { v } = numFor(op); r = Number.isFinite(v) ? cv.removeBoth(v) : { ok: false, reason: 'bad-number' }; if (!r.ok) say((REASON[r.reason] || (() => ''))(v, x)); }
-      else if (op === 'remove-unknown-both') { r = cv.removeBoth(x); if (!r.ok) say(REASON[r.reason]?.(0, x) || ''); }
+      else if (op === 'remove-unknown-both') { const lab = label || x; r = cv.removeBoth(lab); if (!r.ok) say(REASON[r.reason]?.(0, lab) || ''); }
       else if (op === 'halve-both') { r = cv.halveBoth(); if (!r.ok) say(REASON[r.reason]?.() || ''); }
       else if (op === 'divide-both') { const { v } = numFor(op); r = Number.isFinite(v) ? cv.divideBoth(v) : { ok: false, reason: 'bad-number' }; if (!r.ok) say(REASON[r.reason]?.() || ''); }
       else if (op === 'subtract-both' || op === 'add-both') { const { v } = numFor(op); r = Number.isFinite(v) && cv.subtractBoth ? (op === 'add-both' ? cv.addBoth(v) : cv.subtractBoth(v)) : { ok: false, reason: 'bad-number' }; if (!r.ok) say(REASON[r.reason]?.() || ''); }
       if (r && r.ok) say('');
     };
-    el.addEventListener('click', (e) => { const b = e.target.closest('[data-op]'); if (b) run(b.dataset.op); });
+    el.addEventListener('click', (e) => { const b = e.target.closest('[data-op]'); if (b) run(b.dataset.op, b.dataset.label); });
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.for) { e.preventDefault(); e.stopPropagation(); run(e.target.dataset.for); } });
 
     const tgt = spec.target || { left: ['unknown'], right: [] };
-    const want = (list) => ({ n: list.filter(t => t === 'unknown').length, w: list.filter(t => typeof t === 'number').reduce((s, v) => s + v, 0) });
-    const matches = (a, b) => a.n === b.n && Math.abs(a.w - b.w) < 1e-9;
+    /* target entries: "unknown" is x, any other word is the unknown with that label, numbers are weights */
+    const want = (list) => { const n = {}; list.filter(t => typeof t === 'string').forEach(t => { const lab = t === 'unknown' ? x : t; n[lab] = (n[lab] || 0) + 1; }); return { n, w: list.filter(t => typeof t === 'number').reduce((s, v) => s + v, 0) }; };
+    const matches = (a, b) => [...new Set([...Object.keys(a.n), ...Object.keys(b.n)])].every(k => Math.abs((a.n[k] || 0) - (b.n[k] || 0)) < 1e-9) && Math.abs(a.w - b.w) < 1e-9;
     const itemIds = () => { const st = cv.get(); return [...(st.left || []), ...(st.right || [])].map(i => i.id); };
     const replay = (list) => {
       cv.reset();
@@ -94,7 +102,8 @@
       }
       showEq();
     };
-    const targetItems = (list, s) => list.map((t, k) => (t === 'unknown' ? { id: `${s}-x${k + 1}`, kind: 'unknown', label: x } : { id: `${s}-w${k + 1}`, kind: 'weight', value: t }));
+    const valueOf = (lab) => (all.find(i => i.kind === 'unknown' && (i.label || x) === lab && i.value != null) || {}).value;
+    const targetItems = (list, s) => list.map((t, k) => (typeof t === 'string' ? { id: `${s}-u${k + 1}`, kind: 'unknown', label: t === 'unknown' ? x : t, ...(valueOf(t === 'unknown' ? x : t) != null ? { value: valueOf(t === 'unknown' ? x : t) } : {}) } : { id: `${s}-w${k + 1}`, kind: 'weight', value: t }));
     const setLocked = (on) => { locked = on; el.querySelectorAll('button, input').forEach(n => { n.disabled = on; }); cv.lock && cv.lock(on); };
 
     return {
