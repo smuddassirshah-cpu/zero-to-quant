@@ -100,7 +100,7 @@ Second pass (items 24 to 39):
 49. Done: plane tangent at a corner is not drawn unless `side` picks a one-sided slope; `lengthPx` gives a length in pixels.
 50. Done: series `drawdown: "money"` (and `"abs"`) labels the absolute fall; no division by a zero peak.
 
-Third pass (items 51 to 77):
+Third pass (items 51 to 114, and 123):
 
 51. Done: area signed pieces: a negative `colSizes` or `rowSizes` entry makes its strip subtracted (hatched, dashed edge).
 52. Done: area `colLabels`, `rowLabels` and edge `labels` patchable through state.
@@ -140,6 +140,33 @@ Third pass (items 51 to 77):
 86. Done: the verdict chip lets long inline maths wrap between terms.
 87. Done: plane `xStep` and `yStep`.
 88. Done: circle cos label starts clear of the angle mark; the sin label sits past the rim (outside the circle for small angles).
+89. Done: grid `state.cells` (a map by id or a 2D array) overrides `params.cells` per cell; `null` restores.
+90. Done: derive guard (engine and validator) blanks quoted strings first, so `=` and `;` inside a string literal are allowed.
+91. Done: display maths scrolls sideways inside its own box (`.katex-display`), and longform's grid children may shrink, so a long formula never widens the page at 360px.
+92. Done: a boxes `box` container is closed on all four sides (rounded corners).
+93. Done: grid `state.paths` (routes through cell centres, drawn on, arrowhead, colour slot, highlightable ids) and `params.lattice: true` (points joined by streets, text above right).
+94. Done: tree `compact: true` (smaller pills, closer leaves and rows); top to bottom, level labels get their own left margin.
+95. Done: graph `state.labels`, `params.layout: "ring"` and `state.rotate` (seats, animated).
+96. Done: grid shade sets take `{ "ids": [...], "colour": n }`.
+97. Done: tree `state.current` (blue ring round a node's pill, or the root) and `params.rootLabel` (a labelled root pill).
+98. Done: canvas captions (every kind and the pair caption) render through `ZQ.grade.inline`: maths, inline code, bold and italic.
+99. Done: graph radius fits the longest label (22 to 34) without `nodeRadius`; longer labels shrink down to 10px.
+100. Done: grid `params.rowOffsets` (per-row shift in cell widths); outlines, highlights and the point box follow the shift.
+101. Done: validator: in a course on the code track, a generalise screen may state the rule in a fenced code block instead of KaTeX.
+102. Done: boxes cards are as wide as their label (file names fit), shared with 111.
+103. Done: graph `nodes` and `edges` live in state: a list replaces, a map merges, adds or removes (`null`); arrivals fade and grow in, leavers fade out; a removed node takes its edges.
+104. Done: `ZQ.grade.inline` sets code spans aside in the same pass as maths, so `$` and `*` inside backticks are literal.
+105. Done: the expression widget accepts a value while the maths editor loads (`ready()` counts it) and `grade()` waits for the load.
+106. Done: README-B vectors documents head dragging (origin-based vectors only); `params.points` with compass `labelPos`, vector `labelPos: "end"|"mid"|"start"` and `labelSide`.
+107. Done: vectors `tap` mode on whole arrows (wide hit stroke) and on points.
+108. Done: the derive function set is tabled in AUTHORING.md section 4 and listed in README-B.
+109. Done: code widget script mode: `compare: "stdout"` cases with `stdin` and `exact`, the learner's code re-run per case with `input()` fed from stdin, `printed` for call cases; validator rules; first-python l1, l3, l4, review-1, homework-1 converted.
+110. Done: Run examples shows what the code printed (script mode per row; otherwise what it printed as it loaded).
+111. Done: see 102.
+112. Done: the playthrough waits for Python ready on code screens, fails when Python cannot load, and fails an answer that applied with nothing to check (lesson screens and set items).
+113. Done: code results headers and value chips wrap long calls.
+114. Done: terminal l12 and homework-3 converted to `compare: "stdout"` (review-3 had no `_getframe` tests).
+123. Done: AUTHORING.md section 3 documents `compare: "stdout"`, `stdin`, `exact` and `printed` (with 109).
 
 
 Raised later (equations level 2):
@@ -335,3 +362,10 @@ Raised later (mental level 2):
 
 127. `area`: controls may bind `colSizes`/`rowSizes` entries so a cut can be dragged at true proportions.
 128. `grid` `text: "marked"`: a `revealAfterGrade: true` option so tapping does not reveal the product.
+
+Raised later (mental level 3):
+
+129. A `timed` option on `table` widget screens (countdown, live score, lock on zero) for mental arithmetic sets; or a lesson-level link to the Today warm-up with a target score.
+130. `area`: group labels (`labels: { "c11-c16": "£5,070" }` spanning cells); `colSizes`/`rowSizes` patchable (same as 127).
+131. `number-line`: interval labels keep "a/b" as inline text unless wrapped in `$...$`.
+132. `tap-regions` `only`: accept grid set names (`col7`, `row5`).

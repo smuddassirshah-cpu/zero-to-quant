@@ -1,0 +1,1020 @@
+{
+  "id": "l10-reading-a-csv",
+  "course": "py-found",
+  "title": "Reading a CSV of prices",
+  "minutes": 13,
+  "objectives": [
+    "Read a CSV file of prices with the `csv` module.",
+    "Convert text fields to numbers and dates as you read them",
+    "Sort rows by real dates with `datetime.strptime`"
+  ],
+  "skills": [
+    "pf-modules"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A price file",
+      "prose": "A price file is plain text: a header line, then one line per day. The table shows the file held in `text`. Python's `csv` module reads it.\n\n```python\nimport csv\n\nrows = list(csv.DictReader(text.splitlines()))\nprint(rows[2][\"close\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "101.20"
+            ],
+            [
+              "2024-03-12",
+              "102.50"
+            ],
+            [
+              "2024-03-13",
+              "99.80"
+            ],
+            [
+              "2024-03-14",
+              "100.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The file in `text`: a header line, then four days"
+        }
+      },
+      "question": "Tap the value this prints.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c1"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The header line is not a day of data. It names the columns."
+        },
+        {
+          "rung": "point",
+          "text": "`rows[0]` is the first day, 11 March.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`rows[2]` is the third day, 13 March, and `[\"close\"]` picks its close."
+        }
+      ],
+      "feedback": {
+        "correct": "`rows[2][\"close\"]` is the close on 13 March: 99.80.",
+        "generic": "Not quite right. Count the days from 0, leaving out the header line.",
+        "byKey": {
+          "r1c1": "You counted the header line as `rows[0]`. The header becomes the keys, so `rows[0]` is 11 March.",
+          "r3c1": "You counted from 1. `rows[2]` is the third day, 13 March.",
+          "r2c0": "`[\"close\"]` picks the close column. The date sits under the key `\"date\"`."
+        }
+      },
+      "explain": {
+        "text": "Each line after the header became one dict, keyed by the header names. `rows[2]` is the third day, and `[\"close\"]` reads its close. This is what `csv.DictReader` does: one dict per row.",
+        "canvas": {
+          "highlight": [
+            "r2c1"
+          ],
+          "caption": "rows[2][\"close\"]"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Now look at one whole row.\n\n```python\nprint(rows[0])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "101.20"
+            ],
+            [
+              "2024-03-12",
+              "102.50"
+            ],
+            [
+              "2024-03-13",
+              "99.80"
+            ],
+            [
+              "2024-03-14",
+              "100.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`{'date': '2024-03-11', 'close': '101.20'}`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`{'date': '2024-03-11', 'close': 101.2}`",
+            "why": "You expected `csv` to turn the close into a number. It gives every value back as text, exactly as written."
+          },
+          {
+            "id": "c",
+            "text": "`['2024-03-11', '101.20']`",
+            "why": "That is what `csv.reader` gives: a list per line. `DictReader` keys each value by its header."
+          },
+          {
+            "id": "d",
+            "text": "`{'date': 'date', 'close': 'close'}`",
+            "why": "The header line supplies the keys. It is never returned as a row itself."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does a CSV file record whether `101.20` is a number or text?"
+        },
+        {
+          "rung": "point",
+          "text": "This is the row `rows[0]` holds.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The keys come from the header, and every value is the text from the file, quotes and all."
+        }
+      ],
+      "feedback": {
+        "correct": "A dict keyed by the header, with every value as text.",
+        "generic": "Not quite right. The file is text, and `csv` does not guess types."
+      },
+      "explain": {
+        "text": "Every value comes back as a string, exactly as written, trailing zero included. The `csv` module never guesses types. Converting is your job, with `float` or `int`.",
+        "canvas": {
+          "highlight": [
+            "r0c1"
+          ],
+          "caption": "'101.20' is text, not a number"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Read the closes",
+      "prose": "Turn the close column into numbers you can calculate with. Read it by name, so the code still works if the file gains an `open` column.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "101.20"
+            ],
+            [
+              "2024-03-12",
+              "102.50"
+            ],
+            [
+              "2024-03-13",
+              "99.80"
+            ],
+            [
+              "2024-03-14",
+              "100.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `closes(text)` returning the closes as floats, in file order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\n\n\ndef closes(text):\n    ...\n",
+        "solution": "import csv\n\n\ndef closes(text):\n    out = []\n    for row in csv.DictReader(text.splitlines()):\n        out.append(float(row[\"close\"]))\n    return out\n",
+        "tests": [
+          {
+            "call": "closes(\"date,close\\n2024-03-11,101.20\\n2024-03-12,102.50\\n2024-03-13,99.80\\n2024-03-14,100.40\\n\")",
+            "expect": "[101.2, 102.5, 99.8, 100.4]",
+            "compare": "equal"
+          },
+          {
+            "call": "closes(\"date,open,close\\n2024-03-11,100.90,101.20\\n2024-03-12,101.20,102.50\\n\")",
+            "expect": "[101.2, 102.5]",
+            "compare": "equal"
+          },
+          {
+            "call": "closes(\"date,close\\n\")",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "type(closes(\"date,close\\n2024-03-11,101.20\\n2024-03-12,102.50\\n2024-03-13,99.80\\n2024-03-14,100.40\\n\")[0]).__name__",
+            "expect": "'float'",
+            "compare": "equal"
+          },
+          {
+            "call": "closes(\"close,date\\n0.72,2024-03-11\\n0.75,2024-03-12\")",
+            "expect": "[0.72, 0.75]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each passes a whole file as one string, with `\\n` between lines.",
+        "examples": [
+          {
+            "call": "closes(\"date,close\\n2024-03-11,101.20\\n2024-03-12,102.50\\n2024-03-13,99.80\\n2024-03-14,100.40\\n\")",
+            "expect": "[101.2, 102.5, 99.8, 100.4]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop over `csv.DictReader(text.splitlines())`; each row is a dict."
+        },
+        {
+          "rung": "point",
+          "text": "The value you want sits under the key `\"close\"`, as text.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For each row, append `float(row[\"close\"])` to a list, then return the list."
+        }
+      ],
+      "feedback": {
+        "correct": "Read by name, converted once, ready to use.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects floats such as `101.2`. Strings such as `'101.20'` mean the `float(...)` is missing.",
+          "test-2": "Test 2 has an extra `open` column. Splitting on commas and taking position 1 reads the open; `row[\"close\"]` reads the close wherever it sits."
+        }
+      },
+      "explain": {
+        "text": "`DictReader` handles the header, and `row[\"close\"]` finds the column by name in any position. `float` turns `'101.20'` into `101.2` once, as you read. A file with only a header gives an empty list.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Another export writes a space after each comma.\n\n```text\ndate, close\n2024-03-11, 101.20\n2024-03-12, 102.50\n```\n\n```python\nfor row in csv.DictReader(text.splitlines()):\n    print(row[\"close\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            " close"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              " 101.20"
+            ],
+            [
+              "2024-03-12",
+              " 102.50"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The header line here is `date, close`"
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`KeyError: 'close'`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It prints `101.20` and `102.50`",
+            "why": "You read the header as `close`. The space after the comma is kept, so the key is `' close'`."
+          },
+          {
+            "id": "c",
+            "text": "`ValueError: could not convert string to float`",
+            "why": "Nothing is converted here. The lookup of `'close'` fails before any number is read."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What exactly is the second name in the header line, character by character?"
+        },
+        {
+          "rung": "point",
+          "text": "This header has a space before `close`.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The keys are `'date'` and `' close'`. Asking for `'close'` finds nothing, so Python raises `KeyError`."
+        }
+      ],
+      "feedback": {
+        "correct": "The key is `' close'`, with its space, so `'close'` is missing.",
+        "generic": "Not quite right. Read the header exactly as written, spaces included."
+      },
+      "explain": {
+        "text": "`csv` keeps every character between the commas, so the key is `' close'`. Pass `skipinitialspace=True` to `DictReader` and the spaces after commas are dropped, in the header too. Then `row[\"close\"]` is `'101.20'`.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "You want the highest close in the file.\n\n```python\nprint(max(row[\"close\"] for row in rows))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "101.20"
+            ],
+            [
+              "2024-03-12",
+              "102.50"
+            ],
+            [
+              "2024-03-13",
+              "99.80"
+            ],
+            [
+              "2024-03-14",
+              "100.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "text",
+            "text": "`99.80`",
+            "correct": true
+          },
+          {
+            "id": "number",
+            "text": "`102.50`",
+            "why": "You compared the closes as amounts. They are strings, compared character by character, and `'9'` comes after `'1'`."
+          },
+          {
+            "id": "float",
+            "text": "`102.5`",
+            "why": "That is `max` over floats. These are still the strings from the file."
+          },
+          {
+            "id": "error",
+            "text": "`TypeError`",
+            "why": "Strings can be compared, so `max` works without an error. It compares text, not amounts."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What type is each `row[\"close\"]`?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare these as words, one character at a time, as a dictionary would order them.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`'99.80'` starts with `'9'`, and every other close starts with `'1'`. As text, `'9'` comes last, so it is the largest."
+        }
+      ],
+      "feedback": {
+        "correct": "As text, `'99.80'` beats them all, though it is the lowest price.",
+        "generic": "Not quite right. These values are strings. Compare them as text.",
+        "byKey": {
+          "number": "You compared amounts, but `max` saw strings. Text compares character by character, and `'9'` beats `'1'`.",
+          "float": "No `float` was applied, so `max` saw strings. `'99.80'` wins as text."
+        }
+      },
+      "explain": {
+        "text": "Strings compare letter by letter, so `'9'` beats `'1'` and `'99.80'` is the largest. It is actually the lowest close. Convert first: `max(float(row[\"close\"]) for row in rows)` gives `102.5`.",
+        "canvas": {
+          "highlight": [
+            "r2c1"
+          ],
+          "caption": "Largest as text, smallest as a price"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "UK files often write dates as day/month/year. You sort them as text.\n\n```python\ndays = [\"15/03/2024\", \"02/04/2024\", \"28/02/2024\"]\nprint(sorted(days))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "day"
+          ],
+          "rows": [
+            [
+              "15/03/2024"
+            ],
+            [
+              "02/04/2024"
+            ],
+            [
+              "28/02/2024"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['02/04/2024', '15/03/2024', '28/02/2024']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`['28/02/2024', '15/03/2024', '02/04/2024']`",
+            "why": "That is date order. `sorted` compares text character by character, so the day digits decide first."
+          },
+          {
+            "id": "c",
+            "text": "`['15/03/2024', '02/04/2024', '28/02/2024']`",
+            "why": "`sorted` does reorder the list. It just orders the strings as text."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which characters does a text comparison look at first?"
+        },
+        {
+          "rung": "point",
+          "text": "The first two characters are the day.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "As text, `'02'` < `'15'` < `'28'`, so the order follows the day of the month and ignores the month."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted by the day digits: 2 April lands first.",
+        "generic": "Not quite right. Sort the strings by their first characters."
+      },
+      "explain": {
+        "text": "Text sorting ignores what the digits mean. `datetime.strptime(\"15/03/2024\", \"%d/%m/%Y\")` turns the text into a date, and dates sort by time. `%d` is the day, `%m` the month and `%Y` the four-digit year.",
+        "canvas": {
+          "highlight": [
+            "r1c0"
+          ],
+          "caption": "2 April sorts first as text"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Fix the sort. Turn each string into a date, sort by the date, and give back the original strings.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "day"
+          ],
+          "rows": [
+            [
+              "15/03/2024"
+            ],
+            [
+              "02/04/2024"
+            ],
+            [
+              "28/02/2024"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `in_order(days)`: take `dd/mm/yyyy` strings and return the same strings in date order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from datetime import datetime\n\n\ndef in_order(days):\n    ...\n",
+        "solution": "from datetime import datetime\n\n\ndef in_order(days):\n    pairs = sorted((datetime.strptime(d, \"%d/%m/%Y\"), d) for d in days)\n    return [d for _, d in pairs]\n",
+        "tests": [
+          {
+            "call": "in_order([\"15/03/2024\", \"02/04/2024\", \"28/02/2024\"])",
+            "expect": "['28/02/2024', '15/03/2024', '02/04/2024']",
+            "compare": "equal"
+          },
+          {
+            "call": "in_order([\"05/01/2025\", \"31/12/2024\"])",
+            "expect": "['31/12/2024', '05/01/2025']",
+            "compare": "equal"
+          },
+          {
+            "call": "in_order([\"01/03/2024\", \"29/02/2024\", \"28/02/2024\"])",
+            "expect": "['28/02/2024', '29/02/2024', '01/03/2024']",
+            "compare": "equal"
+          },
+          {
+            "call": "in_order([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "in_order([\"12/06/2024\"])",
+            "expect": "['12/06/2024']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests that compare the list you return.",
+        "examples": [
+          {
+            "call": "in_order([\"15/03/2024\", \"02/04/2024\", \"28/02/2024\"])",
+            "expect": "['28/02/2024', '15/03/2024', '02/04/2024']",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Sort pairs whose first item is the date. Tuples sort by their first item."
+        },
+        {
+          "rung": "point",
+          "text": "Each string needs `datetime.strptime(d, \"%d/%m/%Y\")`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pairs = sorted((datetime.strptime(d, \"%d/%m/%Y\"), d) for d in days)`, then return `[d for _, d in pairs]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted by real dates: February, March, then April.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `['28/02/2024', '15/03/2024', '02/04/2024']`. Plain `sorted(days)` orders by the day digits. If you got dates back, return the original strings."
+        }
+      },
+      "explain": {
+        "text": "Each pair holds a date and its string. Tuples compare first items first, so the pairs sort by date, and the second items come along. Test 2 crosses a year end, which text sorting also gets wrong.",
+        "canvas": {
+          "highlight": [
+            "r2c0"
+          ],
+          "caption": "28 February comes first by date"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Everything `csv` reads is text. Convert each field once, as you read it:\n\n$$\\texttt{float(row[\"close\"])} \\qquad \\texttt{datetime.strptime(row[\"date\"], \"\\%d/\\%m/\\%Y\")}$$\n\nThen compare, sort and add the converted values, never the raw strings.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "101.20"
+            ],
+            [
+              "2024-03-12",
+              "102.50"
+            ],
+            [
+              "2024-03-13",
+              "99.80"
+            ],
+            [
+              "2024-03-14",
+              "100.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "`row[\"qty\"]` is `'250'`. Which expression gives the number 250?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`int(row[\"qty\"])`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`row[\"qty\"] * 1`",
+            "why": "Multiplying a string by 1 repeats it once. You still have the text `'250'`."
+          },
+          {
+            "id": "c",
+            "text": "`int(row)`",
+            "why": "`int` needs one field's text, not the whole row dict."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`int` turns the text `'250'` into the number 250.",
+        "generic": "Not quite right. Convert one field's text with `int`."
+      },
+      "explain": {
+        "text": "A quantity is a whole number, so `int` fits; a price takes `float`. Convert at the moment you read the row."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Returns from a vendor file",
+      "prose": "A data vendor sends closes newest first, with UK dates. A backtest needs daily returns in time order. Another export of the same prices comes in a jumbled order.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "05/03/2024",
+              "103.10"
+            ],
+            [
+              "04/03/2024",
+              "101.60"
+            ],
+            [
+              "01/03/2024",
+              "102.00"
+            ],
+            [
+              "29/02/2024",
+              "100.40"
+            ],
+            [
+              "28/02/2024",
+              "100.00"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The vendor's file, newest first"
+        }
+      },
+      "question": "Write `daily_returns(text)`: read the file, sort by date, and return each day's simple return, rounded to 4 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nfrom datetime import datetime\n\n\ndef daily_returns(text):\n    ...\n",
+        "solution": "import csv\nfrom datetime import datetime\n\n\ndef daily_returns(text):\n    pairs = []\n    for row in csv.DictReader(text.splitlines()):\n        when = datetime.strptime(row[\"date\"], \"%d/%m/%Y\")\n        pairs.append((when, float(row[\"close\"])))\n    pairs.sort()\n    out = []\n    for i in range(1, len(pairs)):\n        out.append(round(pairs[i][1] / pairs[i - 1][1] - 1, 4))\n    return out\n",
+        "tests": [
+          {
+            "call": "daily_returns(\"date,close\\n05/03/2024,103.10\\n04/03/2024,101.60\\n01/03/2024,102.00\\n29/02/2024,100.40\\n28/02/2024,100.00\\n\")",
+            "expect": "[0.004, 0.0159, -0.0039, 0.0148]",
+            "compare": "equal"
+          },
+          {
+            "call": "daily_returns(\"date,close\\n01/03/2024,102.00\\n28/02/2024,100.00\\n05/03/2024,103.10\\n29/02/2024,100.40\\n04/03/2024,101.60\\n\")",
+            "expect": "[0.004, 0.0159, -0.0039, 0.0148]",
+            "compare": "equal"
+          },
+          {
+            "call": "daily_returns(\"date,close\\n02/01/2025,250.00\\n31/12/2024,240.00\\n\")",
+            "expect": "[0.0417]",
+            "compare": "equal"
+          },
+          {
+            "call": "daily_returns(\"date,close\\n05/03/2024,103.10\\n\")",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests, each a whole file as one string. Returns are compared after rounding to 4 places.",
+        "examples": [
+          {
+            "call": "daily_returns(\"date,close\\n05/03/2024,103.10\\n04/03/2024,101.60\\n01/03/2024,102.00\\n29/02/2024,100.40\\n28/02/2024,100.00\\n\")",
+            "expect": "[0.004, 0.0159, -0.0039, 0.0148]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build `(date, close)` pairs, sort them, then walk through neighbours."
+        },
+        {
+          "rung": "point",
+          "text": "The oldest day is at the bottom of this file.",
+          "highlight": [
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Append `(datetime.strptime(row[\"date\"], \"%d/%m/%Y\"), float(row[\"close\"]))` for each row and sort. Then return `round(p1 / p0 - 1, 4)` for each neighbouring pair."
+        }
+      ],
+      "feedback": {
+        "correct": "In time order the returns are [0.004, 0.0159, -0.0039, 0.0148].",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `[0.004, 0.0159, -0.0039, 0.0148]`. Sorting the date strings as text puts 1 March before 28 February.",
+          "test-2": "Test 2 is the same prices in a jumbled order. Reversing the file only works when it is exactly newest first; sort by the parsed date."
+        }
+      },
+      "explain": {
+        "text": "Sorted by date the closes run £100.00, £100.40, £102.00, £101.60, £103.10. Four days of change give four returns, the first 0.004 from £100.00 to £100.40. Parsing the dates is what makes 29 February come before 1 March.",
+        "canvas": {
+          "highlight": [
+            "r4",
+            "r3"
+          ],
+          "caption": "Oldest first: 28 February, then 29 February"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`csv.DictReader` turns each line after the header into a dict keyed by the header names.",
+      "Every value it gives is text. Convert closes with `float`, quantities with `int` and dates with `datetime.strptime`, as you read.",
+      "Text compares character by character, so `'99.80'` beats `'102.50'` and `'02/04/2024'` sorts before `'15/03/2024'`."
+    ],
+    "formula": {
+      "name": "Reading a price file",
+      "tex": "\\texttt{for row in csv.DictReader(lines):}\\ \\texttt{float(row[\"close\"])}",
+      "note": "`%d/%m/%Y` reads 15/03/2024 and `%Y-%m-%d` reads 2024-03-15."
+    },
+    "trap": "`max`, `sorted` and `+` on the raw column work on text. Convert to `float` before you compare, sort or add."
+  },
+  "quiz": [
+    {
+      "id": "q-repeat",
+      "difficulty": 2,
+      "prose": "A row from `csv.DictReader` holds `{'date': '2024-03-11', 'close': '101.20'}`.\n\n```python\nprint(row[\"close\"] * 2)\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`101.20101.20`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`202.4`",
+            "why": "You treated the close as a number. It is the string `'101.20'`, and a string times 2 repeats it."
+          },
+          {
+            "id": "c",
+            "text": "`TypeError`",
+            "why": "A string times a whole number is legal in Python. It repeats the text."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The value is text, so `* 2` repeats it.",
+        "generic": "Not quite right. What type does `csv` give back?"
+      },
+      "explain": {
+        "text": "`csv` gives text, and text times 2 is the text twice. `float(row[\"close\"]) * 2` gives `202.4`."
+      }
+    },
+    {
+      "id": "q-count",
+      "difficulty": 2,
+      "prose": "`text` holds a header line, then five lines of prices, then one empty line at the end.\n\n```python\nrows = list(csv.DictReader(text.splitlines()))\nprint(len(rows))\n```",
+      "question": "What number does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "5",
+        "wrong": [
+          {
+            "id": "header",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "seven",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Five rows: the header gives the keys and the empty line is skipped.",
+        "generic": "Not quite right. Leave out the header line and the empty line.",
+        "byKey": {
+          "header": "You counted the header line as a row. It supplies the keys, so it is not returned.",
+          "seven": "You counted the header and the empty line. `DictReader` returns neither."
+        }
+      },
+      "explain": {
+        "text": "The header becomes the keys, and `DictReader` skips completely empty lines. That leaves one dict per price line: 5."
+      }
+    },
+    {
+      "id": "q-format",
+      "difficulty": 3,
+      "prose": "```python\nfrom datetime import datetime\n\nd = datetime.strptime(\"2024-03-15\", \"%d/%m/%Y\")\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`ValueError: time data '2024-03-15' does not match format '%d/%m/%Y'`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`d` is 15 March 2024",
+            "why": "`strptime` does not guess. The format must match the text exactly, and this text uses dashes, year first."
+          },
+          {
+            "id": "c",
+            "text": "`d` is 20 March 2015",
+            "why": "`strptime` never reads part of a field and moves on. Any mismatch raises an error."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The format string must match the text exactly.",
+        "generic": "Not quite right. Compare the format with the text character by character."
+      },
+      "explain": {
+        "text": "`%d/%m/%Y` expects day, slash, month, slash, year. The text starts with a four-digit year and uses dashes, so `strptime` raises `ValueError`. The right format is `%Y-%m-%d`."
+      }
+    },
+    {
+      "id": "q-iso",
+      "difficulty": 3,
+      "prose": "```python\ndays = [\"2024-03-15\", \"2024-02-28\", \"2024-04-02\"]\nprint(sorted(days))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['2024-02-28', '2024-03-15', '2024-04-02']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`['2024-04-02', '2024-03-15', '2024-02-28']`",
+            "why": "`sorted` puts the smallest first, and these strings compare in date order."
+          },
+          {
+            "id": "c",
+            "text": "`['2024-03-15', '2024-04-02', '2024-02-28']`",
+            "why": "You sorted by the day digits. These strings start with the year, then the month."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Year-month-day text sorts in date order.",
+        "generic": "Not quite right. Which characters does the comparison read first here?"
+      },
+      "explain": {
+        "text": "With the year first, then a two-digit month, then a two-digit day, text order is date order. That is why ISO dates such as 2024-03-15 are safe to sort as strings, and UK dates are not."
+      }
+    }
+  ]
+}

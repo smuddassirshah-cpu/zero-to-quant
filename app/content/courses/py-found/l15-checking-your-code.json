@@ -1,0 +1,1007 @@
+{
+  "id": "l15-checking-your-code",
+  "course": "py-found",
+  "title": "Checking your own code",
+  "minutes": 15,
+  "objectives": [
+    "Write assertions that test a function's edge cases",
+    "Compute and annualise the volatility of daily returns"
+  ],
+  "skills": [
+    "pf-functions",
+    "pf-modules"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "How far from average?",
+      "prose": "A fund's returns over five days. Their average is exactly 0%. Volatility measures how far a typical day strays from the average.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1.0%",
+            "−2.0%",
+            "1.5%",
+            "0.5%",
+            "−1.0%"
+          ],
+          "indexFrom": 1
+        },
+        "state": {
+          "caption": "Daily returns, average 0%"
+        }
+      },
+      "question": "Tap the day that moved furthest from the average.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2"
+        ],
+        "max": 1,
+        "countWord": "days"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Distance from 0% ignores the sign. How far is each day from 0%?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the biggest rise with the biggest fall.",
+          "highlight": [
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The biggest rise is 1.5% from the average; the biggest fall is 2.0% away."
+        }
+      ],
+      "feedback": {
+        "correct": "Day 2 is 2.0% from the average, the furthest.",
+        "generic": "Not quite right. Measure each day's distance from 0%, whatever its sign.",
+        "byKey": {
+          "c3": "You picked the largest number. A fall of 2.0% is further from 0% than a rise of 1.5%.",
+          "c1": "Day 1 is 1.0% from the average. Day 2 is further.",
+          "c5": "Day 5 is 1.0% from the average. Day 2 is further.",
+          "c4": "Day 4 is the closest to the average, only 0.5% away."
+        }
+      },
+      "explain": {
+        "text": "You measured distance from the average, ignoring the sign. The standard deviation does this for every day at once: it squares each distance, averages the squares and takes the square root. Squaring treats a fall of 2% exactly like a rise of 2%.",
+        "canvas": {
+          "highlight": [
+            "c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A line that checks",
+      "prose": "Before trusting `mean`, we check it. `assert condition` does nothing when the condition is true and stops the program with `AssertionError` when it is false.\n\n```python\ndef mean(xs):\n    return sum(xs) / len(xs)\n\nassert mean([0.1, 0.2]) == 0.15\nprint(\"passed\")\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0.1",
+            "0.2"
+          ]
+        },
+        "state": {
+          "caption": "Two returns, average 0.15"
+        }
+      },
+      "question": "What happens when it runs?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pass",
+            "text": "It prints `passed`",
+            "why": "You trusted `==` with floats. `0.1 + 0.2` is `0.30000000000000004`, so the mean is a hair above 0.15."
+          },
+          {
+            "id": "right",
+            "text": "It stops with `AssertionError`",
+            "correct": true
+          },
+          {
+            "id": "bug",
+            "text": "It stops because `mean` has a bug",
+            "why": "`mean` is right. The test is what is fragile: it demands exact equality from a float."
+          },
+          {
+            "id": "zero",
+            "text": "It stops with `ZeroDivisionError`",
+            "why": "`len([0.1, 0.2])` is 2, not 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Remember lesson 1: what is `0.1 + 0.2` in Python?"
+        },
+        {
+          "rung": "point",
+          "text": "`0.1 + 0.2` is `0.30000000000000004`. Halve it.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The mean is `0.15000000000000002`, which is not `== 0.15`, so the assert fails."
+        }
+      ],
+      "feedback": {
+        "correct": "The function is fine; the exact comparison is not.",
+        "generic": "Not quite right. Work out `mean([0.1, 0.2])` as Python does, float error included.",
+        "byKey": {
+          "pass": "You trusted `==` with floats. The mean is `0.15000000000000002`, so the assert fails.",
+          "bug": "`mean` is correct. The test demands exact equality from a float, and that is the fragile part."
+        }
+      },
+      "explain": {
+        "text": "The mean comes out as `0.15000000000000002`, so `==` says false and the assert stops the program. Tests on floats compare with a tolerance: `assert math.isclose(mean([0.1, 0.2]), 0.15)` passes.",
+        "canvas": {
+          "caption": "mean = 0.15000000000000002"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now the spread, by hand. For $[1, 3]$ the mean is 2, each value is 1 away, and the average squared distance is 1, so the answer is $\\sqrt{1} = 1$. The starter's assert checks exactly that.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1.0%",
+            "−2.0%",
+            "1.5%",
+            "0.5%",
+            "−1.0%"
+          ],
+          "indexFrom": 1
+        },
+        "state": {
+          "caption": "Answer for these five: about 0.01304"
+        }
+      },
+      "question": "Write `sd(xs)`: the square root of the average squared distance from the mean.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\ndef mean(xs):\n    return sum(xs) / len(xs)\n\ndef sd(xs):\n    pass  # the square root of the average squared distance from the mean\n\nassert math.isclose(sd([1.0, 3.0]), 1.0)\nprint(sd([0.01, -0.02, 0.015, 0.005, -0.01]))\n",
+        "solution": "import math\n\ndef mean(xs):\n    return sum(xs) / len(xs)\n\ndef sd(xs):\n    m = mean(xs)\n    return math.sqrt(sum((x - m) ** 2 for x in xs) / len(xs))\n\nassert math.isclose(sd([1.0, 3.0]), 1.0)\nprint(sd([0.01, -0.02, 0.015, 0.005, -0.01]))\n",
+        "tests": [
+          {
+            "call": "sd([1.0, 3.0])",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "sd([0.01, -0.02, 0.015, 0.005, -0.01])",
+            "expect": "0.013038404810405297",
+            "compare": "isclose"
+          },
+          {
+            "call": "sd([2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0])",
+            "expect": "2.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "sd([0.004, 0.004, 0.004])",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each answer is accepted when it is within a relative $10^{-9}$ of the expected value.",
+        "examples": [
+          {
+            "call": "sd([0.01, -0.02, 0.015, 0.005, -0.01])",
+            "expect": "0.013038404810405297",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Three steps: find the mean, average the squared distances, take the square root."
+        },
+        {
+          "rung": "point",
+          "text": "`(x - m) ** 2` is one squared distance. Sum them over `xs`, then divide by `len(xs)`.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`m = mean(xs)`, then `return math.sqrt(sum((x - m) ** 2 for x in xs) / len(xs))`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your spread matches the hand calculation.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-2": "Test 2 expects about 0.01304. About 0.00017 means the square root is missing; 0.012 means you averaged plain distances instead of squared ones.",
+          "error": "An `AssertionError` on load means your `sd([1.0, 3.0])` is not 1. Divide by `len(xs)`, and take the square root."
+        }
+      },
+      "explain": {
+        "text": "For the five returns the squared distances add to 0.00085. Dividing by 5 gives 0.00017, and its square root is 0.01304. Test 4 is the edge case: identical returns have no spread at all.",
+        "canvas": {
+          "caption": "sd = √(0.00085 / 5) ≈ 0.01304"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "To check `sd`, you compare it with the `statistics` module, which has `mean` and `stdev` built in.\n\n```python\nr = [0.01, -0.02, 0.015, 0.005, -0.01]\nprint(sd(r))                 # 0.01303840...\nprint(statistics.stdev(r))   # 0.01457737...\nassert math.isclose(sd(r), statistics.stdev(r))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Function",
+            "Divides by",
+            "Result"
+          ],
+          "rows": [
+            [
+              "sd (yours)",
+              "?",
+              "0.013038"
+            ],
+            [
+              "statistics.stdev",
+              "?",
+              "0.014577"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "The assert fails. Which number is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mine",
+            "text": "Yours: `sd` has a bug",
+            "why": "You assumed the library is the reference. Your `sd` does exactly what you designed: it divides by $n$."
+          },
+          {
+            "id": "right",
+            "text": "Neither: `stdev` divides by $n - 1$, yours by $n$",
+            "correct": true
+          },
+          {
+            "id": "float",
+            "text": "Neither: it is floating point error",
+            "why": "Float error is around $10^{-17}$. These differ in the second significant figure."
+          },
+          {
+            "id": "lib",
+            "text": "`stdev`: the library rounds badly",
+            "why": "The ratio is $\\sqrt{5/4} \\approx 1.118$ exactly. That is a different formula, not rounding."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide one result by the other. Does the ratio look like rounding?"
+        },
+        {
+          "rung": "point",
+          "text": "The ratio is about 1.118, which is $\\sqrt{5/4}$.",
+          "highlight": [
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Squared distances 0.00085 over 5 gives your answer; over 4 gives `stdev`'s."
+        }
+      ],
+      "feedback": {
+        "correct": "Two definitions: $n - 1$ for a sample, $n$ for a whole population.",
+        "generic": "Not quite right. Compare the two results as a ratio.",
+        "byKey": {
+          "mine": "You assumed the library is the reference. Your `sd` divides by 5, as designed; `stdev` divides by 4.",
+          "float": "Float error is tiny, around $10^{-17}$. A gap of 0.0015 comes from a different formula."
+        }
+      },
+      "explain": {
+        "text": "`statistics.pstdev` divides by $n$ and matches yours. `statistics.stdev` divides by $n - 1$: five days are a **sample**, and their own mean sits closer to them than the true mean, so dividing by $n$ runs small. Volatility estimates use `stdev`.",
+        "canvas": {
+          "values": {
+            "r0c1": "n = 5",
+            "r1c1": "n − 1 = 4"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A strategy started trading yesterday, so it has one daily return so far.\n\n```python\nprint(statistics.pstdev([0.012]))\nprint(statistics.stdev([0.012]))\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1.2%"
+          ],
+          "indexFrom": 1
+        },
+        "state": {
+          "caption": "One daily return"
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`0.0`, then a `StatisticsError`",
+            "correct": true
+          },
+          {
+            "id": "zeros",
+            "text": "`0.0`, then `0.0`",
+            "why": "With $n - 1 = 0$ the sample formula would divide by zero, so `stdev` refuses."
+          },
+          {
+            "id": "both",
+            "text": "Two errors",
+            "why": "`pstdev` divides by $n = 1$, which is fine. One value has zero spread around itself."
+          },
+          {
+            "id": "value",
+            "text": "`0.012` twice",
+            "why": "That is the return itself. The spread of one value around its own mean is 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is $n - 1$ when $n = 1$?"
+        },
+        {
+          "rung": "point",
+          "text": "`pstdev` divides by 1; `stdev` would divide by 0.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pstdev` gives 0.0. `stdev` raises `StatisticsError: stdev requires at least two data points`."
+        }
+      ],
+      "feedback": {
+        "correct": "One point has no spread, and no sample estimate.",
+        "generic": "Not quite right. Work out each denominator with $n = 1$."
+      },
+      "explain": {
+        "text": "`pstdev([0.012])` is 0.0: one value sits on its own mean. `stdev` needs at least two values and raises `StatisticsError`. A volatility function should expect this edge case on a strategy's first day.",
+        "canvas": {
+          "caption": "n = 1: pstdev 0.0, stdev raises"
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Vol is quoted per year. A year has about 252 trading days: 365, less 104 weekend days, less about 9 holidays. Treat a year's return as roughly the sum of 252 daily returns $r_i$, each with standard deviation $\\sigma$.",
+      "question": "Put the lines in order to find the yearly standard deviation.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "sum",
+            "text": "$R \\approx r_1 + r_2 + \\dots + r_{252}$, a year's return as a sum of days"
+          },
+          {
+            "id": "add",
+            "text": "$\\text{Var}(R) \\approx \\text{Var}(r_1) + \\dots + \\text{Var}(r_{252})$, the days are independent, so variances add"
+          },
+          {
+            "id": "same",
+            "text": "$\\text{Var}(R) \\approx 252\\,\\sigma^2$, every day has variance $\\sigma^2$"
+          },
+          {
+            "id": "root",
+            "text": "$\\text{sd}(R) \\approx \\sqrt{252}\\,\\sigma$, take the square root of both sides"
+          }
+        ],
+        "answer": [
+          "sum",
+          "add",
+          "same",
+          "root"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by writing the year in terms of the days."
+        },
+        {
+          "rung": "point",
+          "text": "Variances add for independent days; standard deviations do not."
+        },
+        {
+          "rung": "step",
+          "text": "Sum of days, then add the variances, then 252 equal terms, then the square root."
+        }
+      ],
+      "feedback": {
+        "correct": "Variance grows with time, so the standard deviation grows with its square root.",
+        "generic": "Not quite right. Begin with the year as a sum, and take the square root last.",
+        "byKey": {
+          "root": "The square root comes last, once the variance is known.",
+          "same": "Before counting 252 equal terms, split the variance of the sum into one term per day."
+        }
+      },
+      "explain": {
+        "text": "Variances of independent days add, so a year has $252\\sigma^2$ of variance. The square root gives $\\sqrt{252}\\,\\sigma \\approx 15.87\\,\\sigma$. That is why vol scales with $\\sqrt{252}$, not 252."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A share's daily returns have a sample standard deviation of 1.2%. $\\sqrt{252} \\approx 15.87$.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1.2%",
+            "× √252",
+            "= ?"
+          ]
+        },
+        "state": {
+          "caption": "Daily vol to annual vol"
+        }
+      },
+      "question": "What is its annualised volatility, in percent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19.05,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "%",
+        "label": "Annualised volatility",
+        "accept": "19.05%, give or take 0.05: $1.2\\% \\times \\sqrt{252} \\approx 19.05\\%$.",
+        "wrong": [
+          {
+            "id": "times252",
+            "value": 302.4,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "days365",
+            "value": 22.93,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "sqrt",
+            "value": 1.0954451150103321,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the daily figure by the square root of the trading days."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sqrt{252} \\approx 15.87$.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.2 \\times 15.87 \\approx 19.05$, so about 19.05%."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.2\\% \\times 15.87 \\approx 19.05\\%$ a year.",
+        "generic": "Not quite right. Multiply 1.2% by $\\sqrt{252}$.",
+        "byKey": {
+          "times252": "You multiplied by 252. Variance scales with the days; the standard deviation scales with their square root.",
+          "days365": "You used 365 calendar days. Prices only move on about 252 trading days a year.",
+          "sqrt": "You took the square root of 1.2. The square root belongs on the 252."
+        }
+      },
+      "explain": {
+        "text": "$0.012 \\times \\sqrt{252} = 0.012 \\times 15.87 \\approx 0.1905$, about 19.05% a year. Using 365 days would overstate it at about 22.93%.",
+        "canvas": {
+          "cells": [
+            "1.2%",
+            "× √252",
+            "≈ 19.05%"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Tests that catch bugs",
+      "prose": "A test earns its keep by failing on wrong code. `check_vol(vol)` takes any version of a volatility function and asserts what it must give. Hidden versions include the right one and three common mistakes. Work your expected values out by hand.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Version",
+            "Formula",
+            "Your asserts should"
+          ],
+          "rows": [
+            [
+              "right",
+              "stdev × √252",
+              "pass"
+            ],
+            [
+              "population",
+              "pstdev × √252",
+              "fail"
+            ],
+            [
+              "no root",
+              "stdev × 252",
+              "fail"
+            ],
+            [
+              "calendar",
+              "stdev × √365",
+              "fail"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write asserts in `check_vol` that pass on the right version and fail on each of the three mistakes.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\nimport statistics\n\ndef caught(check, version):\n    # The checker uses this helper: leave it in.\n    try:\n        check(version)\n    except AssertionError:\n        return True\n    return False\n\ndef check_vol(vol):\n    # Write asserts about vol(returns), with answers you work out by hand.\n    pass\n\ngood = lambda r: statistics.stdev(r) * math.sqrt(252)\nprint(caught(check_vol, good))   # should be False\n",
+        "solution": "import math\nimport statistics\n\ndef caught(check, version):\n    # The checker uses this helper: leave it in.\n    try:\n        check(version)\n    except AssertionError:\n        return True\n    return False\n\ndef check_vol(vol):\n    # Write asserts about vol(returns), with answers you work out by hand.\n    # [0.01, -0.01]: mean 0, squared distances 0.0002 over n - 1 = 1\n    assert math.isclose(vol([0.01, -0.01]), math.sqrt(0.0002 * 252))\n    # edge case: identical returns have no spread\n    assert math.isclose(vol([0.003, 0.003, 0.003]), 0.0, abs_tol=1e-12)\n\ngood = lambda r: statistics.stdev(r) * math.sqrt(252)\nprint(caught(check_vol, good))   # should be False\n",
+        "tests": [
+          {
+            "call": "caught(check_vol, lambda r: statistics.stdev(r) * math.sqrt(252))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "caught(check_vol, lambda r: statistics.pstdev(r) * math.sqrt(252))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "caught(check_vol, lambda r: statistics.stdev(r) * 252)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "caught(check_vol, lambda r: statistics.stdev(r) * math.sqrt(365))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "caught(check_vol, lambda r: (sum((x - sum(r) / len(r)) ** 2 for x in r) / (len(r) - 1)) ** 0.5 * 252 ** 0.5)",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each hands `check_vol` one version: two correct versions must pass every assert, and each mistake must fail one.",
+        "examples": [
+          {
+            "call": "caught(check_vol, lambda r: statistics.stdev(r) * math.sqrt(252))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "caught(check_vol, lambda r: statistics.pstdev(r) * math.sqrt(252))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Pick a tiny input you can do by hand, such as `[0.01, -0.01]`."
+        },
+        {
+          "rung": "point",
+          "text": "For `[0.01, -0.01]` the mean is 0 and the squared distances add to 0.0002. The right version divides by $n - 1 = 1$.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`assert math.isclose(vol([0.01, -0.01]), math.sqrt(0.0002 * 252))` catches all three mistakes."
+        }
+      ],
+      "feedback": {
+        "correct": "Your asserts pass the right versions and catch every mistake.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 hands you the right version, and an assert failed. Compare floats with `math.isclose`, not `==`.",
+          "test-2": "Test 2 is the population version, and nothing failed. Assert an exact value that only the $n - 1$ formula gives.",
+          "test-5": "Test 5 is a correct version written by hand. If it fails, an assert uses `==`, which float error defeats."
+        }
+      },
+      "explain": {
+        "text": "One hand-worked value, $\\sqrt{0.0002 \\times 252} \\approx 0.2245$, separates all three mistakes: they give 0.1587, 3.564 and 0.2702. Test 5 is a correct version with different rounding, so `==` would wrongly fail it.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Volatility is the sample standard deviation of daily returns, scaled to a year: $$\\sigma_{\\text{annual}} = \\sqrt{252}\\;\\sqrt{\\frac{1}{n - 1}\\sum_{i=1}^{n}(r_i - \\bar r)^2}$$ Each small function gets a test of asserts. **pytest** runs every function named `test_...` in files named `test_*.py`, and reports each failing assert.",
+      "question": "In `test_risk.py`, which function does pytest run on its own?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`def test_annualised_vol():`",
+            "correct": true
+          },
+          {
+            "id": "check",
+            "text": "`def check_vol(vol):`",
+            "why": "pytest only collects names starting with `test`. It also cannot know what to pass as `vol`."
+          },
+          {
+            "id": "suffix",
+            "text": "`def annualised_vol_test():`",
+            "why": "The word must come first: pytest looks for names that start with `test`."
+          },
+          {
+            "id": "all",
+            "text": "Every function in the file",
+            "why": "Helpers would run too, with no arguments. pytest runs only the `test_` functions."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A `test_` name with no arguments: pytest finds it and calls it.",
+        "generic": "Not quite right. pytest picks functions by their name."
+      },
+      "explain": {
+        "text": "pytest finds `test_annualised_vol` by its name, calls it, and reports an `AssertionError` as a failed test. You already write the asserts; pytest only collects and runs them."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Vol for the risk report",
+      "prose": "The share from the last lesson had these six daily returns. A risk report quotes its annualised volatility, and the function needs a test beside it, as pytest would run.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "r",
+              "label": "Return",
+              "values": [
+                0.01025,
+                -0.013239,
+                0.006144,
+                0.02156,
+                -0.011102,
+                0.018011
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "format": "pct",
+          "baseline": 0,
+          "height": 220
+        },
+        "state": {
+          "caption": "Six daily returns, 29 January to 5 February"
+        }
+      },
+      "question": "Write `annualised_vol(returns)` with `statistics.stdev` and $\\sqrt{252}$, and a `test_annualised_vol()` that passes.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\nimport statistics\n\ndef annualised_vol(returns):\n    pass  # replace this line\n\ndef test_annualised_vol():\n    # one assert with a value worked out by hand, one for an edge case\n    pass\n\ntest_annualised_vol()\nreturns = [0.01025, -0.013239, 0.006144, 0.02156, -0.011102, 0.018011]\nprint(f\"Annualised vol: {annualised_vol(returns):.2%}\")\n",
+        "solution": "import math\nimport statistics\n\ndef annualised_vol(returns):\n    return statistics.stdev(returns) * math.sqrt(252)\n\ndef test_annualised_vol():\n    # one assert with a value worked out by hand, one for an edge case\n    assert math.isclose(annualised_vol([0.01, -0.01]), math.sqrt(0.0002 * 252))\n    assert math.isclose(annualised_vol([0.002, 0.002]), 0.0, abs_tol=1e-12)\n\ntest_annualised_vol()\nreturns = [0.01025, -0.013239, 0.006144, 0.02156, -0.011102, 0.018011]\nprint(f\"Annualised vol: {annualised_vol(returns):.2%}\")\n",
+        "tests": [
+          {
+            "call": "annualised_vol([0.01, -0.02, 0.015, 0.005, -0.01])",
+            "expect": "0.2314087293081227",
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol([0.01, -0.01])",
+            "expect": "0.22449944320643647",
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol([0.01025, -0.013239, 0.006144, 0.02156, -0.011102, 0.018011])",
+            "expect": "0.23155971310744017",
+            "compare": "isclose"
+          },
+          {
+            "call": "annualised_vol([0.003, 0.003, 0.003, 0.003])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "test_annualised_vol()",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Four compare your volatility within a relative $10^{-9}$; the last runs your `test_annualised_vol()`, which must finish without an `AssertionError`.",
+        "examples": [
+          {
+            "call": "annualised_vol([0.01, -0.02, 0.015, 0.005, -0.01])",
+            "expect": "0.2314087293081227",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One line for the function. Two asserts for the test, as on the earlier screen."
+        },
+        {
+          "rung": "point",
+          "text": "`statistics.stdev` divides by $n - 1$; then scale by `math.sqrt(252)`.",
+          "highlight": [
+            "r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return statistics.stdev(returns) * math.sqrt(252)`. In the test: `assert math.isclose(annualised_vol([0.01, -0.01]), math.sqrt(0.0002 * 252))`."
+        }
+      ],
+      "feedback": {
+        "correct": "About 23.16% a year, with a test that pins it down.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects about 0.2314. About 0.2070 means `pstdev`; about 3.67 means you multiplied by 252, not its square root.",
+          "test-5": "Test 5 ran your `test_annualised_vol()` and an assert failed. Check your hand-worked value, and compare with `math.isclose`."
+        }
+      },
+      "explain": {
+        "text": "`stdev` gave a daily figure of about 0.0146, and $\\sqrt{252}$ scaled it to about 23.16% a year. Your test pins the formula with a value you can check by hand, so a later edit that breaks it fails at once."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`assert` stops the program when a condition is false. Compare floats with `math.isclose`, never `==`.",
+      "`statistics.stdev` divides by $n - 1$, the sample estimate used for volatility. `pstdev` divides by $n$.",
+      "Variances of independent days add, so yearly volatility is the daily figure times $\\sqrt{252}$."
+    ],
+    "formula": {
+      "name": "Annualised volatility",
+      "tex": "\\sigma_{\\text{annual}} = \\sqrt{252}\\,\\sqrt{\\frac{1}{n - 1}\\sum_{i=1}^{n} (r_i - \\bar r)^2}",
+      "note": "252 trading days, not 365 calendar days; at least two returns."
+    },
+    "trap": "`pstdev` and `stdev` differ by a factor of $\\sqrt{n / (n - 1)}$. A test against the wrong one fails a correct function."
+  },
+  "quiz": [
+    {
+      "id": "q-which-sd",
+      "difficulty": 2,
+      "prose": "You have 20 daily returns of a stock and want its volatility.",
+      "question": "Which function gives the daily figure?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`statistics.stdev(returns)`",
+            "correct": true
+          },
+          {
+            "id": "p",
+            "text": "`statistics.pstdev(returns)`",
+            "why": "That treats the 20 days as everything there is. They are a sample of the stock's behaviour."
+          },
+          {
+            "id": "mean",
+            "text": "`statistics.mean(returns)`",
+            "why": "The mean is the average day, not the spread around it."
+          },
+          {
+            "id": "range",
+            "text": "`max(returns) - min(returns)`",
+            "why": "That is the range, set by just two days. The standard deviation uses every day."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Twenty days are a sample, so divide by $n - 1$.",
+        "generic": "Not quite right. Which function estimates spread from a sample?"
+      },
+      "explain": {
+        "text": "The 20 returns are a sample, so `stdev` and its $n - 1$ give the estimate. With 20 days the two differ by $\\sqrt{20/19} \\approx 1.026$, about 2.6%."
+      }
+    },
+    {
+      "id": "q-annualise",
+      "difficulty": 2,
+      "prose": "A fund's daily volatility is 0.8%.",
+      "question": "What is its annualised volatility?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.7,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "%",
+        "label": "Annualised volatility",
+        "accept": "12.70%: $0.8\\% \\times \\sqrt{252} \\approx 12.70\\%$.",
+        "wrong": [
+          {
+            "id": "x252",
+            "value": 201.6,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "x365",
+            "value": 15.28,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.8\\% \\times 15.87 \\approx 12.70\\%$.",
+        "generic": "Not quite right. Scale by the square root of 252.",
+        "byKey": {
+          "x252": "You multiplied by 252. Only the variance scales with the number of days.",
+          "x365": "You used 365 days. Markets trade on about 252."
+        }
+      },
+      "explain": {
+        "text": "$0.008 \\times \\sqrt{252} = 0.008 \\times 15.87 \\approx 0.127$, so about 12.70% a year."
+      }
+    },
+    {
+      "id": "q-assert-float",
+      "difficulty": 3,
+      "prose": "```python\nr = [0.01, -0.02, 0.015, 0.005, -0.01]\nassert sum(r) / len(r) == 0\n```",
+      "question": "The returns add to zero on paper. What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`AssertionError`: the float sum is a tiny bit off zero",
+            "correct": true
+          },
+          {
+            "id": "pass",
+            "text": "Nothing: the assert passes",
+            "why": "On paper yes, but floats round at each step. The sum is about $-8.7 \\times 10^{-19}$."
+          },
+          {
+            "id": "type",
+            "text": "`TypeError`: comparing a float with an int",
+            "why": "Python compares `0.0` with `0` happily. The trouble is the value, not the types."
+          },
+          {
+            "id": "zero",
+            "text": "`ZeroDivisionError`",
+            "why": "The division is by `len(r)`, which is 5."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Float rounding leaves a speck of error, and `==` sees it.",
+        "generic": "Not quite right. Floats like 0.015 are not stored exactly."
+      },
+      "explain": {
+        "text": "Each float is stored slightly off, so the sum comes out near $-8.7 \\times 10^{-19}$, not 0. Use `math.isclose(mean, 0, abs_tol=1e-12)`: near zero a relative tolerance alone is too strict."
+      }
+    },
+    {
+      "id": "q-edge",
+      "difficulty": 3,
+      "prose": "`annualised_vol(returns)` uses `statistics.stdev`. A colleague adds an edge-case test.",
+      "question": "Which assert is a correct edge-case test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`assert math.isclose(annualised_vol([0.004, 0.004]), 0.0, abs_tol=1e-12)`",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "`assert annualised_vol([0.004]) == 0.0`",
+            "why": "With one return `stdev` raises `StatisticsError`, so this assert never gets to compare."
+          },
+          {
+            "id": "eq",
+            "text": "`assert annualised_vol([0.01, -0.01]) == 0.2245`",
+            "why": "0.2245 is rounded, and `==` demands every digit. Use `math.isclose` with the exact value."
+          },
+          {
+            "id": "pos",
+            "text": "`assert annualised_vol([0.01, -0.01]) > 0`",
+            "why": "True, but it would also pass with `pstdev` or 365 days. A test should pin the value."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Identical returns have zero spread, checked with a tolerance.",
+        "generic": "Not quite right. A good test fails on wrong code and passes on right code."
+      },
+      "explain": {
+        "text": "Two equal returns are the smallest valid input, and their volatility is exactly 0. `abs_tol` is needed because a relative tolerance around 0 accepts nothing but exact zero."
+      }
+    }
+  ]
+}

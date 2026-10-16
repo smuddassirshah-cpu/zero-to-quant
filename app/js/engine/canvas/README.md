@@ -12,7 +12,7 @@ Authoring reference for the canvas kinds built on `_base.js` by E3. The lesson s
 
 | key | meaning |
 |---|---|
-| `caption` | text under the drawing (markdown with `$...$` maths) |
+| `caption` | text under the drawing, rendered like lesson prose: `$...$` maths, `**bold**`, `*italic*` and inline code in backticks (where `$` and `*` stay literal) |
 | `highlight` | `[ids]`: pear wash and a 2px ink ring that pulses twice, stays until cleared (`"highlight": []`) |
 | `selected` | `[ids]`: the learner's tap selection, in manipulable blue. The `tap-regions` widget reads and writes it |
 
@@ -41,10 +41,12 @@ Sample spaces, two-dice tables, area models, Punnett squares. Square cells, at m
 | `cells` | blank | `"pair"` shows "r, c", `"sum"`, `"product"`, `"diff"` (absolute), `"max"`, `"min"`, or a 2D array of strings |
 | `text` | `"always"` | `"marked"` hides cell text until a cell is shaded, selected, graded, flashed or highlighted (the prototype's look) |
 | `compact` | false | smaller grid for title screens |
+| `lattice` | false | points instead of cells: a dot at each cell centre, joined to its neighbours by streets, its text above right of the dot (path counts). Ids, shading, taps, marks and `paths` work the same way |
+| `rowOffsets` | none | per-row shift in cell widths, `[0, 0.25, 0.75]`, for staggered layouts such as a keyboard; outlines and highlights follow the shift |
 
-**state**: `shade: { "<set>": [ids] }` (or one array; sets take series slots in order: 18% fill and a 2px stroke; a cell in a second set gets an inner ring), `outline: "row5" | "col3" | "cross5" | "cross5-3" | [ids]` (dashed union outline in the gutters, one path), `dim: [ids]` (fades to 20%, row after row), `mark: { "<id>": "✓" | { "text": "×2", "tone": "notyet" | "correct" | "hint" } }`, `point: [ids]` (the prototype's hint box around the cells' bounding box; pulses twice, fades after 3.2s).
+**state**: `shade: { "<set>": [ids] }` (or one array; sets take series slots in order: 18% fill and a 2px stroke; a cell in a second set gets an inner ring; `{ "<set>": { "ids": [...], "colour": 3 } }` picks the slot), `cells: { "r2c3": "5" }` (or a 2D array: overrides `params.cells` for those cells, so an explanation can fill a cell; `""` blanks one, `null` restores them all), `paths: [{ "id": "route", "cells": ["r4c1", "r4c2", "r3c2"], "colour": 1, "arrow": true }]` (or `{ "route": [ids] }`: a route through the cell centres, drawn on as it appears, an arrowhead at the end unless `arrow: false`; its id highlights), `outline: "row5" | "col3" | "cross5" | "cross5-3" | [ids]` (dashed union outline in the gutters, one path), `dim: [ids]` (fades to 20%, row after row), `mark: { "<id>": "✓" | { "text": "×2", "tone": "notyet" | "correct" | "hint" } }`, `point: [ids]` (the prototype's hint box around the cells' bounding box; pulses twice, fades after 3.2s).
 
-**ids**: `r{i}c{j}`, one-based (`r5c1` is row 5, column 1). Any id list also accepts `row5`, `col3`, `cross5`, `cross5-3` and `all`.
+**ids**: `r{i}c{j}`, one-based (`r5c1` is row 5, column 1), and path ids. Any id list also accepts `row5`, `col3`, `cross5`, `cross5-3` and `all`.
 
 **methods**: `flash(ids)`, `point(ids)`, `peek(ms)` (briefly undims), `expand(list)`. **events**: tap.
 
@@ -56,15 +58,24 @@ Sample spaces, two-dice tables, area models, Punnett squares. Square cells, at m
   "state": { "shade": { "eight": ["r2c6", "r3c5", "r4c4", "r5c3", "r6c2"] }, "outline": "cross5", "dim": ["r1c1"], "mark": { "r5c5": { "text": "×2", "tone": "notyet" } } } }
 ```
 
+Lattice paths (counting routes on a 4 by 5 street grid):
+
+```json
+{ "kind": "grid",
+  "params": { "rows": 4, "cols": 5, "rowHeads": false, "colHeads": false, "lattice": true },
+  "state": { "cells": { "r4c1": "1", "r3c1": "1", "r4c2": "1", "r3c2": "2" }, "shade": { "start": { "ids": ["r4c1"], "colour": 3 } },
+    "paths": [{ "id": "route", "cells": ["r4c1", "r4c2", "r3c2", "r3c3", "r2c3", "r2c4", "r1c4", "r1c5"] }] } }
+```
+
 ## tree
 
 Probability and decision trees, left to right or top to bottom; spacing is automatic.
 
 Collapsing (`state.collapse`) resizes the drawing to the leaves (or, top to bottom, the depth) still shown.
 
-**params**: `levels: [{ "label": "First draw", "branches": [{ "id": "r", "label": "Red", "p": "3/5" }] }]` (every node of a level gets the level's branches; `p` and `label` may be a map keyed by the parent path, with `"*"` as the default, for draws without replacement; a branch whose `p` map has no entry for a parent is left out there), or `nodes: [{ "id", "label", "p", "value", "children": [...] }]`; `leaves: { "<path>": "6/20" }`; `orient: "lr" | "tb"`; `levelLabels` (with `nodes`). Probabilities such as `"3/5"` render as fractions; `"$...$"` is TeX.
+**params**: `compact: true` (smaller pills and closer leaves: a 16-leaf tree fits the column; top to bottom suits it best), `rootLabel: "Start"` (the root is a labelled pill instead of a dot; `"/"` for a folder tree), `levels: [{ "label": "First draw", "branches": [{ "id": "r", "label": "Red", "p": "3/5" }] }]` (every node of a level gets the level's branches; `p` and `label` may be a map keyed by the parent path, with `"*"` as the default, for draws without replacement; a branch whose `p` map has no entry for a parent is left out there), or `nodes: [{ "id", "label", "p", "value", "children": [...] }]`; `leaves: { "<path>": "6/20" }`; `orient: "lr" | "tb"`; `levelLabels` (with `nodes`). Probabilities such as `"3/5"` render as fractions; `"$...$"` is TeX.
 
-**state**: `highlight: [paths]` (every branch from the root to each path: bold stroke and pear wash), `shade: [paths]` or `{ "<set>": [paths] }` (series colour along the path), `show: "p" | "none"` (hide probabilities), `unknown: [paths]` (shows "?" for those probabilities), `values: false` (hide leaf values), `collapse: [paths]` (hide the subtree; the tree re-spaces with an animation).
+**state**: `highlight: [paths]` (every branch from the root to each path: bold stroke and pear wash), `shade: [paths]` or `{ "<set>": [paths] }` (series colour along the path), `show: "p" | "none"` (hide probabilities), `unknown: [paths]` (shows "?" for those probabilities), `values: false` (hide leaf values), `collapse: [paths]` (hide the subtree; the tree re-spaces with an animation), `current: "a-b"` (a manipulable-blue ring round that node's pill, like graph's current node; `"root"` for the root).
 
 **ids**: branch paths `a`, `a-b`, `a-b-c` (branch ids joined by `-`), leaf values `val-a-b`, the root `root`. **events**: tap (branches).
 
@@ -111,7 +122,7 @@ One to three sets in a universe; each region is its exact shape.
 
 Containers and items for counting and drawing without replacement.
 
-**params**: `containers: [{ "id": "urn", "label": "Urn", "kind": "urn" | "bag" | "box" | "hand" | "row", "items": [{ "id": "b1", "kind": "ball" | "card" | "coin" | "slot" | "bag", "colour": 1, "label": "1", "face": "up" }], "capacity": 3, "slots": 3, "cols": 3 }]`, `itemKind` (default for items, `"ball"`). A coin shows its face, H or T, unless it has a `label`. Without a `hand` container, drawn items wait in a band above the containers; the band is there only while an item is drawn, so a plain set of containers has no empty space on top. An item of kind `bag` (alias `sealed`) is a closed sack showing only its label (`"?"`, `"n"`), for a bag of counters whose contents stay hidden. `colour` is a series slot 1 to 6 (0 for a plain item). A `row` draws `slots` dashed places that fill left to right. `fill: "top"` or `"bottom"` on a container sets where its items start (default: top for `hand` and `row`, bottom for urns, bags and boxes).
+**params**: `containers: [{ "id": "urn", "label": "Urn", "kind": "urn" | "bag" | "box" | "hand" | "row", "items": [{ "id": "b1", "kind": "ball" | "card" | "coin" | "slot" | "bag", "colour": 1, "label": "1", "face": "up" }], "capacity": 3, "slots": 3, "cols": 3 }]`, `itemKind` (default for items, `"ball"`). A coin shows its face, H or T, unless it has a `label`. Without a `hand` container, drawn items wait in a band above the containers; the band is there only while an item is drawn, so a plain set of containers has no empty space on top. An item of kind `bag` (alias `sealed`) is a closed sack showing only its label (`"?"`, `"n"`), for a bag of counters whose contents stay hidden. `colour` is a series slot 1 to 6 (0 for a plain item). A `row` draws `slots` dashed places that fill left to right. `fill: "top"` or `"bottom"` on a container sets where its items start (default: top for `hand` and `row`, bottom for urns, bags and boxes). A `box` is closed on all four sides. A `card` is as wide as its label (a file name such as `prices.csv` fits on one card, which then draws a little shorter); every place in the drawing takes the widest item's width, so keep wide cards to their own canvas or to a few per container.
 
 **state**: `draw: [ids]` (move to the container whose kind is `hand`; without one, drawn items lift above the containers), `move: { "<item>": "<container>" }` (key order is arrival order), `face: { "<card>": "up" | "down", "<coin>": "H" | "T" }` (flips animate).
 

@@ -9,7 +9,7 @@ Authors write `canvas: { "kind", "params", "state", "controls" }` (AUTHORING.md 
 - **`state.caption: "text"`** shows under the drawing. It may contain `$...$` maths.
 - **Labels.** A label string with no `$` is plain text. A label that is entirely `$...$` is KaTeX. Mixed text and maths (`"slope of $f$"`) also works.
 - **Series colours.** Series take slots 1 to 6 in order. Set `colour: 1..6` on a series, function, vector or leg to pick a slot. Learner-movable things are always manipulable blue.
-- **Linked state (`derive`).** Any canvas may carry `"derive": { "<target>": "<expression>" }` beside `params` and `state`. After every change (a patch, a drag, a control) each target is set from its expression: `"p2.x": "0.8 * p1.x"` (an item's property, by id), `"values.7": "10 - values['3']"` (bars), `"params.b": "2 * a"`, `"caption": "Change: {{round((p1.x / 50 - 1) * 100, 1)}}%"` (a string fills each `{{expression}}`). Expressions see item ids (`p1.x`), param names, top-level numbers (`angle`, `ran`), `values` (bar heights by label and id) and `abs min max sqrt pow exp log floor ceil round(v, places) fixed(v, places) money(v, symbol) pi`. Also `sin cos tan asin acos atan atan2 hypot ln log10 e`. Rules run up to three passes, so a caption may read a value another rule derives. `fixed(3.5, 2)` is "3.50"; `money(1234.5)` is "£1,234.50" (`money(v, "$")` for dollars); negative numbers, in captions and from these helpers, print with the minus sign −; `(expr).toFixed(2)` and ternaries (`p1.x > 3 ? "high" : "low"`) work as in JavaScript. A plane explore screen often pairs points with `drag: true` and a `derive` caption: the validator accepts that as the screen's interaction. It is engine-wide (`ZQ.canvas.create`), so it works on number-line, plane, bars and every other kind, runs again in the Why? copy on the explained state, and on a `pair` reads both sides (README.md, "pair").
+- **Linked state (`derive`).** Any canvas may carry `"derive": { "<target>": "<expression>" }` beside `params` and `state`. After every change (a patch, a drag, a control) each target is set from its expression: `"p2.x": "0.8 * p1.x"` (an item's property, by id), `"values.7": "10 - values['3']"` (bars), `"params.b": "2 * a"`, `"caption": "Change: {{round((p1.x / 50 - 1) * 100, 1)}}%"` (a string fills each `{{expression}}`). Expressions see item ids (`p1.x`), param names, top-level numbers (`angle`, `ran`) and `values` (bar heights by label and id). The function set: `abs min max sqrt pow floor ceil sign hypot`, `round(v, places)`, `exp`, `log` and `ln` (natural), `log10`, `sin cos tan asin acos atan atan2` (radians), the constants `pi` and `e`, and for text `fixed(v, places)` and `money(v, symbol, places)`. `=` and `;` may appear only inside quoted strings. Rules run up to three passes, so a caption may read a value another rule derives. `fixed(3.5, 2)` is "3.50"; `money(1234.5)` is "£1,234.50" (`money(v, "$")` for dollars); negative numbers, in captions and from these helpers, print with the minus sign −; `(expr).toFixed(2)` and ternaries (`p1.x > 3 ? "high" : "low"`) work as in JavaScript. A plane explore screen often pairs points with `drag: true` and a `derive` caption: the validator accepts that as the screen's interaction. It is engine-wide (`ZQ.canvas.create`), so it works on number-line, plane, bars and every other kind, runs again in the Why? copy on the explained state, and on a `pair` reads both sides (README.md, "pair").
 - **Keyed list patches.** Lists with ids (`points`, `vectors`, `segments`, `markers`, `pointers`) can be patched by id: `{ "points": { "p1": { "x": 2 } } }` changes only `p1`. Sending an array replaces the whole list.
 - **`state.params` overrides params.** In `plane` and `distribution` it overrides the expression or family parameters (`params.params`). In `walk` it overrides top-level numbers (`p`, `mu`, `sigma`, `steps`, `paths`, `start`). This is what a bound slider writes.
 - **Interactive modes.** A widget calls `canvas.enable(mode, opts)`. The modes each kind supports are listed below. Elements the author marks as movable (`"drag": true` on a plane point, `state.drag` on vectors) move without `enable`. Clones made for the Why? modal are always static.
@@ -271,7 +271,8 @@ Random walks or price paths from the seeded RNG.
 
 **params**
 - `x`, `y` ranges (the frame keeps square units), `grid`, `snap`, `height`, `xLabel`, `yLabel`.
-- `vectors: [{ id, v: [x, y], label, from: [x, y] | vectorId, colour }]`.
+- `vectors: [{ id, v: [x, y], label, from: [x, y] | vectorId, colour, labelPos, labelSide }]`. `labelPos` is `"end"` (default, just past the head), `"mid"` (beside the middle of the arrow) or `"start"` (by the tail); `labelSide: "right"` puts a mid or start label on the arrow's right (default left).
+- `points: [{ id, x, y, label, labelPos, colour }]`: labelled dots such as O, A, B and M; `labelPos` is a compass point (`"ne"` default, `"n"`, `"e"`, `"se"`, `"s"`, `"sw"`, `"w"`, `"nw"`). Patchable by id like `vectors`.
 - `showCoords`, `basisLabels`, `sumLabel`, `projLabel`.
 
 **state**
@@ -282,12 +283,12 @@ Random walks or price paths from the seeded RNG.
 - `span: ["u"]`: a shaded line, or the whole plane when two independent vectors are given.
 - `scale: { "u": 2 }`: draws the scaled arrow and leaves a dashed ghost of the original. The label becomes `2u`.
 - `basis: [[1, 0.5], [-0.5, 1]]`: replaces the grid with the skewed basis grid and draws `b1`, `b2`. It animates.
-- `drag: ["u"]`: which heads move. In drag mode all heads move unless `drag` is given.
+- `drag: ["u"]`: which heads move. In drag mode all heads move unless `drag` is given. Only a vector drawn from the origin (no `from`) has a draggable head; one drawn from another vector's head follows it.
 - `hide`, `highlight`, `sumColour`, `projColour`.
 
-**ids:** vector ids, `sum`, `proj`, `perp`, `span`, `b1`, `b2`.
+**ids:** vector ids, point ids, `sum`, `proj`, `perp`, `span`, `b1`, `b2`.
 
-**modes:** `drag` (vector heads) emits `{ type: "drag", id, v: [x, y], x, y, phase }`. `slider` is also supported. **methods:** `points()`, `place(id, [x, y])`.
+**modes:** `drag` (vector heads) emits `{ type: "drag", id, v: [x, y], x, y, phase }`. `tap` (whole arrows and points; tap-regions `answer` and `among` name vector or point ids) emits `{ type: "tap", id, on, selected }`. `slider` is also supported. **methods:** `points()`, `place(id, [x, y])`.
 
 ```json
 { "kind": "vectors",
@@ -301,6 +302,8 @@ Random walks or price paths from the seeded RNG.
 - `nodes: [{ id, label, x, y, colour }]`. `x` and `y` are fractions from 0 to 1 of the frame.
 - `edges: [{ from, to, w, label, directed, dashed, bend, colour }]`. Edge ids are `e-{from}-{to}`.
 - `directed` (the default for all edges), `markov: true`, `nodeRadius`, `height`.
+- `layout: "ring"`: the nodes sit evenly round a circle in list order (seats round a table), ignoring `x` and `y`.
+- Without `nodeRadius` the radius grows to fit the longest label (22 up to 34); a label still too long shrinks (down to 10px).
 - `markov: true` makes edges directed and labels them with probabilities. Self-loops (`from` = `to`) point away from the graph's centre. A pair of opposite edges curves apart.
 
 **state**
@@ -308,6 +311,9 @@ Random walks or price paths from the seeded RNG.
 - `current: id`: a manipulable-blue ring.
 - `distribution: { "n1": 0.5 }`: a fill bar inside each node, with the value under it.
 - `show: "none"` hides the edge labels. `order: false` hides the badges.
+- `labels: { "A": "Alice" }`: relabels nodes.
+- `rotate: 1`: turns a ring by that many seats (fractions too); it animates.
+- `nodes`, `edges`: the graph itself lives in state (seeded from params). A list replaces it; a map keyed by id merges into a node, adds one (a new id) or removes one (`null`): `{ "nodes": { "D": { "label": "D", "x": 0.8, "y": 0.2 } }, "edges": { "e-C-D": { "from": "C", "to": "D" } } }`, then `{ "nodes": { "D": null } }`. Edges of a removed node go with it. Arriving nodes and edges fade and grow in, leaving ones fade out where they were; in a ring the others slide to their new seats.
 - `highlight`, `selected`.
 
 **ids:** node ids and `e-n1-n2`. An undirected edge also answers to `e-n2-n1`.
