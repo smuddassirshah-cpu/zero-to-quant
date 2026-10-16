@@ -1,0 +1,1398 @@
+{
+  "id": "l9-keys",
+  "course": "sql",
+  "title": "Primary and foreign keys",
+  "minutes": 13,
+  "objectives": [
+    "Explain how keys link two tables",
+    "Tell a primary key from a foreign key, including a key of two columns",
+    "Follow a foreign key with a subquery in `WHERE`"
+  ],
+  "skills": [
+    "sql-join",
+    "sql-select"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two tables, one question",
+      "prose": "A database splits its facts into tables. `securities` holds one row per company. `prices` holds closing prices, here for 4 March 2026. Neither table on its own says which closes belong to energy companies.",
+      "canvas": {
+        "kind": "pair",
+        "active": "right",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "name",
+              "sector"
+            ],
+            "rows": [
+              [
+                "AZN",
+                "AstraZeneca",
+                "Health"
+              ],
+              [
+                "BARC",
+                "Barclays",
+                "Banks"
+              ],
+              [
+                "BP",
+                "BP",
+                "Energy"
+              ],
+              [
+                "HSBA",
+                "HSBC",
+                "Banks"
+              ],
+              [
+                "SHEL",
+                "Shell",
+                "Energy"
+              ],
+              [
+                "VOD",
+                "Vodafone",
+                "Telecoms"
+              ]
+            ],
+            "align": "left"
+          },
+          "state": {
+            "caption": "securities"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "AZN",
+                "2026-03-04",
+                "109.80"
+              ],
+              [
+                "BARC",
+                "2026-03-04",
+                "2.51"
+              ],
+              [
+                "BP",
+                "2026-03-04",
+                "4.35"
+              ],
+              [
+                "HSBA",
+                "2026-03-04",
+                "8.69"
+              ],
+              [
+                "SHEL",
+                "2026-03-04",
+                "27.40"
+              ],
+              [
+                "VOD",
+                "2026-03-04",
+                "0.72"
+              ]
+            ],
+            "align": [
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "prices, 4 March"
+          }
+        }
+      },
+      "question": "Tap the ticker of every price row that belongs to an Energy company.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c0",
+          "r4c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0",
+          "r5c0"
+        ],
+        "countWord": "tickers"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which companies does `securities` list as Energy?"
+        },
+        {
+          "rung": "point",
+          "text": "BP and Shell are the Energy companies. Shell trades under the ticker SHEL.",
+          "highlight": [
+            "left:r2c2",
+            "left:r4c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Find BP and SHEL in the ticker column of `prices` and tap both."
+        }
+      ],
+      "feedback": {
+        "correct": "BP and SHEL. You matched each price to its company through the ticker.",
+        "generic": "Not quite right. Look each sector up in `securities`, then find those tickers in `prices`.",
+        "byKey": {
+          "r0c0": "AZN is AstraZeneca, listed under Health. Read the sector from the left table.",
+          "r1c0": "BARC is Barclays, a bank. Read the sector from the left table.",
+          "r3c0": "HSBA is HSBC, a bank. Read the sector from the left table.",
+          "r5c0": "VOD is Vodafone, listed under Telecoms. Read the sector from the left table.",
+          "r2c0": "You missed BP. The left table lists BP under Energy.",
+          "r4c0": "You missed SHEL. Shell is an Energy company, and its ticker is SHEL."
+        }
+      },
+      "explain": {
+        "text": "You read each sector in one table and found the matching tickers in the other. The `ticker` column is what links the two tables. A column that links tables like this is called a **key**.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "rows": [
+                2,
+                4
+              ]
+            }
+          },
+          "right": {
+            "highlight": {
+              "rows": [
+                2,
+                4
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Why not one big table?",
+      "prose": "Here is the same data as one wide table. Every price row repeats the company name and sector. It shows BP and Shell over three days.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "name",
+            "sector",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "BP",
+              "BP",
+              "Energy",
+              "2026-03-02",
+              "4.32"
+            ],
+            [
+              "BP",
+              "BP",
+              "Energy",
+              "2026-03-03",
+              "4.28"
+            ],
+            [
+              "BP",
+              "BP",
+              "Energy",
+              "2026-03-04",
+              "4.35"
+            ],
+            [
+              "SHEL",
+              "Shell",
+              "Energy",
+              "2026-03-02",
+              "27.10"
+            ],
+            [
+              "SHEL",
+              "Shell",
+              "Energy",
+              "2026-03-03",
+              "26.85"
+            ],
+            [
+              "SHEL",
+              "Shell",
+              "Energy",
+              "2026-03-04",
+              "27.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Shell renames itself Shell plc. How many rows of this table must change?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows to change",
+        "accept": "3: every Shell row carries the name.",
+        "wrong": [
+          {
+            "id": "once",
+            "value": 1,
+            "canvas": {
+              "highlight": {
+                "cells": [
+                  "r4c1",
+                  "r5c1"
+                ]
+              }
+            }
+          },
+          {
+            "id": "all",
+            "value": 6
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows mention Shell?"
+        },
+        {
+          "rung": "point",
+          "text": "The name sits in every Shell row.",
+          "highlight": [
+            "r3c1",
+            "r4c1",
+            "r5c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count the rows whose name is Shell."
+        }
+      ],
+      "feedback": {
+        "correct": "Three rows, one per day, each repeating the name.",
+        "generic": "Not quite right. Count the rows that say Shell.",
+        "byKey": {
+          "once": "You changed one row. The other two Shell rows would still say Shell, so the table would contradict itself.",
+          "all": "Only the Shell rows carry its name. The BP rows stay as they are."
+        }
+      },
+      "explain": {
+        "text": "Every Shell price row repeats the name, so all 3 must change, and five years of prices would mean 1,260 rows. In the split design the name sits once in `securities`, so one row changes. Store each fact once and link the rest by key.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r3c1",
+              "r4c1",
+              "r5c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The primary key",
+      "prose": "Back to the split tables. A **primary key** is a column whose value picks out exactly one row. It is never empty and never repeats within its table.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "name",
+            "sector"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "AstraZeneca",
+              "Health"
+            ],
+            [
+              "BARC",
+              "Barclays",
+              "Banks"
+            ],
+            [
+              "BP",
+              "BP",
+              "Energy"
+            ],
+            [
+              "HSBA",
+              "HSBC",
+              "Banks"
+            ],
+            [
+              "SHEL",
+              "Shell",
+              "Energy"
+            ],
+            [
+              "VOD",
+              "Vodafone",
+              "Telecoms"
+            ]
+          ],
+          "align": "left"
+        },
+        "state": {}
+      },
+      "question": "Which column is the primary key of `securities`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ticker",
+            "text": "`ticker`",
+            "correct": true
+          },
+          {
+            "id": "name",
+            "text": "`name`",
+            "why": "You picked the name. Names change, as Shell's just did, and a key has to stay fixed."
+          },
+          {
+            "id": "sector",
+            "text": "`sector`",
+            "why": "Banks appears twice, so a sector cannot pick out one company."
+          },
+          {
+            "id": "none",
+            "text": "None of them: any column could repeat",
+            "why": "Each company has one ticker and no two share it. That is exactly what a primary key needs."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which column has a different value on every row?"
+        },
+        {
+          "rung": "point",
+          "text": "Look down the sector column: Banks appears twice.",
+          "highlight": [
+            "r1c2",
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only `ticker` is different on every row and is fixed for each company."
+        }
+      ],
+      "feedback": {
+        "correct": "Each ticker appears once, so it picks out one company.",
+        "generic": "Not quite right. Find the column that never repeats.",
+        "byKey": {
+          "sector": "Banks appears twice in `sector`. A key value must pick out a single row."
+        }
+      },
+      "explain": {
+        "text": "Each ticker appears once in `securities`, so it picks out one company. Other tables refer to a company by its ticker, never by its name.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The same column, another table",
+      "prose": "`prices` has a `ticker` column too. Here are its rows for BP and Shell.\n\n```sql\nSELECT close FROM prices\nWHERE ticker = 'BP';\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "BP",
+              "2026-03-02",
+              "4.32"
+            ],
+            [
+              "BP",
+              "2026-03-03",
+              "4.28"
+            ],
+            [
+              "BP",
+              "2026-03-04",
+              "4.35"
+            ],
+            [
+              "SHEL",
+              "2026-03-02",
+              "27.10"
+            ],
+            [
+              "SHEL",
+              "2026-03-03",
+              "26.85"
+            ],
+            [
+              "SHEL",
+              "2026-03-04",
+              "27.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many rows does this query return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "one",
+            "text": "1",
+            "why": "You treated `ticker` as the key of `prices`. BP has one price row per day, so the ticker repeats here.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "id": "three",
+            "text": "3",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "6",
+            "why": "That counts Shell as well. The `WHERE` keeps only the BP rows."
+          },
+          {
+            "id": "error",
+            "text": "An error: `ticker` is the key of another table",
+            "why": "A column can be a key in one table and an ordinary column in another. The query runs."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many BP rows can you see?"
+        },
+        {
+          "rung": "point",
+          "text": "BP has a row for each of the three days.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One BP close per day for three days gives 3 rows."
+        }
+      ],
+      "feedback": {
+        "correct": "One BP row per day: 3 rows.",
+        "generic": "Not quite right. Count the BP rows in `prices`.",
+        "byKey": {
+          "one": "You treated `ticker` as the key of `prices`. It is unique in `securities`, but here BP has one row per day."
+        }
+      },
+      "explain": {
+        "text": "`ticker` is unique in `securities` but repeats in `prices`, once per day. In `prices` it points at a company in another table: it is a **foreign key**. It is not the key of `prices` itself.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A key made of two columns",
+      "prose": "So what picks out one row of `prices`? A primary key can be two columns taken together.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "BP",
+              "2026-03-02",
+              "4.32"
+            ],
+            [
+              "BP",
+              "2026-03-03",
+              "4.28"
+            ],
+            [
+              "BP",
+              "2026-03-04",
+              "4.35"
+            ],
+            [
+              "SHEL",
+              "2026-03-02",
+              "27.10"
+            ],
+            [
+              "SHEL",
+              "2026-03-03",
+              "26.85"
+            ],
+            [
+              "SHEL",
+              "2026-03-04",
+              "27.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which pair of columns picks out exactly one row of `prices`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "td",
+            "text": "`ticker` and `date`",
+            "correct": true
+          },
+          {
+            "id": "tc",
+            "text": "`ticker` and `close`",
+            "why": "A stock can close at the same price on two different days, so that pair can repeat."
+          },
+          {
+            "id": "dc",
+            "text": "`date` and `close`",
+            "why": "Two companies can close at the same price on the same day, so that pair can repeat."
+          },
+          {
+            "id": "d",
+            "text": "`date` on its own",
+            "why": "Six companies share every date, so the date alone repeats six times."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which two facts together fix one close?"
+        },
+        {
+          "rung": "point",
+          "text": "One company has exactly one close on each day.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A ticker with a date names one close, and that pair can never repeat."
+        }
+      ],
+      "feedback": {
+        "correct": "One company, one day, one close.",
+        "generic": "Not quite right. Find the pair that can never repeat."
+      },
+      "explain": {
+        "text": "One company has one close per day, so the pair `(ticker, date)` never repeats. That pair is the primary key of `prices`, and the schema says so with `PRIMARY KEY (ticker, date)`.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A key with nothing behind it",
+      "prose": "`prices.ticker` refers to `securities.ticker`. A data feed now adds this row for Lloyds:\n\n```sql\nINSERT INTO prices\nVALUES ('LLOY', '2026-03-04', 0.52);\n```\n\n`LLOY` has no row in `securities`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "name",
+            "sector"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "AstraZeneca",
+              "Health"
+            ],
+            [
+              "BARC",
+              "Barclays",
+              "Banks"
+            ],
+            [
+              "BP",
+              "BP",
+              "Energy"
+            ],
+            [
+              "HSBA",
+              "HSBC",
+              "Banks"
+            ],
+            [
+              "SHEL",
+              "Shell",
+              "Energy"
+            ],
+            [
+              "VOD",
+              "Vodafone",
+              "Telecoms"
+            ]
+          ],
+          "align": "left"
+        },
+        "state": {
+          "caption": "securities: no row for LLOY"
+        }
+      },
+      "question": "What is wrong with the new row?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "orphan",
+            "text": "Its ticker points at no company, so its name and sector cannot be found",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: `prices` can hold any ticker",
+            "why": "SQLite stores it, but the link is broken. Any lookup of its sector finds nothing."
+          },
+          {
+            "id": "refused",
+            "text": "SQLite refuses it because LLOY is missing",
+            "why": "Only after `PRAGMA foreign_keys = ON`. SQLite does not check foreign keys by default, so this row goes in."
+          },
+          {
+            "id": "dup",
+            "text": "It repeats a primary key",
+            "why": "No LLOY row exists for 4 March yet, so the pair (LLOY, 2026-03-04) is new."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where would a query find Lloyds's sector?"
+        },
+        {
+          "rung": "point",
+          "text": "The foreign key should match a ticker in `securities`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`LLOY` matches no row in `securities`, so the link leads nowhere."
+        }
+      ],
+      "feedback": {
+        "correct": "The foreign key leads nowhere.",
+        "generic": "Not quite right. Follow the ticker into `securities`.",
+        "byKey": {
+          "refused": "You expected SQLite to check the link. It does so only after `PRAGMA foreign_keys = ON`; by default the row goes in."
+        }
+      },
+      "explain": {
+        "text": "A foreign key with no matching row is an **orphan**. SQLite rejects orphans only after `PRAGMA foreign_keys = ON`, so data from a feed needs checking. Later in this level you will find orphans with a query.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A query inside a query",
+      "prose": "One query can use the answer of another. The query in brackets runs first and hands its rows to `IN`.\n\n```sql\nSELECT ticker, close FROM prices\nWHERE date = '2026-03-04'\n  AND ticker IN (SELECT ticker\n                 FROM securities\n                 WHERE sector = 'Banks');\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "name",
+            "sector"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "AstraZeneca",
+              "Health"
+            ],
+            [
+              "BARC",
+              "Barclays",
+              "Banks"
+            ],
+            [
+              "BP",
+              "BP",
+              "Energy"
+            ],
+            [
+              "HSBA",
+              "HSBC",
+              "Banks"
+            ],
+            [
+              "SHEL",
+              "Shell",
+              "Energy"
+            ],
+            [
+              "VOD",
+              "Vodafone",
+              "Telecoms"
+            ]
+          ],
+          "align": "left"
+        },
+        "state": {}
+      },
+      "question": "Which list does the inner query hand to `IN`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tick",
+            "text": "`('BARC', 'HSBA')`",
+            "correct": true
+          },
+          {
+            "id": "names",
+            "text": "`('Barclays', 'HSBC')`",
+            "why": "You took the names. The inner query selects `ticker`, so it returns tickers.",
+            "canvas": {
+              "highlight": {
+                "cells": [
+                  "r1c1",
+                  "r3c1"
+                ]
+              }
+            }
+          },
+          {
+            "id": "sector",
+            "text": "`('Banks')`",
+            "why": "`sector = 'Banks'` only filters the rows. The column it returns is `ticker`."
+          },
+          {
+            "id": "all",
+            "text": "All six tickers",
+            "why": "The `WHERE` inside the brackets keeps only the Banks rows."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the inner query on its own. Which column does it select?"
+        },
+        {
+          "rung": "point",
+          "text": "It selects `ticker` from the rows whose sector is Banks.",
+          "highlight": [
+            "r1c2",
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Banks rows are Barclays and HSBC, with tickers BARC and HSBA."
+        }
+      ],
+      "feedback": {
+        "correct": "The two bank tickers, BARC and HSBA.",
+        "generic": "Not quite right. Run the inner query by eye: which column, which rows?"
+      },
+      "explain": {
+        "text": "The inner query returns the bank tickers, BARC and HSBA. The outer query keeps the 4 March prices whose ticker is in that list: £2.51 and £8.69. This is a **subquery**: the key carries the answer from one table into the other.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r1c0",
+              "r3c0"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write a subquery",
+      "prose": "Your turn. The starter builds the three tables in memory. Your query is the text that `query()` returns, and Run examples prints its rows.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "name",
+            "sector"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "AstraZeneca",
+              "Health"
+            ],
+            [
+              "BARC",
+              "Barclays",
+              "Banks"
+            ],
+            [
+              "BP",
+              "BP",
+              "Energy"
+            ],
+            [
+              "HSBA",
+              "HSBC",
+              "Banks"
+            ],
+            [
+              "SHEL",
+              "Shell",
+              "Energy"
+            ],
+            [
+              "VOD",
+              "Vodafone",
+              "Telecoms"
+            ]
+          ],
+          "align": "left"
+        },
+        "state": {}
+      },
+      "question": "Return `ticker`, `date` and `close` for every Energy price, sorted by ticker, then date.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT *\n        FROM securities\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "solution": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT ticker, date, close\n        FROM prices\n        WHERE ticker IN (SELECT ticker FROM securities\n                         WHERE sector = 'Energy')\n        ORDER BY ticker, date\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "examples": [
+          {
+            "call": "make_db().execute(query()).fetchall()[:2]",
+            "expect": "[('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28), ('BP', '2026-03-04', 4.35), ('SHEL', '2026-03-02', 27.1), ('SHEL', '2026-03-03', 26.85), ('SHEL', '2026-03-04', 27.4)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO securities VALUES ('CNA', 'Centrica', 'Energy')\"); db.execute(\"INSERT INTO prices VALUES ('CNA', '2026-03-04', 1.32)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28), ('BP', '2026-03-04', 4.35), ('CNA', '2026-03-04', 1.32), ('SHEL', '2026-03-02', 27.1), ('SHEL', '2026-03-03', 26.85), ('SHEL', '2026-03-04', 27.4)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"UPDATE securities SET sector = 'Energy' WHERE ticker = 'VOD'\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28), ('BP', '2026-03-04', 4.35), ('SHEL', '2026-03-02', 27.1), ('SHEL', '2026-03-03', 26.85), ('SHEL', '2026-03-04', 27.4), ('VOD', '2026-03-02', 0.71), ('VOD', '2026-03-03', 0.7), ('VOD', '2026-03-04', 0.72)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"DELETE FROM prices WHERE ticker = 'BP'\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('SHEL', '2026-03-02', 27.1), ('SHEL', '2026-03-03', 26.85), ('SHEL', '2026-03-04', 27.4)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each runs your query, some after adding or changing rows, and compares the rows exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the subquery on the last screen. Which sector do you want now?"
+        },
+        {
+          "rung": "point",
+          "text": "Filter `prices` with `ticker IN (SELECT ticker FROM securities WHERE sector = 'Energy')`.",
+          "highlight": [
+            "r2c2",
+            "r4c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Select the three columns asked for and end with `ORDER BY ticker, date`."
+        }
+      ],
+      "feedback": {
+        "correct": "Six rows: BP and Shell over three days.",
+        "generic": "Not quite right. Compare your rows with the example, then check the sort order.",
+        "byKey": {
+          "test-2": "Test 2 adds Centrica as a new Energy company. Look the tickers up with a subquery rather than naming BP and SHEL.",
+          "test-3": "Test 3 moves Vodafone into Energy. Your query should follow the sector, not a fixed list of tickers."
+        }
+      },
+      "explain": {
+        "text": "The subquery turns the sector into tickers, so a new Energy company is picked up with no change to your query. `ORDER BY ticker, date` sorts by ticker first and breaks ties by date.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Declaring keys",
+      "prose": "You have now used both kinds of key. `CREATE TABLE` declares them. `REFERENCES` marks a foreign key, and `PRIMARY KEY` the column or columns that pick out one row.\n\n```sql\nCREATE TABLE securities (\n  ticker TEXT PRIMARY KEY,\n  name   TEXT,\n  sector TEXT);\nCREATE TABLE prices (\n  ticker TEXT REFERENCES securities (ticker),\n  date   TEXT,\n  close  REAL,\n  PRIMARY KEY (ticker, date));\n```",
+      "question": "Which insert does SQLite refuse with this schema, even with foreign-key checks off?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "dup",
+            "text": "A second row for BP on 2026-03-04",
+            "correct": true
+          },
+          {
+            "id": "newday",
+            "text": "A BP row for 2026-03-05",
+            "why": "The pair (BP, 2026-03-05) is new, so the key does not repeat."
+          },
+          {
+            "id": "newco",
+            "text": "A new company in `securities`",
+            "why": "A new ticker is a new key value. Nothing repeats."
+          },
+          {
+            "id": "lloy",
+            "text": "A price for LLOY",
+            "why": "That breaks the foreign key, which SQLite checks only after `PRAGMA foreign_keys = ON`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A primary key is always enforced.",
+        "generic": "Not quite right. Which rule does SQLite check every time?"
+      },
+      "explain": {
+        "text": "SQLite always enforces a primary key, so a second BP close for 4 March fails with `UNIQUE constraint failed: prices.ticker, prices.date`. Foreign keys are checked only once you switch them on."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Bank trades for the risk desk",
+      "prose": "The trade blotter `trades` records each trade: an id, a date, a ticker and a quantity, negative for a sale. Its `ticker` is another foreign key into `securities`. The risk desk wants every trade in bank shares.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty"
+          ],
+          "rows": [
+            [
+              "1",
+              "2026-03-02",
+              "BARC",
+              "1000"
+            ],
+            [
+              "2",
+              "2026-03-02",
+              "SHEL",
+              "200"
+            ],
+            [
+              "3",
+              "2026-03-03",
+              "AZN",
+              "50"
+            ],
+            [
+              "4",
+              "2026-03-03",
+              "BARC",
+              "-400"
+            ],
+            [
+              "5",
+              "2026-03-04",
+              "BP",
+              "1500"
+            ],
+            [
+              "6",
+              "2026-03-04",
+              "HSBA",
+              "600"
+            ],
+            [
+              "7",
+              "2026-03-04",
+              "SHEL",
+              "-100"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return `id`, `ticker` and `qty` for every trade in a Banks company, sorted by id.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT *\n        FROM trades\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "solution": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT id, ticker, qty\n        FROM trades\n        WHERE ticker IN (SELECT ticker FROM securities\n                         WHERE sector = 'Banks')\n        ORDER BY id\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "examples": [
+          {
+            "call": "make_db().execute(query()).fetchall()[0]",
+            "expect": "(1, 'BARC', 1000)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[(1, 'BARC', 1000), (4, 'BARC', -400), (6, 'HSBA', 600)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO securities VALUES ('LLOY', 'Lloyds', 'Banks')\"); db.execute(\"INSERT INTO trades VALUES (8, '2026-03-04', 'LLOY', 5000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(1, 'BARC', 1000), (4, 'BARC', -400), (6, 'HSBA', 600), (8, 'LLOY', 5000)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO trades VALUES (8, '2026-03-04', 'HSBA', -200)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(1, 'BARC', 1000), (4, 'BARC', -400), (6, 'HSBA', 600), (8, 'HSBA', -200)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"DELETE FROM trades WHERE ticker = 'BARC'\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(6, 'HSBA', 600)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each runs your query, some after adding or removing trades, and compares the rows exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which table holds the sector, and which holds the trades?"
+        },
+        {
+          "rung": "point",
+          "text": "The sector lives in `securities`; the trades only carry a ticker.",
+          "highlight": [
+            "r0c2",
+            "r3c2",
+            "r5c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Filter `trades` with `ticker IN (SELECT ticker FROM securities WHERE sector = 'Banks')`, then `ORDER BY id`."
+        }
+      ],
+      "feedback": {
+        "correct": "Trades 1, 4 and 6: Barclays twice and HSBC once.",
+        "generic": "Not quite right. Compare your first row with the example.",
+        "byKey": {
+          "test-2": "Test 2 adds Lloyds as a new bank with one trade. Follow the sector through a subquery instead of listing tickers."
+        }
+      },
+      "explain": {
+        "text": "The subquery turns the sector into tickers, and the tickers pick out trades 1, 4 and 6. The same foreign key, `ticker`, links trades and prices to the company.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              3,
+              5
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Each fact lives once, in one table. Tables link through keys instead of repeating data.",
+      "A primary key picks out one row: `ticker` in `securities`, the pair `(ticker, date)` in `prices`. A foreign key points at another table's primary key.",
+      "A subquery follows a key: `ticker IN (SELECT ticker FROM securities WHERE ...)` turns a sector into tickers."
+    ],
+    "formula": {
+      "name": "Keys of the price table",
+      "tex": "\\texttt{PRIMARY KEY (ticker, date)}",
+      "note": "SQLite always enforces a primary key; foreign keys only after `PRAGMA foreign_keys = ON`."
+    },
+    "trap": "`ticker` is unique in `securities` but repeats in `prices`: a foreign key is not the key of its own table."
+  },
+  "quiz": [
+    {
+      "id": "q-key-trades",
+      "difficulty": 2,
+      "prose": "`trades` has columns `id`, `date`, `ticker` and `qty`. Each trade gets a new `id`, and a ticker can be traded many times.",
+      "question": "What is the primary key of `trades`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "id",
+            "text": "`id`",
+            "correct": true
+          },
+          {
+            "id": "ticker",
+            "text": "`ticker`",
+            "why": "A ticker can be traded many times, so it repeats in `trades`. It is a foreign key here."
+          },
+          {
+            "id": "td",
+            "text": "`ticker` and `date`",
+            "why": "Two trades in the same stock on the same day would repeat that pair."
+          },
+          {
+            "id": "all",
+            "text": "All four columns together",
+            "why": "That would allow two different trades to share an id. The id alone already picks out one trade."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Each trade has its own id.",
+        "generic": "Not quite right. Which column can never repeat?"
+      },
+      "explain": {
+        "text": "A new id for every trade makes `id` unique, so it is the primary key. `ticker` repeats, and it points at `securities`: a foreign key."
+      }
+    },
+    {
+      "id": "q-orphans",
+      "difficulty": 2,
+      "prose": "A feed loads 500 price rows into SQLite with foreign-key checks off. Four of them have tickers that are not in `securities`.",
+      "question": "How many of the 500 rows does SQLite store?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 500,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows stored",
+        "accept": "500: with checks off, orphans are stored like any other row.",
+        "wrong": [
+          {
+            "id": "refused",
+            "value": 496
+          },
+          {
+            "id": "none",
+            "value": 0
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All 500, orphans included.",
+        "generic": "Not quite right. Does SQLite check foreign keys by default?",
+        "byKey": {
+          "refused": "You expected SQLite to reject the four orphans. It checks foreign keys only after `PRAGMA foreign_keys = ON`.",
+          "none": "Nothing stops the load. The four orphans go in alongside the others."
+        }
+      },
+      "explain": {
+        "text": "Foreign-key checks are off by default in SQLite, so all 500 rows go in. The four orphans are there, but no company matches them."
+      }
+    },
+    {
+      "id": "q-subquery",
+      "difficulty": 3,
+      "prose": "Using the tables from this lesson:\n\n```sql\nSELECT COUNT(*) FROM prices\nWHERE ticker IN (SELECT ticker FROM securities\n                 WHERE sector <> 'Banks');\n```",
+      "question": "What number does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Count",
+        "accept": "12: four non-bank companies, three closes each.",
+        "wrong": [
+          {
+            "id": "companies",
+            "value": 4
+          },
+          {
+            "id": "banks",
+            "value": 6
+          },
+          {
+            "id": "all",
+            "value": 18
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four companies times three days.",
+        "generic": "Not quite right. Count the companies the subquery returns, then their price rows.",
+        "byKey": {
+          "companies": "That is how many tickers the subquery returns. Each has three price rows.",
+          "banks": "That counts the bank rows. `<>` means not equal, so banks are left out.",
+          "all": "That counts every price row. The subquery removes the two banks."
+        }
+      },
+      "explain": {
+        "text": "The subquery returns AZN, BP, SHEL and VOD. Each has three closes in `prices`, so the count is $4 \\times 3 = 12$."
+      }
+    },
+    {
+      "id": "q-wide",
+      "difficulty": 3,
+      "prose": "A wide table repeats each company's sector on every daily price row. It holds 2,000 companies and 1,260 days of prices.",
+      "question": "A company moves sector. How many rows must change in the wide table, and how many in the split design?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "1,260 and 1",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "1 and 1",
+            "why": "You changed one row of the wide table. Every one of its 1,260 price rows repeats the sector."
+          },
+          {
+            "id": "all",
+            "text": "2,520,000 and 2,000",
+            "why": "Only the one company moves. Its rows change; the other companies stay put."
+          },
+          {
+            "id": "both",
+            "text": "1,260 and 1,260",
+            "why": "In the split design the sector sits once, in `securities`. The prices only hold the ticker."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every copy in the wide table, one row in the split design.",
+        "generic": "Not quite right. Where does the sector live in each design?"
+      },
+      "explain": {
+        "text": "The wide table stores the sector once per price row, so 1,260 rows change. The split design stores it once in `securities`, so one row changes, and the prices follow by key."
+      }
+    }
+  ]
+}

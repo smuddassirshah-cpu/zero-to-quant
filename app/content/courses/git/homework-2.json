@@ -1,0 +1,466 @@
+{
+  "id": "homework-2",
+  "course": "git",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "hw-cycle",
+      "difficulty": 3,
+      "skills": [
+        "gt-branches"
+      ],
+      "prose": "You test a new carry signal on its own branch, keep it, and tidy up. You start on main.",
+      "question": "Put the commands in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "new",
+            "text": "`git switch -c carry`"
+          },
+          {
+            "id": "commit",
+            "text": "`git commit -am \"Add carry signal\"`"
+          },
+          {
+            "id": "main",
+            "text": "`git switch main`"
+          },
+          {
+            "id": "merge",
+            "text": "`git merge carry`"
+          },
+          {
+            "id": "log",
+            "text": "`git log --oneline --graph`"
+          },
+          {
+            "id": "del",
+            "text": "`git branch -d carry`"
+          }
+        ],
+        "answer": [
+          "new",
+          "commit",
+          "main",
+          "merge",
+          "log",
+          "del"
+        ]
+      },
+      "feedback": {
+        "correct": "Branch, commit, go back, merge, check, delete the label.",
+        "generic": "Not quite right. Each step needs the one before it.",
+        "byKey": {
+          "commit": "You committed before making the branch, so the signal landed on main.",
+          "merge": "You merged while still on carry. Switch to main first, the branch that receives.",
+          "del": "You deleted carry before merging. `-d` would refuse, as its commit is not in main yet.",
+          "main": "You switched to main before committing, so the edits would travel with you uncommitted.",
+          "log": "Check the picture after the merge, before you remove the label."
+        }
+      },
+      "explain": {
+        "text": "`switch -c` puts you on carry, so the commit moves carry. Back on main, `git merge carry` fast-forwards main. The log confirms it, and `branch -d` removes only the label."
+      }
+    },
+    {
+      "id": "hw-count-two-merges",
+      "difficulty": 4,
+      "skills": [
+        "gt-branches"
+      ],
+      "prose": "main has 6 commits. You make two branches at main's tip: signal-a gets 2 commits and signal-b gets 3. On main you merge signal-a, then signal-b.",
+      "question": "How many commits does main contain at the end?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Commits on main",
+        "accept": "12: 6 + 2 (fast-forward) + 3 + 1 merge commit",
+        "wrong": [
+          {
+            "id": "two-merges",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-merge",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-branch",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "6 + 2 + 3 + 1 = 12.",
+        "generic": "Not quite right. Decide, for each merge, whether it is a fast-forward.",
+        "byKey": {
+          "two-merges": "The first merge is a fast-forward: main had not moved since signal-a split off. Only the second makes a merge commit.",
+          "no-merge": "The second merge cannot fast-forward. main gained signal-a's commits, so a merge commit joins signal-b.",
+          "one-branch": "Both branches end up in main: 2 commits from signal-a and 3 from signal-b."
+        }
+      },
+      "explain": {
+        "text": "Merging signal-a is a fast-forward, so main has 8 commits. signal-b split off before those 2, so the second merge needs a merge commit. That adds signal-b's 3 commits plus 1: 12 in all."
+      }
+    },
+    {
+      "id": "hw-revert-target",
+      "difficulty": 4,
+      "skills": [
+        "gt-commits"
+      ],
+      "prose": "main's last three commits, newest first, are shared with your team:\n\n```sh\n$ git log --oneline -3\ne4b2c90 Add sector-neutral weights\na17f3d2 Set costs to zero for testing\n6c9d8e1 Add volume filter\n```",
+      "question": "You must undo only the zero-costs commit. Which command?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`git revert a17f3d2`",
+            "correct": true
+          },
+          {
+            "id": "head",
+            "text": "`git revert HEAD`",
+            "why": "HEAD is e4b2c90, the sector-neutral commit. That would cancel the wrong change."
+          },
+          {
+            "id": "reset",
+            "text": "`git reset --hard HEAD~2`",
+            "why": "That drops two commits, including the good sector-neutral one, and rewrites shared history."
+          },
+          {
+            "id": "restore",
+            "text": "`git restore costs.py`",
+            "why": "The change is committed. restore only discards uncommitted edits."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "revert can cancel any one commit by its id.",
+        "generic": "Not quite right. Name the commit you want to cancel."
+      },
+      "explain": {
+        "text": "`git revert a17f3d2` adds a commit that undoes only the zero-costs change. The newer sector-neutral commit stays. Nothing shared is rewritten."
+      }
+    },
+    {
+      "id": "hw-three-line-conflict",
+      "difficulty": 4,
+      "skills": [
+        "gt-branches"
+      ],
+      "prose": "Before the split: lookback 20, cost_bps 5, max_leverage 2.0. On main, risk lowered leverage to 1.5 and raised costs to 8. On vol-signal you set lookback to 60. Merging gives this:",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "config.yaml after the merge"
+          ],
+          "rows": [
+            [
+              "universe: sp500"
+            ],
+            [
+              "<<<<<<< HEAD"
+            ],
+            [
+              "lookback: 20"
+            ],
+            [
+              "cost_bps: 8"
+            ],
+            [
+              "max_leverage: 1.5"
+            ],
+            [
+              "======="
+            ],
+            [
+              "lookback: 60"
+            ],
+            [
+              "cost_bps: 5"
+            ],
+            [
+              "max_leverage: 2.0"
+            ],
+            [
+              ">>>>>>> vol-signal"
+            ],
+            [
+              "rebalance: monthly"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Place the lines of the correct file in order.",
+      "widget": {
+        "kind": "place",
+        "mode": "order",
+        "tokens": [
+          {
+            "id": "u",
+            "text": "`universe: sp500`"
+          },
+          {
+            "id": "m1",
+            "text": "`<<<<<<< HEAD`"
+          },
+          {
+            "id": "lb20",
+            "text": "`lookback: 20`"
+          },
+          {
+            "id": "c8",
+            "text": "`cost_bps: 8`"
+          },
+          {
+            "id": "lev15",
+            "text": "`max_leverage: 1.5`"
+          },
+          {
+            "id": "sep",
+            "text": "`=======`"
+          },
+          {
+            "id": "lb60",
+            "text": "`lookback: 60`"
+          },
+          {
+            "id": "c5",
+            "text": "`cost_bps: 5`"
+          },
+          {
+            "id": "lev20",
+            "text": "`max_leverage: 2.0`"
+          },
+          {
+            "id": "m3",
+            "text": "`>>>>>>> vol-signal`"
+          },
+          {
+            "id": "reb",
+            "text": "`rebalance: monthly`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "file",
+            "label": "config.yaml"
+          }
+        ],
+        "order": [
+          "u",
+          "lb60",
+          "c8",
+          "lev15",
+          "reb"
+        ]
+      },
+      "feedback": {
+        "correct": "Your lookback, and main's costs and leverage.",
+        "generic": "Not quite right. Compare each line with the file before the split.",
+        "byKey": {
+          "lb20": "lookback: 20 is the old value. main never changed it; your branch did, to 60.",
+          "c5": "cost_bps: 5 is the old value. Keeping it silently undoes main's rise to 8.",
+          "lev20": "max_leverage: 2.0 is the old value. Keeping it undoes the risk team's cut to 1.5.",
+          "m1": "You kept a conflict marker. Delete all three.",
+          "sep": "You kept the divider. Delete all three markers.",
+          "m3": "You kept a conflict marker. Delete all three."
+        }
+      },
+      "explain": {
+        "text": "Each half repeats lines its side never changed. Against the old file, your branch changed only lookback, and main changed costs and leverage. Taking each real change gives lookback 60, cost_bps 8 and max_leverage 1.5."
+      }
+    },
+    {
+      "id": "hw-contains-code",
+      "difficulty": 4,
+      "skills": [
+        "gt-branches"
+      ],
+      "prose": "Model a history as a dictionary from each commit id to the list of its parents. A merge commit has two parents; the first commit has none. Write `contains(parents, tip)`: the set of commits a branch at `tip` contains.",
+      "question": "Complete `contains(parents, tip)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def contains(parents, tip):\n    seen = set()\n    todo = [tip]\n    while todo:\n        c = todo.pop()\n        # if c is not in seen yet:\n        #     add it to seen, and add its parents to todo\n        pass\n    return seen\n",
+        "examples": [
+          {
+            "call": "contains({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"]}, \"c3\")",
+            "expect": "{'c1', 'c2', 'c3'}"
+          },
+          {
+            "call": "contains({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"], \"c4\": [\"c2\"], \"c5\": [\"c4\"], \"m\": [\"c3\", \"c5\"]}, \"c5\")",
+            "expect": "{'c1', 'c2', 'c4', 'c5'}"
+          }
+        ],
+        "tests": [
+          {
+            "call": "contains({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"]}, \"c3\")",
+            "expect": "{'c1', 'c2', 'c3'}"
+          },
+          {
+            "call": "contains({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"]}, \"c1\")",
+            "expect": "{'c1'}"
+          },
+          {
+            "call": "contains({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"], \"c4\": [\"c2\"], \"c5\": [\"c4\"], \"m\": [\"c3\", \"c5\"]}, \"m\")",
+            "expect": "{'c1', 'c2', 'c3', 'c4', 'c5', 'm'}"
+          },
+          {
+            "call": "contains({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"], \"c4\": [\"c2\"], \"c5\": [\"c4\"], \"m\": [\"c3\", \"c5\"]}, \"c5\")",
+            "expect": "{'c1', 'c2', 'c4', 'c5'}"
+          },
+          {
+            "call": "contains({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"], \"c4\": [\"c2\"], \"c5\": [\"c4\"], \"m\": [\"c3\", \"c5\"]}, \"c3\")",
+            "expect": "{'c1', 'c2', 'c3'}"
+          },
+          {
+            "call": "contains({\"a\": [], \"b\": [\"a\"], \"c\": [\"a\"], \"d\": [\"b\", \"c\"], \"e\": [\"d\", \"c\"]}, \"e\")",
+            "expect": "{'a', 'b', 'c', 'd', 'e'}"
+          },
+          {
+            "call": "contains({\"a\": [], \"b\": [\"a\"], \"c\": [\"a\"], \"d\": [\"b\", \"c\"], \"e\": [\"d\", \"c\"]}, \"c\")",
+            "expect": "{'a', 'c'}"
+          },
+          {
+            "call": "len(contains({f\"c{i}\": ([f\"c{i-1}\"] if i > 1 else []) for i in range(1, 501)}, \"c500\"))",
+            "expect": "500"
+          }
+        ],
+        "solution": "def contains(parents, tip):\n    seen = set()\n    todo = [tip]\n    while todo:\n        c = todo.pop()\n        if c not in seen:\n            seen.add(c)\n            todo.extend(parents[c])\n    return seen\n",
+        "how": "Check runs 8 hidden tests: a straight line, a merge commit, shared ancestors reached twice, and a 500-commit history. Each result must equal the expected set."
+      },
+      "feedback": {
+        "correct": "Your function follows every parent arrow, including both of a merge's.",
+        "generic": "Not quite right. Follow every parent, and skip commits you have already seen."
+      },
+      "explain": {
+        "text": "`todo.extend(parents[c])` follows every arrow, so both parents of a merge are reached. The `seen` check stops shared ancestors being visited twice. This set is what `git log` lists for a branch."
+      }
+    },
+    {
+      "id": "hw-merge-kind-code",
+      "difficulty": 5,
+      "skills": [
+        "gt-branches"
+      ],
+      "prose": "Use `contains` to predict what `git merge other` does while you are on `current`. Return \"up to date\" when current already contains other, \"fast-forward\" when other contains current, and \"merge commit\" otherwise.",
+      "question": "Complete `merge_kind(parents, current, other)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def contains(parents, tip):\n    seen = set()\n    todo = [tip]\n    while todo:\n        c = todo.pop()\n        if c not in seen:\n            seen.add(c)\n            todo.extend(parents[c])\n    return seen\n\n\ndef merge_kind(parents, current, other):\n    # return \"up to date\", \"fast-forward\"\n    # or \"merge commit\"\n    pass\n",
+        "examples": [
+          {
+            "call": "merge_kind({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"]}, \"c1\", \"c3\")",
+            "expect": "'fast-forward'"
+          }
+        ],
+        "tests": [
+          {
+            "call": "merge_kind({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"]}, \"c1\", \"c3\")",
+            "expect": "'fast-forward'"
+          },
+          {
+            "call": "merge_kind({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"]}, \"c3\", \"c1\")",
+            "expect": "'up to date'"
+          },
+          {
+            "call": "merge_kind({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"]}, \"c2\", \"c2\")",
+            "expect": "'up to date'"
+          },
+          {
+            "call": "merge_kind({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"], \"c4\": [\"c2\"], \"c5\": [\"c4\"], \"m\": [\"c3\", \"c5\"]}, \"c3\", \"c5\")",
+            "expect": "'merge commit'"
+          },
+          {
+            "call": "merge_kind({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"], \"c4\": [\"c2\"], \"c5\": [\"c4\"], \"m\": [\"c3\", \"c5\"]}, \"m\", \"c5\")",
+            "expect": "'up to date'"
+          },
+          {
+            "call": "merge_kind({\"c1\": [], \"c2\": [\"c1\"], \"c3\": [\"c2\"], \"c4\": [\"c2\"], \"c5\": [\"c4\"], \"m\": [\"c3\", \"c5\"]}, \"c4\", \"m\")",
+            "expect": "'fast-forward'"
+          },
+          {
+            "call": "merge_kind({\"a\": [], \"b\": [\"a\"], \"c\": [\"a\"], \"d\": [\"b\", \"c\"], \"e\": [\"d\", \"c\"]}, \"b\", \"c\")",
+            "expect": "'merge commit'"
+          },
+          {
+            "call": "merge_kind({\"a\": [], \"b\": [\"a\"], \"c\": [\"a\"], \"d\": [\"b\", \"c\"], \"e\": [\"d\", \"c\"]}, \"c\", \"e\")",
+            "expect": "'fast-forward'"
+          }
+        ],
+        "solution": "def contains(parents, tip):\n    seen = set()\n    todo = [tip]\n    while todo:\n        c = todo.pop()\n        if c not in seen:\n            seen.add(c)\n            todo.extend(parents[c])\n    return seen\n\n\ndef merge_kind(parents, current, other):\n    if other in contains(parents, current):\n        return \"up to date\"\n    if current in contains(parents, other):\n        return \"fast-forward\"\n    return \"merge commit\"\n",
+        "how": "Check runs 8 hidden tests, including merging a branch into itself and merging into a merge commit. Each result must equal the expected text exactly."
+      },
+      "feedback": {
+        "correct": "Your function sorts every merge the way git does.",
+        "generic": "Not quite right. Check \"up to date\" first, then \"fast-forward\"."
+      },
+      "explain": {
+        "text": "Check \"up to date\" first. If current already reaches other, there is nothing to bring in; that covers a branch merged into itself too. If other reaches current, main is directly behind, so git can slide it. Anything else needs a merge commit."
+      }
+    },
+    {
+      "id": "hw-workflow-essay",
+      "difficulty": 5,
+      "skills": [
+        "gt-branches",
+        "gt-commits"
+      ],
+      "kind": "longform",
+      "title": "Two signals, one reproducible main",
+      "prompt": "Your backtest repository's main produced `results-2026-09.md` (Sharpe 1.12). You want to test two ideas, a momentum filter and a carry signal, independently. Both will need to change `config.yaml`. Describe your plan, with the git commands and a reason for each.\n1. How you set up and work on the two ideas so that main can always reproduce the note.\n2. How you bring a successful idea back. Which kind of merge do you expect for the first, and for the second?\n3. What happens when both ideas changed the `lookback:` line in config.yaml, and how you resolve it.\n4. A week later a merged idea turns out to have a look-ahead bug, and colleagues have pulled main. How do you undo it, and why not with reset?",
+      "model": "**1. One branch per idea.** From main I run `git switch -c momentum-filter`, and later, from main again, `git switch -c carry`. `-c` moves HEAD onto the new branch, so every commit moves that branch and never main. Before committing I check `git branch` for the star. main stays on the commit that wrote the note, so `git switch main` and a rerun reproduce Sharpe 1.12.\n\n**2. Merging back.** I stand on the receiving branch: `git switch main`, then `git merge momentum-filter`. main has not moved since I branched, so this is a fast-forward. carry split off before those commits, so `git merge carry` then makes a merge commit with two parents. I check with `git log --oneline --graph` and remove the labels with `git branch -d`.\n\n**3. The conflict.** Both branches edited `lookback:`, so the second merge stops with `CONFLICT (content)`. config.yaml shows `<<<<<<< HEAD`, main's version (now momentum's), then `=======`, then carry's, then `>>>>>>> carry`. I compare both halves with the file before the split, keep each real change, choose one lookback deliberately, and delete all three markers. Then I rerun the backtest, `git add config.yaml` and `git commit`.\n\n**4. Undoing a shared mistake.** Colleagues have the commits, so I must not rewrite history. `git revert <commit>` adds a new commit that cancels the bug; for the whole merge, `git revert -m 1 <merge>`. `git reset --hard` would move main back, but colleagues' copies still hold those commits. Their next merge would bring the bug back and the histories would disagree.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Uses one branch per idea, made with `git switch -c` (not `git branch` alone), so main never moves while experimenting"
+        },
+        {
+          "points": 1,
+          "text": "Explains that main stays on the commit that produced the note, so switching back reproduces it"
+        },
+        {
+          "points": 1,
+          "text": "Merges by switching to main first and naming the idea branch"
+        },
+        {
+          "points": 2,
+          "text": "Predicts a fast-forward for the first merge and a merge commit with two parents for the second, with the reason"
+        },
+        {
+          "points": 2,
+          "text": "Resolves the conflict: reads the markers, compares with the old file and deletes every marker. Then runs `git add` and `git commit`"
+        },
+        {
+          "points": 2,
+          "text": "Undoes the shared mistake with `git revert`, and explains why reset is unsafe once others have the commits"
+        }
+      ]
+    }
+  ]
+}

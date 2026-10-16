@@ -1,0 +1,1358 @@
+{
+  "id": "l5-counting-and-averaging",
+  "course": "sql",
+  "title": "Counting and averaging",
+  "minutes": 13,
+  "objectives": [
+    "Use `COUNT`, `SUM`, `AVG`, `MIN` and `MAX` on a whole table",
+    "Predict how many rows an aggregate query returns",
+    "Explain how `NULL` changes `COUNT` and `AVG`"
+  ],
+  "skills": [
+    "sql-aggregate"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One value from many rows",
+      "prose": "The `prices` table holds a week of AstraZeneca closes, one row per trading day. This query asks it a question about the whole week.\n\n```sql\nSELECT MAX(close)\nFROM prices;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices: one row per trading day"
+        }
+      },
+      "question": "Tap the value this query returns.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r3c2"
+        ],
+        "max": 1,
+        "only": [
+          "r0c2",
+          "r1c2",
+          "r2c2",
+          "r3c2",
+          "r4c2"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`MAX` keeps one value from the column it is given."
+        },
+        {
+          "rung": "point",
+          "text": "The query reads only the close column.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Compare the five closes and keep the largest."
+        }
+      ],
+      "feedback": {
+        "correct": "`MAX(close)` read all five closes and kept the largest, £120.25.",
+        "generic": "Not quite right. Look down the whole close column for its largest value.",
+        "byKey": {
+          "r4c2": "You picked the latest close. `MAX` compares every row, not just the last one.",
+          "r0c2": "You picked the first row. `MAX` looks at every close before it answers.",
+          "r2c2": "That is the smallest close. `MIN(close)` would return it."
+        }
+      },
+      "explain": {
+        "text": "You scanned the whole close column and kept one number. `MAX` does exactly that, and so do `MIN`, `SUM`, `AVG` and `COUNT` in their own ways.",
+        "canvas": {
+          "highlight": [
+            "r3c2"
+          ],
+          "caption": "MAX(close) = 120.25"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Which rows take part",
+      "prose": "This query adds up a column.\n\n```sql\nSELECT SUM(volume)\nFROM prices;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every volume that `SUM(volume)` adds.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c3",
+          "r1c3",
+          "r2c3",
+          "r3c3",
+          "r4c3"
+        ],
+        "only": [
+          "r0c3",
+          "r1c3",
+          "r2c3",
+          "r3c3",
+          "r4c3"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is there anything in the query that leaves a row out?"
+        },
+        {
+          "rung": "point",
+          "text": "There is no `WHERE` line.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Every row feeds the sum, so tap all five volumes."
+        }
+      ],
+      "feedback": {
+        "correct": "All five rows feed the sum: 10,600,000 shares.",
+        "generic": "Not quite right. Nothing in this query leaves a row out."
+      },
+      "explain": {
+        "text": "With no `WHERE`, every row feeds the aggregate. The five volumes add to 10,600,000 shares, returned as one value.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              3
+            ]
+          },
+          "caption": "SUM(volume) = 10600000"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The shape of the answer",
+      "prose": "Now we ask for three summaries at once.\n\n```sql\nSELECT COUNT(*), SUM(volume), MAX(close)\nFROM prices;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many rows does this query return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "One row, holding three values",
+            "correct": true
+          },
+          {
+            "id": "five",
+            "text": "Five rows, one per day",
+            "why": "You expected one result per input row. Each of these functions folds all five rows into one value."
+          },
+          {
+            "id": "three",
+            "text": "Three rows, one per function",
+            "why": "You gave each function its own row. They sit side by side, as the columns of one row."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many values did `MAX(close)` give on its own?"
+        },
+        {
+          "rung": "point",
+          "text": "`COUNT(*)` counts the rows: one number.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2",
+            "r3",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Three single values side by side make one row with three columns."
+        }
+      ],
+      "feedback": {
+        "correct": "One row: `(5, 10600000, 120.25)`.",
+        "generic": "Not quite right. Each function on its own returns one value.",
+        "byKey": {
+          "five": "You expected one result per day. Each function folds the five days into one value."
+        }
+      },
+      "explain": {
+        "text": "`COUNT`, `SUM`, `AVG`, `MIN` and `MAX` are **aggregate functions**. Each folds a column into a single value, so the result is one row: `(5, 10600000, 120.25)`.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2,
+              3
+            ]
+          },
+          "caption": "five rows in, one row out"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The average close",
+      "prose": "```sql\nSELECT AVG(close)\nFROM prices;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does this return? Give pounds to 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 119.03,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "pounds",
+        "accept": "£119.03",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 595.15,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "median",
+            "value": 119.1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "four",
+            "value": 148.79,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the five closes first."
+        },
+        {
+          "rung": "point",
+          "text": "The closes sum to £595.15.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide £595.15 by the 5 rows."
+        }
+      ],
+      "feedback": {
+        "correct": "£595.15 over 5 days is £119.03.",
+        "generic": "Not quite right. Add the five closes, then divide by how many there are.",
+        "byKey": {
+          "sum": "You added the closes but did not divide. `AVG` divides the sum by the count.",
+          "median": "You took the middle close when sorted. `AVG` is the mean, not the median.",
+          "four": "You divided by 4. There are five closes in the table."
+        }
+      },
+      "explain": {
+        "text": "The closes sum to £595.15 over 5 rows, so `AVG(close)` is £119.03. It reads one column and returns one value, like `MAX`.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          },
+          "caption": "AVG(close) = 595.15 / 5 = 119.03"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write it",
+      "prose": "The starter builds the same `prices` table in memory. Your `query()` returns the SQL as a string, and the tests run it. `ROUND(x, 2)` rounds `x` to two decimals.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return one row: the number of days, the total volume, and the average close rounded to 2 decimal places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices(date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2024-03-11\", \"AZN\", 118.40, 2100000),\n    (\"2024-03-12\", \"AZN\", 119.10, 1900000),\n    (\"2024-03-13\", \"AZN\", 117.60, 2600000),\n    (\"2024-03-14\", \"AZN\", 120.25, 2300000),\n    (\"2024-03-15\", \"AZN\", 119.80, 1700000),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT COUNT(*)\nFROM prices\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices(date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2024-03-11\", \"AZN\", 118.40, 2100000),\n    (\"2024-03-12\", \"AZN\", 119.10, 1900000),\n    (\"2024-03-13\", \"AZN\", 117.60, 2600000),\n    (\"2024-03-14\", \"AZN\", 120.25, 2300000),\n    (\"2024-03-15\", \"AZN\", 119.80, 1700000),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT COUNT(*), SUM(volume), ROUND(AVG(close), 2)\nFROM prices\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(5, 10600000, 119.03)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(5, 10600000, 119.03)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); db.backup(t2); t2.executescript(\"INSERT INTO prices VALUES ('2024-03-18', 'AZN', 121.20, 1800000);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[(6, 12400000, 119.39)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); db.backup(t3); t3.executescript(\"DELETE FROM prices WHERE date < '2024-03-13';\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[(3, 6600000, 119.22)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each runs your query and compares the rows from `fetchall()` exactly, so round in the query. Tests after the first add rows to a copy of the data."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put the three aggregates in one `SELECT`, separated by commas."
+        },
+        {
+          "rung": "point",
+          "text": "`ROUND(AVG(close), 2)` rounds the mean to two places.",
+          "highlight": [
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`SELECT COUNT(*), SUM(volume), ROUND(AVG(close), 2) FROM prices`"
+        }
+      ],
+      "feedback": {
+        "correct": "One row, three columns, and the average fixed to two places.",
+        "generic": "Not quite right. Run the examples and compare your row with the expected one.",
+        "byKey": {
+          "test-1": "Test 1 expects `[(5, 10600000, 119.03)]`. Check the order of your three columns.",
+          "test-2": "Test 2 adds a sixth day. A typed-in number cannot follow it, but the aggregates can."
+        }
+      },
+      "explain": {
+        "text": "Three aggregates in one `SELECT` give one row with three columns. `ROUND` fixes the float to two places, so the test can compare it exactly.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Filter, then fold",
+      "prose": "Add a filter.\n\n```sql\nSELECT SUM(volume)\nFROM prices\nWHERE close > 119;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every volume that this sum adds.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c3",
+          "r3c3",
+          "r4c3"
+        ],
+        "only": [
+          "r0c3",
+          "r1c3",
+          "r2c3",
+          "r3c3",
+          "r4c3"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "all",
+            "set": [
+              "r0c3",
+              "r1c3",
+              "r2c3",
+              "r3c3",
+              "r4c3"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which days closed above £119?"
+        },
+        {
+          "rung": "point",
+          "text": "Read the close column first.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep 12, 14 and 15 March, then tap their volumes."
+        }
+      ],
+      "feedback": {
+        "correct": "Three days closed above £119, so the sum is 5,900,000 shares.",
+        "generic": "Not quite right. Keep only the rows whose close is above £119.",
+        "byKey": {
+          "all": "You added every day. `WHERE` removes the rows with a close of £119 or less before `SUM` sees them.",
+          "r0c3": "11 March closed at £118.40, below £119, so `WHERE` drops that row.",
+          "r2c3": "13 March closed at £117.60, so `WHERE` drops that row."
+        }
+      },
+      "explain": {
+        "text": "`WHERE` runs first and keeps three rows. `SUM` then adds only their volumes: 1,900,000 + 2,300,000 + 1,700,000 = 5,900,000.",
+        "canvas": {
+          "highlight": [
+            "r1c3",
+            "r3c3",
+            "r4c3"
+          ],
+          "caption": "WHERE keeps 3 rows, then SUM adds them"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A missing close",
+      "prose": "The data vendor sent nothing for 13 March, so that close is `NULL`.\n\n```sql\nSELECT AVG(close)\nFROM prices;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "NULL",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "13 March has no close"
+        }
+      },
+      "question": "What does this return? Give pounds to 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 119.39,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "placeholder": "pounds",
+        "accept": "£119.39 (exactly 119.3875)",
+        "wrong": [
+          {
+            "id": "as-zero",
+            "value": 95.51,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "sum",
+            "value": 477.55,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is a missing close the same as a close of £0?"
+        },
+        {
+          "rung": "point",
+          "text": "Only four closes are known.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add the four known closes, £477.55, and divide by 4."
+        }
+      ],
+      "feedback": {
+        "correct": "£477.55 over the 4 known closes is £119.39.",
+        "generic": "Not quite right. Decide what `AVG` does with the row that has no close.",
+        "byKey": {
+          "as-zero": "You counted the missing close as £0 and divided by 5. `AVG` skips the `NULL`, so it divides by 4.",
+          "sum": "You added the four closes but did not divide."
+        }
+      },
+      "explain": {
+        "text": "`AVG` leaves the `NULL` row out entirely: £477.55 over 4 closes is £119.39. Treating it as £0 would drag the average down to £95.51. `COUNT(*)` still counts 5 rows, but `COUNT(close)` counts 4 values.",
+        "canvas": {
+          "highlight": [
+            "r2c2"
+          ],
+          "caption": "COUNT(*) = 5, COUNT(close) = 4"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "Every aggregate reads the rows that survive `WHERE` and returns one value. Each skips `NULL`, except `COUNT(*)`, which counts rows.\n\n```sql\nSELECT COUNT(*), COUNT(close), SUM(volume),\n       ROUND(AVG(close), 2), MIN(close), MAX(close)\nFROM prices\nWHERE ...;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "NULL",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "On this table, what do `COUNT(*)` and `COUNT(close)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "five-four",
+            "text": "5 and 4",
+            "correct": true
+          },
+          {
+            "id": "five-five",
+            "text": "5 and 5",
+            "why": "You counted the `NULL` as a close. `COUNT(close)` counts only the values that are present."
+          },
+          {
+            "id": "four-four",
+            "text": "4 and 4",
+            "why": "`COUNT(*)` counts rows, whatever they hold. The row for 13 March is still a row."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Five rows, four closes.",
+        "generic": "Not quite right. One counts rows; the other counts values."
+      },
+      "explain": {
+        "text": "`COUNT(*)` counts the five rows. `COUNT(close)` skips the `NULL` and counts four.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why the average skipped a day",
+      "prose": "We can write what `AVG` did, one line at a time, for a column $c$.\n\n$$\\begin{aligned} \\text{AVG}(c) &= \\frac{\\text{sum of the values present}}{\\text{number of values present}} && \\text{NULLs are skipped} \\\\ &= \\frac{\\text{SUM}(c)}{\\;?\\;} && \\text{SUM also skips NULLs} \\end{aligned}$$",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "NULL",
+              "2600000"
+            ],
+            [
+              "2024-03-14",
+              "AZN",
+              "120.25",
+              "2300000"
+            ],
+            [
+              "2024-03-15",
+              "AZN",
+              "119.80",
+              "1700000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which denominator completes the second line?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "count-col",
+            "text": "`COUNT(close)`",
+            "correct": true
+          },
+          {
+            "id": "count-star",
+            "text": "`COUNT(*)`",
+            "why": "That divides by every row, so the `NULL` acts as a £0 close. It gives the £95.51 answer."
+          },
+          {
+            "id": "minus-one",
+            "text": "`COUNT(*) - 1`",
+            "why": "Subtracting 1 fixes this table only, which has one `NULL`. A table with two would break it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The numerator only adds values that are present."
+        },
+        {
+          "rung": "point",
+          "text": "Which count also skips the `NULL`?",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`COUNT(close)` counts the values present: 4 here."
+        }
+      ],
+      "feedback": {
+        "correct": "Both sides skip the `NULL`, so they match.",
+        "generic": "Not quite right. The denominator must skip the same rows as the numerator."
+      },
+      "explain": {
+        "text": "`SUM(close)` adds the 4 values present, so it must be divided by the 4 that `COUNT(close)` counts. £477.55 / 4 = £119.39, the value you found.",
+        "canvas": {
+          "highlight": [
+            "r2c2"
+          ],
+          "caption": "AVG(close) = SUM(close) / COUNT(close)"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The day's blotter",
+      "prose": "A desk's `trades` table holds one row per fill: quantity and price in pounds. Risk wants three numbers for 12 March.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "trades: two days of fills"
+        }
+      },
+      "question": "Return one row for 12 March: the number of trades, the total quantity, and the traded value `SUM(qty * price)` rounded to 2 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\ndb.executemany(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\", [\n    (1, \"2024-03-12\", \"AZN\", 200, 118.90),\n    (2, \"2024-03-12\", \"BARC\", 5000, 2.17),\n    (3, \"2024-03-12\", \"AZN\", 500, 119.20),\n    (4, \"2024-03-12\", \"BARC\", 8000, 2.19),\n    (5, \"2024-03-13\", \"AZN\", 300, 117.80),\n    (6, \"2024-03-13\", \"AZN\", 100, 117.50),\n    (7, \"2024-03-13\", \"BARC\", 6000, 2.16),\n    (8, \"2024-03-13\", \"AZN\", 400, 117.70),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT COUNT(*)\nFROM trades\nWHERE date = '2024-03-12'\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\ndb.executemany(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\", [\n    (1, \"2024-03-12\", \"AZN\", 200, 118.90),\n    (2, \"2024-03-12\", \"BARC\", 5000, 2.17),\n    (3, \"2024-03-12\", \"AZN\", 500, 119.20),\n    (4, \"2024-03-12\", \"BARC\", 8000, 2.19),\n    (5, \"2024-03-13\", \"AZN\", 300, 117.80),\n    (6, \"2024-03-13\", \"AZN\", 100, 117.50),\n    (7, \"2024-03-13\", \"BARC\", 6000, 2.16),\n    (8, \"2024-03-13\", \"AZN\", 400, 117.70),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT COUNT(*), SUM(qty), ROUND(SUM(qty * price), 2)\nFROM trades\nWHERE date = '2024-03-12'\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(4, 13700, 111750.0)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[(4, 13700, 111750.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); db.backup(t2); t2.executescript(\"INSERT INTO trades VALUES (9, '2024-03-12', 'AZN', 100, 119.00);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[(5, 13800, 123650.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); db.backup(t3); t3.executescript(\"INSERT INTO trades VALUES (9, '2024-03-14', 'BARC', 2000, 2.20);\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[(4, 13700, 111750.0)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly. Test 2 adds a fill on 12 March; test 3 adds one on another day."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Filter to the day first, then fold."
+        },
+        {
+          "rung": "point",
+          "text": "`WHERE date = '2024-03-12'` keeps four fills.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`SELECT COUNT(*), SUM(qty), ROUND(SUM(qty * price), 2) FROM trades WHERE date = '2024-03-12'`"
+        }
+      ],
+      "feedback": {
+        "correct": "Four fills, 13,700 shares, £111,750.00 traded.",
+        "generic": "Not quite right. Run the examples and compare your row with the expected one.",
+        "byKey": {
+          "test-3": "Test 3 adds a fill on 14 March. If it changed your answer, the `WHERE` line is missing or wrong.",
+          "test-1": "Test 1 expects `[(4, 13700, 111750.0)]`. Check the filter and the order of the columns."
+        }
+      },
+      "explain": {
+        "text": "`WHERE` keeps the four fills from 12 March, then each aggregate folds them. `SUM(qty * price)` multiplies inside each row before adding, so every fill counts at its own price.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2,
+              3
+            ]
+          },
+          "caption": "traded value = 23780 + 10850 + 59600 + 17520 = 111750"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An aggregate function folds a whole column into one value, so a query of aggregates returns one row.",
+      "`WHERE` runs first: only the rows it keeps reach `COUNT`, `SUM`, `AVG`, `MIN` and `MAX`.",
+      "Every aggregate skips `NULL` except `COUNT(*)`, which counts rows; round averages with `ROUND(x, 2)`."
+    ],
+    "formula": {
+      "name": "Average with missing values",
+      "tex": "\\text{AVG}(c) = \\dfrac{\\text{SUM}(c)}{\\text{COUNT}(c)}",
+      "note": "Divide by the values present, not by `COUNT(*)`."
+    },
+    "trap": "A `NULL` close is not £0: `AVG` leaves that row out instead of averaging in a zero."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "On the AstraZeneca week, every close is below £121.\n\n```sql\nSELECT COUNT(*)\nFROM prices\nWHERE close > 200;\n```",
+      "question": "What comes back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "One row holding 0",
+            "correct": true
+          },
+          {
+            "id": "empty",
+            "text": "No rows at all",
+            "why": "You expected an empty filter to give an empty result. An aggregate with no `GROUP BY` always returns one row."
+          },
+          {
+            "id": "null",
+            "text": "One row holding `NULL`",
+            "why": "`COUNT` of nothing is 0. It is `SUM`, `AVG`, `MIN` and `MAX` that give `NULL` when no rows reach them."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "No rows survive, and the count of nothing is 0.",
+        "generic": "Not quite right. Think about what counting zero rows gives."
+      },
+      "explain": {
+        "text": "No row passes `WHERE`, so `COUNT(*)` counts nothing and returns 0. A whole-table aggregate still returns exactly one row."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "Same table, same impossible filter.\n\n```sql\nSELECT SUM(volume)\nFROM prices\nWHERE close > 200;\n```",
+      "question": "What comes back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "null",
+            "text": "One row holding `NULL`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "One row holding 0",
+            "why": "You expected an empty sum to be 0. SQL returns `NULL` when no rows reach `SUM`."
+          },
+          {
+            "id": "empty",
+            "text": "No rows at all",
+            "why": "A whole-table aggregate always returns one row, even when no rows pass `WHERE`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "With no values to add, `SUM` returns `NULL`.",
+        "generic": "Not quite right. `SUM` and `COUNT` differ on an empty set."
+      },
+      "explain": {
+        "text": "`SUM` over no rows is `NULL`, not 0, in SQL. `COALESCE(SUM(volume), 0)` turns it into 0 when a report needs a number."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "A table has 8 daily closes, and 3 of them are `NULL`. The known closes add up to £600.00.",
+      "question": "What does `ROUND(AVG(close), 2)` return? Give pounds.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 120.0,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "accept": "£120.00",
+        "wrong": [
+          {
+            "id": "all-rows",
+            "value": 75.0,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£600.00 over the 5 known closes is £120.00.",
+        "generic": "Not quite right. Decide how many closes `AVG` divides by.",
+        "byKey": {
+          "all-rows": "You divided by all 8 rows. `AVG` skips the 3 `NULL`s and divides by 5."
+        }
+      },
+      "explain": {
+        "text": "`AVG(close)` is `SUM(close) / COUNT(close)`. Both skip the `NULL`s, so it is £600.00 / 5 = £120.00."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 2,
+      "prose": "The AstraZeneca week has a mean close of £119.03.\n\n```sql\nSELECT ROUND(AVG(close), 1)\nFROM prices;\n```",
+      "question": "What does SQLite return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "one",
+            "text": "`119.0`",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "`119.03`",
+            "why": "You kept two places. The second argument of `ROUND` is the number of decimals to keep: 1."
+          },
+          {
+            "id": "int",
+            "text": "`119`",
+            "why": "`ROUND(x, 1)` keeps one decimal, and SQLite returns a float, so it shows `119.0`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One decimal place: `119.0`.",
+        "generic": "Not quite right. Read the second argument of `ROUND`."
+      },
+      "explain": {
+        "text": "`ROUND(119.03, 1)` keeps one decimal place, and the 3 in the second place rounds down. The result is the float `119.0`."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1927 @@
+{
+  "id": "l8-undoing-safely",
+  "course": "git",
+  "title": "Undoing safely",
+  "minutes": 14,
+  "objectives": [
+    "Choose between restore, revert and reset for each kind of mistake",
+    "Move a commit made on main by accident onto its own branch"
+  ],
+  "skills": [
+    "gt-commits",
+    "gt-branches"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Your last commit, c4, broke the signal code. You made it a minute ago, on your own, and nobody else has it. You want main to look as if c4 never happened.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 0.75,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 0.75,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c4",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "nodeRadius": 30,
+          "height": 300,
+          "aria": "Commit graph: circles are commits, arrows point to parents, labels point at commits"
+        },
+        "state": {
+          "caption": "c4 is the bad commit"
+        }
+      },
+      "question": "Tap the commit main should point to.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c3"
+        ],
+        "countWord": "selected",
+        "max": 1,
+        "wrong": [
+          {
+            "id": "first",
+            "set": [
+              "c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A branch is a label. Where would it point if c4 had never been made?"
+        },
+        {
+          "rung": "point",
+          "text": "c4 was built on this commit.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Before c4, main pointed at c3. Moving the label back there leaves c4 out."
+        }
+      ],
+      "feedback": {
+        "correct": "Point main back at c3, c4's parent.",
+        "generic": "Not quite right. Find the commit main pointed at just before c4.",
+        "byKey": {
+          "first": "That would drop c2 and c3 as well. Only c4 is bad, so go back one step.",
+          "c4": "That is the bad commit itself. main must point before it.",
+          "c2": "That drops c3 too, which was fine. Go back one step only.",
+          "main": "Tap a commit, not a label.",
+          "HEAD": "Tap a commit, not a label."
+        }
+      },
+      "explain": {
+        "text": "Moving main back to c3 is what `git reset --hard HEAD~1` does: HEAD~1 means one parent back. c4 still exists, but no branch reaches it any more. The folder is rewritten to match c3.",
+        "canvas": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 0.5,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 0.5,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c3",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "caption": "After `git reset --hard HEAD~1`: no label reaches c4"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "There is a second way to undo c4. This command makes a **new** commit, c5, whose changes are exactly the opposite of c4's:\n\n```sh\n$ git revert HEAD\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 0.75,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 0.75,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c4",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "nodeRadius": 30,
+          "height": 300,
+          "aria": "Commit graph: circles are commits, arrows point to parents, labels point at commits"
+        },
+        "state": {
+          "caption": "Before the command"
+        },
+        "enter": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "c5",
+              "label": "c5",
+              "x": 1.0,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 1.0,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 1.0,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "c5",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c5",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "caption": "After `git revert HEAD`: c5 undoes c4"
+        }
+      },
+      "question": "Tap every commit main contains now.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "dropped",
+            "set": [
+              "c1",
+              "c2",
+              "c3",
+              "c5"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the arrows back from main. Is any commit skipped?"
+        },
+        {
+          "rung": "point",
+          "text": "c5 is built on c4.",
+          "highlight": [
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From c5 the arrows run through c4, c3, c2 and c1. Nothing was removed."
+        }
+      ],
+      "feedback": {
+        "correct": "All five: the bad commit and its undoing are both in the history.",
+        "generic": "Not quite right. Follow every arrow back from main.",
+        "byKey": {
+          "dropped": "c4 is still there. revert adds a commit that cancels c4; it removes nothing.",
+          "c4": "c4 is still there. revert adds a commit that cancels c4; it removes nothing.",
+          "c1": "Keep following arrows back, all the way to c1.",
+          "main": "Tap only commits.",
+          "HEAD": "Tap only commits."
+        }
+      },
+      "explain": {
+        "text": "main now holds c4 and also c5, which cancels it. The files match c3 again, but the history only grew. Nothing anyone else has seen was changed.",
+        "canvas": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "c5",
+              "label": "c5",
+              "x": 1.0,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 1.0,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 1.0,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "c5",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c5",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "highlight": [
+            "c1",
+            "c2",
+            "c3",
+            "c4",
+            "c5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "So **reset** moves a branch back, dropping commits from it. **revert** adds a commit that cancels one. Now suppose a colleague has already built risk-model on top of the bad c4.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 0.33
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 0.33
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 0.33
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 0.33
+            },
+            {
+              "id": "r1",
+              "label": "r1",
+              "x": 1.0,
+              "y": 0.67
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 0.75,
+              "y": 0.0,
+              "colour": 2
+            },
+            {
+              "id": "risk",
+              "label": "risk-model",
+              "x": 1.0,
+              "y": 1.0,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 0.5,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "r1",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c4",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "risk",
+              "to": "r1",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "nodeRadius": 30,
+          "height": 380,
+          "aria": "Commit graph: circles are commits, arrows point to parents, labels point at commits"
+        },
+        "state": {
+          "caption": "risk-model was built on c4"
+        }
+      },
+      "question": "Which undo is safe on main?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`git revert HEAD`: add a commit that cancels c4",
+            "correct": true
+          },
+          {
+            "id": "reset",
+            "text": "`git reset --hard HEAD~1`: move main back to c3",
+            "why": "risk-model still contains c4. When it is merged back, c4 returns, and main's history no longer matches your colleague's."
+          },
+          {
+            "id": "restore",
+            "text": "`git restore signal.py`",
+            "why": "restore works on files in your folder. It does not touch commits."
+          },
+          {
+            "id": "delete",
+            "text": "`git branch -d risk-model`, then reset",
+            "why": "Deleting a colleague's branch label does not delete their work, and it is theirs to keep."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which method leaves every existing commit in place?"
+        },
+        {
+          "rung": "point",
+          "text": "This commit sits on c4. Removing c4 from main does not remove it from here.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Revert changes nothing that exists; it only adds. That keeps main and risk-model in agreement."
+        }
+      ],
+      "feedback": {
+        "correct": "Revert keeps shared history intact.",
+        "generic": "Not quite right. Prefer the undo that only adds a commit.",
+        "byKey": {
+          "reset": "risk-model still contains c4. When it is merged back, c4 returns, and main's history no longer matches your colleague's."
+        }
+      },
+      "explain": {
+        "text": "Revert adds c5 and changes no existing commit, so risk-model and main still share the same past. When risk-model is merged, c5 keeps c4 cancelled. Reset is for commits only you have.",
+        "canvas": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 0.33
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 0.33
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 0.33
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 0.33
+            },
+            {
+              "id": "r1",
+              "label": "r1",
+              "x": 1.0,
+              "y": 0.67
+            },
+            {
+              "id": "c5",
+              "label": "c5",
+              "x": 1.0,
+              "y": 0.33
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 1.0,
+              "y": 0.0,
+              "colour": 2
+            },
+            {
+              "id": "risk",
+              "label": "risk-model",
+              "x": 1.0,
+              "y": 1.0,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 0.75,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "r1",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "c5",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c5",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "risk",
+              "to": "r1",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "caption": "After `git revert HEAD` on main"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "`HEAD~1` means one parent back from the commit HEAD is on. `HEAD~2` means two parents back, and so on.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "c5",
+              "label": "c5",
+              "x": 1.0,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 1.0,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 1.0,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "c5",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c5",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "nodeRadius": 30,
+          "height": 300,
+          "aria": "Commit graph: circles are commits, arrows point to parents, labels point at commits"
+        },
+        "state": {
+          "caption": "HEAD is on main, at c5"
+        }
+      },
+      "question": "Tap the commit `HEAD~2` names.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c3"
+        ],
+        "countWord": "selected",
+        "max": 1,
+        "wrong": [
+          {
+            "id": "counted-start",
+            "set": [
+              "c4"
+            ]
+          },
+          {
+            "id": "too-far",
+            "set": [
+              "c2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at the commit HEAD is on. Step back along one arrow, then another."
+        },
+        {
+          "rung": "point",
+          "text": "HEAD is on this commit. Steps start here.",
+          "highlight": [
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One step from c5 is c4 (HEAD~1). Two steps is c3."
+        }
+      ],
+      "feedback": {
+        "correct": "Two parents back from c5 is c3.",
+        "generic": "Not quite right. Start at c5 and follow two arrows.",
+        "byKey": {
+          "counted-start": "That is HEAD~1, one step back. Take one more.",
+          "too-far": "You took three steps. Count the arrows from c5: c4 is one, c3 is two.",
+          "c5": "That is HEAD itself, HEAD~0. Step back twice.",
+          "main": "Tap a commit, not a label.",
+          "HEAD": "Tap a commit, not a label."
+        }
+      },
+      "explain": {
+        "text": "From c5, one arrow leads to c4 and a second to c3. So `HEAD~2` is c3. `git reset --hard HEAD~2` would move main back two commits.",
+        "canvas": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "c5",
+              "label": "c5",
+              "x": 1.0,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 1.0,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 1.0,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "c5",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c5",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "highlight": [
+            "c3",
+            "e-c5-c4",
+            "e-c4-c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Three tools, three kinds of mistake. `git restore` works on files you have not committed. `git revert` and `git reset` work on commits.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "situation"
+          ],
+          "rows": [
+            [
+              "A",
+              "You edited signal.py an hour ago, never committed, and want the last committed version back"
+            ],
+            [
+              "B",
+              "A bad commit on main that colleagues have already built on"
+            ],
+            [
+              "C",
+              "A bad commit made a minute ago, on your own branch, never shared"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Drag each command to the situation it fits.",
+      "widget": {
+        "kind": "place",
+        "tokens": [
+          {
+            "id": "restore",
+            "text": "`git restore signal.py`"
+          },
+          {
+            "id": "revert",
+            "text": "`git revert HEAD`"
+          },
+          {
+            "id": "reset",
+            "text": "`git reset --hard HEAD~1`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "a",
+            "label": "A: uncommitted edit",
+            "accepts": [
+              "restore"
+            ]
+          },
+          {
+            "id": "b",
+            "label": "B: shared bad commit",
+            "accepts": [
+              "revert"
+            ]
+          },
+          {
+            "id": "c",
+            "label": "C: unshared bad commit",
+            "accepts": [
+              "reset"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which situation involves no commit at all?"
+        },
+        {
+          "rung": "point",
+          "text": "Situation A has nothing committed, so neither commit tool applies.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A: restore the file. B: revert, since others have the commit. C: reset, since only you have it."
+        }
+      ],
+      "feedback": {
+        "correct": "restore for files, revert for shared commits, reset for private ones.",
+        "generic": "Not quite right. First ask: is there a commit? Then ask: has anyone else got it?",
+        "byKey": {
+          "restore": "restore throws away uncommitted edits to a file. Only situation A has no commit.",
+          "revert": "revert is the safe undo for a commit others already have. That is situation B.",
+          "reset": "reset moves a branch back, rewriting it. Use it only where nobody else has the commit: situation C."
+        }
+      },
+      "explain": {
+        "text": "restore copies the last committed version of a file over your edits. revert adds a cancelling commit, so shared history is untouched. reset rewinds a branch, which is fine while the commits are yours alone.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "You staged two files, then decide prices.csv should not be in this commit after all:\n\n```sh\n$ git add backtest.py prices.csv\n$ git restore --staged prices.csv\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "git status, before the restore"
+          ],
+          "rows": [
+            [
+              "Changes to be committed:"
+            ],
+            [
+              "modified:   backtest.py"
+            ],
+            [
+              "modified:   prices.csv"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      },
+      "question": "What happens to your edits in prices.csv?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "They stay in the file; it just leaves the staging area",
+            "correct": true
+          },
+          {
+            "id": "gone",
+            "text": "They are thrown away",
+            "why": "That is plain `git restore prices.csv`. With `--staged`, only the staging is undone."
+          },
+          {
+            "id": "committed",
+            "text": "They are committed on their own",
+            "why": "restore never commits. It only changes what is staged or what is in a file."
+          },
+          {
+            "id": "both",
+            "text": "backtest.py is unstaged too",
+            "why": "restore acts only on the file you name."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `--staged` restrict the command to?"
+        },
+        {
+          "rung": "point",
+          "text": "This is the line the command changes.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`--staged` undoes the `git add` for that file and leaves its contents alone."
+        }
+      ],
+      "feedback": {
+        "correct": "Unstaged, not deleted.",
+        "generic": "Not quite right. `--staged` only touches the staging area."
+      },
+      "explain": {
+        "text": "`git restore --staged prices.csv` undoes the `git add` for that file. Your edits stay in the folder, so nothing is lost. Without `--staged`, restore would overwrite the edits.",
+        "canvas": {
+          "values": {
+            "r2c0": "(prices.csv: not staged, edits kept)"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "You have an hour of uncommitted edits in backtest.py. You also want to drop your last commit, c4, which only you have. You run:\n\n```sh\n$ git reset --hard HEAD~1\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 0.75,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 0.75,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c4",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "nodeRadius": 30,
+          "height": 300,
+          "aria": "Commit graph: circles are commits, arrows point to parents, labels point at commits"
+        },
+        "state": {
+          "caption": "Before the command, with unsaved work in the folder"
+        }
+      },
+      "question": "What happens to the hour of edits in backtest.py?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Gone for good: they were never committed, so git has no copy",
+            "correct": true
+          },
+          {
+            "id": "undo",
+            "text": "Safe: anything in git can be undone",
+            "why": "You trusted git to keep everything. It can find lost commits, but these edits were never committed."
+          },
+          {
+            "id": "into",
+            "text": "They move into the dropped commit, c4",
+            "why": "A reset does not save anything. c4 holds only what it held before."
+          },
+          {
+            "id": "refuse",
+            "text": "git refuses, because there are uncommitted changes",
+            "why": "`--hard` does not ask. That is exactly why it is dangerous."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which work has git ever saved: the commits, or the edits in your folder?"
+        },
+        {
+          "rung": "point",
+          "text": "c4 is a commit, so git keeps it somewhere. Your edits are not in any commit.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`--hard` rewrites the folder to match c3. Edits git never saved are overwritten, with no way back."
+        }
+      ],
+      "feedback": {
+        "correct": "Committed work can be found again; uncommitted edits cannot.",
+        "generic": "Not quite right. Ask whether git ever saved those edits.",
+        "byKey": {
+          "undo": "You trusted git to keep everything. It can find lost commits, but these edits were never committed."
+        }
+      },
+      "explain": {
+        "text": "`--hard` made the folder match c3 and overwrote your hour of edits. c4 can still be found with `git reflog`, because it was committed. Commit your work before any `--hard` reset.",
+        "canvas": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 0.5,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 0.5,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c3",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "caption": "main moved to c3; the folder edits are gone",
+          "highlight": [
+            "c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "The undo commands, from gentlest to roughest:\n\n```sh\n$ git restore --staged f   # unstage; edits kept\n$ git revert HEAD          # cancel; safe if shared\n$ git restore f            # edits overwritten\n$ git reset --hard HEAD~1  # rewind; edits lost\n```\n\nCommits are hard to lose. Uncommitted edits are easy to lose.",
+      "question": "Which pair can destroy work that git has no copy of?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`git restore f` and `git reset --hard`",
+            "correct": true
+          },
+          {
+            "id": "revert",
+            "text": "`git revert` and `git reset --hard`",
+            "why": "revert only adds a commit. It never deletes anything."
+          },
+          {
+            "id": "staged",
+            "text": "`git restore --staged f` and `git restore f`",
+            "why": "`--staged` keeps your edits. Only plain restore overwrites them."
+          },
+          {
+            "id": "none",
+            "text": "None: git keeps a copy of everything",
+            "why": "git keeps commits. Edits you never committed have no copy."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which commands rewrite the files in your folder?"
+        },
+        {
+          "rung": "step",
+          "text": "Plain restore and `reset --hard` both overwrite the folder. Uncommitted edits there have no copy."
+        }
+      ],
+      "feedback": {
+        "correct": "Both overwrite uncommitted edits in your folder.",
+        "generic": "Not quite right. Look for the commands that rewrite your folder."
+      },
+      "explain": {
+        "text": "Plain `git restore` and `git reset --hard` overwrite files in the folder. Anything you had not committed is lost. Revert and `restore --staged` never touch your edits."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "You meant to put a new volatility signal on its own branch, but committed it to main as c5. main must stay at c4, the version behind `results-2026-09.md`. Nobody else has c5 yet.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "c5",
+              "label": "c5",
+              "x": 1.0,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 1.0,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 1.0,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "c5",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c5",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "main",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "nodeRadius": 30,
+          "height": 300,
+          "aria": "Commit graph: circles are commits, arrows point to parents, labels point at commits"
+        },
+        "state": {
+          "caption": "c5 landed on main by accident"
+        }
+      },
+      "question": "Put the commands that fix this in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "branch",
+            "text": "`git branch vol-signal`"
+          },
+          {
+            "id": "reset",
+            "text": "`git reset --hard HEAD~1`"
+          },
+          {
+            "id": "switch",
+            "text": "`git switch vol-signal`"
+          }
+        ],
+        "answer": [
+          "branch",
+          "reset",
+          "switch"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Before main lets go of c5, what must point at it?"
+        },
+        {
+          "rung": "point",
+          "text": "Right now only main reaches c5.",
+          "highlight": [
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Label c5 with a new branch first. Then move main back one commit. Then switch to the new branch to carry on."
+        }
+      ],
+      "feedback": {
+        "correct": "Label c5, move main back, then switch to the new branch.",
+        "generic": "Not quite right. Keep c5 reachable before moving main.",
+        "byKey": {
+          "reset": "You moved main back before labelling c5. No branch would reach it, so your signal commit would be stranded.",
+          "switch": "You switched to vol-signal before resetting, so the reset would move vol-signal back, not main."
+        }
+      },
+      "explain": {
+        "text": "`git branch vol-signal` labels c5 and leaves HEAD on main. The reset then moves main back to c4, so it reproduces the results note again. Switching puts you on vol-signal, with the signal commit intact.",
+        "canvas": {
+          "nodes": [
+            {
+              "id": "c1",
+              "label": "c1",
+              "x": 0.0,
+              "y": 1.0
+            },
+            {
+              "id": "c2",
+              "label": "c2",
+              "x": 0.25,
+              "y": 1.0
+            },
+            {
+              "id": "c3",
+              "label": "c3",
+              "x": 0.5,
+              "y": 1.0
+            },
+            {
+              "id": "c4",
+              "label": "c4",
+              "x": 0.75,
+              "y": 1.0
+            },
+            {
+              "id": "c5",
+              "label": "c5",
+              "x": 1.0,
+              "y": 1.0
+            },
+            {
+              "id": "main",
+              "label": "main",
+              "x": 0.75,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "vol",
+              "label": "vol-signal",
+              "x": 1.0,
+              "y": 0.5,
+              "colour": 2
+            },
+            {
+              "id": "HEAD",
+              "label": "HEAD",
+              "x": 1.0,
+              "y": 0.0,
+              "colour": 4
+            }
+          ],
+          "edges": [
+            {
+              "from": "c2",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "c3",
+              "to": "c2",
+              "directed": true
+            },
+            {
+              "from": "c4",
+              "to": "c3",
+              "directed": true
+            },
+            {
+              "from": "c5",
+              "to": "c4",
+              "directed": true
+            },
+            {
+              "from": "main",
+              "to": "c4",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "vol",
+              "to": "c5",
+              "directed": true,
+              "dashed": true
+            },
+            {
+              "from": "HEAD",
+              "to": "vol",
+              "directed": true,
+              "dashed": true
+            }
+          ],
+          "caption": "main back on c4; the signal lives on vol-signal"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`git restore` works on files you have not committed; `--staged` only unstages them.",
+      "`git revert` adds a commit that cancels another. Use it once anyone else has the commit.",
+      "`git reset --hard HEAD~1` moves the branch back one commit and overwrites the folder. Use it only on commits nobody else has."
+    ],
+    "formula": {
+      "name": "Undo a commit",
+      "tex": "\\text{shared} \\to \\texttt{revert} \\qquad \\text{yours alone} \\to \\texttt{reset}",
+      "note": "Uncommitted edits: `git restore`. Commit first: `--hard` destroys uncommitted edits for good."
+    },
+    "trap": "git can find lost commits, but not edits you never committed. `reset --hard` and plain `restore` overwrite them with no way back."
+  },
+  "quiz": [
+    {
+      "id": "q-tilde",
+      "difficulty": 2,
+      "prose": "main points at c7, and HEAD points at main. The history is one straight line, c1 to c7.",
+      "question": "Which commit is `HEAD~3`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "c4",
+            "correct": true
+          },
+          {
+            "id": "c3",
+            "text": "c3",
+            "why": "You took four steps. From c7: c6 is one, c5 two, c4 three."
+          },
+          {
+            "id": "c5",
+            "text": "c5",
+            "why": "That is HEAD~2. Take one more step."
+          },
+          {
+            "id": "c3first",
+            "text": "c3, the third commit",
+            "why": "The number counts steps back from HEAD, not commits from the start."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Three parents back from c7 is c4.",
+        "generic": "Not quite right. Count arrows back from c7."
+      },
+      "explain": {
+        "text": "HEAD is on c7. One step back is c6, two is c5, three is c4. The number counts parents back from HEAD."
+      }
+    },
+    {
+      "id": "q-shared",
+      "difficulty": 2,
+      "prose": "A commit on main set transaction costs to zero by mistake. Two colleagues have already built branches on it.",
+      "question": "Which command undoes it safely?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`git revert` on that commit",
+            "correct": true
+          },
+          {
+            "id": "reset",
+            "text": "`git reset --hard` to before it",
+            "why": "Their branches still contain the commit. Rewinding main makes the histories disagree, and the commit comes back when they merge."
+          },
+          {
+            "id": "restore",
+            "text": "`git restore` on the costs file",
+            "why": "restore discards uncommitted edits. The mistake is already committed."
+          },
+          {
+            "id": "new",
+            "text": "Delete main and make it again",
+            "why": "That loses every commit only main reaches, and still clashes with your colleagues' branches."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "revert adds a cancelling commit and rewrites nothing.",
+        "generic": "Not quite right. Others have the commit already."
+      },
+      "explain": {
+        "text": "Once others have a commit, only add to history. `git revert` makes a new commit that puts the costs back. Everyone's history still agrees."
+      }
+    },
+    {
+      "id": "q-revert-count",
+      "difficulty": 2,
+      "prose": "main has 4 commits. You run `git revert HEAD` to undo the last one.",
+      "question": "How many commits does main contain afterwards?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Commits on main",
+        "wrong": [
+          {
+            "id": "removed",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "same",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "4 + 1 cancelling commit = 5.",
+        "generic": "Not quite right. Does revert remove anything?",
+        "byKey": {
+          "removed": "You treated revert like reset. revert removes nothing; it adds one commit.",
+          "same": "revert makes a new commit, so the count goes up by one."
+        }
+      },
+      "explain": {
+        "text": "revert keeps all 4 commits and adds a fifth that cancels the last one. The files match commit 3. The history shows both the mistake and its undoing."
+      }
+    },
+    {
+      "id": "q-restore",
+      "difficulty": 3,
+      "prose": "You have been trying values in params.py all morning, none committed. None of them helped.",
+      "question": "Which command puts params.py back to its last committed version?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`git restore params.py`",
+            "correct": true
+          },
+          {
+            "id": "revert",
+            "text": "`git revert HEAD`",
+            "why": "That cancels the last commit, which was fine. Your trial edits are not in any commit."
+          },
+          {
+            "id": "reset",
+            "text": "`git reset --hard HEAD~1`",
+            "why": "That also drops your last commit, and overwrites every edited file, not just params.py."
+          },
+          {
+            "id": "staged",
+            "text": "`git restore --staged params.py`",
+            "why": "`--staged` only unstages. Your edits would stay in the file."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "restore overwrites the file with its last committed version.",
+        "generic": "Not quite right. The edits are not committed, so work on the file."
+      },
+      "explain": {
+        "text": "`git restore params.py` copies the committed version over your edits. Only that file changes. The morning's trial values are gone, which is what you wanted here."
+      }
+    }
+  ]
+}

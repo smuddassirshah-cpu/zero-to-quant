@@ -409,3 +409,8 @@ Raised later (git level 1):
 146. Fenced blocks: no Copy button on output-only blocks (` ```text ` or no `$` prompt), or place it so it never overlaps the first line.
 147. Table cells: keep leading spaces (`white-space: pre-wrap`, same as 139).
 148. README-B `series`: marker `i` and `shade` `from`/`to` are 0-based array indices even with `indexFrom: 1`.
+
+Raised later (git level 3):
+
+149. `graph`: lane/row labels (`lanes: [{ "y": 0.3, "label": "local" }]`) and a `dashed` node style for fetched-but-unmerged commits.
+150. A small simulated shell for `sh` scripts (or `code` with `language: "sh"` running a tiny POSIX subset in JS) so loop scripts can be written for real; until then shell is prediction-only.
