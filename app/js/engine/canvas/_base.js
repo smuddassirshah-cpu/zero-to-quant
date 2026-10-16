@@ -83,8 +83,36 @@
 
   /* Expression evaluation for plane functions: 'x^2 + a*x' with params. Safe subset: numbers, x, params, + - * / ^, functions. */
   const FN = { sin: Math.sin, cos: Math.cos, tan: Math.tan, exp: Math.exp, ln: Math.log, log: Math.log, log10: Math.log10, sqrt: Math.sqrt, abs: Math.abs, max: Math.max, min: Math.min, floor: Math.floor, ceil: Math.ceil, pow: Math.pow, pi: Math.PI, e: Math.E, atan: Math.atan, asin: Math.asin, acos: Math.acos, sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, sign: Math.sign, round: Math.round };
+  /* JavaScript rejects a unary minus right before **, so -x^2 is rewritten -(x**2) (maths reads it as -(x^2)) */
+  const wrapUnaryPow = (src) => {
+    const prim = (i) => { // end index of the primary starting at i (after spaces): number, name or name(...), or (...)
+      while (src[i] === ' ') i++;
+      const close = (j) => { let d = 0; for (; j < src.length; j++) { if (src[j] === '(') d++; else if (src[j] === ')' && --d === 0) return j + 1; } return src.length; };
+      if (src[i] === '(') return close(i);
+      const m = src.slice(i).match(/^([A-Za-z_][\w.]*|\d*\.?\d+(?:e[+-]?\d+)?)/); if (!m) return -1;
+      let j = i + m[0].length; let k = j; while (src[k] === ' ') k++;
+      return src[k] === '(' && /^[A-Za-z_]/.test(m[0]) ? close(k) : j;
+    };
+    const powChain = (i) => { // end of base(**rhs)* where rhs may itself start with a unary minus
+      let j = prim(i); if (j < 0) return -1;
+      for (;;) { let k = j; while (src[k] === ' ') k++; if (src.slice(k, k + 2) !== '**') return j; k += 2; while (src[k] === ' ') k++; if (src[k] === '-' || src[k] === '+') k++; const e = powChain(k); if (e < 0) return j; j = e; }
+    };
+    for (let i = 0; i < src.length; i++) {
+      if (src[i] !== '-') continue;
+      let p = i - 1; while (p >= 0 && src[p] === ' ') p--;
+      if (p >= 0 && !/[(,+\-*/%<>=?:&|!]/.test(src[p])) continue; // binary minus
+      if (p >= 0 && src[p] === '*' && src[p - 1] === '*') continue; // 2**-x is fine
+      const end = powChain(i + 1); if (end < 0) continue;
+      const body = src.slice(i + 1, end);
+      if (!/\*\*/.test(body.replace(/\([^()]*\)/g, ''))) continue; // no power at this level
+      src = src.slice(0, i + 1) + '(' + body + ')' + src.slice(end); i += 1;
+    }
+    return src;
+  };
   const compile = (expr, paramNames = []) => {
-    const src = String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round)\b(?!\s*[:\w])/g, 'F.$1').replace(/\bF\.e\b/g, 'F.e');
+    let src = String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round)\b(?!\s*[:\w])/g, 'F.$1');
+    if (!paramNames.includes('e')) src = src.replace(/(^|[^\w.])e(?![\w(])/g, '$1F.e'); // Euler's number, not the e of 1e5
+    src = wrapUnaryPow(src);
     if (/[^\w\s+\-*/().,<>=?:!&|%]/.test(src.replace(/F\./g, ''))) throw new Error('Bad expression: ' + expr);
     // eslint-disable-next-line no-new-func
     const f = new Function('F', 'x', ...paramNames, 'return (' + src + ');');
