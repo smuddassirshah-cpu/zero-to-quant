@@ -1,0 +1,1017 @@
+{
+  "id": "l11-numbers-from-a-file",
+  "course": "first-python",
+  "title": "Reading numbers from a file",
+  "minutes": 14,
+  "objectives": [
+    "Read a text file line by line and convert each line to a number",
+    "Split a CSV row at its commas and skip the header line",
+    "Pull the last close out of a prices file"
+  ],
+  "skills": [
+    "fp-functions",
+    "fp-lists"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Numbers in a file",
+      "prose": "A file `closes.txt` holds three closing prices, one per line. `open` opens it, and a `for` loop hands you one line at a time.\n\n```python\ntotal = 0\nfor line in open(\"closes.txt\"):\n    total = total + line\nprint(total)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "closes.txt"
+          ],
+          "rows": [
+            [
+              "1",
+              "101.20"
+            ],
+            [
+              "2",
+              "102.50"
+            ],
+            [
+              "3",
+              "99.80"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What happens when it runs?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sum",
+            "text": "It prints `303.5`",
+            "why": "You read each line as a number. Python reads every line of a file as text, so `0 + \"101.20\\n\"` fails."
+          },
+          {
+            "id": "right",
+            "text": "It stops with a `TypeError` on the first line",
+            "correct": true
+          },
+          {
+            "id": "joined",
+            "text": "It prints `101.20102.5099.80`",
+            "why": "Joining would happen if `total` started as text. It starts as the number 0, and a number plus text is an error."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What type is `line`: a number or text?"
+        },
+        {
+          "rung": "point",
+          "text": "Every line comes in as text, newline included.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first pass tries `0 + \"101.20\\n\"`: a number plus text, which is a `TypeError`."
+        }
+      ],
+      "feedback": {
+        "correct": "A file gives you text, so the first addition fails.",
+        "generic": "Not quite right. Ask what type `line` has on the first pass."
+      },
+      "explain": {
+        "text": "Each line arrives as text with its newline, such as `\"101.20\\n\"`. The first pass tries `0 + \"101.20\\n\"` and stops with `TypeError: unsupported operand type(s) for +: 'int' and 'str'`. Text must be converted with `float` first.",
+        "canvas": {
+          "highlight": [
+            "r0c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Most price files are **CSV**: comma-separated values, with a header line on top. For each line, this code takes the piece after the comma and makes it a number.\n\n```python\nprice = float(line.split(\",\")[1])\n```\n\n`line.split(\",\")` cuts the text at each comma into a list of pieces.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "1",
+              "Day,Close"
+            ],
+            [
+              "2",
+              "Mon,101.20"
+            ],
+            [
+              "3",
+              "Tue,102.50"
+            ],
+            [
+              "4",
+              "Wed,n/a"
+            ],
+            [
+              "5",
+              "Thu,100.40"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every line where that code would stop with an error.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c1",
+          "r3c1"
+        ],
+        "only": [
+          "r0c1",
+          "r1c1",
+          "r2c1",
+          "r3c1",
+          "r4c1"
+        ],
+        "countWord": "lines",
+        "wrong": [
+          {
+            "id": "missed-gap",
+            "set": [
+              "r0c1"
+            ]
+          },
+          {
+            "id": "missed-header",
+            "set": [
+              "r3c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each line, what is the piece after the comma? Is it a number?"
+        },
+        {
+          "rung": "point",
+          "text": "Two of these pieces are words, not numbers.",
+          "highlight": [
+            "r0c1",
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Line 1 gives `Close` and line 4 gives `n/a`. Neither can become a float."
+        }
+      ],
+      "feedback": {
+        "correct": "The header and the missing price both stop `float`.",
+        "generic": "Not quite right. Split each line at the comma and look at the second piece.",
+        "byKey": {
+          "missed-gap": "You found the header. Look again at Wednesday: its price is `n/a`, a missing value.",
+          "missed-header": "Python reads the header line too. Its second piece is `Close`, which is not a number.",
+          "r1c1": "Monday's second piece is `101.20`, which `float` reads.",
+          "r2c1": "Tuesday's second piece is `102.50`, which `float` reads.",
+          "r4c1": "Thursday's second piece is `100.40`, which `float` reads."
+        }
+      },
+      "explain": {
+        "text": "You marked the header and Wednesday. `float(\"Close\")` and `float(\"n/a\")` both raise `ValueError`. Real files have both: skip the header, and decide what to do about gaps.",
+        "canvas": {
+          "highlight": [
+            "r0c1",
+            "r3c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "`split` returns a **list** of pieces, so `[1]` picks the second one. Each line still ends in a newline, written `\\n`; `float` ignores it.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "Tue",
+            "102.50"
+          ]
+        },
+        "state": {
+          "caption": "The pieces of \"Tue,102.50\\n\". The newline stays on piece 1."
+        }
+      },
+      "question": "Write `close_from_row(line)` that returns the price in a line such as `\"Tue,102.50\\n\"` as a float.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def close_from_row(line):\n    pass  # replace this line\n\nprint(close_from_row(\"Tue,102.50\\n\"))\n",
+        "solution": "def close_from_row(line):\n    parts = line.split(\",\")\n    return float(parts[1])\n\nprint(close_from_row(\"Tue,102.50\\n\"))\n",
+        "tests": [
+          {
+            "call": "close_from_row(\"Tue,102.50\\n\")",
+            "expect": "102.5",
+            "compare": "equal"
+          },
+          {
+            "call": "close_from_row(\"Mon,101.20\")",
+            "expect": "101.2",
+            "compare": "equal"
+          },
+          {
+            "call": "close_from_row(\"Fri,99.05\\n\")",
+            "expect": "99.05",
+            "compare": "equal"
+          },
+          {
+            "call": "close_from_row(\"2026-10-16,250.00\\n\")",
+            "expect": "250.0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests that call your function. Each answer must be a float equal to the price.",
+        "examples": [
+          {
+            "call": "close_from_row(\"Tue,102.50\\n\")",
+            "expect": "102.5",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split the line at the comma, then take one piece."
+        },
+        {
+          "rung": "point",
+          "text": "The price is the second piece, index 1.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return float(line.split(\",\")[1])`."
+        }
+      ],
+      "feedback": {
+        "correct": "`split` gave two pieces and `float` read the second.",
+        "generic": "Not quite right. Look at what test 1 got back.",
+        "byKey": {
+          "test-1": "Test 1 expects the number 102.5. Text such as `'102.50\\n'` means `float` is missing; an error about `'Tue'` means you took index 0."
+        }
+      },
+      "explain": {
+        "text": "`split(\",\")` turned the line into `[\"Tue\", \"102.50\\n\"]`, and `float` read index 1. Test 4 has a full date in front, and the same code works.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now the whole file. A loop over `open(name)` visits each line in turn, top to bottom. The starter builds `closes.txt` for you, one price per line.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "closes.txt"
+          ],
+          "rows": [
+            [
+              "1",
+              "101.20"
+            ],
+            [
+              "2",
+              "102.50"
+            ],
+            [
+              "3",
+              "99.80"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `read_closes(name)` so it returns a list of every price in the file, as floats.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "# This builds the file for you\nwith open(\"closes.txt\", \"w\") as f:\n    f.write(\"101.20\\n102.50\\n99.80\\n\")\n\ndef read_closes(name):\n    closes = []\n    # loop over the lines and append each one as a float\n    return closes\n\nprint(read_closes(\"closes.txt\"))\n",
+        "solution": "# This builds the file for you\nwith open(\"closes.txt\", \"w\") as f:\n    f.write(\"101.20\\n102.50\\n99.80\\n\")\n\ndef read_closes(name):\n    closes = []\n    for line in open(name):\n        closes.append(float(line))\n    return closes\n\nprint(read_closes(\"closes.txt\"))\n",
+        "tests": [
+          {
+            "call": "(open('c1.txt', 'w').write('101.20\\n102.50\\n99.80\\n'), read_closes('c1.txt'))[1]",
+            "expect": "[101.2, 102.5, 99.8]",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('c2.txt', 'w').write('250.00\\n'), read_closes('c2.txt'))[1]",
+            "expect": "[250.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('c3.txt', 'w').write(''), read_closes('c3.txt'))[1]",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('c4.txt', 'w').write('99.05\\n100.10\\n98.75\\n101.00\\n'), len(read_closes('c4.txt')))[1]",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each one writes a small file, then calls your function on it.",
+        "examples": [
+          {
+            "call": "read_closes('closes.txt')",
+            "expect": "[101.2, 102.5, 99.8]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Inside `read_closes`, loop with `for line in open(name):`."
+        },
+        {
+          "rung": "point",
+          "text": "Each `line` is text, so convert it before appending.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two lines: `for line in open(name):`, then indented `closes.append(float(line))`."
+        }
+      ],
+      "feedback": {
+        "correct": "The loop read three lines and stored three floats.",
+        "generic": "Not quite right. Look at what test 1 got back.",
+        "byKey": {
+          "test-1": "Test 1 expects `[101.2, 102.5, 99.8]`. Items like `'101.20\\n'` mean the `float` is missing; a single number means the list was replaced instead of appended to."
+        }
+      },
+      "explain": {
+        "text": "`for line in open(name)` read the file line by line, and `float(line)` turned each into a number. Test 3 reads an empty file: the loop never runs, so you get `[]`."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Someone prints each line of the same file.\n\n```python\nfor line in open(\"closes.txt\"):\n    print(line)\n```\n\nThe output has an empty line after every price.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "closes.txt"
+          ],
+          "rows": [
+            [
+              "1",
+              "101.20"
+            ],
+            [
+              "2",
+              "102.50"
+            ],
+            [
+              "3",
+              "99.80"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Where do the empty lines come from?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Each line keeps its own newline, and `print` adds another",
+            "correct": true
+          },
+          {
+            "id": "file",
+            "text": "The file has empty lines between the prices",
+            "why": "The table shows none. Each line has one newline at its end, and that is all."
+          },
+          {
+            "id": "print",
+            "text": "`print` always leaves an empty line after its text",
+            "why": "Normally `print` ends with one newline, so lines sit together. Here the text already ended in one."
+          },
+          {
+            "id": "loop",
+            "text": "The loop runs twice for every line",
+            "why": "The loop visits each line once. Count the prices printed: three, not six."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the last character of each line that Python reads?"
+        },
+        {
+          "rung": "point",
+          "text": "Each line is really `\"101.20\\n\"`, newline included.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The line's newline ends the price, then `print` adds its own, leaving an empty line."
+        }
+      ],
+      "feedback": {
+        "correct": "Two newlines per price: the file's and `print`'s.",
+        "generic": "Not quite right. Look at the end of each line as Python reads it."
+      },
+      "explain": {
+        "text": "Each line ends in `\\n`, and `print` adds another, so you see a gap. `line.strip()` removes spaces and newlines from both ends: `print(line.strip())` prints the prices together."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A full price file, header included. This loop takes the second piece of every line.\n\n```python\ncloses = []\nfor line in open(\"prices.csv\"):\n    parts = line.split(\",\")\n    closes.append(float(parts[1]))\nprint(closes)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "1",
+              "Day,Close"
+            ],
+            [
+              "2",
+              "Mon,101.20"
+            ],
+            [
+              "3",
+              "Tue,102.50"
+            ],
+            [
+              "4",
+              "Wed,99.80"
+            ],
+            [
+              "5",
+              "Thu,100.40"
+            ],
+            [
+              "6",
+              "Fri,101.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What happens when it runs?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "works",
+            "text": "It prints `[101.2, 102.5, 99.8, 100.4, 101.1]`",
+            "why": "You expected Python to skip the header. It reads every line, and the first one is `Day,Close`."
+          },
+          {
+            "id": "right",
+            "text": "It stops on the first line with a `ValueError`",
+            "correct": true
+          },
+          {
+            "id": "days",
+            "text": "It stops because `parts[1]` is the day",
+            "why": "Index 1 is the second piece, the price. The day is index 0."
+          },
+          {
+            "id": "index",
+            "text": "It stops with an `IndexError`",
+            "why": "Every line has a comma, so `parts[1]` exists. The trouble is what it holds on line 1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which line does the loop read first?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 1 of the file is the header.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`\"Day,Close\\n\".split(\",\")[1]` is `\"Close\\n\"`, and `float` cannot read it."
+        }
+      ],
+      "feedback": {
+        "correct": "The header line comes first, and `Close` is not a number.",
+        "generic": "Not quite right. Run the loop by hand on line 1.",
+        "byKey": {
+          "works": "You expected Python to skip the header. It reads every line, and the first is `Day,Close`, so `float(\"Close\\n\")` fails.",
+          "days": "Index 1 is the second piece, the price column. The trouble is line 1, where that piece is `Close`."
+        }
+      },
+      "explain": {
+        "text": "The first pass reads the header, and `float(\"Close\\n\")` raises `ValueError: could not convert string to float: 'Close\\n'`. The loop must start at line 2.",
+        "canvas": {
+          "highlight": [
+            "r0c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "`open(name).readlines()` gives every line as a list. A slice from index 1, `lines[1:]`, leaves out the header.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "1",
+              "Day,Close"
+            ],
+            [
+              "2",
+              "Mon,101.20"
+            ],
+            [
+              "3",
+              "Tue,102.50"
+            ],
+            [
+              "4",
+              "Wed,99.80"
+            ],
+            [
+              "5",
+              "Thu,100.40"
+            ],
+            [
+              "6",
+              "Fri,101.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        }
+      },
+      "question": "Write `read_csv_closes(name)` that skips the header and returns the closes as floats.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef read_csv_closes(name):\n    closes = []\n    # skip the header, then split each line and convert the price\n    return closes\n\nprint(read_csv_closes(\"prices.csv\"))\n",
+        "solution": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef read_csv_closes(name):\n    closes = []\n    lines = open(name).readlines()\n    for line in lines[1:]:\n        parts = line.split(\",\")\n        closes.append(float(parts[1]))\n    return closes\n\nprint(read_csv_closes(\"prices.csv\"))\n",
+        "tests": [
+          {
+            "call": "(open('p1.csv', 'w').write('Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n'), read_csv_closes('p1.csv'))[1]",
+            "expect": "[101.2, 102.5, 99.8, 100.4, 101.1]",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('p2.csv', 'w').write('Date,Close\\n2026-10-15,250.00\\n2026-10-16,245.00\\n'), read_csv_closes('p2.csv'))[1]",
+            "expect": "[250.0, 245.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('p3.csv', 'w').write('Day,Close\\n'), read_csv_closes('p3.csv'))[1]",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each one writes a small file, then calls your function on it.",
+        "examples": [
+          {
+            "call": "read_csv_closes('prices.csv')",
+            "expect": "[101.2, 102.5, 99.8, 100.4, 101.1]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Get the lines as a list, then loop over a slice of it."
+        },
+        {
+          "rung": "point",
+          "text": "Index 0 is the header, so start the slice at 1.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`lines = open(name).readlines()`, then `for line in lines[1:]:` with `closes.append(float(line.split(\",\")[1]))` inside."
+        }
+      ],
+      "feedback": {
+        "correct": "The slice dropped the header, and five closes came back.",
+        "generic": "Not quite right. Check the error or result of the first failing test.",
+        "byKey": {
+          "error": "Your script stops before the tests run. `ValueError` about `'Close\\n'` means the header line is still being converted.",
+          "test-1": "Test 1 expects all five closes. A `ValueError` means the header is still read; four closes means the slice skipped one line too many."
+        }
+      },
+      "explain": {
+        "text": "`readlines()` gave a list of six lines, and `lines[1:]` started after the header. Test 3 is a file with only a header: the slice is empty, so you get `[]`."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Every price you read went through the same steps: $$\\texttt{\"Tue,102.50\"} \\;\\xrightarrow{\\texttt{split}}\\; [\\texttt{\"Tue\"}, \\texttt{\"102.50\"}] \\;\\xrightarrow{\\texttt{[1]}}\\; \\texttt{\"102.50\"} \\;\\xrightarrow{\\texttt{float}}\\; 102.5$$ Skip the header first, and remember every piece is text until you convert it.",
+      "question": "A line reads `\"Wed,99.80\\n\"`. What is `line.split(\",\")[0]`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`'Wed'`",
+            "correct": true
+          },
+          {
+            "id": "price",
+            "text": "`'99.80\\n'`",
+            "why": "That is index 1. Index 0 is the first piece, before the comma."
+          },
+          {
+            "id": "number",
+            "text": "`99.8`",
+            "why": "`split` gives text pieces and never converts them. You would need `float` and index 1."
+          },
+          {
+            "id": "letter",
+            "text": "`'W'`",
+            "why": "Index 0 of the line itself is `'W'`. After `split`, index 0 is a whole piece."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Index 0 is the piece before the comma, `'Wed'`.",
+        "generic": "Not quite right. Split first, then count pieces from 0."
+      },
+      "explain": {
+        "text": "`split(\",\")` gives `['Wed', '99.80\\n']`. Index 0 is `'Wed'` and index 1 is the price, still text until `float` reads it."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The last close",
+      "prose": "A strategy runs after the market shuts and needs the latest close from the day's file. To print a price with two decimal places, write `f\"£{price:.2f}\"`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "prices.csv"
+          ],
+          "rows": [
+            [
+              "1",
+              "Day,Close"
+            ],
+            [
+              "2",
+              "Mon,101.20"
+            ],
+            [
+              "3",
+              "Tue,102.50"
+            ],
+            [
+              "4",
+              "Wed,99.80"
+            ],
+            [
+              "5",
+              "Thu,100.40"
+            ],
+            [
+              "6",
+              "Fri,101.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              5
+            ]
+          }
+        }
+      },
+      "question": "Write `last_close(name)` that returns the last close in a CSV file, then print `Last close: £101.10` for `prices.csv`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef last_close(name):\n    pass  # replace this line\n\n# print the last close of prices.csv here\n",
+        "solution": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef last_close(name):\n    lines = open(name).readlines()\n    return float(lines[-1].split(\",\")[1])\n\nprint(f\"Last close: £{last_close('prices.csv'):.2f}\")\n",
+        "tests": [
+          {
+            "call": "(open('q1.csv', 'w').write('Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n'), last_close('q1.csv'))[1]",
+            "expect": "101.1",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('q2.csv', 'w').write('Date,Close\\n2026-10-15,250.00\\n2026-10-16,245.00\\n'), last_close('q2.csv'))[1]",
+            "expect": "245.0",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('q3.csv', 'w').write('Day,Close\\nMon,87.65\\n'), last_close('q3.csv'))[1]",
+            "expect": "87.65",
+            "compare": "equal"
+          },
+          {
+            "compare": "stdout",
+            "expect": "Last close: £101.10\n"
+          }
+        ],
+        "how": "Check runs your script once per test. Three tests write a small file and call `last_close`; the last compares everything your script prints with `Last close: £101.10`.",
+        "examples": [
+          {
+            "call": "last_close('prices.csv')",
+            "expect": "101.1",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Get the lines as a list. Which index is the last one?"
+        },
+        {
+          "rung": "point",
+          "text": "Index `-1` counts from the back: it is always the last line.",
+          "highlight": [
+            "r5c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return float(lines[-1].split(\",\")[1])`, then `print(f\"Last close: £{last_close('prices.csv'):.2f}\")`."
+        }
+      ],
+      "feedback": {
+        "correct": "Friday's close, £101.10, printed to the penny.",
+        "generic": "Not quite right. Look at the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 101.1, Friday's close. `IndexError` means the index ran past the end; 101.2 means you took the first data line. Any other error stops your script before the call: read its traceback.",
+          "test-4": "Your function works, but the script should print exactly one line, `Last close: £101.10`. Use `:.2f` so 101.1 prints as 101.10, and remove any other `print`."
+        }
+      },
+      "explain": {
+        "text": "`lines[-1]` is the last line whatever the file's length, and `:.2f` printed 101.1 as 101.10. Test 3 has one data line, which is also the last.",
+        "canvas": {
+          "highlight": [
+            "r5c1"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A file gives you text, one line at a time, each ending in a newline. Convert with `float` before doing sums.",
+      "`line.split(\",\")` cuts a CSV row into a list of text pieces; `[1]` is the second column.",
+      "Skip the header with `open(name).readlines()[1:]`, and `lines[-1]` is the last line."
+    ],
+    "formula": {
+      "name": "One CSV price",
+      "tex": "\\texttt{float(line.split(\",\")[1])}",
+      "note": "Split at the commas, take the second piece, convert it to a number."
+    },
+    "trap": "Python does not skip a header for you. The first line of `prices.csv` is `Day,Close`, and `float(\"Close\")` stops the program."
+  },
+  "quiz": [
+    {
+      "id": "q-split",
+      "difficulty": 2,
+      "prose": "```python\nrow = \"Thu,100.40\\n\".split(\",\")\nprint(row)\n```",
+      "question": "What does this print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`['Thu', '100.40\\n']`",
+            "correct": true
+          },
+          {
+            "id": "number",
+            "text": "`['Thu', 100.4]`",
+            "why": "`split` only cuts text. The pieces stay text until you call `float`."
+          },
+          {
+            "id": "joined",
+            "text": "`Thu 100.40`",
+            "why": "`split` returns a list, so `print` shows brackets and quotes."
+          },
+          {
+            "id": "no-newline",
+            "text": "`['Thu', '100.40']`",
+            "why": "The newline belongs to the last piece. Only `strip` would remove it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two text pieces; the newline stays on the second.",
+        "generic": "Not quite right. `split` cuts text and changes nothing else."
+      },
+      "explain": {
+        "text": "`split(\",\")` cuts at the comma and keeps everything else, newline included. Both pieces are text."
+      }
+    },
+    {
+      "id": "q-blank-line",
+      "difficulty": 3,
+      "prose": "`closes.txt` ends with an empty line: its text is `\"101.20\\n102.50\\n\\n\"`.\n\n```python\ncloses = []\nfor line in open(\"closes.txt\"):\n    closes.append(float(line))\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It stops with a `ValueError` on line 3 of the file",
+            "correct": true
+          },
+          {
+            "id": "skips",
+            "text": "`closes` ends as `[101.2, 102.5]`; empty lines are skipped",
+            "why": "Python skips nothing. The empty line arrives as `\"\\n\"`, and `float` cannot read it."
+          },
+          {
+            "id": "zero",
+            "text": "`closes` ends as `[101.2, 102.5, 0.0]`",
+            "why": "`float` never turns empty text into 0.0. It raises an error instead."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`float(\"\\n\")` cannot read an empty line.",
+        "generic": "Not quite right. What text does the third line hold?"
+      },
+      "explain": {
+        "text": "The third line is just `\"\\n\"`, and `float` raises `ValueError: could not convert string to float: '\\n'`. Skip it with `if line.strip() == \"\": continue`, or remove the empty line from the file."
+      }
+    },
+    {
+      "id": "q-count-rows",
+      "difficulty": 2,
+      "prose": "`prices.csv` has a header line and then one line for each of 20 trading days.\n\n```python\nlines = open(\"prices.csv\").readlines()\nprint(len(lines[1:]))\n```",
+      "question": "What number does this print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "label": "The printed number",
+        "placeholder": "a whole number",
+        "accept": "20 exactly: 21 lines, less the header.",
+        "wrong": [
+          {
+            "id": "with-header",
+            "value": 21
+          },
+          {
+            "id": "two-off",
+            "value": 19
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "21 lines, and the slice drops the header.",
+        "generic": "Not quite right. Count every line, then drop the one the slice leaves out.",
+        "byKey": {
+          "with-header": "21 is `len(lines)`. The slice `[1:]` leaves out the header.",
+          "two-off": "The slice drops only index 0, the header. All 20 days remain."
+        }
+      },
+      "explain": {
+        "text": "The file has $1 + 20 = 21$ lines. `lines[1:]` drops index 0, the header, leaving 20."
+      }
+    },
+    {
+      "id": "q-strip",
+      "difficulty": 2,
+      "prose": "```python\nline = \"  101.20\\n\"\nprint(line.strip() + \"0\")\n```",
+      "question": "What does this print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`101.200`",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "`101.2`",
+            "why": "You treated the text as a number. `+` on two pieces of text joins them."
+          },
+          {
+            "id": "spaces",
+            "text": "`  101.200`",
+            "why": "`strip` removes spaces from both ends, not just the newline."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`strip` gives `\"101.20\"`, then `+` joins `\"0\"` on.",
+        "generic": "Not quite right. `strip` trims both ends; `+` on text joins."
+      },
+      "explain": {
+        "text": "`strip()` removed the two spaces and the newline, leaving `\"101.20\"`. Adding text to text joins it, so the result is `101.200`."
+      }
+    }
+  ]
+}

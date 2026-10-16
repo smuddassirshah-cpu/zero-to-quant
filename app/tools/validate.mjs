@@ -344,7 +344,28 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       req(file, where, w, ['language', 'starter']);
       if (!Array.isArray(w.tests) || w.tests.length < 3) err(file, `${where}.tests`, 'at least 3 tests');
       else if (w.tests.length > 15) err(file, `${where}.tests`, 'at most 15 tests');
-      (w.tests || []).forEach((t, i) => { if (t.call == null || t.expect == null) err(file, `${where}.tests[${i}]`, 'each test needs call and expect'); if (t.compare && !['isclose', 'equal', 'fraction'].includes(t.compare)) err(file, `${where}.tests[${i}].compare`, 'compare is isclose, equal or fraction'); });
+      /* Item 109: a stdout case needs only expect (a string) and may carry stdin and exact; other cases need call */
+      const codeCase = (t, at) => {
+        if (!t || typeof t !== 'object') { err(file, at, 'each case is an object'); return; }
+        const out = t.compare === 'stdout' || (t.call == null && t.expect != null && t.compare == null);
+        if (t.compare && !['isclose', 'equal', 'fraction', 'stdout'].includes(t.compare)) err(file, `${at}.compare`, 'compare is isclose, equal, fraction or stdout');
+        if (out) {
+          if (typeof t.expect !== 'string') err(file, `${at}.expect`, 'a stdout case needs expect: the printed text, as a string ("Return: 5.00%\\n")');
+          if (t.call != null) err(file, `${at}.call`, 'a stdout case has no call (it compares what the whole program prints)');
+        } else if (t.call == null || t.expect == null) err(file, at, 'each test needs call and expect (or compare: "stdout" with expect)');
+        if (t.stdin != null && typeof t.stdin !== 'string') err(file, `${at}.stdin`, 'stdin is a string, one line per input() call ("250\\n262.5\\n")');
+        if (t.exact != null && typeof t.exact !== 'boolean') err(file, `${at}.exact`, 'exact is true or false');
+        if (t.exact != null && !out) warn(file, `${at}.exact`, 'exact only applies to compare: "stdout"');
+        if (typeof t.call === 'string' && /_getframe|f_locals\[/.test(t.call)) warn(file, `${at}.call`, 'reads the harness frame to get printed output; use { "compare": "stdout", "expect": "..." } instead (and printed in later calls)');
+      };
+      (w.tests || []).forEach((t, i) => codeCase(t, `${where}.tests[${i}]`));
+      if (w.examples != null && !Array.isArray(w.examples)) err(file, `${where}.examples`, 'examples is a list of cases');
+      else (w.examples || []).forEach((t, i) => codeCase(t, `${where}.examples[${i}]`));
+      {
+        const all = [...(Array.isArray(w.tests) ? w.tests : []), ...(Array.isArray(w.examples) ? w.examples : [])].filter(t => t && typeof t === 'object');
+        const script = all.some(t => t.compare === 'stdout' || t.stdin != null || (t.call == null && t.expect != null));
+        if (!script && !all.some(t => typeof t.call === 'string' && /printed\s*:=/.test(t.call)) && all.some(t => typeof t.call === 'string' && /\bprinted\b/.test(t.call) && !/_getframe/.test(t.call))) err(file, `${where}.tests`, 'printed is only defined when a case uses compare: "stdout" or stdin (script mode)');
+      }
       if (!w.how) warn(file, `${where}.how`, 'say how it is checked');
       keys.add('*');
       break;

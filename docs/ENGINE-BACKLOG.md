@@ -303,3 +303,9 @@ Raised later (first-python level 1), high priority for the programming courses:
 109. `code` widget: a `compare: "stdout"` test mode (`{ "stdin": "250\n", "expect": "Return: 5.00%\n" }`, exact or whitespace-normalised) that re-runs the learner's code per test with the given stdin, so `input()` works and printed output is graded; "Run examples" shows what the code printed. Then replace the `_getframe` trick in first-python level 1 tests (l1, l3, l4, review-1, homework-1) with the new mode.
 110. `code` widget: show stdout from Run examples under the editor.
 111. `boxes`: card width sized to its label (or a `wide` item kind), shared with item 102.
+
+Raised later (terminal level 3):
+
+112. Playthrough: on a `code` screen, wait for "Python ready" before `check()`; never reveal and move on silently; count a null check as a failure.
+113. Code widget results header: let long test calls wrap (`.lsn-ic` nowrap inside `.wd-res-h`).
+114. After item 109 lands, also convert the `_getframe` tests in terminal l12, review-3 and homework-3 to `compare: "stdout"`.

@@ -5,7 +5,12 @@
    harness appended to the learner's code, so one worker spec covers every compare mode (isclose, equal, fraction):
    the harness returns 1.0 for a pass and prints the actual value after a marker, which the widget reads back.
    grade() returns a Promise; results are cached per source text. Results show per test. Drafts: with ctx.draftKey the
-   source is saved with ZQ.state.drills.draft(key, code) as you type and restored when the item opens again. */
+   source is saved with ZQ.state.drills.draft(key, code) as you type and restored when the item opens again.
+   Script mode (any example or test with compare "stdout" or a stdin): the learner's code is not run at load. The
+   harness carries it as a string and runs it afresh for every case, with input() and sys.stdin fed from that case's
+   stdin and print output captured; a stdout case compares the captured text with expect (whitespace-normalised, or
+   exactly with exact: true), and a call case is evaluated in that run's namespace, which also holds printed (the
+   captured lines as a list). input() prompts are not part of the output. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -181,6 +186,65 @@ def __zq_case(_i):
 
 __ZQ_CASES = ${JSON.stringify(cases.map(c => [c.call, String(c.expect), c.compare || 'equal']))}
 `;
+  /* Script mode harness: the learner's source runs once per case in a fresh namespace (see the header) */
+  const scriptHarness = (src, cases) => `
+import sys as _zs, io as _zio, linecache as _zlc
+__ZQ_SRC = ${JSON.stringify(src)}
+_zlc.cache['solution.py'] = (len(__ZQ_SRC), None, __ZQ_SRC.splitlines(True), 'solution.py')
+__ZQ_CODE = compile(__ZQ_SRC, 'solution.py', 'exec')
+__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [c.call == null ? '' : String(c.call), String(c.expect ?? ''), c.compare || (c.call == null ? 'stdout' : 'equal'), c.stdin == null ? '' : String(c.stdin), !!c.exact])))})
+
+def __zq_norm(_t):
+    _ls = [_l.rstrip() for _l in _t.replace('\\r\\n', '\\n').split('\\n')]
+    while _ls and not _ls[0]: _ls.pop(0)
+    while _ls and not _ls[-1]: _ls.pop()
+    return _ls
+
+def __zq_case(_i):
+    import math as _m
+    from fractions import Fraction as _F
+    _call, _exp, _cmp, _stdin, _exact = __ZQ_CASES[_i]
+    _feed = _zio.StringIO(_stdin)
+    _out = _zio.StringIO()
+    def _input(prompt=''):
+        _ln = _feed.readline()
+        if not _ln:
+            raise EOFError('EOF when reading a line (this test gives input() no more lines)')
+        return _ln[:-1] if _ln.endswith('\\n') else _ln
+    _ns = {'__name__': '__main__', 'input': _input}
+    _old = (_zs.stdout, _zs.stdin)
+    _zs.stdout, _zs.stdin = _out, _feed
+    try:
+        exec(__ZQ_CODE, _ns)
+    except SystemExit:
+        pass
+    except BaseException:
+        _zs.stdout, _zs.stdin = _old
+        print(_out.getvalue(), end='')
+        raise
+    finally:
+        _zs.stdout, _zs.stdin = _old
+    _txt = _out.getvalue()
+    print(_txt, end='')
+    _ns['printed'] = _txt.splitlines()
+    if _cmp == 'stdout':
+        print(${JSON.stringify(MARK)}, end='')
+        if _exact:
+            return 1.0 if _txt == _exp else 0.0
+        return 1.0 if __zq_norm(_txt) == __zq_norm(_exp) else 0.0
+    _a = eval(_call, _ns)
+    print(${JSON.stringify(MARK)} + repr(_a), end='')
+    _e = eval(_exp, _ns)
+    if _cmp == 'fraction':
+        return 1.0 if isinstance(_a, _F) and _a == _e else 0.0
+    if _cmp == 'isclose':
+        try:
+            return 1.0 if _m.isclose(float(_a), float(_e), rel_tol=1e-9, abs_tol=1e-12) else 0.0
+        except Exception:
+            return 1.0 if _a == _e else 0.0
+    return 1.0 if _a == _e else 0.0
+`;
+  const isOut = (c) => c.compare === 'stdout' || (c.call == null && c.expect != null);
   const cleanTb = (tb) => String(tb || '').split('\n').filter((ln, i, all) => !/__zq_case|<string>/.test(ln) && !(/^\s{4}\S/.test(ln) && /__zq_case|<string>/.test(all[i - 1] || ''))).join('\n');
 
   Z.widgets.register('code', (host, spec, ctx) => {
@@ -218,41 +282,54 @@ __ZQ_CASES = ${JSON.stringify(cases.map(c => [c.call, String(c.expect), c.compar
     const unsub = Py.sub(sync);
     Py.ensure(); sync();
 
+    const pre = (t, cls = 'wd-res-out') => `<pre class="${cls} t-code">${Z.esc(t)}</pre>`;
+    const outRow = (r) => {
+      const said = r.stdout.trim() ? pre(r.stdout) : '<div class="t-caption">Your code printed nothing.</div>';
+      const input = r.stdin ? `<div class="t-caption">Input</div>${pre(r.stdin.replace(/\n$/, ''), 'wd-res-out wd-res-in')}` : '';
+      if (r.error) return `${input}${pre(cleanTb(r.error), 'wd-res-err')}${r.stdout.trim() ? `<div class="t-caption">Printed before the error</div>${said}` : ''}`;
+      if (r.ok) return `${input}<div class="t-caption">Printed the expected output</div>${said}`;
+      return `${input}<div class="t-caption">Expected output</div>${pre(r.expect.replace(/\n$/, ''))}<div class="t-caption">Your code printed</div>${said}`;
+    };
     const row = (r, label) => `<li class="wd-res-row ${r.ok ? 'ok' : 'bad'}">
         <span class="wd-res-ic" aria-hidden="true">${Z.icon(r.ok ? 'check' : 'cross', 'xs')}</span>
-        <div class="wd-res-b"><div class="wd-res-h"><b>${label}</b> <code class="lsn-ic">${Z.esc(r.call)}</code></div>
-        ${r.error ? `<pre class="wd-res-err t-code">${Z.esc(cleanTb(r.error))}</pre>` : `<div class="t-caption">Expected <code class="lsn-ic">${Z.esc(r.expect)}</code>, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>`}
-        ${r.stdout ? `<pre class="wd-res-out t-code">${Z.esc(r.stdout)}</pre>` : ''}</div></li>`;
+        <div class="wd-res-b"><div class="wd-res-h"><b>${label}</b> ${r.out ? (r.stdin ? 'what it prints with this input' : 'what it prints') : `<code class="lsn-ic">${Z.esc(r.call)}</code>`}</div>
+        ${r.out ? outRow(r) : `${r.error ? pre(cleanTb(r.error), 'wd-res-err') : `<div class="t-caption">Expected <code class="lsn-ic">${Z.esc(r.expect)}</code>, got <code class="lsn-ic">${Z.esc(r.actual ?? 'nothing')}</code></div>`}
+        ${r.stdout ? pre(r.stdout) : ''}`}</div></li>`;
     const render = (title, rows, cases, extra = '') => {
       const n = rows.filter(r => r.ok).length;
       res.innerHTML = `<div class="wd-res-top"><span class="t-label">${title}</span><span class="t-caption">${n} of ${cases.length} passed</span></div>${extra}<ol class="wd-res-list">${rows.map((r, i) => row(r, (title === 'Examples' ? 'Example ' : 'Test ') + (i + 1))).join('')}</ol>`;
     };
     /* Run a list of cases; resolves to { rows, error } */
+    const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null);
     const runCases = (cases) => new Promise((resolve) => {
-      const code = ed.value + harness(cases);
-      const rows = cases.map(c => ({ call: c.call, expect: String(c.expect), ok: false, actual: null, error: null, stdout: '' }));
-      let loadErr = null;
+      const code = script ? scriptHarness(ed.value, cases) : ed.value + harness(cases);
+      const rows = cases.map(c => ({ call: c.call, expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
+      let loadErr = null, loaded = '';
       const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, TEST_MS * Math.max(1, cases.length),
         (d) => {
-          if (d.kind === 'error') loadErr = d.error;
+          if (d.kind === 'error') { loadErr = d.error; loaded = String(d.stdout || ''); }
+          if (d.kind === 'loaded') loaded = String(d.stdout || '');
           if (d.kind === 'test') {
             const r = rows[d.i]; if (!r) return;
             const out = String(d.stdout || ''), k = out.lastIndexOf(MARK);
             r.actual = k >= 0 ? out.slice(k + MARK.length) : null;
-            r.stdout = (k >= 0 ? out.slice(0, k) : out).trim();
+            r.stdout = k >= 0 ? out.slice(0, k) : out;
+            if (!r.out) r.stdout = r.stdout.trim();
             r.error = d.error || null;
             r.ok = !!d.ok && !d.error;
           }
         },
-        (info) => resolve({ rows, error: loadErr ? cleanTb(loadErr) : info.timeout ? 'Stopped after the time limit. Look for a loop that never ends.' : info.crash || null }));
-      if (!ok) resolve({ rows, error: Py.status === 'unavailable' ? 'Python could not load: ' + Py.reason : 'Python is still loading. Try again in a moment.' });
+        (info) => resolve({ rows, printed: loaded, error: loadErr ? cleanTb(loadErr) : info.timeout ? 'Stopped after the time limit. Look for a loop that never ends, or an input() waiting for a line the test does not give.' : info.crash || null }));
+      if (!ok) resolve({ rows, printed: '', error: Py.status === 'unavailable' ? 'Python could not load: ' + Py.reason : 'Python is still loading. Try again in a moment.' });
     });
     const runExamples = async () => {
       if (busy || locked || Py.status !== 'ready' || !examples.length) return;
       busy = true; sync();
       const r = await runCases(examples);
       busy = false; if (!alive) return;
-      render('Examples', r.rows, examples, r.error ? `<pre class="wd-res-err t-code">${Z.esc(r.error)}</pre>` : '');
+      /* Item 110: outside script mode, what the code printed when it loaded is shown above the example rows */
+      const printed = !script && r.printed.trim() ? `<div class="t-caption">Your code printed</div>${pre(r.printed.replace(/\n$/, ''))}` : '';
+      render('Examples', r.rows, examples, (r.error ? pre(r.error, 'wd-res-err') : '') + printed);
       sync();
     };
     runBtn.addEventListener('click', runExamples);
