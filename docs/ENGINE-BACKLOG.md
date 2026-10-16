@@ -178,3 +178,11 @@ Raised later (exp-log level 2):
 
 65. `drag-point` on plane: a `tolX` (x-only tolerance) and a target given as `{ "on": "f", "x": 12.3 }` so dragging along a steep curve is gradable.
 66. `series` and `plane`: `yScale: "log"` option (log-price charts).
+
+Raised later (trig level 2):
+
+67. Validator: accept `arc` and `radius` as circle ids.
+68. `circle`: free drag on explore screens (`drag: true` on the point) with `derive` live captions, like plane points.
+69. A screen may hold two canvases side by side (`canvases: [...]` or a `pair` kind), or a built-in "unrolling" view on circle (angle to sine graph).
+70. `circle` README: note that `drag-point` default `tol` 0.25 is about 14° in radians; recommend 0.02.
+71. `derive` functions: add `sin`, `cos`, `tan`, `sqrt`, `abs`, `ln`, `exp`, `pi` to the derive function set.
