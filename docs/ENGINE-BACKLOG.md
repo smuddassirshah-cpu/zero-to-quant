@@ -134,6 +134,12 @@ Third pass (items 51 to 77):
 80. Done: `derive` runs up to three passes, so a rule can read a value another rule derives.
 81. Done: table `compact` (automatic above 6 columns): tighter cells; it still scrolls sideways rather than clipping.
 82. Done: plane points outside the plot are not drawn; the x-axis title moves below the axis when a point or curve sits under it.
+83. Done: tree `collapse` resizes the drawing to the leaves (or depth) still shown.
+84. Done: place `mode: "boxes"` counts as canvas-bound (player and the explore rule); `free: true` and `count: { container: n }` (key `count-<container>`).
+85. Done: boxes containers take `fill: "top"|"bottom"`.
+86. Done: the verdict chip lets long inline maths wrap between terms.
+87. Done: plane `xStep` and `yStep`.
+88. Done: circle cos label starts clear of the angle mark; the sin label sits past the rim (outside the circle for small angles).
 
 
 Raised later (equations level 2):
@@ -263,3 +269,10 @@ Raised later (series level 3):
 90. `derive` validation: allow `=` inside string literals in caption expressions.
 91. Longform model answers and prose: wrap or scroll long display maths at narrow widths.
 92. `boxes` `box` container: close the top edge (cosmetic).
+
+Raised later (counting level 2):
+
+93. `grid`: a `paths` overlay (sequence of cell ids drawn as a route) and a lattice-points mode.
+94. `tree`: `compact: true` with narrower leaf spacing so a 16-leaf tree fits the column.
+95. `graph`: `state.labels` to relabel nodes; a `ring` layout with a `rotate` patch (seats round a table).
+96. `grid` `shade`: optional `colour` slot per named set.

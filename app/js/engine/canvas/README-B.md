@@ -40,6 +40,7 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - Expressions: `-x^2` is $-(x^2)$ (a unary minus before a power applies to the whole power), and `e` is Euler's number (`e^x` equals `exp(x)`).
 - `axes: false` draws no axes, ticks or grid: a geometry figure.
 - `xTicks: "integer"` and `yTicks: "integer"` keep whole-number ticks only, for sequence plots on small ranges.
+- `xStep` and `yStep` put a tick and a grid line at every multiple of the step (90 for a degree axis, 3 for months).
 - Points outside the `x` and `y` ranges are not drawn; when a point or curve sits under the x-axis title near y = 0, the title moves below the axis.
 - `yScale: "log"` (a positive `y` range): log-price charts, ticks at 1, 2 and 5 times powers of ten; `money: "£"` labels them as prices (£10, £20, £50). Points and functions use the same scale; areas under curves are for linear scales.
   - `expr` uses `x`, numbers, `+ - * / ^`, `sin cos tan exp ln log sqrt abs min max floor ceil pi e`, and any name in `params`.

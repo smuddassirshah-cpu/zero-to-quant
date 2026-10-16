@@ -60,6 +60,8 @@ Sample spaces, two-dice tables, area models, Punnett squares. Square cells, at m
 
 Probability and decision trees, left to right or top to bottom; spacing is automatic.
 
+Collapsing (`state.collapse`) resizes the drawing to the leaves (or, top to bottom, the depth) still shown.
+
 **params**: `levels: [{ "label": "First draw", "branches": [{ "id": "r", "label": "Red", "p": "3/5" }] }]` (every node of a level gets the level's branches; `p` and `label` may be a map keyed by the parent path, with `"*"` as the default, for draws without replacement; a branch whose `p` map has no entry for a parent is left out there), or `nodes: [{ "id", "label", "p", "value", "children": [...] }]`; `leaves: { "<path>": "6/20" }`; `orient: "lr" | "tb"`; `levelLabels` (with `nodes`). Probabilities such as `"3/5"` render as fractions; `"$...$"` is TeX.
 
 **state**: `highlight: [paths]` (every branch from the root to each path: bold stroke and pear wash), `shade: [paths]` or `{ "<set>": [paths] }` (series colour along the path), `show: "p" | "none"` (hide probabilities), `unknown: [paths]` (shows "?" for those probabilities), `values: false` (hide leaf values), `collapse: [paths]` (hide the subtree; the tree re-spaces with an animation).
@@ -109,7 +111,7 @@ One to three sets in a universe; each region is its exact shape.
 
 Containers and items for counting and drawing without replacement.
 
-**params**: `containers: [{ "id": "urn", "label": "Urn", "kind": "urn" | "bag" | "box" | "hand" | "row", "items": [{ "id": "b1", "kind": "ball" | "card" | "coin" | "slot" | "bag", "colour": 1, "label": "1", "face": "up" }], "capacity": 3, "slots": 3, "cols": 3 }]`, `itemKind` (default for items, `"ball"`). A coin shows its face, H or T, unless it has a `label`. Without a `hand` container, drawn items wait in a band above the containers; the band is there only while an item is drawn, so a plain set of containers has no empty space on top. An item of kind `bag` (alias `sealed`) is a closed sack showing only its label (`"?"`, `"n"`), for a bag of counters whose contents stay hidden. `colour` is a series slot 1 to 6 (0 for a plain item). A `row` draws `slots` dashed places that fill left to right.
+**params**: `containers: [{ "id": "urn", "label": "Urn", "kind": "urn" | "bag" | "box" | "hand" | "row", "items": [{ "id": "b1", "kind": "ball" | "card" | "coin" | "slot" | "bag", "colour": 1, "label": "1", "face": "up" }], "capacity": 3, "slots": 3, "cols": 3 }]`, `itemKind` (default for items, `"ball"`). A coin shows its face, H or T, unless it has a `label`. Without a `hand` container, drawn items wait in a band above the containers; the band is there only while an item is drawn, so a plain set of containers has no empty space on top. An item of kind `bag` (alias `sealed`) is a closed sack showing only its label (`"?"`, `"n"`), for a bag of counters whose contents stay hidden. `colour` is a series slot 1 to 6 (0 for a plain item). A `row` draws `slots` dashed places that fill left to right. `fill: "top"` or `"bottom"` on a container sets where its items start (default: top for `hand` and `row`, bottom for urns, bags and boxes).
 
 **state**: `draw: [ids]` (move to the container whose kind is `hand`; without one, drawn items lift above the containers), `move: { "<item>": "<container>" }` (key order is arrival order), `face: { "<card>": "up" | "down", "<coin>": "H" | "T" }` (flips animate).
 
@@ -170,7 +172,7 @@ The unit circle.
 
 **state**: `angle` (default 30° or π/6), `shade: "arc" | "sector"`.
 
-**ids**: `angle`, `pt`, `radius`, `cos`, `sin`, `tan`, `arc`. **events**: drag on `pt`: `{ id: "pt", angle, x: cos, y: sin, phase }`. A drag-point target is the angle (a number). With `degrees: false` the default `tol` of 0.25 is about 14°: give `tol: 0.02` (about 1°).
+**ids**: `angle`, `pt`, `radius`, `cos`, `sin`, `tan`, `arc`. **events**: drag on `pt`: `{ id: "pt", angle, x: cos, y: sin, phase }`. A drag-point target is the angle (a number). Labels keep clear of each other: the cos label starts past the angle mark when the mark sweeps over its side, and the sin label sits outside the rim (outside the circle altogether for a short segment). With `degrees: false` the default `tol` of 0.25 is about 14°: give `tol: 0.02` (about 1°).
 
 ```json
 { "kind": "circle", "params": { "values": true }, "state": { "angle": 60, "shade": "sector" } }
@@ -215,6 +217,6 @@ Two canvases side by side (stacked below 480px, or always with `stack: true`), f
 ## Canvas-bound widgets
 
 - **tap-regions** (`answer`, `max`, `wrong: [{ "id", "set", "flash" }]`, `countWord`): works on any canvas with tap mode (grid, tree, venn, area, boxes, table, number-line points, and E4's tappable kinds). Keys: a matching `wrong[]` id, else the first wrongly selected id, else the first missed answer id. `showWhy` flashes the extra ids of the matched set (or `flash`), else the wrong picks. Count mode: `{ "count": 3, "among": ["c11", "c12", "c13", "c14"] }` with no `answer` is correct when exactly `count` regions are selected, all within `among` when given; keys are a matching `wrong[]` id, else the first pick outside `among`, else `too-few` or `too-many`; the count reads "2 of 3 shaded" (with `countWord`); reveal selects the first `count` of `among`.
-- **place** in `mode: "boxes"` (`answer: { "<container>": [itemIds] }`, `ordered`): the learner drags the canvas's items between containers; correct when every named container holds exactly its listed items. Keys: the first item out of place. `reveal` moves the items there in hint indigo.
+- **place** in `mode: "boxes"` (`answer: { "<container>": [itemIds] }`, `ordered`, or `count: { "<container>": n }`, or `free: true`): the learner drags the canvas's items between containers; correct when every named container holds exactly its listed items. Keys: the first item out of place. `reveal` moves the items there in hint indigo.
 - **balance** (`moves: ["remove-both", "remove-unknown-both", "halve-both", "divide-both", "subtract-both", "add-both", "remove-item"]`, `target: { "left": ["unknown"], "right": [4] }`): chips under the canvas and a live equation. Keys: `unbalanced`, `unsolved`. A target matches either way round; weights compare by total. The test hook's correct answer is the shortest list of the allowed moves (at most six) that reaches the target (`ZQ.grade.balanceMoves`), so the target must be reachable with them.
 - **drag-point** (`points: [{ "id", "target", "tol" }]`, `wrong: [{ "id", "region": { "x": [a, b], "y": [c, d] } | { "angle": [a, b] }, "canvas": {patch} }]`): targets are `[x, y]`, or a number on number-line (x) and circle (angle). Default `tol` 0.25. Keys: a `wrong[]` id whose region holds a point, else the first point off target (its point id, which `byKey` may use).
