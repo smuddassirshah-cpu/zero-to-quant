@@ -161,3 +161,9 @@ Raised later (quadratics level 2):
 
 57. `plane` function labels: `labelAnchor` (start|end) and automatic placement clear of other curves and the axes.
 58. `\text{£}` renders in a different face from prose; a `\pounds`-style macro in the KaTeX settings (define `\£` or map `\text{£}` to the sans face).
+
+Raised later (exp-log level 1):
+
+59. `bars` `setParam`: accept free parameter names (stored in `state.params`) so a `derive` block can drive every bar from one control.
+60. Validator: for object categories `{id, label}` accept the element id as `id` as well as `x{label}`.
+61. README-B: a `functions` patch by id keeps `domain` from params unless given again (document, or merge the domain).
