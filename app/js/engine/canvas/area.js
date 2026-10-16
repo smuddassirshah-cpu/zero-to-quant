@@ -233,11 +233,15 @@
       if (base === 'split') { const sp = curSplit() || [1, 1]; const next = part === 'rows' ? [v, sp[1]] : [sp[0], v]; I.api.set({ split: shape === 'circle' ? [next[1]] : next }, { instant: true }); }
       else if (base === 'grid') { const gr = curGrid(); const next = part === 'rows' ? [v, gr[1]] : [gr[0], v]; I.api.set({ grid: shape === 'circle' ? [next[1]] : next }, { instant: true }); }
     };
+    { /* item 134: any other name is a free parameter in state.params, for a derive block to read */
+      const own = I.api.setParam;
+      I.api.setParam = (name, v) => (['shade', 'split', 'grid'].includes(String(name).split('.')[0]) ? own(name, v) : I.api.set({ params: { [name]: +v } }, { instant: true }));
+    }
     I.api.getParam = (name) => {
       const [base, part] = String(name).split('.');
       const pair = base === 'split' ? curSplit() : base === 'grid' ? curGrid() : null;
       if (base === 'shade') { const sh = I.state().shade; return typeof sh === 'number' ? sh : undefined; }
-      return pair ? (part === 'rows' ? pair[0] : pair[1]) : undefined;
+      return pair ? (part === 'rows' ? pair[0] : pair[1]) : (I.state().params || {})[name];
     };
     I.api.set({}, { instant: true });
     return I.api;

@@ -381,3 +381,8 @@ Raised later (py-found level 3):
 
 137. `code` tests: `compare: "raises"` with `expect` the exception name.
 138. `tree` canvas: honour `params.label` as a title.
+
+Raised later (py-found level 4):
+
+139. Inline code and table cells: `white-space: pre-wrap` so padded output keeps its spaces.
+140. `code` widget: a per-test `argv` list in script mode so `sys.argv` code can be graded.

@@ -232,10 +232,11 @@
       }
       return rawSet(patch, o);
     };
-    api.getParam = (name) => { const q = (I.state().points || []).find(p => p.id === name); return q ? q.x : undefined; };
+    api.getParam = (name) => { const q = (I.state().points || []).find(p => p.id === name); return q ? q.x : (I.state().params || {})[name]; };
     api.points = () => Object.fromEntries((I.state().points || []).map(p => [p.id, { x: p.x, y: 0 }]));
     api.place = (id, pos, { instant = false } = {}) => api.set({ points: (I.state().points || []).map(p => (p.id === id ? { ...p, x: typeof pos === 'number' ? pos : pos[0] } : p)) }, { instant });
-    api.setParam = api.param = (name, v) => { if ((I.state().points || []).some(p => p.id === name)) api.place(name, v, { instant: true }); };
+    /* item 134: a name that is no point is a free parameter in state.params, for a derive block to read */
+    api.setParam = api.param = (name, v) => { if ((I.state().points || []).some(p => p.id === name)) api.place(name, v, { instant: true }); else api.set({ params: { [name]: +v } }, { instant: true }); };
     api.set({}, { instant: true });
     return api;
   }

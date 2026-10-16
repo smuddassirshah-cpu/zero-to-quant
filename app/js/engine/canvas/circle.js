@@ -142,7 +142,8 @@
     const api = I.api;
     api.points = () => { const a = cur * Math.PI / 180; return { pt: { x: Math.cos(a), y: Math.sin(a), angle: I.state().angle } }; };
     api.place = (id, pos, { instant = false } = {}) => api.set({ angle: typeof pos === 'number' ? pos : fromDeg(((Math.atan2(pos[1], pos[0]) * 180 / Math.PI) + 360) % 360) }, { instant });
-    api.setParam = api.param = (name, v) => { if (name === 'angle') api.set({ angle: v }, { instant: true }); };
+    api.setParam = api.param = (name, v) => { if (name === 'angle') api.set({ angle: v }, { instant: true }); else api.set({ params: { [name]: +v } }, { instant: true }); }; // other names: state.params (item 134)
+    api.getParam = (name) => (name === 'angle' ? I.state().angle : (I.state().params || {})[name]);
     api.set({}, { instant: true });
     const syncFree = () => { if (I.mode() == null) { const on = free(); pt.classList.toggle('cv-handle', on); if (on) { pt.setAttribute('tabindex', '0'); pt.setAttribute('role', 'slider'); pt.setAttribute('aria-label', 'Angle'); } } };
     syncFree();
