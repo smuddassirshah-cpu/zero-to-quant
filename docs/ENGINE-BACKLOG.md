@@ -369,3 +369,10 @@ Raised later (mental level 3):
 130. `area`: group labels (`labels: { "c11-c16": "£5,070" }` spanning cells); `colSizes`/`rowSizes` patchable (same as 127).
 131. `number-line`: interval labels keep "a/b" as inline text unless wrapped in `$...$`.
 132. `tap-regions` `only`: accept grid set names (`col7`, `row5`).
+
+Raised later (py-found level 1):
+
+133. `bars`: negative values drawn below a zero baseline.
+134. `number-line` (and any kind with `setParam`): unknown control names fall back to `state.params`.
+135. Prose code blocks: wrap long lines or scroll horizontally; never run under the Copy button.
+136. `code` tests: a per-test `setup` line (run before `call`) so tests read cleanly.

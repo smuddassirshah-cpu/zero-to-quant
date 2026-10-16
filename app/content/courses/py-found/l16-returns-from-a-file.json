@@ -1,0 +1,1048 @@
+{
+  "id": "l16-returns-from-a-file",
+  "course": "py-found",
+  "title": "Returns from a price file",
+  "minutes": 15,
+  "objectives": [
+    "Compute daily returns from a CSV of prices in plain Python",
+    "Turn a script into a tool with command-line arguments, a main guard and a results file"
+  ],
+  "skills": [
+    "pf-modules",
+    "pf-functions"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Words from the command line",
+      "prose": "A script becomes a tool when it reads its file name from the command. You type `python summary.py prices.csv` in a terminal. Python stores the words after `python` in a list, `sys.argv`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "summary.py",
+            "prices.csv"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "sys.argv for: python summary.py prices.csv"
+        }
+      },
+      "question": "The script reads `sys.argv[1]`. Tap the item it gets.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c1"
+        ],
+        "max": 1,
+        "countWord": "items"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Lists count from 0. What sits at index 0?"
+        },
+        {
+          "rung": "point",
+          "text": "Index 0 is the script's own name.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`sys.argv[0]` is `'summary.py'`, so `sys.argv[1]` is `'prices.csv'`."
+        }
+      ],
+      "feedback": {
+        "correct": "`sys.argv[1]` is the first word after the script's name.",
+        "generic": "Not quite right. Count from index 0.",
+        "byKey": {
+          "c0": "Index 0 holds the script's own name, `'summary.py'`. The first argument you typed is at index 1."
+        }
+      },
+      "explain": {
+        "text": "`sys.argv[0]` is always the script itself, so your arguments start at index 1. Here `sys.argv[1]` is `'prices.csv'`. In this browser Python runs with no command line, so we predict `sys.argv` and test with plain lists.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ],
+          "pointers": [
+            {
+              "id": "i",
+              "at": 1,
+              "label": "sys.argv[1]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You add a second argument, the trading days per year: `python summary.py prices.csv 252`.\n\n```python\nimport sys\ndays = sys.argv[2]\nprint(days * 2)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "summary.py",
+            "prices.csv",
+            "252"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "sys.argv for: python summary.py prices.csv 252"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "num",
+            "text": "`504`",
+            "why": "You read `252` as a number. Every item of `sys.argv` is text, and text times 2 repeats it."
+          },
+          {
+            "id": "right",
+            "text": "`252252`",
+            "correct": true
+          },
+          {
+            "id": "err",
+            "text": "A `TypeError`",
+            "why": "Text times a whole number is allowed: it repeats the text."
+          },
+          {
+            "id": "file",
+            "text": "`prices.csvprices.csv`",
+            "why": "That is index 1. Index 2 is the third item, `'252'`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What type is everything you type on a command line?"
+        },
+        {
+          "rung": "point",
+          "text": "`sys.argv[2]` is the text `'252'`.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`'252' * 2` repeats the text: `'252252'`."
+        }
+      ],
+      "feedback": {
+        "correct": "`sys.argv` holds text, so `* 2` repeats it.",
+        "generic": "Not quite right. Work out the type of `sys.argv[2]` first.",
+        "byKey": {
+          "num": "You read `252` as a number. It arrives as the text `'252'`; convert it with `int(sys.argv[2])`."
+        }
+      },
+      "explain": {
+        "text": "Arguments arrive as text, just like CSV values. `'252' * 2` is `'252252'`. Convert first: `int(sys.argv[2]) * 2` is 504.",
+        "canvas": {
+          "highlight": [
+            "c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "You forget the file name and type only `python summary.py`.\n\n```python\nimport sys\npath = sys.argv[1]\nprint(\"Reading\", path)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "summary.py"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "sys.argv for: python summary.py"
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`IndexError: list index out of range`",
+            "correct": true
+          },
+          {
+            "id": "empty",
+            "text": "It prints `Reading` and an empty name",
+            "why": "Python does not fill in a blank. Index 1 does not exist in a one-item list."
+          },
+          {
+            "id": "none",
+            "text": "It prints `Reading None`",
+            "why": "A missing list item is an error, not `None`."
+          },
+          {
+            "id": "ask",
+            "text": "Python asks you for the file name",
+            "why": "Only `input()` asks. `sys.argv` is fixed when the script starts."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many items does `sys.argv` hold now?"
+        },
+        {
+          "rung": "point",
+          "text": "Only index 0 exists.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Reading index 1 of a one-item list raises `IndexError`."
+        }
+      ],
+      "feedback": {
+        "correct": "A one-item list has no index 1.",
+        "generic": "Not quite right. Count the items in `sys.argv`."
+      },
+      "explain": {
+        "text": "`sys.argv` is `['summary.py']`, so index 1 does not exist and Python raises `IndexError`. A friendlier script checks `len(sys.argv)` first and prints how to call it.",
+        "canvas": {
+          "highlight": [
+            "c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A function that reads `sys.argv` directly is hard to test. Take the list as an argument instead: the script calls `parse_args(sys.argv)`, and a test passes any list it likes.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "summary.py",
+            "prices.csv",
+            "365"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "argv = ['summary.py', 'prices.csv', '365']"
+        }
+      },
+      "question": "Write `parse_args(argv)` that returns `(path, days)`, with `days` a whole number that defaults to 252.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sys\n\ndef parse_args(argv):\n    # return (path, days); days is 252 unless a third item gives it\n    pass\n\nprint(parse_args([\"summary.py\", \"prices.csv\"]))\nprint(parse_args([\"summary.py\", \"prices.csv\", \"365\"]))\n",
+        "solution": "import sys\n\ndef parse_args(argv):\n    # return (path, days); days is 252 unless a third item gives it\n    path = argv[1]\n    days = int(argv[2]) if len(argv) > 2 else 252\n    return path, days\n\nprint(parse_args([\"summary.py\", \"prices.csv\"]))\nprint(parse_args([\"summary.py\", \"prices.csv\", \"365\"]))\n",
+        "tests": [
+          {
+            "call": "parse_args(['summary.py', 'prices.csv'])",
+            "expect": "('prices.csv', 252)",
+            "compare": "equal"
+          },
+          {
+            "call": "parse_args(['summary.py', 'prices.csv', '365'])",
+            "expect": "('prices.csv', 365)",
+            "compare": "equal"
+          },
+          {
+            "call": "parse_args(['summary.py', 'fund.csv', '260'])",
+            "expect": "('fund.csv', 260)",
+            "compare": "equal"
+          },
+          {
+            "call": "type(parse_args(['summary.py', 'fund.csv', '260'])[1]).__name__",
+            "expect": "'int'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each passes a list in place of `sys.argv` and compares the tuple you return.",
+        "examples": [
+          {
+            "call": "parse_args(['summary.py', 'prices.csv'])",
+            "expect": "('prices.csv', 252)",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The path is at index 1. The days are at index 2, but only if the list is long enough."
+        },
+        {
+          "rung": "point",
+          "text": "`len(argv) > 2` tells you whether a third item exists.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`days = int(argv[2]) if len(argv) > 2 else 252`, then `return argv[1], days`."
+        }
+      ],
+      "feedback": {
+        "correct": "Path from index 1, days converted or defaulted.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects `('prices.csv', 252)`. `'summary.py'` means you took index 0.",
+          "test-2": "Test 2 expects the number 365, not the text `'365'`. Convert it with `int`.",
+          "error": "An `IndexError` on load means you read `argv[2]` when the list has only two items. Check `len(argv)` first."
+        }
+      },
+      "explain": {
+        "text": "You read index 1, and index 2 only when it exists, converting it with `int`. Because `parse_args` takes a list, the tests never needed a terminal. The script's last line is simply `parse_args(sys.argv)`.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "p",
+              "at": 1,
+              "label": "path"
+            },
+            {
+              "id": "d",
+              "at": 2,
+              "label": "days"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Who is running this file?",
+      "prose": "`summary.py` contains one line, `print(__name__)`. Python sets `__name__` before running a file. You run `python summary.py`. Later, `test_summary.py` runs `import summary`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "How the file starts",
+            "Printed"
+          ],
+          "rows": [
+            [
+              "python summary.py",
+              "?"
+            ],
+            [
+              "import summary",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is printed each time?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`__main__`, then `summary`",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "`summary` both times",
+            "why": "When you run a file directly, Python names it `__main__`, not after the file."
+          },
+          {
+            "id": "main",
+            "text": "`__main__` both times",
+            "why": "Only the file you ran is `__main__`. An imported file gets its module name."
+          },
+          {
+            "id": "ext",
+            "text": "`summary.py`, then `summary`",
+            "why": "`__name__` never includes `.py`. Run directly, it is `__main__`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only one file can be the program you started."
+        },
+        {
+          "rung": "point",
+          "text": "The file you start with `python` is called `__main__`.",
+          "highlight": [
+            "r0c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Run directly: `__main__`. Imported: the module's name, `summary`."
+        }
+      ],
+      "feedback": {
+        "correct": "`__main__` when run, the module name when imported.",
+        "generic": "Not quite right. Which file is the program, and which is only borrowed?"
+      },
+      "explain": {
+        "text": "The file you start is `__main__`; a file pulled in by `import` is named after itself. So `if __name__ == \"__main__\":` asks: was I started directly?",
+        "canvas": {
+          "values": {
+            "r0c1": "__main__",
+            "r1c1": "summary"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "`summary.py` has functions, then script lines at the bottom with no guard. `test_summary.py` starts with `from summary import max_drawdown`, and you run `pytest`.\n\n```python\ndef max_drawdown(prices):\n    ...\n\npath = sys.argv[1]\nprint_summary(path)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line in summary.py",
+            "Runs on import?"
+          ],
+          "rows": [
+            [
+              "def max_drawdown(prices):",
+              "?"
+            ],
+            [
+              "path = sys.argv[1]",
+              "?"
+            ],
+            [
+              "print_summary(path)",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What happens when pytest imports `summary`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "only",
+            "text": "Only `max_drawdown` is imported, and the tests run",
+            "why": "You expected `import` to take just the function. Importing runs every top-level line of the file first."
+          },
+          {
+            "id": "right",
+            "text": "The bottom lines run too, and the import fails",
+            "correct": true
+          },
+          {
+            "id": "skip",
+            "text": "pytest skips the bottom lines because they are not tests",
+            "why": "pytest does not choose which lines of an import run. Python runs them all."
+          },
+          {
+            "id": "imperr",
+            "text": "`ImportError`: a script cannot be imported",
+            "why": "Any `.py` file can be imported. The trouble is what its top level does."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does Python do with a file the first time it is imported?"
+        },
+        {
+          "rung": "point",
+          "text": "Importing runs the whole file, top to bottom, including the last two lines.",
+          "highlight": [
+            "r1c0",
+            "r2c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Under pytest, `sys.argv` holds pytest's own words, not a price file. `sys.argv[1]` is missing or wrong, and the import stops."
+        }
+      ],
+      "feedback": {
+        "correct": "Importing runs the file. Guard the script lines.",
+        "generic": "Not quite right. Importing a file runs it, top to bottom.",
+        "byKey": {
+          "only": "You expected `import` to take just the function. Python runs the whole file first, so `sys.argv[1]` is read during the import."
+        }
+      },
+      "explain": {
+        "text": "Python runs a module's top level when it is first imported, so the script lines ran inside pytest. There `sys.argv` is pytest's, and `sys.argv[1]` fails. Put them under `if __name__ == \"__main__\":` and the import only defines the functions.",
+        "canvas": {
+          "values": {
+            "r0c1": "yes: defines it",
+            "r1c1": "yes: fails",
+            "r2c1": "yes"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The summary prints as a text table. In an f-string, `{label:<14}` pads the label to 14 characters, aligned left. `{value:>8.2%}` writes a percentage with 2 places, aligned right in 8 characters.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Label (14, left)",
+            "Value (8, right)"
+          ],
+          "rows": [
+            [
+              "Total return",
+              "3.15%"
+            ],
+            [
+              "Max drawdown",
+              "−5.32%"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `format_row(label, value)` that returns one table row in that format.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def format_row(label, value):\n    pass  # replace this line\n\nprint(format_row(\"Total return\", 0.0315))\nprint(format_row(\"Max drawdown\", -0.0532))\n",
+        "solution": "def format_row(label, value):\n    return f\"{label:<14}{value:>8.2%}\"\n\nprint(format_row(\"Total return\", 0.0315))\nprint(format_row(\"Max drawdown\", -0.0532))\n",
+        "tests": [
+          {
+            "call": "format_row('Total return', 0.0315)",
+            "expect": "'Total return     3.15%'",
+            "compare": "equal"
+          },
+          {
+            "call": "format_row('Max drawdown', -0.0532)",
+            "expect": "'Max drawdown    -5.32%'",
+            "compare": "equal"
+          },
+          {
+            "call": "format_row('Annual vol', 0.2904)",
+            "expect": "'Annual vol      29.04%'",
+            "compare": "equal"
+          },
+          {
+            "call": "len(format_row('Return', 0.1))",
+            "expect": "22",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each compares the exact text you return, spaces included.",
+        "examples": [
+          {
+            "call": "format_row('Total return', 0.0315)",
+            "expect": "'Total return     3.15%'",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One f-string with two fields: the label, then the value."
+        },
+        {
+          "rung": "point",
+          "text": "`<14` aligns left in 14 characters; `>8.2%` right-aligns a 2-place percentage in 8.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return f\"{label:<14}{value:>8.2%}\"`"
+        }
+      ],
+      "feedback": {
+        "correct": "Every row is 22 characters, so the columns line up.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects `'Total return     3.15%'`. `0.03` means you used `.2f`, not `.2%`; no padding means the widths are missing."
+        }
+      },
+      "explain": {
+        "text": "`%` multiplies by 100 and adds the sign, and the widths pad each part. Fourteen plus eight makes every row 22 characters, so the values line up in a column.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The tool also saves its results. `with open(path, \"w\") as f:` opens a file for writing and closes it when the block ends. `\"w\"` replaces anything already there. `f.write(text)` adds no newline of its own.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "summary.txt, line",
+            "Text"
+          ],
+          "rows": [
+            [
+              "1",
+              "Total return     3.15%"
+            ],
+            [
+              "2",
+              "Max drawdown     5.32%"
+            ]
+          ],
+          "align": [
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `write_summary(path, lines)` that writes each line to the file, each followed by a newline.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def write_summary(path, lines):\n    pass  # write each line, followed by a newline\n\nwrite_summary(\"summary.txt\", [\"Total return     3.15%\", \"Max drawdown     5.32%\"])\nprint(open(\"summary.txt\").read())\n",
+        "solution": "def write_summary(path, lines):\n    with open(path, \"w\") as f:\n        for line in lines:\n            f.write(line + \"\\n\")\n\nwrite_summary(\"summary.txt\", [\"Total return     3.15%\", \"Max drawdown     5.32%\"])\nprint(open(\"summary.txt\").read())\n",
+        "tests": [
+          {
+            "call": "(open('s1.txt', 'w').close(), write_summary('s1.txt', ['a', 'b']), open('s1.txt').read())[2]",
+            "expect": "'a\\nb\\n'",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('s2.txt', 'w').close(), write_summary('s2.txt', ['Days 10']), open('s2.txt').read())[2]",
+            "expect": "'Days 10\\n'",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('s3.txt', 'w').close(), write_summary('s3.txt', ['old', 'text']), write_summary('s3.txt', ['new']), open('s3.txt').read())[3]",
+            "expect": "'new\\n'",
+            "compare": "equal"
+          },
+          {
+            "call": "(open('s4.txt', 'w').write('stale'), write_summary('s4.txt', []), open('s4.txt').read())[2]",
+            "expect": "''",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each empties a file, calls your function, then reads the file back and compares its text exactly.",
+        "examples": [
+          {
+            "call": "(open('s1.txt', 'w').close(), write_summary('s1.txt', ['a', 'b']), open('s1.txt').read())[2]",
+            "expect": "'a\\nb\\n'",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Open the file once, then loop over the lines inside the `with` block."
+        },
+        {
+          "rung": "point",
+          "text": "Each line needs `\"\\n\"` added, because `write` does not add one.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`with open(path, \"w\") as f:`, then `for line in lines:` and `f.write(line + \"\\n\")`."
+        }
+      ],
+      "feedback": {
+        "correct": "One line of text per line of the file.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects `'a\\nb\\n'`. `'ab'` means a missing newline; `'b\\n'` alone means you reopened the file inside the loop.",
+          "test-3": "Test 3 writes twice to the same file and expects only the second summary. Mode `\"a\"` appends; use `\"w\"`."
+        }
+      },
+      "explain": {
+        "text": "You opened the file once in `\"w\"` mode and wrote each line with its newline. Test 3 is the edge case: a second run replaces yesterday's summary rather than adding to it. Test 4 writes an empty file, which is still a file.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Each piece is a small function with its own test. Only the guard touches the command line:\n\n```python\nimport csv, io, math, statistics, sys\n\ndef daily_returns(closes): ...\ndef annualised_vol(returns): ...\ndef max_drawdown(prices): ...\ndef summarise(csv_text): ...\n\ndef main(argv):\n    path, days = parse_args(argv)\n    ...\n\nif __name__ == \"__main__\":\n    main(sys.argv)\n```",
+      "question": "`test_summary.py` imports this file. Which line runs only when you start the tool yourself?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`main(sys.argv)`",
+            "correct": true
+          },
+          {
+            "id": "def",
+            "text": "`def summarise(csv_text): ...`",
+            "why": "`def` lines run on import too: that is how the test gets the function."
+          },
+          {
+            "id": "imp",
+            "text": "`import csv, io, math, statistics, sys`",
+            "why": "Imports run every time, on import as well, so the functions can use them."
+          },
+          {
+            "id": "none",
+            "text": "None of them: an import runs everything",
+            "why": "Without the guard, yes. The `if` is false on import, so its block is skipped."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The guard's block runs only when the file is `__main__`.",
+        "generic": "Not quite right. Which line sits inside the `if`?"
+      },
+      "explain": {
+        "text": "On import, `__name__` is `\"summary\"`, so the `if` is false and `main` never runs. The `def` and `import` lines still run, which is what lets a test import the functions."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The summary tool",
+      "prose": "The starter holds every piece you have built, already finished. The guard prints the summary as a table. One function is missing: the one that ties them together.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                180.0,
+                182.7,
+                179.45,
+                176.2,
+                178.9,
+                183.35,
+                181.1,
+                185.6,
+                184.05,
+                187.25
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 230
+        },
+        "state": {
+          "markers": [],
+          "caption": "Closes, 2 to 13 February 2026, from a file sent newest first",
+          "drawdown": true
+        }
+      },
+      "question": "Write `summarise(csv_text)` that returns a dictionary with `days` (the number of closes), `total_return`, `annual_vol` and `max_drawdown`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nimport io\nimport math\nimport statistics\nfrom datetime import datetime\n\nCSV = \"\"\"Date,Close\n13/02/2026,187.25\n12/02/2026,184.05\n11/02/2026,185.60\n10/02/2026,181.10\n09/02/2026,183.35\n06/02/2026,178.90\n05/02/2026,176.20\n04/02/2026,179.45\n03/02/2026,182.70\n02/02/2026,180.00\n\"\"\"\n\ndef read_closes(csv_text):\n    rows = csv.DictReader(io.StringIO(csv_text))\n    rows = sorted(rows, key=lambda row: datetime.strptime(row[\"Date\"], \"%d/%m/%Y\"))\n    return [float(row[\"Close\"]) for row in rows]\n\ndef daily_returns(closes):\n    return [today / yesterday - 1 for yesterday, today in zip(closes, closes[1:])]\n\ndef annualised_vol(returns):\n    return statistics.stdev(returns) * math.sqrt(252)\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\ndef format_row(label, value):\n    return f\"{label:<14}{value:>8.2%}\"\n\ndef summarise(csv_text):\n    closes = read_closes(csv_text)\n    # return a dictionary with the keys days, total_return, annual_vol, max_drawdown\n    return {}\n\nif __name__ == \"__main__\":\n    s = summarise(CSV)\n    print(f\"{'Days':<14}{s['days']:>8}\")\n    print(format_row(\"Total return\", s[\"total_return\"]))\n    print(format_row(\"Annual vol\", s[\"annual_vol\"]))\n    print(format_row(\"Max drawdown\", s[\"max_drawdown\"]))\n",
+        "solution": "import csv\nimport io\nimport math\nimport statistics\nfrom datetime import datetime\n\nCSV = \"\"\"Date,Close\n13/02/2026,187.25\n12/02/2026,184.05\n11/02/2026,185.60\n10/02/2026,181.10\n09/02/2026,183.35\n06/02/2026,178.90\n05/02/2026,176.20\n04/02/2026,179.45\n03/02/2026,182.70\n02/02/2026,180.00\n\"\"\"\n\ndef read_closes(csv_text):\n    rows = csv.DictReader(io.StringIO(csv_text))\n    rows = sorted(rows, key=lambda row: datetime.strptime(row[\"Date\"], \"%d/%m/%Y\"))\n    return [float(row[\"Close\"]) for row in rows]\n\ndef daily_returns(closes):\n    return [today / yesterday - 1 for yesterday, today in zip(closes, closes[1:])]\n\ndef annualised_vol(returns):\n    return statistics.stdev(returns) * math.sqrt(252)\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\ndef format_row(label, value):\n    return f\"{label:<14}{value:>8.2%}\"\n\ndef summarise(csv_text):\n    closes = read_closes(csv_text)\n    return {\n        \"days\": len(closes),\n        \"total_return\": closes[-1] / closes[0] - 1,\n        \"annual_vol\": annualised_vol(daily_returns(closes)),\n        \"max_drawdown\": max_drawdown(closes),\n    }\n\nif __name__ == \"__main__\":\n    s = summarise(CSV)\n    print(f\"{'Days':<14}{s['days']:>8}\")\n    print(format_row(\"Total return\", s[\"total_return\"]))\n    print(format_row(\"Annual vol\", s[\"annual_vol\"]))\n    print(format_row(\"Max drawdown\", s[\"max_drawdown\"]))\n",
+        "tests": [
+          {
+            "call": "summarise(CSV)['days']",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "call": "summarise(CSV)['total_return']",
+            "expect": "0.04027777777777786",
+            "compare": "isclose"
+          },
+          {
+            "call": "summarise(CSV)['annual_vol']",
+            "expect": "0.2903929987228655",
+            "compare": "isclose"
+          },
+          {
+            "call": "summarise(CSV)['max_drawdown']",
+            "expect": "0.03557744937055282",
+            "compare": "isclose"
+          },
+          {
+            "call": "summarise(\"Date,Close\\n04/03/2026,95.00\\n03/03/2026,90.00\\n02/03/2026,100.00\\n\")['max_drawdown']",
+            "expect": "0.1",
+            "compare": "isclose"
+          },
+          {
+            "call": "summarise(\"Date,Close\\n04/03/2026,95.00\\n03/03/2026,90.00\\n02/03/2026,100.00\\n\")['total_return']",
+            "expect": "-0.050000000000000044",
+            "compare": "isclose"
+          },
+          {
+            "compare": "stdout",
+            "expect": "Days                10\nTotal return     4.03%\nAnnual vol      29.04%\nMax drawdown     3.56%\n"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Six call `summarise` and compare each value, within a relative $10^{-9}$ for decimals. The last runs your script and compares the printed table, spaces aside.",
+        "examples": [
+          {
+            "call": "summarise(CSV)['days']",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "call": "summarise(CSV)['annual_vol']",
+            "expect": "0.2903929987228655",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each value is one call to a finished helper, or one line of arithmetic."
+        },
+        {
+          "rung": "point",
+          "text": "Volatility needs the returns, not the closes: `annualised_vol(daily_returns(closes))`.",
+          "highlight": [
+            "drawdown"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `{\"days\": len(closes), \"total_return\": closes[-1] / closes[0] - 1, \"annual_vol\": annualised_vol(daily_returns(closes)), \"max_drawdown\": max_drawdown(closes)}`."
+        }
+      ],
+      "feedback": {
+        "correct": "Ten closes: up 4.03%, vol 29.04% a year, worst fall 3.56%.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects 10 days, the number of closes. 9 is the number of returns.",
+          "test-2": "Test 2 expects about 0.0403, the last close over the first, minus 1. Adding the daily returns is only an approximation.",
+          "test-3": "Test 3 expects about 0.2904. Pass the daily returns to `annualised_vol`, not the closes."
+        }
+      },
+      "explain": {
+        "text": "`summarise` reads the closes once and hands each helper what it needs. The share rose from £180.00 to £187.25, a 4.03% return. Its worst fall was from £182.70 to £176.20, and its vol was 29.04% a year.",
+        "canvas": {
+          "drawdown": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`sys.argv` is a list of text: index 0 is the script, your arguments start at 1. Pass it to a function so tests can use any list.",
+      "Importing a file runs its top level. Put script lines under `if __name__ == \"__main__\":` so tests can import the functions.",
+      "A tool is small tested functions, one `summarise` that combines them, and a guard that prints and saves the results."
+    ],
+    "formula": {
+      "name": "Total return",
+      "tex": "R = \\frac{P_{\\text{last}}}{P_{\\text{first}}} - 1",
+      "note": "Not the sum of daily returns, which only approximates it."
+    },
+    "trap": "Without the guard, `import summary` runs the whole script, `sys.argv[1]` included."
+  },
+  "quiz": [
+    {
+      "id": "q-argv-len",
+      "difficulty": 2,
+      "prose": "You run `python summary.py fund.csv 260`.",
+      "question": "What is `len(sys.argv)`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Length of sys.argv",
+        "accept": "3: `['summary.py', 'fund.csv', '260']`.",
+        "wrong": [
+          {
+            "id": "args",
+            "value": 2
+          },
+          {
+            "id": "python",
+            "value": 4
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The script's name plus two arguments.",
+        "generic": "Not quite right. List every word after `python`.",
+        "byKey": {
+          "args": "You left out the script's name. It is item 0.",
+          "python": "`python` itself is not in the list. It starts at the script's name."
+        }
+      },
+      "explain": {
+        "text": "`sys.argv` is `['summary.py', 'fund.csv', '260']`: the script, then each argument as text. Its length is 3."
+      }
+    },
+    {
+      "id": "q-guard",
+      "difficulty": 2,
+      "prose": "```python\ndef total_return(closes):\n    return closes[-1] / closes[0] - 1\n\nif __name__ == \"__main__\":\n    print(total_return([100.0, 104.0]))\n```",
+      "question": "This file is `risk.py`. Another file runs `from risk import total_return`. What is printed?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Nothing",
+            "correct": true
+          },
+          {
+            "id": "val",
+            "text": "`0.04`",
+            "why": "The `print` is inside the guard. On import, `__name__` is `\"risk\"`, so it is skipped."
+          },
+          {
+            "id": "err",
+            "text": "A `NameError`",
+            "why": "The function is defined on import as normal. Only the guarded block is skipped."
+          },
+          {
+            "id": "both",
+            "text": "`0.040000000000000036`",
+            "why": "No print runs at all on import, rounded or not."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The guard is false on import, so nothing prints.",
+        "generic": "Not quite right. What is `__name__` when a file is imported?"
+      },
+      "explain": {
+        "text": "On import `__name__` is `\"risk\"`, so the `if` block is skipped. `total_return` is defined and ready to use, and nothing is printed."
+      }
+    },
+    {
+      "id": "q-fstring",
+      "difficulty": 3,
+      "prose": "```python\nprint(f\"[{-0.0532:>8.2%}]\")\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[  -5.32%]`",
+            "correct": true
+          },
+          {
+            "id": "left",
+            "text": "`[-5.32%  ]`",
+            "why": "`>` aligns right, so the padding goes on the left."
+          },
+          {
+            "id": "dec",
+            "text": "`[   -0.05]`",
+            "why": "`%` multiplies by 100 and adds the percent sign."
+          },
+          {
+            "id": "nopad",
+            "text": "`[-5.32%]`",
+            "why": "The `8` asks for at least 8 characters, so two spaces are added."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Six characters of `-5.32%`, padded on the left to 8.",
+        "generic": "Not quite right. Read the format as fill, width, places, type."
+      },
+      "explain": {
+        "text": "`.2%` turns −0.0532 into `-5.32%`, six characters. `>8` pads it on the left to 8, giving two spaces."
+      }
+    },
+    {
+      "id": "q-total",
+      "difficulty": 3,
+      "prose": "A share's daily returns over two days were +10% and −10%.",
+      "question": "What is the total return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "label": "Total return",
+        "accept": "−1%: $1.10 \\times 0.90 - 1 = -0.01$.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£100.00 becomes £110.00, then £99.00.",
+        "generic": "Not quite right. Follow £100.00 through both days.",
+        "byKey": {
+          "sum": "You added the returns. The −10% applies to £110.00, not to £100.00."
+        }
+      },
+      "explain": {
+        "text": "£100.00 rises to £110.00, then falls 10% of that, £11.00, to £99.00. The total return is $\\tfrac{99}{100} - 1 = -1\\%$, so `summarise` uses last over first, not a sum."
+      }
+    }
+  ]
+}

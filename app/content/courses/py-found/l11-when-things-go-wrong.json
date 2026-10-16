@@ -1,0 +1,916 @@
+{
+  "id": "l11-when-things-go-wrong",
+  "course": "py-found",
+  "title": "Handling what goes wrong",
+  "minutes": 14,
+  "objectives": [
+    "Raise and catch exceptions on purpose, and only the ones you expect.",
+    "Wrap only the line that can fail in `try`, and name the exception in `except`",
+    "Raise `ValueError` for a value that makes no sense"
+  ],
+  "skills": [
+    "pf-classes"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One bad value",
+      "prose": "A feed sends closes as text, and one day is missing.\n\n```python\nraw = [\"101.20\", \"102.50\", \"n/a\", \"100.40\"]\ncloses = []\nfor p in raw:\n    closes.append(float(p))\nprint(closes)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.20",
+            "102.50",
+            "n/a",
+            "100.40"
+          ]
+        },
+        "state": {
+          "caption": "raw: four closes as text"
+        }
+      },
+      "question": "Tap the value where the program stops.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which of these can `float` not read as a number?"
+        },
+        {
+          "rung": "point",
+          "text": "The first two convert without trouble.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`float(\"n/a\")` cannot work, so the program stops on the third value."
+        }
+      ],
+      "feedback": {
+        "correct": "`float(\"n/a\")` fails, and the program stops right there.",
+        "generic": "Not quite right. Find the first value `float` cannot read.",
+        "byKey": {
+          "c3": "The loop never reaches `'100.40'`. It stops one value earlier.",
+          "c0": "`float(\"101.20\")` is fine: it gives `101.2`. Look further along.",
+          "c1": "`float(\"102.50\")` is fine: it gives `102.5`. Look one value further."
+        }
+      },
+      "explain": {
+        "text": "`float(\"n/a\")` raises a `ValueError`. The program stops at once: `'100.40'` is never read and `print` never runs. Python calls this signal an **exception**.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "stop",
+              "at": 2,
+              "label": "ValueError"
+            }
+          ],
+          "highlight": [
+            "c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Now the risky line sits inside a `try` block, with an `except` block after it.\n\n```python\ncloses = []\nfor p in raw:\n    try:\n        closes.append(float(p))\n    except ValueError:\n        print(\"skipped\", p)\nprint(closes)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.20",
+            "102.50",
+            "n/a",
+            "100.40"
+          ]
+        },
+        "state": {
+          "caption": "raw"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`skipped n/a`, then `[101.2, 102.5, 100.4]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`skipped n/a`, then `[101.2, 102.5]`",
+            "why": "You expected the loop to end at the error. The `except` deals with it, and the loop carries on to `'100.40'`."
+          },
+          {
+            "id": "c",
+            "text": "`[101.2, 102.5, 100.4]` only",
+            "why": "The `except` block runs for `'n/a'`, and it contains a `print`."
+          },
+          {
+            "id": "d",
+            "text": "A `ValueError` traceback",
+            "why": "`except ValueError` catches exactly this error, so nothing stops the program."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When `float(\"n/a\")` raises, where does Python go next?"
+        },
+        {
+          "rung": "point",
+          "text": "Only this value raises an error.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The `except ValueError` block prints `skipped n/a`. The loop then moves on and converts `'100.40'`."
+        }
+      ],
+      "feedback": {
+        "correct": "The bad value is skipped and the loop carries on.",
+        "generic": "Not quite right. Follow the loop through all four values."
+      },
+      "explain": {
+        "text": "`try` runs its block. When a `ValueError` is raised inside it, Python jumps to the matching `except` instead of stopping. The loop then moves on, so three good closes remain.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "skip",
+              "at": 2,
+              "label": "skipped"
+            }
+          ],
+          "highlight": [
+            "c0",
+            "c1",
+            "c3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Keep what you can read",
+      "prose": "Real feeds hold blanks, dashes and thousands separators. Keep what `float` can read. Anything other than a `ValueError` is a bug, so let it through.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "",
+            " 99.80 ",
+            "1,234.50",
+            "100"
+          ]
+        },
+        "state": {
+          "caption": "Some messier values"
+        }
+      },
+      "question": "Write `clean(raw)`: return the values `float` can read, as floats, skipping any that raise `ValueError`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def clean(raw):\n    ...\n",
+        "solution": "def clean(raw):\n    out = []\n    for p in raw:\n        try:\n            out.append(float(p))\n        except ValueError:\n            pass\n    return out\n",
+        "tests": [
+          {
+            "call": "clean([\"101.20\", \"102.50\", \"n/a\", \"100.40\"])",
+            "expect": "[101.2, 102.5, 100.4]",
+            "compare": "equal"
+          },
+          {
+            "call": "clean([\"\", \" 99.80 \", \"1,234.50\", \"100\"])",
+            "expect": "[99.8, 100.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "clean([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "clean([\"n/a\", \"-\"])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = clean([\"101.20\", None])\\nexcept TypeError: got = \"TypeError\"', globals()) or got",
+            "expect": "'TypeError'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Test 5 passes `None`, which is not text at all: it must raise `TypeError`, not be skipped.",
+        "examples": [
+          {
+            "call": "clean([\"101.20\", \"102.50\", \"n/a\", \"100.40\"])",
+            "expect": "[101.2, 102.5, 100.4]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put the `try` inside the loop, around the one line that can fail."
+        },
+        {
+          "rung": "point",
+          "text": "`float` reads `' 99.80 '` but not `''` or `'1,234.50'`.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In the loop: `try:` append `float(p)`, then `except ValueError:` with `pass`. Return the list."
+        }
+      ],
+      "feedback": {
+        "correct": "Bad text is skipped, and a real bug such as `None` still stops the program.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects three closes. If you got fewer, the `try` wraps the whole loop, so the first error ends it.",
+          "test-5": "Test 5 expects `TypeError` for `None`. A bare `except:` swallowed it. Name the error: `except ValueError:`."
+        }
+      },
+      "explain": {
+        "text": "`float` ignores spaces around a number, so `' 99.80 '` is `99.8`. A blank or a comma raises `ValueError` and is skipped. `None` raises `TypeError`, which you did not expect, so it rightly stops the program.",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c3"
+          ],
+          "caption": "Kept: 99.8 and 100.0"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A close of £0.00 slips into a return calculation.\n\n```python\ndef ret(p0, p1):\n    return p1 / p0 - 1\n\ntry:\n    print(ret(0.00, 101.20))\nexcept ValueError:\n    print(\"bad price\")\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "0.00",
+            "101.20"
+          ]
+        },
+        "state": {
+          "caption": "p0 and p1, in £"
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A traceback ending `ZeroDivisionError: float division by zero`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`bad price`",
+            "why": "You expected `except ValueError` to catch any error. It catches `ValueError` only, and dividing by zero raises `ZeroDivisionError`."
+          },
+          {
+            "id": "c",
+            "text": "`inf`",
+            "why": "Python does not return infinity for a division by zero. It raises an exception."
+          },
+          {
+            "id": "d",
+            "text": "Nothing, because the error happens inside `ret`",
+            "why": "An exception raised inside a function travels out to the caller. The `try` there sees it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which exception does dividing by zero raise?"
+        },
+        {
+          "rung": "point",
+          "text": "This value is the divisor.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`101.20 / 0.00` raises `ZeroDivisionError`. The `except` names `ValueError`, so it does not match and the program stops."
+        }
+      ],
+      "feedback": {
+        "correct": "The `except` names a different error, so this one escapes.",
+        "generic": "Not quite right. An `except` catches only the type it names."
+      },
+      "explain": {
+        "text": "The error is raised inside `ret` and travels out to the `try` around the call. There Python checks each `except` in turn. None names `ZeroDivisionError`, so the program stops with a traceback.",
+        "canvas": {
+          "highlight": [
+            "c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "You can raise an exception yourself when a value makes no sense.\n\n```python\ndef order(qty):\n    if qty <= 0:\n        raise ValueError(\"qty must be positive\")\n    return f\"BUY {qty}\"\n\ntry:\n    print(order(-50))\nexcept ValueError as e:\n    print(\"rejected:\", e)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "250",
+            "-50"
+          ]
+        },
+        "state": {
+          "caption": "Two order sizes"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`rejected: qty must be positive`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`BUY -50`",
+            "why": "The `if` catches −50 before the `return` line, and `raise` leaves the function at once."
+          },
+          {
+            "id": "c",
+            "text": "`rejected: ValueError`",
+            "why": "`e` is the exception itself. Printing it shows its message, not its type."
+          },
+          {
+            "id": "d",
+            "text": "A traceback ending `ValueError: qty must be positive`",
+            "why": "The caller's `except ValueError` catches what `order` raised, so nothing stops."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does `order(-50)` ever reach its `return` line?"
+        },
+        {
+          "rung": "point",
+          "text": "This size fails the check `qty <= 0`.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`raise` leaves `order` with a `ValueError`. The caller's `except ValueError as e` catches it, and printing `e` shows the message."
+        }
+      ],
+      "feedback": {
+        "correct": "`order` raised, the caller caught it, and `e` printed as its message.",
+        "generic": "Not quite right. Follow the −50 through the `if`."
+      },
+      "explain": {
+        "text": "`raise` stops the function and hands the exception to the caller. `except ValueError as e` catches it and names it `e`. Printing `e` shows the message you wrote.",
+        "canvas": {
+          "highlight": [
+            "c1"
+          ],
+          "caption": "-50 is rejected"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "An order file gives quantities as text. A bad quantity should be refused loudly, not passed on.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "250",
+            " 40 ",
+            "-40",
+            "0",
+            "abc"
+          ]
+        },
+        "state": {
+          "caption": "Quantities from an order file"
+        }
+      },
+      "question": "Write `parse_qty(text)`: return the quantity as an `int`, and raise `ValueError` unless it is a whole number above zero.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def parse_qty(text):\n    ...\n",
+        "solution": "def parse_qty(text):\n    qty = int(text)\n    if qty <= 0:\n        raise ValueError(f\"quantity must be positive: {text}\")\n    return qty\n",
+        "tests": [
+          {
+            "call": "parse_qty(\"250\")",
+            "expect": "250",
+            "compare": "equal"
+          },
+          {
+            "call": "parse_qty(\" 40 \")",
+            "expect": "40",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = parse_qty(\"-40\")\\nexcept ValueError: got = \"ValueError\"', globals()) or got",
+            "expect": "'ValueError'",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = parse_qty(\"0\")\\nexcept ValueError: got = \"ValueError\"', globals()) or got",
+            "expect": "'ValueError'",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = parse_qty(\"abc\")\\nexcept ValueError: got = \"ValueError\"', globals()) or got",
+            "expect": "'ValueError'",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = parse_qty(\"2.5\")\\nexcept ValueError: got = \"ValueError\"', globals()) or got",
+            "expect": "'ValueError'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Tests 3 to 6 pass when your function raises `ValueError`.",
+        "examples": [
+          {
+            "call": "parse_qty(\"250\")",
+            "expect": "250",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = parse_qty(\"-40\")\\nexcept ValueError: got = \"ValueError\"', globals()) or got",
+            "expect": "'ValueError'",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`int(text)` already raises `ValueError` for `'abc'` and `'2.5'`. What is left to check?"
+        },
+        {
+          "rung": "point",
+          "text": "These two convert fine but are not real order sizes.",
+          "highlight": [
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`qty = int(text)`, then `if qty <= 0: raise ValueError(...)`, then `return qty`."
+        }
+      ],
+      "feedback": {
+        "correct": "Good quantities come back as `int`, and bad ones raise `ValueError`.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 expects `ValueError` for `'-40'`. Returning `None` hides the problem from the caller; raise instead.",
+          "test-4": "Test 4 expects `ValueError` for `'0'`. An order for zero shares is not an order, so test `qty <= 0`.",
+          "test-5": "Test 5 expects `ValueError` for `'abc'`. Let the error from `int` travel out instead of catching it."
+        }
+      },
+      "explain": {
+        "text": "`int` does half the work: it raises for `'abc'` and `'2.5'` and strips the spaces from `' 40 '`. Your `raise` covers the rest, −40 and 0. The caller decides what to do about it.",
+        "canvas": {
+          "highlight": [
+            "c2",
+            "c3",
+            "c4"
+          ],
+          "caption": "Refused: -40, 0 and abc"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "This version uses a bare `except`, which names no error. It prints `[]`, with no error message at all.\n\n```python\ndef clean(raw):\n    out = []\n    for p in raw:\n        try:\n            out.append(flaot(p))\n        except:\n            pass\n    return out\n\nprint(clean([\"101.20\", \"102.50\", \"100.40\"]))\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.20",
+            "102.50",
+            "100.40"
+          ]
+        },
+        "state": {
+          "caption": "Three good closes"
+        }
+      },
+      "question": "Why is the list empty?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "typo",
+            "text": "`flaot` is a typo, and the bare `except` swallows the `NameError` it raises",
+            "correct": true
+          },
+          {
+            "id": "strings",
+            "text": "Strings cannot go into a list",
+            "why": "Strings can go in a list. Nothing was appended because the `append` line raised an error every time."
+          },
+          {
+            "id": "pass",
+            "text": "`pass` deletes each value",
+            "why": "`pass` does nothing at all. The `except` ran for every price, so an error happened every time."
+          },
+          {
+            "id": "data",
+            "text": "None of the prices is a valid number",
+            "why": "`float(\"101.20\")` works. The function called here is `flaot`, which does not exist."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the line inside `try` slowly, letter by letter."
+        },
+        {
+          "rung": "point",
+          "text": "Each of these is a valid number, yet none was kept.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`flaot` is not defined, so every call raises `NameError`. The bare `except` catches it, and `pass` throws it away."
+        }
+      ],
+      "feedback": {
+        "correct": "The typo raised `NameError` every time, and the bare `except` hid it.",
+        "generic": "Not quite right. Look for an error the bare `except` could be hiding.",
+        "byKey": {
+          "strings": "You blamed the data type. The values never reached the list, because the line raised a `NameError` each time.",
+          "pass": "You blamed `pass`. It does nothing; the real problem is the error it silently ignored on every value.",
+          "data": "You blamed the data. These are fine numbers; the misspelt `flaot` failed on all of them."
+        }
+      },
+      "explain": {
+        "text": "A bare `except` catches every error, including your own typos. Here the `NameError` for `flaot` hit every price and was thrown away. Write `except ValueError:` and the typo stops the program with a traceback naming line 5.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ],
+          "caption": "Valid closes, all silently dropped"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Catch only what you expect, around only the line that can fail:\n\n$$\\texttt{try:}\\ \\textit{risky line} \\qquad \\texttt{except ValueError:}\\ \\textit{handle it}$$\n\nRaise when a value makes no sense, with `raise ValueError(\"why\")`. Anything you did not expect should still stop the program.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "VOD",
+            "AZN",
+            "BARC"
+          ]
+        },
+        "state": {
+          "caption": "Tickers you hold prices for"
+        }
+      },
+      "question": "`prices[ticker]` fails when `ticker` is not in the dict. Which `except` fits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`except KeyError:`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`except:`",
+            "why": "A bare `except` would also hide typos and every other bug in the block."
+          },
+          {
+            "id": "c",
+            "text": "`except ValueError:`",
+            "why": "A missing dict key raises `KeyError`, so this `except` would not catch it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A missing key raises `KeyError`, so name exactly that.",
+        "generic": "Not quite right. Which exception does a missing dict key raise?"
+      },
+      "explain": {
+        "text": "Looking up a key that is not there raises `KeyError`. Naming it catches the unknown ticker and nothing else."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "An order file",
+      "prose": "An order file has one `TICKER,QTY` line per order. Rejected lines are counted for the morning report. `parse_qty` from before is already in the file.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "VOD,250",
+            "BARC,-40",
+            "LLOY,abc",
+            "HSBA",
+            "AZN,15"
+          ]
+        },
+        "state": {
+          "caption": "Lines from today's order file"
+        }
+      },
+      "question": "Write `load_orders(lines)`: return `(orders, rejected)`, a list of `(ticker, qty)` tuples and the number of lines that raised `ValueError`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def parse_qty(text):\n    qty = int(text)\n    if qty <= 0:\n        raise ValueError(f\"quantity must be positive: {text}\")\n    return qty\n\n\ndef load_orders(lines):\n    ...\n",
+        "solution": "def parse_qty(text):\n    qty = int(text)\n    if qty <= 0:\n        raise ValueError(f\"quantity must be positive: {text}\")\n    return qty\n\n\ndef load_orders(lines):\n    orders = []\n    rejected = 0\n    for line in lines:\n        try:\n            ticker, text = line.split(\",\")\n            orders.append((ticker, parse_qty(text)))\n        except ValueError:\n            rejected += 1\n    return orders, rejected\n",
+        "tests": [
+          {
+            "call": "load_orders([\"VOD,250\", \"BARC,-40\", \"LLOY,abc\", \"HSBA\", \"AZN,15\"])",
+            "expect": "([('VOD', 250), ('AZN', 15)], 3)",
+            "compare": "equal"
+          },
+          {
+            "call": "load_orders([\"SHEL,10,20\", \"BARC,0\"])",
+            "expect": "([], 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "load_orders([])",
+            "expect": "([], 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "load_orders([\"VOD, 250\"])",
+            "expect": "([('VOD', 250)], 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "exec('try: got = load_orders([\"VOD,250\", None])\\nexcept AttributeError: got = \"AttributeError\"', globals()) or got",
+            "expect": "'AttributeError'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Test 5 includes `None` where a line should be: that is a bug upstream and must not be counted as a rejection.",
+        "examples": [
+          {
+            "call": "load_orders([\"VOD,250\", \"BARC,-40\", \"LLOY,abc\", \"HSBA\", \"AZN,15\"])",
+            "expect": "([('VOD', 250), ('AZN', 15)], 3)",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both the split and `parse_qty` can raise `ValueError`. Put both inside the `try`."
+        },
+        {
+          "rung": "point",
+          "text": "This line has no comma, so unpacking it into two names fails.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In the loop: `try:` then `ticker, text = line.split(\",\")` and append `(ticker, parse_qty(text))`. In `except ValueError:` add 1 to `rejected`."
+        }
+      ],
+      "feedback": {
+        "correct": "Two good orders, three rejected lines, and a real bug still stops the program.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `([('VOD', 250), ('AZN', 15)], 3)`. A crash on `'HSBA'` means the split sits outside the `try`.",
+          "test-5": "Test 5 expects `AttributeError` for `None`. A bare `except:` counted the bug as a rejected line."
+        }
+      },
+      "explain": {
+        "text": "`'HSBA'` splits into one piece, and unpacking one piece into two names raises `ValueError` too. So does `'SHEL,10,20'`, with three pieces. A `None` line raises `AttributeError`, which is not a bad order but a bug, so it stops the program.",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c2",
+            "c3"
+          ],
+          "caption": "Rejected: BARC,-40, LLOY,abc and HSBA"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An exception stops the program at the line that raised it, unless a `try` around that line has a matching `except`.",
+      "`raise ValueError(\"why\")` refuses a value that makes no sense, and the caller decides what to do about it.",
+      "Name the exception you expect. A bare `except` also swallows `NameError`, `TypeError` and every other bug."
+    ],
+    "formula": {
+      "name": "Catching one exception",
+      "tex": "\\texttt{try:}\\ \\textit{risky line}\\qquad\\texttt{except ValueError:}\\ \\textit{handle it}",
+      "note": "An `except` catches only the types it names. Anything else still stops the program, which is what you want for bugs."
+    },
+    "trap": "A bare `except:` hides typos. The code runs, returns nonsense, and never tells you why."
+  },
+  "quiz": [
+    {
+      "id": "q-int",
+      "difficulty": 2,
+      "prose": "```python\nqty = int(\"12.5\")\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`ValueError: invalid literal for int() with base 10: '12.5'`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`qty` is 12",
+            "why": "You expected `int` to drop the decimals. That happens for `int(12.5)`, a number, but not for the text `'12.5'`."
+          },
+          {
+            "id": "c",
+            "text": "`qty` is 13",
+            "why": "`int` never rounds. And from text with a decimal point it raises an error."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`int` reads only whole-number text.",
+        "generic": "Not quite right. Can `int` read text with a decimal point?"
+      },
+      "explain": {
+        "text": "`int(\"12.5\")` raises `ValueError`, because the text is not a whole number. `int(float(\"12.5\"))` gives 12."
+      }
+    },
+    {
+      "id": "q-keyerror",
+      "difficulty": 2,
+      "prose": "```python\nprices = {\"VOD\": 0.72, \"AZN\": 104.20}\nprint(prices[\"BARC\"])\n```",
+      "question": "Which exception does this raise?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`KeyError`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`ValueError`",
+            "why": "`ValueError` is for a value of the right type that makes no sense. A missing key raises `KeyError`."
+          },
+          {
+            "id": "c",
+            "text": "`IndexError`",
+            "why": "`IndexError` is for a list position past the end. Dicts are looked up by key."
+          },
+          {
+            "id": "d",
+            "text": "None: it prints `None`",
+            "why": "Square brackets never return `None` for a missing key. `prices.get(\"BARC\")` would."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A missing dict key raises `KeyError`.",
+        "generic": "Not quite right. What goes wrong is a lookup by key."
+      },
+      "explain": {
+        "text": "`\"BARC\"` is not a key, so the lookup raises `KeyError: 'BARC'`. Catch it with `except KeyError:` or use `prices.get(\"BARC\")`."
+      }
+    },
+    {
+      "id": "q-flow",
+      "difficulty": 3,
+      "prose": "```python\ndef ret(p0, p1):\n    try:\n        return p1 / p0 - 1\n    except ZeroDivisionError:\n        return None\n\nprint(ret(0.00, 101.20), ret(100.00, 102.50))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`None 0.025`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "A `ZeroDivisionError` traceback",
+            "why": "The `except ZeroDivisionError` inside `ret` catches it and returns `None`."
+          },
+          {
+            "id": "c",
+            "text": "`None` only",
+            "why": "Catching the first error does not stop the program. The second call runs normally."
+          },
+          {
+            "id": "d",
+            "text": "`0 0.025`",
+            "why": "The `except` block returns `None`, not 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The first call is caught and returns `None`; the second gives 0.025.",
+        "generic": "Not quite right. Run each call separately."
+      },
+      "explain": {
+        "text": "The first call divides by zero, and the `except` returns `None`. The second gives $102.50 / 100.00 - 1 = 0.025$. Both are printed."
+      }
+    },
+    {
+      "id": "q-whole-block",
+      "difficulty": 3,
+      "prose": "```python\ntry:\n    qty = int(\"40\")\n    price = float(\"£7.25\")\nexcept ValueError:\n    qty = 0\nprint(qty)\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`0`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`40`",
+            "why": "`qty` was 40 for a moment. Then `float(\"£7.25\")` raised, and the `except` set `qty` to 0."
+          },
+          {
+            "id": "c",
+            "text": "A `ValueError` traceback",
+            "why": "The `except ValueError` catches the error from `float`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The error on line 3 sent Python to the `except`, which set `qty` to 0.",
+        "generic": "Not quite right. Which line raises, and what does the `except` do?"
+      },
+      "explain": {
+        "text": "`int(\"40\")` worked, but the `£` sign makes `float` raise. Python jumps to `except` and sets `qty = 0`. This is why a `try` should wrap only the line that can fail."
+      }
+    }
+  ]
+}
