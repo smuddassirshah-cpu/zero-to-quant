@@ -243,7 +243,7 @@
     gg.append(lab(ay + 10, py1 - 2, yl, { anchor: 'start', cls: 'cvb-axlab', halo: true }));
     boxes.push(boxOf({ x: px1 + 2, y: ax - 14, text: xl, anchor: 'end', h: 20 }), boxOf({ x: ay + 10, y: py1 - 2, text: yl, anchor: 'start', h: 20 }));
     g.append(gg);
-    return { xt, yt, ax, ay, boxes, xTitle, xTitleBox: boxOf({ x: px1 + 2, y: ax - 14, text: xl, anchor: 'end', h: 20 }) };
+    return { xt, yt, ax, ay, boxes, xTitle, xTitleBox: boxOf({ x: px1 + 2, y: ax - 14, text: xl, anchor: 'end', h: 20, w: tw(String(xl).replace(/[$\\{}]/g, '')) + 14 }) };
   };
 
   /* ---------- Instance lifecycle shared by every Canvases B kind ----------

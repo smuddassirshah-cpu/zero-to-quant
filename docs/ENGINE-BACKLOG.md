@@ -129,6 +129,11 @@ Third pass (items 51 to 77):
 75. Done: README-B documents `hlines` and `vlines` (pass 2), now with their patchable fields.
 76. Done: plane geometry kit: `polygons` with `vertexLabels`, `angles` (arcs and right-angle squares), segment `labelOffset`, `axes: false`.
 77. Done: area `state.diagonal` per cell and half-cell shade ids (`c11/ul`, `c11/lr`, `c11/ur`, `c11/ll`).
+78. Done: plane `xTicks: "integer"` and `yTicks: "integer"`.
+79. Done: bars per-category `colour` (series slot), and `state.colours` to change them.
+80. Done: `derive` runs up to three passes, so a rule can read a value another rule derives.
+81. Done: table `compact` (automatic above 6 columns): tighter cells; it still scrolls sideways rather than clipping.
+82. Done: plane points outside the plot are not drawn; the x-axis title moves below the axis when a point or curve sits under it.
 
 
 Raised later (equations level 2):

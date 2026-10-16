@@ -184,7 +184,7 @@ An HTML table in the canvas wrapper.
 
 **state**: `highlight` as ids or `{ "rows": [0], "cols": [2], "cells": ["r1c1"] }` (one ring around the union), `shade: [ids]` or `{ "<set>": [ids] }`, `values: { "r1c1": "0.5" }` (fills inputs or replaces cell text).
 
-Numbers print with the minus sign (−3), as does text that starts with a negative number ("-0.5 kg" reads −0.5 kg).
+Numbers print with the minus sign (−3), as does text that starts with a negative number ("-0.5 kg" reads −0.5 kg). `compact: true` (automatic above 6 columns) tightens the cells so a wide table fits the column; anything still wider scrolls sideways.
 
 **ids**: zero-based, as E2's table widget: `r{i}` a body row, `c{j}` a column (header and cells), `r{i}c{j}` a cell; `r0c0` is the first body cell. **methods**: `cells()` returns the editable inputs (each with `data-id`), `input(id)`. **events**: tap (non-editable cells).
 
