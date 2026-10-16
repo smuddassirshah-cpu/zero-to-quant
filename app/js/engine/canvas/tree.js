@@ -54,25 +54,28 @@
     const pBox = (p) => { const t = pTex(p); return t.tex ? texBox(t.src) : { w: C.textW(t.src, 13) + 6, h: 16 }; };
     const valW = anyValue ? Math.min(130, Math.max(40, ...all.filter(n => n.value != null).map(n => { const t = C.texOf(n.value); return t.tex ? texBox(t.src).w + 12 : C.textW(t.src, 13, 600) + 16; }))) : 0;
     let W, H, colPos, top, band;
+    /* item 138: params.label is drawn as a title above the tree (and stays its accessible name) */
+    const title = P.label != null && P.label !== '' ? String(P.label) : null, titleH = title ? 24 : 0;
     /* top to bottom, level labels sit in a left margin of their own so they never cross a branch */
     const leftM = tb && hasHead ? Math.ceil(Math.max(...levelLabels.map(t => C.textW(String(t || ''), 13)))) + 16 : 12;
     const spOf = compact ? (n) => (n <= 2 ? 64 : n <= 4 ? 46 : n <= 8 ? 32 : 26) : (n) => (n <= 2 ? 80 : n <= 4 ? 60 : n <= 6 ? 50 : n <= 8 ? 42 : 34); // leaf spacing for n leaves shown
     const rowSp = compact ? 72 : 96;
     if (!tb) {
-      W = 540; top = (hasHead ? 26 : 8) + 6;
+      W = 540; top = titleH + (hasHead ? 26 : 8) + 6;
       band = Lf * spOf(Lf); H = top + band + 6;
       const maxLast = Math.max(30, ...all.filter(n => n.depth === D).map(pillW));
       const x0 = 14 + rootW / 2, xD = W - 8 - valW - maxLast / 2;
       colPos = (d) => (d === 0 ? x0 : x0 + rootW / 2 + 22 + (xD - x0 - rootW / 2 - 22) * d / D);
     } else {
-      W = 540; top = rootLabel ? 6 + PH / 2 : 18;
+      W = 540; top = titleH + (rootLabel ? 6 + PH / 2 : 18);
       H = top + D * rowSp + 20 + (anyValue ? 30 : 0) + 6;
       colPos = (d) => top + d * rowSp;
       band = W - 12 - leftM;
     }
     const fr = C.frame(host, W, H, { label: P.label || 'Probability tree' });
     const g = fr.g;
-    if (hasHead) levelLabels.forEach((t, k) => { if (!t) return; if (!tb) g.append(C.label(colPos(k + 1), 12, t, { cls: 'cv-muted' })); else g.append(C.label(8, colPos(k + 1) - 28, t, { cls: 'cv-muted', anchor: 'start' })); });
+    if (title) g.append(C.label(8, 12, title, { cls: 'cv-tree-title', anchor: 'start', size: 14, tex: 'auto', w: 400, h: 22 }));
+    if (hasHead) levelLabels.forEach((t, k) => { if (!t) return; if (!tb) g.append(C.label(colPos(k + 1), titleH + 12, t, { cls: 'cv-muted' })); else g.append(C.label(8, colPos(k + 1) - 28, t, { cls: 'cv-muted', anchor: 'start' })); });
 
     /* ---- Elements ---- */
     const branchG = svg('g', { class: 'cv-branches' }), pillG = svg('g', { class: 'cv-pills' }), valG = svg('g', { class: 'cv-vals' });
