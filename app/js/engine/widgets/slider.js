@@ -11,10 +11,11 @@
 
   Z.widgets.register('slider', (host, spec, ctx) => {
     const min = +(spec.min ?? 0), max = +(spec.max ?? 1), step = +(spec.step ?? ((max - min) / 100 || 0.01));
-    const dp = (() => { const s = String(+step.toFixed(10)); const i = s.indexOf('.'); return i < 0 ? 0 : s.length - i - 1; })();
+    const stepDp = (() => { const s = String(+step.toFixed(10)); const i = s.indexOf('.'); return i < 0 ? 0 : s.length - i - 1; })();
+    const dp = spec.decimals != null ? +spec.decimals : stepDp; // decimals overrides the places the step implies, for display only
     const unit = spec.unitLabel || '';
     const fmt = (v) => {
-      if (spec.format === 'fraction' || spec.format === 'percent') { const f = Z.grade.fmtAs(+(+v).toFixed(10), spec.format).replace('-', '−'); return unit ? `${f} ${unit}` : f; }
+      if (spec.format === 'fraction' || spec.format === 'percent') { const f = Z.grade.fmtAs(+(+v).toFixed(10), spec.format, spec.decimals).replace('-', '−'); return unit ? `${f} ${unit}` : f; }
       let n = (+v).toFixed(dp); if (/^-0(\.0+)?$/.test(n)) n = n.slice(1);
       n = n.replace('-', '−');
       if (Math.abs(v) >= 1000) n = (v < 0 ? '−' : '') + Math.abs(+v).toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -22,7 +23,7 @@
       if (/^[£$€]$/.test(unit)) return (v < 0 ? '−' : '') + unit + n.replace('−', '');
       return unit === '%' ? n + '%' : n + ' ' + unit;
     };
-    const snap = (v) => { const k = Math.round((v - min) / step); return Math.min(max, Math.max(min, +(min + k * step).toFixed(Math.min(10, dp + 2)))); };
+    const snap = (v) => { const k = Math.round((v - min) / step); return Math.min(max, Math.max(min, +(min + k * step).toFixed(Math.min(10, stepDp + 2)))); };
     const start = snap(spec.start ?? (min + max) / 2);
     const name = spec.label || spec.bind || 'Value';
     const nTicks = Math.round((max - min) / step);

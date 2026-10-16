@@ -73,6 +73,8 @@
         const comb = K.obj(legs.length > 1 ? 'total' : (legs[0] ? legs[0].id : 'total'), '', params.colour || 1), dC = pts((S) => total(legs, S, pl));
         comb.append(K.washPath(dC), svg('path', { d: dC, class: 'cvb-ln bold' }));
         plot.append(comb);
+        /* the bold combined line is an obstacle: leg labels move off it */
+        fixed.push(...K.lineBoxes(Array.from({ length: 121 }, (_, i) => { const S = range[0] + (range[1] - range[0]) * i / 120; return [sx(S), sy(total(legs, S, pl))]; }), 8, 4));
         if (params.label) { const lx = range[1] - (range[1] - range[0]) * 0.03; labels.push({ x: sx(lx), y: sy(total(legs, lx, pl)) - 14, text: params.label, anchor: 'end' }); }
         /* strike ticks and the kinks they make */
         const seenK = new Set();

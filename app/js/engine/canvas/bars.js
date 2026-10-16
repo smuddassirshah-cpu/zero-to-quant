@@ -166,8 +166,9 @@
         values: () => Object.fromEntries(cats.map((c, i) => [c.id, heights(R.state)[i]])),
         counts: () => Object.fromEntries(cats.map((c, i) => [c.id, tally(Math.round(R.state.ran || 0))[i]])),
         /* Explore controls: bind a category (its label or id, or "values.<label>") to move that bar's height */
-        setParam: (name, v) => { const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); },
-        getParam: (name) => { const i = catIndex(String(name).replace(/^values\./, '')); return i >= 0 ? heights(R.state)[i] : undefined; },
+        /* a name that is no category is a free parameter in state.params, for a derive block to read */
+        setParam: (name, v) => { const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); else R.inst.set({ params: { [name]: +v } }, { instant: true }); },
+        getParam: (name) => { const i = catIndex(String(name).replace(/^values\./, '')); return i >= 0 ? heights(R.state)[i] : ((R.state.params || {})[name]); },
       }),
     };
     return K.make(host, params, ctx, def);

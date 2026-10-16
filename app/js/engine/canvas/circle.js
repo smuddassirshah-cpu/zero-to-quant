@@ -116,9 +116,12 @@
       paint(d); const v = fromDeg(d); I.setQuiet({ angle: v });
       I.emit('change', { id: 'pt', angle: v, x: Math.cos(d * Math.PI / 180), y: Math.sin(d * Math.PI / 180), phase });
     };
-    C.dragger(pt, fr.svg, { start: () => !(I.locked() || I.mode() !== 'drag'), move: (p) => setFromXY(p, 'move'), end: (p) => setFromXY(p, 'end') });
+    /* An explore circle (params.drag or state.drag true) drags without a widget, like a plane point with drag: true */
+    const free = () => !I.isStatic && I.mode() == null && !!(P.drag || I.state().drag);
+    const canDrag = () => !I.locked() && (I.mode() === 'drag' || free());
+    C.dragger(pt, fr.svg, { start: () => canDrag(), move: (p) => setFromXY(p, 'move'), end: (p) => setFromXY(p, 'end') });
     pt.addEventListener('keydown', (e) => {
-      if (I.mode() !== 'drag' || I.locked()) return;
+      if (!canDrag()) return;
       const k = { ArrowRight: -1, ArrowDown: -1, ArrowLeft: 1, ArrowUp: 1 }[e.key]; if (!k) return;
       e.preventDefault(); emitAngle(((cur + k * (e.shiftKey ? 15 : Math.max(1, snapDeg))) % 360 + 360) % 360, 'end');
     });
@@ -130,8 +133,10 @@
     api.points = () => { const a = cur * Math.PI / 180; return { pt: { x: Math.cos(a), y: Math.sin(a), angle: I.state().angle } }; };
     api.place = (id, pos, { instant = false } = {}) => api.set({ angle: typeof pos === 'number' ? pos : fromDeg(((Math.atan2(pos[1], pos[0]) * 180 / Math.PI) + 360) % 360) }, { instant });
     api.setParam = api.param = (name, v) => { if (name === 'angle') api.set({ angle: v }, { instant: true }); };
-    if (P.drag) pt.classList.add('cv-handle');
     api.set({}, { instant: true });
+    const syncFree = () => { if (I.mode() == null) { const on = free(); pt.classList.toggle('cv-handle', on); if (on) { pt.setAttribute('tabindex', '0'); pt.setAttribute('role', 'slider'); pt.setAttribute('aria-label', 'Angle'); } } };
+    syncFree();
+    const rawSet = api.set; api.set = (patch, o) => { const r = rawSet(patch, o); if (patch && 'drag' in patch) syncFree(); return r; };
     return api;
   }
 

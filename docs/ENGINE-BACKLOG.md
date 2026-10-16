@@ -198,3 +198,7 @@ Raised later (trig level 1):
 
 76. `plane` geometry: `polygons` (filled, with ids and vertex labels), `angles` (arc markers at a vertex with a label), segment `labelPos`/offset, `axes: false` to hide axes and ticks. This is the triangle kit.
 77. `area`: a diagonal across a piece (`split: "diag"` on a cell).
+
+Raised later (series level 1):
+
+78. `plane`: `xTicks: "integer"` (and `yTicks`) option for sequence plots on small ranges.

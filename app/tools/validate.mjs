@@ -30,7 +30,7 @@ const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(f
 /* ---------- Vocabulary ---------- */
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform']);
-const CANVASES = new Set(['grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'graph', 'array', 'payoff', 'orderbook', 'table']);
+const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'graph', 'array', 'payoff', 'orderbook', 'table']);
 const SCREEN_TYPES = new Set(['title', 'explore', 'problem', 'ladder', 'demonstrate', 'trap', 'generalise', 'derive', 'transfer']);
 const GRADED = new Set(['problem', 'ladder', 'trap', 'transfer', 'derive']);
 const CANVAS_BOUND = new Set(['tap-regions', 'drag-point', 'sketch', 'balance', 'slider']);
@@ -100,6 +100,8 @@ const ENGINE = (() => {
 /* A canvas the learner can work without a widget: points with drag: true (plane, number-line), vectors in state.drag,
    or a simulation's run chips (bars, walk) */
 const authorMovable = (c) => {
+  if (isObj(c) && c.kind === 'pair') return authorMovable(c.left) || authorMovable(c.right) || (Array.isArray(c.controls) && c.controls.length > 0);
+  if (isObj(c) && c.kind === 'circle' && ((isObj(c.state) && c.state.drag === true) || (isObj(c.params) && c.params.drag === true))) return true;
   const st = isObj(c && c.state) ? c.state : {}, p = isObj(c && c.params) ? c.params : {};
   return (Array.isArray(st.points) && st.points.some(q => isObj(q) && q.drag === true)) || (Array.isArray(st.drag) && st.drag.length > 0) || isObj(p.sim);
 };
@@ -108,7 +110,17 @@ const authorMovable = (c) => {
 const range = (a, b) => Array.from({ length: Math.max(0, b - a + 1) }, (_, i) => a + i);
 const regionIds = (canvas) => {
   if (!isObj(canvas)) return null;
+  if (canvas.kind === 'pair') { // the side widgets drive, plus every id of either side with its "left:" or "right:" prefix
+    const a = ['left', 'right'].includes(canvas.active) ? canvas.active : 'left', out = new Set();
+    ['left', 'right'].forEach(k => { const ids = regionIds(canvas[k]); if (ids) ids.forEach(id => { out.add(`${k}:${id}`); if (k === a) out.add(id); }); });
+    return out.size ? out : null;
+  }
   const p = canvas.params || {};
+  if (canvas.kind === 'bars' && Array.isArray(p.categories)) { // object categories keep their own id, plain ones are x{label}
+    const ids = new Set(['exact']);
+    p.categories.forEach(c => { const id = isObj(c) ? (c.id || 'x' + c.label) : 'x' + c; ids.add(String(id)); ids.add('exact-' + id); });
+    return ids;
+  }
   if (canvas.kind === 'grid' && p.rows && p.cols) {
     const ids = new Set();
     range(0, p.rows).forEach(i => range(0, p.cols).forEach(j => ids.add(`r${i}c${j}`)));
@@ -154,12 +166,13 @@ const PLAUSIBLE = {
   orderbook: /^(bid\d+|ask\d+|spread)$/,
   distribution: /^(mean|shade|x-?\d+)$/,
   scatter: /^(p\d+|line)$/,
-  circle: /^(angle|sin|cos|tan|pt)$/,
+  circle: /^(angle|sin|cos|tan|pt|arc|radius)$/,
   bars: /^x[A-Za-z0-9.-]+$/,
   array: /^(c\d+|[a-z][a-z0-9-]*)$/,
 };
 const plausibleId = (canvas, id) => {
   if (!isObj(canvas)) return true;
+  if (canvas.kind === 'pair') { const m = String(id).match(/^(left|right):(.+)$/); const a = ['left', 'right'].includes(canvas.active) ? canvas.active : 'left'; return m ? plausibleId(canvas[m[1]], m[2]) : plausibleId(canvas[a], id) || plausibleId(canvas[a === 'left' ? 'right' : 'left'], id); }
   const ids = regionIds(canvas);
   if (ids && ids.has(id)) return true;
   if (canvas.kind === 'grid' && ids) return /^(row|col|cross)\d+$/.test(id);
@@ -227,8 +240,15 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         if (!p.id) err(file, `${where}.points[${i}].id`, 'required');
         const oneD = canvas && (canvas.kind === 'number-line' || canvas.kind === 'circle');
         if (oneD && typeof p.target === 'number') { /* a bare number: x on a number line, the angle on a circle */ }
-        else if (!Array.isArray(p.target) || p.target.length !== 2) err(file, `${where}.points[${i}].target`, oneD ? 'must be a number (or [x, y])' : 'must be [x, y]');
-        if (p.tol != null && typeof p.tol !== 'number') err(file, `${where}.points[${i}].tol`, 'must be a number (default 0.25)');
+        else if (isObj(p.target)) { /* { on: f, x } on a plane: the point of function f at x */
+          const fns = new Set(((canvas && canvas.params || {}).functions || []).filter(isObj).map(f => f.id));
+          if (!canvas || canvas.kind !== 'plane') err(file, `${where}.points[${i}].target`, '{ "on", "x" } targets need a plane canvas');
+          else if (!fns.has(p.target.on)) err(file, `${where}.points[${i}].target.on`, `"${p.target.on}" is not a function on the plane`);
+          if (typeof p.target.x !== 'number') err(file, `${where}.points[${i}].target.x`, 'must be a number');
+        }
+        else if (!Array.isArray(p.target) || p.target.length !== 2) err(file, `${where}.points[${i}].target`, oneD ? 'must be a number (or [x, y])' : 'must be [x, y], or { "on": "f", "x": number } on a plane');
+        if (p.tol != null && typeof p.tol !== 'number' && !(Array.isArray(p.tol) && p.tol.length === 2 && p.tol.every(t => typeof t === 'number'))) err(file, `${where}.points[${i}].tol`, 'must be a number (default 0.25) or [dx, dy]');
+        if (p.tolX != null && typeof p.tolX !== 'number') err(file, `${where}.points[${i}].tolX`, 'must be a number');
         if (p.id) keys.add(String(p.id)); // the key when this point is off target and in no wrong[] region
       });
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
@@ -342,6 +362,10 @@ const checkLongform = (file, where, x) => {
 const checkCanvas = (file, where, c) => {
   if (c == null) return;
   if (!isObj(c)) { err(file, where, 'canvas must be an object'); return; }
+  if (c.kind === 'pair') {
+    ['left', 'right'].forEach(k => { if (!isObj(c[k])) err(file, `${where}.${k}`, 'a pair needs a left and a right canvas'); else if (c[k].kind === 'pair') err(file, `${where}.${k}.kind`, 'a pair cannot hold a pair'); else checkCanvas(file, `${where}.${k}`, c[k]); });
+    if (c.active != null && !['left', 'right'].includes(c.active)) err(file, `${where}.active`, 'active is "left" or "right"');
+  }
   if (!CANVASES.has(c.kind)) err(file, `${where}.kind`, `unknown canvas kind "${c.kind}"`);
   if (c.params != null && !isObj(c.params)) err(file, `${where}.params`, 'must be an object');
   if (c.state != null && !isObj(c.state)) err(file, `${where}.state`, 'must be an object');

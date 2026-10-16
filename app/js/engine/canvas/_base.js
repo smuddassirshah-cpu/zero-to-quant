@@ -424,9 +424,12 @@
      state keys (angle, ran), `values` (bars heights by label and id), and abs, min, max, sqrt, pow, exp, log, floor,
      ceil, round(v, places), fixed(v, places), money(v, symbol), pi. JavaScript's own (expr).toFixed(2) and ternaries
      (a ? b : c) work too. A caption (or any string target) fills each {{expression}}. */
-  const DERIVE_FN = { abs: Math.abs, min: Math.min, max: Math.max, sqrt: Math.sqrt, pow: Math.pow, exp: Math.exp, log: Math.log, ln: Math.log, floor: Math.floor, ceil: Math.ceil, sign: Math.sign, pi: Math.PI, round: (v, d = 0) => +(+v).toFixed(d),
-    /* for captions: fixed(v, 2) keeps trailing zeros ("3.50"), money(v) is "£3.50" or "−£3.50" (money(v, "$") for dollars) */
-    fixed: (v, d = 2) => (+v < 0 ? '−' : '') + Math.abs(+v).toFixed(d), money: (v, sym = '£', d = 2) => (+v < 0 ? '−' : '') + sym + Math.abs(+v).toFixed(d) };
+  const grouped = (v, d) => Math.abs(+v).toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const DERIVE_FN = { abs: Math.abs, min: Math.min, max: Math.max, sqrt: Math.sqrt, pow: Math.pow, exp: Math.exp, log: Math.log, ln: Math.log, log10: Math.log10, floor: Math.floor, ceil: Math.ceil, sign: Math.sign, pi: Math.PI, e: Math.E,
+    sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan, atan2: Math.atan2, hypot: Math.hypot, round: (v, d = 0) => +(+v).toFixed(d),
+    /* for captions: fixed(v, 2) keeps trailing zeros ("3.50"), money(v) is "£1,234.50" or "−£3.50" (money(v, "$") for
+       dollars); both write a negative with the minus sign U+2212 */
+    fixed: (v, d = 2) => (+v < 0 && Math.abs(+v).toFixed(d) !== (0).toFixed(d) ? '−' : '') + Math.abs(+v).toFixed(d), money: (v, sym = '£', d = 2) => (+v < 0 && grouped(v, d) !== grouped(0, d) ? '−' : '') + sym + grouped(v, d) };
   const deriveCache = {};
   const deriveExpr = (src) => {
     if (deriveCache[src]) return deriveCache[src];
@@ -439,35 +442,48 @@
     const rules = Object.entries(spec.derive || {});
     if (!rules.length || !inst || !inst.set) return;
     const rawSet = inst.set.bind(inst);
-    const scope = () => {
-      const st = inst.get ? inst.get() : {}, S = Object.assign({}, DERIVE_FN);
+    const sides = inst.sides || null; // a pair: { left, right } and the side widgets drive (inst.activeSide)
+    const scopeOf = (one, params) => {
+      const st = one.get ? one.get() : {}, S = {};
       Object.entries(st).forEach(([k, v]) => { if (typeof v === 'number') S[k] = v; });
-      Object.assign(S, (spec.params || {}).params || {}, st.params || {});
-      const vals = Object.assign({}, st.values || {}); try { if (typeof inst.values === 'function') Object.assign(vals, inst.values() || {}); } catch { /* no heights */ }
+      Object.assign(S, (params || {}).params || {}, st.params || {});
+      const vals = Object.assign({}, st.values || {}); try { if (typeof one.values === 'function') Object.assign(vals, one.values() || {}); } catch { /* no heights */ }
       S.values = vals;
       Object.values(st).forEach(v => { if (Array.isArray(v)) v.forEach(it => { if (it && typeof it === 'object' && it.id != null && /^[A-Za-z_$][\w$]*$/.test(it.id)) S[it.id] = it; }); });
       return S;
     };
+    /* A pair reads across both sides: ids of either side directly, or left.p1 and right.p1 when they share an id */
+    const scope = () => {
+      if (!sides) return Object.assign({}, DERIVE_FN, scopeOf(inst, spec.params));
+      const L = scopeOf(sides.left, (spec.left || {}).params), R = scopeOf(sides.right, (spec.right || {}).params);
+      return Object.assign({}, DERIVE_FN, L, R, { left: L, right: R, values: Object.assign({}, L.values, R.values) });
+    };
     const evalOne = (expr, S) => {
       if (typeof expr !== 'string') return expr;
-      if (expr.includes('{{')) return expr.replace(/\{\{([^}]+)\}\}/g, (_, e) => { const v = deriveExpr(e.trim())(S); return typeof v === 'number' ? fmtNum(v, 4) : String(v); });
+      if (expr.includes('{{')) return expr.replace(/\{\{([^}]+)\}\}/g, (_, e) => { const v = deriveExpr(e.trim())(S); return typeof v === 'number' ? fmtNum(v, 4).replace(/^-/, '−') : String(v).replace(/(^|[\s(=])-(?=\d)/g, '$1−'); });
       return deriveExpr(expr)(S);
     };
+    /* Write v at target into patch, against state st (only when it changes) */
+    const put = (st, patch, target, v) => {
+      const [head, ...rest] = target.split('.');
+      const listKey = rest.length ? Object.keys(st).find(k => Array.isArray(st[k]) && st[k].some(it => it && it.id === head)) : null;
+      if (listKey) {
+        const list = (patch[listKey] || st[listKey]).map(it => (it && it.id === head ? setPath({ ...it }, rest, v) : it));
+        const before = st[listKey].find(it => it && it.id === head);
+        if (JSON.stringify(getPath(before, rest)) !== JSON.stringify(v)) patch[listKey] = list;
+      } else if (JSON.stringify(getPath(st, [head, ...rest])) !== JSON.stringify(v)) setPath(patch, [head, ...rest], v);
+    };
     const patchFor = () => {
-      const st = inst.get(), S = scope(), patch = {};
+      const S = scope(), patch = {};
       for (const [target, expr] of rules) {
         let v; try { v = evalOne(expr, S); } catch (e) { console.warn(e.message || e); continue; }
         if (typeof v === 'number' && !Number.isFinite(v)) continue;
-        const [head, ...rest] = target.split('.');
-        const listKey = rest.length ? Object.keys(st).find(k => Array.isArray(st[k]) && st[k].some(it => it && it.id === head)) : null;
-        if (listKey) {
-          const list = (patch[listKey] || st[listKey]).map(it => (it && it.id === head ? setPath({ ...it }, rest, v) : it));
-          const before = st[listKey].find(it => it && it.id === head);
-          if (JSON.stringify(getPath(before, rest)) !== JSON.stringify(v)) patch[listKey] = list;
-        } else if (JSON.stringify(getPath(st, [head, ...rest])) !== JSON.stringify(v)) {
-          setPath(patch, [head, ...rest], v);
-        }
+        const m = sides && target.match(/^(left|right):(.+)$/);
+        if (m) { patch[m[1]] = patch[m[1]] || {}; put(sides[m[1]].get(), patch[m[1]], m[2], v); }
+        else if (sides && target !== 'caption') { const a = inst.activeSide || 'left'; patch[a] = patch[a] || {}; put(sides[a].get(), patch[a], target, v); }
+        else put(sides ? { caption: inst.get().caption } : inst.get(), patch, target, v);
       }
+      Object.keys(patch).forEach(k => { if (sides && (k === 'left' || k === 'right') && !Object.keys(patch[k]).length) delete patch[k]; });
       return patch;
     };
     let busy = false;
@@ -486,13 +502,75 @@
   /* Registry */
   const kinds = {};
   const register = (kind, factory) => { kinds[kind] = factory; };
+  /* Two canvases side by side: canvas: { kind: "pair", left: { kind, params, state }, right: {...}, active: "left",
+     stack: false, derive: {...} }. State patches take { left: {...}, right: {...}, caption }; ids in highlight, mark and
+     flash take a "left:" or "right:" prefix (unprefixed ids go to both). Canvas-bound widgets and anything else the pair
+     does not define (enable, points, place, cells, removeBoth, ...) reach the `active` side; a patch key other than
+     left, right and caption goes there too. Controls bind "left:p1" or "right:a" (unprefixed: the active side). */
+  const SIDES = ['left', 'right'];
+  const pairOf = (host, spec, ctx) => {
+    const wrap = document.createElement('div'); wrap.className = 'cv cv-pair' + (spec.stack ? ' is-stacked' : '');
+    const row = document.createElement('div'); row.className = 'cv-pair-row';
+    const cap = document.createElement('div'); cap.className = 't-caption cv-caption'; cap.hidden = true;
+    wrap.append(row, cap); host.append(wrap);
+    const side = {}, active = SIDES.includes(spec.active) ? spec.active : 'left';
+    for (const k of SIDES) { const h = document.createElement('div'); h.className = 'cv-pair-side cv-pair-' + k; row.append(h); side[k] = create(h, spec[k] || { kind: 'table', params: {} }, ctx); }
+    const A = side[active];
+    let caption = '';
+    const route = (ids) => { const out = { left: [], right: [] }; [].concat(ids || []).forEach(id => { const m = String(id).match(/^(left|right):(.+)$/); if (m) out[m[1]].push(m[2]); else { out.left.push(id); out.right.push(id); } }); return out; };
+    const each = (ids, fn) => { const r = route(ids); SIDES.forEach(k => { if (side[k] && r[k].length) fn(side[k], r[k]); }); };
+    const em = emitter();
+    SIDES.forEach(k => side[k] && side[k].on && side[k].on('change', (d) => em.emit('change', d && typeof d === 'object' ? { ...d, side: k } : d)));
+    const sideOfName = (name) => { const m = String(name).match(/^(left|right):(.+)$/); return m ? [side[m[1]], m[2]] : [A, String(name)]; };
+    const api = {
+      el: wrap, kind: 'pair', params: spec, sides: side, activeSide: active,
+      get: () => ({ ...(A && A.get ? A.get() : {}), left: side.left && side.left.get(), right: side.right && side.right.get(), caption }),
+      set(patch = {}, o = {}) {
+        patch = patch || {};
+        const rest = {};
+        Object.entries(patch).forEach(([k, v]) => { if (SIDES.includes(k)) { if (v && side[k]) side[k].set(v, o); } else if (k === 'caption') { caption = v || ''; cap.hidden = !caption; cap.innerHTML = caption ? Z.md(caption) : ''; } else rest[k] = v; });
+        if (Object.keys(rest).length && A) { if ('highlight' in rest) { each(rest.highlight, (c, ids) => c.set({ highlight: ids }, o)); delete rest.highlight; } if (Object.keys(rest).length) A.set(rest, o); }
+        return api;
+      },
+      highlight(ids, on = true) { if (ids == null || (Array.isArray(ids) && !ids.length)) SIDES.forEach(k => side[k] && side[k].highlight(ids, on)); else each(ids, (c, l) => c.highlight(l, on)); return api; },
+      mark(ids, cls, on = true) { each(ids, (c, l) => c.mark && c.mark(l, cls, on)); return api; },
+      unmark(cls) { SIDES.forEach(k => side[k] && side[k].unmark && side[k].unmark(cls)); return api; },
+      flash(ids, o) { const ps = []; each(ids, (c, l) => c.flash && ps.push(c.flash(l, o))); return Promise.all(ps); },
+      unflash() { SIDES.forEach(k => side[k] && side[k].unflash && side[k].unflash()); },
+      lock(on = true) { SIDES.forEach(k => side[k] && side[k].lock && side[k].lock(on)); return api; },
+      caption(t) { api.set({ caption: t }); },
+      on: (ev, fn) => em.on(ev, fn),
+      setParam(name, v) {
+        const [c, n] = sideOfName(name); if (!c) return;
+        if (c.setParam && !/^(points|intervals|arrows|markers|vectors|segments|pointers)\./.test(n)) c.setParam(n, v);
+        else c.set(n.includes('.') ? n.split('.').reduceRight((acc, k) => ({ [k]: acc }), v) : { params: { [n]: v } }, { instant: true });
+        api.set({}, { instant: true }); // a side changed outside the pair's own set: let derive see it
+      },
+      getParam(name) {
+        const [c, n] = sideOfName(name); if (!c) return undefined;
+        const v = c.getParam ? c.getParam(n) : undefined; if (v != null) return v;
+        let o = c.get ? c.get() : {}; for (const k of n.split('.')) o = o == null ? undefined : Array.isArray(o) ? o.find(it => it && it.id === k) : o[k];
+        return typeof o === 'number' ? o : (o == null ? ((c.get() || {}).params || {})[n] : undefined);
+      },
+      clone(host2) { return create(host2, { ...spec, state: { left: side.left && side.left.get(), right: side.right && side.right.get(), caption } }, { ...ctx, static: true }); },
+      destroy() { SIDES.forEach(k => side[k] && side[k].destroy && side[k].destroy()); wrap.remove(); },
+    };
+    /* Everything else (enable, points, place, cells, sample, removeBoth, ...) is the active side's */
+    return new Proxy(api, { get(t, k) { if (k in t) return t[k]; const v = A ? A[k] : undefined; return typeof v === 'function' ? v.bind(A) : v; }, set(t, k, v) { t[k] = v; return true; } });
+  };
   const create = (host, spec, ctx = {}) => {
+    if (spec.kind === 'pair') {
+      const inst = pairOf(host, spec, { ...ctx, Z });
+      if (spec.state) inst.set(spec.state, { instant: true });
+      if (spec.derive) attachDerive(inst, spec);
+      return inst;
+    }
     const f = kinds[spec.kind];
     if (!f) { host.append(Z.h(`<div class="cv cv-missing t-caption">Canvas "${Z.esc(spec.kind)}" is not available.</div>`)); return null; }
     const inst = f(host, spec.params || {}, { ...ctx, Z, initial: spec.state || {} });
     if (spec.state) inst.set(spec.state, { instant: true });
     if (spec.state && spec.state.caption && inst.caption) inst.caption(spec.state.caption);
-    if (spec.derive && !(ctx.static || ctx.mode === 'static')) attachDerive(inst, spec);
+    if (spec.derive) attachDerive(inst, spec); // static copies too: the Why? clone shows values derived from its own (explained) state
     return inst;
   };
 

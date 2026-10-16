@@ -62,9 +62,11 @@
   const logo = () => `<a class="logo" href="#today" aria-label="Zero to Quant home">${mark()}<span>zero <span class="to">to</span> quant</span></a>`;
 
   /* ---------- Maths (KaTeX) ---------- */
+  /* \pounds (and \text{£}, rewritten to it) draws the pound sign in the prose face, not KaTeX's serif */
+  const TEX_OPTS = { throwOnError: false, strict: 'ignore', macros: { '\\pounds': '\\htmlClass{zq-gbp}{\\text{£}}' }, trust: (c) => c.command === '\\htmlClass' };
   const tex = (src, display = false) => {
     if (!window.katex) return `<code>${esc(src)}</code>`;
-    return katex.renderToString(src, { displayMode: display, throwOnError: false, strict: 'ignore' });
+    return katex.renderToString(String(src).replace(/\\text\{£\}/g, '\\pounds{}'), { ...TEX_OPTS, displayMode: display });
   };
   /* Renders every [data-tex] element (add data-display for block maths) and $...$ spans inside .md text */
   const mathify = (root = document) => { $$('[data-tex]', root).forEach(el => { el.innerHTML = tex(el.dataset.tex, el.hasAttribute('data-display')); el.removeAttribute('data-tex'); }); };

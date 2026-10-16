@@ -130,12 +130,14 @@
      fixed: [{ x0, y0, x1, y1 }]; bounds: { x0, y0, x1, y1 } keeps labels inside the plot. */
   const boxOf = (l) => { const w = (l.w || tw(l.text)) + 4, h = l.h || 16, a = l.anchor || 'middle'; const x0 = a === 'start' ? l.x - 2 : a === 'end' ? l.x - w + 2 : l.x - w / 2; return { x0, x1: x0 + w, y0: l.y - h / 2, y1: l.y + h / 2 }; };
   const hit = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  /* Small boxes along a drawn line (pixel points [[x, y]]), as obstacles so labels keep clear of the line */
+  const lineBoxes = (pts, every = 10, pad = 3) => { const out = []; let last = null; for (const [x, y] of pts) { if (!Number.isFinite(y)) { last = null; continue; } if (last && Math.hypot(x - last[0], y - last[1]) < every) continue; out.push({ x0: x - pad, x1: x + pad, y0: y - pad, y1: y + pad }); last = [x, y]; } return out; };
   const placeLabels = (labels, fixed = [], bounds) => {
     const placed = fixed.slice();
     for (const l of labels) {
       const y0 = l.y; let best = null;
       if (bounds) { const w = (l.w || tw(l.text)) + 4; if (l.anchor === 'start') l.x = Math.min(l.x, bounds.x1 - w); else if (l.anchor === 'end') l.x = Math.max(l.x, bounds.x0 + w); else l.x = clamp(l.x, bounds.x0 + w / 2, bounds.x1 - w / 2); }
-      for (const dy of [0, -16, 16, -32, 32, -48, 48, -64, 64]) {
+      for (const dy of (l.side === 1 ? [0, 16, -16, 32, -32, 48, -48, 64, -64] : [0, -16, 16, -32, 32, -48, 48, -64, 64])) { // side 1: try below first
         l.y = y0 + dy;
         const b = boxOf(l);
         if (bounds && (b.y0 < bounds.y0 || b.y1 > bounds.y1)) continue;
@@ -494,7 +496,7 @@
     return d;
   };
 
-  Z.cvb = { isObj, deep, clamp, snapTo, round, lerp, fmt, fmtTick, tw, ticksFor, txt, lab, obj, colourCls, washRect, washPath, washCircle, arrow, handle, spread, chartAxes, yMargin, planeAxes, make, eff, placeLabels, boxOf, lgamma, erf, simpson, gauss, rngFor, fnOf, brokenPath };
+  Z.cvb = { isObj, deep, clamp, snapTo, round, lerp, fmt, fmtTick, tw, ticksFor, txt, lab, obj, colourCls, washRect, washPath, washCircle, arrow, handle, spread, chartAxes, yMargin, planeAxes, make, eff, placeLabels, boxOf, lineBoxes, lgamma, erf, simpson, gauss, rngFor, fnOf, brokenPath };
 })();
 
 /* ===== plane ===== */
@@ -567,14 +569,16 @@
       kind: 'plane', aria: params.aria || 'Coordinate plane',
       modes: ['drag', 'slider', 'sketch', 'tap'],
       size: () => size,
-      listKeys: ['points', 'vectors', 'segments'],
+      listKeys: ['points', 'vectors', 'segments', 'polygons', 'angles', 'vlines', 'hlines'],
       init: () => ({ points: [], segments: [], vectors: [], params: { ...(params.params || {}) }, highlight: [], showTarget: false }),
       render(view, R) {
         const { m, sx, sy } = geom(R);
         const g = R.F.g, fns = evaluator(view);
         const px0 = m.l, px1 = size.w - m.r, py0 = size.h - m.b, py1 = m.t;
-        const axInfo = K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel });
+        /* axes: false draws no axes, ticks or grid (a geometry figure) */
+        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel });
         const fixed = axInfo.boxes.slice();
+        if (params.axes !== false) { const ax = yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
         const clip = R.clipRect(px0, py1 - 2, px1 - px0, py0 - py1 + 4);
         const plot = svg('g', { 'clip-path': clip }); g.append(plot);
         const over = svg('g'); g.append(over);
@@ -651,6 +655,7 @@
           const a = sx(lo), b = sx(hi), n = Math.max(2, Math.ceil((b - a) * 2));
           const pts = []; for (let i = 0; i <= n; i++) { const px = a + (b - a) * i / n; pts.push([px, sy(f(sx.invert(px)))]); }
           const d = K.brokenPath(pts, size.h, py1, py0);
+          fixed.push(...K.lineBoxes(pts.filter((p) => p[1] >= py1 && p[1] <= py0))); // labels keep clear of every curve
           const o = K.obj(id, 'cvb-fn', fd.slot);
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (fd.dashed ? ' cvb-dash' : '') }));
           plot.append(o);
@@ -664,7 +669,7 @@
             } else ly = sy(f(lx));
             /* labelSide "above" (default) or "below" the curve, and labelOffset [dx, dy] in px to nudge it */
             const off = Array.isArray(fd.labelOffset) ? fd.labelOffset : [0, 0];
-            if (lx != null && Number.isFinite(ly)) labels.push({ x: sx(lx) + (+off[0] || 0), y: ly + ((fd.labelSide || fd.labelPos) === 'below' ? 14 : -12) + (+off[1] || 0), text: fd.label, id });
+            if (lx != null && Number.isFinite(ly)) labels.push({ x: sx(lx) + (+off[0] || 0), y: ly + ((fd.labelSide || fd.labelPos) === 'below' ? 16 : -14) + (+off[1] || 0), text: fd.label, id, anchor: fd.labelAnchor === 'start' ? 'start' : fd.labelAnchor === 'middle' ? 'middle' : 'end', side: (fd.labelSide || fd.labelPos) === 'below' ? 1 : -1 });
           }
         }
 
@@ -702,6 +707,38 @@
           }
         }
 
+        /* Polygons: [{ id, points: [[x, y] | pointId, ...], colour, label, vertexLabels: ["A", "B", "C"], dashed }]: a filled
+           shape (a series wash) with its vertices labelled outside the shape */
+        for (const pg of view.polygons || params.polygons || []) {
+          const vs = (pg.points || []).map((q) => pointXY(view, q)).filter((q) => Array.isArray(q) && q.length === 2);
+          if (vs.length < 2) continue;
+          const o = K.obj(pg.id, 'cvb-poly', pg.colour || 1);
+          const d = 'M' + vs.map(([x, y]) => `${sx(x).toFixed(2)},${sy(y).toFixed(2)}`).join('L') + 'Z';
+          o.append(K.washPath(d), svg('path', { d, class: 'cvb-poly-f' }), svg('path', { d, class: 'cvb-ln' + (pg.dashed ? ' cvb-dash' : '') }));
+          plot.append(o);
+          const cxm = vs.reduce((a, q) => a + q[0], 0) / vs.length, cym = vs.reduce((a, q) => a + q[1], 0) / vs.length;
+          (pg.vertexLabels || []).forEach((t, k) => {
+            if (!t || !vs[k]) return;
+            const vx = sx(vs[k][0]), vy = sy(vs[k][1]), dx = vx - sx(cxm), dy = vy - sy(cym), L0 = Math.hypot(dx, dy) || 1;
+            labels.push({ x: vx + dx / L0 * 14, y: vy + dy / L0 * 14, text: t, anchor: Math.abs(dx / L0) < 0.35 ? 'middle' : dx > 0 ? 'start' : 'end', id: pg.id + '-v' + k });
+          });
+          if (pg.label) labels.push({ x: sx(cxm), y: sy(cym), text: pg.label, anchor: 'middle', id: pg.id });
+        }
+        /* Angle markers: [{ id, at: vertex, from: point, to: point, label, right: true, radius: px }]: an arc (or a square
+           for a right angle) between the rays at -> from and at -> to, the smaller angle, labelled on its bisector */
+        for (const an of view.angles || params.angles || []) {
+          const [ax, ay] = pointXY(view, an.at), [fx, fy] = pointXY(view, an.from), [tx, ty] = pointXY(view, an.to);
+          const A = [sx(ax), sy(ay)], a1 = Math.atan2(sy(fy) - A[1], sx(fx) - A[0]), a2 = Math.atan2(sy(ty) - A[1], sx(tx) - A[0]);
+          let da = a2 - a1; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+          const r = an.radius || 22, o = K.obj(an.id || 'angle', 'cvb-angle', an.colour || 'ink'), mid = a1 + da / 2;
+          let d;
+          if (an.right) { const u = [Math.cos(a1), Math.sin(a1)], v = [Math.cos(a2), Math.sin(a2)], k = r * 0.55; d = `M${A[0] + u[0] * k},${A[1] + u[1] * k}L${A[0] + (u[0] + v[0]) * k},${A[1] + (u[1] + v[1]) * k}L${A[0] + v[0] * k},${A[1] + v[1] * k}`; }
+          else d = `M${A[0] + r * Math.cos(a1)},${A[1] + r * Math.sin(a1)}A${r} ${r} 0 0 ${da > 0 ? 1 : 0} ${A[0] + r * Math.cos(a2)},${A[1] + r * Math.sin(a2)}`;
+          o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln thin' }));
+          over.append(o);
+          if (an.label) labels.push({ x: A[0] + (r + 12) * Math.cos(mid), y: A[1] + (r + 12) * Math.sin(mid), text: an.label, anchor: 'middle', id: an.id || 'angle' });
+        }
+
         /* Segments */
         for (const s of view.segments || []) {
           const [ax, ay] = pointXY(view, s.from), [bx, by] = pointXY(view, s.to);
@@ -711,7 +748,9 @@
           if (s.arrow) o.append(K.arrow(sx(ax), sy(ay), sx(bx), sy(by), { cls: 'cvb-ln' + (s.dashed ? ' cvb-dash' : '') }));
           else o.append(svg('path', { d, class: 'cvb-ln' + (s.dashed ? ' cvb-dash thin' : '') }));
           plot.append(o);
-          if (s.label) labels.push({ x: (sx(ax) + sx(bx)) / 2 + 8, y: (sy(ay) + sy(by)) / 2 - 10, text: s.label, anchor: 'start', id: s.id });
+          /* label at the midpoint, nudged by labelOffset [dx, dy] in px (default 8 right and 10 up) */
+          const so = Array.isArray(s.labelOffset) ? s.labelOffset : [8, -10];
+          if (s.label) labels.push({ x: (sx(ax) + sx(bx)) / 2 + (+so[0] || 0), y: (sy(ay) + sy(by)) / 2 + (+so[1] || 0), text: s.label, anchor: (+so[0] || 0) < 0 ? 'end' : (+so[0] || 0) === 0 ? 'middle' : 'start', id: s.id });
         }
 
         /* Vectors */

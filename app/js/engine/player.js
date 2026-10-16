@@ -157,7 +157,7 @@
         /* Explore controls: each slider drives canvas.setParam(bind, v) (else state.params[bind], or the state path for a
            dotted bind). `start` sets the opening value and is applied to the canvas; without it the slider opens at the
            bound value's current value (a number-line point's x, an area split, a param), else at min. */
-        const shown = (c, v) => G().fmtAs(v, c.format);
+        const shown = (c, v) => G().fmtAs(v, c.format, c.decimals);
         const drive = (c, v) => {
           if (!canvas) return;
           try {
@@ -211,12 +211,18 @@
 
     /* Canvas states: initial (with the optional enter patch), reset, reveal, explanation */
     const initial = Object.assign({}, (spec.canvas && spec.canvas.state) || {}, (spec.canvas && spec.canvas.enter) || {});
+    const resetFor = (cur, init) => {
+      const patch = {};
+      Object.keys(cur || {}).forEach(k => { patch[k] = k in init ? init[k] : (Array.isArray(cur[k]) ? [] : cur[k] && typeof cur[k] === 'object' ? {} : null); });
+      return Object.assign(patch, init);
+    };
     const resetCanvas = () => {
       if (!canvas || !canvas.set) return;
       let cur = {}; try { cur = canvas.get ? canvas.get() || {} : {}; } catch { cur = {}; }
-      const patch = {};
-      Object.keys(cur).forEach(k => { patch[k] = k in initial ? initial[k] : (Array.isArray(cur[k]) ? [] : cur[k] && typeof cur[k] === 'object' ? {} : null); });
-      Object.assign(patch, initial);
+      /* a pair resets each side to its own authored state */
+      const patch = canvas.kind === 'pair'
+        ? { left: resetFor(cur.left, Object.assign({}, (spec.canvas.left || {}).state, initial.left)), right: resetFor(cur.right, Object.assign({}, (spec.canvas.right || {}).state, initial.right)), caption: initial.caption || '' }
+        : resetFor(cur, initial);
       try { canvas.set(patch); } catch (e) { console.error(e); }
     };
     let demoAt = 0;
@@ -274,7 +280,8 @@
         try { state = canvas && canvas.get ? canvas.get() || {} : Object.assign({}, initial); } catch { state = Object.assign({}, initial); }
         const patch = (spec.explain && spec.explain.canvas) || {};
         const merged = Z.canvas.merge ? Z.canvas.merge(state, patch) : Object.assign({}, state, patch);
-        try { return Z.canvas.create(host, { kind: spec.canvas.kind, params: spec.canvas.params, state: merged }, { mode: 'static', reducedMotion: true }); } catch (e) { console.error(e); return null; }
+        /* derive runs again on the explained state, so derived points and captions follow the patch */
+        try { return Z.canvas.create(host, { kind: spec.canvas.kind, params: spec.canvas.params, state: merged, derive: spec.canvas.derive, left: spec.canvas.left, right: spec.canvas.right }, { mode: 'static', reducedMotion: true }); } catch (e) { console.error(e); return null; }
       },
       answer() {
         if (!widget) return true;

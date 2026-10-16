@@ -17,7 +17,9 @@
     const tbl = document.createElement('table'); tbl.className = 'cv-tbl';
     if (P.label) tbl.setAttribute('aria-label', P.label);
     const cap = document.createElement('div'); cap.className = 't-caption cv-caption'; cap.hidden = true;
-    const html = (v) => (v == null ? '' : typeof v === 'number' ? Z.esc(C.fmtNum(v, 4)) : Z.md(Z.esc(String(v)).replace(/&#39;/g, "'")));
+    /* numbers, and text that starts as a negative number ("-3", "-0.5 kg"), use the minus sign U+2212 */
+    const minus = (t) => t.replace(/^-(?=\d|\.\d)/, '−');
+    const html = (v) => (v == null ? '' : typeof v === 'number' ? Z.esc(minus(C.fmtNum(v, 4))) : Z.md(minus(Z.esc(String(v)).replace(/&#39;/g, "'"))));
     if (columns.length) {
       const thead = document.createElement('thead'), tr = document.createElement('tr');
       columns.forEach((c, k) => { const th = document.createElement('th'); th.scope = 'col'; th.className = 'cv-obj'; th.dataset.id = `c${k}`; th.dataset.col = `c${k}`; th.style.textAlign = alignOf(k + 1); th.innerHTML = html(c); tr.append(th); });

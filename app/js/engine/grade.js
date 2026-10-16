@@ -53,7 +53,11 @@
     return String(+v.toFixed(6));
   };
   /* Readout formats for sliders and explore controls: "fraction" (3/8), "percent" (0.375 -> 37.5%), else the number */
-  const fmtAs = (v, format) => (format === 'fraction' ? fmtFrac(v) : format === 'percent' ? fmtNum(+(v * 100).toFixed(4)) + '%' : fmtNum(v));
+  /* decimals: fixed places for the plain and percent readouts (trailing zeros kept), whatever the step */
+  const fmtAs = (v, format, decimals) => {
+    const fx = (n) => (decimals != null ? (n < 0 ? '−' : '') + Math.abs(n).toFixed(decimals) : fmtNum(n).replace(/^-/, '−'));
+    return format === 'fraction' ? fmtFrac(v).replace(/^-/, '−') : format === 'percent' ? fx(+(v * 100).toFixed(6)) + '%' : fx(v);
+  };
   /* A number as a fraction a/b in lowest terms (denominator up to maxDen), else fmtNum: 0.375 -> "3/8", 2 -> "2" */
   const fmtFrac = (v, maxDen = 100) => {
     if (!Number.isFinite(v)) return '';
@@ -222,19 +226,14 @@
     .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
     .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\w)/g, '$1<i>$2</i>');
   /* Inline copy: text with $maths$ and $$display$$. Punctuation that follows a formula stays on its line. */
+  /* Maths is set aside as placeholders first, so **bold** and *italic* may wrap a formula ("**the mean $\mu$**") */
   const inline = (s, { br = false } = {}) => {
     const src = String(s ?? '');
-    const text = (t) => (br ? styleText(t).replace(/\n/g, '<br>') : styleText(t)); // line breaks only outside maths: KaTeX SVG keeps its newlines
-    let out = '', last = 0;
-    const re = /\$\$([^$]+)\$\$|\$([^$]+)\$([.,:;?)]?)/g;
-    let m;
-    while ((m = re.exec(src))) {
-      out += text(src.slice(last, m.index));
-      if (m[1] != null) out += tex(m[1], true);
-      else out += `<span class="lsn-nw">${tex(m[2], false)}${esc(m[3] || '')}</span>`;
-      last = re.lastIndex;
-    }
-    return out + text(src.slice(last));
+    const maths = [];
+    const held = src.replace(/\$\$([^$]+)\$\$|\$([^$]+)\$([.,:;?)]?)/g, (all, d, t, p) => { maths.push(d != null ? tex(d, true) : `<span class="lsn-nw">${tex(t, false)}${esc(p || '')}</span>`); return `\u0000${maths.length - 1}\u0000`; });
+    let out = styleText(held);
+    if (br) out = out.replace(/\n/g, '<br>'); // line breaks only outside maths: KaTeX SVG keeps its newlines
+    return out.replace(/\u0000(\d+)\u0000/g, (_, k) => maths[+k]);
   };
   const codeBlock = (code, lang) => `<div class="lsn-code" data-lang="${esc(lang || '')}"><button type="button" class="link-btn lsn-copy" aria-label="Copy code">Copy</button><pre class="t-code"><code>${esc(code.replace(/\n$/, ''))}</code></pre></div>`;
   /* Block copy: paragraphs split on blank lines, fenced code blocks, display maths. */

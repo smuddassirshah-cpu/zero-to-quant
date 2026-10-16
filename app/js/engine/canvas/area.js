@@ -6,7 +6,12 @@
    Explore controls bind to them through setParam: "split" (the number of columns cut, or sectors on a circle),
    "split.rows", "split.cols", "grid" (columns, or sectors), "grid.rows", "grid.cols", and "shade" (a fraction). Grid lines inside shaded cells
    are drawn again over the shading so they stay visible. Text on a piece: labels keyed by cell id, in params.labels
-   or state.labels ({ "c11": "3n" }). Params and state: engine/canvas/README.md. */
+   or state.labels ({ "c11": "3n" }). Signed pieces: a negative entry in colSizes or rowSizes lays out by its size and
+   marks the pieces of that strip negative (dashed and hatched: subtracted), so (x + 5)(x - 2) stays on one model.
+   state.colLabels / rowLabels / labels (top, bottom, left, right) patch the edge labels. state.move: { from, to } (or a
+   list, each with an optional id) slides a copy of the piece from one cell to another (its place is left empty), for
+   rearrangements. state.diagonal: { "c11": "/" | "\\" } draws a dashed diagonal; shade ids "c11/ul", "c11/lr",
+   "c11/ur", "c11/ll" fill the triangle on that side. Params and state: engine/canvas/README.md. */
 (function () {
   'use strict';
   const Z = window.ZQ, C = Z.canvas, { svg, attrs, lerp } = C;
@@ -19,7 +24,8 @@
     let rows = shape === 'circle' ? 1 : Math.max(1, (P.grid || [1, 1])[0]), cols = shape === 'circle' ? sectors : Math.max(1, (P.grid || [1, 1])[1]);
     const L = P.labels || {};
     const hasTop = !!(L.top || P.colLabels), hasLeft = !!(L.left || P.rowLabels), hasBottom = !!L.bottom, hasRight = !!L.right;
-    const sizes = (list, n) => { const a = list && list.length === n ? list : Array(n).fill(1); const s = a.reduce((x, y) => x + y, 0); let acc = 0; return [0, ...a.map(v => (acc += v) / s)]; };
+    const sizes = (list, n) => { const a = (list && list.length === n ? list : Array(n).fill(1)).map(v => Math.abs(+v) || 1); const s = a.reduce((x, y) => x + y, 0); let acc = 0; return [0, ...a.map(v => (acc += v) / s)]; };
+    const signOf = (list, k) => (list && +list[k] < 0 ? -1 : 1);
     let cx = sizes(P.colSizes, cols), cy = sizes(P.rowSizes, rows);
     let w, h;
     if (shape === 'circle') { w = h = 264; }
@@ -45,11 +51,13 @@
     /* Hatch patterns for sets 2 and 3 */
     const defs = svg('defs');
     [2, 3].forEach(k => defs.append(svg('pattern', { id: `cv-hatch-${id}-${k}`, patternUnits: 'userSpaceOnUse', width: 8, height: 8, patternTransform: `rotate(${k === 2 ? 45 : -45})` }, [svg('rect', { class: `cv-hatch-bg cv-k${k}`, width: 8, height: 8 }), svg('line', { class: `cv-hatch-line cv-k${k}`, x1: 0, y1: 0, x2: 0, y2: 8 })])));
+    defs.append(svg('pattern', { id: `cv-hatch-${id}-neg`, patternUnits: 'userSpaceOnUse', width: 7, height: 7, patternTransform: 'rotate(-45)' }, [svg('line', { class: 'cv-neg-hatch', x1: 0, y1: 0, x2: 0, y2: 7 })]));
     g.append(defs);
 
     const cellG = svg('g', { class: 'cv-acells' }), shadeG = svg('g', { class: 'cv-shades' }), lineG = svg('g', { class: 'cv-alines' }), inG = svg('g', { class: 'cv-ainner' }), splitG = svg('g', { class: 'cv-split' }), ptG = svg('g', { class: 'cv-apoints' }), labG = svg('g', { class: 'cv-alabels' });
-    const cellLabG = svg('g', { class: 'cv-acelllabels' });
-    g.append(cellG, shadeG, lineG, inG, splitG, cellLabG, ptG, labG);
+    const cellLabG = svg('g', { class: 'cv-acelllabels' }), coverG = svg('g', { class: 'cv-acover' }), diagG = svg('g', { class: 'cv-split cv-adiag' }), moveG = svg('g', { class: 'cv-amoves' });
+    g.append(cellG, shadeG, coverG, lineG, inG, splitG, diagG, cellLabG, moveG, ptG, labG);
+    const movePos = new Map(); // move id -> current top-left, for animating from there
     const cells = new Map();
     let order = [], n = 0, gridKey = '';
     /* Cells and grid lines for rows x cols (a circle: sectors); called again when state.grid re-cuts the shape */
@@ -60,7 +68,8 @@
       cellG.replaceChildren(); lineG.replaceChildren(); cells.clear();
       for (let i = 1; i <= rows; i++) for (let j = 1; j <= cols; j++) {
         const cid = cellId(i, j);
-        const grp = svg('g', { class: 'cv-obj cv-acell', 'data-id': cid, 'data-tap': '', 'data-label': shape === 'circle' ? `Sector ${j} of ${sectors}` : `Row ${i}, column ${j}` }, [cellShape(i, j, 'cv-body')]);
+        const neg = shape !== 'circle' && signOf(same(P.colSizes, cols) && P.colSizes, j - 1) * signOf(same(P.rowSizes, rows) && P.rowSizes, i - 1) < 0;
+        const grp = svg('g', { class: 'cv-obj cv-acell' + (neg ? ' is-neg' : ''), 'data-id': cid, 'data-tap': '', 'data-label': (shape === 'circle' ? `Sector ${j} of ${sectors}` : `Row ${i}, column ${j}`) + (neg ? ', subtracted' : '') }, [cellShape(i, j, 'cv-body')]);
         cellG.append(grp); cells.set(cid, { grp, i, j });
       }
       if (shape === 'circle') {
@@ -70,23 +79,38 @@
         for (let j = 1; j < cols; j++) lineG.append(svg('line', { class: 'cv-gline', x1: ox + cx[j] * w, x2: ox + cx[j] * w, y1: oy, y2: oy + h }));
         for (let i = 1; i < rows; i++) lineG.append(svg('line', { class: 'cv-gline', y1: oy + cy[i] * h, y2: oy + cy[i] * h, x1: ox, x2: ox + w }));
         lineG.append(svg('rect', { class: 'cv-outline-shape', x: ox, y: oy, width: w, height: h, rx: 2 }));
+        /* subtracted pieces: hatched over any shading, with a dashed edge */
+        for (const c of cells.values()) if (c.grp.classList.contains('is-neg')) { const b = cellBox(c.i, c.j); lineG.append(svg('rect', { class: 'cv-negpiece', x: b.x + 1, y: b.y + 1, width: Math.max(0, b.w - 2), height: Math.max(0, b.h - 2), fill: `url(#cv-hatch-${id}-neg)` })); }
       }
       n = rows * cols; order = [...cells.keys()]; gridKey = `${rows}x${cols}`;
     };
     build(rows, cols);
-    /* Edge labels and per-row / per-column labels */
+    /* Edge labels and per-row / per-column labels: from params, patchable through state (colLabels, rowLabels, labels) */
     const lab = (x, y, t, anchor = 'middle') => labG.append(C.label(x, y, t, { tex: 'auto', anchor, w: 160, h: 36 }));
-    if (L.top) lab(ox + w / 2, oy - 18, L.top);
-    if (L.bottom) lab(ox + w / 2, oy + h + 20, L.bottom);
-    if (L.left) lab(ox - 12, oy + h / 2, L.left, 'end');
-    if (L.right) lab(ox + w + 12, oy + h / 2, L.right, 'start');
-    if (P.colLabels && shape !== 'circle') P.colLabels.forEach((t, j) => lab(ox + (cx[j] + cx[j + 1]) / 2 * w, oy - 16, t));
-    if (P.rowLabels && shape !== 'circle') P.rowLabels.forEach((t, i) => lab(ox - 10, oy + (cy[i] + cy[i + 1]) / 2 * h, t, 'end'));
+    const drawEdges = (st) => {
+      const E = { ...L, ...Object.fromEntries(Object.entries(st.labels || {}).filter(([k]) => ['top', 'bottom', 'left', 'right'].includes(k))) };
+      const colL = st.colLabels || P.colLabels, rowL = st.rowLabels || P.rowLabels;
+      const key = JSON.stringify([E.top, E.bottom, E.left, E.right, colL, rowL, gridKey]);
+      if (labG.dataset.key === key) return;
+      labG.dataset.key = key; labG.replaceChildren();
+      if (E.top) lab(ox + w / 2, oy - 18, E.top);
+      if (E.bottom) lab(ox + w / 2, oy + h + 20, E.bottom);
+      if (E.left) lab(ox - 12, oy + h / 2, E.left, 'end');
+      if (E.right) lab(ox + w + 12, oy + h / 2, E.right, 'start');
+      if (colL && shape !== 'circle') colL.slice(0, cols).forEach((t, j) => lab(ox + (cx[j] + cx[j + 1]) / 2 * w, oy - 16, t));
+      if (rowL && shape !== 'circle') rowL.slice(0, rows).forEach((t, i) => lab(ox - 10, oy + (cy[i] + cy[i + 1]) / 2 * h, t, 'end'));
+    };
 
     /* Shading: ids, a fraction (cells in reading order when it lands on whole cells, else a continuous strip or sector),
        { rows: k }, { cols: k } */
     const shapesFor = (spec, frac) => {
-      if (Array.isArray(spec)) return spec.filter(x => cells.has(x)).map(x => { const c = cells.get(x); return cellShape(c.i, c.j, 'cv-shade-shape'); });
+      if (Array.isArray(spec)) return spec.map(String).filter(x => cells.has(x) || (shape !== 'circle' && cells.has(x.split('/')[0]))).map(x => {
+        const [cid, half] = x.split('/'), c = cells.get(cid);
+        if (!half) return cellShape(c.i, c.j, 'cv-shade-shape');
+        const b = cellBox(c.i, c.j), TL = [b.x, b.y], TR = [b.x + b.w, b.y], BL = [b.x, b.y + b.h], BR = [b.x + b.w, b.y + b.h];
+        const tri = { ul: [TL, TR, BL], lr: [TR, BR, BL], ur: [TL, TR, BR], ll: [TL, BR, BL] }[half] || [TL, TR, BR, BL];
+        return svg('path', { class: 'cv-shade-shape', d: 'M' + tri.map(p => p.join(' ')).join('L') + 'Z' });
+      });
       if (typeof spec === 'number') {
         const f = Math.max(0, Math.min(1, frac ?? spec));
         if (shape === 'circle') return f > 0 ? [svg('path', { class: 'cv-shade-shape', d: sectorPath(-Math.PI / 2, -Math.PI / 2 + f * 2 * Math.PI) })] : [];
@@ -146,9 +170,39 @@
           if (!instant) splitG.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' });
         }
       }
+      drawEdges(st);
+      /* diagonals: { c11: "/" } runs bottom left to top right, "\\" top left to bottom right */
+      const dg = st.diagonal || {}, dk = JSON.stringify(dg) + gridKey;
+      if (diagG.dataset.key !== dk) {
+        diagG.dataset.key = dk;
+        diagG.replaceChildren(...Object.entries(dg).filter(([cid]) => cells.has(cid) && shape !== 'circle').map(([cid, dir]) => { const c = cells.get(cid), b = cellBox(c.i, c.j); return dir === '/' ? svg('line', { class: 'cv-splitline', x1: b.x, y1: b.y + b.h, x2: b.x + b.w, y2: b.y }) : svg('line', { class: 'cv-splitline', x1: b.x, y1: b.y, x2: b.x + b.w, y2: b.y + b.h }); }));
+      }
+      /* moving pieces: a copy of the from piece (its first shading's colour and its text) slides to the to cell */
+      const mv = st.move == null ? [] : [].concat(st.move).filter(m => m && cells.has(m.from) && cells.has(m.to) && shape !== 'circle');
+      const shadeOf = (cid) => { const k = list.findIndex(sp => Array.isArray(sp) && sp.map(String).includes(cid)); return k >= 0 ? k + 1 : 0; };
+      const textOf = (cid) => (st.labels && st.labels[cid]) ?? L[cid];
+      coverG.replaceChildren(...mv.map(m => { const c = cells.get(m.from); return cellShape(c.i, c.j, 'cv-cover'); }));
+      const keep = new Set();
+      mv.forEach((m, k) => {
+        const mid = m.id || 'move' + (k + 1); keep.add(mid);
+        const fc = cells.get(m.from), tc = cells.get(m.to), fb = cellBox(fc.i, fc.j), tb = cellBox(tc.i, tc.j);
+        let grpEl = moveG.querySelector(`[data-id="${CSS.escape(mid)}"]`);
+        const slot = m.colour || shadeOf(m.from) || 1;
+        if (!grpEl || grpEl.dataset.from !== m.from) {
+          grpEl = svg('g', { class: `cv-obj cv-apiece cv-k${slot}`, 'data-id': mid, 'data-from': m.from }, [svg('rect', { class: 'cv-body', x: 0, y: 0, width: fb.w, height: fb.h })]);
+          const t = textOf(m.from); if (t) grpEl.append(C.label(fb.w / 2, fb.h / 2, t, { tex: 'auto', cls: 'cv-halo cv-alabel', w: 90, h: 30 }));
+          moveG.querySelector(`[data-id="${CSS.escape(mid)}"]`)?.remove(); moveG.append(grpEl); movePos.set(mid, [fb.x, fb.y]);
+        }
+        const [x0, y0] = movePos.get(mid) || [fb.x, fb.y], x1 = tb.x, y1 = tb.y;
+        movePos.set(mid, [x1, y1]);
+        if (instant || (x0 === x1 && y0 === y1)) grpEl.setAttribute('transform', `translate(${x1} ${y1})`);
+        else { const el = grpEl; C.animator().run(Math.max(ms, 700), (t) => el.setAttribute('transform', `translate(${lerp(x0, x1, t)} ${lerp(y0, y1, t)})`)); }
+      });
+      moveG.querySelectorAll('.cv-apiece').forEach(n => { if (!keep.has(n.dataset.id)) { n.remove(); movePos.delete(n.dataset.id); } });
       /* text on a piece: params.labels and state.labels keyed by cell id ({ "c11": "3n" }); the state wins */
-      const pieceText = Object.assign({}, ...[L, st.labels || {}].map(m => Object.fromEntries(Object.entries(m || {}).filter(([k]) => cells.has(k)))));
-      const ptKey = JSON.stringify(pieceText) + gridKey;
+      const movedFrom = new Set(mv.map(m => m.from));
+      const pieceText = Object.assign({}, ...[L, st.labels || {}].map(m => Object.fromEntries(Object.entries(m || {}).filter(([k]) => cells.has(k) && !movedFrom.has(k)))));
+      const ptKey = JSON.stringify(pieceText) + gridKey + [...movedFrom].join();
       if (cellLabG.dataset.key !== ptKey) {
         cellLabG.dataset.key = ptKey;
         cellLabG.replaceChildren(...Object.entries(pieceText).filter(([, t]) => t != null && t !== '').map(([cid, t]) => {
