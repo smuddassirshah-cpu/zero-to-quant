@@ -5,7 +5,8 @@
    Signed pans (for x - 3 = 8 and 7 - 3x = 22): weights may be negative (drawn as lifting blocks) and an unknown block
    may carry a coefficient `coef` (-1, 0.5, -3). Then subtractBoth(n), addBoth(n), removeBoth and divideBoth(k) (k any
    non-zero number) work on the pan totals, and each pan collapses to one unknown block and one weight block.
-   The unknown's value is state.params.x (patchable, and a control can bind "x"), else params.x, else the value that
+   More than one unknown kind: an unknown with its own `label` (y) and a hidden `value` weighs that value (else
+   state.params[label], else 1); moves keep the kinds apart. The x unknown's value is state.params.x (patchable, and a control can bind "x"), else params.x, else the value that
    balances the starting pans. Ids: item ids, plus "beam", "left" and "right" (the pans). Params and state:
    engine/canvas/README.md. */
 (function () {
@@ -15,19 +16,26 @@
   function balance(host, params, ctx = {}) {
     const P = params || {};
     const xLabel = P.unknownLabel || 'x';
-    const norm = (list, side) => (list || []).map((it, k) => ({ kind: it.kind === 'unknown' ? 'unknown' : 'weight', id: it.id || `${side}${k + 1}`, label: it.label || xLabel, value: it.value ?? 1, ...(it.kind === 'unknown' && it.coef != null ? { coef: +it.coef } : {}) }));
+    /* An unknown keeps a hidden `value` only when authored (a second kind such as y with its own weight) */
+    const norm = (list, side) => (list || []).map((it, k) => (it.kind === 'unknown'
+      ? { kind: 'unknown', id: it.id || `${side}${k + 1}`, label: it.label || xLabel, ...(it.coef != null ? { coef: +it.coef } : {}), ...(it.value != null ? { value: +it.value } : {}) }
+      : { kind: 'weight', id: it.id || `${side}${k + 1}`, label: it.label || xLabel, value: it.value ?? 1 }));
     const L0 = norm(P.left, 'l'), R0 = norm(P.right, 'r');
     const sumW = (l) => l.filter(i => i.kind === 'weight').reduce((s, i) => s + i.value, 0);
-    const nX = (l) => l.filter(i => i.kind === 'unknown').length;
-    const cX = (l) => +l.filter(i => i.kind === 'unknown').reduce((s, i) => s + (i.coef ?? 1), 0).toFixed(10);
+    const nX = (l, lab) => l.filter(i => i.kind === 'unknown' && (lab == null || i.label === lab)).length;
+    const cX = (l, lab = xLabel) => +l.filter(i => i.kind === 'unknown' && i.label === lab).reduce((s, i) => s + (i.coef ?? 1), 0).toFixed(10);
+    const labelsOf = (...lists) => [...new Set(lists.flat().filter(i => i.kind === 'unknown').map(i => i.label))];
+    /* the mass of the unknowns that are not x: each its own authored value, or state.params[label], or 1 */
+    const otherMass = (l, P2 = {}) => l.filter(i => i.kind === 'unknown' && i.label !== xLabel).reduce((s, i) => s + (i.coef ?? 1) * (i.value ?? (Number.isFinite(+P2[i.label]) && P2[i.label] != null ? +P2[i.label] : 1)), 0);
     const signed = P.signed === true || [...L0, ...R0].some(i => (i.kind === 'unknown' && i.coef != null && i.coef !== 1) || (i.kind === 'weight' && i.value < 0));
-    const x0 = P.x ?? (cX(L0) !== cX(R0) ? (sumW(R0) - sumW(L0)) / (cX(L0) - cX(R0)) : 1);
+    const x0 = P.x ?? (cX(L0) !== cX(R0) ? (sumW(R0) + otherMass(R0) - sumW(L0) - otherMass(L0)) / (cX(L0) - cX(R0)) : 1);
     const xOf = () => { const p = (I && I.state().params) || {}; return Number.isFinite(+p.x) && p.x != null ? +p.x : x0; };
     const k = P.k ?? 3;
-    const mass = (l) => sumW(l) + cX(l) * xOf();
+    const xFor = (it) => (it.label === xLabel ? (it.value ?? xOf()) : null);
+    const mass = (l) => { const P2 = (I && I.state().params) || {}; return sumW(l) + l.filter(i => i.kind === 'unknown' && i.label === xLabel).reduce((s, i) => s + (i.coef ?? 1) * xFor(i), 0) + otherMass(l, P2); };
     const tiltOf = (l, r) => Math.max(-15, Math.min(15, k * (mass(r) - mass(l))));
     /* An unknown block's label: x, −x, 3x, ½x written in TeX */
-    const coefTex = (c) => { if (c === 1) return xLabel; if (c === -1) return '-' + xLabel; const f = Z.grade && Z.grade.fmtFrac ? Z.grade.fmtFrac(Math.abs(c), 12) : String(Math.abs(c)); const m = f.match(/^(\d+)\/(\d+)$/); return (c < 0 ? '-' : '') + (m ? `\\tfrac{${m[1]}}{${m[2]}}` : f) + xLabel; };
+    const coefTex = (c, lab = xLabel) => { if (c === 1) return lab; if (c === -1) return '-' + lab; const f = Z.grade && Z.grade.fmtFrac ? Z.grade.fmtFrac(Math.abs(c), 12) : String(Math.abs(c)); const m = f.match(/^(\d+)\/(\d+)$/); return (c < 0 ? '-' : '') + (m ? `\\tfrac{${m[1]}}{${m[2]}}` : f) + lab; };
     const wText = (v) => (v < 0 ? '−' : '') + C.fmtNum(Math.abs(v), 2);
 
     const W = 540, H = 290, px = 270, py = 80, arm = 190, drop = 108, B = 32, gap = 4, perRow = 4;
@@ -58,7 +66,7 @@
     const mkItem = (it) => {
       const wide = widthOf(it);
       const grp = svg('g', { class: `cv-obj cv-blk cv-blk-${it.kind}${it.kind === 'weight' && it.value < 0 ? ' is-neg' : ''}`, 'data-id': it.id, 'data-tap': '', 'data-label': it.kind === 'unknown' ? `Unknown ${it.label}` : `Weight ${it.value}` }, [svg('rect', { class: 'cv-body', x: -wide / 2, y: -B, width: wide, height: B, rx: 5 })]);
-      const txt = it.kind === 'unknown' ? C.label(0, -B / 2, coefTex(it.coef ?? 1), { tex: true, w: wide, h: B, cls: 'cv-xlab' }) : C.label(0, -B / 2 + 0.5, wText(it.value), { size: 14, cls: 'cv-wlab' });
+      const txt = it.kind === 'unknown' ? C.label(0, -B / 2, coefTex(it.coef ?? 1, it.label), { tex: true, w: wide, h: B, cls: 'cv-xlab' }) : C.label(0, -B / 2 + 0.5, wText(it.value), { size: 14, cls: 'cv-wlab' });
       grp.append(txt); itemG.append(grp);
       return { grp, txt, it, side: null, local: null, o: 0, coef: it.coef ?? 1 };
     };
@@ -115,9 +123,12 @@
     const isSigned = () => signed || [...cur()[0], ...cur()[1]].some(i => (i.kind === 'unknown' && (i.coef ?? 1) !== 1) || (i.kind === 'weight' && i.value < 0));
     /* Signed pans collapse to one unknown block (total coefficient) and one weight block (total) */
     const collapse = (list, side) => {
-      const u = cX(list), w = +sumW(list).toFixed(10), out = [];
-      const uid = (list.find(i => i.kind === 'unknown') || {}).id || `${side}-x`, wid = (list.find(i => i.kind === 'weight') || {}).id || `${side}-w`;
-      if (Math.abs(u) > 1e-9) out.push({ id: uid, kind: 'unknown', label: xLabel, ...(u !== 1 ? { coef: u } : {}) });
+      const w = +sumW(list).toFixed(10), out = [];
+      labelsOf(list).forEach(lab => {
+        const u = cX(list, lab), first = list.find(i => i.kind === 'unknown' && i.label === lab) || {};
+        if (Math.abs(u) > 1e-9) out.push({ id: first.id || `${side}-${lab}`, kind: 'unknown', label: lab, ...(u !== 1 ? { coef: u } : {}), ...(first.value != null ? { value: first.value } : {}) });
+      });
+      const wid = (list.find(i => i.kind === 'weight') || {}).id || `${side}-w`;
       if (Math.abs(w) > 1e-9) out.push({ id: wid, kind: 'weight', value: w });
       return out;
     };
@@ -153,9 +164,11 @@
       if (I.locked()) return { ok: false, reason: 'locked' };
       const [l, r] = cur();
       if (typeof n === 'string' && isNaN(+n)) {
-        if (isSigned()) return commit(collapse([...l, { kind: 'unknown', coef: -1 }], 'l'), collapse([...r, { kind: 'unknown', coef: -1 }], 'r'), { op: 'remove-both', n });
-        if (!nX(l) || !nX(r)) return { ok: false, reason: 'no-unknown' };
-        const drop1 = (list) => { const i = list.map(x => x.kind).lastIndexOf('unknown'); return list.filter((_, k) => k !== i); };
+        /* one unknown of that label (any label when it is not on the pans, for "x" as the generic unknown) */
+        const lab = labelsOf(l, r).includes(n) ? n : xLabel;
+        if (isSigned()) { const ref = [...l, ...r].find(i => i.kind === 'unknown' && i.label === lab) || {}; const neg = { kind: 'unknown', label: lab, coef: -1, ...(ref.value != null ? { value: ref.value } : {}) }; return commit(collapse([...l, neg], 'l'), collapse([...r, neg], 'r'), { op: 'remove-both', n }); }
+        if (!nX(l, lab) || !nX(r, lab)) return { ok: false, reason: 'no-unknown' };
+        const drop1 = (list) => { const i = list.map(x => (x.kind === 'unknown' && x.label === lab ? 'u' : '')).lastIndexOf('u'); return list.filter((_, k) => k !== i); };
         return commit(drop1(l), drop1(r), { op: 'remove-both', n: n });
       }
       n = +n;
@@ -174,10 +187,10 @@
         return commit(div(l, 'l'), div(r, 'r'), { op: d === 2 ? 'halve-both' : 'divide-both', n: d });
       }
       if (!(d > 1)) return { ok: false, reason: 'bad-number' };
-      if (nX(l) % d || nX(r) % d) return { ok: false, reason: 'uneven' };
+      if (labelsOf(l, r).some(lab => nX(l, lab) % d || nX(r, lab) % d)) return { ok: false, reason: 'uneven' };
       const div = (list) => {
-        const us = list.filter(i => i.kind === 'unknown'), ws = list.filter(i => i.kind === 'weight');
-        const keepU = us.slice(0, us.length / d);
+        const ws = list.filter(i => i.kind === 'weight');
+        const keepU = labelsOf(list).flatMap(lab => { const us = list.filter(i => i.kind === 'unknown' && i.label === lab); return us.slice(0, us.length / d); });
         const each = ws.every(i => Math.abs(i.value / d - Math.round(i.value / d)) < 1e-9);
         const nw = each ? ws.map(i => ({ ...i, value: i.value / d })) : ws.length ? [{ ...ws[0], value: +(sumW(list) / d).toFixed(10) }] : [];
         return [...keepU, ...nw];
