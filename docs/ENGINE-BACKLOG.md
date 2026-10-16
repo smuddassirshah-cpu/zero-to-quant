@@ -309,3 +309,10 @@ Raised later (terminal level 3):
 112. Playthrough: on a `code` screen, wait for "Python ready" before `check()`; never reveal and move on silently; count a null check as a failure.
 113. Code widget results header: let long test calls wrap (`.lsn-ic` nowrap inside `.wd-res-h`).
 114. After item 109 lands, also convert the `_getframe` tests in terminal l12, review-3 and homework-3 to `compare: "stdout"`.
+
+Raised later (first-python level 2):
+
+115. `player.js` `resetFor`: on Start over and demonstrate reset, restore the authored initial state rather than emptying unset keys (array cells blank otherwise).
+116. `table` canvas: inline code in cells (`mode: "code"` monospaced listing with line numbers).
+117. `graph`: node `shape` (circle, diamond, rect) and multi-line labels; tap mode on edges.
+118. `table` widget: grade text cells (`answer: "True"`, case-insensitive) as well as numbers.
