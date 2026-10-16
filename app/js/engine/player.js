@@ -126,7 +126,7 @@
     const mode = o.mode || 'lesson';
     const w = spec.widget || (spec.kind === 'longform' ? { ...spec, kind: 'longform' } : null);
     const type = spec.type || (mode === 'lesson' ? 'problem' : 'item');
-    const bound = w && (BOUND.has(w.kind) || (w.kind === 'slider' && w.bind));
+    const bound = w && (BOUND.has(w.kind) || (w.kind === 'slider' && w.bind) || (w.kind === 'place' && w.mode === 'boxes'));
     const el = Z.h(`<section class="lsn-step lsn-t-${Z.esc(type)}"></section>`);
     const add = (html) => { const n = typeof html === 'string' ? Z.h(html) : html; el.append(n); return n; };
     const rng = o.rng || rngFrom(hash((o.key || '') + JSON.stringify(spec.widget || {}).length));
@@ -142,6 +142,7 @@
       if (w.kind === 'tap-regions') return k === 'grid' ? 'Tap a cell to shade it' : k === 'venn' ? 'Tap a region to shade it' : k === 'tree' ? 'Tap a branch to pick it' : 'Tap to select';
       if (w.kind === 'drag-point') return 'Drag the point';
       if (w.kind === 'sketch') return 'Drag the control points';
+      if (w.kind === 'place') return 'Drag the items into the containers';
       return '';
     };
     const cbarHTML = (cap) => `<div class="lsn-cbar"><span class="t-caption lsn-cap">${Z.esc(cap || '')}</span>${mode === 'lesson' && w ? '<button type="button" class="link-btn lsn-so" disabled>Start over</button>' : ''}</div>`;

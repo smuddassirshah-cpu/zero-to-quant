@@ -8,7 +8,9 @@
    (or one list) names groups that are; either slot or position then accepts any member of the group.
    mode "boxes": no tokens or slots of its own; the learner drags the items of the screen's `boxes` canvas into its
    containers. `answer: { "<container>": [itemIds] }` lists what each named container must hold (in any order; with
-   `ordered: true` in that order); key = the first item out of place. Items left out of `answer` may be anywhere. */
+   `ordered: true` in that order); key = the first item out of place. Items left out of `answer` may be anywhere.
+   `count: { "<container>": n }` asks only for how many items a container holds (key "count-<container>"), and
+   `free: true` accepts any arrangement once the learner has moved an item (an explore task). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -30,6 +32,8 @@
     const where = () => { const w = {}; Object.entries(contents()).forEach(([c, list]) => list.forEach(id => { w[id] = c; })); return w; };
     const misplaced = () => {
       const c = contents(), w = where();
+      if (spec.free) return null;
+      for (const [cid, n] of Object.entries(spec.count || {})) if ((c[cid] || []).length !== +n) return 'count-' + cid;
       for (const [cid, list] of Object.entries(want)) {
         const have = c[cid] || [];
         const extra = have.find(id => !list.includes(id)); if (extra) return extra;
@@ -44,7 +48,14 @@
       el,
       value: () => contents(),
       set(v) { placeAll(v); moved = true; ctx.change && ctx.change({ set: true }); },
-      answer: () => JSON.parse(JSON.stringify(want)),
+      /* the authored answer; with count only, the first n items not yet there are moved into each counted container */
+      answer: () => {
+        if (Object.keys(want).length || !spec.count) return JSON.parse(JSON.stringify(want));
+        const c = contents(), out = {}, used = new Set();
+        Object.entries(spec.count).forEach(([cid, n]) => { const have = (c[cid] || []).slice(0, +n); have.forEach(id => used.add(id)); out[cid] = have; });
+        Object.entries(spec.count).forEach(([cid, n]) => { const pool = Object.entries(c).filter(([k]) => !(k in spec.count)).flatMap(([, l]) => l).filter(id => !used.has(id)); while (out[cid].length < +n && pool.length) { const id = pool.shift(); used.add(id); out[cid].push(id); } });
+        return out;
+      },
       ready: () => moved,
       dirty: () => moved,
       grade() { const k = misplaced(); return { ok: !k, key: k, detail: { contents: contents() } }; },
@@ -58,7 +69,7 @@
         const bad = inNamed.filter(([id, cid]) => !(want[cid] || []).includes(id)).map(([id]) => id);
         mark(good, res && res.ok ? 'is-correct' : 'is-dim'); mark(bad, 'is-notyet');
       },
-      reveal() { cv.unmark && cv.unmark(); placeAll(want); mark(Object.values(want).flat(), 'is-reveal'); cv.lock && cv.lock(true); },
+      reveal() { cv.unmark && cv.unmark(); placeAll(Object.keys(want).length ? want : this.answer()); mark(Object.values(want).flat(), 'is-reveal'); cv.lock && cv.lock(true); },
       reset() { cv.unmark && cv.unmark(); cv.lock && cv.lock(false); cv.set({ move: null, draw: [] }, { instant: true }); placeAll(start, { instant: true }); moved = false; },
       focus() { const n = cv.el.querySelector('.cv-handle[tabindex="0"]'); if (n) n.focus({ preventScroll: true }); },
       destroy() { if (cv.enable) cv.enable(null); },

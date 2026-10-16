@@ -48,7 +48,8 @@
       const b = box.get(cid), g = b.g, lineish = b.c.kind === 'hand' || b.c.kind === 'row';
       const col = k % g.cols, row = Math.floor(k / g.cols);
       const ix = b.x + g.padX + (col + 0.5) * pitchX;
-      const iy = lineish ? b.y + g.padTop + (row + 0.5) * pitchY : b.y + g.padTop + g.ih - (row + 0.5) * pitchY;
+      const fromTop = b.c.fill === 'top' || (lineish && b.c.fill !== 'bottom'); // fill: "top" | "bottom" (default: top for hand and row, bottom for the rest)
+      const iy = fromTop ? b.y + g.padTop + (row + 0.5) * pitchY : b.y + g.padTop + g.ih - (row + 0.5) * pitchY;
       return { x: ix, y: iy };
     };
 

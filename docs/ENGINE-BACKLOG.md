@@ -256,3 +256,10 @@ Raised later (trig level 3):
 
 87. `plane`: `xStep`/`yStep` tick spacing parameters (degree axes at 90, month axes at 3).
 88. `circle`: angle label collides with the cos label in the fourth quadrant; sin label touches the circle at small angles.
+
+Raised later (series level 3):
+
+89. `grid`: `state.cells` (or `values`) override so a patch can fill a cell during an explanation.
+90. `derive` validation: allow `=` inside string literals in caption expressions.
+91. Longform model answers and prose: wrap or scroll long display maths at narrow widths.
+92. `boxes` `box` container: close the top edge (cosmetic).

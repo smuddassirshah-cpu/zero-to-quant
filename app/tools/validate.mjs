@@ -259,7 +259,10 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         if (!canvas || canvas.kind !== 'boxes') err(file, where, 'place mode "boxes" needs a boxes canvas');
         const conts = (canvas && Array.isArray((canvas.params || {}).containers) ? canvas.params.containers : []).filter(isObj);
         const cids = new Set(conts.map(c => c.id)), iids = new Set(conts.flatMap(c => (Array.isArray(c.items) ? c.items : []).filter(isObj).map(i => i.id)));
-        if (!isObj(w.answer) || !Object.keys(w.answer).length) err(file, `${where}.answer`, 'answer maps container ids to the item ids each must hold');
+        if (w.count != null && (!isObj(w.count) || Object.values(w.count).some(n => !Number.isInteger(n) || n < 0))) err(file, `${where}.count`, 'count maps container ids to whole numbers');
+        else if (isObj(w.count)) Object.keys(w.count).forEach(c => { if (canvas && !cids.has(c)) err(file, `${where}.count`, `container "${c}" is not on the boxes canvas`); keys.add('count-' + c); });
+        if (w.answer == null && (w.free || isObj(w.count))) { /* free or count only: no answer needed */ }
+        else if (!isObj(w.answer) || !Object.keys(w.answer).length) err(file, `${where}.answer`, 'answer maps container ids to the item ids each must hold (or give count, or free: true)');
         else Object.entries(w.answer).forEach(([c, list]) => {
           if (canvas && !cids.has(c)) err(file, `${where}.answer`, `container "${c}" is not on the boxes canvas`);
           list.forEach(id => { if (canvas && !iids.has(id)) err(file, `${where}.answer.${c}`, `item "${id}" is not on the boxes canvas`); });
@@ -488,7 +491,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     }
     if (s.type === 'explore') {
       if (!s.canvas) err(file, `${at}.canvas`, 'an explore screen needs a canvas');
-      else if (!(s.canvas.controls || []).length && !(s.widget && CANVAS_BOUND.has(s.widget.kind)) && !authorMovable(s.canvas)) err(file, `${at}.canvas`, 'an explore screen needs an interactive canvas (controls or a canvas-bound widget)');
+      else if (!(s.canvas.controls || []).length && !(s.widget && (CANVAS_BOUND.has(s.widget.kind) || (s.widget.kind === 'place' && s.widget.mode === 'boxes'))) && !authorMovable(s.canvas)) err(file, `${at}.canvas`, 'an explore screen needs an interactive canvas (controls or a canvas-bound widget)');
       if (!s.widget) err(file, `${at}.widget`, 'an explore screen ends with one observation question');
       else checkFeedback(file, `${at}.feedback`, s.feedback, keys);
       checkHints(file, `${at}.hints`, s.hints, s.canvas, false);

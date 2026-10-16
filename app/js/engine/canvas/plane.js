@@ -206,8 +206,12 @@
     const intTicks = (t, lo, hi, px) => { if (t.step >= 1 && t.ticks.every(Number.isInteger)) return t; const n = Math.floor(hi) - Math.ceil(lo) + 1, every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(px / 34)))); const ticks = []; for (let v = Math.ceil(lo); v <= hi; v++) if ((v - Math.ceil(lo)) % every === 0) ticks.push(v); return { ticks, step: every }; };
     let xt = ticksFor(sx.domain[0], sx.domain[1], px1 - px0, { minGap: 40 });
     if (o.xTicks === 'integer') xt = intTicks(xt, sx.domain[0], sx.domain[1], px1 - px0);
+    /* xStep / yStep: ticks (and grid lines) at every multiple of the step, such as 90 for degrees or 3 for months */
+    const stepTicks = (lo, hi, st) => { const ticks = []; for (let v = Math.ceil(lo / st - 1e-9) * st, k = 0; v <= hi + 1e-9 && k < 200; v += st, k++) ticks.push(+v.toFixed(10)); return { ticks, step: st }; };
+    if (o.xStep > 0) xt = stepTicks(sx.domain[0], sx.domain[1], +o.xStep);
     let yt = sy.log ? logTicks(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 26 }) : ticksFor(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 34 });
     if (o.yTicks === 'integer' && !sy.log) yt = intTicks(yt, sy.domain[0], sy.domain[1], py0 - py1);
+    if (o.yStep > 0 && !sy.log) yt = stepTicks(sy.domain[0], sy.domain[1], +o.yStep);
     const ax = !sy.log && sy.domain[0] <= 0 && sy.domain[1] >= 0 ? sy(0) : py0; // x axis pixel y
     const ay = sx.domain[0] <= 0 && sx.domain[1] >= 0 ? sx(0) : px0; // y axis pixel x
     const gg = svg('g', { class: 'cvb-axes' });
@@ -602,7 +606,7 @@
         const px0 = m.l, px1 = size.w - m.r, py0 = size.h - m.b, py1 = m.t;
         /* axes: false draws no axes, ticks or grid (a geometry figure) */
         const fmtYp = params.yFormat === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || '£') + K.fmtTick(Math.abs(v), st) : null;
-        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp, xTicks: params.xTicks, yTicks: params.yTicks });
+        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp, xTicks: params.xTicks, yTicks: params.yTicks, xStep: params.xStep, yStep: params.yStep });
         const fixed = axInfo.boxes.slice();
         if (params.axes !== false) { const ax = !sy.log && yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
         const clip = R.clipRect(px0, py1 - 2, px1 - px0, py0 - py1 + 4);
