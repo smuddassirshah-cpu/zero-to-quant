@@ -81,6 +81,7 @@
     /* Label layout, from the target positions: side per label, then tiers so no two labels overlap. Offsets are from
        the point (or from the interval's bar) in px; above-band labels share one row and stack upwards by 18px. */
     const near = (a, b) => Math.abs(a - b) < 1e-9;
+    const setSlot = (el, k) => { for (let i = 1; i <= 6; i++) el.classList.toggle('cv-k' + i, i === k); };
     const rowOf = (iv, k) => (Number.isInteger(iv.row) && iv.row >= 0 ? iv.row : k); // row 0 sits on the axis
     const estW = (t) => { const x = C.texOf(t); return x.tex ? Math.min(80, C.textW(x.src.replace(/\\[a-zA-Z]+|[{}^_]/g, ''), 13) + 14) : C.textW(String(x.src), 13, 600) + 10; };
     const layout = (P2, I2, A2) => {
@@ -145,6 +146,7 @@
           e.g.append(e.bar, e.a, e.b, e.lab); intG.append(e.g); ints.set(iv.id, e); e.fresh = true;
         }
         e.row = rowOf(iv, k); e.spec = iv;
+        setSlot(e.g, Math.min(6, Math.max(1, iv.colour || k + 1))); // colour: a series slot 1 to 6, patchable
       });
       for (const [id, e] of ints) if (!seenI.has(id)) { e.g.remove(); ints.delete(id); }
 
@@ -168,7 +170,7 @@
         e.from = e.fresh ? p.x : e.x; e.to = p.x; e.spec = p;
         e.drag = isDraggable(p);
         e.g.classList.toggle('cv-handle', e.drag);
-        e.g.classList.toggle('cv-k' + Math.min(6, p.colour || 1), !!p.colour);
+        setSlot(e.g, p.colour ? Math.min(6, Math.max(1, +p.colour)) : 0);
         const L = lay.pt[p.id];
         e.lab.replaceChildren(p.label && L ? C.label(L.dx, L.below ? belowY() + L.dy : L.dy, p.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 30, anchor: L.anchor }) : '');
         if (e.drag && I.mode() === 'drag' && !I.isStatic) { e.g.setAttribute('tabindex', '0'); e.g.setAttribute('role', 'slider'); e.g.setAttribute('aria-label', p.label || p.id); e.g.setAttribute('aria-valuenow', p.x); }

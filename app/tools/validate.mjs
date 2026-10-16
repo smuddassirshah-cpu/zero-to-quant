@@ -131,8 +131,10 @@ const regionIds = (canvas) => {
     range(1, R2).forEach(i => range(1, C2).forEach(j => ids.add(i >= 10 || j >= 10 ? `c${i}-${j}` : `c${i}${j}`)));
     return ids;
   }
-  if (canvas.kind === 'number-line' && Array.isArray((canvas.state || {}).points)) {
-    return new Set(canvas.state.points.map(q => q && q.id).filter(Boolean)); // tap mode on points
+  if ((canvas.kind === 'number-line' || canvas.kind === 'plane') && Array.isArray((canvas.state || {}).points)) {
+    const ids = new Set(canvas.state.points.map(q => q && q.id).filter(Boolean)); // tap mode on points
+    if (canvas.kind === 'plane') { (canvas.state.segments || []).concat(canvas.state.vectors || [], canvas.state.vlines || [], canvas.state.hlines || [], (canvas.params || {}).functions || []).forEach(q => { if (isObj(q) && q.id) ids.add(q.id); }); ['tangent', 'area', 'riemann', 'target', 'sketch'].forEach(k => ids.add(k)); }
+    return ids;
   }
   if (canvas.kind === 'table' && Array.isArray(p.rows)) {
     const r = p.rows.length, c = Array.isArray(p.columns) ? p.columns.length : (p.rows[0] || []).length, ids = new Set();

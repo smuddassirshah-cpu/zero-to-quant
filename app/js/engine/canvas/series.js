@@ -38,7 +38,9 @@
       ? (i) => { const d = dates[Math.round(i)]; if (!d) return ''; const span = (dates[dates.length - 1] - dates[0]) / 864e5; return span > 300 ? MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2) : d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
       : (i) => K.fmt(i + (params.indexFrom || 0), 2);
     const idxOf = (v) => { if (typeof v === 'number') return v; if (dates && typeof v === 'string') { const t = new Date(v + (v.length <= 10 ? 'T00:00:00Z' : '')).getTime(); let best = 0; dates.forEach((d, i) => { if (Math.abs(d - t) < Math.abs(dates[best] - t)) best = i; }); return best; } return 0; };
-    const drawdown = (vals) => { let peak = 0, best = { dd: 0, from: 0, to: 0 }; vals.forEach((v, i) => { if (v > vals[peak]) peak = i; const dd = (vals[peak] - v) / vals[peak]; if (dd > best.dd) best = { dd, from: peak, to: i }; }); return best; };
+    /* Maximum drawdown: the largest fall from a running peak, as a share of the peak (abs: true measures the fall itself,
+       for cumulative P&L that starts at zero) */
+    const drawdown = (vals, abs = false) => { let peak = -1, best = { dd: 0, fall: 0, from: 0, to: 0 }; vals.forEach((v, i) => { if (!Number.isFinite(v)) return; if (peak < 0 || v > vals[peak]) peak = i; const fall = vals[peak] - v, dd = abs ? fall : vals[peak] ? fall / vals[peak] : 0; if (dd > best.dd) best = { dd, fall, from: peak, to: i }; }); return best; };
 
     const def = {
       kind: 'series', aria: params.aria || 'Time series chart',
@@ -57,7 +59,13 @@
         const fixed = [];
         /* shaded ranges, drawdown and the window behind the lines */
         const shades = [].concat(view.shade || []);
-        if (view.drawdown && list[0]) { const dd = drawdown(valuesOf(list[0])); if (dd.dd > 0) shades.push({ id: 'drawdown', from: dd.from, to: dd.to, label: (params.drawdownLabel || 'Max drawdown') + ' −' + K.fmt(dd.dd * 100, 1) + '%', tone: 'neg' }); }
+        /* drawdown: true labels the fall as a percentage of the peak; drawdown: "money" (or "abs") labels the absolute fall in
+           the series' money format, for P&L that starts at zero */
+        if (view.drawdown && list[0]) {
+          const abs = view.drawdown === 'money' || view.drawdown === 'abs', dd = drawdown(valuesOf(list[0]), abs);
+          const amount = view.drawdown === 'money' ? '−' + (money || '£') + num(dd.fall, 2) : abs ? '−' + num(dd.fall, 2) : '−' + K.fmt(dd.dd * 100, 1) + '%';
+          if (dd.dd > 0) shades.push({ id: 'drawdown', from: dd.from, to: dd.to, label: (params.drawdownLabel || 'Max drawdown') + ' ' + amount, tone: 'neg' });
+        }
         shades.forEach((s, i) => {
           const a = sx(idxOf(s.from)), b = sx(idxOf(s.to)), o = K.obj(s.id || 'shade' + i, '', s.tone === 'neg' ? 'neg' : s.tone === 'pos' ? 'pos' : 'muted');
           o.append(K.washRect(a, y1, b - a, y0 - y1, 0), svg('rect', { x: a, y: y1, width: Math.max(1, b - a), height: y0 - y1, class: 'cvb-shade' }));
@@ -116,7 +124,7 @@
         for (const l of labels) over.append(K.lab(l.x, l.y, l.text, { anchor: l.anchor, halo: true, cls: 'cvb-strong' }));
       },
       methods: (R) => ({
-        maxDrawdown: (id) => { const s = list.find((q) => q.id === id) || list[0]; return s ? drawdown(valuesOf(s)) : null; },
+        maxDrawdown: (id, abs) => { const s = list.find((q) => q.id === id) || list[0]; return s ? drawdown(valuesOf(s), !!abs) : null; },
       }),
     };
     return K.make(host, params, ctx, def);

@@ -525,8 +525,14 @@
 
   C.register('plane', (host, params, ctx) => {
     const K = Z.cvb;
-    const xr = params.x || [-5, 5], yr = params.y || [-5, 5];
+    let xr = params.x || [-5, 5], yr = params.y || [-5, 5];
     const size = sizeOf(params);
+    /* equal: true with a height: keep the height and widen the x or y range about its centre so units stay square */
+    if (params.equal && params.height) {
+      const pw = size.w - 28, ph = size.h - 28, k = pw / ph, sx0 = xr[1] - xr[0], sy0 = yr[1] - yr[0];
+      if (sx0 / sy0 < k) { const c = (xr[0] + xr[1]) / 2, h = sy0 * k / 2; xr = [c - h, c + h]; }
+      else { const c = (yr[0] + yr[1]) / 2, h = sx0 / k / 2; yr = [c - h, c + h]; }
+    }
     const exprParams = (view) => ({ ...(params.params || {}), ...(view.params || {}) });
 
     const geom = (R) => {
@@ -554,10 +560,12 @@
       const p = (view.points || []).find((q) => q.id === ref); return p ? [p.x, p.y] : [0, 0];
     };
     const deriv = (f, x) => { const h = Math.max(1e-6, (xr[1] - xr[0]) * 1e-5); return (f(x + h) - f(x - h)) / (2 * h); };
+    /* One-sided slopes, to find a corner (a piecewise-linear function at its join) */
+    const sides = (f, x) => { const h = Math.max(1e-6, (xr[1] - xr[0]) * 1e-5); return [(f(x) - f(x - h)) / h, (f(x + h) - f(x)) / h]; };
 
     const def = {
       kind: 'plane', aria: params.aria || 'Coordinate plane',
-      modes: ['drag', 'slider', 'sketch'],
+      modes: ['drag', 'slider', 'sketch', 'tap'],
       size: () => size,
       listKeys: ['points', 'vectors', 'segments'],
       init: () => ({ points: [], segments: [], vectors: [], params: { ...(params.params || {}) }, highlight: [], showTarget: false }),
@@ -656,7 +664,7 @@
             } else ly = sy(f(lx));
             /* labelSide "above" (default) or "below" the curve, and labelOffset [dx, dy] in px to nudge it */
             const off = Array.isArray(fd.labelOffset) ? fd.labelOffset : [0, 0];
-            if (lx != null && Number.isFinite(ly)) labels.push({ x: sx(lx) + (+off[0] || 0), y: ly + (fd.labelSide === 'below' ? 14 : -12) + (+off[1] || 0), text: fd.label, id });
+            if (lx != null && Number.isFinite(ly)) labels.push({ x: sx(lx) + (+off[0] || 0), y: ly + ((fd.labelSide || fd.labelPos) === 'below' ? 14 : -12) + (+off[1] || 0), text: fd.label, id });
           }
         }
 
@@ -664,8 +672,13 @@
         for (const tg of [].concat(view.tangent || [])) {
           const f = fns[tg.f]; if (!f) continue;
           const x0 = typeof tg.x === 'string' ? pointXY(view, tg.x)[0] : tg.x;
-          const y0 = f(x0), mm = deriv(f, x0); if (!Number.isFinite(y0) || !Number.isFinite(mm)) continue;
-          const half = tg.length ? tg.length / 2 : null;
+          const y0 = f(x0); let mm = deriv(f, x0); if (!Number.isFinite(y0) || !Number.isFinite(mm)) continue;
+          /* at a corner the two one-sided slopes differ: use the side asked for (side: "left" | "right"), else draw none */
+          const [sl, sr] = sides(f, x0);
+          if (Math.abs(sl - sr) > 1e-3 * Math.max(1, Math.abs(sl), Math.abs(sr))) { if (tg.side === 'left') mm = sl; else if (tg.side === 'right') mm = sr; else continue; }
+          /* length in x units, or lengthPx in pixels along the line */
+          const pxPerX = Math.hypot(sx(1) - sx(0), mm * (sy(0) - sy(1)));
+          const half = tg.lengthPx ? (tg.lengthPx / 2) * Math.sqrt(1 + mm * mm) / (pxPerX || 1) : tg.length ? tg.length / 2 : null;
           const xa = half ? x0 - half / Math.sqrt(1 + mm * mm) : xr[0], xb = half ? x0 + half / Math.sqrt(1 + mm * mm) : xr[1];
           const o = K.obj(tg.id || 'tangent', 'cvb-tangent', tg.colour || 'ink');
           const d = `M${sx(xa)},${sy(y0 + mm * (xa - x0))}L${sx(xb)},${sy(y0 + mm * (xb - x0))}`;
@@ -674,6 +687,18 @@
           if (tg.label) {
             const text = tg.label === 'slope' || tg.label === true ? 'slope ' + K.fmt(mm, tg.dp ?? 2) : String(tg.label).replace('{slope}', K.fmt(mm, tg.dp ?? 2));
             labels.push({ x: sx(x0) + 10, y: sy(y0) + (mm > 0 ? 16 : -16), text, anchor: 'start', id: tg.id || 'tangent' });
+          }
+        }
+
+        /* Reference lines x = a and y = b: vlines [{ id, x, label, dashed, colour }], hlines [{ id, y, ... }] */
+        for (const [list, vert] of [[view.vlines || params.vlines || [], true], [view.hlines || params.hlines || [], false]]) {
+          for (const l of list) {
+            const v = vert ? l.x : l.y; if (!Number.isFinite(+v)) continue;
+            const o = K.obj(l.id || (vert ? 'x' : 'y') + '=' + v, 'cvb-seg', l.colour || 'ink');
+            const d = vert ? `M${sx(+v)},${py0}L${sx(+v)},${py1}` : `M${px0},${sy(+v)}L${px1},${sy(+v)}`;
+            o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (l.dashed !== false ? ' cvb-dash thin' : '') }));
+            plot.append(o);
+            if (l.label) labels.push(vert ? { x: sx(+v) + 6, y: py1 + 12, text: l.label, anchor: 'start', id: l.id } : { x: px1 - 4, y: sy(+v) - 10, text: l.label, anchor: 'end', id: l.id });
           }
         }
 
@@ -727,7 +752,8 @@
           o.append(K.washCircle(x, y, p.drag ? 15 : 11));
           if (p.drag && R.active() && (R.mode == null || R.mode === 'drag' || R.mode === 'slider')) o.append(K.handle(x, y, p.id, { label: p.ariaLabel || `Point ${p.label || p.id}` }));
           else if (p.drag) o.append(svg('circle', { cx: x, cy: y, r: 10, class: 'cvb-hd-o' }), svg('circle', { cx: x, cy: y, r: 7, class: 'cvb-hd' }));
-          else o.append(svg('circle', { cx: x, cy: y, r: 4.5, class: 'cvb-dot' + (p.open ? ' open' : '') }));
+          else o.append(svg('circle', { cx: x, cy: y, r: R.mode === 'tap' ? 6 : 4.5, class: 'cvb-dot' + (p.open ? ' open' : '') + (R.mode === 'tap' ? ' cv-body' : '') }));
+          if (R.mode === 'tap' && !p.drag) { o.append(svg('circle', { cx: x, cy: y, r: 16, class: 'cvb-tapbox', fill: 'transparent' })); R.tappable(o, p.id, p.ariaLabel || `Point ${p.label || p.id} at (${K.fmt(p.x, 2)}, ${K.fmt(p.y, 2)})`); }
           over.append(o);
           if (p.label) {
             const pos = p.labelPos || 'ne', dx = pos.includes('e') ? 12 : pos.includes('w') ? -12 : 0, dy = pos.includes('n') ? -13 : pos.includes('s') ? 14 : 0;
@@ -797,7 +823,7 @@
       x = K.clamp(x, xr[0], xr[1]); y = K.clamp(y, yr[0], yr[1]);
       if (pt.snap) { x = K.snapTo(x, pt.snap); y = K.snapTo(y, pt.snap); }
       if (pt.snapX) x = K.snapTo(x, pt.snapX);
-      if (pt.on) { const f = evaluator(R.state)[pt.on]; if (f) y = f(x); }
+      if (pt.on) { const f = evaluator(R.state)[pt.on]; if (f) { const dom = f.def && f.def.domain; if (dom) x = K.clamp(x, dom[0], dom[1]); y = f(x); } } // a point on f stays inside f's domain
       if (pt.lockX) x = pt.x; if (pt.lockY) y = pt.y;
       x = K.round(x, 6); y = K.round(y, 6);
       R.commit({ points: { [id]: { x, y } } });

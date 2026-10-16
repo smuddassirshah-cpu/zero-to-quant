@@ -88,6 +88,17 @@ Second pass (items 24 to 39):
 37. Done: number-line interval rows 16px apart with `row`; a side label on a ray sits above it at the edge.
 38. Done: keyed list patches in `ZQ.canvas.merge`, so explain, option and step patches merge by id on every kind.
 39. Done: number-line points are plain dots unless `drag: true` or a drag-point widget lists them; never handles in tap mode or a static copy.
+40. Done: balance unknowns of several kinds (own `label`, hidden `value`); one remove chip per label; targets name labels; solver and validator follow.
+41. Done: same as 25; `labelPos` is accepted as an alias of `labelSide` on plane function labels.
+42. Done: boxes without a `hand` show the band above the containers only while an item is drawn.
+43. Done: plane `vlines` and `hlines` with ids and labels; a point `on: "f"` stays inside f's `domain` when dragged.
+44. Done: plane `equal: true` with `height` keeps the height and widens the shorter range so units stay square.
+45. Done: number-line `colour` on points and intervals, now patchable (the old slot class is replaced).
+46. Done: `derive` helpers `fixed(v, d)` and `money(v, symbol)`; `(expr).toFixed(2)` and ternaries documented.
+47. Done: plane tap mode on points, so `tap-regions` takes plane point ids (validator knows them).
+48. Done: the validator accepts an explore screen whose interaction is a `drag: true` point (or vectors in `state.drag`, or a `sim`); the controls plus derive pattern is documented.
+49. Done: plane tangent at a corner is not drawn unless `side` picks a one-sided slope; `lengthPx` gives a length in pixels.
+50. Done: series `drawdown: "money"` (and `"abs"`) labels the absolute fall; no division by a zero peak.
 
 
 Raised later (equations level 2):
@@ -145,3 +156,8 @@ Raised later (functions level 4):
 54. `ZQ.canvas.compile`: `-x^2` compiles to `-x**2` which JavaScript rejects; wrap unary minus before a power (`(-x)**2` is wrong; want `-(x**2)`), or document `-(x^2)`.
 55. `payoff`: leg labels may overlap the bold combined line; place labels away from it.
 56. Derived numbers in tables and captions: render negatives with a proper minus sign (U+2212).
+
+Raised later (quadratics level 2):
+
+57. `plane` function labels: `labelAnchor` (start|end) and automatic placement clear of other curves and the axes.
+58. `\text{£}` renders in a different face from prose; a `\pounds`-style macro in the KaTeX settings (define `\£` or map `\text{£}` to the sans face).

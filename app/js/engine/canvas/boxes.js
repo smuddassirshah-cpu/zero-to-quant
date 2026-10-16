@@ -98,8 +98,8 @@
       el.set(it.id, { grp, flip, text: flip.querySelector('.cv-itext'), it, pos: null, face: null, scale: 1 });
       C.dragger(grp, fr.svg, {
         start: () => !(I.locked() || I.mode() !== 'drag' || (I.modeOpts().ids && !I.modeOpts().ids.includes(it.id))),
-        move: (p) => { const e = el.get(it.id); e.pos = { x: p.x, y: p.y }; paintItem(e); grp.classList.add('is-lifted'); I.emit('change', { id: it.id, x: p.x, y: p.y, phase: 'move' }); },
-        end: (p) => { grp.classList.remove('is-lifted'); drop(it.id, p); },
+        move: (p0) => { const p = { x: p0.x, y: p0.y + off }; const e = el.get(it.id); e.pos = { x: p.x, y: p.y }; paintItem(e); grp.classList.add('is-lifted'); I.emit('change', { id: it.id, x: p.x, y: p.y, phase: 'move' }); },
+        end: (p0) => { grp.classList.remove('is-lifted'); drop(it.id, { x: p0.x, y: p0.y + off }); },
       });
       grp.addEventListener('keydown', (ev) => {
         if (I.mode() !== 'drag' || I.locked()) return;
@@ -140,7 +140,16 @@
     };
 
     const anim = C.animator();
+    /* Without a hand container the band above the containers (where drawn items wait) shows only while an item is
+       drawn; otherwise the drawing moves up and loses it */
+    let off = -1;
+    const band = (st) => {
+      const want = hand || [...where(st).values()].includes('@drawn') ? 0 : lift;
+      if (want === off) return;
+      off = want; g.setAttribute('transform', `translate(0 ${-off})`); fr.resize(W, H - off);
+    };
     const draw = (st, prev, { instant, ms }) => {
+      band(st);
       const T = targets(st);
       const moves = [];
       for (const [id, e] of el) {

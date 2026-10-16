@@ -394,8 +394,11 @@
      segments, pointers...), "values.<key>" (bars), "params.<name>", "caption" or any other state key or dotted path.
      Expressions are arithmetic over: item ids (p1.x, p1.y), state.params and params.params names, top-level numeric
      state keys (angle, ran), `values` (bars heights by label and id), and abs, min, max, sqrt, pow, exp, log, floor,
-     ceil, round(v, places), pi. A caption (or any string target) fills each {{expression}}. */
-  const DERIVE_FN = { abs: Math.abs, min: Math.min, max: Math.max, sqrt: Math.sqrt, pow: Math.pow, exp: Math.exp, log: Math.log, ln: Math.log, floor: Math.floor, ceil: Math.ceil, sign: Math.sign, pi: Math.PI, round: (v, d = 0) => +(+v).toFixed(d) };
+     ceil, round(v, places), fixed(v, places), money(v, symbol), pi. JavaScript's own (expr).toFixed(2) and ternaries
+     (a ? b : c) work too. A caption (or any string target) fills each {{expression}}. */
+  const DERIVE_FN = { abs: Math.abs, min: Math.min, max: Math.max, sqrt: Math.sqrt, pow: Math.pow, exp: Math.exp, log: Math.log, ln: Math.log, floor: Math.floor, ceil: Math.ceil, sign: Math.sign, pi: Math.PI, round: (v, d = 0) => +(+v).toFixed(d),
+    /* for captions: fixed(v, 2) keeps trailing zeros ("3.50"), money(v) is "£3.50" or "−£3.50" (money(v, "$") for dollars) */
+    fixed: (v, d = 2) => (+v < 0 ? '−' : '') + Math.abs(+v).toFixed(d), money: (v, sym = '£', d = 2) => (+v < 0 ? '−' : '') + sym + Math.abs(+v).toFixed(d) };
   const deriveCache = {};
   const deriveExpr = (src) => {
     if (deriveCache[src]) return deriveCache[src];
