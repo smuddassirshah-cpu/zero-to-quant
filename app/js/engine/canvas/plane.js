@@ -151,12 +151,13 @@
   /* Chart axes (left and bottom, horizontal gridlines). Returns the tick info used. */
   const chartAxes = (g, sx, sy, o = {}) => {
     const [x0, x1] = sx.range, [y0, y1] = sy.range; // y0 bottom pixel, y1 top pixel
-    const yt = o.yTicks || ticksFor(sy.domain[0], sy.domain[1], Math.abs(y0 - y1), { minGap: 30, fmtF: o.fmtY });
+    const yt = o.yTicks || (sy.log ? logTicks(sy.domain[0], sy.domain[1], Math.abs(y0 - y1), { minGap: 24 }) : ticksFor(sy.domain[0], sy.domain[1], Math.abs(y0 - y1), { minGap: 30, fmtF: o.fmtY }));
     const gg = svg('g', { class: 'cvb-axes' });
     for (const v of yt.ticks) {
       const y = sy(v); if (y < y1 - 0.5 || y > y0 + 0.5) continue;
       if (o.grid !== false) gg.append(svg('line', { x1: x0, x2: x1, y1: y, y2: y, class: 'cvb-grid' }));
-      gg.append(txt(x0 - 7, y, o.fmtY ? o.fmtY(v, yt.step) : fmtTick(v, yt.step), { anchor: 'end', cls: 'cvb-tick', size: 12 }));
+      const st = yt.log ? Math.pow(10, Math.floor(Math.log10(v))) : yt.step;
+      gg.append(txt(x0 - 7, y, o.fmtY ? o.fmtY(v, st) : fmtTick(v, st), { anchor: 'end', cls: 'cvb-tick', size: 12 }));
     }
     if (!o.noX) {
       const xt = o.xTicks || ticksFor(sx.domain[0], sx.domain[1], Math.abs(x1 - x0), { minGap: 48, fmtF: o.fmtX });
@@ -175,29 +176,47 @@
     return yt;
   };
   /* Left margin a chart needs for its y tick labels. */
-  const yMargin = (min, max, px, fmtY) => {
-    const t = ticksFor(min, max, px, { minGap: 30, fmtF: fmtY });
+  const yMargin = (min, max, px, fmtY, log = false) => {
+    const t = log ? logTicks(min, max, px, { minGap: 24 }) : ticksFor(min, max, px, { minGap: 30, fmtF: fmtY });
     return 14 + Math.max(...t.ticks.map((v) => tw(fmtY ? fmtY(v, t.step) : fmtTick(v, t.step), 12)));
+  };
+
+  /* Log scale (yScale: "log"): positive values only; ticks at 1, 2 and 5 times powers of ten that fit, thinned to minGap px */
+  const logScale = (domain, range) => {
+    const [d0, d1] = domain.map((v) => Math.log(Math.max(1e-12, v))), [r0, r1] = range, k = (r1 - r0) / ((d1 - d0) || 1);
+    const f = (v) => (v > 0 ? r0 + (Math.log(v) - d0) * k : NaN);
+    f.invert = (p) => Math.exp(d0 + (p - r0) / k); f.domain = domain; f.range = range; f.log = true; return f;
+  };
+  const logTicks = (lo, hi, px, { minGap = 30 } = {}) => {
+    const all = [];
+    for (let e = Math.floor(Math.log10(lo)) - 1; e <= Math.ceil(Math.log10(hi)); e++) [1, 2, 5].forEach((m) => { const v = +(m * Math.pow(10, e)).toPrecision(12); if (v >= lo * (1 - 1e-9) && v <= hi * (1 + 1e-9)) all.push(v); });
+    const perPx = px / (Math.log(hi / lo) || 1);
+    let ticks = all, keep = [1, 2, 5];
+    const gapOk = (list) => list.every((v, i) => i === 0 || (Math.log(v / list[i - 1]) * perPx) >= minGap);
+    if (!gapOk(ticks)) { keep = [1, 5]; ticks = all.filter((v) => keep.includes(+String(v.toExponential()).split('e')[0][0])); }
+    if (!gapOk(ticks)) ticks = all.filter((v) => /^1/.test(v.toExponential()));
+    if (!ticks.length) ticks = [lo, hi];
+    return { ticks, step: Math.pow(10, Math.floor(Math.log10(Math.min(...ticks)))), log: true };
   };
 
   /* Plane axes through the origin (or along the edges), arrowheads at the positive ends. */
   const planeAxes = (g, sx, sy, o = {}) => {
     const [px0, px1] = sx.range, [py0, py1] = sy.range; // py0 bottom
     const xt = ticksFor(sx.domain[0], sx.domain[1], px1 - px0, { minGap: 40 });
-    const yt = ticksFor(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 34 });
-    const ax = sy.domain[0] <= 0 && sy.domain[1] >= 0 ? sy(0) : py0; // x axis pixel y
+    const yt = sy.log ? logTicks(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 26 }) : ticksFor(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 34 });
+    const ax = !sy.log && sy.domain[0] <= 0 && sy.domain[1] >= 0 ? sy(0) : py0; // x axis pixel y
     const ay = sx.domain[0] <= 0 && sx.domain[1] >= 0 ? sx(0) : px0; // y axis pixel x
     const gg = svg('g', { class: 'cvb-axes' });
     if (o.grid !== false) {
       const gx = typeof o.grid === 'number' ? C.niceTicks(sx.domain[0], sx.domain[1], Math.round((sx.domain[1] - sx.domain[0]) / o.grid)) : xt.ticks;
-      const gy = typeof o.grid === 'number' ? C.niceTicks(sy.domain[0], sy.domain[1], Math.round((sy.domain[1] - sy.domain[0]) / o.grid)) : yt.ticks;
+      const gy = typeof o.grid === 'number' && !sy.log ? C.niceTicks(sy.domain[0], sy.domain[1], Math.round((sy.domain[1] - sy.domain[0]) / o.grid)) : yt.ticks;
       for (const v of gx) gg.append(svg('line', { x1: sx(v), x2: sx(v), y1: py0, y2: py1, class: 'cvb-grid' }));
       for (const v of gy) gg.append(svg('line', { x1: px0, x2: px1, y1: sy(v), y2: sy(v), class: 'cvb-grid' }));
     }
     gg.append(arrow(px0, ax, px1 + 6, ax, { cls: 'cvb-axis', head: 8 }));
     gg.append(arrow(ay, py0, ay, py1 - 6, { cls: 'cvb-axis', head: 8 }));
     const below = ax + 14 > py0 + 18 ? ax - 12 : ax + 14;
-    const origin = sx.domain[0] <= 0 && sx.domain[1] >= 0 && sy.domain[0] <= 0 && sy.domain[1] >= 0, yAt0 = origin, xAt0 = origin;
+    const origin = !sy.log && sx.domain[0] <= 0 && sx.domain[1] >= 0 && sy.domain[0] <= 0 && sy.domain[1] >= 0, yAt0 = origin, xAt0 = origin;
     const boxes = [];
     for (const v of xt.ticks) {
       const x = sx(v); if ((yAt0 && Math.abs(x - ay) < 2) || x > px1 - 14) continue;
@@ -209,7 +228,7 @@
     for (const v of yt.ticks) {
       const y = sy(v); if ((xAt0 && Math.abs(y - ax) < 2) || y < py1 + 12) continue;
       gg.append(svg('line', { x1: ay - 3, x2: ay + 3, y1: y, y2: y, class: 'cvb-axis thin' }));
-      const t = fmtTick(v, yt.step);
+      const t = o.fmtY ? o.fmtY(v, yt.step) : fmtTick(v, yt.log ? Math.pow(10, Math.floor(Math.log10(v))) : yt.step);
       gg.append(txt(ay - 7, y, t, { anchor: 'end', cls: 'cvb-tick', size: 12, halo: true }));
       boxes.push(boxOf({ x: ay - 7, y, text: t, anchor: 'end', h: 14 }));
     }
@@ -496,7 +515,7 @@
     return d;
   };
 
-  Z.cvb = { isObj, deep, clamp, snapTo, round, lerp, fmt, fmtTick, tw, ticksFor, txt, lab, obj, colourCls, washRect, washPath, washCircle, arrow, handle, spread, chartAxes, yMargin, planeAxes, make, eff, placeLabels, boxOf, lineBoxes, lgamma, erf, simpson, gauss, rngFor, fnOf, brokenPath };
+  Z.cvb = { isObj, deep, clamp, snapTo, round, lerp, fmt, fmtTick, tw, ticksFor, txt, lab, obj, colourCls, washRect, washPath, washCircle, arrow, handle, spread, chartAxes, yMargin, planeAxes, make, eff, placeLabels, boxOf, lineBoxes, logScale, logTicks, lgamma, erf, simpson, gauss, rngFor, fnOf, brokenPath };
 })();
 
 /* ===== plane ===== */
@@ -540,7 +559,8 @@
     const geom = (R) => {
       const xLabelRoom = yr[0] > 0 || yr[1] < 0 ? 22 : 0, yLabelRoom = xr[0] >= 0 || xr[1] <= 0 ? 34 : 0;
       const m = { l: 14 + yLabelRoom, r: 18, t: 18, b: 14 + xLabelRoom };
-      return { m, sx: C.scale(xr, [m.l, size.w - m.r]), sy: C.scale(yr, [size.h - m.b, m.t]) };
+      /* yScale: "log" (positive y range): log-price charts; ticks at 1, 2, 5 times powers of ten, labelled as prices with yFormat */
+      return { m, sx: C.scale(xr, [m.l, size.w - m.r]), sy: params.yScale === 'log' ? K.logScale([Math.max(1e-9, yr[0]), yr[1]], [size.h - m.b, m.t]) : C.scale(yr, [size.h - m.b, m.t]) };
     };
     const functionsOf = (view) => {
       const list = (params.functions || []).map((f, i) => ({ ...f, slot: f.colour || i + 1 }));
@@ -576,9 +596,10 @@
         const g = R.F.g, fns = evaluator(view);
         const px0 = m.l, px1 = size.w - m.r, py0 = size.h - m.b, py1 = m.t;
         /* axes: false draws no axes, ticks or grid (a geometry figure) */
-        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel });
+        const fmtYp = params.yFormat === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || '£') + K.fmtTick(Math.abs(v), st) : null;
+        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp });
         const fixed = axInfo.boxes.slice();
-        if (params.axes !== false) { const ax = yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
+        if (params.axes !== false) { const ax = !sy.log && yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
         const clip = R.clipRect(px0, py1 - 2, px1 - px0, py0 - py1 + 4);
         const plot = svg('g', { 'clip-path': clip }); g.append(plot);
         const over = svg('g'); g.append(over);

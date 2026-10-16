@@ -25,15 +25,20 @@
       if (params.y) return params.y;
       let lo = Infinity, hi = -Infinity;
       for (const s of list) { for (const v of valuesOf(s)) { if (Number.isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } } for (const c of s.ohlc || []) { lo = Math.min(lo, c[2]); hi = Math.max(hi, c[1]); } }
+      if (params.yScale === 'log') { // positive values only, padded by a ratio
+        let plo = Infinity; for (const s of list) for (const v of valuesOf(s)) if (Number.isFinite(v) && v > 0) plo = Math.min(plo, v);
+        return Number.isFinite(plo) ? [plo / 1.08, hi * 1.08] : [1, 10];
+      }
       if (params.baseline != null) { lo = Math.min(lo, params.baseline); hi = Math.max(hi, params.baseline); }
       if (!Number.isFinite(lo)) return [0, 1];
       const pad = (hi - lo || 1) * 0.08; const t = C.niceTicks(lo - pad, hi + pad, 5); const st = t[1] - t[0] || 1;
       return [Math.floor((lo - pad) / st) * st, Math.ceil((hi + pad) / st) * st];
     })();
     const labelW = Math.max(0, ...list.filter((s) => s.label).map((s) => K.tw(s.label) + 22));
-    const ml = K.yMargin(yRange[0], yRange[1], H - 60, fmtY), mt = 26, mb = params.xLabel ? 46 : 30, mr = Math.max(14, Math.min(150, labelW));
+    const logY = params.yScale === 'log';
+    const ml = K.yMargin(yRange[0], yRange[1], H - 60, fmtY, logY), mt = 26, mb = params.xLabel ? 46 : 30, mr = Math.max(14, Math.min(150, labelW));
     const hasCandles = list.some((s) => s.ohlc && (params.candles || s.candles)), padI = hasCandles ? 0.7 : 0;
-    const sx = C.scale([-padI, n - 1 + padI], [ml, W - mr]), sy = C.scale(yRange, [H - mb, mt]);
+    const sx = C.scale([-padI, n - 1 + padI], [ml, W - mr]), sy = logY ? K.logScale(yRange, [H - mb, mt]) : C.scale(yRange, [H - mb, mt]); // yScale: "log", for log-price charts
     const fmtX = dates
       ? (i) => { const d = dates[Math.round(i)]; if (!d) return ''; const span = (dates[dates.length - 1] - dates[0]) / 864e5; return span > 300 ? MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2) : d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
       : (i) => K.fmt(i + (params.indexFrom || 0), 2);
@@ -53,7 +58,7 @@
         const g = R.F.g, x0 = ml, x1 = W - mr, y0 = H - mb, y1 = mt;
         const xt = K.ticksFor(0, n - 1, x1 - x0, { minGap: 56, fmtF: (v) => fmtX(v) });
         xt.ticks = xt.ticks.filter((v) => Number.isInteger(v) && v >= 0 && v <= n - 1);
-        K.chartAxes(g, sx, sy, { yLabel: params.yLabel, xLabel: params.xLabel, fmtY, fmtX: (v) => fmtX(v), xTicks: xt, baseline: params.baseline ?? (yRange[0] < 0 && yRange[1] > 0 ? 0 : null) });
+        K.chartAxes(g, sx, sy, { yLabel: params.yLabel, xLabel: params.xLabel, fmtY, fmtX: (v) => fmtX(v), xTicks: xt, baseline: logY ? null : params.baseline ?? (yRange[0] < 0 && yRange[1] > 0 ? 0 : null) });
         const back = svg('g'), plot = svg('g', { 'clip-path': R.clipRect(x0 - 1, y1 - 4, x1 - x0 + 2, y0 - y1 + 8) }), over = svg('g');
         g.append(back, plot, over);
         const fixed = [];
