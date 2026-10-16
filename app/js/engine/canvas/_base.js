@@ -184,6 +184,8 @@
     return out;
   };
 
+  /* Captions read like prose (item 98): maths, inline code in backticks, **bold** and *italic*, via grade.js's inline() */
+  const capHtml = (t) => (Z.grade && Z.grade.inline ? Z.grade.inline(t) : Z.md(t));
   /* Frame: a responsive SVG in the 540px column. frame(host, w, h) -> { svg, g } with a caption slot.
      fit: true caps the drawing at its natural width (w px) and centres it, for drawings narrower than the column. */
   const frame = (host, w, h, { cls = '', label: aria = 'Diagram', fit = false } = {}) => {
@@ -193,7 +195,7 @@
     const g = svg('g'); s.append(g);
     const cap = document.createElement('div'); cap.className = 't-caption cv-caption'; cap.hidden = true;
     wrap.append(s, cap); host.append(wrap);
-    const fr = { wrap, svg: s, g, caption: (t) => { cap.hidden = !t; cap.innerHTML = t ? Z.md(t) : ''; }, w, h };
+    const fr = { wrap, svg: s, g, caption: (t) => { cap.hidden = !t; cap.innerHTML = t ? capHtml(t) : ''; }, w, h };
     fr.resize = (w2, h2) => { fr.w = w2; fr.h = h2; s.setAttribute('viewBox', `0 0 ${w2} ${h2}`); if (fit) s.style.maxWidth = w2 + 'px'; };
     return fr;
   };
@@ -433,7 +435,8 @@
   const deriveCache = {};
   const deriveExpr = (src) => {
     if (deriveCache[src]) return deriveCache[src];
-    if (/[;`{}]|=>|\bfunction\b|\bnew\b|\bthis\b|(^|[^=!<>])=(?!=)/.test(src)) throw new Error('derive: not an expression: ' + src);
+    /* string literals are blanked before the guard, so "=" or ";" inside quotes is allowed (item 90) */
+    if (/[;`{}]|=>|\bfunction\b|\bnew\b|\bthis\b|(^|[^=!<>])=(?!=)/.test(src.replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g, '""'))) throw new Error('derive: not an expression: ' + src);
     // eslint-disable-next-line no-new-func
     const f = new Function('S', 'with (S) { return (' + src + '); }');
     return (deriveCache[src] = f);
@@ -529,7 +532,7 @@
       set(patch = {}, o = {}) {
         patch = patch || {};
         const rest = {};
-        Object.entries(patch).forEach(([k, v]) => { if (SIDES.includes(k)) { if (v && side[k]) side[k].set(v, o); } else if (k === 'caption') { caption = v || ''; cap.hidden = !caption; cap.innerHTML = caption ? Z.md(caption) : ''; } else rest[k] = v; });
+        Object.entries(patch).forEach(([k, v]) => { if (SIDES.includes(k)) { if (v && side[k]) side[k].set(v, o); } else if (k === 'caption') { caption = v || ''; cap.hidden = !caption; cap.innerHTML = caption ? capHtml(caption) : ''; } else rest[k] = v; });
         if (Object.keys(rest).length && A) { if ('highlight' in rest) { each(rest.highlight, (c, ids) => c.set({ highlight: ids }, o)); delete rest.highlight; } if (Object.keys(rest).length) A.set(rest, o); }
         return api;
       },

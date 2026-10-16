@@ -324,3 +324,9 @@ Raised later (first-python level 3):
 121. Code widget `isclose`: require a real number, not a number-like string.
 122. Player: hide "Start over" when the screen has no interactive canvas (choice and code screens with static diagrams).
 123. AUTHORING.md section 3: document `compare: "stdout"`, `stdin` and `printed` once item 109 lands.
+
+Raised later (mental level 1):
+
+124. `orderbook`: `spreadValue: false` to hide the computed spread number.
+125. `number-line`: controls may bind a free `state.params` name for `derive` (like other kinds).
+126. `number-line` arrows: per-arrow `side: "below"` and automatic stacking of overlapping arcs; tidy zero-length arrows.

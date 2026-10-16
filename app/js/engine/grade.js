@@ -226,11 +226,12 @@
     .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
     .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\w)/g, '$1<i>$2</i>');
   /* Inline copy: text with $maths$ and $$display$$. Punctuation that follows a formula stays on its line. */
-  /* Maths is set aside as placeholders first, so **bold** and *italic* may wrap a formula ("**the mean $\mu$**") */
+  /* Maths is set aside as placeholders first, so **bold** and *italic* may wrap a formula ("**the mean $\mu$**").
+     Code spans are set aside in the same left-to-right pass, so `$` and `*` inside backticks stay literal (item 104). */
   const inline = (s, { br = false } = {}) => {
     const src = String(s ?? '');
     const maths = [];
-    const held = src.replace(/\$\$([^$]+)\$\$|\$([^$]+)\$([.,:;?)]?)/g, (all, d, t, p) => { maths.push(d != null ? tex(d, true) : `<span class="lsn-nw">${tex(t, false)}${esc(p || '')}</span>`); return `\u0000${maths.length - 1}\u0000`; });
+    const held = src.replace(/`([^`\n]+)`|\$\$([^$]+)\$\$|\$([^$]+)\$([.,:;?)]?)/g, (all, c, d, t, p) => { maths.push(c != null ? `<code class="lsn-ic">${esc(c)}</code>` : d != null ? tex(d, true) : `<span class="lsn-nw">${tex(t, false)}${esc(p || '')}</span>`); return `\u0000${maths.length - 1}\u0000`; });
     let out = styleText(held);
     if (br) out = out.replace(/\n/g, '<br>'); // line breaks only outside maths: KaTeX SVG keeps its newlines
     return out.replace(/\u0000(\d+)\u0000/g, (_, k) => maths[+k]);
