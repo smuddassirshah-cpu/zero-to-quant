@@ -202,3 +202,10 @@ Raised later (trig level 1):
 Raised later (series level 1):
 
 78. `plane`: `xTicks: "integer"` (and `yTicks`) option for sequence plots on small ranges.
+
+Raised later (series level 2):
+
+79. `bars`: per-category `colour` (series slot) or grouped series, so term bars and cumulative bars differ.
+80. `derive`: evaluate rules in dependency order (or iterate to a fixed point, at most 3 passes) so a caption can read another derived value.
+81. `table` canvas: shrink or scroll horizontally at narrow widths instead of clipping; the player's column is 540px so tables over about 7 columns need a compact mode.
+82. `plane`: clip points and segments to the plot area; move the x-axis title clear of marks near y = 0.
