@@ -246,3 +246,8 @@ Raised later (counting level 1):
 84. `place` `mode: "boxes"`: count as a canvas-bound widget on explore screens; add `free: true` (any arrangement accepted) and grading by `count` per container.
 85. `boxes` `box` container: a `fill: "top"|"bottom"` option.
 86. Verdict chip: wrap long inline KaTeX instead of overflowing.
+
+Raised later (trig level 3):
+
+87. `plane`: `xStep`/`yStep` tick spacing parameters (degree axes at 90, month axes at 3).
+88. `circle`: angle label collides with the cos label in the fourth quadrant; sin label touches the circle at small angles.

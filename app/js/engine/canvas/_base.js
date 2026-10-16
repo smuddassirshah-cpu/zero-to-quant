@@ -490,7 +490,8 @@
     const apply = () => {
       if (busy) return;
       busy = true;
-      try { const p = patchFor(); if (Object.keys(p).length) rawSet(p, { instant: true }); } catch (e) { console.error(e); } finally { busy = false; }
+      /* up to three passes, so a rule may read a value another rule derives (a caption reading a derived point) */
+      try { for (let k = 0; k < 3; k++) { const p = patchFor(); if (!Object.keys(p).length) break; rawSet(p, { instant: true }); } } catch (e) { console.error(e); } finally { busy = false; }
     };
     inst.set = (patch, o) => { const r = rawSet(patch, o); apply(); return r; };
     if (inst.on) inst.on('change', () => apply());

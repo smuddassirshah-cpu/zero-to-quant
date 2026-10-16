@@ -14,7 +14,8 @@
     const alignOf = (j) => (Array.isArray(P.align) ? P.align[j - 1] : P.align) || (j === 1 ? 'left' : 'right');
     const wrap = document.createElement('div'); wrap.className = 'cv';
     const scroller = document.createElement('div'); scroller.className = 'cv-tbl-wrap';
-    const tbl = document.createElement('table'); tbl.className = 'cv-tbl';
+    /* compact (or more than 6 columns): tighter cells so a wide table fits the 540px column; it still scrolls sideways if not */
+    const tbl = document.createElement('table'); tbl.className = 'cv-tbl' + (P.compact || (columns.length || (rows[0] || []).length) > 6 ? ' is-compact' : '');
     if (P.label) tbl.setAttribute('aria-label', P.label);
     const cap = document.createElement('div'); cap.className = 't-caption cv-caption'; cap.hidden = true;
     /* numbers, and text that starts as a negative number ("-3", "-0.5 kg"), use the minus sign U+2212 */

@@ -202,8 +202,12 @@
   /* Plane axes through the origin (or along the edges), arrowheads at the positive ends. */
   const planeAxes = (g, sx, sy, o = {}) => {
     const [px0, px1] = sx.range, [py0, py1] = sy.range; // py0 bottom
-    const xt = ticksFor(sx.domain[0], sx.domain[1], px1 - px0, { minGap: 40 });
-    const yt = sy.log ? logTicks(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 26 }) : ticksFor(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 34 });
+    /* xTicks / yTicks: "integer" keeps whole-number ticks only (sequence plots on small ranges) */
+    const intTicks = (t, lo, hi, px) => { if (t.step >= 1 && t.ticks.every(Number.isInteger)) return t; const n = Math.floor(hi) - Math.ceil(lo) + 1, every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(px / 34)))); const ticks = []; for (let v = Math.ceil(lo); v <= hi; v++) if ((v - Math.ceil(lo)) % every === 0) ticks.push(v); return { ticks, step: every }; };
+    let xt = ticksFor(sx.domain[0], sx.domain[1], px1 - px0, { minGap: 40 });
+    if (o.xTicks === 'integer') xt = intTicks(xt, sx.domain[0], sx.domain[1], px1 - px0);
+    let yt = sy.log ? logTicks(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 26 }) : ticksFor(sy.domain[0], sy.domain[1], py0 - py1, { minGap: 34 });
+    if (o.yTicks === 'integer' && !sy.log) yt = intTicks(yt, sy.domain[0], sy.domain[1], py0 - py1);
     const ax = !sy.log && sy.domain[0] <= 0 && sy.domain[1] >= 0 ? sy(0) : py0; // x axis pixel y
     const ay = sx.domain[0] <= 0 && sx.domain[1] >= 0 ? sx(0) : px0; // y axis pixel x
     const gg = svg('g', { class: 'cvb-axes' });
@@ -234,11 +238,12 @@
     }
     if (origin && sx.domain[0] < 0 && sy.domain[0] < 0) gg.append(txt(ay - 7, ax + 12, '0', { anchor: 'end', cls: 'cvb-tick', size: 12, halo: true }));
     const xl = o.xLabel ?? '$x$', yl = o.yLabel ?? '$y$';
-    gg.append(lab(px1 + 2, ax - 14, xl, { anchor: 'end', cls: 'cvb-axlab', halo: true }));
+    const xTitle = lab(px1 + 2, ax - 14, xl, { anchor: 'end', cls: 'cvb-axlab', halo: true });
+    gg.append(xTitle);
     gg.append(lab(ay + 10, py1 - 2, yl, { anchor: 'start', cls: 'cvb-axlab', halo: true }));
     boxes.push(boxOf({ x: px1 + 2, y: ax - 14, text: xl, anchor: 'end', h: 20 }), boxOf({ x: ay + 10, y: py1 - 2, text: yl, anchor: 'start', h: 20 }));
     g.append(gg);
-    return { xt, yt, ax, ay, boxes };
+    return { xt, yt, ax, ay, boxes, xTitle, xTitleBox: boxOf({ x: px1 + 2, y: ax - 14, text: xl, anchor: 'end', h: 20 }) };
   };
 
   /* ---------- Instance lifecycle shared by every Canvases B kind ----------
@@ -597,7 +602,7 @@
         const px0 = m.l, px1 = size.w - m.r, py0 = size.h - m.b, py1 = m.t;
         /* axes: false draws no axes, ticks or grid (a geometry figure) */
         const fmtYp = params.yFormat === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || '£') + K.fmtTick(Math.abs(v), st) : null;
-        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp });
+        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp, xTicks: params.xTicks, yTicks: params.yTicks });
         const fixed = axInfo.boxes.slice();
         if (params.axes !== false) { const ax = !sy.log && yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
         const clip = R.clipRect(px0, py1 - 2, px1 - px0, py0 - py1 + 4);
@@ -805,9 +810,12 @@
           });
         }
 
-        /* Points */
+        /* Points (one outside the plot is not drawn: the plot is clipped) */
+        const marks = [];
         for (const p of view.points || []) {
           const x = sx(p.x), y = sy(p.y);
+          if (!Number.isFinite(x) || !Number.isFinite(y) || x < px0 - 4 || x > px1 + 4 || y < py1 - 4 || y > py0 + 4) continue;
+          marks.push({ x0: x - 8, x1: x + 8, y0: y - 8, y1: y + 8 });
           const o = K.obj(p.id, 'cvb-pt', p.drag ? 'manip' : (p.colour || 'ink'));
           o.append(K.washCircle(x, y, p.drag ? 15 : 11));
           if (p.drag && R.active() && (R.mode == null || R.mode === 'drag' || R.mode === 'slider')) o.append(K.handle(x, y, p.id, { label: p.ariaLabel || `Point ${p.label || p.id}` }));
@@ -819,6 +827,13 @@
             const pos = p.labelPos || 'ne', dx = pos.includes('e') ? 12 : pos.includes('w') ? -12 : 0, dy = pos.includes('n') ? -13 : pos.includes('s') ? 14 : 0;
             labels.push({ x: x + dx, y: y + dy, text: String(p.label).replace('{x}', K.fmt(p.x, 2)).replace('{y}', K.fmt(p.y, 2)), anchor: dx > 0 ? 'start' : dx < 0 ? 'end' : 'middle', id: p.id });
           }
+        }
+
+        /* The x-axis title moves below the axis when a point or curve sits under it near y = 0 */
+        if (axInfo.xTitle && axInfo.xTitleBox) {
+          const tb = axInfo.xTitleBox, hitT = (b) => b.x0 < tb.x1 && tb.x0 < b.x1 && b.y0 < tb.y1 && tb.y0 < b.y1;
+          const curveBoxes = fixed.filter((b) => b.x1 - b.x0 <= 8 && b.y1 - b.y0 <= 8);
+          if (marks.some(hitT) || curveBoxes.some(hitT)) axInfo.xTitle.setAttribute('transform', 'translate(0 44)');
         }
 
         /* Labels last, placed clear of each other and of the axis labels, inside the plot */

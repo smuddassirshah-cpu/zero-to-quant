@@ -12,7 +12,7 @@
     const binned = !!params.bins;
     const cats = binned
       ? (() => { const { min, max, width } = params.bins; const n = Math.max(1, Math.round((max - min) / width)); return Array.from({ length: n }, (_, i) => ({ id: 'b' + i, label: K.fmt(min + i * width, 4), lo: min + i * width, hi: min + (i + 1) * width })); })()
-      : (params.categories || []).map((c) => (K.isObj(c) ? { id: c.id || 'x' + c.label, label: String(c.label ?? c.id) } : { id: 'x' + c, label: String(c) }));
+      : (params.categories || []).map((c) => (K.isObj(c) ? { id: c.id || 'x' + c.label, label: String(c.label ?? c.id), colour: c.colour } : { id: 'x' + c, label: String(c) }));
     const catIndex = (key) => {
       if (key == null) return -1; const k = String(key);
       let i = cats.findIndex((c) => c.id === k || c.label === k);
@@ -126,7 +126,7 @@
         const bars = svg('g'), vals = svg('g');
         cats.forEach((c, i) => {
           const v = hs[i] || 0, y = sy(Math.max(0, v)), h = Math.max(0, sy(0) - y);
-          const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : ''), params.colour || 1);
+          const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : ''), ((view.colours || {})[c.id] ?? (view.colours || {})[c.label]) || c.colour || params.colour || 1); // per-category colour (series slot), patchable through state.colours
           o.append(K.washRect(x(i) - 3, sy(top) - 2, bw + 6, sy(0) - sy(top) + 4, 4));
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(0) - sy(top), class: 'cvb-selw' }));
           o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
