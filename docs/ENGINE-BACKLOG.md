@@ -100,7 +100,7 @@ Second pass (items 24 to 39):
 49. Done: plane tangent at a corner is not drawn unless `side` picks a one-sided slope; `lengthPx` gives a length in pixels.
 50. Done: series `drawdown: "money"` (and `"abs"`) labels the absolute fall; no division by a zero peak.
 
-Third pass (items 51 to 114, and 123):
+Third pass (items 51 to 114, 123 and 133 to 138):
 
 51. Done: area signed pieces: a negative `colSizes` or `rowSizes` entry makes its strip subtracted (hatched, dashed edge).
 52. Done: area `colLabels`, `rowLabels` and edge `labels` patchable through state.
@@ -167,6 +167,12 @@ Third pass (items 51 to 114, and 123):
 113. Done: code results headers and value chips wrap long calls.
 114. Done: terminal l12 and homework-3 converted to `compare: "stdout"` (review-3 had no `_getframe` tests).
 123. Done: AUTHORING.md section 3 documents `compare: "stdout"`, `stdin`, `exact` and `printed` (with 109).
+133. Done: bars draw negative values below a zero baseline (axis down to a nice tick, or `yMin`); a negative bar's value label sits under it.
+134. Done: number-line, circle, balance and area `setParam` write any name they do not own to `state.params` (and `getParam` reads it back), as bars already did.
+135. Done: fenced code blocks put the language and the Copy button in a strip above the code; long lines scroll inside the block and never widen the column.
+136. Done: code cases take `setup`, Python run just before `call` (both modes).
+137. Done: code `compare: "raises"` with `expect` the exception name (subclasses count); in script mode a raises case without `call` checks the whole program.
+138. Done: tree `params.label` is drawn as a title above the tree (and stays its accessible name).
 
 
 Raised later (equations level 2):
@@ -390,3 +396,9 @@ Raised later (py-found level 4):
 Raised later (py-found level 2):
 
 141. A `refs` canvas kind (or `graph` with patchable edges): names as labels pointing at objects, re-pointed by a state patch, for aliasing and mutation lessons.
+
+Raised later (numpy-pandas level 1):
+
+142. Done by the orchestrator: `drill-worker.js` now calls `loadPackagesFromImports(code)` before each run, so numpy and pandas load on first use.
+143. `code` tests: a per-item `budget` (ms) so the first NumPy run is not charged against the 5 s case limit; `compare: "isclose"` element-wise for arrays and nested lists.
+144. `matrix` canvas: scale to the column width when the matrices are wide.

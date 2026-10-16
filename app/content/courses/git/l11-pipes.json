@@ -1,0 +1,1293 @@
+{
+  "id": "l11-pipes",
+  "course": "git",
+  "title": "Joining commands with pipes",
+  "minutes": 14,
+  "objectives": [
+    "Chain shell commands with pipes and redirect output to a file",
+    "Find files by name with find and by contents with grep -r",
+    "Write a shell script that loops over tickers"
+  ],
+  "skills": [
+    "gt-shell"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Your broker sends `trades.csv`, one trade per line. You want only the tickers. `cut` splits each line at a character you name, then keeps the pieces you ask for:\n\n```sh\n$ cut -d, -f2 trades.csv\n```\n\n`-d,` splits at commas; `-f2` keeps piece 2.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "rows": [
+            [
+              "date",
+              "ticker",
+              "side",
+              "qty"
+            ],
+            [
+              "2024-03-01",
+              "AAPL",
+              "buy",
+              "100"
+            ],
+            [
+              "2024-03-01",
+              "MSFT",
+              "sell",
+              "50"
+            ],
+            [
+              "2024-03-04",
+              "AAPL",
+              "sell",
+              "100"
+            ],
+            [
+              "2024-03-04",
+              "NVDA",
+              "buy",
+              "20"
+            ],
+            [
+              "2024-03-05",
+              "MSFT",
+              "buy",
+              "50"
+            ],
+            [
+              "2024-03-05",
+              "AAPL",
+              "buy",
+              "30"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "trades.csv, each line split at its commas. The column number is the field number."
+        }
+      },
+      "question": "Tap every piece this prints.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c1",
+          "r1c1",
+          "r2c1",
+          "r3c1",
+          "r4c1",
+          "r5c1",
+          "r6c1"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "no-header",
+            "set": [
+              "r1c1",
+              "r2c1",
+              "r3c1",
+              "r4c1",
+              "r5c1",
+              "r6c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which column is field 2?"
+        },
+        {
+          "rung": "point",
+          "text": "This is the first line of the file, and cut treats it like any other.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "cut prints field 2 of all seven lines, the header line included."
+        }
+      ],
+      "feedback": {
+        "correct": "Field 2 of every line, header included: seven lines.",
+        "generic": "Not quite right. cut keeps field 2 of every line in the file.",
+        "byKey": {
+          "no-header": "You skipped the header. cut does not know it is a header; it prints `ticker` too.",
+          "r0c0": "That is field 1, the date. `-f2` keeps the second field."
+        }
+      },
+      "explain": {
+        "text": "cut printed field 2 of each of the seven lines. The first is the word `ticker`, from the header. Remember it: it will turn up in every count we make next.",
+        "canvas": {
+          "shade": [
+            "r0c1",
+            "r1c1",
+            "r2c1",
+            "r3c1",
+            "r4c1",
+            "r5c1",
+            "r6c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Now feed those seven lines through two more commands. `sort` puts lines in order. `uniq -c` collapses repeated lines into one, with a count in front.\n\n```sh\n$ cut -d, -f2 trades.csv | sort | uniq -c\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "rows": [
+            [
+              "date",
+              "ticker",
+              "side",
+              "qty"
+            ],
+            [
+              "2024-03-01",
+              "AAPL",
+              "buy",
+              "100"
+            ],
+            [
+              "2024-03-01",
+              "MSFT",
+              "sell",
+              "50"
+            ],
+            [
+              "2024-03-04",
+              "AAPL",
+              "sell",
+              "100"
+            ],
+            [
+              "2024-03-04",
+              "NVDA",
+              "buy",
+              "20"
+            ],
+            [
+              "2024-03-05",
+              "MSFT",
+              "buy",
+              "50"
+            ],
+            [
+              "2024-03-05",
+              "AAPL",
+              "buy",
+              "30"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "trades.csv, each line split at its commas. The column number is the field number.",
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "3 AAPL, 2 MSFT, 1 NVDA, 1 ticker (one per line)",
+            "correct": true
+          },
+          {
+            "id": "noheader",
+            "text": "3 AAPL, 2 MSFT, 1 NVDA (one per line)",
+            "why": "You dropped the header line. cut passed `ticker` along, so it is counted too."
+          },
+          {
+            "id": "unsorted",
+            "text": "Seven lines, each with a count of 1",
+            "why": "That is what happens without `sort`. Here sort puts equal tickers next to each other first."
+          },
+          {
+            "id": "total",
+            "text": "7",
+            "why": "You counted lines, as `wc -l` would. `uniq -c` counts each distinct line."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After sort, which lines sit next to each other?"
+        },
+        {
+          "rung": "point",
+          "text": "Field 2 holds AAPL three times and MSFT twice.",
+          "highlight": [
+            "r1c1",
+            "r3c1",
+            "r6c1",
+            "r2c1",
+            "r5c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "sort gives AAPL, AAPL, AAPL, MSFT, MSFT, NVDA, ticker. uniq -c then counts each run."
+        }
+      ],
+      "feedback": {
+        "correct": "Each command works on the output of the one before.",
+        "generic": "Not quite right. Follow the lines through cut, then sort, then uniq -c.",
+        "byKey": {
+          "noheader": "You dropped the header. Nothing in the chain removes it, so `1 ticker` appears."
+        }
+      },
+      "explain": {
+        "text": "A chain of commands joined by pipes is a **pipeline**. cut sent seven lines, sort grouped them, and uniq -c counted each group. The stray `1 ticker` is the header, still riding along.",
+        "canvas": {
+          "shade": [
+            "r0c1",
+            "r1c1",
+            "r2c1",
+            "r3c1",
+            "r4c1",
+            "r5c1",
+            "r6c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "You try to save a step and leave out `sort`:\n\n```sh\n$ cut -d, -f2 trades.csv | uniq -c\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "rows": [
+            [
+              "date",
+              "ticker",
+              "side",
+              "qty"
+            ],
+            [
+              "2024-03-01",
+              "AAPL",
+              "buy",
+              "100"
+            ],
+            [
+              "2024-03-01",
+              "MSFT",
+              "sell",
+              "50"
+            ],
+            [
+              "2024-03-04",
+              "AAPL",
+              "sell",
+              "100"
+            ],
+            [
+              "2024-03-04",
+              "NVDA",
+              "buy",
+              "20"
+            ],
+            [
+              "2024-03-05",
+              "MSFT",
+              "buy",
+              "50"
+            ],
+            [
+              "2024-03-05",
+              "AAPL",
+              "buy",
+              "30"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "trades.csv, each line split at its commas. The column number is the field number.",
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      },
+      "question": "How many lines does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "label": "Lines printed",
+        "accept": "7: no two equal tickers sit next to each other, so nothing collapses.",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "uniq only compares each line with the one just before it."
+        },
+        {
+          "rung": "point",
+          "text": "Read field 2 from top to bottom.",
+          "highlight": [
+            "r0c1",
+            "r1c1",
+            "r2c1",
+            "r3c1",
+            "r4c1",
+            "r5c1",
+            "r6c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "ticker, AAPL, MSFT, AAPL, NVDA, MSFT, AAPL: no line equals its neighbour, so all seven stay."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven lines, each counted once.",
+        "generic": "Not quite right. uniq collapses a line only when it repeats the line just above.",
+        "byKey": {
+          "same": "You expected the same four counts. uniq only merges neighbours, and no two AAPL lines are neighbours here.",
+          "three": "You counted the three tickers. Without sort, repeats are not next to each other, so none merge."
+        }
+      },
+      "explain": {
+        "text": "uniq compares each line only with the line before it. The AAPL lines are never neighbours, so each prints with a count of 1. That is why `sort | uniq -c` is a pair.",
+        "canvas": {
+          "highlight": [
+            "r1c1",
+            "r3c1",
+            "r6c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Pipes handle what is inside files. To find the files themselves, use `find`. It walks a folder and every folder inside it.\n\n```sh\n$ find . -name \"*.csv\"\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Every file in the project"
+          ],
+          "rows": [
+            [
+              "./README.md"
+            ],
+            [
+              "./returns.py"
+            ],
+            [
+              "./data/spy.csv"
+            ],
+            [
+              "./data/aapl.csv"
+            ],
+            [
+              "./results/summary.csv"
+            ],
+            [
+              "./tests/test_returns.py"
+            ],
+            [
+              "./tests/prices_small.csv"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "The dot means the current folder"
+        }
+      },
+      "question": "Tap the lines it prints.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c0",
+          "r3c0",
+          "r4c0",
+          "r6c0"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "data-only",
+            "set": [
+              "r2c0",
+              "r3c0"
+            ]
+          },
+          {
+            "id": "no-tests",
+            "set": [
+              "r2c0",
+              "r3c0",
+              "r4c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which names end in .csv, in any folder?"
+        },
+        {
+          "rung": "point",
+          "text": "This one sits in tests, not in data.",
+          "highlight": [
+            "r6c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Four files end in .csv: two in data, one in results, one in tests."
+        }
+      ],
+      "feedback": {
+        "correct": "All four .csv files, wherever they sit.",
+        "generic": "Not quite right. find looks in every folder below the current one.",
+        "byKey": {
+          "data-only": "You looked in data only. find searches every folder, results and tests included.",
+          "no-tests": "You missed the test's small price file. find searches tests too.",
+          "r0c0": "README.md does not end in .csv.",
+          "r1c0": "returns.py does not end in .csv.",
+          "r5c0": "That file ends in .py."
+        }
+      },
+      "explain": {
+        "text": "find went into every folder and kept names matching `*.csv`. `ls *.csv` would have found nothing, since no .csv sits at the top. The quotes stop the shell expanding the star before find sees it.",
+        "canvas": {
+          "shade": [
+            "r2c0",
+            "r3c0",
+            "r4c0",
+            "r6c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "`grep -r` searches the **contents** of every file in every folder. With `-l` it prints only the names of files that match.\n\n```sh\n$ grep -rl momentum .\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "File",
+            "Its whole contents"
+          ],
+          "rows": [
+            [
+              "./README.md",
+              "A 20-day momentum backtest on SPY."
+            ],
+            [
+              "./backtest.py",
+              "from signals.momentum import signal"
+            ],
+            [
+              "./signals/momentum.py",
+              "def signal(prices, lookback=20):"
+            ],
+            [
+              "./tests/test_signal.py",
+              "from signals.momentum import signal"
+            ],
+            [
+              "./notes.txt",
+              "Try mean reversion next."
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "A folder of five one-line files"
+        }
+      },
+      "question": "Tap the file names it prints.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0",
+          "r1c0",
+          "r3c0"
+        ],
+        "countWord": "selected",
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "wrong": [
+          {
+            "id": "by-name",
+            "set": [
+              "r0c0",
+              "r1c0",
+              "r2c0",
+              "r3c0"
+            ]
+          },
+          {
+            "id": "name-only",
+            "set": [
+              "r2c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "grep reads what is inside each file. Does the name count?"
+        },
+        {
+          "rung": "point",
+          "text": "Read this file's contents closely.",
+          "highlight": [
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "momentum appears inside README.md, backtest.py and test_signal.py. momentum.py's own text never says it."
+        }
+      ],
+      "feedback": {
+        "correct": "Three files contain the word. The file named momentum.py does not.",
+        "generic": "Not quite right. grep matches what is inside the files, not their names.",
+        "byKey": {
+          "by-name": "You included momentum.py for its name. grep reads contents, and its one line never says momentum.",
+          "name-only": "You searched by name, which is find's job. grep -r reads contents.",
+          "r2c0": "You picked momentum.py for its name. Its contents never say momentum.",
+          "r4c0": "notes.txt talks about mean reversion. The word momentum is not in it."
+        }
+      },
+      "explain": {
+        "text": "grep -r read every file and printed the three whose text contains momentum. momentum.py matched only by name, so grep skipped it. find searches names; grep searches contents.",
+        "canvas": {
+          "shade": [
+            "r0c0",
+            "r1c0",
+            "r3c0"
+          ],
+          "highlight": [
+            "r2c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "To run a backtest over several tickers, save the commands in a script, `run_all.sh`. `START=2019-01-01` sets a variable (no spaces round `=`) and `$START` reads it. The loop runs its body once per ticker, with `T` set to it.\n\n```sh\n#!/bin/bash\nSTART=2019-01-01\nfor T in SPY QQQ IWM; do\n  echo \"Running $T from $START\"\n  python3 backtest.py \"$T\" \"$START\" >> results.csv\ndone\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Ticker",
+            "What backtest.py prints"
+          ],
+          "rows": [
+            [
+              "SPY",
+              "SPY,0.71"
+            ],
+            [
+              "QQQ",
+              "QQQ,0.88"
+            ],
+            [
+              "IWM",
+              "IWM,0.32"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "One line per run: the ticker and its Sharpe ratio"
+        }
+      },
+      "question": "You run `bash run_all.sh`. What appears on the screen?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Three lines: Running SPY from 2019-01-01, then the same for QQQ and IWM",
+            "correct": true
+          },
+          {
+            "id": "literal",
+            "text": "Running $T from $START, three times",
+            "why": "You read the variables as plain text. Inside double quotes the shell replaces `$T` and `$START` with their values."
+          },
+          {
+            "id": "six",
+            "text": "Six lines: each Running line, then that ticker's Sharpe ratio",
+            "why": "You expected the Sharpe lines on screen. `>>` sends them into results.csv instead."
+          },
+          {
+            "id": "last",
+            "text": "One line: Running IWM from 2019-01-01",
+            "why": "You expected only the last pass to show. echo runs on every pass, so each ticker prints."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does each command's output go: the screen or a file?"
+        },
+        {
+          "rung": "step",
+          "text": "echo prints to the screen on each pass. The backtest's line goes into results.csv because of `>>`."
+        }
+      ],
+      "feedback": {
+        "correct": "Three Running lines on screen; the Sharpe ratios went into the file.",
+        "generic": "Not quite right. Follow one pass of the loop, then repeat it for each ticker.",
+        "byKey": {
+          "six": "You expected the backtest's output on screen. `>>` redirected it to results.csv."
+        }
+      },
+      "explain": {
+        "text": "Each pass sets `T`, echoes one line to the screen and appends one line to results.csv. So the screen shows three Running lines. results.csv ends with SPY,0.71, QQQ,0.88 and IWM,0.32.",
+        "canvas": {
+          "shade": [
+            "r0c1",
+            "r1c1",
+            "r2c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A colleague's version of the script uses one `>` instead of `>>`. `results.csv` starts empty.\n\n```sh\n#!/bin/bash\nfor T in SPY QQQ IWM; do\n  python3 backtest.py \"$T\" > results.csv\ndone\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Ticker",
+            "What backtest.py prints"
+          ],
+          "rows": [
+            [
+              "SPY",
+              "SPY,0.71"
+            ],
+            [
+              "QQQ",
+              "QQQ,0.88"
+            ],
+            [
+              "IWM",
+              "IWM,0.32"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "One line per run"
+        }
+      },
+      "question": "How many lines does `results.csv` hold afterwards?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "label": "Lines in results.csv",
+        "accept": "1: each pass empties the file and writes one line, so only IWM's survives.",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `>` do to a file that already has something in it?"
+        },
+        {
+          "rung": "point",
+          "text": "This is the last pass of the loop.",
+          "highlight": [
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`>` empties the file before writing. Each pass wipes the line before it, and IWM's pass is last."
+        }
+      ],
+      "feedback": {
+        "correct": "One line: IWM,0.32.",
+        "generic": "Not quite right. Think about what `>` does at the start of each pass.",
+        "byKey": {
+          "three": "You expected each pass to add a line. `>` empties the file first, every pass, so only IWM's line survives.",
+          "zero": "Each pass does write a line. The last one, IWM's, is still there at the end."
+        }
+      },
+      "explain": {
+        "text": "`>` empties results.csv and then writes, on every pass. SPY's line is wiped by QQQ's, and QQQ's by IWM's. Inside a loop, append with `>>`.",
+        "canvas": {
+          "highlight": [
+            "r2c1"
+          ],
+          "shade": [
+            "r2c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "The patterns you used:\n\n```sh\ncmd1 | cmd2            # cmd2 reads cmd1's output\ncmd > file             # empty the file, then write\ncmd >> file            # add to the end of the file\nfind . -name \"*.csv\"   # files by name, in every folder\ngrep -r word .         # files by contents, in every folder\nfor T in A B C; do     # the body runs once per word,\n  cmd \"$T\"             # with $T set to that word\ndone\n```",
+      "question": "Which command adds a line to `log.txt` without erasing what is there?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "app",
+            "text": "`echo \"done\" >> log.txt`",
+            "correct": true
+          },
+          {
+            "id": "over",
+            "text": "`echo \"done\" > log.txt`",
+            "why": "You picked the single `>`. It empties log.txt first, as in the loop that kept only IWM."
+          },
+          {
+            "id": "pipe",
+            "text": "`echo \"done\" | log.txt`",
+            "why": "A pipe feeds another command, and log.txt is a file. The shell would try to run it as a program."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which sign appends?"
+        },
+        {
+          "rung": "step",
+          "text": "`>>` adds to the end; `>` starts the file afresh."
+        }
+      ],
+      "feedback": {
+        "correct": "`>>` appends.",
+        "generic": "Not quite right. Recall the loop that kept only one line."
+      },
+      "explain": {
+        "text": "`>>` appends and `>` overwrites. A pipe joins two commands, never a command and a file. Mixing these up is the commonest way to lose a results file."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Build a pipeline that prints only the most traded ticker in `trades.csv`, with its count. `sort -rn` sorts by number, largest first. `head -n 1` keeps the first line.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "rows": [
+            [
+              "date",
+              "ticker",
+              "side",
+              "qty"
+            ],
+            [
+              "2024-03-01",
+              "AAPL",
+              "buy",
+              "100"
+            ],
+            [
+              "2024-03-01",
+              "MSFT",
+              "sell",
+              "50"
+            ],
+            [
+              "2024-03-04",
+              "AAPL",
+              "sell",
+              "100"
+            ],
+            [
+              "2024-03-04",
+              "NVDA",
+              "buy",
+              "20"
+            ],
+            [
+              "2024-03-05",
+              "MSFT",
+              "buy",
+              "50"
+            ],
+            [
+              "2024-03-05",
+              "AAPL",
+              "buy",
+              "30"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "trades.csv, each line split at its commas. The column number is the field number."
+        }
+      },
+      "question": "Put the pieces of the pipeline in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "cut",
+            "text": "`cut -d, -f2 trades.csv`"
+          },
+          {
+            "id": "sort",
+            "text": "`| sort`"
+          },
+          {
+            "id": "uniq",
+            "text": "`| uniq -c`"
+          },
+          {
+            "id": "rn",
+            "text": "`| sort -rn`"
+          },
+          {
+            "id": "head",
+            "text": "`| head -n 1`"
+          }
+        ],
+        "answer": [
+          "cut",
+          "sort",
+          "uniq",
+          "rn",
+          "head"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You need counts before you can sort by count."
+        },
+        {
+          "rung": "step",
+          "text": "Cut the tickers, sort so repeats sit together, count them, sort the counts largest first, keep the top line."
+        }
+      ],
+      "feedback": {
+        "correct": "It prints `3 AAPL`.",
+        "generic": "Not quite right. Each step needs the output of the one before.",
+        "byKey": {
+          "uniq": "uniq -c needs equal lines next to each other, so plain sort comes before it.",
+          "rn": "Sort by count once the counts exist, after uniq -c.",
+          "head": "Keep the top line last, once the largest count is on top.",
+          "sort": "Plain sort groups the tickers, so it comes straight after cut.",
+          "cut": "Start by cutting out the tickers; every other step reads them."
+        }
+      },
+      "explain": {
+        "text": "The counts come out as 3 AAPL, 2 MSFT, 1 NVDA, 1 ticker. `sort -rn` keeps 3 AAPL on top, and `head -n 1` keeps that line. Without `-n`, sort would compare the counts as text, and 10 would come before 9.",
+        "canvas": {
+          "highlight": [
+            "r1c1",
+            "r3c1",
+            "r6c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "Your Stage 1 script now runs over five ETFs. `returns.py` prints one line: ticker, annualised volatility, maximum drawdown. You run this, spot a bug in `returns.py`, fix it and run it again.\n\n```sh\nfor T in SPY QQQ IWM EFA TLT; do\n  python3 returns.py \"data/$T.csv\" >> results.csv\ndone\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Ticker",
+            "Volatility",
+            "Max drawdown"
+          ],
+          "rows": [
+            [
+              "SPY",
+              "0.176",
+              "−0.341"
+            ],
+            [
+              "QQQ",
+              "0.219",
+              "−0.356"
+            ],
+            [
+              "IWM",
+              "0.224",
+              "−0.431"
+            ],
+            [
+              "EFA",
+              "0.164",
+              "−0.336"
+            ],
+            [
+              "TLT",
+              "0.145",
+              "−0.516"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "One run's output, 2014 to 2023"
+        }
+      },
+      "question": "How many lines does `results.csv` hold now? It did not exist before the first run.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "label": "Lines in results.csv",
+        "accept": "10: each run appends five lines, and nothing ever empties the file.",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does anything in the script empty the file?"
+        },
+        {
+          "rung": "step",
+          "text": "`>>` only appends. Two runs of five lines each leave ten, with the stale ones first."
+        }
+      ],
+      "feedback": {
+        "correct": "Ten lines: five stale, then five fresh.",
+        "generic": "Not quite right. Count what each run appends, and whether anything clears the file.",
+        "byKey": {
+          "five": "You expected the second run to replace the first. `>>` only appends, so the buggy five lines are still there.",
+          "one": "That would happen with `>` inside the loop. With `>>`, every line is kept."
+        }
+      },
+      "explain": {
+        "text": "`>>` kept the five lines from the buggy run above the five good ones. Start the script with `echo \"ticker,vol,mdd\" > results.csv`: one `>` before the loop clears the file and writes a header. Then every run gives one header and five fresh rows.",
+        "canvas": {
+          "caption": "Before the loop: `echo \"ticker,vol,mdd\" > results.csv`"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "In a pipeline each command reads the output of the one before: `cut | sort | uniq -c` counts.",
+      "find searches every folder for names; grep -r searches every folder for contents.",
+      "A loop runs its body once per word. Inside it, append with `>>`; clear the file once, before the loop."
+    ],
+    "formula": {
+      "name": "Count each value in a column",
+      "tex": "\\texttt{cut -d, -f2 file | sort | uniq -c}",
+      "note": "uniq only merges neighbours, so sort first."
+    },
+    "trap": "`>` inside a loop empties the file on every pass. Only the last line survives."
+  },
+  "quiz": [
+    {
+      "id": "q-side-count",
+      "difficulty": 2,
+      "prose": "Field 3 of `trades.csv` is the side. Its seven lines are: side, buy, sell, sell, buy, buy, buy.\n\n```sh\n$ cut -d, -f3 trades.csv | sort | uniq -c\n```",
+      "question": "What count is printed next to `buy`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "label": "Count for buy",
+        "accept": "4",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "seven",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "buy appears four times.",
+        "generic": "Not quite right. Count the buy lines.",
+        "byKey": {
+          "three": "You missed one. Count again: lines 2, 5, 6 and 7 say buy.",
+          "seven": "That counts every line. uniq -c counts each value separately."
+        }
+      },
+      "explain": {
+        "text": "sort groups the four buy lines together, then the two sells and the header. uniq -c prints 4 buy, 2 sell, 1 side."
+      }
+    },
+    {
+      "id": "q-find-py",
+      "difficulty": 2,
+      "prose": "Your project has Python files at the top and inside `signals/` and `tests/`.",
+      "question": "Which command lists every Python file, in every folder?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "find",
+            "text": "`find . -name \"*.py\"`",
+            "correct": true
+          },
+          {
+            "id": "ls",
+            "text": "`ls *.py`",
+            "why": "ls looks only in the current folder. The files in signals and tests are missed."
+          },
+          {
+            "id": "grep",
+            "text": "`grep -r py .`",
+            "why": "grep -r searches contents. It prints every line containing the letters py, in any file."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "find searches names in every folder.",
+        "generic": "Not quite right. You want names, in every folder."
+      },
+      "explain": {
+        "text": "find walks down through every folder and matches names. ls stays at the top. grep reads contents, not names."
+      }
+    },
+    {
+      "id": "q-spaces",
+      "difficulty": 3,
+      "prose": "A script starts with this line:\n\n```sh\nSTART = 2019-01-01\n```",
+      "question": "What happens when it runs?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "error",
+            "text": "An error: `START: command not found`",
+            "correct": true
+          },
+          {
+            "id": "works",
+            "text": "START is set to 2019-01-01",
+            "why": "You read it like Python. In the shell, spaces round `=` turn it into a command named START."
+          },
+          {
+            "id": "empty",
+            "text": "START is set to an empty value",
+            "why": "With the spaces, nothing is set at all. The shell tries to run START."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The shell runs START as a command, with = and the date as its arguments.",
+        "generic": "Not quite right. Shell variables allow no spaces round `=`."
+      },
+      "explain": {
+        "text": "The shell splits the line at spaces, so START becomes a command name. No such command exists. Write `START=2019-01-01`, with no spaces."
+      }
+    },
+    {
+      "id": "q-single-quotes",
+      "difficulty": 3,
+      "prose": "Inside the loop, `T` is SPY. The script runs:\n\n```sh\necho 'Running $T'\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "literal",
+            "text": "`Running $T`",
+            "correct": true
+          },
+          {
+            "id": "spy",
+            "text": "`Running SPY`",
+            "why": "That is what double quotes give. Single quotes keep every character as typed."
+          },
+          {
+            "id": "blank",
+            "text": "`Running`",
+            "why": "The shell does not read `$T` here at all, so nothing is replaced."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Single quotes print exactly what is inside them.",
+        "generic": "Not quite right. Compare single and double quotes."
+      },
+      "explain": {
+        "text": "Inside single quotes the shell replaces nothing. Inside double quotes it replaces `$T` with SPY. Use double quotes round variables."
+      }
+    }
+  ]
+}

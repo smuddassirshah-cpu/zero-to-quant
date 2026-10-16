@@ -152,6 +152,8 @@ self.onmessage = async (e) => {
     const emit = (s) => self.postMessage({ type: 'event', id: m.id, data: String(s) });
     try {
       if (!runFn) throw new Error('Python is not ready.');
+      // Packages the learner imports (numpy, pandas) are fetched from the CDN on first use.
+      try { await py.loadPackagesFromImports(m.code); } catch (e) { emit('Package load failed: ' + ((e && e.message) || e)); }
       runFn(m.code, JSON.stringify(m.spec), emit);
     } catch (err) {
       self.postMessage({ type: 'crash', id: m.id, message: String((err && err.message) || err) });

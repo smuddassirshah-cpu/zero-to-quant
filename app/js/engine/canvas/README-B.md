@@ -88,7 +88,8 @@ Bar chart or histogram. It can draw dashed exact-value lines and fill itself fro
 
 **params**
 - `categories: [2, 3, ...]` or `[{ id, label, value }]`. Alternatively `bins: { min, max, width }`.
-- `yLabel`, `xLabel`, `height`, `colour`, `showValues`, `yMax`.
+- `yLabel`, `xLabel`, `height`, `colour`, `showValues`, `yMax`, `yMin`.
+- Negative values hang below a zero baseline (a profit and loss by month); the axis runs down to a tick under the lowest bar unless `yMin` fixes it, and a negative bar's value label sits under it.
 - Value labels (`showValues`): `decimals: 2` fixes the places and keeps trailing zeros (0.50, not 0.5); `money: "£"` prefixes the currency and uses two places unless `decimals` says otherwise (£12.50).
 - `exact: [{ x: "7", y: 0.1667 }]`. `x` is a category label or id; for bins it is any value inside the bin.
 - `exactLabel` (default "exact"; false hides it).

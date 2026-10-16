@@ -1,0 +1,1125 @@
+{
+  "id": "l7-collisions",
+  "course": "git",
+  "title": "When two changes collide",
+  "minutes": 14,
+  "objectives": [
+    "Resolve a merge conflict by hand",
+    "Read conflict markers and tell which half came from which branch"
+  ],
+  "skills": [
+    "gt-branches"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Both branches changed the same line of params.py, in different ways. You are on main and run `git merge experiment`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "params.py",
+            "before the split",
+            "on main",
+            "on experiment"
+          ],
+          "rows": [
+            [
+              "line 1",
+              "ticker = \"SPY\"",
+              "ticker = \"SPY\"",
+              "ticker = \"SPY\""
+            ],
+            [
+              "line 2",
+              "lookback = 20",
+              "lookback = 30",
+              "lookback = 60"
+            ],
+            [
+              "line 3",
+              "cost_bps = 5",
+              "cost_bps = 5",
+              "cost_bps = 5"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      },
+      "question": "Which lookback should the merged file have?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "git cannot know, so it stops and asks you",
+            "correct": true
+          },
+          {
+            "id": "newer",
+            "text": "60, from the newer commit",
+            "why": "You expected the latest change to win. git never judges by time; either value could be the one you want."
+          },
+          {
+            "id": "ours",
+            "text": "30, from the branch you are on",
+            "why": "Being on main gives main no priority. Both changes are real edits to the same line."
+          },
+          {
+            "id": "before",
+            "text": "20, the value before either change",
+            "why": "That would throw away both edits. git keeps work; it does not undo it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is there a rule that could tell which edit is right?"
+        },
+        {
+          "rung": "point",
+          "text": "Both branches rewrote this line, each in its own way.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each value is a deliberate edit. Only a person can decide, so git stops and asks."
+        }
+      ],
+      "feedback": {
+        "correct": "Two edits to one line: git stops and leaves the choice to you.",
+        "generic": "Not quite right. Ask whether any rule could pick the right value."
+      },
+      "explain": {
+        "text": "Line 2 was edited on both branches, so git has two answers and no way to choose. It stops the merge and marks the clash in the file. Lines 1 and 3 changed on neither branch, so they cause no trouble."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "git printed `CONFLICT (content): Merge conflict in params.py` and stopped. You open the file. You wrote four of these lines; git wrote the rest itself.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "params.py after the merge"
+          ],
+          "rows": [
+            [
+              "ticker = \"SPY\""
+            ],
+            [
+              "<<<<<<< HEAD"
+            ],
+            [
+              "lookback = 30"
+            ],
+            [
+              "======="
+            ],
+            [
+              "lookback = 60"
+            ],
+            [
+              ">>>>>>> experiment"
+            ],
+            [
+              "cost_bps = 5"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the lines git wrote itself.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c0",
+          "r3c0",
+          "r5c0"
+        ],
+        "countWord": "selected",
+        "wrong": [
+          {
+            "id": "took-values",
+            "set": [
+              "r1c0",
+              "r2c0",
+              "r3c0",
+              "r4c0",
+              "r5c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which lines are not Python at all?"
+        },
+        {
+          "rung": "point",
+          "text": "This line is a row of seven less-than signs and a name.",
+          "highlight": [
+            "r1c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "git wrote three lines: one of <, one of = and one of >."
+        }
+      ],
+      "feedback": {
+        "correct": "The three marker lines came from git.",
+        "generic": "Not quite right. Pick only the lines that could not be in a Python file.",
+        "byKey": {
+          "took-values": "The two lookback lines are real code: main's version and experiment's. git only wrote the three marker lines around them.",
+          "r2c0": "lookback = 30 is main's line, which you wrote earlier. git only wrote the markers.",
+          "r4c0": "lookback = 60 is experiment's line, which you wrote earlier. git only wrote the markers.",
+          "r0c0": "The ticker line merged cleanly. It is ordinary code.",
+          "r6c0": "The cost line merged cleanly. It is ordinary code.",
+          "r1c0": "Look for every line made of repeated symbols: there are three."
+        }
+      },
+      "explain": {
+        "text": "git wrote three **conflict markers** around the clash. Everything else is code you wrote. The markers fence off the two versions of line 2.",
+        "canvas": {
+          "shade": [
+            "r1c0",
+            "r3c0",
+            "r5c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The markers split the clash in two. HEAD is the branch you are on, and the last marker names the branch you are merging in.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "params.py after the merge"
+          ],
+          "rows": [
+            [
+              "ticker = \"SPY\""
+            ],
+            [
+              "<<<<<<< HEAD"
+            ],
+            [
+              "lookback = 30"
+            ],
+            [
+              "======="
+            ],
+            [
+              "lookback = 60"
+            ],
+            [
+              ">>>>>>> experiment"
+            ],
+            [
+              "cost_bps = 5"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the line that came from experiment.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r4c0"
+        ],
+        "countWord": "selected",
+        "max": 1,
+        "wrong": [
+          {
+            "id": "ours",
+            "set": [
+              "r2c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which marker names experiment?"
+        },
+        {
+          "rung": "point",
+          "text": "This marker names experiment. Its half is just above it.",
+          "highlight": [
+            "r5c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The half between ======= and >>>>>>> experiment is experiment's version."
+        }
+      ],
+      "feedback": {
+        "correct": "lookback = 60 sits between ======= and >>>>>>> experiment.",
+        "generic": "Not quite right. Find the half that ends at the marker naming experiment.",
+        "byKey": {
+          "ours": "lookback = 30 sits under <<<<<<< HEAD. HEAD is main, the branch you are on, so that is main's line.",
+          "r5c0": "That is the marker itself. Tap the code line inside experiment's half.",
+          "r3c0": "That is the divider between the halves. Tap a code line."
+        }
+      },
+      "explain": {
+        "text": "Between `<<<<<<< HEAD` and `=======` is **ours**, main's version. Between `=======` and `>>>>>>> experiment` is **theirs**. Resolving means rewriting this block as the code you actually want.",
+        "canvas": {
+          "shade": {
+            "ours": [
+              "r2c0"
+            ],
+            "theirs": [
+              "r4c0"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Your tests showed the 60-day lookback works better. Build the finished params.py from these lines. Leave out every line that should not be in it.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "params.py after the merge"
+          ],
+          "rows": [
+            [
+              "ticker = \"SPY\""
+            ],
+            [
+              "<<<<<<< HEAD"
+            ],
+            [
+              "lookback = 30"
+            ],
+            [
+              "======="
+            ],
+            [
+              "lookback = 60"
+            ],
+            [
+              ">>>>>>> experiment"
+            ],
+            [
+              "cost_bps = 5"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Place the lines of the finished file in order, top to bottom.",
+      "widget": {
+        "kind": "place",
+        "mode": "order",
+        "tokens": [
+          {
+            "id": "t0",
+            "text": "`ticker = \"SPY\"`"
+          },
+          {
+            "id": "m1",
+            "text": "`<<<<<<< HEAD`"
+          },
+          {
+            "id": "l30",
+            "text": "`lookback = 30`"
+          },
+          {
+            "id": "sep",
+            "text": "`=======`"
+          },
+          {
+            "id": "l60",
+            "text": "`lookback = 60`"
+          },
+          {
+            "id": "m3",
+            "text": "`>>>>>>> experiment`"
+          },
+          {
+            "id": "t6",
+            "text": "`cost_bps = 5`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "file",
+            "label": "params.py"
+          }
+        ],
+        "order": [
+          "t0",
+          "l60",
+          "t6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which lines are Python you want, and which are git's notes to you?"
+        },
+        {
+          "rung": "point",
+          "text": "These three markers must all go.",
+          "highlight": [
+            "r1c0",
+            "r3c0",
+            "r5c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep the ticker, then lookback = 60, then the cost line. Drop main's lookback and every marker."
+        }
+      ],
+      "feedback": {
+        "correct": "Three lines of plain Python, with no markers left.",
+        "generic": "Not quite right. Keep the ticker, the lookback you chose and the cost line, in file order.",
+        "byKey": {
+          "m1": "You kept a conflict marker. Python cannot run a file containing <<<<<<<, so delete every marker line.",
+          "sep": "You kept the ======= divider. It is a git note, not code, so delete it.",
+          "m3": "You kept a conflict marker. Python cannot run a file containing >>>>>>>, so delete every marker line.",
+          "l30": "You kept main's lookback. You chose 60, so lookback = 30 goes.",
+          "t6": "The cost line comes last, after the lookback, as in the original file."
+        }
+      },
+      "explain": {
+        "text": "You kept the clean lines and the version you chose, and deleted the three markers. A finished file must contain no `<<<<<<<`, `=======` or `>>>>>>>` lines. Choosing 60 was your decision; git only asked."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The file is fixed in your editor, but git does not know yet. `git status` still lists params.py under Unmerged paths as both modified.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "git status"
+          ],
+          "rows": [
+            [
+              "On branch main"
+            ],
+            [
+              "You have unmerged paths."
+            ],
+            [
+              "Unmerged paths:"
+            ],
+            [
+              "both modified:   params.py"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      },
+      "question": "Put the steps that finish the merge in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "edit",
+            "text": "Delete the markers and save params.py"
+          },
+          {
+            "id": "check",
+            "text": "`python backtest.py`, to check the file runs"
+          },
+          {
+            "id": "add",
+            "text": "`git add params.py`"
+          },
+          {
+            "id": "commit",
+            "text": "`git commit`, which makes the merge commit"
+          }
+        ],
+        "answer": [
+          "edit",
+          "check",
+          "add",
+          "commit"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How does git learn that a file is resolved?"
+        },
+        {
+          "rung": "step",
+          "text": "Fix the file and check it runs. `git add` tells git it is resolved; `git commit` makes the merge commit."
+        }
+      ],
+      "feedback": {
+        "correct": "Fix, check, add, commit.",
+        "generic": "Not quite right. git only counts the file as resolved once you add it, and the commit comes last.",
+        "byKey": {
+          "add": "You added the file before fixing it, so the markers would go into the commit.",
+          "commit": "You committed before adding. git refuses while a file is still unmerged.",
+          "check": "Check the file after you edit it and before you add it, so a broken file never gets committed."
+        }
+      },
+      "explain": {
+        "text": "`git add params.py` is how you tell git the conflict is resolved. `git commit` then makes the merge commit, with two parents as usual. Running the backtest first catches a stray marker before it is committed."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Another merge. This time main changed line 1 and experiment changed line 3. Line 2 was left alone by both.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "params.py",
+            "before the split",
+            "on main",
+            "on experiment"
+          ],
+          "rows": [
+            [
+              "line 1",
+              "ticker = \"SPY\"",
+              "ticker = \"QQQ\"",
+              "ticker = \"SPY\""
+            ],
+            [
+              "line 2",
+              "lookback = 20",
+              "lookback = 20",
+              "lookback = 20"
+            ],
+            [
+              "line 3",
+              "cost_bps = 5",
+              "cost_bps = 5",
+              "cost_bps = 8"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does `git merge experiment` do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Merges cleanly: ticker QQQ and cost_bps 8",
+            "correct": true
+          },
+          {
+            "id": "file",
+            "text": "Stops with a conflict, because both changed params.py",
+            "why": "git compares lines, not whole files. Edits to separate lines combine without asking."
+          },
+          {
+            "id": "ours",
+            "text": "Keeps main's file and drops experiment's change",
+            "why": "Nothing clashes, so git keeps both edits."
+          },
+          {
+            "id": "theirs",
+            "text": "Keeps experiment's file, so the ticker goes back to SPY",
+            "why": "Nothing clashes, so git keeps both edits."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Did both branches change the same line?"
+        },
+        {
+          "rung": "point",
+          "text": "main changed only line 1, and experiment only line 3.",
+          "highlight": [
+            "r0c2",
+            "r2c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Separate lines, with an untouched line between them: git takes each change from the branch that made it."
+        }
+      ],
+      "feedback": {
+        "correct": "Separate lines merge cleanly: you get both edits.",
+        "generic": "Not quite right. Ask whether the two edits touch the same lines."
+      },
+      "explain": {
+        "text": "Each line was changed on at most one branch, so git takes each edit from where it was made. The result has ticker QQQ and cost_bps 8, with no conflict. Edits to touching lines, with nothing unchanged between them, do clash.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c2",
+              "r2c3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "Two branches each added a new signal to the same list. You want both signals in the backtest.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "signals.py after the merge"
+          ],
+          "rows": [
+            [
+              "signals = ["
+            ],
+            [
+              "    \"trend\","
+            ],
+            [
+              "<<<<<<< HEAD"
+            ],
+            [
+              "    \"carry\","
+            ],
+            [
+              "======="
+            ],
+            [
+              "    \"value\","
+            ],
+            [
+              ">>>>>>> experiment"
+            ],
+            [
+              "]"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Place the lines of the finished signals.py in order.",
+      "widget": {
+        "kind": "place",
+        "mode": "order",
+        "same": [
+          [
+            "carry",
+            "value"
+          ]
+        ],
+        "tokens": [
+          {
+            "id": "open",
+            "text": "`signals = [`"
+          },
+          {
+            "id": "trend",
+            "text": "`\"trend\",`"
+          },
+          {
+            "id": "m1",
+            "text": "`<<<<<<< HEAD`"
+          },
+          {
+            "id": "carry",
+            "text": "`\"carry\",`"
+          },
+          {
+            "id": "sep",
+            "text": "`=======`"
+          },
+          {
+            "id": "value",
+            "text": "`\"value\",`"
+          },
+          {
+            "id": "m3",
+            "text": "`>>>>>>> experiment`"
+          },
+          {
+            "id": "close",
+            "text": "`]`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "file",
+            "label": "signals.py"
+          }
+        ],
+        "order": [
+          "open",
+          "trend",
+          "carry",
+          "value",
+          "close"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does keeping one signal mean losing the other?"
+        },
+        {
+          "rung": "point",
+          "text": "Each half holds one new signal, and you want both.",
+          "highlight": [
+            "r3c0",
+            "r5c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Open the list, keep trend, keep both carry and value, then close it. Drop the three markers."
+        }
+      ],
+      "feedback": {
+        "correct": "All three signals, and no markers.",
+        "generic": "Not quite right. Keep every signal you want, and none of the markers.",
+        "byKey": {
+          "close": "You closed the list after one new signal. A conflict does not mean one side must lose: keep both carry and value.",
+          "m1": "You kept a conflict marker. Delete all three marker lines.",
+          "sep": "You kept the ======= divider. Delete all three marker lines.",
+          "m3": "You kept a conflict marker. Delete all three marker lines.",
+          "trend": "trend was in the list before the split. Keep it, right after the opening line."
+        }
+      },
+      "explain": {
+        "text": "You kept both halves, because each added something you want. A conflict only means git will not choose for you. The answer can be ours, theirs, both, or a new line written by hand.",
+        "canvas": {
+          "shade": [
+            "r3c0",
+            "r5c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Every conflict has this shape:\n\n```sh\n<<<<<<< HEAD\nyour branch's lines\n=======\nthe other branch's lines\n>>>>>>> other-branch\n```\n\nRewrite the block as the code you want, delete the markers, then `git add` and `git commit`.",
+      "question": "When does git count the conflict as resolved?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "When you `git add` the fixed file",
+            "correct": true
+          },
+          {
+            "id": "save",
+            "text": "As soon as you save the file",
+            "why": "git does not watch your editor. Saving changes the folder; `git add` tells git."
+          },
+          {
+            "id": "markers",
+            "text": "When you delete one side's lines",
+            "why": "git does not read your edits until you add the file."
+          },
+          {
+            "id": "never",
+            "text": "Only after `git merge --abort`",
+            "why": "`--abort` cancels the merge and puts main back as it was. Nothing is resolved."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which command did `git status` tell you to use?"
+        },
+        {
+          "rung": "step",
+          "text": "git status said: use git add to mark resolution."
+        }
+      ],
+      "feedback": {
+        "correct": "`git add` marks the file resolved; `git commit` finishes the merge.",
+        "generic": "Not quite right. Look back at what `git status` suggested."
+      },
+      "explain": {
+        "text": "`git add` records the fixed file and marks it resolved. When no unmerged files are left, `git commit` makes the merge commit. If you want to start again, `git merge --abort` returns to before the merge."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "Before the split, config.yaml said lookback: 20 and cost_bps: 5. On main, a colleague raised costs to 8 bps after checking real fills. On vol-signal you set lookback to 60. The two lines touch, so git reports one conflict.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "config.yaml after the merge"
+          ],
+          "rows": [
+            [
+              "ticker: SPY"
+            ],
+            [
+              "<<<<<<< HEAD"
+            ],
+            [
+              "lookback: 20"
+            ],
+            [
+              "cost_bps: 8"
+            ],
+            [
+              "======="
+            ],
+            [
+              "lookback: 60"
+            ],
+            [
+              "cost_bps: 5"
+            ],
+            [
+              ">>>>>>> vol-signal"
+            ],
+            [
+              "start: 2015-01-01"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Place the lines of the correct config.yaml in order.",
+      "widget": {
+        "kind": "place",
+        "mode": "order",
+        "tokens": [
+          {
+            "id": "tick",
+            "text": "`ticker: SPY`"
+          },
+          {
+            "id": "m1",
+            "text": "`<<<<<<< HEAD`"
+          },
+          {
+            "id": "lb20",
+            "text": "`lookback: 20`"
+          },
+          {
+            "id": "c8",
+            "text": "`cost_bps: 8`"
+          },
+          {
+            "id": "sep",
+            "text": "`=======`"
+          },
+          {
+            "id": "lb60",
+            "text": "`lookback: 60`"
+          },
+          {
+            "id": "c5",
+            "text": "`cost_bps: 5`"
+          },
+          {
+            "id": "m3",
+            "text": "`>>>>>>> vol-signal`"
+          },
+          {
+            "id": "start",
+            "text": "`start: 2015-01-01`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "file",
+            "label": "config.yaml"
+          }
+        ],
+        "order": [
+          "tick",
+          "lb60",
+          "c8",
+          "start"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each half with the file before the split. Which line did each side actually change?"
+        },
+        {
+          "rung": "point",
+          "text": "main's half changed cost_bps; your half changed lookback.",
+          "highlight": [
+            "r3c0",
+            "r5c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take lookback: 60 from your branch and cost_bps: 8 from main. Keep ticker and start, and drop the markers."
+        }
+      ],
+      "feedback": {
+        "correct": "lookback 60 from your branch, costs of 8 bps from main.",
+        "generic": "Not quite right. Take each side's real change, and nothing else.",
+        "byKey": {
+          "lb20": "You kept main's half whole. lookback: 20 undoes your own change; take lookback from your branch.",
+          "c5": "You kept your branch's half whole. cost_bps: 5 silently undoes your colleague's fix to 8 bps.",
+          "m1": "You kept a conflict marker. Delete all three.",
+          "sep": "You kept the ======= divider. Delete all three markers.",
+          "m3": "You kept a conflict marker. Delete all three.",
+          "start": "start: 2015-01-01 is the last line, after both settings."
+        }
+      },
+      "explain": {
+        "text": "Each half repeats one line it never changed. Comparing with the file before the split shows the real edits: lookback on your branch, cost_bps on main. Keeping either half whole would quietly undo the other person's work, and flatter or break the backtest.",
+        "canvas": {
+          "shade": {
+            "keep": [
+              "r3c0",
+              "r5c0"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "git stops with a conflict when both branches changed the same or touching lines. Edits to separate lines merge cleanly.",
+      "Between `<<<<<<< HEAD` and `=======` is your branch; between `=======` and `>>>>>>> name` is the other one.",
+      "Rewrite the block as the code you want, delete every marker, then `git add` the file and `git commit`."
+    ],
+    "formula": {
+      "name": "Finish a conflicted merge",
+      "tex": "\\text{edit} \\;\\to\\; \\texttt{git add} \\;\\to\\; \\texttt{git commit}",
+      "note": "Compare each half with the file before the split to see what each side really changed."
+    },
+    "trap": "A conflict does not mean one side must win. Keeping a whole half can silently undo the other branch's change."
+  },
+  "quiz": [
+    {
+      "id": "q-which-half",
+      "difficulty": 2,
+      "prose": "You are on main and merge the branch fees. You see:\n\n```sh\n<<<<<<< HEAD\nfee = 0.0005\n=======\nfee = 0.0010\n>>>>>>> fees\n```",
+      "question": "Which value came from main?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`fee = 0.0005`",
+            "correct": true
+          },
+          {
+            "id": "theirs",
+            "text": "`fee = 0.0010`",
+            "why": "That is under the divider, in the half ending >>>>>>> fees. It came from fees."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: main's value is not shown",
+            "why": "Both versions are shown. HEAD's half is main's."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The half under <<<<<<< HEAD is the branch you are on: main.",
+        "generic": "Not quite right. Which marker is HEAD?"
+      },
+      "explain": {
+        "text": "HEAD is main, the branch you are on. Its half runs from `<<<<<<< HEAD` to `=======`. So main has 0.0005 and fees has 0.0010."
+      }
+    },
+    {
+      "id": "q-count-conflicts",
+      "difficulty": 2,
+      "prose": "A merge leaves backtest.py with markers in it. Searching for `=======` finds 2 lines, and each conflict has 3 marker lines.",
+      "question": "How many conflicts must you resolve in backtest.py?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Conflicts",
+        "wrong": [
+          {
+            "id": "markers",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "halves",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One ======= per conflict, so 2.",
+        "generic": "Not quite right. How many dividers does one conflict have?",
+        "byKey": {
+          "markers": "You counted marker lines. Each conflict has three of them, so 6 lines is 2 conflicts.",
+          "halves": "You counted halves. Each conflict has two halves, so 4 halves is 2 conflicts."
+        }
+      },
+      "explain": {
+        "text": "Each conflict has exactly one `=======` divider. Two dividers means two conflicts, with 6 marker lines in all. Every one must go before you `git add` the file."
+      }
+    },
+    {
+      "id": "q-both-lines",
+      "difficulty": 3,
+      "prose": "To be safe, you resolve a conflict by keeping both versions:\n\n```sh\nlookback = 30\nlookback = 60\n```",
+      "question": "What lookback does the backtest now use?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "60, silently: the second line overwrites the first",
+            "correct": true
+          },
+          {
+            "id": "error",
+            "text": "None: Python stops with an error",
+            "why": "Assigning a name twice is legal Python. Nothing warns you."
+          },
+          {
+            "id": "first",
+            "text": "30, the first one",
+            "why": "Python runs top to bottom, so the later line wins."
+          },
+          {
+            "id": "both",
+            "text": "Both: it runs once with each",
+            "why": "A name holds one value at a time. The second line replaces the first."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The later line wins, and nothing warns you.",
+        "generic": "Not quite right. Python runs the lines top to bottom."
+      },
+      "explain": {
+        "text": "Keeping both lines is not safe here. Python sets lookback to 30, then to 60. Two values for one setting means you must choose one."
+      }
+    },
+    {
+      "id": "q-after-edit",
+      "difficulty": 3,
+      "prose": "You deleted the markers in params.py and saved it. `git status` still shows `both modified: params.py`.",
+      "question": "What do you run next?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`git add params.py`",
+            "correct": true
+          },
+          {
+            "id": "merge",
+            "text": "`git merge experiment` again",
+            "why": "A merge is already in progress. Running it again does not finish it."
+          },
+          {
+            "id": "abort",
+            "text": "`git merge --abort`",
+            "why": "That throws away the merge and your resolution."
+          },
+          {
+            "id": "commit",
+            "text": "`git commit` straight away",
+            "why": "git refuses to commit while a file is still unmerged. Add it first."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`git add` marks the file resolved.",
+        "generic": "Not quite right. How does git learn that you fixed the file?"
+      },
+      "explain": {
+        "text": "Saving changes the folder, not git's record. `git add params.py` marks it resolved. Then `git commit` makes the merge commit."
+      }
+    }
+  ]
+}

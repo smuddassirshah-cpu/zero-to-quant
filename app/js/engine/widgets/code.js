@@ -10,7 +10,9 @@
    harness carries it as a string and runs it afresh for every case, with input() and sys.stdin fed from that case's
    stdin and print output captured; a stdout case compares the captured text with expect (whitespace-normalised, or
    exactly with exact: true), and a call case is evaluated in that run's namespace, which also holds printed (the
-   captured lines as a list). input() prompts are not part of the output. */
+   captured lines as a list). input() prompts are not part of the output. Any case may carry setup (Python run before
+   call); compare "raises" passes when the call (or, in script mode with no call, the program) raises the named
+   exception or a subclass. */
 (function () {
   'use strict';
   const Z = window.ZQ;
