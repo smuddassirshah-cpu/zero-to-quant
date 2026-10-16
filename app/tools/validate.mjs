@@ -124,6 +124,8 @@ const regionIds = (canvas) => {
   if (canvas.kind === 'grid' && p.rows && p.cols) {
     const ids = new Set();
     range(0, p.rows).forEach(i => range(0, p.cols).forEach(j => ids.add(`r${i}c${j}`)));
+    const routes = (canvas.state || {}).paths; // routes drawn over the grid (item 93) answer to their ids
+    (Array.isArray(routes) ? routes.map((q, k) => (isObj(q) && q.id != null ? q.id : 'path' + (k + 1))) : isObj(routes) ? Object.keys(routes) : []).forEach(id => ids.add(String(id)));
     return ids;
   }
   if (canvas.kind === 'venn') {
@@ -157,7 +159,7 @@ const regionIds = (canvas) => {
   return null;
 };
 const PLAUSIBLE = {
-  grid: /^(r\d+c\d+|row\d+|col\d+|cross\d+)$/,
+  grid: /^(r\d+c\d+|row\d+|col\d+|cross\d+|path\d+)$/,
   venn: /^(A|B|C|AB|AC|BC|ABC|none|[A-Za-z]{1,3})$/,
   area: /^(c\d+(-\d+)?|pt\d+|shade|split|point)$/,
   table: /^(r\d+|c\d+|r\d+c\d+)$/,
@@ -393,6 +395,26 @@ const checkCanvas = (file, where, c) => {
   if (!CANVASES.has(c.kind)) err(file, `${where}.kind`, `unknown canvas kind "${c.kind}"`);
   if (c.params != null && !isObj(c.params)) err(file, `${where}.params`, 'must be an object');
   if (c.state != null && !isObj(c.state)) err(file, `${where}.state`, 'must be an object');
+  /* pass 3 canvas options (items 89 to 107): shapes only, never a crash */
+  const P = isObj(c.params) ? c.params : {}, S = isObj(c.state) ? c.state : {};
+  const slotOk = (v) => v == null || (Number.isInteger(+v) && +v >= 1 && +v <= 6);
+  if (c.kind === 'grid') {
+    if (P.rowOffsets != null && !(Array.isArray(P.rowOffsets) && P.rowOffsets.every(v => typeof v === 'number' && v >= 0))) err(file, `${where}.params.rowOffsets`, 'rowOffsets is a list of offsets in cell widths, one per row, 0 or more');
+    if (S.cells != null && !Array.isArray(S.cells) && !isObj(S.cells)) err(file, `${where}.state.cells`, 'state.cells is { "r1c2": "5" } or a 2D array of strings');
+    if (isObj(S.shade)) Object.entries(S.shade).forEach(([k, v]) => { if (isObj(v) && (!Array.isArray(v.ids || v.cells) || !slotOk(v.colour))) err(file, `${where}.state.shade.${k}`, 'a coloured set is { "ids": [...], "colour": 1 to 6 }'); });
+    if (S.paths != null) {
+      const list = Array.isArray(S.paths) ? S.paths : isObj(S.paths) ? Object.entries(S.paths).map(([id, v]) => (Array.isArray(v) ? { id, cells: v } : { id, ...(isObj(v) ? v : {}) })) : null;
+      if (!list) err(file, `${where}.state.paths`, 'paths is a list of { id, cells: [ids], colour } or a map from id to cell ids');
+      else list.forEach((q, i) => { if (!isObj(q) || !Array.isArray(q.cells) || q.cells.length < 2) err(file, `${where}.state.paths[${i}]`, 'a path needs cells: at least two cell ids'); else if (!slotOk(q.colour)) err(file, `${where}.state.paths[${i}].colour`, 'colour is a slot 1 to 6'); else if (P.rows && P.cols) q.cells.forEach(id => { const m = String(id).match(/^r(\d+)c(\d+)$/); if (!m || +m[1] < 1 || +m[1] > P.rows || +m[2] < 1 || +m[2] > P.cols) err(file, `${where}.state.paths[${i}].cells`, `no cell "${id}" in a ${P.rows} by ${P.cols} grid`); }); });
+    }
+  }
+  if (c.kind === 'graph') {
+    if (P.layout != null && P.layout !== 'ring') err(file, `${where}.params.layout`, 'layout is "ring" (or leave it out and give each node x and y)');
+    if (S.labels != null && !isObj(S.labels)) err(file, `${where}.state.labels`, 'labels maps node ids to new labels');
+    if (S.rotate != null && typeof S.rotate !== 'number') err(file, `${where}.state.rotate`, 'rotate is a number of seats');
+  }
+  if (c.kind === 'tree' && S.current != null && typeof S.current !== 'string') err(file, `${where}.state.current`, 'current is a branch path such as "a-b", or "root"');
+  if (c.kind === 'vectors' && P.points != null && !(Array.isArray(P.points) && P.points.every(q => isObj(q) && typeof q.x === 'number' && typeof q.y === 'number'))) err(file, `${where}.params.points`, 'points is a list of { id, x, y, label }');
   (c.controls || []).forEach((k, i) => {
     if (!k.bind) err(file, `${where}.controls[${i}].bind`, 'required');
     if (k.format != null && !['fraction', 'percent'].includes(k.format)) err(file, `${where}.controls[${i}].format`, 'format is "fraction" or "percent"');
@@ -518,7 +540,9 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
       checkHints(file, `${at}.hints`, s.hints, s.canvas, false);
     }
     if (s.type === 'generalise') {
-      if (!s.prose || !/\$/.test(s.prose)) err(file, `${at}.prose`, 'a generalise screen states the rule in KaTeX');
+      /* item 101: in a programming course (a topic on the code track) a fenced code block states the rule as well as KaTeX does */
+      const codeCourse = (C.stages || []).some(st => (st.topics || []).some(t => t.track === 'code' && (t.courses || []).includes(courseId)));
+      if (!s.prose || !(/\$/.test(s.prose) || (codeCourse && /```[\w+-]*\n[\s\S]*?```/.test(s.prose)))) err(file, `${at}.prose`, codeCourse ? 'a generalise screen states the rule in KaTeX or a fenced code block' : 'a generalise screen states the rule in KaTeX');
       if (s.widget) checkFeedback(file, `${at}.feedback`, s.feedback, keys);
     }
     if (GRADED.has(s.type)) {

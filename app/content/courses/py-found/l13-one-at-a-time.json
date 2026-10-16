@@ -1,0 +1,1199 @@
+{
+  "id": "l13-one-at-a-time",
+  "course": "py-found",
+  "title": "Producing values one at a time",
+  "minutes": 14,
+  "objectives": [
+    "Write a generator and use it in a loop",
+    "Compute the maximum drawdown of a price series from its running peak"
+  ],
+  "skills": [
+    "pf-idioms",
+    "pf-functions"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The deepest fall",
+      "prose": "A fund closed at these prices over ten trading days. Anyone who bought at a high and held on watched the price fall below what they paid.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                96.0,
+                92.0,
+                97.0,
+                110.0,
+                104.5,
+                99.0,
+                103.0,
+                108.0,
+                112.0
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "d1",
+              "i": 0
+            },
+            {
+              "id": "d2",
+              "i": 1
+            },
+            {
+              "id": "d3",
+              "i": 2
+            },
+            {
+              "id": "d4",
+              "i": 3
+            },
+            {
+              "id": "d5",
+              "i": 4
+            },
+            {
+              "id": "d6",
+              "i": 5
+            },
+            {
+              "id": "d7",
+              "i": 6
+            },
+            {
+              "id": "d8",
+              "i": 7
+            },
+            {
+              "id": "d9",
+              "i": 8
+            },
+            {
+              "id": "d10",
+              "i": 9
+            }
+          ],
+          "caption": "Tap a day to choose it"
+        }
+      },
+      "question": "Tap the day that ends the deepest fall, measured as a share of the highest close before it.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "d7"
+        ],
+        "max": 1,
+        "countWord": "days"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each low point, find the highest close before it. What share of that high was lost?"
+        },
+        {
+          "rung": "point",
+          "text": "Two falls stand out: from day 1 down to day 3, and from day 5 down to day 7.",
+          "highlight": [
+            "d3",
+            "d7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 3 is £8.00 below £100.00, a fall of 8%. Day 7 is £11.00 below £110.00, a fall of 10%."
+        }
+      ],
+      "feedback": {
+        "correct": "Day 7 sits 10% below the £110.00 high of day 5.",
+        "generic": "Not quite right. For each low, divide the fall by the highest close before it.",
+        "byKey": {
+          "d3": "You tapped the lowest close. It is 8% below the £100.00 high before it, but day 7 is 10% below £110.00.",
+          "d10": "Day 10 is the highest close of all, so nobody who held it is down.",
+          "d6": "Day 6 is 5% below the day 5 high. The price kept falling the next day.",
+          "d2": "Day 2 is 4% below day 1. The price fell further on day 3.",
+          "d1": "Day 1 has no earlier close, so there is nothing to fall from."
+        }
+      },
+      "explain": {
+        "text": "You compared each low with the highest close before it. Day 3 is 8% below £100.00, and day 7 is $\\tfrac{110 - 99}{110} = 10\\%$ below £110.00. The lowest price is not always the deepest fall.",
+        "canvas": {
+          "shade": [
+            {
+              "id": "s1",
+              "from": 0,
+              "to": 2,
+              "label": "−8%",
+              "tone": "neutral"
+            },
+            {
+              "id": "s2",
+              "from": 4,
+              "to": 6,
+              "label": "−10%",
+              "tone": "neg"
+            }
+          ],
+          "highlight": [
+            "d7"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "To measure a fall you need the highest close so far. Call a close a **new high** when it beats every close before it.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                96.0,
+                92.0,
+                97.0,
+                110.0,
+                104.5,
+                99.0,
+                103.0,
+                108.0,
+                112.0
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "d1",
+              "i": 0
+            },
+            {
+              "id": "d2",
+              "i": 1
+            },
+            {
+              "id": "d3",
+              "i": 2
+            },
+            {
+              "id": "d4",
+              "i": 3
+            },
+            {
+              "id": "d5",
+              "i": 4
+            },
+            {
+              "id": "d6",
+              "i": 5
+            },
+            {
+              "id": "d7",
+              "i": 6
+            },
+            {
+              "id": "d8",
+              "i": 7
+            },
+            {
+              "id": "d9",
+              "i": 8
+            },
+            {
+              "id": "d10",
+              "i": 9
+            }
+          ],
+          "caption": "Tap every new high after day 1"
+        }
+      },
+      "question": "Tap every new high after day 1.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "d5",
+          "d10"
+        ],
+        "countWord": "days",
+        "wrong": [
+          {
+            "id": "rises",
+            "set": [
+              "d4",
+              "d5",
+              "d8",
+              "d9",
+              "d10"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk left to right, keeping the best close you have seen so far."
+        },
+        {
+          "rung": "point",
+          "text": "The best close stays at £100.00 until something beats it.",
+          "highlight": [
+            "d1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£110.00 on day 5 beats everything before it. After that only £112.00 on day 10 beats £110.00."
+        }
+      ],
+      "feedback": {
+        "correct": "Only days 5 and 10 beat every earlier close.",
+        "generic": "Not quite right. A new high must beat every earlier close, not just the day before.",
+        "byKey": {
+          "rises": "You tapped every day that rose. A rise only counts as a new high if it beats the best close so far.",
+          "d4": "£97.00 is up on day 3 but still below day 1's £100.00.",
+          "d8": "£103.00 is up on day 7 but still below day 5's £110.00.",
+          "d9": "£108.00 is still below day 5's £110.00."
+        }
+      },
+      "explain": {
+        "text": "You kept one number as you walked: the best close so far. It is the **running peak**, and it only moves on days 5 and 10. The fall from it on any day is that day's **drawdown**.",
+        "canvas": {
+          "markers": [
+            {
+              "id": "d1",
+              "i": 0,
+              "label": "£100.00"
+            },
+            {
+              "id": "d5",
+              "i": 4,
+              "label": "£110.00"
+            },
+            {
+              "id": "d10",
+              "i": 9,
+              "label": "£112.00"
+            }
+          ],
+          "highlight": [
+            "d5",
+            "d10"
+          ]
+        }
+      }
+    },
+    {
+      "type": "demonstrate",
+      "difficulty": 1,
+      "title": "The running peak",
+      "prose": "Here is the walk you just did, as code. It carries one number, `peak`, from day to day.\n\n```python\npeak = prices[0]\nfor p in prices:\n    peak = max(peak, p)\n    drawdown = (peak - p) / peak\n```",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                96.0,
+                92.0,
+                97.0,
+                110.0,
+                104.5,
+                99.0,
+                103.0,
+                108.0,
+                112.0
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "peak",
+              "i": 0,
+              "label": "peak £100.00",
+              "colour": 3
+            }
+          ],
+          "caption": "Day 1: peak £100.00, drawdown 0%"
+        }
+      },
+      "steps": [
+        {
+          "caption": "Day 1. The peak starts at the first close, £100.00. Drawdown 0%.",
+          "canvas": {
+            "markers": [
+              {
+                "id": "peak",
+                "i": 0,
+                "label": "peak £100.00",
+                "colour": 3
+              }
+            ],
+            "shade": [],
+            "caption": "Day 1: peak £100.00, drawdown 0%"
+          }
+        },
+        {
+          "caption": "Day 3. £92.00 does not beat £100.00, so the peak stays. Drawdown $\\tfrac{100 - 92}{100} = 8\\%$.",
+          "canvas": {
+            "markers": [
+              {
+                "id": "peak",
+                "i": 0,
+                "label": "peak £100.00",
+                "colour": 3
+              },
+              {
+                "id": "now",
+                "i": 2,
+                "label": "£92.00",
+                "below": true
+              }
+            ],
+            "shade": [
+              {
+                "id": "s1",
+                "from": 0,
+                "to": 2,
+                "label": "−8%",
+                "tone": "neg"
+              }
+            ],
+            "caption": "Day 3: peak £100.00, drawdown 8%"
+          }
+        },
+        {
+          "caption": "Day 5. £110.00 beats the peak, so `max` moves it. Drawdown is back to 0%.",
+          "canvas": {
+            "markers": [
+              {
+                "id": "peak",
+                "i": 4,
+                "label": "peak £110.00",
+                "colour": 3
+              }
+            ],
+            "shade": [],
+            "caption": "Day 5: peak £110.00, drawdown 0%"
+          }
+        },
+        {
+          "caption": "Day 7. £99.00 against a peak of £110.00. Drawdown $\\tfrac{110 - 99}{110} = 10\\%$, the worst so far.",
+          "canvas": {
+            "markers": [
+              {
+                "id": "peak",
+                "i": 4,
+                "label": "peak £110.00",
+                "colour": 3
+              },
+              {
+                "id": "now",
+                "i": 6,
+                "label": "£99.00",
+                "below": true
+              }
+            ],
+            "shade": [
+              {
+                "id": "s2",
+                "from": 4,
+                "to": 6,
+                "label": "−10%",
+                "tone": "neg"
+              }
+            ],
+            "caption": "Day 7: peak £110.00, drawdown 10%"
+          }
+        },
+        {
+          "caption": "Day 10. A new peak, £112.00. The largest drawdown seen on the way is the **maximum drawdown**: 10%.",
+          "canvas": {
+            "markers": [
+              {
+                "id": "peak",
+                "i": 9,
+                "label": "peak £112.00",
+                "colour": 3
+              }
+            ],
+            "shade": [],
+            "drawdown": true,
+            "caption": "Maximum drawdown: 10%, from day 5 to day 7"
+          }
+        }
+      ]
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "One value per request",
+      "prose": "This function hands back the peak with `yield` instead of `return`.\n\n```python\ndef running_peak(prices):\n    peak = prices[0]\n    for p in prices:\n        peak = max(peak, p)\n        yield peak\n\ng = running_peak([100.0, 96.0, 110.0, 104.5])\nprint(next(g))\nprint(next(g))\nprint(next(g))\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "100.0",
+            "96.0",
+            "110.0",
+            "104.5"
+          ]
+        },
+        "state": {
+          "caption": "The four closes passed in"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`100.0`, then `100.0`, then `110.0`",
+            "correct": true
+          },
+          {
+            "id": "closes",
+            "text": "`100.0`, then `96.0`, then `110.0`",
+            "why": "You printed the closes. `yield peak` hands back the running peak, which stays at 100.0 on the second close."
+          },
+          {
+            "id": "ran-all",
+            "text": "`110.0` three times",
+            "why": "You ran the whole loop before the first `print`. The function pauses at each `yield` and only carries on when `next` asks."
+          },
+          {
+            "id": "list",
+            "text": "`[100.0, 100.0, 110.0, 110.0]`, once",
+            "why": "You expected one finished list. Each `next(g)` gets one value, and there are three calls."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the function hand back the first time it reaches `yield`?"
+        },
+        {
+          "rung": "point",
+          "text": "The first `next` runs the loop for the first close only, then pauses.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "First pass: peak 100.0. Second pass: `max(100.0, 96.0)` is 100.0. Third pass: `max(100.0, 110.0)` is 110.0."
+        }
+      ],
+      "feedback": {
+        "correct": "Each `next` runs one more pass of the loop and pauses at `yield`.",
+        "generic": "Not quite right. Run the loop one pass per `next`, and note the value of `peak` each time.",
+        "byKey": {
+          "ran-all": "You ran the whole loop before the first `print`. The function pauses at each `yield`, holding `peak`, until the next `next`."
+        }
+      },
+      "explain": {
+        "text": "A function containing `yield` is a **generator**. Calling it runs nothing; each `next(g)` runs to the next `yield`, hands back one value and pauses there. `peak` survives the pause, which is what a running peak needs.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "p",
+              "at": 2,
+              "label": "third next"
+            }
+          ],
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "`list(g)` asks a generator for values until it runs out, and collects them. A `for` loop over it does the same, one value per pass.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "100.0",
+            "96.0",
+            "92.0",
+            "97.0",
+            "110.0"
+          ]
+        },
+        "state": {
+          "caption": "Running peak: 100.0, 100.0, 100.0, 100.0, 110.0"
+        }
+      },
+      "question": "Complete the generator `running_peak(prices)` so it yields the highest close so far, once per close.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def running_peak(prices):\n    peak = prices[0]\n    for p in prices:\n        pass  # update peak, then hand it back with yield\n\nprint(list(running_peak([100.0, 96.0, 92.0, 97.0, 110.0])))\n",
+        "solution": "def running_peak(prices):\n    peak = prices[0]\n    for p in prices:\n        peak = max(peak, p)\n        yield peak\n\nprint(list(running_peak([100.0, 96.0, 92.0, 97.0, 110.0])))\n",
+        "tests": [
+          {
+            "call": "list(running_peak([100.0, 96.0, 92.0, 97.0, 110.0]))",
+            "expect": "[100.0, 100.0, 100.0, 100.0, 110.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(running_peak([50.0, 55.0, 60.0]))",
+            "expect": "[50.0, 55.0, 60.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(running_peak([80.0]))",
+            "expect": "[80.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(running_peak([100.0, 96.0, 92.0, 97.0, 110.0, 104.5, 99.0, 103.0, 108.0, 112.0]))",
+            "expect": "[100.0, 100.0, 100.0, 100.0, 110.0, 110.0, 110.0, 110.0, 110.0, 112.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "type(running_peak([1.0])).__name__",
+            "expect": "'generator'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Four turn your generator into a list and compare it exactly; one checks it is a generator.",
+        "examples": [
+          {
+            "call": "list(running_peak([100.0, 96.0, 92.0, 97.0, 110.0]))",
+            "expect": "[100.0, 100.0, 100.0, 100.0, 110.0]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two lines go inside the loop: one updates `peak`, one hands it back."
+        },
+        {
+          "rung": "point",
+          "text": "`max(peak, p)` is the bigger of the two.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Inside the loop: `peak = max(peak, p)`, then `yield peak`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your generator yields one peak per close.",
+        "generic": "Not quite right. Look at the first test that failed and compare the two lists.",
+        "byKey": {
+          "test-1": "Test 1 expects `[100.0, 100.0, 100.0, 100.0, 110.0]`. Getting the closes back means you yielded `p`; a list one step behind means you yielded before updating.",
+          "test-5": "Test 5 checks for a generator. Building a list and returning it gives the right values but not one at a time: use `yield`."
+        }
+      },
+      "explain": {
+        "text": "Your loop updates `peak` and then yields it, so each close produces one value. Test 3 is the edge case: one close gives one peak, itself.",
+        "canvas": {
+          "highlight": [
+            "c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now yield the drawdown instead of the peak: the fall from the peak as a share of the peak. Day 7 should give `0.1`.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                96.0,
+                92.0,
+                97.0,
+                110.0,
+                104.5,
+                99.0,
+                103.0,
+                108.0,
+                112.0
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "d7",
+              "i": 6,
+              "label": "0.1"
+            }
+          ],
+          "shade": [
+            {
+              "id": "s2",
+              "from": 4,
+              "to": 6,
+              "label": "−10%",
+              "tone": "neg"
+            }
+          ]
+        }
+      },
+      "question": "Complete the generator `drawdowns(prices)` so it yields each close's drawdown as a decimal.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def drawdowns(prices):\n    peak = prices[0]\n    for p in prices:\n        pass  # update peak, then yield this close's drawdown\n\nprint(list(drawdowns([100.0, 96.0, 92.0, 97.0, 110.0, 104.5, 99.0])))\n",
+        "solution": "def drawdowns(prices):\n    peak = prices[0]\n    for p in prices:\n        peak = max(peak, p)\n        yield (peak - p) / peak\n\nprint(list(drawdowns([100.0, 96.0, 92.0, 97.0, 110.0, 104.5, 99.0])))\n",
+        "tests": [
+          {
+            "call": "[round(d, 4) for d in drawdowns([100.0, 96.0, 92.0, 97.0, 110.0, 104.5, 99.0])]",
+            "expect": "[0.0, 0.04, 0.08, 0.03, 0.0, 0.05, 0.1]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(d, 4) for d in drawdowns([50.0, 40.0, 60.0, 45.0])]",
+            "expect": "[0.0, 0.2, 0.0, 0.25]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(d, 4) for d in drawdowns([100.0, 101.0, 103.0])]",
+            "expect": "[0.0, 0.0, 0.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "type(drawdowns([1.0])).__name__",
+            "expect": "'generator'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Three round each yielded drawdown to 4 places and compare the lists; one checks it is a generator.",
+        "examples": [
+          {
+            "call": "[round(d, 4) for d in drawdowns([100.0, 96.0, 92.0, 97.0, 110.0, 104.5, 99.0])]",
+            "expect": "[0.0, 0.04, 0.08, 0.03, 0.0, 0.05, 0.1]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep the peak line from the last screen. What do you yield now?"
+        },
+        {
+          "rung": "point",
+          "text": "On day 7 the peak is 110.0 and the close is 99.0: the answer is 0.1.",
+          "highlight": [
+            "d7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Inside the loop: `peak = max(peak, p)`, then `yield (peak - p) / peak`."
+        }
+      ],
+      "feedback": {
+        "correct": "One drawdown per close, measured from the running peak.",
+        "generic": "Not quite right. Compare your first failing list with the expected one, close by close.",
+        "byKey": {
+          "test-1": "Test 1 expects `0.1` on day 7. Pounds such as `11.0` mean you did not divide; `0.1111` means you divided by the close, not the peak."
+        }
+      },
+      "explain": {
+        "text": "You divided the fall by the peak, so day 7 gives $\\tfrac{11}{110} = 0.1$. Test 3 is the edge case: a price that only rises never falls below its peak, so every drawdown is 0.",
+        "canvas": {
+          "highlight": [
+            "d7"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "`prices` holds the ten closes. You find the worst drawdown, then want to look at them all.\n\n```python\ndd = drawdowns(prices)\nprint(max(dd))\nprint(list(dd))\n```",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                96.0,
+                92.0,
+                97.0,
+                110.0,
+                104.5,
+                99.0,
+                103.0,
+                108.0,
+                112.0
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "markers": [],
+          "drawdown": true
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "replay",
+            "text": "`0.1`, then the ten drawdowns",
+            "why": "You expected `dd` to replay like a list. `max` already asked it for every value, so it has none left."
+          },
+          {
+            "id": "right",
+            "text": "`0.1`, then `[]`",
+            "correct": true
+          },
+          {
+            "id": "error",
+            "text": "`0.1`, then an error",
+            "why": "A used-up generator is not an error. It simply has nothing left, so `list` collects nothing."
+          },
+          {
+            "id": "last",
+            "text": "`0.1`, then `[0.0]`",
+            "why": "That keeps only the last value. A finished generator keeps nothing at all."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "To find the largest value, how many values must `max` ask for?"
+        },
+        {
+          "rung": "point",
+          "text": "`max` runs the generator to its end. Where is it paused now?"
+        },
+        {
+          "rung": "step",
+          "text": "The generator is finished after `max`. Asking a finished generator for more gives nothing, so `list(dd)` is `[]`."
+        }
+      ],
+      "feedback": {
+        "correct": "`max` used every value up. A generator runs once.",
+        "generic": "Not quite right. Think about what `max` did to `dd` before `list` saw it.",
+        "byKey": {
+          "replay": "You expected `dd` to replay like a list. `max(dd)` already took every value, so `list(dd)` gets none."
+        }
+      },
+      "explain": {
+        "text": "`max(dd)` pulled all ten values, so the generator is spent. `list(dd)` then finds nothing and gives `[]`, with no error to warn you. Call `drawdowns(prices)` again, or keep `list(drawdowns(prices))` if you need the values twice.",
+        "canvas": {
+          "drawdown": true
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You carried a running peak $M_t$ and measured each close $P_t$ against it: $$M_t = \\max(P_1, \\dots, P_t), \\qquad D_t = \\frac{M_t - P_t}{M_t}$$ The **maximum drawdown** is the largest $D_t$. It is a fall from a peak to a later trough, never to an earlier one.",
+      "question": "Which line computes the maximum drawdown of `prices`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`max(drawdowns(prices))`",
+            "correct": true
+          },
+          {
+            "id": "hilo",
+            "text": "`(max(prices) - min(prices)) / max(prices)`",
+            "why": "That pairs the highest and lowest closes in any order. Day 3's £92.00 came before the £112.00 high, so nobody lost 17.9%."
+          },
+          {
+            "id": "last",
+            "text": "`list(drawdowns(prices))[-1]`",
+            "why": "That is the drawdown on the last day only. Day 10 is a new peak, so it gives 0."
+          },
+          {
+            "id": "index",
+            "text": "`drawdowns(prices)[6]`",
+            "why": "A generator has no positions to index; it only hands out the next value. And day 7 being worst is what you are trying to find."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The largest of the drawdowns, which the generator yields one at a time.",
+        "generic": "Not quite right. The peak must come before the trough."
+      },
+      "explain": {
+        "text": "`max` asks the generator for every drawdown and keeps the largest: 0.1 here. The high-minus-low line ignores the order of the days, which is the whole point of a drawdown."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A fund's worst stretch",
+      "prose": "A risk report needs the maximum drawdown of a fund's daily closes. The starter reads the CSV from a string with `csv.DictReader` and `io.StringIO`, so `prices` is a list of floats.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                250.0,
+                253.75,
+                249.1,
+                256.4,
+                261.25,
+                255.0,
+                247.4,
+                243.15,
+                250.6,
+                258.8,
+                263.5,
+                259.9
+              ]
+            }
+          ],
+          "x": "dates",
+          "indexFrom": 1,
+          "xLabel": null,
+          "money": "£",
+          "dates": [
+            "2026-03-02",
+            "2026-03-03",
+            "2026-03-04",
+            "2026-03-05",
+            "2026-03-06",
+            "2026-03-09",
+            "2026-03-10",
+            "2026-03-11",
+            "2026-03-12",
+            "2026-03-13",
+            "2026-03-16",
+            "2026-03-17"
+          ],
+          "height": 240
+        },
+        "state": {
+          "markers": [],
+          "caption": "Daily closes, 2 to 17 March 2026"
+        }
+      },
+      "question": "Write `max_drawdown(prices)` that returns the largest fall from a running peak, as a decimal.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nimport io\n\nCSV = \"\"\"Date,Close\n2026-03-02,250.00\n2026-03-03,253.75\n2026-03-04,249.10\n2026-03-05,256.40\n2026-03-06,261.25\n2026-03-09,255.00\n2026-03-10,247.40\n2026-03-11,243.15\n2026-03-12,250.60\n2026-03-13,258.80\n2026-03-16,263.50\n2026-03-17,259.90\n\"\"\"\n\ndef max_drawdown(prices):\n    pass  # replace this line\n\nprices = [float(row[\"Close\"]) for row in csv.DictReader(io.StringIO(CSV))]\nprint(f\"Max drawdown: {max_drawdown(prices):.2%}\")\n",
+        "solution": "import csv\nimport io\n\nCSV = \"\"\"Date,Close\n2026-03-02,250.00\n2026-03-03,253.75\n2026-03-04,249.10\n2026-03-05,256.40\n2026-03-06,261.25\n2026-03-09,255.00\n2026-03-10,247.40\n2026-03-11,243.15\n2026-03-12,250.60\n2026-03-13,258.80\n2026-03-16,263.50\n2026-03-17,259.90\n\"\"\"\n\ndef drawdowns(prices):\n    peak = prices[0]\n    for p in prices:\n        peak = max(peak, p)\n        yield (peak - p) / peak\n\ndef max_drawdown(prices):\n    return max(drawdowns(prices))\n\nprices = [float(row[\"Close\"]) for row in csv.DictReader(io.StringIO(CSV))]\nprint(f\"Max drawdown: {max_drawdown(prices):.2%}\")\n",
+        "tests": [
+          {
+            "call": "max_drawdown([250.0, 253.75, 249.1, 256.4, 261.25, 255.0, 247.4, 243.15, 250.6, 258.8, 263.5, 259.9])",
+            "expect": "0.06928229665071768",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown([50.0, 40.0, 60.0, 45.0])",
+            "expect": "0.25",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown([100.0, 90.0, 95.0, 120.0, 110.0])",
+            "expect": "0.1",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown([100.0, 101.0, 103.0])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "max_drawdown([120.0])",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each answer is accepted when it is within a relative $10^{-9}$ of the expected decimal.",
+        "examples": [
+          {
+            "call": "max_drawdown([50.0, 40.0, 60.0, 45.0])",
+            "expect": "0.25",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Reuse the `drawdowns` generator from earlier, then take the largest value."
+        },
+        {
+          "rung": "point",
+          "text": "The peak here is £261.25 on 6 March; the trough comes three days later."
+        },
+        {
+          "rung": "step",
+          "text": "Paste `drawdowns` above, then `return max(drawdowns(prices))`."
+        }
+      ],
+      "feedback": {
+        "correct": "6.93%, from £261.25 down to £243.15.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects about 0.0693. Getting 0.0772 means you used the highest and lowest closes, but the £263.50 high came after the £243.15 low."
+        }
+      },
+      "explain": {
+        "text": "The running peak reaches £261.25 on 6 March, and the price falls to £243.15 by 11 March: $\\tfrac{18.10}{261.25} \\approx 6.93\\%$. The later £263.50 high comes after that low, so it does not count.",
+        "canvas": {
+          "drawdown": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A function with `yield` is a generator. Each `next` runs it to the next `yield` and pauses, keeping its variables.",
+      "The running peak is the highest close so far. A close's drawdown is its fall below that peak, as a share of the peak.",
+      "A generator runs once. After `max` or `list` has used it up, it gives nothing more."
+    ],
+    "formula": {
+      "name": "Maximum drawdown",
+      "tex": "\\text{MDD} = \\max_t \\frac{M_t - P_t}{M_t}, \\quad M_t = \\max(P_1, \\dots, P_t)",
+      "note": "The peak always comes before the trough."
+    },
+    "trap": "Reusing a generator after `max` has consumed it gives an empty result, with no error to warn you."
+  },
+  "quiz": [
+    {
+      "id": "q-mdd-order",
+      "difficulty": 2,
+      "prose": "A strategy's closes are £50.00, £40.00, £60.00 and £45.00, in that order.",
+      "question": "What is the maximum drawdown?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "%",
+        "label": "Maximum drawdown",
+        "accept": "25%: from the £60.00 peak down to £45.00.",
+        "wrong": [
+          {
+            "id": "hilo",
+            "value": 33.33,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "first",
+            "value": 20,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "pounds",
+            "value": 15,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "From £60.00 down to £45.00 is a 25% fall.",
+        "generic": "Not quite right. Track the highest close so far and measure each fall from it.",
+        "byKey": {
+          "hilo": "You paired the £60.00 high with the £40.00 low. The low came first, so nobody lost that.",
+          "first": "That is the first fall, from £50.00. The later fall from £60.00 is deeper.",
+          "pounds": "That is the fall in pounds. Divide it by the £60.00 peak."
+        }
+      },
+      "explain": {
+        "text": "The running peak is £50.00, £50.00, £60.00, £60.00. The drawdowns are 0, 0.2, 0 and 0.25, so the maximum is $\\tfrac{60 - 45}{60} = 25\\%$."
+      }
+    },
+    {
+      "id": "q-spent",
+      "difficulty": 2,
+      "prose": "```python\ng = running_peak([3.0, 5.0])\nprint(next(g))\nprint(next(g))\nprint(next(g))\n```",
+      "question": "What happens on the third `next(g)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It raises `StopIteration`",
+            "correct": true
+          },
+          {
+            "id": "again",
+            "text": "It prints `3.0` again",
+            "why": "You expected the generator to start over. It never restarts; it is finished."
+          },
+          {
+            "id": "last",
+            "text": "It prints `5.0` again",
+            "why": "A finished generator does not repeat its last value. It has nothing left to give."
+          },
+          {
+            "id": "none",
+            "text": "It prints `None`",
+            "why": "Python does not invent a value. A generator with nothing left signals it by raising `StopIteration`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two closes give two values; the third request finds nothing.",
+        "generic": "Not quite right. Count how many values the generator can yield."
+      },
+      "explain": {
+        "text": "The generator yields once per close, so it has two values: `3.0` and `5.0`. The third `next` finds the loop finished and raises `StopIteration`. A `for` loop or `list` catches that signal quietly; a bare `next` does not."
+      }
+    },
+    {
+      "id": "q-rising",
+      "difficulty": 2,
+      "prose": "A bond fund rose every day: £100.00, £100.40, £100.90, £101.30.",
+      "question": "What is `max(drawdowns(prices))`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`0.0`",
+            "correct": true
+          },
+          {
+            "id": "gain",
+            "text": "`0.013`",
+            "why": "That is the total gain, 1.3%. A drawdown measures falls, and there were none."
+          },
+          {
+            "id": "neg",
+            "text": "`-0.013`",
+            "why": "A drawdown is never negative: on a new high the close equals the peak, so it is 0."
+          },
+          {
+            "id": "err",
+            "text": "An error, because nothing fell",
+            "why": "The generator still yields a value for every close. Each one is 0, and the maximum of zeros is 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every close is a new high, so every drawdown is 0.",
+        "generic": "Not quite right. Compare each close with the running peak."
+      },
+      "explain": {
+        "text": "Each close beats the one before, so the running peak is always today's close. Every drawdown is $\\tfrac{P_t - P_t}{P_t} = 0$, and so is the maximum."
+      }
+    },
+    {
+      "id": "q-yield",
+      "difficulty": 3,
+      "prose": "```python\ndef closes(rows):\n    for row in rows:\n        return float(row[\"Close\"])\n```",
+      "question": "A colleague wants this to produce every close, one at a time. What single change does it need?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Replace `return` with `yield`",
+            "correct": true
+          },
+          {
+            "id": "list",
+            "text": "Wrap the loop in `list(...)`",
+            "why": "The loop still ends at the first `return`, so there would be one close at most."
+          },
+          {
+            "id": "next",
+            "text": "Call it with `next(closes(rows))`",
+            "why": "`next` works only on a generator. As written, the function returns the first close and stops."
+          },
+          {
+            "id": "indent",
+            "text": "Move `return` outside the loop",
+            "why": "Then it returns only the last close. It still hands back a single value."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`yield` hands back each close and carries on with the loop.",
+        "generic": "Not quite right. Which keyword hands back a value without ending the function?"
+      },
+      "explain": {
+        "text": "`return` ends the function on the first row. `yield` hands back the close and pauses, so the loop resumes on the next request. That turns the function into a generator of closes."
+      }
+    }
+  ]
+}

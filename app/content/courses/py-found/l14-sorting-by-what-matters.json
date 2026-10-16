@@ -1,0 +1,1082 @@
+{
+  "id": "l14-sorting-by-what-matters",
+  "course": "py-found",
+  "title": "Sorting by what matters",
+  "minutes": 14,
+  "objectives": [
+    "Sort with key functions and lambdas",
+    "Put a price file in date order and compute its daily returns"
+  ],
+  "skills": [
+    "pf-idioms",
+    "pf-modules"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which day came first?",
+      "prose": "A data vendor sent a file of closes merged from two exports, so the rows are out of order. Dates are written day first, as in the UK.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Date",
+            "Close (£)"
+          ],
+          "rows": [
+            [
+              "30/03/2026",
+              "101.20"
+            ],
+            [
+              "02/04/2026",
+              "103.10"
+            ],
+            [
+              "27/03/2026",
+              "100.00"
+            ],
+            [
+              "01/04/2026",
+              "99.80"
+            ],
+            [
+              "31/03/2026",
+              "102.50"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the date of the oldest close.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c0"
+        ],
+        "max": 1,
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "countWord": "dates"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read each date as day, month, year. Which month comes first?"
+        },
+        {
+          "rung": "point",
+          "text": "Three dates are in March and two in April.",
+          "highlight": [
+            "r0c0",
+            "r2c0",
+            "r4c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The March dates are the 27th, 30th and 31st. The 27th is the oldest."
+        }
+      ],
+      "feedback": {
+        "correct": "27 March 2026 is the oldest close.",
+        "generic": "Not quite right. Compare months first, then days.",
+        "byKey": {
+          "r3c0": "You picked the smallest-looking text. `01` beats `27`, but that is 1 April, after 27 March.",
+          "r0c0": "That is the first row of the file, not the oldest date. This file is out of order.",
+          "r1c0": "2 April is the newest date here, not the oldest.",
+          "r4c0": "31 March is later than 27 March."
+        }
+      },
+      "explain": {
+        "text": "You compared the month before the day, as you read a date. Nobody would call 1 April older than 27 March. Python does not know these are dates, though: to it they are text.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r2c0"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "To compute returns, the closes must be in time order. A first attempt sorts the date strings.\n\n```python\ndates = [\"30/03/2026\", \"02/04/2026\", \"27/03/2026\", \"01/04/2026\", \"31/03/2026\"]\nprint(sorted(dates))\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "30/03/2026",
+            "02/04/2026",
+            "27/03/2026",
+            "01/04/2026",
+            "31/03/2026"
+          ]
+        },
+        "state": {
+          "caption": "The dates as the file holds them: text"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "time",
+            "text": "`['27/03/2026', '30/03/2026', '31/03/2026', '01/04/2026', '02/04/2026']`",
+            "why": "You expected `sorted` to read them as dates. It sees text and compares it character by character."
+          },
+          {
+            "id": "right",
+            "text": "`['01/04/2026', '02/04/2026', '27/03/2026', '30/03/2026', '31/03/2026']`",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "The list unchanged",
+            "why": "`sorted` always returns a new sorted list. It just sorts by the wrong thing here."
+          },
+          {
+            "id": "error",
+            "text": "A `TypeError`: text cannot be sorted",
+            "why": "Text sorts fine, alphabetically. That is exactly the problem."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Text is compared one character at a time, from the left."
+        },
+        {
+          "rung": "point",
+          "text": "The first characters are `3`, `0`, `2`, `0`, `3`. Which come first?",
+          "highlight": [
+            "c1",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`0` comes before `2` and `3`, so both April dates go first. Then `27`, `30`, `31`."
+        }
+      ],
+      "feedback": {
+        "correct": "Text sorts by its first character, and here that is the day.",
+        "generic": "Not quite right. Compare the strings character by character, as a dictionary would.",
+        "byKey": {
+          "time": "You expected `sorted` to read them as dates. It sees text, and `'01/04'` beats `'27/03'` on the first character."
+        }
+      },
+      "explain": {
+        "text": "Text compares from the left, so the day decides the order before the month is read. The April dates jump ahead of March. We need Python to see dates, not text.",
+        "canvas": {
+          "cells": [
+            "01/04/2026",
+            "02/04/2026",
+            "27/03/2026",
+            "30/03/2026",
+            "31/03/2026"
+          ],
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "`datetime.strptime(text, pattern)` reads text into a date and time. The pattern `\"%d/%m/%Y\"` means day, slash, month, slash, four-digit year. `.date()` then drops the time.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "27",
+            "/",
+            "03",
+            "/",
+            "2026"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "d",
+              "at": 0,
+              "label": "%d"
+            },
+            {
+              "id": "m",
+              "at": 2,
+              "label": "%m"
+            },
+            {
+              "id": "y",
+              "at": 4,
+              "label": "%Y"
+            }
+          ]
+        }
+      },
+      "question": "Write `to_date(text)` that turns a date such as `\"27/03/2026\"` into a `date`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from datetime import datetime\n\ndef to_date(text):\n    pass  # replace this line\n\nprint(to_date(\"27/03/2026\"))\n",
+        "solution": "from datetime import datetime\n\ndef to_date(text):\n    return datetime.strptime(text, \"%d/%m/%Y\").date()\n\nprint(to_date(\"27/03/2026\"))\n",
+        "tests": [
+          {
+            "call": "type(to_date(\"02/04/2026\")).__name__",
+            "expect": "'date'",
+            "compare": "equal"
+          },
+          {
+            "call": "to_date(\"27/03/2026\").isoformat()",
+            "expect": "'2026-03-27'",
+            "compare": "equal"
+          },
+          {
+            "call": "to_date(\"05/11/2025\").isoformat()",
+            "expect": "'2025-11-05'",
+            "compare": "equal"
+          },
+          {
+            "call": "to_date(\"01/04/2026\") > to_date(\"27/03/2026\")",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. One checks you return a `date`, two compare the date in ISO form, and one checks 1 April comes after 27 March.",
+        "examples": [
+          {
+            "call": "to_date(\"27/03/2026\").isoformat()",
+            "expect": "'2026-03-27'",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Call `datetime.strptime` with the text and a pattern, then `.date()` on the result."
+        },
+        {
+          "rung": "point",
+          "text": "The day comes first in this file, so the pattern starts with `%d`.",
+          "highlight": [
+            "d"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return datetime.strptime(text, \"%d/%m/%Y\").date()`"
+        }
+      ],
+      "feedback": {
+        "correct": "Your dates now compare as dates.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects a `date`. Without `.date()` you return a `datetime`, which carries a time of midnight.",
+          "test-3": "Test 3 expects 5 November. Getting 11 May means the pattern reads the month first.",
+          "error": "If the error says `does not match format`, the pattern reads the month first, and there is no month 27. Put `%d` before `%m`."
+        }
+      },
+      "explain": {
+        "text": "`strptime` read the day, month and year from their places in the text. A `date` compares by year, then month, then day, so 1 April now beats 27 March. Test 3 is the edge case: 05/11 is a valid date either way round, so only the right pattern passes.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c2",
+            "c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "`csv.DictReader` gives each row as a dictionary, such as `{'Date': '27/03/2026', 'Close': '100.00'}`. `sorted` takes a `key`: a function it calls on each item, sorting by what comes back. This sorts by close:\n\n```python\nsorted(rows, key=lambda row: float(row[\"Close\"]))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Date",
+            "Close (£)"
+          ],
+          "rows": [
+            [
+              "30/03/2026",
+              "101.20"
+            ],
+            [
+              "02/04/2026",
+              "103.10"
+            ],
+            [
+              "27/03/2026",
+              "100.00"
+            ],
+            [
+              "01/04/2026",
+              "99.80"
+            ],
+            [
+              "31/03/2026",
+              "102.50"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `sort_rows(rows)` that returns the rows sorted by date, oldest first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nimport io\nfrom datetime import datetime\n\nCSV = \"\"\"Date,Close\n30/03/2026,101.20\n02/04/2026,103.10\n27/03/2026,100.00\n01/04/2026,99.80\n31/03/2026,102.50\n\"\"\"\n\ndef to_date(text):\n    return datetime.strptime(text, \"%d/%m/%Y\").date()\n\ndef sort_rows(rows):\n    pass  # replace this line\n\nrows = list(csv.DictReader(io.StringIO(CSV)))\nfor row in sort_rows(rows):\n    print(row[\"Date\"], row[\"Close\"])\n",
+        "solution": "import csv\nimport io\nfrom datetime import datetime\n\nCSV = \"\"\"Date,Close\n30/03/2026,101.20\n02/04/2026,103.10\n27/03/2026,100.00\n01/04/2026,99.80\n31/03/2026,102.50\n\"\"\"\n\ndef to_date(text):\n    return datetime.strptime(text, \"%d/%m/%Y\").date()\n\ndef sort_rows(rows):\n    return sorted(rows, key=lambda row: to_date(row[\"Date\"]))\n\nrows = list(csv.DictReader(io.StringIO(CSV)))\nfor row in sort_rows(rows):\n    print(row[\"Date\"], row[\"Close\"])\n",
+        "tests": [
+          {
+            "call": "[row['Date'] for row in sort_rows([{'Date': '30/03/2026', 'Close': '101.20'}, {'Date': '02/04/2026', 'Close': '103.10'}, {'Date': '27/03/2026', 'Close': '100.00'}, {'Date': '01/04/2026', 'Close': '99.80'}, {'Date': '31/03/2026', 'Close': '102.50'}])]",
+            "expect": "['27/03/2026', '30/03/2026', '31/03/2026', '01/04/2026', '02/04/2026']",
+            "compare": "equal"
+          },
+          {
+            "call": "[row['Close'] for row in sort_rows([{'Date': '30/03/2026', 'Close': '101.20'}, {'Date': '02/04/2026', 'Close': '103.10'}, {'Date': '27/03/2026', 'Close': '100.00'}, {'Date': '01/04/2026', 'Close': '99.80'}, {'Date': '31/03/2026', 'Close': '102.50'}])]",
+            "expect": "['100.00', '101.20', '102.50', '99.80', '103.10']",
+            "compare": "equal"
+          },
+          {
+            "call": "[row['Date'] for row in sort_rows([{'Date': '02/01/2026', 'Close': '1'}, {'Date': '31/12/2025', 'Close': '2'}, {'Date': '30/12/2025', 'Close': '3'}])]",
+            "expect": "['30/12/2025', '31/12/2025', '02/01/2026']",
+            "compare": "equal"
+          },
+          {
+            "call": "sort_rows([])",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each passes a list of row dictionaries and compares the dates or closes of what you return.",
+        "examples": [
+          {
+            "call": "[row['Date'] for row in sort_rows([{'Date': '30/03/2026', 'Close': '101.20'}, {'Date': '02/04/2026', 'Close': '103.10'}, {'Date': '27/03/2026', 'Close': '100.00'}, {'Date': '01/04/2026', 'Close': '99.80'}, {'Date': '31/03/2026', 'Close': '102.50'}])]",
+            "expect": "['27/03/2026', '30/03/2026', '31/03/2026', '01/04/2026', '02/04/2026']",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Copy the line above, and change what the key returns."
+        },
+        {
+          "rung": "point",
+          "text": "The key should turn each row's date text into a `date`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return sorted(rows, key=lambda row: to_date(row[\"Date\"]))`"
+        }
+      ],
+      "feedback": {
+        "correct": "The key turned each row into its date, and `sorted` did the rest.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects 27 March first. If 1 April came first, your key returned the date text; sort by `to_date(row[\"Date\"])`."
+        }
+      },
+      "explain": {
+        "text": "`lambda row: to_date(row[\"Date\"])` is a one-line function. `sorted` calls it on every row and orders the rows by the dates it returns. The rows themselves come back whole, closes included.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A quick check of the highest close in the same file.\n\n```python\nrows = list(csv.DictReader(io.StringIO(CSV)))\nprint(max(row[\"Close\"] for row in rows))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Date",
+            "Close (£)"
+          ],
+          "rows": [
+            [
+              "30/03/2026",
+              "101.20"
+            ],
+            [
+              "02/04/2026",
+              "103.10"
+            ],
+            [
+              "27/03/2026",
+              "100.00"
+            ],
+            [
+              "01/04/2026",
+              "99.80"
+            ],
+            [
+              "31/03/2026",
+              "102.50"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "number",
+            "text": "`103.10`",
+            "correct": true
+          },
+          {
+            "id": "right",
+            "text": "`99.80`",
+            "correct": true
+          },
+          {
+            "id": "error",
+            "text": "A `TypeError`, because closes are text",
+            "why": "`max` compares text happily, alphabetically. No error warns you."
+          },
+          {
+            "id": "first",
+            "text": "`101.20`",
+            "why": "`max` looks at every close, not just the first row."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What type is `row[\"Close\"]`?"
+        },
+        {
+          "rung": "point",
+          "text": "Every value from `DictReader` is a string. Compare `'99.80'` and `'103.10'` character by character.",
+          "highlight": [
+            "r3c1",
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first characters are `'9'` and `'1'`. `'9'` is later than `'1'`, so `'99.80'` is the largest text."
+        }
+      ],
+      "feedback": {
+        "correct": "As text, `'99.80'` is the largest: `'9'` beats `'1'`.",
+        "generic": "Not quite right. Every value in a `DictReader` row is text.",
+        "byKey": {
+          "number": "You read the closes as numbers. `DictReader` gives text, and `'9'` beats `'1'`, so `'99.80'` wins.",
+          "error": "`max` compares strings alphabetically without complaint. That silence is the danger."
+        }
+      },
+      "explain": {
+        "text": "`DictReader` hands back strings, and strings compare from their first character. `'99.80'` starts with `'9'`, so it beats every close starting with `'1'`. Give `max` a key, `max(rows, key=lambda row: float(row[\"Close\"]))`, or convert the closes with `float` first.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r3c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "In date order the closes are £100.00, £101.20, £102.50, £99.80 and £103.10. From £100.00 to £101.20 is a **daily return** of $\\tfrac{101.20}{100.00} - 1 = 0.012$. `zip(closes, closes[1:])` pairs each close with the next one.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "100.00",
+            "101.20",
+            "102.50",
+            "99.80",
+            "103.10"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "y",
+              "at": 0,
+              "label": "yesterday"
+            },
+            {
+              "id": "t",
+              "at": 1,
+              "label": "today"
+            }
+          ],
+          "caption": "Return: 101.20 / 100.00 − 1 = 0.012"
+        }
+      },
+      "question": "Write `returns(closes)` that returns the list of daily returns, one fewer than the closes.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def returns(closes):\n    pass  # replace this line\n\nprint(returns([100.00, 101.20, 102.50, 99.80, 103.10]))\n",
+        "solution": "def returns(closes):\n    out = []\n    for yesterday, today in zip(closes, closes[1:]):\n        out.append(today / yesterday - 1)\n    return out\n\nprint(returns([100.00, 101.20, 102.50, 99.80, 103.10]))\n",
+        "tests": [
+          {
+            "call": "[round(r, 6) for r in returns([100.00, 101.20, 102.50, 99.80, 103.10])]",
+            "expect": "[0.012, 0.012846, -0.026341, 0.033066]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(r, 6) for r in returns([250.00, 245.00])]",
+            "expect": "[-0.02]",
+            "compare": "equal"
+          },
+          {
+            "call": "returns([100.00])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(returns([1.0, 2.0, 3.0, 4.0]))",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Returns are rounded to 6 places and the lists compared.",
+        "examples": [
+          {
+            "call": "[round(r, 6) for r in returns([100.00, 101.20, 102.50, 99.80, 103.10])]",
+            "expect": "[0.012, 0.012846, -0.026341, 0.033066]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop over `zip(closes, closes[1:])`, which hands you `(yesterday, today)` pairs."
+        },
+        {
+          "rung": "point",
+          "text": "The first pair is `(100.00, 101.20)`.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return [today / yesterday - 1 for yesterday, today in zip(closes, closes[1:])]`"
+        }
+      ],
+      "feedback": {
+        "correct": "Four returns from five closes.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects 0.012 first. Pounds such as 1.2 mean you subtracted; −0.011858 means you divided yesterday by today."
+        }
+      },
+      "explain": {
+        "text": "`closes[1:]` is the list shifted by one, so `zip` pairs each close with the next and stops at the shorter list. Five closes give four returns. Test 3 is the edge case: one close has no next, so there are no returns.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "y",
+              "at": 3,
+              "label": "yesterday"
+            },
+            {
+              "id": "t",
+              "at": 4,
+              "label": "today"
+            }
+          ],
+          "caption": "Last return: 103.10 / 99.80 − 1 ≈ 0.033"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Each pair is a date and that day's return. A risk check wants the two worst days.\n\n```python\ndays = [(\"30/03\", 0.012), (\"31/03\", 0.0128), (\"01/04\", -0.0263), (\"02/04\", 0.0331)]\nworst = sorted(days, key=lambda day: day[1])[:2]\nprint([d for d, r in worst])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Date",
+            "Return"
+          ],
+          "rows": [
+            [
+              "30/03",
+              "0.012"
+            ],
+            [
+              "31/03",
+              "0.0128"
+            ],
+            [
+              "01/04",
+              "-0.0263"
+            ],
+            [
+              "02/04",
+              "0.0331"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`['01/04', '30/03']`",
+            "correct": true
+          },
+          {
+            "id": "best",
+            "text": "`['02/04', '31/03']`",
+            "why": "Those are the two best days. `sorted` puts the smallest first, and the worst return is the smallest."
+          },
+          {
+            "id": "dates",
+            "text": "`['01/04', '02/04']`",
+            "why": "That sorts by the date text. The key `day[1]` picks the return, not the date."
+          },
+          {
+            "id": "first",
+            "text": "`['30/03', '31/03']`",
+            "why": "That is the first two in file order. `sorted` reorders before the slice `[:2]` is taken."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the key `day[1]` pick out of each pair?"
+        },
+        {
+          "rung": "point",
+          "text": "The key picks the return. Smallest first.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Smallest returns: −0.0263 on 01/04, then 0.012 on 30/03. The slice keeps those two."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted by return, smallest first, then the first two.",
+        "generic": "Not quite right. Sort the four returns from smallest to largest, then take two.",
+        "byKey": {
+          "best": "Those are the two best days. Ascending order puts the most negative return first."
+        }
+      },
+      "explain": {
+        "text": "The key picked `day[1]`, the return, so `sorted` ordered the days from worst to best. The slice kept the first two. For the best days, add `reverse=True`.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "`sorted(items, key=f)` orders the items by $f(\\text{item})$ and hands back the items themselves. You sorted rows by their date and days by their return. Returns then come from neighbouring closes: $$r_t = \\frac{P_t}{P_{t-1}} - 1$$",
+      "question": "Which line lists the rows newest first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`sorted(rows, key=lambda row: to_date(row[\"Date\"]), reverse=True)`",
+            "correct": true
+          },
+          {
+            "id": "text",
+            "text": "`sorted(rows, key=lambda row: row[\"Date\"], reverse=True)`",
+            "why": "That sorts the date text, so the day still decides the order before the month."
+          },
+          {
+            "id": "minus",
+            "text": "`sorted(rows, key=lambda row: -row[\"Date\"])`",
+            "why": "You cannot negate text. `reverse=True` is how to flip the order."
+          },
+          {
+            "id": "rev",
+            "text": "`reversed(rows)`",
+            "why": "That only flips the file's own order. This file was never in date order to begin with."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Same key, order flipped.",
+        "generic": "Not quite right. Keep the date key and flip the order."
+      },
+      "explain": {
+        "text": "The key decides what is compared and `reverse=True` flips the result. Many vendor files arrive newest first, so check the order before computing a single return."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A vendor file, newest first",
+      "prose": "Your vendor sends a share's closes newest first, with UK dates. A backtest needs the daily returns in time order. The starter holds the file in a string.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Date",
+            "Close (£)"
+          ],
+          "rows": [
+            [
+              "05/02/2026",
+              "412.60"
+            ],
+            [
+              "04/02/2026",
+              "405.30"
+            ],
+            [
+              "03/02/2026",
+              "409.85"
+            ],
+            [
+              "02/02/2026",
+              "401.20"
+            ],
+            [
+              "30/01/2026",
+              "398.75"
+            ],
+            [
+              "29/01/2026",
+              "404.10"
+            ],
+            [
+              "28/01/2026",
+              "400.00"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `daily_returns(csv_text)` that returns the daily returns, oldest first, for any such file.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nimport io\nfrom datetime import datetime\n\nCSV = \"\"\"Date,Close\n05/02/2026,412.60\n04/02/2026,405.30\n03/02/2026,409.85\n02/02/2026,401.20\n30/01/2026,398.75\n29/01/2026,404.10\n28/01/2026,400.00\n\"\"\"\n\ndef daily_returns(csv_text):\n    rows = list(csv.DictReader(io.StringIO(csv_text)))\n    # sort the rows by date, turn the closes into floats, then compute the returns\n    return []\n\nprint(daily_returns(CSV))\n",
+        "solution": "import csv\nimport io\nfrom datetime import datetime\n\nCSV = \"\"\"Date,Close\n05/02/2026,412.60\n04/02/2026,405.30\n03/02/2026,409.85\n02/02/2026,401.20\n30/01/2026,398.75\n29/01/2026,404.10\n28/01/2026,400.00\n\"\"\"\n\ndef to_date(text):\n    return datetime.strptime(text, \"%d/%m/%Y\").date()\n\ndef daily_returns(csv_text):\n    rows = list(csv.DictReader(io.StringIO(csv_text)))\n    rows = sorted(rows, key=lambda row: to_date(row[\"Date\"]))\n    closes = [float(row[\"Close\"]) for row in rows]\n    return [today / yesterday - 1 for yesterday, today in zip(closes, closes[1:])]\n\nprint(daily_returns(CSV))\n",
+        "tests": [
+          {
+            "call": "[round(r, 6) for r in daily_returns(\"Date,Close\\n05/02/2026,412.60\\n04/02/2026,405.30\\n03/02/2026,409.85\\n02/02/2026,401.20\\n30/01/2026,398.75\\n29/01/2026,404.10\\n28/01/2026,400.00\\n\")]",
+            "expect": "[0.01025, -0.013239, 0.006144, 0.02156, -0.011102, 0.018011]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(r, 6) for r in daily_returns(\"Date,Close\\n02/01/2026,249.90\\n29/12/2025,250.00\\n05/01/2026,255.00\\n31/12/2025,247.45\\n30/12/2025,252.50\\n\")]",
+            "expect": "[0.01, -0.02, 0.009901, 0.020408]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(r, 6) for r in daily_returns(\"Date,Close\\n02/03/2026,101.00\\n27/02/2026,100.00\\n\")]",
+            "expect": "[0.01]",
+            "compare": "equal"
+          },
+          {
+            "call": "daily_returns(\"Date,Close\\n02/03/2026,101.00\\n\")",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests, each on a different file. Returns are rounded to 6 places and the lists compared.",
+        "examples": [
+          {
+            "call": "[round(r, 6) for r in daily_returns(CSV)]",
+            "expect": "[0.01025, -0.013239, 0.006144, 0.02156, -0.011102, 0.018011]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Three steps: sort the rows by date, make a list of float closes, then pair neighbours."
+        },
+        {
+          "rung": "point",
+          "text": "Sort with `key=lambda row: to_date(row[\"Date\"])`, and write `to_date` as before.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`rows = sorted(rows, key=lambda row: to_date(row[\"Date\"]))`, then `closes = [float(row[\"Close\"]) for row in rows]`, then the `zip` line."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted by real dates, then returns from neighbouring closes.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-1": "Test 1 expects 0.01025 first, from £400.00 to £404.10. Other numbers mean the rows were not in date order: sort by `to_date`, not by the text.",
+          "test-2": "Test 2's file is shuffled across New Year. Reversing the rows is not enough; sort them by date."
+        }
+      },
+      "explain": {
+        "text": "You parsed each date, sorted on it, converted the closes and paired neighbours. Test 2 is shuffled across New Year, where reversing the file or sorting the text both fail. Seven closes gave six returns.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              6,
+              5
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`sorted(items, key=f)` compares `f(item)`, not the item. A `lambda` writes `f` in one line.",
+      "Values from a CSV are text. Text compares character by character, so dates and prices sort wrongly until you convert them.",
+      "Sort by real dates, then each daily return is today's close over yesterday's, minus 1."
+    ],
+    "formula": {
+      "name": "Daily return",
+      "tex": "r_t = \\frac{P_t}{P_{t-1}} - 1",
+      "note": "$n$ closes give $n - 1$ returns, and only in date order."
+    },
+    "trap": "`max` and `sorted` on CSV text compare characters: `'99.80'` beats `'103.10'` and `'01/04'` comes before `'27/03'`."
+  },
+  "quiz": [
+    {
+      "id": "q-text-prices",
+      "difficulty": 2,
+      "prose": "```python\nprint(sorted([\"9.50\", \"10.25\", \"100.00\"]))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "num",
+            "text": "`['9.50', '10.25', '100.00']`",
+            "why": "You sorted them as numbers. As text, `'1'` comes before `'9'`."
+          },
+          {
+            "id": "right",
+            "text": "`['10.25', '100.00', '9.50']`",
+            "correct": true
+          },
+          {
+            "id": "rev",
+            "text": "`['100.00', '10.25', '9.50']`",
+            "why": "That is largest first, as numbers. `sorted` is smallest first, and these are text."
+          },
+          {
+            "id": "len",
+            "text": "`['9.50', '10.25', '100.00']`, by length",
+            "why": "`sorted` does not look at length. It compares characters from the left."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Text sorts by its first character: `'1'` before `'9'`.",
+        "generic": "Not quite right. Compare the strings from their first character."
+      },
+      "explain": {
+        "text": "`'10.25'` and `'100.00'` both start with `'1'`, so they come first; at the third character `'.'` comes before `'0'`. `'9.50'` comes last. Use `key=float` to sort them as prices."
+      }
+    },
+    {
+      "id": "q-return-sign",
+      "difficulty": 2,
+      "prose": "A share closed at £250.00 yesterday and £245.00 today.",
+      "question": "What is today's daily return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -2,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "label": "Daily return",
+        "accept": "−2%: $\\tfrac{245}{250} - 1 = -0.02$.",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 2,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "today",
+            "value": -2.04,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "pounds",
+            "value": -5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£5.00 lost on £250.00 is −2%.",
+        "generic": "Not quite right. Divide today's close by yesterday's and subtract 1.",
+        "byKey": {
+          "sign": "The price fell, so the return is negative.",
+          "today": "You divided the fall by today's close. A return is measured from yesterday's.",
+          "pounds": "That is the change in pounds. Divide by yesterday's close."
+        }
+      },
+      "explain": {
+        "text": "$r = \\tfrac{245.00}{250.00} - 1 = 0.98 - 1 = -0.02$, a return of −2%. The base is always yesterday's close."
+      }
+    },
+    {
+      "id": "q-iso",
+      "difficulty": 3,
+      "prose": "Three files hold the same dates in different formats. You sort each one's date strings as plain text, with no conversion.",
+      "question": "Which format still sorts into time order?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`2026-03-31`, year then month then day",
+            "correct": true
+          },
+          {
+            "id": "uk",
+            "text": "`31/03/2026`, day first",
+            "why": "The day is compared first, so 1 April sorts before 31 March."
+          },
+          {
+            "id": "us",
+            "text": "`03/31/2026`, month first",
+            "why": "Month first works within a year, but December 2025 would sort after January 2026."
+          },
+          {
+            "id": "words",
+            "text": "`31 Mar 2026`",
+            "why": "The day comes first again, and month names sort alphabetically: Apr before Mar."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Largest unit first, padded with zeros: text order is time order.",
+        "generic": "Not quite right. Which format puts the biggest unit first?"
+      },
+      "explain": {
+        "text": "ISO dates write the year, then the month, then the day, each padded to a fixed width. Comparing from the left then compares the year first, exactly as time does. That is why files and databases prefer them."
+      }
+    },
+    {
+      "id": "q-one-close",
+      "difficulty": 2,
+      "prose": "A file holds a header and a single row: `02/03/2026,101.00`.",
+      "question": "What should `daily_returns` give for it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[]`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "`[0.0]`",
+            "why": "A return needs two closes. With one, there is no yesterday to compare with."
+          },
+          {
+            "id": "err",
+            "text": "An `IndexError`",
+            "why": "`zip(closes, closes[1:])` stops at the shorter list, which is empty. No error."
+          },
+          {
+            "id": "one",
+            "text": "`[101.0]`",
+            "why": "That is the close itself, not a return."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One close, no returns.",
+        "generic": "Not quite right. How many neighbouring pairs does one close make?"
+      },
+      "explain": {
+        "text": "`closes[1:]` is empty, so `zip` makes no pairs and the list of returns is empty. $n$ closes always give $n - 1$ returns."
+      }
+    }
+  ]
+}

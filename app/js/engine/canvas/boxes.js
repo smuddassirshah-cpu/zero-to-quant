@@ -17,8 +17,13 @@
     const items = new Map();
     conts.forEach(c => c.items.forEach(it => { const v = { kind: P.itemKind || 'ball', ...it, home: c.id }; v.kind = KIND(v.kind); items.set(it.id, v); }));
     const total = items.size;
-    const kinds = new Set([...items.values()].map(i => i.kind));
-    const maxSz = [...kinds].reduce((m, k) => [Math.max(m[0], (SIZE[k] || SIZE.ball)[0]), Math.max(m[1], (SIZE[k] || SIZE.ball)[1])], [0, 0]);
+    /* items 102 and 111: a card is as wide as its label (a file name fits on one card); a wide card is a little shorter */
+    const sizeOf = (it) => {
+      if (it.kind !== 'card') return SIZE[it.kind] || SIZE.ball;
+      const w = Math.ceil(C.textW(String(it.label ?? ''), 13, 600)) + 14;
+      return w > SIZE.card[0] ? [Math.min(200, w), 30] : SIZE.card;
+    };
+    const maxSz = [...items.values()].reduce((m, it) => { const z = sizeOf(it); return [Math.max(m[0], z[0]), Math.max(m[1], z[1])]; }, [0, 0]);
     const hand = conts.find(c => c.kind === 'hand') || null;
 
     /* ---- Layout: containers side by side, bottoms aligned, labels below ---- */
@@ -60,7 +65,7 @@
     const shapePath = (c, x0, y0, w, h) => {
       if (c.kind === 'urn') { const a = x0 + w * 0.3, b = x0 + w * 0.7; return `M${a} ${y0}L${a} ${y0 + 10}C${a} ${y0 + 24} ${x0} ${y0 + 20} ${x0} ${y0 + 40}L${x0} ${y0 + h - 16}Q${x0} ${y0 + h} ${x0 + 16} ${y0 + h}L${x0 + w - 16} ${y0 + h}Q${x0 + w} ${y0 + h} ${x0 + w} ${y0 + h - 16}L${x0 + w} ${y0 + 40}C${x0 + w} ${y0 + 20} ${b} ${y0 + 24} ${b} ${y0 + 10}L${b} ${y0}`; }
       if (c.kind === 'bag') { const a = x0 + w * 0.38, b = x0 + w * 0.62, r = 20; return `M${a} ${y0 + 14}C${x0 + w * 0.1} ${y0 + 22} ${x0} ${y0 + h * 0.4} ${x0} ${y0 + h - r}Q${x0} ${y0 + h} ${x0 + r} ${y0 + h}L${x0 + w - r} ${y0 + h}Q${x0 + w} ${y0 + h} ${x0 + w} ${y0 + h - r}C${x0 + w} ${y0 + h * 0.4} ${x0 + w * 0.9} ${y0 + 22} ${b} ${y0 + 14}Z`; }
-      if (c.kind === 'box') return `M${x0} ${y0}L${x0} ${y0 + h - 6}Q${x0} ${y0 + h} ${x0 + 6} ${y0 + h}L${x0 + w - 6} ${y0 + h}Q${x0 + w} ${y0 + h} ${x0 + w} ${y0 + h - 6}L${x0 + w} ${y0}`;
+      if (c.kind === 'box') return `M${x0 + 6} ${y0}Q${x0} ${y0} ${x0} ${y0 + 6}L${x0} ${y0 + h - 6}Q${x0} ${y0 + h} ${x0 + 6} ${y0 + h}L${x0 + w - 6} ${y0 + h}Q${x0 + w} ${y0 + h} ${x0 + w} ${y0 + h - 6}L${x0 + w} ${y0 + 6}Q${x0 + w} ${y0} ${x0 + w - 6} ${y0}Z`; // closed on all four sides (item 92)
       return '';
     };
     for (const b of box.values()) {
@@ -78,7 +83,7 @@
     /* ---- Items ---- */
     const el = new Map();
     for (const it of items.values()) {
-      const [w, h] = (SIZE[it.kind] || SIZE.ball).map(v => v * scaleItem);
+      const [w, h] = sizeOf(it).map(v => v * scaleItem);
       const colour = it.colour == null ? (it.kind === 'ball' ? 1 : it.kind === 'coin' ? 4 : 0) : it.colour;
       const grp = svg('g', { class: `cv-obj cv-item cv-${it.kind}${colour ? ' cv-k' + colour : ' cv-plain'}`, 'data-id': it.id, 'data-tap': '', 'data-label': `${it.label || it.kind} ${it.id}` });
       const flip = svg('g', { class: 'cv-flip' });

@@ -330,3 +330,8 @@ Raised later (mental level 1):
 124. `orderbook`: `spreadValue: false` to hide the computed spread number.
 125. `number-line`: controls may bind a free `state.params` name for `derive` (like other kinds).
 126. `number-line` arrows: per-arrow `side: "below"` and automatic stacking of overlapping arcs; tidy zero-length arrows.
+
+Raised later (mental level 2):
+
+127. `area`: controls may bind `colSizes`/`rowSizes` entries so a cut can be dragged at true proportions.
+128. `grid` `text: "marked"`: a `revealAfterGrade: true` option so tapping does not reveal the product.

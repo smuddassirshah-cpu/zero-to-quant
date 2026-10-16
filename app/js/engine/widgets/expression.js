@@ -77,7 +77,7 @@
       if (locked) lockNow(true);
       changed();
     };
-    G().maths().then(build, () => build({ mathlive: false, ce: null }));
+    const loadP = G().maths().then(build, () => build({ mathlive: false, ce: null }));
 
     const lockNow = (v) => { if (mf) mf.readOnly = v; if (txt) txt.readOnly = v; };
     const forms = () => [spec.answer, ...(spec.accept || [])].filter(Boolean);
@@ -106,13 +106,15 @@
     const acceptText = () => 'Accepted: any expression equal to ' + G().inline('$' + spec.answer + '$') + (spec.accept && spec.accept.length ? ', for example ' + spec.accept.slice(0, 2).map(a => `<code class="lsn-ic">${Z.esc(a)}</code>`).join(' or ') : '') + '.';
     const showAccept = () => { acc.innerHTML = acceptText(); acc.hidden = false; };
 
-    return {
+    const api = {
       el,
       value: () => latex(),
       set(v) { setValue(v); changed(); },
       answer: () => (mf || !txt ? spec.answer : (spec.accept && spec.accept[0]) || spec.answer),
-      ready: () => loaded && latex().trim() !== '',
+      /* item 105: a value set while the editor loads (the test hook's answerCorrect) counts; grading then waits for the load */
+      ready: () => latex().trim() !== '',
       grade() {
+        if (!loaded) return loadP.then(() => api.grade());
         const L = latex(), A = ascii();
         if (!L.trim()) return { ok: false, key: null };
         const same = forms().some(f => equal(L, A, f));
@@ -130,5 +132,6 @@
       focus() { (mf || txt)?.focus?.(); },
       destroy() { alive = false; try { if (window.mathVirtualKeyboard && window.mathVirtualKeyboard.visible) window.mathVirtualKeyboard.hide(); } catch { /* none */ } },
     };
+    return api;
   });
 })();

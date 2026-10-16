@@ -8,6 +8,7 @@
   function tree(host, params, ctx = {}) {
     const P = params || {};
     const tb = P.orient === 'tb';
+    const compact = !!P.compact; // item 94: smaller pills and closer leaves, so a 16-leaf tree fits the column
 
     /* ---- Model ---- */
     const root = { path: '', depth: 0, children: [], parent: null };
@@ -43,26 +44,31 @@
     const anyValue = all.some(n => n.value != null && n.value !== '');
 
     /* ---- Fixed geometry ---- */
-    const PH = 26;
-    const pillW = (n) => Math.max(30, Math.ceil(C.textW(C.texOf(n.label).src.replace(/\\[a-z]+/g, ''), 13, 600)) + 18);
+    const PH = compact ? 22 : 26, PF = compact ? 12 : 13;
+    const pillW = (n) => Math.max(compact ? 22 : 30, Math.ceil(C.textW(C.texOf(n.label).src.replace(/\\[a-z]+/g, ''), PF, 600)) + (compact ? 12 : 18));
+    /* item 97: rootLabel draws the root as a labelled pill instead of a dot */
+    const rootLabel = P.rootLabel != null && P.rootLabel !== '' ? String(P.rootLabel) : null;
+    const rootW = rootLabel ? pillW({ label: rootLabel }) : 0;
     const pTex = (p) => C.texOf(p == null ? '' : p);
     const texBox = (src) => { const f = src.match(/frac\{([^}]*)\}\{([^}]*)\}/); if (f) return { w: Math.max(f[1].length, f[2].length) * 8 + 8, h: 34 }; return { w: src.replace(/\\[a-zA-Z]+|[{}^_]/g, '').length * 8 + 8, h: 20 }; };
     const pBox = (p) => { const t = pTex(p); return t.tex ? texBox(t.src) : { w: C.textW(t.src, 13) + 6, h: 16 }; };
     const valW = anyValue ? Math.min(130, Math.max(40, ...all.filter(n => n.value != null).map(n => { const t = C.texOf(n.value); return t.tex ? texBox(t.src).w + 12 : C.textW(t.src, 13, 600) + 16; }))) : 0;
     let W, H, colPos, top, band;
-    const spOf = (n) => (n <= 2 ? 80 : n <= 4 ? 60 : n <= 6 ? 50 : n <= 8 ? 42 : 34); // leaf spacing for n leaves shown
+    /* top to bottom, level labels sit in a left margin of their own so they never cross a branch */
+    const leftM = tb && hasHead ? Math.ceil(Math.max(...levelLabels.map(t => C.textW(String(t || ''), 13)))) + 16 : 12;
+    const spOf = compact ? (n) => (n <= 2 ? 64 : n <= 4 ? 46 : n <= 8 ? 32 : 26) : (n) => (n <= 2 ? 80 : n <= 4 ? 60 : n <= 6 ? 50 : n <= 8 ? 42 : 34); // leaf spacing for n leaves shown
+    const rowSp = compact ? 72 : 96;
     if (!tb) {
       W = 540; top = (hasHead ? 26 : 8) + 6;
       band = Lf * spOf(Lf); H = top + band + 6;
       const maxLast = Math.max(30, ...all.filter(n => n.depth === D).map(pillW));
-      const x0 = 14, xD = W - 8 - valW - maxLast / 2;
-      colPos = (d) => (d === 0 ? x0 : x0 + 22 + (xD - x0 - 22) * d / D);
+      const x0 = 14 + rootW / 2, xD = W - 8 - valW - maxLast / 2;
+      colPos = (d) => (d === 0 ? x0 : x0 + rootW / 2 + 22 + (xD - x0 - rootW / 2 - 22) * d / D);
     } else {
-      W = 540; top = 18;
-      const rowSp = 96;
+      W = 540; top = rootLabel ? 6 + PH / 2 : 18;
       H = top + D * rowSp + 20 + (anyValue ? 30 : 0) + 6;
       colPos = (d) => top + d * rowSp;
-      band = W - 24;
+      band = W - 12 - leftM;
     }
     const fr = C.frame(host, W, H, { label: P.label || 'Probability tree' });
     const g = fr.g;
@@ -71,7 +77,9 @@
     /* ---- Elements ---- */
     const branchG = svg('g', { class: 'cv-branches' }), pillG = svg('g', { class: 'cv-pills' }), valG = svg('g', { class: 'cv-vals' });
     g.append(branchG, pillG, valG);
-    const rootDot = svg('g', { class: 'cv-obj cv-root', 'data-id': 'root' }, [svg('circle', { class: 'cv-body', r: 5 })]);
+    const rootDot = svg('g', { class: 'cv-obj cv-root' + (rootLabel ? ' has-label' : ''), 'data-id': 'root', 'data-label': rootLabel || 'Root' }, rootLabel
+      ? [svg('rect', { class: 'cv-cur', x: -rootW / 2 - 4, y: -PH / 2 - 4, width: rootW + 8, height: PH + 8, rx: 11 }), svg('rect', { class: 'cv-body', x: -rootW / 2, y: -PH / 2, width: rootW, height: PH, rx: 8 }), C.label(0, 0.5, rootLabel, { tex: 'auto', w: rootW, h: PH, cls: 'cv-ntext', size: PF })]
+      : [svg('circle', { class: 'cv-cur', r: 10 }), svg('circle', { class: 'cv-body', r: 5 })]);
     g.append(rootDot);
     const el = new Map();
     for (const n of all) {
@@ -82,7 +90,7 @@
         hit: svg('line', { class: 'cv-hit' }), wash: svg('line', { class: 'cv-wash' }), line: svg('line', { class: 'cv-line' }),
         pill: svg('g', { class: 'cv-pill' }), pg: svg('g', { class: 'cv-p' }), pb,
       };
-      e.pill.append(svg('rect', { class: 'cv-body', x: -e.w / 2, y: -PH / 2, width: e.w, height: PH, rx: 8 }), C.label(0, 0.5, n.label, { tex: 'auto', w: e.w, h: PH, cls: 'cv-ntext' }));
+      e.pill.append(svg('rect', { class: 'cv-cur', x: -e.w / 2 - 4, y: -PH / 2 - 4, width: e.w + 8, height: PH + 8, rx: 11 }), svg('rect', { class: 'cv-body', x: -e.w / 2, y: -PH / 2, width: e.w, height: PH, rx: 8 }), C.label(0, 0.5, n.label, { tex: 'auto', w: e.w, h: PH, cls: 'cv-ntext', size: PF }));
       if (n.p != null) {
         e.pText = pt.tex ? C.label(0, 0, n.p, { tex: 'auto', w: pb.w + 8, h: pb.h + 4 }) : C.label(0, 0.5, pt.src, { cls: 'cv-halo' });
         e.pq = C.label(0, 0.5, '?', { cls: 'cv-halo cv-q' });
@@ -107,9 +115,9 @@
       /* the drawing is sized by the leaves (left to right) or the depth (top to bottom) actually shown */
       const b = tb ? band : nL * spOf(nL);
       const pos = new Map();
-      leaves.forEach((n, i) => { const t = (i + 0.5) / nL; pos.set(n, tb ? { x: 12 + b * t, y: colPos(n.depth) } : { x: colPos(n.depth), y: top + b * t }); });
+      leaves.forEach((n, i) => { const t = (i + 0.5) / nL; pos.set(n, tb ? { x: leftM + b * t, y: colPos(n.depth) } : { x: colPos(n.depth), y: top + b * t }); });
       const dShown = Math.max(1, ...leaves.map(n => n.depth));
-      vis.H = tb ? top + dShown * 96 + 20 + (anyValue ? 30 : 0) + 6 : top + b + 6;
+      vis.H = tb ? top + dShown * rowSp + 20 + (anyValue ? 30 : 0) + 6 : top + b + 6;
       const place = (n) => {
         const k = kids(n); if (!k.length) return pos.get(n) || { x: colPos(0), y: top + b / 2 };
         const ps = k.map(place), a = ps[0], b = ps[ps.length - 1];
@@ -127,7 +135,7 @@
     };
 
     /* ---- Painting one frame of positions ---- */
-    const anchorOut = (n, p) => (n === root ? { x: p.x, y: p.y } : tb ? { x: p.x, y: p.y + PH / 2 } : { x: p.x + el.get(n.path).w / 2, y: p.y });
+    const anchorOut = (n, p) => (n === root ? (rootLabel ? (tb ? { x: p.x, y: p.y + PH / 2 } : { x: p.x + rootW / 2, y: p.y }) : { x: p.x, y: p.y }) : tb ? { x: p.x, y: p.y + PH / 2 } : { x: p.x + el.get(n.path).w / 2, y: p.y });
     const anchorIn = (n, p) => (tb ? { x: p.x, y: p.y - PH / 2 } : { x: p.x - el.get(n.path).w / 2, y: p.y });
     const paint = (vis, showP, unknown, showVals) => {
       const r = vis.get(''); attrs(rootDot, { transform: `translate(${r.x} ${r.y})` });
@@ -166,6 +174,10 @@
       const slot = new Map(); sets.forEach((list, k) => (list || []).forEach(p => prefixes(p).forEach(q => { if (!slot.has(q)) slot.set(q, k + 1); })));
       for (const n of all) { const e = el.get(n.path); for (let k = 1; k <= 6; k++) e.g.classList.toggle('cv-sh' + k, slot.get(n.path) === k); e.g.classList.toggle('is-shaded', slot.has(n.path)); if (e.val) e.val.classList.toggle('is-shaded', slot.has(n.path)); }
       const showP = st.show !== 'none', unknown = new Set(st.unknown || []), showVals = st.values !== false;
+      /* current (item 97): a manipulable-blue ring round one node's pill ("root" or "" for the root) */
+      const curP = st.current == null ? null : String(st.current) === 'root' ? '' : String(st.current);
+      rootDot.classList.toggle('is-current', curP === '');
+      for (const n of all) el.get(n.path).g.classList.toggle('is-current', curP === n.path);
       const next = layout(st.collapse);
       if (next.H && next.H !== fr.h) fr.resize(W, next.H);
       const from = cur;

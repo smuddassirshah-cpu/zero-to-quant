@@ -18,10 +18,10 @@
 
     const def = {
       kind: 'vectors', aria: params.aria || 'Vectors on a plane',
-      modes: ['drag', 'slider'],
+      modes: ['drag', 'slider', 'tap'],
       size: () => ({ w: W, h: H }),
-      listKeys: ['vectors'],
-      init: () => ({ vectors: base.map((v) => ({ ...v })), show: [], scale: Object.fromEntries(base.map((v) => [v.id, 1])), drag: null, basis: null, highlight: [] }),
+      listKeys: ['vectors', 'points'],
+      init: () => ({ vectors: base.map((v) => ({ ...v })), points: (params.points || []).map((p, i) => ({ ...p, id: p.id || 'p' + i })), show: [], scale: Object.fromEntries(base.map((v) => [v.id, 1])), drag: null, basis: null, highlight: [], selected: [] }),
       render(view, R) {
         const g = R.F.g, vs = view.vectors || [], byId = Object.fromEntries(vs.map((v) => [v.id, v]));
         const show = new Set([].concat(view.show || []));
@@ -99,11 +99,34 @@
           if (k !== 1) { const og = add(t, v.v); plot.append(svg('path', { d: `M${sx(t[0])},${sy(t[1])}L${sx(og[0])},${sy(og[1])}`, class: 'cvb-ln thin cvb-dash ' + K.colourCls(v.slot) })); }
           const o = K.obj(v.id, '', v.slot);
           o.append(K.washPath(`M${sx(t[0])},${sy(t[1])}L${sx(h[0])},${sy(h[1])}`), K.arrow(sx(t[0]), sy(t[1]), sx(h[0]), sy(h[1]), { cls: 'cvb-ln bold' }));
+          /* tap mode (item 107): the whole arrow is the target, through a wide transparent stroke */
+          if (R.mode === 'tap') { o.append(svg('path', { d: `M${sx(t[0])},${sy(t[1])}L${sx(h[0])},${sy(h[1])}`, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 22px; fill: none' })); R.tappable(o, v.id, `Vector ${String(v.label || v.id).replace(/\$|\\[a-zA-Z]+|[{}]/g, '')}`); }
           plot.append(o);
           const canDrag = !v.from && R.active() && ((dragSet && dragSet.has(v.id)) || (!dragSet && R.mode === 'drag'));
           if (canDrag) over.append(K.handle(sx(h[0]), sy(h[1]), v.id, { r: 7, label: `Head of ${v.label || v.id}` }));
           const lt = k !== 1 && v.label ? (/^\$.*\$$/.test(v.label) ? `$${K.fmt(k, 3)}${v.label.slice(1, -1)}$` : K.fmt(k, 3) + v.label) : v.label;
-          if (lt) { const dx = h[0] - t[0], dy = h[1] - t[1], L = Math.hypot(dx, dy) || 1; labels.push({ x: sx(h[0]) + (dx / L) * 10 + (dy / L) * 10, y: sy(h[1]) - (dy / L) * 10 + (dx / L) * 10, text: params.showCoords ? `${lt} (${K.fmt(h[0], 2)}, ${K.fmt(h[1], 2)})` : lt, anchor: dx >= 0 ? 'start' : 'end' }); }
+          if (lt) {
+            /* labelPos (item 106): "end" (default, past the head), "mid" (beside the middle) or "start" (by the tail); labelSide flips the side */
+            const dx = h[0] - t[0], dy = h[1] - t[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, side = v.labelSide === 'right' ? -1 : 1;
+            const text = params.showCoords ? `${lt} (${K.fmt(h[0], 2)}, ${K.fmt(h[1], 2)})` : lt;
+            if (v.labelPos === 'mid' || v.labelPos === 'start') {
+              const f = v.labelPos === 'mid' ? 0.5 : 0.18, nx = -uy * side, ny = ux * side; // left normal in maths coordinates
+              const px = sx(t[0] + dx * f) + nx * 14, py = sy(t[1] + dy * f) - ny * 14;
+              labels.push({ x: px, y: py, text, anchor: nx > 0.35 ? 'start' : nx < -0.35 ? 'end' : 'middle' });
+            } else labels.push({ x: sx(h[0]) + ux * 10 + uy * 10 * side, y: sy(h[1]) - uy * 10 + ux * 10 * side, text, anchor: dx >= 0 ? 'start' : 'end' });
+          }
+        }
+        /* points (item 106): labelled dots such as A, B, O, M, with labelPos n, ne, e, se, s, sw, w, nw */
+        for (const p of view.points || []) {
+          if (p.x == null || p.y == null) continue;
+          const x = sx(p.x), y = sy(p.y), o = K.obj(p.id, 'cvb-pt', p.colour || 'ink');
+          o.append(K.washCircle(x, y, 11), svg('circle', { cx: x, cy: y, r: R.mode === 'tap' ? 6 : 4.5, class: 'cvb-dot' + (p.open ? ' open' : '') + (R.mode === 'tap' ? ' cv-body' : '') }));
+          if (R.mode === 'tap') { o.append(svg('circle', { cx: x, cy: y, r: 16, class: 'cvb-tapbox', fill: 'transparent' })); R.tappable(o, p.id, `Point ${p.label || p.id}`); }
+          over.append(o);
+          if (p.label) {
+            const pos = p.labelPos || 'ne', ddx = pos.includes('e') ? 12 : pos.includes('w') ? -12 : 0, ddy = pos.includes('n') ? -13 : pos.includes('s') ? 14 : 0;
+            labels.push({ x: x + ddx, y: y + ddy, text: String(p.label), anchor: ddx > 0 ? 'start' : ddx < 0 ? 'end' : 'middle', id: p.id });
+          }
         }
         /* the projection sits along the vector it projects onto, so lift it above the vectors */
         ['perp', 'proj'].forEach((id) => { const el = plot.querySelector(`[data-id="${id}"]`); if (el) plot.append(el); });
