@@ -1024,7 +1024,7 @@
       "type": "problem",
       "difficulty": 3,
       "title": "Log returns",
-      "prose": "`close` is a Series of closes, oldest first, with dates as the index. Return the daily log returns $\\ln(p_t / p_{t-1})$ as a list rounded to 6 places, without the first day. Use `shift`.",
+      "prose": "`close` is a Series of closes, oldest first, with dates as the index. Return the daily log returns $\\ln(p_t / p_{t-1})$ as a Series on the same dates, rounded to 6 places. Each return belongs to the later day of its pair.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -1075,55 +1075,61 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import numpy as np\nimport pandas as pd\n\ndef log_returns(close):\n    lr = ...\n    return lr.dropna().round(6).tolist()\n",
-        "solution": "import numpy as np\nimport pandas as pd\n\ndef log_returns(close):\n    lr = np.log(close / close.shift(1))\n    return lr.dropna().round(6).tolist()\n",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef log_returns(close):\n    lr = ...\n    return lr.round(6)\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef log_returns(close):\n    lr = np.log(close / close.shift(1))\n    return lr.round(6)\n",
         "tests": [
           {
             "setup": "close = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=pd.to_datetime([\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"]))[\"close\"]",
-            "call": "log_returns(close)",
+            "call": "log_returns(close).dropna().tolist()",
             "expect": "[-0.019309, 0.013715, 0.011155, -0.014366]",
             "compare": "equal"
           },
           {
             "setup": "close = pd.Series([50.00, 55.00, 49.50, 54.45], index=pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"]))",
-            "call": "log_returns(close)",
+            "call": "log_returns(close).dropna().tolist()",
             "expect": "[0.09531, -0.105361, 0.09531]",
             "compare": "equal"
           },
           {
-            "setup": "close = pd.Series([7.05], index=pd.to_datetime([\"2025-01-02\"]))",
-            "call": "log_returns(close)",
-            "expect": "[]",
-            "compare": "equal"
-          },
-          {
-            "setup": "close = pd.Series([50.00, 55.00, 49.50, 54.45], index=pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"]))",
-            "call": "round(sum(log_returns(close)), 4)",
-            "expect": "0.0853",
+            "setup": "close = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=pd.to_datetime([\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"]))[\"close\"]",
+            "call": "[d.strftime(\"%Y-%m-%d\") for d in log_returns(close).dropna().index]",
+            "expect": "['2024-03-05', '2024-03-06', '2024-03-07', '2024-03-08']",
             "compare": "equal"
           },
           {
             "setup": "close = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=pd.to_datetime([\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"]))[\"close\"]",
+            "call": "bool(pd.isna(log_returns(close).iloc[0]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([7.05], index=pd.to_datetime([\"2025-01-02\"]))",
             "call": "len(log_returns(close))",
-            "expect": "4",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([50.00, 55.00, 49.50, 54.45], index=pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"]))",
+            "call": "round(float(log_returns(close).sum()), 4)",
+            "expect": "0.0853",
             "compare": "equal"
           }
         ],
         "examples": [
           {
             "setup": "close = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=pd.to_datetime([\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"]))[\"close\"]",
-            "call": "log_returns(close)",
+            "call": "log_returns(close).dropna().tolist()",
             "expect": "[-0.019309, 0.013715, 0.011155, -0.014366]",
             "compare": "equal"
           },
           {
-            "setup": "close = pd.Series([50.00, 55.00, 49.50, 54.45], index=pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"]))",
-            "call": "log_returns(close)",
-            "expect": "[0.09531, -0.105361, 0.09531]",
+            "setup": "close = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=pd.to_datetime([\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"]))[\"close\"]",
+            "call": "[d.strftime(\"%Y-%m-%d\") for d in log_returns(close).dropna().index]",
+            "expect": "['2024-03-05', '2024-03-06', '2024-03-07', '2024-03-08']",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 5 hidden tests on short price series. Lists must match exactly after rounding to 6 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+        "how": "Check runs 6 hidden tests on short price series: the values, the dates they sit on and the NaN on the first day. Values must match exactly after rounding to 6 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
       },
       "hints": [
         {
@@ -1147,7 +1153,8 @@
         "generic": "Some tests failed. Check the direction of the shift and that you take the log of the ratio.",
         "byKey": {
           "test-1": "Test 1 expects `[-0.019309, 0.013715, 0.011155, -0.014366]`. Positive and negative swapped means the ratio is upside down.",
-          "test-3": "Test 3 has a single close, so there are no returns: the answer is an empty list.",
+          "test-3": "Test 3 checks the dates. Each return belongs on the later day, 5 to 8 March. Starting on 4 March means `shift(-1)`: a look-ahead.",
+          "test-4": "Test 4 expects NaN on the first day. Do not fill it or drop it: return the Series on every date.",
           "error": "Your code stopped with an error. `np.log` needs `import numpy as np` at the top."
         }
       },

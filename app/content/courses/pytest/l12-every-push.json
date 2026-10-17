@@ -1,0 +1,1382 @@
+{
+  "id": "l12-every-push",
+  "course": "pytest",
+  "title": "Running tests on every push",
+  "minutes": 14,
+  "objectives": [
+    "Lay out a project with `src/`, `tests/` and `conftest.py`",
+    "Run the whole suite and read a coverage report",
+    "Run your tests automatically on GitHub after every push"
+  ],
+  "skills": [
+    "pt-tools",
+    "pt-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Your 1.1 project is going into a Git repository. Five files sit loose in one folder. Most projects keep code, tests and data in separate folders.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "loose",
+              "label": "Loose files",
+              "kind": "box",
+              "cols": 3,
+              "items": [
+                {
+                  "id": "rk",
+                  "label": "risk.py"
+                },
+                {
+                  "id": "tr",
+                  "label": "test_risk.py"
+                },
+                {
+                  "id": "pc",
+                  "label": "prices.csv"
+                },
+                {
+                  "id": "cf",
+                  "label": "conftest.py"
+                },
+                {
+                  "id": "tv",
+                  "label": "test_vol.py"
+                }
+              ]
+            },
+            {
+              "id": "src",
+              "label": "src/",
+              "kind": "box",
+              "cols": 2
+            },
+            {
+              "id": "tests",
+              "label": "tests/",
+              "kind": "box",
+              "cols": 3
+            },
+            {
+              "id": "data",
+              "label": "data/",
+              "kind": "box",
+              "cols": 2
+            }
+          ]
+        },
+        "state": {
+          "caption": "conftest.py holds the fixtures the tests share"
+        }
+      },
+      "question": "Drag each file into the folder where it belongs.",
+      "widget": {
+        "kind": "place",
+        "mode": "boxes",
+        "answer": {
+          "src": [
+            "rk"
+          ],
+          "tests": [
+            "tr",
+            "tv",
+            "cf"
+          ],
+          "data": [
+            "pc"
+          ],
+          "loose": []
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which files are code, which are tests, which are data?"
+        },
+        {
+          "rung": "point",
+          "text": "The fixtures are used only by the tests.",
+          "highlight": [
+            "cf"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`risk.py` goes in `src/`. Both `test_` files and `conftest.py` go in `tests/`. `prices.csv` goes in `data/`."
+        }
+      ],
+      "feedback": {
+        "correct": "Code, tests and data each have their own folder.",
+        "generic": "Not quite right. Look at the file that is out of place.",
+        "byKey": {
+          "cf": "`conftest.py` holds fixtures for the tests, so it lives in `tests/` beside them.",
+          "rk": "`risk.py` is the code under test. It goes in `src/`, apart from the tests.",
+          "pc": "`prices.csv` is data, not code. It goes in `data/`.",
+          "tr": "`test_risk.py` is a test file: `tests/`.",
+          "tv": "`test_vol.py` is a test file: `tests/`."
+        }
+      },
+      "explain": {
+        "text": "`src/` holds the code, `tests/` the tests and their shared fixtures, `data/` the data. The tests import from `src/`; nothing in `src/` imports a test.",
+        "canvas": {
+          "move": {
+            "rk": "src",
+            "tr": "tests",
+            "tv": "tests",
+            "cf": "tests",
+            "pc": "data"
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Here is the project as a tree, with a workflow file added under `.github/`. You type `pytest` in the top folder. pytest searches every folder for files named `test_*.py`.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "label": "Project folder",
+          "nodes": [
+            {
+              "id": "p",
+              "label": "risk-project",
+              "children": [
+                {
+                  "id": "s",
+                  "label": "src",
+                  "children": [
+                    {
+                      "id": "rk",
+                      "label": "risk.py"
+                    }
+                  ]
+                },
+                {
+                  "id": "t",
+                  "label": "tests",
+                  "children": [
+                    {
+                      "id": "cf",
+                      "label": "conftest.py"
+                    },
+                    {
+                      "id": "tr",
+                      "label": "test_risk.py"
+                    },
+                    {
+                      "id": "tv",
+                      "label": "test_vol.py"
+                    }
+                  ]
+                },
+                {
+                  "id": "d",
+                  "label": "data",
+                  "children": [
+                    {
+                      "id": "pc",
+                      "label": "prices.csv"
+                    }
+                  ]
+                },
+                {
+                  "id": "g",
+                  "label": ".github",
+                  "children": [
+                    {
+                      "id": "w",
+                      "label": "workflows",
+                      "children": [
+                        {
+                          "id": "y",
+                          "label": "tests.yml"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "The project after sorting"
+        }
+      },
+      "question": "Tap every file pytest collects tests from.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "p-t-tr",
+          "p-t-tv"
+        ],
+        "countWord": "files",
+        "wrong": [
+          {
+            "id": "with-conf",
+            "set": [
+              "p-t-tr",
+              "p-t-tv",
+              "p-t-cf"
+            ]
+          },
+          {
+            "id": "with-src",
+            "set": [
+              "p-t-tr",
+              "p-t-tv",
+              "p-s-rk"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check each file name against the pattern `test_*.py`."
+        }
+      ],
+      "feedback": {
+        "correct": "Two files match `test_*.py`.",
+        "generic": "Not quite right. Only names that start with `test_` and end in `.py` are collected.",
+        "byKey": {
+          "with-conf": "You included `conftest.py`. pytest reads it for fixtures, but it holds no tests: its name does not start with `test_`.",
+          "with-src": "You included `risk.py`. It is the code under test, imported by the tests, not a test file.",
+          "p-t-cf": "`conftest.py` is loaded for its fixtures. It is not a test file.",
+          "p-s-rk": "`risk.py` holds code, not tests.",
+          "p-g-w-y": "`tests.yml` is a workflow file for GitHub, not a Python test."
+        }
+      },
+      "explain": {
+        "text": "pytest walks every folder and collects `test_risk.py` and `test_vol.py`. It loads `conftest.py` too, so its fixtures reach every test in `tests/`. Running them all at once is running the **suite**.",
+        "canvas": {
+          "highlight": [
+            "p-t-tr",
+            "p-t-tv"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You run the whole suite. Each character after a file name is one test: `.` passed, `F` failed.\n\n```text\n$ pytest\ntests/test_risk.py ..F.                    [ 57%]\ntests/test_vol.py ...                      [100%]\nFAILED tests/test_risk.py::test_trough_on_last_day\n1 failed, 6 passed in 0.09s\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "label": "Project folder",
+          "nodes": [
+            {
+              "id": "p",
+              "label": "risk-project",
+              "children": [
+                {
+                  "id": "s",
+                  "label": "src",
+                  "children": [
+                    {
+                      "id": "rk",
+                      "label": "risk.py"
+                    }
+                  ]
+                },
+                {
+                  "id": "t",
+                  "label": "tests",
+                  "children": [
+                    {
+                      "id": "cf",
+                      "label": "conftest.py"
+                    },
+                    {
+                      "id": "tr",
+                      "label": "test_risk.py"
+                    },
+                    {
+                      "id": "tv",
+                      "label": "test_vol.py"
+                    }
+                  ]
+                },
+                {
+                  "id": "d",
+                  "label": "data",
+                  "children": [
+                    {
+                      "id": "pc",
+                      "label": "prices.csv"
+                    }
+                  ]
+                },
+                {
+                  "id": "g",
+                  "label": ".github",
+                  "children": [
+                    {
+                      "id": "w",
+                      "label": "workflows",
+                      "children": [
+                        {
+                          "id": "y",
+                          "label": "tests.yml"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "p-t-tr",
+            "p-t-tv"
+          ],
+          "caption": "The two test files"
+        }
+      },
+      "question": "How many tests ran?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Tests run",
+        "accept": "7: four in `test_risk.py`, three in `test_vol.py`.",
+        "wrong": [
+          {
+            "id": "passes",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "files",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the characters after each file name."
+        },
+        {
+          "rung": "point",
+          "text": "`..F.` is four tests; `...` is three.",
+          "highlight": [
+            "p-t-tr"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4 + 3 = 7, and the summary agrees: 1 failed, 6 passed."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven tests: 1 failed, 6 passed.",
+        "generic": "Not quite right. Count every `.` and every `F`.",
+        "byKey": {
+          "passes": "You counted the passes. The `F` is a test that ran too.",
+          "files": "You counted files. Each file holds several tests."
+        }
+      },
+      "explain": {
+        "text": "`..F.` is four tests and `...` is three. The `FAILED` line names the file and the test, so you know where to look. The percentages count tests run so far: 4 of 7 is 57%."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A coverage tool watches the suite run and counts which lines of `src/risk.py` were executed. Here is its report, one row per function.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Function",
+            "Statements",
+            "Missed",
+            "Cover"
+          ],
+          "rows": [
+            [
+              "parse_closes",
+              "4",
+              "0",
+              "100%"
+            ],
+            [
+              "daily_returns",
+              "2",
+              "0",
+              "100%"
+            ],
+            [
+              "annualised_vol",
+              "3",
+              "3",
+              "0%"
+            ],
+            [
+              "max_drawdown",
+              "7",
+              "0",
+              "100%"
+            ],
+            [
+              "format_report",
+              "5",
+              "2",
+              "60%"
+            ],
+            [
+              "TOTAL",
+              "21",
+              "5",
+              "76%"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Coverage of src/risk.py"
+        }
+      },
+      "question": "Tap the function that no test runs at all.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "countWord": "functions",
+        "wrong": [
+          {
+            "id": "partial",
+            "set": [
+              "r4c0"
+            ]
+          },
+          {
+            "id": "both",
+            "set": [
+              "r2c0",
+              "r4c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which row has every one of its statements missed?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the Statements and Missed columns.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`annualised_vol` has 3 statements and 3 missed: 0%. `format_report` runs 3 of its 5."
+        }
+      ],
+      "feedback": {
+        "correct": "`annualised_vol`: 3 statements, all missed.",
+        "generic": "Not quite right. Find the row where every statement was missed.",
+        "byKey": {
+          "partial": "`format_report` is partly covered: 3 of its 5 statements ran. Some test calls it, but one branch never runs.",
+          "both": "`format_report` ran 3 of its 5 statements, so some test reaches it. Only `annualised_vol` is never run."
+        }
+      },
+      "explain": {
+        "text": "0% means no test ever calls `annualised_vol`. A bug there would ship unseen. `format_report` at 60% is called, but one branch, perhaps the empty-list case, never runs.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "You add a test that calls `annualised_vol`, and all 3 of its statements now run. `format_report` still misses 2.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Function",
+            "Statements",
+            "Missed",
+            "Cover"
+          ],
+          "rows": [
+            [
+              "parse_closes",
+              "4",
+              "0",
+              "100%"
+            ],
+            [
+              "daily_returns",
+              "2",
+              "0",
+              "100%"
+            ],
+            [
+              "annualised_vol",
+              "3",
+              "3",
+              "0%"
+            ],
+            [
+              "max_drawdown",
+              "7",
+              "0",
+              "100%"
+            ],
+            [
+              "format_report",
+              "5",
+              "2",
+              "60%"
+            ],
+            [
+              "TOTAL",
+              "21",
+              "?",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The TOTAL row adds up the statements"
+        }
+      },
+      "question": "What is the TOTAL cover now, as a percentage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 90.48,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "%",
+        "label": "Total cover",
+        "accept": "90.48%: 19 of 21 statements run, $19/21 \\approx 0.9048$.",
+        "wrong": [
+          {
+            "id": "average",
+            "value": 92,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "all",
+            "value": 100,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "missed",
+            "value": 9.52,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many of the 21 statements are still missed?"
+        },
+        {
+          "rung": "point",
+          "text": "Only `format_report` misses any now.",
+          "highlight": [
+            "r4c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "21 − 2 = 19 statements run. $19/21 \\approx 0.9048$."
+        }
+      ],
+      "feedback": {
+        "correct": "$19/21 \\approx 90.48\\%$.",
+        "generic": "Not quite right. Add up statements, not percentages.",
+        "byKey": {
+          "average": "You averaged the five percentages. Functions have different sizes, so add the statements: 19 of 21.",
+          "all": "`format_report` still misses 2 statements.",
+          "missed": "That is the share missed. Cover is the share run."
+        }
+      },
+      "explain": {
+        "text": "Two statements are still missed, so $19/21 \\approx 90.48\\%$ run. Averaging the percentages gives 92% because it counts the 2-line function as much as the 7-line one.",
+        "canvas": {
+          "values": {
+            "r5c2": "2",
+            "r5c3": "90%"
+          },
+          "highlight": {
+            "rows": [
+              5
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "`max_drawdown` has the max − min bug. The suite's only test of it:\n\n```python\ndef test_drawdown_runs():\n    max_drawdown([80.00, 100.00, 120.00])\n```\nThe coverage report says `max_drawdown` is at 100%.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Function",
+            "Statements",
+            "Missed",
+            "Cover"
+          ],
+          "rows": [
+            [
+              "max_drawdown",
+              "7",
+              "0",
+              "100%"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      },
+      "question": "Does the suite catch the bug?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "No: every line runs, but nothing checks the answer",
+            "correct": true
+          },
+          {
+            "id": "covered",
+            "text": "Yes: 100% cover means every line is tested",
+            "why": "You read cover as checked. Coverage counts lines that ran, not answers that were compared."
+          },
+          {
+            "id": "wrong",
+            "text": "Yes: a wrong answer makes pytest fail",
+            "why": "pytest fails a test on a failed `assert` or an error. A wrong number with no `assert` is neither."
+          },
+          {
+            "id": "path",
+            "text": "Yes: this path exposes max − min",
+            "why": "The path would expose it, since the true answer is 0. But without an `assert`, nobody compares."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What makes a pytest test fail?"
+        },
+        {
+          "rung": "point",
+          "text": "Look for an `assert` in the test.",
+          "highlight": [
+            "r0c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The test calls the function and throws the answer away. Coverage records every line as run; nothing compares 0.33 with 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Run is not the same as checked.",
+        "generic": "Not quite right. What in this test could fail?",
+        "byKey": {
+          "covered": "You read 100% as tested. It means every line ran during the suite. Whether anything checked the result is a separate question.",
+          "wrong": "pytest only knows a value is wrong if an `assert` says what it should be.",
+          "path": "Right path, no check. Add `assert max_drawdown([80.00, 100.00, 120.00]) == 0.0`."
+        }
+      },
+      "explain": {
+        "text": "Coverage tells you what never ran, which is useful: 0% is a function with no test. It cannot tell you what was checked. 100% with no `assert` catches nothing."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now make GitHub run the suite. A workflow file in `.github/workflows/` runs after every push, on a fresh machine with nothing installed. Its steps run in order.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "label": "Project folder",
+          "nodes": [
+            {
+              "id": "p",
+              "label": "risk-project",
+              "children": [
+                {
+                  "id": "s",
+                  "label": "src",
+                  "children": [
+                    {
+                      "id": "rk",
+                      "label": "risk.py"
+                    }
+                  ]
+                },
+                {
+                  "id": "t",
+                  "label": "tests",
+                  "children": [
+                    {
+                      "id": "cf",
+                      "label": "conftest.py"
+                    },
+                    {
+                      "id": "tr",
+                      "label": "test_risk.py"
+                    },
+                    {
+                      "id": "tv",
+                      "label": "test_vol.py"
+                    }
+                  ]
+                },
+                {
+                  "id": "d",
+                  "label": "data",
+                  "children": [
+                    {
+                      "id": "pc",
+                      "label": "prices.csv"
+                    }
+                  ]
+                },
+                {
+                  "id": "g",
+                  "label": ".github",
+                  "children": [
+                    {
+                      "id": "w",
+                      "label": "workflows",
+                      "children": [
+                        {
+                          "id": "y",
+                          "label": "tests.yml"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "p-g-w-y"
+          ],
+          "caption": ".github/workflows/tests.yml"
+        }
+      },
+      "question": "Put the workflow's steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "`uses: actions/checkout@v4`: copy the repository onto the machine"
+          },
+          {
+            "id": "s2",
+            "text": "`uses: actions/setup-python@v5`: install Python"
+          },
+          {
+            "id": "s3",
+            "text": "`run: pip install pytest`: install pytest"
+          },
+          {
+            "id": "s4",
+            "text": "`run: pytest`: run the suite"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The machine starts empty. What must exist before pytest can run?"
+        },
+        {
+          "rung": "point",
+          "text": "The code and tests arrive first, with the checkout.",
+          "highlight": [
+            "p"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Repository, then Python, then pytest installed with pip, then pytest run."
+        }
+      ],
+      "feedback": {
+        "correct": "Code, Python, pytest, run.",
+        "generic": "Not quite right. Each step needs the ones before it.",
+        "byKey": {
+          "s3": "`pip` comes with Python, so Python must be installed before `pip install pytest`.",
+          "s4": "Running pytest needs the code checked out, Python and pytest all in place first.",
+          "s2": "Check out the repository first: the rest of the job works on its files."
+        }
+      },
+      "explain": {
+        "text": "Without the checkout there are no files; without Python there is no `pip`; without `pip install pytest` the last step fails with `command not found`. Order is everything on an empty machine."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "The suite passes on your laptop. On GitHub, after a push:\n\n```text\nFAILED tests/test_risk.py::test_real_prices\nFileNotFoundError: 'data/prices.csv'\n```\nYour `.gitignore` contains the line `data/`.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "label": "Project folder",
+          "nodes": [
+            {
+              "id": "p",
+              "label": "risk-project",
+              "children": [
+                {
+                  "id": "s",
+                  "label": "src",
+                  "children": [
+                    {
+                      "id": "rk",
+                      "label": "risk.py"
+                    }
+                  ]
+                },
+                {
+                  "id": "t",
+                  "label": "tests",
+                  "children": [
+                    {
+                      "id": "cf",
+                      "label": "conftest.py"
+                    },
+                    {
+                      "id": "tr",
+                      "label": "test_risk.py"
+                    },
+                    {
+                      "id": "tv",
+                      "label": "test_vol.py"
+                    }
+                  ]
+                },
+                {
+                  "id": "d",
+                  "label": "data",
+                  "children": [
+                    {
+                      "id": "pc",
+                      "label": "prices.csv"
+                    }
+                  ]
+                },
+                {
+                  "id": "g",
+                  "label": ".github",
+                  "children": [
+                    {
+                      "id": "w",
+                      "label": "workflows",
+                      "children": [
+                        {
+                          "id": "y",
+                          "label": "tests.yml"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "p-d-pc"
+          ],
+          "caption": "Ignored by Git: data/"
+        }
+      },
+      "question": "Why does the test fail on GitHub only?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The test reads `data/prices.csv`, which `.gitignore` keeps out of the repository",
+            "correct": true
+          },
+          {
+            "id": "python",
+            "text": "GitHub runs a different version of Python",
+            "why": "A different Python would not remove a file. The error names a missing file."
+          },
+          {
+            "id": "conftest",
+            "text": "pytest needs `conftest.py` to find the data folder",
+            "why": "`conftest.py` holds fixtures; it does not locate folders. The file is simply not there."
+          },
+          {
+            "id": "flaky",
+            "text": "The test is flaky and will pass on a rerun",
+            "why": "It fails the same way every time: the file never reaches GitHub's machine."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What exactly does GitHub's machine have on its disk?"
+        },
+        {
+          "rung": "point",
+          "text": "Only what is committed. Git ignores everything under `data/`.",
+          "highlight": [
+            "p-d"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The checkout copies the repository. `data/` was never committed, so `data/prices.csv` does not exist there."
+        }
+      ],
+      "feedback": {
+        "correct": "The data never reached the repository, so the test cannot open it.",
+        "generic": "Not quite right. Read the error: which file is missing, and why?",
+        "byKey": {
+          "python": "You blamed the Python version. The error is `FileNotFoundError`: the file is absent.",
+          "flaky": "The failure is the same every run. Nothing random is involved."
+        }
+      },
+      "explain": {
+        "text": "A test that opens a real data file passes only where that file exists. The fix is the one from the start of this level: hand the function its data, such as three closes typed into the test. Then the suite needs nothing outside the repository.",
+        "canvas": {
+          "highlight": [
+            "p-d-pc"
+          ],
+          "caption": "Tests should carry their own data"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "The whole setup, in one file:\n\n```yaml\n# .github/workflows/tests.yml\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n      - run: pip install pytest\n      - run: pytest\n```\nGitHub marks each commit with a tick or a cross.",
+      "question": "When does this workflow run?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "After every push to the repository",
+            "correct": true
+          },
+          {
+            "id": "local",
+            "text": "Whenever you run pytest on your laptop",
+            "why": "Your laptop runs pytest by itself. The workflow runs on GitHub's machine, triggered by `on: push`."
+          },
+          {
+            "id": "daily",
+            "text": "Once a day",
+            "why": "A daily run would need `on: schedule`. This file says `on: push`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`on: push`: every push starts a fresh run.",
+        "generic": "Not quite right. Read the `on:` line."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The 1.1 project, with tests",
+      "prose": "Topic 1.2 ends when your 1.1 project is in a Git repository with tests. Here are its three functions. Give each one a test, with answers worked out by hand, so the workflow has something to catch.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Function",
+            "Statements",
+            "Missed",
+            "Cover"
+          ],
+          "rows": [
+            [
+              "simple_returns",
+              "1",
+              "1",
+              "0%"
+            ],
+            [
+              "annualised_vol",
+              "1",
+              "1",
+              "0%"
+            ],
+            [
+              "max_drawdown",
+              "5",
+              "5",
+              "0%"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Before: no tests at all"
+        }
+      },
+      "question": "Write `test_simple_returns()`, `test_annualised_vol()` and `test_max_drawdown()`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\nimport statistics\n\n\n# src/risk.py\ndef simple_returns(closes):\n    return [b / a - 1 for a, b in zip(closes, closes[1:])]\n\n\ndef annualised_vol(returns):\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef max_drawdown(closes):\n    peak, worst = closes[0], 0.0\n    for c in closes:\n        peak = max(peak, c)\n        worst = max(worst, (peak - c) / peak)\n    return worst\n\n\n# tests/test_risk.py\ndef test_simple_returns():\n    pass\n\n\ndef test_annualised_vol():\n    pass\n\n\ndef test_max_drawdown():\n    pass\n",
+        "solution": "import math\nimport statistics\n\n\n# src/risk.py\ndef simple_returns(closes):\n    return [b / a - 1 for a, b in zip(closes, closes[1:])]\n\n\ndef annualised_vol(returns):\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef max_drawdown(closes):\n    peak, worst = closes[0], 0.0\n    for c in closes:\n        peak = max(peak, c)\n        worst = max(worst, (peak - c) / peak)\n    return worst\n\n\n# tests/test_risk.py\ndef test_simple_returns():\n    r = simple_returns([100.00, 104.00, 101.92])\n    assert len(r) == 2\n    assert math.isclose(r[0], 0.04) and math.isclose(r[1], -0.02)\n\n\ndef test_annualised_vol():\n    # mean 0, squared distances 0.0002 over n - 1 = 1, times 252\n    assert math.isclose(annualised_vol([0.01, -0.01]), math.sqrt(0.0002 * 252))\n\n\ndef test_max_drawdown():\n    assert math.isclose(max_drawdown([100.00, 120.00, 90.00]), 0.25)  # trough last\n    assert max_drawdown([80.00, 100.00, 120.00]) == 0.0               # only rises\n",
+        "tests": [
+          {
+            "call": "test_simple_returns()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "import itertools, math, statistics; _ret = lambda c: [b / a - 1 for a, b in zip(c, c[1:])]; _vol = lambda r: statistics.stdev(r) * math.sqrt(252); _dd = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)]); simple_returns, annualised_vol, max_drawdown = _ret, _vol, _dd"
+          },
+          {
+            "call": "test_simple_returns()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "simple_returns = lambda c: [b / a for a, b in zip(c, c[1:])]"
+          },
+          {
+            "call": "test_annualised_vol()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "simple_returns, annualised_vol = _ret, _vol"
+          },
+          {
+            "call": "test_annualised_vol()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "annualised_vol = lambda r: statistics.pstdev(r) * math.sqrt(252)"
+          },
+          {
+            "call": "test_annualised_vol()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "annualised_vol = lambda r: statistics.stdev(r) * 252"
+          },
+          {
+            "call": "test_max_drawdown()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "simple_returns, annualised_vol, max_drawdown = _ret, _vol, _dd"
+          },
+          {
+            "call": "test_max_drawdown()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: (max(p) - min(p)) / max(p)"
+          },
+          {
+            "call": "test_max_drawdown()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: _dd(p[:-1])"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Each of your tests runs on a correct version, where it must pass, and on broken ones, where it must fail: returns without the `- 1`, volatility with `pstdev` or times 252, drawdown as max − min or skipping the last day."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One small hand-made input per function, with the answer worked out on paper."
+        },
+        {
+          "rung": "point",
+          "text": "For volatility, two returns 0.01 and −0.01 have mean 0 and `stdev` $\\sqrt{0.0002}$.",
+          "highlight": [
+            "r1c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Returns: £100.00, £104.00, £101.92 give 0.04 and −0.02. Volatility: `math.sqrt(0.0002 * 252)`. Drawdown: £100.00, £120.00, £90.00 gives 0.25; a rising path gives 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Every function has a test that can fail. The project meets the 1.2 exit.",
+        "generic": "Not quite right. The first failing test names the function whose test let a broken version through, or failed a correct one.",
+        "byKey": {
+          "test-4": "Your volatility test let `pstdev` through. Use two returns so that $n - 1$ and $n$ differ by a factor of 2.",
+          "test-7": "Your drawdown test let max − min through. Add a path that only rises.",
+          "test-8": "Your drawdown test let a version through that skips the last day. Put the trough on the last day."
+        }
+      },
+      "explain": {
+        "text": "Three hand-made inputs, three answers worked out on paper. With these in `tests/` and the workflow in `.github/workflows/`, every push reruns them. From here on, everything you build ships the same way.",
+        "canvas": {
+          "rows": null,
+          "values": {
+            "r0c3": "100%",
+            "r1c3": "100%",
+            "r2c3": "100%",
+            "r0c2": "0",
+            "r1c2": "0",
+            "r2c2": "0"
+          },
+          "caption": "After: every function tested"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Code in `src/`, tests in `tests/`, shared fixtures in `tests/conftest.py`. `pytest` in the top folder runs the whole suite.",
+      "Coverage counts the lines the tests run. A function at 0% has no test; 100% can still be wrong if nothing asserts.",
+      "A workflow in `.github/workflows/` runs `pytest` on a fresh machine after every push. Anything a test needs must be in the repository."
+    ],
+    "formula": {
+      "name": "Coverage",
+      "tex": "\\text{cover} = \\dfrac{\\text{statements run}}{\\text{statements}}",
+      "note": "Add up statements across functions; never average the percentages."
+    },
+    "trap": "100% coverage means every line ran, not that any answer was checked. A test with no `assert` covers lines too."
+  },
+  "quiz": [
+    {
+      "id": "q-collect",
+      "difficulty": 2,
+      "prose": "You run `pytest` in a project's top folder.",
+      "question": "Which file does pytest collect tests from?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`tests/test_vol.py`",
+            "correct": true
+          },
+          {
+            "id": "conf",
+            "text": "`tests/conftest.py`",
+            "why": "pytest loads it for fixtures, but it is not a test file."
+          },
+          {
+            "id": "src",
+            "text": "`src/vol.py`",
+            "why": "That is the code under test. pytest only imports it when a test does."
+          },
+          {
+            "id": "check",
+            "text": "`tests/check_vol.py`",
+            "why": "pytest looks for names starting `test_`. A file named `check_` is skipped."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`test_` at the start of the name.",
+        "generic": "Not quite right. pytest collects files named `test_*.py`."
+      },
+      "explain": {
+        "text": "pytest collects files whose names start with `test_`. `conftest.py` is loaded for its fixtures, and code files are imported by the tests that need them."
+      }
+    },
+    {
+      "id": "q-cover",
+      "difficulty": 2,
+      "prose": "A coverage report says `src/pnl.py` has 40 statements, of which the tests miss 6.",
+      "question": "What is its cover, as a percentage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 85,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "label": "Cover",
+        "accept": "85%: 34 of 40 statements run.",
+        "wrong": [
+          {
+            "id": "missed",
+            "value": 15,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "six",
+            "value": 6,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$34/40 = 0.85$.",
+        "generic": "Not quite right. Cover is the share of statements that ran.",
+        "byKey": {
+          "missed": "That is the share missed. Cover counts the statements run: 34 of 40.",
+          "six": "6 is the count missed, not a percentage."
+        }
+      },
+      "explain": {
+        "text": "40 − 6 = 34 statements ran, and $34/40 = 0.85$, so 85%."
+      }
+    },
+    {
+      "id": "q-push",
+      "difficulty": 3,
+      "prose": "Your repository has a workflow with `on: push` that runs `pytest`. You push a commit that breaks one test.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "GitHub runs the suite on a fresh machine and marks the commit with a red cross",
+            "correct": true
+          },
+          {
+            "id": "refuse",
+            "text": "GitHub refuses the push",
+            "why": "The push is accepted. The run starts after the commit arrives, then marks it."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing, until you run pytest yourself",
+            "why": "That is the point of the workflow: it runs without you, on every push."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The push goes through, and the run marks it failed.",
+        "generic": "Not quite right. The workflow runs after every push."
+      },
+      "explain": {
+        "text": "`on: push` starts a run for each push. A failing test turns the commit's mark into a red cross, and GitHub can be set to block merging until it is fixed."
+      }
+    },
+    {
+      "id": "q-module",
+      "difficulty": 3,
+      "prose": "A workflow fails at its last step with `pytest: command not found`.",
+      "question": "Which step is missing?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`run: pip install pytest`",
+            "correct": true
+          },
+          {
+            "id": "checkout",
+            "text": "`uses: actions/checkout@v4`",
+            "why": "Without a checkout pytest would run but find no tests. The error says pytest itself is missing."
+          },
+          {
+            "id": "python",
+            "text": "`uses: actions/setup-python@v5`",
+            "why": "The runner already has a system Python. What is missing is pytest."
+          },
+          {
+            "id": "conftest",
+            "text": "A `conftest.py` in `tests/`",
+            "why": "`conftest.py` holds fixtures. It cannot install pytest."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The fresh machine has no pytest until you install it.",
+        "generic": "Not quite right. Read the error: which command is missing?"
+      },
+      "explain": {
+        "text": "Every run starts on an empty machine, so anything your tests need is installed by a step. `pip install pytest` puts the `pytest` command there."
+      }
+    }
+  ]
+}
