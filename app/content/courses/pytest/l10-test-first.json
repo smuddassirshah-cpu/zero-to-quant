@@ -1,0 +1,1241 @@
+{
+  "id": "l10-test-first",
+  "course": "pytest",
+  "title": "Writing the test first",
+  "minutes": 15,
+  "objectives": [
+    "Write a failing test, then the code that passes it",
+    "Turn a bug report into a regression test",
+    "Test random code by passing in a seed"
+  ],
+  "skills": [
+    "pt-design",
+    "pt-cases"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "The plan: `shares_for(cash, price, fee)` returns how many whole shares the cash buys after a fixed dealing fee. This time the test comes first, before the function exists.\n\n```python\ndef test_no_fee():\n    assert shares_for(1000.00, 25.00, 0.00) == 40\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Test",
+            "shares_for written?",
+            "pytest says"
+          ],
+          "rows": [
+            [
+              "test_no_fee",
+              "not yet",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Run pytest before writing any code"
+        }
+      },
+      "question": "You run pytest now. What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The test fails: `NameError: name 'shares_for' is not defined`",
+            "correct": true
+          },
+          {
+            "id": "pass",
+            "text": "It passes, because there is no code yet to be wrong",
+            "why": "You expected an empty project to be safe. The test calls `shares_for`, and calling a name that does not exist is an error."
+          },
+          {
+            "id": "skip",
+            "text": "pytest skips it until the function exists",
+            "why": "pytest has no idea the function is coming. It runs the test, the call fails, and the test is reported as failed."
+          },
+          {
+            "id": "load",
+            "text": "Python refuses to load the test file",
+            "why": "The file is valid Python. Names inside a function are looked up only when it runs, so the error comes when the test runs."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What happens when Python calls a name that was never defined?"
+        },
+        {
+          "rung": "point",
+          "text": "The last column is the one to fill in.",
+          "highlight": [
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The test runs, reaches `shares_for(...)`, and Python cannot find that name: `NameError`. pytest reports the test as failed."
+        }
+      ],
+      "feedback": {
+        "correct": "A test written first fails, because the code it calls is not there yet.",
+        "generic": "Not quite right. pytest runs the test, and the test calls a function that does not exist.",
+        "byKey": {
+          "pass": "A test with nothing to call cannot pass: the call itself fails with `NameError`.",
+          "skip": "pytest only skips a test you mark with `skip`. This one runs and fails."
+        }
+      },
+      "explain": {
+        "text": "The test fails with `NameError`. That failure is useful: it shows the test runs and really calls `shares_for`. Writing just enough code to make it pass comes next.",
+        "canvas": {
+          "values": {
+            "r0c2": "failed: NameError"
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Three people each write a first `shares_for` to pass `test_no_fee`. The table shows what each returns for £1,000.00 at £25.00 with no fee.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Version",
+            "(1000.00, 25.00, 0.00)",
+            "(1000.00, 600.00, 0.00)"
+          ],
+          "rows": [
+            [
+              "int((cash - fee) / price)",
+              "40",
+              "?"
+            ],
+            [
+              "round((cash - fee) / price)",
+              "40",
+              "?"
+            ],
+            [
+              "(cash - fee) // price",
+              "40.0",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "test_no_fee expects 40"
+        }
+      },
+      "question": "Tap the version of every person whose code passes `test_no_fee`.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0",
+          "r1c0",
+          "r2c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0"
+        ],
+        "countWord": "versions",
+        "wrong": [
+          {
+            "id": "only-int",
+            "set": [
+              "r0c0"
+            ]
+          },
+          {
+            "id": "no-float",
+            "set": [
+              "r0c0",
+              "r1c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each value in the middle column with 40, the way `==` would."
+        }
+      ],
+      "feedback": {
+        "correct": "All three pass the one test there is.",
+        "generic": "Not quite right. Check each middle value against 40 with `==`.",
+        "byKey": {
+          "only-int": "You kept only `int`. `round(40.0)` is 40 and `40.0 == 40` is `True`, so the other two pass as well.",
+          "no-float": "You left out `//`. It gives `40.0`, and `40.0 == 40` is `True` in Python.",
+          "r2c0": "`40.0 == 40` is `True`: the floor division version passes too."
+        }
+      },
+      "explain": {
+        "text": "All three pass, yet they disagree elsewhere: with £1,000.00 at £600.00, `round` buys 2 shares that cost £1,200.00. One test pins down one point. The next test should be one some version fails.",
+        "canvas": {
+          "values": {
+            "r0c2": "1",
+            "r1c2": "2",
+            "r2c2": "1.0"
+          },
+          "highlight": {
+            "cells": [
+              "r1c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You add a second test, and your code is the `round` version.\n\n```python\ndef test_whole_shares_only():\n    assert shares_for(1000.00, 600.00, 0.00) == 1\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "red",
+              "label": "red",
+              "x": 0.5,
+              "y": 0.1
+            },
+            {
+              "id": "green",
+              "label": "green",
+              "x": 0.85,
+              "y": 0.85
+            },
+            {
+              "id": "tidy",
+              "label": "refactor",
+              "x": 0.15,
+              "y": 0.85
+            }
+          ],
+          "edges": [
+            {
+              "from": "red",
+              "to": "green",
+              "directed": true
+            },
+            {
+              "from": "green",
+              "to": "tidy",
+              "directed": true
+            },
+            {
+              "from": "tidy",
+              "to": "red",
+              "directed": true
+            }
+          ],
+          "nodeRadius": 42,
+          "height": 240
+        },
+        "state": {
+          "caption": "The cycle of test-first work"
+        }
+      },
+      "question": "What does pytest report, before you change any code?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "One test passes; the new one fails with `assert 2 == 1`",
+            "correct": true
+          },
+          {
+            "id": "both-pass",
+            "text": "Both tests pass",
+            "why": "You assumed `round` goes down. 1000.00 / 600.00 = 1.67, which rounds to 2."
+          },
+          {
+            "id": "both-fail",
+            "text": "Both tests fail",
+            "why": "The first test is unchanged: 1000.00 / 25.00 = 40.0, which still rounds to 40."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out 1000.00 / 600.00, then round it."
+        },
+        {
+          "rung": "point",
+          "text": "The new test is the one at the top of the cycle.",
+          "highlight": [
+            "red"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1000.00 / 600.00 = 1.67, and `round(1.67)` is 2. The test expects 1, so it fails. The old test still gets 40."
+        }
+      ],
+      "feedback": {
+        "correct": "The new test fails and the old one passes.",
+        "generic": "Not quite right. Work out each test separately with `round`.",
+        "byKey": {
+          "both-pass": "`round(1.67)` is 2, not 1. The new test fails."
+        }
+      },
+      "explain": {
+        "text": "A new test that fails is **red**. Swapping `round` for `int` makes it pass: **green**. With every test green you can tidy the code safely: **refactor**. Then the next test starts the cycle again.",
+        "canvas": {
+          "current": "red",
+          "caption": "Red: a failing test. Green: the code passes. Refactor: tidy while green."
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Here are four tests, written before the code. They are the specification: read them, then write the function that passes them all.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Test",
+            "Call",
+            "Expects"
+          ],
+          "rows": [
+            [
+              "test_no_fee",
+              "(1000.00, 25.00, 0.00)",
+              "40"
+            ],
+            [
+              "test_fee_is_paid_first",
+              "(1000.00, 25.00, 10.00)",
+              "39"
+            ],
+            [
+              "test_never_negative",
+              "(5.00, 2.00, 10.00)",
+              "0"
+            ],
+            [
+              "test_whole_shares_only",
+              "(1000.00, 600.00, 0.00)",
+              "1"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The tests come first"
+        }
+      },
+      "question": "Write `shares_for(cash, price, fee)` so that all four tests pass.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def shares_for(cash, price, fee):\n    pass  # write this after reading the tests\n\n\ndef test_no_fee():\n    assert shares_for(1000.00, 25.00, 0.00) == 40\n\n\ndef test_fee_is_paid_first():\n    assert shares_for(1000.00, 25.00, 10.00) == 39\n\n\ndef test_never_negative():\n    assert shares_for(5.00, 2.00, 10.00) == 0\n\n\ndef test_whole_shares_only():\n    assert shares_for(1000.00, 600.00, 0.00) == 1\n",
+        "solution": "def shares_for(cash, price, fee):\n    return max(0, int((cash - fee) / price))\n\n\ndef test_no_fee():\n    assert shares_for(1000.00, 25.00, 0.00) == 40\n\n\ndef test_fee_is_paid_first():\n    assert shares_for(1000.00, 25.00, 10.00) == 39\n\n\ndef test_never_negative():\n    assert shares_for(5.00, 2.00, 10.00) == 0\n\n\ndef test_whole_shares_only():\n    assert shares_for(1000.00, 600.00, 0.00) == 1\n",
+        "tests": [
+          {
+            "call": "test_no_fee()",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "test_fee_is_paid_first()",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "test_never_negative()",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "test_whole_shares_only()",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "shares_for(2500.00, 99.99, 9.99)",
+            "expect": "24",
+            "compare": "equal"
+          },
+          {
+            "call": "shares_for(10.00, 25.00, 0.00)",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: your four test functions, each of which must finish without an error, and two more calls compared with `==`.",
+        "examples": [
+          {
+            "call": "test_no_fee()",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "test_fee_is_paid_first()",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Pay the fee first, then see how many whole shares the rest buys."
+        },
+        {
+          "rung": "point",
+          "text": "`test_never_negative` leaves £5.00 − £10.00 = −£5.00. `int(-2.5)` is −2, not 0.",
+          "highlight": [
+            "r2c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return max(0, int((cash - fee) / price))`: `int` drops the fraction, and `max(0, ...)` stops a negative count."
+        }
+      ],
+      "feedback": {
+        "correct": "Every test you were given is green.",
+        "generic": "Not quite right. Find the first failing test and work its call out by hand.",
+        "byKey": {
+          "test-2": "The fee must come off the cash before dividing: £990.00 buys 39 shares at £25.00.",
+          "test-3": "With less cash than the fee, `int(-5.00 / 2.00)` gives −2. Use `max(0, ...)`."
+        }
+      },
+      "explain": {
+        "text": "`(cash - fee) / price` is what is left per share, `int` keeps whole shares, and `max(0, ...)` handles cash below the fee, the edge case. You wrote no line that a test did not ask for."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Weeks later a user reports a bug: £2,700.00 at £5.40 with no fee should buy 500 shares. Your function returned 499.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Cash",
+            "Price",
+            "Should buy",
+            "Got",
+            "cash / price"
+          ],
+          "rows": [
+            [
+              "2700.00",
+              "5.40",
+              "500",
+              "499",
+              "499.99999999999994"
+            ]
+          ],
+          "align": [
+            "right",
+            "right",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The bug report"
+        }
+      },
+      "question": "What do you do first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Write a test that reproduces the report, and watch it fail",
+            "correct": true
+          },
+          {
+            "id": "fix",
+            "text": "Fix the code, then check the answer by hand",
+            "why": "That fixes it today. Without a test, nothing stops the bug coming back when someone edits the function."
+          },
+          {
+            "id": "plus",
+            "text": "Add `+ 1` to the result",
+            "why": "That patches one case and breaks the rest: £1,000.00 at £25.00 would buy 41."
+          },
+          {
+            "id": "round",
+            "text": "Use `round()` instead of `int()`",
+            "why": "That turns 499.99999999999994 into 500, but it also turns 1.67 into 2: the over-buying bug comes back."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How would you know, a year from now, that this bug has not come back?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at the last column: the float division lands just below 500.",
+          "highlight": [
+            "r0c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "First capture the report as a test: `assert shares_for(2700.00, 5.40, 0.00) == 500`. It fails now. It will pass once the code is fixed."
+        }
+      ],
+      "feedback": {
+        "correct": "The report becomes a test before it becomes a fix.",
+        "generic": "Not quite right. Which step stops this bug from ever coming back unnoticed?",
+        "byKey": {
+          "round": "`round` would also buy 2 shares for £1,000.00 at £600.00. Your `test_whole_shares_only` would catch that."
+        }
+      },
+      "explain": {
+        "text": "A test written from a bug report is a **regression test**. It fails now, passes after the fix, and stays in the suite forever. If anyone brings the bug back, it goes red.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c3",
+              "r0c4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "You write the regression test and run it before touching the code.\n\n```python\ndef test_report_2700():\n    shares_for(2700.00, 5.40, 0.00) == 500\n```\npytest reports it as passed.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Moment",
+            "Should be",
+            "pytest says"
+          ],
+          "rows": [
+            [
+              "Before the fix",
+              "red",
+              "green"
+            ],
+            [
+              "After the fix",
+              "green",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "A regression test's two runs"
+        }
+      },
+      "question": "What does that green tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Nothing about the code: without `assert`, the comparison is worked out and thrown away",
+            "correct": true
+          },
+          {
+            "id": "fixed",
+            "text": "The bug is already fixed",
+            "why": "You trusted the green. The code still returns 499; a test that cannot fail tells you nothing about it."
+          },
+          {
+            "id": "flaky",
+            "text": "The bug only happens some of the time",
+            "why": "Float division is deterministic: 2700.00 / 5.40 gives the same bits on every run."
+          },
+          {
+            "id": "skipped",
+            "text": "pytest skipped the test",
+            "why": "pytest ran it. A skipped test is reported as skipped, not passed."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would make this test fail? Look for the word that turns a comparison into a check."
+        },
+        {
+          "rung": "point",
+          "text": "It should have been red before the fix.",
+          "highlight": [
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`shares_for(...) == 500` evaluates to `False`, and the line ends. Only `assert` turns `False` into a failure."
+        }
+      ],
+      "feedback": {
+        "correct": "The test could never fail, so its green means nothing.",
+        "generic": "Not quite right. Ask what would make this test fail. Can anything?",
+        "byKey": {
+          "fixed": "You trusted the green. The function still returns 499. A regression test must go red before the fix, or it proves nothing.",
+          "flaky": "You suspected bad luck. The same floats give the same answer every run; the test simply checks nothing.",
+          "skipped": "pytest ran it and found no failed `assert`, because there is no `assert` at all."
+        }
+      },
+      "explain": {
+        "text": "Without `assert`, the line works out `False` and moves on, so nothing can fail. Watching a new test go red first is how you test the test. With `assert` it fails: `assert 499 == 500`.",
+        "canvas": {
+          "values": {
+            "r0c2": "red: assert 499 == 500"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Now the fix. Work in whole pence: `round(2700.00 * 100)` is the integer 270000, exactly. Integer `//` has no rounding error, so 270000 // 540 is exactly 500.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Step",
+            "Value"
+          ],
+          "rows": [
+            [
+              "round((2700.00 - 0.00) * 100)",
+              "270000"
+            ],
+            [
+              "round(5.40 * 100)",
+              "540"
+            ],
+            [
+              "270000 // 540",
+              "500"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Pence are whole numbers"
+        }
+      },
+      "question": "Write `test_report_2700()` with an `assert`, watch it fail, then fix `shares_for` to work in pence.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def shares_for(cash, price, fee):\n    return max(0, int((cash - fee) / price))\n\n\ndef test_fee_is_paid_first():\n    assert shares_for(1000.00, 25.00, 10.00) == 39\n\n\ndef test_report_2700():\n    pass  # the report: £2,700.00 at £5.40, no fee, should buy 500\n\n\nprint(shares_for(2700.00, 5.40, 0.00))\n",
+        "solution": "def shares_for(cash, price, fee):\n    pence = round((cash - fee) * 100)       # whole pence: an exact integer\n    return max(0, pence // round(price * 100))\n\n\ndef test_fee_is_paid_first():\n    assert shares_for(1000.00, 25.00, 10.00) == 39\n\n\ndef test_report_2700():\n    assert shares_for(2700.00, 5.40, 0.00) == 500\n\n\nprint(shares_for(2700.00, 5.40, 0.00))\n",
+        "tests": [
+          {
+            "call": "shares_for(2700.00, 5.40, 0.00)",
+            "expect": "500",
+            "compare": "equal"
+          },
+          {
+            "call": "shares_for(1000.00, 25.00, 10.00)",
+            "expect": "39",
+            "compare": "equal"
+          },
+          {
+            "call": "shares_for(5.00, 2.00, 10.00)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "shares_for(2500.00, 99.99, 9.99)",
+            "expect": "24",
+            "compare": "equal"
+          },
+          {
+            "call": "shares_for(1000.00, 600.00, 0.00)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "test_report_2700()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "shares_for = lambda cash, price, fee: max(0, round((cash - fee) * 100) // round(price * 100))"
+          },
+          {
+            "call": "test_report_2700()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "shares_for = lambda cash, price, fee: max(0, int((cash - fee) / price))"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Five compare your `shares_for` with `==`. Then your `test_report_2700()` runs twice: it must pass on the fixed function and fail on the old float one.",
+        "examples": [
+          {
+            "call": "shares_for(2700.00, 5.40, 0.00)",
+            "expect": "500",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two jobs: an `assert` that reproduces the report, then the pence version of the function."
+        },
+        {
+          "rung": "point",
+          "text": "The last row of the table is the whole fix: integers, then `//`.",
+          "highlight": [
+            "r2c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pence = round((cash - fee) * 100)` then `return max(0, pence // round(price * 100))`. The test is `assert shares_for(2700.00, 5.40, 0.00) == 500`."
+        }
+      ],
+      "feedback": {
+        "correct": "The report is now a test, and the fix turns it green.",
+        "generic": "Not quite right. Check the first failing test. If it is test 7, your test passed on the buggy version.",
+        "byKey": {
+          "test-7": "Your test passed on the old float version, so it does not reproduce the report. It needs `assert shares_for(2700.00, 5.40, 0.00) == 500`.",
+          "test-6": "Your test failed on the fixed version. Check the numbers: £2,700.00 at £5.40 with no fee is 500 shares."
+        }
+      },
+      "explain": {
+        "text": "`round` turns each amount into an exact count of pence, and `//` on integers is exact. Your old tests still pass, so the fix broke nothing. `test_report_2700` now guards this bug for good."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Next feature: a random walk for simulating prices. The first test written for it:\n\n```python\ndef random_walk(start, steps):\n    prices = [start]\n    for _ in range(steps):\n        move = random.choice([1.01, 0.99])\n        prices.append(round(prices[-1] * move, 2))\n    return prices\n\ndef test_walk_repeats():\n    assert random_walk(100.00, 5) == random_walk(100.00, 5)\n```",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "a",
+              "label": "Run 1",
+              "values": [
+                100.0,
+                101.0,
+                99.99,
+                100.99,
+                102.0,
+                100.98
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Run 2",
+              "values": [
+                100.0,
+                99.0,
+                98.01,
+                98.99,
+                98.0,
+                98.98
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Step",
+          "height": 220
+        },
+        "state": {
+          "caption": "Two calls of random_walk(100.00, 5)"
+        }
+      },
+      "question": "What is the chance that this test passes on one run?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.125,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "label": "Chance the test passes",
+        "placeholder": "percentage",
+        "accept": "3.125%: both calls must make the same choice at all 5 steps, $(1/2)^5 = 1/32$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 50,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "always",
+            "value": 100,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "tenth",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For the two lists to be equal, what must happen at each step?"
+        },
+        {
+          "rung": "point",
+          "text": "The two runs split apart at the very first step.",
+          "highlight": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each step the two calls agree with chance 1/2, and the 5 steps are independent: $(1/2)^5$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(1/2)^5 = 1/32$, about 3.1%. The test fails 31 runs in 32.",
+        "generic": "Not quite right. Both calls must choose the same move at every one of the 5 steps.",
+        "byKey": {
+          "half": "You matched one step. Every one of the 5 steps must match, so multiply five halves.",
+          "always": "You assumed the two calls repeat each other. Each call draws fresh random numbers.",
+          "tenth": "You added the chances of the steps. Matching every step is an and, so multiply: $(1/2)^5$."
+        }
+      },
+      "explain": {
+        "text": "The test passes 1 run in 32 and fails the rest, whatever the code does. A test that passes or fails by luck is **flaky**. The cure is a seed: `random.Random(seed)` makes the same draws every time.",
+        "canvas": {
+          "highlight": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "What you did, in order:\n\n```python\n# 1. red: write the test, run it, watch it fail\ndef test_report_2700():\n    assert shares_for(2700.00, 5.40, 0.00) == 500\n# 2. green: change the code until every test passes\n# 3. refactor: tidy the code; the tests stay green\n```\nFor randomness, pass a seed in and build `random.Random(seed)` inside.",
+      "question": "A new test passes on its very first run, before any code change. What should you suspect first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The test: it may not be able to fail",
+            "correct": true
+          },
+          {
+            "id": "code",
+            "text": "Nothing: the feature already works",
+            "why": "It might, but you have not seen the test fail, so you do not yet know it checks anything."
+          },
+          {
+            "id": "pytest",
+            "text": "pytest: it may have cached an old result",
+            "why": "pytest runs every test afresh. A green first run points at the test, not at pytest."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A test you never saw fail has not been tested itself.",
+        "generic": "Not quite right. Red comes before green for a reason."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "A user reports that `max_drawdown` gives 0 for a path that clearly falls. Put the work in order.",
+      "question": "Put the steps for handling a bug report in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Write a test that reproduces the report"
+          },
+          {
+            "id": "s2",
+            "text": "Run it and watch it fail"
+          },
+          {
+            "id": "s3",
+            "text": "Change the code until that test passes"
+          },
+          {
+            "id": "s4",
+            "text": "Run the whole suite: every test passes"
+          },
+          {
+            "id": "s5",
+            "text": "Commit the fix and the test together"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Nothing should be fixed before the bug is captured."
+        },
+        {
+          "rung": "step",
+          "text": "Test, red, fix, whole suite green, commit. The whole suite checks the fix broke nothing else."
+        }
+      ],
+      "feedback": {
+        "correct": "Capture, see it fail, fix, check everything, commit.",
+        "generic": "Not quite right. The test comes before the fix, and the whole suite runs before the commit.",
+        "byKey": {
+          "s3": "You fixed the code before seeing the test fail. Then you cannot know the test catches the bug.",
+          "s5": "Commit last, once the whole suite is green, so the fix and its guard travel together."
+        }
+      },
+      "explain": {
+        "text": "The red run proves the test catches the bug. The full-suite run proves the fix broke nothing else. Committing them together means the guard can never be lost from the fix."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A seeded random walk",
+      "prose": "A Monte Carlo pricer averages many simulated paths. To test it, the randomness must repeat. This `random_walk` takes a `seed` and builds its own generator, so the same seed always gives the same path.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "seed 42",
+              "values": [
+                100.0,
+                101.0,
+                102.01,
+                100.99,
+                102.0,
+                103.02
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Step",
+          "height": 220
+        },
+        "state": {
+          "caption": "random_walk(100.00, 5, 42)"
+        }
+      },
+      "question": "Finish `random_walk(start, steps, seed)`, then write `test_random_walk()` checking: the same seed repeats the path, there are `steps + 1` prices, and the first is `start`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\n\ndef random_walk(start, steps, seed):\n    rng = random.Random(seed)\n    prices = [start]\n    # each step: multiply the last price by rng.choice([1.01, 0.99]),\n    # round to 2 places, and append it\n    return prices\n\n\ndef test_random_walk():\n    pass  # same seed, same path; steps + 1 prices; the first is start\n\n\nprint(random_walk(100.00, 5, 42))\n",
+        "solution": "import random\n\n\ndef random_walk(start, steps, seed):\n    rng = random.Random(seed)\n    prices = [start]\n    for _ in range(steps):\n        prices.append(round(prices[-1] * rng.choice([1.01, 0.99]), 2))\n    return prices\n\n\ndef test_random_walk():\n    a = random_walk(100.00, 10, 7)\n    assert a == random_walk(100.00, 10, 7)   # same seed, same path\n    assert len(a) == 11                      # steps + 1 prices\n    assert a[0] == 100.00                    # starts at start\n\n\nprint(random_walk(100.00, 5, 42))\n",
+        "tests": [
+          {
+            "call": "random_walk(100.00, 5, 42)",
+            "expect": "[100.0, 101.0, 102.01, 100.99, 102.0, 103.02]",
+            "compare": "isclose"
+          },
+          {
+            "call": "random_walk(250.00, 3, 1)",
+            "expect": "[250.0, 252.5, 255.03, 252.48]",
+            "compare": "isclose"
+          },
+          {
+            "call": "random_walk(100.00, 0, 9)",
+            "expect": "[100.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "random_walk(80.00, 8, 3) == random_walk(80.00, 8, 3)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "test_random_walk()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "import itertools, random; _good = lambda start, steps, seed, moves=(1.01, 0.99): (lambda rng: list(itertools.accumulate(range(steps), lambda p, _: round(p * rng.choice(moves), 2), initial=start)))(random.Random(seed)); random_walk = _good"
+          },
+          {
+            "call": "test_random_walk()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "_flip = itertools.cycle([(1.01, 0.99), (0.99, 1.01)]); random_walk = lambda start, steps, seed: _good(start, steps, seed, next(_flip))"
+          },
+          {
+            "call": "test_random_walk()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "random_walk = lambda start, steps, seed: _good(start, steps, seed)[1:]"
+          },
+          {
+            "call": "test_random_walk()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "random_walk = lambda start, steps, seed: _good(start, steps + 1, seed)"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Four check your walk's prices. Then your `test_random_walk()` runs on a correct walk, where it must pass, and on three broken ones, where it must fail: one ignores the seed, one drops the start, one takes an extra step.",
+        "examples": [
+          {
+            "call": "random_walk(100.00, 5, 42)",
+            "expect": "[100.0, 101.0, 102.01, 100.99, 102.0, 103.02]",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The loop runs `steps` times, appending one price each time."
+        },
+        {
+          "rung": "point",
+          "text": "Call the walk twice with the same seed and compare the two lists with `==`.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In the test: `a = random_walk(100.00, 10, 7)`, then assert `a == random_walk(100.00, 10, 7)`, `len(a) == 11` and `a[0] == 100.00`."
+        }
+      ],
+      "feedback": {
+        "correct": "The seed makes the walk repeatable, and your test pins down its shape.",
+        "generic": "Not quite right. Look at the first failing test. Tests 6 to 8 mean your test let a broken walk through.",
+        "byKey": {
+          "test-6": "Your test let through a walk that ignores its seed. Call it twice with the same seed and assert the two paths are equal.",
+          "test-7": "Your test let through a walk that drops `start`. Assert the length is `steps + 1` and the first price is `start`.",
+          "test-8": "Your test let through a walk with one step too many. Assert the length is exactly `steps + 1`."
+        }
+      },
+      "explain": {
+        "text": "`random.Random(seed)` gives the walk its own generator, so the same seed gives the same draws and the same path. Your test checks what must hold for every seed, so it never depends on luck. The seed 42 path is 100.00, 101.00, 102.01, 100.99, 102.00, 103.02."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Write the test first and watch it fail: red. Write just enough code to pass: green. Then tidy with every test still green.",
+      "Every bug report becomes a regression test that reproduces it. It fails before the fix, passes after, and stays forever.",
+      "Random code is testable once the seed is an argument: `random.Random(seed)` makes the same draws every run."
+    ],
+    "formula": {
+      "name": "Red, green, refactor",
+      "tex": "\\text{red} \\to \\text{green} \\to \\text{refactor}",
+      "note": "A test you never saw fail has not been tested itself."
+    },
+    "trap": "A test without `assert` passes whatever the code does. If a new test is green before the fix, suspect the test."
+  },
+  "quiz": [
+    {
+      "id": "q-regression",
+      "difficulty": 2,
+      "prose": "Bug report: `average_fill([])` crashes with `ZeroDivisionError`. It should return 0.0 when there are no fills.",
+      "question": "Which is the right regression test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`def test_no_fills(): assert average_fill([]) == 0.0`",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "`def test_one_fill(): assert average_fill([101.50]) == 101.50`",
+            "why": "That tests one fill. The report is about no fills, so this passes with the bug still there."
+          },
+          {
+            "id": "noassert",
+            "text": "`def test_no_fills(): average_fill([])`",
+            "why": "It fails while the crash remains, but after that it passes whatever comes back, even `None`. Assert the 0.0."
+          },
+          {
+            "id": "swallow",
+            "text": "`def test_no_fills():` with `try: average_fill([])` and `except ZeroDivisionError: pass`",
+            "why": "That swallows the very error the report describes, so the test passes with the bug."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It reproduces the report and states the right answer.",
+        "generic": "Not quite right. The test must fail now and pass only when the right value comes back."
+      },
+      "explain": {
+        "text": "`assert average_fill([]) == 0.0` fails today with `ZeroDivisionError`. It passes only when the function returns 0.0. That is a regression test."
+      }
+    },
+    {
+      "id": "q-flaky",
+      "difficulty": 2,
+      "prose": "A test compares two calls of an unseeded walk of 4 steps, each step up 1% or down 1% with chance 1/2.",
+      "question": "What is the chance the test passes on one run?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6.25,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "label": "Chance it passes",
+        "accept": "6.25%: $(1/2)^4 = 1/16$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 50,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "quarter",
+            "value": 12.5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(1/2)^4 = 1/16 = 6.25\\%$.",
+        "generic": "Not quite right. All 4 steps must match.",
+        "byKey": {
+          "half": "You matched one step. All four must match: $(1/2)^4$.",
+          "quarter": "That is $(1/2)^3$: you matched three steps. There are four."
+        }
+      },
+      "explain": {
+        "text": "Each step matches with chance 1/2, independently, so all four match with chance $1/16$. The test fails 15 runs in 16: flaky."
+      }
+    },
+    {
+      "id": "q-seed",
+      "difficulty": 3,
+      "prose": "Two versions of a function that adds noise to a price.",
+      "question": "Which one can a test pin down exactly?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`def noisy(p, rng): return round(p * (1 + rng.gauss(0, 0.01)), 2)`, called with `random.Random(1)`",
+            "correct": true
+          },
+          {
+            "id": "module",
+            "text": "`def noisy(p): return round(p * (1 + random.gauss(0, 0.01)), 2)`",
+            "why": "It draws from the shared `random` module. Any other code that draws in between shifts its numbers, so the result is not under the test's control."
+          },
+          {
+            "id": "time",
+            "text": "`def noisy(p): random.seed(time.time()); return round(p * (1 + random.gauss(0, 0.01)), 2)`",
+            "why": "Seeding with the clock gives a new seed every run, which is the opposite of repeatable."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The generator is an argument, so the test chooses its seed.",
+        "generic": "Not quite right. Which version lets the test decide which random numbers are drawn?"
+      },
+      "explain": {
+        "text": "Passing `rng` in is injection again, this time of the random source. The test hands in `random.Random(1)`, so the draw is the same every run."
+      }
+    },
+    {
+      "id": "q-green-first",
+      "difficulty": 3,
+      "prose": "You write `test_fee_waived()` for a feature you have not built yet. You run pytest and it passes.",
+      "question": "What do you do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Check the test: find out why it cannot fail, such as a missing `assert` or a call to the wrong function",
+            "correct": true
+          },
+          {
+            "id": "ship",
+            "text": "Commit: the feature works already",
+            "why": "You have not built it yet. A green test for missing code means the test is not checking it."
+          },
+          {
+            "id": "rerun",
+            "text": "Run it again until it fails",
+            "why": "Tests are not lotteries. If the result is the same each run, rerunning tells you nothing new."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Red should come before green. A test that starts green needs checking itself.",
+        "generic": "Not quite right. The feature does not exist, yet the test passed."
+      },
+      "explain": {
+        "text": "A test for code you have not written should fail. If it passes, it is not checking that code: look for a missing `assert`, a wrong name, or an expected value that matches anything."
+      }
+    }
+  ]
+}
