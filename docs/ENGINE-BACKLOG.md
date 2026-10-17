@@ -442,3 +442,7 @@ Raised later (pytest level 1):
 158. `table` canvas: cells and captions through `Z.grade.inline` so backticks and bold render (same as 145).
 159. A `console` canvas kind: monospace block that keeps indentation, line ids `l{i}`, tap mode on lines, highlight (pytest output, tracebacks, shell sessions).
 160. pytest in the worker: either a built-in `approx`/`raises` helper module injected when `import pytest` fails, or preloading the pytest wheel set with a larger first-run budget.
+
+Raised later (numpy-pandas level 2):
+
+161. Code widget: package loading (`loadPackagesFromImports`) must run outside the per-case time limit, with a "Loading pandas..." line in the results panel (extends 143).
