@@ -1,0 +1,1071 @@
+{
+  "id": "l11-testing-drawdown",
+  "course": "pytest",
+  "title": "Testing a drawdown function",
+  "minutes": 14,
+  "objectives": [
+    "Test a maximum drawdown function on hand-made price paths",
+    "Choose paths that tell a correct function from common broken ones",
+    "Write a look-ahead test and a transaction-cost test for a backtest"
+  ],
+  "skills": [
+    "pt-cases",
+    "pt-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "A hand-made price path: five closes we chose ourselves. **Maximum drawdown** is the worst fall from a running peak, as a fraction of that peak.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                120.0,
+                90.0,
+                130.0,
+                117.0
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Day",
+          "height": 220
+        },
+        "state": {
+          "caption": "£100.00, £120.00, £90.00, £130.00, £117.00"
+        }
+      },
+      "question": "What is the maximum drawdown of this path, as a percentage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "label": "Maximum drawdown",
+        "placeholder": "percentage",
+        "accept": "25%: £120.00 falls to £90.00, and $30/120 = 0.25$.",
+        "wrong": [
+          {
+            "id": "maxmin",
+            "value": 30.77,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "pounds",
+            "value": 30,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk along the path, keeping the highest close so far."
+        },
+        {
+          "rung": "point",
+          "text": "The peak before the lowest close is £120.00.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From £120.00 to £90.00 is a fall of £30.00. As a fraction of the peak: $30/120$."
+        }
+      ],
+      "feedback": {
+        "correct": "$30/120 = 0.25$: a 25% drawdown.",
+        "generic": "Not quite right. Find the biggest fall from an earlier peak, then divide by that peak.",
+        "byKey": {
+          "maxmin": "You used the highest and lowest closes overall. The £130.00 peak comes after the £90.00 low, so that fall never happened.",
+          "ten": "You found a 10% fall: £100.00 to £90.00, or £130.00 to £117.00. Measure from the running peak, £120.00, instead.",
+          "pounds": "You gave the fall in pounds. Drawdown is a fraction of the peak: $30/120$."
+        }
+      },
+      "explain": {
+        "text": "The running peak is £120.00 when the price drops to £90.00, a fall of 25%. The later peak of £130.00 only falls to £117.00, which is 10%. We built this path, so we know the answer exactly: that is what makes it a good test.",
+        "canvas": {
+          "drawdown": true
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Move the four closes. The caption works out the maximum drawdown as you go.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "d1",
+              "label": "Mon"
+            },
+            {
+              "id": "d2",
+              "label": "Tue"
+            },
+            {
+              "id": "d3",
+              "label": "Wed"
+            },
+            {
+              "id": "d4",
+              "label": "Thu"
+            }
+          ],
+          "yLabel": "Close (£)",
+          "showValues": true,
+          "money": "£",
+          "yMax": 160
+        },
+        "state": {
+          "values": {
+            "Mon": 100,
+            "Tue": 120,
+            "Wed": 90,
+            "Thu": 130
+          }
+        },
+        "controls": [
+          {
+            "bind": "d1",
+            "min": 50,
+            "max": 150,
+            "step": 5,
+            "label": "Mon",
+            "start": 100
+          },
+          {
+            "bind": "d2",
+            "min": 50,
+            "max": 150,
+            "step": 5,
+            "label": "Tue",
+            "start": 120
+          },
+          {
+            "bind": "d3",
+            "min": 50,
+            "max": 150,
+            "step": 5,
+            "label": "Wed",
+            "start": 90
+          },
+          {
+            "bind": "d4",
+            "min": 50,
+            "max": 150,
+            "step": 5,
+            "label": "Thu",
+            "start": 130
+          }
+        ],
+        "derive": {
+          "caption": "Max drawdown: {{fixed(100 * max(0, (max(values['Mon'], values['Tue']) - values['Tue']) / max(values['Mon'], values['Tue']), (max(values['Mon'], values['Tue'], values['Wed']) - values['Wed']) / max(values['Mon'], values['Tue'], values['Wed']), (max(values['Mon'], values['Tue'], values['Wed'], values['Thu']) - values['Thu']) / max(values['Mon'], values['Tue'], values['Wed'], values['Thu'])), 1)}}%"
+        }
+      },
+      "question": "Make the maximum drawdown read 0.0%. What do all such paths share?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Each close is at least as high as every close before it",
+            "correct": true
+          },
+          {
+            "id": "last",
+            "text": "The last close is the highest",
+            "why": "A path can end at its high and still dip on the way: £100.00, £80.00, £120.00 falls 20% first."
+          },
+          {
+            "id": "first",
+            "text": "The first close is the lowest",
+            "why": "£100.00, £120.00, £110.00 starts lowest, yet falls from £120.00 to £110.00."
+          },
+          {
+            "id": "equal",
+            "text": "All four closes are equal",
+            "why": "Equal closes give 0%, but so does any path that never falls, such as £80.00, £90.00, £100.00, £110.00."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try a path that only goes up, then one that dips once and recovers."
+        }
+      ],
+      "feedback": {
+        "correct": "No close may sit below an earlier one.",
+        "generic": "Not quite right. A drawdown needs some close below an earlier peak."
+      },
+      "explain": {
+        "text": "Drawdown is 0 exactly when the price never falls below its running peak. A rising path is the simplest hand-made test with a known answer of 0."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Each path below is a **hand-made path**: small enough that the right answer is known before any code runs. Together they test different ideas.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                50.0,
+                200.0,
+                150.0
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Day",
+          "height": 220
+        },
+        "state": {
+          "caption": "The fourth path: a deep fall, then a shallow one"
+        }
+      },
+      "question": "Fill in each path's maximum drawdown as a decimal.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Path",
+          "Max drawdown"
+        ],
+        "rows": [
+          [
+            "£100.00, £110.00, £121.00",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "£100.00, £80.00",
+            {
+              "edit": true,
+              "answer": 0.2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "£100.00",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "£100.00, £50.00, £200.00, £150.00",
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each path, keep the highest close so far and the worst fall from it."
+        },
+        {
+          "rung": "point",
+          "text": "In the fourth path the first fall is from £100.00 to £50.00.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rising: 0. £100.00 to £80.00: 0.2. One price: nothing can fall, 0. Fourth: 0.5 from the first fall beats 0.25 from the second."
+        }
+      ],
+      "feedback": {
+        "correct": "0, 0.2, 0 and 0.5.",
+        "generic": "Not quite right. Check the first wrong row by walking along the path.",
+        "byKey": {
+          "r3c1": "Two falls: £100.00 to £50.00 is 0.5, £200.00 to £150.00 is 0.25. The maximum is the bigger one.",
+          "r2c1": "One price has no fall at all, so the drawdown is 0.",
+          "r0c1": "This path only rises, so it never falls below a peak: 0."
+        }
+      },
+      "explain": {
+        "text": "Each path checks one idea: no fall, one fall, a single price (the edge case), and a later new peak with a smaller fall. A correct `max_drawdown` must get all four.",
+        "canvas": {
+          "drawdown": true
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "In First Python, `max_drawdown` crashed with `range(1, len(prices) + 1)`. A rushed fix stopped the crash:\n\n```python\nfor i in range(1, len(prices) - 1):\n```\nOn the hook path it still gives 0.25.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "£100.00",
+            "£120.00",
+            "£90.00",
+            "£130.00",
+            "£117.00"
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              1,
+              3
+            ],
+            "label": "the loop visits"
+          },
+          "caption": "range(1, 4) on five prices"
+        }
+      },
+      "question": "Which hand-made path shows that the rushed fix is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "£100.00, £120.00, £90.00",
+            "correct": true
+          },
+          {
+            "id": "mid",
+            "text": "£100.00, £90.00, £120.00",
+            "why": "Its fall happens at index 1, which the loop still visits: both versions give 0.1."
+          },
+          {
+            "id": "rise",
+            "text": "£100.00, £110.00, £121.00",
+            "why": "It never falls, so both versions return 0."
+          },
+          {
+            "id": "one",
+            "text": "£120.00",
+            "why": "With one price both loops run zero times and return 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which index does `range(1, len(prices) - 1)` never reach?"
+        },
+        {
+          "rung": "point",
+          "text": "The last cell is outside the loop.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The loop skips the last price, so the bug shows only when the worst fall ends on the last day."
+        }
+      ],
+      "feedback": {
+        "correct": "Its only fall lands on the last day, which the loop skips: 0 instead of 0.25.",
+        "generic": "Not quite right. Find the index the loop never visits.",
+        "byKey": {
+          "mid": "You picked a path whose fall the loop still sees. Both versions agree on it, so it cannot catch the bug."
+        }
+      },
+      "explain": {
+        "text": "`range(1, len(prices) - 1)` stops one short, so the last price is never looked at. Only a path whose worst fall ends on the last day tells the difference. That path becomes the regression test for this bug.",
+        "canvas": {
+          "highlight": [
+            "c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Now the test itself. Hidden versions of `max_drawdown` include two correct ones and four broken ones. Your `test_max_drawdown()` must pass on the correct ones and fail on every broken one.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Version",
+            "Mistake",
+            "Your test should"
+          ],
+          "rows": [
+            [
+              "two correct",
+              "none",
+              "pass"
+            ],
+            [
+              "skip last",
+              "never looks at the last price",
+              "fail"
+            ],
+            [
+              "from first",
+              "falls measured from the first price",
+              "fail"
+            ],
+            [
+              "max − min",
+              "(highest − lowest) / highest",
+              "fail"
+            ],
+            [
+              "in pounds",
+              "returns the fall in £",
+              "fail"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "What your test must tell apart"
+        }
+      },
+      "question": "Write `test_max_drawdown()` with hand-made paths and answers worked out by hand.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef max_drawdown(prices):\n    peak = prices[0]\n    worst = 0.0\n    for price in prices[1:]:\n        peak = max(peak, price)\n        worst = max(worst, (peak - price) / peak)\n    return worst\n\n\ndef test_max_drawdown():\n    pass  # hand-made paths, answers worked out by hand\n",
+        "solution": "import math\n\n\ndef max_drawdown(prices):\n    peak = prices[0]\n    worst = 0.0\n    for price in prices[1:]:\n        peak = max(peak, price)\n        worst = max(worst, (peak - price) / peak)\n    return worst\n\n\ndef test_max_drawdown():\n    # trough on the last day: 120.00 falls to 90.00\n    assert math.isclose(max_drawdown([100.00, 120.00, 90.00]), 0.25)\n    # a path that only rises never draws down\n    assert max_drawdown([80.00, 100.00, 120.00]) == 0.0\n    # edge case: one price\n    assert max_drawdown([120.00]) == 0.0\n",
+        "tests": [
+          {
+            "call": "test_max_drawdown()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "import itertools; max_drawdown = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)])"
+          },
+          {
+            "call": "test_max_drawdown()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "max_drawdown = lambda p: max([0.0] + [(max(p[:i + 1]) - p[i]) / max(p[:i + 1]) for i in range(len(p))])"
+          },
+          {
+            "call": "test_max_drawdown()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p[:-1], max), p[:-1])])"
+          },
+          {
+            "call": "test_max_drawdown()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: max([0.0] + [(p[0] - x) / p[0] for x in p])"
+          },
+          {
+            "call": "test_max_drawdown()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: (max(p) - min(p)) / max(p)"
+          },
+          {
+            "call": "test_max_drawdown()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: max([0.0] + [m - x for m, x in zip(itertools.accumulate(p, max), p)])"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each swaps in one version of `max_drawdown` and runs your test: it must pass on the two correct versions and fail on the four broken ones."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One path cannot catch every mistake. Which path does each broken version get wrong?"
+        },
+        {
+          "rung": "point",
+          "text": "max − min is fooled by a path whose low comes before its high.",
+          "highlight": [
+            "r3c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£100.00, £120.00, £90.00 (0.25) catches skip last, from first and in pounds. £80.00, £100.00, £120.00 (0) catches max − min."
+        }
+      ],
+      "feedback": {
+        "correct": "Your paths tell every broken version from the right one.",
+        "generic": "Not quite right. The first failing test shows which version your test let through, or which correct one it failed.",
+        "byKey": {
+          "test-1": "Your test failed a correct version. Check your hand-worked answers, and compare floats with `math.isclose`.",
+          "test-3": "Your test let `skip last` through. Add a path whose worst fall ends on the last day.",
+          "test-4": "Your test let `from first` through. Add a path that peaks above its first price before falling.",
+          "test-5": "Your test let max − min through. Add a path that only rises: the answer is 0.",
+          "test-6": "Your test let the pounds version through. Assert an exact fraction, such as 0.25."
+        }
+      },
+      "explain": {
+        "text": "Each path targets a mistake: a trough on the last day, a peak above the start, a path that only rises. Two correct versions written differently both pass, so the test checks the answer, not the method."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague's test passes:\n\n```python\ndef test_max_drawdown():\n    p = [80.00, 100.00, 120.00]\n    expected = (max(p) - min(p)) / max(p)\n    assert math.isclose(max_drawdown(p), expected)\n```\nTheir `max_drawdown` uses the same formula.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                80.0,
+                100.0,
+                120.0
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Day",
+          "height": 220
+        },
+        "state": {
+          "caption": "The test's path"
+        }
+      },
+      "question": "Is their `max_drawdown` right for this path?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "No: the path never falls, so the answer is 0, and the test copied the code's mistake",
+            "correct": true
+          },
+          {
+            "id": "green",
+            "text": "Yes: the test passes",
+            "why": "You trusted the green. The expected value came from the same formula as the code, so they agree even when both are wrong."
+          },
+          {
+            "id": "third",
+            "text": "Yes: 40/120 ≈ 0.33 is the fall from top to bottom",
+            "why": "The bottom, £80.00, comes before the top. Drawdown is a fall from an earlier peak, and this path only rises."
+          },
+          {
+            "id": "more",
+            "text": "You cannot tell without more data",
+            "why": "Three closes are enough: you can check this path by eye."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does this path ever fall?"
+        },
+        {
+          "rung": "point",
+          "text": "Each close is higher than the one before.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No close sits below an earlier peak, so the maximum drawdown is 0. The test expects 0.33."
+        }
+      ],
+      "feedback": {
+        "correct": "The test agreed with the code because it repeated the code.",
+        "generic": "Not quite right. Work out this path's drawdown by hand.",
+        "byKey": {
+          "green": "You trusted the green. A test that computes its answer with the code's own formula agrees with the code whatever it does.",
+          "third": "You measured from the lowest to the highest close. The low comes first, so that is a rise, not a fall."
+        }
+      },
+      "explain": {
+        "text": "The expected value must come from somewhere other than the code: from hand work on a small path. By hand this path only rises, so the answer is 0 and the test should fail.",
+        "canvas": {
+          "caption": "Never falls: maximum drawdown 0"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "A backtest preview. `positions(closes)` says whether we hold the share on day t, earning that day's move. It may only use closes up to day t − 1.\n\n```python\ndef positions(closes):\n    return [0] + [1 if closes[t] > closes[t - 1] else 0\n                  for t in range(1, len(closes))]\n```",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "a",
+              "label": "Closes",
+              "values": [
+                100.0,
+                101.0,
+                102.0,
+                103.0
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Today changed",
+              "values": [
+                null,
+                null,
+                102.0,
+                95.0
+              ],
+              "dashed": true
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Day",
+          "height": 220
+        },
+        "state": {
+          "hide": [
+            "b"
+          ],
+          "caption": "Closes for days 0 to 3; day 3 is today"
+        }
+      },
+      "question": "Which test catches the look-ahead in this code?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Change only today's close; assert today's position is unchanged",
+            "correct": true
+          },
+          {
+            "id": "profit",
+            "text": "Assert the strategy makes money on a rising path",
+            "why": "A correct strategy also makes money on a rising path, so that test cannot tell them apart."
+          },
+          {
+            "id": "length",
+            "text": "Assert there is one position per close",
+            "why": "Both versions return one position per day. The length cannot see which closes were used."
+          },
+          {
+            "id": "first",
+            "text": "Assert the first position is 0",
+            "why": "Both versions start flat. The leak is in the later days."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The position for day t must not depend on day t's close. How would a test check that?"
+        },
+        {
+          "rung": "point",
+          "text": "Change the last close and watch the last position.",
+          "highlight": [
+            "a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With closes 100.00, 101.00, 102.00, 103.00 the last position is 1. Make the last close 95.00 and it flips to 0, though nothing known at day 2 changed."
+        }
+      ],
+      "feedback": {
+        "correct": "Changing today's close must not change today's position. Here it does.",
+        "generic": "Not quite right. The test must probe what the position is allowed to see.",
+        "byKey": {
+          "profit": "Making money is what look-ahead is good at, and honest strategies can too. Neither proves anything."
+        }
+      },
+      "explain": {
+        "text": "A position for day t may only use what was known at the close of day t − 1. So changing day t's close must leave day t's position alone. In this code it flips from 1 to 0: the signal peeked at the close it trades on.",
+        "canvas": {
+          "hide": [],
+          "caption": "Today's close 103.00 gives position 1; 95.00 gives 0"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "The pattern: one hand-made path per idea, with the answer worked out by hand.\n\n```python\ndef test_trough_on_last_day():\n    assert math.isclose(max_drawdown([100.00, 120.00, 90.00]), 0.25)\n\ndef test_no_lookahead():\n    a = [100.00, 101.00, 102.00, 103.00]\n    b = a[:-1] + [95.00]   # change today only\n    assert positions(a)[-1] == positions(b)[-1]\n```",
+      "question": "Where must a test's expected value come from?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Hand work on a path small enough to check",
+            "correct": true
+          },
+          {
+            "id": "snapshot",
+            "text": "The function's own output, saved from one run",
+            "why": "That freezes whatever the code did that day, bugs included. The test then guards the bug."
+          },
+          {
+            "id": "formula",
+            "text": "The same formula, written again inside the test",
+            "why": "A copy of the formula makes the same mistake as the code, so the two always agree."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Worked out independently of the code, so the two can disagree.",
+        "generic": "Not quite right. The expected value must be able to disagree with the code."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Tests for a backtest engine",
+      "prose": "Stage 2's backtest engine starts with these two tests. `positions` decides from yesterday's closes. `daily_pnl` charges £`cost` each time the position changes. Write both tests with hand-made closes.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                102.0,
+                103.0
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Day",
+          "height": 220
+        },
+        "state": {
+          "caption": "Hold for day 1 only: buy, earn £20.00, sell"
+        }
+      },
+      "question": "Write `test_no_lookahead()` and `test_costs()`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def positions(closes):\n    # hold (1) on day t if the close rose from day t - 2 to day t - 1\n    return [0] + [1 if t >= 2 and closes[t - 1] > closes[t - 2] else 0\n                  for t in range(1, len(closes))]\n\n\ndef daily_pnl(closes, pos, shares, cost):\n    pnl = [0.0]\n    for t in range(1, len(closes)):\n        move = shares * pos[t] * (closes[t] - closes[t - 1])\n        trade = cost * abs(pos[t] - pos[t - 1])  # cost when the position changes\n        pnl.append(move - trade)\n    return pnl\n\n\ndef test_no_lookahead():\n    pass  # change only the last close: the last position must not move\n\n\ndef test_costs():\n    pass  # hand-made closes and positions, P&L worked out by hand\n",
+        "solution": "def positions(closes):\n    # hold (1) on day t if the close rose from day t - 2 to day t - 1\n    return [0] + [1 if t >= 2 and closes[t - 1] > closes[t - 2] else 0\n                  for t in range(1, len(closes))]\n\n\ndef daily_pnl(closes, pos, shares, cost):\n    pnl = [0.0]\n    for t in range(1, len(closes)):\n        move = shares * pos[t] * (closes[t] - closes[t - 1])\n        trade = cost * abs(pos[t] - pos[t - 1])  # cost when the position changes\n        pnl.append(move - trade)\n    return pnl\n\n\ndef test_no_lookahead():\n    a = [100.00, 101.00, 102.00, 103.00]\n    b = [100.00, 101.00, 102.00, 95.00]   # only today's close differs\n    assert positions(a)[-1] == positions(b)[-1]\n\n\ndef test_costs():\n    # buy for day 1 (+£20.00, pay £5.00), sell for day 2 (pay £5.00)\n    pnl = daily_pnl([100.00, 102.00, 103.00], [0, 1, 0], 10, 5.00)\n    assert pnl == [0.0, 15.0, -5.0]\n",
+        "tests": [
+          {
+            "call": "test_no_lookahead()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "positions = lambda c: [0] + [1 if t >= 2 and c[t - 1] > c[t - 2] else 0 for t in range(1, len(c))]; daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * abs(p[t] - p[t - 1]) for t in range(1, len(c))]"
+          },
+          {
+            "call": "test_no_lookahead()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "positions = lambda c: [0] + [1 if c[t] > c[t - 1] else 0 for t in range(1, len(c))]"
+          },
+          {
+            "call": "test_costs()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "positions = lambda c: [0] + [1 if t >= 2 and c[t - 1] > c[t - 2] else 0 for t in range(1, len(c))]; daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * abs(p[t] - p[t - 1]) for t in range(1, len(c))]"
+          },
+          {
+            "call": "test_costs()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) for t in range(1, len(c))]"
+          },
+          {
+            "call": "test_costs()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * p[t] for t in range(1, len(c))]"
+          },
+          {
+            "call": "test_costs()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * s * abs(p[t] - p[t - 1]) for t in range(1, len(c))]"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. `test_no_lookahead()` runs on a correct `positions` and on one that peeks at today's close. `test_costs()` runs on a correct `daily_pnl` and on three that charge costs wrongly. Each must pass on the correct one and fail on the broken ones."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For look-ahead: two paths that differ only in the last close."
+        },
+        {
+          "rung": "point",
+          "text": "For costs: closes £100.00, £102.00, £103.00 with positions 0, 1, 0, 10 shares and £5.00 a trade.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 1: 10 × £2.00 − £5.00 = £15.00. Day 2: position 0, so no move, but selling costs £5.00. Assert `[0.0, 15.0, -5.0]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both tests pass on the honest engine and catch every broken one.",
+        "generic": "Not quite right. The first failing test names the version your test let through or wrongly failed.",
+        "byKey": {
+          "test-2": "Your look-ahead test missed the peeking version. Make today's change big enough to cross yesterday's close.",
+          "test-4": "Your cost test missed a version with no costs. Assert P&L on a day when the position changes.",
+          "test-5": "Your cost test missed a version that charges every day held. Include a day when you sell.",
+          "test-6": "Your cost test missed a version that charges per share. Use more than one share."
+        }
+      },
+      "explain": {
+        "text": "The look-ahead test changes only the future and checks the past stays put. The cost test fixes the positions by hand, so every pound of P&L is known: +£20.00 − £5.00 on day 1, −£5.00 on day 2."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A hand-made path is small enough that you know its drawdown before the code runs. Each path tests one idea.",
+      "Choose paths that tell right from wrong: a trough on the last day, a peak above the start, a path that only rises, one price.",
+      "Backtest tests: changing today's close must not change today's position, and costs are charged once per change of position."
+    ],
+    "formula": {
+      "name": "Maximum drawdown",
+      "tex": "\\text{MDD} = \\max_t \\dfrac{M_t - p_t}{M_t}, \\quad M_t = \\max_{s \\le t} p_s",
+      "note": "$M_t$ is the running peak: only earlier prices count."
+    },
+    "trap": "An expected value computed with the code's own formula agrees with the code even when both are wrong. Work it out by hand."
+  },
+  "quiz": [
+    {
+      "id": "q-mdd",
+      "difficulty": 2,
+      "prose": "Closes: £200.00, £250.00, £150.00, £300.00, £240.00.",
+      "question": "What is the maximum drawdown, as a percentage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "label": "Maximum drawdown",
+        "accept": "40%: £250.00 falls to £150.00, $100/250 = 0.4$.",
+        "wrong": [
+          {
+            "id": "maxmin",
+            "value": 50,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "first",
+            "value": 25,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "last",
+            "value": 20,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$100/250 = 0.4$.",
+        "generic": "Not quite right. Measure each fall from the running peak.",
+        "byKey": {
+          "maxmin": "You used £300.00 and £150.00. The £300.00 peak comes after the £150.00 low.",
+          "first": "You measured from the first close, £200.00. The peak before the fall is £250.00.",
+          "last": "You took the last fall, £300.00 to £240.00. The earlier fall is bigger."
+        }
+      },
+      "explain": {
+        "text": "Running peak £250.00, low £150.00: $100/250 = 0.4$. The later fall from £300.00 to £240.00 is only 0.2."
+      }
+    },
+    {
+      "id": "q-maxmin-path",
+      "difficulty": 2,
+      "prose": "A buggy `max_drawdown` returns `(max(p) - min(p)) / max(p)`.",
+      "question": "Which hand-made path exposes it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "£50.00, £100.00",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "£100.00, £50.00",
+            "why": "The bug gives 0.5 and so does the right answer: the low comes after the high."
+          },
+          {
+            "id": "one",
+            "text": "£100.00",
+            "why": "Both give 0 for a single price."
+          },
+          {
+            "id": "vee",
+            "text": "£100.00, £50.00, £100.00",
+            "why": "Both give 0.5: the low comes after a peak of £100.00."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It only rises: the truth is 0, the bug says 0.5.",
+        "generic": "Not quite right. The bug ignores the order of the prices."
+      },
+      "explain": {
+        "text": "max − min ignores whether the low came before or after the high. A rising path has its low first, so the true drawdown is 0 while the bug reports 0.5."
+      }
+    },
+    {
+      "id": "q-lookahead",
+      "difficulty": 3,
+      "prose": "Four rules for the position held on day t, which earns the move from close t − 1 to close t.",
+      "question": "Which rule has no look-ahead?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`1 if closes[t - 1] > closes[t - 2] else 0`",
+            "correct": true
+          },
+          {
+            "id": "today",
+            "text": "`1 if closes[t] > closes[t - 1] else 0`",
+            "why": "It uses `closes[t]`, the close the position is meant to earn. That is not known when the position is taken."
+          },
+          {
+            "id": "tomorrow",
+            "text": "`1 if closes[t + 1] > closes[t] else 0`",
+            "why": "It reads tomorrow's close: look-ahead by two days."
+          },
+          {
+            "id": "all",
+            "text": "`1 if closes[t - 1] > sum(closes) / len(closes) else 0`",
+            "why": "The average uses every close, including all future ones."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It uses only closes up to day t − 1.",
+        "generic": "Not quite right. The rule may use only closes known at the end of day t − 1."
+      },
+      "explain": {
+        "text": "The position for day t is fixed at the close of day t − 1, so only `closes[: t]` may appear. Any index t or later, or a whole-path average, leaks the future."
+      }
+    },
+    {
+      "id": "q-costs",
+      "difficulty": 3,
+      "prose": "A backtest's positions are 0, 1, 1, 0, 1, 1, 1, 0. Each change of position costs £4.50.",
+      "question": "How much do costs take off the P&L?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 18,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "£",
+        "label": "Total costs",
+        "accept": "£18.00: four changes of position at £4.50.",
+        "wrong": [
+          {
+            "id": "held",
+            "value": 22.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "trips",
+            "value": 9,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four changes: 0 to 1, 1 to 0, 0 to 1, 1 to 0. $4 \\times 4.50 = 18$.",
+        "generic": "Not quite right. Count each change of position.",
+        "byKey": {
+          "held": "You charged each day held: five days. Costs come with trades, when the position changes.",
+          "trips": "You counted round trips. Buying and selling are separate trades, each with its cost."
+        }
+      },
+      "explain": {
+        "text": "Costs follow the changes, not the holding: 0→1, 1→0, 0→1, 1→0 is four trades, so £18.00."
+      }
+    }
+  ]
+}

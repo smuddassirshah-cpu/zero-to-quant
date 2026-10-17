@@ -102,41 +102,41 @@
       "skills": [
         "pt-cases"
       ],
-      "prose": "A bug makes `daily_returns` read the prices in reverse order.",
-      "question": "Which assert catches the bug?",
+      "prose": "A bug makes `daily_returns` read the prices in reverse order. You test it on one price path, asserting the whole list of returns against your hand answer.",
+      "question": "Which price path catches the bug?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "rise",
-            "text": "`assert daily_returns([100.00, 110.00, 121.00]) == [0.1, 0.1]`",
+            "text": "£100.00, £110.00, £121.00",
             "correct": true
           },
           {
             "id": "pal",
-            "text": "`assert daily_returns([100.00, 110.00, 100.00]) == [0.1, -10 / 110]`",
-            "why": "Your prices read the same backwards. Reversing them changes nothing, so the bug passes."
+            "text": "£100.00, £110.00, £100.00",
+            "why": "Your path reads the same backwards. Reversing it changes nothing, so the bug passes."
           },
           {
             "id": "flat",
-            "text": "`assert daily_returns([100.00, 100.00, 100.00]) == [0.0, 0.0]`",
+            "text": "£100.00, £100.00, £100.00",
             "why": "A flat path reads the same both ways. Every return is 0.0 in either order."
           },
           {
             "id": "len",
-            "text": "`assert len(daily_returns([100.00, 110.00, 121.00])) == 2`",
-            "why": "Reversing keeps the count. Both orders give two returns."
+            "text": "Any of them, if you assert only the length",
+            "why": "Reversing keeps the count. Both orders give two returns, so a length check passes."
           }
         ],
         "shuffle": true
       },
       "feedback": {
         "correct": "Reversed, a steady rise turns into falls.",
-        "generic": "Not quite right. For each assert, reverse its prices and see whether the answer changes."
+        "generic": "Not quite right. Reverse each path and see whether its returns change."
       },
       "explain": {
-        "text": "Reversed, £121.00, £110.00, £100.00 gives two falls of about 9.09%, so the assert fails. The other inputs read the same both ways, or the check ignores order. A good test input breaks the symmetry the bug relies on."
+        "text": "Reversed, £121.00, £110.00, £100.00 gives two falls of about 9.09%, so the assert fails. The other paths read the same both ways, and a length check ignores order. A good test input breaks the symmetry the bug relies on."
       }
     },
     {
@@ -233,7 +233,7 @@
         "pt-basics",
         "pt-cases"
       ],
-      "prose": "```text\n    def test_bad_file():\n>       r = daily_returns([100.00, 0.00, 105.00])\n\nreturns.py:3: in daily_returns\n    return [(b - a) / a for a, b in zip(prices, prices[1:])]\nE   ZeroDivisionError: float division by zero\n```",
+      "prose": "```text\n    def test_bad_file():\n>       r = daily_returns([100.00, 0.00, 105.00])\n\ntest_bad.py:4:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\n    def daily_returns(prices):\n>       return [(b - a) / a for a, b in zip(prices, prices[1:])]\nE       ZeroDivisionError: float division by zero\n\nreturns.py:3: ZeroDivisionError\n```",
       "question": "What does this report tell you?",
       "widget": {
         "kind": "choice",
@@ -267,7 +267,7 @@
         "generic": "Not quite right. Read where the error was raised and what kind it is."
       },
       "explain": {
-        "text": "The report walks from the test into `returns.py`, line 3, where `105.00 / 0.00` raised. So the code itself fails on a zero price. Deciding what it should do instead, such as raising a clear `ValueError`, is the next design choice."
+        "text": "The report walks from the test into `returns.py`, line 3, where the step from £0.00 divided by zero. So the code itself fails on a zero price. Deciding what it should do instead, such as raising a clear `ValueError`, is the next design choice."
       }
     },
     {
@@ -320,13 +320,13 @@
         "pt-basics",
         "pt-cases"
       ],
-      "prose": "`total_return(prices)` gives the return from the first price to the last. On paper two 10% rises make 21%. In floats `121.00 / 100.00 - 1` is `0.20999999999999996`. The starter's first lines stand in for pytest.",
+      "prose": "`total_return(prices)` gives the return from the first price to the last. On paper two 10% rises make 21%. In floats `121.00 / 100.00 - 1` is `0.20999999999999996`. The lines at the bottom of the starter stand in for pytest.",
       "question": "Write `test_two_rises` so it passes on correct versions and fails on broken ones.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "# This page cannot load pytest, so these lines stand in\n# for it. In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            pairs = zip(actual, e)\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in pairs)\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n\n\ndef total_return(prices):\n    # return from the first price to the last\n    return prices[-1] / prices[0] - 1\n\n\ndef test_two_rises():\n    # £100.00, £110.00, £121.00: two 10% rises\n    pass\n",
-        "solution": "# This page cannot load pytest, so these lines stand in\n# for it. In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            pairs = zip(actual, e)\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in pairs)\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n\n\ndef total_return(prices):\n    # return from the first price to the last\n    return prices[-1] / prices[0] - 1\n\n\ndef test_two_rises():\n    # £100.00, £110.00, £121.00: two 10% rises\n    # 121 / 100 - 1 = 0.21 on paper\n    r = total_return([100.00, 110.00, 121.00])\n    assert r == pytest.approx(0.21)\n",
+        "starter": "def total_return(prices):\n    # return from the first price to the last\n    return prices[-1] / prices[0] - 1\n\n\ndef test_two_rises():\n    # £100.00, £110.00, £121.00: two 10% rises\n    pass\n\n\n# ---- Leave the lines below alone. ----\n# This page cannot load pytest, so they stand in for it.\n# In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            pairs = zip(actual, e)\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in pairs)\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n",
+        "solution": "def total_return(prices):\n    # return from the first price to the last\n    return prices[-1] / prices[0] - 1\n\n\ndef test_two_rises():\n    # £100.00, £110.00, £121.00: two 10% rises\n    # 121 / 100 - 1 = 0.21 on paper\n    r = total_return([100.00, 110.00, 121.00])\n    assert r == pytest.approx(0.21)\n\n\n# ---- Leave the lines below alone. ----\n# This page cannot load pytest, so they stand in for it.\n# In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            pairs = zip(actual, e)\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in pairs)\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n",
         "examples": [
           {
             "call": "test_two_rises()",
@@ -369,7 +369,7 @@
             "expect": "Exception"
           }
         ],
-        "how": "Check runs your test against two correct versions, where it must pass, and against four broken versions, where it must fail."
+        "how": "Check runs your test against two correct versions, where it must pass, and against four broken versions, where it must fail. The lines at the bottom of the starter stand in for pytest, which this page cannot load."
       },
       "feedback": {
         "correct": "Your test passes both correct versions and fails every bug.",

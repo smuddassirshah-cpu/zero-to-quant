@@ -248,7 +248,7 @@
       "type": "ladder",
       "difficulty": 2,
       "title": "Dates that are dates",
-      "prose": "`parse_dates=True` turns the index from text into real dates. Then part of a date selects a whole month.\n\n```python\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\", parse_dates=True)\nmarch = df.loc[\"2024-03\"]\n```",
+      "prose": "`parse_dates=True` turns the index from text into real dates. Then part of a date selects a whole month.\n\n```python\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\",\n                 parse_dates=True)\nmarch = df.loc[\"2024-03\"]\n```",
       "canvas": {
         "kind": "table",
         "params": {
@@ -700,7 +700,7 @@
       "type": "ladder",
       "difficulty": 2,
       "title": "Newest first",
-      "prose": "Many vendors send files newest first. `rev` holds the same five rows in reverse.\n\n```python\nd2 = pd.read_csv(io.StringIO(rev), index_col=\"date\", parse_dates=True)\nprint(d2[\"close\"].iloc[0])\n```",
+      "prose": "Many vendors send files newest first. `rev` holds the same five rows in reverse.\n\n```python\nd2 = pd.read_csv(io.StringIO(rev), index_col=\"date\",\n                 parse_dates=True)\nprint(d2[\"close\"].iloc[0])\n```",
       "canvas": {
         "kind": "table",
         "params": {
@@ -806,40 +806,40 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "Loading a file, in one place",
-      "prose": "Everything so far, as a recipe.\n\n```python\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\", parse_dates=True)\ndf = df.sort_index()          # oldest first, whatever the file did\ndf.describe()                 # count, mean, std, quartiles\ndf.sort_values(\"close\")       # rows ordered by one column\ndf[\"close\"].nsmallest(3)      # the three lowest closes\ntext = df.to_csv(float_format=\"%.2f\")   # back to text\n```",
-      "question": "A file arrives newest first. Which line gives a frame you can look up by date, oldest row first?",
+      "prose": "Everything so far, as a recipe.\n\n```python\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\",\n                 parse_dates=True)\ndf = df.sort_index()         # oldest first, always\ndf.describe()                # count, mean, std, ...\ndf.sort_values(\"close\")      # rows ordered by close\ndf[\"close\"].nsmallest(3)     # the three lowest\n# back to text, prices with two decimals\ntext = df.to_csv(float_format=\"%.2f\")\n```",
+      "question": "`df` was loaded from a newest-first file with the dates as its index. Which line makes `df.iloc[0]` the earliest day?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "right",
-            "text": "`pd.read_csv(f, index_col=\"date\", parse_dates=True).sort_index()`",
+            "text": "`df = df.sort_index()`",
             "correct": true
           },
           {
-            "id": "no-index",
-            "text": "`pd.read_csv(f).sort_index()`",
-            "why": "Without `index_col` the index is 0, 1, 2, so sorting it changes nothing, and dates are not labels."
+            "id": "no-assign",
+            "text": "`df.sort_index()`",
+            "why": "That returns a sorted copy and throws it away. Assign it back to `df`."
           },
           {
-            "id": "no-sort",
-            "text": "`pd.read_csv(f, index_col=\"date\", parse_dates=True)`",
-            "why": "That keeps the newest-first order of the file. Add `.sort_index()`."
+            "id": "desc",
+            "text": "`df = df.sort_index(ascending=False)`",
+            "why": "That keeps the newest day first, as the file already had it."
           },
           {
-            "id": "no-col",
-            "text": "`pd.read_csv(f, parse_dates=True).sort_values(\"date\")`",
-            "why": "The rows are in order, but the dates stay an ordinary column, so `.loc` cannot find a date."
+            "id": "by-close",
+            "text": "`df = df.sort_values(\"close\")`",
+            "why": "That orders the rows by price, not by date."
           }
         ]
       },
       "feedback": {
-        "correct": "Dates as the index, then sorted.",
-        "generic": "Not quite right. You need the dates as the index and the rows in date order."
+        "correct": "Sort by the index, and keep the result.",
+        "generic": "Not quite right. Sort by the dates in the index, oldest first, and assign the result."
       },
       "explain": {
-        "text": "`index_col` and `parse_dates` make the dates real row labels, and `sort_index` orders them oldest first. Only then do `.iloc[0]` and later returns mean what you expect."
+        "text": "`sort_index()` returns a new frame ordered by date, oldest first, so assign it back. Only then do `.iloc[0]` and later returns mean what you expect."
       }
     },
     {
