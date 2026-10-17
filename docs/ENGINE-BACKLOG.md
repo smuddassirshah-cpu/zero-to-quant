@@ -432,3 +432,7 @@ Raised later (sql level 3):
 
 155. `pair` canvas with two tables: allow full width per side at narrow widths (auto `stack`) and compact column sizing.
 156. Code widget: when the starter itself errors before the learner edits, show a gentler "fill in the starter first" line instead of the raw traceback.
+
+Raised later (sql level 2):
+
+157. AUTHORING.md section 3 `code`: note that `Connection.backup()` hangs in Pyodide's sqlite3; copy a database with `executescript("".join(db.iterdump()))`.

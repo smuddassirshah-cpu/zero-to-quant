@@ -167,23 +167,22 @@
     };
   })();
 
-  /* One judge for both harnesses: setup (item 136) runs first; compare "raises" (item 137) passes when the call raises
-     the named exception (or a subclass of it); the others compare values. It prints the marker and the actual value. */
+  /* Shared by both harnesses: __zq_raises (compare "raises", item 137: the call raises the named exception or a
+     subclass) and __zq_cmp (the value compares); each prints the marker and the actual value. setup (item 136) runs
+     first, in each harness's case function. */
   const JUDGE = `
-def __zq_judge(_call, _exp, _cmp, _ns, _setup=''):
+def __zq_raises(_call, _exp, _ns):
+    try:
+        _a = eval(_call, _ns)
+    except Exception as _x:
+        print(${JSON.stringify(MARK)} + 'raised ' + type(_x).__name__, end='')
+        return 1.0 if _exp.strip().strip(chr(34) + chr(39)) in [_k.__name__ for _k in type(_x).__mro__] else 0.0
+    print(${JSON.stringify(MARK)} + 'no error, the value was ' + repr(_a), end='')
+    return 0.0
+
+def __zq_cmp(_a, _exp, _cmp, _ns):
     import math as _m
     from fractions import Fraction as _F
-    if _setup:
-        exec(_setup, _ns)
-    if _cmp == 'raises':
-        try:
-            _a = eval(_call, _ns)
-        except Exception as _x:
-            print(${JSON.stringify(MARK)} + 'raised ' + type(_x).__name__, end='')
-            return 1.0 if _exp.strip().strip(chr(34) + chr(39)) in [_k.__name__ for _k in type(_x).__mro__] else 0.0
-        print(${JSON.stringify(MARK)} + 'no error, the value was ' + repr(_a), end='')
-        return 0.0
-    _a = eval(_call, _ns)
     print(${JSON.stringify(MARK)} + repr(_a), end='')
     _e = eval(_exp, _ns)
     if _cmp == 'fraction':
@@ -211,7 +210,12 @@ def __zq_judge(_call, _exp, _cmp, _ns, _setup=''):
 ${JUDGE}
 def __zq_case(_i):
     _call, _exp, _cmp, _setup = __ZQ_CASES[_i]
-    return __zq_judge(_call, _exp, _cmp, globals(), _setup)
+    if _setup:
+        exec(_setup, globals())
+    if _cmp == 'raises':
+        return __zq_raises(_call, _exp, globals())
+    _a = eval(_call, globals())  # evaluated here, one frame under the worker, as before
+    return __zq_cmp(_a, _exp, _cmp, globals())
 
 __ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [String(c.call ?? ''), String(c.expect ?? ''), c.compare || 'equal', c.setup == null ? '' : String(c.setup)])))})
 `;
@@ -271,7 +275,11 @@ def __zq_case(_i):
     if _cmp == 'raises' and not _call:
         print(${JSON.stringify(MARK)} + 'no error: the program ran to the end', end='')
         return 0.0
-    return __zq_judge(_call, _exp, _cmp, _ns, _setup)
+    if _setup:
+        exec(_setup, _ns)
+    if _cmp == 'raises':
+        return __zq_raises(_call, _exp, _ns)
+    return __zq_cmp(eval(_call, _ns), _exp, _cmp, _ns)
 `;
   const isOut = (c) => c.compare === 'stdout' || (c.call == null && c.expect != null && c.compare == null);
   const cleanTb = (tb) => String(tb || '').split('\n').filter((ln, i, all) => !/__zq_case|<string>/.test(ln) && !(/^\s{4}\S/.test(ln) && /__zq_case|<string>/.test(all[i - 1] || ''))).join('\n');
