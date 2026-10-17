@@ -1,0 +1,951 @@
+{
+  "id": "l6-many-inputs",
+  "course": "pytest",
+  "title": "One test, many inputs",
+  "minutes": 13,
+  "objectives": [
+    "Parametrise a test over a table of cases",
+    "Choose rows that each catch a different mistake",
+    "Name a test after the one behaviour it checks"
+  ],
+  "skills": [
+    "pt-tools",
+    "pt-cases"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Four checks, one result",
+      "prose": "This test checks a buggy `max_drawdown` four times. pytest reports `FAILED test_max_drawdown`, pointing at the first `assert`.\n\n```python\ndef test_max_drawdown():\n    assert max_drawdown([100.00, 120.00, 90.00]) == pytest.approx(-0.25)\n    assert max_drawdown([100.00, 110.00]) == 0.0\n    assert max_drawdown([80.00, 60.00, 70.00]) == pytest.approx(-0.25)\n    assert max_drawdown([50.00]) == 0.0\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices",
+            "expected",
+            "Result"
+          ],
+          "rows": [
+            [
+              "`[100.00, 120.00, 90.00]`",
+              "−0.25",
+              "FAILED"
+            ],
+            [
+              "`[100.00, 110.00]`",
+              "0.0",
+              "?"
+            ],
+            [
+              "`[80.00, 60.00, 70.00]`",
+              "−0.25",
+              "?"
+            ],
+            [
+              "`[50.00]`",
+              "0.0",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      },
+      "question": "What do you know about the other three cases?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nothing",
+            "text": "Nothing: they never ran",
+            "correct": true
+          },
+          {
+            "id": "passed",
+            "text": "They passed",
+            "why": "You read one failure as 'the rest are fine'. A failed `assert` stops the function, so the lines after it never run."
+          },
+          {
+            "id": "failed",
+            "text": "They failed too",
+            "why": "You read one failure as 'all failed'. The later lines never ran, so pytest has no result for them."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a failed `assert` do to the rest of the function?"
+        },
+        {
+          "rung": "step",
+          "text": "It raises `AssertionError`, which ends the function on that line."
+        }
+      ],
+      "feedback": {
+        "correct": "The first failure ended the function, so three cases have no result.",
+        "generic": "Not quite right. Think about what happens after an `assert` fails.",
+        "byKey": {
+          "passed": "You read one failure as 'the rest are fine'. The function stopped at the first `assert`, so the other three never ran."
+        }
+      },
+      "explain": {
+        "text": "The first `assert` raised `AssertionError` and the function stopped there. Three of the four cases were never checked, so one bug can hide another. We want each case to run and report on its own.",
+        "canvas": {
+          "values": {
+            "r1c2": "not run",
+            "r2c2": "not run",
+            "r3c2": "not run"
+          },
+          "shade": {
+            "unknown": [
+              "r1",
+              "r2",
+              "r3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Tap the case that fails",
+      "prose": "Here the four checks sit in a table, and every row runs on its own. This version measures each fall from the first price, not from the running peak:\n\n```python\ndef max_drawdown(prices):\n    return min(p / prices[0] - 1 for p in prices)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices",
+            "expected",
+            "Result"
+          ],
+          "rows": [
+            [
+              "`[100.00, 120.00, 90.00]`",
+              "−0.25",
+              "?"
+            ],
+            [
+              "`[100.00, 110.00]`",
+              "0.0",
+              "?"
+            ],
+            [
+              "`[80.00, 60.00, 70.00]`",
+              "−0.25",
+              "?"
+            ],
+            [
+              "`[50.00]`",
+              "0.0",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the case that fails.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0"
+        ],
+        "max": 1,
+        "countWord": "cases"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out what this version returns for each row."
+        },
+        {
+          "rung": "point",
+          "text": "In row 1 the peak, 120.00, is not the first price.",
+          "highlight": [
+            "r0c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 1 gives min(0, 0.2, −0.1) = −0.1, not −0.25. Tap it."
+        }
+      ],
+      "feedback": {
+        "correct": "Row 1 fails: −0.10 instead of −0.25.",
+        "generic": "Not quite right. Compute `p / prices[0] - 1` for every price in each row.",
+        "byKey": {
+          "r2c0": "This row peaks on its first price, 80.00, so measuring from the start gives −0.25 too. It passes by accident.",
+          "r1c0": "A rising series never drops below its first price, so this version returns 0.0 here as well.",
+          "r3c0": "With one price, 50.00 / 50.00 − 1 is 0.0, the expected value."
+        }
+      },
+      "explain": {
+        "text": "Only row 1 has its peak after the first price, so only there does the bug show: −0.10 instead of −0.25. Row 3 passes by accident, because its first price is its peak. As separate rows, the three passes are real results.",
+        "canvas": {
+          "values": {
+            "r0c2": "FAILED (−0.10)",
+            "r1c2": "PASSED",
+            "r2c2": "PASSED",
+            "r3c2": "PASSED"
+          },
+          "shade": {
+            "fail": [
+              "r0"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A parametrised test",
+      "prose": "pytest builds that table for us. This is a **parametrised** test: one function, run once per row.\n\n```python\n@pytest.mark.parametrize(\"prices, expected\", [\n    ([100.00, 120.00, 90.00], -0.25),\n    ([100.00, 110.00], 0.0),\n    ([80.00, 60.00, 70.00], -0.25),\n    ([50.00], 0.0),\n])\ndef test_max_drawdown(prices, expected):\n    assert max_drawdown(prices) == pytest.approx(expected)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Test id pytest reports",
+            "prices",
+            "expected"
+          ],
+          "rows": [
+            [
+              "`test_max_drawdown[prices0--0.25]`",
+              "`[100.00, 120.00, 90.00]`",
+              "−0.25"
+            ],
+            [
+              "`test_max_drawdown[prices1-0.0]`",
+              "`[100.00, 110.00]`",
+              "0.0"
+            ],
+            [
+              "`test_max_drawdown[prices2--0.25]`",
+              "`[80.00, 60.00, 70.00]`",
+              "−0.25"
+            ],
+            [
+              "`test_max_drawdown[prices3-0.0]`",
+              "`[50.00]`",
+              "0.0"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "With the first-price bug, what does pytest's last line say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`1 failed, 3 passed`",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "`1 failed`",
+            "why": "You counted one function as one test. Each row is its own test, so the other three still run and pass."
+          },
+          {
+            "id": "all",
+            "text": "`4 failed`",
+            "why": "You expected one failing row to fail the whole function. Rows run separately, and three of them pass."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many tests does a table of four rows make?"
+        },
+        {
+          "rung": "step",
+          "text": "Four tests. Only the first row failed on the last screen."
+        }
+      ],
+      "feedback": {
+        "correct": "Four rows, four tests, one failure.",
+        "generic": "Not quite right. Count one test per row."
+      },
+      "explain": {
+        "text": "The decorator names the parameters, then lists one row per case. pytest runs the function once per row and names each run with an id built from the values. A list gets its name and row number, as in `prices0`.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Your own table",
+      "prose": "Turn the four-assert test into a parametrised one. Keep the name `test_max_drawdown` and the four cases. Run examples prints one line per row.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "prices",
+            "expected"
+          ],
+          "rows": [
+            [
+              "`[100.00, 120.00, 90.00]`",
+              "−0.25"
+            ],
+            [
+              "`[100.00, 110.00]`",
+              "0.0"
+            ],
+            [
+              "`[80.00, 60.00, 70.00]`",
+              "−0.25"
+            ],
+            [
+              "`[50.00]`",
+              "0.0"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Rewrite `test_max_drawdown` with `@pytest.mark.parametrize`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import ast, inspect, itertools, linecache, math, re\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    # pytest.main() runs every test_ function and prints a report.\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = min(worst, p / peak - 1)\n    return worst\n\n# Rewrite this as one parametrised test with the same four cases.\ndef test_max_drawdown():\n    assert max_drawdown([100.00, 120.00, 90.00]) == pytest.approx(-0.25)\n    assert max_drawdown([100.00, 110.00]) == 0.0\n    assert max_drawdown([80.00, 60.00, 70.00]) == pytest.approx(-0.25)\n    assert max_drawdown([50.00]) == 0.0\n",
+        "solution": "import ast, inspect, itertools, linecache, math, re\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    # pytest.main() runs every test_ function and prints a report.\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = min(worst, p / peak - 1)\n    return worst\n\n@pytest.mark.parametrize(\"prices, expected\", [\n    ([100.00, 120.00, 90.00], -0.25),\n    ([100.00, 110.00], 0.0),\n    ([80.00, 60.00, 70.00], -0.25),\n    ([50.00], 0.0),\n])\ndef test_max_drawdown(prices, expected):\n    assert max_drawdown(prices) == pytest.approx(expected)\n",
+        "examples": [
+          {
+            "call": "pytest.main()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "pytest.outcome()",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "pytest.count(test='test_max_drawdown') >= 4",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: min(p / prices[0] - 1 for p in prices)",
+            "call": "pytest.outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: max(1 - p / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "pytest.outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: min([0.0] + [p / max(prices[:i + 1]) - 1 for i, p in enumerate(prices[:-1])])",
+            "call": "pytest.outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Test 2 counts the rows of `test_max_drawdown`. Tests 3 to 5 swap in wrong versions of `max_drawdown`: each must fail at least one row."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The decorator takes a string of names and a list of tuples, one tuple per case."
+        },
+        {
+          "rung": "point",
+          "text": "The names string is `\"prices, expected\"`, and the function takes `(prices, expected)`.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Copy the four cases into tuples such as `([100.00, 120.00, 90.00], -0.25)`, then assert with `pytest.approx(expected)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Four rows, each reported on its own.",
+        "generic": "Not quite right. Read the first test that failed.",
+        "byKey": {
+          "test-1": "Your test fails on the correct `max_drawdown`. Check the four expected values and use `pytest.approx(expected)`.",
+          "test-2": "pytest finds fewer than four rows for `test_max_drawdown`. Put all four cases in the decorator's list, and keep the name.",
+          "test-3": "The first-price version passed. Keep the row `([100.00, 120.00, 90.00], -0.25)`.",
+          "test-4": "A version that returns the drawdown as a positive number passed. Your expected values should be negative.",
+          "test-5": "A version that ignores the last price passed. Keep a row whose trough is on the last day.",
+          "error": "Your code stopped before the tests ran. Check the decorator's brackets and commas."
+        }
+      },
+      "explain": {
+        "text": "One function now gives four tests, and a failure in one row no longer hides the others. The first row does most of the work: its trough is last and its peak is not first. That one row catches all three wrong versions."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A row that earns its place",
+      "prose": "Another wrong version finds the highest price, then the lowest price after it:\n\n```python\ndef max_drawdown(prices):\n    top = max(prices)\n    after = prices[prices.index(top):]\n    return min(after) / top - 1\n```\n\nIt passes all four rows of your table.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Row",
+            "prices"
+          ],
+          "rows": [
+            [
+              "A",
+              "`[100.00, 120.00, 60.00]`"
+            ],
+            [
+              "B",
+              "`[120.00, 100.00, 110.00]`"
+            ],
+            [
+              "C",
+              "`[100.00, 50.00, 120.00, 110.00]`"
+            ],
+            [
+              "D",
+              "`[100.00, 90.00]`"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which row would catch this version?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "Row A",
+            "why": "Here the worst fall comes after the highest price, so this version gets −0.50 right too."
+          },
+          {
+            "id": "b",
+            "text": "Row B",
+            "why": "The highest price comes first, so 'after the top' is the whole series. It gets −0.1667 right."
+          },
+          {
+            "id": "c",
+            "text": "Row C",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "Row D",
+            "why": "The highest price is first again, so it gets −0.10 right."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When does 'the fall after the highest price' miss the worst fall?"
+        },
+        {
+          "rung": "point",
+          "text": "Look for a row whose worst fall happens before the highest price.",
+          "highlight": [
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row C falls to 50.00 (−0.50) before it reaches 120.00. This version only sees 110.00 / 120.00 − 1."
+        }
+      ],
+      "feedback": {
+        "correct": "Row C: the true answer is −0.50, and this version says −0.0833.",
+        "generic": "Not quite right. Find a row where the worst fall comes before the highest price."
+      },
+      "explain": {
+        "text": "In row C the price halves, from 100.00 to 50.00, then climbs to a new high of 120.00. This version only looks after 120.00 and returns 110 / 120 − 1 ≈ −0.0833. A good row targets a mistake the other rows cannot see.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "One name, one list",
+      "prose": "A property test should run on one series. Its author wrote:\n\n```python\n@pytest.mark.parametrize(\"prices\", [100.00, 120.00, 90.00])\ndef test_drawdown_never_positive(prices):\n    assert max_drawdown(prices) <= 0\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "100.00",
+            "120.00",
+            "90.00"
+          ],
+          "indexFrom": 0
+        },
+        "state": {
+          "caption": "The list given to `parametrize`"
+        }
+      },
+      "question": "How many tests does pytest run, and what is `prices` in the first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "One test; `prices` is `[100.00, 120.00, 90.00]`",
+            "why": "You read the list as one input. With one name, every item of the list is a row of its own."
+          },
+          {
+            "id": "three",
+            "text": "Three tests; `prices` is `100.0`, a single float",
+            "correct": true
+          },
+          {
+            "id": "whole",
+            "text": "Three tests; each gets the whole list",
+            "why": "Each row receives one item of the list, not the whole list."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With two names, each row was a tuple. With one name, what is a row?"
+        },
+        {
+          "rung": "point",
+          "text": "Each item of the list is one row.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So the first test gets `prices = 100.0`, and `max_drawdown(100.0)` cannot index a float."
+        }
+      ],
+      "feedback": {
+        "correct": "Three tests, each with one float, and each fails with a `TypeError`.",
+        "generic": "Not quite right. Each item of the list becomes one row.",
+        "byKey": {
+          "one": "You read the list as one input. pytest makes one row per item, so `prices` is 100.0, then 120.0, then 90.0."
+        }
+      },
+      "explain": {
+        "text": "Each item became its own row, so `max_drawdown(100.0)` failed with `TypeError: 'float' object is not subscriptable`. To pass one series, wrap it in an outer list: `[[100.00, 120.00, 90.00]]`. The outer list holds the rows; each row is one series.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "r0",
+              "at": 0,
+              "label": "row 0"
+            },
+            {
+              "id": "r1",
+              "at": 1,
+              "label": "row 1"
+            },
+            {
+              "id": "r2",
+              "at": 2,
+              "label": "row 2"
+            }
+          ],
+          "caption": "Three rows, each a single float"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "The pattern: one row per case, an answer worked out by hand in each, and a name that says what is checked.\n\n```python\n@pytest.mark.parametrize(\"inputs, expected\", [\n    (case_1, answer_1),\n    (case_2, answer_2),\n])\ndef test_behaviour_being_checked(inputs, expected):\n    assert f(inputs) == pytest.approx(expected)   # one assert\n```",
+      "question": "One row of a parametrised test fails. What happens to the rows after it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "run",
+            "text": "They still run, and each reports its own result",
+            "correct": true
+          },
+          {
+            "id": "skip",
+            "text": "They are skipped",
+            "why": "That is what happened with four asserts in one function. Rows are separate tests, so a failure in one does not stop the next."
+          },
+          {
+            "id": "merge",
+            "text": "The whole table reports one FAILED line",
+            "why": "pytest prints one line per row, with that row's id."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Think back to the report: `1 failed, 3 passed`."
+        },
+        {
+          "rung": "step",
+          "text": "Each row is a separate test, so each gets its own PASSED or FAILED line."
+        }
+      ],
+      "feedback": {
+        "correct": "Every row runs and reports.",
+        "generic": "Not quite right. Remember the report line from the first-price bug."
+      },
+      "explain": {
+        "text": "With the first-price bug, row 1 failed and the other three still ran and passed. One assert per test means one failure tells you exactly one thing. A name like `test_max_drawdown_matches_hand_values` says what that thing is."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Five fund paths",
+      "prose": "A risk team checks `max_drawdown` before it goes into their fund report. Write one parametrised test over the five paths in the starter, with each answer worked out by hand.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "b",
+              "label": "Fund b",
+              "values": [
+                200.0,
+                150.0,
+                220.0,
+                209.0
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 220
+        },
+        "state": {
+          "drawdown": true,
+          "caption": "Path b: the worst fall comes before the highest close"
+        }
+      },
+      "question": "Write `test_max_drawdown` as one parametrised test over paths a to e.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import ast, inspect, itertools, linecache, math, re\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    # pytest.main() runs every test_ function and prints a report.\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = min(worst, p / peak - 1)\n    return worst\n\n# Five fund paths, in pounds. Work out each drawdown by hand.\n# a: 250.00, 262.50, 210.00, 231.00\n# b: 200.00, 150.00, 220.00, 209.00\n# c: 120.00, 121.50, 125.00\n# d: 98.40\n# e: 100.00, 90.00, 105.00, 84.00\n\ndef test_max_drawdown():\n    pass\n",
+        "solution": "import ast, inspect, itertools, linecache, math, re\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    # pytest.main() runs every test_ function and prints a report.\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = min(worst, p / peak - 1)\n    return worst\n\n# Five fund paths, in pounds. Work out each drawdown by hand.\n@pytest.mark.parametrize(\"prices, expected\", [\n    ([250.00, 262.50, 210.00, 231.00], -0.20),   # 210 / 262.5 - 1\n    ([200.00, 150.00, 220.00, 209.00], -0.25),   # 150 / 200 - 1, before the high\n    ([120.00, 121.50, 125.00], 0.0),             # only rises\n    ([98.40], 0.0),                              # one price\n    ([100.00, 90.00, 105.00, 84.00], -0.20),     # 84 / 105 - 1, the second dip\n])\ndef test_max_drawdown(prices, expected):\n    assert max_drawdown(prices) == pytest.approx(expected)\n",
+        "examples": [
+          {
+            "call": "pytest.main()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "pytest.outcome()",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "pytest.count(test='test_max_drawdown') >= 5",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: min(p / prices[0] - 1 for p in prices)",
+            "call": "pytest.outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: min(prices[prices.index(max(prices)):]) / max(prices) - 1",
+            "call": "pytest.outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: max(1 - p / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "pytest.outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: min([0.0] + [p / max(prices[:i + 1]) - 1 for i, p in enumerate(prices[:-1])])",
+            "call": "pytest.outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: min(p / max(prices[:i + 1]) - 1 for i, p in enumerate(prices) if i > 0)",
+            "call": "pytest.outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Test 2 counts your rows. Tests 3 to 7 each swap in a wrong `max_drawdown`; every one must fail at least one row."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each path, find the worst fall from a running peak: trough over peak, minus 1."
+        },
+        {
+          "rung": "point",
+          "text": "Path b peaks at 200.00 before it falls to 150.00. Path e has two dips; the second, from 105.00 to 84.00, is deeper.",
+          "highlight": [
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The answers are −0.20, −0.25, 0.0, 0.0 and −0.20. Put each in a row with its path."
+        }
+      ],
+      "feedback": {
+        "correct": "Five rows, each a different way for `max_drawdown` to go wrong.",
+        "generic": "Not quite right. Read the first test that failed: it names the version your rows let through.",
+        "byKey": {
+          "test-1": "Your test fails on the correct `max_drawdown`. Recheck each hand answer: trough over the peak before it, minus 1.",
+          "test-2": "pytest finds fewer than five rows for `test_max_drawdown`. Give one row per path.",
+          "test-3": "The first-price version passed. Paths a and e catch it: their peaks are not the first price.",
+          "test-4": "The version that only looks after the highest price passed. Path b catches it: its worst fall comes first.",
+          "test-5": "A version with positive drawdowns passed. Your expected values should be negative or zero.",
+          "test-6": "A version that ignores the last price passed. Path a or e catches it: the trough is on the last day.",
+          "test-7": "A version that crashes on one price passed. Path d, a single price, catches it.",
+          "error": "Your code stopped before the tests ran. Check the decorator's brackets and commas."
+        }
+      },
+      "explain": {
+        "text": "Each path targets one mistake: a and e catch the first-price version, b the highest-price version, d the crash on one price. The signs catch the positive version. A table of cases is cheap, so give every known failure its own row."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Several asserts in one test stop at the first failure, so later cases never run.",
+      "`@pytest.mark.parametrize(\"x, expected\", rows)` runs the test once per row, and each row reports on its own.",
+      "Give every known mistake its own row, and name the test after the behaviour it checks."
+    ],
+    "formula": {
+      "name": "Parametrise",
+      "tex": "\\text{tests run} = \\text{rows}_1 \\times \\text{rows}_2 \\times \\cdots",
+      "note": "Stacked decorators combine every row with every row."
+    },
+    "trap": "With one name, `parametrize(\"prices\", [100.00, 120.00])` makes one row per float. Wrap a series in an outer list: `[[100.00, 120.00]]`."
+  },
+  "quiz": [
+    {
+      "id": "q6-stacked",
+      "difficulty": 3,
+      "prose": "```python\n@pytest.mark.parametrize(\"prices\", [[100.00, 90.00], [80.00, 88.00], [50.00]])\n@pytest.mark.parametrize(\"scale\", [1, 100])\ndef test_drawdown_ignores_scale(prices, scale):\n    assert max_drawdown([p * scale for p in prices]) == pytest.approx(max_drawdown(prices))\n```",
+      "question": "How many tests does pytest run?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "6",
+        "wrong": [
+          {
+            "id": "added",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "outer",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three series times two scales: six tests.",
+        "generic": "Not quite right. Every row of one table meets every row of the other.",
+        "byKey": {
+          "added": "You added the rows. Stacked tables combine: each series runs at each scale, so 3 × 2.",
+          "outer": "You counted only the series. Each series also runs at both scales."
+        }
+      },
+      "explain": {
+        "text": "Stacked decorators give every combination: 3 series × 2 scales = 6 tests. Scaling every price by 100 must not change a drawdown, since it is a ratio."
+      }
+    },
+    {
+      "id": "q6-asserts",
+      "difficulty": 2,
+      "prose": "A test function has five `assert` lines. pytest reports that it failed on the second one.",
+      "question": "How many of its `assert` lines ran?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "one",
+            "text": "1",
+            "why": "The first one passed, so the function reached the second, which failed."
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "correct": true
+          },
+          {
+            "id": "five",
+            "text": "5",
+            "why": "A failed assert ends the function, so lines 3 to 5 never ran."
+          },
+          {
+            "id": "four",
+            "text": "4",
+            "why": "You counted the passes you expected. Only lines 1 and 2 ran."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The first passed, the second failed, and the function stopped.",
+        "generic": "Not quite right. A failed assert stops the function on that line."
+      },
+      "explain": {
+        "text": "Asserts run top to bottom until one fails. Line 2 failed, so lines 3 to 5 tell you nothing. Rows of a parametrised test would each have run."
+      }
+    },
+    {
+      "id": "q6-wrapped",
+      "difficulty": 2,
+      "prose": "```python\n@pytest.mark.parametrize(\"prices\", [[100.00, 90.00], [80.00, 88.00]])\ndef test_drawdown_never_positive(prices):\n    assert max_drawdown(prices) <= 0\n```",
+      "question": "What is `prices` in the second test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "list",
+            "text": "`[80.00, 88.00]`",
+            "correct": true
+          },
+          {
+            "id": "float",
+            "text": "`90.00`",
+            "why": "You took the rows to be single numbers. Here each item of the outer list is a whole series."
+          },
+          {
+            "id": "both",
+            "text": "`[[100.00, 90.00], [80.00, 88.00]]`",
+            "why": "The outer list holds the rows. Each test gets one row, not all of them."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The outer list holds the rows; the second row is `[80.00, 88.00]`.",
+        "generic": "Not quite right. Each item of the outer list is one row."
+      },
+      "explain": {
+        "text": "With one name, each item of the list is a row. The items here are lists, so each test gets one whole series. This is the fix for the trap from the lesson."
+      }
+    },
+    {
+      "id": "q6-name",
+      "difficulty": 2,
+      "prose": "A test fails in tomorrow's run. You will see only its name in the report.",
+      "question": "Which name tells you most about what broke?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "t2",
+            "text": "`test_2`",
+            "why": "A number says nothing about the behaviour. You would have to open the file to learn what failed."
+          },
+          {
+            "id": "works",
+            "text": "`test_max_drawdown_works`",
+            "why": "'Works' covers everything, so a failure narrows nothing down."
+          },
+          {
+            "id": "rising",
+            "text": "`test_max_drawdown_is_zero_when_prices_only_rise`",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "`test_all_drawdown_cases`",
+            "why": "A test of everything fails for any reason. The name cannot say which."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The name states the behaviour, so the failure explains itself.",
+        "generic": "Not quite right. Pick the name that states one behaviour."
+      },
+      "explain": {
+        "text": "A name that states one behaviour turns a FAILED line into a bug report: rising prices no longer give 0. That works best with one assert per test."
+      }
+    }
+  ]
+}
