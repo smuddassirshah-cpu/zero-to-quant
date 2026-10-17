@@ -243,7 +243,7 @@ The learner drags control points of a curve on the `plane` canvas; graded on sam
   "tests": [ { "call": "max_drawdown([100, 90, 95])", "expect": "0.1", "compare": "isclose" } ], "how": "Submit runs 8 hidden tests. Each answer is accepted when math.isclose(actual, expected, rel_tol=1e-9)." }
 ```
 
-`compare` is `isclose`, `equal`, `fraction`, `stdout` or `raises` (both below). At most 15 tests. Tests run in the Pyodide worker with a 5 s budget each.
+`compare` is `isclose`, `equal`, `fraction`, `stdout` or `raises` (both below). `isclose` and `equal` compare NumPy arrays, pandas Series and nested lists element by element (through `tolist()`), so `expect: "[[0.5, 1], [2, 3]]"` works for a 2 by 2 array. At most 15 tests. Tests run in the Pyodide worker with a 5 s budget each; `budget` on the widget (ms) adds to a run's limit, and code that imports numpy, pandas, scipy or matplotlib gets 30 s extra without one, so the first package load is not charged against the tests. Packages load from the code's own imports, in script mode too.
 
 Any case may carry `setup`, a line of Python run just before `call` (`{ "setup": "prices = [100, 90, 95]", "call": "max_drawdown(prices)", "expect": "0.1" }`), so the call reads cleanly. `"compare": "raises"` passes when the call raises the named exception or a subclass of it: `{ "call": "parse_price('abc')", "compare": "raises", "expect": "ValueError" }`; the result reads "raised ValueError" or "no error, the value was ...". In script mode a raises case without `call` checks the whole program (with its `stdin`).
 

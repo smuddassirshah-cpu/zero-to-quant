@@ -46,13 +46,14 @@
         return C.tween(0, 1, 500, (t) => { if (a.alive()) a.show(t >= 1 ? next : K.lerp(from, next, t, def.skip)); });
       },
       render(view, R) {
-        const g = R.F.g, p = view._p ?? 1;
+        const g = svg('g'), p = view._p ?? 1; R.F.g.append(g); // drawn into one group, so wide matrices can scale to the column (item 144)
         const rowsOf = (m) => (view.rows && view.rows[m.id]) || m.rows || [];
         const layout = mats.map((m) => { const rows = rowsOf(m), cw = cellW(rows); return { m, rows, cw, w: (rows[0] || []).length * cw + 20 }; });
         const opW = 36, rowOpW = view.rowOp ? 120 : 0;
         const total = layout.reduce((s, l) => s + l.w, 0) + Math.max(0, layout.length - 1) * opW + rowOpW;
         let x = Math.max(8, (W - total) / 2);
         const top = 18;
+        if (total > W - 16) { const k = (W - 16) / total; g.setAttribute('transform', `translate(${(8 * (1 - k)).toFixed(2)} ${(top * (1 - k)).toFixed(2)}) scale(${k.toFixed(4)})`); }
         const hiddenSet = new Set([].concat(view.hidden || []));
         const shown = new Set(toIds(view.cell, 'cells').concat(view.product ? [`${view.product.c}-${view.product.i}-${view.product.j}`] : []));
         const emph = toIds(K.isObj(view.highlight) ? view.highlight : null);

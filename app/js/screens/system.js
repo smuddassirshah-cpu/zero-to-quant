@@ -110,6 +110,8 @@
       state: { current: 'H-T', highlight: ['H-T'] } } },
     { name: 'bars (below zero)', about: 'Negative values hang below the zero baseline; value labels in pounds', spec: { kind: 'bars',
       params: { categories: [{ id: 'jan', label: 'Jan', value: 120 }, { id: 'feb', label: 'Feb', value: -80 }, { id: 'mar', label: 'Mar', value: 45 }, { id: 'apr', label: 'Apr', value: -150 }, { id: 'may', label: 'May', value: 200 }], yLabel: 'P&L (£)', showValues: true, money: '£', decimals: 0 }, state: {} } },
+    { name: 'matrix (wide)', about: 'Three wide matrices scale down to the column instead of running off it', spec: { kind: 'matrix',
+      params: { matrices: [{ id: 'A', rows: [[1.25, -3.5, 12.75, 0.5], [2, 4.125, -6, 8]] }, { id: 'B', rows: [[10.5, 20.25], [30, 40.75], [-5.5, 6], [7, 8.25]] }, { id: 'C', rows: [[105.94, 162.47], [97.44, 278.63]] }], ops: ['*', '='] }, state: { highlight: { A: { rows: [0] }, B: { cols: [1] } } } } },
     { name: 'graph (ring, rotate)', about: 'layout: "ring" seats the nodes round a circle; state.rotate turns them; labels relabel; the radius fits the longest label', spec: { kind: 'graph',
       params: { layout: 'ring', directed: false, nodes: ['A', 'B', 'C', 'D', 'E'].map(id => ({ id, label: id })), edges: [{ from: 'A', to: 'B' }, { from: 'B', to: 'C' }] },
       state: { rotate: 1, labels: { A: 'Alice', B: 'Bryony' }, current: 'A' } } },

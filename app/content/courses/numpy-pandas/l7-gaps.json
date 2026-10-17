@@ -1,0 +1,1679 @@
+{
+  "id": "l7-gaps",
+  "course": "numpy-pandas",
+  "title": "Gaps in the data",
+  "minutes": 15,
+  "objectives": [
+    "Find, fill or drop missing values, and say what each choice does to the result.",
+    "Forward-fill prices, and explain why volumes and returns need a different choice."
+  ],
+  "skills": [
+    "pd-frames"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Holes in the file",
+      "prose": "A price file with some fields left empty.\n\n```python\ncsv = \"\"\"date,close,volume\n2024-03-04,12.55,18400\n2024-03-05,12.31,22100\n2024-03-06,,\n2024-03-07,12.62,19800\n2024-03-08,12.44,\n2024-03-11,,21000\n\"\"\"\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\", parse_dates=True)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "",
+              ""
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              ""
+            ],
+            [
+              "2024-03-11",
+              "",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`"
+        }
+      },
+      "question": "Tap every value the file did not give.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c1",
+          "r2c2",
+          "r4c2",
+          "r5c1"
+        ],
+        "countWord": "picked",
+        "wrong": [
+          {
+            "id": "rows",
+            "set": [
+              "r2c1",
+              "r2c2",
+              "r5c1"
+            ],
+            "flash": [
+              "r4c2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look for fields with nothing between the commas."
+        },
+        {
+          "rung": "point",
+          "text": "Check 8 March: is its volume there?",
+          "highlight": [
+            "r4c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "6 March is missing both values, 8 March its volume and 11 March its close."
+        }
+      ],
+      "feedback": {
+        "correct": "Four missing values in three rows.",
+        "generic": "Not quite right. Tap each empty cell, in either column.",
+        "byKey": {
+          "rows": "You missed the volume on 8 March. Its line ends in a comma with nothing after it.",
+          "r4c2": "You missed the volume on 8 March. Its line ends in a comma with nothing after it."
+        }
+      },
+      "explain": {
+        "text": "Each empty field becomes `NaN`, short for *not a number*. It is pandas' marker for a missing value. The rest of the row is read as normal.",
+        "canvas": {
+          "values": {
+            "r2c1": "NaN",
+            "r2c2": "NaN",
+            "r4c2": "NaN",
+            "r5c1": "NaN"
+          },
+          "highlight": {
+            "cells": [
+              "r2c1",
+              "r2c2",
+              "r4c2",
+              "r5c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Counting the gaps",
+      "prose": "`isna()` asks of every value: is this missing?\n\n```python\nprint(df.isna().sum())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`close 2` and `volume 2`",
+            "correct": true
+          },
+          {
+            "id": "total",
+            "text": "`4`",
+            "why": "You added up the whole frame. `.sum()` adds down each column, giving one count per column."
+          },
+          {
+            "id": "present",
+            "text": "`close 4` and `volume 4`",
+            "why": "You counted the values that are there. `isna` is True on the gaps."
+          },
+          {
+            "id": "date",
+            "text": "`date 0`, `close 2` and `volume 2`",
+            "why": "The dates are the index, not a column, so they get no count."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`isna()` gives True at each NaN. What does `.sum()` do with True?"
+        },
+        {
+          "rung": "point",
+          "text": "Count the NaN cells in the close column, then in the volume column.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two in each column: `close 2`, `volume 2`."
+        }
+      ],
+      "feedback": {
+        "correct": "Two gaps in each column.",
+        "generic": "Not quite right. Count the NaN values down each column."
+      },
+      "explain": {
+        "text": "`df.isna()` is a frame of True and False, True at each gap. `.sum()` adds each column, True counting 1. `df.isna().sum().sum()` would give the total, 4.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r2c1",
+              "r2c2",
+              "r4c2",
+              "r5c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Dropping rows",
+      "prose": "`dropna()` removes every row that has a gap anywhere.\n\n```python\nprint(len(df.dropna()))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "3: only 4, 5 and 7 March are complete.",
+        "wrong": [
+          {
+            "id": "close-only",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "cells",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A row goes if either of its values is NaN."
+        },
+        {
+          "rung": "point",
+          "text": "Which rows have a NaN in either column?",
+          "highlight": [
+            "r2",
+            "r4",
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "6, 8 and 11 March each have a gap, so 3 of the 6 rows survive."
+        }
+      ],
+      "feedback": {
+        "correct": "Three complete rows survive.",
+        "generic": "Not quite right. Drop each row with a gap in any column, then count.",
+        "byKey": {
+          "close-only": "You dropped only the rows missing a close. 8 March is missing its volume, so `dropna()` drops it too.",
+          "cells": "You subtracted the four gaps. Two of them share a row, 6 March, so only three rows go."
+        }
+      },
+      "explain": {
+        "text": "`dropna()` drops 6, 8 and 11 March, keeping 3 rows. To drop only rows without a close, write `df.dropna(subset=[\"close\"])`: 4 rows, keeping 8 March.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Averages skip the gaps",
+      "prose": "Five daily returns, in %, with two days missing.\n\n```python\nr = pd.Series([0.8, None, -0.4, 1.1, None])\nprint(r.mean())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "r"
+          ],
+          "rows": [
+            [
+              "0",
+              "0.8"
+            ],
+            [
+              "1",
+              "NaN"
+            ],
+            [
+              "2",
+              "−0.4"
+            ],
+            [
+              "3",
+              "1.1"
+            ],
+            [
+              "4",
+              "NaN"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`r`, in %"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`0.5`",
+            "correct": true
+          },
+          {
+            "id": "nan",
+            "text": "`nan`",
+            "why": "That is what `np.mean` gives on an array with NaN. pandas skips missing values by default."
+          },
+          {
+            "id": "zero",
+            "text": "`0.3`",
+            "why": "You counted the gaps as zeros and divided by 5. `mean` leaves them out."
+          },
+          {
+            "id": "error",
+            "text": "A `TypeError`",
+            "why": "pandas stores `None` as NaN, so the arithmetic runs."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does pandas count a missing value in an average?"
+        },
+        {
+          "rung": "point",
+          "text": "Add the three values that are there.",
+          "highlight": [
+            "r0c1",
+            "r2c1",
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "(0.8 − 0.4 + 1.1) / 3 = 0.5."
+        }
+      ],
+      "feedback": {
+        "correct": "Three returns, averaged: 0.5.",
+        "generic": "Not quite right. pandas averages only the values that are present."
+      },
+      "explain": {
+        "text": "pandas skips NaN by default, so the mean is $1.5 / 3 = 0.5$. NumPy's `np.mean` would give `nan`. Neither choice is wrong; you need to know which one ran.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c1",
+              "r2c1",
+              "r3c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Filling with zero",
+      "prose": "A colleague fills the gaps first.\n\n```python\nprint(r.fillna(0).mean())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "r"
+          ],
+          "rows": [
+            [
+              "0",
+              "0.8"
+            ],
+            [
+              "1",
+              "NaN"
+            ],
+            [
+              "2",
+              "−0.4"
+            ],
+            [
+              "3",
+              "1.1"
+            ],
+            [
+              "4",
+              "NaN"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`r`, in %"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 0.25",
+        "label": "Value printed",
+        "accept": "0.3: 1.5 / 5.",
+        "wrong": [
+          {
+            "id": "skip",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After `fillna(0)` there are five values."
+        },
+        {
+          "rung": "point",
+          "text": "The two gaps are now 0.0. What is the new total and count?",
+          "highlight": [
+            "r1c1",
+            "r4c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The total is still 1.5, but it is divided by 5."
+        }
+      ],
+      "feedback": {
+        "correct": "1.5 over 5 days: 0.3.",
+        "generic": "Not quite right. With the gaps as 0, divide the total by all five values.",
+        "byKey": {
+          "skip": "That is the mean before filling. After `fillna(0)` the gaps count as two flat days, so divide by 5."
+        }
+      },
+      "explain": {
+        "text": "Filling with 0 claims the stock was flat on both days. The mean drops from 0.5 to 0.3 because the divisor grows from 3 to 5. Fill a return with 0 only when you know the day was flat.",
+        "canvas": {
+          "values": {
+            "r1c1": "0.0",
+            "r4c1": "0.0"
+          },
+          "highlight": {
+            "cells": [
+              "r1c1",
+              "r4c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Looking for NaN with ==",
+      "prose": "A colleague counts the missing closes like this.\n\n```python\nprint((df[\"close\"] == np.nan).sum())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "two",
+            "text": "`2`",
+            "why": "You expected `==` to find the gaps. NaN is not equal to anything, not even NaN, so every comparison is False."
+          },
+          {
+            "id": "zero",
+            "text": "`0`",
+            "correct": true
+          },
+          {
+            "id": "error",
+            "text": "A `TypeError`",
+            "why": "Comparing with NaN is allowed. It just never gives True."
+          },
+          {
+            "id": "four",
+            "text": "`4`",
+            "why": "That is the number of real closes. The comparison is False for those too."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is NaN equal to NaN?"
+        },
+        {
+          "rung": "point",
+          "text": "In Python, `float(\"nan\") == float(\"nan\")` is False.",
+          "highlight": [
+            "r2c1",
+            "r5c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Every comparison is False, so the sum is 0."
+        }
+      ],
+      "feedback": {
+        "correct": "NaN equals nothing, so `==` finds nothing.",
+        "generic": "Not quite right. Think about what `NaN == NaN` gives.",
+        "byKey": {
+          "two": "You expected `==` to find the gaps. NaN is not equal to anything, itself included, so the count is 0.",
+          "four": "The real closes are not equal to NaN either, so they add nothing.",
+          "error": "The comparison runs. It is False everywhere, so the sum is 0."
+        }
+      },
+      "explain": {
+        "text": "By definition NaN is not equal to anything, including another NaN. So `== np.nan` is False everywhere, and the count is a silent, wrong 0. Use `df[\"close\"].isna().sum()`, which gives 2.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r2c1",
+              "r5c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Carry the last price",
+      "prose": "`ffill` (forward fill) copies the last known value down into each gap.\n\n```python\nclose = df[\"close\"].ffill()\nprint(close.loc[\"2024-03-06\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.31,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 12.00",
+        "label": "Value printed",
+        "accept": "12.31: the close on 5 March, carried forward.",
+        "wrong": [
+          {
+            "id": "bfill",
+            "value": 12.62,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "interp",
+            "value": 12.465,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Forward means from earlier days into later ones."
+        },
+        {
+          "rung": "point",
+          "text": "Which close is the last one before 6 March?",
+          "highlight": [
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "5 March closed at 12.31, so 6 March gets 12.31."
+        }
+      ],
+      "feedback": {
+        "correct": "6 March takes 5 March's close: 12.31.",
+        "generic": "Not quite right. Copy the last close before the gap.",
+        "byKey": {
+          "bfill": "That is the next close, from 7 March. Copying backwards is `bfill`, and it uses a price nobody knew on 6 March.",
+          "interp": "You averaged the two neighbours. That needs 7 March's close, which was not known on 6 March."
+        }
+      },
+      "explain": {
+        "text": "`ffill` copies 12.31 into 6 March and 12.44 into 11 March. It uses only prices already known on each day. `bfill` would borrow tomorrow's price, a look-ahead that flatters a backtest.",
+        "canvas": {
+          "values": {
+            "r2c1": "12.31",
+            "r5c1": "12.44"
+          },
+          "highlight": {
+            "cells": [
+              "r2c1",
+              "r5c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A price of zero",
+      "prose": "Another colleague fills the closes with 0, then computes returns.\n\n```python\nz = df[\"close\"].fillna(0)\nret = z.pct_change()\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does `ret` say happened on 6 March?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "A return of −1.0: the stock lost everything",
+            "correct": true
+          },
+          {
+            "id": "flat",
+            "text": "A return of 0.0: a flat day",
+            "why": "That is what a forward fill would give. After `fillna(0)` the price is £0.00, a total loss."
+          },
+          {
+            "id": "nan",
+            "text": "`NaN`, because the close was missing",
+            "why": "The gap was filled with 0, so there is a number to divide."
+          },
+          {
+            "id": "prev",
+            "text": "About −0.0191, the same as 5 March",
+            "why": "That is 5 March's return, from 12.55 to 12.31. 6 March goes from 12.31 to 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the close on 6 March after `fillna(0)`?"
+        },
+        {
+          "rung": "point",
+          "text": "The return is $0 / 12.31 - 1$.",
+          "highlight": [
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That is −1.0: a 100% loss. 7 March then divides by 0."
+        }
+      ],
+      "feedback": {
+        "correct": "A fake 100% loss, then a division by zero.",
+        "generic": "Not quite right. Work out $0 / 12.31 - 1$."
+      },
+      "explain": {
+        "text": "A price of £0.00 turns a missing day into a 100% loss, and 7 March becomes $12.62 / 0$, infinite. Filling a price with 0 invents a crash. Prices need the last known value instead.",
+        "canvas": {
+          "values": {
+            "r2c1": "0.00",
+            "r5c1": "0.00"
+          },
+          "highlight": {
+            "cells": [
+              "r2c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Choosing what to do with a gap",
+      "prose": "The tools, in one place.\n\n```python\ndf.isna().sum()                # gaps per column\ndf.dropna()                     # drop rows with any gap\ndf.dropna(subset=[\"close\"])     # drop rows missing a close\ndf[\"close\"].ffill()             # carry the last known price\nr.fillna(0)                     # claim the day was flat\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Before computing returns, which column should you forward-fill?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "close",
+            "text": "`close` only",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Both `close` and `volume`",
+            "why": "Copying volume claims yesterday's trading happened again: 41900 shares here that never traded."
+          },
+          {
+            "id": "volume",
+            "text": "`volume` only",
+            "why": "That leaves the price gaps, and copies trading that did not happen."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: drop every row with a gap",
+            "why": "That throws away 8 March's good close because its volume is missing."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A close is a level; a volume is a count of what traded that day."
+        },
+        {
+          "rung": "point",
+          "text": "On 6 March, what is the best price for the stock? How many shares are known to have traded?"
+        },
+        {
+          "rung": "step",
+          "text": "Carry the price forward; leave the volume missing."
+        }
+      ],
+      "feedback": {
+        "correct": "Fill the price, leave the volume.",
+        "generic": "Not quite right. Ask which column a copy of yesterday honestly describes."
+      },
+      "explain": {
+        "text": "A price is a level: the last trade is still the best mark for the stock. A volume is a flow: copying 22100 shares into 6 March invents trading. Leave it missing, and `sum` skips it.",
+        "canvas": {
+          "values": {
+            "r2c1": "12.31",
+            "r5c1": "12.44"
+          },
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Which days lack a close",
+      "prose": "Return the index labels of the days with no close, in date order. A missing volume alone does not count.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`, the frame in the examples"
+        }
+      },
+      "question": "Complete `gap_days` with `isna`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef gap_days(df):\n    missing = ...\n    return df[missing].index.tolist()\n",
+        "solution": "import pandas as pd\n\ndef gap_days(df):\n    missing = df[\"close\"].isna()\n    return df[missing].index.tolist()\n",
+        "tests": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, None, 12.62, 12.44, None], \"volume\": [18400, 22100, None, 19800, None, 21000]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\", \"2024-03-11\"])",
+            "call": "gap_days(df)",
+            "expect": "['2024-03-06', '2024-03-11']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [None, None, 250.40, 251.10, None, 249.80], \"volume\": [None, 0, 3100, 2900, None, 3300]}, index=[\"2024-07-01\", \"2024-07-02\", \"2024-07-03\", \"2024-07-04\", \"2024-07-05\", \"2024-07-08\"])",
+            "call": "gap_days(df)",
+            "expect": "['2024-07-01', '2024-07-02', '2024-07-05']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [7.05, 7.10, 7.02], \"volume\": [52000, 48000, 61000]}, index=[\"2024-12-30\", \"2024-12-31\", \"2025-01-02\"])",
+            "call": "gap_days(df)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [95.10, None, None, None, 96.40], \"volume\": [3100, None, None, None, 2950]}, index=[\"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\"])",
+            "call": "gap_days(df)",
+            "expect": "['2024-04-09', '2024-04-10', '2024-04-11']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, None, 12.62, 12.44, None], \"volume\": [18400, 22100, None, 19800, None, 21000]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\", \"2024-03-11\"])",
+            "call": "len(gap_days(df))",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, None, 12.62, 12.44, None], \"volume\": [18400, 22100, None, 19800, None, 21000]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\", \"2024-03-11\"])",
+            "call": "gap_days(df)",
+            "expect": "['2024-03-06', '2024-03-11']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [7.05, 7.10, 7.02], \"volume\": [52000, 48000, 61000]}, index=[\"2024-12-30\", \"2024-12-31\", \"2025-01-02\"])",
+            "call": "gap_days(df)",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on small frames like `df`. Each result must match exactly. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You need a mask that is True where the close is missing."
+        },
+        {
+          "rung": "point",
+          "text": "`==` cannot find NaN. Which method can?",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write `missing = df[\"close\"].isna()`."
+        }
+      ],
+      "feedback": {
+        "correct": "A mask from `isna`, then the labels.",
+        "generic": "Some tests failed. Check that only missing closes count.",
+        "byKey": {
+          "test-1": "Test 1 expects 6 and 11 March. If 8 March appears, you checked the whole row, volume included.",
+          "error": "Your code stopped with an error. Check that `missing` is `df[\"close\"].isna()`, not `...`."
+        }
+      },
+      "explain": {
+        "text": "`df[\"close\"].isna()` is True only where the close is missing, so 8 March, missing just its volume, stays out. An empty list means the closes are complete."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Two averages",
+      "prose": "Return a pair: the mean return with the gaps dropped, then the mean with the gaps filled with 0. Round each to 6 places and return plain floats.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "r"
+          ],
+          "rows": [
+            [
+              "0",
+              "0.8"
+            ],
+            [
+              "1",
+              "NaN"
+            ],
+            [
+              "2",
+              "−0.4"
+            ],
+            [
+              "3",
+              "1.1"
+            ],
+            [
+              "4",
+              "NaN"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`r` in the first example, in %"
+        }
+      },
+      "question": "Complete `two_means(r)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef two_means(r):\n    dropped = ...\n    zeros = ...\n    return (round(float(dropped), 6), round(float(zeros), 6))\n",
+        "solution": "import pandas as pd\n\ndef two_means(r):\n    dropped = r.dropna().mean()\n    zeros = r.fillna(0).mean()\n    return (round(float(dropped), 6), round(float(zeros), 6))\n",
+        "tests": [
+          {
+            "setup": "r = pd.Series([0.8, None, -0.4, 1.1, None])",
+            "call": "two_means(r)",
+            "expect": "(0.5, 0.3)",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = pd.Series([1.2, -0.6, 0.3])",
+            "call": "two_means(r)",
+            "expect": "(0.3, 0.3)",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = pd.Series([None, 2.0])",
+            "call": "two_means(r)",
+            "expect": "(2.0, 1.0)",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = pd.Series([-0.25, None, None, -0.75])",
+            "call": "two_means(r)",
+            "expect": "(-0.5, -0.25)",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = pd.Series([0.4, None, 0.6, None, 0.2])",
+            "call": "two_means(r)[0] > two_means(r)[1]",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = pd.Series([0.012, -0.004, None, 0.007, 0.001, None, -0.009])",
+            "call": "two_means(r)",
+            "expect": "(0.0014, 0.001)",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "r = pd.Series([0.8, None, -0.4, 1.1, None])",
+            "call": "two_means(r)",
+            "expect": "(0.5, 0.3)",
+            "compare": "equal"
+          },
+          {
+            "setup": "r = pd.Series([1.2, -0.6, 0.3])",
+            "call": "two_means(r)",
+            "expect": "(0.3, 0.3)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each pair must match exactly after rounding to 6 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One mean leaves the gaps out; the other counts them as 0."
+        },
+        {
+          "rung": "point",
+          "text": "`r.mean()` already skips NaN. `r.fillna(0)` turns each gap into 0.0.",
+          "highlight": [
+            "r1c1",
+            "r4c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`dropped = r.dropna().mean()` and `zeros = r.fillna(0).mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Same data, two answers: the divisor differs.",
+        "generic": "Some tests failed. Check which mean divides by every day.",
+        "byKey": {
+          "test-1": "Test 1 expects (0.5, 0.3). If you got them the other way round, swap the two lines.",
+          "error": "Your code stopped with an error. Check that both `dropped` and `zeros` are means, not `...`."
+        }
+      },
+      "explain": {
+        "text": "Dropping divides the total by the days with data; filling with 0 divides by every day. With gaps, the zero-filled mean is pulled towards 0. Without gaps the two agree."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A clean price table",
+      "prose": "Before a backtest, clean the prices. Forward-fill missing closes, leave volumes as they are, then drop rows still without a close, such as gaps before the first price. Return a new frame; leave `df` unchanged.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`, the raw prices"
+        }
+      },
+      "question": "Complete `clean_prices(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef clean_prices(df):\n    out = df.copy()\n    out[\"close\"] = ...\n    # volumes stay as they are\n    out = ...\n    return out\n",
+        "solution": "import pandas as pd\n\ndef clean_prices(df):\n    out = df.copy()\n    out[\"close\"] = out[\"close\"].ffill()\n    # volumes stay as they are\n    out = out.dropna(subset=[\"close\"])\n    return out\n",
+        "tests": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, None, 12.62, 12.44, None], \"volume\": [18400, 22100, None, 19800, None, 21000]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\", \"2024-03-11\"])",
+            "call": "clean_prices(df)[\"close\"].tolist()",
+            "expect": "[12.55, 12.31, 12.31, 12.62, 12.44, 12.44]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, None, 12.62, 12.44, None], \"volume\": [18400, 22100, None, 19800, None, 21000]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\", \"2024-03-11\"])",
+            "call": "int(clean_prices(df)[\"volume\"].isna().sum())",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [None, None, 250.40, 251.10, None, 249.80], \"volume\": [None, 0, 3100, 2900, None, 3300]}, index=[\"2024-07-01\", \"2024-07-02\", \"2024-07-03\", \"2024-07-04\", \"2024-07-05\", \"2024-07-08\"])",
+            "call": "clean_prices(df).index.tolist()",
+            "expect": "['2024-07-03', '2024-07-04', '2024-07-05', '2024-07-08']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [None, None, 250.40, 251.10, None, 249.80], \"volume\": [None, 0, 3100, 2900, None, 3300]}, index=[\"2024-07-01\", \"2024-07-02\", \"2024-07-03\", \"2024-07-04\", \"2024-07-05\", \"2024-07-08\"])",
+            "call": "clean_prices(df)[\"close\"].tolist()",
+            "expect": "[250.4, 251.1, 251.1, 249.8]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [95.10, None, None, None, 96.40], \"volume\": [3100, None, None, None, 2950]}, index=[\"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\"])",
+            "call": "clean_prices(df)[\"close\"].tolist()",
+            "expect": "[95.1, 95.1, 95.1, 95.1, 96.4]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [95.10, None, None, None, 96.40], \"volume\": [3100, None, None, None, 2950]}, index=[\"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\"])",
+            "call": "float(clean_prices(df)[\"volume\"].sum())",
+            "expect": "6050.0",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, None, 12.62, 12.44, None], \"volume\": [18400, 22100, None, 19800, None, 21000]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\", \"2024-03-11\"]); out = clean_prices(df)",
+            "call": "int(df[\"close\"].isna().sum())",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [7.05, 7.10, 7.02], \"volume\": [52000, 48000, 61000]}, index=[\"2024-12-30\", \"2024-12-31\", \"2025-01-02\"])",
+            "call": "clean_prices(df)[\"close\"].tolist()",
+            "expect": "[7.05, 7.1, 7.02]",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, None, 12.62, 12.44, None], \"volume\": [18400, 22100, None, 19800, None, 21000]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\", \"2024-03-11\"])",
+            "call": "clean_prices(df)[\"close\"].tolist()",
+            "expect": "[12.55, 12.31, 12.31, 12.62, 12.44, 12.44]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [None, None, 250.40, 251.10, None, 249.80], \"volume\": [None, 0, 3100, 2900, None, 3300]}, index=[\"2024-07-01\", \"2024-07-02\", \"2024-07-03\", \"2024-07-04\", \"2024-07-05\", \"2024-07-08\"])",
+            "call": "clean_prices(df).index.tolist()",
+            "expect": "['2024-07-03', '2024-07-04', '2024-07-05', '2024-07-08']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on small frames like `df`. Each result must match exactly. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two steps: fill the close column, then drop what is still missing."
+        },
+        {
+          "rung": "point",
+          "text": "`ffill` cannot fill a gap before the first price. `dropna(subset=[\"close\"])` removes those rows only.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`out[\"close\"] = out[\"close\"].ffill()`, then `out = out.dropna(subset=[\"close\"])`."
+        }
+      ],
+      "feedback": {
+        "correct": "Prices carried forward, volumes left honest.",
+        "generic": "Some tests failed. Check the volumes and the rows before the first price.",
+        "byKey": {
+          "test-2": "Test 2 counts missing volumes. They should still be missing: 2. Fill only the close column.",
+          "test-3": "Test 3 starts with two days that have no close at all. Drop them after the fill.",
+          "test-6": "Test 6 adds up the volumes. If it is too big, you copied volume into the gaps.",
+          "test-7": "Test 7 checks that `df` itself is unchanged. Work on `out = df.copy()`.",
+          "error": "Your code stopped with an error. Check both `...` lines."
+        }
+      },
+      "explain": {
+        "text": "`ffill` carries each close forward, using only prices known that day. `dropna(subset=[\"close\"])` then removes days before trading began, and nothing else. Volumes stay missing, so their sum counts real trades only.",
+        "canvas": {
+          "values": {
+            "r2c1": "12.31",
+            "r5c1": "12.44"
+          },
+          "highlight": {
+            "cells": [
+              "r2c1",
+              "r5c1"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An empty field becomes NaN. Find gaps with `isna()`, never `== np.nan`, which is always False.",
+      "`dropna` removes rows, `fillna(0)` claims a value of 0, and `ffill` carries the last known value forward. Each changes the answer differently.",
+      "Forward-fill prices, which are levels. Leave volumes missing, and drop a missing return unless the day was truly flat."
+    ],
+    "formula": {
+      "name": "Mean with gaps, two ways",
+      "tex": "\\bar{r}_{\\text{drop}} = \\dfrac{1}{m}\\sum_{t \\text{ known}} r_t \\qquad \\bar{r}_{\\text{zero}} = \\dfrac{1}{n}\\sum_{t \\text{ known}} r_t",
+      "note": "Same total, different divisor: $m$ known days against all $n$ days."
+    },
+    "trap": "`df[\"close\"] == np.nan` is False everywhere, so it counts 0 gaps. Use `df[\"close\"].isna()`."
+  },
+  "quiz": [
+    {
+      "id": "q-count",
+      "difficulty": 2,
+      "prose": "```python\ns = pd.Series([12.55, None, 12.62])\nprint(s.count())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "2: `count` skips the missing value.",
+        "wrong": [
+          {
+            "id": "len",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`count` counts the values that are present.",
+        "generic": "Not quite right. `count` leaves out NaN.",
+        "byKey": {
+          "len": "That is `len(s)`, which counts the gap too. `count` counts only the values present."
+        }
+      },
+      "explain": {
+        "text": "`count` skips NaN, so it gives 2. `len(s)` gives 3, and `s.isna().sum()` gives 1. `describe` starts with this `count`."
+      }
+    },
+    {
+      "id": "q-subset",
+      "difficulty": 2,
+      "prose": "`df` has six rows. The close is missing on 6 and 11 March; the volume on 6 and 8 March.\n\n```python\nprint(len(df.dropna(subset=[\"volume\"])))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "4: 6 and 8 March go.",
+        "wrong": [
+          {
+            "id": "any",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "close",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only the rows missing a volume go.",
+        "generic": "Not quite right. `subset` limits the check to the volume column.",
+        "byKey": {
+          "any": "You dropped rows with a gap anywhere. `subset=[\"volume\"]` looks at volume only, so 11 March stays.",
+          "close": "You subtracted every gap. Only rows missing a volume go: 6 and 8 March."
+        }
+      },
+      "explain": {
+        "text": "`subset=[\"volume\"]` checks only the volume, so 6 and 8 March go and 4 rows remain. 11 March stays despite its missing close."
+      }
+    },
+    {
+      "id": "q-ffill-run",
+      "difficulty": 3,
+      "prose": "```python\ns = pd.Series([12.55, None, None, 12.62])\nprint(s.ffill().tolist())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[12.55, 12.55, 12.55, 12.62]`",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "`[12.55, 12.55, nan, 12.62]`",
+            "why": "You expected one gap to be filled. `ffill` carries a value across a whole run of gaps."
+          },
+          {
+            "id": "interp",
+            "text": "`[12.55, 12.5733, 12.5967, 12.62]`",
+            "why": "That is a straight line between the two prices, `interpolate`. It uses the later price."
+          },
+          {
+            "id": "drop",
+            "text": "`[12.55, 12.62]`",
+            "why": "That is `dropna`. `ffill` keeps every row and fills it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The last price runs through both gaps.",
+        "generic": "Not quite right. `ffill` copies the last known value into every gap after it."
+      },
+      "explain": {
+        "text": "`ffill` copies 12.55 into both missing days, so the price is flat until 12.62 arrives. `ffill(limit=1)` would fill only the first gap."
+      }
+    },
+    {
+      "id": "q-bfill",
+      "difficulty": 3,
+      "prose": "A backtest buys when today's close is above yesterday's. Its author fills missing closes with `bfill`, which copies the next known close back into each gap.",
+      "question": "What is wrong with that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "On a gap day the strategy sees a price that was only known later",
+            "correct": true
+          },
+          {
+            "id": "slow",
+            "text": "`bfill` is slower than `ffill`",
+            "why": "Speed is not the issue. The problem is which price each day is allowed to see."
+          },
+          {
+            "id": "zero",
+            "text": "`bfill` puts 0 into the gaps",
+            "why": "`bfill` copies a real price; the trouble is that it comes from the future."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: `bfill` and `ffill` give the same returns",
+            "why": "They differ on every gap: `bfill` borrows tomorrow's price, `ffill` keeps yesterday's."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "That is look-ahead: the backtest peeks at the future.",
+        "generic": "Not quite right. Ask which day's price ends up on the gap day."
+      },
+      "explain": {
+        "text": "`bfill` puts a later close on the gap day, so a signal computed that day already knows tomorrow's move. That look-ahead makes a backtest look better than any real trading could. Use `ffill` for prices."
+      }
+    }
+  ]
+}

@@ -1,0 +1,986 @@
+{
+  "id": "l2-first-test",
+  "course": "pytest",
+  "title": "Writing a test function",
+  "minutes": 13,
+  "objectives": [
+    "Name test files and functions so pytest collects them",
+    "Write a test function in arrange, act, assert order",
+    "Run every test with `pytest -q` from the project folder"
+  ],
+  "skills": [
+    "pt-basics"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where pytest looks",
+      "prose": "Calling `check_returns()` by hand is easy to forget. **pytest** is a tool that finds your tests and runs them all with one command. It finds them by their names, not by what is inside.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "label": "Project folder",
+          "nodes": [
+            {
+              "id": "p",
+              "label": "project",
+              "children": [
+                {
+                  "id": "d",
+                  "label": "data",
+                  "children": [
+                    {
+                      "id": "csv",
+                      "label": "prices.csv"
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "returns.py"
+                },
+                {
+                  "id": "c",
+                  "label": "check_returns.py"
+                },
+                {
+                  "id": "t",
+                  "label": "test_returns.py"
+                },
+                {
+                  "id": "n",
+                  "label": "notes",
+                  "children": [
+                    {
+                      "id": "md",
+                      "label": "ideas.md"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "You run pytest in `project`. It opens one file and ignores the rest. Tap the file it opens.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "p-t"
+        ],
+        "max": 1,
+        "only": [
+          "p-d-csv",
+          "p-r",
+          "p-c",
+          "p-t",
+          "p-n-md"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which file's name says it holds tests?"
+        },
+        {
+          "rung": "point",
+          "text": "pytest goes by the start of the name.",
+          "highlight": [
+            "p-t"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "pytest opens `test_returns.py`.",
+        "generic": "Not quite right. pytest picks a file by its name.",
+        "byKey": {
+          "p-c": "You picked the file with checks in it. pytest goes by the name, and `check_` is not the word it looks for.",
+          "p-r": "That is the code being tested. The test file imports it, but pytest does not look for tests there.",
+          "p-d-csv": "pytest opens Python files only, and only those named as tests.",
+          "p-n-md": "pytest opens Python files only, and only those named as tests."
+        }
+      },
+      "explain": {
+        "text": "`test_returns.py` starts with `test_`, so pytest opens it. `check_returns.py` might hold checks, but pytest never looks inside. The name is the whole signal.",
+        "canvas": {
+          "highlight": [
+            "p-t"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "pytest opened `test_returns.py`, which holds five functions. It called some of them and reported `3 passed`. A function it calls is a test.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "In `test_returns.py`"
+          ],
+          "rows": [
+            [
+              "`def test_up_day():`"
+            ],
+            [
+              "`def check_flat_day():`"
+            ],
+            [
+              "`def test_down_day():`"
+            ],
+            [
+              "`def one_price_test():`"
+            ],
+            [
+              "`def test_two_days():`"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "pytest's summary line: `3 passed`"
+        }
+      },
+      "question": "Tap the three functions pytest called.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0",
+          "r2c0",
+          "r4c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "suffix",
+            "set": [
+              "r0c0",
+              "r2c0",
+              "r3c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What do three of the five names have in common?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at how each name begins.",
+          "highlight": [
+            "r0c0",
+            "r2c0",
+            "r4c0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "pytest called the functions whose names start with `test`.",
+        "generic": "Not quite right. Find what three of the names share.",
+        "byKey": {
+          "suffix": "`one_price_test` ends in `test` but does not start with it. For functions the word must come first.",
+          "r1c0": "`check_flat_day` does not start with `test`, so pytest never calls it.",
+          "r3c0": "`one_price_test` ends in `test`. For functions, pytest wants `test` at the start."
+        }
+      },
+      "explain": {
+        "text": "You picked the three names that begin with `test`. pytest called each one and counted it. `check_flat_day` and `one_price_test` were never run.",
+        "canvas": {
+          "highlight": [
+            "r0c0",
+            "r2c0",
+            "r4c0"
+          ],
+          "caption": "Called: the names that start with `test`"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "pytest **collects** tests by name. It opens files named `test_*.py` or `*_test.py`, in the folder and every folder below it. Inside them it calls each function whose name starts with `test`.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "label": "Project folder",
+          "nodes": [
+            {
+              "id": "p",
+              "label": "project",
+              "children": [
+                {
+                  "id": "r",
+                  "label": "returns.py"
+                },
+                {
+                  "id": "t",
+                  "label": "test_returns.py"
+                },
+                {
+                  "id": "s",
+                  "label": "tests.py"
+                },
+                {
+                  "id": "v",
+                  "label": "vol_test.py"
+                },
+                {
+                  "id": "k",
+                  "label": "tests",
+                  "children": [
+                    {
+                      "id": "dd",
+                      "label": "test_drawdown.py"
+                    },
+                    {
+                      "id": "h",
+                      "label": "helpers.py"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every file pytest collects tests from.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "p-t",
+          "p-v",
+          "p-k-dd"
+        ],
+        "only": [
+          "p-r",
+          "p-t",
+          "p-s",
+          "p-v",
+          "p-k-dd",
+          "p-k-h"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "top-only",
+            "set": [
+              "p-t",
+              "p-v"
+            ]
+          },
+          {
+            "id": "prefix-only",
+            "set": [
+              "p-t",
+              "p-k-dd"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check each name against the two patterns: `test_` at the start, or `_test` at the end."
+        },
+        {
+          "rung": "point",
+          "text": "One file sits one folder down. pytest looks there too.",
+          "highlight": [
+            "p-k-dd"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "`test_returns.py`, `vol_test.py` and `tests/test_drawdown.py`.",
+        "generic": "Not quite right. Check each file name against both patterns.",
+        "byKey": {
+          "top-only": "You stopped at the top folder. pytest also looks inside `tests`, where `test_drawdown.py` sits.",
+          "prefix-only": "You missed `vol_test.py`. For files, a name ending in `_test.py` counts too.",
+          "p-s": "`tests.py` has no `test_` at the start and no `_test` at the end. A plural is not a match.",
+          "p-r": "`returns.py` is the code under test. Its name matches neither pattern.",
+          "p-k-h": "`helpers.py` is in the tests folder, but its own name matches neither pattern."
+        }
+      },
+      "explain": {
+        "text": "Three names match: `test_returns.py`, `vol_test.py` and `test_drawdown.py` one folder down. `tests.py` is a near miss, and the folder name does not make `helpers.py` count. Inside the matching files, only `test...` functions run.",
+        "canvas": {
+          "highlight": [
+            "p-t",
+            "p-v",
+            "p-k-dd"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Most tests have three parts, in a fixed order. They are called **arrange, act, assert**.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Step",
+            "Job"
+          ],
+          "rows": [
+            [
+              "Arrange",
+              "set up the inputs"
+            ],
+            [
+              "Act",
+              "call the code once"
+            ],
+            [
+              "Assert",
+              "compare with the hand answer"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Put the lines of `test_down_day` in arrange, act, assert order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "`def test_down_day():`"
+          },
+          {
+            "id": "arr",
+            "text": "`    p0, p1 = 100.00, 90.00`"
+          },
+          {
+            "id": "act",
+            "text": "`    r = simple_return(p0, p1)`"
+          },
+          {
+            "id": "ass",
+            "text": "`    assert r == -0.1`"
+          }
+        ],
+        "answer": [
+          "def",
+          "arr",
+          "act",
+          "ass"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The prices have to exist before the code can use them."
+        },
+        {
+          "rung": "point",
+          "text": "Act means calling the code under test once.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The `def` line, then the prices, then the call, then the assert on its result."
+        }
+      ],
+      "feedback": {
+        "correct": "Inputs first, one call, then the check.",
+        "generic": "Not quite right. Each line needs what the line above it made."
+      },
+      "explain": {
+        "text": "The arrange line makes the prices, the act line calls `simple_return` once, and the assert compares with −0.1. A reader can see at a glance what is tested and what the answer should be.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now write one. `test_up_day` shows the shape. Fill in `test_down_day` for a fall from £100.00 to £90.00, working out the answer by hand.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "`simple_return` version",
+            "Your test should"
+          ],
+          "rows": [
+            [
+              "(p1 − p0) / p0, the right one",
+              "pass"
+            ],
+            [
+              "four broken versions",
+              "fail"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "A test earns its keep by failing on wrong code"
+        }
+      },
+      "question": "Write `test_down_day` in arrange, act, assert order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def simple_return(p0, p1):\n    return (p1 - p0) / p0\n\n\ndef test_up_day():\n    p0, p1 = 100.00, 110.00          # arrange\n    r = simple_return(p0, p1)        # act\n    assert r == 0.1                  # assert\n\n\ndef test_down_day():\n    # a fall from £100.00 to £90.00\n    pass\n",
+        "solution": "def simple_return(p0, p1):\n    return (p1 - p0) / p0\n\n\ndef test_up_day():\n    p0, p1 = 100.00, 110.00          # arrange\n    r = simple_return(p0, p1)        # act\n    assert r == 0.1                  # assert\n\n\ndef test_down_day():\n    # a fall from £100.00 to £90.00\n    p0, p1 = 100.00, 90.00\n    r = simple_return(p0, p1)\n    assert r == -0.1\n",
+        "examples": [
+          {
+            "call": "test_down_day()",
+            "expect": "None"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "simple_return = lambda p0, p1: (p1 - p0) / p0",
+            "call": "test_down_day()",
+            "expect": "None"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: (p1 - p0) / p1",
+            "call": "test_down_day()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: abs(p1 - p0) / p0",
+            "call": "test_down_day()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: (p0 - p1) / p0",
+            "call": "test_down_day()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: p1 / p0",
+            "call": "test_down_day()",
+            "compare": "raises",
+            "expect": "Exception"
+          }
+        ],
+        "how": "Check calls `test_down_day()` five times: with the right `simple_return`, where it must pass, and with four broken versions, where it must fail."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "£90.00 is £10.00 below £100.00. What is that as a return?"
+        },
+        {
+          "rung": "step",
+          "text": "The return is −10 / 100 = −0.1. Write `p0, p1 = 100.00, 90.00`, then `r = simple_return(p0, p1)`, then `assert r == -0.1`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your test passes on the right code and fails on all four broken versions.",
+        "generic": "Not quite right. Read which version your test let through.",
+        "byKey": {
+          "test-1": "Your test fails on the right `simple_return`. Check your hand answer: £10.00 down on £100.00 is −0.1.",
+          "test-2": "The version that divides by the later price got through. Assert the exact value, −0.1, not just its sign.",
+          "test-3": "The version that drops the minus sign got through. A fall must come out negative.",
+          "test-5": "The version that forgets to subtract 1 got through. Check the exact value, −0.1.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "From £100.00 to £90.00 is −10 / 100 = −0.1. Asserting that exact value catches the sign, divisor and ratio bugs together. A fall is a separate behaviour from a rise, so it gets its own test.\n\n```python\ndef test_down_day():\n    p0, p1 = 100.00, 90.00\n    r = simple_return(p0, p1)\n    assert r == -0.1\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A colleague puts three behaviours into one test function. A change then breaks the one-price case and the fall case.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "Inside `test_returns()`"
+          ],
+          "rows": [
+            [
+              "1",
+              "`assert daily_returns([100.00, 110.00]) == [0.1]`"
+            ],
+            [
+              "2",
+              "`assert daily_returns([100.00]) == []`"
+            ],
+            [
+              "3",
+              "`assert daily_returns([100.00, 90.00]) == [-0.1]`"
+            ]
+          ],
+          "align": [
+            "center",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does pytest report for this test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "first",
+            "text": "One failure, at line 2. Line 3 never runs.",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "Two failures, at lines 2 and 3",
+            "why": "You counted the broken asserts. A test stops at its first failing assert, so line 3 never runs.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "id": "both",
+            "text": "One failure, listing lines 2 and 3",
+            "why": "A test stops at its first failing assert. The report can only show line 2."
+          },
+          {
+            "id": "pass",
+            "text": "A pass, since line 1 still holds",
+            "why": "One failing assert fails the whole test. Passing line 1 is not enough."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a false assert do to the lines after it?"
+        },
+        {
+          "rung": "point",
+          "text": "The first broken behaviour is on line 2.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Line 2 raises `AssertionError`. The function stops there, so line 3 is never checked."
+        }
+      ],
+      "feedback": {
+        "correct": "The test stops at line 2, so the broken fall case stays hidden.",
+        "generic": "Not quite right. Think about what a false assert does to the lines after it."
+      },
+      "explain": {
+        "text": "Line 2 raises `AssertionError` and the function stops, so the fall case on line 3 is never checked. You would fix line 2 and only then meet a second failure. Write **one test per behaviour**: `test_up_day`, `test_one_price`, `test_down_day`.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          },
+          "caption": "Stops at line 2. Line 3 is never checked."
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "To see a failure for yourself, you add a test with a wrong answer on purpose. You run `pytest -q`.\n\n```python\ndef test_up_day():\n    assert simple_return(100.00, 110.00) == 0.1\n\ndef test_down_day():\n    assert simple_return(100.00, 90.00) == -0.1\n\ndef flat_day_test():\n    assert simple_return(100.00, 100.00) == 5.0   # wrong on purpose\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Terminal"
+          ],
+          "rows": [
+            [
+              "`$ pytest -q`"
+            ],
+            [
+              "`..`"
+            ],
+            [
+              "`2 passed in 0.01s`"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "Three functions in the file, two dots"
+        }
+      },
+      "question": "Why does pytest report `2 passed` and no failure?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "name",
+            "text": "It never ran `flat_day_test`: the name does not start with `test`",
+            "correct": true
+          },
+          {
+            "id": "suffix",
+            "text": "`_test` at the end counts, so the test ran and 5.0 must be right",
+            "why": "You carried the file rule over to functions. Files may end in `_test`, but functions must start with `test`."
+          },
+          {
+            "id": "later",
+            "text": "pytest reports failures only after a second run",
+            "why": "Every run reports every failure it meets. This one met none, because the test was never called."
+          },
+          {
+            "id": "flat",
+            "text": "A flat day returns nothing, so there was nothing to compare",
+            "why": "`simple_return(100.00, 100.00)` returns 0.0. If the test had run, `0.0 == 5.0` would have failed."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the dots: one per test that ran."
+        },
+        {
+          "rung": "point",
+          "text": "Two dots, but three functions.",
+          "highlight": [
+            "r1c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The two dots are `test_up_day` and `test_down_day`. Check how the third name begins."
+        }
+      ],
+      "feedback": {
+        "correct": "Two dots for two tests: the third was never collected.",
+        "generic": "Not quite right. Count the dots and match them to the functions.",
+        "byKey": {
+          "suffix": "You carried the file rule over to functions. A file may end in `_test.py`, but a function must start with `test`."
+        }
+      },
+      "explain": {
+        "text": "One dot per test that ran: two dots, two tests. `flat_day_test` does not start with `test`, so pytest skipped it without a word. A misnamed test is worse than none, because it looks like cover.",
+        "canvas": {
+          "highlight": [
+            "r1c0"
+          ],
+          "caption": "Two dots: `flat_day_test` was never collected"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Every test you wrote has this shape, in a file pytest will collect:\n\n```python\n# test_returns.py\nfrom returns import simple_return\n\ndef test_down_day():\n    p0, p1 = 100.00, 90.00        # arrange\n    r = simple_return(p0, p1)     # act\n    assert r == -0.1              # assert\n```\n\nThen, in a terminal open at the project folder, `pytest -q` runs every test it collects.",
+      "question": "Which terminal command runs every test in the project?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "q",
+            "text": "`pytest -q`",
+            "correct": true
+          },
+          {
+            "id": "python",
+            "text": "`python test_returns.py`",
+            "why": "That runs the file as a script. It defines the tests but never calls them, so nothing is checked."
+          },
+          {
+            "id": "func",
+            "text": "`pytest test_down_day`",
+            "why": "pytest takes files or folders, not a bare function name. `pytest -q` runs them all."
+          },
+          {
+            "id": "import",
+            "text": "`import pytest`",
+            "why": "That is a line of Python, not a terminal command."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The tool's name is also its command."
+        },
+        {
+          "rung": "step",
+          "text": "Type `pytest`, with `-q` for the short report, in the project folder."
+        }
+      ],
+      "feedback": {
+        "correct": "`pytest -q` collects and runs every test below the current folder.",
+        "generic": "Not quite right. The command is the tool's own name."
+      },
+      "explain": {
+        "text": "`pytest` collects from the folder you are in and every folder below. `-q` keeps the report short: one character per test, then a summary. Running the file with `python` only defines the functions."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A backtest books each trade's profit or loss with `trade_pnl(shares, entry, exit)`. Profits and losses are separate behaviours, so each gets its own test. Work out both answers in pounds by hand.",
+      "question": "Write `test_profit` and `test_loss` so they pass on the right `trade_pnl` and fail on broken ones.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def trade_pnl(shares, entry, exit):\n    # profit or loss in pounds on a round trip: buy at entry, sell at exit\n    return shares * (exit - entry)\n\n\ndef test_profit():\n    # 40 shares bought at £12.50 and sold at £13.75\n    pass\n\n\ndef test_loss():\n    # 40 shares bought at £12.50 and sold at £11.25\n    pass\n",
+        "solution": "def trade_pnl(shares, entry, exit):\n    # profit or loss in pounds on a round trip: buy at entry, sell at exit\n    return shares * (exit - entry)\n\n\ndef test_profit():\n    # 40 shares bought at £12.50 and sold at £13.75\n    pnl = trade_pnl(40, 12.50, 13.75)\n    assert pnl == 50.0\n\n\ndef test_loss():\n    # 40 shares bought at £12.50 and sold at £11.25\n    pnl = trade_pnl(40, 12.50, 11.25)\n    assert pnl == -50.0\n",
+        "examples": [
+          {
+            "call": "test_profit()",
+            "expect": "None"
+          },
+          {
+            "call": "test_loss()",
+            "expect": "None"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "trade_pnl = lambda shares, entry, exit: shares * (exit - entry)",
+            "call": "test_profit()",
+            "expect": "None"
+          },
+          {
+            "setup": "trade_pnl = lambda shares, entry, exit: shares * (exit - entry)",
+            "call": "test_loss()",
+            "expect": "None"
+          },
+          {
+            "setup": "trade_pnl = lambda shares, entry, exit: shares * (entry - exit)",
+            "call": "(test_profit(), test_loss())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "trade_pnl = lambda shares, entry, exit: exit - entry",
+            "call": "(test_profit(), test_loss())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "trade_pnl = lambda shares, entry, exit: shares * exit - entry",
+            "call": "(test_profit(), test_loss())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "trade_pnl = lambda shares, entry, exit: abs(shares * (exit - entry))",
+            "call": "test_loss()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "trade_pnl = lambda shares, entry, exit: shares * (exit - entry) - 10.0",
+            "call": "test_profit()",
+            "compare": "raises",
+            "expect": "Exception"
+          }
+        ],
+        "how": "Check runs your two tests against the right `trade_pnl`, where both must pass, and against five broken versions. Each broken version must make at least one test fail."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The profit is 40 times the rise in price. The loss is 40 times the fall."
+        },
+        {
+          "rung": "point",
+          "text": "£13.75 − £12.50 is £1.25, and £11.25 − £12.50 is −£1.25."
+        },
+        {
+          "rung": "step",
+          "text": "`assert trade_pnl(40, 12.50, 13.75) == 50.0` and `assert trade_pnl(40, 12.50, 11.25) == -50.0`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both tests pass on the right code, and every broken version fails one.",
+        "generic": "Not quite right. Read which version your tests let through.",
+        "byKey": {
+          "test-1": "`test_profit` fails on the right code. Recheck: 40 × £1.25 is £50.00.",
+          "test-2": "`test_loss` fails on the right code. Recheck: 40 × −£1.25 is −£50.00.",
+          "test-6": "The version that books every loss as a profit got through. `test_loss` must assert a negative number.",
+          "test-7": "The version that knocks £10.00 off every trade got through. Assert the exact amount, not a rough one.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "40 × (£13.75 − £12.50) = £50.00, and 40 × (£11.25 − £12.50) = −£50.00. Only the loss test can catch the version that drops the sign. That is why a loss is a behaviour of its own.\n\n```python\ndef test_profit():\n    assert trade_pnl(40, 12.50, 13.75) == 50.0\n\ndef test_loss():\n    assert trade_pnl(40, 12.50, 11.25) == -50.0\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "pytest collects files named `test_*.py` or `*_test.py`, in every folder below, and calls the functions in them whose names start with `test`.",
+      "A test arranges its inputs, acts by calling the code once, and asserts the result against a hand answer.",
+      "One test per behaviour: a test stops at its first failing assert, so anything after it goes unchecked."
+    ],
+    "formula": {
+      "name": "Run the tests",
+      "tex": "\\texttt{pytest -q}",
+      "note": "From the project folder. One character per test: `.` for a pass, `F` for a failure."
+    },
+    "trap": "A function named `flat_day_test` is never run. For functions, `test` must come first, and pytest skips the rest silently."
+  },
+  "quiz": [
+    {
+      "id": "q-which-runs",
+      "difficulty": 2,
+      "prose": "A file named `test_signal.py` holds these four functions.",
+      "question": "Which one does pytest run?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "t",
+            "text": "`def test_crossover():`",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "`def check_crossover():`",
+            "why": "You went by what the function does. pytest goes by the name, which must start with `test`."
+          },
+          {
+            "id": "s",
+            "text": "`def crossover_test():`",
+            "why": "You put `test` at the end. For functions, pytest wants it at the start."
+          },
+          {
+            "id": "cap",
+            "text": "`def Test_crossover():`",
+            "why": "Names are case-sensitive. pytest looks for lower-case `test`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only `test_crossover` starts with `test`.",
+        "generic": "Not quite right. pytest collects functions whose names start with `test`."
+      },
+      "explain": {
+        "text": "pytest calls functions whose names start with lower-case `test`. A `_test` ending works for file names but not for functions."
+      }
+    },
+    {
+      "id": "q-no-assert",
+      "difficulty": 3,
+      "prose": "```python\ndef test_down_day():\n    r = simple_return(100.00, 90.00)\n```",
+      "question": "`simple_return` has a bug and returns 5.0 here. What does pytest report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pass",
+            "text": "The test passes",
+            "correct": true
+          },
+          {
+            "id": "fail",
+            "text": "The test fails",
+            "why": "You expected the test to know the answer. Without an assert it never compares `r` with anything."
+          },
+          {
+            "id": "skip",
+            "text": "pytest skips it, since it has no assert",
+            "why": "pytest does not read inside the function. It calls it, and the call finishes without an error."
+          },
+          {
+            "id": "err",
+            "text": "pytest stops with a `SyntaxError`",
+            "why": "A function without an assert is valid Python. It just checks nothing."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It ran to the end without an error, so it passes.",
+        "generic": "Not quite right. A test fails only when something inside it raises an error."
+      },
+      "explain": {
+        "text": "A test passes when it runs to the end without raising. With no assert, nothing can raise, so any result passes. Every test needs an assert against a hand answer."
+      }
+    },
+    {
+      "id": "q-aaa-act",
+      "difficulty": 2,
+      "prose": "```python\ndef test_one_price():\n    prices = [100.00]\n    r = daily_returns(prices)\n    assert r == []\n```",
+      "question": "Which line is the act step?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "act",
+            "text": "`r = daily_returns(prices)`",
+            "correct": true
+          },
+          {
+            "id": "arr",
+            "text": "`prices = [100.00]`",
+            "why": "That sets up the input. It is the arrange step."
+          },
+          {
+            "id": "ass",
+            "text": "`assert r == []`",
+            "why": "That compares with the hand answer. It is the assert step."
+          },
+          {
+            "id": "def",
+            "text": "`def test_one_price():`",
+            "why": "That names the test. The act step is the one call to the code under test."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The act step is the one call to the code under test.",
+        "generic": "Not quite right. Find the line that runs `daily_returns`."
+      },
+      "explain": {
+        "text": "Arrange makes `prices`, act calls `daily_returns` once, and assert checks the result is `[]`. One price is the edge case: no gaps, so no returns."
+      }
+    }
+  ]
+}

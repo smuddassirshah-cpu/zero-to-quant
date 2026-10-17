@@ -1,0 +1,930 @@
+{
+  "id": "l4-floats-in-tests",
+  "course": "pytest",
+  "title": "Testing with floats",
+  "minutes": 13,
+  "objectives": [
+    "Explain why `==` on floats makes a test fail on correct code",
+    "Compare floats in tests with `pytest.approx`",
+    "Choose relative or absolute tolerance for returns and money"
+  ],
+  "skills": [
+    "pt-basics",
+    "pt-cases"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Exactly 10%",
+      "prose": "A share rises from £10.10 to £11.11. On paper that is £1.01 on £10.10, exactly 10%. You write the test the obvious way.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "p0",
+            "p1",
+            "Change",
+            "Return on paper"
+          ],
+          "rows": [
+            [
+              "£10.10",
+              "£11.11",
+              "£1.01",
+              "exactly 10%"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "`assert simple_return(10.10, 11.11) == 0.1`"
+        }
+      },
+      "question": "`simple_return` is correct. Does the test pass?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fails",
+            "text": "No, it fails",
+            "correct": true
+          },
+          {
+            "id": "passes",
+            "text": "Yes: the return is exactly 0.1",
+            "why": "You did the sum on paper, where it is exact. In floats the code gives 0.09999999999999998."
+          },
+          {
+            "id": "error",
+            "text": "It stops with a `TypeError`",
+            "why": "Dividing two floats is fine. The code returns a number, just not quite 0.1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Can a float hold 10.10 or 11.11 exactly?"
+        },
+        {
+          "rung": "step",
+          "text": "Neither price is stored exactly, so their difference is a hair off £1.01, and the return a hair off 0.1."
+        }
+      ],
+      "feedback": {
+        "correct": "Right code, failed test: the float is a hair below 0.1.",
+        "generic": "Not quite right. Think about how floats store 10.10 and 11.11."
+      },
+      "explain": {
+        "text": "pytest reports `assert 0.09999999999999998 == 0.1`. Neither price is stored exactly in binary, so the result misses 0.1 by about 2.8e−17. The code is right; the test demands an exactness floats cannot give.",
+        "canvas": {
+          "caption": "`E  assert 0.09999999999999998 == 0.1`",
+          "highlight": {
+            "cols": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Instead of exact equality, accept any result within a **tolerance** of 0.1. The table holds the right code's float result and a real bug's result. Drag the tolerance from tiny to large and read the caption.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Version",
+            "Result",
+            "Gap from 0.1"
+          ],
+          "rows": [
+            [
+              "right code, in floats",
+              "0.09999999999999998",
+              "2.8e−17"
+            ],
+            [
+              "bug: divides by £11.11",
+              "0.0909",
+              "0.0091"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "params": {
+            "tol": -18
+          }
+        },
+        "controls": [
+          {
+            "bind": "tol",
+            "min": -18,
+            "max": -1,
+            "step": 1,
+            "start": -18,
+            "label": "Tolerance, as a power of ten"
+          }
+        ],
+        "derive": {
+          "caption": "Tolerance 1e{{tol}}: right code {{2.8 * pow(10, -17) <= pow(10, tol) ? \"passes\" : \"fails\"}}, bug {{0.0091 <= pow(10, tol) ? \"passes\" : \"fails\"}}"
+        }
+      },
+      "question": "Which tolerances let the right code pass and still fail the bug?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "middle",
+            "text": "Anything from 1e−16 to 1e−3",
+            "correct": true
+          },
+          {
+            "id": "tiny",
+            "text": "Only the smallest, 1e−18",
+            "why": "At 1e−18 the right code fails too: its gap, 2.8e−17, is larger.",
+            "canvas": {
+              "params": {
+                "tol": -18
+              }
+            }
+          },
+          {
+            "id": "big",
+            "text": "The largest, 1e−1",
+            "why": "At 1e−1 the bug passes too: its gap, 0.0091, is smaller.",
+            "canvas": {
+              "params": {
+                "tol": -1
+              }
+            }
+          },
+          {
+            "id": "none",
+            "text": "No tolerance does both",
+            "why": "Drag through the middle. From 1e−16 to 1e−3 the right code passes and the bug fails.",
+            "canvas": {
+              "params": {
+                "tol": -6
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each tolerance with the two gaps, 2.8e−17 and 0.0091."
+        }
+      ],
+      "feedback": {
+        "correct": "A wide band of tolerances separates a rounding slip from a real bug.",
+        "generic": "Not quite right. A tolerance must be above 2.8e−17 and below 0.0091."
+      },
+      "explain": {
+        "text": "A rounding slip is around 1e−17, while a real bug moves the answer in the second or third decimal place. Any tolerance between them tells the two apart. That gap is why comparing within a tolerance is safe.",
+        "canvas": {
+          "params": {
+            "tol": -6
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "pytest does this for you. `x == pytest.approx(0.1)` is True when `x` is within a millionth of 0.1, relative to 0.1. That tolerance sits in the safe band you found.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Assert"
+          ],
+          "rows": [
+            [
+              "`0.09999999999999998 == pytest.approx(0.1)`"
+            ],
+            [
+              "`0.1 == pytest.approx(0.1)`"
+            ],
+            [
+              "`0.0909 == pytest.approx(0.1)`"
+            ],
+            [
+              "`0.11 == pytest.approx(0.1)`"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Select all that apply: which of these asserts pass?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "slip",
+            "text": "`0.09999999999999998 == pytest.approx(0.1)`",
+            "correct": true
+          },
+          {
+            "id": "exact",
+            "text": "`0.1 == pytest.approx(0.1)`",
+            "correct": true
+          },
+          {
+            "id": "bug",
+            "text": "`0.0909 == pytest.approx(0.1)`",
+            "why": "A gap of 0.0091 is about 9% of 0.1. approx allows a millionth."
+          },
+          {
+            "id": "high",
+            "text": "`0.11 == pytest.approx(0.1)`",
+            "why": "A gap of 0.01 is 10% of 0.1, far beyond a millionth."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A millionth of 0.1 is 1e−7. Which gaps are smaller than that?"
+        },
+        {
+          "rung": "point",
+          "text": "An exact match has a gap of zero.",
+          "highlight": [
+            "r1c0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The slip and the exact value pass. Both real misses fail.",
+        "generic": "Not quite right. Compare each gap with a millionth of 0.1, which is 1e−7.",
+        "byKey": {
+          "exact": "An exact 0.1 passes too: a gap of zero is within any tolerance."
+        }
+      },
+      "explain": {
+        "text": "A millionth of 0.1 is 1e−7. The slip of 2.8e−17 is far inside it, and an exact match has no gap at all. The misses of 0.0091 and 0.01 are far outside.",
+        "canvas": {
+          "highlight": [
+            "r0c0",
+            "r1c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The tolerance is **relative**: a millionth of the expected value. A test checks a fund's book value:\n\n```python\nassert book_value(holdings) == pytest.approx(1250000.00)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Expected",
+            "Relative tolerance",
+            "Allowed gap"
+          ],
+          "rows": [
+            [
+              "£1,250,000.00",
+              "1e−6",
+              "?"
+            ]
+          ],
+          "align": [
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How large a gap, in pounds, does `pytest.approx` allow here?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.25,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "£",
+        "placeholder": "Pounds",
+        "label": "Allowed gap in pounds",
+        "accept": "£1.25: a millionth of £1,250,000.00.",
+        "wrong": [
+          {
+            "id": "abs",
+            "value": 1e-06,
+            "tol": {
+              "abs": 1e-07
+            }
+          },
+          {
+            "id": "tenth",
+            "value": 0.125,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "big",
+            "value": 12.5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the expected value by the relative tolerance."
+        },
+        {
+          "rung": "step",
+          "text": "£1,250,000.00 × 0.000001 = £1.25."
+        }
+      ],
+      "feedback": {
+        "correct": "£1.25 either side of £1,250,000.00 passes.",
+        "generic": "Not quite right. Multiply £1,250,000.00 by one millionth.",
+        "byKey": {
+          "abs": "You took a millionth as a fixed gap. It is a millionth of the expected value, which here is £1.25.",
+          "tenth": "You moved the decimal point one place too far. £1,250,000.00 × 0.000001 is £1.25.",
+          "big": "You moved the decimal point one place the other way. A millionth of £1,250,000.00 is £1.25."
+        }
+      },
+      "explain": {
+        "text": "£1,250,000.00 × 1e−6 = £1.25, so a pricing bug of £1.00 would pass. On money you often want a fixed gap instead: `pytest.approx(1250000.00, abs=0.005)` allows half a penny. The `rel=` and `abs=` arguments set each kind of gap.",
+        "canvas": {
+          "values": {
+            "r0c2": "£1.25"
+          },
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Three trades should net to zero. In floats the P&L comes out as `0.10 + 0.20 - 0.30`, which is `5.551115123125783e-17`, not 0.0.\n\n```python\nassert pnl == pytest.approx(0.0)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Expected",
+            "A millionth of it",
+            "Actual gap"
+          ],
+          "rows": [
+            [
+              "0.0",
+              "0.0",
+              "5.6e−17"
+            ]
+          ],
+          "align": [
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Does the assert pass?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: near zero, approx also allows a fixed gap of 1e−12",
+            "correct": true
+          },
+          {
+            "id": "no",
+            "text": "No: a millionth of 0 is 0, so only exactly 0.0 passes",
+            "why": "You applied the relative rule alone. approx also has a fixed floor of 1e−12, for exactly this case."
+          },
+          {
+            "id": "refuse",
+            "text": "No: approx refuses an expected value of 0",
+            "why": "approx accepts 0. Near zero it falls back on its fixed gap of 1e−12."
+          },
+          {
+            "id": "penny",
+            "text": "Yes: approx ignores anything below a penny",
+            "why": "The floor is 1e−12, far below a penny. `0.001 == pytest.approx(0.0)` fails."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A relative tolerance of 0 would accept nothing. pytest adds a second, fixed gap."
+        },
+        {
+          "rung": "step",
+          "text": "approx allows the larger of a millionth of the expected value and 1e−12. Here that is 1e−12, and 5.6e−17 is smaller."
+        }
+      ],
+      "feedback": {
+        "correct": "5.6e−17 is inside the fixed floor of 1e−12.",
+        "generic": "Not quite right. Near zero the relative gap vanishes, so think about what else approx allows."
+      },
+      "explain": {
+        "text": "approx allows the larger of $10^{-6}$ times the expected value and $10^{-12}$. With an expected 0.0 that is $10^{-12}$, so the slip passes. This is the edge case of approx: an expected value of zero.",
+        "canvas": {
+          "values": {
+            "r0c1": "1e−12 floor"
+          },
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A colleague rewrites `simple_return` as `return p1 / p0 - 1`. On paper it is the same formula. An old test, which used to pass, now fails:\n\n```python\nassert simple_return(100.00, 110.00) == 0.1\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Version",
+            "Formula",
+            "`simple_return(100.00, 110.00)`"
+          ],
+          "rows": [
+            [
+              "before",
+              "(p1 − p0) / p0",
+              "0.1"
+            ],
+            [
+              "after",
+              "p1 / p0 − 1",
+              "0.10000000000000009"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "test",
+            "text": "The test: `==` demanded one exact float, and the new formula rounds differently",
+            "correct": true
+          },
+          {
+            "id": "code",
+            "text": "The new formula: it gives the wrong return",
+            "why": "You trusted the failing test. $p_1/p_0 - 1 = (p_1 - p_0)/p_0$ on paper; the gap is 8.3e−17, a rounding slip."
+          },
+          {
+            "id": "prices",
+            "text": "The prices: round prices should give exact returns",
+            "why": "The old formula happened to round to exactly 0.1. The new one computes 1.1 first, and 1.1 is not exact in binary."
+          },
+          {
+            "id": "rerun",
+            "text": "Nothing: rerun and it will pass",
+            "why": "Floats are deterministic. The same formula gives the same 0.10000000000000009 every time."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is $p_1/p_0 - 1$ the same as $(p_1 - p_0)/p_0$ on paper?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at the size of the gap in the last column.",
+          "highlight": [
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The gap is 8.3e−17. The code is right; only an exact comparison could fail on that."
+        }
+      ],
+      "feedback": {
+        "correct": "A correct refactor broke an exact test. The test was fragile all along.",
+        "generic": "Not quite right. Decide whether 0.10000000000000009 is a bug or a rounding slip.",
+        "byKey": {
+          "code": "You trusted the failing test. The two formulas agree on paper, and the gap of 8.3e−17 is a rounding slip."
+        }
+      },
+      "explain": {
+        "text": "`110.00 / 100.00` is 1.1, which binary stores a hair high, so subtracting 1 leaves 0.10000000000000009. The code did not change its meaning, only its rounding. With `pytest.approx(0.1)` the test passes both versions and still catches real bugs.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          },
+          "caption": "Gap 8.3e−17: a rounding slip, not a bug"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Write a test that survives that refactor. The starter's first lines stand in for pytest, which this page cannot load; in your project you write `import pytest` instead.",
+      "question": "Write `test_ten_percent_rise` for £10.10 to £11.11 with `pytest.approx`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n\ndef simple_return(p0, p1):\n    return (p1 - p0) / p0\n\n\ndef test_ten_percent_rise():\n    # £10.10 to £11.11 is a rise of exactly 10%\n    pass\n",
+        "solution": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n\ndef simple_return(p0, p1):\n    return (p1 - p0) / p0\n\n\ndef test_ten_percent_rise():\n    # £10.10 to £11.11 is a rise of exactly 10%\n    r = simple_return(10.10, 11.11)\n    assert r == pytest.approx(0.1)\n",
+        "examples": [
+          {
+            "call": "test_ten_percent_rise()",
+            "expect": "None"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "simple_return = lambda p0, p1: (p1 - p0) / p0",
+            "call": "test_ten_percent_rise()",
+            "expect": "None"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: p1 / p0 - 1",
+            "call": "test_ten_percent_rise()",
+            "expect": "None"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: (p1 - p0) / p1",
+            "call": "test_ten_percent_rise()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: p1 / p0",
+            "call": "test_ten_percent_rise()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: (p0 - p1) / p0",
+            "call": "test_ten_percent_rise()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "simple_return = lambda p0, p1: (p1 - p0) / p0 * 100",
+            "call": "test_ten_percent_rise()",
+            "compare": "raises",
+            "expect": "Exception"
+          }
+        ],
+        "how": "Check runs your test against both correct formulas, `(p1 - p0) / p0` and `p1 / p0 - 1`, where it must pass. Then against four broken versions, where it must fail."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The hand answer is 0.1. Compare with it through `pytest.approx`."
+        },
+        {
+          "rung": "step",
+          "text": "`assert simple_return(10.10, 11.11) == pytest.approx(0.1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your test passes both correct formulas and fails all four bugs.",
+        "generic": "Not quite right. Read which version your test let through or rejected.",
+        "byKey": {
+          "test-1": "Your test fails on the right code. With `==`, the float 0.09999999999999998 is not 0.1: use `pytest.approx(0.1)`.",
+          "test-2": "Your test fails on the refactored formula, which gives 0.10000000000000009. Compare with `pytest.approx(0.1)`.",
+          "test-3": "The version that divides by £11.11 got through. Your tolerance is too loose: keep approx's default.",
+          "test-5": "The version with the sign flipped got through. Check the value, not just its size.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "Both formulas land within a millionth of 0.1, so the test passes either way. The bugs miss by at least 9%, so they still fail. The test now checks the meaning of the code, not its rounding.\n\n```python\ndef test_ten_percent_rise():\n    assert simple_return(10.10, 11.11) == pytest.approx(0.1)\n```"
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Whenever a result is a float, compare it with `pytest.approx`:\n\n```python\nimport pytest\n\ndef test_ten_percent_rise():\n    assert simple_return(10.10, 11.11) == pytest.approx(0.1)\n```\n\nThe default gap is the larger of $10^{-6}$ times the expected value and $10^{-12}$. `rel=` and `abs=` change it. approx also takes a list.",
+      "question": "Which line compares a list of returns correctly?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "list",
+            "text": "`assert daily_returns(p) == pytest.approx([0.1, 0.1])`",
+            "correct": true
+          },
+          {
+            "id": "inside",
+            "text": "`assert pytest.approx(daily_returns(p) == [0.1, 0.1])`",
+            "why": "The `==` inside runs first and compares exactly. approx then wraps a True or False."
+          },
+          {
+            "id": "round",
+            "text": "`assert round(daily_returns(p), 2) == [0.1, 0.1]`",
+            "why": "`round` takes one number, not a list, so this raises `TypeError`."
+          },
+          {
+            "id": "exact",
+            "text": "`assert daily_returns(p) == [0.1, 0.1]`",
+            "why": "That is exact equality again, element by element. One rounding slip fails it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does approx go in the single-number version?"
+        },
+        {
+          "rung": "step",
+          "text": "On the right of `==`, wrapping the expected value. For a list, wrap the whole expected list."
+        }
+      ],
+      "feedback": {
+        "correct": "Wrap the expected list in approx, on the right of `==`.",
+        "generic": "Not quite right. approx wraps the expected value, on its own side of `==`."
+      },
+      "explain": {
+        "text": "approx wraps the expected value and does the comparing itself. Given a list, it compares element by element, each within its own tolerance. Putting `==` inside approx compares exactly before approx can help."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A risk report quotes **annualised volatility**: the sample standard deviation of daily returns times $\\sqrt{252}$. Test it on two inputs you can work out by hand. Write the hand answer as an expression, such as `math.sqrt(0.0002 * 252)`, not a rounded decimal.",
+      "question": "Write `test_two_days` and `test_constant_returns` with `pytest.approx`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\nimport statistics\n\n\ndef annualised_vol(returns):\n    # sample standard deviation of daily returns, scaled to 252 trading days\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef test_two_days():\n    # daily returns of +1% and -1%\n    pass\n\n\ndef test_constant_returns():\n    # the same return every day, such as 0.3%\n    pass\n",
+        "solution": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\nimport statistics\n\n\ndef annualised_vol(returns):\n    # sample standard deviation of daily returns, scaled to 252 trading days\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef test_two_days():\n    # daily returns of +1% and -1%\n    # mean 0, squared gaps 0.0001 + 0.0001 = 0.0002, over n - 1 = 1\n    vol = annualised_vol([0.01, -0.01])\n    assert vol == pytest.approx(math.sqrt(0.0002 * 252))\n\n\ndef test_constant_returns():\n    # the same return every day, such as 0.3%\n    vol = annualised_vol([0.003, 0.003, 0.003])\n    assert vol == pytest.approx(0.0)\n",
+        "examples": [
+          {
+            "call": "test_two_days()",
+            "expect": "None"
+          },
+          {
+            "call": "test_constant_returns()",
+            "expect": "None"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "annualised_vol = lambda returns: statistics.stdev(returns) * math.sqrt(252)",
+            "call": "test_two_days()",
+            "expect": "None"
+          },
+          {
+            "setup": "annualised_vol = lambda returns: math.sqrt(statistics.variance(returns) * 252)",
+            "call": "test_two_days()",
+            "expect": "None"
+          },
+          {
+            "setup": "annualised_vol = lambda returns: statistics.stdev(returns) * math.sqrt(252)",
+            "call": "test_constant_returns()",
+            "expect": "None"
+          },
+          {
+            "setup": "annualised_vol = lambda returns: math.sqrt(statistics.variance(returns) * 252)",
+            "call": "test_constant_returns()",
+            "expect": "None"
+          },
+          {
+            "setup": "annualised_vol = lambda returns: statistics.pstdev(returns) * math.sqrt(252)",
+            "call": "(test_two_days(), test_constant_returns())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "annualised_vol = lambda returns: statistics.stdev(returns) * 252",
+            "call": "(test_two_days(), test_constant_returns())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "annualised_vol = lambda returns: statistics.stdev(returns) * math.sqrt(365)",
+            "call": "(test_two_days(), test_constant_returns())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "annualised_vol = lambda returns: statistics.stdev(returns)",
+            "call": "(test_two_days(), test_constant_returns())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "annualised_vol = lambda returns: math.sqrt(sum(r * r for r in returns) / (len(returns) - 1) * 252)",
+            "call": "(test_two_days(), test_constant_returns())",
+            "compare": "raises",
+            "expect": "Exception"
+          }
+        ],
+        "how": "Check runs both tests against two correct versions, which round differently, where they must pass. Then against five broken versions, where at least one test must fail."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For +1% and −1% the mean is 0. Each squared gap from it is 0.0001."
+        },
+        {
+          "rung": "point",
+          "text": "The sample variance divides by n − 1 = 1: 0.0002. Annualised vol is the square root of 0.0002 × 252."
+        },
+        {
+          "rung": "step",
+          "text": "`assert annualised_vol([0.01, -0.01]) == pytest.approx(math.sqrt(0.0002 * 252))`, and for a constant series such as `[0.003, 0.003, 0.003]`, `== pytest.approx(0.0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both tests pass on both correct versions, and every bug fails one.",
+        "generic": "Not quite right. Read which version your tests let through or rejected.",
+        "byKey": {
+          "test-1": "`test_two_days` fails on the right code. Use the exact expression `math.sqrt(0.0002 * 252)`: a rounded 0.2245 is outside a millionth.",
+          "test-2": "`test_two_days` fails on a correct version that rounds differently. Compare with `pytest.approx`, not `==`.",
+          "test-3": "`test_constant_returns` fails on the right code. A constant series has no spread, so expect 0.0.",
+          "test-5": "The version that divides by n instead of n − 1 got through. Check `test_two_days` against the sample variance, 0.0002.",
+          "test-9": "The version that forgets to subtract the mean got through. Use a nonzero constant return, such as 0.3% every day.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "For +1% and −1% the squared gaps sum to 0.0002 over $n - 1 = 1$, so vol is $\\sqrt{0.0002 \\times 252} \\approx 0.2245$. A constant series has zero spread, which only a nonzero constant can test. approx lets both correct versions pass despite their different last digits.\n\n```python\ndef test_two_days():\n    assert annualised_vol([0.01, -0.01]) == pytest.approx(math.sqrt(0.0002 * 252))\n\ndef test_constant_returns():\n    assert annualised_vol([0.003, 0.003, 0.003]) == pytest.approx(0.0)\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Floats round, so correct code can miss a hand answer by about 1e−17. `==` turns that slip into a failed test.",
+      "`x == pytest.approx(y)` passes when the gap is within the larger of $10^{-6} |y|$ and $10^{-12}$. It works on single numbers and on lists.",
+      "The default gap is relative, so it grows with the value. For money, set `abs=` to a fixed gap such as half a penny."
+    ],
+    "formula": {
+      "name": "approx's default gap",
+      "tex": "|x - y| \\le \\max(10^{-6}\\,|y|,\\ 10^{-12})",
+      "note": "Change it with `rel=` and `abs=`."
+    },
+    "trap": "An exact `==` test can fail after a correct refactor, such as `p1 / p0 - 1` for `(p1 - p0) / p0`. Compare floats with approx."
+  },
+  "quiz": [
+    {
+      "id": "q-sum-floats",
+      "difficulty": 2,
+      "prose": "Two trades make £0.10 and £0.20. A test checks the total.",
+      "question": "Which assert is right for this test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "approx",
+            "text": "`assert 0.10 + 0.20 == pytest.approx(0.30)`",
+            "correct": true
+          },
+          {
+            "id": "eq",
+            "text": "`assert 0.10 + 0.20 == 0.30`",
+            "why": "You trusted `==` on floats. `0.10 + 0.20` is 0.30000000000000004, so this fails."
+          },
+          {
+            "id": "round",
+            "text": "`assert round(0.10 + 0.20) == 0.30`",
+            "why": "`round` with no places rounds to a whole number, 0. That is not 0.30."
+          },
+          {
+            "id": "str",
+            "text": "`assert str(0.10 + 0.20) == \"0.3\"`",
+            "why": "The text of the sum is `0.30000000000000004`, so this fails too."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "approx accepts the tiny slip in 0.30000000000000004.",
+        "generic": "Not quite right. Work out what `0.10 + 0.20` gives in floats."
+      },
+      "explain": {
+        "text": "`0.10 + 0.20` is 0.30000000000000004 in floats. `pytest.approx(0.30)` accepts it, since the slip is far below a millionth of 0.30."
+      }
+    },
+    {
+      "id": "q-rel-gap",
+      "difficulty": 3,
+      "prose": "A test asserts `price == pytest.approx(250.00)`, with the default tolerance.",
+      "question": "What is the largest gap from £250.00 that passes, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.00025,
+        "tol": {
+          "abs": 1e-06
+        },
+        "unit": "£",
+        "label": "Largest gap in pounds",
+        "placeholder": "Pounds",
+        "accept": "£0.00025: a millionth of £250.00.",
+        "wrong": [
+          {
+            "id": "abs",
+            "value": 1e-06,
+            "tol": {
+              "abs": 1e-07
+            }
+          },
+          {
+            "id": "floor",
+            "value": 1e-12,
+            "tol": {
+              "abs": 1e-13
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£250.00 × 1e−6 = £0.00025.",
+        "generic": "Not quite right. Multiply the expected value by one millionth.",
+        "byKey": {
+          "abs": "You took a millionth as a fixed gap. It is relative: a millionth of £250.00.",
+          "floor": "1e−12 is the floor for values near zero. Here a millionth of £250.00 is larger."
+        }
+      },
+      "explain": {
+        "text": "approx allows the larger of $10^{-6} \\times 250 = 0.00025$ and $10^{-12}$. So £0.00025 either side of £250.00 passes."
+      }
+    },
+    {
+      "id": "q-no-approx",
+      "difficulty": 2,
+      "prose": "`p` is a list of five closing prices.",
+      "question": "Which assert is safe without `pytest.approx`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "len",
+            "text": "`assert len(daily_returns(p)) == 4`",
+            "correct": true
+          },
+          {
+            "id": "ret",
+            "text": "`assert daily_returns(p)[0] == 0.012`",
+            "why": "A return is a float from a division. It can miss 0.012 by a rounding slip."
+          },
+          {
+            "id": "sum",
+            "text": "`assert sum(daily_returns(p)) == 0.05`",
+            "why": "A sum of floats piles up rounding slips. Compare with approx."
+          },
+          {
+            "id": "vol",
+            "text": "`assert annualised_vol(daily_returns(p)) == 0.18`",
+            "why": "A square root of a float is almost never exact. Compare with approx."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A length is a whole number, so `==` is exact.",
+        "generic": "Not quite right. Look for the assert that compares whole numbers."
+      },
+      "explain": {
+        "text": "`len` counts, so it gives an exact whole number: five prices, four returns. Every other assert compares floats, which need approx."
+      }
+    }
+  ]
+}

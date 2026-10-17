@@ -1,0 +1,1457 @@
+{
+  "id": "l8-new-columns",
+  "course": "numpy-pandas",
+  "title": "Computing new columns",
+  "minutes": 15,
+  "objectives": [
+    "Add columns computed from other columns without a loop.",
+    "Set values with one `.loc` call, and choose vectorised arithmetic over `apply`."
+  ],
+  "skills": [
+    "pd-frames",
+    "np-broadcast"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One day's return",
+      "prose": "The stock closed at £12.55 on 4 March and £12.31 on 5 March.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "close",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              ""
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              ""
+            ],
+            [
+              "2024-03-06",
+              "12.48",
+              ""
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              ""
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              ""
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "closes, in £"
+        }
+      },
+      "question": "What was the return on 5 March, in %? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.019124,
+        "tol": {
+          "abs": 0.00005
+        },
+        "unit": "%",
+        "placeholder": "For example 1.25",
+        "label": "Return on 5 March, in %",
+        "accept": "−1.91%: 12.31 / 12.55 − 1 = −0.019124.",
+        "wrong": [
+          {
+            "id": "change",
+            "value": -0.0024,
+            "tol": {
+              "abs": 0.00005
+            }
+          },
+          {
+            "id": "new-base",
+            "value": -0.019497,
+            "tol": {
+              "abs": 0.00005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A return is the new price over the old one, minus 1."
+        },
+        {
+          "rung": "point",
+          "text": "Divide 12.31 by 12.55.",
+          "highlight": [
+            "r0c1",
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "12.31 / 12.55 − 1 = −0.0191, so −1.91%."
+        }
+      ],
+      "feedback": {
+        "correct": "A fall of 1.91%.",
+        "generic": "Not quite right. Divide the 5 March close by the 4 March close, then subtract 1.",
+        "byKey": {
+          "change": "You gave the change in pounds, −£0.24. A return divides it by the earlier price.",
+          "new-base": "You divided by the new close, 12.31. A return divides by the earlier close, 12.55."
+        }
+      },
+      "explain": {
+        "text": "$12.31 / 12.55 - 1 = -0.0191$, a fall of 1.91%. Each day's return uses that day's close and the one before. pandas can do every row at once.",
+        "canvas": {
+          "values": {
+            "r1c2": "−0.019124"
+          },
+          "highlight": {
+            "cells": [
+              "r0c1",
+              "r1c1",
+              "r1c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A whole column at once",
+      "prose": "Assigning to a new name adds a column. `pct_change` divides each value by the one before, minus 1.\n\n```python\ndf[\"ret\"] = df[\"close\"].pct_change()\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "close",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              ""
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              ""
+            ],
+            [
+              "2024-03-06",
+              "12.48",
+              ""
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              ""
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              ""
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`, with an empty `ret` column"
+        }
+      },
+      "question": "What is `ret` on 4 March?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "nan",
+            "text": "`NaN`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "`0.0`",
+            "why": "You expected pandas to fill the first day. It has no earlier close, so pandas leaves the return missing."
+          },
+          {
+            "id": "close",
+            "text": "`12.55`",
+            "why": "The column holds returns, not prices. The first one has nothing to divide by."
+          },
+          {
+            "id": "error",
+            "text": "A `KeyError`, because `ret` does not exist yet",
+            "why": "Assigning to a new name creates the column; only reading a missing one fails."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A return needs the close from the day before."
+        },
+        {
+          "rung": "point",
+          "text": "Is there a row before 4 March in `df`?",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With no earlier close, the first return is missing: NaN."
+        }
+      ],
+      "feedback": {
+        "correct": "No earlier close, so no return.",
+        "generic": "Not quite right. Ask what 4 March's close would be divided by."
+      },
+      "explain": {
+        "text": "`pct_change` gives each row its close over the previous close, minus 1, in one vectorised step. 4 March has no previous close, so its return is NaN. Five closes give four returns.",
+        "canvas": {
+          "values": {
+            "r0c2": "NaN",
+            "r1c2": "−0.019124",
+            "r2c2": "0.013810",
+            "r3c2": "0.011218",
+            "r4c2": "−0.014263"
+          },
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Reading the new column",
+      "prose": "The new column works like any other.\n\n```python\nprint(round(df[\"ret\"].iloc[2], 4))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "close",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "NaN"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "−0.019124"
+            ],
+            [
+              "2024-03-06",
+              "12.48",
+              "0.013810"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "0.011218"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "−0.014263"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0138,
+        "tol": {
+          "abs": 0.00005
+        },
+        "placeholder": "For example 0.0123",
+        "label": "Value printed",
+        "accept": "0.0138: 12.48 / 12.31 − 1.",
+        "wrong": [
+          {
+            "id": "from-one",
+            "value": -0.0191,
+            "tol": {
+              "abs": 0.00005
+            }
+          },
+          {
+            "id": "next",
+            "value": 0.0112,
+            "tol": {
+              "abs": 0.00005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Position 2 is the third row."
+        },
+        {
+          "rung": "point",
+          "text": "The third row is 6 March.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "12.48 / 12.31 − 1 = 0.0138."
+        }
+      ],
+      "feedback": {
+        "correct": "6 March's return: 0.0138.",
+        "generic": "Not quite right. Count positions from 0 and read the `ret` column.",
+        "byKey": {
+          "from-one": "That is position 1, 5 March. Position 2 is the third row, 6 March.",
+          "next": "That is 7 March, position 3. Count from 0: 4, 5, then 6 March."
+        }
+      },
+      "explain": {
+        "text": "Position 2 is 6 March: $12.48 / 12.31 - 1 = 0.0138$. The NaN in row 0 still counts as a position.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r2c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A signal column",
+      "prose": "`np.where` builds a column from a mask: 1 on up days, −1 otherwise.\n\n```python\ndf[\"signal\"] = np.where(df[\"ret\"] > 0, 1, -1)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "close",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "NaN"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "−0.019124"
+            ],
+            [
+              "2024-03-06",
+              "12.48",
+              "0.013810"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "0.011218"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "−0.014263"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the date of every row where `signal` is −1.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0",
+          "r1c0",
+          "r4c0"
+        ],
+        "countWord": "picked",
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "wrong": [
+          {
+            "id": "nan-day",
+            "set": [
+              "r1c0",
+              "r4c0"
+            ],
+            "flash": [
+              "r0c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A row gets −1 whenever `ret > 0` is False."
+        },
+        {
+          "rung": "point",
+          "text": "What is `NaN > 0`?",
+          "highlight": [
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "NaN > 0 is False, so 4 March gets −1, with 5 and 8 March."
+        }
+      ],
+      "feedback": {
+        "correct": "The two losing days, and the NaN day.",
+        "generic": "Not quite right. Every row where `ret > 0` is False gets −1.",
+        "byKey": {
+          "nan-day": "You skipped 4 March. `NaN > 0` is False, so `np.where` gives it −1.",
+          "r0c0": "You skipped 4 March. `NaN > 0` is False, so `np.where` gives it −1."
+        }
+      },
+      "explain": {
+        "text": "Any comparison with NaN is False, so the first day becomes a sell signal by accident. `np.sign(df[\"ret\"])` keeps it NaN instead. Always check what your rule does on the first row.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Changing a filtered copy",
+      "prose": "You want `flag` to be −1 on the losing days.\n\n```python\ndf[\"flag\"] = 0\ndf[df[\"ret\"] < 0][\"flag\"] = -1\nprint((df[\"flag\"] == -1).sum())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "close",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "NaN"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "−0.019124"
+            ],
+            [
+              "2024-03-06",
+              "12.48",
+              "0.013810"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "0.011218"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "−0.014263"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "`2`",
+            "why": "You expected the change to reach `df`. The first brackets made a filtered copy, and only the copy changed."
+          },
+          {
+            "id": "zero",
+            "text": "`0`, with a `SettingWithCopyWarning`",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "`3`",
+            "why": "That counts 4 March too. `NaN < 0` is False, and in any case `df` was not changed."
+          },
+          {
+            "id": "error",
+            "text": "It stops with an error",
+            "why": "pandas warns rather than stopping. The line runs and changes nothing in `df`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `df[df[\"ret\"] < 0]` return: `df` itself, or a new frame?"
+        },
+        {
+          "rung": "point",
+          "text": "It returns a new, filtered frame. The second brackets write into that.",
+          "highlight": [
+            "r1",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The copy changes and is thrown away. `df[\"flag\"]` is still all 0."
+        }
+      ],
+      "feedback": {
+        "correct": "The write went to a copy, so `df` kept its zeros.",
+        "generic": "Not quite right. Follow where `[\"flag\"] = -1` actually writes.",
+        "byKey": {
+          "two": "You expected 5 and 8 March to change. The write went into a filtered copy, so `df` still holds zeros.",
+          "three": "Nothing in `df` changed, so the count is 0.",
+          "error": "There is no error, only a `SettingWithCopyWarning`. The count is 0."
+        }
+      },
+      "explain": {
+        "text": "`df[mask]` builds a new frame, and `[\"flag\"] = -1` writes into it; the copy is then lost. That is chained assignment, and pandas warns about it. Write one step instead: `df.loc[df[\"ret\"] < 0, \"flag\"] = -1`.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One step with loc",
+      "prose": "`.loc` takes the row mask and the column together, so it writes into `df` itself.\n\n```python\ndf[\"flag\"] = 0\ndf.loc[df[\"ret\"] < 0, \"flag\"] = -1\nprint(df[\"flag\"].sum())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "close",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "NaN"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "−0.019124"
+            ],
+            [
+              "2024-03-06",
+              "12.48",
+              "0.013810"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "0.011218"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "−0.014263"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "−2: 5 and 8 March are −1.",
+        "wrong": [
+          {
+            "id": "nan",
+            "value": -3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "copy",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows have `ret < 0`?"
+        },
+        {
+          "rung": "point",
+          "text": "5 and 8 March lost money. What about the NaN day?",
+          "highlight": [
+            "r1c2",
+            "r4c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two rows become −1; the rest stay 0. The sum is −2."
+        }
+      ],
+      "feedback": {
+        "correct": "Two losing days flagged: −2.",
+        "generic": "Not quite right. Count the rows where `ret < 0` is True.",
+        "byKey": {
+          "nan": "You counted 4 March. `NaN < 0` is False, so its flag stays 0.",
+          "copy": "This time `.loc` writes into `df` itself, so the two flags stick."
+        }
+      },
+      "explain": {
+        "text": "`df.loc[mask, \"flag\"]` names rows and column in one step, so the write lands in `df`. 5 and 8 March become −1 and the sum is −2.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r1c2",
+              "r4c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One row at a time",
+      "prose": "`apply` calls a function of yours on each part of a frame.\n\n```python\nvalue = book.apply(lambda row: row[\"price\"] * row[\"qty\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*ticker*",
+            "price",
+            "qty"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "118.40",
+              "50"
+            ],
+            [
+              "BARC",
+              "2.15",
+              "2000"
+            ],
+            [
+              "HSBA",
+              "6.62",
+              "800"
+            ],
+            [
+              "VOD",
+              "0.71",
+              "5000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`book`, prices in £"
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "values",
+            "text": "`value` holds the four position values",
+            "why": "That needs `axis=1`. By default `apply` passes each column, and a column has no label `price`."
+          },
+          {
+            "id": "keyerror",
+            "text": "It stops with `KeyError: 'price'`",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "`value` holds two numbers, one per column",
+            "why": "You expected a result per column. The function itself fails on the first column, before anything is returned."
+          },
+          {
+            "id": "total",
+            "text": "`value` is the total book value, £19,066.00",
+            "why": "`apply` never adds up the rows by itself. Here it fails before that, with `KeyError`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "By default, does `apply` hand your function a row or a column?"
+        },
+        {
+          "rung": "point",
+          "text": "It hands it a column. What are the labels of the `price` column?",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The labels are tickers, so `row[\"price\"]` raises `KeyError`."
+        }
+      ],
+      "feedback": {
+        "correct": "Without `axis=1`, `apply` passes columns.",
+        "generic": "Not quite right. Check what `apply` passes to the function by default.",
+        "byKey": {
+          "values": "That needs `axis=1`. By default the function gets a column, labelled by ticker, so `row[\"price\"]` fails.",
+          "two": "The function fails on the first column, so nothing comes back.",
+          "total": "`apply` does not sum anything here. It fails with `KeyError`."
+        }
+      },
+      "explain": {
+        "text": "By default `apply` passes columns, so `row[\"price\"]` fails. With `axis=1` it works, but calls Python once per row. `book[\"price\"] * book[\"qty\"]` does it in one vectorised step, far faster on a big table.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "New columns, in one place",
+      "prose": "The patterns, in one place.\n\n```python\ndf[\"ret\"] = df[\"close\"].pct_change()          # first row NaN\ndf[\"signal\"] = np.where(df[\"ret\"] > 0, 1, -1)  # NaN > 0 is False\ndf.loc[df[\"ret\"] < 0, \"flag\"] = -1            # mask and column, one step\nbook[\"value\"] = book[\"price\"] * book[\"qty\"]    # matched by label\nout = df.assign(ret=df[\"close\"].pct_change())  # new frame, df unchanged\n```",
+      "question": "Which line sets `size` to 0 on each day with a missing return, in `df` itself?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`df.loc[df[\"ret\"].isna(), \"size\"] = 0`",
+            "correct": true
+          },
+          {
+            "id": "chained",
+            "text": "`df[df[\"ret\"].isna()][\"size\"] = 0`",
+            "why": "That writes into a filtered copy, so `df` does not change."
+          },
+          {
+            "id": "eqnan",
+            "text": "`df.loc[df[\"ret\"] == np.nan, \"size\"] = 0`",
+            "why": "`== np.nan` is False everywhere, so no row is selected."
+          },
+          {
+            "id": "apply",
+            "text": "`df[\"size\"] = df[\"ret\"].isna().apply(lambda x: 0)`",
+            "why": "That returns 0 for every row, missing or not."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`.loc` with an `isna` mask, in one step.",
+        "generic": "Not quite right. You need a mask from `isna` and a single `.loc` write."
+      },
+      "explain": {
+        "text": "`df[\"ret\"].isna()` is True on the first day only, and `.loc[mask, \"size\"] = 0` writes there in `df` itself. The other rows of the new column are NaN until you set them."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Fix the flags",
+      "prose": "This function should return −1 on each losing day and 0 on every other day, the NaN day included. It returns all zeros. Fix the marked line.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "close",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "NaN"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "−0.019124"
+            ],
+            [
+              "2024-03-06",
+              "12.48",
+              "0.013810"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "0.011218"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "−0.014263"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df` in the first example"
+        }
+      },
+      "question": "Fix `loss_flags(df)` so the write reaches the frame.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef loss_flags(df):\n    df = df.copy()\n    df[\"flag\"] = 0\n    df[df[\"ret\"] < 0][\"flag\"] = -1   # this line does not change df\n    return df[\"flag\"].tolist()\n",
+        "solution": "import pandas as pd\n\ndef loss_flags(df):\n    df = df.copy()\n    df[\"flag\"] = 0\n    df.loc[df[\"ret\"] < 0, \"flag\"] = -1\n    return df[\"flag\"].tolist()\n",
+        "tests": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44], \"ret\": [None, -0.019124, 0.013810, 0.011218, -0.014263]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"])",
+            "call": "loss_flags(df)",
+            "expect": "[0, -1, 0, 0, -1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [100.00, 98.00, 98.00, 99.47], \"ret\": [None, -0.02, 0.0, 0.015]}, index=[\"d1\", \"d2\", \"d3\", \"d4\"])",
+            "call": "loss_flags(df)",
+            "expect": "[0, -1, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [40.00, 41.00, 42.00], \"ret\": [None, 0.025, 0.02439]}, index=[\"d1\", \"d2\", \"d3\"])",
+            "call": "loss_flags(df)",
+            "expect": "[0, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44], \"ret\": [None, -0.019124, 0.013810, 0.011218, -0.014263]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"])",
+            "call": "sum(loss_flags(df))",
+            "expect": "-2",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44], \"ret\": [None, -0.019124, 0.013810, 0.011218, -0.014263]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"]); out = loss_flags(df)",
+            "call": "list(df.columns)",
+            "expect": "['close', 'ret']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [5.00, 4.90, 4.85, 4.70], \"ret\": [None, -0.02, -0.010204, -0.030928]}, index=[\"d1\", \"d2\", \"d3\", \"d4\"])",
+            "call": "loss_flags(df)",
+            "expect": "[0, -1, -1, -1]",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44], \"ret\": [None, -0.019124, 0.013810, 0.011218, -0.014263]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"])",
+            "call": "loss_flags(df)",
+            "expect": "[0, -1, 0, 0, -1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [100.00, 98.00, 98.00, 99.47], \"ret\": [None, -0.02, 0.0, 0.015]}, index=[\"d1\", \"d2\", \"d3\", \"d4\"])",
+            "call": "loss_flags(df)",
+            "expect": "[0, -1, 0, 0]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on small frames with a `ret` column. Each list must match exactly. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The marked line writes into a filtered copy."
+        },
+        {
+          "rung": "point",
+          "text": "Give the mask and the column to one `.loc`.",
+          "highlight": [
+            "r1c2",
+            "r4c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`df.loc[df[\"ret\"] < 0, \"flag\"] = -1`"
+        }
+      ],
+      "feedback": {
+        "correct": "One `.loc` write, and the flags stick.",
+        "generic": "Some tests failed. Check that the write uses `.loc` with the mask and the column together.",
+        "byKey": {
+          "test-1": "Test 1 expects `[0, -1, 0, 0, -1]`. All zeros means the write still goes to a copy.",
+          "test-2": "Test 2 has a flat day, return 0.0. It is not a loss, so use `< 0`.",
+          "test-5": "Test 5 checks that the caller's frame gains no `flag` column. Keep the `df = df.copy()` line.",
+          "error": "Your code stopped with an error. The fixed line is `df.loc[df[\"ret\"] < 0, \"flag\"] = -1`."
+        }
+      },
+      "explain": {
+        "text": "`df.loc[mask, \"flag\"] = -1` selects rows and column in one call, so pandas writes into `df`. The copy at the top keeps the caller's frame as it was.\n\n```python\ndf[df[\"ret\"] < 0][\"flag\"] = -1    # writes to a copy\ndf.loc[df[\"ret\"] < 0, \"flag\"] = -1  # writes to df\n```"
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Spreads in basis points",
+      "prose": "A quote has a bid and an ask, in £. The spread in basis points is $(\\text{ask} - \\text{bid}) / \\text{mid} \\times 10000$, where the mid is their average. Work on whole columns, without `apply`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*ticker*",
+            "bid",
+            "ask"
+          ],
+          "rows": [
+            [
+              "XYZ",
+              "12.30",
+              "12.32"
+            ],
+            [
+              "BARC",
+              "2.15",
+              "2.16"
+            ],
+            [
+              "AZN",
+              "118.40",
+              "118.46"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`quotes` in the first example"
+        }
+      },
+      "question": "Complete `spread_bps(quotes)`: a list of spreads, rounded to 1 place.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef spread_bps(quotes):\n    mid = ...\n    spread = ...\n    return spread.round(1).tolist()\n",
+        "solution": "import pandas as pd\n\ndef spread_bps(quotes):\n    mid = (quotes[\"bid\"] + quotes[\"ask\"]) / 2\n    spread = (quotes[\"ask\"] - quotes[\"bid\"]) / mid * 10000\n    return spread.round(1).tolist()\n",
+        "tests": [
+          {
+            "setup": "quotes = pd.DataFrame({\"bid\": [12.30, 2.15, 118.40], \"ask\": [12.32, 2.16, 118.46]}, index=[\"XYZ\", \"BARC\", \"AZN\"])",
+            "call": "spread_bps(quotes)",
+            "expect": "[16.2, 46.4, 5.1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "quotes = pd.DataFrame({\"bid\": [99.98], \"ask\": [100.02]}, index=[\"GILT\"])",
+            "call": "spread_bps(quotes)",
+            "expect": "[4.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "quotes = pd.DataFrame({\"ask\": [6.63, 0.72], \"bid\": [6.61, 0.71]}, index=[\"HSBA\", \"VOD\"])",
+            "call": "spread_bps(quotes)",
+            "expect": "[30.2, 139.9]",
+            "compare": "equal"
+          },
+          {
+            "setup": "quotes = pd.DataFrame({\"bid\": [24.37, 24.37], \"ask\": [24.37, 24.40]}, index=[\"t1\", \"t2\"])",
+            "call": "spread_bps(quotes)",
+            "expect": "[0.0, 12.3]",
+            "compare": "equal"
+          },
+          {
+            "setup": "quotes = pd.DataFrame({\"bid\": [12.30, 2.15, 118.40], \"ask\": [12.32, 2.16, 118.46]}, index=[\"XYZ\", \"BARC\", \"AZN\"])",
+            "call": "len(spread_bps(quotes))",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "quotes = pd.DataFrame({\"bid\": [1.00, 50.00, 250.00, 3.10], \"ask\": [1.01, 50.05, 250.50, 3.12]}, index=[\"a\", \"b\", \"c\", \"d\"])",
+            "call": "spread_bps(quotes)",
+            "expect": "[99.5, 10.0, 20.0, 64.3]",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "quotes = pd.DataFrame({\"bid\": [12.30, 2.15, 118.40], \"ask\": [12.32, 2.16, 118.46]}, index=[\"XYZ\", \"BARC\", \"AZN\"])",
+            "call": "spread_bps(quotes)",
+            "expect": "[16.2, 46.4, 5.1]",
+            "compare": "equal"
+          },
+          {
+            "setup": "quotes = pd.DataFrame({\"bid\": [99.98], \"ask\": [100.02]}, index=[\"GILT\"])",
+            "call": "spread_bps(quotes)",
+            "expect": "[4.0]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on small quote tables. Each list must match exactly after rounding to 1 place. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two columns in, one column out: each step is whole-column arithmetic."
+        },
+        {
+          "rung": "point",
+          "text": "The mid is `(quotes[\"bid\"] + quotes[\"ask\"]) / 2`.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`spread = (quotes[\"ask\"] - quotes[\"bid\"]) / mid * 10000`."
+        }
+      ],
+      "feedback": {
+        "correct": "Column arithmetic, no loop and no `apply`.",
+        "generic": "Some tests failed. Check that you divide by the mid, not the bid or the ask.",
+        "byKey": {
+          "test-1": "Test 1 expects `[16.2, 46.4, 5.1]`. 16.3 means you divided by the bid; 16.2 needs the mid, 12.31.",
+          "error": "Your code stopped with an error. Check both `...` lines use `quotes[\"bid\"]` and `quotes[\"ask\"]`."
+        }
+      },
+      "explain": {
+        "text": "Each line works on whole columns, matched row by row, so there is no loop. XYZ's spread is $0.02 / 12.31 \\times 10000 = 16.2$ basis points. A cheap stock with a one-penny spread, like BARC, costs far more to trade."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Returns for the backtest",
+      "prose": "A backtest needs daily returns beside the prices. Return a new frame with every column of `df` plus `ret`, the simple return from `close`. Leave `df` itself unchanged; the backtest reuses it.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "close",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "NaN"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "−0.019124"
+            ],
+            [
+              "2024-03-06",
+              "12.48",
+              "0.013810"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "0.011218"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "−0.014263"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "what `with_returns(df)` returns for the first example"
+        }
+      },
+      "question": "Complete `with_returns(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef with_returns(df):\n    out = ...\n    return out\n",
+        "solution": "import pandas as pd\n\ndef with_returns(df):\n    out = df.assign(ret=df[\"close\"].pct_change())\n    return out\n",
+        "tests": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"])",
+            "call": "with_returns(df)[\"ret\"].iloc[1:].round(6).tolist()",
+            "expect": "[-0.019124, 0.01381, 0.011218, -0.014263]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"])",
+            "call": "bool(pd.isna(with_returns(df)[\"ret\"].iloc[0]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [250.00, 252.50, 247.45, 249.92], \"volume\": [5200, 6100, 4800, 5000]}, index=[\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"])",
+            "call": "list(with_returns(df).columns)",
+            "expect": "['close', 'volume', 'ret']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [250.00, 252.50, 247.45, 249.92], \"volume\": [5200, 6100, 4800, 5000]}, index=[\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"])",
+            "call": "with_returns(df)[\"ret\"].iloc[1:].round(6).tolist()",
+            "expect": "[0.01, -0.02, 0.009982]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"]); out = with_returns(df)",
+            "call": "list(df.columns)",
+            "expect": "['close']",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"])",
+            "call": "len(with_returns(df))",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [7.05]}, index=[\"2025-01-02\"])",
+            "call": "bool(with_returns(df)[\"ret\"].isna().all())",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.55, 12.31, 12.48, 12.62, 12.44]}, index=[\"2024-03-04\", \"2024-03-05\", \"2024-03-06\", \"2024-03-07\", \"2024-03-08\"])",
+            "call": "with_returns(df)[\"ret\"].iloc[1:].round(6).tolist()",
+            "expect": "[-0.019124, 0.01381, 0.011218, -0.014263]",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [250.00, 252.50, 247.45, 249.92], \"volume\": [5200, 6100, 4800, 5000]}, index=[\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"])",
+            "call": "list(with_returns(df).columns)",
+            "expect": "['close', 'volume', 'ret']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on small price frames. Returns are compared after rounding to 6 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You need a copy of `df` with one more column."
+        },
+        {
+          "rung": "point",
+          "text": "`df.assign(name=values)` returns a new frame with the column added.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`out = df.assign(ret=df[\"close\"].pct_change())`."
+        }
+      ],
+      "feedback": {
+        "correct": "A new frame with returns; the original untouched.",
+        "generic": "Some tests failed. Check the first return and the caller's frame.",
+        "byKey": {
+          "test-2": "Test 2 expects the first return to be NaN. Do not fill it with 0: no return exists for that day.",
+          "test-5": "Test 5 checks that `df` gained no column. `df[\"ret\"] = ...` changes the caller's frame; use `assign` or a copy.",
+          "error": "Your code stopped with an error. Check that `out` is a frame, built from `df[\"close\"].pct_change()`."
+        }
+      },
+      "explain": {
+        "text": "`assign` returns a new frame with `ret` added, so the caller's `df` is unchanged. The first return stays NaN: there is no earlier close, and 0 would claim a flat day.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Assigning to a new name adds a column computed from whole columns: `df[\"ret\"] = df[\"close\"].pct_change()`.",
+      "Write with one `.loc[mask, column]` call. `df[mask][column] = x` changes a copy and leaves `df` alone.",
+      "Vectorised column arithmetic beats `apply`, which calls Python once per row and passes columns unless `axis=1`."
+    ],
+    "formula": {
+      "name": "Simple return column",
+      "tex": "r_t = \\dfrac{p_t}{p_{t-1}} - 1",
+      "note": "`df[\"close\"].pct_change()`: the first row is NaN, never 0."
+    },
+    "trap": "`df[df[\"ret\"] < 0][\"flag\"] = -1` writes into a filtered copy, so `df` does not change. Use `df.loc[df[\"ret\"] < 0, \"flag\"] = -1`."
+  },
+  "quiz": [
+    {
+      "id": "q-pct-change",
+      "difficulty": 2,
+      "prose": "```python\ns = pd.Series([10.00, 11.00, 9.90])\nprint(s.pct_change().round(2).tolist())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[nan, 0.1, -0.1]`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "`[0.0, 0.1, -0.1]`",
+            "why": "You filled the first day with 0. pandas leaves it NaN: there is no earlier price."
+          },
+          {
+            "id": "diff",
+            "text": "`[nan, 1.0, -1.1]`",
+            "why": "Those are the changes in price, `s.diff()`. `pct_change` divides by the earlier price."
+          },
+          {
+            "id": "short",
+            "text": "`[0.1, -0.1]`",
+            "why": "`pct_change` keeps every row, so the first one is NaN rather than gone."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One NaN, then two returns.",
+        "generic": "Not quite right. Each value is divided by the one before it, minus 1."
+      },
+      "explain": {
+        "text": "$11 / 10 - 1 = 0.1$ and $9.9 / 11 - 1 = -0.1$. The first row has no earlier price, so it is NaN, and the length stays 3."
+      }
+    },
+    {
+      "id": "q-apply",
+      "difficulty": 3,
+      "prose": "Two ways to value a book of 10,000 positions.\n\n```python\na = book.apply(lambda row: row[\"price\"] * row[\"qty\"], axis=1)\nb = book[\"price\"] * book[\"qty\"]\n```",
+      "question": "Which is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Same values; `b` is one vectorised step, `a` one Python call per row",
+            "correct": true
+          },
+          {
+            "id": "differ",
+            "text": "`a` and `b` give different values",
+            "why": "Both multiply each row's price by its quantity, so the values agree."
+          },
+          {
+            "id": "faster",
+            "text": "`a` is faster because it works row by row",
+            "why": "Row by row is the slow way: 10,000 Python calls instead of one array operation."
+          },
+          {
+            "id": "needs",
+            "text": "`b` fails unless the columns are sorted",
+            "why": "Columns of one frame share an index, so they are matched row by row whatever the order."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Same answer; the vectorised line is the fast one.",
+        "generic": "Not quite right. Compare what each line computes and how many Python calls it makes."
+      },
+      "explain": {
+        "text": "Both give price times quantity for every row. `apply` with `axis=1` calls the lambda 10,000 times; the vectorised line runs one operation in compiled code. Reach for `apply` only when no vectorised form exists."
+      }
+    },
+    {
+      "id": "q-where-nan",
+      "difficulty": 3,
+      "prose": "```python\nret = pd.Series([None, 0.5, -0.2])\nprint(np.where(ret > 0, 1, -1).tolist())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[-1, 1, -1]`",
+            "correct": true
+          },
+          {
+            "id": "nan",
+            "text": "`[nan, 1, -1]`",
+            "why": "You expected NaN to pass through. `NaN > 0` is False, so `np.where` takes −1."
+          },
+          {
+            "id": "zero",
+            "text": "`[0, 1, -1]`",
+            "why": "`np.where` has only two choices here, 1 and −1. There is no 0."
+          },
+          {
+            "id": "short",
+            "text": "`[1, -1]`",
+            "why": "`np.where` keeps every row, the missing one included."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The missing day gets −1.",
+        "generic": "Not quite right. Work out `NaN > 0` first."
+      },
+      "explain": {
+        "text": "`NaN > 0` is False, so the first day takes the second choice, −1. A missing return becomes a sell signal unless you handle it."
+      }
+    },
+    {
+      "id": "q-assign",
+      "difficulty": 2,
+      "prose": "`df` has one column, `close`.\n\n```python\nout = df.assign(ret=df[\"close\"].pct_change())\nprint(len(df.columns))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "1: `assign` returns a new frame and leaves `df` alone.",
+        "wrong": [
+          {
+            "id": "changed",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`df` still has one column.",
+        "generic": "Not quite right. `assign` returns a new frame; it does not change `df`.",
+        "byKey": {
+          "changed": "That is `len(out.columns)`. `assign` built a new frame, so `df` still has only `close`."
+        }
+      },
+      "explain": {
+        "text": "`assign` returns a new frame with `ret` added, so `out` has two columns and `df` still has one. `df[\"ret\"] = ...` would change `df` itself."
+      }
+    }
+  ]
+}

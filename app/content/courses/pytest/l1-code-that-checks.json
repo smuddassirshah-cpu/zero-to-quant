@@ -1,0 +1,920 @@
+{
+  "id": "l1-code-that-checks",
+  "course": "pytest",
+  "title": "Code that checks code",
+  "minutes": 11,
+  "objectives": [
+    "See a test catch a broken change before it does damage",
+    "Write an assert that stops a script when a result is wrong",
+    "Choose test inputs whose answers you can work out by hand"
+  ],
+  "skills": [
+    "pt-basics",
+    "pt-cases"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The file that flipped",
+      "prose": "Your script turns a vendor's closing prices into daily returns. It reads the file from top to bottom. This month the vendor switched the file to newest first, and told nobody.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "Date",
+              "Close"
+            ],
+            "rows": [
+              [
+                "3 Mar",
+                "£100.00"
+              ],
+              [
+                "4 Mar",
+                "£110.00"
+              ],
+              [
+                "5 Mar",
+                "£121.00"
+              ]
+            ],
+            "align": [
+              "left",
+              "right"
+            ],
+            "label": "Last month's file"
+          },
+          "state": {
+            "caption": "Last month: oldest first"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "Date",
+              "Close"
+            ],
+            "rows": [
+              [
+                "5 Mar",
+                "£121.00"
+              ],
+              [
+                "4 Mar",
+                "£110.00"
+              ],
+              [
+                "3 Mar",
+                "£100.00"
+              ]
+            ],
+            "align": [
+              "left",
+              "right"
+            ],
+            "label": "This month's file"
+          },
+          "state": {
+            "caption": "This month: newest first"
+          }
+        },
+        "state": {}
+      },
+      "question": "The script runs with no error. What does it report for this month's three prices?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "falls",
+            "text": "Two falls of about 9.09%",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Two rises of 10%, as before",
+            "why": "You assumed the script knows the dates. It sees only the numbers, in the order the file gives them."
+          },
+          {
+            "id": "error",
+            "text": "Nothing: it stops with an error",
+            "why": "The script never reads the dates. Python divides any two prices without complaint."
+          },
+          {
+            "id": "rises",
+            "text": "Two rises of about 9.09%",
+            "why": "You reversed the order but kept the sign. Going from £121.00 to £110.00 is a fall."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read this month's file from the top. Which price comes first?"
+        },
+        {
+          "rung": "point",
+          "text": "The script pairs £121.00 with £110.00 first.",
+          "highlight": [
+            "right:r0",
+            "right:r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From £121.00 to £110.00 is a fall of £11.00 on £121.00, about 9.09%."
+        }
+      ],
+      "feedback": {
+        "correct": "A steady rise now reads as a steady slide.",
+        "generic": "Not quite right. Pair the prices in the order this month's file lists them."
+      },
+      "explain": {
+        "text": "The script paired £121.00 with £110.00, then £110.00 with £100.00. Both look like falls of about 9.09%. Nothing crashed, which is why nobody noticed.",
+        "canvas": {
+          "right": {
+            "highlight": {
+              "rows": [
+                0,
+                1
+              ]
+            }
+          },
+          "caption": "−11 / 121 and −10 / 110 are both about −0.0909"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "You want a line of code that runs after the returns are computed and stops the script when they look wrong. Here are five candidates. Each one looks at `r`, the list of returns.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Check on `r`"
+          ],
+          "rows": [
+            [
+              "`assert len(r) == 2`"
+            ],
+            [
+              "`assert r[0] > 0`"
+            ],
+            [
+              "`assert r == [0.1, 0.1]`"
+            ],
+            [
+              "`assert isinstance(r[0], float)`"
+            ],
+            [
+              "`assert r[1] < 1`"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "`r` was `[0.1, 0.1]` last month. This month it is about `[-0.0909, -0.0909]`."
+        }
+      },
+      "question": "Tap every check that would have stopped the script this month.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c0",
+          "r2c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "only-exact",
+            "set": [
+              "r2c0"
+            ]
+          },
+          {
+            "id": "only-sign",
+            "set": [
+              "r1c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each check, ask: is it true for `[0.1, 0.1]`, and is it true for `[-0.0909, -0.0909]`?"
+        },
+        {
+          "rung": "point",
+          "text": "Two checks look at a value that changed between the months.",
+          "highlight": [
+            "r1c0",
+            "r2c0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Those two look at something that changed: the sign, and the exact list.",
+        "generic": "Not quite right. Keep only the checks that are true last month and false this month.",
+        "byKey": {
+          "only-exact": "`r[0] > 0` catches it too. −0.0909 is not above zero.",
+          "only-sign": "`r == [0.1, 0.1]` catches it too. This month's list is different, so the comparison is False.",
+          "r0c0": "Reversing the file kept three prices, so `len(r)` is still 2.",
+          "r3c0": "Both months give floats. The type did not change, only the values.",
+          "r4c0": "−0.0909 is below 1 as well, so that check passes in both months."
+        }
+      },
+      "explain": {
+        "text": "You kept the checks that are true last month and false this month. A check can catch a break only if the break changes what the check looks at. Length, type and a loose upper bound all survived the flip.",
+        "canvas": {
+          "highlight": [
+            "r1c0",
+            "r2c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Each line you tapped is an **assert**: the word `assert`, then a condition. Here is one running on this month's returns.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "Code"
+          ],
+          "rows": [
+            [
+              "1",
+              "`r = [-0.0909, -0.0909]`"
+            ],
+            [
+              "2",
+              "`assert r[0] > 0`"
+            ],
+            [
+              "3",
+              "`print(\"returns saved\")`"
+            ]
+          ],
+          "align": [
+            "center",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "A three-line script"
+        }
+      },
+      "question": "What happens when these three lines run?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stops",
+            "text": "It stops at line 2 with `AssertionError`, and line 3 never runs",
+            "correct": true
+          },
+          {
+            "id": "prints-false",
+            "text": "It prints `False`, then `returns saved`",
+            "why": "You read `assert` as a kind of print. A false assert raises an error on that line."
+          },
+          {
+            "id": "warns",
+            "text": "It warns about line 2, then prints `returns saved`",
+            "why": "You expected a warning. `assert` raises an error, so nothing after it runs."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing happens: asserts only run inside a test tool",
+            "why": "You thought `assert` needs a test runner. It is plain Python and runs anywhere."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is `r[0] > 0` true or false here?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 2 is where the condition is checked.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`r[0]` is −0.0909, so the condition is False. A false assert raises `AssertionError`."
+        }
+      ],
+      "feedback": {
+        "correct": "The false condition stops the script before anything is saved.",
+        "generic": "Not quite right. Work out whether the condition on line 2 is true."
+      },
+      "explain": {
+        "text": "`r[0] > 0` is False, so line 2 raises `AssertionError` and line 3 never runs. When the condition is True, `assert` does nothing at all. That silence on success is what makes asserts cheap to leave in.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          },
+          "caption": "AssertionError at line 2"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The strongest checks compare a result with an answer you work out by hand. The function under test is `simple_return(p0, p1)`, the return from price `p0` to price `p1`.\n\n```python\nassert simple_return(250.00, 255.00) == ...\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "p0",
+            "p1",
+            "Change",
+            "Return"
+          ],
+          "rows": [
+            [
+              "£250.00",
+              "£255.00",
+              "£5.00",
+              "?"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Work out the return by hand"
+        }
+      },
+      "question": "What number belongs after `==`? Give it as a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.02,
+        "tol": {
+          "abs": 1e-05
+        },
+        "placeholder": "For example 0.05",
+        "label": "Return as a decimal",
+        "accept": "0.02 exactly: £5.00 on £250.00.",
+        "wrong": [
+          {
+            "id": "change",
+            "value": 5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "later",
+            "value": 0.0196,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 1.02,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "percent",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A return is the change divided by the starting price."
+        },
+        {
+          "rung": "point",
+          "text": "The change is in the third column.",
+          "highlight": [
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£5.00 divided by £250.00 is 0.02."
+        }
+      ],
+      "feedback": {
+        "correct": "£5.00 on £250.00 is 0.02.",
+        "generic": "Not quite right. Divide the change by the starting price.",
+        "byKey": {
+          "change": "That is the change in pounds. A return divides it by the starting price.",
+          "later": "You divided by the later price, £255.00. A return is measured from where it started.",
+          "ratio": "That is `p1 / p0`. Subtract 1 to turn the ratio into a return.",
+          "percent": "You gave a percentage. In code a 2% return is the decimal 0.02."
+        }
+      },
+      "explain": {
+        "text": "£5.00 / £250.00 = 0.02. You worked it out without running the code, so the assert checks the code against something independent. Copying the code's own output into the assert would check nothing.",
+        "canvas": {
+          "values": {
+            "r0c3": "0.02"
+          },
+          "highlight": {
+            "cols": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A colleague's only check of `simple_return` passes:\n\n```python\nassert simple_return(1.00, 3.00) == 2.0\n```\n\nThen an edit breaks the function to `return p1 - p0`, with no division.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Version",
+            "Formula",
+            "`simple_return(1.00, 3.00)`"
+          ],
+          "rows": [
+            [
+              "right",
+              "(p1 − p0) / p0",
+              "2.0"
+            ],
+            [
+              "broken",
+              "p1 − p0",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Does the colleague's assert stop the broken version?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "misses",
+            "text": "No: with `p0` = 1 both versions give 2.0",
+            "correct": true
+          },
+          {
+            "id": "changed",
+            "text": "Yes: the formula changed, so the check fails",
+            "why": "You expected the check to notice the code changed. It sees only one result, and dividing by 1 changes nothing.",
+            "canvas": {
+              "values": {
+                "r1c2": "2.0"
+              },
+              "highlight": {
+                "cols": [
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "id": "crash",
+            "text": "Yes: `p1 - p0` raises an error",
+            "why": "Subtracting two floats is fine. The broken version runs quietly and returns 2.0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out `3.00 - 1.00`, then `(3.00 - 1.00) / 1.00`."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the two results in the last column.",
+          "highlight": [
+            "r0c2",
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Dividing by 1 leaves a number as it is, so both versions return 2.0."
+        }
+      ],
+      "feedback": {
+        "correct": "The broken version returns 2.0 too, so the check passes.",
+        "generic": "Not quite right. Compute what the broken version returns for these two prices.",
+        "byKey": {
+          "changed": "You expected the check to notice the code changed. A check sees only results, and here both versions give 2.0."
+        }
+      },
+      "explain": {
+        "text": "Dividing by a starting price of 1 leaves the change as it is, so both versions agree. A passing check proves only that the code is right on that input. Choose inputs where the likely mistakes give different answers, such as £250.00 to £255.00.",
+        "canvas": {
+          "values": {
+            "r1c2": "2.0"
+          },
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "`daily_returns(prices)` gives one return per gap between days. Three prices give two returns. What about a file with a single price, the day a stock lists?",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Prices",
+            "Gaps between days",
+            "Returns"
+          ],
+          "rows": [
+            [
+              "3",
+              "2",
+              "2"
+            ],
+            [
+              "2",
+              "1",
+              "1"
+            ],
+            [
+              "1",
+              "?",
+              "?"
+            ]
+          ],
+          "align": [
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "One closing price, the day a stock lists"
+        }
+      },
+      "question": "What should `daily_returns([100.00])` return, so an assert can pin it down?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "empty",
+            "text": "`[]`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "`[0.0]`",
+            "why": "You gave the single day a return of zero. A return needs two prices, so there is none to report."
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "`None` breaks any code that loops over the result. An empty list says there are no returns."
+          },
+          {
+            "id": "zde",
+            "text": "It raises `ZeroDivisionError`",
+            "why": "Nothing is divided. With one price there is no gap, so no division happens."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many gaps are there between days when there is one day?"
+        },
+        {
+          "rung": "step",
+          "text": "Three prices have two gaps, two prices have one, one price has none. No gaps means no returns."
+        }
+      ],
+      "feedback": {
+        "correct": "No gaps, so no returns: an empty list.",
+        "generic": "Not quite right. Count the gaps between days."
+      },
+      "explain": {
+        "text": "One price has no gap, so the list of returns is empty: `assert daily_returns([100.00]) == []`. This is an **edge case**, an input at the limit of what the code handles. Edge cases are where code most often breaks.",
+        "canvas": {
+          "values": {
+            "r2c1": "0",
+            "r2c2": "0: `[]`"
+          },
+          "highlight": {
+            "rows": [
+              2
+            ]
+          },
+          "caption": "No gaps, so `[]`"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Every useful check had the same shape: run the code on an input you chose, then assert the result equals an answer you worked out by hand.\n\n```python\nresult = simple_return(250.00, 255.00)   # run the code\nassert result == 0.02                    # compare with the hand answer\n```\n\nCode that checks other code like this is a **test**.",
+      "question": "Which line is a real test of `simple_return`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`assert simple_return(100.00, 110.00) == 0.1`",
+            "correct": true
+          },
+          {
+            "id": "self",
+            "text": "`assert simple_return(100.00, 110.00) == simple_return(100.00, 110.00)`",
+            "why": "You compared the code with itself. That passes whatever the code does."
+          },
+          {
+            "id": "truthy",
+            "text": "`assert simple_return(100.00, 110.00)`",
+            "why": "That only checks the result is not zero. A wrong return of 10.0 would pass."
+          },
+          {
+            "id": "print",
+            "text": "`print(simple_return(100.00, 110.00))`",
+            "why": "Printing shows a value but never stops anything. Someone has to read it and know the answer."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A test needs an answer that does not come from the code itself."
+        },
+        {
+          "rung": "step",
+          "text": "Only one line compares the result with a number worked out by hand: £10.00 on £100.00 is 0.1."
+        }
+      ],
+      "feedback": {
+        "correct": "It compares the code with 0.1, worked out by hand.",
+        "generic": "Not quite right. Look for an assert against an answer worked out without the code."
+      },
+      "explain": {
+        "text": "£10.00 on £100.00 is 0.1, worked out without the code. The self-comparison can never fail, and the bare assert accepts almost anything. A print checks nothing until a person reads it."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "Put your checks in a function, so they can run again whenever the vendor sends a file. Write asserts inside `check_returns()` for `daily_returns`, with answers you work out by hand. Use round prices, such as £100.00 to £110.00, so each return is exact.",
+      "question": "Write `check_returns()` so it stops on a broken `daily_returns` and stays quiet on the right one.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def daily_returns(prices):\n    # one return per gap between days, measured from the day before\n    return [(b - a) / a for a, b in zip(prices, prices[1:])]\n\n\ndef check_returns():\n    # Write asserts with answers you worked out by hand.\n    pass\n",
+        "solution": "def daily_returns(prices):\n    # one return per gap between days, measured from the day before\n    return [(b - a) / a for a, b in zip(prices, prices[1:])]\n\n\ndef check_returns():\n    # Write asserts with answers you worked out by hand.\n    assert daily_returns([100.00, 110.00, 121.00]) == [0.1, 0.1]\n    assert daily_returns([100.00]) == []\n",
+        "examples": [
+          {
+            "call": "check_returns()",
+            "expect": "None"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "daily_returns = lambda prices: [(b - a) / a for a, b in zip(prices, prices[1:])]",
+            "call": "check_returns()",
+            "expect": "None"
+          },
+          {
+            "setup": "daily_returns = lambda prices: [(b - a) / a for a, b in zip(prices[::-1], prices[::-1][1:])]",
+            "call": "check_returns()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "daily_returns = lambda prices: [(b - a) / b for a, b in zip(prices, prices[1:])]",
+            "call": "check_returns()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "daily_returns = lambda prices: [b - a for a, b in zip(prices, prices[1:])]",
+            "call": "check_returns()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "daily_returns = lambda prices: [(b - a) / a for a, b in zip(prices, prices[1:-1])]",
+            "call": "check_returns()",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "daily_returns = lambda prices: [0.0] + [(b - a) / a for a, b in zip(prices, prices[1:])]",
+            "call": "check_returns()",
+            "compare": "raises",
+            "expect": "Exception"
+          }
+        ],
+        "how": "Check calls your `check_returns()` six times. First with the right `daily_returns`, where it must finish quietly. Then with five broken versions in its place, where it must stop with an error."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Choose three round prices, work out both returns by hand, and assert the whole list."
+        },
+        {
+          "rung": "point",
+          "text": "One broken version reads the list backwards, and one drops the last return. A steady rise and a check of the whole list catch both."
+        },
+        {
+          "rung": "step",
+          "text": "`assert daily_returns([100.00, 110.00, 121.00]) == [0.1, 0.1]` catches four of the five. Add the one-price edge case: `assert daily_returns([100.00]) == []`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your checks pass on the right function and stop all five broken ones.",
+        "generic": "Not quite right. Read which version your checks let through, then add an assert that tells it apart.",
+        "byKey": {
+          "test-1": "Your checks stop the right function too. Recheck one of your hand answers, and use round prices so each return is exact.",
+          "test-2": "The version that reads the prices backwards got through. Use prices that rise, so reversing them turns the returns negative.",
+          "test-3": "The version that divides by the later price got through. Check a return whose size you know, such as 0.1.",
+          "test-4": "The version that forgets to divide got through. A starting price of 1 hides it: use £100.00.",
+          "test-5": "The version that drops the last return got through. Compare the whole list, not one element.",
+          "test-6": "The version that adds a return for the first day got through. Check the length, or the one-price case `[]`.",
+          "error": "Your code stopped before the checks could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "A steady rise from £100.00 by 10% a day gives exact returns of 0.1, so `==` is safe here. Comparing the whole list catches the reversed, mis-divided and shortened versions at once. The one-price case `[]` catches the extra zero.\n\n```python\nassert daily_returns([100.00, 110.00, 121.00]) == [0.1, 0.1]\nassert daily_returns([100.00]) == []\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Wrong code often runs without an error. Only a check that knows the right answer can notice.",
+      "`assert condition` does nothing when the condition is true and raises `AssertionError` when it is false.",
+      "A test compares the code's result with an answer worked out by hand, on inputs where likely mistakes differ."
+    ],
+    "formula": {
+      "name": "The smallest test",
+      "tex": "\\texttt{assert result == expected}",
+      "note": "`expected` comes from your own working, never from the code."
+    },
+    "trap": "A check can pass on broken code. With a starting price of 1, dividing and not dividing give the same answer."
+  },
+  "quiz": [
+    {
+      "id": "q-assert-true",
+      "difficulty": 2,
+      "prose": "```python\nassert simple_return(100.00, 110.00) == 0.1\nprint(\"done\")\n```\n\n`simple_return` is right, and this assert holds.",
+      "question": "What does the script print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "done",
+            "text": "`done`",
+            "correct": true
+          },
+          {
+            "id": "true",
+            "text": "`True`, then `done`",
+            "why": "You expected a passing assert to report itself. A true assert prints nothing."
+          },
+          {
+            "id": "passed",
+            "text": "`assert passed`, then `done`",
+            "why": "A true assert is silent. Only a false one makes a sound, by raising an error."
+          },
+          {
+            "id": "err",
+            "text": "`AssertionError`",
+            "why": "The condition is True: £10.00 on £100.00 is 0.1. A true assert does nothing."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A true assert is silent, so only `done` appears.",
+        "generic": "Not quite right. Decide whether the condition is true, then what `assert` does with a true condition."
+      },
+      "explain": {
+        "text": "(110.00 − 100.00) / 100.00 is 0.1, so the condition is True and `assert` does nothing. The script carries on and prints `done`."
+      }
+    },
+    {
+      "id": "q-weak-input",
+      "difficulty": 3,
+      "prose": "A bug makes `simple_return` divide by the later price: `(p1 - p0) / p1`.",
+      "question": "Which check stops the buggy version?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "good",
+            "text": "`assert simple_return(100.00, 110.00) == 0.1`",
+            "correct": true
+          },
+          {
+            "id": "flat",
+            "text": "`assert simple_return(100.00, 100.00) == 0.0`",
+            "why": "You picked a flat day. The change is zero, so both versions give 0.0."
+          },
+          {
+            "id": "type",
+            "text": "`assert isinstance(simple_return(100.00, 110.00), float)`",
+            "why": "Both versions return a float. The check looks at the type, which the bug does not change."
+          },
+          {
+            "id": "sign",
+            "text": "`assert simple_return(100.00, 110.00) > 0`",
+            "why": "The buggy version gives about 0.0909, which is above zero too."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The buggy version gives about 0.0909, not 0.1.",
+        "generic": "Not quite right. Work out what the buggy version returns for each check's prices."
+      },
+      "explain": {
+        "text": "£10.00 divided by £110.00 is about 0.0909, which fails `== 0.1`. A flat day hides the bug because zero divided by anything is zero. Checks on type or sign pass for both versions."
+      }
+    },
+    {
+      "id": "q-edge-two",
+      "difficulty": 2,
+      "prose": "`daily_returns(prices)` gives one return per gap between days.",
+      "question": "How many returns does `daily_returns([100.00, 110.00])` give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Number of returns",
+        "accept": "1: two prices have one gap.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two prices, one gap, one return: `[0.1]`.",
+        "generic": "Not quite right. Count the gaps between the prices.",
+        "byKey": {
+          "two": "You counted the prices. A return needs a pair, so two prices give one.",
+          "zero": "Zero is the one-price case. Two prices have one gap between them."
+        }
+      },
+      "explain": {
+        "text": "One gap between two prices gives one return, `[0.1]`. One price gives none, `[]`, and $n$ prices give $n - 1$."
+      }
+    }
+  ]
+}

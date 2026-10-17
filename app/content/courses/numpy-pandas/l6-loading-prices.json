@@ -1,0 +1,1457 @@
+{
+  "id": "l6-loading-prices",
+  "course": "numpy-pandas",
+  "title": "Loading prices from a file",
+  "minutes": 14,
+  "objectives": [
+    "Read a CSV with dates as the index.",
+    "Summarise, sort and write a price table: `describe`, `sort_values`, `nsmallest` and `to_csv`."
+  ],
+  "skills": [
+    "pd-frames"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "What read_csv builds",
+      "prose": "A price file arrives as text. `io.StringIO` lets a string stand in for a file.\n\n```python\ncsv = \"\"\"date,close,volume\n2024-02-28,12.18,16900\n2024-02-29,12.25,15200\n2024-03-01,12.40,17300\n2024-03-04,12.55,18400\n2024-03-05,12.31,22100\n\"\"\"\n```\n\n```python\nimport io\nimport pandas as pd\ndf = pd.read_csv(io.StringIO(csv))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ],
+            [
+              "1",
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2",
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "3",
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`"
+        }
+      },
+      "question": "Tap the labels pandas gave the rows.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "countWord": "picked",
+        "wrong": [
+          {
+            "id": "dates",
+            "set": [
+              "r0c1",
+              "r1c1",
+              "r2c1",
+              "r3c1",
+              "r4c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Row labels sit down the left edge, in the index."
+        },
+        {
+          "rung": "point",
+          "text": "Look at the first column, before `date`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The labels are 0, 1, 2, 3 and 4."
+        }
+      ],
+      "feedback": {
+        "correct": "The rows are numbered 0 to 4.",
+        "generic": "Not quite right. Tap the labels down the left edge, in the index.",
+        "byKey": {
+          "dates": "Those are the dates, but here they are an ordinary column. The row labels are down the left edge.",
+          "r0c1": "That date is a value in the `date` column. The row labels are down the left edge."
+        }
+      },
+      "explain": {
+        "text": "Left to itself, `read_csv` numbers the rows 0 to 4. The dates arrive as an ordinary column of text. So `df.loc` cannot find a row by its date yet.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Dates as the index",
+      "prose": "`index_col` names the column to use as the index.\n\n```python\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\")\nprint(df.loc[\"2024-03-04\", \"close\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df` with `index_col=\"date\"`"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.55,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 12.00",
+        "label": "Value printed",
+        "accept": "12.55: the close on 4 March.",
+        "wrong": [
+          {
+            "id": "next",
+            "value": 12.31,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "prev",
+            "value": 12.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The dates are now the row labels."
+        },
+        {
+          "rung": "point",
+          "text": "Find the 2024-03-04 row.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Read along that row to `close`: 12.55."
+        }
+      ],
+      "feedback": {
+        "correct": "12.55, found by its date.",
+        "generic": "Not quite right. Find the row labelled 2024-03-04, then its close.",
+        "byKey": {
+          "next": "12.31 is the close on 5 March. Go up one row.",
+          "prev": "12.40 is the close on 1 March. Go down one row."
+        }
+      },
+      "explain": {
+        "text": "With `index_col=\"date\"` the dates become row labels, and the column leaves the data. Now `df.loc[\"2024-03-04\", \"close\"]` finds 12.55 by its date.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r3c0",
+              "r3c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Dates that are dates",
+      "prose": "`parse_dates=True` turns the index from text into real dates. Then part of a date selects a whole month.\n\n```python\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\", parse_dates=True)\nmarch = df.loc[\"2024-03\"]\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the date of every row in `march`.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "countWord": "picked",
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ],
+        "wrong": [
+          {
+            "id": "leap",
+            "set": [
+              "r1c0",
+              "r2c0",
+              "r3c0",
+              "r4c0"
+            ],
+            "flash": [
+              "r1c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows fall in March 2024?"
+        },
+        {
+          "rung": "point",
+          "text": "2024 is a leap year. Which month is 29 February in?",
+          "highlight": [
+            "r1c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1, 4 and 5 March are in March; 28 and 29 February are not."
+        }
+      ],
+      "feedback": {
+        "correct": "The three March days.",
+        "generic": "Not quite right. Keep only the dates in March 2024.",
+        "byKey": {
+          "leap": "29 February is a leap day, still in February. Only 1, 4 and 5 March match.",
+          "r1c0": "29 February is a leap day, still in February. Only 1, 4 and 5 March match.",
+          "r0c0": "28 February is in February, so `\"2024-03\"` does not match it."
+        }
+      },
+      "explain": {
+        "text": "With real dates in the index, `\"2024-03\"` matches every day of March 2024: 1, 4 and 5 March. On text labels the same lookup raises `KeyError`, because no label is exactly 2024-03.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A summary in one call",
+      "prose": "`describe` summarises a column: count, mean, standard deviation, minimum, quartiles and maximum.\n\n```python\nsummary = df[\"close\"].describe()\nprint(summary[\"50%\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.31,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 12.00",
+        "label": "Value printed",
+        "accept": "12.31: the middle of the five sorted closes.",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 12.338,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "file-middle",
+            "value": 12.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`50%` is the value with half the closes below it."
+        },
+        {
+          "rung": "point",
+          "text": "Sort the five closes first.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "12.18, 12.25, 12.31, 12.40, 12.55: the middle one is 12.31."
+        }
+      ],
+      "feedback": {
+        "correct": "The median close is 12.31.",
+        "generic": "Not quite right. Sort the closes and take the middle one.",
+        "byKey": {
+          "mean": "That is the mean, 12.338. `50%` is the median: the middle value once sorted.",
+          "file-middle": "You took the middle row of the file. The median is the middle value once the closes are sorted."
+        }
+      },
+      "explain": {
+        "text": "`50%` is the median: sort the closes and take the middle, 12.31. The mean is 12.338. The `std` in `describe` divides by $n - 1$, like `np.std(x, ddof=1)`.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r4c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Sorting by a column",
+      "prose": "`sort_values` reorders the rows by one column. It puts the smallest first unless told otherwise.\n\n```python\nbusy = df.sort_values(\"volume\", ascending=False)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the date of the row that comes first in `busy`.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r4c0"
+        ],
+        "countWord": "picked",
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`ascending=False` puts the largest value first."
+        },
+        {
+          "rung": "point",
+          "text": "Which day has the largest volume?",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "5 March traded 22100 shares, the most."
+        }
+      ],
+      "feedback": {
+        "correct": "5 March, the busiest day, comes first.",
+        "generic": "Not quite right. With `ascending=False` the largest volume leads.",
+        "byKey": {
+          "r1c0": "29 February is the quietest day. It would lead with the default, smallest first.",
+          "r0c0": "That is the first row of the file. Sorting moves the busiest day to the top.",
+          "r3c0": "4 March traded 18400. 5 March traded more, 22100."
+        }
+      },
+      "explain": {
+        "text": "Largest first, 5 March's 22100 shares lead, and each row moves whole with its date. `df.nlargest(2, \"volume\")` and `df[\"close\"].nsmallest(2)` are shortcuts for the top or bottom few.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Forgetting index_col",
+      "prose": "A colleague loads the file without `index_col`, then looks up a date.\n\n```python\ndf = pd.read_csv(io.StringIO(csv))\nprint(df.loc[\"2024-03-04\", \"close\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ],
+            [
+              "1",
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2",
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "3",
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "prints",
+            "text": "It prints 12.55",
+            "why": "You assumed the dates are the index. Without `index_col` the index is 0 to 4, and the dates are a column."
+          },
+          {
+            "id": "keyerror",
+            "text": "It stops with a `KeyError`",
+            "correct": true
+          },
+          {
+            "id": "nan",
+            "text": "It prints `NaN`, because no row has that label",
+            "why": "You expected a missing label to give NaN. A `.loc` lookup of an absent label raises `KeyError`."
+          },
+          {
+            "id": "type",
+            "text": "It stops with a `TypeError`: the index holds numbers, not text",
+            "why": "You expected a type check. pandas simply finds no label 2024-03-04 and raises `KeyError`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What are the row labels when `index_col` is left out?"
+        },
+        {
+          "rung": "point",
+          "text": "The labels are 0 to 4. Is 2024-03-04 one of them?",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No row is labelled 2024-03-04, so `.loc` raises `KeyError`."
+        }
+      ],
+      "feedback": {
+        "correct": "The labels are 0 to 4, so the date is not found.",
+        "generic": "Not quite right. Check what the row labels are without `index_col`.",
+        "byKey": {
+          "prints": "The date is a value in a column, not a row label. `.loc` searches the labels, 0 to 4, and fails.",
+          "nan": "`.loc` does not invent a row for a missing label. It raises `KeyError`.",
+          "type": "pandas does not check types here. It finds no such label and raises `KeyError`."
+        }
+      },
+      "explain": {
+        "text": "Without `index_col` the rows are labelled 0 to 4, and 2024-03-04 is only a value in the `date` column. `.loc` finds no such label and raises `KeyError`. Load with `index_col=\"date\", parse_dates=True`.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Newest first",
+      "prose": "Many vendors send files newest first. `rev` holds the same five rows in reverse.\n\n```python\nd2 = pd.read_csv(io.StringIO(rev), index_col=\"date\", parse_dates=True)\nprint(d2[\"close\"].iloc[0])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`d2`, as the file arrived"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.31,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 12.00",
+        "label": "Value printed",
+        "accept": "12.31: the first row of the file, 5 March.",
+        "wrong": [
+          {
+            "id": "earliest",
+            "value": 12.18,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`iloc[0]` is the first row as stored, not the earliest date."
+        },
+        {
+          "rung": "point",
+          "text": "Which date is in the first row of `rev`?",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first row is 5 March, so it prints 12.31."
+        }
+      ],
+      "feedback": {
+        "correct": "The first row is the newest day: 12.31.",
+        "generic": "Not quite right. `iloc[0]` reads the first row in the order the file gave.",
+        "byKey": {
+          "earliest": "12.18 is the earliest close, but `read_csv` keeps the file's order. Here the first row is 5 March."
+        }
+      },
+      "explain": {
+        "text": "`read_csv` keeps the file's order, so `iloc[0]` is the latest day here. `d2 = d2.sort_index()` puts the dates oldest first. Returns computed before sorting would run backwards in time.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Loading a file, in one place",
+      "prose": "Everything so far, as a recipe.\n\n```python\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\", parse_dates=True)\ndf = df.sort_index()          # oldest first, whatever the file did\ndf.describe()                 # count, mean, std, quartiles\ndf.sort_values(\"close\")       # rows ordered by one column\ndf[\"close\"].nsmallest(3)      # the three lowest closes\ntext = df.to_csv(float_format=\"%.2f\")   # back to text\n```",
+      "question": "A file arrives newest first. Which line gives a frame you can look up by date, oldest row first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`pd.read_csv(f, index_col=\"date\", parse_dates=True).sort_index()`",
+            "correct": true
+          },
+          {
+            "id": "no-index",
+            "text": "`pd.read_csv(f).sort_index()`",
+            "why": "Without `index_col` the index is 0, 1, 2, so sorting it changes nothing, and dates are not labels."
+          },
+          {
+            "id": "no-sort",
+            "text": "`pd.read_csv(f, index_col=\"date\", parse_dates=True)`",
+            "why": "That keeps the newest-first order of the file. Add `.sort_index()`."
+          },
+          {
+            "id": "no-col",
+            "text": "`pd.read_csv(f, parse_dates=True).sort_values(\"date\")`",
+            "why": "The rows are in order, but the dates stay an ordinary column, so `.loc` cannot find a date."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Dates as the index, then sorted.",
+        "generic": "Not quite right. You need the dates as the index and the rows in date order."
+      },
+      "explain": {
+        "text": "`index_col` and `parse_dates` make the dates real row labels, and `sort_index` orders them oldest first. Only then do `.iloc[0]` and later returns mean what you expect."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Load a vendor file",
+      "prose": "Vendor files come in any date order. Return the closes as a list, oldest first. The file may hold other columns as well.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "a newest-first file, read as it arrived"
+        }
+      },
+      "question": "Complete `load_closes(text)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import io\nimport pandas as pd\n\ndef load_closes(text):\n    df = ...\n    return df[\"close\"].tolist()\n",
+        "solution": "import io\nimport pandas as pd\n\ndef load_closes(text):\n    df = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True)\n    df = df.sort_index()\n    return df[\"close\"].tolist()\n",
+        "tests": [
+          {
+            "setup": "text = \"date,close,volume\\n2024-03-05,12.31,22100\\n2024-03-04,12.55,18400\\n2024-03-01,12.40,17300\\n2024-02-29,12.25,15200\\n2024-02-28,12.18,16900\\n\"",
+            "call": "load_closes(text)",
+            "expect": "[12.18, 12.25, 12.4, 12.55, 12.31]",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-02-28,12.18,16900\\n2024-02-29,12.25,15200\\n2024-03-01,12.40,17300\\n2024-03-04,12.55,18400\\n2024-03-05,12.31,22100\\n\"",
+            "call": "load_closes(text)",
+            "expect": "[12.18, 12.25, 12.4, 12.55, 12.31]",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,open,close,volume\\n2024-07-03,95.10,96.40,3100\\n2024-07-01,94.00,94.85,2800\\n2024-07-02,94.85,95.10,2950\\n\"",
+            "call": "load_closes(text)",
+            "expect": "[94.85, 95.1, 96.4]",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-12-31,7.05\\n2024-12-30,7.10\\n\"",
+            "call": "load_closes(text)",
+            "expect": "[7.1, 7.05]",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2025-01-02,250.00,1200\\n\"",
+            "call": "load_closes(text)",
+            "expect": "[250.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-03-05,12.31,22100\\n2024-03-04,12.55,18400\\n2024-03-01,12.40,17300\\n2024-02-29,12.25,15200\\n2024-02-28,12.18,16900\\n\"",
+            "call": "len(load_closes(text))",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "text = \"date,close,volume\\n2024-03-05,12.31,22100\\n2024-03-04,12.55,18400\\n2024-03-01,12.40,17300\\n2024-02-29,12.25,15200\\n2024-02-28,12.18,16900\\n\"",
+            "call": "load_closes(text)",
+            "expect": "[12.18, 12.25, 12.4, 12.55, 12.31]",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,open,close,volume\\n2024-07-03,95.10,96.40,3100\\n2024-07-01,94.00,94.85,2800\\n2024-07-02,94.85,95.10,2950\\n\"",
+            "call": "load_closes(text)",
+            "expect": "[94.85, 95.1, 96.4]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each passes a whole file as one string, with `\\n` between lines. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read with the dates as a parsed index."
+        },
+        {
+          "rung": "point",
+          "text": "Then put the rows in date order with `sort_index`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`df = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True).sort_index()`"
+        }
+      ],
+      "feedback": {
+        "correct": "Read, index by date, sort.",
+        "generic": "Some tests failed. Check a file that arrives newest first.",
+        "byKey": {
+          "test-1": "Test 1 is newest first. The answer starts 12.18, the close on 28 February, so sort by date.",
+          "test-3": "Test 3 is in no order and has an `open` column. Sorting the index puts 1 July first.",
+          "error": "Your code stopped with an error. Wrap the text in `io.StringIO` before `read_csv`."
+        }
+      },
+      "explain": {
+        "text": "`index_col=\"date\", parse_dates=True` gives a date index, and `sort_index` orders it oldest first whatever the vendor did. `df[\"close\"]` finds the column by name in any position."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write it back as text",
+      "prose": "Return a clean file as text: oldest first, only `date` and `close`, every close with two decimals. For the file above the answer starts `date,close` then `2024-02-28,12.18`, and 12.4 is written `12.40`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-02-28",
+              "12.18",
+              "16900"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "the clean frame, before writing"
+        }
+      },
+      "question": "Complete `clean_csv(text)` with `to_csv`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import io\nimport pandas as pd\n\ndef clean_csv(text):\n    df = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True)\n    df = df.sort_index()\n    return ...\n",
+        "solution": "import io\nimport pandas as pd\n\ndef clean_csv(text):\n    df = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True)\n    df = df.sort_index()\n    return df[[\"close\"]].to_csv(float_format=\"%.2f\")\n",
+        "tests": [
+          {
+            "setup": "text = \"date,close,volume\\n2024-03-05,12.31,22100\\n2024-03-04,12.55,18400\\n2024-03-01,12.40,17300\\n2024-02-29,12.25,15200\\n2024-02-28,12.18,16900\\n\"",
+            "call": "clean_csv(text)",
+            "expect": "'date,close\\n2024-02-28,12.18\\n2024-02-29,12.25\\n2024-03-01,12.40\\n2024-03-04,12.55\\n2024-03-05,12.31\\n'",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-02-28,12.18,16900\\n2024-02-29,12.25,15200\\n2024-03-01,12.40,17300\\n2024-03-04,12.55,18400\\n2024-03-05,12.31,22100\\n\"",
+            "call": "clean_csv(text)",
+            "expect": "'date,close\\n2024-02-28,12.18\\n2024-02-29,12.25\\n2024-03-01,12.40\\n2024-03-04,12.55\\n2024-03-05,12.31\\n'",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,open,close,volume\\n2024-07-03,95.10,96.40,3100\\n2024-07-01,94.00,94.85,2800\\n2024-07-02,94.85,95.10,2950\\n\"",
+            "call": "clean_csv(text)",
+            "expect": "'date,close\\n2024-07-01,94.85\\n2024-07-02,95.10\\n2024-07-03,96.40\\n'",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-12-31,7.05\\n2024-12-30,7.10\\n\"",
+            "call": "clean_csv(text)",
+            "expect": "'date,close\\n2024-12-30,7.10\\n2024-12-31,7.05\\n'",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2025-01-02,250.00,1200\\n\"",
+            "call": "clean_csv(text)",
+            "expect": "'date,close\\n2025-01-02,250.00\\n'",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,open,close,volume\\n2024-07-03,95.10,96.40,3100\\n2024-07-01,94.00,94.85,2800\\n2024-07-02,94.85,95.10,2950\\n\"",
+            "call": "clean_csv(text).splitlines()[0]",
+            "expect": "'date,close'",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "text = \"date,close,volume\\n2024-03-05,12.31,22100\\n2024-03-04,12.55,18400\\n2024-03-01,12.40,17300\\n2024-02-29,12.25,15200\\n2024-02-28,12.18,16900\\n\"",
+            "call": "clean_csv(text)",
+            "expect": "'date,close\\n2024-02-28,12.18\\n2024-02-29,12.25\\n2024-03-01,12.40\\n2024-03-04,12.55\\n2024-03-05,12.31\\n'",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-12-31,7.05\\n2024-12-30,7.10\\n\"",
+            "call": "clean_csv(text)",
+            "expect": "'date,close\\n2024-12-30,7.10\\n2024-12-31,7.05\\n'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each result is compared as one exact string. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`to_csv()` with no file name returns the text instead of writing a file."
+        },
+        {
+          "rung": "point",
+          "text": "Select the close with double brackets so it stays a frame, and pass `float_format=\"%.2f\"`.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return df[[\"close\"]].to_csv(float_format=\"%.2f\")`"
+        }
+      ],
+      "feedback": {
+        "correct": "A clean file, two decimals on every price.",
+        "generic": "Some tests failed. Check the columns kept and the decimals.",
+        "byKey": {
+          "test-1": "Test 1 expects `date,close` as the header and `12.40` with two decimals. Check `float_format` and that only `close` is kept.",
+          "error": "Your code stopped with an error. `to_csv` is a method of the frame: `df[[\"close\"]].to_csv(...)`."
+        }
+      },
+      "explain": {
+        "text": "`df[[\"close\"]]` keeps a one-column frame, so the index is written as `date`. `float_format=\"%.2f\"` writes 12.4 as 12.40, as a price should look. Pass a file name instead to write to disk."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A backtest's worst days",
+      "prose": "A backtest wrote its daily P&L, in £, to a file. Return the dates of the `n` worst days, worst first, as text such as `\"2024-03-07\"`. With fewer than `n` days, return them all.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "pnl"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "120.50"
+            ],
+            [
+              "2024-03-05",
+              "-340.25"
+            ],
+            [
+              "2024-03-06",
+              "85.00"
+            ],
+            [
+              "2024-03-07",
+              "-512.80"
+            ],
+            [
+              "2024-03-08",
+              "-45.10"
+            ],
+            [
+              "2024-03-11",
+              "230.75"
+            ],
+            [
+              "2024-03-12",
+              "-198.40"
+            ],
+            [
+              "2024-03-13",
+              "-12.00"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "the backtest's P&L file, in £"
+        }
+      },
+      "question": "Complete `worst_days(text, n=5)` with `nsmallest`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import io\nimport pandas as pd\n\ndef worst_days(text, n=5):\n    pnl = ...\n    worst = ...\n    return worst.index.tolist()\n",
+        "solution": "import io\nimport pandas as pd\n\ndef worst_days(text, n=5):\n    pnl = pd.read_csv(io.StringIO(text), index_col=\"date\")[\"pnl\"]\n    worst = pnl.nsmallest(n)\n    return worst.index.tolist()\n",
+        "tests": [
+          {
+            "setup": "text = \"date,pnl\\n2024-03-04,120.50\\n2024-03-05,-340.25\\n2024-03-06,85.00\\n2024-03-07,-512.80\\n2024-03-08,-45.10\\n2024-03-11,230.75\\n2024-03-12,-198.40\\n2024-03-13,-12.00\\n\"",
+            "call": "worst_days(text)",
+            "expect": "['2024-03-07', '2024-03-05', '2024-03-12', '2024-03-08', '2024-03-13']",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,pnl\\n2024-03-04,120.50\\n2024-03-05,-340.25\\n2024-03-06,85.00\\n2024-03-07,-512.80\\n2024-03-08,-45.10\\n2024-03-11,230.75\\n2024-03-12,-198.40\\n2024-03-13,-12.00\\n\"",
+            "call": "worst_days(text, 3)",
+            "expect": "['2024-03-07', '2024-03-05', '2024-03-12']",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,pnl\\n2024-03-04,120.50\\n2024-03-05,-340.25\\n2024-03-06,85.00\\n2024-03-07,-512.80\\n2024-03-08,-45.10\\n2024-03-11,230.75\\n2024-03-12,-198.40\\n2024-03-13,-12.00\\n\"",
+            "call": "worst_days(text, 1)",
+            "expect": "['2024-03-07']",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,pnl\\n2024-05-01,410.00\\n2024-05-02,95.50\\n2024-05-03,12.25\\n2024-05-07,301.00\\n2024-05-08,58.75\\n2024-05-09,140.00\\n\"",
+            "call": "worst_days(text, 2)",
+            "expect": "['2024-05-03', '2024-05-08']",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,trades,pnl\\n2024-06-03,14,-75.00\\n2024-06-04,9,-1250.40\\n2024-06-05,11,330.10\\n\"",
+            "call": "worst_days(text)",
+            "expect": "['2024-06-04', '2024-06-03', '2024-06-05']",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,pnl\\n2024-03-04,120.50\\n2024-03-05,-340.25\\n2024-03-06,85.00\\n2024-03-07,-512.80\\n2024-03-08,-45.10\\n2024-03-11,230.75\\n2024-03-12,-198.40\\n2024-03-13,-12.00\\n\"",
+            "call": "len(worst_days(text, 20))",
+            "expect": "8",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "text = \"date,pnl\\n2024-03-04,120.50\\n2024-03-05,-340.25\\n2024-03-06,85.00\\n2024-03-07,-512.80\\n2024-03-08,-45.10\\n2024-03-11,230.75\\n2024-03-12,-198.40\\n2024-03-13,-12.00\\n\"",
+            "call": "worst_days(text)",
+            "expect": "['2024-03-07', '2024-03-05', '2024-03-12', '2024-03-08', '2024-03-13']",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,pnl\\n2024-03-04,120.50\\n2024-03-05,-340.25\\n2024-03-06,85.00\\n2024-03-07,-512.80\\n2024-03-08,-45.10\\n2024-03-11,230.75\\n2024-03-12,-198.40\\n2024-03-13,-12.00\\n\"",
+            "call": "worst_days(text, 3)",
+            "expect": "['2024-03-07', '2024-03-05', '2024-03-12']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on small P&L files. Each list of dates must match exactly, in order. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the file with the dates as the index, then take the `pnl` column."
+        },
+        {
+          "rung": "point",
+          "text": "`nsmallest(n)` returns the `n` smallest values, smallest first, with their dates.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pnl = pd.read_csv(io.StringIO(text), index_col=\"date\")[\"pnl\"]`, then `worst = pnl.nsmallest(n)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The worst days, worst first.",
+        "generic": "Some tests failed. Check the order: the biggest loss comes first. Leave out `parse_dates`, so the dates stay text.",
+        "byKey": {
+          "test-1": "Test 1 expects 7 March first, the £512.80 loss. If 4 March leads, you took the largest P&L, not the smallest.",
+          "test-5": "Test 5 has a `trades` column and only three days. Read `pnl` by name and let `nsmallest` return all three.",
+          "test-2": "Test 2 asks for 3 days. Pass `n` to `nsmallest` rather than a fixed 5.",
+          "error": "Your code stopped with an error. Check that `pnl` is a column, read with `[\"pnl\"]`."
+        }
+      },
+      "explain": {
+        "text": "`nsmallest(5)` sorts the P&L and keeps the five lowest, with their dates: 7, 5 and 12 March lead. A risk report starts here, at the days that lost most.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r3c1",
+              "r1c1",
+              "r6c1",
+              "r4c1",
+              "r7c1"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True)` gives a frame you can look up by date.",
+      "`read_csv` keeps the file's order, so sort with `sort_index()` before anything that depends on time.",
+      "`describe`, `sort_values` and `nsmallest` summarise and rank; `to_csv(float_format=\"%.2f\")` writes prices back as text."
+    ],
+    "formula": {
+      "name": "Loading a price file",
+      "tex": "\\texttt{read\\_csv(f, index\\_col=\"date\", parse\\_dates=True).sort\\_index()}",
+      "note": "Without `index_col` the rows are labelled 0, 1, 2 and the dates are just a column."
+    },
+    "trap": "Without `index_col=\"date\"`, `df.loc[\"2024-03-04\"]` raises `KeyError`: the row labels are 0 to 4."
+  },
+  "quiz": [
+    {
+      "id": "q-shape-read",
+      "difficulty": 2,
+      "prose": "```python\ntext = \"date,close\\n2024-03-04,12.55\\n2024-03-05,12.31\\n\"\nprint(pd.read_csv(io.StringIO(text)).shape)\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(2, 2)`",
+            "correct": true
+          },
+          {
+            "id": "header",
+            "text": "`(3, 2)`",
+            "why": "You counted the header line as a row. It becomes the column names."
+          },
+          {
+            "id": "index",
+            "text": "`(2, 1)`",
+            "why": "You expected the dates to become the index. Without `index_col` they stay a column."
+          },
+          {
+            "id": "flat",
+            "text": "`(2,)`",
+            "why": "A frame read from a file has two dimensions, rows and columns."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two rows, two columns.",
+        "generic": "Not quite right. The header becomes the column names, and no column is the index."
+      },
+      "explain": {
+        "text": "The header line names the columns, so there are two data rows. With no `index_col`, `date` stays a column beside `close`: shape `(2, 2)`."
+      }
+    },
+    {
+      "id": "q-describe-std",
+      "difficulty": 3,
+      "prose": "For five closes, `df[\"close\"].describe()` reports a `std` of 0.1434, but `np.std(df[\"close\"].to_numpy())` gives 0.1283.",
+      "question": "Why do they differ?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`describe` divides by $n - 1$; `np.std` divides by $n$ unless given `ddof=1`",
+            "correct": true
+          },
+          {
+            "id": "rounding",
+            "text": "`describe` rounds the closes first",
+            "why": "You blamed rounding. Both use the same five numbers; the divisor differs."
+          },
+          {
+            "id": "median",
+            "text": "`describe` measures spread around the median",
+            "why": "You mixed up centres. Both measure spread around the mean."
+          },
+          {
+            "id": "annual",
+            "text": "`describe` annualises the standard deviation",
+            "why": "Nothing is annualised here. The ratio is $\\sqrt{5/4} \\approx 1.118$, the $n$ versus $n - 1$ divisor."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "pandas uses the sample standard deviation.",
+        "generic": "Not quite right. Compare the divisors the two functions use."
+      },
+      "explain": {
+        "text": "pandas divides by $n - 1$, the sample estimate; NumPy divides by $n$ by default. The ratio is $\\sqrt{5/4} \\approx 1.118$, and $0.1283 \\times 1.118 = 0.1434$."
+      }
+    },
+    {
+      "id": "q-nsmallest",
+      "difficulty": 2,
+      "prose": "The closes are 12.18, 12.25, 12.40, 12.55 and 12.31, in date order.\n\n```python\nprint(df[\"close\"].nsmallest(2).tolist())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[12.18, 12.25]`",
+            "correct": true
+          },
+          {
+            "id": "largest",
+            "text": "`[12.55, 12.4]`",
+            "why": "Those are the two largest. `nsmallest` keeps the lowest values."
+          },
+          {
+            "id": "first",
+            "text": "`[12.18, 12.25]` only because they come first in the file",
+            "why": "You read it as the first two rows. `nsmallest` sorts by value; here the lowest happen to come first."
+          },
+          {
+            "id": "desc",
+            "text": "`[12.25, 12.18]`",
+            "why": "`nsmallest` puts the smallest value first."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The two lowest closes, smallest first.",
+        "generic": "Not quite right. `nsmallest(2)` keeps the two lowest values, smallest first."
+      },
+      "explain": {
+        "text": "`nsmallest(2)` sorts by value and keeps the two lowest: 12.18 then 12.25. It would pick them wherever they sat in the file."
+      }
+    },
+    {
+      "id": "q-partial-text",
+      "difficulty": 3,
+      "prose": "```python\ndf = pd.read_csv(io.StringIO(csv), index_col=\"date\")\nmarch = df.loc[\"2024-03\"]\n```\nThe file has the five dates from 28 February to 5 March, and no `parse_dates`.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It stops with a `KeyError`",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "`march` holds the three March rows",
+            "why": "That needs real dates. Without `parse_dates` the labels are text, and none is exactly 2024-03."
+          },
+          {
+            "id": "empty",
+            "text": "`march` is an empty frame",
+            "why": "A missing single label is not an empty result. `.loc` raises `KeyError`."
+          },
+          {
+            "id": "all",
+            "text": "`march` holds all five rows",
+            "why": "No label equals 2024-03, so nothing matches at all; `.loc` raises `KeyError`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Text labels match only in full.",
+        "generic": "Not quite right. Think about what the labels are without `parse_dates`."
+      },
+      "explain": {
+        "text": "Without `parse_dates` the index holds strings, and `\"2024-03\"` must equal one of them exactly. None does, so `.loc` raises `KeyError`. Real dates allow the month lookup."
+      }
+    }
+  ]
+}

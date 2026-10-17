@@ -1,0 +1,411 @@
+{
+  "id": "homework-1",
+  "course": "pytest",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-drawdown-tests",
+      "difficulty": 4,
+      "skills": [
+        "pt-basics",
+        "pt-cases"
+      ],
+      "title": "Test a drawdown function",
+      "prose": "`max_drawdown(prices)` gives the largest fall from a running peak to a later price, as a fraction of that peak. Write three tests: one dip, a flat path, and a steady rise. A flat path and a steady rise never fall, so both give 0. Use round two-decimal prices and `pytest.approx`.",
+      "question": "Write `test_one_dip`, `test_flat` and `test_steady_rise`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n\ndef max_drawdown(prices):\n    # largest fall from a running peak to a later price, as a fraction of the peak\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    pass\n\n\ndef test_flat():\n    pass\n\n\ndef test_steady_rise():\n    pass\n",
+        "solution": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n\ndef max_drawdown(prices):\n    # largest fall from a running peak to a later price, as a fraction of the peak\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    # peak £125.00, low after it £100.00: 25 / 125 = 0.2\n    assert max_drawdown([100.00, 125.00, 100.00, 110.00]) == pytest.approx(0.2)\n\n\ndef test_flat():\n    assert max_drawdown([100.00, 100.00, 100.00]) == pytest.approx(0.0)\n\n\ndef test_steady_rise():\n    assert max_drawdown([100.00, 110.00, 121.00]) == pytest.approx(0.0)\n",
+        "examples": [
+          {
+            "call": "test_one_dip()",
+            "expect": "None"
+          },
+          {
+            "call": "test_flat()",
+            "expect": "None"
+          },
+          {
+            "call": "test_steady_rise()",
+            "expect": "None"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "max_drawdown = lambda prices: max((max(prices[:i + 1]) - p) / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "test_one_dip()",
+            "expect": "None"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: max(1 - p / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "test_one_dip()",
+            "expect": "None"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: max((max(prices[:i + 1]) - p) / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "test_flat()",
+            "expect": "None"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: max(1 - p / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "test_flat()",
+            "expect": "None"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: max((max(prices[:i + 1]) - p) / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "test_steady_rise()",
+            "expect": "None"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: max(1 - p / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "test_steady_rise()",
+            "expect": "None"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: (max(prices) - min(prices)) / max(prices)",
+            "call": "(test_one_dip(), test_flat(), test_steady_rise())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: (prices[0] - min(prices)) / prices[0]",
+            "call": "(test_one_dip(), test_flat(), test_steady_rise())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: min((p - max(prices[:i + 1])) / max(prices[:i + 1]) for i, p in enumerate(prices))",
+            "call": "(test_one_dip(), test_flat(), test_steady_rise())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: max(max(prices[:i + 1]) - p for i, p in enumerate(prices))",
+            "call": "(test_one_dip(), test_flat(), test_steady_rise())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "max_drawdown = lambda prices: max((max(prices[:i + 1]) - p) / p for i, p in enumerate(prices))",
+            "call": "(test_one_dip(), test_flat(), test_steady_rise())",
+            "compare": "raises",
+            "expect": "Exception"
+          }
+        ],
+        "how": "Check runs each test against two correct versions that round differently, where all must pass. Then it runs all three against five broken versions, where at least one must fail."
+      },
+      "feedback": {
+        "correct": "All three pass on both correct versions, and every bug fails one of them.",
+        "generic": "Not quite right. Read which version your tests let through or rejected.",
+        "byKey": {
+          "test-1": "`test_one_dip` fails on the right code. Recheck your hand answer: the fall from the peak, divided by the peak.",
+          "test-2": "`test_one_dip` fails on a correct version that rounds differently. Compare with `pytest.approx`, not `==`.",
+          "test-7": "The version that measures the whole range got through. A steady rise must give 0: test it.",
+          "test-8": "The version that measures only from the first price got through. Put the peak after the first price in `test_one_dip`.",
+          "test-11": "The version that divides by the low instead of the peak got through. Check the exact fraction in `test_one_dip`.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "From a £125.00 peak to £100.00 is 25 / 125 = 0.2. One correct version computes `1 - p / peak`, which gives 0.19999999999999996, so `==` would fail it. The steady rise catches the range bug, and a peak after the first price catches the first-price bug.\n\n```python\ndef test_one_dip():\n    assert max_drawdown([100.00, 125.00, 100.00, 110.00]) == pytest.approx(0.2)\n\ndef test_flat():\n    assert max_drawdown([100.00, 100.00, 100.00]) == pytest.approx(0.0)\n\ndef test_steady_rise():\n    assert max_drawdown([100.00, 110.00, 121.00]) == pytest.approx(0.0)\n```"
+      }
+    },
+    {
+      "id": "h-bad-row",
+      "difficulty": 5,
+      "skills": [
+        "pt-basics",
+        "pt-cases"
+      ],
+      "title": "A bad row must raise",
+      "prose": "`parse_row` turns one line of the vendor's CSV into a date and a price. A row with a price of zero or less must raise `ValueError`, so a bad file stops the backtest. To test that something raises, put the call inside `with pytest.raises(ValueError):`. The test passes only if the block raises that error.",
+      "question": "Write `test_good_row` and `test_zero_price_raises`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n    class raises:\n        def __init__(self, expected):\n            self.expected = expected\n\n        def __enter__(self):\n            return self\n\n        def __exit__(self, kind, value, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.expected.__name__}\")\n            return issubclass(kind, self.expected)\n\n\ndef parse_row(line):\n    # one line of the vendor's CSV, such as \"2024-03-05,101.25\", to (date, price)\n    date, close = line.strip().split(\",\")\n    price = float(close)\n    if price <= 0:\n        raise ValueError(f\"bad price on {date}: {close}\")\n    return date, price\n\n\ndef test_good_row():\n    pass\n\n\ndef test_zero_price_raises():\n    pass\n",
+        "solution": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n    class raises:\n        def __init__(self, expected):\n            self.expected = expected\n\n        def __enter__(self):\n            return self\n\n        def __exit__(self, kind, value, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.expected.__name__}\")\n            return issubclass(kind, self.expected)\n\n\ndef parse_row(line):\n    # one line of the vendor's CSV, such as \"2024-03-05,101.25\", to (date, price)\n    date, close = line.strip().split(\",\")\n    price = float(close)\n    if price <= 0:\n        raise ValueError(f\"bad price on {date}: {close}\")\n    return date, price\n\n\ndef test_good_row():\n    assert parse_row(\"2024-03-05,101.25\\n\") == (\"2024-03-05\", 101.25)\n\n\ndef test_zero_price_raises():\n    with pytest.raises(ValueError):\n        parse_row(\"2024-03-06,0.00\\n\")\n",
+        "examples": [
+          {
+            "call": "test_good_row()",
+            "expect": "None"
+          },
+          {
+            "call": "test_zero_price_raises()",
+            "expect": "None"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "_right_parse_row = parse_row",
+            "call": "test_good_row()",
+            "expect": "None"
+          },
+          {
+            "setup": "parse_row = _right_parse_row",
+            "call": "test_zero_price_raises()",
+            "expect": "None"
+          },
+          {
+            "setup": "parse_row = lambda line: (line.strip().split(',')[0], float(line.strip().split(',')[1]))",
+            "call": "(test_good_row(), test_zero_price_raises())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "parse_row = lambda line: _right_parse_row(line) if float(line.strip().split(',')[1]) > 0 else None",
+            "call": "(test_good_row(), test_zero_price_raises())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "parse_row = lambda line: (_right_parse_row(line)[0], line.strip().split(',')[1])",
+            "call": "(test_good_row(), test_zero_price_raises())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "parse_row = lambda line: (_right_parse_row(line)[0], _right_parse_row(line)[1] / 100)",
+            "call": "(test_good_row(), test_zero_price_raises())",
+            "compare": "raises",
+            "expect": "Exception"
+          },
+          {
+            "setup": "parse_row = lambda line: _right_parse_row(line)[::-1]",
+            "call": "(test_good_row(), test_zero_price_raises())",
+            "compare": "raises",
+            "expect": "Exception"
+          }
+        ],
+        "how": "Check runs both tests against the right `parse_row`, where both must pass, and against five broken versions, where at least one must fail."
+      },
+      "feedback": {
+        "correct": "Both tests pass on the right code, and every broken version fails one.",
+        "generic": "Not quite right. Read which version your tests let through or rejected.",
+        "byKey": {
+          "test-1": "`test_good_row` fails on the right code. `parse_row` returns a tuple: the date as text and the price as a float.",
+          "test-4": "The version that returns `None` for a zero price got through. Only `pytest.raises` notices that nothing was raised.",
+          "test-2": "`test_zero_price_raises` fails on the right code. Put the call with a £0.00 price inside `with pytest.raises(ValueError):`.",
+          "test-3": "The version that accepts a zero price got through. Your bad row must have a price of 0.00, not just text that is not a number.",
+          "test-5": "The version that returns the price as text got through. Compare the price with a float such as 101.25.",
+          "test-6": "The version that divides the price by 100 got through. Check the exact price.",
+          "test-7": "The version that swaps the date and the price got through. Compare the whole tuple.",
+          "error": "Your code stopped before the tests could run. Read the error under the editor."
+        }
+      },
+      "explain": {
+        "text": "The good row pins down both parts of the tuple, which catches the text and the divide-by-100 bugs. The raises test needs a price of exactly zero, because a row of text such as `abc` raises even in the broken version. `pytest.raises` fails the test with `DID NOT RAISE` when nothing is raised.\n\n```python\ndef test_good_row():\n    assert parse_row(\"2024-03-05,101.25\\n\") == (\"2024-03-05\", 101.25)\n\ndef test_zero_price_raises():\n    with pytest.raises(ValueError):\n        parse_row(\"2024-03-06,0.00\\n\")\n```"
+      }
+    },
+    {
+      "id": "h-collect",
+      "difficulty": 3,
+      "skills": [
+        "pt-basics"
+      ],
+      "prose": "A project holds these tests, written as `file::function`.",
+      "question": "Select all that apply: which does `pytest -q` run from the project folder?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`test_signal.py::test_long`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`test_signal.py::long_test`",
+            "why": "The file is collected, but a function must start with `test`."
+          },
+          {
+            "id": "c",
+            "text": "`signal_tests.py::test_short`",
+            "why": "`signal_tests.py` ends in `_tests`, with an s. It matches neither file pattern, so nothing in it runs."
+          },
+          {
+            "id": "d",
+            "text": "`tests/drawdown_test.py::test_flat`",
+            "correct": true
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two run: the files match a pattern and the functions start with `test`.",
+        "generic": "Not quite right. Check the file name against both patterns, then the function name."
+      },
+      "explain": {
+        "text": "A test runs only if its file matches `test_*.py` or `*_test.py`, anywhere below the folder, and its function starts with `test`. `drawdown_test.py` in `tests` passes both checks. `signal_tests.py` fails the file check, and `long_test` the function check."
+      }
+    },
+    {
+      "id": "h-list-approx",
+      "difficulty": 4,
+      "skills": [
+        "pt-cases"
+      ],
+      "prose": "A test feeds `daily_returns` four closing prices: £50.00, £52.00, £49.40, £49.40.",
+      "question": "Which assert is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`assert daily_returns(p) == pytest.approx([0.04, -0.05, 0.0])`",
+            "correct": true
+          },
+          {
+            "id": "exact",
+            "text": "`assert daily_returns(p) == [0.04, -0.05, 0.0]`",
+            "why": "The hand answers are right, but in floats the second return is −0.05000000000000003, so `==` fails."
+          },
+          {
+            "id": "four",
+            "text": "`assert daily_returns(p) == pytest.approx([0.04, -0.05, 0.0, 0.0])`",
+            "why": "Four prices give three returns, not four. The lists differ in length."
+          },
+          {
+            "id": "sign",
+            "text": "`assert daily_returns(p) == pytest.approx([0.04, 0.05, 0.0])`",
+            "why": "£52.00 to £49.40 is a fall, so its return is negative."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three returns, compared with approx.",
+        "generic": "Not quite right. Work out each return, count them, then decide how to compare."
+      },
+      "explain": {
+        "text": "£2.00 on £50.00 is 0.04, −£2.60 on £52.00 is −0.05, and the flat day is 0.0. Four prices give three returns. Floats give −0.05000000000000003 for the second, so approx is needed."
+      }
+    },
+    {
+      "id": "h-vol-report",
+      "difficulty": 4,
+      "skills": [
+        "pt-basics",
+        "pt-cases"
+      ],
+      "prose": "```text\n        vol = annualised_vol([0.01, -0.01])\n>       assert vol == pytest.approx(math.sqrt(0.0002 * 252))\nE       assert 0.15874507866387544 == 0.22449944320643647 ± 2.2e-07\nE         Obtained: 0.15874507866387544\nE         Expected: 0.22449944320643647 ± 2.2e-07\n```",
+      "question": "What is the most likely bug?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "n",
+            "text": "`annualised_vol` divides by $n$ instead of $n - 1$",
+            "correct": true
+          },
+          {
+            "id": "test",
+            "text": "The test: the variance should divide by $n = 2$",
+            "why": "Volatility estimated from data uses the sample variance, which divides by $n - 1$. The test's 0.0002 is right."
+          },
+          {
+            "id": "days",
+            "text": "`annualised_vol` uses 365 days instead of 252",
+            "why": "That would scale by $\\sqrt{365/252} \\approx 1.20$, making it bigger. The code's answer is smaller."
+          },
+          {
+            "id": "slip",
+            "text": "A floating-point slip",
+            "why": "The gap is about 0.066, far beyond any rounding slip."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.2245 / 0.1587 = 1.414, which is $\\sqrt{2/1}$.",
+        "generic": "Not quite right. Divide the two numbers and look for a familiar factor."
+      },
+      "explain": {
+        "text": "0.22449944 / 0.15874508 = 1.4142, which is $\\sqrt{2}$. With two returns, dividing by $n = 2$ instead of $n - 1 = 1$ shrinks the variance by 2 and the vol by $\\sqrt{2}$. The code uses the population formula."
+      }
+    },
+    {
+      "id": "h-edge",
+      "difficulty": 3,
+      "skills": [
+        "pt-cases"
+      ],
+      "prose": "The drawdown tests cover one dip, a flat path and a steady rise.",
+      "question": "Which edge case is still untested?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "A single price, where there is no fall at all",
+            "correct": true
+          },
+          {
+            "id": "two-dips",
+            "text": "Two dips, where the second is deeper",
+            "why": "That is a useful case, but not an edge: it is an ordinary path with more points."
+          },
+          {
+            "id": "big",
+            "text": "A very long path of 2,520 prices",
+            "why": "Length is not an edge for this loop. It does the same thing at every price."
+          },
+          {
+            "id": "rise",
+            "text": "A rise of 20% instead of 10%",
+            "why": "A steady rise of any size has no drawdown. It is the same case again."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One price is the smallest input the function accepts.",
+        "generic": "Not quite right. Look for the input at the very limit of what the function accepts."
+      },
+      "explain": {
+        "text": "With one price, the peak is that price and nothing falls, so the answer is 0.0. A test pins it down: `assert max_drawdown([100.00]) == pytest.approx(0.0)`. An empty list is the next edge, and the function must decide whether to raise."
+      }
+    },
+    {
+      "id": "h-review-file",
+      "difficulty": 5,
+      "skills": [
+        "pt-basics",
+        "pt-cases"
+      ],
+      "title": "Review a colleague's tests",
+      "kind": "longform",
+      "prompt": "A colleague hands you `test_backtest.py` and says the backtest is fully tested.\n\n```python\nfrom backtest import daily_returns, max_drawdown, annualised_vol\n\ndef check_returns():\n    assert daily_returns([1.00, 2.00]) == [1.0]\n\ndef test_everything():\n    r = daily_returns([20.00, 22.00, 24.20])\n    assert r == [0.1, 0.1]\n    assert max_drawdown([100.00, 125.00, 100.00]) == 0.2\n    assert annualised_vol(r) == annualised_vol(r)\n\ndef drawdown_test():\n    assert max_drawdown([100.00, 90.00]) == 0.1\n```\n\n(a) Which functions does pytest run, and what does `pytest -q` report if all three backtest functions are correct? Explain why. (b) List every problem with this file, and say for each what it lets through. (c) Rewrite the file as a set of good tests, with every hand answer worked out. (d) Name two edge cases the file never tests, and write a test for each.",
+      "model": "**(a)** pytest collects only `test_everything`: `check_returns` and `drawdown_test` do not start with `test`, so they never run. Even with correct code, `pytest -q` prints `F` and `1 failed`, because the first assert compares floats exactly. `daily_returns([20.00, 22.00, 24.20])` is `[0.1, 0.09999999999999996]`, which is not `[0.1, 0.1]`.\n\n**(b)** Five problems.\n\n1. `check_returns` is never collected. It also uses a starting price of 1, where forgetting to divide gives the same answer, so it could not catch that bug anyway.\n2. `test_everything` tests three behaviours. It stops at the first failing assert, so the drawdown and vol lines never run.\n3. `assert r == [0.1, 0.1]` uses `==` on floats, so it fails on correct code.\n4. `assert annualised_vol(r) == annualised_vol(r)` compares the code with itself. It passes whatever the code does.\n5. `drawdown_test` is never collected, and its hand answer is fine (10 / 100 = 0.1) but untested.\n\n**(c)** A fixed file, one behaviour per test, arrange, act, assert, approx for floats:\n\n```python\nimport math\nimport pytest\nfrom backtest import daily_returns, max_drawdown, annualised_vol\n\ndef test_returns_steady_rise():\n    r = daily_returns([20.00, 22.00, 24.20])\n    assert r == pytest.approx([0.1, 0.1])\n\ndef test_drawdown_one_dip():\n    dd = max_drawdown([100.00, 125.00, 100.00])\n    assert dd == pytest.approx(0.2)            # 25 / 125\n\ndef test_drawdown_single_fall():\n    assert max_drawdown([100.00, 90.00]) == pytest.approx(0.1)\n\ndef test_vol_two_days():\n    vol = annualised_vol([0.01, -0.01])\n    assert vol == pytest.approx(math.sqrt(0.0002 * 252))\n```\n\nThe vol hand answer: mean 0, squared gaps 0.0001 + 0.0001 = 0.0002, over $n - 1 = 1$, times 252 trading days, then the square root: about 0.2245.\n\n**(d)** Edge cases: one price gives no returns, `assert daily_returns([100.00]) == []`. A steady rise has no drawdown, `assert max_drawdown([100.00, 110.00, 121.00]) == pytest.approx(0.0)`. A constant return has no volatility, `assert annualised_vol([0.003, 0.003, 0.003]) == pytest.approx(0.0)`. Any two of these, or a flat price path, earn the marks.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "(a) Says only `test_everything` runs, because the other names do not start with `test`, and that it fails on correct code: `F`, `1 failed`."
+        },
+        {
+          "points": 1,
+          "text": "(a) Explains the failure: `[0.1, 0.09999999999999996]` is not `[0.1, 0.1]` under `==`."
+        },
+        {
+          "points": 2,
+          "text": "(b) Names the self-comparison of `annualised_vol` and the base price of 1 in `check_returns` as checks that cannot catch bugs."
+        },
+        {
+          "points": 1,
+          "text": "(b) Says the three-behaviour test stops at its first failing assert, hiding the later lines."
+        },
+        {
+          "points": 2,
+          "text": "(c) Rewrites with collected names, one behaviour per test and `pytest.approx` for floats, with hand answers 0.1, 0.2 and $\\sqrt{0.0002 \\times 252}$ worked out."
+        },
+        {
+          "points": 2,
+          "text": "(d) Gives two real edge cases, such as one price, a steady rise or a constant return, each with a correct test."
+        }
+      ]
+    }
+  ]
+}

@@ -100,7 +100,7 @@ Second pass (items 24 to 39):
 49. Done: plane tangent at a corner is not drawn unless `side` picks a one-sided slope; `lengthPx` gives a length in pixels.
 50. Done: series `drawdown: "money"` (and `"abs"`) labels the absolute fall; no division by a zero peak.
 
-Third pass (items 51 to 114, 123 and 133 to 138):
+Third pass (items 51 to 114, 123, 133 to 138 and 142 to 144):
 
 51. Done: area signed pieces: a negative `colSizes` or `rowSizes` entry makes its strip subtracted (hatched, dashed edge).
 52. Done: area `colLabels`, `rowLabels` and edge `labels` patchable through state.
@@ -173,6 +173,9 @@ Third pass (items 51 to 114, 123 and 133 to 138):
 136. Done: code cases take `setup`, Python run just before `call` (both modes).
 137. Done: code `compare: "raises"` with `expect` the exception name (subclasses count); in script mode a raises case without `call` checks the whole program.
 138. Done: tree `params.label` is drawn as a title above the tree (and stays its accessible name).
+142. Kept: the worker's `loadPackagesFromImports(code)`; in script mode the code widget repeats the learner's import lines under `if False:` in the harness, so the worker sees them.
+143. Done: code widget `budget` (ms, added to the run limit; 30 s extra by default when the code imports numpy, pandas, scipy or matplotlib); `isclose` and `equal` compare arrays, Series and nested lists element by element via `tolist()`.
+144. Done: matrix scales the whole drawing to the column when it is wider than 540px.
 
 
 Raised later (equations level 2):
@@ -419,3 +422,8 @@ Raised later (git level 2):
 
 151. `ZQ.canvas.merge`: a keyed patch with `null` removes that item from the list (works in explain clones too).
 152. `graph`: per-node `r` and pill-shaped label nodes (same family as 99 and 117).
+
+Raised later (sql level 1):
+
+153. `table` canvas: a row-tap mode (`tap: "rows"`) where tapping any cell selects the row id `r{i}`.
+154. Choice options: let inline code wrap (same family as 135 and 139).

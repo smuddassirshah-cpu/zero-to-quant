@@ -1,0 +1,1593 @@
+{
+  "id": "l8-daily-volume",
+  "course": "sql",
+  "title": "Daily volume from a trades table",
+  "minutes": 14,
+  "objectives": [
+    "Summarise fills by day and ticker with `GROUP BY date, ticker`",
+    "Compute traded value and VWAP with `SUM(qty * price)`",
+    "Sort groups by an aggregate, and preview a daily return with `LAG`"
+  ],
+  "skills": [
+    "sql-aggregate"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A day's volume",
+      "prose": "A `trades` table holds one row per fill. A ticker's **volume** on a day is the shares it traded: the sum of that day's fills.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "trades: two days, two tickers"
+        }
+      },
+      "question": "Tap the quantities that make up AZN's volume on 12 March.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c3",
+          "r2c3"
+        ],
+        "only": [
+          "r0c3",
+          "r1c3",
+          "r2c3",
+          "r3c3",
+          "r4c3",
+          "r5c3",
+          "r6c3",
+          "r7c3"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "all-azn",
+            "set": [
+              "r0c3",
+              "r2c3",
+              "r4c3",
+              "r5c3",
+              "r7c3"
+            ]
+          },
+          {
+            "id": "whole-day",
+            "set": [
+              "r0c3",
+              "r1c3",
+              "r2c3",
+              "r3c3"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two things must match: the date and the ticker."
+        },
+        {
+          "rung": "point",
+          "text": "Rows 1 to 4 are 12 March.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Of those, rows 1 and 3 are AZN."
+        }
+      ],
+      "feedback": {
+        "correct": "Two fills: 200 + 500 = 700 shares.",
+        "generic": "Not quite right. Keep the fills that are both AZN and on 12 March.",
+        "byKey": {
+          "all-azn": "You took AZN's fills from both days. The volume is for one day, so 13 March's fills belong to another group.",
+          "whole-day": "You took every fill on 12 March, BARC's included. The group is one ticker on one day."
+        }
+      },
+      "explain": {
+        "text": "AZN on 12 March has two fills: 200 + 500 = 700 shares. The group is fixed by two columns at once, the date and the ticker.",
+        "canvas": {
+          "highlight": [
+            "r0c3",
+            "r2c3"
+          ],
+          "caption": "AZN, 12 March: 200 + 500 = 700"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "All four at once",
+      "prose": "```sql\nSELECT date, ticker, SUM(qty)\nFROM trades\nGROUP BY date, ticker;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the `SUM(qty)` on the row for AZN on 13 March?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 800,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "shares",
+        "wrong": [
+          {
+            "id": "all-azn",
+            "value": 1500,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "count",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the fills that are AZN and on 13 March."
+        },
+        {
+          "rung": "point",
+          "text": "There are three of them.",
+          "highlight": [
+            "r4c3",
+            "r5c3",
+            "r7c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "300 + 100 + 400."
+        }
+      ],
+      "feedback": {
+        "correct": "300 + 100 + 400 = 800 shares.",
+        "generic": "Not quite right. Add the quantities of the AZN fills on 13 March.",
+        "byKey": {
+          "all-azn": "You added AZN's fills from both days. Grouping by date as well splits them.",
+          "count": "You counted the fills. `SUM(qty)` adds their quantities."
+        }
+      },
+      "explain": {
+        "text": "Grouping by `date, ticker` gives four groups, one per day and ticker. AZN on 13 March holds three fills summing to 800 shares.",
+        "canvas": {
+          "highlight": [
+            "r4c3",
+            "r5c3",
+            "r7c3"
+          ],
+          "caption": "AZN, 13 March: 800"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The daily volume table",
+      "prose": "`AS volume` names a result column. Sort by two columns with `ORDER BY date, ticker`: by date, then by ticker within a date.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return the date, the ticker and the volume for every day and ticker, sorted by date then ticker.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\ndb.executemany(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\", [\n    (1, \"2024-03-12\", \"AZN\", 200, 118.90),\n    (2, \"2024-03-12\", \"BARC\", 5000, 2.17),\n    (3, \"2024-03-12\", \"AZN\", 500, 119.20),\n    (4, \"2024-03-12\", \"BARC\", 8000, 2.19),\n    (5, \"2024-03-13\", \"AZN\", 300, 117.80),\n    (6, \"2024-03-13\", \"AZN\", 100, 117.50),\n    (7, \"2024-03-13\", \"BARC\", 6000, 2.16),\n    (8, \"2024-03-13\", \"AZN\", 400, 117.70),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT date, ticker\nFROM trades\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\ndb.executemany(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\", [\n    (1, \"2024-03-12\", \"AZN\", 200, 118.90),\n    (2, \"2024-03-12\", \"BARC\", 5000, 2.17),\n    (3, \"2024-03-12\", \"AZN\", 500, 119.20),\n    (4, \"2024-03-12\", \"BARC\", 8000, 2.19),\n    (5, \"2024-03-13\", \"AZN\", 300, 117.80),\n    (6, \"2024-03-13\", \"AZN\", 100, 117.50),\n    (7, \"2024-03-13\", \"BARC\", 6000, 2.16),\n    (8, \"2024-03-13\", \"AZN\", 400, 117.70),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT date, ticker, SUM(qty) AS volume\nFROM trades\nGROUP BY date, ticker\nORDER BY date, ticker\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2024-03-12', 'AZN', 700), ('2024-03-12', 'BARC', 13000), ('2024-03-13', 'AZN', 800), ('2024-03-13', 'BARC', 6000)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2024-03-12', 'AZN', 700), ('2024-03-12', 'BARC', 13000), ('2024-03-13', 'AZN', 800), ('2024-03-13', 'BARC', 6000)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO trades VALUES (9, '2024-03-14', 'BARC', 7000, 2.20);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[('2024-03-12', 'AZN', 700), ('2024-03-12', 'BARC', 13000), ('2024-03-13', 'AZN', 800), ('2024-03-13', 'BARC', 6000), ('2024-03-14', 'BARC', 7000)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); t3.executescript(\"\".join(db.iterdump())); t3.executescript(\"INSERT INTO trades VALUES (9, '2024-03-12', 'AZN', 100, 119.00);\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[('2024-03-12', 'AZN', 800), ('2024-03-12', 'BARC', 13000), ('2024-03-13', 'AZN', 800), ('2024-03-13', 'BARC', 6000)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly, order included. Tests 2 and 3 add a fill."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Group by both columns you want to see."
+        },
+        {
+          "rung": "point",
+          "text": "`GROUP BY date, ticker`, then `ORDER BY date, ticker`.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`SELECT date, ticker, SUM(qty) AS volume FROM trades GROUP BY date, ticker ORDER BY date, ticker`"
+        }
+      ],
+      "feedback": {
+        "correct": "Four rows: 700, 13,000, 800 and 6,000 shares.",
+        "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
+        "byKey": {
+          "test-1": "Test 1 expects four rows, starting `('2024-03-12', 'AZN', 700)`. Check both the grouping and the sort."
+        }
+      },
+      "explain": {
+        "text": "Two grouping columns make one group per day and ticker. `ORDER BY date, ticker` sorts by date first and breaks ties by ticker, so the order never depends on luck.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The busiest day",
+      "prose": "```sql\nSELECT date, ticker, SUM(qty) AS volume\nFROM trades\nGROUP BY date, ticker\nORDER BY volume DESC\nLIMIT 1;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which row comes back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "barc12",
+            "text": "`2024-03-12, BARC, 13000`",
+            "correct": true
+          },
+          {
+            "id": "fill",
+            "text": "`2024-03-12, BARC, 8000`",
+            "why": "You sorted single fills. `ORDER BY` runs after grouping, so it sorts the daily totals."
+          },
+          {
+            "id": "azn13",
+            "text": "`2024-03-13, AZN, 800`",
+            "why": "AZN on 13 March is the biggest day in pounds, not in shares. This query sorts by `volume`, a share count."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out the four daily volumes first."
+        },
+        {
+          "rung": "point",
+          "text": "They are 700, 13,000, 800 and 6,000 shares.",
+          "highlight": [
+            "r1c3",
+            "r3c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The largest is BARC on 12 March."
+        }
+      ],
+      "feedback": {
+        "correct": "BARC traded 13,000 shares on 12 March.",
+        "generic": "Not quite right. Sort the four daily totals, largest first."
+      },
+      "explain": {
+        "text": "`ORDER BY volume DESC` sorts the finished groups by their own aggregate, and `LIMIT 1` keeps the top one. BARC wins on shares because its price is about £2.",
+        "canvas": {
+          "highlight": [
+            "r1c3",
+            "r3c3"
+          ],
+          "caption": "BARC, 12 March: 5000 + 8000 = 13000"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Traded value",
+      "prose": "Risk now wants each day and ticker's **traded value** in pounds: what all its fills cost.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which expression gives it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`SUM(qty * price)`",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "`SUM(qty) * AVG(price)`",
+            "why": "You multiplied total shares by the average price. `AVG` weights a 200-share fill like a 500-share one, so AZN on 12 March comes out at £83,335, not £83,380.",
+            "canvas": {
+              "highlight": [
+                "r0c4",
+                "r2c4"
+              ],
+              "caption": "AVG(price) gives each fill the same weight"
+            }
+          },
+          {
+            "id": "sums",
+            "text": "`SUM(qty) * SUM(price)`",
+            "why": "Adding the prices of two fills gives £238.10, which is not a price at all. It roughly doubles the value."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What did each fill cost on its own?"
+        },
+        {
+          "rung": "point",
+          "text": "One fill costs its `qty` times its `price`.",
+          "highlight": [
+            "r0c3",
+            "r2c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Multiply inside each row, then add the products."
+        }
+      ],
+      "feedback": {
+        "correct": "Each fill is priced at its own price, then the costs are added.",
+        "generic": "Not quite right. Price each fill first, then add.",
+        "byKey": {
+          "avg": "You multiplied total shares by the average price. `AVG` weights a 200-share fill like a 500-share one, so AZN on 12 March comes out at £83,335, not £83,380."
+        }
+      },
+      "explain": {
+        "text": "AZN on 12 March: 200 × £118.90 + 500 × £119.20 = £83,380. The shortcut with `AVG(price)` gives £83,335, because it ignores that the bigger fill had the higher price.",
+        "canvas": {
+          "highlight": [
+            "r0c3",
+            "r2c3",
+            "r0c4",
+            "r2c4"
+          ],
+          "caption": "23780 + 59600 = 83380"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "VWAP",
+      "prose": "The **volume-weighted average price**, VWAP, is traded value over volume. Traders judge their fills against it.\n\n```sql\nSUM(qty * price) / SUM(qty)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is AZN's VWAP on 12 March? Give pounds to 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 119.11,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "pounds",
+        "accept": "£119.11 (exactly 119.1143...)",
+        "wrong": [
+          {
+            "id": "avg",
+            "value": 119.05,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "value",
+            "value": 83380,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You found the traded value on the last screen."
+        },
+        {
+          "rung": "point",
+          "text": "It is £83,380 over 700 shares.",
+          "highlight": [
+            "r0c4",
+            "r2c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£83,380 / 700."
+        }
+      ],
+      "feedback": {
+        "correct": "£83,380 / 700 = £119.11.",
+        "generic": "Not quite right. Divide the traded value by the volume.",
+        "byKey": {
+          "avg": "You took the plain average of the two prices. VWAP weights the 500-share fill more than the 200-share one.",
+          "value": "That is the traded value. Divide it by the 700 shares."
+        }
+      },
+      "explain": {
+        "text": "VWAP is £83,380 / 700 = £119.11, above the plain average of £119.05. The bigger fill was at the higher price, so it pulls the average up.",
+        "canvas": {
+          "highlight": [
+            "r0c3",
+            "r2c3",
+            "r0c4",
+            "r2c4"
+          ],
+          "caption": "VWAP = 83380 / 700 = 119.11"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Yesterday's close",
+      "prose": "A daily return needs yesterday's close beside today's. A **window function** fetches it without folding any rows.\n\n```sql\nSELECT date, ticker, close,\n  LAG(close) OVER (PARTITION BY ticker ORDER BY date)\nFROM prices;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-11",
+              "BARC",
+              "2.12",
+              "41000000"
+            ],
+            [
+              "2024-03-12",
+              "BARC",
+              "2.18",
+              "52000000"
+            ],
+            [
+              "2024-03-13",
+              "BARC",
+              "2.15",
+              "38000000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices, sorted by ticker then date"
+        }
+      },
+      "question": "Tap the close that `LAG(close)` returns on BARC's 13 March row.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r4c2"
+        ],
+        "max": 1,
+        "only": [
+          "r0c2",
+          "r1c2",
+          "r2c2",
+          "r3c2",
+          "r4c2",
+          "r5c2"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`LAG` looks back one row."
+        },
+        {
+          "rung": "point",
+          "text": "`PARTITION BY ticker` keeps BARC's rows apart from AZN's.",
+          "highlight": [
+            "r3c2",
+            "r4c2",
+            "r5c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One row back from BARC on 13 March is BARC on 12 March."
+        }
+      ],
+      "feedback": {
+        "correct": "BARC closed at £2.18 the day before.",
+        "generic": "Not quite right. Step back one day inside BARC's own rows.",
+        "byKey": {
+          "r5c2": "That is the row's own close. `LAG` reaches one row back.",
+          "r3c2": "That is two days back. `LAG(close)` reaches one row back.",
+          "r2c2": "That is an AZN close. `PARTITION BY ticker` keeps each ticker's rows apart."
+        }
+      },
+      "explain": {
+        "text": "`LAG(close)` reaches one row back within the ticker, in date order, so BARC on 13 March sees £2.18. Its return is 2.15 / 2.18 − 1 ≈ −1.38%. Each ticker's first day has no row behind it, so `LAG` gives `NULL` there.",
+        "canvas": {
+          "highlight": [
+            "r4c2",
+            "r5c2"
+          ],
+          "caption": "2.15 / 2.18 - 1 = -0.0138"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Two shapes of summary",
+      "prose": "A `GROUP BY` folds each group into one row. A window function keeps every row and adds a value from its neighbours.\n\n```sql\nSELECT date, ticker,\n  ROUND(close / LAG(close) OVER\n    (PARTITION BY ticker ORDER BY date) - 1, 4)\nFROM prices;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-11",
+              "BARC",
+              "2.12",
+              "41000000"
+            ],
+            [
+              "2024-03-12",
+              "BARC",
+              "2.18",
+              "52000000"
+            ],
+            [
+              "2024-03-13",
+              "BARC",
+              "2.15",
+              "38000000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does this give on AZN's first day, 11 March?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "null",
+            "text": "`NULL`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "`0.0`",
+            "why": "You read \"no earlier close\" as \"no change\". There is no earlier close at all, so the division has nothing to use."
+          },
+          {
+            "id": "error",
+            "text": "An error",
+            "why": "Arithmetic with `NULL` gives `NULL` in SQL. Nothing fails, which is why the first row needs care later."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "No previous close, so no return.",
+        "generic": "Not quite right. Ask what `LAG` returns on the first row of a ticker."
+      },
+      "explain": {
+        "text": "`LAG` gives `NULL` on each ticker's first row, and `close / NULL` is `NULL`. A table of daily returns always starts one row short per ticker.",
+        "canvas": {
+          "highlight": [
+            "r0c2",
+            "r3c2"
+          ],
+          "caption": "first rows: LAG gives NULL"
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Write the report",
+      "prose": "A daily report needs volumes from 12 March on, days of at least 1,000 shares only, biggest first. SQL fixes the order in which you write the clauses.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Put the lines of the query in the order you must write them.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "l1",
+            "text": "`SELECT date, ticker, SUM(qty) AS volume`"
+          },
+          {
+            "id": "l2",
+            "text": "`FROM trades`"
+          },
+          {
+            "id": "l3",
+            "text": "`WHERE date >= '2024-03-12'`"
+          },
+          {
+            "id": "l4",
+            "text": "`GROUP BY date, ticker`"
+          },
+          {
+            "id": "l5",
+            "text": "`HAVING SUM(qty) >= 1000`"
+          },
+          {
+            "id": "l6",
+            "text": "`ORDER BY volume DESC;`"
+          }
+        ],
+        "answer": [
+          "l1",
+          "l2",
+          "l3",
+          "l4",
+          "l5",
+          "l6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`SELECT` is written first, even though the database works on it late."
+        },
+        {
+          "rung": "point",
+          "text": "The row filter comes before the grouping; the group filter after.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`SELECT`, `FROM`, `WHERE`, `GROUP BY`, `HAVING`, `ORDER BY`."
+        }
+      ],
+      "feedback": {
+        "correct": "Written order: SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY.",
+        "generic": "Not quite right. Start with `SELECT`, then follow the order the database works in."
+      },
+      "explain": {
+        "text": "You write `SELECT` first, then the clauses in the order the database runs them. `ORDER BY` can use the name `volume` because it runs after `SELECT` defines it.",
+        "canvas": {}
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Where the money went",
+      "prose": "Commission is charged on traded value, not on shares. The desk head wants each ticker's traded value over both days, largest first.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "2024-03-12",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "2024-03-12",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "2024-03-12",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "4",
+              "2024-03-12",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "5",
+              "2024-03-13",
+              "AZN",
+              "300",
+              "117.80"
+            ],
+            [
+              "6",
+              "2024-03-13",
+              "AZN",
+              "100",
+              "117.50"
+            ],
+            [
+              "7",
+              "2024-03-13",
+              "BARC",
+              "6000",
+              "2.16"
+            ],
+            [
+              "8",
+              "2024-03-13",
+              "AZN",
+              "400",
+              "117.70"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return each ticker with its traded value rounded to 2 places, sorted by traded value, largest first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\ndb.executemany(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\", [\n    (1, \"2024-03-12\", \"AZN\", 200, 118.90),\n    (2, \"2024-03-12\", \"BARC\", 5000, 2.17),\n    (3, \"2024-03-12\", \"AZN\", 500, 119.20),\n    (4, \"2024-03-12\", \"BARC\", 8000, 2.19),\n    (5, \"2024-03-13\", \"AZN\", 300, 117.80),\n    (6, \"2024-03-13\", \"AZN\", 100, 117.50),\n    (7, \"2024-03-13\", \"BARC\", 6000, 2.16),\n    (8, \"2024-03-13\", \"AZN\", 400, 117.70),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT ticker\nFROM trades\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\ndb.executemany(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\", [\n    (1, \"2024-03-12\", \"AZN\", 200, 118.90),\n    (2, \"2024-03-12\", \"BARC\", 5000, 2.17),\n    (3, \"2024-03-12\", \"AZN\", 500, 119.20),\n    (4, \"2024-03-12\", \"BARC\", 8000, 2.19),\n    (5, \"2024-03-13\", \"AZN\", 300, 117.80),\n    (6, \"2024-03-13\", \"AZN\", 100, 117.50),\n    (7, \"2024-03-13\", \"BARC\", 6000, 2.16),\n    (8, \"2024-03-13\", \"AZN\", 400, 117.70),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, ROUND(SUM(qty * price), 2) AS value\nFROM trades\nGROUP BY ticker\nORDER BY value DESC\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN', 177550.0), ('BARC', 41330.0)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN', 177550.0), ('BARC', 41330.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO trades VALUES (9, '2024-03-13', 'HSBA', 10000, 6.45);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[('AZN', 177550.0), ('HSBA', 64500.0), ('BARC', 41330.0)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); t3.executescript(\"\".join(db.iterdump())); t3.executescript(\"INSERT INTO trades VALUES (9, '2024-03-13', 'BARC', 100000, 2.20);\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[('BARC', 261330.0), ('AZN', 177550.0)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly, order included. Tests 2 and 3 add a large fill."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Group by ticker only: both days go into one total."
+        },
+        {
+          "rung": "point",
+          "text": "The value of a fill is `qty * price`; sum those per ticker.",
+          "highlight": [
+            "c3",
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`SELECT ticker, ROUND(SUM(qty * price), 2) AS value FROM trades GROUP BY ticker ORDER BY value DESC`"
+        }
+      ],
+      "feedback": {
+        "correct": "AZN £177,550.00, BARC £41,330.00.",
+        "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
+        "byKey": {
+          "test-1": "Test 1 expects `[('AZN', 177550.0), ('BARC', 41330.0)]`. Check `SUM(qty * price)` and the sort direction.",
+          "test-3": "Test 3 adds a £220,000 BARC fill, so BARC must now come first. Sort by the value, not by name."
+        }
+      },
+      "explain": {
+        "text": "BARC traded far more shares, but AZN traded over four times the money. Sorting by `SUM(qty * price)` ranks tickers by what commission is charged on.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              3,
+              4
+            ]
+          },
+          "caption": "AZN 177550, BARC 41330"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Grouping by `date, ticker` gives one row per ticker per day; `SUM(qty)` is that day's volume.",
+      "Traded value is `SUM(qty * price)`: price each fill, then add. VWAP divides it by `SUM(qty)`.",
+      "`ORDER BY` runs last, so it can sort groups by an aggregate; `LAG` adds the previous row's value without folding rows."
+    ],
+    "formula": {
+      "name": "VWAP",
+      "tex": "\\text{VWAP} = \\dfrac{\\sum_i q_i\\, p_i}{\\sum_i q_i}",
+      "note": "In SQL: `SUM(qty * price) / SUM(qty)` per group."
+    },
+    "trap": "`SUM(qty) * AVG(price)` is not the traded value: it weights a small fill as much as a large one."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "BARC on 12 March: 5,000 shares at £2.17 and 8,000 shares at £2.19.",
+      "question": "What is the traded value in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 28370,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "avg",
+            "value": 28340,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£10,850 + £17,520 = £28,370.",
+        "generic": "Not quite right. Price each fill, then add.",
+        "byKey": {
+          "avg": "You multiplied 13,000 shares by the average price, £2.18. The bigger fill was at the higher price, so that undercounts by £30."
+        }
+      },
+      "explain": {
+        "text": "`SUM(qty * price)` prices each fill on its own: 5,000 × £2.17 + 8,000 × £2.19 = £28,370."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "```sql\nSELECT date, ticker,\n  LAG(close) OVER (PARTITION BY ticker ORDER BY date)\nFROM prices;\n```",
+      "question": "What does the `LAG` column hold on each ticker's first date?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "null",
+            "text": "`NULL`",
+            "correct": true
+          },
+          {
+            "id": "own",
+            "text": "That row's own close",
+            "why": "You expected `LAG` to fall back on the current row. With nothing behind it, it returns `NULL`."
+          },
+          {
+            "id": "other",
+            "text": "The previous ticker's last close",
+            "why": "`PARTITION BY ticker` stops `LAG` crossing from one ticker into another."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "There is no earlier row in that partition.",
+        "generic": "Not quite right. Ask what lies one row back from a partition's first row."
+      },
+      "explain": {
+        "text": "Each partition starts afresh, so its first row has nothing one row back. `LAG` returns `NULL` there."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "A query lists daily traded value per ticker and sorts by it.\n\n```sql\nSELECT date, ticker, SUM(qty * price) AS value\nFROM trades\nGROUP BY date, ticker\nORDER BY value DESC;\n```",
+      "question": "When does the database sort?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "after",
+            "text": "After grouping, on the finished totals",
+            "correct": true
+          },
+          {
+            "id": "before",
+            "text": "Before grouping, on single fills",
+            "why": "You expected `ORDER BY` to sort the raw rows. It runs last, on the rows the groups produce."
+          },
+          {
+            "id": "error",
+            "text": "Never: `value` is not a column of `trades`",
+            "why": "`AS value` names a result column, and `ORDER BY` runs after `SELECT`, so the name is known."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`ORDER BY` runs last, on the grouped rows.",
+        "generic": "Not quite right. Recall the order in which the clauses run."
+      },
+      "explain": {
+        "text": "`ORDER BY` is the last step, after `SELECT` has made one row per group. So it sorts the totals, and it can use the name `value`."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "BARC closed at £2.18 on 12 March and £2.15 on 13 March.\n\n```sql\nROUND(close / LAG(close) OVER (PARTITION BY ticker ORDER BY date) - 1, 4)\n```",
+      "question": "What does this give on BARC's 13 March row?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0138,
+        "tol": {
+          "abs": 5e-05
+        },
+        "wrong": [
+          {
+            "id": "flipped",
+            "value": 0.014,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "pct",
+            "value": -1.38,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2.15 / 2.18 − 1 = −0.0138.",
+        "generic": "Not quite right. Divide today's close by yesterday's, then subtract 1.",
+        "byKey": {
+          "flipped": "You divided yesterday by today. The return is today over yesterday, minus 1.",
+          "pct": "That is the percentage. The query returns the decimal, −0.0138."
+        }
+      },
+      "explain": {
+        "text": "`LAG(close)` is £2.18, so the return is 2.15 / 2.18 − 1 = −0.01376, which rounds to −0.0138 at four places."
+      }
+    }
+  ]
+}

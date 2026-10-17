@@ -247,6 +247,7 @@ Random walks or price paths from the seeded RNG.
 - `matrices: [{ id, rows: [[...]], label }]`. Cells may be numbers or strings, including `$...$`.
 - `ops: ["×", "="]`: the operators between consecutive matrices.
 - `cellHeight`.
+- When the matrices, operators and any row-operation label are wider than the column, the whole drawing scales down to fit (cells keep their proportions).
 
 **state**
 - `highlight`: ids, or the object form `{ "A": { "rows": [0], "cols": [1], "cells": [[0, 1]] } }`. In the object form, rows take a slot 1 wash, columns a slot 2 wash and cells a pear wash. These washes are persistent and do not pulse.

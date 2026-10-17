@@ -1,0 +1,1179 @@
+{
+  "id": "l12-database-to-pandas",
+  "course": "sql",
+  "title": "From a database to pandas",
+  "minutes": 15,
+  "objectives": [
+    "Query SQLite from Python with placeholders and read the rows",
+    "Create a table, insert rows and commit them",
+    "Read a query, with a subquery, into a DataFrame"
+  ],
+  "skills": [
+    "sql-python",
+    "sql-join"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "What comes back",
+      "prose": "Python talks to SQLite through the `sqlite3` module. `execute` runs SQL on an open connection `db`, and `fetchall` collects the rows.\n\n```python\nrows = db.execute(\n    \"SELECT ticker, close FROM prices \"\n    \"WHERE date = '2026-03-04' \"\n    \"ORDER BY close DESC LIMIT 2\"\n).fetchall()\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "2026-03-04",
+              "109.80"
+            ],
+            [
+              "BARC",
+              "2026-03-04",
+              "2.51"
+            ],
+            [
+              "BP",
+              "2026-03-04",
+              "4.35"
+            ],
+            [
+              "HSBA",
+              "2026-03-04",
+              "8.69"
+            ],
+            [
+              "SHEL",
+              "2026-03-04",
+              "27.40"
+            ],
+            [
+              "VOD",
+              "2026-03-04",
+              "0.72"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices on 4 March"
+        }
+      },
+      "question": "What is `rows`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tuples",
+            "text": "`[('AZN', 109.8), ('SHEL', 27.4)]`",
+            "correct": true
+          },
+          {
+            "id": "dicts",
+            "text": "`[{'ticker': 'AZN', 'close': 109.8}, ...]`",
+            "why": "You expected named fields. `sqlite3` returns each row as a plain tuple, in the order of the select list."
+          },
+          {
+            "id": "text",
+            "text": "`[('AZN', '109.80'), ('SHEL', '27.40')]`",
+            "why": "`close` is stored as a number, so it comes back as a float. Python prints 109.8 without the trailing zero."
+          },
+          {
+            "id": "frame",
+            "text": "A DataFrame with two columns",
+            "why": "`fetchall` returns plain Python values. A DataFrame needs pandas, later in this lesson."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What type holds one row?"
+        },
+        {
+          "rung": "point",
+          "text": "Each row is a tuple in the order of the select list: ticker, then close.",
+          "highlight": [
+            "r0c2",
+            "r4c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The two highest closes on 4 March are AstraZeneca and Shell, as floats."
+        }
+      ],
+      "feedback": {
+        "correct": "A list of tuples, one per row.",
+        "generic": "Not quite right. Think about the Python type of one row."
+      },
+      "explain": {
+        "text": "Each row is a tuple in the order of the select list, and `fetchall` puts the rows in a list. So `rows[0][1]` is `109.8`, AstraZeneca's close, ready for arithmetic.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Placeholders",
+      "prose": "The ticker often comes from a variable. Do not paste it into the SQL text. Write `?` where it goes and pass the values as a tuple; SQLite fills each `?` in order.\n\n```python\nticker = \"BP\"\nsql = \"SELECT close FROM prices WHERE ticker = ?\"\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "2026-03-04",
+              "109.80"
+            ],
+            [
+              "BARC",
+              "2026-03-04",
+              "2.51"
+            ],
+            [
+              "BP",
+              "2026-03-04",
+              "4.35"
+            ],
+            [
+              "HSBA",
+              "2026-03-04",
+              "8.69"
+            ],
+            [
+              "SHEL",
+              "2026-03-04",
+              "27.40"
+            ],
+            [
+              "VOD",
+              "2026-03-04",
+              "0.72"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices on 4 March"
+        }
+      },
+      "question": "Which call returns BP's closes?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`db.execute(sql, (ticker,))`",
+            "correct": true
+          },
+          {
+            "id": "nocomma",
+            "text": "`db.execute(sql, (ticker))`",
+            "why": "`(ticker)` is just the text `'BP'`, not a tuple. SQLite counts its 2 letters as 2 values and raises `Incorrect number of bindings supplied`."
+          },
+          {
+            "id": "bare",
+            "text": "`db.execute(sql, ticker)`",
+            "why": "You passed the text itself. SQLite treats it as a sequence of 2 letters, so 2 values meet 1 placeholder and it raises an error."
+          },
+          {
+            "id": "noargs",
+            "text": "`db.execute(sql)`",
+            "why": "The `?` needs a value. With none supplied, SQLite raises `Incorrect number of bindings supplied`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What makes a one-item tuple in Python?"
+        },
+        {
+          "rung": "point",
+          "text": "A tuple of one needs a trailing comma: `(ticker,)`.",
+          "highlight": [
+            "r2c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pass `(ticker,)`, a tuple of one, as the second argument."
+        }
+      ],
+      "feedback": {
+        "correct": "A bare `?` and a one-item tuple.",
+        "generic": "Not quite right. Check the `?` and the tuple in each call.",
+        "byKey": {
+          "nocomma": "You wrapped `ticker` in brackets, but without a comma it is not a tuple. SQLite sees the 2 letters as 2 values."
+        }
+      },
+      "explain": {
+        "text": "A placeholder is a bare `?`, and the values travel separately as a tuple. `(ticker,)` is a tuple of one; `(ticker)` is just the text. SQLite never reads the value as SQL, so any text is safe.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A query in a function",
+      "prose": "Wrap the query in a function the rest of your code can call. It takes an open connection and a ticker, and hands back plain Python values.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "BP",
+              "2026-03-02",
+              "4.32"
+            ],
+            [
+              "BP",
+              "2026-03-03",
+              "4.28"
+            ],
+            [
+              "BP",
+              "2026-03-04",
+              "4.35"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices for BP"
+        }
+      },
+      "question": "Write `closes(db, ticker)` that returns a list of `(date, close)` tuples for that ticker, oldest first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndef closes(db, ticker):\n    # return [(date, close), ...] for this ticker, oldest first\n    pass\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    \"\"\")\n    return db\n\nprint(closes(make_db(), \"BP\"))\n",
+        "solution": "import sqlite3\n\ndef closes(db, ticker):\n    return db.execute(\n        \"SELECT date, close FROM prices WHERE ticker = ? ORDER BY date\",\n        (ticker,),\n    ).fetchall()\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    \"\"\")\n    return db\n\nprint(closes(make_db(), \"BP\"))\n",
+        "examples": [
+          {
+            "call": "closes(make_db(), 'BP')[0]",
+            "expect": "('2026-03-02', 4.32)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "closes(make_db(), 'BP')",
+            "expect": "[('2026-03-02', 4.32), ('2026-03-03', 4.28), ('2026-03-04', 4.35)]",
+            "compare": "equal"
+          },
+          {
+            "call": "closes(make_db(), 'VOD')",
+            "expect": "[('2026-03-02', 0.71), ('2026-03-03', 0.7), ('2026-03-04', 0.72)]",
+            "compare": "equal"
+          },
+          {
+            "call": "closes(make_db(), 'LLOY')",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "closes(make_db(), \"BP' OR '1'='1\")",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests, one with a ticker that contains quotes. Each compares the list you return exactly."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which two columns, which filter and which order?"
+        },
+        {
+          "rung": "point",
+          "text": "Select `date, close` with `WHERE ticker = ?` and `ORDER BY date`.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `db.execute(sql, (ticker,)).fetchall()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Three dated closes for BP, and an empty list for a ticker with no prices.",
+        "generic": "Not quite right. Compare your first tuple with the example.",
+        "byKey": {
+          "test-4": "Test 4 passes the ticker `BP' OR '1'='1`. Pasted into the SQL it rewrites the query; passed with `?` it is just a name with no prices."
+        }
+      },
+      "explain": {
+        "text": "Dates stored as `YYYY-MM-DD` text sort in time order, so `ORDER BY date` gives oldest first. With `?`, even the crafted ticker in test 4 is only compared as text, so it matches nothing."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Pasting values into SQL",
+      "prose": "A colleague builds the SQL with an f-string instead:\n\n```python\nticker = \"BP\"\nsql = f\"SELECT close FROM prices WHERE ticker = {ticker}\"\nrows = db.execute(sql).fetchall()\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "BP",
+              "2026-03-02",
+              "4.32"
+            ],
+            [
+              "BP",
+              "2026-03-03",
+              "4.28"
+            ],
+            [
+              "BP",
+              "2026-03-04",
+              "4.35"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices for BP"
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "works",
+            "text": "It returns BP's three closes",
+            "why": "You expected the f-string to paste in `'BP'` with its quotes. It pastes the bare letters BP, and SQL reads a bare word as a column name."
+          },
+          {
+            "id": "error",
+            "text": "`OperationalError: no such column: BP`",
+            "correct": true
+          },
+          {
+            "id": "empty",
+            "text": "It returns an empty list",
+            "why": "SQLite never gets as far as comparing. It stops at the unknown name BP."
+          },
+          {
+            "id": "all",
+            "text": "It returns every close in the table",
+            "why": "Nothing is compared at all. SQLite rejects the query before reading a row."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write out the SQL text the f-string builds."
+        },
+        {
+          "rung": "point",
+          "text": "It builds `WHERE ticker = BP`, with no quotes round BP.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A bare word in SQL is a column name, and `prices` has no column called BP."
+        }
+      ],
+      "feedback": {
+        "correct": "The f-string drops the quotes, so BP looks like a column.",
+        "generic": "Not quite right. Write out the exact SQL text first.",
+        "byKey": {
+          "works": "You expected the f-string to keep the quotes. It builds `WHERE ticker = BP`, and SQL reads BP as a column name."
+        }
+      },
+      "explain": {
+        "text": "The f-string builds `WHERE ticker = BP`, and SQL reads BP as a missing column. Adding quotes by hand breaks on a value such as O'Neill, and lets crafted text rewrite the query. Placeholders pass values as data, never as SQL."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Writing results to a file",
+      "prose": "A backtest saves its runs to a file so you can query them tomorrow. `results` holds the 3 tuples shown.\n\n```python\ndb = sqlite3.connect(\"results.db\")\ndb.execute(\"CREATE TABLE runs (run_id INTEGER PRIMARY KEY, \"\n           \"strategy TEXT, sharpe REAL, pnl REAL)\")\ndb.executemany(\"INSERT INTO runs VALUES (?, ?, ?, ?)\", results)\ndb.close()\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "run_id",
+            "strategy",
+            "sharpe",
+            "pnl (£)"
+          ],
+          "rows": [
+            [
+              "1",
+              "momentum",
+              "0.84",
+              "12,450.00"
+            ],
+            [
+              "2",
+              "mean reversion",
+              "0.37",
+              "3,120.50"
+            ],
+            [
+              "3",
+              "carry",
+              "1.12",
+              "18,730.25"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "results: three backtest runs, held in Python"
+        }
+      },
+      "question": "Tomorrow you open `results.db` and count the rows of `runs`. How many are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows in runs",
+        "accept": "0: the inserts were never committed.",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3
+          },
+          {
+            "id": "one",
+            "value": 1
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which line saves changes to the file for good?"
+        },
+        {
+          "rung": "point",
+          "text": "Inserts wait in a transaction until `db.commit()`. Is there one?",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "There is no `commit`, so `close` throws the inserts away. The table exists but is empty."
+        }
+      ],
+      "feedback": {
+        "correct": "The table is there, but empty.",
+        "generic": "Not quite right. Look for the line that makes the inserts permanent.",
+        "byKey": {
+          "three": "You expected `executemany` to save the rows. They wait in a transaction until `db.commit()`, and `close` discards them.",
+          "one": "`executemany` inserts all three runs at once, and none of them was committed."
+        }
+      },
+      "explain": {
+        "text": "The `CREATE TABLE` took effect at once, but the inserts wait in an open transaction. `close()` without `commit()` discards them, so the table is empty. Call `db.commit()` after writing, or write inside `with db:`, which commits when the block ends."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Save the runs properly",
+      "prose": "Now write the saving step. A sweep calls it after every batch of runs, so the table may already exist. `CREATE TABLE IF NOT EXISTS` creates it only the first time.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "run_id",
+            "strategy",
+            "sharpe",
+            "pnl (£)"
+          ],
+          "rows": [
+            [
+              "1",
+              "momentum",
+              "0.84",
+              "12,450.00"
+            ],
+            [
+              "2",
+              "mean reversion",
+              "0.37",
+              "3,120.50"
+            ],
+            [
+              "3",
+              "carry",
+              "1.12",
+              "18,730.25"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "results: three backtest runs, held in Python"
+        }
+      },
+      "question": "Write `save_runs(db, runs)` that creates `runs (run_id, strategy, sharpe, pnl)` if needed, inserts every run with placeholders, and commits.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\nRUNS = [\n    (1, \"momentum\", 0.84, 12450.00),\n    (2, \"mean reversion\", 0.37, 3120.50),\n    (3, \"carry\", 1.12, 18730.25),\n]\n\ndef save_runs(db, runs):\n    # create the table runs if it is not there yet,\n    # insert every run, then commit\n    pass\n\ndb = sqlite3.connect(\":memory:\")\nsave_runs(db, RUNS)\nprint(db.execute(\"SELECT * FROM runs\").fetchall())\n",
+        "solution": "import sqlite3\n\nRUNS = [\n    (1, \"momentum\", 0.84, 12450.00),\n    (2, \"mean reversion\", 0.37, 3120.50),\n    (3, \"carry\", 1.12, 18730.25),\n]\n\ndef save_runs(db, runs):\n    # create the table runs if it is not there yet,\n    # insert every run, then commit\n    db.execute(\n        \"CREATE TABLE IF NOT EXISTS runs (run_id INTEGER PRIMARY KEY, \"\n        \"strategy TEXT, sharpe REAL, pnl REAL)\"\n    )\n    db.executemany(\"INSERT INTO runs VALUES (?, ?, ?, ?)\", runs)\n    db.commit()\n\ndb = sqlite3.connect(\":memory:\")\nsave_runs(db, RUNS)\nprint(db.execute(\"SELECT * FROM runs\").fetchall())\n",
+        "examples": [
+          {
+            "setup": "db = sqlite3.connect(':memory:'); save_runs(db, RUNS)",
+            "call": "db.execute('SELECT COUNT(*) FROM runs').fetchone()[0]",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "db = sqlite3.connect(':memory:'); save_runs(db, RUNS)",
+            "call": "db.execute('SELECT * FROM runs ORDER BY run_id').fetchall()",
+            "expect": "[(1, 'momentum', 0.84, 12450.0), (2, 'mean reversion', 0.37, 3120.5), (3, 'carry', 1.12, 18730.25)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "import os; os.path.exists('runs-a.db') and os.remove('runs-a.db'); save_runs(sqlite3.connect('runs-a.db'), RUNS)",
+            "call": "sqlite3.connect('runs-a.db').execute('SELECT COUNT(*) FROM runs').fetchone()[0]",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = sqlite3.connect(':memory:'); save_runs(db, RUNS[:2]); save_runs(db, [(4, 'value', 0.55, 6400.0)])",
+            "call": "db.execute('SELECT run_id FROM runs ORDER BY run_id').fetchall()",
+            "expect": "[(1,), (2,), (4,)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = sqlite3.connect(':memory:'); save_runs(db, RUNS)",
+            "call": "[c[1] for c in db.execute('PRAGMA table_info(runs)')]",
+            "expect": "['run_id', 'strategy', 'sharpe', 'pnl']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. One saves to a file and counts the rows from a second connection, which sees only committed rows."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Three steps: create, insert, commit. Which method inserts a list of tuples?"
+        },
+        {
+          "rung": "point",
+          "text": "`db.executemany(\"INSERT INTO runs VALUES (?, ?, ?, ?)\", runs)` inserts them all.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Start with `CREATE TABLE IF NOT EXISTS runs (...)`, insert with `executemany`, and finish with `db.commit()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Created once, inserted, committed.",
+        "generic": "Not quite right. Look at the first test that failed.",
+        "byKey": {
+          "test-2": "Test 2 reads the file from a second connection and finds nothing. Call `db.commit()` after the inserts.",
+          "test-3": "Test 3 saves twice into one database. Use `CREATE TABLE IF NOT EXISTS` so the second call does not fail."
+        }
+      },
+      "explain": {
+        "text": "Test 2 is the one that catches a missing commit: a second connection sees only committed rows. `IF NOT EXISTS` lets the sweep call the function again and again. The primary key `run_id` refuses a run saved twice."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A query as a table",
+      "prose": "A subquery can stand in for a table in `FROM`. Here it gives each ticker's highest close, and the join finds the row that holds it.\n\n```sql\nSELECT p.ticker, p.date, p.close\nFROM prices AS p\nJOIN (SELECT ticker, MAX(close) AS top\n      FROM prices\n      GROUP BY ticker) AS m\n  ON p.ticker = m.ticker\n AND p.close = m.top\nORDER BY p.ticker;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "SHEL",
+              "2026-03-02",
+              "27.10"
+            ],
+            [
+              "SHEL",
+              "2026-03-03",
+              "26.85"
+            ],
+            [
+              "SHEL",
+              "2026-03-04",
+              "27.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices for Shell"
+        }
+      },
+      "question": "Which row does the query return for SHEL?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`('SHEL', '2026-03-04', 27.4)`",
+            "correct": true
+          },
+          {
+            "id": "first",
+            "text": "`('SHEL', '2026-03-02', 27.1)`",
+            "why": "That is Shell's first close. The join keeps the row whose close equals the maximum, 27.40."
+          },
+          {
+            "id": "nodate",
+            "text": "`('SHEL', None, 27.4)`",
+            "why": "You expected `MAX` to lose the date. Joining back to `prices` finds the row holding that close, date and all."
+          },
+          {
+            "id": "all",
+            "text": "All three Shell rows",
+            "why": "The `ON` requires `p.close = m.top`, so only the row with the highest close survives."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is Shell's highest close?"
+        },
+        {
+          "rung": "point",
+          "text": "The subquery gives SHEL a `top` of 27.40.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The join keeps the Shell row whose close is 27.40: the one dated 2026-03-04."
+        }
+      ],
+      "feedback": {
+        "correct": "Shell peaked at £27.40 on 4 March.",
+        "generic": "Not quite right. Work out the subquery's row for SHEL, then match it back."
+      },
+      "explain": {
+        "text": "The subquery is a small table with one row per ticker and its highest close. Joining it back on ticker and close recovers the date: 4 March for Shell. If two days tied at the top, both rows would come back.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Straight into pandas",
+      "prose": "pandas reads a query straight into a DataFrame. Each result column becomes a DataFrame column, named as SQLite names it.\n\n```python\nimport pandas as pd\ndf = pd.read_sql_query(\n    \"SELECT ticker, MAX(close) \"\n    \"FROM prices GROUP BY ticker\",\n    db)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "SHEL",
+              "2026-03-02",
+              "27.10"
+            ],
+            [
+              "SHEL",
+              "2026-03-03",
+              "26.85"
+            ],
+            [
+              "SHEL",
+              "2026-03-04",
+              "27.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices for Shell"
+        }
+      },
+      "question": "What are the column names of `df`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`ticker` and `MAX(close)`",
+            "correct": true
+          },
+          {
+            "id": "close",
+            "text": "`ticker` and `close`",
+            "why": "You expected the column to keep its source name. SQLite names an expression by its own text, `MAX(close)`."
+          },
+          {
+            "id": "pos",
+            "text": "`0` and `1`",
+            "why": "Those would be positions. `read_sql_query` takes the names SQLite reports for the result."
+          },
+          {
+            "id": "max",
+            "text": "`ticker` and `max`",
+            "why": "pandas does not shorten anything. It uses the name SQLite gives, the full text `MAX(close)`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What name does SQLite give a column that is an expression?"
+        },
+        {
+          "rung": "point",
+          "text": "Without `AS`, the name is the expression's own text.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The columns are `ticker` and `MAX(close)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The expression's text becomes the column name.",
+        "generic": "Not quite right. Which name does SQLite report for `MAX(close)`?",
+        "byKey": {
+          "close": "You expected the source column's name. Without `AS`, the column is named `MAX(close)`."
+        }
+      },
+      "explain": {
+        "text": "SQLite names an expression by its text, so you would have to type `df[\"MAX(close)\"]`. Write `MAX(close) AS top` and the column is `top`. The alias you choose in SQL is the name you use in pandas."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The round trip",
+      "prose": "You wrote rows with placeholders, made them stick with a commit, and read a query back. The whole round trip:\n\n```python\nimport sqlite3\nimport pandas as pd\n\ndb = sqlite3.connect(\"research.db\")\nwith db:  # commits when the block ends\n    db.executemany(\n        \"INSERT INTO runs VALUES (?, ?, ?, ?)\",\n        results)\ndf = pd.read_sql_query(\n    \"SELECT strategy, sharpe AS s \"\n    \"FROM runs WHERE sharpe > ?\",\n    db, params=(0.5,))\n```",
+      "question": "What are the columns of `df`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`strategy` and `s`",
+            "correct": true
+          },
+          {
+            "id": "sharpe",
+            "text": "`strategy` and `sharpe`",
+            "why": "The query renames `sharpe` with `AS s`, and pandas uses the alias."
+          },
+          {
+            "id": "all",
+            "text": "`run_id`, `strategy`, `sharpe` and `pnl`",
+            "why": "Only the selected columns come back: `strategy` and the alias `s`."
+          },
+          {
+            "id": "param",
+            "text": "`strategy`, `s` and `0.5`",
+            "why": "`params` fills the `?` in the `WHERE`. It adds no column."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The select list, aliases included, sets the columns.",
+        "generic": "Not quite right. Read the select list, aliases and all."
+      },
+      "explain": {
+        "text": "The select list sets the columns, and `AS s` renames the second. `params=(0.5,)` fills the `?`, and `with db:` commits the inserts before the read."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Read back the best of a sweep",
+      "prose": "A parameter sweep backtests a momentum signal with five lookbacks, in trading days. Save the runs, then read back the ones that beat the sweep's average Sharpe ratio. The first run of pandas in this page takes a few seconds to load.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "lookback",
+            "sharpe",
+            "pnl (£)"
+          ],
+          "rows": [
+            [
+              "5",
+              "−0.12",
+              "−1,540.00"
+            ],
+            [
+              "20",
+              "0.41",
+              "5,230.00"
+            ],
+            [
+              "60",
+              "0.88",
+              "11,870.50"
+            ],
+            [
+              "120",
+              "1.05",
+              "14,310.25"
+            ],
+            [
+              "250",
+              "0.62",
+              "8,020.75"
+            ]
+          ],
+          "align": [
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The sweep: average Sharpe 0.568"
+        }
+      },
+      "question": "Write `above_average(db, runs)`: save the runs into `runs`, then return a DataFrame of `lookback` and `sharpe` above the average Sharpe, best first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\nimport pandas as pd\n\nSWEEP = [  # (lookback, sharpe, pnl)\n    (5, -0.12, -1540.00),\n    (20, 0.41, 5230.00),\n    (60, 0.88, 11870.50),\n    (120, 1.05, 14310.25),\n    (250, 0.62, 8020.75),\n]\n\ndef above_average(db, runs):\n    # save runs into a table, then return a DataFrame of\n    # (lookback, sharpe) for runs above the average Sharpe, best first\n    pass\n\nprint(above_average(sqlite3.connect(\":memory:\"), SWEEP))\n",
+        "solution": "import sqlite3\nimport pandas as pd\n\nSWEEP = [  # (lookback, sharpe, pnl)\n    (5, -0.12, -1540.00),\n    (20, 0.41, 5230.00),\n    (60, 0.88, 11870.50),\n    (120, 1.05, 14310.25),\n    (250, 0.62, 8020.75),\n]\n\ndef above_average(db, runs):\n    # save runs into a table, then return a DataFrame of\n    # (lookback, sharpe) for runs above the average Sharpe, best first\n    db.execute(\"CREATE TABLE IF NOT EXISTS runs \"\n               \"(lookback INTEGER PRIMARY KEY, sharpe REAL, pnl REAL)\")\n    db.executemany(\"INSERT INTO runs VALUES (?, ?, ?)\", runs)\n    db.commit()\n    return pd.read_sql_query(\n        \"SELECT lookback, sharpe FROM runs \"\n        \"WHERE sharpe > (SELECT AVG(sharpe) FROM runs) \"\n        \"ORDER BY sharpe DESC\",\n        db)\n\nprint(above_average(sqlite3.connect(\":memory:\"), SWEEP))\n",
+        "examples": [
+          {
+            "call": "above_average(sqlite3.connect(':memory:'), SWEEP).values.tolist()[0]",
+            "expect": "[120, 1.05]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "above_average(sqlite3.connect(':memory:'), SWEEP).values.tolist()",
+            "expect": "[[120, 1.05], [60, 0.88], [250, 0.62]]",
+            "compare": "equal"
+          },
+          {
+            "call": "list(above_average(sqlite3.connect(':memory:'), SWEEP).columns)",
+            "expect": "['lookback', 'sharpe']",
+            "compare": "equal"
+          },
+          {
+            "call": "above_average(sqlite3.connect(':memory:'), [(10, 0.2, 1200.0), (30, 0.3, 2100.0), (90, 0.95, 9900.0)]).values.tolist()",
+            "expect": "[[90, 0.95]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = sqlite3.connect(':memory:'); above_average(db, SWEEP)",
+            "call": "db.execute('SELECT COUNT(*) FROM runs').fetchone()[0]",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. They compare the DataFrame's rows and column names exactly, and count the rows saved."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two steps: save, then query. Where does the average come from?"
+        },
+        {
+          "rung": "point",
+          "text": "A subquery in `WHERE` gives it: `sharpe > (SELECT AVG(sharpe) FROM runs)`.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Create and fill `runs` as in `save_runs`, then return `pd.read_sql_query(sql, db)` with `ORDER BY sharpe DESC`."
+        }
+      ],
+      "feedback": {
+        "correct": "Lookbacks 120, 60 and 250 beat the average of 0.568.",
+        "generic": "Not quite right. Compare your first row with the example.",
+        "byKey": {
+          "test-3": "Test 3 uses a different sweep. Compute the average in SQL rather than typing 0.568.",
+          "test-2": "Test 2 checks the column names. Select exactly `lookback, sharpe`."
+        }
+      },
+      "explain": {
+        "text": "The average Sharpe is $2.84 / 5 = 0.568$, and three lookbacks beat it: 120, 60 and 250. The subquery recomputes the average from whatever runs are saved. The result arrives as a DataFrame, ready to plot or join with other research."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`db.execute(sql, params).fetchall()` returns a list of tuples. Pass values with `?` placeholders and a tuple, never by pasting them into the SQL.",
+      "`CREATE TABLE IF NOT EXISTS` and `executemany` write results; nothing is saved until `db.commit()` or the end of a `with db:` block.",
+      "`pd.read_sql_query(sql, db, params=...)` gives a DataFrame named by the select list. A subquery can act as a table in `FROM` or a value in `WHERE`."
+    ],
+    "formula": {
+      "name": "One-value tuple",
+      "tex": "\\texttt{(ticker,)} \\ne \\texttt{(ticker)}",
+      "note": "Without the comma it is just the text, and each letter counts as a value."
+    },
+    "trap": "An f-string pastes the value into the SQL: `WHERE ticker = BP` looks for a column called BP."
+  },
+  "quiz": [
+    {
+      "id": "q-count-shape",
+      "difficulty": 2,
+      "prose": "`prices` has 18 rows.\n\n```python\nn = db.execute(\"SELECT COUNT(*) FROM prices\").fetchall()\n```",
+      "question": "What is `n`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[(18,)]`",
+            "correct": true
+          },
+          {
+            "id": "int",
+            "text": "`18`",
+            "why": "You expected the number itself. `fetchall` always returns a list of row tuples; use `.fetchone()[0]` for the bare number."
+          },
+          {
+            "id": "tuple",
+            "text": "`(18,)`",
+            "why": "That is what `fetchone()` returns. `fetchall()` wraps the row in a list."
+          },
+          {
+            "id": "rows",
+            "text": "A list of 18 tuples",
+            "why": "`COUNT(*)` collapses the table to one row holding 18."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One row, holding one value, in a list.",
+        "generic": "Not quite right. What does `fetchall` always return?"
+      },
+      "explain": {
+        "text": "`COUNT(*)` returns one row with one column. `fetchall` returns it as a list of one tuple: `[(18,)]`. `fetchone()[0]` gives the 18 directly."
+      }
+    },
+    {
+      "id": "q-bindings",
+      "difficulty": 2,
+      "prose": "```python\ndb.execute(\n    \"SELECT close FROM prices WHERE ticker = ? AND date = ?\",\n    (\"BP\",))\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "err",
+            "text": "A `ProgrammingError`: 2 placeholders, 1 value",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "It returns every BP close",
+            "why": "SQLite does not skip a `?` it has no value for. It refuses the query."
+          },
+          {
+            "id": "none",
+            "text": "It returns no rows",
+            "why": "The query never runs. SQLite checks the count of values first."
+          },
+          {
+            "id": "nulldate",
+            "text": "It treats the missing date as `NULL`",
+            "why": "Missing values are not filled in. Two `?` need two values."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two `?` need a tuple of two values.",
+        "generic": "Not quite right. Count the `?` and the values."
+      },
+      "explain": {
+        "text": "SQLite counts 2 placeholders and 1 value, so it raises `Incorrect number of bindings supplied`. Pass `(\"BP\", \"2026-03-04\")`."
+      }
+    },
+    {
+      "id": "q-with",
+      "difficulty": 3,
+      "prose": "```python\ndb = sqlite3.connect(\"results.db\")\nwith db:\n    db.execute(\"INSERT INTO runs VALUES (4, 'value', 0.55, 6400.0)\")\ndb.close()\n```",
+      "question": "You open `results.db` the next day. Is run 4 there?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: `with db:` committed it when the block ended",
+            "correct": true
+          },
+          {
+            "id": "no",
+            "text": "No: there is no `db.commit()`",
+            "why": "You looked for an explicit commit. `with db:` commits by itself when the block ends without an error."
+          },
+          {
+            "id": "closed",
+            "text": "No: `with db:` closed the connection first",
+            "why": "The `with` block on a connection commits; it does not close it. That is why `db.close()` still follows."
+          },
+          {
+            "id": "error",
+            "text": "An error: the connection is already closed at `db.close()`",
+            "why": "`with db:` leaves the connection open, so closing it afterwards is fine."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The block commits on a clean exit.",
+        "generic": "Not quite right. What does `with db:` do when the block ends?"
+      },
+      "explain": {
+        "text": "A `with db:` block commits when it ends cleanly and rolls back if an error escapes. The row was committed before `close()`, so it is in the file."
+      }
+    },
+    {
+      "id": "q-tie",
+      "difficulty": 3,
+      "prose": "Suppose BP had closed at its high of £4.35 on two different days. Run this lesson's highest-close query, the one that joins prices to the subquery of `MAX(close)` per ticker.",
+      "question": "How many rows does it return for BP?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows for BP",
+        "accept": "2: both days hold the maximum, so both match the join.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Both days match the maximum.",
+        "generic": "Not quite right. How many BP rows have a close equal to the maximum?",
+        "byKey": {
+          "one": "You expected one row per ticker. The join keeps every row whose close equals the maximum, and two do."
+        }
+      },
+      "explain": {
+        "text": "The subquery still gives BP one row with `top` 4.35. Two price rows have that close, so the join keeps both. Add a rule, such as the earliest date, if you need one row."
+      }
+    }
+  ]
+}

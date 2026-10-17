@@ -373,6 +373,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         // a raises case with no call checks the whole program, which needs script mode (it is on whenever such a case exists)
         if (!script && !all.some(t => typeof t.call === 'string' && /printed\s*:=/.test(t.call)) && all.some(t => typeof t.call === 'string' && /\bprinted\b/.test(t.call) && !/_getframe/.test(t.call))) err(file, `${where}.tests`, 'printed is only defined when a case uses compare: "stdout" or stdin (script mode)');
       }
+      if (w.budget != null && !(typeof w.budget === 'number' && w.budget >= 0 && w.budget <= 120000)) err(file, `${where}.budget`, 'budget is extra milliseconds for a run, 0 to 120000');
       if (!w.how) warn(file, `${where}.how`, 'say how it is checked');
       keys.add('*');
       break;

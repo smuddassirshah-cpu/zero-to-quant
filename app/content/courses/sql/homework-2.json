@@ -1,0 +1,612 @@
+{
+  "id": "homework-2",
+  "course": "sql",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-coverage",
+      "difficulty": 3,
+      "skills": [
+        "sql-aggregate"
+      ],
+      "title": "Data coverage",
+      "prose": "A vendor file has gaps: some closes arrived as `NULL`. Before computing returns, report the damage per ticker.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-11",
+              "BARC",
+              "2.12",
+              "41000000"
+            ],
+            [
+              "2024-03-11",
+              "SHEL",
+              "25.80",
+              "9800000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-12",
+              "BARC",
+              "NULL",
+              "52000000"
+            ],
+            [
+              "2024-03-12",
+              "SHEL",
+              "26.05",
+              "8700000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-13",
+              "BARC",
+              "2.15",
+              "38000000"
+            ],
+            [
+              "2024-03-13",
+              "SHEL",
+              "NULL",
+              "9100000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return each ticker with its number of rows and its number of known closes, sorted by ticker.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices(date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2024-03-11\", \"AZN\", 118.40, 2100000),\n    (\"2024-03-11\", \"BARC\", 2.12, 41000000),\n    (\"2024-03-11\", \"SHEL\", 25.80, 9800000),\n    (\"2024-03-12\", \"AZN\", 119.10, 1900000),\n    (\"2024-03-12\", \"BARC\", None, 52000000),\n    (\"2024-03-12\", \"SHEL\", 26.05, 8700000),\n    (\"2024-03-13\", \"AZN\", 117.60, 2600000),\n    (\"2024-03-13\", \"BARC\", 2.15, 38000000),\n    (\"2024-03-13\", \"SHEL\", None, 9100000),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*)\nFROM prices\nGROUP BY ticker\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices(date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2024-03-11\", \"AZN\", 118.40, 2100000),\n    (\"2024-03-11\", \"BARC\", 2.12, 41000000),\n    (\"2024-03-11\", \"SHEL\", 25.80, 9800000),\n    (\"2024-03-12\", \"AZN\", 119.10, 1900000),\n    (\"2024-03-12\", \"BARC\", None, 52000000),\n    (\"2024-03-12\", \"SHEL\", 26.05, 8700000),\n    (\"2024-03-13\", \"AZN\", 117.60, 2600000),\n    (\"2024-03-13\", \"BARC\", 2.15, 38000000),\n    (\"2024-03-13\", \"SHEL\", None, 9100000),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*), COUNT(close)\nFROM prices\nGROUP BY ticker\nORDER BY ticker\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN', 3, 3), ('BARC', 3, 2), ('SHEL', 3, 2)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN', 3, 3), ('BARC', 3, 2), ('SHEL', 3, 2)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO prices VALUES ('2024-03-14', 'AZN', NULL, 2000000);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[('AZN', 4, 3), ('BARC', 3, 2), ('SHEL', 3, 2)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); t3.executescript(\"\".join(db.iterdump())); t3.executescript(\"INSERT INTO prices VALUES ('2024-03-13', 'HSBA', 6.48, 21000000);\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[('AZN', 3, 3), ('BARC', 3, 2), ('HSBA', 1, 1), ('SHEL', 3, 2)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly, order included. Tests 2 and 3 add a row."
+      },
+      "feedback": {
+        "correct": "BARC and SHEL each lost one close.",
+        "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
+        "byKey": {
+          "test-1": "Test 1 expects `[('AZN', 3, 3), ('BARC', 3, 2), ('SHEL', 3, 2)]`."
+        }
+      },
+      "explain": {
+        "text": "`COUNT(*)` counts the rows in each group and `COUNT(close)` counts the closes present. Where they differ, the vendor sent gaps."
+      }
+    },
+    {
+      "id": "h-pairs",
+      "difficulty": 3,
+      "skills": [
+        "sql-aggregate"
+      ],
+      "prose": "A `trades` table covers 4 days. AZN traded on all 4, BARC on 3 and SHEL on 2.\n\n```sql\nSELECT date, ticker, SUM(qty)\nFROM trades\nGROUP BY date, ticker;\n```",
+      "question": "How many rows does this return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "all-pairs",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "tickers",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "4 + 3 + 2 = 9 pairs have fills.",
+        "generic": "Not quite right. Count the date and ticker pairs that have at least one fill.",
+        "byKey": {
+          "all-pairs": "You counted all 4 × 3 pairs. A pair with no fills makes no group.",
+          "tickers": "You grouped by ticker only. Grouping by date as well splits each ticker by day."
+        }
+      },
+      "explain": {
+        "text": "Each ticker contributes one group per day it traded: 4 + 3 + 2 = 9. Pairs with no fills make no group."
+      }
+    },
+    {
+      "id": "h-active",
+      "difficulty": 4,
+      "skills": [
+        "sql-aggregate"
+      ],
+      "title": "The most active names",
+      "prose": "The starter generates a day of fills: 22 for AZN, 35 for BARC, 21 for SHEL and 20 for HSBA.",
+      "question": "Return each ticker with more than 20 fills, its number of fills and its average fill size rounded to 1 place, most active first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\nbase = {\"AZN\": 118.90, \"BARC\": 2.17, \"SHEL\": 26.00, \"HSBA\": 6.45}\ncounts = {\"AZN\": 22, \"BARC\": 35, \"SHEL\": 21, \"HSBA\": 20}\nn = 0\nfor ticker in counts:\n    for k in range(counts[ticker]):\n        n += 1\n        db.execute(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\",\n                   (n, \"2024-03-12\", ticker, 100 * (k % 5 + 1), base[ticker]))\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*)\nFROM trades\nGROUP BY ticker\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\nbase = {\"AZN\": 118.90, \"BARC\": 2.17, \"SHEL\": 26.00, \"HSBA\": 6.45}\ncounts = {\"AZN\": 22, \"BARC\": 35, \"SHEL\": 21, \"HSBA\": 20}\nn = 0\nfor ticker in counts:\n    for k in range(counts[ticker]):\n        n += 1\n        db.execute(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\",\n                   (n, \"2024-03-12\", ticker, 100 * (k % 5 + 1), base[ticker]))\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*), ROUND(AVG(qty), 1)\nFROM trades\nGROUP BY ticker\nHAVING COUNT(*) > 20\nORDER BY COUNT(*) DESC\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('SHEL', 21, 290.5)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('SHEL', 21, 290.5)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO trades VALUES (200, '2024-03-12', 'HSBA', 5000, 6.45);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('SHEL', 21, 290.5), ('HSBA', 21, 523.8)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); t3.executescript(\"\".join(db.iterdump())); t3.executescript(\"DELETE FROM trades WHERE ticker = 'SHEL' AND qty = 100;\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[('BARC', 35, 300.0), ('AZN', 22, 286.4)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly, order included. Tests 2 and 3 change the counts."
+      },
+      "feedback": {
+        "correct": "BARC, AZN and SHEL pass; HSBA sits on the line.",
+        "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
+        "byKey": {
+          "test-1": "Test 1 expects `[('BARC', 35, 300.0), ('AZN', 22, 286.4), ('SHEL', 21, 290.5)]`.",
+          "test-2": "Test 2 gives HSBA a 21st fill of 5,000 shares, so it must appear with its new average."
+        }
+      },
+      "explain": {
+        "text": "`HAVING COUNT(*) > 20` drops HSBA with exactly 20. `ORDER BY COUNT(*) DESC` sorts the surviving groups by their own count."
+      }
+    },
+    {
+      "id": "h-returns",
+      "difficulty": 4,
+      "skills": [
+        "sql-aggregate"
+      ],
+      "title": "Daily returns in SQL",
+      "prose": "Compute daily returns inside the database. `LAG(close) OVER (PARTITION BY ticker ORDER BY date)` is the previous day's close for the same ticker.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-11",
+              "BARC",
+              "2.12",
+              "41000000"
+            ],
+            [
+              "2024-03-11",
+              "SHEL",
+              "25.80",
+              "9800000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-12",
+              "BARC",
+              "2.18",
+              "52000000"
+            ],
+            [
+              "2024-03-12",
+              "SHEL",
+              "26.05",
+              "8700000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-13",
+              "BARC",
+              "2.15",
+              "38000000"
+            ],
+            [
+              "2024-03-13",
+              "SHEL",
+              "26.30",
+              "9100000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return the date, the ticker and the daily return rounded to 4 places for every row, sorted by ticker then date.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices(date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2024-03-11\", \"AZN\", 118.40, 2100000),\n    (\"2024-03-11\", \"BARC\", 2.12, 41000000),\n    (\"2024-03-11\", \"SHEL\", 25.80, 9800000),\n    (\"2024-03-12\", \"AZN\", 119.10, 1900000),\n    (\"2024-03-12\", \"BARC\", 2.18, 52000000),\n    (\"2024-03-12\", \"SHEL\", 26.05, 8700000),\n    (\"2024-03-13\", \"AZN\", 117.60, 2600000),\n    (\"2024-03-13\", \"BARC\", 2.15, 38000000),\n    (\"2024-03-13\", \"SHEL\", 26.30, 9100000),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT date, ticker, close\nFROM prices\nORDER BY ticker, date\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices(date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2024-03-11\", \"AZN\", 118.40, 2100000),\n    (\"2024-03-11\", \"BARC\", 2.12, 41000000),\n    (\"2024-03-11\", \"SHEL\", 25.80, 9800000),\n    (\"2024-03-12\", \"AZN\", 119.10, 1900000),\n    (\"2024-03-12\", \"BARC\", 2.18, 52000000),\n    (\"2024-03-12\", \"SHEL\", 26.05, 8700000),\n    (\"2024-03-13\", \"AZN\", 117.60, 2600000),\n    (\"2024-03-13\", \"BARC\", 2.15, 38000000),\n    (\"2024-03-13\", \"SHEL\", 26.30, 9100000),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT date, ticker,\n       ROUND(close / LAG(close) OVER (PARTITION BY ticker ORDER BY date) - 1, 4)\nFROM prices\nORDER BY ticker, date\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2024-03-11', 'AZN', None), ('2024-03-12', 'AZN', 0.0059), ('2024-03-13', 'AZN', -0.0126), ('2024-03-11', 'BARC', None), ('2024-03-12', 'BARC', 0.0283), ('2024-03-13', 'BARC', -0.0138), ('2024-03-11', 'SHEL', None), ('2024-03-12', 'SHEL', 0.0097), ('2024-03-13', 'SHEL', 0.0096)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2024-03-11', 'AZN', None), ('2024-03-12', 'AZN', 0.0059), ('2024-03-13', 'AZN', -0.0126), ('2024-03-11', 'BARC', None), ('2024-03-12', 'BARC', 0.0283), ('2024-03-13', 'BARC', -0.0138), ('2024-03-11', 'SHEL', None), ('2024-03-12', 'SHEL', 0.0097), ('2024-03-13', 'SHEL', 0.0096)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO prices VALUES ('2024-03-14', 'AZN', 120.25, 2300000);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[('2024-03-11', 'AZN', None), ('2024-03-12', 'AZN', 0.0059), ('2024-03-13', 'AZN', -0.0126), ('2024-03-14', 'AZN', 0.0225), ('2024-03-11', 'BARC', None), ('2024-03-12', 'BARC', 0.0283), ('2024-03-13', 'BARC', -0.0138), ('2024-03-11', 'SHEL', None), ('2024-03-12', 'SHEL', 0.0097), ('2024-03-13', 'SHEL', 0.0096)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); t3.executescript(\"\".join(db.iterdump())); t3.executescript(\"INSERT INTO prices VALUES ('2024-03-13', 'HSBA', 6.48, 21000000);\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[('2024-03-11', 'AZN', None), ('2024-03-12', 'AZN', 0.0059), ('2024-03-13', 'AZN', -0.0126), ('2024-03-11', 'BARC', None), ('2024-03-12', 'BARC', 0.0283), ('2024-03-13', 'BARC', -0.0138), ('2024-03-13', 'HSBA', None), ('2024-03-11', 'SHEL', None), ('2024-03-12', 'SHEL', 0.0097), ('2024-03-13', 'SHEL', 0.0096)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly, order included, so a first day must show `None`."
+      },
+      "feedback": {
+        "correct": "Each ticker's first day has no return.",
+        "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
+        "byKey": {
+          "test-1": "Test 1 expects nine rows, starting `('2024-03-11', 'AZN', None)` then `('2024-03-12', 'AZN', 0.0059)`. Check the partition, the order and the rounding."
+        }
+      },
+      "explain": {
+        "text": "The return is today's close over yesterday's, minus 1. `LAG` gives `NULL` on each ticker's first day, so the return there is `None` in Python."
+      }
+    },
+    {
+      "id": "h-peak-volume",
+      "difficulty": 5,
+      "skills": [
+        "sql-aggregate"
+      ],
+      "title": "Record days",
+      "prose": "Find each ticker's highest-volume day. If two days tie, list both. A query in brackets can sit inside `WHERE`, and `FROM prices AS p` names the outer table so the inner query can refer to it.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-11",
+              "AZN",
+              "118.40",
+              "2100000"
+            ],
+            [
+              "2024-03-11",
+              "BARC",
+              "2.12",
+              "41000000"
+            ],
+            [
+              "2024-03-11",
+              "SHEL",
+              "25.80",
+              "9800000"
+            ],
+            [
+              "2024-03-12",
+              "AZN",
+              "119.10",
+              "1900000"
+            ],
+            [
+              "2024-03-12",
+              "BARC",
+              "2.18",
+              "52000000"
+            ],
+            [
+              "2024-03-12",
+              "SHEL",
+              "26.05",
+              "8700000"
+            ],
+            [
+              "2024-03-13",
+              "AZN",
+              "117.60",
+              "2600000"
+            ],
+            [
+              "2024-03-13",
+              "BARC",
+              "2.15",
+              "38000000"
+            ],
+            [
+              "2024-03-13",
+              "SHEL",
+              "26.30",
+              "9100000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return the ticker, the date and the volume of each ticker's highest-volume day, sorted by ticker then date.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices(date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2024-03-11\", \"AZN\", 118.40, 2100000),\n    (\"2024-03-11\", \"BARC\", 2.12, 41000000),\n    (\"2024-03-11\", \"SHEL\", 25.80, 9800000),\n    (\"2024-03-12\", \"AZN\", 119.10, 1900000),\n    (\"2024-03-12\", \"BARC\", 2.18, 52000000),\n    (\"2024-03-12\", \"SHEL\", 26.05, 8700000),\n    (\"2024-03-13\", \"AZN\", 117.60, 2600000),\n    (\"2024-03-13\", \"BARC\", 2.15, 38000000),\n    (\"2024-03-13\", \"SHEL\", 26.30, 9100000),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, MAX(volume)\nFROM prices\nGROUP BY ticker\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices(date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2024-03-11\", \"AZN\", 118.40, 2100000),\n    (\"2024-03-11\", \"BARC\", 2.12, 41000000),\n    (\"2024-03-11\", \"SHEL\", 25.80, 9800000),\n    (\"2024-03-12\", \"AZN\", 119.10, 1900000),\n    (\"2024-03-12\", \"BARC\", 2.18, 52000000),\n    (\"2024-03-12\", \"SHEL\", 26.05, 8700000),\n    (\"2024-03-13\", \"AZN\", 117.60, 2600000),\n    (\"2024-03-13\", \"BARC\", 2.15, 38000000),\n    (\"2024-03-13\", \"SHEL\", 26.30, 9100000),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, date, volume\nFROM prices AS p\nWHERE volume = (SELECT MAX(volume) FROM prices AS q WHERE q.ticker = p.ticker)\nORDER BY ticker, date\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN', '2024-03-13', 2600000), ('BARC', '2024-03-12', 52000000), ('SHEL', '2024-03-11', 9800000)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN', '2024-03-13', 2600000), ('BARC', '2024-03-12', 52000000), ('SHEL', '2024-03-11', 9800000)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO prices VALUES ('2024-03-14', 'AZN', 120.25, 3000000);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[('AZN', '2024-03-14', 3000000), ('BARC', '2024-03-12', 52000000), ('SHEL', '2024-03-11', 9800000)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); t3.executescript(\"\".join(db.iterdump())); t3.executescript(\"INSERT INTO prices VALUES ('2024-03-14', 'SHEL', 26.10, 9800000);\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[('AZN', '2024-03-13', 2600000), ('BARC', '2024-03-12', 52000000), ('SHEL', '2024-03-11', 9800000), ('SHEL', '2024-03-14', 9800000)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly, order included. Test 3 adds a SHEL day that ties its record volume."
+      },
+      "feedback": {
+        "correct": "AZN peaked on 13 March, BARC on 12 March, SHEL on 11 March.",
+        "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
+        "byKey": {
+          "test-1": "Test 1 expects `[('AZN', '2024-03-13', 2600000), ('BARC', '2024-03-12', 52000000), ('SHEL', '2024-03-11', 9800000)]`.",
+          "test-3": "Test 3 gives SHEL two days of 9,800,000 shares, and both must appear. A `GROUP BY ticker` query returns one row per ticker, so it cannot list a tie."
+        }
+      },
+      "explain": {
+        "text": "Each row is kept when its volume equals its own ticker's maximum, so ties keep both days. `SELECT ticker, date, MAX(volume) ... GROUP BY ticker` happens to work in SQLite, which takes bare columns from the maximum row, but it shows one day on a tie and other databases refuse it."
+      }
+    },
+    {
+      "id": "h-vwap",
+      "difficulty": 4,
+      "skills": [
+        "sql-aggregate"
+      ],
+      "title": "VWAP",
+      "prose": "SHEL fills on one day: 1,000 shares at £26.00, 3,000 at £26.20 and 1,000 at £26.50.",
+      "question": "What is the VWAP, `SUM(qty * price) / SUM(qty)`, in pounds to 2 places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 26.22,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "avg",
+            "value": 26.23,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "value",
+            "value": 131100,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£131,100 / 5,000 = £26.22.",
+        "generic": "Not quite right. Find the traded value first, then divide by the shares.",
+        "byKey": {
+          "avg": "You averaged the three prices. VWAP weights each price by its shares, and 3,000 of 5,000 went at £26.20.",
+          "value": "That is the traded value. Divide it by the 5,000 shares."
+        }
+      },
+      "explain": {
+        "text": "The traded value is £26,000 + £78,600 + £26,500 = £131,100 over 5,000 shares, so VWAP is £26.22. The plain average of the prices, £26.23, ignores that most shares went at £26.20."
+      }
+    },
+    {
+      "id": "h-liquid-universe",
+      "difficulty": 5,
+      "skills": [
+        "sql-aggregate",
+        "sql-select"
+      ],
+      "title": "Review a liquidity filter",
+      "kind": "longform",
+      "prompt": "A colleague builds a liquid universe: tickers whose average daily traded value, `close * volume`, is above £5,000,000 over the sample. They wrote:\n\n```sql\nSELECT ticker, AVG(close * volume) AS adv\nFROM prices\nWHERE close * volume > 5000000\nGROUP BY ticker;\n```\n\n(a) Explain what this returns and why it is not the universe asked for. (b) Give a ticker, with three days of numbers, that this query wrongly includes. (c) Write the corrected query, with `adv` rounded to 2 places and the largest first. (d) Some closes are `NULL`. Say what happens to those days in `adv`, and whether that biases it. (e) One ticker listed only last week. Explain why its `adv` is not comparable with the others, and what you would add to the query.",
+      "model": "**(a)** `WHERE` runs on single days, before grouping. Only days whose traded value is above £5m reach `AVG`, so each `adv` is the average of a ticker's big days. Any ticker with one big day appears, and its `adv` is above £5m by construction. The test belongs on the average of all days, in `HAVING`.\n\n**(b)** A ticker trades £8m, £1m and £1m on three days. Its true average is £10m / 3 = £3.33m, so it should be out. `WHERE` keeps only the £8m day, so the query reports `adv` = £8m and includes it.\n\n**(c)**\n\n```sql\nSELECT ticker, ROUND(AVG(close * volume), 2) AS adv\nFROM prices\nGROUP BY ticker\nHAVING AVG(close * volume) > 5000000\nORDER BY adv DESC;\n```\n\n**(d)** A `NULL` close makes `close * volume` `NULL` for that day. `AVG` skips it, so it averages the known days only and divides by their number. That is unbiased if the gaps fall at random. If gaps cluster on quiet days, such as halts, `adv` is overstated; if on busy days, understated.\n\n**(e)** A new listing has only a few days, and listing weeks often see unusual volume. Its average is noisier and drawn from a different period, so it is not comparable. Add `COUNT(close) AS days` to the output and a minimum such as `HAVING COUNT(close) >= 20`, or require the full sample.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "(a) Says `WHERE` filters single days before grouping, so only days above £5m enter each average"
+        },
+        {
+          "points": 1,
+          "text": "(a) Says any ticker with one big day gets in, with an inflated `adv`, and that the test belongs in `HAVING`"
+        },
+        {
+          "points": 2,
+          "text": "(b) Gives a three-day example whose true average is below £5m but which the query includes, with correct arithmetic"
+        },
+        {
+          "points": 2,
+          "text": "(c) Writes a working query: no `WHERE` on traded value, `HAVING AVG(close * volume) > 5000000`, `ROUND(..., 2)` and `ORDER BY adv DESC`"
+        },
+        {
+          "points": 1,
+          "text": "(d) States that a `NULL` close makes the product `NULL` and `AVG` skips that day"
+        },
+        {
+          "points": 1,
+          "text": "(d) Explains the bias depends on which days are missing: none if at random, otherwise up or down"
+        },
+        {
+          "points": 1,
+          "text": "(e) Explains a short history is not comparable and adds a day count with a minimum in `HAVING`"
+        }
+      ]
+    },
+    {
+      "id": "h-empty-day",
+      "difficulty": 3,
+      "skills": [
+        "sql-aggregate"
+      ],
+      "title": "A day with no trades",
+      "prose": "A P&L report sums each day's fills. 16 March 2024 was a Saturday, so `trades` has no rows for it.\n\n```sql\nSELECT COUNT(*), SUM(qty * price)\nFROM trades\nWHERE date = '2024-03-16';\n```",
+      "question": "What does Python get from `fetchall()`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[(0, None)]`",
+            "correct": true
+          },
+          {
+            "id": "zeros",
+            "text": "`[(0, 0)]`",
+            "why": "You expected an empty sum to be 0. SQL gives `NULL` when no rows reach `SUM`, and Python shows it as `None`."
+          },
+          {
+            "id": "empty",
+            "text": "`[]`",
+            "why": "A query of aggregates with no `GROUP BY` always returns exactly one row, even over no rows."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One row: a count of 0 and a sum of `None`.",
+        "generic": "Not quite right. Recall what `COUNT` and `SUM` give on no rows."
+      },
+      "explain": {
+        "text": "`COUNT(*)` of no rows is 0, but `SUM` of no rows is `NULL`, which arrives as `None`. Write `COALESCE(SUM(qty * price), 0)` if the report must show £0."
+      }
+    }
+  ]
+}

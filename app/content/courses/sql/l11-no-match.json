@@ -1,0 +1,1534 @@
+{
+  "id": "l11-no-match",
+  "course": "sql",
+  "title": "Keeping rows with no match",
+  "minutes": 14,
+  "objectives": [
+    "Use a left join to keep rows with no partner",
+    "Find rows with no partner using `IS NULL`",
+    "Place conditions in `ON` or `WHERE` on purpose, and stack results with `UNION`"
+  ],
+  "skills": [
+    "sql-join"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Who is missing?",
+      "prose": "The security master lists six companies. The blotter lists this week's trades. Some companies may not have been traded at all.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "name",
+              "sector"
+            ],
+            "rows": [
+              [
+                "AZN",
+                "AstraZeneca",
+                "Health"
+              ],
+              [
+                "BARC",
+                "Barclays",
+                "Banks"
+              ],
+              [
+                "BP",
+                "BP",
+                "Energy"
+              ],
+              [
+                "HSBA",
+                "HSBC",
+                "Banks"
+              ],
+              [
+                "SHEL",
+                "Shell",
+                "Energy"
+              ],
+              [
+                "VOD",
+                "Vodafone",
+                "Telecoms"
+              ]
+            ],
+            "align": "left",
+            "compact": true
+          },
+          "state": {
+            "caption": "securities"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "id",
+              "date",
+              "ticker",
+              "qty"
+            ],
+            "rows": [
+              [
+                "1",
+                "2026-03-02",
+                "BARC",
+                "1000"
+              ],
+              [
+                "2",
+                "2026-03-02",
+                "SHEL",
+                "200"
+              ],
+              [
+                "3",
+                "2026-03-03",
+                "AZN",
+                "50"
+              ],
+              [
+                "4",
+                "2026-03-03",
+                "BARC",
+                "-400"
+              ],
+              [
+                "5",
+                "2026-03-04",
+                "BP",
+                "1500"
+              ],
+              [
+                "6",
+                "2026-03-04",
+                "HSBA",
+                "600"
+              ],
+              [
+                "7",
+                "2026-03-04",
+                "SHEL",
+                "-100"
+              ]
+            ],
+            "align": [
+              "right",
+              "left",
+              "left",
+              "right"
+            ],
+            "compact": true
+          },
+          "state": {
+            "caption": "trades"
+          }
+        },
+        "active": "left"
+      },
+      "question": "Tap the ticker of every company with no trade in `trades`.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r5c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0",
+          "r5c0"
+        ],
+        "countWord": "tickers"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Go down `securities`. Does each ticker appear in the ticker column of `trades`?"
+        },
+        {
+          "rung": "point",
+          "text": "AZN, BARC, BP, HSBA and SHEL all appear in `trades`.",
+          "highlight": [
+            "right:c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only one ticker never appears on the right: VOD."
+        }
+      ],
+      "feedback": {
+        "correct": "Vodafone has no trades.",
+        "generic": "Not quite right. Look for a ticker that never appears in `trades`.",
+        "byKey": {
+          "r0c0": "AZN was traded once: trade 3.",
+          "r1c0": "BARC was traded twice: trades 1 and 4.",
+          "r2c0": "BP was traded once: trade 5.",
+          "r3c0": "HSBA was traded once: trade 6.",
+          "r4c0": "SHEL was traded twice: trades 2 and 7.",
+          "r5c0": "You missed VOD. Look for it in the ticker column of `trades`."
+        }
+      },
+      "explain": {
+        "text": "Every ticker except VOD finds at least one trade. An inner join would quietly drop Vodafone, because nothing matches it. To see it, we need a join that keeps rows with no partner.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "rows": [
+                5
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "LEFT JOIN",
+      "prose": "`LEFT JOIN` keeps every row of the left table. Where nothing on the right matches, the right table's columns are filled with `NULL`.\n\n```sql\nSELECT s.ticker, t.id\nFROM securities AS s\nLEFT JOIN trades AS t\n  ON s.ticker = t.ticker;\n```",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "ticker",
+              "name",
+              "sector"
+            ],
+            "rows": [
+              [
+                "AZN",
+                "AstraZeneca",
+                "Health"
+              ],
+              [
+                "BARC",
+                "Barclays",
+                "Banks"
+              ],
+              [
+                "BP",
+                "BP",
+                "Energy"
+              ],
+              [
+                "HSBA",
+                "HSBC",
+                "Banks"
+              ],
+              [
+                "SHEL",
+                "Shell",
+                "Energy"
+              ],
+              [
+                "VOD",
+                "Vodafone",
+                "Telecoms"
+              ]
+            ],
+            "align": "left",
+            "compact": true
+          },
+          "state": {
+            "caption": "securities"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "id",
+              "date",
+              "ticker",
+              "qty"
+            ],
+            "rows": [
+              [
+                "1",
+                "2026-03-02",
+                "BARC",
+                "1000"
+              ],
+              [
+                "2",
+                "2026-03-02",
+                "SHEL",
+                "200"
+              ],
+              [
+                "3",
+                "2026-03-03",
+                "AZN",
+                "50"
+              ],
+              [
+                "4",
+                "2026-03-03",
+                "BARC",
+                "-400"
+              ],
+              [
+                "5",
+                "2026-03-04",
+                "BP",
+                "1500"
+              ],
+              [
+                "6",
+                "2026-03-04",
+                "HSBA",
+                "600"
+              ],
+              [
+                "7",
+                "2026-03-04",
+                "SHEL",
+                "-100"
+              ]
+            ],
+            "align": [
+              "right",
+              "left",
+              "left",
+              "right"
+            ],
+            "compact": true
+          },
+          "state": {
+            "caption": "trades"
+          }
+        }
+      },
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "accept": "8: the 7 trade matches plus one row for VOD.",
+        "wrong": [
+          {
+            "id": "inner",
+            "value": 7
+          },
+          {
+            "id": "companies",
+            "value": 6
+          },
+          {
+            "id": "cross",
+            "value": 42
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many rows would the inner join give?"
+        },
+        {
+          "rung": "point",
+          "text": "The inner join gives one row per trade: 7. Which company did it drop?",
+          "highlight": [
+            "left:r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add one row for VOD, which the left join keeps: $7 + 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven matches plus Vodafone.",
+        "generic": "Not quite right. Count the matched rows, then add the companies with no match.",
+        "byKey": {
+          "inner": "That is the inner join. `LEFT JOIN` also keeps Vodafone, which has no trade.",
+          "companies": "Barclays and Shell match two trades each, and each match is its own row.",
+          "cross": "That is every pair. `ON` still keeps only matching tickers."
+        }
+      },
+      "explain": {
+        "text": "The 7 trades each match their company, as in the inner join. Vodafone matches nothing, and the left join keeps it once with `NULL` for `t.id`: 8 rows.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "rows": [
+                5
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What NULL looks like",
+      "prose": "Here is the left join with `t.date` added. The row for VOD found no trade.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "s.ticker",
+            "t.id",
+            "t.date"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "3",
+              "2026-03-03"
+            ],
+            [
+              "BARC",
+              "1",
+              "2026-03-02"
+            ],
+            [
+              "BARC",
+              "4",
+              "2026-03-03"
+            ],
+            [
+              "BP",
+              "5",
+              "2026-03-04"
+            ],
+            [
+              "HSBA",
+              "6",
+              "2026-03-04"
+            ],
+            [
+              "SHEL",
+              "2",
+              "2026-03-02"
+            ],
+            [
+              "SHEL",
+              "7",
+              "2026-03-04"
+            ],
+            [
+              "VOD",
+              "?",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does Python receive in `t.id` for the VOD row?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "none",
+            "text": "`None`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "`0`",
+            "why": "You read the gap as zero. `NULL` means no value at all, not the number 0.",
+            "canvas": {
+              "highlight": {
+                "cells": [
+                  "r7c1"
+                ]
+              }
+            }
+          },
+          {
+            "id": "empty",
+            "text": "`''`, an empty string",
+            "why": "An empty string is a value. A missing match gives `NULL`, which Python shows as `None`."
+          },
+          {
+            "id": "gone",
+            "text": "Nothing: the row is dropped",
+            "why": "That is what the inner join does. The left join keeps the row."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Was there any trade to take an id from?"
+        },
+        {
+          "rung": "point",
+          "text": "No trade matched VOD, so SQL fills every `trades` column with `NULL`.",
+          "highlight": [
+            "r7c1",
+            "r7c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Python's `sqlite3` turns SQL `NULL` into `None`."
+        }
+      ],
+      "feedback": {
+        "correct": "SQL `NULL` arrives in Python as `None`.",
+        "generic": "Not quite right. What does SQL put where there is no matching row?",
+        "byKey": {
+          "zero": "You read the gap as zero. `NULL` means no value at all, and Python receives it as `None`."
+        }
+      },
+      "explain": {
+        "text": "No trade matched, so every column from `trades` is `NULL` in that row. Python's `sqlite3` turns `NULL` into `None`, so the row arrives as `('VOD', None, None)`.",
+        "canvas": {
+          "values": {
+            "r7c1": "NULL",
+            "r7c2": "NULL"
+          },
+          "highlight": {
+            "rows": [
+              7
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Companies never traded",
+      "prose": "A company with no partner now stands out: its `trades` columns are `NULL`. Test for that with `IS NULL`. Writing `= NULL` never matches, because nothing equals an unknown.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "s.ticker",
+            "t.id",
+            "t.date"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "3",
+              "2026-03-03"
+            ],
+            [
+              "BARC",
+              "1",
+              "2026-03-02"
+            ],
+            [
+              "BARC",
+              "4",
+              "2026-03-03"
+            ],
+            [
+              "BP",
+              "5",
+              "2026-03-04"
+            ],
+            [
+              "HSBA",
+              "6",
+              "2026-03-04"
+            ],
+            [
+              "SHEL",
+              "2",
+              "2026-03-02"
+            ],
+            [
+              "SHEL",
+              "7",
+              "2026-03-04"
+            ],
+            [
+              "VOD",
+              "NULL",
+              "NULL"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return the `ticker` of every company with no trades, sorted by ticker.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT *\n        FROM securities\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "solution": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT s.ticker\n        FROM securities AS s\n        LEFT JOIN trades AS t\n          ON s.ticker = t.ticker\n        WHERE t.id IS NULL\n        ORDER BY s.ticker\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "examples": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[('VOD',)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[('VOD',)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO securities VALUES ('LLOY', 'Lloyds', 'Banks')\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('LLOY',), ('VOD',)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO trades VALUES (8, '2026-03-04', 'VOD', 3000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"DELETE FROM trades WHERE id = 3\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN',), ('VOD',)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each runs your query, some after adding or removing rows, and compares the rows exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows of the left join belong to companies with no trade?"
+        },
+        {
+          "rung": "point",
+          "text": "Those rows have `NULL` in `t.id`.",
+          "highlight": [
+            "r7c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Left join `trades` on the ticker, then keep `WHERE t.id IS NULL` and sort by ticker."
+        }
+      ],
+      "feedback": {
+        "correct": "Only VOD, and any company added later with no trades.",
+        "generic": "Not quite right. Compare your rows with the example.",
+        "byKey": {
+          "test-2": "Test 2 adds Lloyds with no trades. Your query should find it without naming it.",
+          "test-3": "Test 3 adds a Vodafone trade, so nothing should come back."
+        }
+      },
+      "explain": {
+        "text": "The left join keeps every company; `WHERE t.id IS NULL` keeps those that matched nothing. This is an **anti-join**, and it also finds the orphans from lesson 9 when the tables are swapped.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              7
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A filter in the wrong place",
+      "prose": "The desk wants every company, with its trades on 4 March where it has any.\n\n```sql\nSELECT s.ticker, t.id\nFROM securities AS s\nLEFT JOIN trades AS t\n  ON s.ticker = t.ticker\nWHERE t.date = '2026-03-04';\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "s.ticker",
+            "t.id",
+            "t.date"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "3",
+              "2026-03-03"
+            ],
+            [
+              "BARC",
+              "1",
+              "2026-03-02"
+            ],
+            [
+              "BARC",
+              "4",
+              "2026-03-03"
+            ],
+            [
+              "BP",
+              "5",
+              "2026-03-04"
+            ],
+            [
+              "HSBA",
+              "6",
+              "2026-03-04"
+            ],
+            [
+              "SHEL",
+              "2",
+              "2026-03-02"
+            ],
+            [
+              "SHEL",
+              "7",
+              "2026-03-04"
+            ],
+            [
+              "VOD",
+              "NULL",
+              "NULL"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many rows come back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "three",
+            "text": "3",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "6",
+            "why": "You expected the left join to keep every company. `WHERE` runs after the join and drops each row whose `t.date` is not 4 March.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  0,
+                  1,
+                  2,
+                  5,
+                  7
+                ]
+              }
+            }
+          },
+          {
+            "id": "eight",
+            "text": "8",
+            "why": "That is the left join before the filter. `WHERE` then removes rows."
+          },
+          {
+            "id": "four",
+            "text": "4",
+            "why": "You kept the VOD row. Its `t.date` is `NULL`, and `NULL = '2026-03-04'` is not true, so `WHERE` drops it.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  7
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows of the left join have `t.date` equal to 2026-03-04?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at the date column: trades 5, 6 and 7 are on 4 March.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Every other row fails the test, including the VOD row with its `NULL` date. 3 rows remain."
+        }
+      ],
+      "feedback": {
+        "correct": "Three rows: the left join has become an inner join.",
+        "generic": "Not quite right. Apply the `WHERE` to each row of the left join.",
+        "byKey": {
+          "six": "You expected the left join to keep every company. `WHERE` runs after the join and drops every row that is not dated 4 March, NULLs included."
+        }
+      },
+      "explain": {
+        "text": "The join gives 8 rows, then `WHERE` keeps only trades dated 4 March: 5, 6 and 7. Vodafone's `NULL` date fails the test too, so the left join behaves like an inner join. A condition on the right table belongs in `ON`.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3,
+              4,
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Move it into ON",
+      "prose": "We want all 6 companies, each with its 4 March trades, and `NULL` where there were none that day. Each option follows `SELECT s.ticker, t.id FROM securities AS s`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "s.ticker",
+            "t.id",
+            "t.date"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "3",
+              "2026-03-03"
+            ],
+            [
+              "BARC",
+              "1",
+              "2026-03-02"
+            ],
+            [
+              "BARC",
+              "4",
+              "2026-03-03"
+            ],
+            [
+              "BP",
+              "5",
+              "2026-03-04"
+            ],
+            [
+              "HSBA",
+              "6",
+              "2026-03-04"
+            ],
+            [
+              "SHEL",
+              "2",
+              "2026-03-02"
+            ],
+            [
+              "SHEL",
+              "7",
+              "2026-03-04"
+            ],
+            [
+              "VOD",
+              "NULL",
+              "NULL"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which version does that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "on",
+            "text": "`LEFT JOIN trades AS t` `ON s.ticker = t.ticker` `AND t.date = '2026-03-04'`",
+            "correct": true
+          },
+          {
+            "id": "ornull",
+            "text": "`LEFT JOIN trades AS t` `ON s.ticker = t.ticker` `WHERE t.date = '2026-03-04'` `OR t.date IS NULL`",
+            "why": "AZN and BARC traded on other days, so their rows carry a date that fails both tests. You get 4 rows, not 6.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "id": "inner",
+            "text": "`JOIN trades AS t` `ON s.ticker = t.ticker` `AND t.date = '2026-03-04'`",
+            "why": "An inner join drops every company with no trade that day: 3 rows."
+          },
+          {
+            "id": "both",
+            "text": "`LEFT JOIN trades AS t` `ON s.ticker = t.ticker` `WHERE t.date = '2026-03-04'` `AND t.id IS NULL`",
+            "why": "No row can have a 4 March date and a `NULL` id at once, so nothing comes back."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where can a condition limit the matches without removing companies?"
+        },
+        {
+          "rung": "point",
+          "text": "A condition in `ON` decides which trades may match. Unmatched companies still survive.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Put `AND t.date = '2026-03-04'` inside the `ON` of the left join."
+        }
+      ],
+      "feedback": {
+        "correct": "In `ON`, the date limits the matches and every company survives.",
+        "generic": "Not quite right. Work out the rows each query keeps for AZN and BARC.",
+        "byKey": {
+          "ornull": "You let NULL dates through, but AZN and BARC are not NULL: they traded on other days. They vanish, leaving 4 rows."
+        }
+      },
+      "explain": {
+        "text": "In `ON`, the date limits which trades can match, and companies that match nothing still survive with `NULL`. AZN, BARC and VOD come back with no trade; BP, HSBA and SHEL with trades 5, 6 and 7."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Counting after a left join",
+      "prose": "Trades per company, built on the left join:\n\n```sql\nSELECT s.ticker, COUNT(*)\nFROM securities AS s\nLEFT JOIN trades AS t\n  ON s.ticker = t.ticker\nGROUP BY s.ticker;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "s.ticker",
+            "t.id",
+            "t.date"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "3",
+              "2026-03-03"
+            ],
+            [
+              "BARC",
+              "1",
+              "2026-03-02"
+            ],
+            [
+              "BARC",
+              "4",
+              "2026-03-03"
+            ],
+            [
+              "BP",
+              "5",
+              "2026-03-04"
+            ],
+            [
+              "HSBA",
+              "6",
+              "2026-03-04"
+            ],
+            [
+              "SHEL",
+              "2",
+              "2026-03-02"
+            ],
+            [
+              "SHEL",
+              "7",
+              "2026-03-04"
+            ],
+            [
+              "VOD",
+              "NULL",
+              "NULL"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What count does VOD get?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "You expected no trades to count as 0. `COUNT(*)` counts rows, and VOD still has its one row of `NULL`s.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  7
+                ]
+              }
+            }
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "correct": true
+          },
+          {
+            "id": "null",
+            "text": "`NULL`",
+            "why": "`COUNT` never returns `NULL`. It always returns a whole number."
+          },
+          {
+            "id": "gone",
+            "text": "VOD is not in the result",
+            "why": "The left join kept VOD, so its group exists."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many rows does VOD have in the left join?"
+        },
+        {
+          "rung": "point",
+          "text": "VOD has one row, with `NULL` in every `trades` column.",
+          "highlight": [
+            "r7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`COUNT(*)` counts that row, so VOD gets 1."
+        }
+      ],
+      "feedback": {
+        "correct": "`COUNT(*)` counts the padded row.",
+        "generic": "Not quite right. Count VOD's rows in the left join.",
+        "byKey": {
+          "zero": "You expected no trades to count as 0. `COUNT(*)` counts rows, and the left join gave VOD one."
+        }
+      },
+      "explain": {
+        "text": "`COUNT(*)` counts rows, and the left join gave VOD one, so it reports 1. `COUNT(t.id)` skips `NULL`s and reports the true 0. After a left join, count a column from the right-hand table.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              7
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Stacking results with UNION",
+      "prose": "`UNION` stacks the rows of two queries with the same columns and removes duplicate rows. `UNION ALL` keeps every row.\n\n```sql\nSELECT ticker FROM trades WHERE qty > 0\nUNION\nSELECT ticker FROM trades WHERE qty < 0;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty"
+          ],
+          "rows": [
+            [
+              "1",
+              "2026-03-02",
+              "BARC",
+              "1000"
+            ],
+            [
+              "2",
+              "2026-03-02",
+              "SHEL",
+              "200"
+            ],
+            [
+              "3",
+              "2026-03-03",
+              "AZN",
+              "50"
+            ],
+            [
+              "4",
+              "2026-03-03",
+              "BARC",
+              "-400"
+            ],
+            [
+              "5",
+              "2026-03-04",
+              "BP",
+              "1500"
+            ],
+            [
+              "6",
+              "2026-03-04",
+              "HSBA",
+              "600"
+            ],
+            [
+              "7",
+              "2026-03-04",
+              "SHEL",
+              "-100"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "accept": "5: BARC, SHEL, AZN, BP and HSBA, each once.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 7
+          },
+          {
+            "id": "both",
+            "value": 2
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which tickers were bought, and which sold?"
+        },
+        {
+          "rung": "point",
+          "text": "Bought: BARC, SHEL, AZN, BP, HSBA. Sold: BARC and SHEL.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Stack the two lists and remove repeats: 5 different tickers."
+        }
+      ],
+      "feedback": {
+        "correct": "Five different tickers.",
+        "generic": "Not quite right. List both sides, then remove duplicates.",
+        "byKey": {
+          "all": "That is `UNION ALL`, which keeps the repeats. `UNION` lists BARC and SHEL once.",
+          "both": "That is the tickers both bought and sold. `UNION` keeps tickers from either query."
+        }
+      },
+      "explain": {
+        "text": "Five tickers were bought and two sold; BARC and SHEL appear on both sides. `UNION` lists each once, giving 5. `UNION ALL` would give all 7.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3,
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The left join pattern",
+      "prose": "You kept every company, spotted the gaps by their `NULL`s, and moved the date into `ON`. The pattern:\n\n```sql\nSELECT a.key\nFROM a\nLEFT JOIN b\n  ON a.key = b.key   -- conditions on b go here\nWHERE b.key IS NULL; -- a's rows with no partner\n```\n\nEvery row of `a` survives the join. Only `WHERE` can remove rows.",
+      "question": "After a left join, what does a condition on `b` placed in `WHERE` do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "inner",
+            "text": "Drops the rows of `a` with no partner, as an inner join would",
+            "correct": true
+          },
+          {
+            "id": "keep",
+            "text": "Nothing: a left join always keeps every row of `a`",
+            "why": "The join keeps them, but `WHERE` runs afterwards. A test on a `NULL` is not true, so those rows go."
+          },
+          {
+            "id": "limit",
+            "text": "Limits which rows of `b` match, keeping every row of `a`",
+            "why": "That is what the same condition does in `ON`."
+          },
+          {
+            "id": "error",
+            "text": "It is an error",
+            "why": "It is legal SQL. That is why the slip is common."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A `WHERE` test on `b` drops the `NULL` rows.",
+        "generic": "Not quite right. What happens to a `NULL` row in a `WHERE` test?"
+      },
+      "explain": {
+        "text": "Unmatched rows carry `NULL` in `b`, and a comparison with `NULL` is never true. So a `WHERE` test on `b` removes them; only `IS NULL` keeps them on purpose."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The morning break report",
+      "prose": "Each morning, operations checks the blotter against the security master. Trade 8, in Lloyds (`LLOY`), has arrived, but `securities` does not list Lloyds. A **break** is a ticker found on one side only.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "date",
+            "ticker",
+            "qty"
+          ],
+          "rows": [
+            [
+              "1",
+              "2026-03-02",
+              "BARC",
+              "1000"
+            ],
+            [
+              "2",
+              "2026-03-02",
+              "SHEL",
+              "200"
+            ],
+            [
+              "3",
+              "2026-03-03",
+              "AZN",
+              "50"
+            ],
+            [
+              "4",
+              "2026-03-03",
+              "BARC",
+              "-400"
+            ],
+            [
+              "5",
+              "2026-03-04",
+              "BP",
+              "1500"
+            ],
+            [
+              "6",
+              "2026-03-04",
+              "HSBA",
+              "600"
+            ],
+            [
+              "7",
+              "2026-03-04",
+              "SHEL",
+              "-100"
+            ],
+            [
+              "8",
+              "2026-03-04",
+              "LLOY",
+              "5000"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return every ticker that appears in only one of `securities` and `trades`, once each, sorted by ticker.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT *\n        FROM securities\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    INSERT INTO trades VALUES (8, '2026-03-04', 'LLOY', 5000);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "solution": "import sqlite3\n\n# Write your SQL between the triple quotes.\ndef query():\n    return \"\"\"\n        SELECT s.ticker AS ticker\n        FROM securities AS s\n        LEFT JOIN trades AS t ON s.ticker = t.ticker\n        WHERE t.id IS NULL\n        UNION\n        SELECT t.ticker\n        FROM trades AS t\n        LEFT JOIN securities AS s ON t.ticker = s.ticker\n        WHERE s.ticker IS NULL\n        ORDER BY ticker\n    \"\"\"\n\n# The tables. The tests build them the same way.\ndef make_db():\n    db = sqlite3.connect(\":memory:\")\n    db.executescript(\"\"\"\n    CREATE TABLE securities (ticker TEXT PRIMARY KEY, name TEXT, sector TEXT);\n    INSERT INTO securities VALUES\n        ('AZN', 'AstraZeneca', 'Health'), ('BARC', 'Barclays', 'Banks'),\n        ('BP', 'BP', 'Energy'), ('HSBA', 'HSBC', 'Banks'),\n        ('SHEL', 'Shell', 'Energy'), ('VOD', 'Vodafone', 'Telecoms');\n    CREATE TABLE prices (ticker TEXT, date TEXT, close REAL,\n                         PRIMARY KEY (ticker, date));\n    INSERT INTO prices VALUES\n        ('AZN', '2026-03-02', 110.20), ('AZN', '2026-03-03', 111.50),\n        ('AZN', '2026-03-04', 109.80), ('BARC', '2026-03-02', 2.48),\n        ('BARC', '2026-03-03', 2.53), ('BARC', '2026-03-04', 2.51),\n        ('BP', '2026-03-02', 4.32), ('BP', '2026-03-03', 4.28),\n        ('BP', '2026-03-04', 4.35), ('HSBA', '2026-03-02', 8.64),\n        ('HSBA', '2026-03-03', 8.71), ('HSBA', '2026-03-04', 8.69),\n        ('SHEL', '2026-03-02', 27.10), ('SHEL', '2026-03-03', 26.85),\n        ('SHEL', '2026-03-04', 27.40), ('VOD', '2026-03-02', 0.71),\n        ('VOD', '2026-03-03', 0.70), ('VOD', '2026-03-04', 0.72);\n    CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);\n    INSERT INTO trades VALUES\n        (1, '2026-03-02', 'BARC', 1000), (2, '2026-03-02', 'SHEL', 200),\n        (3, '2026-03-03', 'AZN', 50), (4, '2026-03-03', 'BARC', -400),\n        (5, '2026-03-04', 'BP', 1500), (6, '2026-03-04', 'HSBA', 600),\n        (7, '2026-03-04', 'SHEL', -100);\n    INSERT INTO trades VALUES (8, '2026-03-04', 'LLOY', 5000);\n    \"\"\")\n    return db\n\nfor row in make_db().execute(query()):\n    print(row)\n",
+        "examples": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[('LLOY',), ('VOD',)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "make_db().execute(query()).fetchall()",
+            "expect": "[('LLOY',), ('VOD',)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO trades VALUES (9, '2026-03-04', 'VOD', 3000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('LLOY',)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO trades VALUES (9, '2026-03-04', 'TSCO', 800)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('LLOY',), ('TSCO',), ('VOD',)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db = make_db(); db.execute(\"INSERT INTO trades VALUES (9, '2026-03-04', 'LLOY', -1000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('LLOY',), ('VOD',)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each runs your query, some after adding trades, and compares the rows exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "There are two kinds of break. What are they?"
+        },
+        {
+          "rung": "point",
+          "text": "Companies with no trades, and trades whose ticker has no company. Each is an anti-join.",
+          "highlight": [
+            "r7c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write both anti-joins with `UNION` between them. Name the column `AS ticker` in the first, then end with `ORDER BY ticker`."
+        }
+      ],
+      "feedback": {
+        "correct": "LLOY has no company and VOD has no trades.",
+        "generic": "Not quite right. Compare your rows with the example.",
+        "byKey": {
+          "test-4": "Test 4 adds a second Lloyds trade. Each ticker should appear once: use `UNION`, not `UNION ALL`."
+        }
+      },
+      "explain": {
+        "text": "One anti-join finds VOD, a company never traded; the reversed one finds LLOY, a trade with no company. `UNION` lists each ticker once, however many trades it has. `ORDER BY` sorts the whole union by a column name from the first query, or by position: `ORDER BY 1`."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`LEFT JOIN` keeps every row of the left table. Where nothing matches, the right-hand columns are `NULL`, and Python sees `None`.",
+      "`WHERE b.col IS NULL` after a left join finds rows with no partner. A condition on `b` belongs in `ON`; in `WHERE` it drops the `NULL` rows.",
+      "`UNION` stacks two results and removes duplicates; `UNION ALL` keeps them. After a left join, count with `COUNT(b.col)`, not `COUNT(*)`."
+    ],
+    "formula": {
+      "name": "Rows from a left join",
+      "tex": "\\text{rows} = \\text{matched pairs} + \\text{unmatched left rows}",
+      "note": "Here $7 + 1 = 8$: the seven trades plus Vodafone."
+    },
+    "trap": "A `WHERE` condition on the right-hand table runs after the join, drops the `NULL` rows and turns the left join into an inner join."
+  },
+  "quiz": [
+    {
+      "id": "q-direction",
+      "difficulty": 2,
+      "prose": "Using this lesson's tables, with 7 trades and 6 companies:\n\n```sql\nSELECT t.id, s.name\nFROM trades AS t\nLEFT JOIN securities AS s\n  ON t.ticker = s.ticker;\n```",
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "accept": "7: every trade has a company, and Vodafone is now on the right, so it is not kept.",
+        "wrong": [
+          {
+            "id": "eight",
+            "value": 8
+          },
+          {
+            "id": "six",
+            "value": 6
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The left table is `trades` now, and each trade has one company.",
+        "generic": "Not quite right. Which table is on the left this time?",
+        "byKey": {
+          "eight": "You kept Vodafone, but here `securities` is on the right. A left join keeps only unmatched rows of the left table.",
+          "six": "The left table is `trades`, so there is one row per trade."
+        }
+      },
+      "explain": {
+        "text": "A left join keeps every row of the left table, here `trades`. Each trade finds its company, so there are 7 rows and Vodafone does not appear."
+      }
+    },
+    {
+      "id": "q-eq-null",
+      "difficulty": 2,
+      "prose": "Someone looks for companies with no trades like this:\n\n```sql\nSELECT s.ticker\nFROM securities AS s\nLEFT JOIN trades AS t\n  ON s.ticker = t.ticker\nWHERE t.id = NULL;\n```",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "No rows at all",
+            "correct": true
+          },
+          {
+            "id": "vod",
+            "text": "VOD",
+            "why": "You expected `= NULL` to match the gap. A comparison with `NULL` is never true; write `IS NULL`."
+          },
+          {
+            "id": "all",
+            "text": "All six companies",
+            "why": "The `WHERE` removes rows; it cannot keep rows that fail its test."
+          },
+          {
+            "id": "error",
+            "text": "An error",
+            "why": "It is legal SQL, which is why it is easy to miss. It just matches nothing."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`= NULL` is never true, so no row passes.",
+        "generic": "Not quite right. What does comparing with `NULL` give?"
+      },
+      "explain": {
+        "text": "`t.id = NULL` is unknown for every row, so `WHERE` keeps none. `t.id IS NULL` is the test that finds VOD."
+      }
+    },
+    {
+      "id": "q-count-col",
+      "difficulty": 3,
+      "prose": "Trades per company, built on `securities LEFT JOIN trades` and grouped by ticker.",
+      "question": "Which select list gives VOD a count of 0?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "col",
+            "text": "`s.ticker, COUNT(t.id)`",
+            "correct": true
+          },
+          {
+            "id": "star",
+            "text": "`s.ticker, COUNT(*)`",
+            "why": "You counted rows. VOD has one row of `NULL`s, so it scores 1."
+          },
+          {
+            "id": "sticker",
+            "text": "`s.ticker, COUNT(s.ticker)`",
+            "why": "`s.ticker` is never `NULL`, so VOD's padded row is counted: 1."
+          },
+          {
+            "id": "sum",
+            "text": "`s.ticker, SUM(t.id)`",
+            "why": "A sum adds the ids, not the trades, and VOD gets `NULL` rather than 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Count a right-hand column, which is `NULL` where nothing matched.",
+        "generic": "Not quite right. Which column is `NULL` in VOD's row?"
+      },
+      "explain": {
+        "text": "`COUNT(t.id)` skips `NULL`, and VOD's only row has `NULL` there, so it counts 0. Every other company counts its trades."
+      }
+    },
+    {
+      "id": "q-union",
+      "difficulty": 2,
+      "prose": "Using this lesson's tables:\n\n```sql\nSELECT ticker FROM securities\nUNION\nSELECT ticker FROM trades;\n```",
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "accept": "6: every traded ticker is already one of the six companies.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 13
+          },
+          {
+            "id": "five",
+            "value": 5
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The six tickers, each once.",
+        "generic": "Not quite right. Stack both lists and remove duplicates.",
+        "byKey": {
+          "all": "That is `UNION ALL`: 6 plus 7 rows. `UNION` removes the repeats.",
+          "five": "That is the traded tickers only. `UNION` also keeps VOD from `securities`."
+        }
+      },
+      "explain": {
+        "text": "Stacked, the two lists hold 13 tickers. Every traded ticker is already among the six companies, so `UNION` leaves 6 distinct rows."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1571 @@
+{
+  "id": "l7-filtering-groups",
+  "course": "sql",
+  "title": "Filtering groups",
+  "minutes": 13,
+  "objectives": [
+    "Filter groups with `HAVING`",
+    "Explain why `WHERE` cannot test an aggregate",
+    "Combine `WHERE` and `HAVING` and sort groups by an aggregate"
+  ],
+  "skills": [
+    "sql-aggregate",
+    "sql-select"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Busy tickers",
+      "prose": "One day of fills for three tickers. Risk wants the tickers that traded more than three times.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "trades on 12 March"
+        }
+      },
+      "question": "Tap the ticker cell of every fill in a ticker with more than 3 fills.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c1",
+          "r3c1",
+          "r5c1",
+          "r8c1"
+        ],
+        "only": [
+          "r0c1",
+          "r1c1",
+          "r2c1",
+          "r3c1",
+          "r4c1",
+          "r5c1",
+          "r6c1",
+          "r7c1",
+          "r8c1"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "with-barc",
+            "set": [
+              "r0c1",
+              "r1c1",
+              "r3c1",
+              "r4c1",
+              "r5c1",
+              "r7c1",
+              "r8c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the fills of each ticker first."
+        },
+        {
+          "rung": "point",
+          "text": "AZN, BARC and SHEL appear 4, 3 and 2 times.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only AZN has more than 3. Tap its four ticker cells."
+        }
+      ],
+      "feedback": {
+        "correct": "AZN has 4 fills; BARC has 3 and SHEL 2.",
+        "generic": "Not quite right. Count each ticker, then keep those with 4 or more.",
+        "byKey": {
+          "with-barc": "You included BARC, which has exactly 3 fills. More than 3 means 4 or more.",
+          "r1c1": "BARC has exactly 3 fills, which is not more than 3.",
+          "r2c1": "SHEL has only 2 fills."
+        }
+      },
+      "explain": {
+        "text": "You counted each ticker's fills, then kept the tickers whose count passed. The test applied to whole groups, not to single rows.",
+        "canvas": {
+          "highlight": [
+            "r0c1",
+            "r3c1",
+            "r5c1",
+            "r8c1"
+          ],
+          "caption": "AZN 4, BARC 3, SHEL 2"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Can WHERE do it?",
+      "prose": "A first attempt puts the count test in `WHERE`.\n\n```sql\nSELECT ticker, COUNT(*)\nFROM trades\nWHERE COUNT(*) > 3\nGROUP BY ticker;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does SQLite do with this query?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "error",
+            "text": "It stops with an error",
+            "correct": true
+          },
+          {
+            "id": "azn",
+            "text": "It returns `('AZN', 4)`",
+            "why": "You read `WHERE` as a test on each group. It runs on single rows, before any group exists."
+          },
+          {
+            "id": "all",
+            "text": "It returns all three tickers",
+            "why": "You expected SQLite to skip the test it cannot use. It refuses the query instead."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When does `WHERE` run: before or after `GROUP BY`?"
+        },
+        {
+          "rung": "point",
+          "text": "`WHERE` looks at one row at a time.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A single row has no count of fills, so the test cannot be evaluated."
+        }
+      ],
+      "feedback": {
+        "correct": "SQLite reports `misuse of aggregate: COUNT()`.",
+        "generic": "Not quite right. Ask what `COUNT(*)` means for one row on its own."
+      },
+      "explain": {
+        "text": "`WHERE` tests one row at a time, before any group exists. A lone row has no count, so SQLite stops with `misuse of aggregate: COUNT()`.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          },
+          "caption": "WHERE sees one row: no count yet"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A filter for groups",
+      "prose": "The fix moves the test after the grouping.\n\n```sql\nSELECT ticker, COUNT(*)\nFROM trades\nGROUP BY ticker\nHAVING COUNT(*) > 3;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does this return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "azn",
+            "text": "`[('AZN', 4)]`",
+            "correct": true
+          },
+          {
+            "id": "barc",
+            "text": "`[('AZN', 4), ('BARC', 3)]`",
+            "why": "You kept BARC, which has exactly 3. `> 3` lets through only 4 or more."
+          },
+          {
+            "id": "all",
+            "text": "`[('AZN', 4), ('BARC', 3), ('SHEL', 2)]`",
+            "why": "You ignored the last line. It removes every group whose count fails the test."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Form the three groups first, then test each count."
+        },
+        {
+          "rung": "point",
+          "text": "The counts are 4, 3 and 2.",
+          "highlight": [
+            "r0c1",
+            "r3c1",
+            "r5c1",
+            "r8c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only a count of 4 is more than 3."
+        }
+      ],
+      "feedback": {
+        "correct": "One group passes the test.",
+        "generic": "Not quite right. Test each group's count against `> 3`."
+      },
+      "explain": {
+        "text": "`HAVING` is `WHERE` for groups: it runs after `GROUP BY`, so it can test an aggregate. Only AZN's count of 4 passes, exactly as you did by hand.",
+        "canvas": {
+          "highlight": [
+            "r0c1",
+            "r3c1",
+            "r5c1",
+            "r8c1"
+          ],
+          "caption": "HAVING keeps the AZN group"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Both filters",
+      "prose": "```sql\nSELECT ticker, COUNT(*)\nFROM trades\nWHERE qty >= 300\nGROUP BY ticker\nHAVING COUNT(*) >= 2;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many rows does this return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "rows",
+        "wrong": [
+          {
+            "id": "having-first",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Apply `WHERE` to the fills before you count anything."
+        },
+        {
+          "rung": "point",
+          "text": "Fills of 300 or more: one AZN, three BARC, two SHEL.",
+          "highlight": [
+            "r0c2",
+            "r1c2",
+            "r2c2",
+            "r3c2",
+            "r4c2",
+            "r5c2",
+            "r6c2",
+            "r7c2",
+            "r8c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Counts after `WHERE` are 1, 3 and 2. Keep those of at least 2."
+        }
+      ],
+      "feedback": {
+        "correct": "BARC and SHEL pass; AZN is left with one fill.",
+        "generic": "Not quite right. Filter the fills, then group, then test the counts.",
+        "byKey": {
+          "having-first": "You counted AZN's four fills. `WHERE` drops its fills under 300 shares first, leaving one, so AZN fails.",
+          "one": "SHEL has two fills of 300 or more, and `>= 2` includes 2."
+        }
+      },
+      "explain": {
+        "text": "`WHERE` keeps fills of 300 shares or more, so AZN keeps only its 500. Grouping gives counts of 1, 3 and 2, and `HAVING` keeps BARC and SHEL.",
+        "canvas": {
+          "highlight": [
+            "r2c2",
+            "r3c2",
+            "r6c2",
+            "r1c2",
+            "r4c2",
+            "r7c2"
+          ],
+          "caption": "after WHERE: AZN 1, BARC 3, SHEL 2"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write it",
+      "prose": "The starter builds this `trades` table, with a `date` column as well. Return your SQL from `query()`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Return each ticker with at least 3 fills, with its number of fills and total quantity, sorted by ticker.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\ndb.executemany(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\", [\n    (1, \"2024-03-12\", \"AZN\", 200, 118.90),\n    (2, \"2024-03-12\", \"BARC\", 5000, 2.17),\n    (3, \"2024-03-12\", \"SHEL\", 300, 26.00),\n    (4, \"2024-03-12\", \"AZN\", 500, 119.20),\n    (5, \"2024-03-12\", \"BARC\", 8000, 2.19),\n    (6, \"2024-03-12\", \"AZN\", 100, 119.00),\n    (7, \"2024-03-12\", \"SHEL\", 400, 26.05),\n    (8, \"2024-03-12\", \"BARC\", 3000, 2.18),\n    (9, \"2024-03-12\", \"AZN\", 150, 119.10),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*)\nFROM trades\nGROUP BY ticker\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\ndb.executemany(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\", [\n    (1, \"2024-03-12\", \"AZN\", 200, 118.90),\n    (2, \"2024-03-12\", \"BARC\", 5000, 2.17),\n    (3, \"2024-03-12\", \"SHEL\", 300, 26.00),\n    (4, \"2024-03-12\", \"AZN\", 500, 119.20),\n    (5, \"2024-03-12\", \"BARC\", 8000, 2.19),\n    (6, \"2024-03-12\", \"AZN\", 100, 119.00),\n    (7, \"2024-03-12\", \"SHEL\", 400, 26.05),\n    (8, \"2024-03-12\", \"BARC\", 3000, 2.18),\n    (9, \"2024-03-12\", \"AZN\", 150, 119.10),\n])\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*), SUM(qty)\nFROM trades\nGROUP BY ticker\nHAVING COUNT(*) >= 3\nORDER BY ticker\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN', 4, 950), ('BARC', 3, 16000)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('AZN', 4, 950), ('BARC', 3, 16000)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO trades VALUES (10, '2024-03-12', 'SHEL', 300, 26.10);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[('AZN', 4, 950), ('BARC', 3, 16000), ('SHEL', 3, 1000)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); t3.executescript(\"\".join(db.iterdump())); t3.executescript(\"DELETE FROM trades WHERE id = 8;\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[('AZN', 4, 950)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly. Test 2 gives SHEL a third fill; test 3 removes one of BARC's."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Group by ticker, then filter the groups."
+        },
+        {
+          "rung": "point",
+          "text": "\"At least 3\" is `HAVING COUNT(*) >= 3`.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`SELECT ticker, COUNT(*), SUM(qty) FROM trades GROUP BY ticker HAVING COUNT(*) >= 3 ORDER BY ticker`"
+        }
+      ],
+      "feedback": {
+        "correct": "AZN and BARC qualify; SHEL has only 2.",
+        "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
+        "byKey": {
+          "test-1": "Test 1 expects `[('AZN', 4, 950), ('BARC', 3, 16000)]`. If BARC is missing, `> 3` should be `>= 3`.",
+          "test-2": "Test 2 gives SHEL a third fill, so SHEL must now appear."
+        }
+      },
+      "explain": {
+        "text": "`HAVING COUNT(*) >= 3` keeps the groups with three or more fills. \"At least\" includes the boundary, so BARC with exactly 3 stays.",
+        "canvas": {
+          "highlight": [
+            "r0c1",
+            "r3c1",
+            "r5c1",
+            "r8c1",
+            "r1c1",
+            "r4c1",
+            "r7c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Filtering too early",
+      "prose": "Risk asks for the tickers whose **average** fill is above 250 shares, with that average.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which query answers it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "having",
+            "text": "`GROUP BY ticker HAVING AVG(qty) > 250`",
+            "correct": true
+          },
+          {
+            "id": "where",
+            "text": "`WHERE qty > 250 GROUP BY ticker`",
+            "why": "You filtered the fills before averaging. AZN's small fills vanish, so its average jumps from 237.5 to 500 and it slips in.",
+            "canvas": {
+              "highlight": [
+                "r3c2"
+              ],
+              "caption": "WHERE kept only AZN's 500: its average jumps to 500"
+            }
+          },
+          {
+            "id": "where-avg",
+            "text": "`WHERE AVG(qty) > 250 GROUP BY ticker`",
+            "why": "`WHERE` runs before the groups exist, so there is no average to test. SQLite stops with an error."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which average does Risk mean: of all fills, or of the large ones?"
+        },
+        {
+          "rung": "point",
+          "text": "AZN averages 237.5 shares over all four fills.",
+          "highlight": [
+            "r0c2",
+            "r3c2",
+            "r5c2",
+            "r8c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The test must run on the finished average, after grouping."
+        }
+      ],
+      "feedback": {
+        "correct": "BARC and SHEL qualify; AZN averages 237.5.",
+        "generic": "Not quite right. The test is on each ticker's average over all its fills.",
+        "byKey": {
+          "where": "You filtered the fills before averaging. AZN's small fills vanish, so its average jumps from 237.5 to 500 and it slips in."
+        }
+      },
+      "explain": {
+        "text": "A `WHERE` on `qty` changes which fills enter each average, so it changes the averages themselves. `HAVING` leaves the averages alone and only drops groups: AZN at 237.5 goes.",
+        "canvas": {
+          "highlight": [
+            "r0c2",
+            "r3c2",
+            "r5c2",
+            "r8c2"
+          ],
+          "caption": "AZN: (200 + 500 + 100 + 150) / 4 = 237.5"
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The order SQL works in",
+      "prose": "We have seen `WHERE` run before groups exist and `HAVING` run after. Put every step of a grouped query in the order the database carries it out.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Order the steps, first to last.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "`FROM trades`: start from every row"
+          },
+          {
+            "id": "s2",
+            "text": "`WHERE`: drop single rows that fail a row test"
+          },
+          {
+            "id": "s3",
+            "text": "`GROUP BY`: pile the surviving rows into groups"
+          },
+          {
+            "id": "s4",
+            "text": "`HAVING`: drop groups that fail an aggregate test"
+          },
+          {
+            "id": "s5",
+            "text": "`SELECT`: compute one output row per group"
+          },
+          {
+            "id": "s6",
+            "text": "`ORDER BY`: sort the output rows"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A step can only use what the step before it produced."
+        },
+        {
+          "rung": "point",
+          "text": "`HAVING` needs groups, so it comes after `GROUP BY`.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rows, row filter, groups, group filter, output, sort."
+        }
+      ],
+      "feedback": {
+        "correct": "Rows, row filter, groups, group filter, output, sort.",
+        "generic": "Not quite right. Each step needs the result of the one before it."
+      },
+      "explain": {
+        "text": "`WHERE` sees rows, so it comes before grouping; `HAVING` sees groups, so it comes after. `ORDER BY` sorts finished rows, which is why it can sort by an aggregate.",
+        "canvas": {}
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Two filters, two jobs",
+      "prose": "A row test goes in `WHERE`; a test on an aggregate goes in `HAVING`.\n\n```sql\nSELECT ticker, COUNT(*)   -- 5. one row per group\nFROM trades               -- 1. every row\nWHERE qty >= 300          -- 2. drop rows\nGROUP BY ticker           -- 3. form groups\nHAVING COUNT(*) >= 2      -- 4. drop groups\nORDER BY COUNT(*) DESC;   -- 6. sort the result\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which condition can only go in `HAVING`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sum",
+            "text": "`SUM(qty) > 1000`",
+            "correct": true
+          },
+          {
+            "id": "qty",
+            "text": "`qty > 1000`",
+            "why": "That tests a single fill, so it belongs in `WHERE`. In `HAVING`, a bare `qty` would test one arbitrary fill per group."
+          },
+          {
+            "id": "ticker",
+            "text": "`ticker <> 'SHEL'`",
+            "why": "`WHERE` can test each row's ticker. Doing it there also saves grouping rows you will throw away."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only a group has a `SUM(qty)`.",
+        "generic": "Not quite right. Look for the test that needs a whole group to evaluate."
+      },
+      "explain": {
+        "text": "`SUM(qty)` exists only once rows are grouped, so it must be tested in `HAVING`. Tests on single columns belong in `WHERE`.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A liquid universe",
+      "prose": "A strategy should trade only names with plenty of activity. The starter generates a day of fills: 24 for AZN, 31 for BARC, 20 for SHEL and 12 for HSBA.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "ticker",
+            "fills"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "24"
+            ],
+            [
+              "BARC",
+              "31"
+            ],
+            [
+              "SHEL",
+              "20"
+            ],
+            [
+              "HSBA",
+              "12"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "fills per ticker in the generated table"
+        }
+      },
+      "question": "Return each ticker with more than 20 fills and its count, most active first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\nbase = {\"AZN\": 118.90, \"BARC\": 2.17, \"SHEL\": 26.00, \"HSBA\": 6.45}\ncounts = {\"AZN\": 24, \"BARC\": 31, \"SHEL\": 20, \"HSBA\": 12}\nn = 0\nfor ticker in counts:\n    for k in range(counts[ticker]):\n        n += 1\n        db.execute(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\",\n                   (n, \"2024-03-12\", ticker, 100 * (k % 5 + 1), base[ticker]))\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*)\nFROM trades\nGROUP BY ticker\n\"\"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE trades(id INTEGER, date TEXT, ticker TEXT, qty INTEGER, price REAL)\")\nbase = {\"AZN\": 118.90, \"BARC\": 2.17, \"SHEL\": 26.00, \"HSBA\": 6.45}\ncounts = {\"AZN\": 24, \"BARC\": 31, \"SHEL\": 20, \"HSBA\": 12}\nn = 0\nfor ticker in counts:\n    for k in range(counts[ticker]):\n        n += 1\n        db.execute(\"INSERT INTO trades VALUES (?, ?, ?, ?, ?)\",\n                   (n, \"2024-03-12\", ticker, 100 * (k % 5 + 1), base[ticker]))\n\n\ndef query():\n    return \"\"\"\nSELECT ticker, COUNT(*)\nFROM trades\nGROUP BY ticker\nHAVING COUNT(*) > 20\nORDER BY COUNT(*) DESC\n\"\"\"\n",
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('BARC', 31), ('AZN', 24)]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('BARC', 31), ('AZN', 24)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = sqlite3.connect(\":memory:\"); t2.executescript(\"\".join(db.iterdump())); t2.executescript(\"INSERT INTO trades VALUES (100, '2024-03-12', 'SHEL', 200, 26.00);\")",
+            "call": "t2.execute(query()).fetchall()",
+            "expect": "[('BARC', 31), ('AZN', 24), ('SHEL', 21)]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t3 = sqlite3.connect(\":memory:\"); t3.executescript(\"\".join(db.iterdump())); t3.executescript(\"INSERT INTO trades SELECT id + 100, date, ticker, qty, price FROM trades WHERE ticker = 'AZN' AND id <= 10;\")",
+            "call": "t3.execute(query()).fetchall()",
+            "expect": "[('AZN', 34), ('BARC', 31)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each compares the rows from `fetchall()` exactly, order included. Test 2 gives SHEL a 21st fill; test 3 adds 10 AZN fills."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count per ticker, keep the big counts, then sort."
+        },
+        {
+          "rung": "point",
+          "text": "`HAVING COUNT(*) > 20`, then `ORDER BY COUNT(*) DESC`.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`SELECT ticker, COUNT(*) FROM trades GROUP BY ticker HAVING COUNT(*) > 20 ORDER BY COUNT(*) DESC`"
+        }
+      ],
+      "feedback": {
+        "correct": "BARC and AZN make the cut; SHEL's 20 is not more than 20.",
+        "generic": "Not quite right. Run the examples and compare your rows with the expected ones.",
+        "byKey": {
+          "test-1": "Test 1 expects `[('BARC', 31), ('AZN', 24)]`. Check the boundary and the sort direction.",
+          "test-2": "Test 2 gives SHEL 21 fills, so SHEL must now appear, last.",
+          "test-3": "Test 3 lifts AZN to 34 fills, so AZN must now come first. Sort by the count, not by name."
+        }
+      },
+      "explain": {
+        "text": "`HAVING` drops the groups with 20 fills or fewer, so SHEL sits exactly on the line and is out. `ORDER BY COUNT(*) DESC` then sorts the surviving groups by their own aggregate.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          },
+          "caption": "kept: BARC 31, AZN 24"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`WHERE` filters single rows before grouping; `HAVING` filters whole groups after it.",
+      "A test on an aggregate such as `COUNT(*)` or `AVG(qty)` can only go in `HAVING`.",
+      "The database works in the order `FROM`, `WHERE`, `GROUP BY`, `HAVING`, `SELECT`, `ORDER BY`, so `ORDER BY` can sort by an aggregate."
+    ],
+    "formula": {
+      "name": "The order of work",
+      "tex": "\\text{FROM} \\to \\text{WHERE} \\to \\text{GROUP BY} \\to \\text{HAVING} \\to \\text{SELECT} \\to \\text{ORDER BY}",
+      "note": "Rows are filtered before groups exist; groups are filtered after."
+    },
+    "trap": "Moving a group test into `WHERE` changes which rows enter each average, so the averages themselves change."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "You want the tickers whose average fill is above 250 shares.",
+      "question": "Where does the test `AVG(qty) > 250` go?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "having",
+            "text": "In `HAVING`, after `GROUP BY`",
+            "correct": true
+          },
+          {
+            "id": "where",
+            "text": "In `WHERE`, before `GROUP BY`",
+            "why": "`WHERE` runs on single rows before any group exists, so it has no average to test."
+          },
+          {
+            "id": "either",
+            "text": "Either; they do the same job",
+            "why": "`WHERE` filters rows and `HAVING` filters groups. Only `HAVING` can see an aggregate."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An aggregate test needs groups.",
+        "generic": "Not quite right. Ask when the average first exists."
+      },
+      "explain": {
+        "text": "The average exists only after `GROUP BY`. `HAVING` runs then, so it is the place for any test on an aggregate."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "```sql\nSELECT ticker\nFROM trades\nGROUP BY ticker\nHAVING SUM(qty) > 1000;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many rows does this return on the 12 March fills?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "rows",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "fills",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only BARC passes, with 16,000 shares.",
+        "generic": "Not quite right. Add each ticker's quantities, then compare with 1,000.",
+        "byKey": {
+          "rows": "You kept every ticker. AZN totals 950 and SHEL 700, both under 1,000.",
+          "fills": "You tested single fills against 1,000. `HAVING` tests each ticker's total."
+        }
+      },
+      "explain": {
+        "text": "The totals are AZN 950, BARC 16,000 and SHEL 700. Only BARC is above 1,000, so one row comes back."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "You want the tickers with more than 20 trades.",
+      "question": "Which query gives them?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "good",
+            "text": "`SELECT ticker FROM trades GROUP BY ticker HAVING COUNT(*) > 20`",
+            "correct": true
+          },
+          {
+            "id": "ge",
+            "text": "`SELECT ticker FROM trades GROUP BY ticker HAVING COUNT(*) >= 20`",
+            "why": "You included tickers with exactly 20. \"More than 20\" means 21 or more."
+          },
+          {
+            "id": "where",
+            "text": "`SELECT ticker FROM trades WHERE COUNT(*) > 20 GROUP BY ticker`",
+            "why": "You put the count in `WHERE`. It runs before any group exists, so SQLite stops with an error."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A count test, in `HAVING`, with a strict `>`.",
+        "generic": "Not quite right. Check where the test goes and its boundary."
+      },
+      "explain": {
+        "text": "Counting needs groups, so the test goes in `HAVING`. \"More than 20\" is `> 20`, which leaves out a ticker with exactly 20."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "```sql\nSELECT ticker\nFROM trades\nWHERE qty < 1000\nGROUP BY ticker\nHAVING COUNT(*) >= 2;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "id",
+            "ticker",
+            "qty",
+            "price"
+          ],
+          "rows": [
+            [
+              "1",
+              "AZN",
+              "200",
+              "118.90"
+            ],
+            [
+              "2",
+              "BARC",
+              "5000",
+              "2.17"
+            ],
+            [
+              "3",
+              "SHEL",
+              "300",
+              "26.00"
+            ],
+            [
+              "4",
+              "AZN",
+              "500",
+              "119.20"
+            ],
+            [
+              "5",
+              "BARC",
+              "8000",
+              "2.19"
+            ],
+            [
+              "6",
+              "AZN",
+              "100",
+              "119.00"
+            ],
+            [
+              "7",
+              "SHEL",
+              "400",
+              "26.05"
+            ],
+            [
+              "8",
+              "BARC",
+              "3000",
+              "2.18"
+            ],
+            [
+              "9",
+              "AZN",
+              "150",
+              "119.10"
+            ]
+          ],
+          "align": [
+            "right",
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many rows does this return on the 12 March fills?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "barc",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "AZN and SHEL; BARC has no fills under 1,000.",
+        "generic": "Not quite right. Apply `WHERE` first, then group.",
+        "byKey": {
+          "barc": "You kept BARC. Every BARC fill is 3,000 shares or more, so `WHERE` removes them all and BARC has no group at all."
+        }
+      },
+      "explain": {
+        "text": "`WHERE` removes all three BARC fills, so BARC forms no group. AZN keeps 4 fills and SHEL 2, and both pass `>= 2`."
+      }
+    }
+  ]
+}

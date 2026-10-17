@@ -1,0 +1,782 @@
+{
+  "id": "homework-2",
+  "course": "numpy-pandas",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-worst-returns",
+      "difficulty": 4,
+      "skills": [
+        "pd-frames"
+      ],
+      "title": "Worst days from a raw file",
+      "prose": "A vendor file may arrive in any order and may have missing closes. Sort it by date, forward-fill the closes, compute daily returns and return the dates of the `n` worst returns, worst first. A day with no earlier close has no return. Dates may be text or timestamps.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-04-12",
+              "96.40",
+              "2950"
+            ],
+            [
+              "2024-04-11",
+              "",
+              ""
+            ],
+            [
+              "2024-04-10",
+              "95.10",
+              "3300"
+            ],
+            [
+              "2024-04-09",
+              "96.80",
+              "2700"
+            ],
+            [
+              "2024-04-08",
+              "95.10",
+              "3100"
+            ],
+            [
+              "2024-04-05",
+              "94.00",
+              "2800"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "the first test file, as it arrives"
+        }
+      },
+      "question": "Complete `worst_returns(text, n=3)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import io\nimport pandas as pd\n\ndef worst_returns(text, n=3):\n    df = ...\n    close = ...\n    ret = ...\n    return ret.nsmallest(n).index.tolist()\n",
+        "solution": "import io\nimport pandas as pd\n\ndef worst_returns(text, n=3):\n    df = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True).sort_index()\n    close = df[\"close\"].ffill()\n    ret = close.pct_change().dropna()\n    return ret.nsmallest(n).index.tolist()\n",
+        "tests": [
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "[str(d)[:10] for d in worst_returns(text)]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "[str(d)[:10] for d in worst_returns(text, 1)]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-01-02,10.00\\n2024-01-03,10.50\\n2024-01-04,10.29\\n2024-01-05,10.80\\n\"",
+            "call": "[str(d)[:10] for d in worst_returns(text, 2)]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,open,close\\n2024-02-02,51.00,50.40\\n2024-02-01,50.00,51.00\\n2024-02-05,50.40,\\n2024-02-06,49.90,49.39\\n\"",
+            "call": "[str(d)[:10] for d in worst_returns(text)]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-08-01,\\n2024-08-02,200.00\\n2024-08-05,190.00\\n2024-08-06,195.70\\n\"",
+            "call": "[str(d)[:10] for d in worst_returns(text, 5)]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "len(worst_returns(text, 10))",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "[str(d)[:10] for d in worst_returns(text)]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-01-02,10.00\\n2024-01-03,10.50\\n2024-01-04,10.29\\n2024-01-05,10.80\\n\"",
+            "call": "[str(d)[:10] for d in worst_returns(text, 2)]",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on small vendor files. Each list of dates must match exactly, in order. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Sorted, filled, then ranked.",
+        "generic": "Some tests failed. Check the order of the steps: sort, fill, then returns.",
+        "byKey": {
+          "test-1": "Test 1 expects 10 April, 11 April, then 8 April. If 11 April is missing, fill the gap before computing returns; if it leads, you filled with 0.",
+          "test-5": "Test 5 starts with a missing close. Forward-fill cannot fill it, so that day has no return and must not appear.",
+          "error": "Your code stopped with an error. Check each `...` line in turn."
+        }
+      },
+      "explain": {
+        "text": "Sorting first makes each return look back in time. `ffill` turns the gap into a flat day, return 0.0, so it ranks among the worst on a rising stock. `dropna` removes days with no earlier close."
+      }
+    },
+    {
+      "id": "h-risk-summary",
+      "difficulty": 5,
+      "skills": [
+        "pd-frames"
+      ],
+      "title": "A risk summary from a file",
+      "prose": "Return a dict for a risk report. `last`: the latest close, 2 places. `gaps`: missing closes in the file. Then forward-fill and take daily returns. `worst_day` and `worst`: the worst return's date and value, 4 places. `vol`: the returns' sample standard deviation times $\\sqrt{252}$, 4 places.",
+      "question": "Complete `risk_summary(text)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import io\nimport math\nimport pandas as pd\n\ndef risk_summary(text):\n    df = ...\n    ret = ...\n    return {\n        \"last\": ...,\n        \"gaps\": ...,\n        \"worst_day\": ...,\n        \"worst\": ...,\n        \"vol\": ...,\n    }\n",
+        "solution": "import io\nimport math\nimport pandas as pd\n\ndef risk_summary(text):\n    df = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True).sort_index()\n    close = df[\"close\"].ffill()\n    ret = close.pct_change().dropna()\n    return {\n        \"last\": round(float(close.iloc[-1]), 2),\n        \"gaps\": int(df[\"close\"].isna().sum()),\n        \"worst_day\": ret.idxmin().strftime(\"%Y-%m-%d\"),\n        \"worst\": round(float(ret.min()), 4),\n        \"vol\": round(float(ret.std() * math.sqrt(252)), 4),\n    }\n",
+        "tests": [
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "risk_summary(text)[\"last\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "risk_summary(text)[\"gaps\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "str(risk_summary(text)[\"worst_day\"])[:10]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "risk_summary(text)[\"worst\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "risk_summary(text)[\"vol\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-01-02,10.00\\n2024-01-03,10.50\\n2024-01-04,10.29\\n2024-01-05,10.80\\n\"",
+            "call": "risk_summary(text)[\"vol\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,open,close\\n2024-02-02,51.00,50.40\\n2024-02-01,50.00,51.00\\n2024-02-05,50.40,\\n2024-02-06,49.90,49.39\\n\"",
+            "call": "str(risk_summary(text)[\"worst_day\"])[:10]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-08-01,\\n2024-08-02,200.00\\n2024-08-05,190.00\\n2024-08-06,195.70\\n\"",
+            "call": "(risk_summary(text)[\"gaps\"], risk_summary(text)[\"last\"], risk_summary(text)[\"worst\"])",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-08-01,\\n2024-08-02,200.00\\n2024-08-05,190.00\\n2024-08-06,195.70\\n\"",
+            "call": "risk_summary(text)[\"vol\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "risk_summary(text)[\"last\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close,volume\\n2024-04-12,96.40,2950\\n2024-04-11,,\\n2024-04-10,95.10,3300\\n2024-04-09,96.80,2700\\n2024-04-08,95.10,3100\\n2024-04-05,94.00,2800\\n\"",
+            "call": "risk_summary(text)[\"vol\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests, one field at a time, on small vendor files. Numbers must match exactly after rounding. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "feedback": {
+        "correct": "One clean pass from file to report.",
+        "generic": "Some tests failed. Each test checks one field; read which field the first failure names.",
+        "byKey": {
+          "test-2": "Test 2 counts missing closes in the file as sent: 1. Count before you fill.",
+          "test-4": "Test 4 expects −0.0176 on 10 April. A −1.0 means a gap became a £0.00 price.",
+          "test-5": "Test 5 expects 0.2273. Check `ddof`: pandas `std` divides by n − 1, and the annual factor is the square root of 252.",
+          "error": "Your code stopped with an error. `ret.idxmin()` gives the worst date; `ret.min()` the worst value."
+        }
+      },
+      "explain": {
+        "text": "Count gaps on the raw column, then forward-fill so every return uses known prices. `idxmin` and `min` locate the worst day. Volatility scales with the square root of time, so the daily standard deviation is multiplied by $\\sqrt{252}$."
+      }
+    },
+    {
+      "id": "h-exposures",
+      "difficulty": 4,
+      "skills": [
+        "pd-frames",
+        "np-broadcast"
+      ],
+      "title": "Long, short, gross and net",
+      "prose": "A risk desk wants four numbers in £, each rounded to 2 places. `long`: the value of the positions with `qty` above 0. `short`: the value of those below 0, a negative number. `gross`: long minus short. `net`: long plus short.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*ticker*",
+            "price",
+            "qty"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "118.40",
+              "50"
+            ],
+            [
+              "SHEL",
+              "24.37",
+              "−300"
+            ],
+            [
+              "HSBA",
+              "6.62",
+              "800"
+            ],
+            [
+              "BP",
+              "4.85",
+              "−1000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`book` in the first test"
+        }
+      },
+      "question": "Complete `exposures(book)` with a value column and masks.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef exposures(book):\n    value = ...\n    long = ...\n    short = ...\n    return {\"long\": round(float(long), 2), \"short\": round(float(short), 2),\n            \"gross\": round(float(long - short), 2), \"net\": round(float(long + short), 2)}\n",
+        "solution": "import pandas as pd\n\ndef exposures(book):\n    value = book[\"price\"] * book[\"qty\"]\n    long = value[book[\"qty\"] > 0].sum()\n    short = value[book[\"qty\"] < 0].sum()\n    return {\"long\": round(float(long), 2), \"short\": round(float(short), 2),\n            \"gross\": round(float(long - short), 2), \"net\": round(float(long + short), 2)}\n",
+        "tests": [
+          {
+            "setup": "book = pd.DataFrame({\"price\": [118.40, 24.37, 6.62, 4.85], \"qty\": [50, -300, 800, -1000]}, index=[\"AZN\", \"SHEL\", \"HSBA\", \"BP\"])",
+            "call": "exposures(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [118.40, 2.15, 6.62, 0.71], \"qty\": [50, 2000, 800, 5000]}, index=[\"AZN\", \"BARC\", \"HSBA\", \"VOD\"])",
+            "call": "exposures(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [24.37], \"qty\": [-300]}, index=[\"SHEL\"])",
+            "call": "exposures(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [118.40, 24.37, 6.62, 4.85], \"qty\": [50, -300, 800, -1000]}, index=[\"AZN\", \"SHEL\", \"HSBA\", \"BP\"])",
+            "call": "exposures(book)[\"gross\"] >= abs(exposures(book)[\"net\"])",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [2.15, 2.15, 0.71], \"qty\": [1000, -1000, 0]}, index=[\"BARC\", \"BARC2\", \"VOD\"])",
+            "call": "exposures(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "book = pd.DataFrame({\"price\": [118.40, 24.37, 6.62, 4.85], \"qty\": [50, -300, 800, -1000]}, index=[\"AZN\", \"SHEL\", \"HSBA\", \"BP\"])",
+            "call": "exposures(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [118.40, 2.15, 6.62, 0.71], \"qty\": [50, 2000, 800, 5000]}, index=[\"AZN\", \"BARC\", \"HSBA\", \"VOD\"])",
+            "call": "exposures(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on small books. Each dict must match exactly after rounding to 2 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Masks split the book; sums give the exposures.",
+        "generic": "Some tests failed. Check the sign of `short` and what happens when a book has no shorts.",
+        "byKey": {
+          "test-1": "Test 1 expects long 11216.0 and short −12161.0. A positive short means you took absolute values too early.",
+          "test-2": "Test 2 has no shorts, so `short` is 0.0. Summing an empty selection gives 0.",
+          "error": "Your code stopped with an error. Check that `value` multiplies `price` by `qty`."
+        }
+      },
+      "explain": {
+        "text": "The value column carries the sign of `qty`, so a mask on `qty` splits longs from shorts. Gross exposure measures the size of the bets, net the direction. Here the book is £23,377.00 gross but only £945.00 net short."
+      }
+    },
+    {
+      "id": "h-loc-mask",
+      "difficulty": 3,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "```python\nprint(df.loc[df[\"volume\"] > 20000, \"close\"].tolist())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "open",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.40",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.55",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "12.30",
+              "12.48",
+              "15700"
+            ],
+            [
+              "2024-03-07",
+              "12.50",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.60",
+              "12.44",
+              "24300"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[12.31, 12.44]`",
+            "correct": true
+          },
+          {
+            "id": "volume",
+            "text": "`[22100, 24300]`",
+            "why": "Those are the volumes. The column named after the comma, `close`, is the one returned."
+          },
+          {
+            "id": "mask",
+            "text": "`[False, True, False, False, True]`",
+            "why": "That is the mask itself. `.loc` uses it to choose rows, then returns the closes there."
+          },
+          {
+            "id": "bigger",
+            "text": "`[12.31, 12.62, 12.44]`",
+            "why": "You included 7 March, with 19800 shares. That is below 20000."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The closes on the two busy days.",
+        "generic": "Not quite right. Keep the rows where volume is above 20000, then read their closes."
+      },
+      "explain": {
+        "text": "The mask is True on 5 and 8 March, and `.loc[mask, \"close\"]` reads the close there. The same form, with `= value` after it, writes instead."
+      }
+    },
+    {
+      "id": "h-ffill-mean",
+      "difficulty": 3,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "```python\nprint(round(df[\"close\"].ffill().mean(), 3))\n```\nFor comparison, `df[\"close\"].mean()` is 12.48.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.445,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 12.000",
+        "label": "Value printed",
+        "accept": "12.445: 74.67 / 6.",
+        "wrong": [
+          {
+            "id": "skip",
+            "value": 12.48,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "zero",
+            "value": 8.32,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Six values after the fill: 12.445.",
+        "generic": "Not quite right. Fill each gap with the close before it, then average all six.",
+        "byKey": {
+          "skip": "That is the mean before filling. After `ffill` there are six values, two of them copies.",
+          "zero": "That is the mean with the gaps as 0. `ffill` copies 12.31 and 12.44 into them."
+        }
+      },
+      "explain": {
+        "text": "`ffill` gives 12.55, 12.31, 12.31, 12.62, 12.44 and 12.44, which add up to 74.67. Over 6 that is 12.445. The copies count twice, which is why a fill changes the average."
+      }
+    },
+    {
+      "id": "h-describe-count",
+      "difficulty": 3,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "```python\nprint(df.describe().loc[\"count\"].tolist())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[4.0, 4.0]`",
+            "correct": true
+          },
+          {
+            "id": "rows",
+            "text": "`[6.0, 6.0]`",
+            "why": "You counted the rows. `count` leaves out NaN in each column."
+          },
+          {
+            "id": "three",
+            "text": "`[3.0, 3.0]`",
+            "why": "You counted complete rows, as `dropna()` would. `describe` counts each column on its own."
+          },
+          {
+            "id": "dates",
+            "text": "`[6.0, 4.0, 4.0]`",
+            "why": "The dates are the index, so `describe` gives them no column."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four values present in each column.",
+        "generic": "Not quite right. `count` is worked out column by column, skipping NaN."
+      },
+      "explain": {
+        "text": "`describe` summarises each column separately, so each skips its own two gaps: 4 and 4. `dropna()` would keep only the 3 complete rows."
+      }
+    },
+    {
+      "id": "h-last-three",
+      "difficulty": 3,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "```python\nprint(round(df.iloc[-3:][\"close\"].mean(), 4))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "open",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.40",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.55",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "12.30",
+              "12.48",
+              "15700"
+            ],
+            [
+              "2024-03-07",
+              "12.50",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.60",
+              "12.44",
+              "24300"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.5133,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "For example 12.0000",
+        "label": "Value printed",
+        "accept": "12.5133: (12.48 + 12.62 + 12.44) / 3.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 12.48,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "two",
+            "value": 12.53,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "first",
+            "value": 12.4467,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The last three closes average 12.5133.",
+        "generic": "Not quite right. `iloc[-3:]` keeps the last three rows; average their closes.",
+        "byKey": {
+          "one": "That is `iloc[-3]`, a single row. The colon keeps every row from there to the end.",
+          "two": "You kept two rows. `-3:` runs from the third-last row to the end: three rows.",
+          "first": "That is the first three closes. Negative positions count from the end."
+        }
+      },
+      "explain": {
+        "text": "`iloc[-3:]` keeps 6, 7 and 8 March, whatever their labels. Their closes add up to 37.54, and 37.54 / 3 = 12.5133. Tomorrow it would pick the newest three."
+      }
+    },
+    {
+      "id": "h-cleaning-review",
+      "difficulty": 5,
+      "skills": [
+        "pd-frames"
+      ],
+      "title": "Review a cleaning script",
+      "kind": "longform",
+      "prompt": "A colleague cleans this file, oldest first, before a backtest.\n\n```python\ntext = \"date,close,volume\\n2024-03-04,12.55,18400\\n2024-03-05,12.31,22100\\n2024-03-06,,\\n2024-03-07,12.62,19800\\n2024-03-08,12.44,\\n2024-03-11,,21000\\n\"\ndf = pd.read_csv(io.StringIO(text))\ndf = df.fillna(0)\ndf[\"ret\"] = df[\"close\"].pct_change()\nprint(df[\"ret\"].mean(), df[\"volume\"].mean())\nprint(df.loc[\"2024-03-06\", \"close\"])\n```\n\n(a) What does the last line do, and why? Give the fix. (b) What does `fillna(0)` do to the returns on 6, 7 and 11 March, and to their mean? (c) What does it do to the mean volume? Give both numbers. (d) Write a corrected version. Say what each choice claims about the missing days, and give the mean daily return it produces to 4 significant figures.",
+      "model": "**(a)** It raises `KeyError: '2024-03-06'`. Without `index_col`, the rows are labelled 0 to 5 and the dates are an ordinary column, so `.loc` finds no such label. Fix: `pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True)`.\n\n**(b)** `fillna(0)` turns the missing closes into £0.00. On 6 March the return is $0 / 12.31 - 1 = -1.0$, a fake 100% loss. On 7 March it is $12.62 / 0$, which is infinite. On 11 March it is $0 / 12.44 - 1 = -1.0$ again. The mean of a column holding infinity is `inf`, so the printed mean return is meaningless.\n\n**(c)** The two missing volumes become 0, so the mean is $81300 / 6 = 13550$ shares. Skipping them gives $81300 / 4 = 20325$. The zeros claim two days of no trading, which the file never said.\n\n**(d)**\n\n```python\ndf = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True).sort_index()\ndf[\"close\"] = df[\"close\"].ffill()       # last known price\ndf[\"ret\"] = df[\"close\"].pct_change()    # first row NaN\nprint(df[\"ret\"].mean(), df[\"volume\"].mean())\n```\n\nForward-filling claims the price stayed at the last trade, which is the best mark anyone had on those days. It uses no later price, so there is no look-ahead. The returns are then −0.019124, 0.0, 0.025183, −0.014263 and 0.0, and their mean is **−0.001641**. The volumes stay missing: we do not know what traded, and `mean` skips them, giving 20325. The first return stays NaN, because no earlier close exists, and `mean` skips it rather than counting a fake flat day.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "(a) Says the last line raises `KeyError` because the index is 0 to 5 without `index_col`, and fixes the load with `index_col=\"date\"` (and `parse_dates=True`)."
+        },
+        {
+          "points": 2,
+          "text": "(b) Gives −1.0 on 6 March, infinity on 7 March and −1.0 on 11 March, and says the mean return becomes infinite or meaningless."
+        },
+        {
+          "points": 2,
+          "text": "(c) Gives 13550 with zeros against 20325 when gaps are skipped, and says the zeros claim days of no trading."
+        },
+        {
+          "points": 2,
+          "text": "(d) Forward-fills the close only, leaves volume missing and keeps the first return NaN, with a reason for each choice."
+        },
+        {
+          "points": 2,
+          "text": "(d) Gives the corrected mean daily return, −0.001641, from the five returns."
+        }
+      ]
+    }
+  ]
+}

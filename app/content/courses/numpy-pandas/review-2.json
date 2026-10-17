@@ -1,0 +1,583 @@
+{
+  "id": "review-2",
+  "course": "numpy-pandas",
+  "level": 2,
+  "items": [
+    {
+      "id": "r-same-rows",
+      "difficulty": 2,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "`df` has the five dates 4 to 8 March as its index.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*index*",
+            "open",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.40",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.55",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "12.30",
+              "12.48",
+              "15700"
+            ],
+            [
+              "2024-03-07",
+              "12.50",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.60",
+              "12.44",
+              "24300"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`"
+        }
+      },
+      "question": "Which line selects the same rows as `df.loc[\"2024-03-05\":\"2024-03-07\"]`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`df.iloc[1:4]`",
+            "correct": true
+          },
+          {
+            "id": "short",
+            "text": "`df.iloc[1:3]`",
+            "why": "A position slice stops before its end, so this gives only 5 and 6 March."
+          },
+          {
+            "id": "loc-num",
+            "text": "`df.loc[1:4]`",
+            "why": "`.loc` reads labels, and the labels are dates. It raises a `TypeError`."
+          },
+          {
+            "id": "iloc-text",
+            "text": "`df.iloc[\"2024-03-05\":\"2024-03-07\"]`",
+            "why": "`.iloc` takes positions only, so text labels raise a `TypeError`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Positions 1, 2 and 3: the same three days.",
+        "generic": "Not quite right. The label slice keeps both ends; a position slice stops before its end."
+      },
+      "explain": {
+        "text": "The label slice keeps 5, 6 and 7 March, at positions 1, 2 and 3. A position slice stops before its end, so it needs `1:4`."
+      }
+    },
+    {
+      "id": "r-backwards",
+      "difficulty": 3,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "A vendor file arrives newest first.\n\n```python\ntext = \"date,close\\n2024-05-03,101.50\\n2024-05-02,100.00\\n2024-05-01,98.00\\n\"\ndf = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True)\nprint(round(df[\"close\"].iloc[-1] / df[\"close\"].iloc[0] - 1, 4))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0345,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "For example 0.0123",
+        "label": "Value printed",
+        "accept": "−0.0345: 98.00 / 101.50 − 1, the period run backwards.",
+        "wrong": [
+          {
+            "id": "sorted",
+            "value": 0.0357,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The code runs the period backwards: −0.0345.",
+        "generic": "Not quite right. Find which close is first and which is last as the file arrived.",
+        "byKey": {
+          "sorted": "That is the true gain, 101.50 / 98.00 − 1. Without `sort_index`, `iloc[0]` is the newest close, so the code computes 98.00 / 101.50 − 1."
+        }
+      },
+      "explain": {
+        "text": "`read_csv` keeps the file's order, so `iloc[0]` is 3 May and `iloc[-1]` is 1 May. The code reports a 3.45% fall for a period that gained 3.57%. Sort the index first."
+      }
+    },
+    {
+      "id": "r-share-missing",
+      "difficulty": 2,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "```python\nr = pd.Series([0.012, None, -0.006, 0.009])\nprint(r.isna().mean())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.25,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 0.5",
+        "label": "Value printed",
+        "accept": "0.25: one gap in four values.",
+        "wrong": [
+          {
+            "id": "count",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "mean",
+            "value": 0.005,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One day in four is missing.",
+        "generic": "Not quite right. `isna()` gives True and False; their mean is the share that is True.",
+        "byKey": {
+          "count": "That is `r.isna().sum()`, the count. `.mean()` divides it by 4.",
+          "mean": "That is the mean return, `r.mean()`. Here the mean is taken of the mask from `isna()`."
+        }
+      },
+      "explain": {
+        "text": "`r.isna()` is False, True, False, False, and True counts as 1. Its mean, 0.25, is the share of days missing, a quick data-quality check."
+      }
+    },
+    {
+      "id": "r-signal-count",
+      "difficulty": 4,
+      "skills": [
+        "pd-frames",
+        "np-broadcast"
+      ],
+      "prose": "Six closes, in £: 50.00, 50.50, 50.50, 49.80, 50.10, 50.10.\n\n```python\ndf[\"ret\"] = df[\"close\"].pct_change()\ndf[\"signal\"] = np.where(df[\"ret\"] > 0, 1, -1)\nprint((df[\"signal\"] == -1).sum())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "4: the NaN day, two flat days and one loss.",
+        "wrong": [
+          {
+            "id": "loss-only",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-nan",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-flat",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four rows fail `ret > 0`.",
+        "generic": "Not quite right. Every row where `ret > 0` is False gets −1: check the first day and the flat days.",
+        "byKey": {
+          "loss-only": "You counted only the falling day. Flat days and the NaN day also fail `ret > 0`.",
+          "no-nan": "You skipped the first day. Its return is NaN, and `NaN > 0` is False.",
+          "no-flat": "You skipped the flat days. A return of 0.0 is not above 0."
+        }
+      },
+      "explain": {
+        "text": "The returns are NaN, 0.01, 0.0, −0.0139, 0.006 and 0.0. Four fail `ret > 0`: the first day, both flat days and the fall. Only two days get 1."
+      }
+    },
+    {
+      "id": "r-book-update",
+      "difficulty": 3,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "You buy 400 more HSBA, then revalue the book.\n\n```python\nbook.loc[\"HSBA\", \"qty\"] = 1200\nprint(round((book[\"price\"] * book[\"qty\"]).sum(), 2))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*ticker*",
+            "price",
+            "qty"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "118.40",
+              "50"
+            ],
+            [
+              "BARC",
+              "2.15",
+              "2000"
+            ],
+            [
+              "HSBA",
+              "6.62",
+              "800"
+            ],
+            [
+              "VOD",
+              "0.71",
+              "5000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`book`, prices in £"
+        }
+      },
+      "question": "What does it print, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21714.0,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "For example 1000.00",
+        "label": "Book value, in £",
+        "accept": "£21,714.00: £19,066.00 plus 400 × £6.62.",
+        "wrong": [
+          {
+            "id": "before",
+            "value": 19066.0,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "hsba",
+            "value": 7944.0,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The book is worth £21,714.00.",
+        "generic": "Not quite right. Value every position, with HSBA now at 1,200 shares, and add them up.",
+        "byKey": {
+          "before": "That is the value before the trade. `.loc[\"HSBA\", \"qty\"] = 1200` changes `book` itself.",
+          "hsba": "That is the HSBA position alone. `.sum()` adds all four positions."
+        }
+      },
+      "explain": {
+        "text": "`.loc[row, column] = value` writes into `book`. The positions are now £5,920.00, £4,300.00, £7,944.00 and £3,550.00, which add up to £21,714.00."
+      }
+    },
+    {
+      "id": "r-describe-count",
+      "difficulty": 2,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "```python\nprint(df[\"close\"].describe()[\"count\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "12.55",
+              "18400"
+            ],
+            [
+              "2024-03-05",
+              "12.31",
+              "22100"
+            ],
+            [
+              "2024-03-06",
+              "NaN",
+              "NaN"
+            ],
+            [
+              "2024-03-07",
+              "12.62",
+              "19800"
+            ],
+            [
+              "2024-03-08",
+              "12.44",
+              "NaN"
+            ],
+            [
+              "2024-03-11",
+              "NaN",
+              "21000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`df`"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "4.0: the six rows less two missing closes.",
+        "wrong": [
+          {
+            "id": "len",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "gaps",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`count` skips the two gaps.",
+        "generic": "Not quite right. `describe` counts only the values that are present.",
+        "byKey": {
+          "len": "That is the number of rows. `count` in `describe` leaves out NaN.",
+          "gaps": "That is the number of missing closes, `isna().sum()`. `count` gives the ones present."
+        }
+      },
+      "explain": {
+        "text": "`describe` starts with `count`, the values present: 4. Comparing it with `len(df)`, 6, is the quickest way to spot gaps."
+      }
+    },
+    {
+      "id": "r-ffill-returns",
+      "difficulty": 4,
+      "skills": [
+        "pd-frames"
+      ],
+      "prose": "Closes of 12.31 on 5 March, missing on 6 March, and 12.62 on 7 March.\n\n```python\nret = df[\"close\"].ffill().pct_change()\n```",
+      "question": "What does `ret` hold for 6 and 7 March?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "0.0 on 6 March, then about 0.0252 on 7 March",
+            "correct": true
+          },
+          {
+            "id": "crash",
+            "text": "−1.0 on 6 March, then infinity on 7 March",
+            "why": "That is `fillna(0)`. `ffill` copies 12.31 into the gap, not 0."
+          },
+          {
+            "id": "split",
+            "text": "About 0.0126 on each day",
+            "why": "You spread the move over both days, as interpolation would. `ffill` keeps the price flat, then books the whole move."
+          },
+          {
+            "id": "nan",
+            "text": "NaN on both days",
+            "why": "After `ffill` there is no gap left, so both returns are numbers."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A flat day, then the whole two-day move.",
+        "generic": "Not quite right. Fill the gap with 12.31 first, then compute each return."
+      },
+      "explain": {
+        "text": "`ffill` puts 12.31 on 6 March, so its return is 0.0. 7 March then books the full move, $12.62 / 12.31 - 1 = 0.0252$. The total over the two days is right; only its timing is assumed."
+      }
+    },
+    {
+      "id": "r-weights",
+      "difficulty": 4,
+      "skills": [
+        "pd-frames",
+        "np-broadcast"
+      ],
+      "prose": "A position's weight is its value over the whole book's value. Return each weight rounded to 4 places, as a dict keyed by ticker. Every `qty` is positive.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "*ticker*",
+            "price",
+            "qty"
+          ],
+          "rows": [
+            [
+              "AZN",
+              "118.40",
+              "50"
+            ],
+            [
+              "BARC",
+              "2.15",
+              "2000"
+            ],
+            [
+              "HSBA",
+              "6.62",
+              "800"
+            ],
+            [
+              "VOD",
+              "0.71",
+              "5000"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`book`, prices in £"
+        }
+      },
+      "question": "Complete `weights(book)` without a loop.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef weights(book):\n    value = ...\n    w = ...\n    return w.round(4).to_dict()\n",
+        "solution": "import pandas as pd\n\ndef weights(book):\n    value = book[\"price\"] * book[\"qty\"]\n    w = value / value.sum()\n    return w.round(4).to_dict()\n",
+        "tests": [
+          {
+            "setup": "book = pd.DataFrame({\"price\": [118.40, 2.15, 6.62, 0.71], \"qty\": [50, 2000, 800, 5000]}, index=[\"AZN\", \"BARC\", \"HSBA\", \"VOD\"])",
+            "call": "weights(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [24.37], \"qty\": [300]}, index=[\"SHEL\"])",
+            "call": "weights(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [10.00, 20.00], \"qty\": [100, 100]}, index=[\"A\", \"B\"])",
+            "call": "weights(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [118.40, 2.15, 6.62, 0.71], \"qty\": [50, 2000, 800, 5000]}, index=[\"AZN\", \"BARC\", \"HSBA\", \"VOD\"])",
+            "call": "round(sum(weights(book).values()), 6)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"qty\": [1000, 250, 40], \"price\": [2.15, 6.62, 118.40]}, index=[\"BARC\", \"HSBA\", \"AZN\"])",
+            "call": "weights(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "book = pd.DataFrame({\"price\": [118.40, 2.15, 6.62, 0.71], \"qty\": [50, 2000, 800, 5000]}, index=[\"AZN\", \"BARC\", \"HSBA\", \"VOD\"])",
+            "call": "weights(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "book = pd.DataFrame({\"price\": [10.00, 20.00], \"qty\": [100, 100]}, index=[\"A\", \"B\"])",
+            "call": "weights(book)",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on small books. Each dict must match exactly after rounding to 4 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Values, then one division by the total.",
+        "generic": "Some tests failed. Divide each position's value by the sum of all of them.",
+        "byKey": {
+          "test-1": "Test 1 expects AZN at 0.3105: £5,920.00 over £19,066.00. Check that you divide by the total value, not the total quantity.",
+          "error": "Your code stopped with an error. Check that `value` multiplies two columns and `w` divides by `value.sum()`."
+        }
+      },
+      "explain": {
+        "text": "`value.sum()` is one number, so dividing the column by it reaches every row. The weights add up to 1: AZN 0.3105, BARC 0.2255, HSBA 0.2778, VOD 0.1862."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1710 @@
+{
+  "id": "l4-missing-values",
+  "course": "sql",
+  "title": "Missing values in SQL",
+  "minutes": 14,
+  "objectives": [
+    "Handle `NULL` correctly in conditions and counts.",
+    "Find gaps with `IS NULL` and keep them out of sorts and filters."
+  ],
+  "skills": [
+    "sql-select"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Your data vendor never sent two closes. The database stores each gap as `NULL`, which means unknown: not zero, not blank text, just unknown.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {
+          "highlight": [
+            "r2c2",
+            "r5c2"
+          ]
+        }
+      },
+      "question": "Tap the date of every row that `WHERE close > 1` keeps.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c0",
+          "r4c0",
+          "r6c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0",
+          "r5c0",
+          "r6c0",
+          "r7c0"
+        ],
+        "countWord": "rows",
+        "wrong": [
+          {
+            "id": "kept-null",
+            "set": [
+              "r0c0",
+              "r2c0",
+              "r4c0",
+              "r6c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Test each close against 1. What can you say about a close nobody knows?"
+        },
+        {
+          "rung": "point",
+          "text": "Three BARC closes are known and above 1. The fourth BARC close is unknown.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep 2, 4 and 5 March for BARC. The 3 March close is unknown, so the test is not true."
+        }
+      ],
+      "feedback": {
+        "correct": "Three rows: the known BARC closes. The unknown one is dropped.",
+        "generic": "Not quite right. Keep a row only when you can say its close is above 1.",
+        "byKey": {
+          "kept-null": "BARC's close on 3 March is unknown. The database cannot say it is above 1, so `WHERE` drops it.",
+          "r2c0": "BARC's close on 3 March is unknown. The database cannot say it is above 1, so `WHERE` drops it.",
+          "r5c0": "VOD's close on 4 March is unknown, and VOD trades below £1 anyway. The row is dropped."
+        }
+      },
+      "explain": {
+        "text": "BARC usually closes above £2, but on 3 March nobody knows. `close > 1` is then unknown, not true, and `WHERE` keeps only rows where the test is true.",
+        "canvas": {
+          "shade": [
+            "r0",
+            "r4",
+            "r6"
+          ],
+          "highlight": [
+            "r2c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Now the opposite test:\n\n```sql\nSELECT *\nFROM prices\nWHERE close <= 1;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap the date of every row this query keeps.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c0",
+          "r3c0",
+          "r7c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0",
+          "r5c0",
+          "r6c0",
+          "r7c0"
+        ],
+        "countWord": "rows",
+        "wrong": [
+          {
+            "id": "kept-null",
+            "set": [
+              "r1c0",
+              "r3c0",
+              "r5c0",
+              "r7c0"
+            ]
+          },
+          {
+            "id": "all-null",
+            "set": [
+              "r1c0",
+              "r2c0",
+              "r3c0",
+              "r5c0",
+              "r7c0"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which known closes are 1 or less?"
+        },
+        {
+          "rung": "point",
+          "text": "The known VOD closes are all below £1. The missing ones are not known to be anything.",
+          "highlight": [
+            "r1c2",
+            "r3c2",
+            "r7c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "2, 3 and 5 March for VOD."
+        }
+      ],
+      "feedback": {
+        "correct": "Three VOD rows. The missing closes are dropped again.",
+        "generic": "Not quite right. Keep a row only when its close is known to be 1 or less.",
+        "byKey": {
+          "kept-null": "VOD's 4 March close is unknown. It cannot be shown to be 1 or less, so it is dropped.",
+          "all-null": "You kept both missing closes. An unknown close passes neither test.",
+          "r5c0": "VOD's 4 March close is unknown. It cannot be shown to be 1 or less, so it is dropped."
+        }
+      },
+      "explain": {
+        "text": "The three known VOD closes pass. The two NULL rows fail this test too, though they also failed `close > 1`.",
+        "canvas": {
+          "shade": [
+            "r1",
+            "r3",
+            "r7"
+          ],
+          "highlight": [
+            "r2c2",
+            "r5c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Unknown is not false",
+      "prose": "`close > 1` kept 3 rows and `close <= 1` kept 3. Every number is either above 1 or not, yet the table has 8 rows.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "high": [
+              "r0",
+              "r4",
+              "r6"
+            ],
+            "low": [
+              "r1",
+              "r3",
+              "r7"
+            ]
+          }
+        }
+      },
+      "question": "How many rows did both filters drop?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows dropped by both filters",
+        "placeholder": "a whole number",
+        "accept": "2: the two rows with a NULL close.",
+        "wrong": [
+          {
+            "id": "split",
+            "value": 0
+          },
+          {
+            "id": "six",
+            "value": 6
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the two results, then compare with the 8 rows in the table."
+        },
+        {
+          "rung": "point",
+          "text": "3 + 3 = 6. Which rows are in neither shaded group?",
+          "highlight": [
+            "r2",
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "BARC on 3 March and VOD on 4 March: the two missing closes."
+        }
+      ],
+      "feedback": {
+        "correct": "Two rows fall through both filters.",
+        "generic": "Not quite right. Subtract the rows the two filters kept from the 8 in the table.",
+        "byKey": {
+          "split": "You assumed the two filters split the table. Rows with a NULL close pass neither test.",
+          "six": "6 is how many rows the filters kept between them. The question asks how many neither kept."
+        }
+      },
+      "explain": {
+        "text": "A comparison with `NULL` gives a third answer: unknown. `WHERE` keeps only true, so unknown rows fall through both filters. This is SQL's **three-valued logic**: true, false and unknown.",
+        "canvas": {
+          "shade": {
+            "high": [
+              "r0",
+              "r4",
+              "r6"
+            ],
+            "low": [
+              "r1",
+              "r3",
+              "r7"
+            ]
+          },
+          "highlight": [
+            "r2",
+            "r5"
+          ],
+          "caption": "Kept by neither: the two NULL closes"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A data-quality check should list the missing closes. A first attempt:\n\n```sql\nSELECT *\nFROM prices\nWHERE close = NULL;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {
+          "highlight": [
+            "r2c2",
+            "r5c2"
+          ]
+        }
+      },
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "You expected `= NULL` to find the missing closes. Comparing anything with NULL, even NULL itself, gives unknown, so no row passes.",
+            "canvas": {
+              "highlight": [
+                "r2c2",
+                "r5c2"
+              ]
+            }
+          },
+          {
+            "id": "six",
+            "text": "6",
+            "why": "You read it as matching the known closes. `= NULL` is unknown for every row, known or not."
+          },
+          {
+            "id": "error",
+            "text": "An error",
+            "why": "The query is valid SQL. It runs and returns nothing, which makes the bug easy to miss."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does any comparison with NULL give?"
+        },
+        {
+          "rung": "point",
+          "text": "Is an unknown close equal to an unknown value? Nobody can say.",
+          "highlight": [
+            "r2c2",
+            "r5c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`close = NULL` is unknown for all 8 rows, and `WHERE` keeps only true."
+        }
+      ],
+      "feedback": {
+        "correct": "Nothing at all, and no error to warn you.",
+        "generic": "Not quite right. Work out what `close = NULL` gives for a missing close, then for a known one.",
+        "byKey": {
+          "two": "You expected `= NULL` to find the missing closes. Comparing anything with NULL, even NULL itself, gives unknown, so no row passes."
+        }
+      },
+      "explain": {
+        "text": "`=` asks whether two values are equal. With NULL on one side the answer is unknown, for every row. So the check silently reports no gaps, which is the worst kind of bug.",
+        "canvas": {
+          "highlight": [
+            "r2c2",
+            "r5c2"
+          ],
+          "caption": "WHERE close = NULL: 0 rows, though two closes are missing"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "IS NULL",
+      "prose": "SQL has a test made for gaps. `IS NULL` is true when a value is missing and false otherwise, never unknown.\n\n```sql\nSELECT *\nFROM prices\nWHERE close IS NULL;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Tap the date of every row this query keeps.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c0",
+          "r5c0"
+        ],
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r4c0",
+          "r5c0",
+          "r6c0",
+          "r7c0"
+        ],
+        "countWord": "rows"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which closes are missing?"
+        },
+        {
+          "rung": "point",
+          "text": "Look for NULL in the close column.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "BARC on 3 March and VOD on 4 March."
+        }
+      ],
+      "feedback": {
+        "correct": "Exactly the two gaps.",
+        "generic": "Not quite right. Keep only the rows whose close is NULL.",
+        "byKey": {
+          "r0c0": "BARC's 2 March close is 2.15, a known value. `IS NULL` is false for it."
+        }
+      },
+      "explain": {
+        "text": "`IS NULL` answers a plain yes or no: is this value missing? Two rows say yes. Its partner `IS NOT NULL` keeps the other six.",
+        "canvas": {
+          "shade": [
+            "r2",
+            "r5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Returns need two real closes in a row, so a model drops the gaps first.\n\n```sql\nSELECT *\nFROM prices\nWHERE ticker = 'VOD'\n  AND close IS NOT NULL;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "placeholder": "a whole number",
+        "accept": "3: VOD on 2, 3 and 5 March.",
+        "wrong": [
+          {
+            "id": "all-vod",
+            "value": 4
+          },
+          {
+            "id": "only-null",
+            "value": 1
+          },
+          {
+            "id": "all-known",
+            "value": 6
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the VOD rows, then drop any with a missing close."
+        },
+        {
+          "rung": "point",
+          "text": "VOD has four rows. One of them has a NULL close.",
+          "highlight": [
+            "r1",
+            "r3",
+            "r5",
+            "r7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4 VOD rows minus 1 gap leaves 3."
+        }
+      ],
+      "feedback": {
+        "correct": "Three VOD rows with real closes.",
+        "generic": "Not quite right. Count VOD rows whose close is not NULL.",
+        "byKey": {
+          "all-vod": "That keeps VOD's 4 March row, whose close is NULL. `IS NOT NULL` drops it.",
+          "only-null": "1 is the VOD row with a missing close. `IS NOT NULL` keeps the others.",
+          "all-known": "6 is every known close. The ticker test keeps VOD only."
+        }
+      },
+      "explain": {
+        "text": "Four VOD rows pass the ticker test. `IS NOT NULL` then drops 4 March, leaving 2, 3 and 5 March.",
+        "canvas": {
+          "shade": [
+            "r1",
+            "r3",
+            "r7"
+          ],
+          "highlight": [
+            "r5c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Counting what survives",
+      "prose": "A reconciliation counts the rows whose close differs from £2.15:\n\n```sql\nSELECT *\nFROM prices\nWHERE close <> 2.15;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "How many rows does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows returned",
+        "placeholder": "a whole number",
+        "accept": "5: 8 rows, minus the 2.15 row, minus the 2 NULL closes.",
+        "wrong": [
+          {
+            "id": "counted-null",
+            "value": 7
+          },
+          {
+            "id": "only-null",
+            "value": 2
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`<>` means not equal. Which rows is it true for?"
+        },
+        {
+          "rung": "point",
+          "text": "One close equals 2.15. For the two NULL closes, `<>` is unknown.",
+          "highlight": [
+            "r0c2",
+            "r2c2",
+            "r5c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "8 rows, minus the 2.15 row, minus 2 unknowns, leaves 5."
+        }
+      ],
+      "feedback": {
+        "correct": "Five rows. The gaps are not 'different', they are unknown.",
+        "generic": "Not quite right. `<>` is unknown for a NULL close, and `WHERE` drops unknown.",
+        "byKey": {
+          "counted-null": "You counted the two missing closes as different from 2.15. For NULL, `<>` is unknown, so they drop out.",
+          "only-null": "2 is the number of gaps. `<>` keeps the known closes that differ from 2.15."
+        }
+      },
+      "explain": {
+        "text": "`<>` is true for the five known closes other than 2.15. For the two gaps it is unknown, so they vanish from the count. Write `OR close IS NULL` if a reconciliation should include them.",
+        "canvas": {
+          "shade": [
+            "r1",
+            "r3",
+            "r4",
+            "r6",
+            "r7"
+          ],
+          "highlight": [
+            "r2c2",
+            "r5c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Gaps in a sort",
+      "prose": "A screen looks for the lowest close:\n\n```sql\nSELECT date, ticker, close\nFROM prices\nORDER BY close, date\nLIMIT 1;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      },
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`('2026-03-03', 'BARC', None)`",
+            "correct": true
+          },
+          {
+            "id": "skipped",
+            "text": "`('2026-03-03', 'VOD', 0.71)`",
+            "why": "You expected the gaps to be skipped. SQLite sorts NULL before every number when ascending, so a gap comes first.",
+            "canvas": {
+              "highlight": [
+                "r2c2",
+                "r5c2"
+              ]
+            }
+          },
+          {
+            "id": "error",
+            "text": "An error: NULL cannot be sorted",
+            "why": "Sorting with gaps is allowed. SQLite puts NULL first when ascending and last when descending."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does SQLite put NULL in an ascending sort?"
+        },
+        {
+          "rung": "point",
+          "text": "NULL sorts before every number. Two rows have a NULL close; the date breaks the tie.",
+          "highlight": [
+            "r2c2",
+            "r5c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "BARC's 3 March gap comes before VOD's 4 March gap. Python shows NULL as `None`."
+        }
+      ],
+      "feedback": {
+        "correct": "A gap, not a price. Python shows NULL as `None`.",
+        "generic": "Not quite right. Decide where NULL sorts before looking at the numbers.",
+        "byKey": {
+          "skipped": "You expected the gaps to be skipped. SQLite sorts NULL before every number when ascending, so a gap comes first."
+        }
+      },
+      "explain": {
+        "text": "SQLite treats NULL as smaller than any number when sorting, so both gaps lead the ascending sort. The date puts 3 March first. Other databases, such as PostgreSQL, put NULL last, so filter gaps out rather than rely on either.",
+        "canvas": {
+          "shade": [
+            "r2"
+          ],
+          "highlight": [
+            "r2c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The lowest real close",
+      "prose": "Fix the screen so it finds the lowest close that is actually known. The tests also add a new VOD day at £0.70.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Make `query()` return the date, ticker and close of the row with the lowest known close.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices (date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2026-03-02\", \"BARC\", 2.15, 412000),\n    (\"2026-03-02\", \"VOD\", 0.72, 638000),\n    (\"2026-03-03\", \"BARC\", None, 389000),\n    (\"2026-03-03\", \"VOD\", 0.71, 704000),\n    (\"2026-03-04\", \"BARC\", 2.12, 527000),\n    (\"2026-03-04\", \"VOD\", None, 581000),\n    (\"2026-03-05\", \"BARC\", 2.18, 455000),\n    (\"2026-03-05\", \"VOD\", 0.74, 612000),\n])\n\n\ndef query():\n    # Return your SQL as one string.\n    return \"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices (date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2026-03-02\", \"BARC\", 2.15, 412000),\n    (\"2026-03-02\", \"VOD\", 0.72, 638000),\n    (\"2026-03-03\", \"BARC\", None, 389000),\n    (\"2026-03-03\", \"VOD\", 0.71, 704000),\n    (\"2026-03-04\", \"BARC\", 2.12, 527000),\n    (\"2026-03-04\", \"VOD\", None, 581000),\n    (\"2026-03-05\", \"BARC\", 2.18, 455000),\n    (\"2026-03-05\", \"VOD\", 0.74, 612000),\n])\n\n\ndef query():\n    return \"SELECT date, ticker, close FROM prices WHERE close IS NOT NULL ORDER BY close LIMIT 1\"\n",
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2026-03-03', 'VOD', 0.71)]",
+            "compare": "equal"
+          },
+          {
+            "call": "[c[0] for c in db.execute(query()).description]",
+            "expect": "['date', 'ticker', 'close']",
+            "compare": "equal"
+          },
+          {
+            "setup": "db.execute(\"INSERT INTO prices VALUES ('2026-03-06', 'VOD', 0.7, 598000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2026-03-06', 'VOD', 0.7)]",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2026-03-03', 'VOD', 0.71)]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests on `db`. They compare the rows your query returns and the column names. Then they add a row to the table and run it again. Rows must match exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drop the gaps first, then sort and cut."
+        },
+        {
+          "rung": "point",
+          "text": "`WHERE close IS NOT NULL` goes before `ORDER BY close`.",
+          "highlight": [
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return the string `SELECT date, ticker, close` `FROM prices` `WHERE close IS NOT NULL` `ORDER BY close` `LIMIT 1`."
+        }
+      ],
+      "feedback": {
+        "correct": "The gaps are gone before the sort, so a real price wins.",
+        "generic": "Not quite right. Open the first failing test below the editor.",
+        "byKey": {
+          "test-1": "Test 1 expects VOD's 0.71 on 3 March. If you got `None`, the gaps are still in the sort.",
+          "test-2": "Test 2 checks the columns: `date`, `ticker`, `close`.",
+          "test-3": "Test 3 adds a VOD close of 0.70. It should now come first."
+        }
+      },
+      "explain": {
+        "text": "`WHERE close IS NOT NULL` removes the two gaps before sorting. The ascending sort then puts 0.71 first, and `LIMIT 1` keeps it. With the new row, 0.70 takes its place.",
+        "canvas": {
+          "shade": [
+            "r3"
+          ],
+          "highlight": [
+            "r2c2",
+            "r5c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You tested for gaps with words, not symbols. The pattern is:\n\n```sql\n-- the gaps\nWHERE close IS NULL\n-- the known values\nWHERE close IS NOT NULL\n```\n\nAny comparison with `NULL` (`=`, `<>`, `<`, `>`) is unknown, and `WHERE` drops unknown.",
+      "question": "Which clause keeps the rows whose close is below £1 or missing?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`WHERE close < 1` `OR close IS NULL`",
+            "correct": true
+          },
+          {
+            "id": "bare",
+            "text": "`WHERE close < 1`",
+            "why": "That drops the gaps: an unknown close is not known to be below 1."
+          },
+          {
+            "id": "eq-null",
+            "text": "`WHERE close < 1` `OR close = NULL`",
+            "why": "`= NULL` is never true, so this keeps only the closes below 1."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Ask for the gaps by name.",
+        "generic": "Not quite right. A missing close needs its own `IS NULL` test."
+      },
+      "explain": {
+        "text": "`close < 1` keeps the three known VOD closes. `OR close IS NULL` adds the two gaps. Together they give 5 rows."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A data-quality report",
+      "prose": "Before a backtest runs, a data-quality report lists every missing close, oldest first, so someone can chase the vendor. The tests add a late-arriving gap for VOD on 27 February.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-02",
+              "BARC",
+              "2.15",
+              "412000"
+            ],
+            [
+              "2026-03-02",
+              "VOD",
+              "0.72",
+              "638000"
+            ],
+            [
+              "2026-03-03",
+              "BARC",
+              "NULL",
+              "389000"
+            ],
+            [
+              "2026-03-03",
+              "VOD",
+              "0.71",
+              "704000"
+            ],
+            [
+              "2026-03-04",
+              "BARC",
+              "2.12",
+              "527000"
+            ],
+            [
+              "2026-03-04",
+              "VOD",
+              "NULL",
+              "581000"
+            ],
+            [
+              "2026-03-05",
+              "BARC",
+              "2.18",
+              "455000"
+            ],
+            [
+              "2026-03-05",
+              "VOD",
+              "0.74",
+              "612000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right",
+            "right"
+          ],
+          "label": "The prices table, with two missing closes",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Make `query()` return the date and ticker of every row with a missing close, oldest first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices (date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2026-03-02\", \"BARC\", 2.15, 412000),\n    (\"2026-03-02\", \"VOD\", 0.72, 638000),\n    (\"2026-03-03\", \"BARC\", None, 389000),\n    (\"2026-03-03\", \"VOD\", 0.71, 704000),\n    (\"2026-03-04\", \"BARC\", 2.12, 527000),\n    (\"2026-03-04\", \"VOD\", None, 581000),\n    (\"2026-03-05\", \"BARC\", 2.18, 455000),\n    (\"2026-03-05\", \"VOD\", 0.74, 612000),\n])\n\n\ndef query():\n    # Return your SQL as one string.\n    return \"\"\n",
+        "solution": "import sqlite3\n\ndb = sqlite3.connect(\":memory:\")\ndb.execute(\"CREATE TABLE prices (date TEXT, ticker TEXT, close REAL, volume INTEGER)\")\ndb.executemany(\"INSERT INTO prices VALUES (?, ?, ?, ?)\", [\n    (\"2026-03-02\", \"BARC\", 2.15, 412000),\n    (\"2026-03-02\", \"VOD\", 0.72, 638000),\n    (\"2026-03-03\", \"BARC\", None, 389000),\n    (\"2026-03-03\", \"VOD\", 0.71, 704000),\n    (\"2026-03-04\", \"BARC\", 2.12, 527000),\n    (\"2026-03-04\", \"VOD\", None, 581000),\n    (\"2026-03-05\", \"BARC\", 2.18, 455000),\n    (\"2026-03-05\", \"VOD\", 0.74, 612000),\n])\n\n\ndef query():\n    return \"SELECT date, ticker FROM prices WHERE close IS NULL ORDER BY date\"\n",
+        "tests": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2026-03-03', 'BARC'), ('2026-03-04', 'VOD')]",
+            "compare": "equal"
+          },
+          {
+            "call": "[c[0] for c in db.execute(query()).description]",
+            "expect": "['date', 'ticker']",
+            "compare": "equal"
+          },
+          {
+            "setup": "db.execute(\"INSERT INTO prices VALUES ('2026-02-27', 'VOD', NULL, 402000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2026-02-27', 'VOD'), ('2026-03-03', 'BARC'), ('2026-03-04', 'VOD')]",
+            "compare": "equal"
+          },
+          {
+            "setup": "db.execute(\"INSERT INTO prices VALUES ('2026-03-06', 'BARC', 2.2, 430000)\")",
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2026-02-27', 'VOD'), ('2026-03-03', 'BARC'), ('2026-03-04', 'VOD')]",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "call": "db.execute(query()).fetchall()",
+            "expect": "[('2026-03-03', 'BARC'), ('2026-03-04', 'VOD')]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on `db`. They compare the rows your query returns and the column names. Then they add rows to the table and run it again. Rows must match exactly, in order."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two clauses: one finds the gaps, one orders them."
+        },
+        {
+          "rung": "point",
+          "text": "Use `IS NULL`, never `= NULL`. Then `ORDER BY date`.",
+          "highlight": [
+            "r2",
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return the string `SELECT date, ticker` `FROM prices` `WHERE close IS NULL` `ORDER BY date`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every gap, oldest first.",
+        "generic": "Not quite right. Open the first failing test below the editor.",
+        "byKey": {
+          "test-1": "Test 1 expects two rows: BARC on 3 March and VOD on 4 March. An empty list means `= NULL` crept in.",
+          "test-2": "Test 2 checks the columns: `date`, then `ticker`.",
+          "test-3": "Test 3 adds a gap dated 27 February at the end of the table. It must come first, so sort by date.",
+          "test-4": "Test 4 adds a row with a real close. It must not appear."
+        }
+      },
+      "explain": {
+        "text": "`IS NULL` finds the gaps, and `ORDER BY date` lists them oldest first, even when one arrives late. With `= NULL` the report would be empty and every check would look clean.",
+        "canvas": {
+          "shade": [
+            "r2",
+            "r5"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`NULL` means unknown. Any comparison with it, even `= NULL`, is unknown, and `WHERE` keeps only true.",
+      "So a filter and its opposite can both drop a row: counts of `close > x` and `close <= x` miss the gaps.",
+      "Test for gaps with `IS NULL` and `IS NOT NULL`. In SQLite, NULL sorts first ascending and last descending."
+    ],
+    "formula": {
+      "name": "Testing for gaps",
+      "tex": "\\texttt{WHERE close IS NULL}",
+      "note": "Never `= NULL` or `<> NULL`: both are true for no row."
+    },
+    "trap": "`WHERE close = NULL` returns nothing, with no error, so a data check looks clean when it is not."
+  },
+  "quiz": [
+    {
+      "id": "q-not-equal-null",
+      "difficulty": 2,
+      "prose": "`prices` has 8 rows, two of them with a NULL close.\n\n```sql\nSELECT *\nFROM prices\nWHERE close <> NULL;\n```",
+      "question": "How many rows come back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "6",
+            "why": "You read `<> NULL` as 'is not missing'. Any comparison with NULL is unknown, so no row passes. Use `IS NOT NULL`."
+          },
+          {
+            "id": "eight",
+            "text": "8",
+            "why": "Nothing is known to differ from an unknown value, so no row passes."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`<> NULL` is as empty as `= NULL`.",
+        "generic": "Not quite right. Any comparison with NULL is unknown."
+      },
+      "explain": {
+        "text": "`close <> NULL` is unknown for every row, so `WHERE` keeps none. The test for known values is `close IS NOT NULL`, which keeps 6."
+      }
+    },
+    {
+      "id": "q-count-split",
+      "difficulty": 2,
+      "prose": "A price table has 50 rows. Four of them have a NULL close. 30 rows have a close above £2.",
+      "question": "How many rows does `WHERE close <= 2` keep?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "rows",
+        "label": "Rows kept",
+        "placeholder": "a whole number",
+        "accept": "16: 50 − 4 missing − 30 above £2.",
+        "wrong": [
+          {
+            "id": "forgot-null",
+            "value": 20
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The four gaps pass neither test.",
+        "generic": "Not quite right. Take away the gaps as well as the rows above £2.",
+        "byKey": {
+          "forgot-null": "You assumed the two filters split all 50 rows. The four NULL closes pass neither test."
+        }
+      },
+      "explain": {
+        "text": "Only the 46 known closes can pass either test. 30 are above £2, so 16 are £2 or below. The four gaps vanish from both counts."
+      }
+    },
+    {
+      "id": "q-zero-vs-null",
+      "difficulty": 3,
+      "prose": "A volume table records no trades in LAND as 0. SBRY's volume never arrived.\n\n```sql\nSELECT ticker\nFROM volumes\nWHERE volume IS NULL;\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ticker",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2026-03-09",
+              "LAND",
+              "0"
+            ],
+            [
+              "2026-03-09",
+              "SBRY",
+              "NULL"
+            ],
+            [
+              "2026-03-09",
+              "VOD",
+              "598000"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ],
+          "label": "Three rows from a volume table",
+          "compact": true
+        },
+        "state": {}
+      },
+      "question": "Which tickers come back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "SBRY only",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "LAND and SBRY",
+            "why": "You treated 0 as missing. 0 is a known value: no shares traded."
+          },
+          {
+            "id": "none",
+            "text": "None",
+            "why": "`IS NULL` is true for a missing value, so SBRY passes."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "0 is a value; NULL is a gap.",
+        "generic": "Not quite right. Which volume is unknown, rather than zero?"
+      },
+      "explain": {
+        "text": "LAND's 0 is a fact: nothing traded. SBRY's NULL is a gap: nobody knows. `IS NULL` finds only the gap."
+      }
+    },
+    {
+      "id": "q-desc-nulls",
+      "difficulty": 3,
+      "prose": "In SQLite, `prices` holds BARC closes 2.15, NULL, 2.12 and 2.18, and VOD closes 0.72, 0.71, NULL and 0.74.\n\n```sql\nSELECT ticker, close\nFROM prices\nORDER BY close DESC\nLIMIT 1;\n```",
+      "question": "What comes back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`('BARC', 2.18)`",
+            "correct": true
+          },
+          {
+            "id": "null",
+            "text": "A row with close `None`",
+            "why": "SQLite sorts NULL first only when ascending. Descending puts the gaps last."
+          },
+          {
+            "id": "vod",
+            "text": "`('VOD', 0.74)`",
+            "why": "0.74 is VOD's best close, but BARC's 2.18 is larger."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Descending puts the gaps last in SQLite.",
+        "generic": "Not quite right. In SQLite, NULL is the smallest value in a sort."
+      },
+      "explain": {
+        "text": "SQLite treats NULL as smaller than any number. Descending puts the largest first, so 2.18 leads and the gaps sink to the end."
+      }
+    }
+  ]
+}

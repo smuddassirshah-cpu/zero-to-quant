@@ -1,0 +1,998 @@
+{
+  "id": "l3-reading-failure",
+  "course": "pytest",
+  "title": "Reading a failure",
+  "minutes": 12,
+  "objectives": [
+    "Find the failing test in pytest's short and long reports",
+    "Read both values and the call from a failure report",
+    "Decide whether the code, the test or neither is at fault"
+  ],
+  "skills": [
+    "pt-basics",
+    "pt-cases"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which test caught it",
+      "prose": "Someone edited `returns.py` this morning. You run `pytest -v`, which prints one line per test with its result.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Test",
+            "Result"
+          ],
+          "rows": [
+            [
+              "`test_returns.py::test_up_day`",
+              "PASSED"
+            ],
+            [
+              "`test_returns.py::test_down_day`",
+              "FAILED"
+            ],
+            [
+              "`test_returns.py::test_flat_day`",
+              "PASSED"
+            ],
+            [
+              "`test_returns.py::test_one_price`",
+              "PASSED"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "`pytest -v`: one line per test"
+        }
+      },
+      "question": "Tap the test that caught the change.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c0"
+        ],
+        "max": 1,
+        "only": [
+          "r0c0",
+          "r1c0",
+          "r2c0",
+          "r3c0",
+          "r0c1",
+          "r1c1",
+          "r2c1",
+          "r3c1"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look down the Result column."
+        },
+        {
+          "rung": "point",
+          "text": "One line does not say PASSED.",
+          "highlight": [
+            "r1c1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "`test_down_day` failed, so the change broke falls.",
+        "generic": "Not quite right. Find the line marked FAILED, then tap its test name.",
+        "byKey": {
+          "r1c1": "That is the right row. Tap the test's name, on the left, to name it.",
+          "r0c0": "`test_up_day` passed. The edit did not change what it checks.",
+          "r2c0": "`test_flat_day` passed. The edit did not change what it checks.",
+          "r3c0": "`test_one_price` passed. The edit did not change what it checks."
+        }
+      },
+      "explain": {
+        "text": "FAILED means an assert in `test_down_day` did not hold. The other three ran to the end, so whatever the edit broke, it is something only a fall exposes. Each name tells you which behaviour to look at.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "`pytest -q` is shorter. It prints one character per test, in the order the tests sit in the file: `.` for a pass and `F` for a failure. This run printed `..F.F`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Order in the file",
+            "Test"
+          ],
+          "rows": [
+            [
+              "1",
+              "`test_up_day`"
+            ],
+            [
+              "2",
+              "`test_down_day`"
+            ],
+            [
+              "3",
+              "`test_flat_day`"
+            ],
+            [
+              "4",
+              "`test_one_price`"
+            ],
+            [
+              "5",
+              "`test_two_days`"
+            ]
+          ],
+          "align": [
+            "center",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "`pytest -q` printed `..F.F`"
+        }
+      },
+      "question": "Tap the tests that failed.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2c1",
+          "r4c1"
+        ],
+        "only": [
+          "r0c1",
+          "r1c1",
+          "r2c1",
+          "r3c1",
+          "r4c1"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "count-dots",
+            "set": [
+              "r0c1",
+              "r1c1",
+              "r3c1"
+            ]
+          },
+          {
+            "id": "shifted",
+            "set": [
+              "r1c1",
+              "r3c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the five characters under the five tests, in order."
+        },
+        {
+          "rung": "point",
+          "text": "The third character is `F`.",
+          "highlight": [
+            "r2c1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The third and fifth characters are `F`.",
+        "generic": "Not quite right. Match each character of `..F.F` to the test in the same place.",
+        "byKey": {
+          "count-dots": "You picked the dots. A dot is a pass, `F` is a failure.",
+          "shifted": "You are one place out. The first character is the first test, `test_up_day`."
+        }
+      },
+      "explain": {
+        "text": "Lined up, `..F.F` puts `F` under `test_flat_day` and `test_two_days`. The short report says how many failed and where. The details come next, in the failure report.",
+        "canvas": {
+          "highlight": [
+            "r2c1",
+            "r4c1"
+          ],
+          "caption": "`.` `.` `F` `.` `F`"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Under the dots, pytest prints a **failure report** for each failed test. The `>` line is the assert that failed. The `E` lines show the values on both sides of `==`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Failure report"
+          ],
+          "rows": [
+            [
+              "`def test_down_day():`"
+            ],
+            [
+              "`>       assert simple_return(100.00, 90.00) == -0.1`"
+            ],
+            [
+              "`E       assert -0.1111111111111111 == -0.1`"
+            ],
+            [
+              "`E        +  where -0.1111111111111111 = simple_return(100.0, 90.0)`"
+            ],
+            [
+              "`test_returns.py:9: AssertionError`"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What did `simple_return(100.00, 90.00)` actually return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "got",
+            "text": "−0.1111111111111111",
+            "correct": true
+          },
+          {
+            "id": "hand",
+            "text": "−0.1",
+            "why": "That is the hand answer written in the test. The `where` line names the value the call produced."
+          },
+          {
+            "id": "line",
+            "text": "9",
+            "why": "That is the line of the file where the assert sits: `test_returns.py:9`."
+          },
+          {
+            "id": "price",
+            "text": "90.0",
+            "why": "That is an argument passed in. The value before `=` on the `where` line is what came back."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the line that starts `E        +  where`."
+        },
+        {
+          "rung": "point",
+          "text": "It reads: value `=` the call that produced it.",
+          "highlight": [
+            "r3c0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The code gave −0.1111111111111111, the test expected −0.1.",
+        "generic": "Not quite right. Read the `where` line: the value comes before `=`."
+      },
+      "explain": {
+        "text": "pytest rewrites a failed `assert a == b` to show both sides: here −0.1111 against −0.1. The `where` line says the left side came from `simple_return(100.0, 90.0)`. Now you know the input, the output and the expected value.",
+        "canvas": {
+          "highlight": [
+            "r2c0",
+            "r3c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The report gives you a clue: −0.1111 is what the code made of a fall from £100.00 to £90.00. Work out what each formula gives.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Formula",
+            "From £100.00 to £90.00"
+          ],
+          "rows": [
+            [
+              "(p1 − p0) / p0",
+              "?"
+            ],
+            [
+              "(p1 − p0) / p1",
+              "?"
+            ],
+            [
+              "(p0 − p1) / p0",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which formula is the edited code using?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "p1",
+            "text": "(p1 − p0) / p1: it divides by the later price",
+            "correct": true
+          },
+          {
+            "id": "p0",
+            "text": "(p1 − p0) / p0, the right formula",
+            "why": "That gives −10 / 100 = −0.1, the test's hand answer. The code gave something else."
+          },
+          {
+            "id": "flip",
+            "text": "(p0 − p1) / p0: it subtracts the wrong way round",
+            "why": "That gives +0.1: the right size with the wrong sign. The code's value was −0.1111."
+          },
+          {
+            "id": "float",
+            "text": "None of them: it is a floating-point slip",
+            "why": "Float slips are near 1e-17. This value is wrong in the second decimal place."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "−0.1111 is −10 divided by what?"
+        },
+        {
+          "rung": "point",
+          "text": "Compute each formula for p0 = 100, p1 = 90.",
+          "highlight": [
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "−10 / 90 = −0.1111. Only the second formula divides by 90."
+        }
+      ],
+      "feedback": {
+        "correct": "−10 / 90 = −0.1111: the code divides by £90.00.",
+        "generic": "Not quite right. Compute each formula for £100.00 to £90.00."
+      },
+      "explain": {
+        "text": "−10 / 100 = −0.1, −10 / 90 = −0.1111 and 10 / 100 = 0.1. Only dividing by the later price matches the report. The failure gave you the numbers to work backwards from.",
+        "canvas": {
+          "values": {
+            "r0c1": "−0.1",
+            "r1c1": "−0.1111",
+            "r2c1": "0.1"
+          },
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Another run, another report. This time look hard at both numbers before you touch the code.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Failure report"
+          ],
+          "rows": [
+            [
+              "`>       assert simple_return(250.00, 255.00) == 0.2`"
+            ],
+            [
+              "`E       assert 0.02 == 0.2`"
+            ],
+            [
+              "`E        +  where 0.02 = simple_return(250.0, 255.0)`"
+            ],
+            [
+              "`test_returns.py:5: AssertionError`"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What needs fixing?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "test",
+            "text": "The test: £5.00 on £250.00 is 0.02, so the hand answer is wrong",
+            "correct": true
+          },
+          {
+            "id": "code",
+            "text": "The code: it should give 0.2",
+            "why": "You trusted the test. Work it out: 5 / 250 is 0.02, which is what the code gave."
+          },
+          {
+            "id": "both",
+            "text": "Both the code and the test",
+            "why": "The code's 0.02 is right. Only the hand answer, 0.2, is off by a factor of ten."
+          },
+          {
+            "id": "rerun",
+            "text": "Neither: run it again",
+            "why": "The same inputs give the same output every run. It would fail the same way."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out the return from £250.00 to £255.00 yourself."
+        },
+        {
+          "rung": "point",
+          "text": "Compare your answer with each side of `==`.",
+          "highlight": [
+            "r1c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£5.00 / £250.00 = 0.02. The code agrees with you. The test does not."
+        }
+      ],
+      "feedback": {
+        "correct": "The code is right. The test's 0.2 was a slip by a factor of ten.",
+        "generic": "Not quite right. Work out the true return, then see which side matches it.",
+        "byKey": {
+          "code": "You trusted the test. A failure says the two sides disagree, not which one is wrong. Here the code's 0.02 is right."
+        }
+      },
+      "explain": {
+        "text": "£5.00 / £250.00 = 0.02, so the code is right and the test's hand answer is wrong. A failure means the code and the test disagree. Check your own working before you change the code.",
+        "canvas": {
+          "highlight": [
+            "r1c0"
+          ],
+          "caption": "0.02 is right: fix the test"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "One more failed test, `test_flat_day`. Its report looks different.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Failure report"
+          ],
+          "rows": [
+            [
+              "`>       assert simple_retrun(100.00, 100.00) == 0.0`"
+            ],
+            [
+              "`E       NameError: name 'simple_retrun' is not defined`"
+            ],
+            [
+              "`test_returns.py:13: NameError`"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does this tell you about `simple_return` on a flat day?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nothing",
+            "text": "Nothing: the call never happened, because of a typo in the test",
+            "correct": true
+          },
+          {
+            "id": "wrong",
+            "text": "It returns the wrong value for a flat day",
+            "why": "You read every failure as a wrong answer. A `NameError` means Python could not find the function, so nothing was returned."
+          },
+          {
+            "id": "missing",
+            "text": "It is missing from `returns.py`",
+            "why": "Look at the spelling in the error: `simple_retrun`. The typo is in the test, not the code."
+          },
+          {
+            "id": "zero",
+            "text": "It divides by zero on a flat day",
+            "why": "A flat day has a zero change, not a zero price. That would also read `ZeroDivisionError`, not `NameError`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the last word of the report. Is it `AssertionError`?"
+        },
+        {
+          "rung": "point",
+          "text": "The `E` line names the error and the name Python could not find.",
+          "highlight": [
+            "r1c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`simple_retrun` swaps two letters. Python never reached `simple_return`."
+        }
+      ],
+      "feedback": {
+        "correct": "The test crashed before it asked the code anything.",
+        "generic": "Not quite right. Read the error type on the `E` line.",
+        "byKey": {
+          "wrong": "You read every failure as a wrong answer. Here the `E` line is a `NameError`: the function was never called."
+        }
+      },
+      "explain": {
+        "text": "A failed assert ends in `AssertionError` and shows two values. This report ends in `NameError`, with no values at all. The test is broken, so it tells you nothing about the code until you fix the typo.",
+        "canvas": {
+          "highlight": [
+            "r1c0",
+            "r2c0"
+          ],
+          "caption": "`NameError`: the call never happened"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "You rename `test_returns.py` to `returns_tests.py` and run `pytest -q`. It prints a single line: `no tests ran in 0.01s`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Terminal"
+          ],
+          "rows": [
+            [
+              "`$ pytest -q`"
+            ],
+            [
+              "`no tests ran in 0.01s`"
+            ]
+          ],
+          "align": [
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does this tell you about the code in `returns.py`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nothing",
+            "text": "Nothing: pytest found no tests to run",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "It is fine: nothing failed",
+            "why": "No failures because nothing ran. Zero tests check zero behaviours."
+          },
+          {
+            "id": "broken",
+            "text": "It is broken: no tests passed",
+            "why": "Nothing passed and nothing failed. The run never reached the code."
+          },
+          {
+            "id": "empty",
+            "text": "The file is empty",
+            "why": "The file still holds every test. Its new name matches neither `test_*.py` nor `*_test.py`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does `returns_tests.py` match `test_*.py` or `*_test.py`?"
+        },
+        {
+          "rung": "step",
+          "text": "It ends in `_tests.py`, with an extra s, so pytest skips the file and runs nothing."
+        }
+      ],
+      "feedback": {
+        "correct": "No tests ran, so there is no verdict on the code.",
+        "generic": "Not quite right. Count how many tests pytest ran."
+      },
+      "explain": {
+        "text": "`returns_tests.py` ends in `_tests`, so it matches neither pattern and nothing is collected. This edge case reads like silence, but it is not a pass. When the count is zero, check your names first."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You read every report in the same order:\n\n```text\nFAILED test_returns.py::test_down_day     which behaviour broke\n>   assert simple_return(100.00, 90.00) == -0.1     which check\nE   assert -0.1111111111111111 == -0.1     both values\nE    +  where -0.1111111111111111 = simple_return(100.0, 90.0)\n```\n\nThen you work out the true answer yourself and decide which side is wrong.",
+      "question": "A test fails with `AssertionError`. What does that prove?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "disagree",
+            "text": "The code and the test disagree on one input",
+            "correct": true
+          },
+          {
+            "id": "code",
+            "text": "The code is wrong",
+            "why": "Sometimes the hand answer is the slip, as with 0.2 for 0.02."
+          },
+          {
+            "id": "crash",
+            "text": "The code crashed",
+            "why": "A crash shows a different error, such as `NameError`. `AssertionError` means the code ran and the values differed."
+          },
+          {
+            "id": "all",
+            "text": "The code is wrong on every input",
+            "why": "A test checks one input. Other inputs may be fine, as the passing tests showed."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Think of the £250.00 report, where the code was right."
+        },
+        {
+          "rung": "step",
+          "text": "An `AssertionError` says the two sides of `==` differ. Your own working decides which side is wrong."
+        }
+      ],
+      "feedback": {
+        "correct": "A failure is a disagreement. Your working settles it.",
+        "generic": "Not quite right. Remember the report where the code was right and the test was not."
+      },
+      "explain": {
+        "text": "An `AssertionError` says only that the two sides of `==` differed. You settle who is wrong by working the answer out yourself. Any other error type means the test never got that far."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A backtest reports **maximum drawdown**: the largest fall from a peak to a later low, as a fraction of the peak. Prices are in pounds. Its tests:",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "Test",
+              "Prices",
+              "Result"
+            ],
+            "rows": [
+              [
+                "`test_one_dip`",
+                "100, 125, 100, 110",
+                "PASSED"
+              ],
+              [
+                "`test_flat`",
+                "100, 100, 100",
+                "PASSED"
+              ],
+              [
+                "`test_steady_rise`",
+                "100, 110, 121",
+                "FAILED"
+              ]
+            ],
+            "align": [
+              "left",
+              "left",
+              "left"
+            ]
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "Failure report"
+            ],
+            "rows": [
+              [
+                "`>       assert max_drawdown([100.00, 110.00, 121.00]) == 0.0`"
+              ],
+              [
+                "`E       assert 0.17355371900826447 == 0.0`"
+              ],
+              [
+                "`E        +  where 0.17355371900826447 = max_drawdown([100.0, 110.0, 121.0])`"
+              ],
+              [
+                "`test_drawdown.py:12: AssertionError`"
+              ]
+            ],
+            "align": [
+              "left"
+            ]
+          },
+          "state": {}
+        },
+        "state": {}
+      },
+      "question": "What is going on?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "range",
+            "text": "The code measures the whole range, ignoring that the low came before the high",
+            "correct": true
+          },
+          {
+            "id": "test",
+            "text": "The test is wrong: a steady rise has a drawdown",
+            "why": "A drawdown needs a fall after a peak. A steady rise never falls, so 0.0 is the right answer."
+          },
+          {
+            "id": "float",
+            "text": "A floating-point slip",
+            "why": "0.1736 is far too big for a slip, which would be near 1e-17."
+          },
+          {
+            "id": "three",
+            "text": "The code cannot handle three prices",
+            "why": "`test_flat` also uses three prices, and it passed."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does a steady rise ever fall from a peak?"
+        },
+        {
+          "rung": "point",
+          "text": "Work out (121 − 100) / 121.",
+          "highlight": [
+            "right:r1c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "21 / 121 = 0.1736. That is the gap between the lowest and highest price, though the low came first."
+        }
+      ],
+      "feedback": {
+        "correct": "(121 − 100) / 121 = 0.1736: the code treats the early low as a fall.",
+        "generic": "Not quite right. Work out what (highest − lowest) / highest gives for 100, 110, 121.",
+        "byKey": {
+          "test": "A drawdown needs a fall after a peak. A steady rise never falls, so the test's 0.0 is right."
+        }
+      },
+      "explain": {
+        "text": "(121 − 100) / 121 = 0.1736, so the code is measuring the whole range. In the dip test the high came before the low, so the bug hid. The steady-rise edge case exposed it, and the passing tests narrowed the search.",
+        "canvas": {
+          "right": {
+            "highlight": [
+              "r1c0",
+              "r2c0"
+            ]
+          },
+          "caption": "21 / 121 = 0.1736: the low came before the high"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`pytest -q` prints `.` for each pass and `F` for each failure, in file order. `pytest -v` names each test with PASSED or FAILED.",
+      "A failure report shows the failing assert, both values, and the call that produced the left one.",
+      "`AssertionError` means the code and test disagree, so work out the answer to see who is wrong. Any other error means the test crashed first."
+    ],
+    "formula": {
+      "name": "Reading order",
+      "tex": "\\texttt{FAILED} \\to \\texttt{>} \\to \\texttt{E} \\to \\text{your own working}",
+      "note": "Which test, which assert, both values, then who is right."
+    },
+    "trap": "Not every failure is a wrong answer. A `NameError` in the test means the code was never asked."
+  },
+  "quiz": [
+    {
+      "id": "q-dots",
+      "difficulty": 2,
+      "prose": "`pytest -q` prints `.F..F.F` and then the failure reports.",
+      "question": "How many tests passed?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Tests passed",
+        "accept": "4: one dot per pass.",
+        "wrong": [
+          {
+            "id": "failed",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four dots, three `F`s, seven tests.",
+        "generic": "Not quite right. Count the dots.",
+        "byKey": {
+          "failed": "That is the number of `F`s, the failures.",
+          "all": "That is every test. Only the dots are passes."
+        }
+      },
+      "explain": {
+        "text": "Each character is one test: `.` passed and `F` failed. Four dots and three `F`s make seven tests, and the summary line would read `3 failed, 4 passed`."
+      }
+    },
+    {
+      "id": "q-where",
+      "difficulty": 2,
+      "prose": "```text\n>       assert daily_returns([100.00, 110.00]) == [0.1]\nE       assert [0.09090909090909091] == [0.1]\nE         At index 0 diff: 0.09090909090909091 != 0.1\n```",
+      "question": "What did the code return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "got",
+            "text": "`[0.09090909090909091]`",
+            "correct": true
+          },
+          {
+            "id": "hand",
+            "text": "`[0.1]`",
+            "why": "That is the hand answer in the test. The code's value is the left side of the `E` line."
+          },
+          {
+            "id": "args",
+            "text": "`[100.0, 110.0]`",
+            "why": "Those are the prices passed in, on the `>` line."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: it crashed",
+            "why": "A crash would end in an error such as `NameError`. Here the code returned a list."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It returned `[0.09090909090909091]`: £10.00 divided by £110.00.",
+        "generic": "Not quite right. Read the left side of `==` on the `E` line."
+      },
+      "explain": {
+        "text": "The `E` line shows the returned list on the left of `==`. For lists, pytest adds the first index where they differ. 0.0909 is 10 / 110, so the code divides by the later price."
+      }
+    },
+    {
+      "id": "q-who-wrong",
+      "difficulty": 3,
+      "prose": "```text\n>       assert simple_return(80.00, 60.00) == -0.20\nE       assert -0.25 == -0.2\nE        +  where -0.25 = simple_return(80.0, 60.0)\n```",
+      "question": "Which side is wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "test",
+            "text": "The test: the return is −0.25",
+            "correct": true
+          },
+          {
+            "id": "code",
+            "text": "The code: the return is −0.20",
+            "why": "You trusted the hand answer. The £20.00 fall divided by the starting £80.00 is −0.25, which is what the code gave."
+          },
+          {
+            "id": "both",
+            "text": "Neither: they are close enough",
+            "why": "−0.25 and −0.20 differ by five percentage points. That is a real disagreement."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£20.00 down on £80.00 is −0.25, so the code is right.",
+        "generic": "Not quite right. Work out the return from £80.00 to £60.00 yourself."
+      },
+      "explain": {
+        "text": "(60 − 80) / 80 = −20 / 80 = −0.25, which is what the code gave. The hand answer −0.20 is the slip, so fix the test."
+      }
+    },
+    {
+      "id": "q-error-kind",
+      "difficulty": 3,
+      "prose": "A failure report ends with `test_vol.py:7: TypeError`.",
+      "question": "What does that tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "crash",
+            "text": "Something raised `TypeError` before the assert could compare values",
+            "correct": true
+          },
+          {
+            "id": "wrong",
+            "text": "The vol function returned the wrong number",
+            "why": "A wrong number ends in `AssertionError`, with both values shown. `TypeError` means an operation failed."
+          },
+          {
+            "id": "type",
+            "text": "The test checked the type of the result and it was wrong",
+            "why": "The report names the error that was raised. No assert about types failed here."
+          },
+          {
+            "id": "ok",
+            "text": "The test passed with a warning",
+            "why": "A line in the failure report means the test failed."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An error stopped the test before any comparison.",
+        "generic": "Not quite right. Compare this error type with `AssertionError`."
+      },
+      "explain": {
+        "text": "`AssertionError` means the values differed. Any other error type, such as `TypeError` or `NameError`, means the test crashed on line 7 before it could compare."
+      }
+    }
+  ]
+}
