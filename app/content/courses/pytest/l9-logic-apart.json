@@ -1,0 +1,1181 @@
+{
+  "id": "l9-logic-apart",
+  "course": "pytest",
+  "title": "Separating logic from input and output",
+  "minutes": 14,
+  "objectives": [
+    "Separate a script into input, computation and output",
+    "Write pure functions that take their data as arguments",
+    "Inject the data source so a test needs no file on disk"
+  ],
+  "skills": [
+    "pt-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Your returns script works. Now you want a test: for closes of £100.00 then £104.00, the return is 0.04.\n\n```python\ndef report():\n    text = open(\"prices.csv\").read()\n    rows = text.splitlines()[1:]\n    closes = [float(r.split(\",\")[1]) for r in rows]\n    r = closes[-1] / closes[0] - 1\n    print(f\"Return: {r:.2%}\")\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "file",
+              "label": "prices.csv",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "fn",
+              "label": "report()",
+              "x": 0.5,
+              "y": 0.5
+            },
+            {
+              "id": "screen",
+              "label": "screen",
+              "x": 0.92,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "file",
+              "to": "fn",
+              "directed": true
+            },
+            {
+              "from": "fn",
+              "to": "screen",
+              "directed": true
+            }
+          ],
+          "height": 180
+        },
+        "state": {
+          "caption": "Data comes in from a file and leaves on the screen"
+        }
+      },
+      "question": "Why can a test not check this function's 0.04?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It reads its own file and prints, so a test can neither hand it prices nor get a value back",
+            "correct": true
+          },
+          {
+            "id": "approx",
+            "text": "The answer is rounded to 4.00%, so the test would need `pytest.approx`",
+            "why": "You focused on the rounding. Rounding is not the obstacle: `report()` hands nothing back to compare, rounded or not."
+          },
+          {
+            "id": "name",
+            "text": "pytest only runs functions whose names start with `test_`",
+            "why": "That rule is about test functions, not the code they check. A test may call any function it likes."
+          },
+          {
+            "id": "assert",
+            "text": "Nothing stops it: `assert report() == 0.04` works",
+            "why": "You expected `report()` to give back its answer. It prints, then returns `None`, so the assert compares `None` with 0.04."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `report()` return?"
+        },
+        {
+          "rung": "point",
+          "text": "Both arrows cross the edge of the function: one from a file, one to the screen.",
+          "highlight": [
+            "file",
+            "screen"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A test calls a function with data it chose and compares the value that comes back. Here there is no argument, and the value back is `None`."
+        }
+      ],
+      "feedback": {
+        "correct": "Its input is a fixed file and its output is the screen. A test needs both ends in its own hands.",
+        "generic": "Not quite right. Think about how a test hands data in and gets an answer back.",
+        "byKey": {
+          "assert": "You expected a value back. `print` shows the text and the function returns `None`.",
+          "approx": "You treated it as a tolerance problem. There is no returned number to compare at all."
+        }
+      },
+      "explain": {
+        "text": "A test hands a function data and compares what comes back. `report()` takes its data from `prices.csv` and sends its answer to the screen, so neither end is reachable. We will cut it into pieces a test can reach.",
+        "canvas": {
+          "highlight": [
+            "e-file-fn",
+            "e-fn-screen"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Here are the five steps inside `report()`. Some only turn the data they are handed into new data. Others reach outside the function, to the disk or the screen.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "read",
+              "label": "open file",
+              "x": 0.08,
+              "y": 0.2
+            },
+            {
+              "id": "split",
+              "label": "split rows",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "parse",
+              "label": "to floats",
+              "x": 0.5,
+              "y": 0.2
+            },
+            {
+              "id": "calc",
+              "label": "divide",
+              "x": 0.7,
+              "y": 0.8
+            },
+            {
+              "id": "show",
+              "label": "print",
+              "x": 0.92,
+              "y": 0.2
+            }
+          ],
+          "edges": [
+            {
+              "from": "read",
+              "to": "split",
+              "directed": true
+            },
+            {
+              "from": "split",
+              "to": "parse",
+              "directed": true
+            },
+            {
+              "from": "parse",
+              "to": "calc",
+              "directed": true
+            },
+            {
+              "from": "calc",
+              "to": "show",
+              "directed": true
+            }
+          ],
+          "height": 240
+        },
+        "state": {
+          "caption": "The steps of `report()`, in order"
+        }
+      },
+      "question": "Tap every step that only turns data it is handed into new data.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "split",
+          "parse",
+          "calc"
+        ],
+        "countWord": "steps",
+        "wrong": [
+          {
+            "id": "with-read",
+            "set": [
+              "read",
+              "split",
+              "parse",
+              "calc"
+            ]
+          },
+          {
+            "id": "with-print",
+            "set": [
+              "split",
+              "parse",
+              "calc",
+              "show"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each step, ask: could its result change if a file on disk changed?"
+        }
+      ],
+      "feedback": {
+        "correct": "Splitting, converting and dividing need nothing but their input.",
+        "generic": "Not quite right. Leave out any step that touches the disk or the screen.",
+        "byKey": {
+          "with-read": "You included opening the file. Its result depends on what the disk holds today, not on anything handed to it.",
+          "with-print": "You included `print`. It sends text to the screen and hands nothing back.",
+          "read": "Opening the file reaches out to the disk, so its result changes whenever the file does.",
+          "show": "`print` reaches out to the screen. It hands nothing back for the next step to use."
+        }
+      },
+      "explain": {
+        "text": "Splitting rows, converting to floats and dividing depend only on the text and numbers they receive. Opening the file and printing reach outside. The middle three are the part worth testing, and they need no file at all.",
+        "canvas": {
+          "highlight": [
+            "split",
+            "parse",
+            "calc"
+          ],
+          "caption": "The middle three: data in, data out"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "The steps fall into three groups. **Input** brings data in. **Computation** turns data into results. **Output** sends results out. Sort the pieces of `report()` into the three.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "in",
+              "label": "input",
+              "x": 0.1,
+              "y": 0.5
+            },
+            {
+              "id": "comp",
+              "label": "computation",
+              "x": 0.5,
+              "y": 0.5
+            },
+            {
+              "id": "out",
+              "label": "output",
+              "x": 0.9,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "in",
+              "to": "comp",
+              "directed": true
+            },
+            {
+              "from": "comp",
+              "to": "out",
+              "directed": true
+            }
+          ],
+          "height": 200
+        },
+        "state": {
+          "caption": "Every script has these three parts"
+        }
+      },
+      "question": "Drag each piece of code to its group.",
+      "widget": {
+        "kind": "place",
+        "mode": "assign",
+        "tokens": [
+          {
+            "id": "t1",
+            "text": "`open(\"prices.csv\").read()`"
+          },
+          {
+            "id": "t2",
+            "text": "`text.splitlines()[1:]`"
+          },
+          {
+            "id": "t3",
+            "text": "`float(r.split(\",\")[1])`"
+          },
+          {
+            "id": "t4",
+            "text": "`closes[-1] / closes[0] - 1`"
+          },
+          {
+            "id": "t5",
+            "text": "`print(f\"Return: {r:.2%}\")`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "in",
+            "label": "Input",
+            "accepts": [
+              "t1"
+            ]
+          },
+          {
+            "id": "comp",
+            "label": "Computation",
+            "accepts": [
+              "t2",
+              "t3",
+              "t4"
+            ]
+          },
+          {
+            "id": "out",
+            "label": "Output",
+            "accepts": [
+              "t5"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which pieces would give the same result whatever is on the disk?"
+        },
+        {
+          "rung": "point",
+          "text": "Only one piece reads, and only one writes.",
+          "highlight": [
+            "in",
+            "out"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`open(...).read()` is input and `print(...)` is output. The three in between all make new data from old."
+        }
+      ],
+      "feedback": {
+        "correct": "One piece of input, three of computation, one of output.",
+        "generic": "Not quite right. Input reads from outside, output writes to outside, and the rest is computation.",
+        "byKey": {
+          "t1": "You put the `open(...)` call with the computation. It reads the disk, so its result changes when the file does: that is input.",
+          "t5": "You put `print` with the computation. It makes no new data; it sends text to the screen, which is output.",
+          "t2": "Splitting text into rows makes a new list from text you already have. Nothing outside is touched, so it is computation.",
+          "t3": "Turning `\"104.00\"` into `104.0` is computation: text in, number out.",
+          "t4": "The division makes a new number from the closes. That is computation; only `print` sends it out."
+        }
+      },
+      "explain": {
+        "text": "Only the computation is worth a unit test, and it needs no file. Pull it into functions that take the data as arguments and return results. Such a function is **pure**: the same input always gives the same output, and nothing outside is touched.",
+        "canvas": {
+          "highlight": [
+            "comp"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "First piece: turn the CSV **text** into closes. The function takes the text as an argument, so a test can hand it any text it likes, with no file on disk. `\"a,b\".split(\",\")` gives `[\"a\", \"b\"]`.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "text",
+              "label": "CSV text",
+              "x": 0.1,
+              "y": 0.5
+            },
+            {
+              "id": "fn",
+              "label": "parse_closes",
+              "x": 0.5,
+              "y": 0.5
+            },
+            {
+              "id": "list",
+              "label": "[100.0, 104.0]",
+              "x": 0.9,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "text",
+              "to": "fn",
+              "directed": true
+            },
+            {
+              "from": "fn",
+              "to": "list",
+              "directed": true
+            }
+          ],
+          "height": 180
+        },
+        "state": {
+          "caption": "Text in, a list of floats out"
+        }
+      },
+      "question": "Write `parse_closes(text)`: skip the header line and return the closes as a list of floats.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def parse_closes(text):\n    pass  # replace this line\n\n\nsample = \"date,close\\n2026-10-12,100.00\\n2026-10-13,104.00\\n\"\nprint(parse_closes(sample))\n",
+        "solution": "def parse_closes(text):\n    rows = text.splitlines()[1:]  # drop the header line\n    return [float(row.split(\",\")[1]) for row in rows]\n\n\nsample = \"date,close\\n2026-10-12,100.00\\n2026-10-13,104.00\\n\"\nprint(parse_closes(sample))\n",
+        "tests": [
+          {
+            "call": "parse_closes('date,close\\n2026-10-12,100.00\\n2026-10-13,104.00\\n')",
+            "expect": "[100.0, 104.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "parse_closes('Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\n')",
+            "expect": "[101.2, 102.5, 99.8]",
+            "compare": "equal"
+          },
+          {
+            "call": "parse_closes('date,close\\n2026-10-12,250.00')",
+            "expect": "[250.0]",
+            "compare": "equal"
+          },
+          {
+            "call": "parse_closes('date,close\\n')",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each hands `parse_closes` a string of CSV text, with no file on disk, and compares the list it returns using `==`.",
+        "examples": [
+          {
+            "call": "parse_closes('date,close\\n2026-10-12,100.00\\n2026-10-13,104.00\\n')",
+            "expect": "[100.0, 104.0]",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`text.splitlines()` gives one string per line. Which line do you drop?"
+        },
+        {
+          "rung": "point",
+          "text": "Slice off the header with `[1:]`, then split each row on the comma.",
+          "highlight": [
+            "text"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`[float(row.split(\",\")[1]) for row in text.splitlines()[1:]]` takes the second field of every row after the header."
+        }
+      ],
+      "feedback": {
+        "correct": "The function sees only the text it is given, so any test can feed it.",
+        "generic": "Not quite right. Look at the first failing test: what text did it pass, and what came back?"
+      },
+      "explain": {
+        "text": "`splitlines()[1:]` drops the header, and `split(\",\")[1]` takes the close from each row. A header with no rows gives `[]`, the edge case. No test needed a file: the text is the input."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Some code reads an open file line by line. `io.StringIO(text)` makes a string behave like an open file, so the same trick works.\n\n```python\ndef load_closes(f):\n    next(f)  # skip the header\n    return [float(line.split(\",\")[1]) for line in f]\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "csv",
+              "label": "prices.csv",
+              "x": 0.1,
+              "y": 0.18
+            },
+            {
+              "id": "sio",
+              "label": "StringIO",
+              "x": 0.1,
+              "y": 0.82
+            },
+            {
+              "id": "fn",
+              "label": "load_closes",
+              "x": 0.55,
+              "y": 0.5
+            },
+            {
+              "id": "out",
+              "label": "closes",
+              "x": 0.92,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "csv",
+              "to": "fn",
+              "directed": true,
+              "label": "script",
+              "dashed": true
+            },
+            {
+              "from": "sio",
+              "to": "fn",
+              "directed": true,
+              "label": "test"
+            },
+            {
+              "from": "fn",
+              "to": "out",
+              "directed": true
+            }
+          ],
+          "height": 240
+        },
+        "state": {
+          "caption": "Two sources, one function"
+        }
+      },
+      "question": "Which test call works with no file on disk?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`load_closes(io.StringIO(\"date,close\\n2026-10-12,100.00\\n\"))`",
+            "correct": true
+          },
+          {
+            "id": "name",
+            "text": "`load_closes(\"prices.csv\")`",
+            "why": "You passed the file's name. A string is not a file: `next(f)` on it raises `TypeError` before any line is read."
+          },
+          {
+            "id": "open",
+            "text": "`load_closes(open(\"test_prices.csv\"))`",
+            "why": "That works only if `test_prices.csv` exists, which brings back the file you wanted to avoid."
+          },
+          {
+            "id": "text",
+            "text": "`load_closes(\"date,close\\n2026-10-12,100.00\\n\")`",
+            "why": "You passed the text itself. A plain string cannot be read line by line with `next`, so it raises `TypeError`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `load_closes` do with `f`? It calls `next` and loops over lines."
+        },
+        {
+          "rung": "point",
+          "text": "Only one option builds something that behaves like an open file.",
+          "highlight": [
+            "sio"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`io.StringIO(text)` gives an object you can call `next` on and loop over, line by line, like `open(...)` does."
+        }
+      ],
+      "feedback": {
+        "correct": "`StringIO` behaves like an open file, so the function cannot tell the difference.",
+        "generic": "Not quite right. The argument must behave like an open file, without being one on disk.",
+        "byKey": {
+          "name": "You passed a name. The function never opens anything; it expects the opened file.",
+          "text": "A string is not a file. Wrap it: `io.StringIO(text)`."
+        }
+      },
+      "explain": {
+        "text": "`load_closes` only asks for something it can read line by line. The script passes `open(\"prices.csv\")`; the test passes `io.StringIO(...)`. Handing the data source in as an argument is called **injecting** it.",
+        "canvas": {
+          "highlight": [
+            "sio",
+            "e-sio-fn"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Now the rest of `report()`. Split it into small functions, each with one job. The printing stays, but only in a thin `report(text)` at the end that a test never needs to call.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "p",
+              "label": "parse_closes",
+              "x": 0.12,
+              "y": 0.5
+            },
+            {
+              "id": "t",
+              "label": "total_return",
+              "x": 0.42,
+              "y": 0.5
+            },
+            {
+              "id": "f",
+              "label": "format_return",
+              "x": 0.72,
+              "y": 0.5
+            },
+            {
+              "id": "pr",
+              "label": "print",
+              "x": 0.94,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "p",
+              "to": "t",
+              "directed": true
+            },
+            {
+              "from": "t",
+              "to": "f",
+              "directed": true
+            },
+            {
+              "from": "f",
+              "to": "pr",
+              "directed": true
+            }
+          ],
+          "height": 180
+        },
+        "state": {
+          "caption": "Three pure functions, then one line of output"
+        }
+      },
+      "question": "Write `total_return(closes)` and `format_return(r)`, which returns the text `Return: 4.00%` rather than printing it.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def parse_closes(text):\n    rows = text.splitlines()[1:]\n    return [float(row.split(\",\")[1]) for row in rows]\n\n\ndef total_return(closes):\n    pass  # first close to last close, as a decimal\n\n\ndef format_return(r):\n    pass  # return the text; do not print it\n\n\ndef report(text):\n    print(format_return(total_return(parse_closes(text))))\n\n\nreport(\"date,close\\n2026-10-12,100.00\\n2026-10-13,104.00\\n\")\n",
+        "solution": "def parse_closes(text):\n    rows = text.splitlines()[1:]\n    return [float(row.split(\",\")[1]) for row in rows]\n\n\ndef total_return(closes):\n    return closes[-1] / closes[0] - 1\n\n\ndef format_return(r):\n    return f\"Return: {r:.2%}\"\n\n\ndef report(text):\n    print(format_return(total_return(parse_closes(text))))\n\n\nreport(\"date,close\\n2026-10-12,100.00\\n2026-10-13,104.00\\n\")\n",
+        "tests": [
+          {
+            "call": "total_return([100.00, 104.00])",
+            "expect": "0.04",
+            "compare": "isclose"
+          },
+          {
+            "call": "total_return([250.00, 245.00, 240.00])",
+            "expect": "-0.04",
+            "compare": "isclose"
+          },
+          {
+            "call": "total_return([101.20])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "format_return(0.04)",
+            "expect": "'Return: 4.00%'",
+            "compare": "equal"
+          },
+          {
+            "call": "format_return(-0.0125)",
+            "expect": "'Return: -1.25%'",
+            "compare": "equal"
+          },
+          {
+            "call": "format_return(0.0)",
+            "expect": "'Return: 0.00%'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: three compare `total_return` within a relative $10^{-9}$, and three compare the text `format_return` returns with `==`.",
+        "examples": [
+          {
+            "call": "total_return([100.00, 104.00])",
+            "expect": "0.04",
+            "compare": "isclose"
+          },
+          {
+            "call": "format_return(0.04)",
+            "expect": "'Return: 4.00%'",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`total_return` is one line: the last close over the first, minus 1."
+        },
+        {
+          "rung": "point",
+          "text": "`format_return` builds the same f-string `report` used to print, and returns it.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return closes[-1] / closes[0] - 1` and `return f\"Return: {r:.2%}\"`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each function has one job, and each hands back a value a test can compare.",
+        "generic": "Not quite right. Check the first failing test. If it shows `None`, the function printed instead of returning.",
+        "byKey": {
+          "test-4": "`format_return` gave back the wrong thing. If it printed, it returned `None`: return the f-string instead."
+        }
+      },
+      "explain": {
+        "text": "`format_return` returns its text, so a test can check `format_return(0.04) == \"Return: 4.00%\"`. One close gives a return of 0.0, the edge case. Only `report` prints, and it is one line long."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague's version returns a value, so it looks testable.\n\n```python\ndef daily_returns():\n    closes = parse_closes(open(\"prices.csv\").read())\n    return [b / a - 1 for a, b in zip(closes, closes[1:])]\n\ndef test_first_return():\n    assert math.isclose(daily_returns()[0], 0.04)\n```\nIt passed on Monday. On Tuesday it fails, and nobody touched the code.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Row",
+            "Monday's file",
+            "Tuesday's file"
+          ],
+          "rows": [
+            [
+              "1",
+              "100.00",
+              "104.00"
+            ],
+            [
+              "2",
+              "104.00",
+              "102.96"
+            ],
+            [
+              "3",
+              "102.96",
+              "104.50"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "`prices.csv` keeps the last three closes"
+        }
+      },
+      "question": "Why does the test fail on Tuesday?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The file dropped its oldest close and gained a new one, so the first return is now −1.00%",
+            "correct": true
+          },
+          {
+            "id": "float",
+            "text": "Floating-point error differs from one run to the next",
+            "why": "You blamed the floats. The same division on the same floats gives the same result every run."
+          },
+          {
+            "id": "zip",
+            "text": "`zip` pairs the closes wrongly",
+            "why": "You looked for a bug in the code. Nothing in it changed between Monday and Tuesday, so it cannot be what changed."
+          },
+          {
+            "id": "approx",
+            "text": "It should use `pytest.approx` instead of `math.isclose`",
+            "why": "You treated it as a tolerance problem. 0.04 against −0.01 is far outside any tolerance; the data moved."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is different between Monday and Tuesday?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the first two rows of each file.",
+          "highlight": [
+            "r0c1",
+            "r1c1",
+            "r0c2",
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Monday: 104.00 / 100.00 − 1 = 0.04. Tuesday: 102.96 / 104.00 − 1 = −0.01. Same code, different file."
+        }
+      ],
+      "feedback": {
+        "correct": "The test was checking Monday's file, not the code.",
+        "generic": "Not quite right. The code did not change. What did?",
+        "byKey": {
+          "float": "You blamed the floats. The same division on the same floats gives the same bits every run; the input changed.",
+          "zip": "You suspected `zip`. The code is identical on both days, so the change came from outside it.",
+          "approx": "You reached for a tolerance. No tolerance turns −0.01 into 0.04: the file changed."
+        }
+      },
+      "explain": {
+        "text": "The function reads a hard-coded path, so its answer depends on what that file holds today. A test of it checks the data, not the code. Pass the closes in, and the test fixes its own data: `daily_returns([100.00, 104.00])`.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c1",
+              "r1c1",
+              "r0c2",
+              "r1c2"
+            ]
+          },
+          "caption": "Monday: 0.04. Tuesday: −0.01."
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Each piece takes its data as an argument and returns its result. Only a thin edge touches the outside world:\n\n```python\ndef main():\n    text = open(\"prices.csv\").read()      # input\n    r = total_return(parse_closes(text))   # computation\n    print(format_return(r))                # output\n```\nTests call the middle. `main` stays too thin to need one.",
+      "question": "Which call belongs in a unit test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`total_return([100.00, 104.00])`",
+            "correct": true
+          },
+          {
+            "id": "main",
+            "text": "`main()`",
+            "why": "You picked the function that reads the file and prints. It returns `None` and depends on `prices.csv`: the two problems we removed."
+          },
+          {
+            "id": "print",
+            "text": "`print(format_return(0.04))`",
+            "why": "That shows the text to a person. A test compares the value itself: `format_return(0.04) == \"Return: 4.00%\"`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Data in, value out: a test can check it.",
+        "generic": "Not quite right. A unit test hands in data and compares the value that comes back."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The Stage 0 script, made testable",
+      "prose": "Your Stage 0 script read `prices.csv` and printed each day's return, all in one function. Here it is cut up, with `daily_returns(closes)` left for you. Then write the test that guards it.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                101.2,
+                102.5,
+                99.8,
+                100.4,
+                101.1
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "height": 220
+        },
+        "state": {
+          "caption": "The Stage 0 closes, Monday to Friday"
+        }
+      },
+      "question": "Write `daily_returns(closes)`, then a `test_daily_returns()` with values worked out by hand.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n\ndef parse_closes(text):\n    rows = text.splitlines()[1:]\n    return [float(row.split(\",\")[1]) for row in rows]\n\n\ndef daily_returns(closes):\n    pass  # one return for each pair of neighbouring closes\n\n\ndef test_daily_returns():\n    # closes you choose, returns you work out by hand\n    pass\n\n\ntext = \"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\"\nprint(daily_returns(parse_closes(text)))\n",
+        "solution": "import math\n\n\ndef parse_closes(text):\n    rows = text.splitlines()[1:]\n    return [float(row.split(\",\")[1]) for row in rows]\n\n\ndef daily_returns(closes):\n    return [b / a - 1 for a, b in zip(closes, closes[1:])]\n\n\ndef test_daily_returns():\n    # closes you choose, returns you work out by hand\n    r = daily_returns([100.00, 104.00, 101.92])\n    assert len(r) == 2\n    assert math.isclose(r[0], 0.04)    # 104.00 / 100.00 - 1\n    assert math.isclose(r[1], -0.02)   # 101.92 / 104.00 - 1\n    assert daily_returns([100.00]) == []\n\n\ntext = \"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\"\nprint(daily_returns(parse_closes(text)))\n",
+        "tests": [
+          {
+            "call": "daily_returns([101.20, 102.50, 99.80, 100.40, 101.10])",
+            "expect": "[0.012845849802371578, -0.02634146341463417, 0.006012024048096309, 0.006972111553784854]",
+            "compare": "isclose"
+          },
+          {
+            "call": "daily_returns([100.00, 104.00])",
+            "expect": "[0.04]",
+            "compare": "isclose"
+          },
+          {
+            "call": "daily_returns([250.00])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "test_daily_returns()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "daily_returns = lambda c: [b / a - 1 for a, b in zip(c, c[1:])]"
+          },
+          {
+            "call": "test_daily_returns()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "daily_returns = lambda c: [b / a for a, b in zip(c, c[1:])]"
+          },
+          {
+            "call": "test_daily_returns()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "daily_returns = lambda c: [(b - a) / b for a, b in zip(c, c[1:])]"
+          },
+          {
+            "call": "test_daily_returns()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "daily_returns = lambda c: [b / a - 1 for a, b in zip(c[1:], c[2:])]"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Three compare your `daily_returns`. Then your `test_daily_returns()` runs four times: it must pass on a correct version and fail on three broken ones.",
+        "examples": [
+          {
+            "call": "daily_returns([100.00, 104.00])",
+            "expect": "[0.04]",
+            "compare": "isclose"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`zip(closes, closes[1:])` pairs each close with the next one."
+        },
+        {
+          "rung": "point",
+          "text": "Pick closes whose returns you can work out in your head: £100.00 to £104.00 is 0.04.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Assert the length, each return with `math.isclose`, and the edge case: one close gives `[]`. The broken versions forget the `- 1`, divide by the later close, or skip the first day."
+        }
+      ],
+      "feedback": {
+        "correct": "The function takes closes and returns returns, and your test pins it down with numbers you worked out yourself.",
+        "generic": "Not quite right. Look at the first failing test. If it is one of the last four, your test let a broken version through, or failed a correct one.",
+        "byKey": {
+          "test-4": "Your test failed the correct version. Compare floats with `math.isclose`, not `==`: 104.00 / 100.00 − 1 is 0.040000000000000036.",
+          "test-7": "Your test let through a version that skips the first day. Assert how many returns come back, and check the first one."
+        }
+      },
+      "explain": {
+        "text": "`daily_returns` is now pure: closes in, a list out, no file. Your test catches each broken version because it pins exact values and the length on closes you chose. The script keeps one line that reads the file and one loop that prints."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A function a test can check takes its data as arguments and returns its result: no files, no `print`, no `input`.",
+      "Split a script into input, computation and output. Test the computation, and keep the input and output thin.",
+      "Inject the data source: pass the closes, the CSV text or an `io.StringIO`, never a hard-coded path."
+    ],
+    "formula": {
+      "name": "Testable shape",
+      "tex": "\\texttt{read} \\;\\to\\; \\texttt{f(data)} \\;\\to\\; \\texttt{print}",
+      "note": "Only the middle step gets unit tests."
+    },
+    "trap": "A function that opens a hard-coded path tests today's file, not the code. When the file changes, the test breaks."
+  },
+  "quiz": [
+    {
+      "id": "q-pure",
+      "difficulty": 2,
+      "prose": "Four ways to work out a dealing fee of £1.50 per trade.",
+      "question": "Which one can a test check without any setup?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`def fee(trades): return 1.50 * trades`",
+            "correct": true
+          },
+          {
+            "id": "input",
+            "text": "`def fee(): return 1.50 * int(input(\"Trades: \"))`",
+            "why": "It waits for someone to type at the keyboard. A test would have to fake the keyboard to give it data."
+          },
+          {
+            "id": "print",
+            "text": "`def fee(trades): print(1.50 * trades)`",
+            "why": "It takes its data as an argument but prints the answer and returns `None`, so there is nothing to compare."
+          },
+          {
+            "id": "file",
+            "text": "`def fee(): return 1.50 * len(open(\"trades.csv\").readlines())`",
+            "why": "It counts lines in a fixed file, so its answer depends on what the disk holds that day."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Data in through the argument, answer out through `return`.",
+        "generic": "Not quite right. Which one takes data in and hands a value back?"
+      },
+      "explain": {
+        "text": "`fee(trades)` is pure, so `assert fee(4) == 6.0` checks it. The others read the keyboard, read a file, or print instead of returning."
+      }
+    },
+    {
+      "id": "q-total",
+      "difficulty": 2,
+      "prose": "`total_return(closes)` returns `closes[-1] / closes[0] - 1`.",
+      "question": "What is `total_return([80.00, 84.00, 82.00])`, as a percentage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "%",
+        "label": "Total return",
+        "accept": "2.5%: $82/80 - 1 = 0.025$.",
+        "wrong": [
+          {
+            "id": "last",
+            "value": -2.38,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "peak",
+            "value": 5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$82/80 - 1 = 0.025$, so 2.5%.",
+        "generic": "Not quite right. Use only the first and the last close.",
+        "byKey": {
+          "last": "You used the last two closes. `closes[0]` is the first close, £80.00.",
+          "peak": "You used the middle close. `closes[-1]` is the last one, £82.00."
+        }
+      },
+      "explain": {
+        "text": "`closes[0]` is £80.00 and `closes[-1]` is £82.00, so the return is $82/80 - 1 = 0.025$. The middle close does not enter."
+      }
+    },
+    {
+      "id": "q-inject",
+      "difficulty": 3,
+      "prose": "```python\ndef vol():\n    r = [float(x) for x in open(\"returns.csv\")]\n    return statistics.stdev(r) * math.sqrt(252)\n```",
+      "question": "Which change makes `vol` easiest to test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Take the returns as an argument: `def vol(r):`",
+            "correct": true
+          },
+          {
+            "id": "path",
+            "text": "Take the path as an argument: `def vol(path=\"returns.csv\"):`",
+            "why": "That lets a test choose the file, but the test still has to write one to disk first. Passing the returns needs no file at all."
+          },
+          {
+            "id": "try",
+            "text": "Wrap the `open` in `try` and `except`",
+            "why": "That stops a crash when the file is missing. The answer still depends on whatever the file holds."
+          },
+          {
+            "id": "print",
+            "text": "Print the result as well as returning it",
+            "why": "Printing adds output; it does not change where the data comes from."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "With the returns as an argument, a test hands in two returns it chose.",
+        "generic": "Not quite right. The trouble is where the data comes from."
+      },
+      "explain": {
+        "text": "`vol([0.01, -0.01])` can be checked against a value worked out by hand. Injecting a path is a halfway step: the test still needs a file."
+      }
+    },
+    {
+      "id": "q-format",
+      "difficulty": 3,
+      "prose": "```python\ndef format_return(r):\n    return f\"Return: {r:.2%}\"\n```",
+      "question": "What is `format_return(0.0375)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`'Return: 3.75%'`",
+            "correct": true
+          },
+          {
+            "id": "frac",
+            "text": "`'Return: 0.04%'`",
+            "why": "You read `.2%` as two places of the decimal. The `%` format multiplies by 100 first, then keeps two places."
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "That is what a version that prints would give back. This one returns the text."
+          },
+          {
+            "id": "round",
+            "text": "`'Return: 3.8%'`",
+            "why": "You kept one place. `.2%` keeps two: 3.75%."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`.2%` multiplies by 100 and keeps two places.",
+        "generic": "Not quite right. Work out what `.2%` does to 0.0375."
+      },
+      "explain": {
+        "text": "0.0375 times 100 is 3.75, shown with two places and a percent sign. Because the function returns the text, `assert format_return(0.0375) == \"Return: 3.75%\"` is a test."
+      }
+    }
+  ]
+}

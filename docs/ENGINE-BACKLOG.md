@@ -427,3 +427,8 @@ Raised later (sql level 1):
 
 153. `table` canvas: a row-tap mode (`tap: "rows"`) where tapping any cell selects the row id `r{i}`.
 154. Choice options: let inline code wrap (same family as 135 and 139).
+
+Raised later (sql level 3):
+
+155. `pair` canvas with two tables: allow full width per side at narrow widths (auto `stack`) and compact column sizing.
+156. Code widget: when the starter itself errors before the learner edits, show a gentler "fill in the starter first" line instead of the raw traceback.

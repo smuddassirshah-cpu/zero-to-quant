@@ -182,7 +182,7 @@
       ],
       "title": "The most active names",
       "prose": "The starter generates a day of fills: 22 for AZN, 35 for BARC, 21 for SHEL and 20 for HSBA.",
-      "question": "Return each ticker with more than 20 fills, its number of fills and its average fill size rounded to 1 place, most active first.",
+      "question": "Return each ticker with more than 20 fills, busiest first. Give its fill count and its average fill size to 1 place.",
       "widget": {
         "kind": "code",
         "language": "python",
@@ -310,7 +310,7 @@
         },
         "state": {}
       },
-      "question": "Return the date, the ticker and the daily return rounded to 4 places for every row, sorted by ticker then date.",
+      "question": "Return the date, the ticker and the daily return to 4 places for every row. Sort by ticker, then date.",
       "widget": {
         "kind": "code",
         "language": "python",
@@ -362,7 +362,7 @@
         "sql-aggregate"
       ],
       "title": "Record days",
-      "prose": "Find each ticker's highest-volume day. If two days tie, list both. A query in brackets can sit inside `WHERE`, and `FROM prices AS p` names the outer table so the inner query can refer to it.",
+      "prose": "Find each ticker's highest-volume day. If two days tie, list both. A query in brackets can sit inside `WHERE`. Name the outer table with `FROM prices AS p` so the inner query can refer to it.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -480,7 +480,7 @@
         }
       },
       "explain": {
-        "text": "Each row is kept when its volume equals its own ticker's maximum, so ties keep both days. `SELECT ticker, date, MAX(volume) ... GROUP BY ticker` happens to work in SQLite, which takes bare columns from the maximum row, but it shows one day on a tie and other databases refuse it."
+        "text": "Each row is kept when its volume equals its own ticker's maximum, so a tie keeps both days. SQLite also accepts `SELECT ticker, date, MAX(volume) ... GROUP BY ticker`, taking bare columns from the maximum row. But that shows one day on a tie, and other databases refuse it."
       }
     },
     {
@@ -537,7 +537,7 @@
       ],
       "title": "Review a liquidity filter",
       "kind": "longform",
-      "prompt": "A colleague builds a liquid universe: tickers whose average daily traded value, `close * volume`, is above £5,000,000 over the sample. They wrote:\n\n```sql\nSELECT ticker, AVG(close * volume) AS adv\nFROM prices\nWHERE close * volume > 5000000\nGROUP BY ticker;\n```\n\n(a) Explain what this returns and why it is not the universe asked for. (b) Give a ticker, with three days of numbers, that this query wrongly includes. (c) Write the corrected query, with `adv` rounded to 2 places and the largest first. (d) Some closes are `NULL`. Say what happens to those days in `adv`, and whether that biases it. (e) One ticker listed only last week. Explain why its `adv` is not comparable with the others, and what you would add to the query.",
+      "prompt": "A colleague builds a liquid universe. It should hold the tickers whose average daily traded value, `close * volume`, is above £5,000,000. They wrote:\n\n```sql\nSELECT ticker, AVG(close * volume) AS adv\nFROM prices\nWHERE close * volume > 5000000\nGROUP BY ticker;\n```\n\n(a) Explain what this returns and why it is not the universe asked for. (b) Give a ticker, with three days of numbers, that this query wrongly includes. (c) Write the corrected query, with `adv` rounded to 2 places and the largest first. (d) Some closes are `NULL`. Say what happens to those days in `adv`, and whether that biases it. (e) One ticker listed only last week. Explain why its `adv` is not comparable with the others, and what you would add to the query.",
       "model": "**(a)** `WHERE` runs on single days, before grouping. Only days whose traded value is above £5m reach `AVG`, so each `adv` is the average of a ticker's big days. Any ticker with one big day appears, and its `adv` is above £5m by construction. The test belongs on the average of all days, in `HAVING`.\n\n**(b)** A ticker trades £8m, £1m and £1m on three days. Its true average is £10m / 3 = £3.33m, so it should be out. `WHERE` keeps only the £8m day, so the query reports `adv` = £8m and includes it.\n\n**(c)**\n\n```sql\nSELECT ticker, ROUND(AVG(close * volume), 2) AS adv\nFROM prices\nGROUP BY ticker\nHAVING AVG(close * volume) > 5000000\nORDER BY adv DESC;\n```\n\n**(d)** A `NULL` close makes `close * volume` `NULL` for that day. `AVG` skips it, so it averages the known days only and divides by their number. That is unbiased if the gaps fall at random. If gaps cluster on quiet days, such as halts, `adv` is overstated; if on busy days, understated.\n\n**(e)** A new listing has only a few days, and listing weeks often see unusual volume. Its average is noisier and drawn from a different period, so it is not comparable. Add `COUNT(close) AS days` to the output and a minimum such as `HAVING COUNT(close) >= 20`, or require the full sample.",
       "rubric": [
         {

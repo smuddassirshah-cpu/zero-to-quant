@@ -11,7 +11,7 @@
         "pd-frames"
       ],
       "title": "Worst days from a raw file",
-      "prose": "A vendor file may arrive in any order and may have missing closes. Sort it by date, forward-fill the closes, compute daily returns and return the dates of the `n` worst returns, worst first. A day with no earlier close has no return. Dates may be text or timestamps.",
+      "prose": "A vendor file may arrive in any order and may have missing closes. Sort it by date, forward-fill the closes and compute daily returns. Return the dates of the `n` worst returns, worst first. A day with no earlier close has no return. Dates may be text or timestamps.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -753,16 +753,16 @@
       ],
       "title": "Review a cleaning script",
       "kind": "longform",
-      "prompt": "A colleague cleans this file, oldest first, before a backtest.\n\n```python\ntext = \"date,close,volume\\n2024-03-04,12.55,18400\\n2024-03-05,12.31,22100\\n2024-03-06,,\\n2024-03-07,12.62,19800\\n2024-03-08,12.44,\\n2024-03-11,,21000\\n\"\ndf = pd.read_csv(io.StringIO(text))\ndf = df.fillna(0)\ndf[\"ret\"] = df[\"close\"].pct_change()\nprint(df[\"ret\"].mean(), df[\"volume\"].mean())\nprint(df.loc[\"2024-03-06\", \"close\"])\n```\n\n(a) What does the last line do, and why? Give the fix. (b) What does `fillna(0)` do to the returns on 6, 7 and 11 March, and to their mean? (c) What does it do to the mean volume? Give both numbers. (d) Write a corrected version. Say what each choice claims about the missing days, and give the mean daily return it produces to 4 significant figures.",
+      "prompt": "A colleague cleans this file, oldest first, before a backtest.\n\n```python\ntext = \"date,close,volume\\n2024-03-04,12.55,18400\\n2024-03-05,12.31,22100\\n2024-03-06,,\\n2024-03-07,12.62,19800\\n2024-03-08,12.44,\\n2024-03-11,,21000\\n\"\ndf = pd.read_csv(io.StringIO(text))\ndf = df.fillna(0)\ndf[\"ret\"] = df[\"close\"].pct_change()\nprint(df[\"ret\"].mean(), df[\"volume\"].mean())\nprint(df.loc[\"2024-03-06\", \"close\"])\n```\n\n(a) What does the last line do, and why? Give the fix. (b) What does `fillna(0)` do to the returns on 6, 7 and 11 March, and to their mean? (c) What does it do to the mean volume? Give both numbers. (d) Write a corrected version. Say what each choice claims about the missing days. Give the mean daily return it produces, to 4 significant figures.",
       "model": "**(a)** It raises `KeyError: '2024-03-06'`. Without `index_col`, the rows are labelled 0 to 5 and the dates are an ordinary column, so `.loc` finds no such label. Fix: `pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True)`.\n\n**(b)** `fillna(0)` turns the missing closes into £0.00. On 6 March the return is $0 / 12.31 - 1 = -1.0$, a fake 100% loss. On 7 March it is $12.62 / 0$, which is infinite. On 11 March it is $0 / 12.44 - 1 = -1.0$ again. The mean of a column holding infinity is `inf`, so the printed mean return is meaningless.\n\n**(c)** The two missing volumes become 0, so the mean is $81300 / 6 = 13550$ shares. Skipping them gives $81300 / 4 = 20325$. The zeros claim two days of no trading, which the file never said.\n\n**(d)**\n\n```python\ndf = pd.read_csv(io.StringIO(text), index_col=\"date\", parse_dates=True).sort_index()\ndf[\"close\"] = df[\"close\"].ffill()       # last known price\ndf[\"ret\"] = df[\"close\"].pct_change()    # first row NaN\nprint(df[\"ret\"].mean(), df[\"volume\"].mean())\n```\n\nForward-filling claims the price stayed at the last trade, which is the best mark anyone had on those days. It uses no later price, so there is no look-ahead. The returns are then −0.019124, 0.0, 0.025183, −0.014263 and 0.0, and their mean is **−0.001641**. The volumes stay missing: we do not know what traded, and `mean` skips them, giving 20325. The first return stays NaN, because no earlier close exists, and `mean` skips it rather than counting a fake flat day.",
       "rubric": [
         {
           "points": 2,
-          "text": "(a) Says the last line raises `KeyError` because the index is 0 to 5 without `index_col`, and fixes the load with `index_col=\"date\"` (and `parse_dates=True`)."
+          "text": "(a) Says the last line raises `KeyError`, since without `index_col` the index is 0 to 5. Fixes the load with `index_col=\"date\"`."
         },
         {
           "points": 2,
-          "text": "(b) Gives −1.0 on 6 March, infinity on 7 March and −1.0 on 11 March, and says the mean return becomes infinite or meaningless."
+          "text": "(b) Gives −1.0 on 6 March, infinity on 7 March and −1.0 on 11 March. Says the mean return becomes infinite."
         },
         {
           "points": 2,

@@ -37,7 +37,7 @@
           ]
         },
         "state": {
-          "caption": "`assert simple_return(10.10, 11.11) == 0.1`"
+          "caption": "assert simple_return(10.10, 11.11) == 0.1"
         }
       },
       "question": "`simple_return` is correct. Does the test pass?",
@@ -60,7 +60,8 @@
             "text": "It stops with a `TypeError`",
             "why": "Dividing two floats is fine. The code returns a number, just not quite 0.1."
           }
-        ]
+        ],
+        "shuffle": true
       },
       "hints": [
         {
@@ -79,7 +80,7 @@
       "explain": {
         "text": "pytest reports `assert 0.09999999999999998 == 0.1`. Neither price is stored exactly in binary, so the result misses 0.1 by about 2.8e−17. The code is right; the test demands an exactness floats cannot give.",
         "canvas": {
-          "caption": "`E  assert 0.09999999999999998 == 0.1`",
+          "caption": "E  assert 0.09999999999999998 == 0.1",
           "highlight": {
             "cols": [
               3
@@ -177,7 +178,8 @@
               }
             }
           }
-        ]
+        ],
+        "shuffle": true
       },
       "hints": [
         {
@@ -210,16 +212,16 @@
           ],
           "rows": [
             [
-              "`0.09999999999999998 == pytest.approx(0.1)`"
+              "0.09999999999999998 == pytest.approx(0.1)"
             ],
             [
-              "`0.1 == pytest.approx(0.1)`"
+              "0.1 == pytest.approx(0.1)"
             ],
             [
-              "`0.0909 == pytest.approx(0.1)`"
+              "0.0909 == pytest.approx(0.1)"
             ],
             [
-              "`0.11 == pytest.approx(0.1)`"
+              "0.11 == pytest.approx(0.1)"
             ]
           ],
           "align": [
@@ -432,7 +434,8 @@
             "text": "Yes: approx ignores anything below a penny",
             "why": "The floor is 1e−12, far below a penny. `0.001 == pytest.approx(0.0)` fails."
           }
-        ]
+        ],
+        "shuffle": true
       },
       "hints": [
         {
@@ -472,7 +475,7 @@
           "columns": [
             "Version",
             "Formula",
-            "`simple_return(100.00, 110.00)`"
+            "simple_return(100.00, 110.00)"
           ],
           "rows": [
             [
@@ -519,7 +522,8 @@
             "text": "Nothing: rerun and it will pass",
             "why": "Floats are deterministic. The same formula gives the same 0.10000000000000009 every time."
           }
-        ]
+        ],
+        "shuffle": true
       },
       "hints": [
         {
@@ -565,8 +569,8 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n\ndef simple_return(p0, p1):\n    return (p1 - p0) / p0\n\n\ndef test_ten_percent_rise():\n    # £10.10 to £11.11 is a rise of exactly 10%\n    pass\n",
-        "solution": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n\n\ndef simple_return(p0, p1):\n    return (p1 - p0) / p0\n\n\ndef test_ten_percent_rise():\n    # £10.10 to £11.11 is a rise of exactly 10%\n    r = simple_return(10.10, 11.11)\n    assert r == pytest.approx(0.1)\n",
+        "starter": "# This page cannot load pytest, so these lines stand in\n# for it. In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in zip(actual, e))\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n\n\ndef simple_return(p0, p1):\n    return (p1 - p0) / p0\n\n\ndef test_ten_percent_rise():\n    # £10.10 to £11.11 is a rise of exactly 10%\n    pass\n",
+        "solution": "# This page cannot load pytest, so these lines stand in\n# for it. In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in zip(actual, e))\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n\n\ndef simple_return(p0, p1):\n    return (p1 - p0) / p0\n\n\ndef test_ten_percent_rise():\n    # £10.10 to £11.11 is a rise of exactly 10%\n    r = simple_return(10.10, 11.11)\n    assert r == pytest.approx(0.1)\n",
         "examples": [
           {
             "call": "test_ten_percent_rise()",
@@ -665,7 +669,8 @@
             "text": "`assert daily_returns(p) == [0.1, 0.1]`",
             "why": "That is exact equality again, element by element. One rounding slip fails it."
           }
-        ]
+        ],
+        "shuffle": true
       },
       "hints": [
         {
@@ -693,8 +698,8 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\nimport statistics\n\n\ndef annualised_vol(returns):\n    # sample standard deviation of daily returns, scaled to 252 trading days\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef test_two_days():\n    # daily returns of +1% and -1%\n    pass\n\n\ndef test_constant_returns():\n    # the same return every day, such as 0.3%\n    pass\n",
-        "solution": "import math\n\n\nclass pytest:\n    # A stand-in for pytest, which this page cannot load.\n    # In your project, delete this class and write: import pytest\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\nimport statistics\n\n\ndef annualised_vol(returns):\n    # sample standard deviation of daily returns, scaled to 252 trading days\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef test_two_days():\n    # daily returns of +1% and -1%\n    # mean 0, squared gaps 0.0001 + 0.0001 = 0.0002, over n - 1 = 1\n    vol = annualised_vol([0.01, -0.01])\n    assert vol == pytest.approx(math.sqrt(0.0002 * 252))\n\n\ndef test_constant_returns():\n    # the same return every day, such as 0.3%\n    vol = annualised_vol([0.003, 0.003, 0.003])\n    assert vol == pytest.approx(0.0)\n",
+        "starter": "# This page cannot load pytest, so these lines stand in\n# for it. In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in zip(actual, e))\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n\n\nimport math\nimport statistics\n\n\ndef annualised_vol(returns):\n    # sample sd of daily returns, times sqrt(252)\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef test_two_days():\n    # daily returns of +1% and -1%\n    pass\n\n\ndef test_constant_returns():\n    # the same return every day, such as 0.3%\n    pass\n",
+        "solution": "# This page cannot load pytest, so these lines stand in\n# for it. In your project, write import pytest instead.\nclass Approx:\n    def __init__(self, expected, rel=None, abs=None):\n        self.expected = expected\n        self.rel, self.abs = rel, abs\n\n    def __eq__(self, actual):\n        e, rel, ab = self.expected, self.rel, self.abs\n        if isinstance(e, (list, tuple)):\n            return len(actual) == len(e) and all(\n                a == Approx(x, rel, ab) for a, x in zip(actual, e))\n        if rel is None and ab is not None:\n            gap = ab\n        else:\n            rel = 1e-6 if rel is None else rel\n            ab = 1e-12 if ab is None else ab\n            gap = max(rel * abs(e), ab)\n        return abs(actual - e) <= gap\n\n\nclass pytest:\n    approx = Approx\n\n\nimport math\nimport statistics\n\n\ndef annualised_vol(returns):\n    # sample sd of daily returns, times sqrt(252)\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef test_two_days():\n    # daily returns of +1% and -1%\n    # mean 0, squared gaps sum to 0.0002, n - 1 = 1\n    vol = annualised_vol([0.01, -0.01])\n    hand = math.sqrt(0.0002 * 252)\n    assert vol == pytest.approx(hand)\n\n\ndef test_constant_returns():\n    # the same return every day, such as 0.3%\n    vol = annualised_vol([0.003, 0.003, 0.003])\n    assert vol == pytest.approx(0.0)\n",
         "examples": [
           {
             "call": "test_two_days()",
@@ -833,7 +838,8 @@
             "text": "`assert str(0.10 + 0.20) == \"0.3\"`",
             "why": "The text of the sum is `0.30000000000000004`, so this fails too."
           }
-        ]
+        ],
+        "shuffle": true
       },
       "feedback": {
         "correct": "approx accepts the tiny slip in 0.30000000000000004.",
@@ -916,7 +922,8 @@
             "text": "`assert annualised_vol(daily_returns(p)) == 0.18`",
             "why": "A square root of a float is almost never exact. Compare with approx."
           }
-        ]
+        ],
+        "shuffle": true
       },
       "feedback": {
         "correct": "A length is a whole number, so `==` is exact.",
