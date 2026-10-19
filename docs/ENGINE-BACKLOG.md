@@ -694,3 +694,8 @@ Raised later (vectors level 2):
 247. `matrix`: cell width is estimated from the LaTeX source, so KaTeX entries such as `\cos\theta` overlap; measure the rendered width.
 248. `matrix`: row and column headings (`rowLabels`, `colLabels`) for factor-model screens.
 249. `vectors`: a matrix-driven transformed grid, unit square and basis arrows whose entries (or an angle and a shear factor) bind to sliders.
+
+Raised later (least-squares level 3):
+
+250. `scatter`: let `derive` read and `setParam` write `line.m` and `line.b` directly (authors bind free params and derive the line, and every Why? patch must then set `params` rather than `line`).
+251. `pair` of two `matrix` canvases scales each half until a 2x2 and a 3x3 are hard to read; keep a minimum font size and stack instead (same family as 155, 185).

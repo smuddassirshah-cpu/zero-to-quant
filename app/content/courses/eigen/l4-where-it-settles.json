@@ -1,0 +1,1152 @@
+{
+  "id": "l4-where-it-settles",
+  "course": "eigen",
+  "title": "Where repeated multiplication settles",
+  "minutes": 13,
+  "objectives": [
+    "Find a steady state as the eigenvector with eigenvalue 1.",
+    "Use the other eigenvalues to judge how fast a chain settles, or whether it does"
+  ],
+  "skills": [
+    "eg-eigen",
+    "eg-diag"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where do the shares go?",
+      "prose": "Each month broker X keeps 90% of its clients and loses 10% to broker Y. Y keeps 80% and loses 20% to X. After $k$ months the shares are $\\mathbf{M}^k\\mathbf{s}_0$, with $\\mathbf{M} = \\begin{pmatrix} 0.9 & 0.2 \\\\ 0.1 & 0.8 \\end{pmatrix}$. Slide $k$ up, then try other starts.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "X",
+              "label": "Broker X"
+            },
+            {
+              "id": "Y",
+              "label": "Broker Y"
+            }
+          ],
+          "yLabel": "Share of clients",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "X": 1,
+            "Y": 0
+          },
+          "params": {
+            "k": 0,
+            "a": 1
+          }
+        },
+        "derive": {
+          "values.X": "2/3 + (a - 2/3) * pow(0.7, k)",
+          "values.Y": "1/3 - (a - 2/3) * pow(0.7, k)",
+          "caption": "Month {{k}}: X has {{fixed(2/3 + (a - 2/3) * pow(0.7, k), 3)}} and Y has {{fixed(1/3 - (a - 2/3) * pow(0.7, k), 3)}}."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 25,
+            "step": 1,
+            "label": "Months $k$",
+            "start": 0
+          },
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 1,
+            "step": 0.1,
+            "label": "Starting share of X",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Where do the shares settle?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "About $\\tfrac{2}{3}$ for X and $\\tfrac{1}{3}$ for Y, from any start",
+            "correct": true
+          },
+          {
+            "id": "start",
+            "text": "It depends on the starting split",
+            "why": "Set the start to 0 and slide $k$ to 25. X still ends near 0.667.",
+            "canvas": {
+              "params": {
+                "k": 25,
+                "a": 0
+              }
+            }
+          },
+          {
+            "id": "half",
+            "text": "Half each",
+            "why": "X wins 20% of Y's clients but loses only 10% of its own, so an equal split tips towards X.",
+            "canvas": {
+              "params": {
+                "k": 1,
+                "a": 0.5
+              }
+            }
+          },
+          {
+            "id": "all",
+            "text": "X ends up with every client",
+            "why": "Y keeps winning 10% of X's clients each month. The flows balance before X takes everything.",
+            "canvas": {
+              "params": {
+                "k": 25,
+                "a": 1
+              }
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every start drifts to $(\\tfrac{2}{3}, \\tfrac{1}{3})$.",
+        "generic": "Not quite right. Slide $k$ to the end for two or three different starts."
+      },
+      "explain": {
+        "text": "Whatever the start, the bars approach 0.667 and 0.333. At that split X gains $0.2 \\times \\tfrac{1}{3}$ and loses $0.1 \\times \\tfrac{2}{3}$: the same amount. So nothing moves any more.",
+        "canvas": {
+          "params": {
+            "k": 25,
+            "a": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The steady state",
+      "prose": "The settled split $\\mathbf{s}$ does not move: $\\mathbf{M}\\mathbf{s} = \\mathbf{s}$. So it is an eigenvector with eigenvalue 1, called the **steady state**. We find it from the nullspace of $\\mathbf{M} - \\mathbf{I}$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "D",
+              "rows": [
+                [
+                  -0.1,
+                  0.2
+                ],
+                [
+                  0.1,
+                  -0.2
+                ]
+              ],
+              "label": "$\\mathbf{M} - \\mathbf{I}$"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which vector solves $(\\mathbf{M} - \\mathbf{I})\\mathbf{s} = \\mathbf{0}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$(2, 1)$",
+            "correct": true
+          },
+          {
+            "id": "swap",
+            "text": "$(1, 2)$",
+            "why": "$(\\mathbf{M} - \\mathbf{I})(1, 2) = (-0.1 + 0.4, 0.1 - 0.4) = (0.3, -0.3)$, not $\\mathbf{0}$."
+          },
+          {
+            "id": "other",
+            "text": "$(1, -1)$",
+            "why": "$(\\mathbf{M} - \\mathbf{I})(1, -1) = (-0.3, 0.3)$. $(1, -1)$ is the eigenvector for 0.7, the other eigenvalue."
+          },
+          {
+            "id": "ones",
+            "text": "$(1, 1)$",
+            "why": "$(\\mathbf{M} - \\mathbf{I})(1, 1) = (0.1, -0.1)$. Rows of $\\mathbf{M}$ do not add to 1; columns do."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Row 1 of $\\mathbf{M} - \\mathbf{I}$ gives one equation in $s_1$ and $s_2$."
+        },
+        {
+          "rung": "point",
+          "text": "Row 1: $-0.1s_1 + 0.2s_2 = 0$.",
+          "highlight": [
+            "D-r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So $s_1 = 2s_2$. With $s_2 = 1$ that is $(2, 1)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$-0.1(2) + 0.2(1) = 0$, and row 2 agrees.",
+        "generic": "Not quite right. Solve row 1 of $\\mathbf{M} - \\mathbf{I}$ for $s_1$ in terms of $s_2$.",
+        "byKey": {
+          "other": "You picked the other eigenvector. $(1, -1)$ goes with 0.7, not with 1."
+        }
+      },
+      "explain": {
+        "text": "Row 1 says $0.1s_1 = 0.2s_2$: the clients X loses equal the clients it wins. So $s_1 = 2s_2$, and $(2, 1)$ is the direction of the steady state.",
+        "canvas": {
+          "highlight": {
+            "D": {
+              "rows": [
+                0
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "$(2, 1)$ is only a direction: every multiple of it solves $(\\mathbf{M} - \\mathbf{I})\\mathbf{s} = \\mathbf{0}$. Shares must add to 1, which picks out one multiple.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "active": "right",
+        "left": {
+          "kind": "matrix",
+          "params": {
+            "matrices": [
+              {
+                "id": "D",
+                "rows": [
+                  [
+                    -0.1,
+                    0.2
+                  ],
+                  [
+                    0.1,
+                    -0.2
+                  ]
+                ],
+                "label": "$\\mathbf{M} - \\mathbf{I}$"
+              },
+              {
+                "id": "s",
+                "rows": [
+                  [
+                    2
+                  ],
+                  [
+                    1
+                  ]
+                ],
+                "label": "$\\mathbf{s}$"
+              },
+              {
+                "id": "z",
+                "rows": [
+                  [
+                    0
+                  ],
+                  [
+                    0
+                  ]
+                ],
+                "label": ""
+              }
+            ],
+            "ops": [
+              "×",
+              "="
+            ]
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "X",
+                "label": "Broker X"
+              },
+              {
+                "id": "Y",
+                "label": "Broker Y"
+              }
+            ],
+            "yLabel": "Share of clients",
+            "yMax": 2,
+            "showValues": true,
+            "decimals": 3
+          },
+          "state": {
+            "values": {
+              "X": 2,
+              "Y": 1
+            }
+          }
+        },
+        "state": {
+          "caption": "The eigenvector $(2, 1)$ as it stands: it adds to 3."
+        }
+      },
+      "question": "What is the steady state, as shares?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Broker",
+          "Long-run share"
+        ],
+        "rows": [
+          [
+            "X",
+            {
+              "edit": true,
+              "answer": 0.6667,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "Y",
+            {
+              "edit": true,
+              "answer": 0.3333,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What do 2 and 1 add to?"
+        },
+        {
+          "rung": "point",
+          "text": "Divide each entry by the total.",
+          "highlight": [
+            "right:X",
+            "right:Y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(2, 1)/3 = (\\tfrac{2}{3}, \\tfrac{1}{3}) \\approx (0.667, 0.333)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(\\tfrac{2}{3}, \\tfrac{1}{3})$, the split the bars settled at.",
+        "generic": "Not quite right. Scale $(2, 1)$ so the entries add to 1.",
+        "byKey": {
+          "r0c1": "Divide 2 by $2 + 1 = 3$: $\\tfrac{2}{3} \\approx 0.667$.",
+          "r1c1": "Divide 1 by 3: $\\tfrac{1}{3} \\approx 0.333$."
+        }
+      },
+      "explain": {
+        "text": "Dividing by the total $2 + 1 = 3$ gives $(\\tfrac{2}{3}, \\tfrac{1}{3})$. That matches the explore screen. Any other scaling is still an eigenvector, but not a split of the market.",
+        "canvas": {
+          "right": {
+            "values": {
+              "X": 0.6667,
+              "Y": 0.3333
+            }
+          },
+          "caption": "Scaled to add to 1: $(\\tfrac{2}{3}, \\tfrac{1}{3})$"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Split the start into eigenvectors: $(1, 0) = \\tfrac{1}{3}(2, 1) + \\tfrac{1}{3}(1, -1)$. Each month the first part stays, and the $(1, -1)$ part is multiplied by 0.7, its eigenvalue. So X holds $\\tfrac{2}{3} + \\tfrac{1}{3}(0.7)^k$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "X",
+              "label": "Broker X"
+            },
+            {
+              "id": "Y",
+              "label": "Broker Y"
+            }
+          ],
+          "yLabel": "Share of clients",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "X": 1,
+            "Y": 0
+          },
+          "params": {
+            "k": 0,
+            "a": 1
+          }
+        },
+        "derive": {
+          "values.X": "2/3 + (a - 2/3) * pow(0.7, k)",
+          "values.Y": "1/3 - (a - 2/3) * pow(0.7, k)",
+          "caption": "Month {{k}}: X is {{fixed(pow(0.7, k) / 3, 4)}} above $\\tfrac{2}{3}$."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 15,
+            "step": 1,
+            "label": "Months $k$",
+            "start": 0
+          }
+        ]
+      },
+      "question": "What is the smallest $k$ with X's share within 0.01 of $\\tfrac{2}{3}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Months k",
+        "placeholder": "whole months",
+        "accept": "10: $\\tfrac{1}{3}(0.7)^{10} \\approx 0.0094$, while $k = 9$ gives 0.0135.",
+        "unit": "months",
+        "wrong": [
+          {
+            "id": "nine",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "no-third",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "linear",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You need $\\tfrac{1}{3}(0.7)^k < 0.01$."
+        },
+        {
+          "rung": "point",
+          "text": "Slide $k$ and read the gap in the caption.",
+          "highlight": [
+            "X"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(0.7)^k < 0.03$. Since $(0.7)^9 \\approx 0.040$ and $(0.7)^{10} \\approx 0.028$, the answer is 10."
+        }
+      ],
+      "feedback": {
+        "correct": "$k = 10$: the gap is $\\tfrac{1}{3}(0.7)^{10} \\approx 0.0094$.",
+        "generic": "Not quite right. Find where the caption's gap first drops below 0.01.",
+        "byKey": {
+          "nine": "At $k = 9$ the gap is $\\tfrac{1}{3}(0.7)^9 \\approx 0.0135$, still above 0.01.",
+          "no-third": "You solved $(0.7)^k < 0.01$ and dropped the starting gap $\\tfrac{1}{3}$.",
+          "linear": "The gap does not fall by a fixed amount each month. It is multiplied by 0.7, so it shrinks ever more slowly."
+        }
+      },
+      "explain": {
+        "text": "The gap starts at $\\tfrac{1}{3}$ and is multiplied by 0.7 each month. $\\tfrac{1}{3}(0.7)^{9} \\approx 0.0135$ and $\\tfrac{1}{3}(0.7)^{10} \\approx 0.0094$. The second eigenvalue sets this speed: closer to 1 means slower.",
+        "canvas": {
+          "params": {
+            "k": 10
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A different chain. Each month every client of X moves to Y and every client of Y moves to X. $\\mathbf{P} = \\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}$ still has columns adding to 1. Slide $k$ and the start.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "X",
+              "label": "Broker X"
+            },
+            {
+              "id": "Y",
+              "label": "Broker Y"
+            }
+          ],
+          "yLabel": "Share of clients",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "X": 1,
+            "Y": 0
+          },
+          "params": {
+            "k": 0,
+            "a": 1
+          }
+        },
+        "derive": {
+          "values.X": "0.5 + (a - 0.5) * pow(-1, k)",
+          "values.Y": "0.5 - (a - 0.5) * pow(-1, k)",
+          "caption": "Month {{k}}: X has {{fixed(0.5 + (a - 0.5) * pow(-1, k), 2)}}."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 12,
+            "step": 1,
+            "label": "Months $k$",
+            "start": 0
+          },
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 1,
+            "step": 0.1,
+            "label": "Starting share of X",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Why does this chain never settle from $(1, 0)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Its other eigenvalue is $-1$, so the $(1, -1)$ part flips sign forever and never shrinks",
+            "correct": true
+          },
+          {
+            "id": "nosteady",
+            "text": "It has no steady state",
+            "why": "$(0.5, 0.5)$ is a steady state: $\\mathbf{P}(0.5, 0.5) = (0.5, 0.5)$. Set the start to 0.5 and nothing moves.",
+            "canvas": {
+              "params": {
+                "a": 0.5,
+                "k": 3
+              }
+            }
+          },
+          {
+            "id": "start",
+            "text": "Only $(1, 0)$ fails; other starts settle",
+            "why": "Try a start of 0.3. It swaps between 0.3 and 0.7 forever. Only 0.5 sits still.",
+            "canvas": {
+              "params": {
+                "a": 0.3,
+                "k": 3
+              }
+            }
+          },
+          {
+            "id": "cols",
+            "text": "Its columns do not add to 1",
+            "why": "Each column is $(0, 1)$ or $(1, 0)$, and both add to 1. It is a Markov matrix."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the eigenvalues of $\\mathbf{P}$: trace 0, determinant $-1$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\lambda^2 - 1 = 0$, so $\\lambda = 1$ or $\\lambda = -1$.",
+          "highlight": [
+            "X"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(1, 0) = \\tfrac{1}{2}(1, 1) + \\tfrac{1}{2}(1, -1)$. The second part is multiplied by $(-1)^k$, which never dies away."
+        }
+      ],
+      "feedback": {
+        "correct": "$|-1| = 1$, so the $(1, -1)$ part keeps its size and just flips.",
+        "generic": "Not quite right. Look at the eigenvalues of $\\mathbf{P}$ and what $(-1)^k$ does."
+      },
+      "explain": {
+        "text": "Settling needs every other eigenvalue to satisfy $|\\lambda| < 1$. Here $\\lambda = -1$, so $(-1)^k$ keeps the swing alive. Such a chain is called periodic.",
+        "canvas": {
+          "params": {
+            "k": 5,
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "For $\\mathbf{M} = \\begin{pmatrix} 0.8 & 0.6 \\\\ 0.2 & 0.4 \\end{pmatrix}$, a library returns the eigenvector $(0.949, 0.316)$ for eigenvalue 1. Most software scales eigenvectors to length 1.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.8,
+                  0.6
+                ],
+                [
+                  0.2,
+                  0.4
+                ]
+              ],
+              "label": "$\\mathbf{M}$"
+            },
+            {
+              "id": "v",
+              "rows": [
+                [
+                  0.949
+                ],
+                [
+                  0.316
+                ]
+              ],
+              "label": "returned"
+            }
+          ],
+          "ops": [
+            ""
+          ]
+        },
+        "state": {}
+      },
+      "question": "In the long run, what share is in state 1?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "unit",
+            "text": "$0.949$",
+            "why": "That entry comes from a vector of length 1. Shares must add to 1, and $0.949 + 0.316 = 1.265$."
+          },
+          {
+            "id": "right",
+            "text": "$0.75$",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "$0.5$",
+            "why": "The chain does not split evenly: state 1 wins 60% of state 2 each step and loses only 20%."
+          },
+          {
+            "id": "start",
+            "text": "It depends on the starting split",
+            "why": "The other eigenvalue is $0.8 + 0.4 - 1 = 0.2$. Its part dies away, so every start ends in the same place."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Shares add to 1. Does the returned vector?"
+        },
+        {
+          "rung": "point",
+          "text": "$0.949 + 0.316 = 1.265$.",
+          "highlight": [
+            "v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by the sum: $0.949 / 1.265 \\approx 0.75$. Or solve $(\\mathbf{M} - \\mathbf{I})\\mathbf{s} = \\mathbf{0}$: $s_1 = 3s_2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(0.949, 0.316)/1.265 = (0.75, 0.25)$.",
+        "generic": "Not quite right. Rescale the eigenvector so its entries add to 1.",
+        "byKey": {
+          "unit": "You used the eigenvector as returned. It has length 1, not sum 1; divide by $0.949 + 0.316$.",
+          "start": "You expected the start to matter. With the other eigenvalue inside $(-1, 1)$, it never does."
+        }
+      },
+      "explain": {
+        "text": "$(0.949, 0.316)$ is $(3, 1)/\\sqrt{10}$, scaled to length 1. Scaling to sum 1 instead gives $(0.75, 0.25)$. Same direction, but only one scaling is a split of probability.",
+        "canvas": {
+          "highlight": {
+            "v": {
+              "cols": [
+                0
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Write the start in eigenvectors, $\\mathbf{s}_0 = c_1\\mathbf{x}_1 + c_2\\mathbf{x}_2$, with $\\lambda_1 = 1$. Then $$\\mathbf{M}^k\\mathbf{s}_0 = c_1\\mathbf{x}_1 + c_2\\lambda_2^k\\mathbf{x}_2 \\;\\to\\; c_1\\mathbf{x}_1 \\quad \\text{when } |\\lambda_2| < 1.$$ The eigenvalue 1 wins, and $\\lambda_2$ sets the speed.",
+      "question": "With eigenvalues 1 and 0.7, the gap to the steady state after $k$ steps is the starting gap times what?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0.7^k$",
+            "correct": true
+          },
+          {
+            "id": "comp",
+            "text": "$0.3^k$",
+            "why": "0.3 is $1 - 0.7$. The gap is multiplied by the eigenvalue itself, 0.7, each step."
+          },
+          {
+            "id": "lin",
+            "text": "$0.7k$",
+            "why": "The factor compounds: each step multiplies by 0.7 again, so it is a power, not a product with $k$."
+          },
+          {
+            "id": "one",
+            "text": "$1^k$",
+            "why": "$1^k$ multiplies the steady part $c_1\\mathbf{x}_1$, which does not shrink. The gap is the other part."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The gap is $c_2\\lambda_2^k\\mathbf{x}_2$, so it shrinks by $0.7$ each step.",
+        "generic": "Not quite right. Which term in $\\mathbf{M}^k\\mathbf{s}_0$ is the gap?"
+      },
+      "explain": {
+        "text": "The steady part $c_1\\mathbf{x}_1$ never changes. The gap is $c_2(0.7)^k\\mathbf{x}_2$, as you saw on the speed screen. For a Markov matrix $\\mathbf{x}_2$'s entries add to 0, so $c_1$ is fixed by the total and the start cannot matter."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Every Markov matrix you met had eigenvalue 1. Prove it for any $\\mathbf{M}$ whose columns add to 1. Write $\\mathbf{1} = (1, 1, \\dots, 1)$.",
+      "question": "Put the lines of the proof in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "cols",
+            "text": "Each column of $\\mathbf{M}$ adds to 1, the Markov property"
+          },
+          {
+            "id": "row",
+            "text": "$\\mathbf{1}^T\\mathbf{M} = \\mathbf{1}^T$, since $\\mathbf{1}^T$ times a column adds up that column"
+          },
+          {
+            "id": "tr",
+            "text": "$\\mathbf{M}^T\\mathbf{1} = \\mathbf{1}$, transposing both sides"
+          },
+          {
+            "id": "detT",
+            "text": "$\\det(\\mathbf{M}^T - \\mathbf{I}) = 0$, since $\\mathbf{1} \\neq \\mathbf{0}$ is in the nullspace of $\\mathbf{M}^T - \\mathbf{I}$"
+          },
+          {
+            "id": "det",
+            "text": "$\\det(\\mathbf{M} - \\mathbf{I}) = 0$, since a matrix and its transpose share a determinant; so 1 is an eigenvalue of $\\mathbf{M}$"
+          }
+        ],
+        "answer": [
+          "cols",
+          "row",
+          "tr",
+          "detT",
+          "det"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the Markov property and end with the characteristic equation at $\\lambda = 1$."
+        },
+        {
+          "rung": "point",
+          "text": "A row of ones times $\\mathbf{M}$ adds up each column of $\\mathbf{M}$."
+        },
+        {
+          "rung": "step",
+          "text": "Columns add to 1, so $\\mathbf{1}^T\\mathbf{M} = \\mathbf{1}^T$. Transpose, read off an eigenvector of $\\mathbf{M}^T$, then move the determinant back to $\\mathbf{M}$."
+        }
+      ],
+      "feedback": {
+        "correct": "So $\\lambda = 1$ solves $\\det(\\mathbf{M} - \\lambda\\mathbf{I}) = 0$ for every Markov matrix.",
+        "generic": "Not quite right. Each line must follow from the one before.",
+        "byKey": {
+          "tr": "Transposing needs a statement about $\\mathbf{M}$ first: $\\mathbf{1}^T\\mathbf{M} = \\mathbf{1}^T$.",
+          "det": "Moving back to $\\mathbf{M}$ is the last step, after the determinant of $\\mathbf{M}^T - \\mathbf{I}$."
+        }
+      },
+      "explain": {
+        "text": "With $\\mathbf{M} = \\begin{pmatrix} 0.9 & 0.2 \\\\ 0.1 & 0.8 \\end{pmatrix}$: $(1, 1)\\mathbf{M} = (1, 1)$. So $(1, 1)$ is an eigenvector of $\\mathbf{M}^T$, not of $\\mathbf{M}$. The eigenvalue 1 carries over; the eigenvector $(2, 1)$ you must still solve for."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A bond book in the long run",
+      "prose": "A fund's £500m of bonds move between ratings each year: investment grade (IG), high yield (HY) and distressed (D). Column $j$ of $\\mathbf{M}$ holds the chances from rating $j$. Ignore defaults here; the markov course adds them.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.95,
+                  0.1,
+                  0
+                ],
+                [
+                  0.05,
+                  0.85,
+                  0.15
+                ],
+                [
+                  0,
+                  0.05,
+                  0.85
+                ]
+              ],
+              "label": "$\\mathbf{M}$"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Columns, and rows, in the order IG, HY, D."
+        }
+      },
+      "question": "Find the long-run share of the book in each rating.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Rating",
+          "Long-run value"
+        ],
+        "rows": [
+          [
+            "IG share",
+            {
+              "edit": true,
+              "answer": 0.6,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "HY share",
+            {
+              "edit": true,
+              "answer": 0.3,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "D share",
+            {
+              "edit": true,
+              "answer": 0.1,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "£m in D",
+            {
+              "edit": true,
+              "answer": 50,
+              "tol": {
+                "abs": 0.5
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Solve $(\\mathbf{M} - \\mathbf{I})\\mathbf{s} = \\mathbf{0}$, then scale so the shares add to 1."
+        },
+        {
+          "rung": "point",
+          "text": "Row 1 of $\\mathbf{M} - \\mathbf{I}$: $-0.05s_1 + 0.10s_2 = 0$, so $s_1 = 2s_2$.",
+          "highlight": [
+            "M-r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 3: $0.05s_2 - 0.15s_3 = 0$, so $s_2 = 3s_3$. So $\\mathbf{s} \\propto (6, 3, 1)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(0.6, 0.3, 0.1)$, so £50m sits in D.",
+        "generic": "Not quite right. Use rows 1 and 3 of $\\mathbf{M} - \\mathbf{I}$, then divide by the total.",
+        "byKey": {
+          "r0c1": "$(6, 3, 1)/10$ gives IG $0.6$.",
+          "r1c1": "$(6, 3, 1)/10$ gives HY $0.3$.",
+          "r2c1": "$(6, 3, 1)/10$ gives D $0.1$.",
+          "r3c1": "$0.1 \\times \\text{£}500\\text{m} = \\text{£}50\\text{m}$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{s} = (6, 3, 1)/10$; check row 2: $0.05(0.6) + 0.85(0.3) + 0.15(0.1) = 0.3$. The other eigenvalues are 0.9 and 0.75, so the gap shrinks only about 10% a year. That slow drift is why rating mixes change over decades.",
+        "canvas": {
+          "highlight": {
+            "M": {
+              "rows": [
+                0,
+                2
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Repeated multiplication $\\mathbf{M}^k\\mathbf{s}_0$ keeps the part along the eigenvector with the largest eigenvalue; the other parts shrink by $\\lambda^k$.",
+      "A Markov matrix (columns adding to 1) always has eigenvalue 1. Its eigenvector, scaled to add to 1, is the steady state, whatever the start.",
+      "The next eigenvalue sets the speed: the gap shrinks by $|\\lambda_2|$ each step. With $|\\lambda_2| = 1$, as in a swap, it never settles."
+    ],
+    "formula": {
+      "name": "Long-run behaviour",
+      "tex": "\\mathbf{M}^k\\mathbf{s}_0 = c_1\\mathbf{x}_1 + c_2\\lambda_2^k\\mathbf{x}_2 \\to c_1\\mathbf{x}_1",
+      "note": "For a Markov matrix, $\\lambda_1 = 1$ and $c_1\\mathbf{x}_1$ is $\\mathbf{x}_1$ scaled to add to 1."
+    },
+    "trap": "An eigenvector from software has length 1, not sum 1: rescale before reading it as shares. And the start does not change the limit."
+  },
+  "quiz": [
+    {
+      "id": "q-steady",
+      "difficulty": 2,
+      "prose": "$\\mathbf{M} = \\begin{pmatrix} 0.7 & 0.4 \\\\ 0.3 & 0.6 \\end{pmatrix}$ moves shares between two states.",
+      "question": "What is the long-run share in state 1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5714,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Long-run share of state 1",
+        "placeholder": "fraction or decimal",
+        "accept": "$\\tfrac{4}{7} \\approx 0.571$.",
+        "wrong": [
+          {
+            "id": "unit",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "keep",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(4, 3)/7$: state 1 holds $\\tfrac{4}{7}$.",
+        "generic": "Not quite right. Solve $(\\mathbf{M} - \\mathbf{I})\\mathbf{s} = \\mathbf{0}$ and scale to sum 1.",
+        "byKey": {
+          "unit": "0.8 comes from $(4, 3)/5$, the eigenvector scaled to length 1. Scale to sum 1: divide by 7.",
+          "half": "An even split is not stable: $\\mathbf{M}(0.5, 0.5) = (0.55, 0.45)$.",
+          "keep": "0.7 is the chance state 1 keeps its share for one step, not the long-run share."
+        }
+      },
+      "explain": {
+        "text": "Row 1 of $\\mathbf{M} - \\mathbf{I}$ is $(-0.3, 0.4)$, so $0.3s_1 = 0.4s_2$ and $\\mathbf{s} \\propto (4, 3)$. Dividing by 7 gives $(\\tfrac{4}{7}, \\tfrac{3}{7}) \\approx (0.571, 0.429)$."
+      }
+    },
+    {
+      "id": "q-speed",
+      "difficulty": 2,
+      "prose": "The same $\\mathbf{M} = \\begin{pmatrix} 0.7 & 0.4 \\\\ 0.3 & 0.6 \\end{pmatrix}$.",
+      "question": "By what factor does the gap to the steady state shrink each step?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Factor per step",
+        "placeholder": "a decimal",
+        "accept": "0.3: the other eigenvalue, trace $- 1 = 1.3 - 1$.",
+        "wrong": [
+          {
+            "id": "keep",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "trace",
+            "value": 1.3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "six",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The eigenvalues add to the trace 1.3; one is 1, so the other is 0.3.",
+        "generic": "Not quite right. Find the second eigenvalue from the trace."
+      },
+      "explain": {
+        "text": "The eigenvalues add to $0.7 + 0.6 = 1.3$, and one of them is 1. So $\\lambda_2 = 0.3$, and the gap is multiplied by 0.3 each step: fast."
+      }
+    },
+    {
+      "id": "q-three",
+      "difficulty": 3,
+      "prose": "A three-state Markov matrix has eigenvector $(2, 3, 5)$ for eigenvalue 1, and its other eigenvalues have size below 1.",
+      "question": "What is the long-run share in state 3?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Long-run share of state 3",
+        "placeholder": "a decimal",
+        "accept": "0.5: $5/(2 + 3 + 5)$.",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "equal",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$5/10 = 0.5$.",
+        "generic": "Not quite right. Scale $(2, 3, 5)$ to add to 1.",
+        "byKey": {
+          "raw": "5 is the entry before scaling. Shares add to 1.",
+          "equal": "The steady state is not an even split; it follows the eigenvector."
+        }
+      },
+      "explain": {
+        "text": "$(2, 3, 5)/10 = (0.2, 0.3, 0.5)$. State 3 holds half of everything in the long run, from any start."
+      }
+    },
+    {
+      "id": "q-never",
+      "difficulty": 2,
+      "prose": "Each matrix below moves shares between two states, starting from $(1, 0)$.",
+      "question": "Which one never settles?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}$",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "$\\begin{pmatrix} 0.5 & 0.5 \\\\ 0.5 & 0.5 \\end{pmatrix}$",
+            "why": "Its other eigenvalue is 0, so it settles at $(0.5, 0.5)$ in one step."
+          },
+          {
+            "id": "usual",
+            "text": "$\\begin{pmatrix} 0.9 & 0.2 \\\\ 0.1 & 0.8 \\end{pmatrix}$",
+            "why": "Its other eigenvalue is 0.7, so it settles at $(\\tfrac{2}{3}, \\tfrac{1}{3})$."
+          },
+          {
+            "id": "absorb",
+            "text": "$\\begin{pmatrix} 1 & 0.5 \\\\ 0 & 0.5 \\end{pmatrix}$",
+            "why": "State 1 keeps everything, and $(1, 0)$ is already its steady state."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The swap matrix has eigenvalue $-1$, so it flips forever.",
+        "generic": "Not quite right. Look for an eigenvalue other than 1 with $|\\lambda| = 1$."
+      },
+      "explain": {
+        "text": "The swap sends $(1, 0)$ to $(0, 1)$ and back, for ever. Its eigenvalues are 1 and $-1$, and $(-1)^k$ never shrinks."
+      }
+    }
+  ]
+}

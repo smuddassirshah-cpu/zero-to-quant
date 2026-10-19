@@ -1,0 +1,1446 @@
+{
+  "id": "l8-ellipses",
+  "course": "eigen",
+  "title": "Ellipses from quadratic forms",
+  "minutes": 14,
+  "objectives": [
+    "Read the shape of a quadratic form from its eigenvalues.",
+    "Find the axes of $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = c$ and of a risk ellipse."
+  ],
+  "skills": [
+    "eg-pd",
+    "eg-pca"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A curve from a matrix",
+      "prose": "Take $\\mathbf{A} = \\begin{pmatrix}4&0\\\\0&1\\end{pmatrix}$, so $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 4x^2 + y^2$. The curve is every point where this equals 1. P rides the curve: drag it round.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2,
+            2
+          ],
+          "y": [
+            -1.5,
+            1.5
+          ],
+          "equal": true,
+          "grid": true,
+          "height": 320,
+          "functions": [
+            {
+              "id": "E",
+              "implicit": "4*x^2 + y^2 - 1",
+              "colour": 1
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0,
+              "y": 1,
+              "drag": true,
+              "on": "E",
+              "label": "P"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "P = ({{fixed(P.x, 2)}}, {{fixed(P.y, 2)}})"
+        }
+      },
+      "question": "How far from the origin does the curve cross the positive $x$-axis?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Distance along the x-axis",
+        "accept": "0.5: on the axis $y = 0$, so $4x^2 = 1$ and $x = \\tfrac{1}{2}$.",
+        "wrong": [
+          {
+            "id": "lambda",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "inverse",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "root",
+            "value": 2,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag P down onto the $x$-axis and read its $x$."
+        },
+        {
+          "rung": "point",
+          "text": "On the $x$-axis, $y = 0$. Solve $4x^2 = 1$.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$x^2 = \\tfrac{1}{4}$, so $x = \\tfrac{1}{2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$4x^2 = 1$ gives $x = \\tfrac{1}{2}$.",
+        "generic": "Not quite right. Put $y = 0$ and solve $4x^2 = 1$.",
+        "byKey": {
+          "lambda": "You read the 4 in the matrix as the distance. It multiplies $x^2$, so the curve is pulled in, not pushed out.",
+          "inverse": "You solved $4x = 1$. The form has $x^2$, so take a square root: $x = \\tfrac{1}{2}$.",
+          "root": "You took $\\sqrt{4}$. The 4 multiplies $x^2$, so $x = 1/\\sqrt{4}$."
+        }
+      },
+      "explain": {
+        "text": "On the axis $4x^2 = 1$, so the curve crosses at $x = \\tfrac{1}{2}$, and at $y = 1$ on the other axis. The curve is an ellipse. The bigger entry, 4, gave the shorter half-width.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0.5,
+              "y": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Two eigenvalues and a turn",
+      "prose": "Now $\\mathbf{A}$ has eigenvalue $\\lambda_1$ along $\\mathbf{q}_1$ and $\\lambda_2$ along $\\mathbf{q}_2$. The angle turns both eigenvectors together. The two segments run from the centre to the curve along $\\mathbf{q}_1$ and $\\mathbf{q}_2$. Slide all three.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.2,
+            2.2
+          ],
+          "y": [
+            -2.2,
+            2.2
+          ],
+          "equal": true,
+          "grid": true,
+          "height": 340,
+          "functions": [
+            {
+              "id": "E",
+              "implicit": "l1*(x*cos(th*pi/180) + y*sin(th*pi/180))^2 + l2*(-x*sin(th*pi/180) + y*cos(th*pi/180))^2 - 1",
+              "colour": 1
+            }
+          ],
+          "params": {
+            "l1": 1,
+            "l2": 4,
+            "th": 30
+          }
+        },
+        "state": {
+          "segments": [
+            {
+              "id": "a1",
+              "from": [
+                0,
+                0
+              ],
+              "to": [
+                0.866,
+                0.5
+              ],
+              "colour": 2,
+              "label": "$\\mathbf{q}_1$"
+            },
+            {
+              "id": "a2",
+              "from": [
+                0,
+                0
+              ],
+              "to": [
+                -0.25,
+                0.433
+              ],
+              "colour": 3,
+              "label": "$\\mathbf{q}_2$"
+            }
+          ]
+        },
+        "derive": {
+          "a1.to": "[cos(th*pi/180)/sqrt(l1), sin(th*pi/180)/sqrt(l1)]",
+          "a2.to": "[-sin(th*pi/180)/sqrt(l2), cos(th*pi/180)/sqrt(l2)]",
+          "caption": "$\\lambda_1$ = {{l1}}: half-axis {{fixed(1/sqrt(l1), 2)}}.  $\\lambda_2$ = {{l2}}: half-axis {{fixed(1/sqrt(l2), 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "l1",
+            "min": 0.25,
+            "max": 4,
+            "step": 0.25,
+            "start": 1,
+            "label": "$\\lambda_1$"
+          },
+          {
+            "bind": "l2",
+            "min": 0.25,
+            "max": 4,
+            "step": 0.25,
+            "start": 4,
+            "label": "$\\lambda_2$"
+          },
+          {
+            "bind": "th",
+            "min": 0,
+            "max": 180,
+            "step": 15,
+            "start": 30,
+            "label": "Angle (°)"
+          }
+        ]
+      },
+      "question": "Take $\\lambda_1$ from 1 to 4. What happens to the half-axis along $\\mathbf{q}_1$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "half",
+            "text": "It halves",
+            "correct": true
+          },
+          {
+            "id": "quarter",
+            "text": "It shrinks to a quarter",
+            "why": "You expected the length to follow $\\lambda$ down in step. The caption reads 1.00, then 0.50: a half.",
+            "canvas": {
+              "params": {
+                "l1": 4
+              }
+            }
+          },
+          {
+            "id": "times4",
+            "text": "It grows four times",
+            "why": "You read a bigger eigenvalue as a longer axis. A bigger $\\lambda$ makes the form climb faster, so the curve sits closer in.",
+            "canvas": {
+              "params": {
+                "l1": 4
+              }
+            }
+          },
+          {
+            "id": "turns",
+            "text": "It turns to a new direction",
+            "why": "You may have mixed the sliders. Only the angle turns the axes; $\\lambda_1$ changes a length.",
+            "canvas": {
+              "params": {
+                "l1": 4
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the angle anywhere, then watch the first half-axis as $\\lambda_1$ goes from 1 to 4."
+        }
+      ],
+      "feedback": {
+        "correct": "Four times the eigenvalue, half the length: the half-axis is $1/\\sqrt{\\lambda}$.",
+        "generic": "Not quite right. Read the first half-axis in the caption at $\\lambda_1 = 1$ and at $\\lambda_1 = 4$."
+      },
+      "explain": {
+        "text": "The caption went from 1.00 to 0.50: the half-axis is $1/\\sqrt{\\lambda_1}$. The angle slider turned the ellipse without changing its shape. Its axes always lie along the eigenvectors.",
+        "canvas": {
+          "params": {
+            "l1": 4,
+            "l2": 1,
+            "th": 30
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Principal axes",
+      "prose": "For $\\mathbf{A} = \\begin{pmatrix}2&1\\\\1&2\\end{pmatrix}$, eigenvalue 3 goes with $(1, 1)$ and eigenvalue 1 with $(1, -1)$. The ellipse $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 1$ has its **principal axes** along them. Drag P round to measure.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.5,
+            1.5
+          ],
+          "y": [
+            -1.2,
+            1.2
+          ],
+          "equal": true,
+          "grid": true,
+          "height": 320,
+          "functions": [
+            {
+              "id": "E",
+              "implicit": "2*x^2 + 2*x*y + 2*y^2 - 1",
+              "colour": 1
+            },
+            {
+              "id": "d1",
+              "expr": "x",
+              "colour": 2,
+              "dashed": true,
+              "label": "$(1, 1)$",
+              "labelAt": 1.0
+            },
+            {
+              "id": "d2",
+              "expr": "-x",
+              "colour": 3,
+              "dashed": true,
+              "label": "$(1, -1)$",
+              "labelAt": 1.0
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0,
+              "y": 0.7071,
+              "drag": true,
+              "on": "E",
+              "label": "P"
+            }
+          ],
+          "segments": [
+            {
+              "id": "OP",
+              "from": [
+                0,
+                0
+              ],
+              "to": "P"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "Distance from the centre to P: {{fixed(hypot(P.x, P.y), 3)}}"
+        }
+      },
+      "question": "How long is the half-axis along $(1, 1)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.577,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Half-axis along (1, 1)",
+        "accept": "$1/\\sqrt{3} \\approx 0.577$.",
+        "wrong": [
+          {
+            "id": "lambda",
+            "value": 3,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "inverse",
+            "value": 0.333,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "root",
+            "value": 1.732,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "other",
+            "value": 1,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag P onto the dashed line $y = x$ and read the distance."
+        },
+        {
+          "rung": "point",
+          "text": "The half-axis is $1/\\sqrt{\\lambda}$ for the eigenvalue of that direction.",
+          "highlight": [
+            "d1",
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Along $(1, 1)$, $\\lambda = 3$, so the half-axis is $1/\\sqrt{3} \\approx 0.577$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1/\\sqrt{3} \\approx 0.577$, the short half-axis.",
+        "generic": "Not quite right. Find the eigenvalue for $(1, 1)$ and take $1/\\sqrt{\\lambda}$.",
+        "byKey": {
+          "lambda": "You used the eigenvalue itself as the length. The half-axis is $1/\\sqrt{3}$.",
+          "inverse": "You took $1/\\lambda$. The form is quadratic, so the length is $1/\\sqrt{\\lambda}$.",
+          "root": "You took $\\sqrt{3}$. A bigger eigenvalue gives a shorter axis: $1/\\sqrt{3}$.",
+          "other": "That is the long half-axis, along $(1, -1)$ with $\\lambda = 1$. Measure along $(1, 1)$."
+        }
+      },
+      "explain": {
+        "text": "Along $(1, 1)$ the distance was smallest, $1/\\sqrt{3} \\approx 0.577$. Along $(1, -1)$ it was largest, $1/\\sqrt{1} = 1$. The principal axes are the eigenvectors, and the half-axes are $1/\\sqrt{\\lambda}$.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0.4082,
+              "y": 0.4082
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Which axis is long",
+      "prose": "Now $\\mathbf{A} = \\begin{pmatrix}5&3\\\\3&5\\end{pmatrix}$, with eigenvalue 8 along $(1, 1)$ and 2 along $(1, -1)$. The ellipse $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 1$ is hidden; the dashed lines are its axes.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.2,
+            1.2
+          ],
+          "y": [
+            -1,
+            1
+          ],
+          "equal": true,
+          "grid": true,
+          "height": 300,
+          "functions": [
+            {
+              "id": "E",
+              "implicit": "5*x^2 + 6*x*y + 5*y^2 - 1",
+              "colour": 1
+            },
+            {
+              "id": "d1",
+              "expr": "x",
+              "colour": 2,
+              "dashed": true,
+              "label": "$(1, 1)$",
+              "labelAt": 0.85
+            },
+            {
+              "id": "d2",
+              "expr": "-x",
+              "colour": 3,
+              "dashed": true,
+              "label": "$(1, -1)$",
+              "labelAt": 0.85
+            }
+          ]
+        },
+        "state": {
+          "hide": [
+            "E"
+          ]
+        }
+      },
+      "question": "Along which direction is the long axis, and how long is its half?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Along $(1, -1)$, half-axis $1/\\sqrt{2} \\approx 0.71$",
+            "correct": true
+          },
+          {
+            "id": "big-short",
+            "text": "Along $(1, 1)$, half-axis $1/\\sqrt{8} \\approx 0.35$",
+            "why": "You matched the long axis to the big eigenvalue. $1/\\sqrt{8}$ is the short half-axis."
+          },
+          {
+            "id": "lambda",
+            "text": "Along $(1, 1)$, half-axis 8",
+            "why": "You read the eigenvalue as a length. Lengths are $1/\\sqrt{\\lambda}$, so big $\\lambda$ means short."
+          },
+          {
+            "id": "inverse",
+            "text": "Along $(1, -1)$, half-axis $\\tfrac{1}{2}$",
+            "why": "Right direction, but you took $1/\\lambda$. The half-axis is $1/\\sqrt{2}$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which eigenvalue makes $1/\\sqrt{\\lambda}$ larger?"
+        },
+        {
+          "rung": "point",
+          "text": "The smaller eigenvalue, 2, goes with $(1, -1)$.",
+          "highlight": [
+            "d2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Long half-axis: $1/\\sqrt{2} \\approx 0.71$ along $(1, -1)$."
+        }
+      ],
+      "feedback": {
+        "correct": "The smaller eigenvalue gives the longer axis: $1/\\sqrt{2}$ along $(1, -1)$.",
+        "generic": "Not quite right. Compute $1/\\sqrt{\\lambda}$ for both eigenvalues."
+      },
+      "explain": {
+        "text": "Half-axes are $1/\\sqrt{8} \\approx 0.35$ along $(1, 1)$ and $1/\\sqrt{2} \\approx 0.71$ along $(1, -1)$. The long axis is twice the short one, since $\\sqrt{8/2} = 2$. The form climbs slowest along the long axis.",
+        "canvas": {
+          "hide": []
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A higher level",
+      "prose": "Back to $\\mathbf{A} = \\begin{pmatrix}4&0\\\\0&1\\end{pmatrix}$. The inner curve is $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 1$. The outer curve, hidden for now, is $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 9$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3.5,
+            3.5
+          ],
+          "y": [
+            -3.5,
+            3.5
+          ],
+          "equal": true,
+          "grid": true,
+          "height": 320,
+          "functions": [
+            {
+              "id": "E1",
+              "implicit": "4*x^2 + y^2 - 1",
+              "colour": 1
+            },
+            {
+              "id": "E9",
+              "implicit": "4*x^2 + y^2 - 9",
+              "colour": 2
+            }
+          ]
+        },
+        "state": {
+          "hide": [
+            "E9"
+          ]
+        }
+      },
+      "question": "Where does $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 9$ cross the positive $x$-axis?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Crossing on the x-axis",
+        "accept": "1.5: $4x^2 = 9$ gives $x = \\tfrac{3}{2}$.",
+        "wrong": [
+          {
+            "id": "no-c",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "times9",
+            "value": 4.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "over4",
+            "value": 2.25,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On the $x$-axis, $y = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "Solve $4x^2 = 9$.",
+          "highlight": [
+            "E1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$x^2 = \\tfrac{9}{4}$, so $x = \\tfrac{3}{2}$: three times the level-1 half-axis."
+        }
+      ],
+      "feedback": {
+        "correct": "$x = \\tfrac{3}{2}$: the level 9 scales every half-axis by $\\sqrt{9} = 3$.",
+        "generic": "Not quite right. Put $y = 0$ and solve $4x^2 = 9$.",
+        "byKey": {
+          "no-c": "That is the crossing at level 1. At level 9, solve $4x^2 = 9$.",
+          "times9": "You multiplied the half-axis 0.5 by 9. Lengths scale by $\\sqrt{9} = 3$.",
+          "over4": "You solved $4x = 9$. The form has $x^2$: take a square root."
+        }
+      },
+      "explain": {
+        "text": "$4x^2 = 9$ gives $x = 1.5$, three times the 0.5 at level 1. In general $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = c$ has half-axes $\\sqrt{c/\\lambda}$. The same shape, scaled by $\\sqrt{c}$.",
+        "canvas": {
+          "hide": []
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Eigenvalues of both signs",
+      "prose": "$\\mathbf{T} = \\begin{pmatrix}1&2\\\\2&1\\end{pmatrix}$ has eigenvalue 3 along $(1, 1)$ and $-1$ along $(1, -1)$. The curve $\\mathbf{x}^T\\mathbf{T}\\mathbf{x} = 1$ is hidden; the dashed lines are the eigen-directions.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.5,
+            2.5
+          ],
+          "y": [
+            -2.5,
+            2.5
+          ],
+          "equal": true,
+          "grid": true,
+          "height": 320,
+          "functions": [
+            {
+              "id": "H",
+              "implicit": "x^2 + 4*x*y + y^2 - 1",
+              "colour": 1
+            },
+            {
+              "id": "d1",
+              "expr": "x",
+              "colour": 2,
+              "dashed": true,
+              "label": "$(1, 1)$",
+              "labelAt": 2
+            },
+            {
+              "id": "d2",
+              "expr": "-x",
+              "colour": 3,
+              "dashed": true,
+              "label": "$(1, -1)$",
+              "labelAt": 2
+            }
+          ]
+        },
+        "state": {
+          "hide": [
+            "H"
+          ]
+        }
+      },
+      "question": "What does $\\mathbf{x}^T\\mathbf{T}\\mathbf{x} = 1$ look like?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "hyper",
+            "text": "Two curves that cross $(1, 1)$'s line at distance $1/\\sqrt{3}$ and never meet $(1, -1)$'s line",
+            "correct": true
+          },
+          {
+            "id": "abs",
+            "text": "An ellipse with half-axes $1/\\sqrt{3}$ and 1",
+            "why": "You dropped the sign of $-1$. Along $(1, -1)$ the form is $-|\\mathbf{x}|^2$, which never reaches 1."
+          },
+          {
+            "id": "lines",
+            "text": "Two parallel lines",
+            "why": "Parallel lines come from an eigenvalue of 0. Here it is $-1$, not 0."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: no point gives 1",
+            "why": "You may have looked only along $(1, -1)$. Along $(1, 1)$ the form is $3|\\mathbf{x}|^2$, which does reach 1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Along each eigen-direction, $\\mathbf{x}^T\\mathbf{T}\\mathbf{x} = \\lambda|\\mathbf{x}|^2$. Which directions can reach 1?"
+        },
+        {
+          "rung": "point",
+          "text": "Along $(1, -1)$, $\\lambda = -1$, so the form is negative there.",
+          "highlight": [
+            "d1",
+            "d2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The curve meets the $(1, 1)$ line at $1/\\sqrt{3}$ and bends away from the $(1, -1)$ line forever: a hyperbola."
+        }
+      ],
+      "feedback": {
+        "correct": "A hyperbola: the level set of a saddle.",
+        "generic": "Not quite right. Ask, direction by direction, whether $\\lambda|\\mathbf{x}|^2$ can equal 1."
+      },
+      "explain": {
+        "text": "Along $(1, 1)$, $3|\\mathbf{x}|^2 = 1$ at distance $1/\\sqrt{3}$. Along $(1, -1)$ the form is never positive, so the curve never gets there. Opposite-sign eigenvalues give a hyperbola, the contour of a saddle.",
+        "canvas": {
+          "hide": []
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Reading the length",
+      "prose": "$\\mathbf{A} = \\begin{pmatrix}0.25&0\\\\0&1\\end{pmatrix}$, so $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 0.25x^2 + y^2$. The ellipse where it equals 1 is hidden. It passes through $(0, 1)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4.5,
+            4.5
+          ],
+          "y": [
+            -2,
+            2
+          ],
+          "equal": true,
+          "grid": true,
+          "height": 260,
+          "functions": [
+            {
+              "id": "E",
+              "implicit": "0.25*x^2 + y^2 - 1",
+              "colour": 1
+            }
+          ]
+        },
+        "state": {
+          "hide": [
+            "E"
+          ],
+          "points": [
+            {
+              "id": "Y",
+              "x": 0,
+              "y": 1,
+              "label": "(0, 1)",
+              "tap": false
+            },
+            {
+              "id": "P",
+              "x": 1,
+              "y": 0,
+              "snap": 0.25,
+              "label": "P"
+            }
+          ]
+        }
+      },
+      "question": "Drag P to where the ellipse crosses the positive $x$-axis.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "P",
+            "target": [
+              2,
+              0
+            ],
+            "tol": 0.15
+          }
+        ],
+        "wrong": [
+          {
+            "id": "lambda",
+            "region": {
+              "x": [
+                0.1,
+                0.4
+              ],
+              "y": [
+                -0.3,
+                0.3
+              ]
+            }
+          },
+          {
+            "id": "root",
+            "region": {
+              "x": [
+                0.4,
+                0.65
+              ],
+              "y": [
+                -0.3,
+                0.3
+              ]
+            }
+          },
+          {
+            "id": "inverse",
+            "region": {
+              "x": [
+                3.7,
+                4.3
+              ],
+              "y": [
+                -0.3,
+                0.3
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On the $x$-axis, $y = 0$, so solve $0.25x^2 = 1$."
+        },
+        {
+          "rung": "point",
+          "text": "$x^2 = 1/0.25 = 4$.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$x = 2 = 1/\\sqrt{0.25}$. Put P at $(2, 0)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(2, 0)$: half-axis $1/\\sqrt{0.25} = 2$.",
+        "generic": "Not quite right. Solve $0.25x^2 = 1$ for $x > 0$.",
+        "byKey": {
+          "lambda": "You put P at 0.25, reading the eigenvalue as the length. A small eigenvalue gives a long axis: $1/\\sqrt{0.25} = 2$.",
+          "root": "You took $\\sqrt{0.25} = 0.5$. The length is the reciprocal of that: $1/\\sqrt{0.25} = 2$.",
+          "inverse": "You took $1/0.25 = 4$. That is $x^2$; the crossing is its square root, 2.",
+          "P": "P is not on the crossing yet. Solve $0.25x^2 = 1$."
+        }
+      },
+      "explain": {
+        "text": "$0.25x^2 = 1$ gives $x^2 = 4$ and $x = 2$. The eigenvalue 0.25 is small, so the form climbs slowly and the curve reaches far out. Half-axis $= 1/\\sqrt{\\lambda}$, never $\\lambda$.",
+        "canvas": {
+          "hide": [],
+          "points": {
+            "P": {
+              "x": 2,
+              "y": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why one over root lambda",
+      "prose": "Let $\\mathbf{q}$ be a unit eigenvector of symmetric $\\mathbf{A}$, with $\\mathbf{A}\\mathbf{q} = \\lambda\\mathbf{q}$ and $\\lambda > 0$. Walk out from the centre along $\\mathbf{q}$ until $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 1$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "walk",
+            "text": "Put $\\mathbf{x} = t\\mathbf{q}$ with $t > 0$, a point along $\\mathbf{q}$"
+          },
+          {
+            "id": "pull",
+            "text": "$\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = t^2\\,\\mathbf{q}^T\\mathbf{A}\\mathbf{q}$, taking the number $t$ out twice"
+          },
+          {
+            "id": "eig",
+            "text": "$= t^2\\,\\mathbf{q}^T(\\lambda\\mathbf{q}) = \\lambda t^2\\,\\mathbf{q}^T\\mathbf{q}$, since $\\mathbf{A}\\mathbf{q} = \\lambda\\mathbf{q}$"
+          },
+          {
+            "id": "unit",
+            "text": "$= \\lambda t^2$, since $\\mathbf{q}^T\\mathbf{q} = 1$"
+          },
+          {
+            "id": "solve",
+            "text": "$\\lambda t^2 = 1$ gives $t = 1/\\sqrt{\\lambda}$, the half-axis along $\\mathbf{q}$"
+          }
+        ],
+        "answer": [
+          "walk",
+          "pull",
+          "eig",
+          "unit",
+          "solve"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by naming the point on the line through $\\mathbf{q}$."
+        },
+        {
+          "rung": "point",
+          "text": "Use the eigenvector equation before the unit length."
+        },
+        {
+          "rung": "step",
+          "text": "Point, pull out $t$, eigenvector, unit length, solve."
+        }
+      ],
+      "feedback": {
+        "correct": "Along an eigenvector the form is just $\\lambda t^2$.",
+        "generic": "Not quite right. Name the point first, then simplify $\\mathbf{x}^T\\mathbf{A}\\mathbf{x}$ one fact at a time.",
+        "byKey": {
+          "unit": "$\\mathbf{q}^T\\mathbf{q}$ only appears after $\\mathbf{A}\\mathbf{q}$ is replaced by $\\lambda\\mathbf{q}$. Put the eigenvector line first.",
+          "solve": "Solving needs the form reduced to $\\lambda t^2$. It comes last."
+        }
+      },
+      "explain": {
+        "text": "Along $\\mathbf{q}$ the form is $\\lambda t^2$, so it reaches 1 at $t = 1/\\sqrt{\\lambda}$. At level $c$ it is $\\sqrt{c/\\lambda}$. With $\\lambda \\le 0$ there is no solution: that direction never reaches the curve."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Risk ellipses",
+      "prose": "The curve $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = c$ has axes along the eigenvectors and half-axes $\\sqrt{c/\\lambda_i}$. For a covariance matrix $\\boldsymbol{\\Sigma}$, the ellipse $\\mathbf{x}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{x} = c$ is a **confidence region** of a bivariate normal. $\\boldsymbol{\\Sigma}^{-1}$ has the same eigenvectors, with eigenvalues $1/\\lambda_i$.",
+      "question": "$\\boldsymbol{\\Sigma}$ has eigenvalues 9 and 1. What are the half-axes of $\\mathbf{x}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{x} = 1$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "3 and 1",
+            "correct": true
+          },
+          {
+            "id": "sigma",
+            "text": "$\\tfrac{1}{3}$ and 1",
+            "why": "You used the eigenvalues of $\\boldsymbol{\\Sigma}$ in $1/\\sqrt{\\lambda}$. The matrix in the form is $\\boldsymbol{\\Sigma}^{-1}$, with eigenvalues $\\tfrac{1}{9}$ and 1."
+          },
+          {
+            "id": "lambda",
+            "text": "9 and 1",
+            "why": "You read variances as lengths. Lengths are standard deviations: $\\sqrt{9} = 3$."
+          },
+          {
+            "id": "inverse",
+            "text": "$\\tfrac{1}{9}$ and 1",
+            "why": "You used the eigenvalues of $\\boldsymbol{\\Sigma}^{-1}$ as lengths. Take $1/\\sqrt{1/9} = 3$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The eigenvalues of $\\boldsymbol{\\Sigma}^{-1}$ are $\\tfrac{1}{9}$ and 1. Apply $1/\\sqrt{\\lambda}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1/\\sqrt{1/9} = 3$ and $1/\\sqrt{1} = 1$: the standard deviations.",
+        "generic": "Not quite right. Find the eigenvalues of $\\boldsymbol{\\Sigma}^{-1}$, then take $1/\\sqrt{\\lambda}$."
+      },
+      "explain": {
+        "text": "For $\\boldsymbol{\\Sigma}^{-1}$ the half-axes are $\\sqrt{c\\,\\lambda_i(\\boldsymbol{\\Sigma})}$: standard deviations along each eigen-portfolio. So the long axis of a risk ellipse points along the largest-variance direction of $\\boldsymbol{\\Sigma}$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The shape of a return cloud",
+      "prose": "Forty days of returns for two stocks, in %. Their $\\boldsymbol{\\Sigma} = \\begin{pmatrix}2&1.6\\\\1.6&2\\end{pmatrix}$ has eigenvalue 3.6 along $(1, 1)$ and 0.4 along $(1, -1)$. The line is the principal direction. The risk ellipses $\\mathbf{x}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{x} = c$ wrap the cloud.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              0.34,
+              0.69
+            ],
+            [
+              -0.09,
+              -0.81
+            ],
+            [
+              -0.37,
+              -1.13
+            ],
+            [
+              0.43,
+              1.8
+            ],
+            [
+              -0.43,
+              -0.81
+            ],
+            [
+              1.1,
+              1.35
+            ],
+            [
+              0.51,
+              -0.39
+            ],
+            [
+              0.3,
+              1.05
+            ],
+            [
+              -1.75,
+              -1.69
+            ],
+            [
+              -2.62,
+              -3.18
+            ],
+            [
+              -2.53,
+              -2.07
+            ],
+            [
+              -1.63,
+              -0.87
+            ],
+            [
+              0.59,
+              0.4
+            ],
+            [
+              -3.58,
+              -3.19
+            ],
+            [
+              0.27,
+              0.45
+            ],
+            [
+              -2.04,
+              -1.93
+            ],
+            [
+              -1.18,
+              -1.59
+            ],
+            [
+              1.99,
+              0.89
+            ],
+            [
+              0.29,
+              1.23
+            ],
+            [
+              -0.57,
+              -0.42
+            ],
+            [
+              0.51,
+              0.6
+            ],
+            [
+              -1.57,
+              -1.01
+            ],
+            [
+              2.46,
+              0.52
+            ],
+            [
+              1.68,
+              1.56
+            ],
+            [
+              -0.66,
+              1.6
+            ],
+            [
+              1.53,
+              0.14
+            ],
+            [
+              0.46,
+              1.06
+            ],
+            [
+              0.05,
+              0.84
+            ],
+            [
+              0.24,
+              0.98
+            ],
+            [
+              2.58,
+              1.48
+            ],
+            [
+              0.66,
+              0.19
+            ],
+            [
+              0.54,
+              -0.62
+            ],
+            [
+              -0.56,
+              -0.5
+            ],
+            [
+              1.74,
+              2.62
+            ],
+            [
+              -1.72,
+              -1.99
+            ],
+            [
+              1.35,
+              -0.78
+            ],
+            [
+              -0.38,
+              -0.26
+            ],
+            [
+              2.3,
+              2.61
+            ],
+            [
+              -0.17,
+              -0.36
+            ],
+            [
+              -0.05,
+              1.6
+            ]
+          ],
+          "xLabel": "A return (%)",
+          "yLabel": "B return (%)",
+          "xRange": [
+            -4.5,
+            4.5
+          ],
+          "yRange": [
+            -4.5,
+            4.5
+          ],
+          "height": 340
+        },
+        "state": {
+          "line": {
+            "m": 1,
+            "b": 0,
+            "label": "principal direction"
+          }
+        }
+      },
+      "question": "How many times longer is a risk ellipse's long axis than its short axis?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Ratio of the axes",
+        "accept": "3: $\\sqrt{3.6/0.4} = \\sqrt{9}$.",
+        "wrong": [
+          {
+            "id": "variance",
+            "value": 9,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "flip",
+            "value": 0.333,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "eig-diff",
+            "value": 3.2,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The half-axes of $\\mathbf{x}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{x} = c$ are $\\sqrt{c\\,\\lambda_i}$, with $\\lambda_i$ the eigenvalues of $\\boldsymbol{\\Sigma}$."
+        },
+        {
+          "rung": "point",
+          "text": "The $c$ cancels in the ratio.",
+          "highlight": [
+            "line"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{3.6}/\\sqrt{0.4} = \\sqrt{9} = 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "3: the cloud is three times as long along $(1, 1)$ as across it.",
+        "generic": "Not quite right. Divide the two half-axes $\\sqrt{c\\,\\lambda_i}$.",
+        "byKey": {
+          "variance": "You divided the variances. Lengths are standard deviations: $\\sqrt{9} = 3$.",
+          "flip": "You divided short by long. The long axis is along $(1, 1)$, the larger eigenvalue.",
+          "eig-diff": "You subtracted the eigenvalues. The axes compare as a ratio of square roots."
+        }
+      },
+      "explain": {
+        "text": "Standard deviations along the axes are $\\sqrt{3.6} \\approx 1.90$ and $\\sqrt{0.4} \\approx 0.63$, a ratio of 3. The cloud runs along $(1, 1)$, the stocks moving together. PCA finds this direction from the data alone.",
+        "canvas": {
+          "highlight": [
+            "line"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 1$, with positive eigenvalues, is an ellipse whose axes lie along the eigenvectors.",
+      "The half-axis along $\\mathbf{q}_i$ is $1/\\sqrt{\\lambda_i}$: a big eigenvalue means a short axis. Opposite signs give a hyperbola.",
+      "For a covariance matrix, $\\mathbf{x}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{x} = c$ has half-axes $\\sqrt{c\\,\\lambda_i}$: its long axis follows the largest variance."
+    ],
+    "formula": {
+      "name": "Half-axes of a quadratic form",
+      "tex": "\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = c \\;\\Rightarrow\\; \\text{half-axis along } \\mathbf{q}_i = \\sqrt{c/\\lambda_i}",
+      "note": "For $\\boldsymbol{\\Sigma}^{-1}$ the eigenvalues invert, so the half-axes are $\\sqrt{c\\,\\lambda_i(\\boldsymbol{\\Sigma})}$."
+    },
+    "trap": "The half-axis is $1/\\sqrt{\\lambda}$, not $\\lambda$: $0.25x^2 + y^2 = 1$ reaches $x = 2$."
+  },
+  "quiz": [
+    {
+      "id": "q-long-half",
+      "difficulty": 2,
+      "prose": "$\\mathbf{A} = \\begin{pmatrix}9&0\\\\0&4\\end{pmatrix}$, and the curve is $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 1$.",
+      "question": "How long is the long half-axis?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Long half-axis",
+        "accept": "0.5: $1/\\sqrt{4}$, from the smaller eigenvalue.",
+        "wrong": [
+          {
+            "id": "short",
+            "value": 0.333,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "lambda",
+            "value": 9,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "inverse",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1/\\sqrt{4} = 0.5$, along the $y$-axis.",
+        "generic": "Not quite right. Compute $1/\\sqrt{\\lambda}$ for each eigenvalue and take the larger.",
+        "byKey": {
+          "short": "That is $1/\\sqrt{9}$, the short half-axis. The smaller eigenvalue gives the long one.",
+          "lambda": "You read the eigenvalue as a length. Lengths are $1/\\sqrt{\\lambda}$.",
+          "inverse": "You took $1/4$. The length is $1/\\sqrt{4}$."
+        }
+      },
+      "explain": {
+        "text": "Half-axes are $1/\\sqrt{9} = \\tfrac{1}{3}$ along $x$ and $1/\\sqrt{4} = \\tfrac{1}{2}$ along $y$. The long one is 0.5."
+      }
+    },
+    {
+      "id": "q-direction",
+      "difficulty": 2,
+      "prose": "$\\mathbf{A} = \\begin{pmatrix}3&1\\\\1&3\\end{pmatrix}$ has eigenvalue 4 along $(1, 1)$ and 2 along $(1, -1)$.",
+      "question": "Where is the long axis of $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 1$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Along $(1, -1)$, half-axis $1/\\sqrt{2}$",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "Along $(1, 1)$, half-axis $\\tfrac{1}{2}$",
+            "why": "You paired the long axis with the big eigenvalue. $\\tfrac{1}{2}$ is the short half-axis."
+          },
+          {
+            "id": "x-axis",
+            "text": "Along the $x$-axis, half-axis $1/\\sqrt{3}$",
+            "why": "You read the diagonal entry 3 as an eigenvalue. The off-diagonal 1 turns the axes to the diagonals."
+          },
+          {
+            "id": "lambda",
+            "text": "Along $(1, -1)$, half-axis 2",
+            "why": "Right direction, but the length is $1/\\sqrt{2}$, not the eigenvalue."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The smaller eigenvalue, 2, gives the long half-axis $1/\\sqrt{2} \\approx 0.71$.",
+        "generic": "Not quite right. The long axis goes with the smaller eigenvalue."
+      },
+      "explain": {
+        "text": "Half-axes are $1/\\sqrt{4} = 0.5$ along $(1, 1)$ and $1/\\sqrt{2} \\approx 0.71$ along $(1, -1)$. The ellipse is stretched along $(1, -1)$."
+      }
+    },
+    {
+      "id": "q-zero",
+      "difficulty": 3,
+      "prose": "$\\mathbf{A} = \\begin{pmatrix}1&0\\\\0&0\\end{pmatrix}$ has eigenvalues 1 and 0.",
+      "question": "What is the curve $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = 1$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "lines",
+            "text": "The two lines $x = 1$ and $x = -1$",
+            "correct": true
+          },
+          {
+            "id": "circle",
+            "text": "A circle of radius 1",
+            "why": "You treated the 0 like a 1. The form is $x^2$ alone; $y$ is free."
+          },
+          {
+            "id": "point",
+            "text": "The two points $(\\pm 1, 0)$",
+            "why": "You fixed $y = 0$. The form ignores $y$, so every $y$ works."
+          },
+          {
+            "id": "ellipse",
+            "text": "A long ellipse with half-axes 1 and 100",
+            "why": "You took a zero eigenvalue as a small one. $1/\\sqrt{0}$ is not a number: the curve never closes."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$x^2 = 1$ for every $y$: two parallel lines.",
+        "generic": "Not quite right. Write out $\\mathbf{x}^T\\mathbf{A}\\mathbf{x}$ and see which variable is missing."
+      },
+      "explain": {
+        "text": "$\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = x^2$, so the curve is $x = \\pm 1$ for any $y$. A zero eigenvalue stretches that axis to infinity: the level set of a trough."
+      }
+    },
+    {
+      "id": "q-confidence",
+      "difficulty": 3,
+      "prose": "Two uncorrelated returns have $\\boldsymbol{\\Sigma} = \\begin{pmatrix}4&0\\\\0&1\\end{pmatrix}$, in $\\%^2$.",
+      "question": "How long is the long half-axis of $\\mathbf{x}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{x} = 1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Long half-axis",
+        "accept": "2: $\\boldsymbol{\\Sigma}^{-1}$ has eigenvalue $\\tfrac{1}{4}$ along $x$, so $1/\\sqrt{1/4} = 2$.",
+        "wrong": [
+          {
+            "id": "sigma",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "variance",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2, the standard deviation of the first return.",
+        "generic": "Not quite right. Invert $\\boldsymbol{\\Sigma}$ first, then take $1/\\sqrt{\\lambda}$.",
+        "byKey": {
+          "sigma": "You used $\\boldsymbol{\\Sigma}$ in place of $\\boldsymbol{\\Sigma}^{-1}$: $1/\\sqrt{4}$. The form uses the inverse, so the length is $\\sqrt{4}$.",
+          "variance": "You used the variance as the length. The half-axis is its square root, 2."
+        }
+      },
+      "explain": {
+        "text": "$\\boldsymbol{\\Sigma}^{-1} = \\begin{pmatrix}\\tfrac{1}{4}&0\\\\0&1\\end{pmatrix}$, so the curve is $\\tfrac{x^2}{4} + y^2 = 1$. It crosses the $x$-axis at 2, one standard deviation. The long axis lies along the larger variance."
+      }
+    }
+  ]
+}
