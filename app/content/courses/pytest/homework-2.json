@@ -1,0 +1,595 @@
+{
+  "id": "homework-2",
+  "course": "pytest",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h2-drawdowns",
+      "difficulty": 4,
+      "skills": [
+        "pt-cases",
+        "pt-tools"
+      ],
+      "prose": "`drawdowns(prices)` gives the fall from the running peak on every day. Test it with a parametrised table of short paths worked out by hand, and two properties checked on the twelve closes in `PATH`.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "PATH",
+              "values": [
+                250.0,
+                262.5,
+                210.0,
+                231.0,
+                273.0,
+                245.7,
+                286.65,
+                229.32,
+                240.79,
+                300.0,
+                285.0,
+                270.0
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 220
+        },
+        "state": {
+          "drawdown": true
+        }
+      },
+      "question": "Write the three tests for `drawdowns`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "# A stand-in for pytest, which this page cannot load. Scroll past it:\n# your code starts below the line \"---- your code ----\".\n# In your project, delete this block and write: import pytest\nimport ast, inspect, itertools, linecache, math, re\n\nclass pytest:\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n# ---- your code ----\n\ndef drawdowns(prices):\n    # one value per price: the fall from the running peak, 0 or negative\n    out, peak = [], prices[0]\n    for p in prices:\n        peak = max(peak, p)\n        out.append(p / peak - 1)\n    return out\n\nPATH = [250.00, 262.50, 210.00, 231.00, 273.00, 245.70, 286.65, 229.32, 240.79, 300.00, 285.00, 270.00]\n\ndef test_drawdowns_by_hand():\n    pass  # parametrise: at least three short paths, answers worked out by hand\n\ndef test_drawdowns_never_positive():\n    pass  # a property, checked on PATH\n\ndef test_one_drawdown_per_price():\n    pass  # a property, checked on PATH\n",
+        "solution": "# A stand-in for pytest, which this page cannot load. Scroll past it:\n# your code starts below the line \"---- your code ----\".\n# In your project, delete this block and write: import pytest\nimport ast, inspect, itertools, linecache, math, re\n\nclass pytest:\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n# ---- your code ----\n\ndef drawdowns(prices):\n    # one value per price: the fall from the running peak, 0 or negative\n    out, peak = [], prices[0]\n    for p in prices:\n        peak = max(peak, p)\n        out.append(p / peak - 1)\n    return out\n\nPATH = [250.00, 262.50, 210.00, 231.00, 273.00, 245.70, 286.65, 229.32, 240.79, 300.00, 285.00, 270.00]\n\n@pytest.mark.parametrize(\"prices, expected\", [\n    ([100.00, 120.00, 90.00, 120.00], [0.0, 0.0, -0.25, 0.0]),\n    ([80.00], [0.0]),\n    ([100.00, 50.00, 75.00], [0.0, -0.5, -0.25]),   # a partial recovery\n])\ndef test_drawdowns_by_hand(prices, expected):\n    assert drawdowns(prices) == pytest.approx(expected)\n\ndef test_drawdowns_never_positive():\n    assert all(d <= 0 for d in drawdowns(PATH))\n\ndef test_one_drawdown_per_price():\n    assert len(drawdowns(PATH)) == len(PATH)\n",
+        "examples": [
+          {
+            "call": "pytest.main()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "pytest.outcome()",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "pytest.count(test='test_drawdowns_by_hand') >= 3",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: [1 - p / max(prices[:i + 1]) for i, p in enumerate(prices)]",
+            "call": "pytest.outcome(drawdowns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: [min(p / prices[0] - 1, 0.0) for p in prices]",
+            "call": "pytest.outcome(drawdowns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: [p / max(prices[:i + 1]) - 1 for i, p in enumerate(prices)][1:]",
+            "call": "pytest.outcome(drawdowns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: [0.0] + [min(b / a - 1, 0.0) for a, b in zip(prices, prices[1:])]",
+            "call": "pytest.outcome(drawdowns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda prices: [p / max(prices[:max(i, 1)]) - 1 for i, p in enumerate(prices)]",
+            "call": "pytest.outcome(drawdowns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Test 2 counts your rows. Tests 3 to 7 swap in wrong versions of `drawdowns`: each must fail at least one of your tests."
+      },
+      "feedback": {
+        "correct": "Hand values and properties together catch all five wrong versions.",
+        "generic": "Not quite right. Read the first test that failed: it names the version your tests let through.",
+        "byKey": {
+          "test-1": "Your tests fail on the correct `drawdowns`. Recheck each hand value: each day's close over the highest close so far, minus 1.",
+          "test-2": "`test_drawdowns_by_hand` needs at least three rows.",
+          "test-3": "A version with positive drawdowns passed. The never-positive property catches it.",
+          "test-4": "A version that measures from the first price passed. Use a path whose peak is not its first price.",
+          "test-5": "A version that drops the first day passed. The one-per-price property catches it.",
+          "test-6": "A version that compares each close with the day before passed. Add a path that falls, then partly recovers, such as 100.00, 50.00, 75.00.",
+          "test-7": "A version that ignores today's close in the peak passed. Its drawdown is positive on a new high, so check the property on `PATH`.",
+          "error": "Your code stopped before the tests ran. Read the error below the editor."
+        }
+      },
+      "explain": {
+        "text": "The daily-change version agrees with the right one until a partial recovery: 100, 50, 75 gives −0.25 on day 3, not 0. Properties catch the sign and length mistakes on any path. Only hand-worked rows catch a wrong peak."
+      }
+    },
+    {
+      "id": "h2-month-end",
+      "difficulty": 4,
+      "skills": [
+        "pt-tools",
+        "pt-cases"
+      ],
+      "prose": "A vendor file crosses a month end, newest first. Write a `summary` fixture that asks for `prices_csv`, then three tests that ask for `summary`. Work every expected value out by hand from the five rows.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Date",
+            "Close"
+          ],
+          "rows": [
+            [
+              "27/03/2026",
+              "100.00"
+            ],
+            [
+              "30/03/2026",
+              "108.00"
+            ],
+            [
+              "31/03/2026",
+              "110.00"
+            ],
+            [
+              "01/04/2026",
+              "99.00"
+            ],
+            [
+              "02/04/2026",
+              "104.50"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The five rows in date order, oldest first"
+        }
+      },
+      "question": "Write the `summary` fixture and the three tests.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "# A stand-in for pytest, which this page cannot load. Scroll past it:\n# your code starts below the line \"---- your code ----\".\n# In your project, delete this block and write: import pytest\nimport ast, inspect, itertools, linecache, math, re\n\nclass pytest:\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n# ---- your code ----\n\nimport csv\nimport io\nfrom datetime import datetime\n\ndef read_closes(csv_text):\n    rows = csv.DictReader(io.StringIO(csv_text))\n    rows = sorted(rows, key=lambda row: datetime.strptime(row[\"Date\"], \"%d/%m/%Y\"))\n    return [float(row[\"Close\"]) for row in rows]\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = min(worst, p / peak - 1)\n    return worst\n\ndef summarise(csv_text):\n    closes = read_closes(csv_text)\n    return {\"days\": len(closes), \"total_return\": closes[-1] / closes[0] - 1,\n            \"max_drawdown\": max_drawdown(closes)}\n\n@pytest.fixture\ndef prices_csv():\n    # newest first, UK dates, across a month end\n    return \"\"\"Date,Close\n02/04/2026,104.50\n01/04/2026,99.00\n31/03/2026,110.00\n30/03/2026,108.00\n27/03/2026,100.00\n\"\"\"\n\ndef summary():\n    pass  # a fixture that asks for prices_csv and returns summarise(...)\n\ndef test_days():\n    pass\n\ndef test_total_return():\n    pass\n\ndef test_max_drawdown():\n    pass\n",
+        "solution": "# A stand-in for pytest, which this page cannot load. Scroll past it:\n# your code starts below the line \"---- your code ----\".\n# In your project, delete this block and write: import pytest\nimport ast, inspect, itertools, linecache, math, re\n\nclass pytest:\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n# ---- your code ----\n\nimport csv\nimport io\nfrom datetime import datetime\n\ndef read_closes(csv_text):\n    rows = csv.DictReader(io.StringIO(csv_text))\n    rows = sorted(rows, key=lambda row: datetime.strptime(row[\"Date\"], \"%d/%m/%Y\"))\n    return [float(row[\"Close\"]) for row in rows]\n\ndef max_drawdown(prices):\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = min(worst, p / peak - 1)\n    return worst\n\ndef summarise(csv_text):\n    closes = read_closes(csv_text)\n    return {\"days\": len(closes), \"total_return\": closes[-1] / closes[0] - 1,\n            \"max_drawdown\": max_drawdown(closes)}\n\n@pytest.fixture\ndef prices_csv():\n    # newest first, UK dates, across a month end\n    return \"\"\"Date,Close\n02/04/2026,104.50\n01/04/2026,99.00\n31/03/2026,110.00\n30/03/2026,108.00\n27/03/2026,100.00\n\"\"\"\n\n@pytest.fixture\ndef summary(prices_csv):\n    return summarise(prices_csv)\n\ndef test_days(summary):\n    assert summary[\"days\"] == 5\n\ndef test_total_return(summary):\n    # oldest close 100.00 on 27 March, newest 104.50 on 2 April\n    assert summary[\"total_return\"] == pytest.approx(104.50 / 100.00 - 1)\n\ndef test_max_drawdown(summary):\n    # peak 110.00 on 31 March, trough 99.00 on 1 April\n    assert summary[\"max_drawdown\"] == pytest.approx(99.00 / 110.00 - 1)\n",
+        "examples": [
+          {
+            "call": "pytest.main()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "pytest.outcome()",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "call": "getattr(summary, 'is_fixture', False)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "pytest.count(fixture='summary') >= 3",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda csv_text: [float(r['Close']) for r in sorted(csv.DictReader(io.StringIO(csv_text)), key=lambda r: r['Date'])]",
+            "call": "pytest.outcome(read_closes=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda csv_text: [float(r['Close']) for r in csv.DictReader(io.StringIO(csv_text))]",
+            "call": "pytest.outcome(read_closes=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "right = read_closes\nplanted = lambda csv_text: right(csv_text)[1:]",
+            "call": "pytest.outcome(read_closes=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Tests 2 and 3 check the `summary` fixture and that three tests ask for it. Tests 4 to 6 swap in wrong versions of `read_closes`."
+      },
+      "feedback": {
+        "correct": "The month-end rows make the date order matter, and your tests check it.",
+        "generic": "Not quite right. Read the first test that failed.",
+        "byKey": {
+          "test-1": "Your tests fail on the correct code. In date order the closes are 100.00, 108.00, 110.00, 99.00, 104.50.",
+          "test-2": "`summary` is not a fixture yet. Add `@pytest.fixture` and give it the parameter `prices_csv`.",
+          "test-3": "Not every test asks for `summary`. Name it as a parameter in all three.",
+          "test-4": "A version that sorts the dates as text passed. '01/04' sorts before '27/03', so check the total return or the drawdown.",
+          "test-5": "A version that keeps the file order passed. Newest first, the total return comes out negative.",
+          "test-6": "A version that drops the oldest row passed. Check the day count.",
+          "error": "Your code stopped before the tests ran. Read the error below the editor."
+        }
+      },
+      "explain": {
+        "text": "Sorted as text, '01/04/2026' comes before '27/03/2026', which scrambles the order across the month end. The right order gives a total return of 4.5% and a drawdown of −10%. A fixture whose data crosses a month end is what exposes the text sort."
+      }
+    },
+    {
+      "id": "h2-ma-signal",
+      "difficulty": 5,
+      "skills": [
+        "pt-design",
+        "pt-cases",
+        "pt-basics"
+      ],
+      "prose": "A moving-average signal goes long when yesterday's close is above the mean of the last n closes. The starter version peeks at today's close and never rejects n = 0. Work red-green: write the three tests, watch them fail, then fix `ma_signal`.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                104.0,
+                102.0,
+                107.0,
+                103.0,
+                108.0
+              ]
+            },
+            {
+              "id": "ma",
+              "label": "2-day mean",
+              "values": [
+                null,
+                102.0,
+                103.0,
+                104.5,
+                105.0,
+                105.5
+              ],
+              "dashed": true
+            }
+          ],
+          "x": "index",
+          "indexFrom": 0,
+          "xLabel": "Day",
+          "money": "£",
+          "height": 230
+        },
+        "state": {
+          "caption": "The 2-day mean at day i averages closes i − 1 and i; day i + 1 trades on it"
+        }
+      },
+      "question": "Write the tests, see red, then fix `ma_signal` until they pass.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "# A stand-in for pytest, which this page cannot load. Scroll past it:\n# your code starts below the line \"---- your code ----\".\n# In your project, delete this block and write: import pytest\nimport ast, inspect, itertools, linecache, math, re\n\nclass pytest:\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n# ---- your code ----\n\ndef ma_signal(closes, n):\n    # Position for day t: 1 if close t - 1 is above the mean of closes t - n to t - 1, else 0.\n    # Day t may use closes up to t - 1 only. Days before t = n are flat.\n    # n below 1 must raise ValueError(\"n must be at least 1\").\n    out = []\n    for t in range(len(closes)):\n        window = closes[t - n + 1:t + 1]\n        out.append(1 if t >= n - 1 and closes[t] > sum(window) / n else 0)\n    return out\n\ncloses = [100.00, 104.00, 102.00, 107.00, 103.00, 108.00]\n\ndef test_ma_signal_by_hand():\n    pass  # parametrise over n = 2 and n = 3; write it before the fix\n\ndef test_last_close_moves_nothing():\n    pass\n\ndef test_window_below_one_raises():\n    pass\n",
+        "solution": "# A stand-in for pytest, which this page cannot load. Scroll past it:\n# your code starts below the line \"---- your code ----\".\n# In your project, delete this block and write: import pytest\nimport ast, inspect, itertools, linecache, math, re\n\nclass pytest:\n    class mark:\n        def parametrize(names, rows):\n            if isinstance(names, str):\n                names = [n.strip() for n in names.split(\",\")]\n            rows = [r if len(names) > 1 else (r,) for r in rows]\n            def add(test):\n                test.tables = [(names, rows)] + getattr(test, \"tables\", [])\n                return test\n            return add\n\n    def fixture(f=None, **options):\n        if f is None:\n            return pytest.fixture\n        f.is_fixture = True\n        return f\n\n    class approx:\n        def __init__(self, expected, rel=None, abs=None):\n            self.expected, self.rel, self.abs = expected, rel, abs\n        def __eq__(self, actual):\n            if isinstance(self.expected, (list, tuple)):\n                return (isinstance(actual, (list, tuple)) and len(actual) == len(self.expected)\n                        and all(a == pytest.approx(e, self.rel, self.abs) for a, e in zip(actual, self.expected)))\n            if self.rel is None and self.abs is not None:\n                gap = self.abs\n            else:\n                rel = 1e-6 if self.rel is None else self.rel\n                gap = max(rel * abs(self.expected), 1e-12 if self.abs is None else self.abs)\n            return abs(actual - self.expected) <= gap\n        def __repr__(self):\n            return f\"approx({self.expected!r})\"\n\n    class raises:\n        def __init__(self, error, match=None):\n            self.error, self.match = error, match\n        def __enter__(self):\n            return self\n        def __exit__(self, kind, err, tb):\n            if kind is None:\n                raise AssertionError(f\"DID NOT RAISE {self.error.__name__}\")\n            if not issubclass(kind, self.error):\n                return False  # a different error: the test fails with it\n            if self.match and not re.search(self.match, str(err)):\n                raise AssertionError(f\"{self.match!r} does not match {str(err)!r}\")\n            return True\n\n    def cases():  # each test once per row of its parametrize tables\n        for name, test in list(globals().items()):\n            if name.startswith(\"test\") and inspect.isfunction(test):\n                tables = getattr(test, \"tables\", [])\n                for pick in itertools.product(*[range(len(rows)) for _, rows in tables]):\n                    args, ids = {}, []\n                    for (names, rows), k in zip(tables, pick):\n                        args.update(zip(names, rows[k]))\n                        ids += [str(v) if isinstance(v, (int, float, str)) else n + str(k)\n                                for n, v in zip(names, rows[k])]\n                    yield name + (\"[\" + \"-\".join(ids) + \"]\" if ids else \"\"), test, args\n\n    def run_one(test, args):  # None when it passes, else the reason\n        made = {}\n        def give(name):\n            if name not in args and name not in made:\n                f = globals().get(name)\n                if not getattr(f, \"is_fixture\", False):\n                    raise LookupError(f\"fixture '{name}' not found\")\n                made[name] = f(*map(give, inspect.signature(f).parameters))\n            return args[name] if name in args else made[name]\n        try:\n            test(*map(give, inspect.signature(test).parameters))\n        except AssertionError as e:\n            return str(e) or pytest.explain(e.__traceback__)\n        except Exception as e:\n            return f\"{type(e).__name__}: {e}\"\n\n    def explain(tb):  # the failing assert line, with both sides\n        while tb.tb_next:\n            tb = tb.tb_next\n        fr, line = tb.tb_frame, linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno).strip()\n        try:\n            t = ast.parse(line).body[0].test\n            see = lambda n: repr(eval(ast.unparse(n), fr.f_globals, fr.f_locals))\n            line += f\"\\nleft:  {see(t.left)}\\nright: {see(t.comparators[0])}\"\n        except Exception:\n            pass\n        return line or \"assert failed\"\n\n    def run(**versions):  # run every test, with any functions swapped in\n        saved = {n: globals()[n] for n in versions}\n        globals().update(versions)\n        try:\n            results = [(c, pytest.run_one(t, a)) for c, t, a in pytest.cases()]\n        finally:\n            globals().update(saved)\n        for c, why in results:\n            if why is None:\n                print(\"PASSED\", c)\n            else:\n                print(\"FAILED \" + c + \"\\n    \" + why.replace(\"\\n\", \"\\n    \"))\n        return results\n\n    def main():\n        results = pytest.run()\n        failed = sum(why is not None for _, why in results)\n        print(f\"{len(results) - failed} passed, {failed} failed\")\n        return 5 if not results else 1 if failed else 0\n\n    def outcome(**versions):\n        results = pytest.run(**versions)\n        return \"no tests\" if not results else \"failed\" if any(w is not None for _, w in results) else \"passed\"\n\n    def count(test=None, fixture=None):\n        return sum(1 for _, t, _ in pytest.cases() if test in (None, t.__name__)\n                   and (fixture is None or fixture in inspect.signature(t).parameters))\n# ---- your code ----\n\ndef ma_signal(closes, n):\n    # Position for day t: 1 if close t - 1 is above the mean of closes t - n to t - 1, else 0.\n    # Day t may use closes up to t - 1 only. Days before t = n are flat.\n    # n below 1 must raise ValueError(\"n must be at least 1\").\n    if n < 1:\n        raise ValueError(\"n must be at least 1\")\n    out = []\n    for t in range(len(closes)):\n        window = closes[t - n:t]\n        out.append(1 if t >= n and closes[t - 1] > sum(window) / n else 0)\n    return out\n\ncloses = [100.00, 104.00, 102.00, 107.00, 103.00, 108.00]\n\n@pytest.mark.parametrize(\"n, expected\", [\n    (2, [0, 0, 1, 0, 1, 0]),   # day 2: 104 > 102; day 4: 107 > 104.5\n    (3, [0, 0, 0, 0, 1, 0]),   # day 3: 102 is not above 102; day 4: 107 > 104.33\n])\ndef test_ma_signal_by_hand(n, expected):\n    assert ma_signal(closes, n) == expected\n\ndef test_last_close_moves_nothing():\n    assert ma_signal(closes[:-1] + [1.00], 2) == ma_signal(closes, 2)\n\ndef test_window_below_one_raises():\n    with pytest.raises(ValueError, match=\"at least 1\"):\n        ma_signal(closes, 0)\n",
+        "examples": [
+          {
+            "call": "pytest.main()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "ma_signal([100.00, 104.00, 102.00, 107.00, 103.00, 108.00], 2)",
+            "expect": "[0, 0, 1, 0, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "ma_signal([100.00, 104.00, 102.00, 107.00, 103.00, 108.00], 3)",
+            "expect": "[0, 0, 0, 0, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "ma_signal([100.00, 104.00], 0)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "pytest.outcome()",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "planted = lambda closes, n: [1 if t >= n - 1 and closes[t] > sum(closes[t - n + 1:t + 1]) / n else 0 for t in range(len(closes))]",
+            "call": "pytest.outcome(ma_signal=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "def right(closes, n):\n    if n < 1:\n        raise ValueError('n must be at least 1')\n    return [1 if t >= n and closes[t - 1] > sum(closes[t - n:t]) / n else 0 for t in range(len(closes))]",
+            "call": "pytest.outcome(ma_signal=right)",
+            "expect": "'passed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "def right(closes, n):\n    if n < 1:\n        raise ValueError('n must be at least 1')\n    return [1 if t >= n and closes[t - 1] > sum(closes[t - n:t]) / n else 0 for t in range(len(closes))]\nplanted = lambda closes, n: right(closes, max(n, 1))",
+            "call": "pytest.outcome(ma_signal=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "setup": "def right(closes, n):\n    if n < 1:\n        raise ValueError('n must be at least 1')\n    return [1 if t >= n and closes[t - 1] > sum(closes[t - n:t]) / n else 0 for t in range(len(closes))]\nplanted = lambda closes, n: ([0] + right(closes, n))[:len(closes)]",
+            "call": "pytest.outcome(ma_signal=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
+          },
+          {
+            "call": "pytest.count() >= 4",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Tests 1 to 3 call your fixed `ma_signal`. Test 4 runs your tests on your fix (green), test 5 on the starter's peeking version (red), test 6 on a reference version, and tests 7 and 8 on two more wrong versions."
+      },
+      "feedback": {
+        "correct": "Red on the peeking version, green on your fix, and the bad window rejected.",
+        "generic": "Not quite right. Read the first test that failed.",
+        "byKey": {
+          "test-1": "With n = 2 your `ma_signal` should give `[0, 0, 1, 0, 1, 0]`. Day t compares close t − 1 with the mean of closes t − 2 and t − 1.",
+          "test-2": "With n = 3 it should give `[0, 0, 0, 0, 1, 0]`. On day 3, 102.00 equals its mean, so the position is 0.",
+          "test-3": "`ma_signal(closes, 0)` should raise `ValueError(\"n must be at least 1\")` before anything else.",
+          "test-4": "Your tests fail on your own fix. Recheck the hand-worked rows.",
+          "test-5": "The peeking version passed your tests. Your hand values for n = 2 should differ from its `[0, 1, 0, 1, 0, 1]`.",
+          "test-6": "Your tests fail on a correct reference version. Check the `match=` text and the hand values.",
+          "test-7": "A version that never rejects n = 0 passed. Add the `pytest.raises` test.",
+          "test-8": "A version one day late passed. Only exact hand-worked positions catch it.",
+          "test-9": "Write the three test functions, with two rows in the parametrised one.",
+          "error": "Your code stopped before the tests ran. Read the error below the editor."
+        }
+      },
+      "explain": {
+        "text": "The peeking version traded day 1 on close 1 itself, which nobody knows that morning. The property catches any use of the last close, and the hand rows catch a signal a day late. The raises test covers the window that makes no sense."
+      }
+    },
+    {
+      "id": "h2-ids",
+      "difficulty": 3,
+      "skills": [
+        "pt-tools"
+      ],
+      "prose": "```python\n@pytest.mark.parametrize(\"prices, expected\", [\n    ([100.00, 90.00], -0.1),\n    ([100.00], 0.0),\n])\ndef test_dd(prices, expected):\n    assert max_drawdown(prices) == pytest.approx(expected)\n```",
+      "question": "Which test ids does pytest report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`test_dd[prices0--0.1]` and `test_dd[prices1-0.0]`",
+            "correct": true
+          },
+          {
+            "id": "nums",
+            "text": "`test_dd[0]` and `test_dd[1]`",
+            "why": "pytest builds ids from the values, not only row numbers. A number like −0.1 appears as itself."
+          },
+          {
+            "id": "lists",
+            "text": "`test_dd[[100.0, 90.0]--0.1]` and `test_dd[[100.0]-0.0]`",
+            "why": "A list is not written out. It is named by its parameter and row number, as `prices0`."
+          },
+          {
+            "id": "one",
+            "text": "`test_dd`",
+            "why": "Each row is its own test with its own id."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Lists get their name and row number; numbers appear as themselves.",
+        "generic": "Not quite right. Think about how pytest names a list value."
+      },
+      "explain": {
+        "text": "pytest joins one piece per parameter with '-'. A list becomes its parameter name plus the row number, such as `prices0`. A number appears as itself, so −0.1 gives the double dash in `prices0--0.1`."
+      }
+    },
+    {
+      "id": "h2-row-value",
+      "difficulty": 3,
+      "skills": [
+        "pt-cases"
+      ],
+      "prose": "You add a row to a parametrised `max_drawdown` test: the fund closed at £250.00, £275.00, £220.00, £264.00, £198.00.",
+      "question": "Worked out by hand, what is the expected value?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.28,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal, such as -0.1",
+        "accept": "−0.28 ± 0.0005",
+        "wrong": [
+          {
+            "id": "from-first",
+            "value": -0.208,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "worst-day",
+            "value": -0.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "first-dip",
+            "value": -0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "198.00 / 275.00 − 1 = −0.28.",
+        "generic": "Not quite right. Find the highest close, then the lowest close after it.",
+        "byKey": {
+          "from-first": "You measured from the first close, 250.00. The fall counts from the peak, 275.00.",
+          "worst-day": "That is the worst single day, 264.00 to 198.00. The fall from the peak is deeper.",
+          "first-dip": "That is the first dip, to 220.00. The later close of 198.00 is lower still."
+        }
+      },
+      "explain": {
+        "text": "The peak is £275.00 on day 2. The lowest close after it is £198.00 on day 5, so the drawdown is 198 / 275 − 1 = −0.28. Neither the first dip nor the worst single day goes that deep."
+      }
+    },
+    {
+      "id": "h2-accident",
+      "difficulty": 4,
+      "skills": [
+        "pt-cases"
+      ],
+      "prose": "A wrong `max_drawdown` returns drawdowns as positive numbers. This test still passes on it:\n\n```python\ndef test_flat_prices_have_no_drawdown():\n    assert max_drawdown([50.00, 50.00, 50.00]) == 0.0\n```",
+      "question": "What does that pass tell you about the sign?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nothing",
+            "text": "Nothing: a zero drawdown looks the same with either sign",
+            "correct": true
+          },
+          {
+            "id": "right",
+            "text": "The sign is right",
+            "why": "You read the pass as evidence about the sign. Zero has no sign, so both versions give 0.0 here."
+          },
+          {
+            "id": "broken",
+            "text": "The test is broken and should be deleted",
+            "why": "The test is fine for what it checks: flat prices. It just cannot see the sign."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The flat case passes by accident on the sign bug.",
+        "generic": "Not quite right. What do the two versions return on flat prices?"
+      },
+      "explain": {
+        "text": "Flat prices have no fall, so both versions return 0.0 and the test passes on each. A pass only tells you about the behaviours the input can reach. A row with a real fall, such as 100.00 to 90.00, pins the sign."
+      }
+    },
+    {
+      "id": "h2-review-file",
+      "difficulty": 4,
+      "skills": [
+        "pt-cases",
+        "pt-tools",
+        "pt-basics"
+      ],
+      "prose": "A colleague asks you to review their test file before it joins the backtest repository.\n\n```python\nCLOSES = [100.00, 110.00, 99.00, 108.90, 98.01]\n\ndef test_everything():\n    expected = simple_returns(CLOSES)\n    assert simple_returns(CLOSES) == expected\n    CLOSES.append(107.81)\n    assert max_drawdown(CLOSES) < 0\n    with pytest.raises(Exception):\n        bad = [float(x) for x in \"100.00,n/a\".split(\",\")]\n        max_drawdown(bad)\n\ndef test_last_close():\n    assert CLOSES[-1] == 98.01\n```",
+      "question": "Write a review: name each problem, say what it lets through, and rewrite the tests.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "List every problem you find in this file. For each, say what bug or failure it lets through, and how to fix it. Finish with your rewritten tests.",
+        "model": "**1. The returns check can never fail.** `expected` comes from `simple_returns` itself, so both sides agree whatever the code does. Work the answer out by hand: each day moves 10%, so the returns are `[0.1, -0.1, 0.1, -0.1]`, compared with `pytest.approx`.\n\n**2. Shared, changed data.** `CLOSES` is one module-level list, and `test_everything` appends to it. `test_last_close` then sees 107.81 and fails in the full run, though it passes alone. Build the data inside a fixture so each test gets a fresh copy.\n\n**3. The error test passes by accident.** `float(\"n/a\")` raises `ValueError` inside the block, so `max_drawdown` never runs. `Exception` is also too broad: a typo raising `NameError` would pass. Build the input outside, ask for `ValueError`, and use `match=`.\n\n**4. One test, many behaviours.** The first failing assert hides the rest, and the name `test_everything` says nothing. Split it: one behaviour per test, named after it.\n\n**5. Weak drawdown check and no edge cases.** `< 0` is a property; it does not pin the value, and it is false for a rising series. Add the hand value: peak 110.00, trough 98.01, so `98.01 / 110.00 - 1`, about −0.109. Add empty and one-price cases.\n\n```python\n@pytest.fixture\ndef closes():\n    return [100.00, 110.00, 99.00, 108.90, 98.01]\n\ndef test_returns_match_hand_values(closes):\n    assert simple_returns(closes) == pytest.approx([0.1, -0.1, 0.1, -0.1])\n\ndef test_drawdown_matches_hand_value(closes):\n    assert max_drawdown(closes) == pytest.approx(98.01 / 110.00 - 1)\n\n@pytest.mark.parametrize(\"prices\", [[100.00], [100.00, 101.00, 103.50]])\ndef test_no_fall_means_zero_drawdown(prices):\n    assert max_drawdown(prices) == 0.0\n\ndef test_negative_price_raises():\n    bad = [100.00, -5.00]\n    with pytest.raises(ValueError, match=\"positive\"):\n        max_drawdown(bad)\n\ndef test_last_close(closes):\n    assert closes[-1] == 98.01\n```",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Spots that `expected` comes from `simple_returns` itself, so the check can never fail, and gives hand-worked returns"
+          },
+          {
+            "points": 2,
+            "text": "Spots that the append to the module-level `CLOSES` breaks `test_last_close` in the full run, and fixes it with a fixture"
+          },
+          {
+            "points": 2,
+            "text": "Spots that `float(\"n/a\")` raises inside the `pytest.raises` block, and that `Exception` is too broad; moves the input out and names `ValueError`"
+          },
+          {
+            "points": 1,
+            "text": "Splits `test_everything` into one behaviour per test with descriptive names"
+          },
+          {
+            "points": 2,
+            "text": "Replaces or supplements `< 0` with the hand value 98.01 / 110.00 − 1 ≈ −0.109"
+          },
+          {
+            "points": 1,
+            "text": "Adds an edge case: empty input, a single price, or a series that only rises"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your review with the model and tick the rubric.",
+        "generic": "Compare your review with the model and tick the rubric."
+      },
+      "explain": {
+        "text": "Every problem in this file makes a test pass when it should fail, or fail when it should pass. Hand-worked answers, fresh fixture data, one call inside `pytest.raises` and one behaviour per test fix them all."
+      }
+    },
+    {
+      "id": "h2-why-red",
+      "difficulty": 3,
+      "skills": [
+        "pt-design"
+      ],
+      "prose": "You are fixing a reported bug test first. Your new test is written, and you have not changed the code yet.",
+      "question": "Why run the new test before you fix the code?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "proof",
+            "text": "To see it fail, which proves it can detect the bug",
+            "correct": true
+          },
+          {
+            "id": "speed",
+            "text": "To measure how long the test takes",
+            "why": "Timing is not the point. A red run shows the test reaches the bug."
+          },
+          {
+            "id": "syntax",
+            "text": "To check the test has no typos",
+            "why": "A typo would show up later too. The point is to watch the test fail for the reported reason."
+          },
+          {
+            "id": "habit",
+            "text": "There is no reason; you could run it after the fix",
+            "why": "Run only after the fix, a pass cannot tell a working test from one that never touches the bug."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Red first: a test that never failed has not shown it can catch the bug.",
+        "generic": "Not quite right. What would a pass after the fix prove on its own?"
+      },
+      "explain": {
+        "text": "If the test only ever ran after the fix, a pass could mean the fix worked or the test misses the bug. Seeing it fail on the old code rules out the second. Then green means the fix did the job."
+      }
+    }
+  ]
+}

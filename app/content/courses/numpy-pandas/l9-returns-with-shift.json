@@ -515,7 +515,7 @@
       "type": "ladder",
       "difficulty": 2,
       "title": "Slice, then shift",
-      "prose": "Here the dates arrive as text in a `date` column. `pd.to_datetime` parses them and `set_index` makes them the index.\n\n```python\nraw[\"date\"] = pd.to_datetime(raw[\"date\"])\ndf = raw.set_index(\"date\")\na = df[\"close\"].pct_change().loc[\"2024-03-05\":\"2024-03-07\"]\nb = df.loc[\"2024-03-05\":\"2024-03-07\", \"close\"].pct_change()\n```",
+      "prose": "Here the dates arrive as text in a `date` column. `pd.to_datetime` parses them and `set_index` makes them the index.\n\n```python\nraw[\"date\"] = pd.to_datetime(raw[\"date\"])\ndf = raw.set_index(\"date\")\nc = df[\"close\"]\na = c.pct_change().loc[\"2024-03-05\":\"2024-03-07\"]\nb = c.loc[\"2024-03-05\":\"2024-03-07\"].pct_change()\n```",
       "canvas": {
         "kind": "table",
         "params": {
@@ -823,7 +823,7 @@
         "correct": "5 March's row uses 6 March's close.",
         "generic": "Not quite right. A negative shift moves values up, so each row sees the next day.",
         "byKey": {
-          "yesterday": "You read `shift(-1)` as yesterday's close. A negative shift pulls the next row up, so 5 March uses 6 March's close, a price nobody knew on 5 March.",
+          "yesterday": "You read `shift(-1)` as yesterday's close. A negative shift pulls the next row up. So 5 March uses 6 March's close, unknown on 5 March.",
           "r0c1": "4 March is the row above. `shift(-1)` brings up the row below instead, 6 March."
         }
       },
@@ -843,7 +843,7 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "Returns, in one place",
-      "prose": "Every return we built compares $p_t$ with $p_{t-1}$, the close `shift(1)` brings down.\n\n$$r_t = \\frac{p_t}{p_{t-1}} - 1 \\qquad \\ell_t = \\ln\\frac{p_t}{p_{t-1}} = \\ln(1 + r_t)$$\n\n```python\ndf = raw.assign(date=pd.to_datetime(raw[\"date\"])).set_index(\"date\").sort_index()\nprev = df[\"close\"].shift(1)        # yesterday's close; first row NaN\nr = df[\"close\"].pct_change()        # same as df[\"close\"] / prev - 1\nlr = np.log(df[\"close\"] / prev)     # log returns add across days\ndf[\"close\"].shift(-1)               # tomorrow's close: look-ahead\n```",
+      "prose": "Every return we built compares $p_t$ with $p_{t-1}$, the close `shift(1)` brings down.\n\n$$r_t = \\frac{p_t}{p_{t-1}} - 1 \\qquad \\ell_t = \\ln\\frac{p_t}{p_{t-1}} = \\ln(1 + r_t)$$\n\n```python\nraw[\"date\"] = pd.to_datetime(raw[\"date\"])\ndf = raw.set_index(\"date\").sort_index()\nprev = df[\"close\"].shift(1)      # NaN on day 1\nr = df[\"close\"].pct_change()      # close / prev - 1\nlr = np.log(df[\"close\"] / prev)   # adds up\ndf[\"close\"].shift(-1)   # tomorrow: look-ahead\n```",
       "question": "`r` holds simple returns. Which line gives the log returns from it?",
       "widget": {
         "kind": "choice",
