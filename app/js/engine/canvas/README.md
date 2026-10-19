@@ -41,6 +41,7 @@ Sample spaces, two-dice tables, area models, Punnett squares. Square cells, at m
 | `cells` | blank | `"pair"` shows "r, c", `"sum"`, `"product"`, `"diff"` (absolute), `"max"`, `"min"`, or a 2D array of strings |
 | `text` | `"always"` | `"marked"` hides cell text until a cell is shaded, selected, graded, flashed or highlighted (the prototype's look) |
 | `compact` | false | smaller grid for title screens |
+| `revealAfterGrade` | false | with `text: "marked"`, a tap selects a cell without showing its text; grading (or a hint) shows it |
 | `lattice` | false | points instead of cells: a dot at each cell centre, joined to its neighbours by streets, its text above right of the dot (path counts). Ids, shading, taps, marks and `paths` work the same way |
 | `rowOffsets` | none | per-row shift in cell widths, `[0, 0.25, 0.75]`, for staggered layouts such as a keyboard; outlines and highlights follow the shift |
 
@@ -107,7 +108,7 @@ One to three sets in a universe; each region is its exact shape.
 
 **params**: `min` (0), `max` (10), `step` (1, tick spacing), `snap` (defaults to `step`), `labels` (true; a number k labels every k-th tick; or `[{ "x": 0.5, "text": "half" }]`; `false` for none; labels thin out automatically so they never collide), `format: "decimal" | "fraction"`, `ends: false` removes the axis arrowheads.
 
-**state**: `points: [{ "id": "p1", "x": 2.5, "label": "a", "colour": 2, "drag": true, "labelPos": "above" }]`, `intervals: [{ "id": "i1", "from": 1, "to": 3, "open": [false, true], "label": "", "labelPos": "above" }]` (`from` or `to` null makes a ray; later intervals stack above the first), `arrows: [{ "id": "j1", "from": -2, "to": 1, "label": "+3" }]` (jumps drawn as arcs). `points`, `intervals` and `arrows` also take keyed patches: `{ "points": { "p1": { "x": 3 } } }` changes `p1` only (an id not yet listed is added).
+**state**: `points: [{ "id": "p1", "x": 2.5, "label": "a", "colour": 2, "drag": true, "labelPos": "above" }]`, `intervals: [{ "id": "i1", "from": 1, "to": 3, "open": [false, true], "label": "", "labelPos": "above" }]` (`from` or `to` null makes a ray; later intervals stack above the first), `arrows: [{ "id": "j1", "from": -2, "to": 1, "label": "+3", "side": "below" }]` (jumps drawn as arcs, above the axis unless `side: "below"`; arrows on one side whose spans overlap stack in levels; a jump from a number to itself is a small loop). An interval label is plain text (`"1/4 of the way"` stays as typed) unless it is wrapped in `$...$`. Controls may bind a free name (not a point id) for a `derive` block: it lands in `state.params`. `points`, `intervals` and `arrows` also take keyed patches: `{ "points": { "p1": { "x": 3 } } }` changes `p1` only (an id not yet listed is added).
 
 **labels**: `labelPos` is `above`, `below` (under the tick labels), `left` or `right` (beside the point, raised clear of the axis; for an interval, beside its ends). Without it a point label goes above, or to the side away from a jump arrow that starts or ends at the point (below when arrows leave both ways). Labels that would overlap each other or an arrow's label are stacked 18px apart, and the drawing grows to fit.
 
@@ -122,7 +123,7 @@ One to three sets in a universe; each region is its exact shape.
 
 Containers and items for counting and drawing without replacement.
 
-**params**: `containers: [{ "id": "urn", "label": "Urn", "kind": "urn" | "bag" | "box" | "hand" | "row", "items": [{ "id": "b1", "kind": "ball" | "card" | "coin" | "slot" | "bag", "colour": 1, "label": "1", "face": "up" }], "capacity": 3, "slots": 3, "cols": 3 }]`, `itemKind` (default for items, `"ball"`). A coin shows its face, H or T, unless it has a `label`. Without a `hand` container, drawn items wait in a band above the containers; the band is there only while an item is drawn, so a plain set of containers has no empty space on top. An item of kind `bag` (alias `sealed`) is a closed sack showing only its label (`"?"`, `"n"`), for a bag of counters whose contents stay hidden. `colour` is a series slot 1 to 6 (0 for a plain item). A `row` draws `slots` dashed places that fill left to right. `fill: "top"` or `"bottom"` on a container sets where its items start (default: top for `hand` and `row`, bottom for urns, bags and boxes). A `box` is closed on all four sides. A `card` is as wide as its label (a file name such as `prices.csv` fits on one card, which then draws a little shorter); every place in the drawing takes the widest item's width, so keep wide cards to their own canvas or to a few per container.
+**params**: `containers: [{ "id": "urn", "label": "Urn", "kind": "urn" | "bag" | "box" | "hand" | "row", "items": [{ "id": "b1", "kind": "ball" | "card" | "coin" | "slot" | "bag", "colour": 1, "label": "1", "face": "up" }], "capacity": 3, "slots": 3, "cols": 3 }]`, `itemKind` (default for items, `"ball"`). A coin shows its face, H or T, unless it has a `label`. Without a `hand` container, drawn items wait in a band above the containers; the band is there only while an item is drawn, so a plain set of containers has no empty space on top. An item of kind `bag` (alias `sealed`) is a closed sack showing only its label (`"?"`, `"n"`), for a bag of counters whose contents stay hidden. `colour` is a series slot 1 to 6 (0 for a plain item). A `row` draws `slots` dashed places that fill left to right. `fill: "top"` or `"bottom"` on a container sets where its items start (default: top for `hand` and `row`, bottom for urns, bags and boxes). A `box` is closed on all four sides. A `card` is as wide as its label (a file name such as `prices.csv` fits on one card, which then draws a little shorter); every place in the drawing takes the widest item's width, so keep wide cards to their own canvas or to a few per container; card text shrinks with the cards. An empty container without `capacity` holds as many places as the fullest container (2 to 6), so items can be put in it.
 
 **state**: `draw: [ids]` (move to the container whose kind is `hand`; without one, drawn items lift above the containers), `move: { "<item>": "<container>" }` (key order is arrival order), `face: { "<card>": "up" | "down", "<coin>": "H" | "T" }` (flips animate).
 
@@ -152,7 +153,9 @@ Fraction and multiplication area models, geometric probability.
 
 **signed pieces**: a negative entry in `colSizes` or `rowSizes` lays the strip out by its size and marks its pieces subtracted (hatched over any shading, dashed edge), so $(x + 5)(x - 2)$ is `colSizes: [3, 1.5]`, `rowSizes: [3, -1]`. **edge labels**: `state.colLabels`, `state.rowLabels` and `state.labels` (`top`, `bottom`, `left`, `right`) patch them; give a starting value in params so the drawing keeps room. **diagonals**: `state.diagonal: { "c11": "/" }` (bottom left to top right) or `"\\"`, dashed; shade ids `"c11/ul"`, `"c11/lr"`, `"c11/ur"`, `"c11/ll"` fill the triangle on that side. **moving a piece**: `state.move: { "id": "m1", "from": "c12", "to": "c31" }` (or a list) slides a copy of the piece (its first shading's colour and its text) to the `to` cell over about 700 ms, leaving its own place empty, for rearrangements such as the difference of two squares.
 
-**text on a piece**: `labels` (params) and `state.labels` also take cell ids, `{ "c11": "$3n$", "c12": "4" }`, drawn centred on the cell (on a circle, along the sector's middle); the state wins.
+**text on a piece**: `labels` (params) and `state.labels` also take cell ids, `{ "c11": "$3n$", "c12": "4" }`, drawn centred on the cell (on a circle, along the sector's middle); the state wins. A key naming two cells, `"c11-c16"`, centres one label on the rectangle they span (a total over a row).
+
+**sizes in state**: `state.colSizes` and `state.rowSizes` override the params (animating the re-cut), and a control can bind one entry, `"bind": "colSizes.0"`, so a cut moves at true proportions (a rectangle with growing sides). **dim**: `state.dim: [ids]` fades pieces under a light veil. A tap selection has a heavy blue edge, so it never reads as authored shading.
 
 **ids**: cells `c{i}{j}` one-based from the top left (`c{i}-{j}` when either index is 10 or more), circle sectors `c1{j}` clockwise from twelve o'clock, points `pt1`, `pt2`. **events**: tap (cells).
 
@@ -193,7 +196,7 @@ The unit circle.
 
 An HTML table in the canvas wrapper.
 
-**params**: `columns`, `rows` (2D array; a cell may be text, a number, `{ "text": "..." }`, or `{ "edit": true, "placeholder": "?" }`), `editable: ["r1c1"]` (more editable cells), `align` (`"left" | "right" | "center"` or one per column; default first column left, others right), `rowHeads` (first column as row headers), `tap: "rows"` (tapping any cell selects the whole row, id `r{i}`: "tap the row the query returns first").
+**params**: `columns`, `rows` (2D array; a cell may be text, a number, `{ "text": "..." }`, or `{ "edit": true, "placeholder": "?" }`), `editable: ["r1c1"]` (more editable cells), `align` (`"left" | "right" | "center"` or one per column; default first column left, others right), `rowHeads` (first column as row headers), `tap: "rows"` (tapping any cell selects the whole row, id `r{i}`: "tap the row the query returns first"). `state.dim: [ids]` greys rows, columns or cells (a row a join drops) without blanking them.
 
 **state**: `highlight` as ids or `{ "rows": [0], "cols": [2], "cells": ["r1c1"] }` (one ring around the union), `shade: [ids]` or `{ "<set>": [ids] }`, `values: { "r1c1": "0.5" }` (fills inputs or replaces cell text).
 
@@ -239,7 +242,10 @@ Two canvases side by side (stacked below 480px, or always with `stack: true`), f
 - **ids** carry a prefix: `left:pt`, `right:P` in hints, `highlight`, marks and `explain.canvas`; an unprefixed id reaches both sides. A tap-regions answer on the active side uses its plain ids.
 - **derive** reads both sides (ids directly, or `left.p1` and `right.p1` when they share an id) and writes `left:` or `right:` targets; a plain target writes the active side, and `caption` the pair's caption.
 - **controls** bind `left:angle`, `right:a`, `right:points.P.x`; unprefixed binds reach the active side.
-- **two tables** are drawn compact, and the pair stacks them (each at full width) whenever either would have to scroll side by side. The Why? copy is a pair too, with derive run on the explained state.
+- **two tables** are drawn compact, and the pair stacks them (each at full width) whenever either would have to scroll side by side.
+- **tap: "sides"** makes each whole side one tappable object, ids `left` and `right`, so "tap the misleading chart" is a tap-regions widget (`answer: ["right"]`); `leftLabel` and `rightLabel` name them for screen readers.
+- **shareMargins: true** lines up the plot areas of two series (stacked or side by side) by giving both the larger left and right margins.
+- The Why? copy of a pair keeps `stack`, `active` and `shareMargins`. The Why? copy is a pair too, with derive run on the explained state.
 
 ## Canvas-bound widgets
 

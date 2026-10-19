@@ -29,7 +29,9 @@ This is the contract between content authors and the engine. Every content file 
 
 ## 2. Screens
 
-Every screen has `type`, and most have `canvas`, `question` and `widget`. Prose supports inline `$...$` and display `$$...$$` KaTeX, `**bold**`, `*italic*`, inline code in backticks, and fenced code blocks (```python). A fenced block shows its language and a Copy button in a strip above the code (an output block, ` ```text ` or ` ```output `, has no Copy button); long lines scroll sideways inside the block. Inline code keeps its spaces and may wrap when a line is full. Code spans are read first, so `$` and `*` inside backticks stay literal (`` `echo $HOME` ``, `` `ls *.py` ``). Display maths wider than the column scrolls sideways in its own box on a phone. Canvas captions render the same way. Keep prose under 60 words per screen.
+Every screen has `type`, and most have `canvas`, `question` and `widget`. Prose supports inline `$...$` and display `$$...$$` KaTeX, `**bold**`, `*italic*`, inline code in backticks, and fenced code blocks (```python). A fenced block shows its language and a Copy button in a strip above the code (an output block, ` ```text ` or ` ```output `, has no Copy button); long lines scroll sideways inside the block. Inline code keeps its spaces and may wrap when a line is full. Code spans are read first, so `$` and `*` inside backticks stay literal (`` `echo $HOME` ``, `` `ls *.py` ``). Display maths wider than the column scrolls sideways in its own box on a phone. Lines starting `- ` (or `* `) make a bulleted list and `1. ` a numbered one, in lesson prose and in set items alike. A fenced block fits about 54 characters a line in the 540px column before it scrolls, so wrap long code by hand where the line breaks naturally. Canvas captions render the same way. Keep prose under 60 words per screen.
+
+The player shows Start over only where there is something to put back: a canvas-bound widget, a canvas with controls or a draggable point, or an `order`, `place`, `manipulate` or `table` widget. Choice, numeric and code screens with a static diagram have none. Start over puts the canvas back as it was first drawn (its own defaults for anything the screen did not set).
 
 ```json
 {
@@ -172,6 +174,8 @@ Interchangeable tokens: with `"byText": true` tokens with the same text count as
 
 The canvas provides the regions (grid cells, venn regions, tree branches, area cells, table cells, boxes items, and number-line points by their point ids). The question line shows the running count. Optional: `wrong[].flash` (ids to flash on Show why), `countWord` (the noun in the count, on every canvas; default "shaded" on a grid, else "selected"), `only` (restrict tappable ids).
 
+`only` limits what can be tapped; on a grid it takes set names as well as ids (`["col7", "row5"]`). The regions also include table rows (`tap: "rows"`), console lines (`l3`), vector arrows and points, graph edges (`tapEdges`), and whole sides of a pair (`tap: "sides"`, ids `left` and `right`).
+
 Count mode, for "shade any 3 of the 4": give `count` instead of `answer`, and optionally `among`.
 
 ```json
@@ -193,6 +197,8 @@ Lines are shuffled on render. Per-line marks after grading.
 ```json
 { "kind": "table", "columns": ["x", "P(X=x)"], "rows": [ ["0", { "edit": true, "answer": 0.25, "tol": { "abs": 0.001 } }], ["1", "0.5"] ] }
 ```
+
+A cell whose `answer` is text (`"True"`, `"AAPL"`) is graded as text, ignoring case and spaces at the ends, with no `tol`; `accept: ["T", "yes"]` lists other spellings.
 
 ### `manipulate`
 
@@ -312,6 +318,10 @@ Negative numbers, in captions and from `fixed` and `money`, print with the minus
 | `orderbook` | `bids: [[price, size]]`, `asks: [[price, size]]`, `depth` | `order: { "side": "buy", "size": 300 }`, `highlight: ["ask0"]`, `fills` | `bid{i}`, `ask{i}`, `spread` |
 | `table` | `columns`, `rows`, `align` (a negative number, or text starting with one, prints with the minus sign −), `compact` (automatic above 6 columns) | `highlight: { "rows": [], "cols": [], "cells": [] }` | `r{i}`, `c{j}`, `r{i}c{j}` |
 | `pair` | two canvases side by side: `left` and `right` (each `{ kind, params, state }`), `active` (the side canvas-bound widgets drive, default `left`), `stack: true` to stack them | patches take `{ "left": {...}, "right": {...}, "caption": "..." }` | either side's ids with a `left:` or `right:` prefix (`left:pt`, `right:P`); unprefixed ids reach both |
+
+More options, each detailed in its README entry: plane `holes`, parametric and implicit curves (with `on` and `tangent`), hidden functions that still evaluate, point `tap: false` and `trace: true`, tangent `labelOffset`; series `title`, `dateFormat`, `fill: "below"`, a second y axis (`axis: 2`, `y2`), `margins`, marker `decimals`; bars `data` with a `binWidth` control and `truncate`; area `state.colSizes`/`rowSizes` (bindable `colSizes.0`), spanning labels `"c11-c16"`, `dim`; number-line arrow `side: "below"`; table `dim`; graph node `shape` and `tapEdges`; payoff `value` and `tangent` (delta); orderbook `spreadValue: false`; pair `tap: "sides"` and `shareMargins`; grid `revealAfterGrade`.
+
+A ladder may move between a table and a chart of the same numbers, or into or out of a `pair`; the validator warns only on other changes of canvas kind between ladder screens.
 
 Every canvas accepts `state.highlight: [ids]` and `state.caption: "text"`. A `derive` block also runs in the Why? copy, after `explain.canvas` is applied, so derived points and captions match the explained state. On a `pair`, `derive` reads both sides (ids directly, or `left.p1` and `right.p1`) and writes `left:` or `right:` targets: `{ "right:P.y": "sin(angle * pi / 180)" }`; controls bind `left:angle` or `right:a`. Every patch (`state`, `explain.canvas`, `demonstrate.steps[].canvas`, a wrong answer's `canvas`) may change one item of a list by id: `{ "points": { "p2": { "x": 3 } } }` merges into `p2` and keeps the rest of the list. A new id adds an item, and `null` removes one: `{ "points": { "p3": null } }` (in the Why? copy too).
 

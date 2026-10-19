@@ -46,15 +46,21 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
   - `expr` uses `x`, numbers, `+ - * / ^`, `sin cos tan exp ln log sqrt abs min max floor ceil pi e`, and any name in `params`.
   - Paths break at NaN, at asymptotes and at jumps.
 - `params: { a: 1 }` are the expression parameters.
+- `holes: [x]` on a function draws an open circle at the limit there (for $\frac{x^2-1}{x-1}$ at 1); a point dragged onto a hole takes the limit instead of vanishing.
+- Curves that are not $y = f(x)$, as `functions` entries: parametric `{ id, x: "2*cos(t)", y: "sin(t)", t: [0, 6.2832] }` and implicit `{ id, implicit: "x^3 + y^3 - 6*x*y" }` (the curve where the expression is 0, traced on a 160 by 120 grid). A point with `on` rides either (it moves to the nearest point of the curve, so it goes all the way round a circle), and `tangent: { f, at: pointId | [x, y] }` (or `t` on a parametric curve) draws the tangent there; a vertical tangent is labelled "vertical". `labelAt` places a curve's label (a `t` value or `[x, y]`).
+- A function listed in `hide` is not drawn but is still evaluated, so a point can ride it (`on`) and a tangent or area can use it.
 
 **state**
 - `points: [{ id, x, y, drag, snap, snapX, on: "f", lockX, lockY, label, labelPos: "ne"|"n"|..., colour, open }]`.
   - `on` keeps a dragged point on function `f`, inside f's `domain`.
+  - `tap: false` keeps a decorative point out of tap mode.
+  - `trace: true` leaves a trail where the point has been (a derive-driven point traces the curve it follows, such as $f'$ while the learner drags along $f$); `trace: "x"` joins the trail in x order. The trail clears on Start over, or with the `clearTrace()` method.
+  - While sketching, a draggable point is drawn as a square, so it is not mistaken for a sketch handle.
   - `label` may contain `{x}` and `{y}`, which are filled with the current coordinates.
 - `segments: [{ id, from: [x, y] | pointId, to, dashed, arrow, label, labelOffset: [dx, dy], colour }]`. The label sits at the midpoint, nudged by `labelOffset` (default 8 right, 10 up; a negative dx anchors it at its end).
 - `polygons: [{ id, points: [[x, y] | pointId, ...], colour, label, vertexLabels: ["A", "B", "C"], dashed }]`: a filled shape (a light series wash) with its vertices labelled just outside it.
 - `angles: [{ id, at, from, to, label, right, radius }]`: an arc between the rays at → from and at → to (the smaller angle), or a square mark with `right: true`; the label sits on the bisector; `radius` in px (default 22).
-- `tangent: { f, x: number | pointId, label: "slope" | "text {slope}", length, lengthPx, side, dashed }`. It can also be an array of these. `length` is in x units, `lengthPx` in pixels along the line. At a corner (the one-sided slopes differ, as on `abs(x)` at 0) no tangent is drawn unless `side: "left"` or `"right"` picks one.
+- `tangent: { f, x: number | pointId, label: "slope" | "text {slope}", length, lengthPx, side, dashed }`. It can also be an array of these. `length` is in x units, `lengthPx` in pixels along the line. At a corner (the one-sided slopes differ, as on `abs(x)` at 0) no tangent is drawn unless `side: "left"` or `"right"` picks one. `labelOffset: [dx, dy]` moves the slope label clear of the point's own label.
 - `area: { id, f, g, from, to, label: "auto" | "text {value}", colour }`. `g` is an optional lower curve. It can also be an array.
 - `riemann: { id, f, from, to, n, rule: "left"|"right"|"mid"|"trap", showSum, sumLabel }`.
 - `vectors: [{ id, v: [dx, dy], from: [x, y] | pointId, label, colour }]`.
@@ -89,6 +95,8 @@ Bar chart or histogram. It can draw dashed exact-value lines and fill itself fro
 **params**
 - `categories: [2, 3, ...]` or `[{ id, label, value }]`. Alternatively `bins: { min, max, width }`.
 - `yLabel`, `xLabel`, `height`, `colour`, `showValues`, `yMax`, `yMin`.
+- Histograms: with `bins` and `data: [raw observations]`, the bars are the counts in the bins; a control bound to `binWidth` re-cuts them (`state.binWidth`). Bin ids are `b0`, `b1`, … (zero-based).
+- `truncate: true` with a `yMin` above 0 starts the axis there, the truncated-axis trick to show directly.
 - Negative values hang below a zero baseline (a profit and loss by month); the axis runs down to a tick under the lowest bar unless `yMin` fixes it, and a negative bar's value label sits under it.
 - Value labels (`showValues`): `decimals: 2` fixes the places and keeps trailing zeros (0.50, not 0.5); `money: "£"` prefixes the currency and uses two places unless `decimals` says otherwise (£12.50).
 - `exact: [{ x: "7", y: 0.1667 }]`. `x` is a category label or id; for bins it is any value inside the bin.
@@ -189,9 +197,14 @@ One or more time series, with optional candles.
 - A `null` in `values` leaves a gap: the line lifts and starts again at the next number (use it for a missing day or a series that starts late).
 - `y: [min, max]`, `baseline` (for example 0 for returns), `yLabel`, `xLabel`, `indexFrom`, `height`, `drawdownLabel`.
 - Each series is labelled directly at its line end; there is no legend.
+- `title`: a heading above the plot. `dateFormat` (with `x: "dates"`): tick labels by `%Y`, `%y`, `%m`, `%d`, `%e`, `%b`, `%B`, for example `"%b %Y"` (Jan 2024) or `"%d/%m"`, to match matplotlib's `DateFormatter`.
+- A series with `fill: "below"` (or `true`) shades between its line and zero (or `baseline`, or its own `fillTo`), as `fill_between` does.
+- A second y axis: series with `axis: 2` use the right-hand axis, with `y2: [min, max]` (else from their values), `y2Label` and `y2Format: "pct" | "money"`. It is the dual-axis chart for the "two scales" trap.
+- `margins: { left, right }` fixes the plot's side margins in px; a `pair` with `shareMargins: true` sets them for you so stacked panels line up.
+- A short chart (a stacked panel 190px high) still gets at least three y ticks.
 
 **state**
-- `markers: [{ id, i, series, label, below, colour, y }]`. `i` is a 0-based index into the values array (even with `indexFrom: 1`, which only changes the axis labels) or an ISO date. `label` may contain `{value}`. A marker sits on its series' value at `i`; give `y` to place it explicitly, which you must do where that value is `null` (a marker on a gap is otherwise skipped).
+- `markers: [{ id, i, series, label, below, colour, y }]`. `i` is a 0-based index into the values array (even with `indexFrom: 1`, which only changes the axis labels) or an ISO date. `label` may contain `{value}`, which keeps the canvas `decimals` unless the marker has its own `decimals`. A marker sits on its series' value at `i`; give `y` to place it explicitly, which you must do where that value is `null` (a marker on a gap is otherwise skipped).
 - `shade: [{ id, from, to, label, tone: "neg"|"pos"|"neutral" }]`. `from` and `to` are 0-based indices into the values array (or ISO dates), whatever `indexFrom` says.
 - `yScale: "log"` in params: a log-price chart (positive values), ticks at 1, 2 and 5 times powers of ten in the money format.
 - `drawdown: true` finds and shades the maximum drawdown of the first series, labelled `Max drawdown −x%`. `drawdown: "money"` measures the absolute fall instead, labelled in the money format (`Max drawdown −£90.00`), for cumulative P&L that starts at zero; `"abs"` gives the plain number.
@@ -307,6 +320,8 @@ Random walks or price paths from the seeded RNG.
 - `layout: "ring"`: the nodes sit evenly round a circle in list order (seats round a table), ignoring `x` and `y`.
 - Without `nodeRadius` the radius grows to fit the longest label (22 up to 34); a label still too long shrinks (down to 10px).
 - A node may carry its own `r`, `shape: "pill"` (a rounded box as wide as its label, for branch names and variable names) and `dashed: true` (for example a fetched commit not yet merged). Edges stop at each node's rim.
+- Node `shape`: `"circle"` (default), `"pill"`, `"rect"` (a rounded box sized to its label; a label with `\n` takes two lines) or `"diamond"`. Labels never shrink below 12px: a long one wraps at a space onto two lines, then ends with …
+- `tapEdges: true` makes edges tappable in tap mode (ids `e-from-to`); a tap-regions widget whose `among` or `only` names an edge does the same.
 - `lanes: [{ "y": 0.15, "label": "origin" }, { "y": 0.85, "label": "local" }]`: labelled dotted lines behind the graph, at the same 0 to 1 heights as node `y`.
 - Names and objects (aliasing, mutation): draw each name as a pill node and each object as a node, with an edge from name to object; re-point a name by patching its edge (`{ "edges": { "e-b-obj1": null, "e-b-obj2": { "from": "b", "to": "obj2" } } }`), which animates.
 - `markov: true` makes edges directed and labels them with probabilities. Self-loops (`from` = `to`) point away from the graph's centre. A pair of opposite edges curves apart.
@@ -338,6 +353,7 @@ Random walks or price paths from the seeded RNG.
 - `cells: [5, 2, 9]`, `indexFrom` (default 0).
 - `mode`: `"array"`, `"stack"` (vertical, top marked), `"queue"` (front and back labels) or `"linked"` (boxes with next arrows ending in `null`).
 - `capacity` (stack height), `showIndex`, `pointersBelow`, `topLabel`, `frontLabel`, `backLabel`, `nullLabel`, `height`.
+- Cells widen to their text (a date, `102.50`) as far as the column allows, and long text shrinks to fit.
 
 **state**
 - `cells`: replaces the values.
@@ -370,6 +386,7 @@ Payoff or profit and loss at expiry against the price of the underlying.
 - `range: [min, max]`.
 - `pl` (default true) subtracts premiums for long legs and adds them for short legs.
 - `y`, `yLabel`, `xLabel`, `label` (the combined line's label), `spotLabel`, `snap` (strike drag step, default 1), `drag` (leg ids), `height`.
+- `value: { t: 0.25, sigma: 0.2, r: 0, label }` (params or state): the position's value before expiry (Black-Scholes, `t` years left), a smooth curve over the payoff; patch `t` towards 0 and it settles onto the payoff. `tangent: true` (or `{ at: S, label: "delta {delta}", labelOffset }`) draws the tangent to that curve at the spot, labelled with its slope, delta.
 
 **Drawing**
 - The combined line is bold, slot 1. With more than one leg, each leg is drawn faint and dashed in its own slot.
@@ -400,7 +417,7 @@ Payoff or profit and loss at expiry against the price of the underlying.
 - `bids: [[price, size]]` and `asks: [[price, size]]`, in any order; they are sorted.
 - `depth`: levels shown on each side.
 - `dp`: price decimals. Inferred if omitted.
-- `currency`, `bidLabel`, `askLabel`, `spreadLabel`, `showMid`.
+- `currency`, `bidLabel`, `askLabel`, `spreadLabel`, `showMid`. `spreadValue: false` keeps the spread row's label but hides the number, for the learner to work out.
 - The ladder has three columns: bid size bars on the left (green side), the price, and ask size bars on the right (red side). Asks sit above the spread row and bids below it. The best levels are bold.
 
 **state**

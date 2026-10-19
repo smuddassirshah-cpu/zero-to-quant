@@ -197,6 +197,59 @@ Third pass (items 51 to 114, 123, 133 to 161; 150 deferred):
 160. Done: pytest loads from the CDN on first use like numpy (checked: `pytest.approx` and `pytest.raises` run in the widget); its load time is kept out of the limit (161) and counts as heavy for the default budget.
 161. Done: the worker posts `pkgs` start, message and end around `loadPackagesFromImports`; the code widget pauses the run's limit while packages load (two minutes of their own) and shows "Loading numpy, pandas" in the results panel.
 
+Fourth pass (items 115 to 132 and 162 to 194):
+115. Done: Start over puts each key the screen did not set back to the canvas's first-drawn state (its own defaults) instead of emptying it, so array cells and the like no longer blank; trails clear too.
+116. Covered: inline code in table cells renders (145, 158), and a monospaced listing with line numbers is the `console` canvas (`numbers: true`, 159).
+117. Done: graph node `shape` "rect" and "diamond" (with "pill" from 152), multi-line labels (`\n`), and tap mode on edges (`tapEdges: true`, or edge ids in the widget's `only`/`among`).
+118. Done: table widget cells with a text answer are graded as text, ignoring case and outer spaces, with `accept` spellings; the validator allows them without `tol`.
+119. Done: array cells widen to their text (as far as the column allows) and long text shrinks to fit.
+120. Done: every code run starts in a fresh, empty working directory (the worker removes the last one).
+121. Done: `isclose` fails a string actual ("0.05" is not 0.05).
+122. Done: Start over shows only with a canvas-bound widget, a canvas with controls or a draggable point, or an order, place, manipulate or table widget.
+124. Done: orderbook `spreadValue: false` hides the spread number (and the mid).
+125. Done: number-line controls may bind a free name, which lands in `state.params` for derive (pass 3, item 134).
+126. Done: number-line arrow `side: "below"`, overlapping arcs stack in levels, and a zero-length jump is a small loop.
+127. Done: area `colSizes.k` / `rowSizes.k` control binds (sign kept), see 191.
+128. Done: grid `revealAfterGrade: true` (with `text: "marked"`): a tap selects without showing the text.
+129. Deferred: a timed table set (countdown, live score, lock at zero) is a screen mode of its own, close to the Today warm-up; better designed with the mental arithmetic course than added to the table widget.
+130. Done: area labels keyed "c11-c16" span the rectangle between the two cells; sizes patchable (191).
+131. Done: number-line interval labels are plain text unless wrapped in `$...$`.
+132. Done: tap-regions `only` expands a canvas's set names (a grid's `col7`, `row5`, `cross5`).
+156. Follow-ups: nothing new was raised against it; pass 3's starter message stands.
+162. Done: box card text shrinks with the cards; an empty container without `capacity` holds as many places as the fullest one (2 to 6).
+163. Done: code widget `prelude` and `postlude` (hidden Python before and after the learner's code, in their namespace; line numbers stay the learner's; `__learner_source__` holds their code). Real pytest loads through `loadPackagesFromImports`: `import pytest` in a postlude, write `__learner_source__` to `test_mine.py` and `pytest.main(["-q", "-p", "no:cacheprovider", "test_mine.py"])` runs parametrize, approx and `raises(match=)` (checked in the browser, about 1.7 s once the wheel is cached), so the pytest level 2 and 3 stand-ins can be replaced.
+164. Covered by 158: table cells render backticks as inline code.
+165. Done: graph labels never shrink below 12px; a long label wraps at a space onto two lines, then ends with an ellipsis.
+166. Done: the validator accepts `b{i}` and `exact-b{i}` bin ids on a histogram `bars` canvas (and checks them against the bin count).
+167. Done: bars `data` (raw observations) with `bins`: a control bound to `binWidth` re-cuts the histogram (`state.binWidth`).
+168. Done: series `title` and `dateFormat` (`%Y %y %m %d %e %b %B`).
+169. Done: matplotlib's "building the font cache" line (and stray library warnings) are dropped from the code results.
+170. Done: validator `distribution` ids include `curve`, `sd`, `prob` and the overlay ids; bars bins as 166.
+171. Done: series `fill: "below"` (or `fillTo`) shades between the line and zero or the baseline.
+172. Done: charts keep at least three y ticks on short heights (stacked panels at 190px).
+173. Done: hidden plane functions stay evaluable (`on`, tangents, areas), only drawing skips them.
+174. Done: a plane point dragged onto a hole takes the limit there instead of NaN.
+175. Done: plane function `holes: [x]` draws an open circle at the limit.
+176. Done: plane point `tap: false` keeps it out of tap mode.
+177. Done: the ladder canvas-kind warning no longer fires between a table and a chart of the same numbers (plane, series, bars, scatter, distribution, number-line, console) or into or out of a pair.
+178. Done: prose (lessons and set items) renders `- ` and `1. ` lines as lists.
+179. Done: AUTHORING.md notes that a fenced block fits about 54 characters a line before it scrolls.
+180. Done: table `state.dim` greys rows, columns or cells.
+181. Done: series markers take their own `decimals` for `{value}`.
+182. Done: the worker ignores FutureWarning and DeprecationWarning for each run, so pandas notices stay out of the learner's output.
+183. Done: pair `tap: "sides"`: each side is one tappable object (`left`, `right`), with selection, grading marks, badge and flash.
+184. Done: bars `truncate: true` honours a `yMin` above 0.
+185. Done: pair `shareMargins: true` gives two series the same left and right margins (series `margins` param and `margins()` method).
+186. Done: series second y axis (`axis: 2`, `y2`, `y2Label`, `y2Format`).
+187. Done: payoff `value: { t, sigma, r }` draws the Black-Scholes value before expiry, and `tangent` draws its tangent at the spot labelled with delta.
+188. Done: plane point `trace: true` (or "x") leaves a trail as a derive-driven point moves; it clears on Start over or `clearTrace()`.
+189. Done: area `state.dim` (a veil over pieces) and a tap selection with a heavy blue edge, distinct from authored shading.
+190. Done: plane tangent `labelOffset` (on functions and on curves).
+191. Done: area `state.colSizes` / `rowSizes` override params and re-cut the drawing; controls bind `colSizes.k`.
+192. Done: plane parametric (`x`, `y`, `t`) and implicit (`implicit`, marching squares) curves as function entries, with `on` (nearest point, so a point goes round a circle) and `tangent` (`at` a point, or `t`).
+193. Done: while sketching, a plane draggable point is drawn as a square.
+194. Done: the Why? copy is built from the whole canvas spec, so a pair keeps `stack`, `active` and `shareMargins`.
+
 
 Raised later (equations level 2):
 
@@ -567,3 +620,9 @@ Raised later (taylor level 2):
 209. Live captions: `^` in a caption formula is not a power (unlike curve formulas), so values go silently wrong; either accept `^` in captions or make the validator warn on it.
 210. `plane` curve formulas: a partial-sum helper (`sum(k, 0, n, term)`) so Taylor polynomials with a slider on $n$ need no per-term switches (see 197).
 211. Table widget beside a compact canvas pushes the table below the fold; allow a `canvas.height` cap or a side-by-side layout on wide screens.
+
+Raised later (taylor level 3):
+
+212. `series` canvas: horizontal reference lines (`hlines: [{ y, label, dashed }]`), for a limit such as $\pi^2/6$ across a partial-sum chart.
+213. Controls: a `scale: "log"` slider option (stops at 1, 10, 100, 1000) whose readout shows the value, not the exponent.
+214. `bars`: during integration pass 4 a `rebin` edit briefly broke every category bar chart (read `params.bins.width` with no bins); keep a gallery check of a category chart in the pass gate.

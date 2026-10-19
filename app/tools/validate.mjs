@@ -434,6 +434,34 @@ const checkCanvas = (file, where, c) => {
     if (S.labels != null && !isObj(S.labels)) err(file, `${where}.state.labels`, 'labels maps node ids to new labels');
     if (S.rotate != null && typeof S.rotate !== 'number') err(file, `${where}.state.rotate`, 'rotate is a number of seats');
   }
+  /* pass 4 options: shapes only */
+  const listOf = (v) => Array.isArray(v) ? v : [];
+  if (c.kind === 'plane') {
+    listOf(P.functions).forEach((f, i) => {
+      if (!isObj(f)) return;
+      if (f.expr == null && !(f.x != null && f.y != null) && f.implicit == null) err(file, `${where}.params.functions[${i}]`, 'a function needs expr, or x and y (parametric, with t: [from, to]), or implicit (F(x, y) = 0)');
+      if (f.holes != null && !(Array.isArray(f.holes) && f.holes.every(x => typeof x === 'number'))) err(file, `${where}.params.functions[${i}].holes`, 'holes is a list of x values');
+      if (f.t != null && !(Array.isArray(f.t) && f.t.length === 2 && f.t.every(x => typeof x === 'number'))) err(file, `${where}.params.functions[${i}].t`, 't is [from, to]');
+    });
+    listOf(S.points).forEach((q, i) => { if (isObj(q) && q.tap != null && typeof q.tap !== 'boolean') err(file, `${where}.state.points[${i}].tap`, 'tap is true or false'); if (isObj(q) && q.trace != null && ![true, false, 'x'].includes(q.trace)) err(file, `${where}.state.points[${i}].trace`, 'trace is true (the path as it went) or "x" (sorted by x)'); });
+  }
+  if (c.kind === 'series') {
+    if (P.y2 != null && !(Array.isArray(P.y2) && P.y2.length === 2)) err(file, `${where}.params.y2`, 'y2 is [min, max] for the right-hand axis');
+    if (P.dateFormat != null && typeof P.dateFormat !== 'string') err(file, `${where}.params.dateFormat`, 'dateFormat is a string such as "%b %Y"');
+    if (P.margins != null && !isObj(P.margins)) err(file, `${where}.params.margins`, 'margins is { left, right } in px');
+    listOf(P.series).forEach((q, i) => { if (isObj(q) && q.axis != null && ![1, 2].includes(q.axis)) err(file, `${where}.params.series[${i}].axis`, 'axis is 1 or 2'); });
+  }
+  if (c.kind === 'bars') {
+    if (P.data != null && !(Array.isArray(P.data) && P.data.every(x => typeof x === 'number'))) err(file, `${where}.params.data`, 'data is a list of numbers (raw observations)');
+    if (P.data != null && !isObj(P.bins)) err(file, `${where}.params.data`, 'data needs bins: { min, max, width }');
+    if (P.truncate && typeof P.yMin !== 'number') err(file, `${where}.params.truncate`, 'truncate needs a yMin');
+  }
+  if (c.kind === 'pair') {
+    if (c.tap != null && c.tap !== 'sides') err(file, `${where}.tap`, 'tap is "sides" (each side one tappable object, ids left and right)');
+  }
+  if (c.kind === 'number-line') listOf(S.arrows).forEach((q, i) => { if (isObj(q) && q.side != null && !['above', 'below'].includes(q.side)) err(file, `${where}.state.arrows[${i}].side`, 'side is "above" or "below"'); });
+  if (c.kind === 'graph') listOf(P.nodes).forEach((q, i) => { if (isObj(q) && q.shape != null && !['circle', 'pill', 'rect', 'diamond'].includes(q.shape)) err(file, `${where}.params.nodes[${i}].shape`, 'shape is circle, pill, rect or diamond'); });
+  if (['area', 'table'].includes(c.kind) && S.dim != null && !Array.isArray(S.dim)) err(file, `${where}.state.dim`, 'dim is a list of ids');
   if (c.kind === 'console' && P.lines == null && typeof P.text !== 'string') err(file, `${where}.params`, 'a console needs lines (a list of strings) or text');
   if (c.kind === 'console' && P.lines != null && !(Array.isArray(P.lines) && P.lines.every(l => typeof l === 'string'))) err(file, `${where}.params.lines`, 'lines is a list of strings, one per line');
   if (c.kind === 'table' && P.tap != null && P.tap !== 'rows') err(file, `${where}.params.tap`, 'tap is "rows" (or leave it out to tap cells)');
