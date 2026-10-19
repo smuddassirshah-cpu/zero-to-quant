@@ -655,3 +655,12 @@ Raised later (vectors level 1):
 229. Long inline KaTeX in `order` lines, Why? text and longform model answers neither wraps nor scrolls on a phone; let an inline maths span overflow onto its own scrolling line.
 
 Content note (vectors level 1): Stage 0 `counting` l9 to l13 already teach arrows, adding, length, dot product as P&L, the cosine proof and beta as a projection. Vectors level 1 uses new numbers and contexts; consider trimming `counting` or framing vectors level 1 as revision-plus.
+
+Raised later (vectors level 3, multivar level 3):
+
+230. Grading bug: `exprEqual` (grade.js) accepts `x` for `\sqrt{x}` because Compute Engine `simplify().isEqual()` agrees at 0 and 1; `5R` passes for `5\sqrt{R}`. Always cross-check numerically at several random points for every free symbol, including with two or more variables (covers 207).
+231. Pyodide 0.27.7 NumPy 2.0.2: `np.linalg.solve` and `inv` return nan for an exactly singular matrix instead of raising `LinAlgError`; AUTHORING.md should say `compare: "raises"` cannot rely on NumPy's own singular-matrix errors.
+232. `plane`: `implicit` and parametric curves exist in plane.js but are undocumented; document them and add a `levels` option for a contour family of $f(x,y)$ (resolves 192 and 215).
+233. `derive` writing an array target (`"g.v": "[...]"`) works but is undocumented; document it (and see 220).
+234. Negative numbers in fixed `table` widget cells and numeric `matrix` cells print a hyphen, not a minus sign; format like the table canvas.
+235. Live `{{...}}` values inside a typeset matrix cell do not update; allow caption-style substitution in matrix entries.
