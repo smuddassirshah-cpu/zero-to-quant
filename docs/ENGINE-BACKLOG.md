@@ -645,3 +645,13 @@ Raised later (multivar level 4):
 222. `plane` areas: a polar region (`r` and `theta` limits) as a shadable area, not only between $y = f(x)$ curves.
 223. `plane` area `label: "auto"` reads low when shading stops at the plot edge; integrate the expression to the authored bounds, not the visible ones.
 224. `grid`: a live caption or `derive` that reads the current tap selection (running total of tapped cells).
+
+Raised later (vectors level 1):
+
+225. `vectors` canvas: angle marks between two arrows (`angles: [{ a, b, label, right: true }]`), so right angles and the θ arc in the cosine proof need not move to `plane`.
+226. Grading two sliders together: a `sliders` widget (or `slider` with `params: [a, b]`) graded as a pair, for "find a and b that reach the target".
+227. `vectors` drag: hold a dragged head to a line (`on: "span"` of another vector, or `lockTo`) for projection drags.
+228. `vectors` labels: scaled plain-text labels render as "0.6Equity fund"; put a space or the scale in maths before a text label.
+229. Long inline KaTeX in `order` lines, Why? text and longform model answers neither wraps nor scrolls on a phone; let an inline maths span overflow onto its own scrolling line.
+
+Content note (vectors level 1): Stage 0 `counting` l9 to l13 already teach arrows, adding, length, dot product as P&L, the cosine proof and beta as a projection. Vectors level 1 uses new numbers and contexts; consider trimming `counting` or framing vectors level 1 as revision-plus.
