@@ -1,0 +1,971 @@
+{
+  "id": "l12-numpy-matrices",
+  "course": "vectors",
+  "title": "Matrices in NumPy",
+  "minutes": 15,
+  "objectives": [
+    "Build, multiply and invert matrices in NumPy, and prefer solving to inverting."
+  ],
+  "skills": [
+    "la-inverse",
+    "la-product"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Greeks of a position",
+      "prose": "In NumPy a matrix is a 2D array, and the operator `@` multiplies matrices: `A @ x` is $\\mathbf{A}\\mathbf{x}$. Each column of `A` holds one option's greeks; `x` holds how many of each we hold.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Greek",
+            "Option P",
+            "Option Q"
+          ],
+          "rows": [
+            [
+              "Delta",
+              "0.50",
+              "0.25"
+            ],
+            [
+              "Vega (£)",
+              "0.20",
+              "0.30"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "`A` for the first test; the position is 225 of P and 350 of Q"
+        }
+      },
+      "question": "Complete `hedge_greeks` so it returns the greeks of the whole position.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef hedge_greeks(A, x):\n    A = np.array(A, dtype=float)\n    x = np.array(x, dtype=float)\n    total = ...\n    return total\n",
+        "solution": "import numpy as np\n\ndef hedge_greeks(A, x):\n    A = np.array(A, dtype=float)\n    x = np.array(x, dtype=float)\n    total = A @ x\n    return total\n",
+        "examples": [
+          {
+            "call": "np.round(hedge_greeks([[0.50, 0.25], [0.20, 0.30]], [225, 350]), 6).tolist()",
+            "expect": "[200.0, 150.0]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(hedge_greeks([[0.50, 0.25], [0.20, 0.30]], [225, 350]), 6).tolist()",
+            "expect": "[200.0, 150.0]"
+          },
+          {
+            "call": "np.round(hedge_greeks([[0.50, 0.25], [0.20, 0.30]], [-150, 300]), 6).tolist()",
+            "expect": "[0.0, 60.0]"
+          },
+          {
+            "call": "np.round(hedge_greeks([[1, 1], [2, -1]], [2, 3]), 6).tolist()",
+            "expect": "[5.0, 1.0]"
+          },
+          {
+            "call": "np.round(hedge_greeks([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]], [200, 300, 100]), 6).tolist()",
+            "expect": "[235.0, 140.0, 19.0]"
+          },
+          {
+            "call": "np.round(hedge_greeks([[1, 0], [0, 1]], [7, -4]), 6).tolist()",
+            "expect": "[7.0, -4.0]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Results are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The greeks of the position are $\\mathbf{A}\\mathbf{x}$."
+        },
+        {
+          "rung": "point",
+          "text": "In NumPy, $\\mathbf{A}\\mathbf{x}$ is written with the `@` operator.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write `total = A @ x`."
+        }
+      ],
+      "feedback": {
+        "correct": "`A @ x` gives delta 200 and vega 150 for the hedge from earlier.",
+        "generic": "Some tests failed. The first test should give `[200.0, 150.0]`.",
+        "byKey": {
+          "test-1": "For 225 of P and 350 of Q the greeks are 200 and 150. Use `A @ x`, the matrix product.",
+          "error": "Your code stopped with an error. Replace the `...` with an expression that uses `A` and `x`."
+        }
+      },
+      "explain": {
+        "text": "`A @ x` multiplies each row of `A` by `x` and adds: $0.50 \\cdot 225 + 0.25 \\cdot 350 = 200$. It works the same for 3 instruments and 3 greeks.\n\n```python\ntotal = A @ x   # the matrix product\n```"
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "NumPy also computes determinants. Here is a short session at the Python prompt.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> A = np.array([[2, 3], [1, 4]])",
+            ">>> print(np.linalg.det(A))",
+            "5.000000000000001"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the determinant of $\\mathbf{A}$, exactly?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Exact determinant",
+        "accept": "5 exactly: $2 \\cdot 4 - 3 \\cdot 1$",
+        "wrong": [
+          {
+            "id": "printed",
+            "value": 5.000000000000001,
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "id": "plus",
+            "value": 11
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out $ad - bc$ by hand."
+        },
+        {
+          "rung": "point",
+          "text": "$a = 2$, $b = 3$, $c = 1$, $d = 4$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\cdot 4 - 3 \\cdot 1 = 5$."
+        }
+      ],
+      "feedback": {
+        "correct": "Exactly 5. The tail NumPy printed is rounding error.",
+        "generic": "Not quite right. Compute $ad - bc$ for the matrix by hand.",
+        "byKey": {
+          "printed": "That is what NumPy printed. By hand $8 - 3 = 5$ exactly; the extra digit is floating-point rounding.",
+          "plus": "You added $bc$. The determinant is $8 - 3$."
+        }
+      },
+      "explain": {
+        "text": "NumPy finds a determinant by elimination in floating point, which leaves an error near $10^{-15}$. So never test computed matrices with `==`. Compare with a tolerance: `np.allclose`.",
+        "canvas": {
+          "tone": {
+            "l3": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Check an inverse",
+      "prose": "`np.linalg.inv(A)` returns $\\mathbf{A}^{-1}$, and `np.eye(n)` is the $n \\times n$ identity. `np.allclose(X, Y)` is `True` when two arrays agree to within a tiny tolerance.",
+      "question": "Complete `is_inverse` so it returns `True` exactly when `B` undoes `A`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return ...\n",
+        "solution": "import numpy as np\n\ndef is_inverse(A, B):\n    A = np.array(A, dtype=float)\n    B = np.array(B, dtype=float)\n    n = len(A)\n    return np.allclose(B @ A, np.eye(n))\n",
+        "examples": [
+          {
+            "call": "is_inverse([[2, 1], [1, 1]], [[1, -1], [-1, 2]])",
+            "expect": "True"
+          },
+          {
+            "call": "is_inverse([[2, 3], [1, 4]], [[4, -3], [-1, 2]])",
+            "expect": "False"
+          }
+        ],
+        "tests": [
+          {
+            "call": "is_inverse([[2, 1], [1, 1]], [[1, -1], [-1, 2]])",
+            "expect": "True"
+          },
+          {
+            "call": "is_inverse([[2, 3], [1, 4]], [[4, -3], [-1, 2]])",
+            "expect": "False"
+          },
+          {
+            "call": "is_inverse([[2, 3], [1, 4]], np.linalg.inv(np.array([[2, 3], [1, 4]])))",
+            "expect": "True"
+          },
+          {
+            "call": "is_inverse([[2, 3], [1, 4]], [[0.8, -0.2], [-0.6, 0.4]])",
+            "expect": "False"
+          },
+          {
+            "call": "is_inverse([[4, 1], [2, 1]], [[0.5, -0.5], [-1, 2]])",
+            "expect": "True"
+          },
+          {
+            "call": "is_inverse([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]], np.linalg.inv(np.array([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]])))",
+            "expect": "True"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, comparing the values returned. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\mathbf{B}$ undoes $\\mathbf{A}$ when $\\mathbf{B}\\mathbf{A} = \\mathbf{I}$."
+        },
+        {
+          "rung": "point",
+          "text": "Build $\\mathbf{B}\\mathbf{A}$ with `@` and the identity with `np.eye(n)`."
+        },
+        {
+          "rung": "step",
+          "text": "Write `return np.allclose(B @ A, np.eye(n))`."
+        }
+      ],
+      "feedback": {
+        "correct": "`np.allclose(B @ A, np.eye(n))` passes true inverses and catches near misses.",
+        "generic": "Some tests failed. Compare `B @ A` with the identity, using a tolerance.",
+        "byKey": {
+          "test-2": "That candidate forgot to divide by the determinant: it gives $5\\mathbf{I}$, so the answer is `False`.",
+          "test-3": "With `==` the rounding error in `np.linalg.inv` can break the test. Use `np.allclose`.",
+          "error": "Your code stopped with an error. Replace the `...` with a comparison of `B @ A` and `np.eye(n)`."
+        }
+      },
+      "explain": {
+        "text": "`B @ A` is the product $\\mathbf{B}\\mathbf{A}$, and `np.allclose` forgives errors near $10^{-15}$. The candidate without the $\\tfrac{1}{5}$ fails, and so does the transposed one.\n\n```python\nreturn np.allclose(B @ A, np.eye(n))\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Solve a system",
+      "prose": "`np.linalg.solve(A, b)` returns the $\\mathbf{x}$ with $\\mathbf{A}\\mathbf{x} = \\mathbf{b}$, without forming $\\mathbf{A}^{-1}$. The first test is the crossing lines from the start of this level.",
+      "question": "Complete `solve_system`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef solve_system(A, b):\n    A = np.array(A, dtype=float)\n    b = np.array(b, dtype=float)\n    x = ...\n    return x\n",
+        "solution": "import numpy as np\n\ndef solve_system(A, b):\n    A = np.array(A, dtype=float)\n    b = np.array(b, dtype=float)\n    x = np.linalg.solve(A, b)\n    return x\n",
+        "examples": [
+          {
+            "call": "np.round(solve_system([[1, 1], [2, -1]], [5, 1]), 6).tolist()",
+            "expect": "[2.0, 3.0]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(solve_system([[1, 1], [2, -1]], [5, 1]), 6).tolist()",
+            "expect": "[2.0, 3.0]"
+          },
+          {
+            "call": "np.round(solve_system([[0.50, 0.25], [0.20, 0.30]], [200, 150]), 6).tolist()",
+            "expect": "[225.0, 350.0]"
+          },
+          {
+            "call": "np.round(solve_system([[3, 2], [1, -4]], [12, 2]), 6).tolist()",
+            "expect": "[3.714286, 0.428571]"
+          },
+          {
+            "call": "np.round(solve_system([[3, 1], [2, 0]], [7, 4]), 6).tolist()",
+            "expect": "[2.0, 1.0]"
+          },
+          {
+            "call": "np.round(solve_system([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]], [235, 140, 19]), 6).tolist()",
+            "expect": "[200.0, 300.0, 100.0]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Results are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which `np.linalg` function solves $\\mathbf{A}\\mathbf{x} = \\mathbf{b}$ directly?"
+        },
+        {
+          "rung": "point",
+          "text": "Its arguments are the matrix first, then the right-hand side."
+        },
+        {
+          "rung": "step",
+          "text": "Write `x = np.linalg.solve(A, b)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The crossing (2, 3), the hedge (225, 350) and a 3 by 3 system, all from one line.",
+        "generic": "Some tests failed. The first test should return `[2.0, 3.0]`.",
+        "byKey": {
+          "test-1": "For $x + y = 5$ and $2x - y = 1$ the answer is (2, 3). Pass `A` first, then `b`.",
+          "error": "Your code stopped with an error. Check the order of the arguments: `np.linalg.solve(A, b)`."
+        }
+      },
+      "explain": {
+        "text": "`np.linalg.solve(A, b)` eliminates on $\\mathbf{b}$ directly. It needs a square `A` with a non-zero determinant.\n\n```python\nx = np.linalg.solve(A, b)\n```"
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague computes the hedge's greeks and expects delta 200 and vega 150. This is what they typed.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> A = np.array([[0.50, 0.25], [0.20, 0.30]])",
+            ">>> x = np.array([225, 350])",
+            ">>> A * x",
+            "array([[112.5,  87.5],",
+            "       [ 45. , 105. ]])"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What did `A * x` compute?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Each entry of `A` times the matching entry of `x`, with no sums",
+            "correct": true
+          },
+          {
+            "id": "product",
+            "text": "The matrix product, laid out as a table",
+            "why": "A 2 by 2 matrix times 2 quantities gives 2 numbers, not 4. The `*` operator multiplies entry by entry; `@` is the product."
+          },
+          {
+            "id": "transpose",
+            "text": "The product $\\mathbf{x}^T\\mathbf{A}$",
+            "why": "That is a product too and gives 2 numbers: 182.5 and 161.25. The output here has 4."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare 112.5 with $0.50 \\times 225$, and 87.5 with $0.25 \\times 350$."
+        },
+        {
+          "rung": "point",
+          "text": "Each number is one entry of `A` times one entry of `x`. Nothing was added.",
+          "highlight": [
+            "l4",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`*` multiplies entry by entry, stretching `x` across each row. Adding each row would give 200 and 150."
+        }
+      ],
+      "feedback": {
+        "correct": "`*` is elementwise; only `@` multiplies matrices.",
+        "generic": "Not quite right. Check where 112.5 and 87.5 come from.",
+        "byKey": {
+          "product": "You took `*` for the matrix product. It multiplies entry by entry: 2 by 2 gives 4 numbers. The product is `A @ x`.",
+          "transpose": "That is a product too and gives 2 numbers: 182.5 and 161.25. The output here has 4."
+        }
+      },
+      "explain": {
+        "text": "`*` multiplies matching entries: `x` is stretched across each row, so $0.50 \\times 225$ and $0.25 \\times 350$ sit side by side. Their sum, $112.5 + 87.5 = 200$, is what `@` gives.\n\n```python\nA * x   # elementwise: 4 numbers\nA @ x   # matrix product: [200., 150.]\n```",
+        "canvas": {
+          "tone": {
+            "l3": "err"
+          },
+          "lines": [
+            ">>> A = np.array([[0.50, 0.25], [0.20, 0.30]])",
+            ">>> x = np.array([225, 350])",
+            ">>> A * x",
+            "array([[112.5,  87.5],",
+            "       [ 45. , 105. ]])",
+            ">>> A @ x",
+            "array([200., 150.])"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Two ways to solve $\\mathbf{H}\\mathbf{x} = \\mathbf{b}$ for a hard $10 \\times 10$ matrix. The true $\\mathbf{x}$ is all ones. One run printed the largest error in $\\mathbf{H}\\mathbf{x} - \\mathbf{b}$ for each.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> n = 10",
+            ">>> H = np.array([[1 / (i + j + 1) for j in range(n)] for i in range(n)])",
+            ">>> b = H @ np.ones(n)",
+            ">>> x1 = np.linalg.solve(H, b)",
+            ">>> x2 = np.linalg.inv(H) @ b",
+            ">>> print(np.abs(H @ x1 - b).max(), np.abs(H @ x2 - b).max())",
+            "4.4e-16 9.7e-05"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which method is more accurate, and why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "solve",
+            "text": "`solve`: it eliminates on `b` directly, so rounding has fewer steps to grow",
+            "correct": true
+          },
+          {
+            "id": "inv-exact",
+            "text": "`inv`: it computes $\\mathbf{H}^{-1}$ once and exactly",
+            "why": "In floating point no inverse is exact. Its errors get multiplied into $\\mathbf{b}$, giving the larger residual."
+          },
+          {
+            "id": "same",
+            "text": "Neither: both compute $\\mathbf{H}^{-1}\\mathbf{b}$",
+            "why": "In exact arithmetic they agree. In floating point the residuals differ by a factor of about $10^{11}$."
+          },
+          {
+            "id": "inv-fast",
+            "text": "`inv`: it is the faster method",
+            "why": "For one right-hand side `inv` does about three times the arithmetic of `solve`. It is slower as well as less accurate."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two printed errors."
+        },
+        {
+          "rung": "point",
+          "text": "4.4e-16 is at the level of rounding; 9.7e-05 is about $10^{11}$ times larger.",
+          "highlight": [
+            "l7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`solve` works on `b` directly. `inv` first builds a whole inverse, with its own errors, then multiplies."
+        }
+      ],
+      "feedback": {
+        "correct": "`solve` is both more accurate and cheaper.",
+        "generic": "Not quite right. Compare the two printed errors first.",
+        "byKey": {
+          "inv-exact": "In floating point no inverse is exact. Its errors get multiplied into $\\mathbf{b}$, giving the larger residual.",
+          "same": "In exact arithmetic they agree. In floating point the residuals differ by a factor of about $10^{11}$.",
+          "inv-fast": "For one right-hand side `inv` does about three times the arithmetic of `solve`. It is slower as well as less accurate."
+        }
+      },
+      "explain": {
+        "text": "`solve` factorises $\\mathbf{H}$ once and eliminates on $\\mathbf{b}$: its error, $4.4 \\times 10^{-16}$, is pure rounding. `inv` builds all of $\\mathbf{H}^{-1}$ first, about three times the work, and its errors are amplified. Use `inv` only when you need the matrix itself.",
+        "canvas": {
+          "tone": {
+            "l7": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Solving $\\mathbf{A}\\mathbf{x} = \\mathbf{b}$ in NumPy, then checking $\\mathbf{A}\\mathbf{x} \\approx \\mathbf{b}$:\n\n```python\nA @ x                     # the product Ax\nA.T                       # the transpose\nnp.linalg.det(A)          # ad - bc, with rounding\nx = np.linalg.solve(A, b) # solves Ax = b\nnp.allclose(A @ x, b)     # check with a tolerance\n```",
+      "question": "Each column of `A` is one option's greeks and `x` is the position. Which line gives the position's greeks?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`A @ x`",
+            "correct": true
+          },
+          {
+            "id": "star",
+            "text": "`A * x`",
+            "why": "`*` multiplies entry by entry and never adds. It returns a whole array, not the greeks."
+          },
+          {
+            "id": "xA",
+            "text": "`x @ A`",
+            "why": "That treats `x` as a row: it is $\\mathbf{x}^T\\mathbf{A}$, which pairs each quantity with the wrong greek."
+          },
+          {
+            "id": "solve",
+            "text": "`np.linalg.solve(A, x)`",
+            "why": "That answers the reverse question: which position has greeks `x`?"
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`A @ x` combines the columns with the quantities as weights.",
+        "generic": "Not quite right. You want $\\mathbf{A}\\mathbf{x}$, the matrix product.",
+        "byKey": {
+          "star": "`*` multiplies entry by entry and never adds. It returns a whole array, not the greeks.",
+          "xA": "That treats `x` as a row: it is $\\mathbf{x}^T\\mathbf{A}$, which pairs each quantity with the wrong greek.",
+          "solve": "That answers the reverse question: which position has greeks `x`?"
+        }
+      },
+      "explain": {
+        "text": "The greeks are $\\mathbf{A}\\mathbf{x}$, written `A @ x`. Going the other way, from target greeks to a position, is `np.linalg.solve(A, b)`."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "A careful hedge script builds the matrix, checks it can be solved, solves, then checks the answer. Here `b` already holds the targets.",
+      "question": "Put the lines of the script in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "l1",
+            "text": "`A = np.array([[0.50, 0.25], [0.20, 0.30]])`, build the greeks matrix"
+          },
+          {
+            "id": "l2",
+            "text": "`d = np.linalg.det(A)`, about 0.1: not zero, so one solution exists"
+          },
+          {
+            "id": "l3",
+            "text": "`x = np.linalg.solve(A, b)`, the quantities"
+          },
+          {
+            "id": "l4",
+            "text": "`check = A @ x`, the greeks those quantities give"
+          },
+          {
+            "id": "l5",
+            "text": "`np.allclose(check, b)`, `True` when the hedge hits the targets"
+          }
+        ],
+        "answer": [
+          "l1",
+          "l2",
+          "l3",
+          "l4",
+          "l5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Nothing can be computed before `A` exists."
+        },
+        {
+          "rung": "point",
+          "text": "Check the determinant before you trust `solve`."
+        },
+        {
+          "rung": "step",
+          "text": "Build, check the determinant, solve, multiply back, compare."
+        }
+      ],
+      "feedback": {
+        "correct": "Build, test, solve, verify.",
+        "generic": "Not quite right. Each line uses something an earlier line made.",
+        "byKey": {
+          "l4": "`check` needs `x`, so it comes after `solve`."
+        }
+      },
+      "explain": {
+        "text": "Each line needs the one before: `det` and `solve` need `A`, the check needs `x`. The final `np.allclose` catches a wrong matrix or a near-singular one."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A three-instrument hedge",
+      "prose": "The desk now targets gamma too, with a third option R. Rows are delta, vega and gamma; columns are P, Q and R. Target: delta 235, vega £140, gamma 19.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Greek",
+            "P",
+            "Q",
+            "R",
+            "Target"
+          ],
+          "rows": [
+            [
+              "Delta",
+              "0.50",
+              "0.25",
+              "0.60",
+              "235"
+            ],
+            [
+              "Vega (£)",
+              "0.20",
+              "0.30",
+              "0.10",
+              "140"
+            ],
+            [
+              "Gamma",
+              "0.04",
+              "0.02",
+              "0.05",
+              "19"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `three_way_hedge` so it returns the quantities of P, Q and R.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef three_way_hedge(greeks, target):\n    A = np.array(greeks, dtype=float)\n    b = np.array(target, dtype=float)\n    quantities = ...\n    return quantities\n",
+        "solution": "import numpy as np\n\ndef three_way_hedge(greeks, target):\n    A = np.array(greeks, dtype=float)\n    b = np.array(target, dtype=float)\n    quantities = np.linalg.solve(A, b)\n    return quantities\n",
+        "examples": [
+          {
+            "call": "np.round(three_way_hedge([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]], [235, 140, 19]), 6).tolist()",
+            "expect": "[200.0, 300.0, 100.0]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(three_way_hedge([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]], [235, 140, 19]), 6).tolist()",
+            "expect": "[200.0, 300.0, 100.0]"
+          },
+          {
+            "call": "np.round(three_way_hedge([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]], [0, 100, 0]), 6).tolist()",
+            "expect": "[-250.0, 500.0, 0.0]"
+          },
+          {
+            "call": "np.round(three_way_hedge([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]], [100, 50, 5]), 6).tolist()",
+            "expect": "[2500.0, -1000.0, -1500.0]"
+          },
+          {
+            "call": "np.round(three_way_hedge([[1, 0.5, 0.4], [0, 0.2, 0.3], [0, 0.01, 0.04]], [300, 120, 9]), 6).tolist()",
+            "expect": "[42.0, 420.0, 120.0]"
+          },
+          {
+            "call": "np.round(three_way_hedge([[0.50, 0.25], [0.20, 0.30]], [200, 150]), 6).tolist()",
+            "expect": "[225.0, 350.0]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Results are compared after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "This is $\\mathbf{A}\\mathbf{x} = \\mathbf{b}$ with three unknowns."
+        },
+        {
+          "rung": "point",
+          "text": "The same `np.linalg.solve` works for any square size.",
+          "highlight": [
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write `quantities = np.linalg.solve(A, b)`."
+        }
+      ],
+      "feedback": {
+        "correct": "200 of P, 300 of Q and 100 of R hit all three targets.",
+        "generic": "Some tests failed. The first should return `[200.0, 300.0, 100.0]`.",
+        "byKey": {
+          "test-1": "For the desk's targets the answer is 200, 300 and 100. Solve with `np.linalg.solve(A, b)`.",
+          "test-3": "Large answers are right here: a small gamma target with little delta needs big offsetting trades.",
+          "error": "Your code stopped with an error. Replace the `...` with a call to `np.linalg.solve`."
+        }
+      },
+      "explain": {
+        "text": "Three greeks and three options give a square $3 \\times 3$ system, and `solve` handles it the same way. The second test is pure vega: sell 250 of P, buy 500 of Q.\n\n```python\nquantities = np.linalg.solve(A, b)\n```",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "When the hedge cannot be solved",
+      "prose": "Option R is replaced by a package T that is exactly one P plus one Q. Its column is the sum of theirs, so the matrix is singular and `np.linalg.solve` raises `np.linalg.LinAlgError`. `hedge` shows it; make `hedge_or_none` return `None` instead.",
+      "question": "Complete `hedge_or_none`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef hedge(greeks, target):\n    return np.linalg.solve(np.array(greeks, dtype=float), np.array(target, dtype=float))\n\ndef hedge_or_none(greeks, target):\n    # return hedge(greeks, target), or None when the matrix is singular\n    ...\n",
+        "solution": "import numpy as np\n\ndef hedge(greeks, target):\n    return np.linalg.solve(np.array(greeks, dtype=float), np.array(target, dtype=float))\n\ndef hedge_or_none(greeks, target):\n    # return hedge(greeks, target), or None when the matrix is singular\n    try:\n        return hedge(greeks, target)\n    except np.linalg.LinAlgError:\n        return None\n",
+        "examples": [
+          {
+            "call": "hedge(S, t)",
+            "expect": "LinAlgError",
+            "compare": "raises",
+            "setup": "S = [[0.50, 0.25, 0.75], [0.20, 0.30, 0.50], [0.04, 0.02, 0.06]]; t = [235, 140, 19]"
+          },
+          {
+            "call": "hedge_or_none([[0.50, 0.25, 0.75], [0.20, 0.30, 0.50], [0.04, 0.02, 0.06]], [235, 140, 19])",
+            "expect": "None"
+          }
+        ],
+        "tests": [
+          {
+            "call": "hedge(S, t)",
+            "expect": "LinAlgError",
+            "compare": "raises",
+            "setup": "S = [[0.50, 0.25, 0.75], [0.20, 0.30, 0.50], [0.04, 0.02, 0.06]]; t = [235, 140, 19]"
+          },
+          {
+            "call": "hedge_or_none([[0.50, 0.25, 0.75], [0.20, 0.30, 0.50], [0.04, 0.02, 0.06]], [235, 140, 19])",
+            "expect": "None"
+          },
+          {
+            "call": "hedge_or_none([[1, 2], [2, 4]], [3, 6])",
+            "expect": "None"
+          },
+          {
+            "call": "np.round(hedge_or_none([[0.50, 0.25, 0.60], [0.20, 0.30, 0.10], [0.04, 0.02, 0.05]], [235, 140, 19]), 6).tolist()",
+            "expect": "[200.0, 300.0, 100.0]"
+          },
+          {
+            "call": "np.round(hedge_or_none([[0.50, 0.25], [0.20, 0.30]], [0, 60]), 6).tolist()",
+            "expect": "[-150.0, 300.0]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: one expects `hedge` to raise `LinAlgError`, the rest compare values after rounding to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Let `hedge` try, and catch the error it raises."
+        },
+        {
+          "rung": "point",
+          "text": "Use `try:` around `return hedge(greeks, target)`, and `except np.linalg.LinAlgError:`."
+        },
+        {
+          "rung": "step",
+          "text": "```python\ntry:\n    return hedge(greeks, target)\nexcept np.linalg.LinAlgError:\n    return None\n```"
+        }
+      ],
+      "feedback": {
+        "correct": "Singular hedges give `None`; solvable ones still return quantities.",
+        "generic": "Some tests failed. A singular matrix should give `None`, not an error.",
+        "byKey": {
+          "test-2": "For the P, Q, T package the matrix is singular, so the answer must be `None`. Catch `np.linalg.LinAlgError`.",
+          "test-4": "A solvable hedge must still return its quantities. Return the result of `hedge` inside the `try`.",
+          "error": "Your code stopped with an error. Catch `np.linalg.LinAlgError` with `try` and `except`."
+        }
+      },
+      "explain": {
+        "text": "T's column is P's plus Q's, so $\\det\\mathbf{A} = 0$ and `solve` refuses. Catching `LinAlgError` turns that into `None`. A nearly singular matrix may not raise at all, so the `np.allclose` check still matters.\n\n```python\nexcept np.linalg.LinAlgError:\n    return None\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`@` is the matrix product; `*` multiplies entry by entry and never adds.",
+      "`np.linalg.solve(A, b)` beats `np.linalg.inv(A) @ b`: less arithmetic and less rounding error.",
+      "Floating point leaves tiny errors, so compare with `np.allclose`, and catch `LinAlgError` for a singular matrix."
+    ],
+    "formula": {
+      "name": "Solve, then check",
+      "tex": "\\mathbf{x} = \\texttt{solve}(\\mathbf{A}, \\mathbf{b}), \\quad \\mathbf{A}\\mathbf{x} \\approx \\mathbf{b}",
+      "note": "In code: `x = np.linalg.solve(A, b)` then `np.allclose(A @ x, b)`."
+    },
+    "trap": "`A * x` is not the matrix product. It returns an array of entrywise products; use `A @ x`."
+  },
+  "quiz": [
+    {
+      "id": "q-at",
+      "difficulty": 2,
+      "prose": "```python\nA = np.array([[1, 2], [3, 4]])\nx = np.array([1, 1])\n```",
+      "question": "What does `A @ x` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`array([3, 7])`",
+            "correct": true
+          },
+          {
+            "id": "star",
+            "text": "`array([[1, 2], [3, 4]])`",
+            "why": "That is `A * x`: entry by entry, and multiplying by 1 changes nothing. `@` multiplies and adds along each row."
+          },
+          {
+            "id": "cols",
+            "text": "`array([4, 6])`",
+            "why": "That adds down the columns: it is `x @ A`. `A @ x` adds along each row."
+          },
+          {
+            "id": "total",
+            "text": "`10`",
+            "why": "That adds every entry. `A @ x` keeps one number per row."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Row sums of $\\mathbf{A}$ weighted by ones: 3 and 7.",
+        "generic": "Not quite right. Multiply each row by $(1, 1)$ and add."
+      },
+      "explain": {
+        "text": "Row 1 gives $1 + 2 = 3$ and row 2 gives $3 + 4 = 7$. So `A @ x` is `array([3, 7])`."
+      }
+    },
+    {
+      "id": "q-transpose",
+      "difficulty": 2,
+      "prose": "`A` and `B` are square NumPy arrays of the same size.",
+      "question": "Which expression always equals `(A @ B).T`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`B.T @ A.T`",
+            "correct": true
+          },
+          {
+            "id": "same-order",
+            "text": "`A.T @ B.T`",
+            "why": "You kept the order. Transposing a product reverses it, as inverting does."
+          },
+          {
+            "id": "no-t",
+            "text": "`A @ B`",
+            "why": "Only a symmetric product equals its own transpose."
+          },
+          {
+            "id": "ba",
+            "text": "`B @ A`",
+            "why": "Reversing alone is not enough; each factor is transposed too."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$(\\mathbf{AB})^T = \\mathbf{B}^T\\mathbf{A}^T$.",
+        "generic": "Not quite right. A transpose of a product reverses the order."
+      },
+      "explain": {
+        "text": "$(\\mathbf{AB})^T = \\mathbf{B}^T\\mathbf{A}^T$, written `B.T @ A.T`. It mirrors $(\\mathbf{AB})^{-1} = \\mathbf{B}^{-1}\\mathbf{A}^{-1}$."
+      }
+    },
+    {
+      "id": "q-raise",
+      "difficulty": 3,
+      "prose": "```python\nA = np.array([[1, 2], [2, 4]])\nnp.linalg.solve(A, np.array([1, 2]))\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It raises `LinAlgError`",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "It returns `array([1., 0.])`",
+            "why": "(1, 0) is one solution, but so is (−1, 1). With $\\det = 0$ there is no single answer, and `solve` stops."
+          },
+          {
+            "id": "nan",
+            "text": "It returns `array([nan, nan])`",
+            "why": "`solve` does not return NaN here. An exactly singular matrix makes it raise an error."
+          },
+          {
+            "id": "inverse",
+            "text": "It returns the inverse of `A`",
+            "why": "`solve` returns $\\mathbf{x}$, never $\\mathbf{A}^{-1}$, and this `A` has no inverse."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$\\det\\mathbf{A} = 0$, so NumPy raises `LinAlgError: Singular matrix`.",
+        "generic": "Not quite right. Compute $\\det\\mathbf{A}$ first."
+      },
+      "explain": {
+        "text": "$\\det\\mathbf{A} = 4 - 4 = 0$. The system has infinitely many solutions, so `solve` raises `np.linalg.LinAlgError`."
+      }
+    },
+    {
+      "id": "q-allclose",
+      "difficulty": 2,
+      "prose": "You check an inverse with `np.allclose(np.linalg.inv(A) @ A, np.eye(2))` rather than `==`.",
+      "question": "Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Floating-point rounding leaves tiny errors, such as $10^{-16}$",
+            "correct": true
+          },
+          {
+            "id": "faster",
+            "text": "`np.allclose` is faster than `==`",
+            "why": "Speed is not the point. `==` fails on a correct inverse that carries rounding error."
+          },
+          {
+            "id": "shape",
+            "text": "`==` cannot compare arrays",
+            "why": "`==` compares arrays entry by entry. It is just too strict for floating-point results."
+          },
+          {
+            "id": "wrong-inv",
+            "text": "`np.linalg.inv` is often wrong",
+            "why": "It is right up to rounding. The tolerance absorbs that rounding, nothing more."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A tolerance absorbs rounding error.",
+        "generic": "Not quite right. Think about what floating point does to $5$."
+      },
+      "explain": {
+        "text": "Computed results carry rounding error, as the determinant 5.000000000000001 showed. `==` would reject a correct inverse; `np.allclose` accepts differences around $10^{-8}$ and below."
+      }
+    }
+  ]
+}

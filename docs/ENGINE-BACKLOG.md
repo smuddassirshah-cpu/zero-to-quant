@@ -638,3 +638,10 @@ Raised later (multivar level 2):
 
 219. `plane`: `labelAvoid: false` on a function so background contours do not push point and vector labels away (see 217).
 220. `derive`: writing one array component (`"g.v.0"`) turns the array into an object; either support numeric path segments or document that the whole vector must be set.
+
+Raised later (multivar level 4):
+
+221. `plane` polygons: vertices may be `derive`-driven points with `hidden: true` (no dots), and a sector or annulus-wedge shape `{ r1, r2, theta1, theta2 }` with curved edges.
+222. `plane` areas: a polar region (`r` and `theta` limits) as a shadable area, not only between $y = f(x)$ curves.
+223. `plane` area `label: "auto"` reads low when shading stops at the plot edge; integrate the expression to the authored bounds, not the visible ones.
+224. `grid`: a live caption or `derive` that reads the current tap selection (running total of tapped cells).

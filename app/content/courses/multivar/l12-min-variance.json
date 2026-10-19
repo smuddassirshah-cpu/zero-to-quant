@@ -1,0 +1,1339 @@
+{
+  "id": "l12-min-variance",
+  "course": "multivar",
+  "title": "The minimum variance portfolio",
+  "minutes": 15,
+  "objectives": [
+    "Find the minimum variance two-asset portfolio with a Lagrange multiplier.",
+    "Check the answer by substitution and see how correlation moves it."
+  ],
+  "skills": [
+    "mv-lagrange",
+    "mv-optimise"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The least risky mix",
+      "prose": "Asset A has volatility 20% and asset B 10%. Their returns have correlation 0.3. You put a fraction $w_1$ of your money in A and the rest in B. The curve is the portfolio volatility $\\sigma_p$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0.09,
+            0.21
+          ],
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "$\\sigma_p$",
+          "functions": [
+            {
+              "id": "sd",
+              "expr": "sqrt(max(0, x^2*s1^2 + (1 - x)^2*s2^2 + 2*x*(1 - x)*r*s1*s2))",
+              "colour": 1,
+              "domain": [
+                0,
+                1
+              ]
+            }
+          ],
+          "params": {
+            "s1": 0.2,
+            "s2": 0.1,
+            "r": 0.3,
+            "w": 0.5
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "M",
+              "x": 0.5,
+              "y": 0.1245,
+              "label": "",
+              "colour": 1
+            }
+          ],
+          "hlines": [
+            {
+              "id": "hb",
+              "y": 0.1,
+              "label": "B alone"
+            }
+          ]
+        },
+        "derive": {
+          "M.x": "w",
+          "M.y": "sqrt(max(0, w*w*s1*s1 + (1 - w)*(1 - w)*s2*s2 + 2*w*(1 - w)*r*s1*s2))",
+          "caption": "In A: {{fixed(w * 100, 1)}}%. Portfolio volatility: {{fixed(sqrt(max(0, w*w*s1*s1 + (1 - w)*(1 - w)*s2*s2 + 2*w*(1 - w)*r*s1*s2)) * 100, 2)}}%"
+        }
+      },
+      "question": "Set $w_1$ to the mix with the lowest volatility.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.005,
+        "start": 0.5,
+        "bind": "w",
+        "label": "$w_1$",
+        "format": "percent",
+        "answer": 0.105,
+        "tol": 0.0101,
+        "wrong": [
+          {
+            "id": "all-b",
+            "from": 0,
+            "to": 0.04
+          },
+          {
+            "id": "half",
+            "from": 0.4,
+            "to": 0.6
+          },
+          {
+            "id": "all-a",
+            "from": 0.9,
+            "to": 1
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the volatility in the caption as you slide towards 0."
+        },
+        {
+          "rung": "point",
+          "text": "Near $w_1 = 0$ the curve dips just below the B-alone line.",
+          "highlight": [
+            "hb"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The lowest volatility, 9.79%, comes at about 10.5% in A."
+        }
+      ],
+      "feedback": {
+        "correct": "About 10.5% in A, for a volatility of 9.79%.",
+        "generic": "Not quite right. Slide towards 0 and watch for the lowest volatility in the caption.",
+        "byKey": {
+          "all-b": "You put everything, or nearly everything, in B. A little of A lowers the risk: at 10.5% in A it is 9.79%.",
+          "half": "Half and half gives 12.45%. The risk keeps falling as you move towards B, until about 10.5% in A.",
+          "all-a": "A alone has 20% volatility, the riskiest choice here."
+        }
+      },
+      "explain": {
+        "text": "You found the lowest point at about 10.5% in A, with volatility 9.79%. That is below B alone, though A is twice as volatile. Because the two do not move in lockstep, a little A partly cancels B's swings.",
+        "canvas": {
+          "params": {
+            "w": 0.10526
+          },
+          "caption": "Lowest point: 10.5% in A, volatility 9.79%"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Changing the correlation",
+      "prose": "Same two assets, but now you set the correlation $\\rho$. The marked point is the lowest point of the curve with $w_1$ between 0 and 1.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.21
+          ],
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "$\\sigma_p$",
+          "functions": [
+            {
+              "id": "sd",
+              "expr": "sqrt(max(0, x^2*s1^2 + (1 - x)^2*s2^2 + 2*x*(1 - x)*r*s1*s2))",
+              "colour": 1,
+              "domain": [
+                0,
+                1
+              ]
+            }
+          ],
+          "params": {
+            "s1": 0.2,
+            "s2": 0.1,
+            "r": 0.3,
+            "w": 0.5
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "L",
+              "x": 0.105,
+              "y": 0.0979,
+              "label": "lowest",
+              "labelPos": "s"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "hb",
+              "y": 0.1,
+              "label": "B alone"
+            }
+          ]
+        },
+        "derive": {
+          "L.x": "max(0, min(1, (s2*s2 - r*s1*s2)/(s1*s1 + s2*s2 - 2*r*s1*s2)))",
+          "L.y": "sqrt(max(0, L.x*L.x*s1*s1 + (1 - L.x)*(1 - L.x)*s2*s2 + 2*L.x*(1 - L.x)*r*s1*s2))",
+          "caption": "$\\rho$ = {{fixed(r, 1)}}: lowest volatility {{fixed(L.y * 100, 2)}}% with {{fixed(L.x * 100, 1)}}% in A"
+        },
+        "controls": [
+          {
+            "bind": "r",
+            "min": -1,
+            "max": 1,
+            "step": 0.1,
+            "label": "$\\rho$",
+            "start": 0.3,
+            "decimals": 1
+          }
+        ]
+      },
+      "question": "Set $\\rho = -1$. What is the lowest volatility you can reach?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "label": "Lowest volatility",
+        "accept": "0%, with a third of the money in A.",
+        "wrong": [
+          {
+            "id": "b",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "base",
+            "value": 0.0979,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag the $\\rho$ slider all the way to the left."
+        },
+        {
+          "rung": "point",
+          "text": "Watch where the marked point lands.",
+          "highlight": [
+            "L"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Zero: the two assets cancel exactly.",
+        "generic": "Not quite right. Set $\\rho = -1$ and read the caption.",
+        "byKey": {
+          "b": "That is B alone. With $\\rho = -1$ the curve drops all the way to the axis.",
+          "base": "That is the lowest point at $\\rho = 0.3$. Move the slider to $-1$ first."
+        }
+      },
+      "explain": {
+        "text": "At $\\rho = -1$ the assets move exactly opposite. With a third in A, $\\tfrac{1}{3} \\times 20\\% = \\tfrac{2}{3} \\times 10\\%$, so their swings cancel and the risk is zero. As $\\rho$ rises, the dip shrinks; from $\\rho = 0.5$ up, B alone is best.",
+        "canvas": {
+          "params": {
+            "r": -1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The minimum variance portfolio",
+      "prose": "The least risky mix is the **minimum variance portfolio**. The variance is $$\\sigma_p^2 = w_1^2\\sigma_1^2 + w_2^2\\sigma_2^2 + 2w_1w_2\\rho\\sigma_1\\sigma_2.$$ With $w_2 = 1 - w_1$, $\\sigma_1 = 0.2$, $\\sigma_2 = 0.1$, $\\rho = 0.3$, it becomes $a w_1^2 + b w_1 + 0.01$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.045
+          ],
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "$\\sigma_p^2$",
+          "functions": [
+            {
+              "id": "v",
+              "expr": "x^2*s1^2 + (1 - x)^2*s2^2 + 2*x*(1 - x)*r*s1*s2",
+              "colour": 1,
+              "label": "$\\sigma_p^2$",
+              "labelAt": 0.85
+            }
+          ],
+          "params": {
+            "s1": 0.2,
+            "s2": 0.1,
+            "r": 0.3
+          }
+        },
+        "state": {}
+      },
+      "question": "What is the coefficient $a$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.038,
+        "tol": {
+          "abs": 5e-05
+        },
+        "label": "a",
+        "accept": "0.038, from $0.04 + 0.01 - 0.012$.",
+        "wrong": [
+          {
+            "id": "nocross",
+            "value": 0.05,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "sign",
+            "value": 0.062,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "first",
+            "value": 0.04,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Collect the $w_1^2$ terms from all three parts."
+        },
+        {
+          "rung": "point",
+          "text": "$(1 - w_1)^2$ gives $+w_1^2$, and $w_1(1 - w_1)$ gives $-w_1^2$.",
+          "highlight": [
+            "v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.04 + 0.01 - 2(0.3)(0.2)(0.1) = 0.04 + 0.01 - 0.012 = 0.038$."
+        }
+      ],
+      "feedback": {
+        "correct": "$a = 0.038$.",
+        "generic": "Not quite right. Each of the three terms contributes to $w_1^2$.",
+        "byKey": {
+          "nocross": "You took $0.04 + 0.01$ but left out the cross term. $2w_1(1 - w_1)(0.006)$ contributes $-0.012w_1^2$.",
+          "sign": "The cross term gives $-0.012w_1^2$, not $+0.012w_1^2$: $w_1(1 - w_1) = w_1 - w_1^2$.",
+          "first": "$(1 - w_1)^2\\sigma_2^2$ also contributes $0.01w_1^2$, and the cross term $-0.012w_1^2$."
+        }
+      },
+      "explain": {
+        "text": "Expanding gives $0.04w_1^2 + 0.01(1 - 2w_1 + w_1^2) + 0.012(w_1 - w_1^2)$. Collecting terms: $\\sigma_p^2 = 0.038w_1^2 - 0.008w_1 + 0.01$. A parabola opening upwards, as drawn."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Setting the slope to zero",
+      "prose": "So $\\sigma_p^2 = 0.038w_1^2 - 0.008w_1 + 0.01$. Its lowest point is where the derivative is zero.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.045
+          ],
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "$\\sigma_p^2$",
+          "functions": [
+            {
+              "id": "v",
+              "expr": "x^2*s1^2 + (1 - x)^2*s2^2 + 2*x*(1 - x)*r*s1*s2",
+              "colour": 1,
+              "label": "$\\sigma_p^2$",
+              "labelAt": 0.85
+            }
+          ],
+          "params": {
+            "s1": 0.2,
+            "s2": 0.1,
+            "r": 0.3
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "T",
+              "x": 0.4,
+              "y": 0.01288,
+              "label": "",
+              "drag": true,
+              "on": "v"
+            }
+          ],
+          "tangent": {
+            "f": "v",
+            "x": "T",
+            "lengthPx": 120
+          }
+        },
+        "derive": {
+          "caption": "Slope at $w_1$ = {{fixed(T.x, 3)}}: {{fixed(0.076 * T.x - 0.008, 4)}}"
+        }
+      },
+      "question": "Solve $\\dfrac{d\\sigma_p^2}{dw_1} = 0$. What is $w_1$? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.10526,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "w1",
+        "accept": "$\\tfrac{0.008}{0.076} = 0.1053$, about 10.5% in A.",
+        "wrong": [
+          {
+            "id": "notwo",
+            "value": 0.2105,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Differentiate: $\\tfrac{d}{dw_1}(aw_1^2 + bw_1 + c) = 2aw_1 + b$."
+        },
+        {
+          "rung": "point",
+          "text": "Drag the point until the tangent is flat.",
+          "highlight": [
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.076w_1 - 0.008 = 0$ gives $w_1 = 0.008 / 0.076 = 0.1053$."
+        }
+      ],
+      "feedback": {
+        "correct": "$w_1 = 0.1053$.",
+        "generic": "Not quite right. Solve $0.076w_1 - 0.008 = 0$.",
+        "byKey": {
+          "notwo": "You solved $0.038w_1 = 0.008$. The derivative of $0.038w_1^2$ is $0.076w_1$.",
+          "zero": "At $w_1 = 0$ the slope is $-0.008$, so the variance still falls as you add A.",
+          "ratio": "That is $\\sigma_2^2 / \\sigma_1^2$, which ignores the correlation. Solve the derivative instead."
+        }
+      },
+      "explain": {
+        "text": "The derivative $0.076w_1 - 0.008$ is zero at $w_1 = 0.10526$. There $\\sigma_p^2 = 0.0095789$, so $\\sigma_p = 0.09787$: 9.79%. The tangent is flat at the bottom of the parabola.",
+        "canvas": {
+          "points": {
+            "T": {
+              "x": 0.10526,
+              "y": 0.0095789
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The same answer with a multiplier",
+      "prose": "Treat $w_1$ and $w_2$ as free, with the budget $w_1 + w_2 = 1$ as a constraint. The ellipses are contours of $\\sigma_p^2$. Here $$\\nabla \\sigma_p^2 = (0.08w_1 + 0.012w_2,\\ 0.02w_2 + 0.012w_1).$$",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -0.8,
+            1.2
+          ],
+          "y": [
+            -1.1,
+            1.3
+          ],
+          "equal": true,
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "$w_2$",
+          "functions": [
+            {
+              "id": "v0-0a",
+              "expr": "(-0.012*x + sqrt(max(0, 0.04*0.0025 - 0.001456*x^2)))/0.02",
+              "domain": [
+                -0.262071,
+                0.262071
+              ],
+              "colour": 1
+            },
+            {
+              "id": "v0-0b",
+              "expr": "(-0.012*x - sqrt(max(0, 0.04*0.0025 - 0.001456*x^2)))/0.02",
+              "domain": [
+                -0.262071,
+                0.262071
+              ],
+              "colour": 1
+            },
+            {
+              "id": "v1-0a",
+              "expr": "(-0.012*x + sqrt(max(0, 0.04*0.006 - 0.001456*x^2)))/0.02",
+              "domain": [
+                -0.405999,
+                0.405999
+              ],
+              "colour": 1
+            },
+            {
+              "id": "v1-0b",
+              "expr": "(-0.012*x - sqrt(max(0, 0.04*0.006 - 0.001456*x^2)))/0.02",
+              "domain": [
+                -0.405999,
+                0.405999
+              ],
+              "colour": 1
+            },
+            {
+              "id": "v2-0a",
+              "expr": "(-0.012*x + sqrt(max(0, 0.04*0.009579 - 0.001456*x^2)))/0.02",
+              "domain": [
+                -0.512989,
+                0.512989
+              ],
+              "colour": 6
+            },
+            {
+              "id": "v2-0b",
+              "expr": "(-0.012*x - sqrt(max(0, 0.04*0.009579 - 0.001456*x^2)))/0.02",
+              "domain": [
+                -0.512989,
+                0.512989
+              ],
+              "colour": 6
+            },
+            {
+              "id": "g",
+              "expr": "1 - x",
+              "colour": 2,
+              "label": "$w_1 + w_2 = 1$",
+              "labelAt": 0.7,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Solve $\\nabla \\sigma_p^2 = \\lambda (1, 1)$ with $w_1 + w_2 = 1$. What is $w_2$? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.89474,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "w2",
+        "accept": "$w_2 = 8.5w_1$, so $w_2 = 8.5 / 9.5 = 0.8947$.",
+        "wrong": [
+          {
+            "id": "w1",
+            "value": 0.10526,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 8.5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both components equal $\\lambda$, so set them equal to each other."
+        },
+        {
+          "rung": "point",
+          "text": "$0.08w_1 + 0.012w_2 = 0.02w_2 + 0.012w_1$ gives $0.068w_1 = 0.008w_2$.",
+          "highlight": [
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So $w_2 = 8.5w_1$. With $w_1 + w_2 = 1$: $9.5w_1 = 1$, $w_1 = 0.1053$, $w_2 = 0.8947$."
+        }
+      ],
+      "feedback": {
+        "correct": "$w_2 = 0.8947$, so $w_1 = 0.1053$ as before.",
+        "generic": "Not quite right. Equate the two components, then use $w_1 + w_2 = 1$.",
+        "byKey": {
+          "w1": "That is $w_1$, the weight in A. The question asks for $w_2$, the weight in B.",
+          "half": "Equal weights ignore the gradient equations. They give $w_2 = 8.5w_1$.",
+          "ratio": "8.5 is the ratio $w_2 / w_1$. Use the budget $w_1 + w_2 = 1$ to turn it into weights."
+        }
+      },
+      "explain": {
+        "text": "Equating the components gave $w_2 = 8.5w_1$, and the budget gave $w_1 = 0.1053$, $w_2 = 0.8947$: the same as substitution. The purple ellipse touches the budget line there. The multiplier is $\\lambda = 0.01916$, exactly $2\\sigma_p^2$.",
+        "canvas": {
+          "points": [
+            {
+              "id": "S",
+              "x": 0.10526,
+              "y": 0.89474,
+              "label": "(0.105, 0.895)",
+              "labelPos": "e"
+            }
+          ],
+          "highlight": [
+            "g"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Perfect correlation",
+      "prose": "Now let $\\rho = 1$, with no short sales, so $0 \\le w_1 \\le 1$. Then $\\sigma_p = w_1\\sigma_1 + w_2\\sigma_2$ exactly: a straight line from 10% to 20%.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.21
+          ],
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "$\\sigma_p$",
+          "functions": [
+            {
+              "id": "sd",
+              "expr": "sqrt(max(0, x^2*s1^2 + (1 - x)^2*s2^2 + 2*x*(1 - x)*r*s1*s2))",
+              "colour": 1,
+              "domain": [
+                0,
+                1
+              ]
+            }
+          ],
+          "params": {
+            "s1": 0.2,
+            "s2": 0.1,
+            "r": 1,
+            "w": 0.5
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "hb",
+              "y": 0.1,
+              "label": "B alone"
+            }
+          ]
+        }
+      },
+      "question": "Which mix has the lowest volatility?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "corner",
+            "text": "All in B, $w_1 = 0$",
+            "correct": true
+          },
+          {
+            "id": "formula",
+            "text": "$w_1 = -1$, from the formula",
+            "why": "The formula gives $(0.01 - 0.02)/(0.04 + 0.01 - 0.04) = -1$: a short sale of A. With $0 \\le w_1 \\le 1$, the line's lowest point is its end."
+          },
+          {
+            "id": "half",
+            "text": "Half in each",
+            "why": "On a straight line there is no dip in the middle. Half in each gives 15%."
+          },
+          {
+            "id": "same",
+            "text": "Every mix is equally risky",
+            "why": "The volatility still changes with the mix: it climbs from 10% to 20% along the line."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where is a rising straight line lowest?"
+        },
+        {
+          "rung": "point",
+          "text": "The line starts at B alone.",
+          "highlight": [
+            "hb"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With $\\rho = 1$ there is no dip: the lowest volatility, 10%, is at $w_1 = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "All in B: with $\\rho = 1$ mixing gives no benefit.",
+        "generic": "Not quite right. With $\\rho = 1$ the volatility is a straight line in $w_1$."
+      },
+      "explain": {
+        "text": "With $\\rho = 1$ the assets move in lockstep, so mixing only averages their volatilities. The best long-only mix is a corner, all in B. With short sales, $w_1 = -1$ would hedge the risk away entirely.",
+        "canvas": {
+          "points": [
+            {
+              "id": "C",
+              "x": 0,
+              "y": 0.1,
+              "label": "all B",
+              "labelPos": "ne"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "The calmer asset alone",
+      "prose": "Asset A has volatility 30% and asset B 15%, uncorrelated. A colleague says the safest portfolio is all in B, the calmer asset.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0.1,
+            0.31
+          ],
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "$\\sigma_p$",
+          "functions": [
+            {
+              "id": "sd",
+              "expr": "sqrt(max(0, x^2*s1^2 + (1 - x)^2*s2^2 + 2*x*(1 - x)*r*s1*s2))",
+              "colour": 1,
+              "domain": [
+                0,
+                1
+              ]
+            }
+          ],
+          "params": {
+            "s1": 0.3,
+            "s2": 0.15,
+            "r": 0,
+            "w": 0.5
+          }
+        },
+        "state": {
+          "hide": [
+            "sd"
+          ],
+          "hlines": [
+            {
+              "id": "hb",
+              "y": 0.15,
+              "label": "B alone"
+            }
+          ],
+          "caption": "The volatility curve appears after you answer."
+        }
+      },
+      "question": "What is the lowest volatility you can reach?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "13.4%, with 20% in A",
+            "correct": true
+          },
+          {
+            "id": "allb",
+            "text": "15%, all in B",
+            "why": "You held only the calmer asset. With $\\rho = 0$, adding some A lowers the risk: 20% in A gives 13.4%.",
+            "canvas": {
+              "hide": [],
+              "points": [
+                {
+                  "id": "S",
+                  "x": 0.2,
+                  "y": 0.13416,
+                  "label": "13.4%",
+                  "labelPos": "s"
+                }
+              ]
+            }
+          },
+          {
+            "id": "zero",
+            "text": "0%, with a third in A",
+            "why": "Zero risk needs $\\rho = -1$. Uncorrelated assets cannot cancel exactly.",
+            "canvas": {
+              "hide": []
+            }
+          },
+          {
+            "id": "avg",
+            "text": "22.5%, half in each",
+            "why": "You averaged the volatilities. Half and half gives $\\sqrt{0.25 \\times 0.09 + 0.25 \\times 0.0225} = 16.8\\%$, and less A does better.",
+            "canvas": {
+              "hide": []
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $w_1^* = \\dfrac{\\sigma_2^2 - \\rho\\sigma_1\\sigma_2}{\\sigma_1^2 + \\sigma_2^2 - 2\\rho\\sigma_1\\sigma_2}$ with $\\rho = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "$w_1^* = 0.0225 / (0.09 + 0.0225) = 0.2$.",
+          "highlight": [
+            "hb"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sigma_p^2 = 0.04 \\times 0.09 + 0.64 \\times 0.0225 = 0.018$, so $\\sigma_p = 0.134$."
+        }
+      ],
+      "feedback": {
+        "correct": "13.4%, below B's 15%.",
+        "generic": "Not quite right. Find $w_1^*$ with $\\rho = 0$, then the volatility there.",
+        "byKey": {
+          "allb": "You assumed the least risky asset is the least risky portfolio. Unless $\\rho$ is high, a slice of the riskier asset diversifies."
+        }
+      },
+      "explain": {
+        "text": "With $\\rho = 0$, $w_1^* = 0.0225 / 0.1125 = 0.2$ and $\\sigma_p^2 = 0.0036 + 0.0144 = 0.018$, so $\\sigma_p = 13.4\\%$. The curve dips below B alone. The calmer asset on its own is not the least risky portfolio.",
+        "canvas": {
+          "hide": [],
+          "points": [
+            {
+              "id": "S",
+              "x": 0.2,
+              "y": 0.13416,
+              "label": "13.4%",
+              "labelPos": "s"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The formula",
+      "prose": "Solving either way for general $\\sigma_1$, $\\sigma_2$, $\\rho$ gives $$w_1^* = \\frac{\\sigma_2^2 - \\rho\\sigma_1\\sigma_2}{\\sigma_1^2 + \\sigma_2^2 - 2\\rho\\sigma_1\\sigma_2}, \\qquad w_2^* = 1 - w_1^*.$$ With no short sales, clip $w_1^*$ to the range 0 to 1.",
+      "question": "Check it on the first pair: $\\sigma_1 = 0.2$, $\\sigma_2 = 0.1$, $\\rho = 0.3$. What is the numerator?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.004,
+        "tol": {
+          "abs": 1e-05
+        },
+        "label": "Numerator",
+        "accept": "$0.01 - 0.006 = 0.004$; then $0.004 / 0.038 = 0.1053$.",
+        "wrong": [
+          {
+            "id": "s1",
+            "value": 0.034,
+            "tol": {
+              "abs": 1e-05
+            }
+          },
+          {
+            "id": "nor",
+            "value": 0.01,
+            "tol": {
+              "abs": 1e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\sigma_2^2 = 0.01$ and $\\rho\\sigma_1\\sigma_2 = 0.3 \\times 0.2 \\times 0.1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.004 / 0.038 = 0.1053$, as before.",
+        "generic": "Not quite right. Compute $0.1^2 - 0.3 \\times 0.2 \\times 0.1$.",
+        "byKey": {
+          "s1": "You used $\\sigma_1^2 = 0.04$. The numerator for $w_1$ uses the other asset's variance, $\\sigma_2^2$.",
+          "nor": "You left out $-\\rho\\sigma_1\\sigma_2 = -0.006$."
+        }
+      },
+      "explain": {
+        "text": "The numerator is $0.01 - 0.006 = 0.004$ and the denominator $0.038$, so $w_1^* = 0.1053$. Notice the numerator uses the *other* asset's variance: the calmer asset gets the larger weight."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Deriving the formula",
+      "prose": "We minimise $\\sigma_p^2$ over $w_1$, with $w_2 = 1 - w_1$. Write $\\sigma_1, \\sigma_2, \\rho$ as letters throughout.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "sub",
+            "text": "$\\sigma_p^2 = w_1^2\\sigma_1^2 + (1 - w_1)^2\\sigma_2^2 + 2w_1(1 - w_1)\\rho\\sigma_1\\sigma_2$, substitute $w_2 = 1 - w_1$"
+          },
+          {
+            "id": "diff",
+            "text": "$\\dfrac{d\\sigma_p^2}{dw_1} = 2w_1\\sigma_1^2 - 2(1 - w_1)\\sigma_2^2 + 2(1 - 2w_1)\\rho\\sigma_1\\sigma_2$, chain rule and product rule"
+          },
+          {
+            "id": "zero",
+            "text": "$0 = w_1\\sigma_1^2 - \\sigma_2^2 + w_1\\sigma_2^2 + \\rho\\sigma_1\\sigma_2 - 2w_1\\rho\\sigma_1\\sigma_2$, set it to zero, halve and expand"
+          },
+          {
+            "id": "collect",
+            "text": "$w_1(\\sigma_1^2 + \\sigma_2^2 - 2\\rho\\sigma_1\\sigma_2) = \\sigma_2^2 - \\rho\\sigma_1\\sigma_2$, collect the $w_1$ terms"
+          },
+          {
+            "id": "divide",
+            "text": "$w_1^* = \\dfrac{\\sigma_2^2 - \\rho\\sigma_1\\sigma_2}{\\sigma_1^2 + \\sigma_2^2 - 2\\rho\\sigma_1\\sigma_2}$, divide; the bracket is $\\text{Var}(R_A - R_B) > 0$"
+          }
+        ],
+        "answer": [
+          "sub",
+          "diff",
+          "zero",
+          "collect",
+          "divide"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Substitute first, then differentiate."
+        },
+        {
+          "rung": "point",
+          "text": "Collecting the $w_1$ terms needs the expanded equation."
+        },
+        {
+          "rung": "step",
+          "text": "Substitute, differentiate, set to zero and expand, collect, divide."
+        }
+      ],
+      "feedback": {
+        "correct": "The formula, from one derivative.",
+        "generic": "Not quite right. You must substitute $w_2 = 1 - w_1$ before differentiating in $w_1$.",
+        "byKey": {
+          "collect": "Collecting needs the expanded form, so the zero line comes first.",
+          "divide": "Dividing is the last step, once all $w_1$ terms are on one side."
+        }
+      },
+      "explain": {
+        "text": "One derivative, set to zero, gives a linear equation in $w_1$. The bracket we divide by is $\\sigma_1^2 + \\sigma_2^2 - 2\\rho\\sigma_1\\sigma_2$, the variance of $R_A - R_B$. It is positive unless the assets are identical, so the formula always works."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A long-only mandate",
+      "prose": "A fund holds two equity books: A with volatility 15%, B with 25%, correlation 0.8. The formula gives $w_1^* = 1.3$: 130% in A and −30% in B. The fund's mandate bans short sales.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -0.2,
+            1.6
+          ],
+          "y": [
+            0.1,
+            0.32
+          ],
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "$\\sigma_p$",
+          "functions": [
+            {
+              "id": "sd",
+              "expr": "sqrt(max(0, x^2*s1^2 + (1 - x)^2*s2^2 + 2*x*(1 - x)*r*s1*s2))",
+              "colour": 1,
+              "domain": [
+                -0.2,
+                1.6
+              ]
+            }
+          ],
+          "params": {
+            "s1": 0.15,
+            "s2": 0.25,
+            "r": 0.8,
+            "w": 0.5
+          },
+          "vlines": [
+            {
+              "id": "lo",
+              "x": 0
+            },
+            {
+              "id": "hi",
+              "x": 1
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "U",
+              "x": 1.3,
+              "y": 0.1423,
+              "label": "$w_1^* = 1.3$",
+              "labelPos": "n"
+            }
+          ],
+          "caption": "Dashed lines: the allowed weights, 0 to 1"
+        }
+      },
+      "question": "Which weight $w_1$ should the fund hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "w1",
+        "accept": "1: all in A, the allowed weight nearest 1.3.",
+        "wrong": [
+          {
+            "id": "ignore",
+            "value": 1.3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The allowed weights lie between the two dashed lines."
+        },
+        {
+          "rung": "point",
+          "text": "Between 0 and 1, the curve falls all the way to the right-hand line.",
+          "highlight": [
+            "hi"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The variance is a parabola with its lowest point at 1.3. On $[0, 1]$ it is lowest at the end nearest 1.3: $w_1 = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "All in A, with volatility 15%.",
+        "generic": "Not quite right. Find the lowest point of the curve between 0 and 1.",
+        "byKey": {
+          "ignore": "1.3 breaks the mandate: it needs a short position of 30% in B.",
+          "zero": "All in B is the riskiest allowed choice here, at 25%.",
+          "half": "Half in each gives about 19%. The curve keeps falling towards $w_1 = 1$."
+        }
+      },
+      "explain": {
+        "text": "The variance is a parabola in $w_1$ with its lowest point at 1.3. Restricted to $[0, 1]$, it is lowest at $w_1 = 1$: all in A, volatility 15%. Clipping the formula to the allowed range always gives the long-only answer for two assets.",
+        "canvas": {
+          "points": [
+            {
+              "id": "U",
+              "x": 1.3,
+              "y": 0.1423,
+              "label": "$w_1^* = 1.3$",
+              "labelPos": "n"
+            },
+            {
+              "id": "K",
+              "x": 1,
+              "y": 0.15,
+              "label": "hold",
+              "labelPos": "s"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "With $w_2 = 1 - w_1$ the portfolio variance is a parabola in $w_1$. Its lowest point is the minimum variance portfolio.",
+      "A multiplier on $w_1 + w_2 = 1$ gives the same weights, with $\\lambda = 2\\sigma_p^2$ at the minimum.",
+      "Lower correlation means a deeper dip: at $\\rho = -1$ risk can reach zero, at $\\rho = 1$ there is no dip. A ban on short sales clips $w_1$ to $[0, 1]$."
+    ],
+    "formula": {
+      "name": "Minimum variance weight",
+      "tex": "w_1^* = \\dfrac{\\sigma_2^2 - \\rho\\sigma_1\\sigma_2}{\\sigma_1^2 + \\sigma_2^2 - 2\\rho\\sigma_1\\sigma_2}",
+      "note": "The bottom is $\\text{Var}(R_1 - R_2) > 0$. For 20%, 10% and $\\rho = 0.3$: $w_1^* = 0.1053$, $\\sigma_p = 9.79\\%$."
+    },
+    "trap": "The least volatile asset alone is not the least volatile portfolio. Unless correlation is high, a slice of the riskier asset lowers risk."
+  },
+  "quiz": [
+    {
+      "id": "q12-equal",
+      "difficulty": 2,
+      "prose": "Two assets both have volatility 20%, with correlation 0.5.",
+      "question": "What weight $w_1$ gives the minimum variance portfolio?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "w1",
+        "accept": "0.5, by symmetry or from the formula.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Half in each.",
+        "generic": "Not quite right. With equal volatilities the formula's top is half its bottom.",
+        "byKey": {
+          "zero": "Neither asset is calmer, so neither corner wins. Splitting evenly diversifies.",
+          "one": "Neither asset is calmer, so neither corner wins. Splitting evenly diversifies."
+        }
+      },
+      "explain": {
+        "text": "$w_1^* = (0.04 - 0.02)/(0.04 + 0.04 - 0.04) = 0.02/0.04 = 0.5$. Identical volatilities make the assets interchangeable, so the best split is even."
+      }
+    },
+    {
+      "id": "q12-hedge",
+      "difficulty": 2,
+      "prose": "Asset A has volatility 20% and B 10%, with correlation $-1$.",
+      "question": "Which weight in A makes the portfolio riskless?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "third",
+            "text": "$w_1 = \\tfrac{1}{3}$",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "$w_1 = \\tfrac{1}{2}$",
+            "why": "Half and half leaves A's larger swings uncancelled: $0.5 \\times 20\\% - 0.5 \\times 10\\% = 5\\%$."
+          },
+          {
+            "id": "twothirds",
+            "text": "$w_1 = \\tfrac{2}{3}$",
+            "why": "You gave the larger weight to the riskier asset. A needs the smaller weight."
+          },
+          {
+            "id": "none",
+            "text": "No mix is riskless",
+            "why": "With $\\rho = -1$ the swings can cancel exactly."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{1}{3} \\times 20\\% = \\tfrac{2}{3} \\times 10\\%$.",
+        "generic": "Not quite right. With $\\rho = -1$, $\\sigma_p = |w_1\\sigma_1 - w_2\\sigma_2|$."
+      },
+      "explain": {
+        "text": "With $\\rho = -1$, $\\sigma_p = |0.2w_1 - 0.1(1 - w_1)|$, which is zero when $0.3w_1 = 0.1$. So $w_1 = \\tfrac{1}{3}$, matching the formula: $0.03 / 0.09$."
+      }
+    },
+    {
+      "id": "q12-half",
+      "difficulty": 3,
+      "prose": "Take $\\sigma_1 = 0.2$, $\\sigma_2 = 0.1$, $\\rho = 0.3$ again.",
+      "question": "What is $\\sigma_p^2$ for half in each asset?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0155,
+        "tol": {
+          "abs": 5e-05
+        },
+        "label": "Variance",
+        "accept": "0.0155, from $0.01 + 0.0025 + 0.003$.",
+        "wrong": [
+          {
+            "id": "nocross",
+            "value": 0.0125,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "avg",
+            "value": 0.025,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.0155, a volatility of 12.45%.",
+        "generic": "Not quite right. Each weight is 0.5, so each squared weight is 0.25.",
+        "byKey": {
+          "nocross": "You dropped the covariance term, $2 \\times 0.25 \\times 0.006 = 0.003$.",
+          "avg": "You averaged the variances. The weights enter squared: $0.25 \\times 0.04 + 0.25 \\times 0.01 + 0.003$."
+        }
+      },
+      "explain": {
+        "text": "$0.25 \\times 0.04 + 0.25 \\times 0.01 + 2 \\times 0.25 \\times 0.006 = 0.01 + 0.0025 + 0.003 = 0.0155$. That is above the minimum, 0.0096."
+      }
+    },
+    {
+      "id": "q12-never",
+      "difficulty": 3,
+      "prose": "Two assets, no short sales. B is the less volatile of the two.",
+      "question": "Which statement is always true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The minimum variance portfolio is never riskier than B alone",
+            "correct": true
+          },
+          {
+            "id": "allb",
+            "text": "The minimum variance portfolio is all in B",
+            "why": "Only when $\\rho \\ge \\sigma_B / \\sigma_A$. Otherwise some A lowers the risk further."
+          },
+          {
+            "id": "zero",
+            "text": "The minimum variance portfolio has zero risk",
+            "why": "Zero risk needs $\\rho = -1$."
+          },
+          {
+            "id": "half",
+            "text": "The minimum variance portfolio holds more of A than of B",
+            "why": "The calmer asset gets the larger weight: the numerator of $w_A$ uses $\\sigma_B^2$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All in B is one of the choices, so the best can only match or beat it.",
+        "generic": "Not quite right. Ask which choices the minimum is taken over."
+      },
+      "explain": {
+        "text": "All in B is an allowed portfolio, so the lowest variance over all allowed mixes is at most B's variance. It equals it when $\\rho \\ge \\sigma_B / \\sigma_A$, and beats it otherwise."
+      }
+    }
+  ]
+}
