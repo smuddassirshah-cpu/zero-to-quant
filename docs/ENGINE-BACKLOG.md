@@ -674,3 +674,9 @@ Raised later (elimination level 1):
 236. Bug, `matrix`: the object form of `highlight` (`{ "A": { "rows": [1] } }`) never draws, because the initial `highlight` is `[]` and `ZQ.canvas.merge` treats the object as a keyed-list patch; use a non-array initial value or skip keyed merging when the existing list is empty.
 237. `manipulate` widget: a per-state `canvas` patch, so each tapped algebra step can animate the canvas (elimination steps on a `matrix`).
 238. `matrix`: an augmented bar (`bar: k`, a separator before column k) instead of two matrices with op "|"; a pivot circle that grows with wide cells; `rowOp` should default to the matrix that holds the rows named.
+
+Raised later (elimination level 2):
+
+239. `plane` point labels substitute `{x}` and `{y}`, so `$\mathbf{x}$` renders as a coordinate; add an escape for literal braces (or only substitute `{x}`/`{y}` outside maths).
+240. `vectors` chains: an arrow drawn `from` another arrow starts at that arrow's head measured from the origin, ignoring its tail; resolve the full tail so head-to-tail chains of three or more need no `derive`.
+241. `vectors`: a simple 3D projected view (isometric or rotatable) for column spaces and nullspaces in $\mathbb{R}^3$.

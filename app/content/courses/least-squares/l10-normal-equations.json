@@ -1,0 +1,1242 @@
+{
+  "id": "l10-normal-equations",
+  "course": "least-squares",
+  "title": "The normal equations",
+  "minutes": 14,
+  "objectives": [
+    "Derive $A^T A \\hat{\\mathbf{x}} = A^T \\mathbf{b}$ from the projection."
+  ],
+  "skills": [
+    "ls-fit",
+    "ls-proj"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Test a guess",
+      "prose": "Points $(0, 1)$, $(1, 3)$ and $(2, 2)$ again. Try the line $y = 1 + x$, so $\\mathbf{x} = (1, 1)$. Its residuals are $\\mathbf{e} = \\mathbf{b} - \\mathbf{A}\\mathbf{x} = (0,\\ 1,\\ -1)$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "AT",
+              "rows": [
+                [
+                  1,
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1,
+                  2
+                ]
+              ],
+              "label": "$\\mathbf{A}^T$"
+            },
+            {
+              "id": "E",
+              "rows": [
+                [
+                  0
+                ],
+                [
+                  1
+                ],
+                [
+                  -1
+                ]
+              ],
+              "label": "$\\mathbf{e}$"
+            },
+            {
+              "id": "R",
+              "rows": [
+                [
+                  0
+                ],
+                [
+                  -1
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{e}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "hidden": [
+            "R"
+          ]
+        }
+      },
+      "question": "Compute $\\mathbf{A}^T\\mathbf{e}$. Each entry is a column of $\\mathbf{A}$ dotted with $\\mathbf{e}$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Row of $\\mathbf{A}^T$",
+          "Entry of $\\mathbf{A}^T\\mathbf{e}$"
+        ],
+        "rows": [
+          [
+            "Row 1, the ones",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Row 2, the $x$ values",
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply row 1 of $\\mathbf{A}^T$ by $\\mathbf{e}$ entry by entry, then add."
+        },
+        {
+          "rung": "point",
+          "text": "Row 1 is $(1, 1, 1)$, so its entry is the sum of the residuals.",
+          "highlight": [
+            "AT-r0",
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 1: $0 + 1 - 1 = 0$. Row 2: $0 \\cdot 0 + 1 \\cdot 1 + 2 \\cdot (-1) = -1$."
+        }
+      ],
+      "feedback": {
+        "correct": "The entries are 0 and $-1$.",
+        "generic": "Not quite right. Dot each row of $\\mathbf{A}^T$ with $(0, 1, -1)$."
+      },
+      "explain": {
+        "text": "Row 2 gives $-1$, not 0, so $\\mathbf{e}$ is not perpendicular to the $x$ column. The projection's error is perpendicular to every column. So $y = 1 + x$ is not the best line.",
+        "canvas": {
+          "cell": [
+            "R-0-0",
+            "R-1-0"
+          ],
+          "highlight": [
+            "R-1-0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Make both entries zero",
+      "prose": "Now move the line yourself. The caption shows $\\mathbf{A}^T\\mathbf{e}$ for the line you set, and the corner shows the sum of squared residuals.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "xRange": [
+            -0.5,
+            2.5
+          ],
+          "yRange": [
+            0,
+            4.5
+          ]
+        },
+        "state": {
+          "params": {
+            "m": 1,
+            "b": 1
+          },
+          "line": {
+            "m": 1,
+            "b": 1
+          },
+          "residuals": "line",
+          "showSSE": true
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "min": -1,
+            "max": 3,
+            "step": 0.1,
+            "label": "Slope $D$",
+            "start": 1
+          },
+          {
+            "bind": "b",
+            "min": -1,
+            "max": 4,
+            "step": 0.1,
+            "label": "Intercept $C$",
+            "start": 1
+          }
+        ],
+        "derive": {
+          "line.m": "m",
+          "line.b": "b",
+          "caption": "$\\mathbf{A}^T\\mathbf{e}$ = ({{fixed(6 - 3*b - 3*m, 2)}}, {{fixed(7 - 3*b - 5*m, 2)}})"
+        }
+      },
+      "question": "Which line makes both entries of $\\mathbf{A}^T\\mathbf{e}$ zero?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$y = 1.5 + 0.5x$",
+            "correct": true
+          },
+          {
+            "id": "flat",
+            "text": "$y = 2$",
+            "why": "You zeroed the first entry only. The residuals sum to 0, but the second entry is 1.",
+            "canvas": {
+              "params": {
+                "m": 0,
+                "b": 2
+              }
+            }
+          },
+          {
+            "id": "guess",
+            "text": "$y = 1 + x$",
+            "why": "That was the guess. Its first entry is 0, but the second is $-1$.",
+            "canvas": {
+              "params": {
+                "m": 1,
+                "b": 1
+              }
+            }
+          },
+          {
+            "id": "two",
+            "text": "$y = 1 + 2x$",
+            "why": "That line passes through the first two points. Its entries are $-3$ and $-6$, far from 0.",
+            "canvas": {
+              "params": {
+                "m": 2,
+                "b": 1
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fix the first entry at 0 first, then change the slope."
+        },
+        {
+          "rung": "point",
+          "text": "Slope 0.5 is a good place to start.",
+          "highlight": [
+            "line"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Both entries are 0 at $y = 1.5 + 0.5x$.",
+        "generic": "Not quite right. Move the sliders until the caption reads (0.00, 0.00)."
+      },
+      "explain": {
+        "text": "Both entries reach 0 at $y = 1.5 + 0.5x$. The sum of squared residuals is smallest there too, at 1.5. Perpendicular error and least squares pick the same line.",
+        "canvas": {
+          "params": {
+            "m": 0.5,
+            "b": 1.5
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "From perpendicular to equations",
+      "prose": "The best $\\hat{\\mathbf{x}}$ leaves an error perpendicular to every column: $\\mathbf{A}^T\\mathbf{e} = \\mathbf{0}$. Turn that into equations for $\\hat{\\mathbf{x}}$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "n1",
+            "text": "$\\mathbf{A}^T\\mathbf{e} = \\mathbf{0}$, since $\\mathbf{e}$ is perpendicular to every column"
+          },
+          {
+            "id": "n2",
+            "text": "$\\mathbf{A}^T(\\mathbf{b} - \\mathbf{A}\\hat{\\mathbf{x}}) = \\mathbf{0}$, substitute $\\mathbf{e} = \\mathbf{b} - \\mathbf{A}\\hat{\\mathbf{x}}$"
+          },
+          {
+            "id": "n3",
+            "text": "$\\mathbf{A}^T\\mathbf{b} - \\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{0}$, multiply out the bracket"
+          },
+          {
+            "id": "n4",
+            "text": "$\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{b}$, move one term across"
+          }
+        ],
+        "answer": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the perpendicular condition."
+        },
+        {
+          "rung": "point",
+          "text": "Replace $\\mathbf{e}$ by what it stands for before you multiply anything out."
+        },
+        {
+          "rung": "step",
+          "text": "Perpendicular condition, substitute, multiply out, rearrange."
+        }
+      ],
+      "feedback": {
+        "correct": "Four lines from perpendicular error to the equations.",
+        "generic": "Not quite right. Start from $\\mathbf{A}^T\\mathbf{e} = \\mathbf{0}$ and change one thing per line.",
+        "byKey": {
+          "n4": "The rearranged form comes last, once the bracket is multiplied out.",
+          "n3": "You cannot multiply out the bracket before $\\mathbf{e}$ has been replaced by it."
+        }
+      },
+      "explain": {
+        "text": "These are the **normal equations**, $\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{b}$. Normal means perpendicular: they say the error is perpendicular to $C(\\mathbf{A})$. With two unknowns there are two equations, however many points we fit."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Build the two sides",
+      "prose": "For our points, $\\mathbf{A}$ has columns $(1, 1, 1)$ and $(0, 1, 2)$, and $\\mathbf{b} = (1, 3, 2)$. Each entry of $\\mathbf{A}^T\\mathbf{A}$ is a column dotted with a column.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "AT",
+              "rows": [
+                [
+                  1,
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1,
+                  2
+                ]
+              ],
+              "label": "$\\mathbf{A}^T$"
+            },
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            },
+            {
+              "id": "G",
+              "rows": [
+                [
+                  3,
+                  3
+                ],
+                [
+                  3,
+                  5
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{A}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "hidden": [
+            "G"
+          ]
+        }
+      },
+      "question": "Fill in $\\mathbf{A}^T\\mathbf{A}$ and $\\mathbf{A}^T\\mathbf{b}$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "Column 1",
+          "Column 2",
+          "$\\mathbf{A}^T\\mathbf{b}$"
+        ],
+        "rows": [
+          [
+            "Row 1",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Row 2",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Row 1 of $\\mathbf{A}^T$ is all ones, so row 1 holds sums."
+        },
+        {
+          "rung": "point",
+          "text": "Row 1: the count of points, $\\sum x_i$ and $\\sum y_i$.",
+          "highlight": [
+            "AT-r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 1 is $3, 3, 6$. Row 2 is $\\sum x_i = 3$, $\\sum x_i^2 = 5$ and $\\sum x_i y_i = 0 + 3 + 4 = 7$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{A}^T\\mathbf{A}$ has rows $(3, 3)$ and $(3, 5)$, and $\\mathbf{A}^T\\mathbf{b} = (6, 7)$.",
+        "generic": "Not quite right. Dot each row of $\\mathbf{A}^T$ with each column of $\\mathbf{A}$, then with $\\mathbf{b}$."
+      },
+      "explain": {
+        "text": "The ones row gives sums: 3 points, $\\sum x_i = 3$, $\\sum y_i = 6$. The $x$ row gives $\\sum x_i^2 = 5$ and $\\sum x_i y_i = 7$. A 3 by 2 problem has shrunk to a 2 by 2 one.",
+        "canvas": {
+          "cell": [
+            "G-0-0",
+            "G-0-1",
+            "G-1-0",
+            "G-1-1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Solve the 2 by 2",
+      "prose": "The normal equations for our points are $3\\hat C + 3\\hat D = 6$ and $3\\hat C + 5\\hat D = 7$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "G",
+              "rows": [
+                [
+                  3,
+                  3
+                ],
+                [
+                  3,
+                  5
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{A}$"
+            },
+            {
+              "id": "X",
+              "rows": [
+                [
+                  "$\\hat C$"
+                ],
+                [
+                  "$\\hat D$"
+                ]
+              ],
+              "label": "$\\hat{\\mathbf{x}}$"
+            },
+            {
+              "id": "R",
+              "rows": [
+                [
+                  6
+                ],
+                [
+                  7
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{b}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {}
+      },
+      "question": "Solve for $\\hat C$ and $\\hat D$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Unknown",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\hat C$",
+            {
+              "edit": true,
+              "answer": 1.5,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$\\hat D$",
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both equations start with $3\\hat C$."
+        },
+        {
+          "rung": "point",
+          "text": "Subtract row 1 from row 2.",
+          "highlight": [
+            "G-r0",
+            "G-r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2\\hat D = 1$, so $\\hat D = 0.5$. Then $3\\hat C = 6 - 1.5 = 4.5$, so $\\hat C = 1.5$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat C = 1.5$ and $\\hat D = 0.5$, the line $y = 1.5 + 0.5x$.",
+        "generic": "Not quite right. Subtract the first equation from the second to remove $\\hat C$."
+      },
+      "explain": {
+        "text": "Subtracting leaves $2\\hat D = 1$, so $\\hat D = 0.5$, and then $\\hat C = 1.5$. That is the line the sliders found, now with no searching. The normal equations always give the least squares line.",
+        "canvas": {
+          "values": {
+            "X-0-0": 1.5,
+            "X-1-0": 0.5
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Which formula?",
+      "prose": "Two products of $\\mathbf{A}$ with its transpose are shown. Only one belongs in the formula for $\\hat{\\mathbf{x}}$.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "matrix",
+          "params": {
+            "matrices": [
+              {
+                "id": "G",
+                "rows": [
+                  [
+                    3,
+                    3
+                  ],
+                  [
+                    3,
+                    5
+                  ]
+                ],
+                "label": "$\\mathbf{A}^T\\mathbf{A}$, 2 by 2"
+              }
+            ],
+            "ops": []
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "matrix",
+          "params": {
+            "matrices": [
+              {
+                "id": "H",
+                "rows": [
+                  [
+                    1,
+                    1,
+                    1
+                  ],
+                  [
+                    1,
+                    2,
+                    3
+                  ],
+                  [
+                    1,
+                    3,
+                    5
+                  ]
+                ],
+                "label": "$\\mathbf{A}\\mathbf{A}^T$, 3 by 3"
+              }
+            ],
+            "ops": []
+          },
+          "state": {}
+        }
+      },
+      "question": "Which formula gives $\\hat{\\mathbf{x}}$ for our three points?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{b}$",
+            "correct": true
+          },
+          {
+            "id": "inv-a",
+            "text": "$\\hat{\\mathbf{x}} = \\mathbf{A}^{-1}\\mathbf{b}$",
+            "why": "You inverted $\\mathbf{A}$ as if $\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{b}$ held. $\\mathbf{A}$ is 3 by 2, so it has no inverse, and no exact solution exists."
+          },
+          {
+            "id": "aat",
+            "text": "$\\hat{\\mathbf{x}} = (\\mathbf{A}\\mathbf{A}^T)^{-1}\\mathbf{b}$",
+            "why": "You multiplied in the other order. $\\mathbf{A}\\mathbf{A}^T$ is 3 by 3 with rank 2, so it is singular, and $\\hat{\\mathbf{x}}$ has only 2 entries.",
+            "canvas": {
+              "highlight": [
+                "right:H"
+              ]
+            }
+          },
+          {
+            "id": "no-at",
+            "text": "$\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{b}$",
+            "why": "You dropped the $\\mathbf{A}^T$ in front of $\\mathbf{b}$. A 2 by 2 matrix cannot multiply a vector with 3 entries."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check the shapes: $\\hat{\\mathbf{x}}$ has 2 entries and $\\mathbf{b}$ has 3."
+        },
+        {
+          "rung": "point",
+          "text": "Only one of the two products is 2 by 2.",
+          "highlight": [
+            "left:G"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Solve $\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{b}$: invert the 2 by 2 matrix, and multiply $\\mathbf{b}$ by $\\mathbf{A}^T$ first."
+        }
+      ],
+      "feedback": {
+        "correct": "Invert the 2 by 2 $\\mathbf{A}^T\\mathbf{A}$, and multiply $\\mathbf{b}$ by $\\mathbf{A}^T$.",
+        "generic": "Not quite right. Check every product has matching shapes.",
+        "byKey": {
+          "inv-a": "You inverted $\\mathbf{A}$ as if $\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{b}$ held. A 3 by 2 matrix has no inverse.",
+          "aat": "You used $\\mathbf{A}\\mathbf{A}^T$, which is 3 by 3 and singular: its rows $(1,1,1)$, $(1,2,3)$, $(1,3,5)$ have row 3 = 2 row 2 − row 1."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{A}^T\\mathbf{A}$ is 2 by 2 and invertible, so $\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{b}$. $\\mathbf{A}\\mathbf{A}^T$ is 3 by 3 but has rank 2, so its determinant is 0. Order matters: the transpose goes on the left.",
+        "canvas": {
+          "left": {
+            "highlight": [
+              "G"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "When every $x$ is the same",
+      "prose": "Three readings all taken at $x = 2$: heights 1, 3 and 2. The columns of $\\mathbf{A}$ are $(1, 1, 1)$ and $(2, 2, 2)$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "AT",
+              "rows": [
+                [
+                  1,
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  2,
+                  2
+                ]
+              ],
+              "label": "$\\mathbf{A}^T$"
+            },
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            },
+            {
+              "id": "G",
+              "rows": [
+                [
+                  3,
+                  6
+                ],
+                [
+                  6,
+                  12
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{A}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $\\det(\\mathbf{A}^T\\mathbf{A})$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Determinant of A transpose A",
+        "accept": "0: $3 \\cdot 12 - 6 \\cdot 6 = 0$.",
+        "wrong": [
+          {
+            "id": "diag",
+            "value": 36,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "added",
+            "value": 72,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For a 2 by 2 matrix, the determinant is $ad - bc$."
+        },
+        {
+          "rung": "point",
+          "text": "Here $a = 3$, $d = 12$ and $b = c = 6$.",
+          "highlight": [
+            "G"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3 \\cdot 12 - 6 \\cdot 6 = 36 - 36 = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "The determinant is 0, so $\\mathbf{A}^T\\mathbf{A}$ has no inverse.",
+        "generic": "Not quite right. Use $ad - bc$ on $\\mathbf{A}^T\\mathbf{A}$.",
+        "byKey": {
+          "diag": "You multiplied the diagonal and stopped. Subtract the product of the other two entries, $6 \\cdot 6$.",
+          "added": "You added the two products. The determinant subtracts them: $36 - 36$."
+        }
+      },
+      "explain": {
+        "text": "The $x$ column is twice the ones column, so the columns are dependent and $\\mathbf{A}^T\\mathbf{A}$ is singular. Every line through $(2, 2)$ fits equally well, so there is no single best slope. $\\mathbf{A}^T\\mathbf{A}$ is invertible exactly when the columns of $\\mathbf{A}$ are independent.",
+        "canvas": {
+          "highlight": [
+            "A-c0",
+            "A-c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The least squares solution",
+      "prose": "When the columns of $\\mathbf{A}$ are independent, $\\mathbf{A}^T\\mathbf{A}$ is invertible and $$\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{b}, \\qquad \\mathbf{p} = \\mathbf{A}\\hat{\\mathbf{x}}.$$ Put together, that is the projection formula $\\mathbf{p} = \\mathbf{A}(\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{b}$.",
+      "question": "We fit $y = C + Dx$ to 1,000 days of data. What size is $\\mathbf{A}^T\\mathbf{A}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "2 by 2",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "1,000 by 1,000",
+            "why": "That is $\\mathbf{A}\\mathbf{A}^T$: you multiplied in the other order."
+          },
+          {
+            "id": "a",
+            "text": "1,000 by 2",
+            "why": "That is $\\mathbf{A}$ itself. Multiplying by $\\mathbf{A}^T$ on the left leaves one row and one column per unknown."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One row and one column per unknown, however many days.",
+        "generic": "Not quite right. $\\mathbf{A}^T$ is 2 by 1,000 and $\\mathbf{A}$ is 1,000 by 2."
+      },
+      "explain": {
+        "text": "$\\mathbf{A}^T$ is 2 by 1,000 and $\\mathbf{A}$ is 1,000 by 2, so $\\mathbf{A}^T\\mathbf{A}$ is 2 by 2. Fitting a line to a long history is still a 2 by 2 solve. Only building the sums grows with the data."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The calculus route",
+      "prose": "Calculus gives the same answer. The sum of squared residuals is a function of $C$ and $D$: $$E = (1 - C)^2 + (3 - C - D)^2 + (2 - C - 2D)^2.$$ At its minimum both partial derivatives are 0.",
+      "question": "Setting $\\partial E / \\partial D = 0$ gives which equation?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$3C + 5D = 7$",
+            "correct": true
+          },
+          {
+            "id": "dc",
+            "text": "$3C + 3D = 6$",
+            "why": "That comes from $\\partial E / \\partial C$, where each bracket has inner derivative $-1$. In $D$ the inner derivatives are $0$, $-1$ and $-2$."
+          },
+          {
+            "id": "chain",
+            "text": "$2C + 3D = 5$",
+            "why": "You dropped the factor 2 that the chain rule brings out of $(2 - C - 2D)^2$."
+          },
+          {
+            "id": "middle",
+            "text": "$C + D = 3$",
+            "why": "You differentiated only the middle bracket. The last bracket depends on $D$ too."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Differentiate each bracket with the chain rule."
+        },
+        {
+          "rung": "point",
+          "text": "The first bracket has no $D$, so it gives 0."
+        },
+        {
+          "rung": "step",
+          "text": "$\\partial E/\\partial D = -2(3 - C - D) - 4(2 - C - 2D) = -2(7 - 3C - 5D)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$3C + 5D = 7$ is row 2 of the normal equations.",
+        "generic": "Not quite right. Apply the chain rule to each bracket that contains $D$."
+      },
+      "explain": {
+        "text": "$\\partial E/\\partial D = -2(7 - 3C - 5D)$, which is 0 when $3C + 5D = 7$. That is row 2 of the normal equations, and $\\partial E/\\partial C = 0$ gives row 1. So $\\hat{\\mathbf{x}}$ minimises $|\\mathbf{e}|^2$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A four-day trend",
+      "prose": "A stock closes at £50, £52, £51 and £55 on days 0 to 3. We fit the trend $\\text{price} = C + Dt$ by least squares.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              0,
+              50
+            ],
+            [
+              1,
+              52
+            ],
+            [
+              2,
+              51
+            ],
+            [
+              3,
+              55
+            ]
+          ],
+          "xLabel": "Day $t$",
+          "yLabel": "Close (£)",
+          "xRange": [
+            -0.5,
+            3.5
+          ],
+          "yRange": [
+            48,
+            57
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the trend slope $\\hat D$, in pounds per day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.4,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Trend slope in pounds per day",
+        "accept": "£1.40 per day: $\\hat D = 1.4$ and $\\hat C = 49.9$.",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "ends",
+            "value": 1.6667,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "intercept",
+            "value": 49.9,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build $\\mathbf{A}$ from a ones column and the days 0, 1, 2, 3."
+        },
+        {
+          "rung": "point",
+          "text": "$\\mathbf{A}^T\\mathbf{A} = \\begin{pmatrix} 4 & 6 \\\\ 6 & 14 \\end{pmatrix}$ and $\\mathbf{A}^T\\mathbf{b} = (208, 319)$.",
+          "highlight": [
+            "p0",
+            "p3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take 1.5 times row 1 from row 2: $5\\hat D = 319 - 312 = 7$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat D = 1.4$: the trend rises £1.40 a day.",
+        "generic": "Not quite right. Solve $4\\hat C + 6\\hat D = 208$ and $6\\hat C + 14\\hat D = 319$.",
+        "byKey": {
+          "ends": "You joined the first and last closes. That ignores days 1 and 2, which pull the slope down.",
+          "intercept": "That is $\\hat C$, the trend's level on day 0. The question asks for the slope."
+        }
+      },
+      "explain": {
+        "text": "$\\hat D = 1.4$ and $\\hat C = 49.9$, so the trend rises £1.40 a day. Joining the end points gives £1.67 and ignores the middle days. The residuals are 0.1, 0.7, −1.7 and 0.9.",
+        "canvas": {
+          "line": {
+            "m": 1.4,
+            "b": 49.9
+          },
+          "residuals": "line"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The best $\\hat{\\mathbf{x}}$ leaves an error $\\mathbf{e} = \\mathbf{b} - \\mathbf{A}\\hat{\\mathbf{x}}$ perpendicular to every column: $\\mathbf{A}^T\\mathbf{e} = \\mathbf{0}$.",
+      "Substituting for $\\mathbf{e}$ gives the normal equations $\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{b}$: one equation per unknown, however many points.",
+      "$\\mathbf{A}^T\\mathbf{A}$ is invertible exactly when the columns of $\\mathbf{A}$ are independent. Setting the partial derivatives of $|\\mathbf{e}|^2$ to 0 gives the same equations."
+    ],
+    "formula": {
+      "name": "The normal equations",
+      "tex": "\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{b}",
+      "note": "With independent columns, $\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{b}$."
+    },
+    "trap": "The transpose goes on the left. $\\mathbf{A}\\mathbf{A}^T$ is large and singular, and a 3 by 2 $\\mathbf{A}$ has no inverse."
+  },
+  "quiz": [
+    {
+      "id": "q-sum-squares",
+      "difficulty": 2,
+      "prose": "We fit $y = C + Dx$ to points with $x$ values 1, 2 and 3.",
+      "question": "What is the bottom-right entry of $\\mathbf{A}^T\\mathbf{A}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 14,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Bottom-right entry",
+        "accept": "14: $\\sum x_i^2 = 1 + 4 + 9$.",
+        "wrong": [
+          {
+            "id": "square-sum",
+            "value": 36,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sum",
+            "value": 6,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 + 4 + 9 = 14$.",
+        "generic": "Not quite right. Dot the $x$ column with itself.",
+        "byKey": {
+          "square-sum": "You squared the sum, $6^2$. Square each $x$ first, then add.",
+          "sum": "That is $\\sum x_i$, the off-diagonal entry. The corner is the $x$ column dotted with itself."
+        }
+      },
+      "explain": {
+        "text": "The bottom-right entry is the $x$ column dotted with itself: $\\sum x_i^2 = 1 + 4 + 9 = 14$. The full matrix is $\\begin{pmatrix} 3 & 6 \\\\ 6 & 14 \\end{pmatrix}$."
+      }
+    },
+    {
+      "id": "q-which-invertible",
+      "difficulty": 2,
+      "prose": "$\\mathbf{A}$ is 50 by 2 with independent columns.",
+      "question": "Which statement is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\mathbf{A}^T\\mathbf{A}$ is 2 by 2 and invertible",
+            "correct": true
+          },
+          {
+            "id": "aat",
+            "text": "$\\mathbf{A}\\mathbf{A}^T$ is 50 by 50 and invertible",
+            "why": "You took the bigger product. Its rank is at most 2, so a 50 by 50 matrix of rank 2 is singular."
+          },
+          {
+            "id": "a",
+            "text": "$\\mathbf{A}$ has an inverse",
+            "why": "You treated $\\mathbf{A}$ as square. Only square matrices have inverses, and $\\mathbf{A}$ is 50 by 2."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\mathbf{A}^T\\mathbf{A}$ is the small, invertible product.",
+        "generic": "Not quite right. Work out the shape and rank of each product."
+      },
+      "explain": {
+        "text": "$\\mathbf{A}^T\\mathbf{A}$ is 2 by 2, and independent columns make it invertible. $\\mathbf{A}\\mathbf{A}^T$ is 50 by 50 but has rank 2. That is why the transpose goes on the left."
+      }
+    },
+    {
+      "id": "q-solve",
+      "difficulty": 3,
+      "prose": "A fit gives $\\mathbf{A}^T\\mathbf{A} = \\begin{pmatrix} 4 & 0 \\\\ 0 & 10 \\end{pmatrix}$ and $\\mathbf{A}^T\\mathbf{b} = (8, 5)$.",
+      "question": "What is $\\hat D$, the second entry of $\\hat{\\mathbf{x}}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Second entry of x hat",
+        "accept": "0.5: $10\\hat D = 5$.",
+        "wrong": [
+          {
+            "id": "c",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "flip",
+            "value": 2.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10\\hat D = 5$, so $\\hat D = 0.5$.",
+        "generic": "Not quite right. Read row 2 of the normal equations.",
+        "byKey": {
+          "c": "That is $\\hat C = 8/4$. Row 2 gives $\\hat D$.",
+          "flip": "You divided 10 by... no: $10\\hat D = 5$ means $\\hat D = 5/10$."
+        }
+      },
+      "explain": {
+        "text": "The matrix is diagonal, so each equation has one unknown: $4\\hat C = 8$ and $10\\hat D = 5$. So $\\hat C = 2$ and $\\hat D = 0.5$. A diagonal $\\mathbf{A}^T\\mathbf{A}$ happens when the $x$ values average to 0."
+      }
+    },
+    {
+      "id": "q-singular",
+      "difficulty": 3,
+      "prose": "We fit $y = C + Dx$ to several data sets.",
+      "question": "For which $x$ values is $\\mathbf{A}^T\\mathbf{A}$ singular?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "4, 4, 4, 4",
+            "correct": true
+          },
+          {
+            "id": "repeat",
+            "text": "1, 1, 3, 5",
+            "why": "You saw a repeated $x$ and expected trouble. One repeat is fine; the columns are dependent only when every $x$ is equal."
+          },
+          {
+            "id": "zero",
+            "text": "0, 1, 2, 3",
+            "why": "You worried about the zero. An $x$ of 0 is fine: the $x$ column is still not a multiple of the ones column."
+          },
+          {
+            "id": "neg",
+            "text": "−2, −1, 1, 2",
+            "why": "You expected the cancelling sum to cause trouble. $\\sum x_i = 0$ just makes $\\mathbf{A}^T\\mathbf{A}$ diagonal, and still invertible."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Equal $x$ values make the $x$ column a multiple of the ones column.",
+        "generic": "Not quite right. Look for an $x$ column that is a multiple of $(1, 1, 1, 1)$."
+      },
+      "explain": {
+        "text": "With every $x = 4$, the $x$ column is 4 times the ones column, so the columns are dependent. Then $\\det(\\mathbf{A}^T\\mathbf{A}) = 4 \\cdot 64 - 16^2 = 0$. Any spread in $x$ fixes it."
+      }
+    }
+  ]
+}
