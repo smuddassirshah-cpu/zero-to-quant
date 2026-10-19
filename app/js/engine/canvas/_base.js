@@ -590,7 +590,7 @@
       let selected = [], tapOn = false, locked = false, opts = {};
       const paint = () => SIDES.forEach(k => { const on = selected.includes(k); hosts[k].classList.toggle('is-on', on); if (tapOn) hosts[k].setAttribute('aria-pressed', String(on)); });
       SIDES.forEach(k => {
-        const h = hosts[k]; h.classList.add('cv-obj', 'cv-pair-tap'); h.dataset.id = k; h.dataset.label = spec[k + 'Label'] || (k === 'left' ? 'Left chart' : 'Right chart');
+        const h = hosts[k]; h.classList.add('cv-pair-tap'); h.dataset.id = k; h.dataset.label = spec[k + 'Label'] || (k === 'left' ? 'Left chart' : 'Right chart');
         const toggle = () => {
           if (!tapOn || locked || (opts.only && !opts.only.includes(k))) return;
           const on = !selected.includes(k);

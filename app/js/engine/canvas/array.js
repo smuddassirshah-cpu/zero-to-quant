@@ -15,7 +15,7 @@
     const linked = mode === 'linked', stack = mode === 'stack';
     const text0 = (v) => (v == null ? '' : typeof v === 'number' ? K.fmt(v, 3) : String(v));
     /* item 119: cells widen to their text (dates, 102.50) as far as the column allows */
-    const widest = Math.max(0, ...(params.cells || []).map((v) => K.tw(text0(v).replace(/\$/g, ''), 13) + 16));
+    const widest = Math.max(0, ...(params.cells || []).map((v) => K.tw(text0(v).replace(/\$/g, ''), 13) + 24));
     const cw = linked ? Math.min(Math.max(58, widest), (W - 60) / cap - 26) : Math.min(Math.max(52, widest), Math.max(30, (W - 40) / cap));
     const ch = 44;
     const H = params.height || (stack ? Math.max(200, cap * ch + 80) : 150);
