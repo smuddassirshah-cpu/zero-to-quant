@@ -446,3 +446,7 @@ Raised later (pytest level 1):
 Raised later (numpy-pandas level 2):
 
 161. Code widget: package loading (`loadPackagesFromImports`) must run outside the per-case time limit, with a "Loading pandas..." line in the results panel (extends 143).
+
+Raised later (pytest level 3):
+
+162. `boxes`: cards shrink but their text does not (overlap); empty containers default to one slot unless `capacity` is set (same family as 102, 111).

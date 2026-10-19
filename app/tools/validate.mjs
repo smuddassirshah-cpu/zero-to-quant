@@ -361,6 +361,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         } else if (t.call == null || t.expect == null) err(file, at, 'each test needs call and expect (or compare: "stdout" with expect)');
         if (t.stdin != null && typeof t.stdin !== 'string') err(file, `${at}.stdin`, 'stdin is a string, one line per input() call ("250\\n262.5\\n")');
         if (t.exact != null && typeof t.exact !== 'boolean') err(file, `${at}.exact`, 'exact is true or false');
+        if (t.argv != null && !(Array.isArray(t.argv) && t.argv.every(x => typeof x === 'string' || typeof x === 'number'))) err(file, `${at}.argv`, 'argv is a list of strings, the words after python3 main.py');
         if (t.exact != null && !out) warn(file, `${at}.exact`, 'exact only applies to compare: "stdout"');
         if (typeof t.call === 'string' && /_getframe|f_locals\[/.test(t.call)) warn(file, `${at}.call`, 'reads the harness frame to get printed output; use { "compare": "stdout", "expect": "..." } instead (and printed in later calls)');
       };
@@ -369,7 +370,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       else (w.examples || []).forEach((t, i) => codeCase(t, `${where}.examples[${i}]`));
       {
         const all = [...(Array.isArray(w.tests) ? w.tests : []), ...(Array.isArray(w.examples) ? w.examples : [])].filter(t => t && typeof t === 'object');
-        const script = all.some(t => t.compare === 'stdout' || t.stdin != null || (t.call == null && t.expect != null));
+        const script = all.some(t => t.compare === 'stdout' || t.stdin != null || t.argv != null || (t.call == null && t.expect != null));
         // a raises case with no call checks the whole program, which needs script mode (it is on whenever such a case exists)
         if (!script && !all.some(t => typeof t.call === 'string' && /printed\s*:=/.test(t.call)) && all.some(t => typeof t.call === 'string' && /\bprinted\b/.test(t.call) && !/_getframe/.test(t.call))) err(file, `${where}.tests`, 'printed is only defined when a case uses compare: "stdout" or stdin (script mode)');
       }

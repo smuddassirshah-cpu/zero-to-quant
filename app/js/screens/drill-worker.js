@@ -9,6 +9,7 @@
                    args and a string expected are Python source, evaluated after the prelude (lambdas for events, Fraction values)
    Messages out: { type: 'ready', version, ms } | { type: 'fail', message }
                  { type: 'event', id, data }   data is JSON: loaded | test | error | done
+                 { type: 'pkgs', id, phase: 'start' | 'msg' | 'end', text }   around loading imported packages
                  { type: 'crash', id, message } | { type: 'end', id } */
 'use strict';
 
@@ -152,8 +153,13 @@ self.onmessage = async (e) => {
     const emit = (s) => self.postMessage({ type: 'event', id: m.id, data: String(s) });
     try {
       if (!runFn) throw new Error('Python is not ready.');
-      // Packages the learner imports (numpy, pandas) are fetched from the CDN on first use.
-      try { await py.loadPackagesFromImports(m.code); } catch (e) { emit('Package load failed: ' + ((e && e.message) || e)); }
+      // Packages the learner imports (numpy, pandas) are fetched from the CDN on first use. The page is told when the
+      // load starts and ends ({ type: 'pkgs', phase }), so it can keep that time out of the run's limit and say what is
+      // loading (item 161); pages that do not know the message ignore it.
+      const pk = (phase, text) => self.postMessage({ type: 'pkgs', id: m.id, phase, text });
+      pk('start');
+      try { await py.loadPackagesFromImports(m.code, { messageCallback: (t) => pk('msg', String(t)), errorCallback: (t) => pk('msg', String(t)) }); } catch (e) { emit('Package load failed: ' + ((e && e.message) || e)); }
+      pk('end');
       runFn(m.code, JSON.stringify(m.spec), emit);
     } catch (err) {
       self.postMessage({ type: 'crash', id: m.id, message: String((err && err.message) || err) });

@@ -1,0 +1,1559 @@
+{
+  "id": "l11-daily-to-monthly",
+  "course": "numpy-pandas",
+  "title": "Daily to monthly",
+  "minutes": 14,
+  "objectives": [
+    "Resample prices to a lower frequency and choose the right aggregation.",
+    "Compute monthly returns from daily closes."
+  ],
+  "skills": [
+    "pd-time"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One close per month",
+      "prose": "A short extract of daily prices in £: a few days either side of each month end. A monthly chart needs one close for each month.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-01-30",
+              "12.22",
+              "16100"
+            ],
+            [
+              "2024-01-31",
+              "12.05",
+              "18300"
+            ],
+            [
+              "2024-02-01",
+              "12.18",
+              "14900"
+            ],
+            [
+              "2024-02-02",
+              "12.31",
+              "15600"
+            ],
+            [
+              "2024-02-28",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "16900"
+            ],
+            [
+              "2024-03-27",
+              "12.71",
+              "14200"
+            ],
+            [
+              "2024-03-28",
+              "12.66",
+              "19800"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "df: dates as the index"
+        }
+      },
+      "question": "Tap the close that should stand for February.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r5c1"
+        ],
+        "countWord": "picked",
+        "only": [
+          "r0c1",
+          "r1c1",
+          "r2c1",
+          "r3c1",
+          "r4c1",
+          "r5c1",
+          "r6c1",
+          "r7c1",
+          "r8c1"
+        ],
+        "wrong": [
+          {
+            "id": "first",
+            "set": [
+              "r2c1"
+            ]
+          },
+          {
+            "id": "leap",
+            "set": [
+              "r4c1"
+            ]
+          },
+          {
+            "id": "march",
+            "set": [
+              "r6c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A month's close is the price when the month ends."
+        },
+        {
+          "rung": "point",
+          "text": "Find the last trading day of February 2024. It was a leap year.",
+          "highlight": [
+            "r4",
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "29 February closed at 12.25."
+        }
+      ],
+      "feedback": {
+        "correct": "12.25, the close on 29 February.",
+        "generic": "Not quite right. Take the last close inside February.",
+        "byKey": {
+          "first": "That is the first close of February. The month's close is where it ended, not where it began.",
+          "leap": "2024 is a leap year, so February ran to the 29th. Its last close is 12.25.",
+          "march": "1 March is already the next month."
+        }
+      },
+      "explain": {
+        "text": "A monthly close is the last daily close in the month. February 2024 ended on the 29th, at 12.25. Anything in between is a daily wiggle the monthly chart leaves out.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r5c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Monthly buckets",
+      "prose": "`df.resample(\"ME\")` drops each row into a bucket for its calendar month. `\"ME\"` means month end. Move the slider to light up each bucket and read its label.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-01-30",
+              "12.22",
+              "16100"
+            ],
+            [
+              "2024-01-31",
+              "12.05",
+              "18300"
+            ],
+            [
+              "2024-02-01",
+              "12.18",
+              "14900"
+            ],
+            [
+              "2024-02-02",
+              "12.31",
+              "15600"
+            ],
+            [
+              "2024-02-28",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "16900"
+            ],
+            [
+              "2024-03-27",
+              "12.71",
+              "14200"
+            ],
+            [
+              "2024-03-28",
+              "12.66",
+              "19800"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "params": {
+            "m": 0
+          },
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        "derive": {
+          "highlight": "[['r0', 'r1'], ['r2', 'r3', 'r4', 'r5'], ['r6', 'r7', 'r8']][m]",
+          "caption": "Bucket labelled {{['2024-01-31', '2024-02-29', '2024-03-31'][m]}}: last close £{{['12.05', '12.25', '12.66'][m]}}, volume {{['34,400', '63,000', '50,900'][m]}}"
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "min": 0,
+            "max": 2,
+            "step": 1,
+            "start": 0,
+            "label": "Month"
+          }
+        ]
+      },
+      "question": "What date labels March's bucket?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "2024-03-31, the last day of the month",
+            "correct": true
+          },
+          {
+            "id": "trade",
+            "text": "2024-03-28, the last trading day",
+            "why": "The label is the calendar month end. 31 March 2024 was a Sunday, and pandas still uses it."
+          },
+          {
+            "id": "first",
+            "text": "2024-03-01, the first day",
+            "why": "`\"ME\"` labels each bucket with its month end. `\"MS\"` would use the month start."
+          },
+          {
+            "id": "text",
+            "text": "2024-03, with no day",
+            "why": "The index stays a date index, so every label is a full date."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the slider to March and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The last row in March is 28 March, but the caption shows another date.",
+          "highlight": [
+            "r8"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Buckets are labelled by calendar month end.",
+        "generic": "Not quite right. Read the label in the caption with the slider on March."
+      },
+      "explain": {
+        "text": "Each bucket gets the last calendar day of its month, even a Sunday. The rows inside keep their own dates. Good Friday, 29 March, simply has no row.",
+        "canvas": {
+          "params": {
+            "m": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Resampling",
+      "prose": "Changing the frequency of a time series is **resampling**. Each bucket needs a rule for turning its rows into one value.\n\n```python\nvol = df[\"volume\"].resample(\"ME\").sum()\nprint(vol.loc[\"2024-02\"].iloc[0])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-01-30",
+              "12.22",
+              "16100"
+            ],
+            [
+              "2024-01-31",
+              "12.05",
+              "18300"
+            ],
+            [
+              "2024-02-01",
+              "12.18",
+              "14900"
+            ],
+            [
+              "2024-02-02",
+              "12.31",
+              "15600"
+            ],
+            [
+              "2024-02-28",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "16900"
+            ],
+            [
+              "2024-03-27",
+              "12.71",
+              "14200"
+            ],
+            [
+              "2024-03-28",
+              "12.66",
+              "19800"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 63000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "63000: 14900 + 15600 + 17300 + 15200.",
+        "wrong": [
+          {
+            "id": "last",
+            "value": 15200,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "mean",
+            "value": 15750,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 148300,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`sum` adds every volume in the bucket."
+        },
+        {
+          "rung": "point",
+          "text": "February's bucket holds four rows.",
+          "highlight": [
+            "r2c2",
+            "r3c2",
+            "r4c2",
+            "r5c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "14900 + 15600 + 17300 + 15200 = 63000."
+        }
+      ],
+      "feedback": {
+        "correct": "63,000 shares traded in these February rows.",
+        "generic": "Not quite right. Add the four February volumes.",
+        "byKey": {
+          "last": "That is the volume on 29 February alone. `sum` adds the whole bucket.",
+          "mean": "That is the average day. `sum` gives the month's total.",
+          "all": "You added every row. Only the February bucket counts."
+        }
+      },
+      "explain": {
+        "text": "`resample(\"ME\").sum()` adds each month's volumes. Volume is a flow: shares traded over the month add up. Closes are levels, so they need a different rule.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r2c2",
+              "r3c2",
+              "r4c2",
+              "r5c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A monthly bar",
+      "prose": "A monthly price bar has an open, a high, a low, a close and a volume. Each column needs its own rule.\n\n```python\nbars = df.resample(\"ME\").agg({\"open\": ..., \"high\": ...,\n                               \"low\": ..., \"close\": ...,\n                               \"volume\": ...})\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-02-01",
+              "12.07",
+              "12.25",
+              "12.04",
+              "12.18",
+              "14900"
+            ],
+            [
+              "2024-02-02",
+              "12.20",
+              "12.36",
+              "12.15",
+              "12.31",
+              "15600"
+            ],
+            [
+              "2024-02-28",
+              "12.33",
+              "12.45",
+              "12.30",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.41",
+              "12.43",
+              "12.20",
+              "12.25",
+              "15200"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "February's rows"
+        }
+      },
+      "question": "Drag a rule onto each column.",
+      "widget": {
+        "kind": "place",
+        "mode": "assign",
+        "tokens": [
+          {
+            "id": "first",
+            "text": "`first`"
+          },
+          {
+            "id": "max",
+            "text": "`max`"
+          },
+          {
+            "id": "min",
+            "text": "`min`"
+          },
+          {
+            "id": "last",
+            "text": "`last`"
+          },
+          {
+            "id": "sum",
+            "text": "`sum`"
+          },
+          {
+            "id": "mean",
+            "text": "`mean`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "open",
+            "label": "open",
+            "accepts": [
+              "first"
+            ]
+          },
+          {
+            "id": "high",
+            "label": "high",
+            "accepts": [
+              "max"
+            ]
+          },
+          {
+            "id": "low",
+            "label": "low",
+            "accepts": [
+              "min"
+            ]
+          },
+          {
+            "id": "close",
+            "label": "close",
+            "accepts": [
+              "last"
+            ]
+          },
+          {
+            "id": "volume",
+            "label": "volume",
+            "accepts": [
+              "sum"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each rule should say what the month did, as one bar."
+        },
+        {
+          "rung": "point",
+          "text": "The month opens at its first open and closes at its last close.",
+          "highlight": [
+            "c1",
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "open: first, high: max, low: min, close: last, volume: sum."
+        }
+      ],
+      "feedback": {
+        "correct": "first, max, min, last and sum.",
+        "generic": "Not quite right. Ask what each column means for the whole month.",
+        "byKey": {
+          "mean": "No column of a bar is an average. The close is the last price, not the typical one.",
+          "first": "`first` belongs to the open: the month opens where its first day opened.",
+          "last": "`last` belongs to the close: the month closes where its last day closed.",
+          "sum": "Only volume adds up. Prices are levels, so adding them means nothing."
+        }
+      },
+      "explain": {
+        "text": "February opens at 12.07, reaches 12.45, dips to 12.04 and closes at 12.25 on 63,000 shares. Prices take first, max, min and last; the flow, volume, takes the sum.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c1",
+              "r2c2",
+              "r0c3",
+              "r3c4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The average month",
+      "prose": "A colleague computes monthly returns like this.\n\n```python\nm = df[\"close\"].resample(\"ME\").mean()\nret = m.pct_change()   # February: 0.0124\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-01-30",
+              "12.22",
+              "16100"
+            ],
+            [
+              "2024-01-31",
+              "12.05",
+              "18300"
+            ],
+            [
+              "2024-02-01",
+              "12.18",
+              "14900"
+            ],
+            [
+              "2024-02-02",
+              "12.31",
+              "15600"
+            ],
+            [
+              "2024-02-28",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "16900"
+            ],
+            [
+              "2024-03-27",
+              "12.71",
+              "14200"
+            ],
+            [
+              "2024-03-28",
+              "12.66",
+              "19800"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What was February's return, from January's last close to February's? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0166,
+        "tol": {
+          "abs": 6e-05
+        },
+        "placeholder": "For example 0.0100",
+        "label": "February's return",
+        "accept": "0.0166: 12.25 / 12.05 − 1 = 0.016598.",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 0.0124,
+            "tol": {
+              "abs": 6e-05
+            }
+          },
+          {
+            "id": "first",
+            "value": 0.0108,
+            "tol": {
+              "abs": 6e-05
+            }
+          },
+          {
+            "id": "back",
+            "value": -0.0163,
+            "tol": {
+              "abs": 6e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the two month-end closes."
+        },
+        {
+          "rung": "point",
+          "text": "January ended at 12.05 and February at 12.25.",
+          "highlight": [
+            "r1c1",
+            "r5c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "12.25 / 12.05 − 1 = 0.016598."
+        }
+      ],
+      "feedback": {
+        "correct": "0.0166 from close to close, not the colleague's 0.0124.",
+        "generic": "Not quite right. Divide February's last close by January's last close.",
+        "byKey": {
+          "mean": "That is the colleague's number. It compares average prices, 12.285 against 12.135, which no investor could have traded at.",
+          "first": "You started from February's first close. The return runs from January's last close to February's last.",
+          "back": "You divided January by February. The later close goes on top."
+        }
+      },
+      "explain": {
+        "text": "A holder from 31 January to 29 February earned $12.25 / 12.05 - 1 = 0.0166$. The mean blends prices from across each month, so its changes are smoothed and lagged. Use `last` for closes.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r1c1",
+              "r5c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A month with no rows",
+      "prose": "This file has closes in January and March, and none in February.\n\n```python\ns = pd.Series([10.00, 11.00],\n              index=pd.to_datetime([\"2024-01-31\", \"2024-03-28\"]))\nprint(s.resample(\"ME\").last())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-01-31",
+              "10.00"
+            ],
+            [
+              "2024-03-28",
+              "11.00"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "s"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Three rows: 10.0, NaN and 11.0",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "Two rows: 10.0 and 11.0",
+            "why": "`resample` makes a bucket for every month in the range, empty or not. February is there, holding NaN."
+          },
+          {
+            "id": "fill",
+            "text": "Three rows: 10.0, 10.0 and 11.0",
+            "why": "`last` does not carry January's close forward. An empty bucket has no last value, so it is NaN."
+          },
+          {
+            "id": "zero",
+            "text": "Three rows: 10.0, 0.0 and 11.0",
+            "why": "pandas does not invent a 0. An empty bucket holds NaN."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does February get a bucket?"
+        },
+        {
+          "rung": "point",
+          "text": "Buckets cover every month from the first row to the last.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "February's bucket is empty, so its last value is NaN."
+        }
+      ],
+      "feedback": {
+        "correct": "An empty month still gets a row, holding NaN.",
+        "generic": "Not quite right. Every month in the range gets a bucket."
+      },
+      "explain": {
+        "text": "The buckets run from January to March, one per month. February's is empty, so `last` gives NaN. Decide what that means before computing returns: a missing file, or a halted stock."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Resampling, in one place",
+      "prose": "A monthly return runs from one month-end close to the next.\n\n$$R_m = \\frac{P_m}{P_{m-1}} - 1, \\quad P_m = \\text{last close in month } m$$\n\n```python\nme = df[\"close\"].resample(\"ME\").last()\nret_m = me.pct_change()          # first month NaN\nvol_m = df[\"volume\"].resample(\"ME\").sum()\nbars = df.resample(\"ME\").agg({\"open\": \"first\",\n    \"high\": \"max\", \"low\": \"min\",\n    \"close\": \"last\", \"volume\": \"sum\"})\n```",
+      "question": "Daily closes run from January to June. How many monthly returns are not NaN?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "five",
+            "text": "5",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "6",
+            "why": "Six months give six month-end closes, but January has no earlier close to compare with."
+          },
+          {
+            "id": "four",
+            "text": "4",
+            "why": "Only the first month lacks a return. February to June give five."
+          },
+          {
+            "id": "many",
+            "text": "About 125, one per trading day",
+            "why": "After resampling there is one row per month, so there are six closes."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Six month-ends give five returns.",
+        "generic": "Not quite right. Count the month-end closes, then lose the first."
+      },
+      "explain": {
+        "text": "Six months give six month-end closes. Each return needs the month before it, so January's is NaN and five remain."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Month-end closes",
+      "prose": "Return the month-end closes of `df`, a frame of daily prices with dates as the index, as a Series with one row per month. Rows may arrive in any order.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-01-30",
+              "12.22",
+              "16100"
+            ],
+            [
+              "2024-01-31",
+              "12.05",
+              "18300"
+            ],
+            [
+              "2024-02-01",
+              "12.18",
+              "14900"
+            ],
+            [
+              "2024-02-02",
+              "12.31",
+              "15600"
+            ],
+            [
+              "2024-02-28",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.40",
+              "16900"
+            ],
+            [
+              "2024-03-27",
+              "12.71",
+              "14200"
+            ],
+            [
+              "2024-03-28",
+              "12.66",
+              "19800"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "df in the first example"
+        }
+      },
+      "question": "Complete `month_end_closes(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef month_end_closes(df):\n    me = ...\n    return me.round(2)\n",
+        "solution": "import pandas as pd\n\ndef month_end_closes(df):\n    me = df[\"close\"].resample(\"ME\").last()\n    return me.round(2)\n",
+        "tests": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "month_end_closes(df).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "[d.strftime(\"%Y-%m-%d\") for d in month_end_closes(df).index]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"])); df = df.iloc[::-1]",
+            "call": "month_end_closes(df).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [250.00, 252.50, 247.45, 249.92, 255.00, 251.10], \"volume\": [5200, 6100, 4800, 5000, 7300, 6600]}, index=pd.to_datetime([\"2024-10-30\", \"2024-10-31\", \"2024-11-01\", \"2024-11-29\", \"2024-12-02\", \"2024-12-31\"]))",
+            "call": "month_end_closes(df).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [250.00, 252.50, 247.45, 249.92, 255.00, 251.10], \"volume\": [5200, 6100, 4800, 5000, 7300, 6600]}, index=pd.to_datetime([\"2024-10-30\", \"2024-10-31\", \"2024-11-01\", \"2024-11-29\", \"2024-12-02\", \"2024-12-31\"]))",
+            "call": "[d.strftime(\"%Y-%m-%d\") for d in month_end_closes(df).index]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [40.00, 41.20, 39.80], \"volume\": [900, 1100, 1000]}, index=pd.to_datetime([\"2024-05-30\", \"2024-05-31\", \"2024-07-01\"]))",
+            "call": "len(month_end_closes(df))",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "month_end_closes(df).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "[d.strftime(\"%Y-%m-%d\") for d in month_end_closes(df).index]",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: the closes, their month-end labels, a frame newest first and one with a month missing. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Bucket by month, then keep one close per bucket."
+        },
+        {
+          "rung": "point",
+          "text": "Which rule keeps the close at the end of the month?",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`me = df[\"close\"].resample(\"ME\").last()`."
+        }
+      ],
+      "feedback": {
+        "correct": "One close per month, labelled by its month end.",
+        "generic": "Some tests failed. Check the rule you give each bucket and the frequency.",
+        "byKey": {
+          "test-1": "Test 1 expects `[12.05, 12.25, 12.66]`. 12.13 or 12.29 means `mean`; 12.22 means `first`.",
+          "test-2": "Test 2 expects labels such as 2024-01-31. Month-start labels come from `\"MS\"`; use `\"ME\"`.",
+          "test-6": "Test 6 has no June rows. The answer still has a June row, holding NaN, so the length is 3.",
+          "error": "Your code stopped with an error. Check the frequency string: `\"ME\"`."
+        }
+      },
+      "explain": {
+        "text": "`resample(\"ME\").last()` keeps each month's final close and labels it by the month end. It also sorts the rows into time order, which is why the newest-first test passes."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Monthly bars",
+      "prose": "Turn daily bars into monthly bars. Return a frame with one row per month and the columns `open`, `high`, `low`, `close` and `volume`, in that order, prices rounded to 2 places.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume"
+          ],
+          "rows": [
+            [
+              "2024-01-30",
+              "12.30",
+              "12.35",
+              "12.18",
+              "12.22",
+              "16100"
+            ],
+            [
+              "2024-01-31",
+              "12.20",
+              "12.24",
+              "12.01",
+              "12.05",
+              "18300"
+            ],
+            [
+              "2024-02-01",
+              "12.07",
+              "12.25",
+              "12.04",
+              "12.18",
+              "14900"
+            ],
+            [
+              "2024-02-02",
+              "12.20",
+              "12.36",
+              "12.15",
+              "12.31",
+              "15600"
+            ],
+            [
+              "2024-02-28",
+              "12.33",
+              "12.45",
+              "12.30",
+              "12.40",
+              "17300"
+            ],
+            [
+              "2024-02-29",
+              "12.41",
+              "12.43",
+              "12.20",
+              "12.25",
+              "15200"
+            ],
+            [
+              "2024-03-01",
+              "12.27",
+              "12.44",
+              "12.25",
+              "12.40",
+              "16900"
+            ],
+            [
+              "2024-03-27",
+              "12.60",
+              "12.75",
+              "12.58",
+              "12.71",
+              "14200"
+            ],
+            [
+              "2024-03-28",
+              "12.70",
+              "12.74",
+              "12.62",
+              "12.66",
+              "19800"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "df in the first example"
+        }
+      },
+      "question": "Complete `monthly_bars(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef monthly_bars(df):\n    rules = {\"open\": ..., \"high\": ..., \"low\": ...,\n             \"close\": ..., \"volume\": ...}\n    bars = df.resample(\"ME\").agg(rules)\n    return bars.round(2)\n",
+        "solution": "import pandas as pd\n\ndef monthly_bars(df):\n    rules = {\"open\": \"first\", \"high\": \"max\", \"low\": \"min\",\n             \"close\": \"last\", \"volume\": \"sum\"}\n    bars = df.resample(\"ME\").agg(rules)\n    return bars.round(2)\n",
+        "tests": [
+          {
+            "setup": "df = pd.DataFrame({\"open\": [12.30, 12.20, 12.07, 12.20, 12.33, 12.41, 12.27, 12.60, 12.70], \"high\": [12.35, 12.24, 12.25, 12.36, 12.45, 12.43, 12.44, 12.75, 12.74], \"low\": [12.18, 12.01, 12.04, 12.15, 12.30, 12.20, 12.25, 12.58, 12.62], \"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "monthly_bars(df).values.tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"open\": [12.30, 12.20, 12.07, 12.20, 12.33, 12.41, 12.27, 12.60, 12.70], \"high\": [12.35, 12.24, 12.25, 12.36, 12.45, 12.43, 12.44, 12.75, 12.74], \"low\": [12.18, 12.01, 12.04, 12.15, 12.30, 12.20, 12.25, 12.58, 12.62], \"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "list(monthly_bars(df).columns)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"open\": [12.30, 12.20, 12.07, 12.20, 12.33, 12.41, 12.27, 12.60, 12.70], \"high\": [12.35, 12.24, 12.25, 12.36, 12.45, 12.43, 12.44, 12.75, 12.74], \"low\": [12.18, 12.01, 12.04, 12.15, 12.30, 12.20, 12.25, 12.58, 12.62], \"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "monthly_bars(df)[\"volume\"].tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"open\": [12.30, 12.20, 12.07, 12.20, 12.33, 12.41, 12.27, 12.60, 12.70], \"high\": [12.35, 12.24, 12.25, 12.36, 12.45, 12.43, 12.44, 12.75, 12.74], \"low\": [12.18, 12.01, 12.04, 12.15, 12.30, 12.20, 12.25, 12.58, 12.62], \"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"])); df = df.iloc[::-1]",
+            "call": "monthly_bars(df)[\"close\"].tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"open\": [12.30, 12.20, 12.07, 12.20, 12.33, 12.41, 12.27, 12.60, 12.70], \"high\": [12.35, 12.24, 12.25, 12.36, 12.45, 12.43, 12.44, 12.75, 12.74], \"low\": [12.18, 12.01, 12.04, 12.15, 12.30, 12.20, 12.25, 12.58, 12.62], \"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "len(monthly_bars(df))",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"open\": [12.30, 12.20, 12.07, 12.20, 12.33, 12.41, 12.27, 12.60, 12.70], \"high\": [12.35, 12.24, 12.25, 12.36, 12.45, 12.43, 12.44, 12.75, 12.74], \"low\": [12.18, 12.01, 12.04, 12.15, 12.30, 12.20, 12.25, 12.58, 12.62], \"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "monthly_bars(df).values.tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on daily bars, one newest first. Values must match exactly after rounding. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each column has its own rule, given as a string such as `\"first\"`."
+        },
+        {
+          "rung": "point",
+          "text": "Prices: first, max, min, last. Volume adds up.",
+          "highlight": [
+            "c1",
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`{\"open\": \"first\", \"high\": \"max\", \"low\": \"min\", \"close\": \"last\", \"volume\": \"sum\"}`."
+        }
+      ],
+      "feedback": {
+        "correct": "A monthly bar from daily bars.",
+        "generic": "Some tests failed. Check the rule for each column.",
+        "byKey": {
+          "test-1": "Test 1 expects January as `[12.3, 12.35, 12.01, 12.05, 34400.0]`. Compare your row with it column by column.",
+          "test-2": "Test 2 checks the column order: open, high, low, close, volume. Keep the keys of `rules` in that order.",
+          "error": "Your code stopped with an error. Each rule is a string in quotes, such as `\"max\"`."
+        }
+      },
+      "explain": {
+        "text": "`agg` takes one rule per column. The month opens on its first open, reaches its highest high and lowest low, and closes on its last close. Only volume is added."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Monthly returns for a report",
+      "prose": "A fund report shows monthly returns. `close` holds daily closes in £ with dates as the index. Return each month's return from month-end closes, rounded to 6 places, without the first month, which has no return.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                24.8,
+                24.39,
+                24.58,
+                25.0,
+                24.85,
+                24.41,
+                24.43,
+                24.66,
+                25.11,
+                24.71,
+                24.28,
+                24.58,
+                24.81,
+                25.43,
+                25.85,
+                25.86,
+                25.81,
+                26.86,
+                26.79,
+                26.53,
+                26.13,
+                26.22,
+                26.33,
+                26.25,
+                26.27,
+                26.44,
+                26.76,
+                27.26,
+                27.4
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Every third trading day, January to April 2024",
+          "money": "£",
+          "height": 240
+        },
+        "state": {
+          "caption": "close in the first test"
+        }
+      },
+      "question": "Complete `monthly_returns(close)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef monthly_returns(close):\n    me = ...\n    ret = ...\n    return ret.dropna().round(6)\n",
+        "solution": "import pandas as pd\n\ndef monthly_returns(close):\n    me = close.resample(\"ME\").last()\n    ret = me.pct_change()\n    return ret.dropna().round(6)\n",
+        "tests": [
+          {
+            "setup": "close = pd.Series([24.80, 24.39, 24.58, 25.00, 24.85, 24.41, 24.43, 24.66, 25.11, 24.71, 24.28, 24.58, 24.81, 25.43, 25.85, 25.86, 25.81, 26.86, 26.79, 26.53, 26.13, 26.22, 26.33, 26.25, 26.27, 26.44, 26.76, 27.26, 27.40], index=pd.bdate_range(\"2024-01-02\", \"2024-04-30\")[::3])",
+            "call": "monthly_returns(close).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([24.80, 24.39, 24.58, 25.00, 24.85, 24.41, 24.43, 24.66, 25.11, 24.71, 24.28, 24.58, 24.81, 25.43, 25.85, 25.86, 25.81, 26.86, 26.79, 26.53, 26.13, 26.22, 26.33, 26.25, 26.27, 26.44, 26.76, 27.26, 27.40], index=pd.bdate_range(\"2024-01-02\", \"2024-04-30\")[::3])",
+            "call": "[d.strftime(\"%Y-%m\") for d in monthly_returns(close).index]",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"])); close = df[\"close\"]",
+            "call": "monthly_returns(close).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [250.00, 252.50, 247.45, 249.92, 255.00, 251.10], \"volume\": [5200, 6100, 4800, 5000, 7300, 6600]}, index=pd.to_datetime([\"2024-10-30\", \"2024-10-31\", \"2024-11-01\", \"2024-11-29\", \"2024-12-02\", \"2024-12-31\"])); close = df[\"close\"]",
+            "call": "monthly_returns(close).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"])); close = df[\"close\"].iloc[::-1]",
+            "call": "monthly_returns(close).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"close\": [12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], \"volume\": [16100, 18300, 14900, 15600, 17300, 15200, 16900, 14200, 19800]}, index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"])); close = df[\"close\"]",
+            "call": "monthly_returns(close).tolist()",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on daily closes over 3 or 4 months, one newest first. Values must match exactly after rounding to 6 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two steps: month-end closes, then returns between them."
+        },
+        {
+          "rung": "point",
+          "text": "`close.resample(\"ME\").last()` gives one close per month.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`ret = me.pct_change()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Month-end closes, then their returns.",
+        "generic": "Some tests failed. Check the bucket rule and when you take returns.",
+        "byKey": {
+          "test-1": "Test 1 has four months, so three returns. If the numbers are close but not equal, check you used `last`, not `mean`.",
+          "test-3": "Test 3 expects `[0.016598, 0.033469]`. Daily returns resampled with `sum` or `mean` give other numbers: resample the closes first.",
+          "error": "Your code stopped with an error. `me` should come from `close.resample(\"ME\")`."
+        }
+      },
+      "explain": {
+        "text": "Resample the levels, then take returns: February is $12.25 / 12.05 - 1 = 0.016598$. Adding daily returns instead ignores compounding, and averaging closes blurs the month ends."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`resample(\"ME\")` puts each row in a bucket for its calendar month, labelled by the month end. Every month in the range gets a bucket, even an empty one.",
+      "Each column needs its own rule: prices take `first`, `max`, `min` and `last`; volume, a flow, takes `sum`.",
+      "Monthly returns: resample the closes with `last`, then `pct_change()`. The first month is NaN."
+    ],
+    "formula": {
+      "name": "Monthly return",
+      "tex": "R_m = \\dfrac{P_m}{P_{m-1}} - 1",
+      "note": "$P_m$ is the last close in month $m$, from `resample(\"ME\").last()`."
+    },
+    "trap": "Averaging closes with `mean` before `pct_change` compares prices nobody could trade at. Use `last`."
+  },
+  "quiz": [
+    {
+      "id": "q-rows",
+      "difficulty": 2,
+      "prose": "`close` holds daily closes from 2 January to 28 June 2024.\n\n```python\nme = close.resample(\"ME\").last()\n```",
+      "question": "How many rows does `me` have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Rows",
+        "accept": "6: one per month, January to June.",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "days",
+            "value": 124,
+            "tol": {
+              "abs": 3
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One row per calendar month.",
+        "generic": "Not quite right. Count the months from January to June.",
+        "byKey": {
+          "five": "Five is the number of monthly returns. There are six month-end closes.",
+          "days": "That is the number of trading days. Resampling leaves one row per month."
+        }
+      },
+      "explain": {
+        "text": "January, February, March, April, May and June each give one bucket, so `me` has 6 rows, labelled 31 January to 30 June."
+      }
+    },
+    {
+      "id": "q-volume-rule",
+      "difficulty": 2,
+      "prose": "You resample daily data to weeks with `resample(\"W-FRI\")`.",
+      "question": "Which rule gives the shares traded in each week?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "sum",
+            "text": "`.sum()`",
+            "correct": true
+          },
+          {
+            "id": "last",
+            "text": "`.last()`",
+            "why": "That is Friday's volume alone. The week's volume adds every day's."
+          },
+          {
+            "id": "mean",
+            "text": "`.mean()`",
+            "why": "That is the average day's volume, a fifth of the weekly total in a full week."
+          },
+          {
+            "id": "max",
+            "text": "`.max()`",
+            "why": "That is the busiest day. The week traded every day's shares."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Volume is a flow, so it adds.",
+        "generic": "Not quite right. Shares traded on each day all count towards the week."
+      },
+      "explain": {
+        "text": "Volumes count shares changing hands, so a week's total is the sum of its days. Closes are levels, so they take `last`."
+      }
+    },
+    {
+      "id": "q-monthly-ret",
+      "difficulty": 3,
+      "prose": "A stock's month-end closes were £50.00 in January and £52.00 in February. Its average close in February was £51.50.",
+      "question": "What was February's monthly return? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.04,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 0.01",
+        "label": "February's return",
+        "accept": "0.04: 52.00 / 50.00 − 1.",
+        "wrong": [
+          {
+            "id": "avg",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "pct",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$52 / 50 - 1 = 0.04$.",
+        "generic": "Not quite right. Use the two month-end closes.",
+        "byKey": {
+          "avg": "You used February's average close. A monthly return runs between month-end closes.",
+          "pct": "Give the return as a decimal: 4% is 0.04."
+        }
+      },
+      "explain": {
+        "text": "The return runs from close to close: $52.00 / 50.00 - 1 = 0.04$. The average close is not a price anyone held at the month end."
+      }
+    },
+    {
+      "id": "q-first-nan",
+      "difficulty": 3,
+      "prose": "```python\nme = close.resample(\"ME\").last()\nret = me.pct_change()\n```\n`close` runs from 2 January to 28 June 2024.",
+      "question": "On which label is `ret` NaN?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "2024-01-31",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "None of them",
+            "why": "January's close has nothing before it, so its return is NaN."
+          },
+          {
+            "id": "june",
+            "text": "2024-06-30",
+            "why": "June has May before it. The first month is the one without a return."
+          },
+          {
+            "id": "jan2",
+            "text": "2024-01-02",
+            "why": "After resampling the labels are month ends. The first is 31 January."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The first month has no earlier close.",
+        "generic": "Not quite right. Which month has no month before it in the data?"
+      },
+      "explain": {
+        "text": "`pct_change` compares each month with the one before. January 2024 is the first month in the data, so its return, labelled 31 January, is NaN."
+      }
+    }
+  ]
+}

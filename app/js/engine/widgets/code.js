@@ -17,7 +17,7 @@
   'use strict';
   const Z = window.ZQ;
   const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
-  const TEST_MS = 5000, LOAD_MS = 60000;
+  const TEST_MS = 5000, LOAD_MS = 60000, PKG_MS = 120000;
   const MARK = '\u001eZQ';
 
   /* ---------- Python highlighting (from drill.js) ---------- */
@@ -140,6 +140,13 @@
         if (m.type === 'fail') { unavailable(m.message); return; }
         if (!run || m.id !== run.id) return;
         if (m.type === 'event') { let d = null; try { d = JSON.parse(m.data); } catch { return; } run.onEvent(d); }
+        else if (m.type === 'pkgs') { // item 161: package loading is kept out of the run's limit (2 minutes of its own)
+          clearTimeout(run.timer);
+          const r = run;
+          if (m.phase === 'end') r.timer = setTimeout(() => { end({ timeout: true }); start(true); }, r.limit);
+          else r.timer = setTimeout(() => { end({ timeout: true, loading: true }); start(true); }, PKG_MS);
+          if (m.phase === 'msg' && r.onPkgs) r.onPkgs(String(m.text || ''));
+        }
         else if (m.type === 'crash') run.crash = m.message;
         else if (m.type === 'end') { const crash = run.crash; end({ crash }); set('ready'); if (crash) start(true); }
       };
@@ -152,9 +159,9 @@
       w.postMessage({ type: 'init', indexURL: PYODIDE });
       loadTimer = setTimeout(() => { if (my === gen) unavailable('Python took more than a minute to load.'); }, LOAD_MS);
     };
-    const exec = (code, spec, limit, onEvent, onEnd) => {
+    const exec = (code, spec, limit, onEvent, onEnd, onPkgs) => {
       if (status !== 'ready' || !w) return false;
-      run = { id: Date.now() + Math.random(), onEvent, onEnd, crash: null };
+      run = { id: Date.now() + Math.random(), onEvent, onEnd, onPkgs, crash: null, limit };
       run.timer = setTimeout(() => { end({ timeout: true }); start(true); }, limit);
       set('running');
       w.postMessage({ type: 'run', id: run.id, code, spec });
@@ -229,7 +236,7 @@ ${importsOf(src).length ? 'if False:\n' + [...new Set(importsOf(src))].map(x => 
 __ZQ_SRC = ${JSON.stringify(src)}
 _zlc.cache['solution.py'] = (len(__ZQ_SRC), None, __ZQ_SRC.splitlines(True), 'solution.py')
 __ZQ_CODE = compile(__ZQ_SRC, 'solution.py', 'exec')
-__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [c.call == null ? '' : String(c.call), String(c.expect ?? ''), c.compare || (c.call == null ? 'stdout' : 'equal'), c.stdin == null ? '' : String(c.stdin), !!c.exact, c.setup == null ? '' : String(c.setup)])))})
+__ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [c.call == null ? '' : String(c.call), String(c.expect ?? ''), c.compare || (c.call == null ? 'stdout' : 'equal'), c.stdin == null ? '' : String(c.stdin), !!c.exact, c.setup == null ? '' : String(c.setup), Array.isArray(c.argv) ? c.argv.map(String) : []])))})
 ${JUDGE}
 def __zq_norm(_t):
     _ls = [_l.rstrip() for _l in _t.replace('\\r\\n', '\\n').split('\\n')]
@@ -240,7 +247,7 @@ def __zq_norm(_t):
 def __zq_case(_i):
     import math as _m
     from fractions import Fraction as _F
-    _call, _exp, _cmp, _stdin, _exact, _setup = __ZQ_CASES[_i]
+    _call, _exp, _cmp, _stdin, _exact, _setup, _argv = __ZQ_CASES[_i]
     _feed = _zio.StringIO(_stdin)
     _out = _zio.StringIO()
     def _input(prompt=''):
@@ -250,6 +257,8 @@ def __zq_case(_i):
         return _ln[:-1] if _ln.endswith('\\n') else _ln
     _ns = {'__name__': '__main__', 'input': _input}
     _old = (_zs.stdout, _zs.stdin)
+    _oldargv = list(_zs.argv)
+    _zs.argv = ['main.py'] + list(_argv)  # item 140: argv per case, as python3 main.py a b would give
     _zs.stdout, _zs.stdin = _out, _feed
     try:
         exec(__ZQ_CODE, _ns)
@@ -264,6 +273,7 @@ def __zq_case(_i):
         raise
     finally:
         _zs.stdout, _zs.stdin = _old
+        _zs.argv = _oldargv
     _txt = _out.getvalue()
     print(_txt, end='')
     _ns['printed'] = _txt.splitlines()
@@ -322,7 +332,7 @@ def __zq_case(_i):
     const pre = (t, cls = 'wd-res-out') => `<pre class="${cls} t-code">${Z.esc(t)}</pre>`;
     const outRow = (r) => {
       const said = r.stdout.trim() ? pre(r.stdout) : '<div class="t-caption">Your code printed nothing.</div>';
-      const input = r.stdin ? `<div class="t-caption">Input</div>${pre(r.stdin.replace(/\n$/, ''), 'wd-res-out wd-res-in')}` : '';
+      const input = (r.argv && r.argv.length ? `<div class="t-caption">Run as</div>${pre('python3 main.py ' + r.argv.map(a => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' '), 'wd-res-out wd-res-in')}` : '') + (r.stdin ? `<div class="t-caption">Input</div>${pre(r.stdin.replace(/\n$/, ''), 'wd-res-out wd-res-in')}` : '');
       if (r.error) return `${input}${pre(cleanTb(r.error), 'wd-res-err')}${r.stdout.trim() ? `<div class="t-caption">Printed before the error</div>${said}` : ''}`;
       if (r.ok) return `${input}<div class="t-caption">Printed the expected output</div>${said}`;
       return `${input}<div class="t-caption">Expected output</div>${pre(r.expect.replace(/\n$/, ''))}<div class="t-caption">Your code printed</div>${said}`;
@@ -337,14 +347,14 @@ def __zq_case(_i):
       res.innerHTML = `<div class="wd-res-top"><span class="t-label">${title}</span><span class="t-caption">${n} of ${cases.length} passed</span></div>${extra}<ol class="wd-res-list">${rows.map((r, i) => row(r, (title === 'Examples' ? 'Example ' : 'Test ') + (i + 1))).join('')}</ol>`;
     };
     /* Run a list of cases; resolves to { rows, error } */
-    const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null || (c.compare === 'raises' && c.call == null));
+    const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null));
     const runCases = (cases) => new Promise((resolve) => {
       const code = script ? scriptHarness(ed.value, cases) : ed.value + harness(cases);
-      const rows = cases.map(c => ({ call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
+      const rows = cases.map(c => ({ argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
       let loadErr = null, loaded = '';
       /* item 143: spec.budget (ms) is added to the run's limit; code importing numpy, pandas or scipy gets 30 s on top
          without one, so the first package load is not charged against the 5 s per case */
-      const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib)\b/m.test(ed.value);
+      const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib|pytest|sklearn|statsmodels)\b/m.test(ed.value);
       const limit = TEST_MS * Math.max(1, cases.length) + (spec.budget != null ? Math.max(0, +spec.budget || 0) : heavy ? 30000 : 0);
       const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, limit,
         (d) => {
@@ -360,7 +370,8 @@ def __zq_case(_i):
             r.ok = !!d.ok && !d.error;
           }
         },
-        (info) => resolve({ rows, printed: loaded, error: loadErr ? cleanTb(loadErr) : info.timeout ? 'Stopped after the time limit. Look for a loop that never ends, or an input() waiting for a line the test does not give.' : info.crash || null }));
+        (info) => resolve({ rows, printed: loaded, error: loadErr ? cleanTb(loadErr) : info.loading ? 'The packages your code imports took more than two minutes to load. Check the connection and try again.' : info.timeout ? 'Stopped after the time limit. Look for a loop that never ends, or an input() waiting for a line the test does not give.' : info.crash || null }),
+        (msg) => { if (alive && /^Loading\b/.test(msg)) res.innerHTML = `<p class="t-caption wd-res-load" aria-live="polite">${Z.esc(msg.replace(/\s*$/, ''))}. The first run that imports a package fetches it once.</p>`; });
       if (!ok) resolve({ rows, printed: '', error: Py.status === 'unavailable' ? 'Python could not load: ' + Py.reason : 'Python is still loading. Try again in a moment.' });
     });
     const runExamples = async () => {
@@ -393,8 +404,10 @@ def __zq_case(_i):
         const n = r.rows.filter(x => x.ok).length;
         const first = r.rows.findIndex(x => !x.ok);
         const ok = !r.error && n === tests.length && tests.length > 0;
-        const result = { ok, key: ok ? null : r.error ? 'error' : `test-${first + 1}`, line: ok ? null : r.error ? 'Your code stopped before the tests finished. The error is shown below the editor.' : `${n} of ${tests.length} tests passed. The first failure is test ${first + 1}.`, detail: { passed: n, total: tests.length, rows: r.rows } };
-        if (alive) render('Tests', r.rows, tests, r.error ? `<pre class="wd-res-err t-code">${Z.esc(r.error)}</pre>` : '');
+        const result = { ok, key: ok ? null : r.error ? 'error' : `test-${first + 1}`, line: ok ? null : r.error && src.trim() === String(spec.starter || '').trim() ? 'The starter does not run yet on its own: fill in the parts it asks for, then check again.' : r.error ? 'Your code stopped before the tests finished. The error is shown below the editor.' : `${n} of ${tests.length} tests passed. The first failure is test ${first + 1}.`, detail: { passed: n, total: tests.length, rows: r.rows } };
+        /* item 156: an untouched starter that errors gets a plain sentence, with the traceback folded away */
+        const untouched = r.error && src.trim() === String(spec.starter || '').trim();
+        if (alive) render('Tests', r.rows, tests, !r.error ? '' : untouched ? `<p class="t-caption">The starter is not finished yet, so Python stopped. Fill in what it asks for and check again.</p><details class="wd-res-more"><summary class="t-caption">Show the error</summary>${pre(r.error, 'wd-res-err')}</details>` : pre(r.error, 'wd-res-err'));
         cache = { src, result };
         return result;
       },

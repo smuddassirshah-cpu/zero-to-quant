@@ -236,7 +236,8 @@
     if (br) out = out.replace(/\n/g, '<br>'); // line breaks only outside maths: KaTeX SVG keeps its newlines
     return out.replace(/\u0000(\d+)\u0000/g, (_, k) => maths[+k]);
   };
-  const codeBlock = (code, lang) => `<div class="lsn-code" data-lang="${esc(lang || '')}"><button type="button" class="link-btn lsn-copy" aria-label="Copy code">Copy</button><pre class="t-code"><code>${esc(code.replace(/\n$/, ''))}</code></pre></div>`;
+  /* item 146: output-only blocks (```text, ```output) have nothing to copy, so no Copy button */
+  const codeBlock = (code, lang) => `<div class="lsn-code${/^(text|output|out|plain)$/i.test(lang || '') ? ' is-output' : ''}" data-lang="${esc(lang || '')}">${/^(text|output|out|plain)$/i.test(lang || '') ? '' : '<button type="button" class="link-btn lsn-copy" aria-label="Copy code">Copy</button>'}<pre class="t-code"><code>${esc(code.replace(/\n$/, ''))}</code></pre></div>`;
   /* Block copy: paragraphs split on blank lines, fenced code blocks, display maths. */
   const prose = (s, cls = 't-prose') => {
     const src = String(s ?? '');

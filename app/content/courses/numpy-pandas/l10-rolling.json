@@ -1,0 +1,1483 @@
+{
+  "id": "l10-rolling",
+  "course": "numpy-pandas",
+  "title": "Rolling windows",
+  "minutes": 14,
+  "objectives": [
+    "Compute rolling means and annualised rolling volatility.",
+    "Build a moving average signal that trades only on what it knew."
+  ],
+  "skills": [
+    "pd-time"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A window that slides",
+      "prose": "Twelve closes of one stock, in £. The shaded band covers 3 days. The second line plots the mean of the closes inside the band, on the band's last day. Slide the band along.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                12.4,
+                12.55,
+                12.31,
+                12.48,
+                12.62,
+                12.44,
+                12.7,
+                12.85,
+                12.66,
+                12.9,
+                13.05,
+                12.98
+              ]
+            },
+            {
+              "id": "ma",
+              "label": "3-day mean",
+              "values": [
+                null,
+                null,
+                12.42,
+                12.4467,
+                12.47,
+                12.5133,
+                12.5867,
+                12.6633,
+                12.7367,
+                12.8033,
+                12.87,
+                12.9767
+              ]
+            }
+          ],
+          "x": "dates",
+          "dates": [
+            "2024-04-02",
+            "2024-04-03",
+            "2024-04-04",
+            "2024-04-05",
+            "2024-04-08",
+            "2024-04-09",
+            "2024-04-10",
+            "2024-04-11",
+            "2024-04-12",
+            "2024-04-15",
+            "2024-04-16",
+            "2024-04-17"
+          ],
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "window": {
+            "from": 0,
+            "to": 2
+          },
+          "markers": [
+            {
+              "id": "m",
+              "i": 2,
+              "series": "ma",
+              "label": "{value}"
+            }
+          ],
+          "params": {
+            "day": 2
+          }
+        },
+        "derive": {
+          "window.from": "day - 2",
+          "window.to": "day",
+          "m.i": "day",
+          "caption": "Window ends {{['2024-04-02', '2024-04-03', '2024-04-04', '2024-04-05', '2024-04-08', '2024-04-09', '2024-04-10', '2024-04-11', '2024-04-12', '2024-04-15', '2024-04-16', '2024-04-17'][day]}}: mean of 3 closes = £{{fixed(([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98][day] + [12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98][day - 1] + [12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98][day - 2]) / 3, 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "day",
+            "min": 2,
+            "max": 11,
+            "step": 1,
+            "start": 2,
+            "label": "Last day (row)"
+          }
+        ]
+      },
+      "question": "How does the 3-day mean line move compared with the price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It is smoother, and it turns after the price turns",
+            "correct": true
+          },
+          {
+            "id": "leads",
+            "text": "It turns before the price does",
+            "why": "Each point averages closes already seen, so it can only follow a turn, never lead it."
+          },
+          {
+            "id": "same",
+            "text": "It is the price moved one day later",
+            "why": "Slide to a sharp move such as 10 April: the mean moves by a third of it, not all of it."
+          },
+          {
+            "id": "flat",
+            "text": "It stays flat while the price moves",
+            "why": "The mean changes every day, as one close leaves the band and a new one enters."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch both lines around 9 and 10 April, where the price dips and jumps."
+        },
+        {
+          "rung": "point",
+          "text": "The mean line only moves a third as far as the price on any day.",
+          "highlight": [
+            "ma",
+            "px"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "It smooths the price and lags behind it.",
+        "generic": "Not quite right. Compare the two lines at a sharp move."
+      },
+      "explain": {
+        "text": "Each point is the mean of the last 3 closes, today included. One big move is shared with two older closes, so the line is smoother. It can only react after the price has moved, so it lags.",
+        "canvas": {
+          "params": {
+            "day": 6
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Rolling windows",
+      "prose": "What you slid is a **rolling window**. pandas computes the mean in every window at once.\n\n```python\nma = df[\"close\"].rolling(3).mean()\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-04-02",
+              "12.40"
+            ],
+            [
+              "2024-04-03",
+              "12.55"
+            ],
+            [
+              "2024-04-04",
+              "12.31"
+            ],
+            [
+              "2024-04-05",
+              "12.48"
+            ],
+            [
+              "2024-04-08",
+              "12.62"
+            ],
+            [
+              "2024-04-09",
+              "12.44"
+            ],
+            [
+              "2024-04-10",
+              "12.70"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              4
+            ]
+          }
+        }
+      },
+      "question": "What is `ma` on 2024-04-08? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.47,
+        "tol": {
+          "abs": 0.004
+        },
+        "unit": "£",
+        "placeholder": "For example 12.40",
+        "label": "ma on 8 April",
+        "accept": "£12.47: (12.31 + 12.48 + 12.62) / 3.",
+        "wrong": [
+          {
+            "id": "before",
+            "value": 12.4467,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "centred",
+            "value": 12.5133,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "two",
+            "value": 12.55,
+            "tol": {
+              "abs": 0.004
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A 3-day window that ends on 8 April."
+        },
+        {
+          "rung": "point",
+          "text": "It holds 4, 5 and 8 April: 12.31, 12.48 and 12.62.",
+          "highlight": [
+            "r2",
+            "r3",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "(12.31 + 12.48 + 12.62) / 3 = 12.47."
+        }
+      ],
+      "feedback": {
+        "correct": "£12.47, the mean of 4, 5 and 8 April.",
+        "generic": "Not quite right. Average the 3 closes ending on 8 April, that day included.",
+        "byKey": {
+          "before": "You averaged the 3 days before 8 April. The window ends on 8 April and includes its close.",
+          "centred": "You centred the window on 8 April. `rolling` looks back only: 8 April is the window's last day.",
+          "two": "That is 8 April's close with 5 April's. A window of 3 holds three closes."
+        }
+      },
+      "explain": {
+        "text": "`rolling(3)` labels each window by its last day. On 8 April it holds 4, 5 and 8 April, so the mean is $(12.31 + 12.48 + 12.62) / 3 = 12.47$. Weekends do not count: the window is 3 rows.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The first few rows",
+      "prose": "Now a 5-day window over all twelve closes.\n\n```python\nma5 = df[\"close\"].rolling(5).mean()\nprint(ma5.isna().sum())\n```",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                12.4,
+                12.55,
+                12.31,
+                12.48,
+                12.62,
+                12.44,
+                12.7,
+                12.85,
+                12.66,
+                12.9,
+                13.05,
+                12.98
+              ]
+            },
+            {
+              "id": "ma",
+              "label": "5-day mean",
+              "values": [
+                null,
+                null,
+                null,
+                null,
+                12.472,
+                12.48,
+                12.51,
+                12.618,
+                12.654,
+                12.71,
+                12.832,
+                12.888
+              ]
+            }
+          ],
+          "x": "dates",
+          "dates": [
+            "2024-04-02",
+            "2024-04-03",
+            "2024-04-04",
+            "2024-04-05",
+            "2024-04-08",
+            "2024-04-09",
+            "2024-04-10",
+            "2024-04-11",
+            "2024-04-12",
+            "2024-04-15",
+            "2024-04-16",
+            "2024-04-17"
+          ],
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "hide": [
+            "ma"
+          ],
+          "caption": "12 closes from 2 April"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "4: the first 4 days have fewer than 5 closes behind them.",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "eight",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A 5-day mean needs 5 closes."
+        },
+        {
+          "rung": "point",
+          "text": "On 5 April only 4 closes exist so far.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first full window ends on the 5th row, so rows 1 to 4 are NaN."
+        }
+      ],
+      "feedback": {
+        "correct": "The first $n - 1 = 4$ rows are NaN.",
+        "generic": "Not quite right. Count the days before a full 5-day window exists.",
+        "byKey": {
+          "five": "The 5th day already has 5 closes: itself and the 4 before. Only the first 4 rows are short.",
+          "zero": "`rolling` does not average a partial window. Until 5 closes exist, the result is NaN.",
+          "eight": "That counts the full windows. The NaN rows are the ones without a full window: 12 − 8 = 4."
+        }
+      },
+      "explain": {
+        "text": "A window of $n$ needs $n$ rows, so the first $n - 1$ results are NaN. Here the 5-day mean starts on 8 April. Passing `min_periods=1` would average partial windows instead.",
+        "canvas": {
+          "hide": [],
+          "markers": [
+            {
+              "id": "first",
+              "i": 4,
+              "series": "ma",
+              "label": "first value"
+            }
+          ],
+          "caption": "The 5-day mean starts on 8 April"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Rolling volatility",
+      "prose": "The standard deviation of returns over a window is a **rolling volatility**.\n\n```python\nvol = df[\"close\"].pct_change().rolling(3).std()\nprint(vol.isna().sum())\n```",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                12.4,
+                12.55,
+                12.31,
+                12.48,
+                12.62,
+                12.44,
+                12.7,
+                12.85,
+                12.66,
+                12.9,
+                13.05,
+                12.98
+              ]
+            }
+          ],
+          "x": "dates",
+          "dates": [
+            "2024-04-02",
+            "2024-04-03",
+            "2024-04-04",
+            "2024-04-05",
+            "2024-04-08",
+            "2024-04-09",
+            "2024-04-10",
+            "2024-04-11",
+            "2024-04-12",
+            "2024-04-15",
+            "2024-04-16",
+            "2024-04-17"
+          ],
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "caption": "12 closes from 2 April"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "three",
+            "text": "`3`",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "`2`",
+            "why": "That counts only the window. `pct_change` already made the first row NaN, so the first full window of returns ends one day later."
+          },
+          {
+            "id": "one",
+            "text": "`1`",
+            "why": "That counts only the missing first return. A window of 3 returns adds two more NaN rows."
+          },
+          {
+            "id": "zero",
+            "text": "`0`",
+            "why": "`std` does not skip a short window. Both the first return and the first two windows are NaN."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two steps each lose rows at the top."
+        },
+        {
+          "rung": "point",
+          "text": "`pct_change` loses 1 row. `rolling(3)` then needs 3 returns.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first 3 returns end on the 4th row, so 3 rows are NaN."
+        }
+      ],
+      "feedback": {
+        "correct": "1 from the return, then 2 from the window.",
+        "generic": "Not quite right. Count the NaN rows each step adds."
+      },
+      "explain": {
+        "text": "The first return is NaN, so the first 3 real returns end on the 4th row. That leaves $1 + (3 - 1) = 3$ NaN rows. NaN rows from each step add up."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "From daily to annual",
+      "prose": "A daily standard deviation is scaled to a year by $\\sqrt{252}$, the number of trading days. Variances add over independent days, so the standard deviation grows with the square root.\n\n```python\nann = vol5 * np.sqrt(252)\n```",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "vol",
+              "label": "5-day vol",
+              "values": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                0.016041,
+                0.017966,
+                0.0134,
+                0.016431,
+                0.017716,
+                0.014308,
+                0.013987
+              ]
+            }
+          ],
+          "x": "dates",
+          "dates": [
+            "2024-04-02",
+            "2024-04-03",
+            "2024-04-04",
+            "2024-04-05",
+            "2024-04-08",
+            "2024-04-09",
+            "2024-04-10",
+            "2024-04-11",
+            "2024-04-12",
+            "2024-04-15",
+            "2024-04-16",
+            "2024-04-17"
+          ],
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "last",
+              "i": 11,
+              "label": "0.013987"
+            }
+          ],
+          "caption": "vol5: the 5-day rolling standard deviation of daily returns"
+        }
+      },
+      "question": "What is `ann` on the last day? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.222,
+        "tol": {
+          "abs": 0.0006
+        },
+        "placeholder": "For example 0.1500",
+        "label": "Annualised volatility",
+        "accept": "0.2220: 0.013987 × √252.",
+        "wrong": [
+          {
+            "id": "times252",
+            "value": 3.5247,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "month",
+            "value": 0.0485,
+            "tol": {
+              "abs": 0.0006
+            }
+          },
+          {
+            "id": "cal",
+            "value": 0.2672,
+            "tol": {
+              "abs": 0.0006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the last value by the square root of 252."
+        },
+        {
+          "rung": "point",
+          "text": "The last value is 0.013987.",
+          "highlight": [
+            "last"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.013987 × 15.875 = 0.2220."
+        }
+      ],
+      "feedback": {
+        "correct": "About 22.2% a year.",
+        "generic": "Not quite right. Multiply 0.013987 by $\\sqrt{252}$, about 15.87.",
+        "byKey": {
+          "times252": "You multiplied by 252. That scales a variance; a standard deviation scales by $\\sqrt{252}$.",
+          "month": "You used $\\sqrt{12}$, for monthly data. These are daily returns, so use $\\sqrt{252}$.",
+          "cal": "You used 365 days. Prices only move on trading days, about 252 a year."
+        }
+      },
+      "explain": {
+        "text": "Variance over 252 independent days is 252 times the daily variance. Taking the square root gives $0.013987 \\times \\sqrt{252} = 0.2220$, an annualised volatility of 22.2%.",
+        "canvas": {
+          "highlight": [
+            "last"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A signal that sees today",
+      "prose": "A colleague holds the stock whenever it closes above its 3-day mean.\n\n```python\nma = df[\"close\"].rolling(3).mean()\npos = (df[\"close\"] > ma).astype(int)\nstrat = pos * df[\"close\"].pct_change()\n```\n\nIn this stretch `strat` dodges both losing days.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close",
+            "ma",
+            "pos",
+            "ret"
+          ],
+          "rows": [
+            [
+              "2024-04-05",
+              "12.48",
+              "12.4467",
+              "1",
+              "0.013810"
+            ],
+            [
+              "2024-04-08",
+              "12.62",
+              "12.4700",
+              "1",
+              "0.011218"
+            ],
+            [
+              "2024-04-09",
+              "12.44",
+              "12.5133",
+              "0",
+              "−0.014263"
+            ],
+            [
+              "2024-04-10",
+              "12.70",
+              "12.5867",
+              "1",
+              "0.020900"
+            ],
+            [
+              "2024-04-11",
+              "12.85",
+              "12.6633",
+              "1",
+              "0.011811"
+            ],
+            [
+              "2024-04-12",
+              "12.66",
+              "12.7367",
+              "0",
+              "−0.014786"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Why does it dodge them?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`pos` uses the same day's close, which already contains that day's return",
+            "correct": true
+          },
+          {
+            "id": "before",
+            "text": "Nothing is wrong: the mean only uses earlier closes",
+            "why": "The window ends on today's row and includes today's close. So `pos` already knows today's move."
+          },
+          {
+            "id": "good",
+            "text": "The 3-day mean is a good predictor of tomorrow",
+            "why": "It looks that way only because each day's position is set after that day's move."
+          },
+          {
+            "id": "nan",
+            "text": "The NaN rows at the start remove the losing days",
+            "why": "The NaN rows are on 2 and 3 April. The losses on 9 and 12 April are inside the stretch."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When is `pos` for 9 April known?"
+        },
+        {
+          "rung": "point",
+          "text": "It needs 9 April's close, 12.44, which already reflects the fall.",
+          "highlight": [
+            "r2c3",
+            "r2c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The return on 9 April is earned before that close is known. Shift `pos` by one day."
+        }
+      ],
+      "feedback": {
+        "correct": "Each day's position is set after that day's move.",
+        "generic": "Not quite right. Ask which close each day's `pos` needs.",
+        "byKey": {
+          "before": "That is the misconception. The window ends on today's row and includes today's close, so `pos` already knows today's move."
+        }
+      },
+      "explain": {
+        "text": "On 9 April the close of 12.44 is below the mean, so `pos` is 0. But that close is the fall itself. Hold yesterday's position: `pos.shift(1) * ret`. Over the twelve days the total falls from 0.0830 to 0.0002.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r2c3",
+              "r2c4",
+              "r5c3",
+              "r5c4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Rolling, in one place",
+      "prose": "Each window ends on its own row, today included.\n\n$$\\bar p_t = \\frac{1}{n}\\sum_{k=0}^{n-1} p_{t-k} \\qquad \\sigma_{\\text{ann}} = \\sigma_{\\text{daily}}\\sqrt{252}$$\n\n```python\nc = df[\"close\"]\nma = c.rolling(20).mean()      # first 19 NaN\nr = c.pct_change()\nvol = r.rolling(20).std() * np.sqrt(252)\npos = (c > ma).astype(int).shift(1)   # no look-ahead\n```",
+      "question": "`c.rolling(20).mean()` on 30 daily closes. How many values are not NaN?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "eleven",
+            "text": "11",
+            "correct": true
+          },
+          {
+            "id": "ten",
+            "text": "10",
+            "why": "You took 30 − 20. The window ending on day 20 is full too, so only 19 rows are NaN: 30 − 19 = 11."
+          },
+          {
+            "id": "thirty",
+            "text": "30",
+            "why": "The first 19 rows have fewer than 20 closes behind them, so they are NaN."
+          },
+          {
+            "id": "twenty",
+            "text": "20",
+            "why": "20 is the window length. Count the rows with a full window: days 20 to 30."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Days 20 to 30: eleven full windows.",
+        "generic": "Not quite right. The first $n - 1$ rows are NaN."
+      },
+      "explain": {
+        "text": "With $n = 20$ the first 19 rows are NaN. Rows 20 to 30 each have a full window, which is 11 values."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A moving average",
+      "prose": "Return the `n`-day moving average of `close`, a Series of closes in £ with dates as the index. Keep every date, with NaN where the window is not full, and round to 4 places.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                12.4,
+                12.55,
+                12.31,
+                12.48,
+                12.62,
+                12.44,
+                12.7,
+                12.85,
+                12.66,
+                12.9,
+                13.05,
+                12.98
+              ]
+            },
+            {
+              "id": "ma",
+              "label": "3-day mean",
+              "values": [
+                null,
+                null,
+                12.42,
+                12.4467,
+                12.47,
+                12.5133,
+                12.5867,
+                12.6633,
+                12.7367,
+                12.8033,
+                12.87,
+                12.9767
+              ]
+            }
+          ],
+          "x": "dates",
+          "dates": [
+            "2024-04-02",
+            "2024-04-03",
+            "2024-04-04",
+            "2024-04-05",
+            "2024-04-08",
+            "2024-04-09",
+            "2024-04-10",
+            "2024-04-11",
+            "2024-04-12",
+            "2024-04-15",
+            "2024-04-16",
+            "2024-04-17"
+          ],
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "caption": "close in the first example, with its 3-day mean"
+        }
+      },
+      "question": "Complete `moving_average(close, n)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef moving_average(close, n):\n    ma = ...\n    return ma.round(4)\n",
+        "solution": "import pandas as pd\n\ndef moving_average(close, n):\n    ma = close.rolling(n).mean()\n    return ma.round(4)\n",
+        "tests": [
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "moving_average(close, 3).dropna().tolist()",
+            "expect": "[12.42, 12.4467, 12.47, 12.5133, 12.5867, 12.6633, 12.7367, 12.8033, 12.87, 12.9767]",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "int(moving_average(close, 5).isna().sum())",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "[d.strftime(\"%Y-%m-%d\") for d in moving_average(close, 3).dropna().index][:2]",
+            "expect": "['2024-04-04', '2024-04-05']",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([250.00, 252.50, 247.45, 249.92, 255.00], index=pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\", \"2024-06-07\"]))",
+            "call": "moving_average(close, 2).dropna().tolist()",
+            "expect": "[251.25, 249.975, 248.685, 252.46]",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.37, 12.47, 12.44, 12.40, 12.27, 12.24, 12.43, 12.51, 12.70, 12.75, 12.83, 12.87, 12.60, 12.76, 12.85, 12.95, 12.68, 12.40, 12.27, 12.21, 12.27, 12.28, 12.37, 12.28, 12.34, 12.42, 12.32, 12.61, 12.71], index=pd.bdate_range(\"2024-05-01\", periods=30))",
+            "call": "len(moving_average(close, 20))",
+            "expect": "30",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.37, 12.47, 12.44, 12.40, 12.27, 12.24, 12.43, 12.51, 12.70, 12.75, 12.83, 12.87, 12.60, 12.76, 12.85, 12.95, 12.68, 12.40, 12.27, 12.21, 12.27, 12.28, 12.37, 12.28, 12.34, 12.42, 12.32, 12.61, 12.71], index=pd.bdate_range(\"2024-05-01\", periods=30))",
+            "call": "moving_average(close, 20).dropna().tolist()[:3]",
+            "expect": "[12.5595, 12.55, 12.545]",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "moving_average(close, 3).dropna().tolist()",
+            "expect": "[12.42, 12.4467, 12.47, 12.5133, 12.5867, 12.6633, 12.7367, 12.8033, 12.87, 12.9767]",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "int(moving_average(close, 5).isna().sum())",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on 5 to 30 daily closes and windows of 2 to 20 days. Values must match exactly after rounding to 4 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "pandas has a method for windows that end on each row."
+        },
+        {
+          "rung": "point",
+          "text": "`close.rolling(n)` groups each row with the `n - 1` rows before it.",
+          "highlight": [
+            "ma"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`ma = close.rolling(n).mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "One line, every window at once.",
+        "generic": "Some tests failed. Check that you keep every date and that the window looks back only.",
+        "byKey": {
+          "test-1": "Test 1 expects the values from £12.42. A value on the first two days means partial windows: drop `min_periods`.",
+          "test-3": "Test 3 checks the dates. The first mean sits on 4 April, the third day. A centred window starts a day early.",
+          "test-5": "Test 5 expects 30 values. Return every date, with NaN at the start, rather than dropping rows.",
+          "error": "Your code stopped with an error. Check that `ma` is built from `close.rolling(n)`."
+        }
+      },
+      "explain": {
+        "text": "`rolling(n).mean()` labels each window by its last day, so the first value sits on day $n$. Keeping the NaN rows keeps the moving average aligned with the closes."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Rolling volatility, annualised",
+      "prose": "A risk report needs the `n`-day rolling volatility of daily returns, annualised with 252 days. Return a Series on every date of `close`, rounded to 4 places. Use the sample standard deviation, which is pandas' default.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "vol",
+              "label": "5-day vol",
+              "values": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                0.016041,
+                0.017966,
+                0.0134,
+                0.016431,
+                0.017716,
+                0.014308,
+                0.013987
+              ]
+            }
+          ],
+          "x": "dates",
+          "dates": [
+            "2024-04-02",
+            "2024-04-03",
+            "2024-04-04",
+            "2024-04-05",
+            "2024-04-08",
+            "2024-04-09",
+            "2024-04-10",
+            "2024-04-11",
+            "2024-04-12",
+            "2024-04-15",
+            "2024-04-16",
+            "2024-04-17"
+          ],
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "last",
+              "i": 11,
+              "label": "0.013987"
+            }
+          ],
+          "caption": "vol5: the 5-day rolling standard deviation of daily returns"
+        }
+      },
+      "question": "Complete `rolling_vol(close, n=20)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef rolling_vol(close, n=20):\n    r = ...\n    vol = ...\n    return vol.round(4)\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef rolling_vol(close, n=20):\n    r = close.pct_change()\n    vol = r.rolling(n).std() * np.sqrt(252)\n    return vol.round(4)\n",
+        "tests": [
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "rolling_vol(close, 5).dropna().tolist()",
+            "expect": "[0.2546, 0.2852, 0.2127, 0.2608, 0.2812, 0.2271, 0.222]",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "int(rolling_vol(close, 5).isna().sum())",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.37, 12.47, 12.44, 12.40, 12.27, 12.24, 12.43, 12.51, 12.70, 12.75, 12.83, 12.87, 12.60, 12.76, 12.85, 12.95, 12.68, 12.40, 12.27, 12.21, 12.27, 12.28, 12.37, 12.28, 12.34, 12.42, 12.32, 12.61, 12.71], index=pd.bdate_range(\"2024-05-01\", periods=30))",
+            "call": "rolling_vol(close, 20).dropna().tolist()",
+            "expect": "[0.1835, 0.1844, 0.1818, 0.1839, 0.1853, 0.1823, 0.1832, 0.1771, 0.1953, 0.1896]",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.37, 12.47, 12.44, 12.40, 12.27, 12.24, 12.43, 12.51, 12.70, 12.75, 12.83, 12.87, 12.60, 12.76, 12.85, 12.95, 12.68, 12.40, 12.27, 12.21, 12.27, 12.28, 12.37, 12.28, 12.34, 12.42, 12.32, 12.61, 12.71], index=pd.bdate_range(\"2024-05-01\", periods=30))",
+            "call": "int(rolling_vol(close, 20).isna().sum())",
+            "expect": "20",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([250.00, 252.50, 247.45, 249.92, 255.00], index=pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\", \"2024-06-07\"]))",
+            "call": "len(rolling_vol(close, 3))",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.37, 12.47, 12.44, 12.40, 12.27, 12.24, 12.43, 12.51, 12.70, 12.75, 12.83, 12.87, 12.60, 12.76, 12.85, 12.95, 12.68, 12.40, 12.27, 12.21, 12.27, 12.28, 12.37, 12.28, 12.34, 12.42, 12.32, 12.61, 12.71], index=pd.bdate_range(\"2024-05-01\", periods=30))",
+            "call": "float(rolling_vol(close).iloc[-1])",
+            "expect": "0.1896",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "rolling_vol(close, 5).dropna().tolist()",
+            "expect": "[0.2546, 0.2852, 0.2127, 0.2608, 0.2812, 0.2271, 0.222]",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "int(rolling_vol(close, 5).isna().sum())",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on 5 to 30 daily closes, with windows of 3, 5 and 20 days. Values must match exactly after rounding to 4 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Returns first, then the window, then the scaling."
+        },
+        {
+          "rung": "point",
+          "text": "`r.rolling(n).std()` is the daily volatility in each window.",
+          "highlight": [
+            "vol"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`vol = close.pct_change().rolling(n).std() * np.sqrt(252)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Returns, a rolling standard deviation, then $\\sqrt{252}$.",
+        "generic": "Some tests failed. Check the order of the steps and the scaling.",
+        "byKey": {
+          "test-1": "Test 1 starts at 0.2546. Values near 0.016 mean you did not multiply by $\\sqrt{252}$; values near 4 mean you multiplied by 252.",
+          "test-2": "Test 2 expects 5 NaN rows: 1 from the first return and 4 from the window.",
+          "error": "Your code stopped with an error. `np.sqrt` needs `import numpy as np` at the top."
+        }
+      },
+      "explain": {
+        "text": "The volatility of returns, not of prices, measures risk. In the 30-day test the first value is on day 21: one row lost to the return, nineteen to the window."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A moving average signal",
+      "prose": "A trend rule holds the stock after any close above its `n`-day moving average, and is out otherwise. A position is set at the close and earns the next day's return. Return the strategy's daily returns as a Series on every date, rounded to 6 places.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                12.4,
+                12.55,
+                12.31,
+                12.48,
+                12.62,
+                12.44,
+                12.7,
+                12.85,
+                12.66,
+                12.9,
+                13.05,
+                12.98
+              ]
+            },
+            {
+              "id": "ma",
+              "label": "3-day mean",
+              "values": [
+                null,
+                null,
+                12.42,
+                12.4467,
+                12.47,
+                12.5133,
+                12.5867,
+                12.6633,
+                12.7367,
+                12.8033,
+                12.87,
+                12.9767
+              ]
+            }
+          ],
+          "x": "dates",
+          "dates": [
+            "2024-04-02",
+            "2024-04-03",
+            "2024-04-04",
+            "2024-04-05",
+            "2024-04-08",
+            "2024-04-09",
+            "2024-04-10",
+            "2024-04-11",
+            "2024-04-12",
+            "2024-04-15",
+            "2024-04-16",
+            "2024-04-17"
+          ],
+          "money": "£",
+          "height": 260
+        },
+        "state": {
+          "caption": "close in the first example, with its 3-day mean"
+        }
+      },
+      "question": "Complete `ma_strategy(close, n=20)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef ma_strategy(close, n=20):\n    ma = ...\n    pos = (close > ma).astype(int)\n    strat = ...\n    return strat.round(6)\n",
+        "solution": "import pandas as pd\n\ndef ma_strategy(close, n=20):\n    ma = close.rolling(n).mean()\n    pos = (close > ma).astype(int)\n    strat = pos.shift(1) * close.pct_change()\n    return strat.round(6)\n",
+        "tests": [
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "ma_strategy(close, 3).dropna().tolist()",
+            "expect": "[0.0, -0.0, 0.0, 0.011218, -0.014263, 0.0, 0.011811, -0.014786, 0.0, 0.011628, -0.005364]",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "round(float(ma_strategy(close, 3).sum()), 6)",
+            "expect": "0.000244",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "bool(pd.isna(ma_strategy(close, 3).iloc[0]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.37, 12.47, 12.44, 12.40, 12.27, 12.24, 12.43, 12.51, 12.70, 12.75, 12.83, 12.87, 12.60, 12.76, 12.85, 12.95, 12.68, 12.40, 12.27, 12.21, 12.27, 12.28, 12.37, 12.28, 12.34, 12.42, 12.32, 12.61, 12.71], index=pd.bdate_range(\"2024-05-01\", periods=30))",
+            "call": "round(float((1 + ma_strategy(close).fillna(0)).prod() - 1), 6)",
+            "expect": "0.00793",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.40, 12.37, 12.47, 12.44, 12.40, 12.27, 12.24, 12.43, 12.51, 12.70, 12.75, 12.83, 12.87, 12.60, 12.76, 12.85, 12.95, 12.68, 12.40, 12.27, 12.21, 12.27, 12.28, 12.37, 12.28, 12.34, 12.42, 12.32, 12.61, 12.71], index=pd.bdate_range(\"2024-05-01\", periods=30))",
+            "call": "round(float(ma_strategy(close, 5).sum()), 6)",
+            "expect": "-7e-06",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([250.00, 252.50, 247.45, 249.92, 255.00], index=pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\", \"2024-06-07\"]))",
+            "call": "len(ma_strategy(close, 2))",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "close = pd.Series([12.40, 12.55, 12.31, 12.48, 12.62, 12.44, 12.70, 12.85, 12.66, 12.90, 13.05, 12.98], index=pd.to_datetime([\"2024-04-02\", \"2024-04-03\", \"2024-04-04\", \"2024-04-05\", \"2024-04-08\", \"2024-04-09\", \"2024-04-10\", \"2024-04-11\", \"2024-04-12\", \"2024-04-15\", \"2024-04-16\", \"2024-04-17\"]))",
+            "call": "ma_strategy(close, 3).dropna().tolist()",
+            "expect": "[0.0, -0.0, 0.0, 0.011218, -0.014263, 0.0, 0.011811, -0.014786, 0.0, 0.011628, -0.005364]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on 5 to 30 daily closes, with windows of 2, 3 and 20 days. Values must match exactly after rounding to 6 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two parts: the moving average, then a position that earns the next day's return."
+        },
+        {
+          "rung": "point",
+          "text": "Yesterday's position on today's row is `pos.shift(1)`.",
+          "highlight": [
+            "ma"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`strat = pos.shift(1) * close.pct_change()`."
+        }
+      ],
+      "feedback": {
+        "correct": "The position from each close earns the next day's return.",
+        "generic": "Some tests failed. Check which day's position earns each return.",
+        "byKey": {
+          "test-1": "Test 1 starts `[0.0, -0.0, 0.0, 0.011218, ...]`. A gain of 0.01381 on 5 April means you held on 5 April's own close: a look-ahead.",
+          "test-3": "Test 3 expects NaN on the first day: no position was held into it.",
+          "error": "Your code stopped with an error. `ma` should be `close.rolling(n).mean()`."
+        }
+      },
+      "explain": {
+        "text": "`pos` on day $t$ needs day $t$'s close, so it can only earn day $t + 1$'s return. Before the average exists, `close > NaN` is False, so the rule is out. On the 12 days the total is 0.000244, not the 0.08296 a same-day signal claims."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`rolling(n)` groups each row with the `n - 1` rows above it; the window ends on its own row, today included.",
+      "The first `n - 1` results are NaN, plus any NaN rows from earlier steps such as `pct_change`.",
+      "Rolling volatility is `r.rolling(n).std() * np.sqrt(252)`. A signal from today's close earns tomorrow's return: `pos.shift(1) * r`."
+    ],
+    "formula": {
+      "name": "Annualised volatility",
+      "tex": "\\sigma_{\\text{ann}} = \\sigma_{\\text{daily}}\\sqrt{252}",
+      "note": "Standard deviations scale with the square root of time."
+    },
+    "trap": "A moving average includes today's close, so a position from it cannot earn today's return. Shift it by one day."
+  },
+  "quiz": [
+    {
+      "id": "q-rolling-list",
+      "difficulty": 2,
+      "prose": "```python\ns = pd.Series([1.0, 2.0, 3.0, 4.0])\nprint(s.rolling(2).mean().tolist())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[nan, 1.5, 2.5, 3.5]`",
+            "correct": true
+          },
+          {
+            "id": "short",
+            "text": "`[1.5, 2.5, 3.5]`",
+            "why": "`rolling` keeps every row. The first row has no full window, so it is NaN rather than gone."
+          },
+          {
+            "id": "partial",
+            "text": "`[1.0, 1.5, 2.5, 3.5]`",
+            "why": "That averages a partial first window, which needs `min_periods=1`. By default it is NaN."
+          },
+          {
+            "id": "ahead",
+            "text": "`[1.5, 2.5, 3.5, nan]`",
+            "why": "The window looks back, so each mean sits on the later of its two rows."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "NaN, then the mean of each pair.",
+        "generic": "Not quite right. Each value averages its own row and the one before."
+      },
+      "explain": {
+        "text": "A window of 2 needs 2 rows, so the first value is NaN. Then each row averages itself and the row above: 1.5, 2.5 and 3.5."
+      }
+    },
+    {
+      "id": "q-annualise",
+      "difficulty": 2,
+      "prose": "A stock's daily returns have a standard deviation of 0.015.",
+      "question": "What is its annualised volatility, using 252 trading days? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2381,
+        "tol": {
+          "abs": 0.0006
+        },
+        "placeholder": "For example 0.1500",
+        "label": "Annualised volatility",
+        "accept": "0.2381: 0.015 × √252.",
+        "wrong": [
+          {
+            "id": "times252",
+            "value": 3.78,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "cal",
+            "value": 0.2866,
+            "tol": {
+              "abs": 0.0006
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.015 \\times \\sqrt{252} = 0.2381$, or 23.8%.",
+        "generic": "Not quite right. Multiply by $\\sqrt{252}$.",
+        "byKey": {
+          "times252": "You multiplied by 252. Variance scales with time, so the standard deviation scales with $\\sqrt{252}$.",
+          "cal": "You used 365 days. Use the 252 days on which the stock trades."
+        }
+      },
+      "explain": {
+        "text": "Variances of independent days add, so a year's variance is $252 \\times 0.015^2$. Its square root is $0.015\\sqrt{252} = 0.2381$."
+      }
+    },
+    {
+      "id": "q-min-periods",
+      "difficulty": 3,
+      "prose": "```python\ns = pd.Series([1.0, 2.0, 3.0, 4.0])\nprint(s.rolling(3, min_periods=1).mean().tolist())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[1.0, 1.5, 2.0, 3.0]`",
+            "correct": true
+          },
+          {
+            "id": "nan",
+            "text": "`[nan, nan, 2.0, 3.0]`",
+            "why": "That is the default. `min_periods=1` averages whatever the window holds, even one value."
+          },
+          {
+            "id": "thirds",
+            "text": "`[0.333, 1.0, 2.0, 3.0]`",
+            "why": "You divided by 3 every time. A partial window is averaged over the values it holds."
+          },
+          {
+            "id": "cum",
+            "text": "`[1.0, 1.5, 2.0, 2.5]`",
+            "why": "That keeps growing the window. It is capped at 3 values, so the last mean is (2 + 3 + 4) / 3."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Partial windows are averaged over what they hold.",
+        "generic": "Not quite right. With `min_periods=1`, a short window still gives a mean."
+      },
+      "explain": {
+        "text": "The first window holds 1.0, the second 1.0 and 2.0, then full windows of 3. A partial mean rests on fewer days, so treat early values with care."
+      }
+    },
+    {
+      "id": "q-window-days",
+      "difficulty": 3,
+      "prose": "`vol = r.rolling(20).std()`, where `r` holds daily returns with dates as the index.",
+      "question": "Which returns does `vol` on a given date use?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The 20 returns ending on that date, that date included",
+            "correct": true
+          },
+          {
+            "id": "before",
+            "text": "The 20 returns before that date",
+            "why": "The window ends on its own row. That day's return is the last of the 20."
+          },
+          {
+            "id": "centred",
+            "text": "10 returns before that date and 10 after",
+            "why": "That needs `center=True`, and it looks ahead. By default the window looks back."
+          },
+          {
+            "id": "cal",
+            "text": "The returns in the 20 calendar days before it",
+            "why": "An integer window counts rows, so 20 trading days, not calendar days."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The window ends on its own row.",
+        "generic": "Not quite right. A rolling window looks back from its own row."
+      },
+      "explain": {
+        "text": "Each window holds its own row and the 19 rows above it. Rows are trading days, so 20 rows is about four weeks."
+      }
+    }
+  ]
+}

@@ -171,14 +171,17 @@
      { "points": { "p1": { "x": 3 } } }, merges into the item with that id (an unknown id is appended), so explain.canvas,
      option canvas patches and demonstrate steps can move one item without wiping the list, on every kind. */
   const isPlain = (v) => v && typeof v === 'object' && !Array.isArray(v);
-  const keyedList = (list, map) => list.map(it => (it && it.id != null && isPlain(map[it.id]) ? merge(it, map[it.id]) : it))
+  /* a keyed patch merges by id, adds a new id, and removes an id set to null (item 151) */
+  const keyedList = (list, map) => list.filter(it => !(it && it.id != null && map[it.id] === null)).map(it => (it && it.id != null && isPlain(map[it.id]) ? merge(it, map[it.id]) : it))
     .concat(Object.entries(map).filter(([id, v]) => isPlain(v) && !list.some(it => it && it.id === id)).map(([id, v]) => ({ id, ...v })));
   const merge = (base, patch) => {
     if (patch == null) return base;
     const out = { ...base };
     for (const [k, v] of Object.entries(patch)) {
       const b = base ? base[k] : undefined;
-      if (isPlain(v) && Array.isArray(b) && Object.values(v).every(isPlain) && b.every(it => isPlain(it) && it.id != null)) out[k] = keyedList(b, v);
+      const keyed = isPlain(v) && Array.isArray(b) && b.every(it => isPlain(it) && it.id != null) && Object.values(v).every(x => x === null || isPlain(x))
+        && Object.entries(v).some(([id, x]) => isPlain(x) || b.some(it => it.id === id));
+      if (keyed) out[k] = keyedList(b, v);
       else out[k] = (isPlain(v) && isPlain(b)) ? merge(b, v) : v;
     }
     return out;
@@ -279,6 +282,7 @@
 
   /* Cross badge on a not-yet answer object (design-research 4.5), top-right of its body. */
   const badge = (obj, type = 'cross') => {
+    if (obj && obj.tagName === 'TR') obj = obj.lastElementChild; // a table row (tap: "rows") wears its badge in its last cell
     if (!obj || obj.querySelector(':scope > .cv-badge')) return;
     if (!(obj instanceof SVGElement)) { const b = document.createElement('span'); b.className = 'cv-badge cv-badge-' + type; b.setAttribute('aria-hidden', 'true'); b.innerHTML = Z.icon(type === 'check' ? 'check' : 'cross'); obj.append(b); return; }
     const body = obj.querySelector('.cv-body') || obj;
@@ -518,7 +522,23 @@
     const cap = document.createElement('div'); cap.className = 't-caption cv-caption'; cap.hidden = true;
     wrap.append(row, cap); host.append(wrap);
     const side = {}, active = SIDES.includes(spec.active) ? spec.active : 'left';
-    for (const k of SIDES) { const h = document.createElement('div'); h.className = 'cv-pair-side cv-pair-' + k; row.append(h); side[k] = create(h, spec[k] || { kind: 'table', params: {} }, ctx); }
+    /* item 155: two tables side by side are compact, and stack (each at full width) whenever either would overflow */
+    const twoTables = SIDES.every(k => (spec[k] || {}).kind === 'table');
+    for (const k of SIDES) {
+      const h = document.createElement('div'); h.className = 'cv-pair-side cv-pair-' + k; row.append(h);
+      const sp = spec[k] || { kind: 'table', params: {} };
+      side[k] = create(h, twoTables ? { ...sp, params: { compact: true, ...(sp.params || {}) } } : sp, ctx);
+    }
+    if (twoTables && !spec.stack) {
+      const fit = () => {
+        if (!wrap.isConnected) return;
+        wrap.classList.remove('is-stacked');
+        const over = SIDES.some(k => { const sc = side[k] && side[k].el && side[k].el.querySelector('.cv-tbl-wrap'); return sc && sc.scrollWidth > sc.clientWidth + 1; });
+        wrap.classList.toggle('is-stacked', over);
+      };
+      if (typeof ResizeObserver === 'function') { let lastW = -1; new ResizeObserver(() => { const w = wrap.clientWidth; if (w !== lastW) { lastW = w; fit(); } }).observe(wrap); }
+      requestAnimationFrame(fit);
+    }
     const A = side[active];
     let caption = '';
     const route = (ids) => { const out = { left: [], right: [] }; [].concat(ids || []).forEach(id => { const m = String(id).match(/^(left|right):(.+)$/); if (m) out[m[1]].push(m[2]); else { out.left.push(id); out.right.push(id); } }); return out; };

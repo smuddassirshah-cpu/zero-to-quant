@@ -24,6 +24,13 @@
     const r = params.nodeRadius || Math.round(K.clamp(Math.max(0, ...nodes0.map((n) => plainW(initLabels[n.id] ?? n.label ?? n.id, 14))) / 2 + 8, 22, 34));
     const labSize = (t) => { const w = plainW(t, 14); return w <= 2 * r - 8 ? 14 : Math.max(10, Math.floor(14 * (2 * r - 8) / w)); };
     const padX = r + 26, padY = r + 22;
+    /* item 152: a node may carry its own r, and shape: "pill" (a rounded box as wide as its label); edges stop at the rim */
+    const shapeOf = (n, view) => {
+      const rr = n.r || r;
+      if (n.shape === 'pill') return { pill: true, hw: Math.max(rr, plainW(labOf(n, view), 14) / 2 + 12), hh: Math.min(rr, 18), rr };
+      return { pill: false, hw: rr, hh: rr, rr };
+    };
+    const rimAt = (sh, ang) => { if (!sh.pill) return sh.hw; const c = Math.abs(Math.cos(ang)), si = Math.abs(Math.sin(ang)); return Math.min(c > 1e-6 ? sh.hw / c : Infinity, si > 1e-6 ? sh.hh / si : Infinity); };
     const ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY));
     const pos = (n, view) => {
       if (ring && n.a != null) { const t = 2 * Math.PI * (n.a + ((view && view.rotate) || 0) / Math.max(1, view && view.seats ? view.seats : 1)) - Math.PI / 2; return [W / 2 + ringR * Math.cos(t), H / 2 + ringR * Math.sin(t)]; }
@@ -81,6 +88,16 @@
       alias: (id, R) => { const m = id.match(/^e-(.+?)-(.+)$/); if (!m) return [id]; const e = ((R && R.state.edges) || []).find((q) => q.id === id || (!isDir(q) && q.from === m[2] && q.to === m[1])); return e ? [e.id] : [id]; },
       render(view, R) {
         const g = R.F.g, eg = svg('g'), ng = svg('g'), lg = svg('g'); g.append(eg, ng, lg);
+        /* lanes (item 149): labelled horizontal bands behind the graph, such as "local" and "origin" for commits */
+        if (Array.isArray(params.lanes) && params.lanes.length) {
+          const lanesG = svg('g', { class: 'cvb-lanes' });
+          params.lanes.forEach((l) => {
+            const ly = padY + (+l.y || 0) * (H - 2 * padY);
+            lanesG.append(svg('line', { x1: 8, x2: W - 8, y1: ly, y2: ly, class: 'cvb-lane' }));
+            if (l.label) lanesG.append(K.txt(10, ly - r - 8, String(l.label), { anchor: 'start', size: 12, weight: 600, cls: 'cvb-muted' }));
+          });
+          g.insertBefore(lanesG, eg);
+        }
         const visited = view.visited || [], dist = view.distribution || null;
         const nodes = view.nodes || [], edges = view.edges || [];
         const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
@@ -90,22 +107,24 @@
         for (const e of edges) {
           const a = byId[e.from], b = byId[e.to]; if (!a || !b) continue;
           const [ax, ay] = pos(a, view), [bx, by] = pos(b, view);
-          const directed = isDir(e);
+          const directed = isDir(e), shA = shapeOf(a, view), shB = shapeOf(b, view);
           const o = fade(K.obj(e.id, 'cvb-edge-o', e.colour || null), Math.min(e.o ?? 1, a.o ?? 1, b.o ?? 1));
           let d, lx, ly, hx, hy, tx, ty;
           if (e.from === e.to) {
             const dcx = ax - centre[0], dcy = ay - centre[1], ang = Math.hypot(dcx, dcy) < 1 ? -Math.PI / 2 : Math.atan2(dcy, dcx), ux = Math.cos(ang), uy = Math.sin(ang);
-            const p1 = [ax + r * Math.cos(ang - 0.5), ay + r * Math.sin(ang - 0.5)], p2 = [ax + r * Math.cos(ang + 0.5), ay + r * Math.sin(ang + 0.5)];
-            const c1 = [ax + (r + 42) * Math.cos(ang - 0.7), ay + (r + 42) * Math.sin(ang - 0.7)], c2 = [ax + (r + 42) * Math.cos(ang + 0.7), ay + (r + 42) * Math.sin(ang + 0.7)];
+            const r1 = rimAt(shA, ang - 0.5), r2 = rimAt(shA, ang + 0.5), rm = rimAt(shA, ang);
+            const p1 = [ax + r1 * Math.cos(ang - 0.5), ay + r1 * Math.sin(ang - 0.5)], p2 = [ax + r2 * Math.cos(ang + 0.5), ay + r2 * Math.sin(ang + 0.5)];
+            const c1 = [ax + (rm + 42) * Math.cos(ang - 0.7), ay + (rm + 42) * Math.sin(ang - 0.7)], c2 = [ax + (rm + 42) * Math.cos(ang + 0.7), ay + (rm + 42) * Math.sin(ang + 0.7)];
             d = `M${p1[0]},${p1[1]}C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
-            lx = ax + ux * (r + 40); ly = ay + uy * (r + 40); hx = p2[0]; hy = p2[1]; tx = p2[0] - c2[0]; ty = p2[1] - c2[1];
+            lx = ax + ux * (rm + 40); ly = ay + uy * (rm + 40); hx = p2[0]; hy = p2[1]; tx = p2[0] - c2[0]; ty = p2[1] - c2[1];
           } else {
             const both = edges.some((q) => q !== e && q.from === e.to && q.to === e.from);
             const dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
             const bend = both ? 22 : (e.bend || 0);
             const mx = (ax + bx) / 2 + nx * bend, my = (ay + by) / 2 + ny * bend;
             const sa = Math.atan2(my - ay, mx - ax), ea = Math.atan2(my - by, mx - bx);
-            const s = [ax + r * Math.cos(sa), ay + r * Math.sin(sa)], t = [bx + (r + (directed ? 1 : 0)) * Math.cos(ea), by + (r + (directed ? 1 : 0)) * Math.sin(ea)];
+            const ra = rimAt(shA, sa), rb = rimAt(shB, ea) + (directed ? 1 : 0);
+            const s = [ax + ra * Math.cos(sa), ay + ra * Math.sin(sa)], t = [bx + rb * Math.cos(ea), by + rb * Math.sin(ea)];
             d = bend ? `M${s[0]},${s[1]}Q${2 * mx - (s[0] + t[0]) / 2},${2 * my - (s[1] + t[1]) / 2} ${t[0]},${t[1]}` : `M${s[0]},${s[1]}L${t[0]},${t[1]}`;
             lx = mx + nx * (bend ? 8 : 0); ly = my + ny * (bend ? 8 : 0); hx = t[0]; hy = t[1];
             tx = t[0] - (bend ? 2 * mx - (s[0] + t[0]) / 2 : s[0]); ty = t[1] - (bend ? 2 * my - (s[1] + t[1]) / 2 : s[1]);
@@ -125,22 +144,25 @@
         for (const n of nodes) {
           const [x, y] = pos(n, view), o = K.obj(n.id, 'cvb-node-o' + (sel.has(n.id) ? ' is-on' : ''), n.colour || null);
           if ((n.o ?? 1) < 1) { fade(o, n.o); const k = 0.6 + 0.4 * Math.max(0, n.o); o.setAttribute('transform', `translate(${x} ${y}) scale(${k.toFixed(3)}) translate(${-x} ${-y})`); }
-          o.append(K.washCircle(x, y, r + 8));
-          if (view.current === n.id) o.append(svg('circle', { cx: x, cy: y, r: r + 5, class: 'cvb-ln', style: 'stroke: var(--manip); stroke-width: 3' }));
-          o.append(svg('circle', { cx: x, cy: y, r, class: 'cvb-node cvb-tapbox cv-body' + (view.current === n.id ? ' cur' : '') }));
+          const sh = shapeOf(n, view), { hw, hh } = sh;
+          /* the node's outline: a circle, or a pill; dashed: true draws it dashed (item 149) */
+          const shape = (grow, attrs) => (sh.pill ? svg('rect', { x: x - hw - grow, y: y - hh - grow, width: 2 * (hw + grow), height: 2 * (hh + grow), rx: hh + grow, ...attrs }) : svg('circle', { cx: x, cy: y, r: hw + grow, ...attrs }));
+          o.append(sh.pill ? svg('rect', { x: x - hw - 8, y: y - hh - 8, width: 2 * hw + 16, height: 2 * hh + 16, rx: hh + 8, class: 'cvb-hlw' }) : K.washCircle(x, y, hw + 8));
+          if (view.current === n.id) o.append(shape(5, { class: 'cvb-ln', style: 'stroke: var(--manip); stroke-width: 3' }));
+          o.append(shape(0, { class: 'cvb-node cvb-tapbox cv-body' + (view.current === n.id ? ' cur' : '') + (n.dashed ? ' cvb-dash' : '') }));
           const vi = visited.indexOf(n.id);
-          if (vi >= 0) o.append(svg('circle', { cx: x, cy: y, r: r - 1, class: 'cvb-node-fill', style: 'fill-opacity: 0.14' }));
+          if (vi >= 0) o.append(shape(-1, { class: 'cvb-node-fill', style: 'fill-opacity: 0.14' }));
           if (dist && dist[n.id] != null) {
             const p = K.clamp(+dist[n.id], 0, 1), cid = R.uid + '-nc-' + n.id;
-            let cp = R.defs.querySelector('#' + CSS.escape(cid)); if (!cp) { cp = svg('clipPath', { id: cid }, [svg('circle')]); R.defs.append(cp); }
-            C.attrs(cp.firstChild, { cx: x, cy: y, r: r - 1.5 });
-            o.append(svg('rect', { x: x - r, y: y + r - 2 * r * p, width: 2 * r, height: 2 * r * p, class: 'cvb-node-fill', 'clip-path': `url(#${cid})` }));
-            o.append(K.txt(x, y + r + 12, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-outink' }));
+            let cp = R.defs.querySelector('#' + CSS.escape(cid)); if (!cp) { cp = svg('clipPath', { id: cid }); R.defs.append(cp); }
+            cp.replaceChildren(shape(-1.5, {}));
+            o.append(svg('rect', { x: x - hw, y: y + hh - 2 * hh * p, width: 2 * hw, height: 2 * hh * p, class: 'cvb-node-fill', 'clip-path': `url(#${cid})` }));
+            o.append(K.txt(x, y + hh + 12, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-outink' }));
           }
           const lt = labOf(n, view);
-          o.append(K.lab(x, y, lt, { w: r * 2 + 20, size: labSize(lt) }));
+          o.append(K.lab(x, y, lt, { w: hw * 2 + 20, size: sh.pill ? 14 : n.r ? (plainW(lt, 14) <= 2 * n.r - 8 ? 14 : Math.max(10, Math.floor(14 * (2 * n.r - 8) / plainW(lt, 14)))) : labSize(lt) }));
           if (vi >= 0 && view.order !== false) {
-            const bx = x + r * 0.78, by = y - r * 0.78;
+            const bx = x + (sh.pill ? hw - 4 : hw * 0.78), by = y - hh * 0.78;
             o.append(svg('circle', { cx: bx, cy: by, r: 9, class: 'cvb-visit' }), K.txt(bx, by + 0.5, String(vi + 1), { cls: 'cvb-visit-t', size: 11 }));
           }
           if (!n.gone) R.tappable(o, n.id, 'Node ' + lt);

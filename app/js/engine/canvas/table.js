@@ -20,7 +20,10 @@
     const cap = document.createElement('div'); cap.className = 't-caption cv-caption'; cap.hidden = true;
     /* numbers, and text that starts as a negative number ("-3", "-0.5 kg"), use the minus sign U+2212 */
     const minus = (t) => t.replace(/^-(?=\d|\.\d)/, '−');
-    const html = (v) => (v == null ? '' : typeof v === 'number' ? Z.esc(minus(C.fmtNum(v, 4))) : Z.md(minus(Z.esc(String(v)).replace(/&#39;/g, "'"))));
+    /* text cells and the caption read like prose (items 145, 158): maths, inline code, bold; spaces are kept (CSS pre-wrap) */
+    const inl = (t) => (Z.grade && Z.grade.inline ? Z.grade.inline(t) : Z.md(Z.esc(t).replace(/&#39;/g, "'")));
+    const html = (v) => (v == null ? '' : typeof v === 'number' ? Z.esc(minus(C.fmtNum(v, 4))) : inl(minus(String(v))));
+    const rowTap = P.tap === 'rows'; // item 153: tapping any cell selects the row id r{i}
     if (columns.length) {
       const thead = document.createElement('thead'), tr = document.createElement('tr');
       columns.forEach((c, k) => { const th = document.createElement('th'); th.scope = 'col'; th.className = 'cv-obj'; th.dataset.id = `c${k}`; th.dataset.col = `c${k}`; th.style.textAlign = alignOf(k + 1); th.innerHTML = html(c); tr.append(th); });
@@ -29,6 +32,7 @@
     const tbody = document.createElement('tbody'), inputs = [];
     rows.forEach((row, i) => {
       const tr = document.createElement('tr'); tr.className = 'cv-obj'; tr.dataset.id = `r${i}`;
+      if (rowTap) { tr.dataset.tap = ''; tr.dataset.label = `Row ${i + 1}: ${row.map(v => (v && typeof v === 'object' ? v.text ?? '' : v ?? '')).join(', ')}`; }
       row.forEach((v, j) => {
         const id = `r${i}c${j}`, td = document.createElement(j === 0 && P.rowHeads ? 'th' : 'td');
         if (td.tagName === 'TH') td.scope = 'row';
@@ -41,7 +45,8 @@
           if (ctx.static) inp.disabled = true;
           td.classList.add('is-edit'); td.append(inp); inputs.push(inp);
         } else {
-          td.dataset.tap = ''; td.dataset.label = `Row ${i + 1}, ${columns[j] ? String(columns[j]).replace(/\$/g, '') : 'column ' + (j + 1)}: ${v && typeof v === 'object' ? v.text ?? '' : v ?? ''}`;
+          if (!rowTap) td.dataset.tap = '';
+          td.dataset.label = `Row ${i + 1}, ${columns[j] ? String(columns[j]).replace(/\$/g, '') : 'column ' + (j + 1)}: ${v && typeof v === 'object' ? v.text ?? '' : v ?? ''}`;
           td.innerHTML = html(v && typeof v === 'object' ? v.text : v);
         }
         tr.append(td);
@@ -49,7 +54,7 @@
       tbody.append(tr);
     });
     tbl.append(tbody); scroller.append(tbl); wrap.append(scroller, cap); host.append(wrap);
-    const fr = { wrap, caption: (t) => { cap.hidden = !t; cap.innerHTML = t ? Z.md(t) : ''; } };
+    const fr = { wrap, caption: (t) => { cap.hidden = !t; cap.innerHTML = t ? inl(String(t)) : ''; } };
 
     const q = (sel) => Array.from(tbl.querySelectorAll(sel));
     const resolve = (id) => {

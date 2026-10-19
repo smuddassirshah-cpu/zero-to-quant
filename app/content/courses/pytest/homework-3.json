@@ -1,0 +1,403 @@
+{
+  "id": "homework-3",
+  "course": "pytest",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h3-report",
+      "difficulty": 3,
+      "skills": [
+        "pt-design"
+      ],
+      "prose": "Your Stage 0 script printed each day's return straight from `prices.csv`. Make the report itself testable: `returns_report(text)` takes the CSV text and **returns** the lines instead of printing them.",
+      "question": "Write `returns_report(text)` returning a list such as `[\"Tue: 1.28%\", \"Wed: -2.63%\", ...]`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def returns_report(text):\n    pass  # one line per day after the first, such as \"Tue: 1.28%\"\n\n\ntext = \"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\"\nprint(returns_report(text))\n",
+        "solution": "def returns_report(text):\n    rows = [row.split(\",\") for row in text.splitlines()[1:]]\n    days = [day for day, close in rows]\n    closes = [float(close) for day, close in rows]\n    return [f\"{days[i]}: {closes[i] / closes[i - 1] - 1:.2%}\"\n            for i in range(1, len(closes))]\n\n\ntext = \"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\"\nfor line in returns_report(text):\n    print(line)\n",
+        "tests": [
+          {
+            "call": "returns_report('Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n')",
+            "expect": "['Tue: 1.28%', 'Wed: -2.63%', 'Thu: 0.60%', 'Fri: 0.70%']",
+            "compare": "equal"
+          },
+          {
+            "call": "returns_report('Day,Close\\nMon,250.00\\nTue,245.00\\n')",
+            "expect": "['Tue: -2.00%']",
+            "compare": "equal"
+          },
+          {
+            "call": "returns_report('Day,Close\\nMon,250.00\\n')",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "returns_report('Day,Close\\n')",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each hands `returns_report` CSV text and compares the list of lines it returns with `==`.",
+        "examples": [
+          {
+            "call": "returns_report('Day,Close\\nMon,250.00\\nTue,245.00\\n')",
+            "expect": "['Tue: -2.00%']",
+            "compare": "equal"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Text in, lines out: every part of the report can be tested.",
+        "generic": "Not quite right. Compare your first failing list with the expected one, character by character."
+      },
+      "explain": {
+        "text": "Each line pairs a day with its return from the day before, formatted with `.2%`. Because the lines come back as a list, a test compares them with `==`; the script only prints them."
+      }
+    },
+    {
+      "id": "h3-regression",
+      "difficulty": 4,
+      "skills": [
+        "pt-cases",
+        "pt-design"
+      ],
+      "prose": "First Python's `max_drawdown` has had three loop bugs in its life: `range(1, len(prices) + 1)` crashed, `range(1, len(prices) - 1)` skipped the last price, and `range(2, len(prices))` skipped the first move. Write one regression test that guards against all three.",
+      "question": "Write `test_max_drawdown_regression()`: it must pass on correct versions and fail on all three loop bugs.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n# pytest cannot load on this page: compare floats with math.isclose\n\n\ndef max_drawdown(prices):\n    peak = prices[0]\n    worst = 0.0\n    for i in range(1, len(prices)):\n        price = prices[i]\n        if price > peak:\n            peak = price\n        drop = (peak - price) / peak\n        if drop > worst:\n            worst = drop\n    return worst\n\n\ndef test_max_drawdown_regression():\n    pass  # paths that catch every wrong loop range\n",
+        "solution": "import math\n# pytest cannot load on this page: compare floats with math.isclose\n\n\ndef max_drawdown(prices):\n    peak = prices[0]\n    worst = 0.0\n    for i in range(1, len(prices)):\n        price = prices[i]\n        if price > peak:\n            peak = price\n        drop = (peak - price) / peak\n        if drop > worst:\n            worst = drop\n    return worst\n\n\ndef test_max_drawdown_regression():\n    # peak on day 1, trough on the last day: the action is at both ends\n    assert math.isclose(max_drawdown([100.00, 120.00, 90.00]), 0.25)\n    # a fall on day 1 that is the worst of the path\n    assert math.isclose(max_drawdown([100.00, 80.00, 90.00]), 0.2)\n",
+        "tests": [
+          {
+            "call": "test_max_drawdown_regression()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "import itertools; _dd = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)]); max_drawdown = _dd"
+          },
+          {
+            "call": "test_max_drawdown_regression()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "max_drawdown = lambda p: max([0.0] + [(max(p[:i + 1]) - p[i]) / max(p[:i + 1]) for i in range(len(p))])"
+          },
+          {
+            "call": "test_max_drawdown_regression()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: p[len(p)]"
+          },
+          {
+            "call": "test_max_drawdown_regression()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: _dd(p[:-1])"
+          },
+          {
+            "call": "test_max_drawdown_regression()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "max_drawdown = lambda p: _dd([p[0]] + p[2:])"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Your test runs on two correct versions, where it must pass, and on the three loop bugs, where it must fail."
+      },
+      "feedback": {
+        "correct": "Your paths put a fall at each end of the loop, so no wrong range survives.",
+        "generic": "Not quite right. The first failing test shows which version your test let through, or wrongly failed.",
+        "byKey": {
+          "test-4": "Your test let through the loop that stops one short. Put the trough on the last day.",
+          "test-5": "Your test let through the loop that starts at 2. Put something that matters on day 1: the peak, or the worst fall."
+        }
+      },
+      "explain": {
+        "text": "Off-by-one bugs live at the ends of a loop, so put the action at the ends. £100.00, £120.00, £90.00 has its peak on day 1 and its trough on the last day: stopping short reports 0, starting at 2 misses the peak and reports 0.1, and the crash raises."
+      }
+    },
+    {
+      "id": "h3-lookahead",
+      "difficulty": 5,
+      "skills": [
+        "pt-design",
+        "pt-cases"
+      ],
+      "prose": "A moving-average signal: hold on day t if close t − 1 is above the mean of the n closes before day t. Three broken versions are known: one compares **today's** close, one lets today's close into the mean, one uses the mean of **every** close.",
+      "question": "Write `test_no_lookahead()` that passes on correct versions and fails on all three peeking ones.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def positions(closes, n):\n    # hold on day t if close t - 1 is above the mean of closes t - n to t - 1\n    pos = []\n    for t in range(len(closes)):\n        if t < n:\n            pos.append(0)\n        else:\n            window = closes[t - n:t]\n            pos.append(1 if closes[t - 1] > sum(window) / n else 0)\n    return pos\n\n\ndef test_no_lookahead():\n    pass  # changing close k must not move any position up to day k\n",
+        "solution": "def positions(closes, n):\n    # hold on day t if close t - 1 is above the mean of closes t - n to t - 1\n    pos = []\n    for t in range(len(closes)):\n        if t < n:\n            pos.append(0)\n        else:\n            window = closes[t - n:t]\n            pos.append(1 if closes[t - 1] > sum(window) / n else 0)\n    return pos\n\n\ndef test_no_lookahead():\n    closes = [100.00, 102.00, 101.00, 104.00, 103.00, 105.00, 102.00, 106.00]\n    base = positions(closes, 3)\n    for k in range(len(closes)):\n        for new in (1.00, 1000.00):          # a crash and a spike\n            changed = closes[:k] + [new] + closes[k + 1:]\n            assert positions(changed, 3)[:k + 1] == base[:k + 1]\n",
+        "tests": [
+          {
+            "call": "test_no_lookahead()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "positions = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c[t - n:t]) / n) for t in range(len(c))]"
+          },
+          {
+            "call": "test_no_lookahead()",
+            "expect": "None",
+            "compare": "equal",
+            "setup": "positions = lambda c, n: [int(t >= n and c[t - 1] * n > sum(c[t - n:t])) for t in range(len(c))]"
+          },
+          {
+            "call": "test_no_lookahead()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "positions = lambda c, n: [0 if t < n else int(c[t] > sum(c[t - n + 1:t + 1]) / n) for t in range(len(c))]"
+          },
+          {
+            "call": "test_no_lookahead()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "positions = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c[t - n + 1:t + 1]) / n) for t in range(len(c))]"
+          },
+          {
+            "call": "test_no_lookahead()",
+            "expect": "Exception",
+            "compare": "raises",
+            "setup": "positions = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c) / len(c)) for t in range(len(c))]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Your test runs on two correct versions of `positions`, where it must pass, and on three that see the future, where it must fail."
+      },
+      "feedback": {
+        "correct": "Your test changes the future and checks that the past stays put, at every day.",
+        "generic": "Not quite right. The first failing test names the version your test let through, or wrongly failed.",
+        "byKey": {
+          "test-3": "Your test let through the version that compares today's close. Change the close of a day that has a position.",
+          "test-4": "Your test let through the version whose mean includes today. Make the change big: a spike moves the mean.",
+          "test-5": "Your test let through the version that averages every close. Change a late close and check the early positions."
+        }
+      },
+      "explain": {
+        "text": "Any leak means some position depends on a close at or after its own day. Changing each close k in turn, to a crash and to a spike, and checking positions 0 to k catches every such leak at once."
+      }
+    },
+    {
+      "id": "h3-mutate",
+      "difficulty": 3,
+      "skills": [
+        "pt-design"
+      ],
+      "prose": "```python\nCLOSES = [100.00, 104.00, 102.96]\n\ndef rebase(closes):\n    for i in range(len(closes)):\n        closes[i] = closes[i] / closes[0]\n    return closes\n\ndef test_rebase():\n    assert rebase(CLOSES)[0] == 1.0\n\ndef test_first_close():\n    assert CLOSES[0] == 100.00\n```",
+      "question": "Run together, `test_first_close` fails. Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`rebase` changes the list it is given, so `CLOSES` itself was rewritten by the first test",
+            "correct": true
+          },
+          {
+            "id": "order",
+            "text": "pytest runs tests in a random order",
+            "why": "pytest runs tests in file order. The failure comes from what the first test did to shared data."
+          },
+          {
+            "id": "float",
+            "text": "`100.00` is not stored exactly",
+            "why": "100.00 is stored exactly. The value is now 1.0, not something near 100."
+          },
+          {
+            "id": "rebase",
+            "text": "`rebase` returns the wrong values",
+            "why": "Its answer is wrong too, but `test_first_close` never calls it. Something changed `CLOSES`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A function that edits its argument is not pure, and it leaked from one test to the next.",
+        "generic": "Not quite right. Look at what `rebase` does to the list it receives."
+      },
+      "explain": {
+        "text": "`closes[i] = ...` writes into the caller's list, so `CLOSES[0]` becomes 1.0. Worse, `closes[0]` changes on the first pass, so later items divide by 1.0. A pure version builds a new list: `[c / closes[0] for c in closes]`."
+      }
+    },
+    {
+      "id": "h3-seed-order",
+      "difficulty": 4,
+      "skills": [
+        "pt-tools",
+        "pt-design"
+      ],
+      "prose": "`tests/test_sim.py` starts with `random.seed(42)` at the top, then `test_paths` asserts exact prices from `simulate()`, which uses the `random` module. Run alone, it passes. In the whole suite, `tests/test_bootstrap.py` is collected first.",
+      "question": "Why does `test_paths` fail in the whole suite?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Seeding happens when the file is imported; other tests draw from `random` before `test_paths` runs, so the draws have moved on",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "Two files cannot both import `random`",
+            "why": "Any number of files may import it. They all share one generator, which is the trouble."
+          },
+          {
+            "id": "seed",
+            "text": "Seed 42 only works once per machine",
+            "why": "A seed works every time. What changes is how many numbers were drawn before your test."
+          },
+          {
+            "id": "conftest",
+            "text": "The seed must go in `conftest.py`",
+            "why": "Moving the shared seed elsewhere still leaves one generator shared by every test. Give `simulate` its own `random.Random(42)`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A shared generator makes a test depend on every other test.",
+        "generic": "Not quite right. Think about when the seed is set and who draws next."
+      },
+      "explain": {
+        "text": "pytest imports every test file first, then runs the tests. By the time `test_paths` runs, other tests have drawn from the module generator. Passing `random.Random(42)` into `simulate` gives the test draws no one else can touch."
+      }
+    },
+    {
+      "id": "h3-drift",
+      "difficulty": 4,
+      "skills": [
+        "pt-cases"
+      ],
+      "prose": "A test runs an **unseeded** 10-step walk from £100.00, each step ×1.01 or ×0.99 with chance 1/2, and asserts it ends above £100.00, \"because prices drift up\".",
+      "question": "What is the chance the test passes, as a percentage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 37.7,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "%",
+        "label": "Chance it passes",
+        "accept": "37.70%: it needs at least 6 ups of 10, $(210 + 120 + 45 + 10 + 1)/1024 = 386/1024$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 50,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "five",
+            "value": 62.3,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$386/1024 \\approx 37.70\\%$: the test fails nearly two runs in three.",
+        "generic": "Not quite right. Find how many up steps are needed to finish above £100.00.",
+        "byKey": {
+          "half": "You assumed up and down balance. Five ups and five downs end at £99.95: $1.01 \\times 0.99 = 0.9999$, so it needs six ups.",
+          "five": "You counted five or more ups. With exactly five the walk ends at £99.95, below the start."
+        }
+      },
+      "explain": {
+        "text": "$1.01^5 \\times 0.99^5 = 0.9999^5$, so five of each ends just below £100.00. Six or more ups is $\\binom{10}{6} + \\dots + \\binom{10}{10} = 386$ of 1,024 equally likely runs. The test is flaky, and its premise is wrong too."
+      }
+    },
+    {
+      "id": "h3-refactor",
+      "difficulty": 4,
+      "skills": [
+        "pt-design",
+        "pt-cases",
+        "pt-tools"
+      ],
+      "prose": "A colleague's backtest script, all in one piece:\n\n```python\nimport csv\ncloses = [float(r[\"close\"]) for r in csv.DictReader(open(\"ftse.csv\"))]\ncash, shares = 10000.00, 0\nfor t in range(1, len(closes)):\n    if closes[t] > closes[t - 1] and shares == 0:\n        shares = int(cash / closes[t])\n        cash -= shares * closes[t]\n    elif closes[t] < closes[t - 1] and shares > 0:\n        cash += shares * closes[t]\n        shares = 0\nprint(f\"Final: £{cash + shares * closes[-1]:,.2f}\")\n```",
+      "question": "Plan how to make it testable before it goes on GitHub. (a) Split it into functions: signatures, which are pure, where input and output live. (b) Name what is wrong in the trading logic. (c) Give a look-ahead test, a cost test and a regression test on hand-made paths, with values worked out by hand. (d) List what the repository needs for the tests to run on every push.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "(a) Split the script into functions: give each signature, say which are pure, and where the input and output now live. (b) Name what is wrong in the trading logic. (c) Give three tests on hand-made paths, with expected values worked out by hand: a look-ahead test, a cost test and a regression test. (d) List what the repository must contain for the tests to run on every push.",
+        "model": "**(a) Split.** Input, computation and output become separate pieces:\n\n- `load_closes(f)`: reads closes from an open file or `io.StringIO`. The only input; the script passes `open(\"ftse.csv\")`.\n- `positions(closes)`: pure. `pos[t] = 1` if `closes[t - 1] > closes[t - 2]`, else 0, for t ≥ 2. It uses only closes up to day t − 1.\n- `shares_for(cash, price)`: pure. Works in whole pence: `round(cash * 100) // round(price * 100)`, so £2,700.00 at £5.40 gives 500, not 499.\n- `run_backtest(closes, cash, cost)`: pure. Returns the final value, charging `cost` on every change of position.\n- `main()`: three lines, open the file, call `run_backtest`, print. Too thin to need a test.\n\n**(b) What is wrong in the original.** It decides on `closes[t] > closes[t - 1]` and fills at `closes[t]` in the same step: it trades at a close it has only just seen, a look-ahead. It charges no costs. `int(cash / closes[t])` can lose a share to float error.\n\n**(c) Three tests, all on hand-made paths.**\n\n1. *Look-ahead*: `a = [100.00, 101.00, 102.00, 103.00]`, `b = a[:-1] + [95.00]`; assert `positions(a)[-1] == positions(b)[-1]`. The original rule flips from 1 to 0 and fails.\n2. *Costs*: closes £100.00, £102.00, £103.00 with positions 0, 1, 0, 10 shares, £5.00 a trade. By hand: day 1 is 10 × £2.00 − £5.00 = £15.00, day 2 is −£5.00. Assert the P&L is `[0.0, 15.0, -5.0]`.\n3. *Shares*: `assert shares_for(2700.00, 5.40) == 500`, a regression test for the float bug. Watch it fail on `int(cash / price)` first.\n\n**(d) Repository.** `src/backtest.py`, `tests/test_backtest.py` (and `tests/conftest.py` if fixtures are shared), `.github/workflows/tests.yml` with checkout, setup-python, `pip install pytest` and `pytest`. The tests carry their own closes, so `ftse.csv` can stay out of Git without breaking the workflow.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Separates input (reading the file), pure computation and output (printing), with signatures that take data as arguments"
+          },
+          {
+            "points": 1,
+            "text": "Injects the data source: an open file or `io.StringIO`, not a hard-coded path inside the logic"
+          },
+          {
+            "points": 2,
+            "text": "Spots the same-close look-ahead and the missing costs (one point each)"
+          },
+          {
+            "points": 2,
+            "text": "Gives a look-ahead test that changes only today's close and asserts today's position is unchanged"
+          },
+          {
+            "points": 2,
+            "text": "Gives a cost test and one regression test, each with expected values worked out by hand (one point each)"
+          },
+          {
+            "points": 1,
+            "text": "Lists `src/`, `tests/` and a workflow running `pip install pytest` and `pytest`, with tests that need no ignored data file"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model and tick the rubric.",
+        "generic": "Compare your answer with the model and tick the rubric."
+      },
+      "explain": {
+        "text": "The script mixes reading, deciding, trading and printing, so nothing in it can be tested alone. Pulled apart, each pure piece gets a hand-made path, and the workflow reruns them on every push."
+      }
+    },
+    {
+      "id": "h3-conftest",
+      "difficulty": 3,
+      "skills": [
+        "pt-tools"
+      ],
+      "prose": "On your laptop the suite passes. On GitHub it fails with `fixture 'closes' not found`. The fixture is defined in `tests/conftest.py`, and `git status` shows:\n\n```text\nUntracked files:\n  tests/conftest.py\n```",
+      "question": "What is the fix?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`git add tests/conftest.py`, commit and push",
+            "correct": true
+          },
+          {
+            "id": "import",
+            "text": "Import `conftest` at the top of every test file",
+            "why": "pytest loads `conftest.py` by itself. The file is simply not in the repository."
+          },
+          {
+            "id": "move",
+            "text": "Move the fixture into `src/`",
+            "why": "Fixtures for tests belong beside the tests. The problem is that the file was never committed."
+          },
+          {
+            "id": "pin",
+            "text": "Pin a newer pytest in the workflow",
+            "why": "Any pytest finds `conftest.py` if it exists. On GitHub's machine it does not."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Untracked means never committed, so the workflow never saw it.",
+        "generic": "Not quite right. Read the `git status` output."
+      },
+      "explain": {
+        "text": "The workflow's checkout copies only what is committed. `conftest.py` is untracked, so GitHub's machine has no fixture. Commit it and the run goes green."
+      }
+    }
+  ]
+}

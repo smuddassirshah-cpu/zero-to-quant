@@ -191,8 +191,8 @@ One or more time series, with optional candles.
 - Each series is labelled directly at its line end; there is no legend.
 
 **state**
-- `markers: [{ id, i, series, label, below, colour, y }]`. `i` is an index or an ISO date. `label` may contain `{value}`. A marker sits on its series' value at `i`; give `y` to place it explicitly, which you must do where that value is `null` (a marker on a gap is otherwise skipped).
-- `shade: [{ id, from, to, label, tone: "neg"|"pos"|"neutral" }]`.
+- `markers: [{ id, i, series, label, below, colour, y }]`. `i` is a 0-based index into the values array (even with `indexFrom: 1`, which only changes the axis labels) or an ISO date. `label` may contain `{value}`. A marker sits on its series' value at `i`; give `y` to place it explicitly, which you must do where that value is `null` (a marker on a gap is otherwise skipped).
+- `shade: [{ id, from, to, label, tone: "neg"|"pos"|"neutral" }]`. `from` and `to` are 0-based indices into the values array (or ISO dates), whatever `indexFrom` says.
 - `yScale: "log"` in params: a log-price chart (positive values), ticks at 1, 2 and 5 times powers of ten in the money format.
 - `drawdown: true` finds and shades the maximum drawdown of the first series, labelled `Max drawdown −x%`. `drawdown: "money"` measures the absolute fall instead, labelled in the money format (`Max drawdown −£90.00`), for cumulative P&L that starts at zero; `"abs"` gives the plain number.
 - `window`: `{ from, to, label }`, or `[from, to]`. A slider can bind to `window.to`.

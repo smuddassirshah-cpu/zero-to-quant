@@ -1,0 +1,479 @@
+{
+  "id": "review-3",
+  "course": "pytest",
+  "level": 3,
+  "items": [
+    {
+      "id": "r3-pure",
+      "difficulty": 2,
+      "skills": [
+        "pt-design"
+      ],
+      "prose": "```python\ndef fees():\n    trades = int(input(\"Trades: \"))\n    print(f\"Fees: £{trades * 1.50:.2f}\")\n```",
+      "question": "Which rewrite can a test check with one `assert`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`def fees(trades): return trades * 1.50`",
+            "correct": true
+          },
+          {
+            "id": "print",
+            "text": "`def fees(trades): print(trades * 1.50)`",
+            "why": "The data now comes in as an argument, but the answer still goes to the screen and the function returns `None`."
+          },
+          {
+            "id": "input",
+            "text": "`def fees(): return int(input(\"Trades: \")) * 1.50`",
+            "why": "It returns a value now, but its data still comes from the keyboard, so a test would have to fake typing."
+          },
+          {
+            "id": "both",
+            "text": "Keep it and test the printed text by eye",
+            "why": "Checking by eye is not a test. Nothing reruns it or fails when it changes."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Argument in, value out: `assert fees(4) == 6.0`.",
+        "generic": "Not quite right. The function must take its data as an argument and return its answer."
+      },
+      "explain": {
+        "text": "Moving `input` and `print` out leaves the arithmetic as a pure function. A thin script can still ask for the number and print the result."
+      }
+    },
+    {
+      "id": "r3-stringio",
+      "difficulty": 3,
+      "skills": [
+        "pt-design"
+      ],
+      "prose": "`count_up_days(f)` takes an open file of `date,close` lines, with a header, and counts the days whose close is above the day before. Tests hand it an `io.StringIO`, so no file is needed.",
+      "question": "Write `count_up_days(f)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import io\n\n\ndef count_up_days(f):\n    pass  # f is an open file of \"date,close\" lines with a header\n\n\nsample = io.StringIO(\"date,close\\n2026-10-12,100.00\\n2026-10-13,101.00\\n\")\nprint(count_up_days(sample))\n",
+        "solution": "import io\n\n\ndef count_up_days(f):\n    next(f)  # skip the header\n    closes = [float(line.split(\",\")[1]) for line in f]\n    return sum(1 for a, b in zip(closes, closes[1:]) if b > a)\n\n\nsample = io.StringIO(\"date,close\\n2026-10-12,100.00\\n2026-10-13,101.00\\n\")\nprint(count_up_days(sample))\n",
+        "tests": [
+          {
+            "call": "count_up_days(io.StringIO('date,close\\n2026-10-12,100.00\\n2026-10-13,101.00\\n2026-10-14,100.50\\n2026-10-15,102.00\\n'))",
+            "expect": "2",
+            "compare": "equal",
+            "setup": "import io"
+          },
+          {
+            "call": "count_up_days(io.StringIO('date,close\\n2026-10-12,100.00\\n2026-10-13,100.00\\n'))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_up_days(io.StringIO('date,close\\n2026-10-12,100.00\\n'))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_up_days(io.StringIO('date,close\\n'))",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_up_days(io.StringIO('date,close\\n2026-10-12,99.50\\n2026-10-13,99.80\\n2026-10-14,100.10\\n'))",
+            "expect": "2",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each hands `count_up_days` an `io.StringIO` holding CSV text and compares the count with `==`.",
+        "examples": [
+          {
+            "call": "count_up_days(io.StringIO('date,close\\n2026-10-12,100.00\\n2026-10-13,101.00\\n'))",
+            "expect": "1",
+            "compare": "equal",
+            "setup": "import io"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The function reads whatever file-like object it is handed.",
+        "generic": "Not quite right. Check the first failing test: a flat day is not an up day, and the header is not a close."
+      },
+      "explain": {
+        "text": "`next(f)` skips the header, the loop reads the closes, and `zip` pairs each close with the next. Because `f` is an argument, a test hands in `io.StringIO(...)` and needs no file."
+      }
+    },
+    {
+      "id": "r3-seed",
+      "difficulty": 2,
+      "skills": [
+        "pt-design"
+      ],
+      "prose": "`simulate_pnl(days)` draws daily P&L with `random.gauss`. Its test asserts the 20-day total is £153.27, and fails most runs.",
+      "question": "Which change makes the test repeatable?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Pass a generator in: `simulate_pnl(days, rng)`, called with `random.Random(3)`",
+            "correct": true
+          },
+          {
+            "id": "majority",
+            "text": "Run the test three times and keep the majority result",
+            "why": "That hides a flaky test instead of fixing it. The draws still differ every run."
+          },
+          {
+            "id": "tol",
+            "text": "Widen the tolerance to ±£100.00",
+            "why": "A wide tolerance still fails on unlucky runs, and it would also pass broken code."
+          },
+          {
+            "id": "noarg",
+            "text": "Call `random.seed()` with no argument first",
+            "why": "With no argument the seed comes from the clock or the system, so every run differs."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A seeded generator repeats its draws exactly.",
+        "generic": "Not quite right. The test needs the same random numbers every run."
+      },
+      "explain": {
+        "text": "`random.Random(3)` gives the same sequence each time, so the total is the same each time. The test can then pin it, and a code change that alters it shows up."
+      }
+    },
+    {
+      "id": "r3-undo",
+      "difficulty": 3,
+      "skills": [
+        "pt-cases"
+      ],
+      "prose": "A bug in `vwap` is fixed, and only then is a test written for it. The test passes.",
+      "question": "How can you be sure the test would have caught the bug?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Put the bug back for a moment and check that the test fails",
+            "correct": true
+          },
+          {
+            "id": "rerun",
+            "text": "Run the test a few more times",
+            "why": "The result is the same every run. Repeating it says nothing about the old code."
+          },
+          {
+            "id": "cover",
+            "text": "Check that coverage of `vwap` is 100%",
+            "why": "Coverage says the lines ran, not that the test can tell right from wrong."
+          },
+          {
+            "id": "read",
+            "text": "Read the test carefully",
+            "why": "Reading helps, but only a run against the buggy code shows that the test goes red."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A regression test must be seen failing on the bug.",
+        "generic": "Not quite right. You need to see this test go red on the old code."
+      },
+      "explain": {
+        "text": "Writing the test first gives this for free. When the fix came first, undo it briefly: the test must go red, then green again when the fix returns."
+      }
+    },
+    {
+      "id": "r3-first-path",
+      "difficulty": 3,
+      "skills": [
+        "pt-cases"
+      ],
+      "prose": "A buggy `max_drawdown` measures every fall from the **first** price instead of the running peak.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                100.0,
+                150.0,
+                120.0
+              ]
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Day",
+          "height": 200
+        },
+        "state": {
+          "caption": "One of the candidate paths"
+        }
+      },
+      "question": "Which hand-made path exposes it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "£100.00, £150.00, £120.00",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "£100.00, £80.00",
+            "why": "The peak is the first price, so both versions give 0.2."
+          },
+          {
+            "id": "up",
+            "text": "£100.00, £110.00",
+            "why": "No fall at all: both give 0."
+          },
+          {
+            "id": "vee",
+            "text": "£100.00, £60.00, £90.00",
+            "why": "The peak is still the first price, so both give 0.4."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Truth 0.2, from £150.00 to £120.00; the bug sees no fall below £100.00 and gives 0.",
+        "generic": "Not quite right. The bug matters only when the peak is not the first price."
+      },
+      "explain": {
+        "text": "The path must climb above its start before falling. £150.00 to £120.00 is a 20% drawdown, but the price never goes below £100.00, so the bug reports 0."
+      }
+    },
+    {
+      "id": "r3-costs",
+      "difficulty": 4,
+      "skills": [
+        "pt-cases"
+      ],
+      "prose": "A backtest's positions are 0, 1, 0, 1, 1, 0, 0, 1. Each change of position costs £2.50.",
+      "question": "What do costs take off the P&L, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "£",
+        "label": "Total costs",
+        "accept": "£12.50: five changes at £2.50.",
+        "wrong": [
+          {
+            "id": "held",
+            "value": 10,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "trips",
+            "value": 5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "four",
+            "value": 7.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Five changes of position: $5 \\times 2.50 = 12.50$.",
+        "generic": "Not quite right. Count every step where the position differs from the day before.",
+        "byKey": {
+          "held": "You charged the four days held. Costs come with changes of position.",
+          "trips": "You counted round trips. Each buy and each sell is a trade.",
+          "four": "You missed the last change, 0 to 1 on the final day. It costs too, though nothing is sold."
+        }
+      },
+      "explain": {
+        "text": "0→1, 1→0, 0→1, 1→0, 0→1: five trades. The last buy has no matching sell yet, but it is still a trade and still costs £2.50."
+      }
+    },
+    {
+      "id": "r3-coverage",
+      "difficulty": 2,
+      "skills": [
+        "pt-tools"
+      ],
+      "prose": "A coverage report for three functions.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Function",
+            "Statements",
+            "Missed"
+          ],
+          "rows": [
+            [
+              "load",
+              "8",
+              "0"
+            ],
+            [
+              "signal",
+              "5",
+              "5"
+            ],
+            [
+              "pnl",
+              "12",
+              "3"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Coverage of src/strategy.py"
+        }
+      },
+      "question": "What is the total cover, as a percentage?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 68,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "%",
+        "label": "Total cover",
+        "accept": "68%: 17 of 25 statements run.",
+        "wrong": [
+          {
+            "id": "average",
+            "value": 58.33,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "missed",
+            "value": 32,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$17/25 = 0.68$.",
+        "generic": "Not quite right. Add up statements across the functions.",
+        "byKey": {
+          "average": "You averaged 100%, 0% and 75%. The functions differ in size, so add statements: 17 of 25.",
+          "missed": "That is the share missed."
+        }
+      },
+      "explain": {
+        "text": "8 + 5 + 12 = 25 statements, of which 0 + 5 + 3 = 8 are missed. So 17 run: $17/25 = 0.68$."
+      }
+    },
+    {
+      "id": "r3-today",
+      "difficulty": 3,
+      "skills": [
+        "pt-design",
+        "pt-tools"
+      ],
+      "prose": "```python\ndef test_market_open():\n    assert is_trading_day(datetime.date.today())\n```\nIt passed all week. The workflow run on Saturday morning failed.",
+      "question": "What is the best fix?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Test fixed dates: `is_trading_day(datetime.date(2026, 10, 17))` is `False`, a Monday is `True`",
+            "correct": true
+          },
+          {
+            "id": "skip",
+            "text": "Skip the workflow at weekends",
+            "why": "That hides the problem. The test still depends on the day it runs."
+          },
+          {
+            "id": "ci",
+            "text": "GitHub's clock is wrong",
+            "why": "Saturday is not a trading day, so the function was right to return `False`."
+          },
+          {
+            "id": "retry",
+            "text": "Rerun the workflow on Monday",
+            "why": "It will pass on Monday and fail again next Saturday."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The date is the function's input, so the test should choose it.",
+        "generic": "Not quite right. Today's date is a hidden input that changes every day."
+      },
+      "explain": {
+        "text": "`date.today()` is input, like a data file. Hand the function fixed dates, a Saturday and a Monday, and the test means the same thing every day of the week."
+      }
+    },
+    {
+      "id": "r3-window",
+      "difficulty": 4,
+      "skills": [
+        "pt-cases",
+        "pt-design"
+      ],
+      "prose": "```python\ndef positions(closes):\n    return [0, 0, 0] + [\n        1 if closes[t - 1] > mean(closes[t - 2:t + 1]) else 0\n        for t in range(3, len(closes))]\n```\nThe position for day t earns the move from close t − 1 to close t.",
+      "question": "Where is the look-ahead?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The slice `closes[t - 2:t + 1]` includes `closes[t]`",
+            "correct": true
+          },
+          {
+            "id": "yesterday",
+            "text": "`closes[t - 1]` is in the future",
+            "why": "Close t − 1 is known when the position for day t is taken. That use is fine."
+          },
+          {
+            "id": "start",
+            "text": "Starting at `t = 3` skips days",
+            "why": "Starting late leaves early days flat. It wastes data but leaks nothing."
+          },
+          {
+            "id": "none",
+            "text": "There is none: `closes[t - 1]` is yesterday's close",
+            "why": "Look inside the mean. A slice ending at `t + 1` stops after index t."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A slice ending at `t + 1` includes index t: today's close.",
+        "generic": "Not quite right. Check the last index each slice reaches."
+      },
+      "explain": {
+        "text": "`closes[t - 2:t + 1]` is closes t − 2, t − 1 and t. Changing today's close moves the mean and can flip today's position. The honest window is `closes[t - 3:t]`."
+      }
+    }
+  ]
+}
