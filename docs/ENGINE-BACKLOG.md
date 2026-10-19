@@ -503,3 +503,11 @@ Raised later (limits level 1):
 175. `plane`: a per-function `holes: [x]` parameter (drawn as an open circle) instead of faking holes with `open: true` points or two pieces.
 176. `plane`: tap mode makes every non-drag point tappable; a per-point `tap: false` (or a `targets` list) so decorative points stay out of tap mode.
 177. Validator: the "ladder changes canvas kind" warning fires on table-to-plane ladders that are natural in limits; either downgrade it or add a table-and-plane `pair` pattern to the docs.
+
+Raised later (numpy-pandas level 3):
+
+178. Item prose: Markdown `- ` lists do not render in set items (show as literal dashes); route item prose through the same renderer as lesson prose.
+179. AUTHORING.md: note that fenced code blocks fit about 54 characters before they scroll sideways.
+180. `table` canvas: a `dim` state for rows (like the grid's), so a join explore can show a dropped row greyed rather than blanked.
+181. `series` markers: `{value}` labels round to the canvas `decimals`; allow a per-marker `decimals`.
+182. Worker: pandas warnings on stderr (`pct_change` with NaN in pandas 2.2) appear in the learner's test output; filter `FutureWarning` lines, or set `fill_method=None` guidance in AUTHORING.md.
