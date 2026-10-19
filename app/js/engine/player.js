@@ -130,7 +130,7 @@
     const el = Z.h(`<section class="lsn-step lsn-t-${Z.esc(type)}"></section>`);
     const add = (html) => { const n = typeof html === 'string' ? Z.h(html) : html; el.append(n); return n; };
     const rng = o.rng || rngFrom(hash((o.key || '') + JSON.stringify(spec.widget || {}).length));
-    let canvas = null, widget = null, cvHost = null, cbar = null, countEl = null, stepper = null;
+    let canvas = null, born = null, widget = null, cvHost = null, cbar = null, countEl = null, stepper = null;
 
     if (spec.title && type !== 'title') add(`<h2 class="t-h1 lsn-h">${G().inline(spec.title)}</h2>`);
     const proseSrc = spec.prose || (spec.kind === 'longform' ? spec.prompt : '');
@@ -152,6 +152,7 @@
       cvHost = add('<div class="lsn-canvas"></div>');
       try {
         canvas = Z.canvas ? Z.canvas.create(cvHost, spec.canvas, { mode, rng, reducedMotion: Z.reducedMotion() }) : null;
+        try { born = canvas && canvas.get ? JSON.parse(JSON.stringify(canvas.get() || {})) : null; } catch { born = null; } // item 115: the state as first drawn
         if (!Z.canvas) cvHost.append(Z.h(`<div class="cv cv-missing t-caption">Canvas "${Z.esc(spec.canvas.kind)}" is not available.</div>`));
       } catch (e) { console.error('Canvas ' + spec.canvas.kind + ' failed', e); canvas = null; cvHost.innerHTML = `<div class="cv cv-missing t-caption">Canvas "${Z.esc(spec.canvas.kind)}" could not be drawn.</div>`; }
       if (spec.canvas.controls && spec.canvas.controls.length) {
@@ -212,9 +213,10 @@
 
     /* Canvas states: initial (with the optional enter patch), reset, reveal, explanation */
     const initial = Object.assign({}, (spec.canvas && spec.canvas.state) || {}, (spec.canvas && spec.canvas.enter) || {});
-    const resetFor = (cur, init) => {
+    /* item 115: a key the author did not set goes back to what the canvas drew first (its own defaults), not to empty */
+    const resetFor = (cur, init, first) => {
       const patch = {};
-      Object.keys(cur || {}).forEach(k => { patch[k] = k in init ? init[k] : (Array.isArray(cur[k]) ? [] : cur[k] && typeof cur[k] === 'object' ? {} : null); });
+      Object.keys(cur || {}).forEach(k => { patch[k] = k in init ? init[k] : first && k in first ? first[k] : (Array.isArray(cur[k]) ? [] : cur[k] && typeof cur[k] === 'object' ? {} : null); });
       return Object.assign(patch, init);
     };
     const resetCanvas = () => {
@@ -222,8 +224,9 @@
       let cur = {}; try { cur = canvas.get ? canvas.get() || {} : {}; } catch { cur = {}; }
       /* a pair resets each side to its own authored state */
       const patch = canvas.kind === 'pair'
-        ? { left: resetFor(cur.left, Object.assign({}, (spec.canvas.left || {}).state, initial.left)), right: resetFor(cur.right, Object.assign({}, (spec.canvas.right || {}).state, initial.right)), caption: initial.caption || '' }
-        : resetFor(cur, initial);
+        ? { left: resetFor(cur.left, Object.assign({}, (spec.canvas.left || {}).state, initial.left), born && born.left), right: resetFor(cur.right, Object.assign({}, (spec.canvas.right || {}).state, initial.right), born && born.right), caption: initial.caption || '' }
+        : resetFor(cur, initial, born);
+      if (canvas.clearTrace) try { canvas.clearTrace(); } catch { /* no trails */ }
       try { canvas.set(patch); } catch (e) { console.error(e); }
     };
     let demoAt = 0;

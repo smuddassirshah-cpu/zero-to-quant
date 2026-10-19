@@ -911,7 +911,8 @@
           else if (p.drag && R.mode === 'sketch') o.append(svg('rect', { x: x - 6, y: y - 6, width: 12, height: 12, rx: 2, class: 'cvb-hd-sq' })); // item 193: not mistaken for a sketch handle
           else if (p.drag) o.append(svg('circle', { cx: x, cy: y, r: 10, class: 'cvb-hd-o' }), svg('circle', { cx: x, cy: y, r: 7, class: 'cvb-hd' }));
           else o.append(svg('circle', { cx: x, cy: y, r: R.mode === 'tap' && p.tap !== false ? 6 : 4.5, class: 'cvb-dot' + (p.open ? ' open' : '') + (R.mode === 'tap' && p.tap !== false ? ' cv-body' : '') }));
-          if (R.mode === 'tap' && !p.drag && p.tap !== false) { // item 176: tap: false keeps a decorative point out of tap mode o.append(svg('circle', { cx: x, cy: y, r: 16, class: 'cvb-tapbox', fill: 'transparent' })); R.tappable(o, p.id, p.ariaLabel || `Point ${p.label || p.id} at (${K.fmt(p.x, 2)}, ${K.fmt(p.y, 2)})`); }
+          /* item 176: tap: false keeps a decorative point out of tap mode */
+          if (R.mode === 'tap' && !p.drag && p.tap !== false) { o.append(svg('circle', { cx: x, cy: y, r: 16, class: 'cvb-tapbox', fill: 'transparent' })); R.tappable(o, p.id, p.ariaLabel || `Point ${p.label || p.id} at (${K.fmt(p.x, 2)}, ${K.fmt(p.y, 2)})`); }
           over.append(o);
           if (p.label) {
             const pos = p.labelPos || 'ne', dx = pos.includes('e') ? 12 : pos.includes('w') ? -12 : 0, dy = pos.includes('n') ? -13 : pos.includes('s') ? 14 : 0;

@@ -546,3 +546,9 @@ Raised later (integrals level 2):
 200. `expression` widget: `upToConstant: true` (grade antiderivatives by comparing derivatives, or strip an added constant symbol), so `+C`, `+c` and `+K` need not be listed in `accept`.
 201. `order` widget: `same` groups of interchangeable lines (as `place` has), so independent derivation steps need not be merged to force one order.
 202. `derive`: a numeric `integral(expr, a, b)` function, and let an `area` item's computed `{value}` feed captions and points.
+
+Raised later (integrals level 3):
+
+203. `plane`: a function's `domain` should accept parameter expressions (stop a line at $u = b$ as a slider moves).
+204. `plane`: keep x-axis tick labels clear of a curve running just below $y=0$ (nudge labels below or add a halo).
+205. `playthrough.mjs`: an option to also screenshot each screen's explanation state after a wrong and a right answer (see 199).
