@@ -1,0 +1,1172 @@
+{
+  "id": "l7-covariance-psd",
+  "course": "eigen",
+  "title": "Why a covariance matrix is positive semidefinite",
+  "minutes": 14,
+  "objectives": [
+    "Show that any covariance matrix is positive semidefinite.",
+    "Build $\\boldsymbol{\\Sigma}$ from returns and read portfolio variances from it."
+  ],
+  "skills": [
+    "eg-pd"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A hedged position",
+      "prose": "Two stocks' daily returns, in %, over five days. You buy £100 of A and sell short £100 of B. Each day your P&L in £ is $r_A - r_B$.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "A",
+              "label": "A",
+              "values": [
+                1.0,
+                -1.0,
+                2.0,
+                0.0,
+                3.0
+              ]
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "values": [
+                2.0,
+                0.0,
+                1.0,
+                -1.0,
+                3.0
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "baseline": 0,
+          "yLabel": "Return (%)",
+          "xLabel": "Day",
+          "height": 220
+        },
+        "state": {}
+      },
+      "question": "Fill in your daily P&L.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "A (%)",
+          "B (%)",
+          "P&L (£)"
+        ],
+        "rows": [
+          [
+            "1",
+            "1",
+            "2",
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "2",
+            "-1",
+            "0",
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "3",
+            "2",
+            "1",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "4",
+            "0",
+            "-1",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "5",
+            "3",
+            "3",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract B's return from A's on each day."
+        },
+        {
+          "rung": "point",
+          "text": "Day 1: $1 - 2$. A short position gains when B falls.",
+          "highlight": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The P&L is $-1, -1, 1, 1, 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "$-1, -1, 1, 1, 0$: the two stocks mostly move together, so the P&L is small.",
+        "generic": "Not quite right. On each day take A's return minus B's.",
+        "byKey": {
+          "r0c3": "Day 1 is $1 - 2 = -1$: B rose more than A, and you are short B.",
+          "r1c3": "Day 2 is $-1 - 0 = -1$.",
+          "r2c3": "Day 3 is $2 - 1 = 1$.",
+          "r3c3": "Day 4 is $0 - (-1) = 1$: B fell, and the short gains.",
+          "r4c3": "Day 5 is $3 - 3 = 0$: the moves cancel."
+        }
+      },
+      "explain": {
+        "text": "Your P&L was $-1, -1, 1, 1, 0$ pounds. Each stock alone swung from $-1\\%$ to $3\\%$. The hedge cancels most of the common move, leaving a much quieter series."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "How much to short",
+      "prose": "Now short £$100k$ of B instead, so each day's P&L is $r_A - k\\,r_B$. The caption gives the variance of the P&L column: subtract its mean, square, and average over the 5 days. Slide $k$ and try to make the variance as small as you can.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "A (%)",
+            "B (%)",
+            "P&L (£)"
+          ],
+          "rows": [
+            [
+              "1",
+              "1",
+              "2",
+              ""
+            ],
+            [
+              "2",
+              "-1",
+              "0",
+              ""
+            ],
+            [
+              "3",
+              "2",
+              "1",
+              ""
+            ],
+            [
+              "4",
+              "0",
+              "-1",
+              ""
+            ],
+            [
+              "5",
+              "3",
+              "3",
+              ""
+            ]
+          ]
+        },
+        "state": {
+          "params": {
+            "k": 1
+          }
+        },
+        "derive": {
+          "values.r0c3": "fixed(1 - k*2, 1)",
+          "values.r1c3": "fixed(-1 - k*0, 1)",
+          "values.r2c3": "fixed(2 - k*1, 1)",
+          "values.r3c3": "fixed(0 - k*-1, 1)",
+          "values.r4c3": "fixed(3 - k*3, 1)",
+          "caption": "$k$ = {{fixed(k, 1)}}: variance of the P&L = {{fixed(2 - 3.2*k + 2*k*k, 2)}} £²"
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 2,
+            "step": 0.1,
+            "start": 1,
+            "label": "$k$",
+            "decimals": 1
+          }
+        ]
+      },
+      "question": "What is the smallest variance you can reach?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "min",
+            "text": "About 0.72, at $k = 0.8$",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0, at $k = 1$: the stocks cancel",
+            "why": "You expected a full hedge to remove all risk. At $k = 1$ the caption reads 0.80: the stocks do not move in lockstep."
+          },
+          {
+            "id": "one",
+            "text": "0.80, at $k = 1$",
+            "why": "You stopped at the one-for-one hedge. Slide a little lower: at $k = 0.8$ the variance is 0.72."
+          },
+          {
+            "id": "negative",
+            "text": "It goes negative for large $k$",
+            "why": "You may have expected a short to subtract variance without limit. Slide to 2: the variance climbs back to 3.60."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide $k$ down from 1 a step at a time and watch the caption."
+        }
+      ],
+      "feedback": {
+        "correct": "0.72 at $k = 0.8$, and never below.",
+        "generic": "Not quite right. Slide $k$ across its whole range and note the lowest variance."
+      },
+      "explain": {
+        "text": "The variance traced $2 - 3.2k + 2k^2$, lowest at $k = 0.8$ with 0.72. It never went below zero, whatever you shorted. This lesson shows why no portfolio can.",
+        "canvas": {
+          "params": {
+            "k": 0.8
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The covariance matrix",
+      "prose": "Subtract each stock's mean return, 1%. These **demeaned** returns are the columns of a $5 \\times 2$ matrix $\\mathbf{R}$. The **covariance matrix** is $\\boldsymbol{\\Sigma} = \\tfrac{1}{n}\\mathbf{R}^T\\mathbf{R}$, with $n = 5$: entry $(i, j)$ is column $i$ dotted with column $j$, over 5.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "A, demeaned",
+            "B, demeaned"
+          ],
+          "rows": [
+            [
+              "1",
+              "0",
+              "1"
+            ],
+            [
+              "2",
+              "-2",
+              "-1"
+            ],
+            [
+              "3",
+              "1",
+              "0"
+            ],
+            [
+              "4",
+              "-1",
+              "-2"
+            ],
+            [
+              "5",
+              "2",
+              "2"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in $\\boldsymbol{\\Sigma}$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "A",
+          "B"
+        ],
+        "rows": [
+          [
+            "A",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 1.6,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "B",
+            {
+              "edit": true,
+              "answer": 1.6,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The diagonal entries are each stock's variance: its squared demeaned returns, averaged."
+        },
+        {
+          "rung": "point",
+          "text": "Off the diagonal, multiply A and B day by day, add, and divide by 5.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac{1}{5}(0 + 4 + 1 + 1 + 4) = 2$ for each variance; $\\tfrac{1}{5}(0 + 2 + 0 + 2 + 4) = 1.6$ for the covariance."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\boldsymbol{\\Sigma} = \\begin{pmatrix}2&1.6\\\\1.6&2\\end{pmatrix}$, in $\\%^2$.",
+        "generic": "Not quite right. Dot the columns of $\\mathbf{R}$ with each other and divide by 5.",
+        "byKey": {
+          "r0c1": "Your variance of A is off: $\\tfrac{1}{5}(0^2 + 2^2 + 1^2 + 1^2 + 2^2) = 2$.",
+          "r1c2": "Your variance of B is off: $\\tfrac{1}{5}(1^2 + 1^2 + 0^2 + 2^2 + 2^2) = 2$.",
+          "r0c2": "Your covariance is off: $\\tfrac{1}{5}(0 \\cdot 1 + (-2)(-1) + 1 \\cdot 0 + (-1)(-2) + 2 \\cdot 2) = 1.6$.",
+          "r1c1": "Your covariance is off: $\\tfrac{1}{5}(0 \\cdot 1 + (-2)(-1) + 1 \\cdot 0 + (-1)(-2) + 2 \\cdot 2) = 1.6$."
+        }
+      },
+      "explain": {
+        "text": "Both variances are 2 and the covariance is 1.6, so the correlation is $1.6/2 = 0.8$. $\\boldsymbol{\\Sigma}$ is symmetric because dotting column A with B equals dotting B with A. We divide by $n$ here; dividing by $n - 1$ rescales $\\boldsymbol{\\Sigma}$ without changing any sign.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Variance from the matrix",
+      "prose": "A portfolio with weights $\\mathbf{w}$ has demeaned daily returns $\\mathbf{R}\\mathbf{w}$. Its variance works out as $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$. Your first hedge, long A and short B, is $\\mathbf{w} = (1, -1)$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$\\boldsymbol{\\Sigma}$",
+            "A",
+            "B"
+          ],
+          "rows": [
+            [
+              "A",
+              "2",
+              "1.6"
+            ],
+            [
+              "B",
+              "1.6",
+              "2"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ for $\\mathbf{w} = (1, -1)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "w transpose Sigma w",
+        "accept": "0.8: $2 + 2 - 2 \\times 1.6$.",
+        "wrong": [
+          {
+            "id": "once",
+            "value": 2.4,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "plus",
+            "value": 7.2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "no-cov",
+            "value": 4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = w_1^2\\sigma_A^2 + 2w_1w_2\\sigma_{AB} + w_2^2\\sigma_B^2$."
+        },
+        {
+          "rung": "point",
+          "text": "Here $w_1w_2 = -1$, so the covariance term subtracts.",
+          "highlight": [
+            "r0c2",
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 + 2 - 2(1.6) = 0.8$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.8, the same variance you saw at $k = 1$, now from the matrix alone.",
+        "generic": "Not quite right. Expand $w_1^2\\sigma_A^2 + 2w_1w_2\\sigma_{AB} + w_2^2\\sigma_B^2$.",
+        "byKey": {
+          "once": "You subtracted the covariance once. It sits in two corners of $\\boldsymbol{\\Sigma}$, so it counts twice.",
+          "plus": "You added the covariance terms. With $w_2 = -1$, the product $w_1w_2$ is negative.",
+          "no-cov": "You added the two variances and ignored the covariance. The stocks move together, which the hedge exploits."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = 2 + 2 - 3.2 = 0.8$. That matches the variance of the P&L column, $\\tfrac{1}{5}(1 + 1 + 1 + 1 + 0) = 0.8$. The matrix holds every portfolio's variance at once.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c1",
+              "r0c2",
+              "r1c1",
+              "r1c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Perpendicular portfolios",
+      "prose": "$\\boldsymbol{\\Sigma}$ is symmetric, so its unit eigenvectors are perpendicular: $\\mathbf{q}_1 = \\tfrac{1}{\\sqrt{2}}(1, 1)$ with eigenvalue 3.6, and $\\mathbf{q}_2 = \\tfrac{1}{\\sqrt{2}}(1, -1)$ with eigenvalue 0.4. Treat $\\mathbf{q}_2$ as a portfolio.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$\\boldsymbol{\\Sigma}$",
+            "A",
+            "B"
+          ],
+          "rows": [
+            [
+              "A",
+              "2",
+              "1.6"
+            ],
+            [
+              "B",
+              "1.6",
+              "2"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the variance of the portfolio $\\mathbf{q}_2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Variance of q2",
+        "accept": "0.4: $\\mathbf{q}_2^T\\boldsymbol{\\Sigma}\\mathbf{q}_2 = \\lambda_2\\,\\mathbf{q}_2^T\\mathbf{q}_2 = 0.4$.",
+        "wrong": [
+          {
+            "id": "unscaled",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "root",
+            "value": 0.566,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "big",
+            "value": 3.6,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\mathbf{q}_2$ is $(1, -1)$ scaled by $\\tfrac{1}{\\sqrt{2}}$. How does scaling $\\mathbf{w}$ change $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$?"
+        },
+        {
+          "rung": "point",
+          "text": "Scaling $\\mathbf{w}$ by $c$ scales the variance by $c^2$.",
+          "highlight": [
+            "r0c1",
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac{1}{2} \\times 0.8 = 0.4$, which is $\\lambda_2$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.4: the eigenvalue is the variance along its eigenvector.",
+        "generic": "Not quite right. $\\mathbf{q}_2$ is half as long, squared, as $(1, -1)$.",
+        "byKey": {
+          "unscaled": "That is the variance of $(1, -1)$. $\\mathbf{q}_2$ has length 1, so scale by $(\\tfrac{1}{\\sqrt{2}})^2 = \\tfrac{1}{2}$.",
+          "root": "You scaled the variance by $\\tfrac{1}{\\sqrt{2}}$. Variance scales by the square: $\\tfrac{1}{2}$.",
+          "big": "That is $\\lambda_1$, the variance of $\\mathbf{q}_1 = \\tfrac{1}{\\sqrt{2}}(1, 1)$. The hedge $\\mathbf{q}_2$ is the quiet one."
+        }
+      },
+      "explain": {
+        "text": "Variance scales with the square of the weights: $\\tfrac{1}{2} \\times 0.8 = 0.4 = \\lambda_2$. Likewise $\\mathbf{q}_1$, the equal-weight portfolio, has variance 3.6. The eigenvalues are the variances along perpendicular portfolios, and they add to $2 + 2 = 4$.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c1",
+              "r1c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "More assets than days",
+      "prose": "Three assets, only two days. After demeaning, day 2 is exactly minus day 1, since each column must sum to 0. So $\\boldsymbol{\\Sigma} = \\tfrac{1}{2}\\mathbf{R}^T\\mathbf{R}$ is $3 \\times 3$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "A",
+            "B",
+            "C"
+          ],
+          "rows": [
+            [
+              "Day 1",
+              "−1",
+              "2",
+              "−1"
+            ],
+            [
+              "Day 2",
+              "1",
+              "−2",
+              "1"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the rank of $\\boldsymbol{\\Sigma}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Rank of Sigma",
+        "accept": "1: $\\mathbf{R}$ has one independent row, so $\\mathbf{R}^T\\mathbf{R}$ has rank 1.",
+        "wrong": [
+          {
+            "id": "days",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "assets",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The rank of $\\mathbf{R}^T\\mathbf{R}$ equals the rank of $\\mathbf{R}$."
+        },
+        {
+          "rung": "point",
+          "text": "How many independent rows does $\\mathbf{R}$ have?",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 2 is $-1$ times row 1, so $\\mathbf{R}$, and so $\\boldsymbol{\\Sigma}$, has rank 1."
+        }
+      ],
+      "feedback": {
+        "correct": "Rank 1: two days leave one independent row after demeaning.",
+        "generic": "Not quite right. Count the independent rows of $\\mathbf{R}$.",
+        "byKey": {
+          "days": "You counted two days. Demeaning ties them together: day 2 is minus day 1.",
+          "assets": "You counted three assets. The rank cannot exceed the number of independent rows of $\\mathbf{R}$."
+        }
+      },
+      "explain": {
+        "text": "With $n$ days the demeaned rows sum to zero, so $\\mathbf{R}$ has rank at most $n - 1$. Here that is 1, and $\\boldsymbol{\\Sigma}$ has two zero eigenvalues. Portfolios such as $(2, 1, 0)$ have $\\mathbf{R}\\mathbf{w} = \\mathbf{0}$: zero variance in this sample.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A correlation of 1.2",
+      "prose": "A colleague's spreadsheet reports this covariance matrix for two stocks, in $\\%^2$. It is symmetric and both variances are positive. The implied correlation is $1.2 / \\sqrt{1 \\times 1} = 1.2$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "T",
+              "rows": [
+                [
+                  1,
+                  1.2
+                ],
+                [
+                  1.2,
+                  1
+                ]
+              ],
+              "label": "$\\boldsymbol{\\Sigma}_?$"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Could this matrix come from any data?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: it is symmetric with positive variances",
+            "why": "You checked the shape and the diagonal. Test a portfolio: $(1, -1)$ gets variance $1 + 1 - 2.4 = -0.4$."
+          },
+          {
+            "id": "no",
+            "text": "No: the portfolio $(1, -1)$ would have variance $-0.4$",
+            "correct": true
+          },
+          {
+            "id": "rare",
+            "text": "Yes, for very strongly linked stocks",
+            "why": "You read 1.2 as extra-strong correlation. A correlation is capped at 1; past that a variance goes negative."
+          },
+          {
+            "id": "zero",
+            "text": "No: the portfolio $(1, -1)$ would have variance 0",
+            "why": "You may have used a covariance of 1, the most these variances allow. With 1.2 the variance is $1 + 1 - 2 \\times 1.2 = -0.4$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every portfolio's variance must be at least 0. Try a hedge."
+        },
+        {
+          "rung": "point",
+          "text": "Compute $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ for $\\mathbf{w} = (1, -1)$.",
+          "highlight": [
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 1 - 2(1.2) = -0.4 < 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "A negative variance is impossible, so no data can produce this matrix.",
+        "generic": "Not quite right. Compute the variance of the portfolio $(1, -1)$.",
+        "byKey": {
+          "yes": "You treated symmetric with positive variances as enough. It is not: $\\mathbf{w} = (1, -1)$ gives $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = -0.4$."
+        }
+      },
+      "explain": {
+        "text": "The hedge $(1, -1)$ gives $1 + 1 - 2.4 = -0.4$, a negative variance. Equivalently, $\\det = 1 - 1.44 < 0$, so one eigenvalue is negative: they are 2.2 and $-0.2$. A matrix that is not symmetric fails too, since $\\tfrac{1}{n}\\mathbf{R}^T\\mathbf{R}$ always is.",
+        "canvas": {
+          "highlight": {
+            "T": {
+              "cells": [
+                [
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why no variance is negative",
+      "prose": "Take any demeaned returns $\\mathbf{R}$, $n$ days by $m$ assets, and any weights $\\mathbf{w}$. Show that $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} \\ge 0$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "$\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = \\tfrac{1}{n}\\mathbf{w}^T\\mathbf{R}^T\\mathbf{R}\\mathbf{w}$, since $\\boldsymbol{\\Sigma} = \\tfrac{1}{n}\\mathbf{R}^T\\mathbf{R}$"
+          },
+          {
+            "id": "transpose",
+            "text": "$= \\tfrac{1}{n}(\\mathbf{R}\\mathbf{w})^T(\\mathbf{R}\\mathbf{w})$, since $\\mathbf{w}^T\\mathbf{R}^T = (\\mathbf{R}\\mathbf{w})^T$"
+          },
+          {
+            "id": "length",
+            "text": "$= \\tfrac{1}{n}|\\mathbf{R}\\mathbf{w}|^2$, a vector dotted with itself"
+          },
+          {
+            "id": "days",
+            "text": "$= \\tfrac{1}{n}\\sum_t p_t^2$, where $p_t$ is the portfolio's demeaned return on day $t$"
+          },
+          {
+            "id": "sign",
+            "text": "$\\ge 0$, since a sum of squares is never negative"
+          }
+        ],
+        "answer": [
+          "def",
+          "transpose",
+          "length",
+          "days",
+          "sign"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the definition of $\\boldsymbol{\\Sigma}$."
+        },
+        {
+          "rung": "point",
+          "text": "Group $\\mathbf{w}^T\\mathbf{R}^T$ as one transpose."
+        },
+        {
+          "rung": "step",
+          "text": "Definition, transpose, length, day by day, sign."
+        }
+      ],
+      "feedback": {
+        "correct": "Every portfolio variance is an average of squares.",
+        "generic": "Not quite right. Substitute $\\boldsymbol{\\Sigma}$, then group the product into $(\\mathbf{R}\\mathbf{w})^T(\\mathbf{R}\\mathbf{w})$.",
+        "byKey": {
+          "length": "The squared length needs $(\\mathbf{R}\\mathbf{w})^T(\\mathbf{R}\\mathbf{w})$ on the page first. Put the transpose line before it.",
+          "sign": "The sign is the conclusion. It comes after the sum of squares is written out."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{R}\\mathbf{w}$ is the portfolio's demeaned P&L day by day, so $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ is its variance, an average of squares. Equality needs $\\mathbf{R}\\mathbf{w} = \\mathbf{0}$: a portfolio whose return equals its mean every day."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Positive semidefinite, always",
+      "prose": "For every $\\mathbf{w}$, $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = \\tfrac{1}{n}|\\mathbf{R}\\mathbf{w}|^2 \\ge 0$. So every covariance matrix is **positive semidefinite**, and its eigenvalues, the variances along perpendicular portfolios, are $\\ge 0$. A zero eigenvalue means $\\mathbf{R}\\mathbf{w} = \\mathbf{0}$: a portfolio whose return never moves.",
+      "question": "Fund C always returns exactly A's return plus B's. Which portfolio has zero variance?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "hedge",
+            "text": "$\\mathbf{w} = (1, 1, -1)$",
+            "correct": true
+          },
+          {
+            "id": "all-long",
+            "text": "$\\mathbf{w} = (1, 1, 1)$",
+            "why": "You added C instead of netting it out. That portfolio returns $2(r_A + r_B)$, which moves."
+          },
+          {
+            "id": "pair",
+            "text": "$\\mathbf{w} = (1, -1, 0)$",
+            "why": "That nets A against B, but they are different stocks. C is the redundant one."
+          },
+          {
+            "id": "none",
+            "text": "None: every portfolio has some variance",
+            "why": "You missed the redundancy. Long A and B and short C returns $r_A + r_B - r_C = 0$ every day."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look for weights that make the daily return $w_1r_A + w_2r_B + w_3r_C$ zero every day."
+        }
+      ],
+      "feedback": {
+        "correct": "$r_A + r_B - r_C = 0$ every day, so the variance is 0.",
+        "generic": "Not quite right. Choose weights that cancel C against A and B."
+      },
+      "explain": {
+        "text": "With $r_C = r_A + r_B$, the portfolio $(1, 1, -1)$ returns 0 every day. So $\\mathbf{R}(1, 1, -1) = \\mathbf{0}$ and $\\boldsymbol{\\Sigma}$ has eigenvalue 0 along it. One asset is redundant, and $\\boldsymbol{\\Sigma}$ is singular."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A big universe, a short history",
+      "prose": "A quant estimates the covariance matrix of 500 stocks from 250 days of returns, demeaning each stock first. $\\boldsymbol{\\Sigma}$ is $500 \\times 500$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Count"
+          ],
+          "rows": [
+            [
+              "Stocks (columns of $\\mathbf{R}$)",
+              "500"
+            ],
+            [
+              "Days (rows of $\\mathbf{R}$)",
+              "250"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the largest rank $\\boldsymbol{\\Sigma}$ can have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 249,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Largest possible rank",
+        "accept": "249: demeaning leaves at most $250 - 1$ independent rows.",
+        "wrong": [
+          {
+            "id": "days",
+            "value": 250,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "stocks",
+            "value": 500,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The rank of $\\boldsymbol{\\Sigma}$ is the rank of $\\mathbf{R}$, at most its number of independent rows."
+        },
+        {
+          "rung": "point",
+          "text": "Demeaning makes every column of $\\mathbf{R}$ sum to 0. What does that do to the rows?",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The rows sum to the zero vector, so at most $250 - 1 = 249$ are independent."
+        }
+      ],
+      "feedback": {
+        "correct": "249, so at least 251 eigenvalues of $\\boldsymbol{\\Sigma}$ are 0.",
+        "generic": "Not quite right. The rank is limited by the days, less one for demeaning.",
+        "byKey": {
+          "days": "You counted the days. Demeaning makes the rows sum to zero, which costs one: 249.",
+          "stocks": "You counted the stocks. With only 250 days, $\\mathbf{R}$ cannot have 500 independent columns."
+        }
+      },
+      "explain": {
+        "text": "Rank at most 249 leaves at least 251 zero eigenvalues. Each is a portfolio with zero variance in the sample, though its real risk is not zero. A minimum-variance optimiser will find them, which is why desks shrink $\\boldsymbol{\\Sigma}$ or use factor models."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "For demeaned returns $\\mathbf{R}$, one column per asset, $\\boldsymbol{\\Sigma} = \\tfrac{1}{n}\\mathbf{R}^T\\mathbf{R}$: variances on the diagonal, covariances off it.",
+      "A portfolio's variance is $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = \\tfrac{1}{n}|\\mathbf{R}\\mathbf{w}|^2 \\ge 0$, so $\\boldsymbol{\\Sigma}$ is positive semidefinite and its eigenvalues are $\\ge 0$.",
+      "Zero variance means $\\mathbf{R}\\mathbf{w} = \\mathbf{0}$: a redundant asset. With more assets than days, $\\boldsymbol{\\Sigma}$ is always singular."
+    ],
+    "formula": {
+      "name": "Portfolio variance",
+      "tex": "\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = \\tfrac{1}{n}|\\mathbf{R}\\mathbf{w}|^2 \\ge 0",
+      "note": "$\\mathbf{R}\\mathbf{w}$ is the portfolio's demeaned return, day by day."
+    },
+    "trap": "Symmetric with positive variances is not enough: a correlation of 1.2 gives $(1, -1)$ the variance $-0.4$, so no data can produce it."
+  },
+  "quiz": [
+    {
+      "id": "q-fifty-fifty",
+      "difficulty": 2,
+      "prose": "Two assets have $\\boldsymbol{\\Sigma} = \\begin{pmatrix}4&-1\\\\-1&1\\end{pmatrix}$, in $\\%^2$.",
+      "question": "What is the variance of the portfolio $\\mathbf{w} = (0.5, 0.5)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Portfolio variance",
+        "accept": "0.75: $0.25 \\times 4 + 2 \\times 0.25 \\times (-1) + 0.25 \\times 1$.",
+        "wrong": [
+          {
+            "id": "no-cov",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "once",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 0.5 + 0.25 = 0.75$.",
+        "generic": "Not quite right. Expand $w_1^2\\sigma_A^2 + 2w_1w_2\\sigma_{AB} + w_2^2\\sigma_B^2$.",
+        "byKey": {
+          "no-cov": "You left out the covariance. Here it is negative, which lowers the variance.",
+          "once": "You counted the covariance once. It appears twice in $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = 0.25(4) + 2(0.25)(-1) + 0.25(1) = 1 - 0.5 + 0.25 = 0.75$. The negative covariance diversifies: the mix is quieter than A alone."
+      }
+    },
+    {
+      "id": "q-valid",
+      "difficulty": 2,
+      "prose": "Four matrices from four spreadsheets, in $\\%^2$.",
+      "question": "Which one could be a covariance matrix?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "$\\begin{pmatrix}4&2\\\\2&1\\end{pmatrix}$",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "$\\begin{pmatrix}4&3\\\\3&1\\end{pmatrix}$",
+            "why": "You checked symmetry only. The correlation is $3/2 = 1.5$, and $\\mathbf{w} = (1, -2)$ gets $4 - 12 + 4 = -4$."
+          },
+          {
+            "id": "asym",
+            "text": "$\\begin{pmatrix}4&2\\\\1&1\\end{pmatrix}$",
+            "why": "You checked the diagonal only. $\\tfrac{1}{n}\\mathbf{R}^T\\mathbf{R}$ is always symmetric, and this is not."
+          },
+          {
+            "id": "negvar",
+            "text": "$\\begin{pmatrix}-1&0\\\\0&2\\end{pmatrix}$",
+            "why": "You may have read the zeros as harmless. A variance on the diagonal cannot be $-1$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Symmetric, and $\\det = 4 - 4 = 0$: semidefinite, so it is allowed.",
+        "generic": "Not quite right. Check symmetry, then that no portfolio gets a negative variance."
+      },
+      "explain": {
+        "text": "$\\begin{pmatrix}4&2\\\\2&1\\end{pmatrix}$ has eigenvalues 5 and 0: positive semidefinite. It describes two perfectly correlated assets, with B's return half of A's. The portfolio $(1, -2)$ has variance exactly 0."
+      }
+    },
+    {
+      "id": "q-rank",
+      "difficulty": 3,
+      "prose": "You estimate $\\boldsymbol{\\Sigma}$ for 10 assets from 3 days of returns, demeaning each asset first.",
+      "question": "What is the largest rank $\\boldsymbol{\\Sigma}$ can have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Largest possible rank",
+        "accept": "2: three days leave at most $3 - 1$ independent demeaned rows.",
+        "wrong": [
+          {
+            "id": "days",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "assets",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At most $3 - 1 = 2$.",
+        "generic": "Not quite right. Count independent rows of the demeaned $\\mathbf{R}$.",
+        "byKey": {
+          "days": "You counted the days. Demeaning makes the three rows sum to zero, so only two are independent.",
+          "assets": "You counted the assets. Three days cannot give ten independent directions."
+        }
+      },
+      "explain": {
+        "text": "Demeaned rows sum to the zero vector, so 3 days give at most 2 independent rows. The $10 \\times 10$ matrix $\\boldsymbol{\\Sigma}$ has rank at most 2, and at least 8 zero eigenvalues."
+      }
+    },
+    {
+      "id": "q-direct",
+      "difficulty": 3,
+      "prose": "A portfolio returned $2\\%$, $-1\\%$, $0\\%$ and $3\\%$ over four days. Its weights $\\mathbf{w}$ and the assets' $\\boldsymbol{\\Sigma}$ come from the same four days, dividing by $n = 4$.",
+      "question": "What value of $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ should you get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "w transpose Sigma w",
+        "accept": "2.5: mean 1, squared deviations $1 + 4 + 1 + 4 = 10$, over 4.",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 3.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "n-minus-1",
+            "value": 3.333,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{10}{4} = 2.5$, the variance of the series itself.",
+        "generic": "Not quite right. Demean the four returns, square, and average over 4.",
+        "byKey": {
+          "raw": "You squared the raw returns. Subtract the mean, 1, first.",
+          "n-minus-1": "You divided by $n - 1 = 3$. This $\\boldsymbol{\\Sigma}$ divides by $n = 4$, so the match needs the same."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ is the variance of the portfolio's own return series. The mean is 1, the deviations are $1, -2, -1, 2$, and $\\tfrac{1}{4}(1 + 4 + 1 + 4) = 2.5$."
+      }
+    }
+  ]
+}
