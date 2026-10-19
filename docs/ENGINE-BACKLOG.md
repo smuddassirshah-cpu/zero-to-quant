@@ -724,3 +724,7 @@ Raised later (eigen level 1):
 262. `vectors`: `span` should allow two or more lines at once (several eigen-lines as bands); a plain line or segment without an arrowhead; a drag constraint to a line (same as 227, 254).
 263. `bars`: value labels for negative or near-zero bars sit on the category label at the baseline; offset them.
 264. `matrix`: operators between matrices accept KaTeX.
+
+Raised later (counting-chance level 1):
+
+265. `grid`: the default shade colour (slot 1) is the same blue as `selected`, so a pre-shaded event on a tap screen needs an explicit `colour`; pick a distinct default and document it.

@@ -1,0 +1,1372 @@
+{
+  "id": "l8-base-rates",
+  "course": "conditional",
+  "title": "Base rates",
+  "minutes": 13,
+  "objectives": [
+    "See how a rare condition makes most positive tests false",
+    "Compute $P(\\text{condition} \\mid +)$ from a base rate and two test rates",
+    "Explain why the same test means different things in different groups"
+  ],
+  "skills": [
+    "bayes",
+    "cond-traps"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "A condition affects 1 in 100 people. A test spots 90% of cases, and wrongly flags 5% of healthy people. Your test comes back positive.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Person",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Condition",
+                  "p": "0.01"
+                },
+                {
+                  "id": "w",
+                  "label": "Healthy",
+                  "p": "0.99"
+                }
+              ]
+            },
+            {
+              "label": "Test",
+              "branches": [
+                {
+                  "id": "p",
+                  "label": "Positive",
+                  "p": {
+                    "i": "0.9",
+                    "w": "0.05"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "Negative",
+                  "p": {
+                    "i": "0.1",
+                    "w": "0.95"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "i-p": "0.009",
+            "i-n": "0.001",
+            "w-p": "0.0495",
+            "w-n": "0.9405"
+          }
+        },
+        "state": {
+          "values": false
+        }
+      },
+      "question": "Roughly how likely is it that you have the condition?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "hit",
+            "text": "About 90%",
+            "why": "You read the test's hit rate as your chance. That turns the condition around."
+          },
+          {
+            "id": "half",
+            "text": "About 50%",
+            "why": "You split the difference between the test and the base rate. Compare the two paths that end in a positive."
+          },
+          {
+            "id": "right",
+            "text": "About 15%",
+            "correct": true
+          },
+          {
+            "id": "prior",
+            "text": "About 1%",
+            "why": "That is the chance before the test. A positive result should raise it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which two paths end in a positive test?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare these two paths. Which is bigger?",
+          "highlight": [
+            "i-p",
+            "w-p"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Condition and positive: $0.01 \\times 0.9 = 0.009$. Healthy and positive: $0.99 \\times 0.05 = 0.0495$."
+        }
+      ],
+      "feedback": {
+        "correct": "Most positives come from healthy people.",
+        "generic": "Not quite right. Compare the two paths that end in a positive."
+      },
+      "explain": {
+        "text": "Condition and positive is $0.01 \\times 0.9 = 0.009$. Healthy and positive is $0.99 \\times 0.05 = 0.0495$, over five times bigger. So only about 15% of positives have the condition.",
+        "canvas": {
+          "values": true,
+          "highlight": [
+            "i-p",
+            "w-p"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Keep the same test and change how common the condition is. The left bar is the chance before the test; the right bar is the chance after a positive.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "prior",
+              "label": "Base rate"
+            },
+            {
+              "id": "post",
+              "label": "After a positive"
+            }
+          ],
+          "yLabel": "Chance of the condition",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "prior": 0.01,
+            "post": 0.1538
+          },
+          "params": {
+            "base": 0.01
+          },
+          "caption": "Base rate 1%: after a positive, the chance is 0.15"
+        },
+        "derive": {
+          "values.prior": "base",
+          "values.post": "0.9*base/(0.9*base + 0.05*(1 - base))",
+          "caption": "Base rate {{round(base*100)}}%: after a positive, the chance is {{fixed(0.9*base/(0.9*base + 0.05*(1 - base)), 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "base",
+            "min": 0.01,
+            "max": 0.5,
+            "step": 0.01,
+            "start": 0.01,
+            "label": "Base rate",
+            "format": "percent"
+          }
+        ]
+      },
+      "question": "Slide the base rate up. Where does a positive first make the condition more likely than not?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "one",
+            "text": "Around 1%",
+            "why": "At 1% the right bar is only about 0.15. Slide further."
+          },
+          {
+            "id": "right",
+            "text": "Between 5% and 6%",
+            "correct": true
+          },
+          {
+            "id": "thirty",
+            "text": "Around 30%",
+            "why": "At 30% the right bar is already near 0.89. It crossed 0.5 much earlier."
+          },
+          {
+            "id": "half",
+            "text": "Around 50%",
+            "why": "At 50% the right bar is about 0.95. Slide back down to find where it crosses 0.5."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the right bar as you slide. When does it pass 0.5?"
+        },
+        {
+          "rung": "point",
+          "text": "Try 5% and then 6%.",
+          "highlight": [
+            "post"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At 5% the right bar reads 0.49. At 6% it reads 0.53."
+        }
+      ],
+      "feedback": {
+        "correct": "The right bar crosses 0.5 between 5% and 6%.",
+        "generic": "Not quite right. Slide slowly and read the right bar."
+      },
+      "explain": {
+        "text": "The right bar climbs fast at first: 0.15 at 1%, about 0.5 by 5%, 0.89 at 30%. The test never changed. Only how common the condition is changed.",
+        "canvas": {
+          "params": {
+            "base": 0.05
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "How common the condition is before any test, 1% here, is called the **base rate**. Back to a base rate of 1%.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Person",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Condition",
+                  "p": "0.01"
+                },
+                {
+                  "id": "w",
+                  "label": "Healthy",
+                  "p": "0.99"
+                }
+              ]
+            },
+            {
+              "label": "Test",
+              "branches": [
+                {
+                  "id": "p",
+                  "label": "Positive",
+                  "p": {
+                    "i": "0.9",
+                    "w": "0.05"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "Negative",
+                  "p": {
+                    "i": "0.1",
+                    "w": "0.95"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "i-p": "0.009",
+            "i-n": "0.001",
+            "w-p": "0.0495",
+            "w-n": "0.9405"
+          }
+        },
+        "state": {
+          "values": false
+        }
+      },
+      "question": "What is $P(+)$, the chance a random person tests positive? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0585,
+        "tol": {
+          "abs": 0.0002
+        },
+        "placeholder": "For example 0.25",
+        "label": "Chance of a positive test",
+        "accept": "0.0585 exactly: $0.009 + 0.0495$.",
+        "wrong": [
+          {
+            "id": "ill-only",
+            "value": 0.009,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "unweighted",
+            "value": 0.059,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "rates",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two paths end in a positive test."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply along each path, then add.",
+          "highlight": [
+            "i-p",
+            "w-p"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.01 \\times 0.9 + 0.99 \\times 0.05 = 0.009 + 0.0495$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.009 + 0.0495 = 0.0585$.",
+        "generic": "Not quite right. Multiply along each path that ends in a positive, then add.",
+        "byKey": {
+          "ill-only": "You counted only people with the condition. Healthy people test positive too.",
+          "unweighted": "You added 5% without weighting it by the 99% who are healthy: use $0.99 \\times 0.05$.",
+          "rates": "You added the two rates. Each needs weighting by how many people it applies to."
+        }
+      },
+      "explain": {
+        "text": "Two paths end in a positive: $0.009 + 0.0495 = 0.0585$. Almost 6 people in 100 test positive, but only 1 in 100 has the condition.",
+        "canvas": {
+          "values": true,
+          "highlight": [
+            "i-p",
+            "w-p"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Same tree, base rate 1%. Now put the number on the hook's question.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Person",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Condition",
+                  "p": "0.01"
+                },
+                {
+                  "id": "w",
+                  "label": "Healthy",
+                  "p": "0.99"
+                }
+              ]
+            },
+            {
+              "label": "Test",
+              "branches": [
+                {
+                  "id": "p",
+                  "label": "Positive",
+                  "p": {
+                    "i": "0.9",
+                    "w": "0.05"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "Negative",
+                  "p": {
+                    "i": "0.1",
+                    "w": "0.95"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "i-p": "0.009",
+            "i-n": "0.001",
+            "w-p": "0.0495",
+            "w-n": "0.9405"
+          }
+        },
+        "state": {
+          "values": true,
+          "highlight": [
+            "i-p",
+            "w-p"
+          ]
+        }
+      },
+      "question": "What is $P(\\text{condition} \\mid +)$? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1538,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.25",
+        "label": "Chance of the condition given a positive",
+        "accept": "any form equal to $\\tfrac{0.009}{0.0585} = \\tfrac{2}{13}$, or 0.154 ± 0.001.",
+        "wrong": [
+          {
+            "id": "inverse",
+            "value": 0.9,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "joint",
+            "value": 0.009,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "base",
+            "value": 0.01,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which path do you want, and which paths make the condition?"
+        },
+        {
+          "rung": "point",
+          "text": "Put this path over both positive paths.",
+          "highlight": [
+            "i-p"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.009 / 0.0585$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.009 / 0.0585 = \\tfrac{2}{13} \\approx 0.154$.",
+        "generic": "Not quite right. Divide the condition-and-positive path by all positive paths.",
+        "byKey": {
+          "inverse": "That is the test's hit rate, $P(+ \\mid \\text{condition})$. You want the condition given a positive.",
+          "joint": "That is condition and positive together. Divide by $P(+) = 0.0585$.",
+          "base": "That is the base rate. The positive should raise it."
+        }
+      },
+      "explain": {
+        "text": "$0.009 / 0.0585 = \\tfrac{2}{13} \\approx 0.154$. The positive raised the chance fifteenfold, from 0.01. It is still far from 0.9.",
+        "canvas": {
+          "shade": [
+            "i-p"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Same tree. A positive result is false when the person is healthy.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Person",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Condition",
+                  "p": "0.01"
+                },
+                {
+                  "id": "w",
+                  "label": "Healthy",
+                  "p": "0.99"
+                }
+              ]
+            },
+            {
+              "label": "Test",
+              "branches": [
+                {
+                  "id": "p",
+                  "label": "Positive",
+                  "p": {
+                    "i": "0.9",
+                    "w": "0.05"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "Negative",
+                  "p": {
+                    "i": "0.1",
+                    "w": "0.95"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "i-p": "0.009",
+            "i-n": "0.001",
+            "w-p": "0.0495",
+            "w-n": "0.9405"
+          }
+        },
+        "state": {
+          "values": true,
+          "highlight": [
+            "i-p",
+            "w-p"
+          ]
+        }
+      },
+      "question": "What share of all positive results are false? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8462,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.25",
+        "label": "Share of positives that are false",
+        "accept": "any form equal to $\\tfrac{0.0495}{0.0585} = \\tfrac{11}{13}$, or 0.846 ± 0.001.",
+        "wrong": [
+          {
+            "id": "fp-rate",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "true-share",
+            "value": 0.1538,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "joint",
+            "value": 0.0495,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "False positives come from one path. Which?"
+        },
+        {
+          "rung": "point",
+          "text": "This path holds the false positives.",
+          "highlight": [
+            "w-p"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.0495 / 0.0585$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{11}{13} \\approx 0.85$ of positives are false.",
+        "generic": "Not quite right. Put the healthy-and-positive path over all positive paths.",
+        "byKey": {
+          "fp-rate": "That is the false-positive rate among healthy people. The question asks about positives.",
+          "true-share": "That is the share of positives that are true. Take the other path.",
+          "joint": "That is healthy and positive among everyone. Divide by all positives, 0.0585."
+        }
+      },
+      "explain": {
+        "text": "$0.0495 / 0.0585 \\approx 0.85$. When a condition is rare, most positive tests are false. The healthy crowd is so large that 5% of it outnumbers the true cases.",
+        "canvas": {
+          "shade": [
+            "w-p"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Same test, a different group: here half the people tested have the condition.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Person",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Condition",
+                  "p": "0.5"
+                },
+                {
+                  "id": "w",
+                  "label": "Healthy",
+                  "p": "0.5"
+                }
+              ]
+            },
+            {
+              "label": "Test",
+              "branches": [
+                {
+                  "id": "p",
+                  "label": "Positive",
+                  "p": {
+                    "i": "0.9",
+                    "w": "0.05"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "Negative",
+                  "p": {
+                    "i": "0.1",
+                    "w": "0.95"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "values": false
+        }
+      },
+      "question": "What is $P(\\text{condition} \\mid +)$ now? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9474,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.25",
+        "label": "Chance of the condition given a positive",
+        "accept": "any form equal to $\\tfrac{0.45}{0.475} = \\tfrac{18}{19}$, or 0.947 ± 0.001.",
+        "wrong": [
+          {
+            "id": "hit",
+            "value": 0.9,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "base",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "spec",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out the two positive paths again with 0.5 at the start."
+        },
+        {
+          "rung": "point",
+          "text": "These two paths end in a positive.",
+          "highlight": [
+            "i-p",
+            "w-p"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.5 \\times 0.9 = 0.45$ and $0.5 \\times 0.05 = 0.025$. Divide 0.45 by their sum."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.45 / 0.475 = \\tfrac{18}{19} \\approx 0.947$.",
+        "generic": "Not quite right. Recompute both positive paths with a base rate of 0.5.",
+        "byKey": {
+          "hit": "That is the hit rate alone. The healthy path still adds false positives.",
+          "base": "That is the chance before the test. A positive moves it.",
+          "spec": "That is the share of healthy people who test negative. It is close, but not the answer."
+        }
+      },
+      "explain": {
+        "text": "With a 50% base rate the 0.5 cancels top and bottom: $\\dfrac{0.9}{0.9 + 0.05} = \\tfrac{18}{19}$. Only the test's two rates are left. This is the edge case where the base rate drops out.",
+        "canvas": {
+          "values": false,
+          "highlight": [
+            "i-p",
+            "w-p"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "Two clinics use the same test. Clinic A screens everyone: base rate 1%. Clinic B tests only people with symptoms: base rate 30%.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Person",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Condition",
+                  "p": "0.01"
+                },
+                {
+                  "id": "w",
+                  "label": "Healthy",
+                  "p": "0.99"
+                }
+              ]
+            },
+            {
+              "label": "Test",
+              "branches": [
+                {
+                  "id": "p",
+                  "label": "Positive",
+                  "p": {
+                    "i": "0.9",
+                    "w": "0.05"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "Negative",
+                  "p": {
+                    "i": "0.1",
+                    "w": "0.95"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "unknown": [
+            "i",
+            "w"
+          ],
+          "values": false,
+          "caption": "The base rate is 1% at clinic A and 30% at clinic B"
+        }
+      },
+      "question": "A patient at each clinic tests positive. Whose positive is more likely to be right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "Equally likely: it is the same test",
+            "why": "You judged the result by the test alone. The base rate differs, and it moves the answer."
+          },
+          {
+            "id": "a",
+            "text": "Clinic A's",
+            "why": "Clinic A tests mostly healthy people, so most of its positives are false."
+          },
+          {
+            "id": "right",
+            "text": "Clinic B's",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the base rate appear in the calculation?"
+        },
+        {
+          "rung": "point",
+          "text": "The first branch is where the two clinics differ.",
+          "highlight": [
+            "i",
+            "w"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Clinic B: $0.3 \\times 0.9 = 0.27$ and $0.7 \\times 0.05 = 0.035$, so $0.27 / 0.305 \\approx 0.89$."
+        }
+      ],
+      "feedback": {
+        "correct": "Clinic B tests people far more likely to be ill, so its positives are mostly true.",
+        "generic": "Not quite right. Work out $P(\\text{condition} \\mid +)$ at each clinic.",
+        "byKey": {
+          "same": "You ignored the base rate: the same test, so the same answer. But clinic A's positives are 85% false and clinic B's only 11%."
+        }
+      },
+      "explain": {
+        "text": "Clinic A: $0.009 / 0.0585 \\approx 0.15$. Clinic B: $0.27 / 0.305 \\approx 0.89$. A test result means nothing without the base rate of the people tested.",
+        "canvas": {
+          "highlight": [
+            "i",
+            "w"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Every time you weighed the same two paths. With base rate $b$, hit rate $h$ and false-positive rate $f$: $$P(\\text{condition} \\mid +) = \\frac{h\\,b}{h\\,b + f\\,(1 - b)}$$",
+      "question": "With $b = 0.01$, $h = 0.9$ and $f = 0.05$, which term on the bottom is bigger?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$f\\,(1 - b) = 0.0495$, the false positives",
+            "correct": true
+          },
+          {
+            "id": "true",
+            "text": "$h\\,b = 0.009$, the true positives",
+            "why": "$0.009$ is smaller than $0.0495$. The healthy group is 99 times larger, which outweighs the low rate."
+          },
+          {
+            "id": "equal",
+            "text": "They are about equal",
+            "why": "One is more than five times the other: $0.0495$ against $0.009$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out each term."
+        },
+        {
+          "rung": "step",
+          "text": "$h\\,b = 0.9 \\times 0.01 = 0.009$ and $f\\,(1 - b) = 0.05 \\times 0.99 = 0.0495$."
+        }
+      ],
+      "feedback": {
+        "correct": "When $b$ is small, the false positives swamp the true ones.",
+        "generic": "Not quite right. Work out both terms with these numbers."
+      },
+      "explain": {
+        "text": "$f\\,(1 - b) = 0.0495$ beats $h\\,b = 0.009$. A small rate applied to a huge group beats a big rate applied to a tiny group. That is why rare conditions make most positives false."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A bank's fraud model flags 95% of fraudulent payments and 1% of genuine ones. Only 0.2% of payments are fraud. A payment is flagged.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Payment",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Fraud",
+                  "p": "0.002"
+                },
+                {
+                  "id": "g",
+                  "label": "Genuine",
+                  "p": "0.998"
+                }
+              ]
+            },
+            {
+              "label": "Model",
+              "branches": [
+                {
+                  "id": "g",
+                  "label": "Flagged",
+                  "p": {
+                    "f": "0.95",
+                    "g": "0.01"
+                  }
+                },
+                {
+                  "id": "p",
+                  "label": "Passed",
+                  "p": {
+                    "f": "0.05",
+                    "g": "0.99"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "f-g": "0.0019",
+            "f-p": "0.0001",
+            "g-g": "0.00998",
+            "g-p": "0.98802"
+          }
+        },
+        "state": {
+          "values": false
+        }
+      },
+      "question": "What is the chance the flagged payment is fraud? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1599,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.25",
+        "label": "Chance a flagged payment is fraud",
+        "accept": "any form equal to $\\tfrac{0.0019}{0.01188}$, or 0.160 ± 0.001.",
+        "wrong": [
+          {
+            "id": "inverse",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "joint",
+            "value": 0.0019,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "spec",
+            "value": 0.99,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which two paths end in a flag?"
+        },
+        {
+          "rung": "point",
+          "text": "Both of these paths end in a flag.",
+          "highlight": [
+            "f-g",
+            "g-g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.002 \\times 0.95 = 0.0019$ and $0.998 \\times 0.01 = 0.00998$. Divide 0.0019 by their sum."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.0019 / 0.01188 \\approx 0.16$.",
+        "generic": "Not quite right. Put the fraud-and-flagged path over both flagged paths.",
+        "byKey": {
+          "inverse": "That is the share of fraud the model catches. You want the share of flags that are fraud.",
+          "joint": "That is fraud and flagged together. Divide by every flag, 0.01188.",
+          "spec": "That is the share of genuine payments the model passes. It is not about flagged payments."
+        }
+      },
+      "explain": {
+        "text": "Fraud and flagged is 0.0019; genuine and flagged is 0.00998. So only about 16% of flags are fraud. With a 0.2% base rate, even a 1% false-alarm rate buries the real cases.",
+        "canvas": {
+          "values": true,
+          "highlight": [
+            "f-g",
+            "g-g"
+          ],
+          "shade": [
+            "f-g"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A quant tests many candidate strategies. About 5% have a real edge; the rest are noise. A backtest passes 90% of real strategies and, by luck, 10% of noise. One strategy passes.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Strategy",
+              "branches": [
+                {
+                  "id": "r",
+                  "label": "Real edge",
+                  "p": "0.05"
+                },
+                {
+                  "id": "n",
+                  "label": "Noise",
+                  "p": "0.95"
+                }
+              ]
+            },
+            {
+              "label": "Backtest",
+              "branches": [
+                {
+                  "id": "s",
+                  "label": "Passes",
+                  "p": {
+                    "r": "0.9",
+                    "n": "0.1"
+                  }
+                },
+                {
+                  "id": "f",
+                  "label": "Fails",
+                  "p": {
+                    "r": "0.1",
+                    "n": "0.9"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "r-s": "0.045",
+            "r-f": "0.005",
+            "n-s": "0.095",
+            "n-f": "0.855"
+          }
+        },
+        "state": {
+          "values": false
+        }
+      },
+      "question": "What is the chance it has a real edge? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3214,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.25",
+        "label": "Chance of a real edge given a pass",
+        "accept": "any form equal to $\\tfrac{0.045}{0.14} = \\tfrac{9}{28}$, or 0.321 ± 0.001.",
+        "wrong": [
+          {
+            "id": "inverse",
+            "value": 0.9,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "joint",
+            "value": 0.045,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "base",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "luck",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which two paths end in a pass?"
+        },
+        {
+          "rung": "point",
+          "text": "Both of these paths end in a pass.",
+          "highlight": [
+            "r-s",
+            "n-s"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.05 \\times 0.9 = 0.045$ and $0.95 \\times 0.1 = 0.095$. Divide 0.045 by their sum."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.045 / 0.14 = \\tfrac{9}{28} \\approx 0.32$.",
+        "generic": "Not quite right. Put the real-and-passes path over both paths that pass.",
+        "byKey": {
+          "inverse": "That is the chance a real strategy passes. You want the chance a passing strategy is real.",
+          "joint": "That is real and passing together. Divide by every pass, 0.14.",
+          "base": "That is the share of real strategies before the backtest. A pass should raise it.",
+          "luck": "That is the chance noise passes. It belongs in the bottom of the fraction."
+        }
+      },
+      "explain": {
+        "text": "Real and passing is 0.045; noise and passing is 0.095. So a pass leaves about a one-in-three chance of a real edge. When most candidates are noise, most backtest winners are noise too.",
+        "canvas": {
+          "values": true,
+          "highlight": [
+            "r-s",
+            "n-s"
+          ],
+          "shade": [
+            "r-s"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The base rate is how common something is before the evidence. It belongs in every calculation.",
+      "When the condition is rare, false positives from the large healthy group outnumber true positives.",
+      "With a 50% base rate, the base rate cancels and only the test's two rates matter."
+    ],
+    "formula": {
+      "name": "Posterior from a base rate",
+      "tex": "P(\\text{condition} \\mid +) = \\dfrac{h\\,b}{h\\,b + f\\,(1 - b)}",
+      "note": "$b$ is the base rate, $h$ the hit rate, $f$ the false-positive rate."
+    },
+    "trap": "Judging a positive by the test alone ignores the base rate. The same test means about 0.15 in one clinic and 0.89 in another."
+  },
+  "quiz": [
+    {
+      "id": "q-breakout",
+      "difficulty": 2,
+      "prose": "Only 5% of chart setups lead to a real breakout. A pattern appears before 60% of real breakouts and before 10% of setups that fail.",
+      "question": "The pattern appears. What is the chance of a real breakout? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.24,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.25",
+        "label": "Chance of a breakout given the pattern",
+        "accept": "0.24: $0.03 / (0.03 + 0.095)$.",
+        "wrong": [
+          {
+            "id": "inverse",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "joint",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "base",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.03 / 0.125 = 0.24$.",
+        "generic": "Not quite right. Weigh the two paths that end with the pattern.",
+        "byKey": {
+          "inverse": "That is the chance of the pattern given a breakout. Turn it around.",
+          "joint": "That is breakout and pattern together. Divide by every way the pattern appears.",
+          "base": "That is the base rate. The pattern should move it."
+        }
+      },
+      "explain": {
+        "text": "Breakout and pattern: $0.05 \\times 0.6 = 0.03$. Failure and pattern: $0.95 \\times 0.1 = 0.095$. So $0.03 / 0.125 = 0.24$."
+      }
+    },
+    {
+      "id": "q-ten-times",
+      "difficulty": 2,
+      "prose": "A test keeps its hit rate of 90% and false-positive rate of 5%. The condition becomes ten times as common, from 1% to 10%.",
+      "question": "What happens to $P(\\text{condition} \\mid +)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It rises, but by less than ten times",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "It stays the same",
+            "why": "You kept only the test's rates. The base rate is in the formula too."
+          },
+          {
+            "id": "tenfold",
+            "text": "It rises exactly ten times",
+            "why": "The bottom of the fraction grows as well, so the rise is smaller than tenfold."
+          },
+          {
+            "id": "falls",
+            "text": "It falls",
+            "why": "More people with the condition means more true positives, so it cannot fall."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "From about 0.15 to about 0.67.",
+        "generic": "Not quite right. Work it out at 1% and at 10%."
+      },
+      "explain": {
+        "text": "At 1%: $0.009 / 0.0585 \\approx 0.15$. At 10%: $0.09 / 0.135 \\approx 0.67$. That is about 4.3 times, not 10."
+      }
+    },
+    {
+      "id": "q-even-base",
+      "difficulty": 3,
+      "prose": "Half of the loans in a pool are risky. A credit check flags 80% of risky loans and 20% of safe ones. A loan is flagged.",
+      "question": "What is the chance it is risky? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.25",
+        "label": "Chance the loan is risky",
+        "accept": "0.8: $0.4 / (0.4 + 0.1)$.",
+        "wrong": [
+          {
+            "id": "base",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "joint",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "With an even base rate, it is $0.8 / (0.8 + 0.2)$.",
+        "generic": "Not quite right. Weigh the two flagged paths.",
+        "byKey": {
+          "base": "That is the chance before the check. A flag should move it.",
+          "joint": "That is risky and flagged together. Divide by every flag, 0.5."
+        }
+      },
+      "explain": {
+        "text": "Risky and flagged: $0.5 \\times 0.8 = 0.4$. Safe and flagged: $0.5 \\times 0.2 = 0.1$. So $0.4 / 0.5 = 0.8$: with a 50% base rate, only the check's two rates matter."
+      }
+    },
+    {
+      "id": "q-perfect-hit",
+      "difficulty": 3,
+      "prose": "A test never misses: its hit rate is 100%. It wrongly flags 2% of healthy people. The condition affects 2% of people.",
+      "question": "You test positive. What is the chance you have the condition? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5051,
+        "tol": {
+          "abs": 0.002
+        },
+        "placeholder": "For example 0.25",
+        "label": "Chance of the condition given a positive",
+        "accept": "about 0.505: $0.02 / (0.02 + 0.0196)$.",
+        "wrong": [
+          {
+            "id": "perfect",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "spec",
+            "value": 0.98,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "base",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About even: $0.02 / 0.0396 \\approx 0.505$.",
+        "generic": "Not quite right. Weigh the two positive paths.",
+        "byKey": {
+          "perfect": "Never missing a case is not the same as never flagging a healthy person. False positives still come in.",
+          "spec": "That is the share of healthy people who test negative. It does not answer the question.",
+          "base": "That is the base rate. The positive should raise it."
+        }
+      },
+      "explain": {
+        "text": "Condition and positive: $0.02 \\times 1 = 0.02$. Healthy and positive: $0.98 \\times 0.02 = 0.0196$. So a positive is barely better than a coin flip, about 0.505."
+      }
+    }
+  ]
+}

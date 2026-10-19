@@ -1,0 +1,2424 @@
+{
+  "id": "l11-principal-components",
+  "course": "eigen",
+  "title": "Principal components",
+  "minutes": 14,
+  "objectives": [
+    "Find the principal components of data from its covariance matrix.",
+    "Compute scores and the share of variance each component explains",
+    "Link PCA to the SVD of the data matrix"
+  ],
+  "skills": [
+    "eg-pca"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Find the widest spread",
+      "prose": "Each dot is one day of returns on two stocks, with the average day moved to the origin. Drag the handle to turn the line. The small dots show where each day lands on the line.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4.5,
+            4.5
+          ],
+          "y": [
+            -3.5,
+            3.5
+          ],
+          "equal": true,
+          "grid": 1,
+          "xLabel": "Stock A return (%)",
+          "yLabel": "Stock B return (%)",
+          "functions": [
+            {
+              "id": "half",
+              "x": "3*cos(t)",
+              "y": "3*sin(t)",
+              "t": [
+                -1.5708,
+                1.5708
+              ],
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 1.9,
+              "y": 1.2,
+              "tap": false
+            },
+            {
+              "id": "p1",
+              "x": -3.3,
+              "y": -1.9,
+              "tap": false
+            },
+            {
+              "id": "p2",
+              "x": -0.1,
+              "y": -1.3,
+              "tap": false
+            },
+            {
+              "id": "p3",
+              "x": -0.7,
+              "y": 0.9,
+              "tap": false
+            },
+            {
+              "id": "p4",
+              "x": 0.3,
+              "y": 0.9,
+              "tap": false
+            },
+            {
+              "id": "p5",
+              "x": 0.7,
+              "y": 1.6,
+              "tap": false
+            },
+            {
+              "id": "p6",
+              "x": -2.4,
+              "y": -1.7,
+              "tap": false
+            },
+            {
+              "id": "p7",
+              "x": -2.2,
+              "y": -1.1,
+              "tap": false
+            },
+            {
+              "id": "p8",
+              "x": 1.9,
+              "y": 1.7,
+              "tap": false
+            },
+            {
+              "id": "p9",
+              "x": 3.9,
+              "y": -0.3,
+              "tap": false
+            },
+            {
+              "id": "D",
+              "x": 3.0,
+              "y": 0.0,
+              "on": "half",
+              "drag": true
+            },
+            {
+              "id": "q0",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q1",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q2",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q3",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q4",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q5",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q6",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q7",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q8",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q9",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            }
+          ],
+          "segments": [
+            {
+              "id": "L",
+              "from": [
+                -4.5,
+                -0.0
+              ],
+              "to": [
+                4.5,
+                0.0
+              ],
+              "colour": 2
+            },
+            {
+              "id": "r0",
+              "from": "p0",
+              "to": "q0",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r1",
+              "from": "p1",
+              "to": "q1",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r2",
+              "from": "p2",
+              "to": "q2",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r3",
+              "from": "p3",
+              "to": "q3",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r4",
+              "from": "p4",
+              "to": "q4",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r5",
+              "from": "p5",
+              "to": "q5",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r6",
+              "from": "p6",
+              "to": "q6",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r7",
+              "from": "p7",
+              "to": "q7",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r8",
+              "from": "p8",
+              "to": "q8",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r9",
+              "from": "p9",
+              "to": "q9",
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "derive": {
+          "L.from": "[-1.5*D.x, -1.5*D.y]",
+          "L.to": "[1.5*D.x, 1.5*D.y]",
+          "q0.x": "(1.9*D.x + 1.2*D.y)/9*D.x",
+          "q0.y": "(1.9*D.x + 1.2*D.y)/9*D.y",
+          "q1.x": "(-3.3*D.x + -1.9*D.y)/9*D.x",
+          "q1.y": "(-3.3*D.x + -1.9*D.y)/9*D.y",
+          "q2.x": "(-0.1*D.x + -1.3*D.y)/9*D.x",
+          "q2.y": "(-0.1*D.x + -1.3*D.y)/9*D.y",
+          "q3.x": "(-0.7*D.x + 0.9*D.y)/9*D.x",
+          "q3.y": "(-0.7*D.x + 0.9*D.y)/9*D.y",
+          "q4.x": "(0.3*D.x + 0.9*D.y)/9*D.x",
+          "q4.y": "(0.3*D.x + 0.9*D.y)/9*D.y",
+          "q5.x": "(0.7*D.x + 1.6*D.y)/9*D.x",
+          "q5.y": "(0.7*D.x + 1.6*D.y)/9*D.y",
+          "q6.x": "(-2.4*D.x + -1.7*D.y)/9*D.x",
+          "q6.y": "(-2.4*D.x + -1.7*D.y)/9*D.y",
+          "q7.x": "(-2.2*D.x + -1.1*D.y)/9*D.x",
+          "q7.y": "(-2.2*D.x + -1.1*D.y)/9*D.y",
+          "q8.x": "(1.9*D.x + 1.7*D.y)/9*D.x",
+          "q8.y": "(1.9*D.x + 1.7*D.y)/9*D.y",
+          "q9.x": "(3.9*D.x + -0.3*D.y)/9*D.x",
+          "q9.y": "(3.9*D.x + -0.3*D.y)/9*D.y",
+          "caption": "Variance along the line: {{fixed((5*D.x*D.x + 4*D.x*D.y + 2*D.y*D.y)/9, 2)}}"
+        }
+      },
+      "question": "Turn the line to the direction where the days are most spread out.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "D",
+            "target": [
+              2.683,
+              1.342
+            ],
+            "tol": 0.2
+          }
+        ],
+        "wrong": [
+          {
+            "id": "axis",
+            "region": {
+              "x": [
+                2.85,
+                3.1
+              ],
+              "y": [
+                -0.6,
+                0.6
+              ]
+            }
+          },
+          {
+            "id": "diag",
+            "region": {
+              "x": [
+                1.9,
+                2.3
+              ],
+              "y": [
+                1.9,
+                2.3
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption: it is the variance of the small dots along the line."
+        },
+        {
+          "rung": "point",
+          "text": "The best direction is between the 45° line and stock A's axis.",
+          "highlight": [
+            "L"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Drag the handle to about 27° above the horizontal, where the caption peaks at 6.00."
+        }
+      ],
+      "feedback": {
+        "correct": "The spread peaks at 6.00 along this direction.",
+        "generic": "Not quite right. Turn the line until the caption stops rising.",
+        "byKey": {
+          "axis": "Along stock A's axis the variance is 5.00, just A's own variance. Tilt the line up a little: B moves with A.",
+          "diag": "At 45° the variance is 5.50. Stock A moves more than B, so tilt the line down towards A's axis."
+        }
+      },
+      "explain": {
+        "text": "You found the direction $(0.89, 0.45)$, where the variance reaches 6.00. No other direction spreads the days more. This direction is the **first principal component**.",
+        "canvas": {
+          "points": {
+            "D": {
+              "x": 2.683,
+              "y": 1.342
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The direction you found is the **first principal component**, PC1. To compute it, put the demeaned returns in a $10 \\times 2$ matrix $\\mathbf{X}$, one row per day. Over the 10 days, $\\sum a_t^2 = 45$, $\\sum a_tb_t = 18$ and $\\sum b_t^2 = 18$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4.5,
+            4.5
+          ],
+          "y": [
+            -3.5,
+            3.5
+          ],
+          "equal": true,
+          "grid": 1,
+          "xLabel": "Stock A return (%)",
+          "yLabel": "Stock B return (%)",
+          "functions": [
+            {
+              "id": "half",
+              "x": "3*cos(t)",
+              "y": "3*sin(t)",
+              "t": [
+                -1.5708,
+                1.5708
+              ],
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 1.9,
+              "y": 1.2,
+              "tap": false
+            },
+            {
+              "id": "p1",
+              "x": -3.3,
+              "y": -1.9,
+              "tap": false
+            },
+            {
+              "id": "p2",
+              "x": -0.1,
+              "y": -1.3,
+              "tap": false
+            },
+            {
+              "id": "p3",
+              "x": -0.7,
+              "y": 0.9,
+              "tap": false
+            },
+            {
+              "id": "p4",
+              "x": 0.3,
+              "y": 0.9,
+              "tap": false
+            },
+            {
+              "id": "p5",
+              "x": 0.7,
+              "y": 1.6,
+              "tap": false
+            },
+            {
+              "id": "p6",
+              "x": -2.4,
+              "y": -1.7,
+              "tap": false
+            },
+            {
+              "id": "p7",
+              "x": -2.2,
+              "y": -1.1,
+              "tap": false
+            },
+            {
+              "id": "p8",
+              "x": 1.9,
+              "y": 1.7,
+              "tap": false
+            },
+            {
+              "id": "p9",
+              "x": 3.9,
+              "y": -0.3,
+              "tap": false
+            },
+            {
+              "id": "D",
+              "x": 2.683,
+              "y": 1.342,
+              "on": "half",
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q0",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q1",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q2",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q3",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q4",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q5",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q6",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q7",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q8",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q9",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            }
+          ],
+          "segments": [
+            {
+              "id": "L",
+              "from": [
+                -4.0245,
+                -2.013
+              ],
+              "to": [
+                4.0245,
+                2.013
+              ],
+              "colour": 2
+            },
+            {
+              "id": "r0",
+              "from": "p0",
+              "to": "q0",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r1",
+              "from": "p1",
+              "to": "q1",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r2",
+              "from": "p2",
+              "to": "q2",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r3",
+              "from": "p3",
+              "to": "q3",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r4",
+              "from": "p4",
+              "to": "q4",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r5",
+              "from": "p5",
+              "to": "q5",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r6",
+              "from": "p6",
+              "to": "q6",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r7",
+              "from": "p7",
+              "to": "q7",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r8",
+              "from": "p8",
+              "to": "q8",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r9",
+              "from": "p9",
+              "to": "q9",
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "derive": {
+          "L.from": "[-1.5*D.x, -1.5*D.y]",
+          "L.to": "[1.5*D.x, 1.5*D.y]",
+          "q0.x": "(1.9*D.x + 1.2*D.y)/9*D.x",
+          "q0.y": "(1.9*D.x + 1.2*D.y)/9*D.y",
+          "q1.x": "(-3.3*D.x + -1.9*D.y)/9*D.x",
+          "q1.y": "(-3.3*D.x + -1.9*D.y)/9*D.y",
+          "q2.x": "(-0.1*D.x + -1.3*D.y)/9*D.x",
+          "q2.y": "(-0.1*D.x + -1.3*D.y)/9*D.y",
+          "q3.x": "(-0.7*D.x + 0.9*D.y)/9*D.x",
+          "q3.y": "(-0.7*D.x + 0.9*D.y)/9*D.y",
+          "q4.x": "(0.3*D.x + 0.9*D.y)/9*D.x",
+          "q4.y": "(0.3*D.x + 0.9*D.y)/9*D.y",
+          "q5.x": "(0.7*D.x + 1.6*D.y)/9*D.x",
+          "q5.y": "(0.7*D.x + 1.6*D.y)/9*D.y",
+          "q6.x": "(-2.4*D.x + -1.7*D.y)/9*D.x",
+          "q6.y": "(-2.4*D.x + -1.7*D.y)/9*D.y",
+          "q7.x": "(-2.2*D.x + -1.1*D.y)/9*D.x",
+          "q7.y": "(-2.2*D.x + -1.1*D.y)/9*D.y",
+          "q8.x": "(1.9*D.x + 1.7*D.y)/9*D.x",
+          "q8.y": "(1.9*D.x + 1.7*D.y)/9*D.y",
+          "q9.x": "(3.9*D.x + -0.3*D.y)/9*D.x",
+          "q9.y": "(3.9*D.x + -0.3*D.y)/9*D.y",
+          "caption": "Variance along the line: {{fixed((5*D.x*D.x + 4*D.x*D.y + 2*D.y*D.y)/9, 2)}}"
+        }
+      },
+      "question": "Fill in the covariance matrix $\\boldsymbol{\\Sigma} = \\mathbf{X}^T\\mathbf{X}/(n-1)$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Entry",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\text{Var}(A)$",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$\\text{Cov}(A, B)$",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$\\text{Var}(B)$",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide each sum by $n - 1$."
+        },
+        {
+          "rung": "point",
+          "text": "There are 10 days, so divide by 9.",
+          "highlight": [
+            "L"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$45 / 9 = 5$, $18 / 9 = 2$ and $18 / 9 = 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\boldsymbol{\\Sigma} = \\begin{pmatrix} 5 & 2 \\\\ 2 & 2 \\end{pmatrix}$.",
+        "generic": "Not quite right. Divide each sum by $n - 1 = 9$.",
+        "byKey": {
+          "r0c1": "Var(A) is $45 / 9$. Did you divide by 10 instead of 9?",
+          "r1c1": "Cov(A, B) is $18 / 9$.",
+          "r2c1": "Var(B) is $18 / 9$."
+        }
+      },
+      "explain": {
+        "text": "$\\boldsymbol{\\Sigma} = \\begin{pmatrix} 5 & 2 \\\\ 2 & 2 \\end{pmatrix}$. The variance along a unit direction $\\mathbf{d}$ is $\\mathbf{d}^T\\boldsymbol{\\Sigma}\\mathbf{d}$. That is the number the caption showed as you turned the line."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now find the direction of least spread. The eigenvalues of $\\boldsymbol{\\Sigma}$ come from $\\lambda^2 - 7\\lambda + 6 = 0$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4.5,
+            4.5
+          ],
+          "y": [
+            -3.5,
+            3.5
+          ],
+          "equal": true,
+          "grid": 1,
+          "xLabel": "Stock A return (%)",
+          "yLabel": "Stock B return (%)",
+          "functions": [
+            {
+              "id": "half",
+              "x": "3*cos(t)",
+              "y": "3*sin(t)",
+              "t": [
+                -1.5708,
+                1.5708
+              ],
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 1.9,
+              "y": 1.2,
+              "tap": false
+            },
+            {
+              "id": "p1",
+              "x": -3.3,
+              "y": -1.9,
+              "tap": false
+            },
+            {
+              "id": "p2",
+              "x": -0.1,
+              "y": -1.3,
+              "tap": false
+            },
+            {
+              "id": "p3",
+              "x": -0.7,
+              "y": 0.9,
+              "tap": false
+            },
+            {
+              "id": "p4",
+              "x": 0.3,
+              "y": 0.9,
+              "tap": false
+            },
+            {
+              "id": "p5",
+              "x": 0.7,
+              "y": 1.6,
+              "tap": false
+            },
+            {
+              "id": "p6",
+              "x": -2.4,
+              "y": -1.7,
+              "tap": false
+            },
+            {
+              "id": "p7",
+              "x": -2.2,
+              "y": -1.1,
+              "tap": false
+            },
+            {
+              "id": "p8",
+              "x": 1.9,
+              "y": 1.7,
+              "tap": false
+            },
+            {
+              "id": "p9",
+              "x": 3.9,
+              "y": -0.3,
+              "tap": false
+            },
+            {
+              "id": "D",
+              "x": 2.683,
+              "y": 1.342,
+              "on": "half",
+              "drag": true
+            },
+            {
+              "id": "q0",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q1",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q2",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q3",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q4",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q5",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q6",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q7",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q8",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q9",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            }
+          ],
+          "segments": [
+            {
+              "id": "L",
+              "from": [
+                -4.0245,
+                -2.013
+              ],
+              "to": [
+                4.0245,
+                2.013
+              ],
+              "colour": 2
+            },
+            {
+              "id": "r0",
+              "from": "p0",
+              "to": "q0",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r1",
+              "from": "p1",
+              "to": "q1",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r2",
+              "from": "p2",
+              "to": "q2",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r3",
+              "from": "p3",
+              "to": "q3",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r4",
+              "from": "p4",
+              "to": "q4",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r5",
+              "from": "p5",
+              "to": "q5",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r6",
+              "from": "p6",
+              "to": "q6",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r7",
+              "from": "p7",
+              "to": "q7",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r8",
+              "from": "p8",
+              "to": "q8",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r9",
+              "from": "p9",
+              "to": "q9",
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "derive": {
+          "L.from": "[-1.5*D.x, -1.5*D.y]",
+          "L.to": "[1.5*D.x, 1.5*D.y]",
+          "q0.x": "(1.9*D.x + 1.2*D.y)/9*D.x",
+          "q0.y": "(1.9*D.x + 1.2*D.y)/9*D.y",
+          "q1.x": "(-3.3*D.x + -1.9*D.y)/9*D.x",
+          "q1.y": "(-3.3*D.x + -1.9*D.y)/9*D.y",
+          "q2.x": "(-0.1*D.x + -1.3*D.y)/9*D.x",
+          "q2.y": "(-0.1*D.x + -1.3*D.y)/9*D.y",
+          "q3.x": "(-0.7*D.x + 0.9*D.y)/9*D.x",
+          "q3.y": "(-0.7*D.x + 0.9*D.y)/9*D.y",
+          "q4.x": "(0.3*D.x + 0.9*D.y)/9*D.x",
+          "q4.y": "(0.3*D.x + 0.9*D.y)/9*D.y",
+          "q5.x": "(0.7*D.x + 1.6*D.y)/9*D.x",
+          "q5.y": "(0.7*D.x + 1.6*D.y)/9*D.y",
+          "q6.x": "(-2.4*D.x + -1.7*D.y)/9*D.x",
+          "q6.y": "(-2.4*D.x + -1.7*D.y)/9*D.y",
+          "q7.x": "(-2.2*D.x + -1.1*D.y)/9*D.x",
+          "q7.y": "(-2.2*D.x + -1.1*D.y)/9*D.y",
+          "q8.x": "(1.9*D.x + 1.7*D.y)/9*D.x",
+          "q8.y": "(1.9*D.x + 1.7*D.y)/9*D.y",
+          "q9.x": "(3.9*D.x + -0.3*D.y)/9*D.x",
+          "q9.y": "(3.9*D.x + -0.3*D.y)/9*D.y",
+          "caption": "Variance along the line: {{fixed((5*D.x*D.x + 4*D.x*D.y + 2*D.y*D.y)/9, 2)}}"
+        }
+      },
+      "question": "What is the smallest variance along any line?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.03
+        },
+        "accept": "1.00, along $(0.45, -0.89)$, at right angles to PC1",
+        "label": "Smallest variance",
+        "wrong": [
+          {
+            "id": "b",
+            "value": 2,
+            "tol": {
+              "abs": 0.03
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Turn the line until the caption is as small as it gets."
+        },
+        {
+          "rung": "point",
+          "text": "Try the direction at right angles to PC1.",
+          "highlight": [
+            "L"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\lambda^2 - 7\\lambda + 6 = (\\lambda - 6)(\\lambda - 1)$, so the smallest variance is 1."
+        }
+      ],
+      "feedback": {
+        "correct": "The smallest variance is 1.00.",
+        "generic": "Not quite right. Drag until the caption reaches its lowest value.",
+        "byKey": {
+          "b": "2 is Var(B), along stock B's axis. Tilt the line further: the least spread is across the cloud.",
+          "zero": "The days do not all lie on one line, so no direction has zero spread."
+        }
+      },
+      "explain": {
+        "text": "The least spread, 1, is at right angles to PC1, along $(0.45, -0.89)$. The two extremes 6 and 1 are the eigenvalues of $\\boldsymbol{\\Sigma}$. Their eigenvectors are PC1 and PC2.",
+        "canvas": {
+          "points": {
+            "D": {
+              "x": 1.342,
+              "y": -2.683
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A day's **score** on PC1 is how far along the line it lands: $z = \\mathbf{x}^T\\mathbf{v}_1$ with $\\mathbf{v}_1 = (2, 1)/\\sqrt5$. Day 1 had returns $(1.9, 1.2)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4.5,
+            4.5
+          ],
+          "y": [
+            -3.5,
+            3.5
+          ],
+          "equal": true,
+          "grid": 1,
+          "xLabel": "Stock A return (%)",
+          "yLabel": "Stock B return (%)",
+          "functions": [
+            {
+              "id": "half",
+              "x": "3*cos(t)",
+              "y": "3*sin(t)",
+              "t": [
+                -1.5708,
+                1.5708
+              ],
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 1.9,
+              "y": 1.2,
+              "tap": false
+            },
+            {
+              "id": "p1",
+              "x": -3.3,
+              "y": -1.9,
+              "tap": false
+            },
+            {
+              "id": "p2",
+              "x": -0.1,
+              "y": -1.3,
+              "tap": false
+            },
+            {
+              "id": "p3",
+              "x": -0.7,
+              "y": 0.9,
+              "tap": false
+            },
+            {
+              "id": "p4",
+              "x": 0.3,
+              "y": 0.9,
+              "tap": false
+            },
+            {
+              "id": "p5",
+              "x": 0.7,
+              "y": 1.6,
+              "tap": false
+            },
+            {
+              "id": "p6",
+              "x": -2.4,
+              "y": -1.7,
+              "tap": false
+            },
+            {
+              "id": "p7",
+              "x": -2.2,
+              "y": -1.1,
+              "tap": false
+            },
+            {
+              "id": "p8",
+              "x": 1.9,
+              "y": 1.7,
+              "tap": false
+            },
+            {
+              "id": "p9",
+              "x": 3.9,
+              "y": -0.3,
+              "tap": false
+            },
+            {
+              "id": "D",
+              "x": 2.683,
+              "y": 1.342,
+              "on": "half",
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q0",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q1",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q2",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q3",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q4",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q5",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q6",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q7",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q8",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q9",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            }
+          ],
+          "segments": [
+            {
+              "id": "L",
+              "from": [
+                -4.0245,
+                -2.013
+              ],
+              "to": [
+                4.0245,
+                2.013
+              ],
+              "colour": 2
+            },
+            {
+              "id": "r0",
+              "from": "p0",
+              "to": "q0",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r1",
+              "from": "p1",
+              "to": "q1",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r2",
+              "from": "p2",
+              "to": "q2",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r3",
+              "from": "p3",
+              "to": "q3",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r4",
+              "from": "p4",
+              "to": "q4",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r5",
+              "from": "p5",
+              "to": "q5",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r6",
+              "from": "p6",
+              "to": "q6",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r7",
+              "from": "p7",
+              "to": "q7",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r8",
+              "from": "p8",
+              "to": "q8",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r9",
+              "from": "p9",
+              "to": "q9",
+              "dashed": true,
+              "colour": 6
+            }
+          ],
+          "highlight": [
+            "p0",
+            "q0"
+          ]
+        },
+        "derive": {
+          "L.from": "[-1.5*D.x, -1.5*D.y]",
+          "L.to": "[1.5*D.x, 1.5*D.y]",
+          "q0.x": "(1.9*D.x + 1.2*D.y)/9*D.x",
+          "q0.y": "(1.9*D.x + 1.2*D.y)/9*D.y",
+          "q1.x": "(-3.3*D.x + -1.9*D.y)/9*D.x",
+          "q1.y": "(-3.3*D.x + -1.9*D.y)/9*D.y",
+          "q2.x": "(-0.1*D.x + -1.3*D.y)/9*D.x",
+          "q2.y": "(-0.1*D.x + -1.3*D.y)/9*D.y",
+          "q3.x": "(-0.7*D.x + 0.9*D.y)/9*D.x",
+          "q3.y": "(-0.7*D.x + 0.9*D.y)/9*D.y",
+          "q4.x": "(0.3*D.x + 0.9*D.y)/9*D.x",
+          "q4.y": "(0.3*D.x + 0.9*D.y)/9*D.y",
+          "q5.x": "(0.7*D.x + 1.6*D.y)/9*D.x",
+          "q5.y": "(0.7*D.x + 1.6*D.y)/9*D.y",
+          "q6.x": "(-2.4*D.x + -1.7*D.y)/9*D.x",
+          "q6.y": "(-2.4*D.x + -1.7*D.y)/9*D.y",
+          "q7.x": "(-2.2*D.x + -1.1*D.y)/9*D.x",
+          "q7.y": "(-2.2*D.x + -1.1*D.y)/9*D.y",
+          "q8.x": "(1.9*D.x + 1.7*D.y)/9*D.x",
+          "q8.y": "(1.9*D.x + 1.7*D.y)/9*D.y",
+          "q9.x": "(3.9*D.x + -0.3*D.y)/9*D.x",
+          "q9.y": "(3.9*D.x + -0.3*D.y)/9*D.y",
+          "caption": "Variance along the line: {{fixed((5*D.x*D.x + 4*D.x*D.y + 2*D.y*D.y)/9, 2)}}"
+        }
+      },
+      "question": "What is day 1's score on PC1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.236,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "$5/\\sqrt5 = \\sqrt5 \\approx 2.236$",
+        "label": "Score on PC1",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 3.1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "noroot",
+            "value": 5,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A score is a dot product with the unit direction."
+        },
+        {
+          "rung": "point",
+          "text": "Day 1 is highlighted, with its landing point on the line.",
+          "highlight": [
+            "p0",
+            "q0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(1.9 \\times 2 + 1.2 \\times 1)/\\sqrt5 = 5/\\sqrt5 = 2.236$."
+        }
+      ],
+      "feedback": {
+        "correct": "$z = 5/\\sqrt5 \\approx 2.236$.",
+        "generic": "Not quite right. Dot the returns with $(2, 1)/\\sqrt5$.",
+        "byKey": {
+          "sum": "You added the two returns. Weight them by the loadings 0.89 and 0.45.",
+          "noroot": "You used $(2, 1)$, which has length $\\sqrt5$. Divide by $\\sqrt5$ to use a unit direction."
+        }
+      },
+      "explain": {
+        "text": "$z_1 = 0.894 \\times 1.9 + 0.447 \\times 1.2 = 2.236$. Stacking every day gives the scores $\\mathbf{X}\\mathbf{V}$, one column per component. The variance of the PC1 scores is 6, the top eigenvalue.",
+        "canvas": {
+          "highlight": [
+            "p0",
+            "q0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The SVD of the data",
+      "prose": "You can skip $\\boldsymbol{\\Sigma}$ and take the SVD of $\\mathbf{X}$ itself. Write it $\\mathbf{X} = \\mathbf{U}\\mathbf{S}\\mathbf{V}^T$, since $\\boldsymbol{\\Sigma}$ is taken. Then $\\mathbf{X}^T\\mathbf{X} = \\mathbf{V}\\mathbf{S}^2\\mathbf{V}^T$, so $\\mathbf{V}$ holds the same PC directions.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Output of `np.linalg.svd(X)`",
+            "Value"
+          ],
+          "rows": [
+            [
+              "singular value 1",
+              "7.348"
+            ],
+            [
+              "singular value 2",
+              "3.000"
+            ],
+            [
+              "`Vt[0]`",
+              "(−0.894, −0.447)"
+            ],
+            [
+              "`Vt[1]`",
+              "(−0.447, 0.894)"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What are the variances along PC1 and PC2?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "6 and 1",
+            "correct": true
+          },
+          {
+            "id": "raw",
+            "text": "7.348 and 3",
+            "why": "Those are singular values of $\\mathbf{X}$, not variances. Square them and divide by $n - 1 = 9$."
+          },
+          {
+            "id": "nosq",
+            "text": "0.816 and 0.333",
+            "why": "You divided by 9 without squaring. Variance is $\\sigma_i^2/(n - 1)$."
+          },
+          {
+            "id": "nodiv",
+            "text": "54 and 9",
+            "why": "You squared but did not divide by $n - 1$. $\\mathbf{X}^T\\mathbf{X}$ is 9 times the covariance."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How is $\\mathbf{X}^T\\mathbf{X}$ related to $\\boldsymbol{\\Sigma}$?"
+        },
+        {
+          "rung": "point",
+          "text": "$\\boldsymbol{\\Sigma} = \\mathbf{X}^T\\mathbf{X}/9$, and the eigenvalues of $\\mathbf{X}^T\\mathbf{X}$ are the squared singular values.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$7.348^2 / 9 = 6$ and $3^2 / 9 = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\lambda_i = \\sigma_i^2/(n-1)$: 6 and 1.",
+        "generic": "Not quite right. Square each singular value, then divide by $n - 1$."
+      },
+      "explain": {
+        "text": "$\\lambda_i = \\sigma_i^2/(n - 1)$ gives $54/9 = 6$ and $9/9 = 1$, the variances you dragged to. The rows of `Vt` are $\\pm\\mathbf{v}_1$ and $\\pm\\mathbf{v}_2$: an SVD may flip a sign, which changes nothing.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Forgetting the mean",
+      "prose": "In a takeover, stock A is the target and B the bidder. Over ten days A averaged $+2\\%$ a day and B $-2\\%$. A colleague runs PCA on the raw returns, skipping the demeaning step.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.5,
+            7
+          ],
+          "y": [
+            -5,
+            2
+          ],
+          "equal": true,
+          "grid": 1,
+          "xLabel": "Stock A return (%)",
+          "yLabel": "Stock B return (%)"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 3.9,
+              "y": -0.8,
+              "tap": false
+            },
+            {
+              "id": "p1",
+              "x": -1.3,
+              "y": -3.9,
+              "tap": false
+            },
+            {
+              "id": "p2",
+              "x": 1.9,
+              "y": -3.3,
+              "tap": false
+            },
+            {
+              "id": "p3",
+              "x": 1.3,
+              "y": -1.1,
+              "tap": false
+            },
+            {
+              "id": "p4",
+              "x": 2.3,
+              "y": -1.1,
+              "tap": false
+            },
+            {
+              "id": "p5",
+              "x": 2.7,
+              "y": -0.4,
+              "tap": false
+            },
+            {
+              "id": "p6",
+              "x": -0.4,
+              "y": -3.7,
+              "tap": false
+            },
+            {
+              "id": "p7",
+              "x": -0.2,
+              "y": -3.1,
+              "tap": false
+            },
+            {
+              "id": "p8",
+              "x": 3.9,
+              "y": -0.3,
+              "tap": false
+            },
+            {
+              "id": "p9",
+              "x": 5.9,
+              "y": -2.3,
+              "tap": false
+            },
+            {
+              "id": "M",
+              "x": 2,
+              "y": -2,
+              "label": "average day",
+              "labelPos": "e",
+              "tap": false,
+              "colour": 3
+            }
+          ],
+          "segments": [
+            {
+              "id": "raw",
+              "from": [
+                -1.745,
+                0.977
+              ],
+              "to": [
+                6.109,
+                -3.418
+              ],
+              "colour": 4,
+              "label": "line a",
+              "labelOffset": [
+                -30,
+                -14
+              ]
+            },
+            {
+              "id": "dm",
+              "from": [
+                -0.682,
+                -3.341
+              ],
+              "to": [
+                4.682,
+                -0.659
+              ],
+              "colour": 2,
+              "label": "line b",
+              "labelOffset": [
+                4,
+                -10
+              ]
+            }
+          ],
+          "caption": "Line a: first component without demeaning. Line b: after demeaning."
+        }
+      },
+      "question": "What does the colleague's first component, line a, mostly capture?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mean",
+            "text": "The average day's offset from the origin",
+            "correct": true
+          },
+          {
+            "id": "together",
+            "text": "How A and B move together from day to day",
+            "why": "That is line b, found after demeaning. Line a passes through the origin and is pulled towards the average day."
+          },
+          {
+            "id": "same",
+            "text": "The same thing as line b: demeaning only shifts the dots",
+            "why": "Shifting the dots changes $\\mathbf{X}^T\\mathbf{X}$. Without demeaning it adds $\\tfrac{n}{n-1}\\boldsymbol{\\mu}\\boldsymbol{\\mu}^T$, which points at the mean."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Line a must pass through the origin. Where is the cloud?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare line a with the dot marking the average day.",
+          "highlight": [
+            "raw",
+            "M"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Raw $\\mathbf{X}^T\\mathbf{X}/(n-1)$ equals $\\boldsymbol{\\Sigma} + \\tfrac{n}{n-1}\\boldsymbol{\\mu}\\boldsymbol{\\mu}^T$. The extra term points at the mean, $(2, -2)$."
+        }
+      ],
+      "feedback": {
+        "correct": "Without demeaning, the first component chases the mean.",
+        "generic": "Not quite right. Look at where line a points: from the origin towards the cloud.",
+        "byKey": {
+          "same": "You assumed shifting the dots changes nothing. Line a tilts down to $-29°$, while line b keeps PC1's $+27°$."
+        }
+      },
+      "explain": {
+        "text": "Line a runs from the origin towards the average day, at $-29°$, not along the cloud. The cloud's own long axis, line b, still slopes up at $+27°$. Always subtract each column's mean before forming $\\mathbf{X}^T\\mathbf{X}$.",
+        "canvas": {
+          "highlight": [
+            "raw",
+            "M"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "No favourite direction",
+      "prose": "Two other stocks are uncorrelated, and each has variance 2, so $\\boldsymbol{\\Sigma} = 2\\mathbf{I}$. Drag the line round.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4.5,
+            4.5
+          ],
+          "y": [
+            -3.5,
+            3.5
+          ],
+          "equal": true,
+          "grid": 1,
+          "xLabel": "Stock A return (%)",
+          "yLabel": "Stock B return (%)",
+          "functions": [
+            {
+              "id": "half",
+              "x": "3*cos(t)",
+              "y": "3*sin(t)",
+              "t": [
+                -1.5708,
+                1.5708
+              ],
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 1.6,
+              "y": -0.8,
+              "tap": false
+            },
+            {
+              "id": "p1",
+              "x": -2.3,
+              "y": 1.3,
+              "tap": false
+            },
+            {
+              "id": "p2",
+              "x": -0.4,
+              "y": -1.0,
+              "tap": false
+            },
+            {
+              "id": "p3",
+              "x": 1.8,
+              "y": -1.0,
+              "tap": false
+            },
+            {
+              "id": "p4",
+              "x": 1.2,
+              "y": 0.5,
+              "tap": false
+            },
+            {
+              "id": "p5",
+              "x": -0.5,
+              "y": -0.4,
+              "tap": false
+            },
+            {
+              "id": "p6",
+              "x": -1.0,
+              "y": 1.1,
+              "tap": false
+            },
+            {
+              "id": "p7",
+              "x": -0.9,
+              "y": -2.3,
+              "tap": false
+            },
+            {
+              "id": "p8",
+              "x": -1.0,
+              "y": 0.0,
+              "tap": false
+            },
+            {
+              "id": "p9",
+              "x": 1.5,
+              "y": 2.6,
+              "tap": false
+            },
+            {
+              "id": "D",
+              "x": 3.0,
+              "y": 0.0,
+              "on": "half",
+              "drag": true
+            },
+            {
+              "id": "q0",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q1",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q2",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q3",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q4",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q5",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q6",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q7",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q8",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "q9",
+              "x": 0,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            }
+          ],
+          "segments": [
+            {
+              "id": "L",
+              "from": [
+                -4.5,
+                -0.0
+              ],
+              "to": [
+                4.5,
+                0.0
+              ],
+              "colour": 2
+            },
+            {
+              "id": "r0",
+              "from": "p0",
+              "to": "q0",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r1",
+              "from": "p1",
+              "to": "q1",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r2",
+              "from": "p2",
+              "to": "q2",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r3",
+              "from": "p3",
+              "to": "q3",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r4",
+              "from": "p4",
+              "to": "q4",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r5",
+              "from": "p5",
+              "to": "q5",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r6",
+              "from": "p6",
+              "to": "q6",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r7",
+              "from": "p7",
+              "to": "q7",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r8",
+              "from": "p8",
+              "to": "q8",
+              "dashed": true,
+              "colour": 6
+            },
+            {
+              "id": "r9",
+              "from": "p9",
+              "to": "q9",
+              "dashed": true,
+              "colour": 6
+            }
+          ]
+        },
+        "derive": {
+          "L.from": "[-1.5*D.x, -1.5*D.y]",
+          "L.to": "[1.5*D.x, 1.5*D.y]",
+          "q0.x": "(1.6*D.x + -0.8*D.y)/9*D.x",
+          "q0.y": "(1.6*D.x + -0.8*D.y)/9*D.y",
+          "q1.x": "(-2.3*D.x + 1.3*D.y)/9*D.x",
+          "q1.y": "(-2.3*D.x + 1.3*D.y)/9*D.y",
+          "q2.x": "(-0.4*D.x + -1.0*D.y)/9*D.x",
+          "q2.y": "(-0.4*D.x + -1.0*D.y)/9*D.y",
+          "q3.x": "(1.8*D.x + -1.0*D.y)/9*D.x",
+          "q3.y": "(1.8*D.x + -1.0*D.y)/9*D.y",
+          "q4.x": "(1.2*D.x + 0.5*D.y)/9*D.x",
+          "q4.y": "(1.2*D.x + 0.5*D.y)/9*D.y",
+          "q5.x": "(-0.5*D.x + -0.4*D.y)/9*D.x",
+          "q5.y": "(-0.5*D.x + -0.4*D.y)/9*D.y",
+          "q6.x": "(-1.0*D.x + 1.1*D.y)/9*D.x",
+          "q6.y": "(-1.0*D.x + 1.1*D.y)/9*D.y",
+          "q7.x": "(-0.9*D.x + -2.3*D.y)/9*D.x",
+          "q7.y": "(-0.9*D.x + -2.3*D.y)/9*D.y",
+          "q8.x": "(-1.0*D.x + 0.0*D.y)/9*D.x",
+          "q8.y": "(-1.0*D.x + 0.0*D.y)/9*D.y",
+          "q9.x": "(1.5*D.x + 2.6*D.y)/9*D.x",
+          "q9.y": "(1.5*D.x + 2.6*D.y)/9*D.y",
+          "caption": "Variance along the line: {{fixed((2*D.x*D.x + 0*D.x*D.y + 2*D.y*D.y)/9, 2)}}"
+        }
+      },
+      "question": "Which direction has the largest variance?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tie",
+            "text": "Every direction ties at 2",
+            "correct": true
+          },
+          {
+            "id": "axis",
+            "text": "Stock A's axis",
+            "why": "Drag the line: the caption reads 2.00 on A's axis and everywhere else."
+          },
+          {
+            "id": "diag",
+            "text": "The 45° line",
+            "why": "The caption reads 2.00 at 45° too. With no correlation and equal variances, nothing stands out."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag the line through several angles and watch the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The caption does not change.",
+          "highlight": [
+            "L"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\mathbf{d}^T(2\\mathbf{I})\\mathbf{d} = 2|\\mathbf{d}|^2 = 2$ for every unit $\\mathbf{d}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Every direction gives 2.",
+        "generic": "Not quite right. Turn the line and read the caption at several angles."
+      },
+      "explain": {
+        "text": "$\\boldsymbol{\\Sigma} = 2\\mathbf{I}$ has eigenvalue 2 twice, so every vector is an eigenvector. There is no preferred direction, and PC1 is not defined. Software still returns some pair of axes: do not read meaning into them.",
+        "canvas": {
+          "points": {
+            "D": {
+              "x": 2.121,
+              "y": 2.121
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "What you did is **principal component analysis**. Demean the columns of $\\mathbf{X}$, form $$\\boldsymbol{\\Sigma} = \\frac{\\mathbf{X}^T\\mathbf{X}}{n-1} = \\mathbf{V}\\boldsymbol{\\Lambda}\\mathbf{V}^T$$ and sort the eigenvalues in decreasing order. Column $\\mathbf{v}_i$ is PC $i$, its variance is $\\lambda_i$, and the scores are $\\mathbf{X}\\mathbf{V}$.",
+      "question": "A covariance matrix has eigenvalues 9 and 1. What share of the total variance does PC1 explain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "90%: $9 / (9 + 1)$",
+        "label": "Share explained",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "sq",
+            "value": 0.9878,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "root",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$9 / 10 = 90\\%$.",
+        "generic": "Not quite right. Divide $\\lambda_1$ by the sum of the eigenvalues.",
+        "byKey": {
+          "sq": "You squared the eigenvalues. They are variances already: use $9/10$.",
+          "root": "You used square roots, $3/4$. Eigenvalues of $\\boldsymbol{\\Sigma}$ are variances: use $9/10$."
+        }
+      },
+      "explain": {
+        "text": "The total variance is the trace, $9 + 1 = 10$, the same in any rotated axes. PC1 carries 9 of it. Here eigenvalues are already variances, so they are not squared."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Why does $\\mathbf{v}_1$ maximise $\\mathbf{d}^T\\boldsymbol{\\Sigma}\\mathbf{d}$ over unit vectors $\\mathbf{d}$? Use the eigenvectors $\\mathbf{v}_1, \\mathbf{v}_2$ of $\\boldsymbol{\\Sigma}$, with $\\lambda_1 \\ge \\lambda_2$.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "basis",
+            "text": "$\\mathbf{d} = c_1\\mathbf{v}_1 + c_2\\mathbf{v}_2$ with $c_1^2 + c_2^2 = 1$: the $\\mathbf{v}_i$ are an orthonormal basis and $|\\mathbf{d}| = 1$"
+          },
+          {
+            "id": "quad",
+            "text": "$\\mathbf{d}^T\\boldsymbol{\\Sigma}\\mathbf{d} = \\lambda_1c_1^2 + \\lambda_2c_2^2$: $\\boldsymbol{\\Sigma}\\mathbf{v}_i = \\lambda_i\\mathbf{v}_i$ and the cross terms vanish"
+          },
+          {
+            "id": "bound",
+            "text": "$\\le \\lambda_1(c_1^2 + c_2^2) = \\lambda_1$: replace $\\lambda_2$ by the larger $\\lambda_1$"
+          },
+          {
+            "id": "equal",
+            "text": "Equality when $c_1 = 1$, $c_2 = 0$: that is $\\mathbf{d} = \\mathbf{v}_1$"
+          }
+        ],
+        "answer": [
+          "basis",
+          "quad",
+          "bound",
+          "equal"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write $\\mathbf{d}$ in the eigenvector basis first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\mathbf{v}_1^T\\mathbf{v}_2 = 0$ kills the cross terms."
+        },
+        {
+          "rung": "step",
+          "text": "Expand, bound by $\\lambda_1$, then ask when the bound is reached."
+        }
+      ],
+      "feedback": {
+        "correct": "The variance is a weighted average of the eigenvalues, so it peaks at $\\lambda_1$.",
+        "generic": "Not quite right. Expand $\\mathbf{d}$ in the eigenvectors before bounding."
+      },
+      "explain": {
+        "text": "In the eigenvector basis the variance is $\\lambda_1c_1^2 + \\lambda_2c_2^2$, an average of the eigenvalues weighted by $c_i^2$. It is largest when all the weight sits on $\\lambda_1$. With your data, $6c_1^2 + 1c_2^2 \\le 6$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two banks",
+      "prose": "Two bank stocks, A and B, over six days. Their means are 0.3% and 0.2%. After demeaning, $\\text{Var}(A) = \\text{Var}(B) = 2.0$ and $\\text{Cov}(A, B) = 1.8$. So PC1 is $(1, 1)/\\sqrt2$, both moving together, and PC2 is $(1, -1)/\\sqrt2$, A minus B.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "A (%)",
+            "B (%)"
+          ],
+          "rows": [
+            [
+              "1",
+              "2.4",
+              "1.5"
+            ],
+            [
+              "2",
+              "1.0",
+              "1.3"
+            ],
+            [
+              "3",
+              "-1.3",
+              "-0.8"
+            ],
+            [
+              "4",
+              "0.1",
+              "0.2"
+            ],
+            [
+              "5",
+              "0.8",
+              "1.1"
+            ],
+            [
+              "6",
+              "-1.2",
+              "-2.1"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What share of the variance does PC1 explain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.95,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "95%: $\\lambda = 2 \\pm 1.8$, so $3.8 / 4$",
+        "label": "Share explained",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "corr",
+            "value": 0.9,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For $\\begin{pmatrix} a & b \\\\ b & a \\end{pmatrix}$ the eigenvalues are $a + b$ and $a - b$."
+        },
+        {
+          "rung": "point",
+          "text": "Here $a = 2.0$ and $b = 1.8$.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\lambda_1 = 3.8$, $\\lambda_2 = 0.2$; $3.8 / 4.0 = 0.95$."
+        }
+      ],
+      "feedback": {
+        "correct": "PC1 carries 95% of the variance.",
+        "generic": "Not quite right. Find both eigenvalues, then divide the larger by their sum.",
+        "byKey": {
+          "half": "You split the variance evenly between two stocks. Most of it is the common move, $\\lambda_1 = 3.8$.",
+          "corr": "0.9 is the correlation. The share is $(1 + \\rho)/2 = 0.95$."
+        }
+      },
+      "explain": {
+        "text": "$\\lambda_1 = 3.8$ is the common bank move; $\\lambda_2 = 0.2$ is the A-minus-B spread. A pairs trader lives on that 5%. A hedger who shorts B against A removes the 95%."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Demean the data, form $\\boldsymbol{\\Sigma} = \\mathbf{X}^T\\mathbf{X}/(n-1)$; its eigenvectors, sorted by eigenvalue, are the principal components.",
+      "PC1 is the unit direction of largest variance; the variance along $\\mathbf{v}_i$ is $\\lambda_i$ and the scores are $\\mathbf{X}\\mathbf{V}$.",
+      "The SVD of $\\mathbf{X}$ gives the same $\\mathbf{V}$, with $\\lambda_i = \\sigma_i^2/(n-1)$."
+    ],
+    "formula": {
+      "name": "Principal components",
+      "tex": "\\boldsymbol{\\Sigma} = \\frac{\\mathbf{X}^T\\mathbf{X}}{n-1} = \\mathbf{V}\\boldsymbol{\\Lambda}\\mathbf{V}^T, \\qquad \\text{share}_i = \\frac{\\lambda_i}{\\sum_j \\lambda_j}",
+      "note": "Demean first; the scores are $\\mathbf{X}\\mathbf{V}$."
+    },
+    "trap": "Skipping the demeaning step makes PC1 point at the mean instead of along the cloud."
+  },
+  "quiz": [
+    {
+      "id": "q-diag",
+      "difficulty": 2,
+      "prose": "$\\boldsymbol{\\Sigma} = \\begin{pmatrix} 4 & 0 \\\\ 0 & 1 \\end{pmatrix}$ for two demeaned return series.",
+      "question": "What share of the variance does PC1 explain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "80%: $4/5$",
+        "label": "Share explained",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "root",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$4/5 = 80\\%$, along the first axis.",
+        "generic": "Not quite right. Divide the largest eigenvalue by the trace.",
+        "byKey": {
+          "root": "You used standard deviations, $2/3$. Use variances: $4/5$."
+        }
+      },
+      "explain": {
+        "text": "$\\boldsymbol{\\Sigma}$ is diagonal, so the axes are the PCs. PC1 is the first axis, with variance 4 of the total 5."
+      }
+    },
+    {
+      "id": "q-loading",
+      "difficulty": 3,
+      "prose": "For $\\boldsymbol{\\Sigma} = \\begin{pmatrix} 5 & 2 \\\\ 2 & 2 \\end{pmatrix}$, PC1 is $(0.894, 0.447)$ with $\\lambda_1 = 6$. A colleague reads the 0.447 as stock B's correlation with PC1.",
+      "question": "What is the correlation of B with the PC1 score?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "load",
+            "text": "0.447",
+            "why": "That is the loading, a weight in a unit vector. A correlation also scales by $\\sqrt{\\lambda_1}$ and by B's standard deviation."
+          },
+          {
+            "id": "right",
+            "text": "0.775",
+            "correct": true
+          },
+          {
+            "id": "ab",
+            "text": "0.632",
+            "why": "0.632 is the correlation between A and B, not between B and the score."
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "B is only partly explained by PC1; PC2 carries the rest."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.447\\sqrt6/\\sqrt2 = 0.775$.",
+        "generic": "Not quite right. Use $\\text{Cov}(\\mathbf{x}, z_1) = \\boldsymbol{\\Sigma}\\mathbf{v}_1 = \\lambda_1\\mathbf{v}_1$."
+      },
+      "explain": {
+        "text": "$\\text{Cov}(B, z_1) = \\lambda_1 \\times 0.447 = 2.683$. Dividing by $\\sqrt{\\text{Var}(B)\\,\\text{Var}(z_1)} = \\sqrt{2 \\times 6}$ gives 0.775. Loadings are directions, not correlations."
+      }
+    },
+    {
+      "id": "q-score",
+      "difficulty": 2,
+      "prose": "PC1 is $\\mathbf{v}_1 = (2, 1)/\\sqrt5$. A demeaned day has returns $(3, 1)$.",
+      "question": "What is its score on PC1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.13,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "$7/\\sqrt5 \\approx 3.130$",
+        "label": "Score",
+        "wrong": [
+          {
+            "id": "noroot",
+            "value": 7,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "sum",
+            "value": 4,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$7/\\sqrt5 \\approx 3.130$.",
+        "generic": "Not quite right. Dot the day with the unit vector $\\mathbf{v}_1$.",
+        "byKey": {
+          "noroot": "7 uses $(2, 1)$, which is not a unit vector. Divide by $\\sqrt5$.",
+          "sum": "You added the returns. Weight them by the loadings."
+        }
+      },
+      "explain": {
+        "text": "$z = (3 \\times 2 + 1 \\times 1)/\\sqrt5 = 7/\\sqrt5 = 3.130$."
+      }
+    },
+    {
+      "id": "q-svd",
+      "difficulty": 3,
+      "prose": "A demeaned data matrix $\\mathbf{X}$ has 21 rows and singular values 10 and 4.",
+      "question": "What share of the variance does PC1 explain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8621,
+        "tol": {
+          "abs": 0.002
+        },
+        "accept": "86.2%: variances $100/20 = 5$ and $16/20 = 0.8$",
+        "label": "Share explained",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "nosq",
+            "value": 0.7143,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$5 / 5.8 = 86.2\\%$.",
+        "generic": "Not quite right. Square the singular values before comparing them.",
+        "byKey": {
+          "nosq": "You compared $10/14$. Variances are $\\sigma_i^2/(n - 1)$: compare $100/116$."
+        }
+      },
+      "explain": {
+        "text": "$\\lambda_i = \\sigma_i^2/20$ gives 5 and 0.8. The $n - 1$ cancels in the share, so it is $100/116 = 86.2\\%$."
+      }
+    }
+  ]
+}

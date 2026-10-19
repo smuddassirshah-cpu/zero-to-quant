@@ -1,0 +1,996 @@
+{
+  "id": "l12-yield-curve",
+  "course": "eigen",
+  "title": "Level, slope and curvature",
+  "minutes": 15,
+  "objectives": [
+    "Run PCA on yield curve changes in NumPy and name the factors.",
+    "Sort `eigh` output and fix eigenvector signs",
+    "Use the first components to describe and hedge curve risk"
+  ],
+  "skills": [
+    "eg-pca"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Fifteen days of the curve",
+      "prose": "Each bar is the day's change in one gilt yield, from 2 years to 30 years, in basis points. Slide through the fifteen days.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "2y",
+              "label": "2y"
+            },
+            {
+              "id": "5y",
+              "label": "5y"
+            },
+            {
+              "id": "10y",
+              "label": "10y"
+            },
+            {
+              "id": "20y",
+              "label": "20y"
+            },
+            {
+              "id": "30y",
+              "label": "30y"
+            }
+          ],
+          "yLabel": "Change (bp)",
+          "yMin": -7,
+          "yMax": 7,
+          "showValues": true,
+          "decimals": 1,
+          "xLabel": "Maturity"
+        },
+        "state": {
+          "values": {
+            "2y": -4.5,
+            "5y": -5.4,
+            "10y": -4.1,
+            "20y": -3.6,
+            "30y": -2.5
+          },
+          "params": {
+            "d": 1
+          }
+        },
+        "derive": {
+          "values.2y": "[-4.5, 1.1, 1.4, 0.0, 2.7, -4.3, 0.6, -2.5, 1.4, -2.5, 3.4, 0.9, -2.6, -0.9, 5.9][d - 1]",
+          "values.5y": "[-5.4, 1.5, 0.3, 1.3, 0.8, -3.8, 2.1, -3.7, 1.5, -1.2, 4.2, 1.8, -3.0, 0.8, 4.2][d - 1]",
+          "values.10y": "[-4.1, 1.5, 0.9, 0.1, 0.2, -4.8, 1.9, -2.7, 2.8, -1.5, 3.3, 2.8, -3.8, 1.7, 2.1][d - 1]",
+          "values.20y": "[-3.6, 2.4, 3.4, -1.2, 1.0, -5.0, 1.0, -1.3, 3.6, -1.4, 2.7, 2.4, -4.6, 1.9, -0.3][d - 1]",
+          "values.30y": "[-2.5, 3.2, 5.2, -3.0, 2.6, -6.6, 0.1, 0.5, 4.3, -2.8, 1.6, 2.3, -5.3, 1.6, -1.9][d - 1]",
+          "caption": "Day {{d}} of 15: changes in basis points"
+        },
+        "controls": [
+          {
+            "bind": "d",
+            "min": 1,
+            "max": 15,
+            "step": 1,
+            "label": "Day",
+            "start": 1
+          }
+        ]
+      },
+      "question": "On how many of the 15 days do all five yields move in the same direction?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11,
+        "tol": {
+          "abs": 1
+        },
+        "accept": "11 (days 1, 2, 3, 5, 6, 7, 9, 10, 11, 12 and 13); 10 or 12 also accepted",
+        "label": "Number of days",
+        "wrong": [
+          {
+            "id": "few",
+            "value": 3,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "all",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A day counts when every bar is above zero, or every bar is below."
+        },
+        {
+          "rung": "point",
+          "text": "Day 1 counts: all five bars are below zero.",
+          "highlight": [
+            "2y",
+            "30y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only days 4, 8, 14 and 15 have bars on both sides of zero. That leaves 11."
+        }
+      ],
+      "feedback": {
+        "correct": "Most days the whole curve shifts one way.",
+        "generic": "Not quite right. Step through each day and count those with every bar on one side of zero.",
+        "byKey": {
+          "few": "You may have counted only big moves. Small days count too, if all five bars share a sign.",
+          "all": "Days 4, 8, 14 and 15 have bars on both sides of zero. Day 15 steepens: short yields up, long yields down."
+        }
+      },
+      "explain": {
+        "text": "On 11 of 15 days the whole curve moved one way. Day 15 is different: the short end rose and the long end fell. PCA will separate those two kinds of move.",
+        "canvas": {
+          "params": {
+            "d": 15
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Covariance and eigh",
+      "prose": "The matrix `X` holds the 15 days, one column per maturity. Complete `pca_eigen` so it returns the eigenvalues of the covariance matrix, largest first, with matching eigenvector columns. `np.linalg.eigh` handles symmetric matrices but returns the smallest eigenvalue first.",
+      "question": "Complete `pca_eigen(X)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n# Daily changes in bp. Columns: 2y, 5y, 10y, 20y, 30y\nX = np.array([\n    [-4.5, -5.4, -4.1, -3.6, -2.5],\n    [ 1.1,  1.5,  1.5,  2.4,  3.2],\n    [ 1.4,  0.3,  0.9,  3.4,  5.2],\n    [ 0.0,  1.3,  0.1, -1.2, -3.0],\n    [ 2.7,  0.8,  0.2,  1.0,  2.6],\n    [-4.3, -3.8, -4.8, -5.0, -6.6],\n    [ 0.6,  2.1,  1.9,  1.0,  0.1],\n    [-2.5, -3.7, -2.7, -1.3,  0.5],\n    [ 1.4,  1.5,  2.8,  3.6,  4.3],\n    [-2.5, -1.2, -1.5, -1.4, -2.8],\n    [ 3.4,  4.2,  3.3,  2.7,  1.6],\n    [ 0.9,  1.8,  2.8,  2.4,  2.3],\n    [-2.6, -3.0, -3.8, -4.6, -5.3],\n    [-0.9,  0.8,  1.7,  1.9,  1.6],\n    [ 5.9,  4.2,  2.1, -0.3, -1.9]\n])\n\ndef pca_eigen(X):\n    X = np.asarray(X, dtype=float)\n    Xc = ...      # subtract each column's mean\n    C = ...       # covariance: Xc.T @ Xc / (n - 1)\n    vals, vecs = np.linalg.eigh(C)\n    order = ...   # positions of vals, largest first\n    return vals[order], vecs[:, order]\n",
+        "solution": "import numpy as np\n\n# Daily changes in bp. Columns: 2y, 5y, 10y, 20y, 30y\nX = np.array([\n    [-4.5, -5.4, -4.1, -3.6, -2.5],\n    [ 1.1,  1.5,  1.5,  2.4,  3.2],\n    [ 1.4,  0.3,  0.9,  3.4,  5.2],\n    [ 0.0,  1.3,  0.1, -1.2, -3.0],\n    [ 2.7,  0.8,  0.2,  1.0,  2.6],\n    [-4.3, -3.8, -4.8, -5.0, -6.6],\n    [ 0.6,  2.1,  1.9,  1.0,  0.1],\n    [-2.5, -3.7, -2.7, -1.3,  0.5],\n    [ 1.4,  1.5,  2.8,  3.6,  4.3],\n    [-2.5, -1.2, -1.5, -1.4, -2.8],\n    [ 3.4,  4.2,  3.3,  2.7,  1.6],\n    [ 0.9,  1.8,  2.8,  2.4,  2.3],\n    [-2.6, -3.0, -3.8, -4.6, -5.3],\n    [-0.9,  0.8,  1.7,  1.9,  1.6],\n    [ 5.9,  4.2,  2.1, -0.3, -1.9]\n])\n\ndef pca_eigen(X):\n    X = np.asarray(X, dtype=float)\n    Xc = X - X.mean(axis=0)\n    C = Xc.T @ Xc / (len(X) - 1)\n    vals, vecs = np.linalg.eigh(C)\n    order = np.argsort(vals)[::-1]\n    return vals[order], vecs[:, order]\n",
+        "examples": [
+          {
+            "call": "[round(float(v), 4) for v in pca_eigen(X)[0]]",
+            "expect": "[36.0779, 7.1616, 1.3558, 0.0925, 0.0235]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(float(v), 4) for v in pca_eigen(X)[0]]",
+            "expect": "[36.0779, 7.1616, 1.3558, 0.0925, 0.0235]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in np.abs(pca_eigen(X)[1][:, 0])]",
+            "expect": "[0.4184, 0.4265, 0.4389, 0.4539, 0.4944]",
+            "compare": "isclose"
+          },
+          {
+            "call": "list(pca_eigen(X)[1].shape)",
+            "expect": "[5, 5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "all(a >= b for a, b in zip(v, v[1:]))",
+            "expect": "True",
+            "compare": "isclose",
+            "setup": "v = [float(t) for t in pca_eigen(X)[0]]"
+          },
+          {
+            "call": "[round(float(v), 4) for v in pca_eigen(Y)[0]]",
+            "expect": "[3.222, 0.7112, 0.5622]",
+            "compare": "isclose",
+            "setup": "Y = np.array([[1.0, 2.0, 0.5], [-0.5, 0.3, 1.2], [2.2, 1.1, -0.4], [0.0, -1.5, 0.8], [-1.8, -0.6, -1.1], [0.7, 1.9, 0.2], [-1.2, -2.0, 0.6], [0.4, 0.1, -0.9]])"
+          },
+          {
+            "call": "[round(float(v), 4) for v in np.abs(pca_eigen(Y)[1][:, 0])]",
+            "expect": "[0.6253, 0.7798, 0.0308]",
+            "compare": "isclose",
+            "setup": "Y = np.array([[1.0, 2.0, 0.5], [-0.5, 0.3, 1.2], [2.2, 1.1, -0.4], [0.0, -1.5, 0.8], [-1.8, -0.6, -1.1], [0.7, 1.9, 0.2], [-1.2, -2.0, 0.6], [0.4, 0.1, -0.9]])"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on `X` and on a second data set. Each value is rounded to 4 decimal places and must match, a tolerance of 0.00005. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Demean with `X.mean(axis=0)`; it gives one mean per column."
+        },
+        {
+          "rung": "point",
+          "text": "`np.argsort(vals)` lists positions smallest first. Reverse it with `[::-1]`."
+        },
+        {
+          "rung": "step",
+          "text": "`Xc = X - X.mean(axis=0)`, `C = Xc.T @ Xc / (len(X) - 1)`, `order = np.argsort(vals)[::-1]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Eigenvalues 36.08, 7.16, 1.36, 0.09 and 0.02, largest first.",
+        "generic": "Some tests failed. Check the demeaning, the $n - 1$ and the order.",
+        "byKey": {
+          "error": "Your code stopped with an error. Replace all three `...` lines."
+        }
+      },
+      "explain": {
+        "text": "The covariance is $\\mathbf{X}_c^T\\mathbf{X}_c/(n-1)$ after demeaning each column. `eigh` returns ascending eigenvalues, so the order is reversed.\n\n```python\nXc = X - X.mean(axis=0)\nC = Xc.T @ Xc / (len(X) - 1)\norder = np.argsort(vals)[::-1]\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Share of the variance",
+      "prose": "The total variance is the sum of the eigenvalues. Each component's share is its eigenvalue over that total. `pca_eigen` from the last screen is already in place.",
+      "question": "Complete `explained(X)` so it returns each component's share, largest first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n# Daily changes in bp. Columns: 2y, 5y, 10y, 20y, 30y\nX = np.array([\n    [-4.5, -5.4, -4.1, -3.6, -2.5],\n    [ 1.1,  1.5,  1.5,  2.4,  3.2],\n    [ 1.4,  0.3,  0.9,  3.4,  5.2],\n    [ 0.0,  1.3,  0.1, -1.2, -3.0],\n    [ 2.7,  0.8,  0.2,  1.0,  2.6],\n    [-4.3, -3.8, -4.8, -5.0, -6.6],\n    [ 0.6,  2.1,  1.9,  1.0,  0.1],\n    [-2.5, -3.7, -2.7, -1.3,  0.5],\n    [ 1.4,  1.5,  2.8,  3.6,  4.3],\n    [-2.5, -1.2, -1.5, -1.4, -2.8],\n    [ 3.4,  4.2,  3.3,  2.7,  1.6],\n    [ 0.9,  1.8,  2.8,  2.4,  2.3],\n    [-2.6, -3.0, -3.8, -4.6, -5.3],\n    [-0.9,  0.8,  1.7,  1.9,  1.6],\n    [ 5.9,  4.2,  2.1, -0.3, -1.9]\n])\n\ndef pca_eigen(X):\n    X = np.asarray(X, dtype=float)\n    Xc = X - X.mean(axis=0)\n    C = Xc.T @ Xc / (len(X) - 1)\n    vals, vecs = np.linalg.eigh(C)\n    order = np.argsort(vals)[::-1]\n    return vals[order], vecs[:, order]\n\n\ndef explained(X):\n    vals, vecs = pca_eigen(X)\n    return ...    # each eigenvalue as a share of the total\n",
+        "solution": "import numpy as np\n\n# Daily changes in bp. Columns: 2y, 5y, 10y, 20y, 30y\nX = np.array([\n    [-4.5, -5.4, -4.1, -3.6, -2.5],\n    [ 1.1,  1.5,  1.5,  2.4,  3.2],\n    [ 1.4,  0.3,  0.9,  3.4,  5.2],\n    [ 0.0,  1.3,  0.1, -1.2, -3.0],\n    [ 2.7,  0.8,  0.2,  1.0,  2.6],\n    [-4.3, -3.8, -4.8, -5.0, -6.6],\n    [ 0.6,  2.1,  1.9,  1.0,  0.1],\n    [-2.5, -3.7, -2.7, -1.3,  0.5],\n    [ 1.4,  1.5,  2.8,  3.6,  4.3],\n    [-2.5, -1.2, -1.5, -1.4, -2.8],\n    [ 3.4,  4.2,  3.3,  2.7,  1.6],\n    [ 0.9,  1.8,  2.8,  2.4,  2.3],\n    [-2.6, -3.0, -3.8, -4.6, -5.3],\n    [-0.9,  0.8,  1.7,  1.9,  1.6],\n    [ 5.9,  4.2,  2.1, -0.3, -1.9]\n])\n\ndef pca_eigen(X):\n    X = np.asarray(X, dtype=float)\n    Xc = X - X.mean(axis=0)\n    C = Xc.T @ Xc / (len(X) - 1)\n    vals, vecs = np.linalg.eigh(C)\n    order = np.argsort(vals)[::-1]\n    return vals[order], vecs[:, order]\n\n\ndef explained(X):\n    vals, vecs = pca_eigen(X)\n    return vals / vals.sum()\n",
+        "examples": [
+          {
+            "call": "[round(float(v), 4) for v in explained(X)]",
+            "expect": "[0.8069, 0.1602, 0.0303, 0.0021, 0.0005]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(float(v), 4) for v in explained(X)]",
+            "expect": "[0.8069, 0.1602, 0.0303, 0.0021, 0.0005]",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(sum(explained(X))), 4)",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(explained(X)[0] + explained(X)[1]), 4)",
+            "expect": "0.9671",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in explained(Y)]",
+            "expect": "[0.7167, 0.1582, 0.1251]",
+            "compare": "isclose",
+            "setup": "Y = np.array([[1.0, 2.0, 0.5], [-0.5, 0.3, 1.2], [2.2, 1.1, -0.4], [0.0, -1.5, 0.8], [-1.8, -0.6, -1.1], [0.7, 1.9, 0.2], [-1.2, -2.0, 0.6], [0.4, 0.1, -0.9]])"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Values are rounded to 4 decimal places and must match, a tolerance of 0.00005."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A share is one eigenvalue divided by all of them added up."
+        },
+        {
+          "rung": "point",
+          "text": "`vals.sum()` is the total variance."
+        },
+        {
+          "rung": "step",
+          "text": "`return vals / vals.sum()`"
+        }
+      ],
+      "feedback": {
+        "correct": "80.7%, 16.0%, 3.0%, 0.2% and 0.05%.",
+        "generic": "Some tests failed. Divide every eigenvalue by their sum.",
+        "byKey": {
+          "error": "Your code stopped with an error. Replace the `...` with an expression."
+        }
+      },
+      "explain": {
+        "text": "`vals / vals.sum()` divides every eigenvalue by the trace. The first component carries 80.7% of the daily variance, the first two 96.7%. Five yields really move with about two or three degrees of freedom."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Which end is PC1",
+      "prose": "A colleague skips the sorting step:\n\n```python\nvals, vecs = np.linalg.eigh(C)\npc1 = vecs[:, 0]\n```\n\nThe table shows the `vals` that `eigh` returned for our yield data.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Position in `vals`",
+            "Eigenvalue"
+          ],
+          "rows": [
+            [
+              "0",
+              "0.0235"
+            ],
+            [
+              "1",
+              "0.0925"
+            ],
+            [
+              "2",
+              "1.3558"
+            ],
+            [
+              "3",
+              "7.1616"
+            ],
+            [
+              "4",
+              "36.0779"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the colleague's `pc1`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "smallest",
+            "text": "The component with the smallest variance, 0.0235",
+            "correct": true
+          },
+          {
+            "id": "level",
+            "text": "PC1, the level move",
+            "why": "`eigh` sorts eigenvalues from smallest to largest. Column 0 is the least important component, not the most.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  4
+                ]
+              }
+            }
+          },
+          {
+            "id": "random",
+            "text": "An arbitrary component: the order is not defined",
+            "why": "That is true of `np.linalg.eig`, not `eigh`. `eigh` always returns ascending order, so column 0 is the smallest."
+          },
+          {
+            "id": "flip",
+            "text": "PC1 with its sign flipped",
+            "why": "Signs can flip, but the order here is wrong too. Column 0 belongs to eigenvalue 0.0235."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the eigenvalue in position 0."
+        },
+        {
+          "rung": "point",
+          "text": "Position 0 holds the smallest eigenvalue.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`vecs[:, 0]` goes with 0.0235, which explains 0.05% of the variance. PC1 is `vecs[:, -1]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Column 0 of `eigh` is the smallest component.",
+        "generic": "Not quite right. Look at which eigenvalue sits in position 0.",
+        "byKey": {
+          "level": "You assumed `eigh` sorts largest first. It sorts smallest first, so column 0 is noise."
+        }
+      },
+      "explain": {
+        "text": "`eigh` returns ascending eigenvalues, so PC1 is the last column. `np.linalg.eig` is worse on a covariance matrix: it promises no order and may return a complex array with `+0j` parts. Use `eigh` and sort descending.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Fix the signs",
+      "prose": "An eigenvector and its negative are equally valid, so a library may return either. To make loadings repeatable, flip each column so its largest-magnitude entry is positive.",
+      "question": "Complete `loadings(X, k)` so it returns the first `k` components, one per column, with that sign rule.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n# Daily changes in bp. Columns: 2y, 5y, 10y, 20y, 30y\nX = np.array([\n    [-4.5, -5.4, -4.1, -3.6, -2.5],\n    [ 1.1,  1.5,  1.5,  2.4,  3.2],\n    [ 1.4,  0.3,  0.9,  3.4,  5.2],\n    [ 0.0,  1.3,  0.1, -1.2, -3.0],\n    [ 2.7,  0.8,  0.2,  1.0,  2.6],\n    [-4.3, -3.8, -4.8, -5.0, -6.6],\n    [ 0.6,  2.1,  1.9,  1.0,  0.1],\n    [-2.5, -3.7, -2.7, -1.3,  0.5],\n    [ 1.4,  1.5,  2.8,  3.6,  4.3],\n    [-2.5, -1.2, -1.5, -1.4, -2.8],\n    [ 3.4,  4.2,  3.3,  2.7,  1.6],\n    [ 0.9,  1.8,  2.8,  2.4,  2.3],\n    [-2.6, -3.0, -3.8, -4.6, -5.3],\n    [-0.9,  0.8,  1.7,  1.9,  1.6],\n    [ 5.9,  4.2,  2.1, -0.3, -1.9]\n])\n\ndef pca_eigen(X):\n    X = np.asarray(X, dtype=float)\n    Xc = X - X.mean(axis=0)\n    C = Xc.T @ Xc / (len(X) - 1)\n    vals, vecs = np.linalg.eigh(C)\n    order = np.argsort(vals)[::-1]\n    return vals[order], vecs[:, order]\n\n\ndef loadings(X, k=3):\n    vals, vecs = pca_eigen(X)\n    L = vecs[:, :k].copy()\n    for j in range(k):\n        i = ...   # row of the largest |loading| in column j\n        if L[i, j] < 0:\n            ...   # flip the whole column\n    return L\n",
+        "solution": "import numpy as np\n\n# Daily changes in bp. Columns: 2y, 5y, 10y, 20y, 30y\nX = np.array([\n    [-4.5, -5.4, -4.1, -3.6, -2.5],\n    [ 1.1,  1.5,  1.5,  2.4,  3.2],\n    [ 1.4,  0.3,  0.9,  3.4,  5.2],\n    [ 0.0,  1.3,  0.1, -1.2, -3.0],\n    [ 2.7,  0.8,  0.2,  1.0,  2.6],\n    [-4.3, -3.8, -4.8, -5.0, -6.6],\n    [ 0.6,  2.1,  1.9,  1.0,  0.1],\n    [-2.5, -3.7, -2.7, -1.3,  0.5],\n    [ 1.4,  1.5,  2.8,  3.6,  4.3],\n    [-2.5, -1.2, -1.5, -1.4, -2.8],\n    [ 3.4,  4.2,  3.3,  2.7,  1.6],\n    [ 0.9,  1.8,  2.8,  2.4,  2.3],\n    [-2.6, -3.0, -3.8, -4.6, -5.3],\n    [-0.9,  0.8,  1.7,  1.9,  1.6],\n    [ 5.9,  4.2,  2.1, -0.3, -1.9]\n])\n\ndef pca_eigen(X):\n    X = np.asarray(X, dtype=float)\n    Xc = X - X.mean(axis=0)\n    C = Xc.T @ Xc / (len(X) - 1)\n    vals, vecs = np.linalg.eigh(C)\n    order = np.argsort(vals)[::-1]\n    return vals[order], vecs[:, order]\n\n\ndef loadings(X, k=3):\n    vals, vecs = pca_eigen(X)\n    L = vecs[:, :k].copy()\n    for j in range(k):\n        i = np.argmax(np.abs(L[:, j]))\n        if L[i, j] < 0:\n            L[:, j] = -L[:, j]\n    return L\n",
+        "examples": [
+          {
+            "call": "[round(float(v), 4) for v in loadings(X)[:, 0]]",
+            "expect": "[0.4184, 0.4265, 0.4389, 0.4539, 0.4944]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(loadings(X), 4).tolist()",
+            "expect": "[[0.4184, -0.4474, 0.7345], [0.4265, -0.4927, -0.2779], [0.4389, -0.1422, -0.4791], [0.4539, 0.2717, -0.2662], [0.4944, 0.6805, 0.2879]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "np.round(loadings(Y, 2), 4).tolist()",
+            "expect": "[[0.6253, 0.3474], [0.7798, -0.2428], [-0.0308, 0.9057]]",
+            "compare": "isclose",
+            "setup": "Y = np.array([[1.0, 2.0, 0.5], [-0.5, 0.3, 1.2], [2.2, 1.1, -0.4], [0.0, -1.5, 0.8], [-1.8, -0.6, -1.1], [0.7, 1.9, 0.2], [-1.2, -2.0, 0.6], [0.4, 0.1, -0.9]])"
+          },
+          {
+            "call": "all(L[np.argmax(np.abs(L[:, j])), j] > 0 for j in range(3))",
+            "expect": "True",
+            "compare": "isclose",
+            "setup": "L = loadings(X)"
+          },
+          {
+            "call": "list(loadings(X, 2).shape)",
+            "expect": "[5, 2]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Loadings are rounded to 4 decimal places and must match, a tolerance of 0.00005."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`np.abs(L[:, j])` gives the sizes in column j."
+        },
+        {
+          "rung": "point",
+          "text": "`np.argmax` returns the position of the largest one."
+        },
+        {
+          "rung": "step",
+          "text": "`i = np.argmax(np.abs(L[:, j]))`, then `L[:, j] = -L[:, j]` when `L[i, j] < 0`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every column now has a fixed sign.",
+        "generic": "Some tests failed. Find the largest |loading| in each column and make it positive.",
+        "byKey": {
+          "error": "Your code stopped with an error. Replace both `...` lines."
+        }
+      },
+      "explain": {
+        "text": "Flipping a whole column changes nothing about the component, only how it is reported. A fixed rule makes results comparable across days and libraries.\n\n```python\ni = np.argmax(np.abs(L[:, j]))\nif L[i, j] < 0:\n    L[:, j] = -L[:, j]\n```"
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Level, slope, curvature",
+      "prose": "The bars are the loadings your function returned. Slide between the first three components. Count how often each one changes sign along the curve.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "2y",
+              "label": "2y"
+            },
+            {
+              "id": "5y",
+              "label": "5y"
+            },
+            {
+              "id": "10y",
+              "label": "10y"
+            },
+            {
+              "id": "20y",
+              "label": "20y"
+            },
+            {
+              "id": "30y",
+              "label": "30y"
+            }
+          ],
+          "yLabel": "Loading",
+          "yMin": -1,
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 2,
+          "xLabel": "Maturity"
+        },
+        "state": {
+          "values": {
+            "2y": 0.4184,
+            "5y": 0.4265,
+            "10y": 0.4389,
+            "20y": 0.4539,
+            "30y": 0.4944
+          },
+          "params": {
+            "pc": 1
+          }
+        },
+        "derive": {
+          "values.2y": "[0.4184, -0.4474, 0.7345][pc - 1]",
+          "values.5y": "[0.4265, -0.4927, -0.2779][pc - 1]",
+          "values.10y": "[0.4389, -0.1422, -0.4791][pc - 1]",
+          "values.20y": "[0.4539, 0.2717, -0.2662][pc - 1]",
+          "values.30y": "[0.4944, 0.6805, 0.2879][pc - 1]",
+          "caption": "Loadings of PC{{pc}}"
+        },
+        "controls": [
+          {
+            "bind": "pc",
+            "min": 1,
+            "max": 3,
+            "step": 1,
+            "label": "Component",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Name each component.",
+      "widget": {
+        "kind": "place",
+        "mode": "assign",
+        "tokens": [
+          {
+            "id": "level",
+            "text": "Level: all the same sign"
+          },
+          {
+            "id": "slope",
+            "text": "Slope: one change of sign"
+          },
+          {
+            "id": "curve",
+            "text": "Curvature: two changes of sign"
+          }
+        ],
+        "slots": [
+          {
+            "id": "s1",
+            "label": "PC1",
+            "accepts": [
+              "level"
+            ]
+          },
+          {
+            "id": "s2",
+            "label": "PC2",
+            "accepts": [
+              "slope"
+            ]
+          },
+          {
+            "id": "s3",
+            "label": "PC3",
+            "accepts": [
+              "curve"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the sign changes from 2y to 30y in each component."
+        },
+        {
+          "rung": "point",
+          "text": "PC2 is negative at the short end and positive at the long end.",
+          "highlight": [
+            "2y",
+            "30y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "PC1 has no sign change, PC2 one, PC3 two."
+        }
+      ],
+      "feedback": {
+        "correct": "Level, slope, curvature: 81%, 16% and 3% of the variance.",
+        "generic": "Not quite right. Slide to each component and count the sign changes."
+      },
+      "explain": {
+        "text": "PC1 moves every yield the same way: a parallel shift. PC2 lifts the long end against the short end: steepening. PC3 bends the middle against both ends.",
+        "canvas": {
+          "params": {
+            "pc": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Another library, run on the same data, reports PC1 with every loading negative.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "2y",
+              "label": "2y"
+            },
+            {
+              "id": "5y",
+              "label": "5y"
+            },
+            {
+              "id": "10y",
+              "label": "10y"
+            },
+            {
+              "id": "20y",
+              "label": "20y"
+            },
+            {
+              "id": "30y",
+              "label": "30y"
+            }
+          ],
+          "yLabel": "Loading",
+          "yMin": -1,
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 2,
+          "xLabel": "Maturity"
+        },
+        "state": {
+          "values": {
+            "2y": -0.4184,
+            "5y": -0.4265,
+            "10y": -0.4389,
+            "20y": -0.4539,
+            "30y": -0.4944
+          },
+          "caption": "The other library's PC1"
+        }
+      },
+      "question": "What does that tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "Nothing new: it is the same level component with the opposite sign",
+            "correct": true
+          },
+          {
+            "id": "fall",
+            "text": "This factor is about yields falling, not rising",
+            "why": "A component is a direction for both rises and falls. Its scores flip sign with it, so the product is unchanged."
+          },
+          {
+            "id": "bug",
+            "text": "One of the libraries has a bug",
+            "why": "Both answers are correct. $\\boldsymbol{\\Sigma}\\mathbf{v} = \\lambda\\mathbf{v}$ holds for $-\\mathbf{v}$ too."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is $-\\mathbf{v}$ an eigenvector when $\\mathbf{v}$ is?"
+        },
+        {
+          "rung": "point",
+          "text": "$\\boldsymbol{\\Sigma}(-\\mathbf{v}) = \\lambda(-\\mathbf{v})$.",
+          "highlight": [
+            "2y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Flip every bar and you get your PC1. Scores flip too, so each day's fitted move is the same."
+        }
+      ],
+      "feedback": {
+        "correct": "Same component; the sign is a convention.",
+        "generic": "Not quite right. Ask whether $-\\mathbf{v}$ satisfies the eigenvector equation."
+      },
+      "explain": {
+        "text": "Your sign rule makes the largest loading positive, so you would flip this to match. That is the edge case PCA always has: a component is a line, not an arrow. Fix the sign before comparing loadings across runs."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "The pipeline you wrote computes $$\\boldsymbol{\\Sigma} = \\mathbf{V}\\boldsymbol{\\Lambda}\\mathbf{V}^T, \\qquad \\text{share}_i = \\frac{\\lambda_i}{\\sum_j \\lambda_j}$$ with the eigenvalues sorted largest first:\n\n```python\nXc = X - X.mean(axis=0)\nC = Xc.T @ Xc / (len(X) - 1)\nvals, vecs = np.linalg.eigh(C)\norder = np.argsort(vals)[::-1]\n```",
+      "question": "What share of the variance do level and slope explain together?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9671,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "96.7%: 80.7% plus 16.0%",
+        "label": "Share explained",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.8069,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$80.7\\% + 16.0\\% = 96.7\\%$.",
+        "generic": "Not quite right. Add the shares of PC1 and PC2.",
+        "byKey": {
+          "one": "That is PC1 alone. Add PC2's 16.0%."
+        }
+      },
+      "explain": {
+        "text": "Two numbers a day describe 96.7% of how five yields move. That is why desks quote curve risk as level and slope."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Hedging a bond book",
+      "prose": "A gilt book loses money when yields rise. Its sensitivity column is the P&L in £ for a 1 bp rise at each maturity. A move of one unit of PC1 raises each yield by its loading, in bp.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Maturity",
+            "Sensitivity (£ per bp)",
+            "PC1 loading",
+            "PC2 loading"
+          ],
+          "rows": [
+            [
+              "2y",
+              "-100",
+              "0.42",
+              "-0.45"
+            ],
+            [
+              "5y",
+              "-200",
+              "0.43",
+              "-0.49"
+            ],
+            [
+              "10y",
+              "-300",
+              "0.44",
+              "-0.14"
+            ],
+            [
+              "20y",
+              "-200",
+              "0.45",
+              "0.27"
+            ],
+            [
+              "30y",
+              "-100",
+              "0.49",
+              "0.68"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the book's P&L, in £, for a one-unit PC1 move?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -399,
+        "tol": {
+          "abs": 3
+        },
+        "accept": "−£399: $\\sum$ sensitivity × loading",
+        "label": "P&L per unit of PC1",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": -900,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "sign",
+            "value": 399,
+            "tol": {
+              "abs": 3
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "P&L is each sensitivity times that yield's move, added up."
+        },
+        {
+          "rung": "point",
+          "text": "The 10y moves 0.44 bp and costs £300 per bp.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-100(0.42) - 200(0.43) - 300(0.44) - 200(0.45) - 100(0.49) = -399$."
+        }
+      ],
+      "feedback": {
+        "correct": "About −£399 per unit of PC1.",
+        "generic": "Not quite right. Multiply each sensitivity by its PC1 loading and add.",
+        "byKey": {
+          "sum": "−£900 assumes every yield rises a full 1 bp. A unit of PC1 moves each yield by its loading, under 0.5 bp.",
+          "sign": "Yields rise in a positive PC1 move, and this book loses when yields rise."
+        }
+      },
+      "explain": {
+        "text": "The book's PC1 exposure is −£399 per unit, and its PC2 exposure is +£64. Two hedges, say 2y and 30y futures, can set both to zero. What is left is exposed to PCs 3 to 5: 3.3% of the variance, instead of five yields to hedge one by one."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Demean, form the covariance, `eigh`, then sort descending: the columns are the principal components.",
+      "On yield curve changes the first three are level (no sign change), slope (one) and curvature (two).",
+      "Two or three components explain almost all the variance, so a book can be hedged against them instead of five yields."
+    ],
+    "formula": {
+      "name": "Share of variance",
+      "tex": "\\text{share}_i = \\frac{\\lambda_i}{\\lambda_1 + \\cdots + \\lambda_5}",
+      "note": "`vals / vals.sum()` after sorting."
+    },
+    "trap": "`eigh` returns the smallest eigenvalue first, and `eig` promises no order: sort before you read PC1."
+  },
+  "quiz": [
+    {
+      "id": "q-last",
+      "difficulty": 2,
+      "prose": "`vals, vecs = np.linalg.eigh(C)` on a covariance matrix `C`.",
+      "question": "Which expression is PC1?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "last",
+            "text": "`vecs[:, -1]`",
+            "correct": true
+          },
+          {
+            "id": "first",
+            "text": "`vecs[:, 0]`",
+            "why": "`eigh` sorts ascending, so column 0 has the smallest eigenvalue."
+          },
+          {
+            "id": "row",
+            "text": "`vecs[-1]`",
+            "why": "That is the last row. Eigenvectors are the columns of `vecs`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The last column has the largest eigenvalue.",
+        "generic": "Not quite right. `eigh` sorts ascending, and eigenvectors are columns."
+      },
+      "explain": {
+        "text": "`eigh` returns eigenvalues smallest first, with eigenvectors as columns. So `vecs[:, -1]` belongs to the largest eigenvalue."
+      }
+    },
+    {
+      "id": "q-name",
+      "difficulty": 2,
+      "prose": "A component has loadings $(0.55, -0.10, -0.60, -0.20, 0.50)$ on the 2y, 5y, 10y, 20y and 30y yields.",
+      "question": "Which name fits it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "level",
+            "text": "Level",
+            "why": "Level has every loading the same sign. This one has both signs."
+          },
+          {
+            "id": "slope",
+            "text": "Slope",
+            "why": "Slope changes sign once. This one changes sign twice, from 2y to 5y and from 20y to 30y."
+          },
+          {
+            "id": "curve",
+            "text": "Curvature",
+            "correct": true
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two sign changes: the ends against the middle.",
+        "generic": "Not quite right. Count the sign changes from 2y to 30y."
+      },
+      "explain": {
+        "text": "The signs run $+, -, -, -, +$: the ends move against the belly. That is curvature."
+      }
+    },
+    {
+      "id": "q-share",
+      "difficulty": 3,
+      "prose": "The eigenvalues of a yield-change covariance matrix are 40, 8, 1.5, 0.4 and 0.1.",
+      "question": "What share of the variance do the first two components explain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.96,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "96%: $48/50$",
+        "label": "Share explained",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$48/50 = 96\\%$.",
+        "generic": "Not quite right. Add the first two eigenvalues and divide by the total.",
+        "byKey": {
+          "one": "That is PC1 alone, $40/50$."
+        }
+      },
+      "explain": {
+        "text": "The total is $40 + 8 + 1.5 + 0.4 + 0.1 = 50$. Level and slope carry 48 of it."
+      }
+    },
+    {
+      "id": "q-sign",
+      "difficulty": 3,
+      "prose": "A component comes back as $(-0.20, 0.30, -0.93)$. Your rule makes the largest-magnitude loading positive.",
+      "question": "What do you report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "flip",
+            "text": "$(0.20, -0.30, 0.93)$",
+            "correct": true
+          },
+          {
+            "id": "keep",
+            "text": "$(-0.20, 0.30, -0.93)$",
+            "why": "The largest magnitude is 0.93, and it is negative. The rule flips the column."
+          },
+          {
+            "id": "abs",
+            "text": "$(0.20, 0.30, 0.93)$",
+            "why": "You took absolute values. That changes the direction; flip every sign together instead."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Flip the whole column.",
+        "generic": "Not quite right. Find the largest |loading|; if it is negative, flip every sign."
+      },
+      "explain": {
+        "text": "$|-0.93|$ is the largest, and it is negative, so multiply the whole vector by $-1$. Flipping every sign keeps the same component."
+      }
+    }
+  ]
+}
