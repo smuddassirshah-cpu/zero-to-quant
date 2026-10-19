@@ -518,3 +518,10 @@ Raised later (plotting level 3):
 184. `bars` canvas: opt-in `truncate: true` so `yMin` above 0 is honoured (to show a truncated-axis lie directly).
 185. `pair` canvas (stacked `series`): a shared-margin option so plot areas line up across panels (currently about 20 px out, from differing tick and line-label widths).
 186. `series` canvas: a second y axis (`y2` series list and scale) for the dual-axis trap.
+
+Raised later (limits level 2):
+
+187. `payoff` canvas: a `value` curve (smooth pre-expiry value) and a `tangent` on it, so delta can be taught on the payoff canvas rather than on `plane`.
+188. `plane` and `pair`: `trace: true` on a `derive`-driven point leaves a trail, so a slope-tracing explore draws the $f'$ curve as the learner drags.
+189. `area` canvas: a `dim` state; and distinguish pre-shaded regions from a tap selection (different fill or hatch) so an `enter` shade is not read as a selection.
+190. `plane` tangents: a `labelOffset` so the slope label can be moved away from the point's own label on steep curves.
