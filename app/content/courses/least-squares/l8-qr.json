@@ -1,0 +1,1409 @@
+{
+  "id": "l8-qr",
+  "course": "least-squares",
+  "title": "Least squares with QR",
+  "minutes": 15,
+  "objectives": [
+    "Factor $\\mathbf{A} = \\mathbf{Q}\\mathbf{R}$ and see why it makes least squares stable.",
+    "Solve $\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{Q}^T\\mathbf{b}$ by back substitution."
+  ],
+  "skills": [
+    "ls-qr",
+    "ls-fit"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Straighten the columns",
+      "prose": "Gram-Schmidt turns the columns $\\mathbf{a}_1$, $\\mathbf{a}_2$ of $\\mathbf{A}$ into orthonormal $\\mathbf{q}_1$, $\\mathbf{q}_2$, the columns of $\\mathbf{Q}$. Start with the first column.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1,
+                  3
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  2,
+                  0
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            },
+            {
+              "id": "Q",
+              "rows": [
+                [
+                  "1/3",
+                  "2/3"
+                ],
+                [
+                  "2/3",
+                  "1/3"
+                ],
+                [
+                  "2/3",
+                  "−2/3"
+                ]
+              ],
+              "label": "$\\mathbf{Q}$"
+            }
+          ],
+          "ops": [
+            "→"
+          ]
+        },
+        "state": {
+          "hidden": [
+            "Q"
+          ]
+        }
+      },
+      "question": "Find $\\mathbf{q}_1 = \\mathbf{a}_1 / |\\mathbf{a}_1|$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Entry",
+          "$\\mathbf{q}_1$"
+        ],
+        "rows": [
+          [
+            "first",
+            {
+              "edit": true,
+              "answer": 0.3333333333333333,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?",
+              "accept": "1/3"
+            }
+          ],
+          [
+            "second",
+            {
+              "edit": true,
+              "answer": 0.6666666666666666,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?",
+              "accept": "2/3"
+            }
+          ],
+          [
+            "third",
+            {
+              "edit": true,
+              "answer": 0.6666666666666666,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?",
+              "accept": "2/3"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$|\\mathbf{a}_1| = \\sqrt{1^2 + 2^2 + 2^2}$."
+        },
+        {
+          "rung": "point",
+          "text": "$|\\mathbf{a}_1| = \\sqrt{9} = 3$.",
+          "highlight": [
+            "A-c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide $(1, 2, 2)$ by 3."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{q}_1 = \\tfrac{1}{3}(1, 2, 2)$, a unit vector.",
+        "generic": "Not quite right. Divide each entry of $(1, 2, 2)$ by its length.",
+        "byKey": {
+          "r0c1": "The length is $\\sqrt{1 + 4 + 4} = 3$, not $1 + 2 + 2 = 5$. So the first entry is $\\tfrac{1}{3}$."
+        }
+      },
+      "explain": {
+        "text": "$|\\mathbf{a}_1| = 3$, so $\\mathbf{q}_1 = (\\tfrac{1}{3}, \\tfrac{2}{3}, \\tfrac{2}{3})$. The 3 we divided by is worth keeping: $\\mathbf{a}_1 = 3\\mathbf{q}_1$.",
+        "canvas": {
+          "cell": [
+            "Q-0-0",
+            "Q-1-0",
+            "Q-2-0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "For $\\mathbf{q}_2$, remove the part of $\\mathbf{a}_2 = (3, 3, 0)$ along $\\mathbf{q}_1$: $\\mathbf{v} = \\mathbf{a}_2 - (\\mathbf{q}_1 \\cdot \\mathbf{a}_2)\\,\\mathbf{q}_1$. Then divide $\\mathbf{v}$ by its length.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1,
+                  3
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  2,
+                  0
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            },
+            {
+              "id": "Q",
+              "rows": [
+                [
+                  "1/3",
+                  "2/3"
+                ],
+                [
+                  "2/3",
+                  "1/3"
+                ],
+                [
+                  "2/3",
+                  "−2/3"
+                ]
+              ],
+              "label": "$\\mathbf{Q}$"
+            }
+          ],
+          "ops": [
+            "→"
+          ]
+        },
+        "state": {
+          "hidden": [
+            "Q-0-1",
+            "Q-1-1",
+            "Q-2-1"
+          ]
+        }
+      },
+      "question": "Find $\\mathbf{v}$ and $\\mathbf{q}_2$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Entry",
+          "$\\mathbf{v}$",
+          "$\\mathbf{q}_2$"
+        ],
+        "rows": [
+          [
+            "first",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            },
+            {
+              "edit": true,
+              "answer": 0.6666666666666666,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?",
+              "accept": "2/3"
+            }
+          ],
+          [
+            "second",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            },
+            {
+              "edit": true,
+              "answer": 0.3333333333333333,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?",
+              "accept": "1/3"
+            }
+          ],
+          [
+            "third",
+            {
+              "edit": true,
+              "answer": -2,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            },
+            {
+              "edit": true,
+              "answer": -0.6666666666666666,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?",
+              "accept": "−2/3"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\mathbf{q}_1 \\cdot \\mathbf{a}_2 = \\tfrac{1}{3}(3 + 6 + 0) = 3$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\mathbf{v} = (3, 3, 0) - 3 \\cdot \\tfrac{1}{3}(1, 2, 2) = (3, 3, 0) - (1, 2, 2)$.",
+          "highlight": [
+            "A-c1",
+            "Q-c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\mathbf{v} = (2, 1, -2)$ has length 3."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{v} = (2, 1, -2)$ and $\\mathbf{q}_2 = \\tfrac{1}{3}(2, 1, -2)$.",
+        "generic": "Not quite right. Find $\\mathbf{q}_1 \\cdot \\mathbf{a}_2 = 3$, subtract $3\\mathbf{q}_1 = (1, 2, 2)$ from $\\mathbf{a}_2$, then normalise.",
+        "byKey": {
+          "r2c1": "$0 - 2 = -2$.",
+          "r0c2": "$|\\mathbf{v}| = \\sqrt{4 + 1 + 4} = 3$, so divide $\\mathbf{v}$ by 3."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{v} = (2, 1, -2)$, and $\\mathbf{v} \\cdot \\mathbf{q}_1 = \\tfrac{1}{3}(2 + 2 - 4) = 0$. Both numbers are worth keeping: $\\mathbf{a}_2 = 3\\mathbf{q}_1 + 3\\mathbf{q}_2$.",
+        "canvas": {
+          "cell": [
+            "Q"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The matrix R",
+      "prose": "The recipe is $\\mathbf{a}_1 = 3\\mathbf{q}_1$ and $\\mathbf{a}_2 = 3\\mathbf{q}_1 + 3\\mathbf{q}_2$. Collect the numbers in a matrix $\\mathbf{R}$, so that $\\mathbf{A} = \\mathbf{Q}\\mathbf{R}$. Since $\\mathbf{Q}^T\\mathbf{Q} = \\mathbf{I}$, multiplying by $\\mathbf{Q}^T$ gives $\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "QT",
+              "rows": [
+                [
+                  "1/3",
+                  "2/3",
+                  "2/3"
+                ],
+                [
+                  "2/3",
+                  "1/3",
+                  "−2/3"
+                ]
+              ],
+              "label": "$\\mathbf{Q}^T$"
+            },
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1,
+                  3
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  2,
+                  0
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            },
+            {
+              "id": "R",
+              "rows": [
+                [
+                  3,
+                  3
+                ],
+                [
+                  0,
+                  3
+                ]
+              ],
+              "label": "$\\mathbf{R}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "hidden": [
+            "R"
+          ]
+        }
+      },
+      "question": "Compute $\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "column 1",
+          "column 2"
+        ],
+        "rows": [
+          [
+            "row 1",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "row 2",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Entry $(i, j)$ is $\\mathbf{q}_i \\cdot \\mathbf{a}_j$."
+        },
+        {
+          "rung": "point",
+          "text": "Row 2, column 1 is $\\mathbf{q}_2 \\cdot \\mathbf{a}_1$. How was $\\mathbf{q}_2$ built?",
+          "highlight": [
+            "QT-r1",
+            "A-c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\mathbf{q}_1 \\cdot \\mathbf{a}_1 = 3$, $\\mathbf{q}_1 \\cdot \\mathbf{a}_2 = 3$, $\\mathbf{q}_2 \\cdot \\mathbf{a}_1 = 0$, $\\mathbf{q}_2 \\cdot \\mathbf{a}_2 = 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{R} = \\begin{pmatrix} 3 & 3 \\\\ 0 & 3 \\end{pmatrix}$: upper triangular.",
+        "generic": "Not quite right. Dot each row of $\\mathbf{Q}^T$ with each column of $\\mathbf{A}$.",
+        "byKey": {
+          "r1c1": "$\\mathbf{q}_2 \\cdot \\mathbf{a}_1 = \\tfrac{1}{3}(2 + 2 - 4) = 0$. Gram-Schmidt built $\\mathbf{q}_2$ perpendicular to $\\mathbf{a}_1$.",
+          "r0c2": "$\\mathbf{q}_1 \\cdot \\mathbf{a}_2 = \\tfrac{1}{3}(3 + 6 + 0) = 3$, the amount you removed."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{R}$ holds the numbers from Gram-Schmidt: lengths on the diagonal, removed amounts above it. The 0 below the diagonal is no accident, because $\\mathbf{q}_2$ is perpendicular to $\\mathbf{a}_1$. This is the factorisation $\\mathbf{A} = \\mathbf{Q}\\mathbf{R}$.",
+        "canvas": {
+          "cell": [
+            "R"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "With three columns, $\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$ is 3 × 3. Entry $(i, j)$ is $\\mathbf{q}_i \\cdot \\mathbf{a}_j$. Remember that $\\mathbf{a}_j$ is built from $\\mathbf{q}_1$ up to $\\mathbf{q}_j$ only.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  "q₁·a₁",
+                  "q₁·a₂",
+                  "q₁·a₃"
+                ],
+                [
+                  "q₂·a₁",
+                  "q₂·a₂",
+                  "q₂·a₃"
+                ],
+                [
+                  "q₃·a₁",
+                  "q₃·a₂",
+                  "q₃·a₃"
+                ]
+              ],
+              "label": "$\\mathbf{R}$"
+            }
+          ],
+          "ops": []
+        },
+        "state": {}
+      },
+      "question": "Tap every entry that Gram-Schmidt forces to be 0.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "R-1-0",
+          "R-2-0",
+          "R-2-1"
+        ],
+        "wrong": [
+          {
+            "id": "upper",
+            "set": [
+              "R-0-1",
+              "R-0-2",
+              "R-1-2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\mathbf{q}_3$ is perpendicular to $\\mathbf{q}_1$ and $\\mathbf{q}_2$, and so to $\\mathbf{a}_1$ and $\\mathbf{a}_2$."
+        },
+        {
+          "rung": "point",
+          "text": "An entry is 0 when $i > j$: the $\\mathbf{q}$ comes later than the $\\mathbf{a}$.",
+          "highlight": [
+            "R-2-0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The three entries below the diagonal are 0, so $\\mathbf{R}$ is upper triangular.",
+        "generic": "Not quite right. Tap the entries where the q comes later than the a.",
+        "byKey": {
+          "upper": "You tapped the entries above the diagonal. There $\\mathbf{q}_i$ comes before $\\mathbf{a}_j$, which contains it, so they are not 0.",
+          "R-0-0": "$\\mathbf{q}_1 \\cdot \\mathbf{a}_1 = |\\mathbf{a}_1|$, which is not 0.",
+          "R-1-1": "Diagonal entries are the lengths from Gram-Schmidt. They are positive."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{a}_j$ lies in the span of $\\mathbf{q}_1, \\dots, \\mathbf{q}_j$, and each later $\\mathbf{q}_i$ is perpendicular to all of those. So $\\mathbf{q}_i \\cdot \\mathbf{a}_j = 0$ whenever $i > j$. That is why $\\mathbf{R}$ is always upper triangular.",
+        "canvas": {
+          "highlight": [
+            "R-1-0",
+            "R-2-0",
+            "R-2-1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Least squares with Q and R",
+      "prose": "Now fit $\\mathbf{A}\\hat{\\mathbf{x}} \\approx \\mathbf{b}$ with $\\mathbf{b} = (2, 1, 7)$. With $\\mathbf{A} = \\mathbf{Q}\\mathbf{R}$ the normal equations become $\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{Q}^T\\mathbf{b}$, as we will prove. First the right-hand side.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "QT",
+              "rows": [
+                [
+                  "1/3",
+                  "2/3",
+                  "2/3"
+                ],
+                [
+                  "2/3",
+                  "1/3",
+                  "−2/3"
+                ]
+              ],
+              "label": "$\\mathbf{Q}^T$"
+            },
+            {
+              "id": "b",
+              "rows": [
+                [
+                  2
+                ],
+                [
+                  1
+                ],
+                [
+                  7
+                ]
+              ],
+              "label": "$\\mathbf{b}$"
+            },
+            {
+              "id": "C",
+              "rows": [
+                [
+                  6
+                ],
+                [
+                  "−3"
+                ]
+              ],
+              "label": "$\\mathbf{Q}^T\\mathbf{b}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "hidden": [
+            "C"
+          ]
+        }
+      },
+      "question": "Compute $\\mathbf{Q}^T\\mathbf{b}$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Entry",
+          "Value"
+        ],
+        "rows": [
+          [
+            "first",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "second",
+            {
+              "edit": true,
+              "answer": -3,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Dot each row of $\\mathbf{Q}^T$ with $\\mathbf{b}$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\tfrac{1}{3}(2 + 2 + 14)$ and $\\tfrac{1}{3}(4 + 1 - 14)$.",
+          "highlight": [
+            "QT-r0",
+            "b"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{Q}^T\\mathbf{b} = (6, -3)$.",
+        "generic": "Not quite right. Dot each row of $\\mathbf{Q}^T$ with $\\mathbf{b} = (2, 1, 7)$.",
+        "byKey": {
+          "r1c1": "Row 2 is $\\tfrac{1}{3}(2, 1, -2)$: $\\tfrac{1}{3}(4 + 1 - 14) = -3$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{Q}^T\\mathbf{b} = (6, -3)$ holds the components of $\\mathbf{b}$ along $\\mathbf{q}_1$ and $\\mathbf{q}_2$. So the projection is $\\mathbf{p} = 6\\mathbf{q}_1 - 3\\mathbf{q}_2 = (0, 3, 6)$.",
+        "canvas": {
+          "cell": [
+            "C"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Solve $\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{Q}^T\\mathbf{b}$. $\\mathbf{R}$ is triangular, so start from the bottom row: **back substitution**.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  3,
+                  3
+                ],
+                [
+                  0,
+                  3
+                ]
+              ],
+              "label": "$\\mathbf{R}$"
+            },
+            {
+              "id": "x",
+              "rows": [
+                [
+                  "$\\hat{x}_1$"
+                ],
+                [
+                  "$\\hat{x}_2$"
+                ]
+              ],
+              "label": "$\\hat{\\mathbf{x}}$"
+            },
+            {
+              "id": "c",
+              "rows": [
+                [
+                  6
+                ],
+                [
+                  "−3"
+                ]
+              ],
+              "label": "$\\mathbf{Q}^T\\mathbf{b}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {}
+      },
+      "question": "Find $\\hat{\\mathbf{x}}$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Entry",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\hat{x}_1$",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "$\\hat{x}_2$",
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0.005
+              },
+              "placeholder": "?"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The bottom row says $3\\hat{x}_2 = -3$."
+        },
+        {
+          "rung": "point",
+          "text": "So $\\hat{x}_2 = -1$. Put it into the top row: $3\\hat{x}_1 + 3(-1) = 6$.",
+          "highlight": [
+            "R-r1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat{\\mathbf{x}} = (3, -1)$.",
+        "generic": "Not quite right. Solve the bottom row first, then put $\\hat{x}_2$ into the top row.",
+        "byKey": {
+          "r0c1": "Use $\\hat{x}_2 = -1$ in the top row: $3\\hat{x}_1 - 3 = 6$, so $\\hat{x}_1 = 3$.",
+          "r1c1": "The bottom row is $0\\hat{x}_1 + 3\\hat{x}_2 = -3$."
+        }
+      },
+      "explain": {
+        "text": "$\\hat{\\mathbf{x}} = (3, -1)$ and $\\mathbf{A}\\hat{\\mathbf{x}} = (0, 3, 6)$, the projection. Check with the normal equations: $\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = (9 \\cdot 3 - 9,\\ 9 \\cdot 3 - 18) = (18, 9) = \\mathbf{A}^T\\mathbf{b}$.",
+        "canvas": {
+          "highlight": [
+            "R-r1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "Three classmates computed $\\mathbf{R}$ for the same $\\mathbf{A}$ and $\\mathbf{Q}$, and got different answers.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1,
+                  3
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  2,
+                  0
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            },
+            {
+              "id": "Q",
+              "rows": [
+                [
+                  "1/3",
+                  "2/3"
+                ],
+                [
+                  "2/3",
+                  "1/3"
+                ],
+                [
+                  "2/3",
+                  "−2/3"
+                ]
+              ],
+              "label": "$\\mathbf{Q}$"
+            }
+          ],
+          "ops": [
+            " "
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which is $\\mathbf{R}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\begin{pmatrix} 3 & 3 \\\\ 0 & 3 \\end{pmatrix}$",
+            "correct": true
+          },
+          {
+            "id": "lower",
+            "text": "$\\begin{pmatrix} 3 & 0 \\\\ 3 & 3 \\end{pmatrix}$",
+            "why": "That is $\\mathbf{R}^T = \\mathbf{A}^T\\mathbf{Q}$. You multiplied in the wrong order: $\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$."
+          },
+          {
+            "id": "aqt",
+            "text": "$\\tfrac{1}{3}\\begin{pmatrix} 7 & 5 & -4 \\\\ 8 & 7 & -2 \\\\ 2 & 4 & 4 \\end{pmatrix}$",
+            "why": "That is $\\mathbf{A}\\mathbf{Q}^T$, a 3 × 3 matrix. $\\mathbf{R}$ must be 2 × 2: $\\mathbf{Q}^T$ (2 × 3) times $\\mathbf{A}$ (3 × 2)."
+          },
+          {
+            "id": "full",
+            "text": "$\\begin{pmatrix} 3 & 3 \\\\ 1 & 3 \\end{pmatrix}$",
+            "why": "A non-zero entry below the diagonal would mean $\\mathbf{q}_2 \\cdot \\mathbf{a}_1 \\neq 0$. Gram-Schmidt makes it 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check the shape first, then the entry below the diagonal."
+        },
+        {
+          "rung": "point",
+          "text": "$\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$ is (2 × 3)(3 × 2).",
+          "highlight": [
+            "A",
+            "Q"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "2 × 2 and upper triangular, as $\\mathbf{Q}^T\\mathbf{A}$ must be.",
+        "generic": "Not quite right. $\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$ is 2 × 2 with a 0 below the diagonal.",
+        "byKey": {
+          "aqt": "You computed $\\mathbf{A}\\mathbf{Q}^T$. The order matters: $\\mathbf{Q}^T$ goes on the left, so that $\\mathbf{Q}^T\\mathbf{Q} = \\mathbf{I}$ cancels in $\\mathbf{Q}^T\\mathbf{Q}\\mathbf{R}$.",
+          "lower": "Yours is lower triangular: you formed $\\mathbf{A}^T\\mathbf{Q}$, the transpose of $\\mathbf{R}$."
+        }
+      },
+      "explain": {
+        "text": "From $\\mathbf{A} = \\mathbf{Q}\\mathbf{R}$, multiply on the left by $\\mathbf{Q}^T$: $\\mathbf{Q}^T\\mathbf{A} = \\mathbf{Q}^T\\mathbf{Q}\\mathbf{R} = \\mathbf{R}$. On the right there is nothing to cancel, since $\\mathbf{Q}\\mathbf{Q}^T$ is a projection, not $\\mathbf{I}$.",
+        "canvas": {
+          "highlight": [
+            "Q"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Why does $\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{Q}^T\\mathbf{b}$ solve least squares? Start from the normal equations, which come from the error being perpendicular to $C(\\mathbf{A})$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  3,
+                  3
+                ],
+                [
+                  0,
+                  3
+                ]
+              ],
+              "label": "$\\mathbf{R}$"
+            }
+          ],
+          "ops": []
+        },
+        "state": {}
+      },
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "r1",
+            "text": "$\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{b}$, the normal equations, from $\\mathbf{A}^T(\\mathbf{b} - \\mathbf{A}\\hat{\\mathbf{x}}) = \\mathbf{0}$"
+          },
+          {
+            "id": "r2",
+            "text": "$\\mathbf{R}^T\\mathbf{Q}^T\\mathbf{Q}\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{R}^T\\mathbf{Q}^T\\mathbf{b}$, substituting $\\mathbf{A} = \\mathbf{Q}\\mathbf{R}$ and $\\mathbf{A}^T = \\mathbf{R}^T\\mathbf{Q}^T$"
+          },
+          {
+            "id": "r3",
+            "text": "$\\mathbf{R}^T\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{R}^T\\mathbf{Q}^T\\mathbf{b}$, because $\\mathbf{Q}^T\\mathbf{Q} = \\mathbf{I}$"
+          },
+          {
+            "id": "r4",
+            "text": "$\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{Q}^T\\mathbf{b}$, multiplying by $(\\mathbf{R}^T)^{-1}$, which exists as $\\mathbf{R}$ is triangular with a non-zero diagonal"
+          }
+        ],
+        "answer": [
+          "r1",
+          "r2",
+          "r3",
+          "r4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the equations you already trust."
+        },
+        {
+          "rung": "point",
+          "text": "Replace every $\\mathbf{A}$ by $\\mathbf{Q}\\mathbf{R}$, then cancel.",
+          "highlight": [
+            "R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Normal equations, substitute, use $\\mathbf{Q}^T\\mathbf{Q} = \\mathbf{I}$, cancel $\\mathbf{R}^T$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{A}^T\\mathbf{A}$ is never formed: only $\\mathbf{R}$ and $\\mathbf{Q}^T\\mathbf{b}$ are needed.",
+        "generic": "Not quite right. Start from $\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{b}$ and substitute $\\mathbf{A} = \\mathbf{Q}\\mathbf{R}$.",
+        "byKey": {
+          "r3": "Cancelling $\\mathbf{Q}^T\\mathbf{Q}$ needs it written out first, after substituting.",
+          "r4": "Removing $\\mathbf{R}^T$ is the last step, once both sides start with it."
+        }
+      },
+      "explain": {
+        "text": "The diagonal of $\\mathbf{R}$ holds the lengths from Gram-Schmidt, which are positive when the columns are independent. So $\\mathbf{R}^T$ can be cancelled, leaving a triangular system. Back substitution then solves it one unknown at a time.",
+        "canvas": {
+          "highlight": [
+            "R"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Why not form AᵀA",
+      "prose": "Two nearly parallel columns: $\\mathbf{a}_1 = (1, 1, 1)$ and $\\mathbf{a}_2 = (1, 1.01, 0.99)$. Their difference shows up in the second decimal place of $\\mathbf{A}$, but only in the fourth of $\\mathbf{A}^T\\mathbf{A}$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  1.01
+                ],
+                [
+                  1,
+                  0.99
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            },
+            {
+              "id": "G",
+              "rows": [
+                [
+                  3,
+                  3
+                ],
+                [
+                  3,
+                  "3.0002"
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{A}$"
+            }
+          ],
+          "ops": [
+            " "
+          ]
+        },
+        "state": {}
+      },
+      "question": "A calculator keeps 4 significant figures, so it stores 3.0002 as 3.000. What is $\\det(\\mathbf{A}^T\\mathbf{A})$ as stored?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 1e-05
+        },
+        "label": "Determinant as stored",
+        "placeholder": "a number",
+        "accept": "0: $3 \\times 3 - 3 \\times 3$.",
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 0.0006,
+            "tol": {
+              "abs": 1e-05
+            }
+          },
+          {
+            "id": "nine",
+            "value": 9,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The stored matrix is $\\begin{pmatrix} 3 & 3 \\\\ 3 & 3 \\end{pmatrix}$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\det = 3 \\times 3 - 3 \\times 3$.",
+          "highlight": [
+            "G-1-1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The stored $\\mathbf{A}^T\\mathbf{A}$ is singular: the normal equations have lost the second column.",
+        "generic": "Not quite right. Round 3.0002 to 3.000 first, then take the determinant.",
+        "byKey": {
+          "exact": "0.0006 is the exact determinant, $9.0006 - 9$. After rounding the 0.0002 is gone, and so is the determinant.",
+          "nine": "That is one product. The determinant subtracts the other: $9 - 9$."
+        }
+      },
+      "explain": {
+        "text": "Forming $\\mathbf{A}^T\\mathbf{A}$ squares the small difference $0.01$ into $0.0002$. The condition number goes from about 245 for $\\mathbf{A}$ to about 60,000 for $\\mathbf{A}^T\\mathbf{A}$: it is squared. QR keeps it at $\\mathbf{A}$'s size: $\\mathbf{R} = \\begin{pmatrix} 1.732 & 1.732 \\\\ 0 & 0.0141 \\end{pmatrix}$ holds the difference at $\\sqrt{2} \\times 0.01$.",
+        "canvas": {
+          "highlight": [
+            "G-1-1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "QR in NumPy",
+      "prose": "Three days of returns, in %: market $(-1, 0, 1)$, stock $(-1, 1.5, 2.5)$. Fitting alpha and beta is least squares with $\\mathbf{A} = [\\mathbf{1}\\ \\mathbf{m}]$. NumPy's `lstsq` never forms $\\mathbf{A}^T\\mathbf{A}$; it takes an orthogonal route. Write the QR route yourself.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "Intercept",
+            "Market (%)",
+            "Stock (%)"
+          ],
+          "rows": [
+            [
+              "1",
+              "1",
+              "−1",
+              "−1"
+            ],
+            [
+              "2",
+              "1",
+              "0",
+              "1.5"
+            ],
+            [
+              "3",
+              "1",
+              "1",
+              "2.5"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "`A` is the middle two columns; `b` is the stock"
+        }
+      },
+      "question": "Complete `ls_qr` so it returns $\\hat{\\mathbf{x}}$ from $\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{Q}^T\\mathbf{b}$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef ls_qr(A, b):\n    A = np.array(A, dtype=float)\n    b = np.array(b, dtype=float)\n    Q, R = np.linalg.qr(A)   # reduced: Q is m x n\n    rhs = ...                # Q^T b\n    x_hat = ...              # solve R x = rhs\n    return x_hat\n",
+        "solution": "import numpy as np\n\ndef ls_qr(A, b):\n    A = np.array(A, dtype=float)\n    b = np.array(b, dtype=float)\n    Q, R = np.linalg.qr(A)   # reduced: Q is m x n\n    rhs = Q.T @ b            # Q^T b\n    x_hat = np.linalg.solve(R, rhs)  # solve R x = rhs\n    return x_hat\n",
+        "examples": [
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[1, -1], [1, 0], [1, 1]], [-1, 1.5, 2.5])]",
+            "expect": "[1.0, 1.75]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[1, -1], [1, 0], [1, 1]], [-1, 1.5, 2.5])]",
+            "expect": "[1.0, 1.75]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[1, 3], [2, 3], [2, 0]], [2, 1, 7])]",
+            "expect": "[3.0, -1.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[1, 0], [1, 1], [1, 2]], [6, 0, 0])]",
+            "expect": "[5.0, -3.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[1, 0], [1, 1], [1, 2]], [1, 3, 5])]",
+            "expect": "[1.0, 2.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[1, 1.0], [1, -0.5], [1, 0], [1, 1.5]], [1.5, -0.4, -0.1, 1.8])]",
+            "expect": "[0.1, 1.2]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[2, 1], [1, 3]], [5, 10])]",
+            "expect": "[1.0, 3.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[1, 1], [1, 1.01], [1, 0.99]], [2, 2.03, 1.97])]",
+            "expect": "[-1.0, 3.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in ls_qr([[1, -1.2], [1, 0.4], [1, 2.1], [1, -0.3], [1, 0.8]], [-1.5, 0.9, 2.8, -0.2, 1.1])]",
+            "expect": "[0.155286, 1.290873]",
+            "compare": "isclose"
+          },
+          {
+            "call": "len(ls_qr([[1], [2], [2]], [3, 3, 0]))",
+            "expect": "1",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Each answer is a plain list rounded to 6 places and compared with math.isclose. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\mathbf{Q}^T\\mathbf{b}$ is `Q.T @ b` in NumPy."
+        },
+        {
+          "rung": "point",
+          "text": "`np.linalg.solve(R, rhs)` solves the triangular system.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write `rhs = Q.T @ b` and `x_hat = np.linalg.solve(R, rhs)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Alpha 1% and beta 1.75 for the three days, with no $\\mathbf{A}^T\\mathbf{A}$ formed.",
+        "generic": "Some tests failed. The first should give `[1.0, 1.75]`: alpha 1, beta 1.75.",
+        "byKey": {
+          "test-1": "For the three days the answer is alpha 1.0 and beta 1.75. Check you used `Q.T @ b`, not `Q @ b`.",
+          "error": "Your code stopped with an error. Replace both `...` with expressions using `Q`, `R` and `b`."
+        }
+      },
+      "explain": {
+        "text": "NumPy's reduced QR gives a 3 × 2 `Q` and a 2 × 2 `R`, possibly with negative signs on the diagonal. Signs cancel between `Q` and `R`, so $\\hat{\\mathbf{x}}$ is the same.\n\n```python\nrhs = Q.T @ b                     # components along q1, q2\nx_hat = np.linalg.solve(R, rhs)   # triangular solve\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Gram-Schmidt turns the columns of $\\mathbf{A}$ into $\\mathbf{Q}$. $\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$ records the recipe and is upper triangular.",
+      "The normal equations become $\\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{Q}^T\\mathbf{b}$, solved by back substitution from the bottom row.",
+      "Forming $\\mathbf{A}^T\\mathbf{A}$ squares the condition number. QR works on $\\mathbf{A}$ directly, which is why software prefers it."
+    ],
+    "formula": {
+      "name": "Least squares by QR",
+      "tex": "\\mathbf{A} = \\mathbf{Q}\\mathbf{R}, \\qquad \\mathbf{R}\\hat{\\mathbf{x}} = \\mathbf{Q}^T\\mathbf{b}",
+      "note": "$\\mathbf{R}$ is square and upper triangular, with the Gram-Schmidt lengths on its diagonal."
+    },
+    "trap": "$\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$, not $\\mathbf{A}\\mathbf{Q}^T$. A non-zero entry below its diagonal means an arithmetic slip."
+  },
+  "quiz": [
+    {
+      "id": "q-r-shape",
+      "difficulty": 2,
+      "prose": "$\\mathbf{A}$ is 5 × 3 with independent columns, and $\\mathbf{A} = \\mathbf{Q}\\mathbf{R}$ with $\\mathbf{Q}$ 5 × 3.",
+      "question": "What shape is $\\mathbf{R}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "3 × 3",
+            "correct": true
+          },
+          {
+            "id": "five",
+            "text": "5 × 5",
+            "why": "That is the shape of $\\mathbf{Q}\\mathbf{Q}^T$. $\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$ is (3 × 5)(5 × 3)."
+          },
+          {
+            "id": "fivethree",
+            "text": "5 × 3",
+            "why": "That is the shape of $\\mathbf{A}$ and $\\mathbf{Q}$. $\\mathbf{R}$ has one row per column of $\\mathbf{Q}$."
+          },
+          {
+            "id": "threefive",
+            "text": "3 × 5",
+            "why": "That is $\\mathbf{Q}^T$. $\\mathbf{R}$ is $\\mathbf{Q}^T$ times $\\mathbf{A}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\mathbf{Q}^T\\mathbf{A}$ is (3 × 5)(5 × 3) = 3 × 3.",
+        "generic": "Not quite right. Work out the shape of $\\mathbf{Q}^T\\mathbf{A}$."
+      },
+      "explain": {
+        "text": "$\\mathbf{R} = \\mathbf{Q}^T\\mathbf{A}$ is 3 × 3: one row and one column per column of $\\mathbf{A}$. It is upper triangular with positive diagonal."
+      }
+    },
+    {
+      "id": "q-r12",
+      "difficulty": 2,
+      "prose": "$\\mathbf{A}$ has columns $\\mathbf{a}_1 = (3, 4)$ and $\\mathbf{a}_2 = (1, 2)$, so $\\mathbf{q}_1 = (0.6, 0.8)$.",
+      "question": "What is the entry $r_{12}$ of $\\mathbf{R}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "r12",
+        "placeholder": "a number",
+        "accept": "2.2: $\\mathbf{q}_1 \\cdot \\mathbf{a}_2 = 0.6 + 1.6$.",
+        "wrong": [
+          {
+            "id": "dot",
+            "value": 11,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$r_{12} = \\mathbf{q}_1 \\cdot \\mathbf{a}_2 = 2.2$.",
+        "generic": "Not quite right. $r_{12} = \\mathbf{q}_1 \\cdot \\mathbf{a}_2$.",
+        "byKey": {
+          "dot": "11 is $\\mathbf{a}_1 \\cdot \\mathbf{a}_2$. Use the unit vector $\\mathbf{q}_1$ instead of $\\mathbf{a}_1$.",
+          "zero": "Above the diagonal $\\mathbf{R}$ need not be 0. Only $r_{21}$ is forced to be 0."
+        }
+      },
+      "explain": {
+        "text": "$r_{12} = \\mathbf{q}_1 \\cdot \\mathbf{a}_2 = 0.6 \\times 1 + 0.8 \\times 2 = 2.2$. It is the amount of $\\mathbf{q}_1$ that Gram-Schmidt removes from $\\mathbf{a}_2$."
+      }
+    },
+    {
+      "id": "q-backsub",
+      "difficulty": 3,
+      "prose": "After QR, a fit leaves $\\mathbf{R} = \\begin{pmatrix} 2 & 1 \\\\ 0 & 4 \\end{pmatrix}$ and $\\mathbf{Q}^T\\mathbf{b} = (5, 8)$.",
+      "question": "What is $\\hat{x}_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "x1",
+        "placeholder": "a number",
+        "accept": "1.5: $\\hat{x}_2 = 2$, then $2\\hat{x}_1 + 2 = 5$.",
+        "wrong": [
+          {
+            "id": "ignore",
+            "value": 2.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "x2",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\hat{x}_2 = 8 / 4 = 2$, then $\\hat{x}_1 = (5 - 2) / 2 = 1.5$.",
+        "generic": "Not quite right. Solve the bottom row first, then the top.",
+        "byKey": {
+          "ignore": "You divided 5 by 2 and ignored $\\hat{x}_2$. The top row is $2\\hat{x}_1 + \\hat{x}_2 = 5$.",
+          "x2": "2 is $\\hat{x}_2$. Use it in the top row to find $\\hat{x}_1$."
+        }
+      },
+      "explain": {
+        "text": "The bottom row gives $4\\hat{x}_2 = 8$, so $\\hat{x}_2 = 2$. The top row then gives $2\\hat{x}_1 + 2 = 5$, so $\\hat{x}_1 = 1.5$."
+      }
+    },
+    {
+      "id": "q-cond",
+      "difficulty": 3,
+      "prose": "A design matrix $\\mathbf{A}$ has condition number about 1,000.",
+      "question": "About what is the condition number of $\\mathbf{A}^T\\mathbf{A}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "1,000,000",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "1,000",
+            "why": "That is what QR works with. Forming $\\mathbf{A}^T\\mathbf{A}$ squares it."
+          },
+          {
+            "id": "double",
+            "text": "2,000",
+            "why": "The condition number is multiplied by itself, not doubled."
+          },
+          {
+            "id": "root",
+            "text": "about 32",
+            "why": "That is the square root. $\\mathbf{A}^T\\mathbf{A}$ makes things worse, not better."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1000^2 = 10^6$: about six digits of accuracy lost instead of three.",
+        "generic": "Not quite right. Forming $\\mathbf{A}^T\\mathbf{A}$ squares the condition number."
+      },
+      "explain": {
+        "text": "$\\kappa(\\mathbf{A}^T\\mathbf{A}) = \\kappa(\\mathbf{A})^2 = 10^6$. Roughly, you lose about $\\log_{10}\\kappa$ digits, so six instead of three. That is why QR, or the SVD, is used."
+      }
+    }
+  ]
+}

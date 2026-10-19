@@ -686,3 +686,11 @@ Raised later (elimination level 3):
 242. `matrix` highlight: with the object form fixed (236), support more than one wash colour (crossed-out row and column in one, the minor block in another), as README-B's cofactor form implies.
 243. `plane` polygons: a keyed `enter` patch that adds a new polygon id does not draw on the live canvas (it does in the Why? copy); make live keyed additions render.
 244. `plane` polygons: vertex labels that follow derived points, or an "F" glyph, to show orientation flips.
+
+Raised later (vectors level 2):
+
+245. `vectors`: an arrow added by a state patch with a new id draws in black, ignoring `colour`; apply styling to patched-in arrows.
+246. Why? modal on phones: wide `$$...$$` or long inline maths widens the whole modal and pushes the diagram off-screen; scroll the maths in its own box as lesson prose does (same family as 229).
+247. `matrix`: cell width is estimated from the LaTeX source, so KaTeX entries such as `\cos\theta` overlap; measure the rendered width.
+248. `matrix`: row and column headings (`rowLabels`, `colLabels`) for factor-model screens.
+249. `vectors`: a matrix-driven transformed grid, unit square and basis arrows whose entries (or an angle and a shear factor) bind to sliders.
