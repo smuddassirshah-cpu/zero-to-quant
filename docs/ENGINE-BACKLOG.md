@@ -540,3 +540,9 @@ Raised later (integrals level 1):
 197. `derive`: read nested state values (`riemann.n`) and add a `sum(expr, k, a, b)` function.
 198. `plane` `equal: true`: do not widen the x range past the authored bounds on wide viewports (empty negative-x margin on a [0, 1] plot).
 199. `playthrough.mjs`: a `--mobile` flag that also captures a 390 px screenshot per screen.
+
+Raised later (integrals level 2):
+
+200. `expression` widget: `upToConstant: true` (grade antiderivatives by comparing derivatives, or strip an added constant symbol), so `+C`, `+c` and `+K` need not be listed in `accept`.
+201. `order` widget: `same` groups of interchangeable lines (as `place` has), so independent derivation steps need not be merged to force one order.
+202. `derive`: a numeric `integral(expr, a, b)` function, and let an `area` item's computed `{value}` feed captions and points.

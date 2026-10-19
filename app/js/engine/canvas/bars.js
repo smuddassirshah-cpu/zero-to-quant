@@ -10,9 +10,14 @@
     const K = Z.cvb;
     const W = 540, H = params.height || 280;
     const binned = !!params.bins;
-    const cats = binned
-      ? (() => { const { min, max, width } = params.bins; const n = Math.max(1, Math.round((max - min) / width)); return Array.from({ length: n }, (_, i) => ({ id: 'b' + i, label: K.fmt(min + i * width, 4), lo: min + i * width, hi: min + (i + 1) * width })); })()
+    /* item 167: bins can be re-cut from state.binWidth (a control binds "binWidth"); with params.data (raw
+       observations) the bars are its counts in the current bins */
+    const binsFor = (width) => { const { min, max } = params.bins, w = Math.max(1e-9, +width || params.bins.width); const n = Math.max(1, Math.round((max - min) / w)); return Array.from({ length: n }, (_, i) => ({ id: 'b' + i, label: K.fmt(min + i * w, 4), lo: min + i * w, hi: min + (i + 1) * w })); };
+    let binW = binned ? params.bins.width : null;
+    let cats = binned
+      ? binsFor(binW)
       : (params.categories || []).map((c) => (K.isObj(c) ? { id: c.id || 'x' + c.label, label: String(c.label ?? c.id), colour: c.colour } : { id: 'x' + c, label: String(c) }));
+    const rebin = (view) => { const w = (view && view.binWidth) || params.bins.width; if (binned && w !== binW) { binW = w; cats = binsFor(w); } };
     const catIndex = (key) => {
       if (key == null) return -1; const k = String(key);
       let i = cats.findIndex((c) => c.id === k || c.label === k);
@@ -40,6 +45,11 @@
       return counts;
     };
     const heights = (view) => {
+      rebin(view);
+      if (binned && Array.isArray(params.data)) { // raw observations: counts (or proportions) in the current bins
+        const counts = new Array(cats.length).fill(0); params.data.forEach((v) => { const j = catIndex(+v); if (j >= 0) counts[j]++; else if (+v === params.bins.max) counts[cats.length - 1]++; });
+        return counts.map((c) => (proportion ? (params.data.length ? c / params.data.length : 0) : c));
+      }
       if (sim && view.ran != null && !(view.values && Object.keys(view.values).length && !view.ran)) {
         const n = Math.round(view.ran), counts = tally(n);
         return counts.map((c) => (proportion ? (n ? c / n : 0) : c));
@@ -56,7 +66,7 @@
     };
     /* item 133: negative values hang below a zero baseline; the axis runs down to a nice tick under the lowest bar */
     const yBot = (hs) => {
-      if (params.yMin != null) return Math.min(0, params.yMin);
+      if (params.yMin != null) return params.truncate ? params.yMin : Math.min(0, params.yMin); // item 184: truncate: true keeps a yMin above 0 (the truncated-axis trick)
       const m = Math.min(0, ...hs); if (m >= 0) return 0;
       const t = C.niceTicks(m * 1.08, 0, 4); return t[0] <= m * 1.02 ? t[0] : m * 1.15;
     };
@@ -97,6 +107,7 @@
         return patch;
       },
       animate(prev, next, a, R) {
+        if ((prev.binWidth || 0) !== (next.binWidth || 0)) { a.show(next); return; } // a re-cut jumps
         const hs0 = heights(R.shown), hs1 = heights(next), y0 = R.shown._yMax ?? yTop(R.shown, hs0), y1 = yTop(next, hs1);
         if (a.instant) { a.show(next); return; }
         if (sim && next.ran !== prev.ran) {
@@ -118,7 +129,7 @@
         const band = pw / Math.max(1, n), gap = binned ? 0 : Math.min(14, band * 0.22);
         const x = (i) => ml + i * band + gap / 2, bw = Math.max(1, band - gap);
         const xAxisTicks = binned ? null : { ticks: [], step: 1 };
-        K.chartAxes(g, { range: [ml, W - mr], domain: [0, 1] }, sy, { yLabel, xLabel: params.xLabel, fmtY, noX: true, xTicks: xAxisTicks, baseline: 0 });
+        K.chartAxes(g, { range: [ml, W - mr], domain: [0, 1] }, sy, { yLabel, xLabel: params.xLabel, fmtY, noX: true, xTicks: xAxisTicks, baseline: bot > 0 ? bot : 0 });
         /* category labels or bin edges */
         const every = Math.max(1, Math.ceil(Math.max(...cats.map((c) => K.tw(c.label, 12))) / (band - 4)));
         if (binned) {
@@ -131,7 +142,7 @@
         const sel = new Set(view.selected || []);
         const bars = svg('g'), vals = svg('g');
         cats.forEach((c, i) => {
-          const v = hs[i] || 0, y = sy(Math.max(0, v)), h = Math.abs(sy(Math.min(0, v)) - y);
+          const base = bot > 0 ? bot : 0, v = hs[i] || 0, y = sy(Math.max(base, v)), h = Math.abs(sy(Math.min(base, v)) - y);
           const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : ''), ((view.colours || {})[c.id] ?? (view.colours || {})[c.label]) || c.colour || params.colour || 1); // per-category colour (series slot), patchable through state.colours
           o.append(K.washRect(x(i) - 3, sy(top) - 2, bw + 6, sy(bot) - sy(top) + 4, 4));
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(bot) - sy(top), class: 'cvb-selw' }));
@@ -173,8 +184,8 @@
         counts: () => Object.fromEntries(cats.map((c, i) => [c.id, tally(Math.round(R.state.ran || 0))[i]])),
         /* Explore controls: bind a category (its label or id, or "values.<label>") to move that bar's height */
         /* a name that is no category is a free parameter in state.params, for a derive block to read */
-        setParam: (name, v) => { const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); else R.inst.set({ params: { [name]: +v } }, { instant: true }); },
-        getParam: (name) => { const i = catIndex(String(name).replace(/^values\./, '')); return i >= 0 ? heights(R.state)[i] : ((R.state.params || {})[name]); },
+        setParam: (name, v) => { if (binned && (name === 'binWidth' || name === 'bins.width')) { R.inst.set({ binWidth: +v }, { instant: true }); return; } const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); else R.inst.set({ params: { [name]: +v } }, { instant: true }); },
+        getParam: (name) => { if (binned && (name === 'binWidth' || name === 'bins.width')) return R.state.binWidth || params.bins.width; const i = catIndex(String(name).replace(/^values\./, '')); return i >= 0 ? heights(R.state)[i] : ((R.state.params || {})[name]); },
       }),
     };
     return K.make(host, params, ctx, def);

@@ -575,7 +575,10 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
       checkFeedback(file, `${at}.feedback`, s.feedback, keys, { requireByKey: s.type === 'trap' });
       checkHints(file, `${at}.hints`, s.hints, s.canvas, true);
       if (s.type === 'derive' && s.widget && !['expression', 'order', 'choice'].includes(s.widget.kind)) err(file, `${at}.widget.kind`, 'a derive screen uses expression, order or choice');
-      if (s.type === 'ladder' && s.canvas && prevCanvasKind && s.canvas.kind !== prevCanvasKind) warn(file, `${at}.canvas`, 'a ladder screen usually reuses the previous canvas kind');
+      /* item 177: moving between a table and a chart of the same numbers (or into or out of a pair) is a natural step, not a warning */
+      const VIEWS = new Set(['table', 'plane', 'series', 'bars', 'scatter', 'distribution', 'console', 'number-line']);
+      const natural = (a, b) => a === 'pair' || b === 'pair' || (VIEWS.has(a) && VIEWS.has(b) && (a === 'table' || b === 'table' || a === 'console' || b === 'console'));
+      if (s.type === 'ladder' && s.canvas && prevCanvasKind && s.canvas.kind !== prevCanvasKind && !natural(prevCanvasKind, s.canvas.kind)) warn(file, `${at}.canvas`, 'a ladder screen usually reuses the previous canvas kind (a table next to a chart of the same numbers, or a pair, is fine)');
       if ((s.type === 'problem' || s.type === 'ladder') && !s.canvas && (trapAt < 0 || i < trapAt)) warn(file, at, 'a problem screen without a canvas before the ladder ends');
     }
     if (s.explain) checkExplain(file, `${at}.explain`, s.explain);
