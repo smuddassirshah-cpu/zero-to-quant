@@ -710,3 +710,10 @@ Raised later (least-squares level 1):
 254. `drag-point` widget: a line target, or a target checked by an expression (`2*v.x + v.y == 0`), so "drag until the dot product is 0" accepts any point on the orthogonal line.
 255. `vectors`: `sumLabel` collides with a vector label when the sum's head coincides with it; offset or suppress automatically.
 256. `matrix`: a cell highlight in an explanation patch that also un-hides the matrix does not show in the Why? panel (apply `hide` before `highlight`).
+
+Raised later (eigen level 2):
+
+257. `plane` implicit curves: `dashed: true` draws solid because each marching-squares segment restarts the dash pattern; join segments into polylines before stroking.
+258. `drag-point` widget on `plane`: `points()` filters on `drag: true`, so a point without it grades silently as its id; either document that `drag: true` is required or include ids the widget enabled.
+259. `scatter`: draw a curve over the cloud (implicit curve for a risk ellipse, or a `points` cloud style on `plane`).
+260. `matrix`: a scalar factor outside the brackets (`scale: "\\tfrac{1}{\\sqrt{2}}"`).
