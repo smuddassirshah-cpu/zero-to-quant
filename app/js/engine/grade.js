@@ -238,13 +238,31 @@
   };
   /* item 146: output-only blocks (```text, ```output) have nothing to copy, so no Copy button */
   const codeBlock = (code, lang) => `<div class="lsn-code${/^(text|output|out|plain)$/i.test(lang || '') ? ' is-output' : ''}" data-lang="${esc(lang || '')}">${/^(text|output|out|plain)$/i.test(lang || '') ? '' : '<button type="button" class="link-btn lsn-copy" aria-label="Copy code">Copy</button>'}<pre class="t-code"><code>${esc(code.replace(/\n$/, ''))}</code></pre></div>`;
+  /* item 178: Markdown lists. Lines starting "- " or "* " make a bulleted list and "1. " a numbered one; other lines
+     around them stay paragraphs */
+  const LI = /^\s*(?:([-*])|(\d+)[.)])\s+(.*)$/;
+  const block = (p, cls) => {
+    const lines = p.split('\n');
+    if (!lines.some(l => LI.test(l) && !/^\s*\*\*/.test(l))) return `<p class="${cls}">${inline(p, { br: true })}</p>`;
+    let out = '', para = [], list = null;
+    const flushP = () => { if (para.length) out += `<p class="${cls}">${inline(para.join('\n'), { br: true })}</p>`; para = []; };
+    const flushL = () => { if (list) out += `<${list.tag} class="lsn-list ${cls}">${list.items.map(t => `<li>${inline(t)}</li>`).join('')}</${list.tag}>`; list = null; };
+    lines.forEach(l => {
+      const m = l.match(LI);
+      if (m && !/^\s*\*\*/.test(l)) { flushP(); const tag = m[2] ? 'ol' : 'ul'; if (!list || list.tag !== tag) { flushL(); list = { tag, items: [] }; } list.items.push(m[3]); }
+      else if (list && /^\s{2,}\S/.test(l)) list.items[list.items.length - 1] += ' ' + l.trim(); // a wrapped item line
+      else { flushL(); para.push(l); }
+    });
+    flushL(); flushP();
+    return out;
+  };
   /* Block copy: paragraphs split on blank lines, fenced code blocks, display maths. */
   const prose = (s, cls = 't-prose') => {
     const src = String(s ?? '');
     const parts = src.split(/```([\w+-]*)\n([\s\S]*?)```/g);
     let out = '';
     for (let i = 0; i < parts.length; i += 3) {
-      parts[i].split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).forEach(p => { out += `<p class="${cls}">${inline(p, { br: true })}</p>`; });
+      parts[i].split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).forEach(p => { out += block(p, cls); });
       if (i + 2 < parts.length) out += codeBlock(parts[i + 2], parts[i + 1]);
     }
     return out;

@@ -134,7 +134,7 @@
 
     if (spec.title && type !== 'title') add(`<h2 class="t-h1 lsn-h">${G().inline(spec.title)}</h2>`);
     const proseSrc = spec.prose || (spec.kind === 'longform' ? spec.prompt : '');
-    if (proseSrc) G().prose(proseSrc).split(/(?=<p class|<div class="lsn-code)/).filter(Boolean).forEach(h => add(h));
+    if (proseSrc) G().prose(proseSrc).split(/(?=<p class|<div class="lsn-code|<ul class="lsn-list|<ol class="lsn-list)/).filter(Boolean).forEach(h => add(h));
     const qLine = spec.question ? `<h2 class="t-h2 lsn-q">${G().inline(spec.question)}<span class="lsn-count tnum" aria-live="polite" hidden></span></h2>` : '';
     const tapHint = () => {
       const k = spec.canvas && spec.canvas.kind;

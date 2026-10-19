@@ -320,6 +320,8 @@ def __zq_case(_i):
         return __zq_raises(_call, _exp, _ns)
     return __zq_cmp(eval(_call, _ns), _exp, _cmp, _ns)
 `;
+  /* item 169: library housekeeping lines (matplotlib's font cache notice, warnings that slip through) are not the learner's output */
+  const quietLib = (t) => String(t || '').split('\n').filter(l => !/^Matplotlib is building the font cache|^\S+\.py:\d+: (FutureWarning|DeprecationWarning):/.test(l)).join('\n');
   const isOut = (c) => c.compare === 'stdout' || (c.call == null && c.expect != null && c.compare == null);
   /* Tracebacks keep only the learner's frames: harness functions (__zq_*), <string>, and the harness line that calls
      __zq_load are dropped, each with its source and caret lines */
@@ -405,11 +407,11 @@ def __zq_case(_i):
       const limit = TEST_MS * Math.max(1, cases.length) + (spec.budget != null ? Math.max(0, +spec.budget || 0) : heavy ? 30000 : 0);
       const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, limit,
         (d) => {
-          if (d.kind === 'error') { loadErr = d.error; loaded = String(d.stdout || ''); }
-          if (d.kind === 'loaded') loaded = String(d.stdout || '');
+          if (d.kind === 'error') { loadErr = d.error; loaded = quietLib(d.stdout); }
+          if (d.kind === 'loaded') loaded = quietLib(d.stdout);
           if (d.kind === 'test') {
             const r = rows[d.i]; if (!r) return;
-            const out = String(d.stdout || ''), k = out.lastIndexOf(MARK);
+            const out = quietLib(d.stdout), k = out.lastIndexOf(MARK);
             r.actual = k >= 0 ? out.slice(k + MARK.length) : null;
             r.stdout = k >= 0 ? out.slice(0, k) : out;
             if (!r.out) r.stdout = r.stdout.trim();
