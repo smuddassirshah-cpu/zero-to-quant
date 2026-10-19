@@ -532,3 +532,11 @@ Raised later (limits level 3):
 192. `plane` canvas: implicit curves $F(x,y)=0$ and parametric curves as function entries, with `on` and `tangent` support (circles and ellipses are two half-functions, and a dragged point cannot go round; $x^3+y^3=6xy$ is 120 segments).
 193. `plane` with `sketch`: a draggable point looks like a sketch handle; give draggable points a distinct look while sketching.
 194. `pair` canvas in the Why? sheet: `stack: true` is ignored (sheet shows the pair side by side).
+
+Raised later (integrals level 1):
+
+195. `plane` tap mode: `area` items, `polygons` and `riemann-{i}` rectangles as tap targets by id (only points are tappable now; "tap the shaded regions" uses placed points).
+196. `plane` `riemann`: accept a list (left and right sums on one plane); `sumLabel` through KaTeX.
+197. `derive`: read nested state values (`riemann.n`) and add a `sum(expr, k, a, b)` function.
+198. `plane` `equal: true`: do not widen the x range past the authored bounds on wide viewports (empty negative-x margin on a [0, 1] plot).
+199. `playthrough.mjs`: a `--mobile` flag that also captures a 390 px screenshot per screen.

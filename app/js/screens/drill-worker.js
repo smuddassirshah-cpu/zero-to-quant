@@ -160,6 +160,8 @@ self.onmessage = async (e) => {
       pk('start');
       try { await py.loadPackagesFromImports(m.code, { messageCallback: (t) => pk('msg', String(t)), errorCallback: (t) => pk('msg', String(t)) }); } catch (e) { emit('Package load failed: ' + ((e && e.message) || e)); }
       pk('end');
+      // Item 120: every run starts in a fresh, empty working directory, so files written by one run are gone in the next
+      py.runPython("import os as _o, shutil as _s, tempfile as _t\n_p = globals().get('_zq_run_dir')\n_o.chdir('/')\nif _p: _s.rmtree(_p, ignore_errors=True)\n_zq_run_dir = _t.mkdtemp(prefix='run-')\n_o.chdir(_zq_run_dir)");
       runFn(m.code, JSON.stringify(m.spec), emit);
     } catch (err) {
       self.postMessage({ type: 'crash', id: m.id, message: String((err && err.message) || err) });

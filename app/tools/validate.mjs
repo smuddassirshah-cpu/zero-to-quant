@@ -113,9 +113,15 @@ const regionIds = (canvas) => {
   if (canvas.kind === 'pair') { // the side widgets drive, plus every id of either side with its "left:" or "right:" prefix
     const a = ['left', 'right'].includes(canvas.active) ? canvas.active : 'left', out = new Set();
     ['left', 'right'].forEach(k => { const ids = regionIds(canvas[k]); if (ids) ids.forEach(id => { out.add(`${k}:${id}`); if (k === a) out.add(id); }); });
+    if (canvas.tap === 'sides') { out.add('left'); out.add('right'); } // whole sides (item 183)
     return out.size ? out : null;
   }
   const p = canvas.params || {};
+  if (canvas.kind === 'bars' && isObj(p.bins) && p.bins.width > 0) { // histogram bins b0, b1, ... (zero-based)
+    const n = Math.max(1, Math.round((p.bins.max - p.bins.min) / p.bins.width)), ids = new Set(['exact']);
+    range(0, n - 1).forEach(i => { ids.add('b' + i); ids.add('exact-b' + i); });
+    return ids;
+  }
   if (canvas.kind === 'bars' && Array.isArray(p.categories)) { // object categories keep their own id, plain ones are x{label}
     const ids = new Set(['exact']);
     p.categories.forEach(c => { const id = isObj(c) ? (c.id || 'x' + c.label) : 'x' + c; ids.add(String(id)); ids.add('exact-' + id); });
@@ -171,18 +177,20 @@ const PLAUSIBLE = {
   matrix: /^[A-Za-z][A-Za-z0-9]*(-(r\d+|c\d+|\d+-\d+))?$/,
   walk: /^(path\d+|barrier-up|barrier-down)$/,
   orderbook: /^(bid\d+|ask\d+|spread)$/,
-  distribution: /^(mean|shade|x-?\d+)$/,
+  distribution: /^(mean|sd|prob|curve|shade|x-?\d+|overlay\d+)$/,
   scatter: /^(p\d+|line)$/,
   circle: /^(angle|sin|cos|tan|pt|arc|radius)$/,
-  bars: /^x[A-Za-z0-9.-]+$/,
+  bars: /^(exact-)?(x[A-Za-z0-9.-]+|b\d+)$/,
   array: /^(c\d+|[a-z][a-z0-9-]*)$/,
 };
 const plausibleId = (canvas, id) => {
   if (!isObj(canvas)) return true;
+  if (canvas.kind === 'pair' && canvas.tap === 'sides' && ['left', 'right'].includes(String(id))) return true;
   if (canvas.kind === 'pair') { const m = String(id).match(/^(left|right):(.+)$/); const a = ['left', 'right'].includes(canvas.active) ? canvas.active : 'left'; return m ? plausibleId(canvas[m[1]], m[2]) : plausibleId(canvas[a], id) || plausibleId(canvas[a === 'left' ? 'right' : 'left'], id); }
   const ids = regionIds(canvas);
   if (ids && ids.has(id)) return true;
   if (canvas.kind === 'grid' && ids) return /^(row|col|cross)\d+$/.test(id);
+  if (canvas.kind === 'distribution' && Array.isArray((canvas.params || {}).overlay) && canvas.params.overlay.some((o, j) => String(isObj(o) && o.id ? o.id : 'overlay' + j) === String(id))) return true; // overlay ids (item 170)
   const re = PLAUSIBLE[canvas.kind];
   return re ? re.test(String(id)) : /^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(String(id));
 };
@@ -379,6 +387,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         // a raises case with no call checks the whole program, which needs script mode (it is on whenever such a case exists)
         if (!script && !all.some(t => typeof t.call === 'string' && /printed\s*:=/.test(t.call)) && all.some(t => typeof t.call === 'string' && /\bprinted\b/.test(t.call) && !/_getframe/.test(t.call))) err(file, `${where}.tests`, 'printed is only defined when a case uses compare: "stdout" or stdin (script mode)');
       }
+      ['prelude', 'postlude'].forEach(k => { if (w[k] != null && typeof w[k] !== 'string') err(file, `${where}.${k}`, `${k} is Python source, a string`); });
       if (w.budget != null && !(typeof w.budget === 'number' && w.budget >= 0 && w.budget <= 120000)) err(file, `${where}.budget`, 'budget is extra milliseconds for a run, 0 to 120000');
       if (!w.how) warn(file, `${where}.how`, 'say how it is checked');
       keys.add('*');

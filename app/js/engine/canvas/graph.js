@@ -21,16 +21,41 @@
     const labOf = (n, view) => String((view && view.labels && view.labels[n.id] != null ? view.labels[n.id] : n.label) ?? n.id);
     const plainW = (t, size) => K.tw(String(t).replace(/\$|\\[a-zA-Z]+|[{}^_]/g, ''), size);
     const initLabels = (params.state && params.state.labels) || {};
-    const r = params.nodeRadius || Math.round(K.clamp(Math.max(0, ...nodes0.map((n) => plainW(initLabels[n.id] ?? n.label ?? n.id, 14))) / 2 + 8, 22, 34));
-    const labSize = (t) => { const w = plainW(t, 14); return w <= 2 * r - 8 ? 14 : Math.max(10, Math.floor(14 * (2 * r - 8) / w)); };
+    const r = params.nodeRadius || Math.round(K.clamp(Math.max(0, ...nodes0.flatMap((n) => String(initLabels[n.id] ?? n.label ?? n.id).split('\n').map((l) => plainW(l, 14)))) / 2 + 8, 22, 34));
     const padX = r + 26, padY = r + 22;
     /* item 152: a node may carry its own r, and shape: "pill" (a rounded box as wide as its label); edges stop at the rim */
+    /* item 117: also shape "rect" (a rounded box sized to the label, multi-line labels too) and "diamond" */
+    const widest = (t) => Math.max(...String(t).split('\n').map(l => plainW(l, 14)));
     const shapeOf = (n, view) => {
-      const rr = n.r || r;
-      if (n.shape === 'pill') return { pill: true, hw: Math.max(rr, plainW(labOf(n, view), 14) / 2 + 12), hh: Math.min(rr, 18), rr };
-      return { pill: false, hw: rr, hh: rr, rr };
+      const rr = n.r || r, lt = labOf(n, view), nl = String(lt).split('\n').length;
+      if (n.shape === 'pill') return { kind: 'pill', pill: true, hw: Math.max(rr, widest(lt) / 2 + 12), hh: Math.max(Math.min(rr, 18), nl * 9 + 4), rr };
+      if (n.shape === 'rect') return { kind: 'rect', pill: true, hw: Math.max(rr, widest(lt) / 2 + 10), hh: Math.max(Math.min(rr, 18), nl * 9 + 6), rr };
+      if (n.shape === 'diamond') return { kind: 'diamond', pill: false, hw: rr * 1.3, hh: rr * 1.3, rr };
+      return { kind: 'circle', pill: false, hw: rr, hh: rr, rr };
     };
-    const rimAt = (sh, ang) => { if (!sh.pill) return sh.hw; const c = Math.abs(Math.cos(ang)), si = Math.abs(Math.sin(ang)); return Math.min(c > 1e-6 ? sh.hw / c : Infinity, si > 1e-6 ? sh.hh / si : Infinity); };
+    const rimAt = (sh, ang) => {
+      const c = Math.abs(Math.cos(ang)), si = Math.abs(Math.sin(ang));
+      if (sh.kind === 'diamond') return 1 / (c / sh.hw + si / sh.hh);
+      if (!sh.pill) return sh.hw;
+      return Math.min(c > 1e-6 ? sh.hw / c : Infinity, si > 1e-6 ? sh.hh / si : Infinity);
+    };
+    /* item 165: plain labels never shrink below 12px; a long one wraps onto two lines at a space, then truncates with … */
+    const nodeLabel = (x, y, lt, maxW) => {
+      lt = String(lt);
+      if (lt.includes('$')) return K.lab(x, y, lt, { w: maxW + 20, size: 14 });
+      let lines = lt.split('\n'), size = 14;
+      while (size > 12 && lines.some(l => plainW(l, size) > maxW)) size--;
+      if (lines.length === 1 && plainW(lines[0], size) > maxW && lines[0].includes(' ')) {
+        const words = lines[0].split(' '); let best = null;
+        for (let k = 1; k < words.length; k++) { const a = words.slice(0, k).join(' '), b = words.slice(k).join(' '), m = Math.max(plainW(a, size), plainW(b, size)); if (!best || m < best.m) best = { a, b, m }; }
+        lines = [best.a, best.b];
+      }
+      const cut = (l) => { if (plainW(l, size) <= maxW) return l; let t = l; while (t.length > 1 && plainW(t + '…', size) > maxW) t = t.slice(0, -1); return t + '…'; };
+      lines = lines.map(cut);
+      const g = svg('g'), lh = size + 2, y0 = y - (lines.length - 1) * lh / 2;
+      lines.forEach((l, k) => g.append(K.txt(x, y0 + k * lh, l, { size })));
+      return g;
+    };
     const ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY));
     const pos = (n, view) => {
       if (ring && n.a != null) { const t = 2 * Math.PI * (n.a + ((view && view.rotate) || 0) / Math.max(1, view && view.seats ? view.seats : 1)) - Math.PI / 2; return [W / 2 + ringR * Math.cos(t), H / 2 + ringR * Math.sin(t)]; }
@@ -130,6 +155,8 @@
             tx = t[0] - (bend ? 2 * mx - (s[0] + t[0]) / 2 : s[0]); ty = t[1] - (bend ? 2 * my - (s[1] + t[1]) / 2 : s[1]);
           }
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-edge' + (e.dashed ? ' cvb-dash' : '') }));
+          /* item 117: edges are tappable in tap mode with params.tapEdges, or when the widget's ids name them */
+          if (R.mode === 'tap' && (params.tapEdges || (R.modeOpts.only && R.modeOpts.only.includes(e.id)))) { o.append(svg('path', { d, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 20px; fill: none' })); R.tappable(o, e.id, `Edge from ${labOf(a, view)} to ${labOf(b, view)}`.replace(/\n/g, ' ')); }
           if (directed) { const L = Math.hypot(tx, ty) || 1, ux = tx / L, uy = ty / L, s = 9; o.append(svg('path', { d: `M${hx},${hy}L${hx - ux * s - uy * s * 0.5},${hy - uy * s + ux * s * 0.5}L${hx - ux * s + uy * s * 0.5},${hy - uy * s - ux * s * 0.5}Z`, class: 'cvb-head', style: 'fill: var(--c, var(--text-2))' })); }
           eg.append(o);
           const wt = view.show === 'none' ? '' : wText(e);
@@ -146,8 +173,9 @@
           if ((n.o ?? 1) < 1) { fade(o, n.o); const k = 0.6 + 0.4 * Math.max(0, n.o); o.setAttribute('transform', `translate(${x} ${y}) scale(${k.toFixed(3)}) translate(${-x} ${-y})`); }
           const sh = shapeOf(n, view), { hw, hh } = sh;
           /* the node's outline: a circle, or a pill; dashed: true draws it dashed (item 149) */
-          const shape = (grow, attrs) => (sh.pill ? svg('rect', { x: x - hw - grow, y: y - hh - grow, width: 2 * (hw + grow), height: 2 * (hh + grow), rx: hh + grow, ...attrs }) : svg('circle', { cx: x, cy: y, r: hw + grow, ...attrs }));
-          o.append(sh.pill ? svg('rect', { x: x - hw - 8, y: y - hh - 8, width: 2 * hw + 16, height: 2 * hh + 16, rx: hh + 8, class: 'cvb-hlw' }) : K.washCircle(x, y, hw + 8));
+          const shape = (grow, attrs) => (sh.kind === 'diamond' ? svg('path', { d: `M${x},${y - hh - grow * 1.4}L${x + hw + grow * 1.4},${y}L${x},${y + hh + grow * 1.4}L${x - hw - grow * 1.4},${y}Z`, ...attrs })
+            : sh.pill ? svg('rect', { x: x - hw - grow, y: y - hh - grow, width: 2 * (hw + grow), height: 2 * (hh + grow), rx: sh.kind === 'rect' ? 6 + Math.max(0, grow) : hh + grow, ...attrs }) : svg('circle', { cx: x, cy: y, r: hw + grow, ...attrs }));
+          o.append(sh.kind === 'circle' ? K.washCircle(x, y, hw + 8) : shape(8, { class: 'cvb-hlw' }));
           if (view.current === n.id) o.append(shape(5, { class: 'cvb-ln', style: 'stroke: var(--manip); stroke-width: 3' }));
           o.append(shape(0, { class: 'cvb-node cvb-tapbox cv-body' + (view.current === n.id ? ' cur' : '') + (n.dashed ? ' cvb-dash' : '') }));
           const vi = visited.indexOf(n.id);
@@ -160,12 +188,12 @@
             o.append(K.txt(x, y + hh + 12, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-outink' }));
           }
           const lt = labOf(n, view);
-          o.append(K.lab(x, y, lt, { w: hw * 2 + 20, size: sh.pill ? 14 : n.r ? (plainW(lt, 14) <= 2 * n.r - 8 ? 14 : Math.max(10, Math.floor(14 * (2 * n.r - 8) / plainW(lt, 14)))) : labSize(lt) }));
+          o.append(nodeLabel(x, y, lt, sh.pill ? 2 * hw - 12 : sh.kind === 'diamond' ? hw * 1.1 : 2 * hw - 8));
           if (vi >= 0 && view.order !== false) {
             const bx = x + (sh.pill ? hw - 4 : hw * 0.78), by = y - hh * 0.78;
             o.append(svg('circle', { cx: bx, cy: by, r: 9, class: 'cvb-visit' }), K.txt(bx, by + 0.5, String(vi + 1), { cls: 'cvb-visit-t', size: 11 }));
           }
-          if (!n.gone) R.tappable(o, n.id, 'Node ' + lt);
+          if (!n.gone) R.tappable(o, n.id, 'Node ' + String(lt).replace(/\n/g, ' '));
           ng.append(o);
         }
       },

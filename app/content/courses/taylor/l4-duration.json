@@ -1,0 +1,1191 @@
+{
+  "id": "l4-duration",
+  "course": "taylor",
+  "title": "Duration as a tangent line",
+  "minutes": 14,
+  "objectives": [
+    "Approximate a bond’s price change with its first derivative.",
+    "Compute modified duration and DV01, and say when they mislead"
+  ],
+  "skills": [
+    "ty-linear",
+    "ty-finance"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Price against yield",
+      "prose": "A 5-year bond pays a £4 coupon each year and £100 at the end. At a 5% yield its price is £95.67. The curve is its price at every yield, and the dashed line is the tangent at 5%. Move the yield and compare them.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.01,
+            0.09
+          ],
+          "y": [
+            79,
+            117
+          ],
+          "grid": true,
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x) + 4/(1+x)^2 + 4/(1+x)^3 + 4/(1+x)^4 + 104/(1+x)^5",
+              "label": "price",
+              "labelAt": 0.03,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "L",
+              "expr": "95.6705 - 420.98*(x - 0.05)",
+              "label": "tangent at 5%",
+              "labelAt": 0.088,
+              "labelSide": "below",
+              "dashed": true,
+              "colour": 2
+            }
+          ],
+          "xLabel": "Yield $y$",
+          "yLabel": "Price (£)",
+          "params": {
+            "yld": 0.05
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.05,
+              "y": 95.6705,
+              "label": "5%",
+              "labelPos": "ne"
+            },
+            {
+              "id": "C",
+              "x": 0.05,
+              "y": 95.6705
+            },
+            {
+              "id": "Q",
+              "x": 0.05,
+              "y": 95.6705
+            }
+          ],
+          "segments": [
+            {
+              "id": "gap",
+              "from": "Q",
+              "to": "C",
+              "colour": 3
+            }
+          ]
+        },
+        "derive": {
+          "C.x": "yld",
+          "C.y": "4/(1+yld) + 4/pow(1+yld,2) + 4/pow(1+yld,3) + 4/pow(1+yld,4) + 104/pow(1+yld,5)",
+          "Q.x": "yld",
+          "Q.y": "95.6705 - 420.98*(yld - 0.05)",
+          "caption": "Yield {{fixed(yld*100, 2)}}%: price {{money(C.y)}}, tangent {{money(Q.y)}}"
+        },
+        "controls": [
+          {
+            "bind": "yld",
+            "min": 0.01,
+            "max": 0.09,
+            "step": 0.0025,
+            "label": "Yield",
+            "start": 0.05,
+            "format": "percent"
+          }
+        ]
+      },
+      "question": "Move the yield from 5% to 6%. By about how much does the price fall?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.1,
+        "tol": {
+          "abs": 0.15
+        },
+        "unit": "£",
+        "label": "Fall in price",
+        "placeholder": "For example 2.5",
+        "accept": "about £4.10: from £95.67 to £91.58. The tangent says £4.21.",
+        "wrong": [
+          {
+            "id": "one-pct",
+            "value": 0.96,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "sign",
+            "value": -4.1,
+            "tol": {
+              "abs": 0.15
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the price at 5%, then at 6%."
+        },
+        {
+          "rung": "point",
+          "text": "At 6% the caption reads about £91.58.",
+          "highlight": [
+            "C"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$95.67 - 91.58 = 4.09$. The tangent says 4.21."
+        }
+      ],
+      "feedback": {
+        "correct": "About £4.09. The tangent says £4.21, close for a 1-point move.",
+        "generic": "Not quite right. Read the price at 5% and at 6%, and subtract.",
+        "byKey": {
+          "one-pct": "You took 1% off the price. This bond loses about 4% of its value when its yield rises 1 point.",
+          "sign": "A fall is a positive amount here. The price drops from £95.67 to about £91.58."
+        }
+      },
+      "explain": {
+        "text": "The price falls from £95.67 to £91.58, about £4.09. The tangent predicts £4.21, close for a 1-point move. The curve bends up, so the line sits a little below it.",
+        "canvas": {
+          "params": {
+            "yld": 0.06
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The slope",
+      "prose": "The tangent's slope is $P'(y)$. Each cash flow $c_t (1+y)^{-t}$ differentiates by the chain rule to $-t\\,c_t (1+y)^{-t-1}$. The table lists the sizes $t\\,c_t / 1.05^{t+1}$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.01,
+            0.09
+          ],
+          "y": [
+            79,
+            117
+          ],
+          "grid": true,
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x) + 4/(1+x)^2 + 4/(1+x)^3 + 4/(1+x)^4 + 104/(1+x)^5",
+              "label": "price",
+              "labelAt": 0.03,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "L",
+              "expr": "95.6705 - 420.98*(x - 0.05)",
+              "label": "tangent at 5%",
+              "labelAt": 0.088,
+              "labelSide": "below",
+              "dashed": true,
+              "colour": 2
+            }
+          ],
+          "xLabel": "Yield $y$",
+          "yLabel": "Price (£)"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.05,
+              "y": 95.6705,
+              "label": "5%",
+              "labelPos": "ne"
+            }
+          ]
+        }
+      },
+      "question": "Fill in the year-5 term and the total.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Year $t$",
+          "$c_t$ (£)",
+          "$t\\,c_t / 1.05^{t+1}$"
+        ],
+        "rows": [
+          [
+            "1",
+            "4",
+            "3.6281"
+          ],
+          [
+            "2",
+            "4",
+            "6.9107"
+          ],
+          [
+            "3",
+            "4",
+            "9.8724"
+          ],
+          [
+            "4",
+            "4",
+            "12.5364"
+          ],
+          [
+            "5",
+            "104",
+            {
+              "edit": true,
+              "answer": 388.032,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "Total",
+            "",
+            {
+              "edit": true,
+              "answer": 420.98,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Year 5 pays the last coupon and the face: £104."
+        },
+        {
+          "rung": "point",
+          "text": "The term is $5 \\times 104 / 1.05^6$, and $1.05^6 = 1.340096$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$520 / 1.340096 = 388.03$, and the total is 420.98."
+        }
+      ],
+      "feedback": {
+        "correct": "$P'(0.05) = -420.98$.",
+        "generic": "Not quite right. Compute $520 / 1.05^6$, then add the five terms."
+      },
+      "explain": {
+        "text": "The year-5 term is $520 / 1.05^6 = 388.03$, and the total is 420.98. So $P'(0.05) = -420.98$ pounds per unit of yield. The final payment dominates: it is large and far away."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Per pound held",
+      "prose": "The slope $-420.98$ is in pounds per unit of yield, for a price of £95.67. Divide by the price to get the fractional change per unit of yield.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.01,
+            0.09
+          ],
+          "y": [
+            79,
+            117
+          ],
+          "grid": true,
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x) + 4/(1+x)^2 + 4/(1+x)^3 + 4/(1+x)^4 + 104/(1+x)^5",
+              "label": "price",
+              "labelAt": 0.03,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "L",
+              "expr": "95.6705 - 420.98*(x - 0.05)",
+              "label": "tangent at 5%",
+              "labelAt": 0.088,
+              "labelSide": "below",
+              "dashed": true,
+              "colour": 2
+            }
+          ],
+          "xLabel": "Yield $y$",
+          "yLabel": "Price (£)"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.05,
+              "y": 95.6705,
+              "label": "5%",
+              "labelPos": "ne"
+            }
+          ]
+        }
+      },
+      "question": "Compute $-P'(0.05) / P(0.05)$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.4,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Minus P prime over P",
+        "placeholder": "For example 3.5",
+        "accept": "4.40: $420.98 / 95.6705$.",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -4.4,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "inverted",
+            "value": 0.2273,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "no-price",
+            "value": 420.98,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide 420.98 by 95.67."
+        },
+        {
+          "rung": "point",
+          "text": "$420.98 / 95.6705$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$= 4.4003$."
+        }
+      ],
+      "feedback": {
+        "correct": "4.40.",
+        "generic": "Not quite right. Divide $-P'(0.05) = 420.98$ by $P(0.05) = 95.67$.",
+        "byKey": {
+          "sign": "You kept the minus sign. $P'$ is negative, and the extra minus makes the result positive.",
+          "inverted": "You divided the price by the slope. Put $-P'$ on top.",
+          "no-price": "That is the slope alone. Divide it by the price, £95.67."
+        }
+      },
+      "explain": {
+        "text": "$420.98 / 95.6705 = 4.40$. This number is the bond's **modified duration**, $D = -P'(y)/P(y)$. The price falls about 4.40% for each 1-point rise in yield."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The **modified duration** is $D = -P'/P = 4.40$. Along the tangent, a yield change $\\Delta y$ moves the price by $P'\\,\\Delta y = -D\\,P\\,\\Delta y$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.01,
+            0.09
+          ],
+          "y": [
+            79,
+            117
+          ],
+          "grid": true,
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x) + 4/(1+x)^2 + 4/(1+x)^3 + 4/(1+x)^4 + 104/(1+x)^5",
+              "label": "price",
+              "labelAt": 0.03,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "L",
+              "expr": "95.6705 - 420.98*(x - 0.05)",
+              "label": "tangent at 5%",
+              "labelAt": 0.088,
+              "labelSide": "below",
+              "dashed": true,
+              "colour": 2
+            }
+          ],
+          "xLabel": "Yield $y$",
+          "yLabel": "Price (£)"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.05,
+              "y": 95.6705,
+              "label": "5%",
+              "labelPos": "ne"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "v6",
+              "x": 0.06,
+              "label": "6%"
+            }
+          ]
+        }
+      },
+      "question": "Yields rise from 5% to 6%. By how much does the tangent say the price falls?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.21,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "label": "Predicted fall",
+        "placeholder": "For example 3.5",
+        "accept": "£4.21: $4.4003 \\times 0.01 \\times 95.6705$.",
+        "wrong": [
+          {
+            "id": "no-price",
+            "value": 0.044,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "face",
+            "value": 4.4,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "units",
+            "value": 420.98,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\Delta y = 0.01$."
+        },
+        {
+          "rung": "point",
+          "text": "$D \\times \\Delta y = 0.044$, a 4.4% fall.",
+          "highlight": [
+            "v6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.044 \\times 95.67 = 4.21$."
+        }
+      ],
+      "feedback": {
+        "correct": "£4.21, so the tangent says £91.46.",
+        "generic": "Not quite right. Multiply $D$, $\\Delta y = 0.01$ and the price.",
+        "byKey": {
+          "no-price": "You found $D \\times 0.01 = 0.044$, the fractional fall. Multiply by the price, £95.67.",
+          "face": "You applied 4.40% to the £100 face. Duration works on today's price, £95.67.",
+          "units": "You used $\\Delta y = 1$. One percentage point is $\\Delta y = 0.01$."
+        }
+      },
+      "explain": {
+        "text": "$4.4003 \\times 0.01 \\times 95.6705 = 4.21$. The tangent's price at 6% is $95.67 - 4.21 = \\text{£}91.46$. The true price is £91.58.",
+        "canvas": {
+          "points": {
+            "Q6": {
+              "x": 0.06,
+              "y": 91.4607,
+              "label": "£91.46",
+              "labelPos": "sw"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Tangent against truth",
+      "prose": "At 6% the true price is £91.58, and the tangent says £91.46. The view is zoomed in around 6%.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.0575,
+            0.0625
+          ],
+          "y": [
+            90.2,
+            92.8
+          ],
+          "grid": true,
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x) + 4/(1+x)^2 + 4/(1+x)^3 + 4/(1+x)^4 + 104/(1+x)^5",
+              "label": "price",
+              "labelAt": 0.0578,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "L",
+              "expr": "95.6705 - 420.98*(x - 0.05)",
+              "label": "tangent at 5%",
+              "labelAt": 0.0622,
+              "labelSide": "below",
+              "dashed": true,
+              "colour": 2
+            }
+          ],
+          "xLabel": "Yield $y$",
+          "yLabel": "Price (£)"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "C6",
+              "x": 0.06,
+              "y": 91.5753,
+              "label": "£91.58",
+              "labelPos": "ne"
+            },
+            {
+              "id": "Q6",
+              "x": 0.06,
+              "y": 91.4607,
+              "label": "£91.46",
+              "labelPos": "sw"
+            }
+          ],
+          "segments": [
+            {
+              "id": "gap",
+              "from": "Q6",
+              "to": "C6",
+              "colour": 3
+            }
+          ]
+        }
+      },
+      "question": "How does the true price compare with the tangent's, and why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "above",
+            "text": "£0.11 above: the price curve bends upwards",
+            "correct": true
+          },
+          {
+            "id": "below",
+            "text": "£0.11 below: the tangent overestimates",
+            "why": "You read the subtraction the wrong way round. $91.58 - 91.46 = +0.11$: the curve is above the line."
+          },
+          {
+            "id": "equal",
+            "text": "Equal: the tangent is exact for a bond",
+            "why": "The tangent is exact only at 5% itself. Away from it the curve bends away."
+          },
+          {
+            "id": "fall",
+            "text": "£4.21 below",
+            "why": "That is the predicted fall, not the gap between the two prices."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the tangent's price from the true price."
+        },
+        {
+          "rung": "point",
+          "text": "$91.58 - 91.46 = 0.11$.",
+          "highlight": [
+            "gap"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Positive: the curve is above the line, so it bends up."
+        }
+      ],
+      "feedback": {
+        "correct": "The curve is £0.11 above the tangent.",
+        "generic": "Not quite right. Compare £91.58 with £91.46.",
+        "byKey": {
+          "below": "You took the tangent's price from the true price the wrong way round. The true price is higher."
+        }
+      },
+      "explain": {
+        "text": "The gap is $91.5753 - 91.4607 = \\text{£}0.11$, with the curve above the line. A curve that bends up has $P'' > 0$, so the tangent underestimates, as in lesson 2. That bend is **convexity**, the subject of the next level."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A big move",
+      "prose": "Rates jump 3 points, from 5% to 8%. The tangent was £0.11 out for a 1-point move. A colleague says for 3 points it will be about $3 \\times 0.11 = \\text{£}0.33$ out.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.01,
+            0.09
+          ],
+          "y": [
+            79,
+            117
+          ],
+          "grid": true,
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x) + 4/(1+x)^2 + 4/(1+x)^3 + 4/(1+x)^4 + 104/(1+x)^5",
+              "label": "price",
+              "labelAt": 0.03,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "L",
+              "expr": "95.6705 - 420.98*(x - 0.05)",
+              "label": "tangent at 5%",
+              "labelAt": 0.088,
+              "labelSide": "below",
+              "dashed": true,
+              "colour": 2
+            }
+          ],
+          "xLabel": "Yield $y$",
+          "yLabel": "Price (£)"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.05,
+              "y": 95.6705,
+              "label": "5%",
+              "labelPos": "ne"
+            },
+            {
+              "id": "C8",
+              "x": 0.08,
+              "y": 84.0292
+            },
+            {
+              "id": "Q8",
+              "x": 0.08,
+              "y": 83.0411
+            }
+          ],
+          "segments": [
+            {
+              "id": "gap",
+              "from": "Q8",
+              "to": "C8",
+              "colour": 3
+            }
+          ],
+          "vlines": [
+            {
+              "id": "v8",
+              "x": 0.08,
+              "label": "8%"
+            }
+          ]
+        }
+      },
+      "question": "About how far is the tangent from the true price at 8%?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.0,
+        "tol": {
+          "abs": 0.06
+        },
+        "unit": "£",
+        "label": "Gap at 8%",
+        "placeholder": "For example 0.5",
+        "accept": "about £1.00: $9 \\times 0.11$. The true gap is £0.99.",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 0.33,
+            "tol": {
+              "abs": 0.03
+            }
+          },
+          {
+            "id": "same",
+            "value": 0.11,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "fall",
+            "value": 12.63,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In lesson 2 the error grew with $h^2$."
+        },
+        {
+          "rung": "point",
+          "text": "Three times the move gives $3^2 = 9$ times the error.",
+          "highlight": [
+            "gap"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$9 \\times 0.11 \\approx \\text{£}1.0$. The true gap is £0.99."
+        }
+      ],
+      "feedback": {
+        "correct": "About £1: nine times the 1-point error.",
+        "generic": "Not quite right. The error grows with the square of the move.",
+        "byKey": {
+          "linear": "You scaled the error in step with the move. It grows with the square: 3 times the move, 9 times the error.",
+          "same": "You kept the 1-point error. The gap widens as the move grows.",
+          "fall": "That is the predicted fall, $4.40 \\times 0.03 \\times 95.67$. The question asks for the gap from the true price."
+        }
+      },
+      "explain": {
+        "text": "The error grows with the square of the move: $9 \\times 0.1145 = 1.03$. The tangent gives £83.04 and the true price is £84.03, a gap of £0.99. Duration alone is fine for small moves and poor for big ones.",
+        "canvas": {
+          "highlight": [
+            "gap"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You priced a yield change with the tangent at today's yield. For a small change $\\Delta y$: $$\\Delta P \\approx P'(y)\\,\\Delta y = -D\\,P\\,\\Delta y, \\quad D = -\\dfrac{P'(y)}{P(y)}$$ Yield up, price down.",
+      "question": "Duration 4.40, price £95.67, and yields fall 0.5%. What does the tangent give?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "up",
+            "text": "A rise of £2.10",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "A fall of £2.10",
+            "why": "You kept the price falling. Yields fell, so $\\Delta y = -0.005$ and $\\Delta P$ is positive."
+          },
+          {
+            "id": "frac",
+            "text": "A rise of £0.02",
+            "why": "$4.40 \\times 0.005 = 0.022$ is the fractional change. Multiply by the price."
+          },
+          {
+            "id": "full",
+            "text": "A rise of £4.21",
+            "why": "That is for a 1-point move. Half a point gives half: £2.10."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A rise of £2.10.",
+        "generic": "Not quite right. Put $\\Delta y = -0.005$ into $-D\\,P\\,\\Delta y$."
+      },
+      "explain": {
+        "text": "$\\Delta P \\approx -4.40 \\times (-0.005) \\times 95.67 = +2.10$. The two minus signs make a rise. The true price at 4.5% is £97.81, again a little above the line."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Where does $D$ come from? Write the price as a sum of cash flows $c_t$, where $c_T$ includes the face.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "price",
+            "text": "$P(y) = \\sum_t c_t (1+y)^{-t}$, each cash flow discounted at yield $y$"
+          },
+          {
+            "id": "deriv",
+            "text": "$P'(y) = -\\sum_t t\\,c_t (1+y)^{-t-1}$, the chain rule on each $(1+y)^{-t}$"
+          },
+          {
+            "id": "tangent",
+            "text": "$\\Delta P \\approx -\\sum_t t\\,c_t (1+y)^{-t-1}\\,\\Delta y$, the tangent line with that slope"
+          },
+          {
+            "id": "divide",
+            "text": "$\\dfrac{\\Delta P}{P} \\approx -D\\,\\Delta y$, divide by $P(y)$, with $D = -P'(y)/P(y)$"
+          }
+        ],
+        "answer": [
+          "price",
+          "deriv",
+          "tangent",
+          "divide"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the price itself."
+        },
+        {
+          "rung": "point",
+          "text": "Differentiate before you can use the slope."
+        },
+        {
+          "rung": "step",
+          "text": "Price, derivative, tangent, then divide by the price."
+        }
+      ],
+      "feedback": {
+        "correct": "Price, slope, tangent, then per pound.",
+        "generic": "Not quite right. You need the derivative before the tangent can use it.",
+        "byKey": {
+          "tangent": "The tangent uses the slope, so the derivative comes first.",
+          "divide": "Dividing by the price is the last step, once you have the tangent."
+        }
+      },
+      "explain": {
+        "text": "Differentiating each discount factor gives the slope, and the tangent turns it into a price change. Dividing by $P$ makes it a fraction of the price. That fraction per unit of yield is $D$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "DV01",
+      "prose": "Your book holds £10 million face of this bond, worth £9,567,052 at 5%. Risk is quoted as **DV01**: the pounds lost when the yield rises one basis point, 0.01%, or $\\Delta y = 0.0001$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Position",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Face",
+              "£10,000,000"
+            ],
+            [
+              "Price per £100 face",
+              "£95.67"
+            ],
+            [
+              "Market value",
+              "£9,567,052"
+            ],
+            [
+              "Modified duration",
+              "4.40"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the position's DV01?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4209.8,
+        "tol": {
+          "abs": 1.5
+        },
+        "unit": "£",
+        "label": "DV01",
+        "placeholder": "For example 3500",
+        "accept": "about £4,209.80: $4.4003 \\times 9{,}567{,}052 \\times 0.0001$.",
+        "wrong": [
+          {
+            "id": "face",
+            "value": 4400.31,
+            "tol": {
+              "abs": 1.5
+            }
+          },
+          {
+            "id": "per-point",
+            "value": 420980,
+            "tol": {
+              "abs": 50
+            }
+          },
+          {
+            "id": "per-100",
+            "value": 0.0421,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "DV01 $= D \\times \\text{value} \\times 0.0001$."
+        },
+        {
+          "rung": "point",
+          "text": "$4.4003 \\times 9{,}567{,}052 = 42{,}097{,}967$.",
+          "highlight": [
+            "r2c1",
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Times 0.0001 gives £4,209.80."
+        }
+      ],
+      "feedback": {
+        "correct": "About £4,210 per basis point.",
+        "generic": "Not quite right. Multiply the duration, the market value and 0.0001.",
+        "byKey": {
+          "face": "You applied duration to the £10m face. Use the market value, £9,567,052.",
+          "per-point": "That is for a full percentage point, 100 basis points. One basis point is $\\Delta y = 0.0001$.",
+          "per-100": "That is per £100 of face. Scale it up to the whole position."
+        }
+      },
+      "explain": {
+        "text": "$4.4003 \\times \\text{£}9{,}567{,}052 \\times 0.0001 = \\text{£}4{,}209.80$. For a 1 bp move the tangent's error is tiny: the true loss is £4,208.63. That is why desks size hedges from DV01.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A bond's price-yield curve is smooth, so its tangent predicts small price changes.",
+      "Modified duration $D = -P'/P$ turns the slope into a fraction of the price. Yield up, price down.",
+      "The tangent underestimates the price for moves either way, and its error grows with the square of the move. That bend is convexity."
+    ],
+    "formula": {
+      "name": "Duration approximation",
+      "tex": "\\Delta P \\approx -D\\,P\\,\\Delta y, \\quad D = -\\dfrac{P'(y)}{P(y)}",
+      "note": "$\\Delta y$ in decimals: one basis point is 0.0001."
+    },
+    "trap": "Duration is a tangent. It is fine for a few basis points and poor for a 3-point jump, where the error is nine times the 1-point error."
+  },
+  "quiz": [
+    {
+      "id": "q-rally",
+      "difficulty": 2,
+      "prose": "A bond has modified duration 6.0 and price £102.00. Its yield falls by 0.25%.",
+      "question": "What does the duration estimate give for the price change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "up",
+            "text": "A rise of £1.53",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "A fall of £1.53",
+            "why": "Yields fell, so the price rises. Yield and price move in opposite directions."
+          },
+          {
+            "id": "frac",
+            "text": "A rise of £0.015",
+            "why": "$6.0 \\times 0.0025 = 0.015$ is the fractional change. Multiply by £102."
+          },
+          {
+            "id": "full",
+            "text": "A rise of £6.12",
+            "why": "That is for a full 1-point fall. A quarter point gives a quarter of it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$6.0 \\times 0.0025 \\times 102 = \\text{£}1.53$, a rise.",
+        "generic": "Not quite right. Use $\\Delta P \\approx -D\\,P\\,\\Delta y$ with $\\Delta y = -0.0025$."
+      },
+      "explain": {
+        "text": "$\\Delta P \\approx -6.0 \\times 102 \\times (-0.0025) = +1.53$. The yield fell, so the price rose."
+      }
+    },
+    {
+      "id": "q-duration",
+      "difficulty": 2,
+      "prose": "A bond is priced at £104.50, and the slope of its price-yield curve there is $P'(y) = -731.50$.",
+      "question": "What is its modified duration?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7.0,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Modified duration",
+        "placeholder": "For example 5.2",
+        "accept": "7.00: $731.50 / 104.50$.",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -7.0,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "inverted",
+            "value": 0.1429,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$D = 731.50 / 104.50 = 7.00$.",
+        "generic": "Not quite right. $D = -P'/P$."
+      },
+      "explain": {
+        "text": "$D = -P'/P = 731.50 / 104.50 = 7.00$. The price falls about 7% per 1-point rise in yield."
+      }
+    },
+    {
+      "id": "q-dv01",
+      "difficulty": 3,
+      "prose": "A bond position is worth £5,000,000 and has modified duration 3.2.",
+      "question": "What is its DV01, in pounds per basis point?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1600,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "DV01",
+        "placeholder": "For example 1000",
+        "accept": "£1,600: $3.2 \\times 5{,}000{,}000 \\times 0.0001$.",
+        "wrong": [
+          {
+            "id": "per-point",
+            "value": 160000,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "pct",
+            "value": 16,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£1,600 per basis point.",
+        "generic": "Not quite right. Multiply duration, value and $\\Delta y = 0.0001$."
+      },
+      "explain": {
+        "text": "$3.2 \\times \\text{£}5{,}000{,}000 \\times 0.0001 = \\text{£}1{,}600$. A 10 bp rise costs about £16,000."
+      }
+    },
+    {
+      "id": "q-trust",
+      "difficulty": 3,
+      "prose": "The same bond, duration 4.40, faces four yield moves.",
+      "question": "For which move is the duration estimate least reliable?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one-bp",
+            "text": "A rise of 1 basis point",
+            "why": "A tiny move: the tangent's error there is about a ten-thousandth of a 1-point error."
+          },
+          {
+            "id": "ten-bp",
+            "text": "A fall of 10 basis points",
+            "why": "Still small. The error is about a hundredth of the 1-point error."
+          },
+          {
+            "id": "half",
+            "text": "A rise of 0.5%",
+            "why": "The error is a quarter of the 1-point error, about £0.03."
+          },
+          {
+            "id": "two",
+            "text": "A fall of 2%",
+            "correct": true
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The 2-point move: four times the 1-point error.",
+        "generic": "Not quite right. The error grows with the square of the move."
+      },
+      "explain": {
+        "text": "The tangent's error grows with $(\\Delta y)^2$, whichever way the yield moves. A 2-point move leaves about four times the 1-point error: £0.49 here."
+      }
+    }
+  ]
+}

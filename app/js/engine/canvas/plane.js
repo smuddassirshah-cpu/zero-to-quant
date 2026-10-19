@@ -52,8 +52,12 @@
   const tw = (s, size = 13) => String(s).replace(/\$|\\[a-z]+/gi, '').length * size * 0.56;
 
   /* Ticks that never collide: start from the pixel budget and drop the count until labels fit. */
-  const ticksFor = (min, max, px, { minGap = 46, fmtF } = {}) => {
+  const ticksFor = (min, max, px, { minGap = 46, fmtF, vertical = false } = {}) => {
     let n = Math.max(2, Math.floor(px / minGap));
+    if (vertical) { // item 172: on a y axis labels stack, so only their height (about 18px) limits the count
+      for (; n >= 2; n--) { const t = C.niceTicks(min, max, n); if (t.length < 2) return { ticks: t, step: (max - min) || 1 }; const step = t[1] - t[0]; if (px / ((max - min) / step) >= 18 || n === 2) return { ticks: t, step }; }
+      return { ticks: [min, max], step: max - min };
+    }
     for (; n >= 2; n--) {
       const t = C.niceTicks(min, max, n); if (t.length < 2) return { ticks: t, step: (max - min) || 1 };
       const step = t[1] - t[0]; const labels = t.map((v) => (fmtF ? fmtF(v, step) : fmtTick(v, step)));
@@ -149,9 +153,14 @@
   };
 
   /* Chart axes (left and bottom, horizontal gridlines). Returns the tick info used. */
+  /* y ticks: the usual spacing, but never fewer than three inside the range on a short chart (item 172) */
+  const yTicksFor = (min, max, px, fmtF) => {
+    const t = ticksFor(min, max, px, { minGap: 30, fmtF }), inside = (q) => q.ticks.filter((v) => v >= min - 1e-9 && v <= max + 1e-9).length;
+    return inside(t) >= 3 ? t : ticksFor(min, max, px, { minGap: 24, fmtF, vertical: true });
+  };
   const chartAxes = (g, sx, sy, o = {}) => {
     const [x0, x1] = sx.range, [y0, y1] = sy.range; // y0 bottom pixel, y1 top pixel
-    const yt = o.yTicks || (sy.log ? logTicks(sy.domain[0], sy.domain[1], Math.abs(y0 - y1), { minGap: 24 }) : ticksFor(sy.domain[0], sy.domain[1], Math.abs(y0 - y1), { minGap: 30, fmtF: o.fmtY }));
+    const yt = o.yTicks || (sy.log ? logTicks(sy.domain[0], sy.domain[1], Math.abs(y0 - y1), { minGap: 24 }) : yTicksFor(sy.domain[0], sy.domain[1], Math.abs(y0 - y1), o.fmtY));
     const gg = svg('g', { class: 'cvb-axes' });
     for (const v of yt.ticks) {
       const y = sy(v); if (y < y1 - 0.5 || y > y0 + 0.5) continue;
@@ -177,7 +186,7 @@
   };
   /* Left margin a chart needs for its y tick labels. */
   const yMargin = (min, max, px, fmtY, log = false) => {
-    const t = log ? logTicks(min, max, px, { minGap: 24 }) : ticksFor(min, max, px, { minGap: 30, fmtF: fmtY });
+    const t = log ? logTicks(min, max, px, { minGap: 24 }) : yTicksFor(min, max, px, fmtY);
     return 14 + Math.max(...t.ticks.map((v) => tw(fmtY ? fmtY(v, t.step) : fmtTick(v, t.step), 12)));
   };
 

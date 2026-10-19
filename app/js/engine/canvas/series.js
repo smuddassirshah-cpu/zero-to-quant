@@ -18,8 +18,8 @@
     /* Marker {value} labels. `decimals` fixes the places and keeps trailing zeros; `money: "£"` is format money with
        that currency and two places unless `decimals` says otherwise */
     const money = params.money || (params.format === 'money' ? params.currency || '$' : null), dec = params.decimals ?? (params.money ? 2 : null);
-    const num = (v, dp) => (dec != null ? Math.abs(v).toLocaleString('en-GB', { minimumFractionDigits: dec, maximumFractionDigits: dec }) : K.fmt(Math.abs(v), dp));
-    const fmtVal = (v) => (params.format === 'pct' ? (v < 0 ? '−' : '') + num(v * 100, 1) + '%' : money ? (v < 0 ? '−' : '') + money + num(v, 2) : (v < 0 ? '−' : '') + num(v, 2));
+    const num = (v, dp, d0 = dec) => (d0 != null ? Math.abs(v).toLocaleString('en-GB', { minimumFractionDigits: d0, maximumFractionDigits: d0 }) : K.fmt(Math.abs(v), dp));
+    const fmtVal = (v, d0 = dec) => (params.format === 'pct' ? (v < 0 ? '−' : '') + num(v * 100, 1, d0) + '%' : money ? (v < 0 ? '−' : '') + money + num(v, 2, d0) : (v < 0 ? '−' : '') + num(v, 2, d0));
     const valuesOf = (s) => (s.values || (s.ohlc ? s.ohlc.map((c) => c[3]) : []));
     const yRange = (() => {
       if (params.y) return params.y;
@@ -36,11 +36,29 @@
     })();
     const labelW = Math.max(0, ...list.filter((s) => s.label).map((s) => K.tw(s.label) + 22));
     const logY = params.yScale === 'log';
-    const ml = K.yMargin(yRange[0], yRange[1], H - 60, fmtY, logY), mt = 26, mb = params.xLabel ? 46 : 30, mr = Math.max(14, Math.min(150, labelW));
+    /* item 186: a second y axis on the right; series with axis: 2 use it (params.y2 range, y2Label, y2Format "pct" | "money") */
+    const right = list.filter((s) => s.axis === 2);
+    const fmtY2 = params.y2Format === 'pct' ? fmtPct : params.y2Format === 'money' ? (v, st) => (v < 0 ? '−' : '') + (params.money || params.currency || '$') + K.fmtTick(Math.abs(v), st) : null;
+    const y2Range = !right.length ? null : params.y2 || (() => {
+      let lo = Infinity, hi = -Infinity; for (const s2 of right) for (const v of valuesOf(s2)) if (Number.isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+      if (!Number.isFinite(lo)) return [0, 1];
+      const pad = (hi - lo || 1) * 0.08, t = C.niceTicks(lo - pad, hi + pad, 5), st = t[1] - t[0] || 1;
+      return [Math.floor((lo - pad) / st) * st, Math.ceil((hi + pad) / st) * st];
+    })();
+    const y2W = y2Range ? K.yMargin(y2Range[0], y2Range[1], H - 60, fmtY2) : 0;
+    /* item 168: a title above the plot */
+    const titleH = params.title ? 20 : 0;
+    /* item 185: params.margins { left, right } fixes the plot's side margins, so stacked panels line up */
+    const M = params.margins || {};
+    const ml = M.left ?? K.yMargin(yRange[0], yRange[1], H - 60, fmtY, logY), mt = 26 + titleH, mb = params.xLabel ? 46 : 30, mr = M.right ?? Math.max(14, Math.min(150, labelW + y2W), y2W + 8);
     const hasCandles = list.some((s) => s.ohlc && (params.candles || s.candles)), padI = hasCandles ? 0.7 : 0;
     const sx = C.scale([-padI, n - 1 + padI], [ml, W - mr]), sy = logY ? K.logScale(yRange, [H - mb, mt]) : C.scale(yRange, [H - mb, mt]); // yScale: "log", for log-price charts
+    const sy2 = y2Range ? C.scale(y2Range, [H - mb, mt]) : null, syOf = (s2) => (s2.axis === 2 && sy2 ? sy2 : sy);
+    /* item 168: dateFormat for date ticks: %Y %y %m %d %e %b %B (for example "%b %Y", "%d/%m", "%Y-%m") */
+    const MONTHS_L = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const strf = (d, f) => f.replace(/%([YymdebB%])/g, (_, c) => ({ Y: String(d.getUTCFullYear()), y: String(d.getUTCFullYear()).slice(2), m: String(d.getUTCMonth() + 1).padStart(2, '0'), d: String(d.getUTCDate()).padStart(2, '0'), e: String(d.getUTCDate()), b: MONTHS[d.getUTCMonth()], B: MONTHS_L[d.getUTCMonth()], '%': '%' })[c]);
     const fmtX = dates
-      ? (i) => { const d = dates[Math.round(i)]; if (!d) return ''; const span = (dates[dates.length - 1] - dates[0]) / 864e5; return span > 300 ? MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2) : d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
+      ? (i) => { const d = dates[Math.round(i)]; if (!d) return ''; if (params.dateFormat) return strf(d, String(params.dateFormat)); const span = (dates[dates.length - 1] - dates[0]) / 864e5; return span > 300 ? MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2) : d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
       : (i) => K.fmt(i + (params.indexFrom || 0), 2);
     const idxOf = (v) => { if (typeof v === 'number') return v; if (dates && typeof v === 'string') { const t = new Date(v + (v.length <= 10 ? 'T00:00:00Z' : '')).getTime(); let best = 0; dates.forEach((d, i) => { if (Math.abs(d - t) < Math.abs(dates[best] - t)) best = i; }); return best; } return 0; };
     /* Maximum drawdown: the largest fall from a running peak, as a share of the peak (abs: true measures the fall itself,
@@ -59,6 +77,14 @@
         const xt = K.ticksFor(0, n - 1, x1 - x0, { minGap: 56, fmtF: (v) => fmtX(v) });
         xt.ticks = xt.ticks.filter((v) => Number.isInteger(v) && v >= 0 && v <= n - 1);
         K.chartAxes(g, sx, sy, { yLabel: params.yLabel, xLabel: params.xLabel, fmtY, fmtX: (v) => fmtX(v), xTicks: xt, baseline: logY ? null : params.baseline ?? (yRange[0] < 0 && yRange[1] > 0 ? 0 : null) });
+        if (params.title) g.append(K.lab(x0, 14, String(params.title), { anchor: 'start', cls: 'cvb-title', size: 14 }));
+        if (sy2) { // the right-hand axis
+          const t2 = K.ticksFor(y2Range[0], y2Range[1], y0 - y1, { minGap: 24, fmtF: fmtY2, vertical: true }), ax = svg('g', { class: 'cvb-axes' });
+          ax.append(svg('line', { x1: x1, x2: x1, y1: y0, y2: y1, class: 'cvb-axis' }));
+          t2.ticks.forEach((v) => { const yy = sy2(v); if (yy < y1 - 0.5 || yy > y0 + 0.5) return; ax.append(svg('line', { x1: x1, x2: x1 + 4, y1: yy, y2: yy, class: 'cvb-axis thin' }), K.txt(x1 + 7, yy, fmtY2 ? fmtY2(v, t2.step) : K.fmtTick(v, t2.step), { anchor: 'start', cls: 'cvb-tick', size: 12 })); });
+          if (params.y2Label) ax.append(K.lab(x1 + 6, y1 - 16, params.y2Label, { anchor: 'end', cls: 'cvb-axlab' }));
+          g.append(ax);
+        }
         const back = svg('g'), plot = svg('g', { 'clip-path': R.clipRect(x0 - 1, y1 - 4, x1 - x0 + 2, y0 - y1 + 8) }), over = svg('g');
         g.append(back, plot, over);
         const fixed = [];
@@ -98,13 +124,19 @@
               o.append(cg);
             });
           } else {
-            const vals = valuesOf(s); let d = '', pen = false;
+            const vals = valuesOf(s), syS = syOf(s); let d = '', pen = false;
             const upto = Math.floor(last);
-            for (let i = 0; i <= Math.min(upto, vals.length - 1); i++) { const v = vals[i]; if (!Number.isFinite(v)) { pen = false; continue; } d += (pen ? 'L' : 'M') + sx(i).toFixed(2) + ',' + sy(v).toFixed(2); pen = true; }
-            if (last > upto && upto + 1 < vals.length && Number.isFinite(vals[upto]) && Number.isFinite(vals[upto + 1])) { const f = last - upto, v = vals[upto] + (vals[upto + 1] - vals[upto]) * f; d += 'L' + sx(last).toFixed(2) + ',' + sy(v).toFixed(2); }
+            const pts = []; // runs of finite points, for the line and the fill
+            for (let i = 0; i <= Math.min(upto, vals.length - 1); i++) { const v = vals[i]; if (!Number.isFinite(v)) { pen = false; continue; } d += (pen ? 'L' : 'M') + sx(i).toFixed(2) + ',' + syS(v).toFixed(2); if (!pen) pts.push([]); pts[pts.length - 1].push([sx(i), syS(v)]); pen = true; }
+            if (last > upto && upto + 1 < vals.length && Number.isFinite(vals[upto]) && Number.isFinite(vals[upto + 1])) { const f = last - upto, v = vals[upto] + (vals[upto + 1] - vals[upto]) * f; d += 'L' + sx(last).toFixed(2) + ',' + syS(v).toFixed(2); if (pts.length) pts[pts.length - 1].push([sx(last), syS(v)]); }
+            /* item 171: fill "below" shades between the line and zero (or the baseline), as fill_between does */
+            if (s.fill && pts.length) {
+              const base = s.fillTo ?? params.baseline ?? 0, by = K.clamp(syS(K.clamp(base, Math.min(...(s.axis === 2 ? y2Range : yRange)), Math.max(...(s.axis === 2 ? y2Range : yRange)))), y1, y0);
+              pts.filter((run) => run.length > 1).forEach((run) => o.append(svg('path', { d: `M${run[0][0].toFixed(2)},${by.toFixed(2)}` + run.map((q) => `L${q[0].toFixed(2)},${q[1].toFixed(2)}`).join('') + `L${run[run.length - 1][0].toFixed(2)},${by.toFixed(2)}Z`, class: 'cvb-fill' })));
+            }
             o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (s.dashed ? ' cvb-dash' : '') + (s.thin ? ' thin' : '') }));
             const li = Math.min(vals.length - 1, Math.max(0, Math.round(last))); const lv = vals[li];
-            if (s.label && Number.isFinite(lv)) ends.push({ x: sx(li), y: sy(lv), text: s.label, slot: s.slot, id: s.id });
+            if (s.label && Number.isFinite(lv)) ends.push({ x: sx(li), y: syS(lv), text: s.label, slot: s.slot, id: s.id });
           }
           plot.append(o);
         }
@@ -119,16 +151,17 @@
         for (const m of view.markers || []) {
           const s = list.find((q) => q.id === m.series) || list[0]; if (!s) continue;
           const i = idxOf(m.i ?? m.at), v = m.y ?? valuesOf(s)[Math.round(i)]; if (!Number.isFinite(v) || i > last + 1e-9) continue;
-          const o = K.obj(m.id, '', m.colour || 'ink'), cx = sx(i), cy = sy(v);
+          const o = K.obj(m.id, '', m.colour || 'ink'), cx = sx(i), cy = syOf(s)(v);
           o.append(K.washCircle(cx, cy, 11), svg('circle', { cx, cy, r: 5, class: 'cvb-dot' }));
           R.tappable(o, m.id, m.label);
           over.append(o);
-          if (m.label) labels.push({ x: cx, y: cy + (m.below ? 16 : -15), text: String(m.label).replace('{value}', fmtVal(v)), anchor: 'middle' });
+          if (m.label) labels.push({ x: cx, y: cy + (m.below ? 16 : -15), text: String(m.label).replace('{value}', fmtVal(v, m.decimals)), anchor: 'middle' }); // item 181: per-marker decimals
         }
         K.placeLabels(labels, fixed, { x0, x1: W - 4, y0: y1, y1: y0 });
         for (const l of labels) over.append(K.lab(l.x, l.y, l.text, { anchor: l.anchor, halo: true, cls: 'cvb-strong' }));
       },
       methods: (R) => ({
+        margins: () => ({ left: ml, right: mr }),
         maxDrawdown: (id, abs) => { const s = list.find((q) => q.id === id) || list[0]; return s ? drawdown(valuesOf(s), !!abs) : null; },
       }),
     };

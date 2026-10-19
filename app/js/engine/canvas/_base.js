@@ -524,10 +524,16 @@
     const side = {}, active = SIDES.includes(spec.active) ? spec.active : 'left';
     /* item 155: two tables side by side are compact, and stack (each at full width) whenever either would overflow */
     const twoTables = SIDES.every(k => (spec[k] || {}).kind === 'table');
+    const hosts = {};
+    /* item 185: shareMargins lines up the plot areas of two series (or other kinds with margins()) */
+    const build = (k, extra) => { const sp = spec[k] || { kind: 'table', params: {} }; return create(hosts[k], { ...sp, params: { ...(twoTables ? { compact: true } : {}), ...(sp.params || {}), ...(extra || {}) } }, ctx); };
     for (const k of SIDES) {
-      const h = document.createElement('div'); h.className = 'cv-pair-side cv-pair-' + k; row.append(h);
-      const sp = spec[k] || { kind: 'table', params: {} };
-      side[k] = create(h, twoTables ? { ...sp, params: { compact: true, ...(sp.params || {}) } } : sp, ctx);
+      const h = document.createElement('div'); h.className = 'cv-pair-side cv-pair-' + k; row.append(h); hosts[k] = h;
+      side[k] = build(k);
+    }
+    if (spec.shareMargins && SIDES.every(k => side[k] && typeof side[k].margins === 'function')) {
+      const m = SIDES.map(k => side[k].margins()), want = { left: Math.max(...m.map(x => x.left)), right: Math.max(...m.map(x => x.right)) };
+      SIDES.forEach((k, i) => { if (m[i].left !== want.left || m[i].right !== want.right) { side[k].destroy && side[k].destroy(); hosts[k].replaceChildren(); side[k] = build(k, { margins: want }); } });
     }
     if (twoTables && !spec.stack) {
       const fit = () => {
@@ -579,6 +585,37 @@
       clone(host2) { return create(host2, { ...spec, state: { left: side.left && side.left.get(), right: side.right && side.right.get(), caption } }, { ...ctx, static: true }); },
       destroy() { SIDES.forEach(k => side[k] && side[k].destroy && side[k].destroy()); wrap.remove(); },
     };
+    /* item 183: tap: "sides" makes each whole side one tappable object, ids "left" and "right" ("tap the misleading chart") */
+    if (spec.tap === 'sides') {
+      let selected = [], tapOn = false, locked = false, opts = {};
+      const paint = () => SIDES.forEach(k => { const on = selected.includes(k); hosts[k].classList.toggle('is-on', on); if (tapOn) hosts[k].setAttribute('aria-pressed', String(on)); });
+      SIDES.forEach(k => {
+        const h = hosts[k]; h.classList.add('cv-obj', 'cv-pair-tap'); h.dataset.id = k; h.dataset.label = spec[k + 'Label'] || (k === 'left' ? 'Left chart' : 'Right chart');
+        const toggle = () => {
+          if (!tapOn || locked || (opts.only && !opts.only.includes(k))) return;
+          const on = !selected.includes(k);
+          if (on && opts.max && selected.length >= opts.max) selected = selected.slice(selected.length - opts.max + 1);
+          selected = on ? [...selected, k] : selected.filter(x => x !== k);
+          paint(); em.emit('change', { type: 'tap', id: k, on, selected: selected.slice() });
+        };
+        h.addEventListener('click', toggle);
+        h.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+      });
+      const baseGet = api.get, baseSet = api.set, baseMark = api.mark, baseUnmark = api.unmark, baseLock = api.lock;
+      Object.assign(api, {
+        enable(m, o) {
+          tapOn = m === 'tap'; opts = o || {};
+          SIDES.forEach(k => { const h = hosts[k]; if (tapOn) { h.dataset.tap = ''; h.tabIndex = 0; h.setAttribute('role', 'button'); h.setAttribute('aria-label', h.dataset.label); } else { delete h.dataset.tap; h.removeAttribute('tabindex'); h.removeAttribute('role'); h.removeAttribute('aria-pressed'); } });
+          wrap.classList.toggle('cv-tap', tapOn); paint(); return api;
+        },
+        get: () => ({ ...baseGet(), selected: selected.slice() }),
+        set(patch = {}, o = {}) { if (patch && 'selected' in patch) { selected = [].concat(patch.selected || []).filter(k => SIDES.includes(k)); paint(); const { selected: _, ...rest } = patch; patch = rest; } return baseSet(patch, o); },
+        mark(ids, cls, on = true) { const mine = [].concat(ids || []).filter(k => SIDES.includes(k)); mine.forEach(k => { hosts[k].classList.toggle(cls, on); if (on && cls === 'is-notyet') badge(hosts[k], 'cross'); if (!on) hosts[k].querySelectorAll(':scope > .cv-badge').forEach(b => b.remove()); }); return baseMark([].concat(ids || []).filter(k => !SIDES.includes(k)), cls, on); },
+        unmark(cls) { SIDES.forEach(k => { (cls ? [cls] : GRADED).forEach(c => hosts[k].classList.remove(c)); if (!cls) hosts[k].querySelectorAll(':scope > .cv-badge').forEach(b => b.remove()); }); return baseUnmark(cls); },
+        lock(on = true) { locked = !!on; wrap.classList.toggle('cv-locked', locked); return baseLock(on); },
+        flash(ids, o) { const mine = [].concat(ids || []).filter(k => SIDES.includes(k)).map(k => hosts[k]); return mine.length ? flash(mine, o) : Promise.resolve(); },
+      });
+    }
     /* Everything else (enable, points, place, cells, sample, removeBoth, ...) is the active side's */
     return new Proxy(api, { get(t, k) { if (k in t) return t[k]; const v = A ? A[k] : undefined; return typeof v === 'function' ? v.bind(A) : v; }, set(t, k, v) { t[k] = v; return true; } });
   };

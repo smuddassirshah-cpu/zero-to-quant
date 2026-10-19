@@ -1,0 +1,1331 @@
+{
+  "id": "l8-convexity",
+  "course": "taylor",
+  "title": "Duration plus convexity",
+  "minutes": 14,
+  "objectives": [
+    "Improve a bond price approximation with the second-order term.",
+    "Compute a bond's convexity from its cash flows"
+  ],
+  "skills": [
+    "ty-finance",
+    "ty-taylor",
+    "ty-linear"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "The bond from level 1: 5 years, a 4% annual coupon, face £100.00, yield 5%, price £95.67. The dashed line is its duration estimate, the tangent at 5%. Slide the yield either way.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            2,
+            8
+          ],
+          "y": [
+            82,
+            112
+          ],
+          "grid": true,
+          "height": 320,
+          "xLabel": "Yield (%)",
+          "yLabel": "Price (£)",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x/100)^1 + 4/(1+x/100)^2 + 4/(1+x/100)^3 + 4/(1+x/100)^4 + 104/(1+x/100)^5",
+              "label": "true price",
+              "labelAt": 2.6,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "Q",
+              "expr": "95.670523 - 4.209797*(x - 5) + 0.1170644*(x - 5)^2",
+              "label": "quadratic",
+              "colour": 3,
+              "labelAt": 7.3,
+              "labelSide": "above"
+            },
+            {
+              "id": "T",
+              "expr": "95.670523 - 4.209797*(x - 5)",
+              "label": "tangent",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 7.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "s": 5
+          }
+        },
+        "state": {
+          "hide": [
+            "Q"
+          ],
+          "points": [
+            {
+              "id": "A",
+              "x": 5,
+              "y": 95.6705,
+              "label": "true"
+            },
+            {
+              "id": "B",
+              "x": 5,
+              "y": 95.6705,
+              "label": "tangent",
+              "labelPos": "s"
+            }
+          ]
+        },
+        "derive": {
+          "A.x": "s",
+          "A.y": "4/(1+s/100)^1 + 4/(1+s/100)^2 + 4/(1+s/100)^3 + 4/(1+s/100)^4 + 104/(1+s/100)^5",
+          "B.x": "s",
+          "B.y": "95.670523 - 4.209797*(s - 5)",
+          "caption": "Yield {{fixed(s, 1)}}%: true price {{money(4/(1+s/100)^1 + 4/(1+s/100)^2 + 4/(1+s/100)^3 + 4/(1+s/100)^4 + 104/(1+s/100)^5)}}, tangent {{money(95.670523 - 4.209797*(s - 5))}}"
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 2,
+            "max": 8,
+            "step": 0.5,
+            "start": 5,
+            "label": "yield (%)"
+          }
+        ]
+      },
+      "question": "Away from 5%, how does the tangent's price compare with the true price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "below",
+            "text": "Below it, whichever way the yield moves",
+            "correct": true
+          },
+          {
+            "id": "above",
+            "text": "Above it, whichever way the yield moves",
+            "why": "Stop at 6% and read the caption: the tangent says £91.46, the bond is worth £91.58."
+          },
+          {
+            "id": "direction",
+            "text": "Below for a rise, above for a fall",
+            "why": "Stop at 4%: the tangent says £99.88, the bond is worth £100.00. It is below on that side too."
+          },
+          {
+            "id": "same",
+            "text": "The same, to the penny, within 1%",
+            "why": "At 6% they differ by 12p. That gap grows fast as the move gets bigger."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Stop at 6% and then at 4%, and compare the two prices each time."
+        },
+        {
+          "rung": "point",
+          "text": "The true curve bends up away from the dashed line.",
+          "highlight": [
+            "P",
+            "T"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The tangent sits below the curve on both sides.",
+        "generic": "Not quite right. Read both prices at 4% and at 6%."
+      },
+      "explain": {
+        "text": "At 6% the tangent gives £91.46 against £91.58; at 4%, £99.88 against £100.00. The price curve bends up, so every tangent lies under it. Duration alone undervalues the bond on both sides.",
+        "canvas": {
+          "params": {
+            "s": 6
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "The bend is measured by $P''(y)$. Write the price as a sum of discounted cash flows $CF_t$ and differentiate twice.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "p",
+            "text": "$P(y) = \\sum_{t=1}^{5} CF_t\\,(1 + y)^{-t}$, each cash flow discounted"
+          },
+          {
+            "id": "p1",
+            "text": "$P'(y) = -\\sum_{t=1}^{5} t\\,CF_t\\,(1 + y)^{-t-1}$, power rule on each term"
+          },
+          {
+            "id": "p2",
+            "text": "$P''(y) = \\sum_{t=1}^{5} t(t + 1)\\,CF_t\\,(1 + y)^{-t-2}$, again: $(-t)(-t-1) = t(t + 1)$"
+          },
+          {
+            "id": "pos",
+            "text": "Every term is positive, so $P''(y) > 0$ and the curve bends up"
+          }
+        ],
+        "answer": [
+          "p",
+          "p1",
+          "p2",
+          "pos"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the price itself."
+        },
+        {
+          "rung": "step",
+          "text": "Price, first derivative, second derivative, then the sign."
+        }
+      ],
+      "feedback": {
+        "correct": "Two minus signs make every term of $P''$ positive.",
+        "generic": "Not quite right. Differentiate once, then again, before judging the sign.",
+        "byKey": {
+          "pos": "The sign is read off $P''$, so that line comes after it.",
+          "p2": "$P''$ comes from $P'$, so $P'$ must come first."
+        }
+      },
+      "explain": {
+        "text": "Each power rule brings down a negative power, and two negatives multiply to a positive. So $P''(y) > 0$ for any plain bond. That is why the curve bends up and every tangent lies below it."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Put $y = 0.05$ into $P''(y) = \\sum t(t + 1)\\,CF_t\\,(1.05)^{-t-2}$. The first four years are done.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            2,
+            8
+          ],
+          "y": [
+            82,
+            112
+          ],
+          "grid": true,
+          "height": 320,
+          "xLabel": "Yield (%)",
+          "yLabel": "Price (£)",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x/100)^1 + 4/(1+x/100)^2 + 4/(1+x/100)^3 + 4/(1+x/100)^4 + 104/(1+x/100)^5",
+              "label": "true price",
+              "labelAt": 2.6,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "Q",
+              "expr": "95.670523 - 4.209797*(x - 5) + 0.1170644*(x - 5)^2",
+              "label": "quadratic",
+              "colour": 3,
+              "labelAt": 7.3,
+              "labelSide": "above"
+            },
+            {
+              "id": "T",
+              "expr": "95.670523 - 4.209797*(x - 5)",
+              "label": "tangent",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 7.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "s": 5
+          }
+        },
+        "state": {
+          "hide": [
+            "Q"
+          ]
+        }
+      },
+      "question": "Fill in the year 5 term and the total $P''(0.05)$, to 2 decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$t$",
+          "$CF_t$ (£)",
+          "$t(t + 1)\\,CF_t\\,(1.05)^{-t-2}$"
+        ],
+        "rows": [
+          [
+            "1",
+            "4",
+            "6.91"
+          ],
+          [
+            "2",
+            "4",
+            "19.74"
+          ],
+          [
+            "3",
+            "4",
+            "37.61"
+          ],
+          [
+            "4",
+            "4",
+            "59.70"
+          ],
+          [
+            "5",
+            "104",
+            {
+              "edit": true,
+              "answer": 2217.33,
+              "tol": {
+                "abs": 0.1
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "Total",
+            "",
+            {
+              "edit": true,
+              "answer": 2341.29,
+              "tol": {
+                "abs": 0.1
+              },
+              "placeholder": "?"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Year 5 pays the last coupon and the face: £104.00."
+        },
+        {
+          "rung": "step",
+          "text": "$5 \\times 6 \\times 104 / 1.05^7 = 3120 / 1.40710 = 2217.33$. Then add all five rows."
+        }
+      ],
+      "feedback": {
+        "correct": "$P''(0.05) = 2341.29$.",
+        "generic": "Not quite right. Use $t = 5$ and $CF_5 = 104$, then add the column.",
+        "byKey": {
+          "r4c2": "Use $5 \\times 6 \\times 104 = 3120$, divided by $1.05^7 = 1.40710$.",
+          "r5c2": "Add all five terms: $123.96$ from years 1 to 4, plus year 5."
+        }
+      },
+      "explain": {
+        "text": "Year 5 gives $3120 / 1.40710 = 2217.33$, nearly all of the total 2341.29. The final repayment of £100.00 dominates the bend, as it dominates the duration."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Duration divides the slope by the price: $D = -P'/P = 4.40$. Doing the same to the bend gives the **convexity**, $C = P''/P$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            2,
+            8
+          ],
+          "y": [
+            82,
+            112
+          ],
+          "grid": true,
+          "height": 320,
+          "xLabel": "Yield (%)",
+          "yLabel": "Price (£)",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x/100)^1 + 4/(1+x/100)^2 + 4/(1+x/100)^3 + 4/(1+x/100)^4 + 104/(1+x/100)^5",
+              "label": "true price",
+              "labelAt": 2.6,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "Q",
+              "expr": "95.670523 - 4.209797*(x - 5) + 0.1170644*(x - 5)^2",
+              "label": "quadratic",
+              "colour": 3,
+              "labelAt": 7.3,
+              "labelSide": "above"
+            },
+            {
+              "id": "T",
+              "expr": "95.670523 - 4.209797*(x - 5)",
+              "label": "tangent",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 7.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "s": 5
+          }
+        },
+        "state": {
+          "hide": [
+            "Q"
+          ]
+        }
+      },
+      "question": "What is the convexity $C$, to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24.47,
+        "tol": {
+          "abs": 0.01
+        },
+        "placeholder": "For example 10.25",
+        "label": "Convexity",
+        "accept": "24.47",
+        "wrong": [
+          {
+            "id": "no-divide",
+            "value": 2341.29,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "upside-down",
+            "value": 0.0409,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "halved",
+            "value": 12.24,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide $P''$ by the price."
+        },
+        {
+          "rung": "step",
+          "text": "$2341.29 / 95.6705$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2341.29 / 95.67 = 24.47$.",
+        "generic": "Not quite right. Divide $P''(0.05) = 2341.29$ by $P = 95.6705$.",
+        "byKey": {
+          "no-divide": "That is $P''$ itself. Convexity divides it by the price.",
+          "upside-down": "You divided the price by $P''$. Convexity is $P''$ over $P$.",
+          "halved": "You took half. The half belongs in the price formula, not in $C$."
+        }
+      },
+      "explain": {
+        "text": "$C = 2341.29 / 95.6705 = 24.47$. Like duration, it is per unit of price, so bonds of any size compare. It sits beside $D = 4.40$ as the bond's second number."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Last lesson's quadratic approximation, with $P' = -DP$ and $P'' = CP$, gives $$\\Delta P \\approx -D\\,P\\,\\Delta y + \\tfrac12 C\\,P\\,(\\Delta y)^2.$$ Use $D = 4.40$, $C = 24.47$, $P = \\text{£}95.67$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            2,
+            8
+          ],
+          "y": [
+            82,
+            112
+          ],
+          "grid": true,
+          "height": 320,
+          "xLabel": "Yield (%)",
+          "yLabel": "Price (£)",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x/100)^1 + 4/(1+x/100)^2 + 4/(1+x/100)^3 + 4/(1+x/100)^4 + 104/(1+x/100)^5",
+              "label": "true price",
+              "labelAt": 2.6,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "Q",
+              "expr": "95.670523 - 4.209797*(x - 5) + 0.1170644*(x - 5)^2",
+              "label": "quadratic",
+              "colour": 3,
+              "labelAt": 7.3,
+              "labelSide": "above"
+            },
+            {
+              "id": "T",
+              "expr": "95.670523 - 4.209797*(x - 5)",
+              "label": "tangent",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 7.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "s": 5
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v6",
+              "x": 6,
+              "label": "6%"
+            }
+          ]
+        }
+      },
+      "question": "Yields rise from 5% to 6%, so $\\Delta y = 0.01$. What price does the formula give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 91.578,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "placeholder": "For example 90.00",
+        "label": "Second-order price at 6%",
+        "accept": "£91.58",
+        "wrong": [
+          {
+            "id": "tangent",
+            "value": 91.46,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "minus",
+            "value": 91.34,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "no-half",
+            "value": 91.69,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out each term in pounds first."
+        },
+        {
+          "rung": "point",
+          "text": "The green quadratic sits on the true curve at 6%.",
+          "highlight": [
+            "Q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-4.40 \\times 95.67 \\times 0.01 = -4.21$ and $\\tfrac12 \\times 24.47 \\times 95.67 \\times 0.0001 = +0.12$."
+        }
+      ],
+      "feedback": {
+        "correct": "$95.67 - 4.21 + 0.12 = \\text{£}91.58$.",
+        "generic": "Not quite right. Add the duration term and the convexity term to £95.67.",
+        "byKey": {
+          "tangent": "£91.46 is duration alone, the tangent. Add the convexity term, $+\\text{£}0.12$.",
+          "minus": "You subtracted the convexity term. $(\\Delta y)^2$ is positive and so is $C$, so it adds.",
+          "no-half": "You left out the half: that adds £0.23 instead of £0.12."
+        }
+      },
+      "explain": {
+        "text": "Duration gives $-\\text{£}4.21$ and convexity gives $+\\text{£}0.12$, so the estimate is £91.58. The true price at 6% is £91.58 too: 91.5778 against 91.5753. Convexity cut a 12p error to a quarter of a penny.",
+        "canvas": {
+          "points": [
+            {
+              "id": "e",
+              "x": 6,
+              "y": 91.5778,
+              "label": "£91.58"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now yields fall from 5% to 4%, so $\\Delta y = -0.01$. The same formula applies; watch each sign.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            2,
+            8
+          ],
+          "y": [
+            82,
+            112
+          ],
+          "grid": true,
+          "height": 320,
+          "xLabel": "Yield (%)",
+          "yLabel": "Price (£)",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x/100)^1 + 4/(1+x/100)^2 + 4/(1+x/100)^3 + 4/(1+x/100)^4 + 104/(1+x/100)^5",
+              "label": "true price",
+              "labelAt": 2.6,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "Q",
+              "expr": "95.670523 - 4.209797*(x - 5) + 0.1170644*(x - 5)^2",
+              "label": "quadratic",
+              "colour": 3,
+              "labelAt": 7.3,
+              "labelSide": "above"
+            },
+            {
+              "id": "T",
+              "expr": "95.670523 - 4.209797*(x - 5)",
+              "label": "tangent",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 7.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "s": 5
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v4",
+              "x": 4,
+              "label": "4%"
+            }
+          ]
+        }
+      },
+      "question": "What price does the second-order formula give at 4%?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 99.997,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "placeholder": "For example 98.00",
+        "label": "Second-order price at 4%",
+        "accept": "£100.00",
+        "wrong": [
+          {
+            "id": "tangent",
+            "value": 99.88,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "minus",
+            "value": 99.76,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "no-half",
+            "value": 100.11,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$-D\\,P\\,\\Delta y$ is now positive. What about $(\\Delta y)^2$?"
+        },
+        {
+          "rung": "point",
+          "text": "$(-0.01)^2 = +0.0001$, the same as before.",
+          "highlight": [
+            "Q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$95.67 + 4.21 + 0.12$."
+        }
+      ],
+      "feedback": {
+        "correct": "$95.67 + 4.21 + 0.12 = \\text{£}100.00$.",
+        "generic": "Not quite right. Both terms are positive for a fall in yield.",
+        "byKey": {
+          "tangent": "£99.88 is duration alone. Convexity adds £0.12 here too.",
+          "minus": "You subtracted the convexity term. A squared move is positive either way.",
+          "no-half": "You left out the half on the convexity term."
+        }
+      },
+      "explain": {
+        "text": "The estimate is £100.00 (99.9974), and the true price is exactly £100.00. At 4% the coupon equals the yield, so the bond prices at par. That is a free check on the arithmetic.",
+        "canvas": {
+          "points": [
+            {
+              "id": "e",
+              "x": 4,
+              "y": 99.9974,
+              "label": "£100.00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A bigger shock: yields jump 2%, from 5% to 7%. A desk analyst says convexity is a correction for error, so it should be subtracted.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            2,
+            8
+          ],
+          "y": [
+            82,
+            112
+          ],
+          "grid": true,
+          "height": 320,
+          "xLabel": "Yield (%)",
+          "yLabel": "Price (£)",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x/100)^1 + 4/(1+x/100)^2 + 4/(1+x/100)^3 + 4/(1+x/100)^4 + 104/(1+x/100)^5",
+              "label": "true price",
+              "labelAt": 2.6,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "Q",
+              "expr": "95.670523 - 4.209797*(x - 5) + 0.1170644*(x - 5)^2",
+              "label": "quadratic",
+              "colour": 3,
+              "labelAt": 7.3,
+              "labelSide": "above"
+            },
+            {
+              "id": "T",
+              "expr": "95.670523 - 4.209797*(x - 5)",
+              "label": "tangent",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 7.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "s": 5
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v7",
+              "x": 7,
+              "label": "7%"
+            }
+          ]
+        }
+      },
+      "question": "What does the second-order formula give at 7%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "£87.72",
+            "correct": true
+          },
+          {
+            "id": "minus",
+            "text": "£86.78",
+            "why": "You subtracted the convexity term. With $(\\Delta y)^2 = 0.0004$ it is $+\\text{£}0.47$, so it adds.",
+            "canvas": {
+              "points": [
+                {
+                  "id": "e",
+                  "x": 7,
+                  "y": 86.7827,
+                  "label": "£86.78"
+                }
+              ]
+            }
+          },
+          {
+            "id": "no-half",
+            "text": "£88.19",
+            "why": "You used $C\\,P\\,(\\Delta y)^2$ without the half, adding £0.94 instead of £0.47.",
+            "canvas": {
+              "points": [
+                {
+                  "id": "e",
+                  "x": 7,
+                  "y": 88.1874,
+                  "label": "£88.19"
+                }
+              ]
+            }
+          },
+          {
+            "id": "tangent",
+            "text": "£87.25",
+            "why": "That is duration alone, $95.67 - 8.42$. The convexity term is missing.",
+            "canvas": {
+              "points": [
+                {
+                  "id": "e",
+                  "x": 7,
+                  "y": 87.2509,
+                  "label": "£87.25"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find each term for $\\Delta y = 0.02$."
+        },
+        {
+          "rung": "point",
+          "text": "The convexity term grows with the square of the move: four times the 1% term.",
+          "highlight": [
+            "Q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-4.40 \\times 95.67 \\times 0.02 = -8.42$ and $\\tfrac12 \\times 24.47 \\times 95.67 \\times 0.0004 = +0.47$."
+        }
+      ],
+      "feedback": {
+        "correct": "$95.67 - 8.42 + 0.47 = \\text{£}87.72$.",
+        "generic": "Not quite right. The duration term is negative, the convexity term positive.",
+        "byKey": {
+          "minus": "You subtracted the convexity term, as the analyst said. It is $+\\tfrac12 C P (\\Delta y)^2$: always positive for a plain bond.",
+          "no-half": "The convexity term carries a half, from the quadratic approximation."
+        }
+      },
+      "explain": {
+        "text": "The estimate is £87.72 and the true price at 7% is £87.70. The convexity term is positive because the curve bends up. Doubling the move doubled the duration term but quadrupled convexity's.",
+        "canvas": {
+          "points": [
+            {
+              "id": "e",
+              "x": 7,
+              "y": 87.7192,
+              "label": "£87.72"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Dividing by $P$ gives the rule desks use: $$\\frac{\\Delta P}{P} \\approx -D\\,\\Delta y + \\tfrac12 C\\,(\\Delta y)^2.$$ Duration is the tangent; convexity is the curvature term, always positive here. Edge case: a tiny move.",
+      "question": "For this bond, how big is the convexity term when yields move 0.1%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "tiny",
+            "text": "About £0.001",
+            "correct": true
+          },
+          {
+            "id": "no-square",
+            "text": "About £1.17",
+            "why": "You multiplied by $\\Delta y = 0.001$ once. The term uses $(\\Delta y)^2 = 0.000001$."
+          },
+          {
+            "id": "one-pct",
+            "text": "About £0.12",
+            "why": "That is the term for a 1% move. A move ten times smaller makes it a hundred times smaller."
+          },
+          {
+            "id": "no-price",
+            "text": "About £0.00001",
+            "why": "You left out the price. $\\tfrac12 C (\\Delta y)^2$ is a fraction of $P$; multiply by £95.67."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\Delta y = 0.001$, so $(\\Delta y)^2 = 0.000001$."
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac12 \\times 24.47 \\times 95.67 \\times 0.000001 = 0.0012$."
+        }
+      ],
+      "feedback": {
+        "correct": "About £0.0012: duration alone is enough for small moves.",
+        "generic": "Not quite right. Square the move before multiplying."
+      },
+      "explain": {
+        "text": "For 0.1% the convexity term is £0.0012, beside a duration term of £0.42. Because it grows with the square of the move, convexity only matters for large moves. For small ones the tangent is enough."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A fund holds this bond. Duration says a 1% rise or fall in yields is worth the same £4.21 either way. Convexity adds the same positive amount to both outcomes.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            2,
+            8
+          ],
+          "y": [
+            82,
+            112
+          ],
+          "grid": true,
+          "height": 320,
+          "xLabel": "Yield (%)",
+          "yLabel": "Price (£)",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "4/(1+x/100)^1 + 4/(1+x/100)^2 + 4/(1+x/100)^3 + 4/(1+x/100)^4 + 104/(1+x/100)^5",
+              "label": "true price",
+              "labelAt": 2.6,
+              "labelSide": "above",
+              "labelAnchor": "start"
+            },
+            {
+              "id": "Q",
+              "expr": "95.670523 - 4.209797*(x - 5) + 0.1170644*(x - 5)^2",
+              "label": "quadratic",
+              "colour": 3,
+              "labelAt": 7.3,
+              "labelSide": "above"
+            },
+            {
+              "id": "T",
+              "expr": "95.670523 - 4.209797*(x - 5)",
+              "label": "tangent",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 7.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "s": 5
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v4",
+              "x": 4,
+              "label": "4%"
+            },
+            {
+              "id": "v6",
+              "x": 6,
+              "label": "6%"
+            }
+          ]
+        }
+      },
+      "question": "By how much does the gain from a 1% fall exceed the loss from a 1% rise?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.234,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "placeholder": "For example 0.50",
+        "label": "Gain minus loss",
+        "accept": "£0.23",
+        "wrong": [
+          {
+            "id": "symmetric",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one-term",
+            "value": 0.12,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "no-half",
+            "value": 0.47,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the gain and the loss separately."
+        },
+        {
+          "rung": "point",
+          "text": "Gain $= 4.21 + 0.12$. Loss $= 4.21 - 0.12$.",
+          "highlight": [
+            "Q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Subtract: the duration terms cancel."
+        }
+      ],
+      "feedback": {
+        "correct": "$(4.21 + 0.12) - (4.21 - 0.12) = 2 \\times 0.12 = \\text{£}0.23$.",
+        "generic": "Not quite right. Subtract the loss from the gain; the duration terms cancel.",
+        "byKey": {
+          "symmetric": "Duration alone is symmetric, but the convexity term helps both sides: gain bigger, loss smaller.",
+          "one-term": "The convexity term counts twice: once raising the gain, once shrinking the loss.",
+          "no-half": "You left out the half on each convexity term."
+        }
+      },
+      "explain": {
+        "text": "The true numbers agree: the bond gains £4.33 at 4% but loses only £4.10 at 6%. That gap of £0.23 is twice the convexity term. Long bonds bend far more: a 30-year zero-coupon bond at 5% has $C \\approx 844$.",
+        "canvas": {
+          "points": [
+            {
+              "id": "g",
+              "x": 4,
+              "y": 100.0,
+              "label": "+£4.33"
+            },
+            {
+              "id": "l",
+              "x": 6,
+              "y": 91.5753,
+              "label": "−£4.10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A trader can hold bond A ($D = 4.40$, $C = 24.47$) or bond B ($D = 4.40$, $C = 60$). Both cost £95.67. Tomorrow yields jump 2% up or 2% down, equally likely.",
+      "question": "What is bond B's expected price change, to the nearest penny?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.148,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "placeholder": "For example 0.80",
+        "label": "Expected price change of B",
+        "accept": "£1.15",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "bond-a",
+            "value": 0.47,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "no-half",
+            "value": 2.3,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Average the two outcomes. What happens to the duration terms?"
+        },
+        {
+          "rung": "step",
+          "text": "The duration terms, $\\pm 8.42$, cancel. Each outcome keeps $\\tfrac12 \\times 60 \\times 95.67 \\times 0.0004$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac12 \\times 60 \\times 95.67 \\times 0.0004 = \\text{£}1.15$.",
+        "generic": "Not quite right. The duration terms average to 0; the convexity term does not.",
+        "byKey": {
+          "zero": "Duration averages to 0, but the convexity term is positive in both outcomes.",
+          "bond-a": "£0.47 is bond A, with $C = 24.47$. Bond B has $C = 60$.",
+          "no-half": "The convexity term carries a half."
+        }
+      },
+      "explain": {
+        "text": "For large moves either way, convexity earns money on average: £1.15 for B against £0.47 for A. Same price, same duration, but B is worth more to someone expecting big moves. Markets charge for this, often through a lower yield."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A bond's price curve bends up, $P''(y) > 0$, so duration alone always undervalues it.",
+      "Convexity $C = P''/P$ measures the bend per pound; here $C = 24.47$ beside $D = 4.40$.",
+      "The convexity term grows with the square of the move: negligible at 0.1%, worth £0.47 at 2%."
+    ],
+    "formula": {
+      "name": "Duration plus convexity",
+      "tex": "\\Delta P \\approx -D\\,P\\,\\Delta y + \\tfrac12 C\\,P\\,(\\Delta y)^2",
+      "note": "The convexity term is positive whichever way yields move."
+    },
+    "trap": "The convexity term adds, for a rise or a fall in yield, and it carries a half."
+  },
+  "quiz": [
+    {
+      "id": "q-conv-term",
+      "difficulty": 2,
+      "prose": "A bond costs £102.00 and has convexity $C = 30$.",
+      "question": "How big is the convexity term for a 1% move in yield?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.153,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "placeholder": "For example 0.25",
+        "label": "Convexity term",
+        "accept": "£0.15",
+        "wrong": [
+          {
+            "id": "no-half",
+            "value": 0.306,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "no-square",
+            "value": 15.3,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac12 \\times 30 \\times 102 \\times 0.0001 = \\text{£}0.15$.",
+        "generic": "Not quite right. Use $\\tfrac12 C\\,P\\,(\\Delta y)^2$ with $\\Delta y = 0.01$.",
+        "byKey": {
+          "no-half": "You left out the half.",
+          "no-square": "You multiplied by $\\Delta y$ once. Square it: 0.0001."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac12 \\times 30 \\times 102 \\times 0.0001 = 0.153$, so about £0.15. It is the same for a rise or a fall."
+      }
+    },
+    {
+      "id": "q-conv-sign",
+      "difficulty": 2,
+      "prose": "Yields fall 1% on a plain coupon bond.",
+      "question": "What does the convexity term do to the estimated price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "adds",
+            "text": "It adds to the price",
+            "correct": true
+          },
+          {
+            "id": "subtracts",
+            "text": "It subtracts from the price",
+            "why": "$(\\Delta y)^2$ is positive whether yields rise or fall, and $C > 0$."
+          },
+          {
+            "id": "zero",
+            "text": "Nothing: it only matters when yields rise",
+            "why": "The term depends on $(\\Delta y)^2$, the same for a rise and a fall."
+          },
+          {
+            "id": "flips",
+            "text": "It takes the sign of the duration term",
+            "why": "The duration term flips with $\\Delta y$. The squared term does not."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac12 C P (\\Delta y)^2 > 0$: it adds.",
+        "generic": "Not quite right. Look at the sign of $(\\Delta y)^2$."
+      },
+      "explain": {
+        "text": "The convexity term is $\\tfrac12 C\\,P\\,(\\Delta y)^2$, and every factor is positive. It adds to the price on both sides."
+      }
+    },
+    {
+      "id": "q-new-price",
+      "difficulty": 3,
+      "prose": "A bond costs £100.00, with $D = 7$ and $C = 60$. Yields rise 1%.",
+      "question": "What price does the second-order formula give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 93.3,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "placeholder": "For example 95.00",
+        "label": "New price",
+        "accept": "£93.30",
+        "wrong": [
+          {
+            "id": "minus",
+            "value": 92.7,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "no-half",
+            "value": 93.6,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "tangent",
+            "value": 93.0,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$100 - 7.00 + 0.30 = \\text{£}93.30$.",
+        "generic": "Not quite right. Duration term $-\\text{£}7.00$, convexity term $+\\text{£}0.30$.",
+        "byKey": {
+          "minus": "You subtracted the convexity term. It adds.",
+          "no-half": "You left out the half: the term is £0.30, not £0.60.",
+          "tangent": "£93.00 is duration alone."
+        }
+      },
+      "explain": {
+        "text": "$-7 \\times 100 \\times 0.01 = -7.00$ and $\\tfrac12 \\times 60 \\times 100 \\times 0.0001 = 0.30$. So £93.30."
+      }
+    },
+    {
+      "id": "q-why-below",
+      "difficulty": 3,
+      "prose": "For a plain coupon bond, the duration estimate is always a little below the true price.",
+      "question": "Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "convex",
+            "text": "$P''(y) > 0$, so the price curve lies above each tangent",
+            "correct": true
+          },
+          {
+            "id": "big-d",
+            "text": "Duration is always slightly too large",
+            "why": "Duration is the exact slope at the starting yield. The error comes from the bend."
+          },
+          {
+            "id": "fixed",
+            "text": "The coupons are fixed, so the price cannot rise",
+            "why": "The price does rise when yields fall. The estimate is low on that side too."
+          },
+          {
+            "id": "floor",
+            "text": "Yields cannot fall below 0",
+            "why": "The error is there for small moves near 5% too, far from 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The curve bends up, so it lies above its tangents.",
+        "generic": "Not quite right. Think about the sign of $P''$."
+      },
+      "explain": {
+        "text": "Every term of $P''(y)$ is positive, so the curve is convex. A convex curve lies above each tangent line, so duration alone always undervalues."
+      }
+    }
+  ]
+}

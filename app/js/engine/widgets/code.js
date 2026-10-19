@@ -201,6 +201,8 @@ def __zq_cmp(_a, _exp, _cmp, _ns):
         _x, _y = _flat(_x), _flat(_y)
         if isinstance(_x, (list, tuple)) or isinstance(_y, (list, tuple)):
             return isinstance(_x, (list, tuple)) and isinstance(_y, (list, tuple)) and len(_x) == len(_y) and all(_close(_p, _q) for _p, _q in zip(_x, _y))
+        if isinstance(_x, (str, bytes)) and not isinstance(_y, (str, bytes)):
+            return False  # item 121: "0.05" is text, not the number 0.05
         try:
             return _m.isclose(float(_x), float(_y), rel_tol=1e-9, abs_tol=1e-12)
         except Exception:
@@ -231,9 +233,31 @@ __ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(
      a string, so its import lines are repeated, never run, under if False */
   const importsOf = (src) => String(src).split('\n').map(l => l.match(/^\s*(?:import\s+([\w.]+(?:\s*,\s*[\w.]+)*)|from\s+([\w.]+)\s+import\b)/)).filter(Boolean)
     .flatMap(m => (m[1] ? m[1].split(',') : [m[2]]).map(x => x.trim())).filter(x => x && !x.startsWith('.'));
-  const scriptHarness = (src, cases) => `
-${importsOf(src).length ? 'if False:\n' + [...new Set(importsOf(src))].map(x => '    import ' + x).join('\n') + '\n' : ''}import sys as _zs, io as _zio, linecache as _zlc
+  const importHint = (...srcs) => { const im = [...new Set(srcs.flatMap(importsOf))]; return im.length ? 'if False:\n' + im.map(x => '    import ' + x).join('\n') + '\n' : ''; };
+  /* item 163: prelude (hidden Python run in the learner's namespace before their code) and postlude (run after it).
+     With either, the learner's code is carried as a string and compiled as solution.py, so its line numbers stay true. */
+  const loadHarness = (src, pre, post) => `${importHint(src, pre, post)}import linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
+__ZQ_PRE = ${JSON.stringify(pre)}
+__ZQ_POST = ${JSON.stringify(post)}
+_zlc.cache['solution.py'] = (len(__ZQ_SRC), None, __ZQ_SRC.splitlines(True), 'solution.py')
+
+def __zq_load():
+    _g = globals()
+    _g['__learner_source__'] = __ZQ_SRC
+    if __ZQ_PRE:
+        exec(compile(__ZQ_PRE, '<prelude>', 'exec'), _g)
+    exec(compile(__ZQ_SRC, 'solution.py', 'exec'), _g)
+    if __ZQ_POST:
+        exec(compile(__ZQ_POST, '<postlude>', 'exec'), _g)
+
+__zq_load()
+`;
+  const scriptHarness = (src, cases, pre = '', post = '') => `
+${importHint(src, pre, post)}import sys as _zs, io as _zio, linecache as _zlc
+__ZQ_SRC = ${JSON.stringify(src)}
+__ZQ_PRE = ${JSON.stringify(pre)}
+__ZQ_POST = ${JSON.stringify(post)}
 _zlc.cache['solution.py'] = (len(__ZQ_SRC), None, __ZQ_SRC.splitlines(True), 'solution.py')
 __ZQ_CODE = compile(__ZQ_SRC, 'solution.py', 'exec')
 __ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(c => [c.call == null ? '' : String(c.call), String(c.expect ?? ''), c.compare || (c.call == null ? 'stdout' : 'equal'), c.stdin == null ? '' : String(c.stdin), !!c.exact, c.setup == null ? '' : String(c.setup), Array.isArray(c.argv) ? c.argv.map(String) : []])))})
@@ -260,8 +284,13 @@ def __zq_case(_i):
     _oldargv = list(_zs.argv)
     _zs.argv = ['main.py'] + list(_argv)  # item 140: argv per case, as python3 main.py a b would give
     _zs.stdout, _zs.stdin = _out, _feed
+    _ns['__learner_source__'] = __ZQ_SRC
     try:
+        if __ZQ_PRE:
+            exec(compile(__ZQ_PRE, '<prelude>', 'exec'), _ns)
         exec(__ZQ_CODE, _ns)
+        if __ZQ_POST:
+            exec(compile(__ZQ_POST, '<postlude>', 'exec'), _ns)
     except SystemExit:
         pass
     except BaseException as _x:
@@ -292,7 +321,24 @@ def __zq_case(_i):
     return __zq_cmp(eval(_call, _ns), _exp, _cmp, _ns)
 `;
   const isOut = (c) => c.compare === 'stdout' || (c.call == null && c.expect != null && c.compare == null);
-  const cleanTb = (tb) => String(tb || '').split('\n').filter((ln, i, all) => !/__zq_case|<string>/.test(ln) && !(/^\s{4}\S/.test(ln) && /__zq_case|<string>/.test(all[i - 1] || ''))).join('\n');
+  /* Tracebacks keep only the learner's frames: harness functions (__zq_*), <string>, and the harness line that calls
+     __zq_load are dropped, each with its source and caret lines */
+  const cleanTb = (tb) => {
+    const L = String(tb || '').split('\n'), out = [], head = (s) => /^\s*File "/.test(s);
+    const frames = []; let cur = null;
+    L.forEach((ln) => {
+      if (head(ln)) { cur = { head: ln, body: [] }; frames.push(cur); }
+      else if (cur && /^\s{4}/.test(ln)) cur.body.push(ln);
+      else { cur = null; frames.push({ text: ln }); }
+    });
+    frames.forEach((f, i) => {
+      if (f.text != null) { out.push(f.text); return; }
+      const next = frames.slice(i + 1).find(x => x.head);
+      if (/in __zq_\w+$|File "<string>"/.test(f.head) || (/in <module>$/.test(f.head) && next && /in __zq_load$/.test(next.head))) return;
+      out.push(f.head, ...f.body);
+    });
+    return out.join('\n');
+  };
 
   Z.widgets.register('code', (host, spec, ctx) => {
     const examples = spec.examples || [], tests = spec.tests || [];
@@ -349,12 +395,13 @@ def __zq_case(_i):
     /* Run a list of cases; resolves to { rows, error } */
     const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null));
     const runCases = (cases) => new Promise((resolve) => {
-      const code = script ? scriptHarness(ed.value, cases) : ed.value + harness(cases);
+      const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
+      const code = script ? scriptHarness(ed.value, cases, pre, post) : (pre || post ? loadHarness(ed.value, pre, post) : ed.value) + harness(cases);
       const rows = cases.map(c => ({ argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
       let loadErr = null, loaded = '';
       /* item 143: spec.budget (ms) is added to the run's limit; code importing numpy, pandas or scipy gets 30 s on top
          without one, so the first package load is not charged against the 5 s per case */
-      const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib|pytest|sklearn|statsmodels)\b/m.test(ed.value);
+      const heavy = /^\s*(?:import|from)\s+(numpy|pandas|scipy|matplotlib|pytest|sklearn|statsmodels)\b/m.test(ed.value + '\n' + String(spec.prelude || '') + '\n' + String(spec.postlude || ''));
       const limit = TEST_MS * Math.max(1, cases.length) + (spec.budget != null ? Math.max(0, +spec.budget || 0) : heavy ? 30000 : 0);
       const ok = Py.exec(code, { fn: '__zq_case', compare: 'isclose', prelude: '', tests: cases.map((_, i) => ({ args: `(${i},)`, expected: 1 })) }, limit,
         (d) => {

@@ -282,7 +282,7 @@
         const patch = (spec.explain && spec.explain.canvas) || {};
         const merged = Z.canvas.merge ? Z.canvas.merge(state, patch) : Object.assign({}, state, patch);
         /* derive runs again on the explained state, so derived points and captions follow the patch */
-        try { return Z.canvas.create(host, { kind: spec.canvas.kind, params: spec.canvas.params, state: merged, derive: spec.canvas.derive, left: spec.canvas.left, right: spec.canvas.right }, { mode: 'static', reducedMotion: true }); } catch (e) { console.error(e); return null; }
+        try { return Z.canvas.create(host, { ...spec.canvas, state: merged }, { mode: 'static', reducedMotion: true }) /* the whole spec, so a pair keeps stack, active and shareMargins (item 194) */; } catch (e) { console.error(e); return null; }
       },
       answer() {
         if (!widget) return true;

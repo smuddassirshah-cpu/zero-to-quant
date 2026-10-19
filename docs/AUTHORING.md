@@ -247,6 +247,15 @@ The learner drags control points of a curve on the `plane` canvas; graded on sam
 
 Any case may carry `setup`, a line of Python run just before `call` (`{ "setup": "prices = [100, 90, 95]", "call": "max_drawdown(prices)", "expect": "0.1" }`), so the call reads cleanly. `"compare": "raises"` passes when the call raises the named exception or a subclass of it: `{ "call": "parse_price('abc')", "compare": "raises", "expect": "ValueError" }`; the result reads "raised ValueError" or "no error, the value was ...". In script mode a raises case without `call` checks the whole program (with its `stdin`). `argv: ["prices.csv", "5"]` on a case runs the program as `python3 main.py prices.csv 5` (`sys.argv`), and puts the widget in script mode.
 
+**Hidden code around the learner's (`prelude`, `postlude`).** `prelude` is Python run in the learner's namespace before their code, and `postlude` after it; neither shows in the editor, and the learner's line numbers stay their own. Use them for helpers and data the exercise needs, or a runner that reports on the learner's tests. The learner's source is available to both as `__learner_source__` (a string), so a postlude can write it to a file and run a tool on it. Real pytest loads in the browser: this postlude runs the learner's tests and leaves the exit code in `RESULT` (0 when every test passes):
+
+```json
+"postlude": "import pytest as _pt\nopen('test_mine.py', 'w').write(__learner_source__)\nRESULT = int(_pt.main(['-q', '-p', 'no:cacheprovider', 'test_mine.py']))\n",
+"tests": [{ "call": "RESULT", "expect": "0" }]
+```
+
+In script mode both run on every case, around the program. Every run starts in a fresh, empty working directory, so files written by one run are gone in the next. `isclose` needs a real number: the text `"0.05"` fails it.
+
 The first run that imports a package (numpy, pandas, pytest) fetches it once; the results panel says "Loading numpy, pandas" meanwhile, and that time does not count against the tests' limit. pytest works (`pytest.approx`, `pytest.raises`): call test functions from a `setup` line or a `call`. Python's `sqlite3` works too, but `Connection.backup()` hangs in Pyodide: copy a database with `dst.executescript("".join(src.iterdump()))` instead. If the untouched starter itself stops with an error, Check says the starter is not finished yet and folds the traceback away.
 
 **Programs that print (script mode).** For a program rather than a function, give a case `"compare": "stdout"` and the printed text as `expect`; `stdin` (optional) feeds `input()`, one line per call:
