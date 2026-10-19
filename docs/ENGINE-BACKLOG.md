@@ -487,3 +487,11 @@ Raised later (plotting level 1):
 169. Worker: suppress matplotlib's "building the font cache" line in the Run examples output on the first import.
 
 Note (plotting level 1): matplotlib 3.8.4 and its eight dependency wheels were added to the local CDN folder used for sandbox playthroughs; in the browser they come from jsDelivr as usual.
+
+Raised later (plotting level 2):
+
+170. Validator: `b\d+` ids for histograms in `bars` hint highlights and `curve` (plus overlay ids) in the `distribution` pattern (extends 166; the engine highlights them correctly).
+171. `series` canvas: a `fill: "below"` option (shade between a line and zero) to match `fill_between`; drawdown lessons approximate it with `shade` ranges.
+172. `pair` canvas: a stacked `series` panel at height 190 shows one y tick even with `y` set; keep at least three ticks at small heights.
+
+Content note (plotting level 2): the log axis (l7 trap, homework h2) and the three-panel figure (homework h1) preview level 3's l9-log-axis, l10-panels and l13.
