@@ -59,7 +59,8 @@
 
     const cellG = svg('g', { class: 'cv-acells' }), shadeG = svg('g', { class: 'cv-shades' }), lineG = svg('g', { class: 'cv-alines' }), inG = svg('g', { class: 'cv-ainner' }), splitG = svg('g', { class: 'cv-split' }), ptG = svg('g', { class: 'cv-apoints' }), labG = svg('g', { class: 'cv-alabels' });
     const cellLabG = svg('g', { class: 'cv-acelllabels' }), coverG = svg('g', { class: 'cv-acover' }), diagG = svg('g', { class: 'cv-split cv-adiag' }), moveG = svg('g', { class: 'cv-amoves' });
-    g.append(cellG, shadeG, coverG, lineG, inG, splitG, diagG, cellLabG, moveG, ptG, labG);
+    const dimG = svg('g', { class: 'cv-adim' });
+    g.append(cellG, shadeG, coverG, dimG, lineG, inG, splitG, diagG, cellLabG, moveG, ptG, labG);
     const movePos = new Map(); // move id -> current top-left, for animating from there
     const cells = new Map();
     let order = [], n = 0, gridKey = '', sizeKey = '';
@@ -145,6 +146,8 @@
       if (JSON.stringify([cs, rs]) !== JSON.stringify([colS, rowS])) { colS = cs; rowS = rs; build(rows, cols); shown = null; }
       /* item 189: dim: [ids] fades pieces (a dropped row, the part not counted) */
       const dimSet = new Set([].concat(st.dim || []).map(String));
+      dimG.replaceChildren(...[...dimSet].filter(cid => cells.has(cid)).map(cid => { const c = cells.get(cid); return cellShape(c.i, c.j, 'cv-dim-shape'); }));
+      cells.forEach((c, cid) => c.grp.classList.toggle('is-out', dimSet.has(cid)));
       /* state.grid re-cuts the shape: [rows, cols], or n columns (n sectors on a circle) */
       if (st.grid != null) {
         const gg = [].concat(st.grid), r2 = gg.length > 1 ? +gg[0] : rows, c2 = +(gg.length > 1 ? gg[1] : gg[0]);
