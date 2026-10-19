@@ -680,3 +680,9 @@ Raised later (elimination level 2):
 239. `plane` point labels substitute `{x}` and `{y}`, so `$\mathbf{x}$` renders as a coordinate; add an escape for literal braces (or only substitute `{x}`/`{y}` outside maths).
 240. `vectors` chains: an arrow drawn `from` another arrow starts at that arrow's head measured from the origin, ignoring its tail; resolve the full tail so head-to-tail chains of three or more need no `derive`.
 241. `vectors`: a simple 3D projected view (isometric or rotatable) for column spaces and nullspaces in $\mathbb{R}^3$.
+
+Raised later (elimination level 3):
+
+242. `matrix` highlight: with the object form fixed (236), support more than one wash colour (crossed-out row and column in one, the minor block in another), as README-B's cofactor form implies.
+243. `plane` polygons: a keyed `enter` patch that adds a new polygon id does not draw on the live canvas (it does in the Why? copy); make live keyed additions render.
+244. `plane` polygons: vertex labels that follow derived points, or an "F" glyph, to show orientation flips.

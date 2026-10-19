@@ -1,0 +1,1381 @@
+{
+  "id": "l12-beta-by-hand",
+  "course": "least-squares",
+  "title": "A stock’s beta by least squares",
+  "minutes": 15,
+  "objectives": [
+    "Estimate a stock’s beta in NumPy from matrix operations alone."
+  ],
+  "skills": [
+    "ls-fit"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Ten days of returns",
+      "prose": "Each point is one day: the market's return against one stock's return, both in per cent. Move the line. Its slope is the stock's **beta**: how far the stock moves per 1% move in the market.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1.2,
+              2.11
+            ],
+            [
+              -0.8,
+              -1.49
+            ],
+            [
+              0.9,
+              1.02
+            ],
+            [
+              0.6,
+              1.43
+            ],
+            [
+              -0.3,
+              -0.04
+            ],
+            [
+              1.5,
+              1.4
+            ],
+            [
+              0.4,
+              1.27
+            ],
+            [
+              -0.5,
+              -0.7
+            ],
+            [
+              0.8,
+              0.69
+            ],
+            [
+              -0.2,
+              0.19
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -1.5,
+            2
+          ],
+          "yRange": [
+            -2,
+            2.5
+          ]
+        },
+        "state": {
+          "params": {
+            "m": 0.5,
+            "b": 0
+          },
+          "line": {
+            "m": 0.5,
+            "b": 0
+          },
+          "residuals": "line",
+          "showSSE": true
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "min": 0,
+            "max": 2.5,
+            "step": 0.05,
+            "label": "Slope $\\beta$",
+            "start": 0.5
+          },
+          {
+            "bind": "b",
+            "min": -0.5,
+            "max": 0.5,
+            "step": 0.05,
+            "label": "Intercept $\\alpha$",
+            "start": 0
+          }
+        ],
+        "derive": {
+          "line.m": "m",
+          "line.b": "b"
+        }
+      },
+      "question": "Roughly which slope fits the points best?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "flat",
+            "text": "About 0.5",
+            "why": "That line is too flat. On big market days the stock moves further than it.",
+            "canvas": {
+              "params": {
+                "m": 0.5,
+                "b": 0.1
+              }
+            }
+          },
+          {
+            "id": "one",
+            "text": "About 1, since a stock moves with its market",
+            "why": "You assumed every stock moves one for one. This one moves more than the market.",
+            "canvas": {
+              "params": {
+                "m": 1,
+                "b": 0.2
+              }
+            }
+          },
+          {
+            "id": "right",
+            "text": "About 1.3",
+            "correct": true
+          },
+          {
+            "id": "steep",
+            "text": "About 2",
+            "why": "That line is too steep. It overshoots the largest market days.",
+            "canvas": {
+              "params": {
+                "m": 2,
+                "b": -0.1
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the intercept near 0.1, then change the slope."
+        },
+        {
+          "rung": "point",
+          "text": "Watch the sum of squared residuals in the corner.",
+          "highlight": [
+            "line"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "A slope near 1.3 gives the smallest sum.",
+        "generic": "Not quite right. Find the slope where the sum in the corner is smallest."
+      },
+      "explain": {
+        "text": "The best line has slope about 1.28 and intercept about 0.13. The stock moves about 1.28% for each 1% move in the market. Next we compute it exactly in NumPy.",
+        "canvas": {
+          "params": {
+            "m": 1.28,
+            "b": 0.13
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Build the design matrix",
+      "prose": "The fit $r_s = \\alpha + \\beta r_m$ is $\\mathbf{A}\\hat{\\mathbf{x}}$ with $\\mathbf{A} = [\\mathbf{1},\\ \\mathbf{r}_m]$. In NumPy, `np.column_stack` puts 1D arrays side by side as columns, and `np.ones(n)` makes $n$ ones.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "Ones",
+            "Market (%)"
+          ],
+          "rows": [
+            [
+              "1",
+              "1",
+              "1.2"
+            ],
+            [
+              "2",
+              "1",
+              "-0.8"
+            ],
+            [
+              "3",
+              "1",
+              "0.9"
+            ],
+            [
+              "4",
+              "1",
+              "0.6"
+            ],
+            [
+              "…",
+              "…",
+              "…"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "The first rows of $\\mathbf{A}$ for our ten days"
+        }
+      },
+      "question": "Complete `design` so it returns $\\mathbf{A}$ for a list of market returns.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef design(rm):\n    rm = np.array(rm, dtype=float)\n    A = ...\n    return A\n",
+        "solution": "import numpy as np\n\ndef design(rm):\n    rm = np.array(rm, dtype=float)\n    A = np.column_stack([np.ones(len(rm)), rm])\n    return A\n",
+        "examples": [
+          {
+            "call": "np.round(design([1.2, -0.8, 0.9]), 6).tolist()",
+            "expect": "[[1.0, 1.2], [1.0, -0.8], [1.0, 0.9]]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(design([1.2, -0.8, 0.9]), 6).tolist()",
+            "expect": "[[1.0, 1.2], [1.0, -0.8], [1.0, 0.9]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "design(rm).shape",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "compare": "equal",
+            "expect": "(10, 2)"
+          },
+          {
+            "call": "np.round(design(rm), 6).tolist()",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "[[1.0, 1.2], [1.0, -0.8], [1.0, 0.9], [1.0, 0.6], [1.0, -0.3], [1.0, 1.5], [1.0, 0.4], [1.0, -0.5], [1.0, 0.8], [1.0, -0.2]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "np.round(design([0.0, 0.0]), 6).tolist()",
+            "expect": "[[1.0, 0.0], [1.0, 0.0]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "np.round(design([-2.5]), 6).tolist()",
+            "expect": "[[1.0, -2.5]]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on the returned matrix, rounded to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Column 1 is all ones, as long as `rm`."
+        },
+        {
+          "rung": "point",
+          "text": "Pass a list of two arrays to `np.column_stack`.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`A = np.column_stack([np.ones(len(rm)), rm])`."
+        }
+      ],
+      "feedback": {
+        "correct": "`np.column_stack` puts the ones and the returns side by side.",
+        "generic": "Some tests failed. For `[1.2, -0.8, 0.9]` the matrix is `[[1, 1.2], [1, -0.8], [1, 0.9]]`.",
+        "byKey": {
+          "test-1": "For three days $\\mathbf{A}$ is 3 by 2: ones in column 1, returns in column 2.",
+          "error": "Your code stopped with an error. Replace the `...` with an expression that builds $\\mathbf{A}$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{A}$ is 10 by 2 for ten days: one row per day, one column per unknown. The ones column lets the line have an intercept, $\\alpha$.\n\n```python\nA = np.column_stack([np.ones(len(rm)), rm])\n```"
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Solve the normal equations",
+      "prose": "Now solve $\\mathbf{A}^T\\mathbf{A}\\hat{\\mathbf{x}} = \\mathbf{A}^T\\mathbf{y}$, with `@` for the matrix product and `.T` for the transpose. `np.linalg.solve(M, v)` solves $M\\mathbf{z} = \\mathbf{v}$ without forming an inverse.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "G",
+              "rows": [
+                [
+                  "$n$",
+                  "$\\sum r_m$"
+                ],
+                [
+                  "$\\sum r_m$",
+                  "$\\sum r_m^2$"
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{A}$"
+            },
+            {
+              "id": "X",
+              "rows": [
+                [
+                  "$\\alpha$"
+                ],
+                [
+                  "$\\beta$"
+                ]
+              ],
+              "label": "$\\hat{\\mathbf{x}}$"
+            },
+            {
+              "id": "R",
+              "rows": [
+                [
+                  "$\\sum r_s$"
+                ],
+                [
+                  "$\\sum r_m r_s$"
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{y}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `fit` so it returns $\\hat{\\mathbf{x}} = (\\hat\\alpha, \\hat\\beta)$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef fit(rm, rs):\n    rm = np.array(rm, dtype=float)\n    y = np.array(rs, dtype=float)\n    A = np.column_stack([np.ones(len(rm)), rm])\n    xhat = ...   # solve the normal equations\n    return xhat\n",
+        "solution": "import numpy as np\n\ndef fit(rm, rs):\n    rm = np.array(rm, dtype=float)\n    y = np.array(rs, dtype=float)\n    A = np.column_stack([np.ones(len(rm)), rm])\n    xhat = np.linalg.solve(A.T @ A, A.T @ y)\n    return xhat\n",
+        "examples": [
+          {
+            "call": "[round(float(v), 6) for v in fit(rm, rs1)]",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "[0.128826, 1.275483]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in fit([0, 1, 2], [1, 3, 2])]",
+            "expect": "[1.5, 0.5]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(float(v), 6) for v in fit(rm, rs1)]",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "[0.128826, 1.275483]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in fit([0, 1, 2], [1, 3, 2])]",
+            "expect": "[1.5, 0.5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in fit(rm, rs2)]",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "[0.132318, 0.426895]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in fit([-1, 0, 1, 2, 3], [-0.8, -0.5, 1.3, 3.1, 3.4])]",
+            "expect": "[0.1, 1.2]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in fit([0, 1, 2], [1, 3, 5])]",
+            "expect": "[1.0, 2.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in fit([-1.0, 0.5, 2.0, 1.0], [-1.1, 0.4, 2.3, 0.9])]",
+            "expect": "[-0.073333, 1.117333]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each returns [alpha, beta] rounded to 6 decimal places and is compared with math.isclose. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The matrix is `A.T @ A` and the right-hand side is `A.T @ y`."
+        },
+        {
+          "rung": "point",
+          "text": "Pass both to `np.linalg.solve`, matrix first.",
+          "highlight": [
+            "G",
+            "R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`xhat = np.linalg.solve(A.T @ A, A.T @ y)`."
+        }
+      ],
+      "feedback": {
+        "correct": "For our ten days, $\\hat\\alpha \\approx 0.1288$ and $\\hat\\beta \\approx 1.2755$.",
+        "generic": "Some tests failed. For the points (0, 1), (1, 3), (2, 2) the answer is `[1.5, 0.5]`.",
+        "byKey": {
+          "test-1": "For our ten days the answer is about `[0.128826, 1.275483]`. Check you used `@`, not `*`, and `A.T @ A`, not `A @ A.T`.",
+          "error": "Your code stopped with an error. A shape error often means `*` where `@` was needed, or `A @ A.T` instead of `A.T @ A`."
+        }
+      },
+      "explain": {
+        "text": "`A.T @ A` is the 2 by 2 matrix of sums, and `A.T @ y` is the 2-vector. Solving gives $\\hat\\alpha = 0.1288$ (% a day) and $\\hat\\beta = 1.2755$.\n\n```python\nxhat = np.linalg.solve(A.T @ A, A.T @ y)\n```",
+        "canvas": {
+          "values": {
+            "X-0-0": 0.1288,
+            "X-1-0": 1.2755
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Covariance over variance",
+      "prose": "The slope formula from the last lesson is $$\\hat\\beta = \\frac{\\sum (x_i - \\bar x)(y_i - \\bar y)}{\\sum (x_i - \\bar x)^2} = \\frac{\\mathrm{Cov}(r_s, r_m)}{\\mathrm{Var}(r_m)},$$ since both sums share the same divisor. Compute it from centred arrays.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1.2,
+              2.11
+            ],
+            [
+              -0.8,
+              -1.49
+            ],
+            [
+              0.9,
+              1.02
+            ],
+            [
+              0.6,
+              1.43
+            ],
+            [
+              -0.3,
+              -0.04
+            ],
+            [
+              1.5,
+              1.4
+            ],
+            [
+              0.4,
+              1.27
+            ],
+            [
+              -0.5,
+              -0.7
+            ],
+            [
+              0.8,
+              0.69
+            ],
+            [
+              -0.2,
+              0.19
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -1.5,
+            2
+          ],
+          "yRange": [
+            -2,
+            2.5
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1.2755,
+            "b": 0.1288
+          },
+          "caption": "The fit from `fit`: slope 1.2755"
+        }
+      },
+      "question": "Complete `beta_cov` using centred sums.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef beta_cov(rm, rs):\n    x = np.array(rm, dtype=float)\n    y = np.array(rs, dtype=float)\n    dx = x - x.mean()\n    dy = ...\n    return ...\n",
+        "solution": "import numpy as np\n\ndef beta_cov(rm, rs):\n    x = np.array(rm, dtype=float)\n    y = np.array(rs, dtype=float)\n    dx = x - x.mean()\n    dy = y - y.mean()\n    return (dx @ dy) / (dx @ dx)\n",
+        "examples": [
+          {
+            "call": "round(float(beta_cov(rm, rs1)), 6)",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "1.275483",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(float(beta_cov(rm, rs1)), 6)",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "1.275483",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(beta_cov([0, 1, 2], [1, 3, 2])), 6)",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(beta_cov(rm, rs2)), 6)",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "0.426895",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(beta_cov([-1, 0, 1, 2, 3], [-0.8, -0.5, 1.3, 3.1, 3.4])), 6)",
+            "expect": "1.2",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(beta_cov([-1.0, 0.5, 2.0, 1.0], [-1.1, 0.4, 2.3, 0.9])), 6)",
+            "expect": "1.117333",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each beta is rounded to 6 decimal places and must match the normal equations. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Centre `y` the same way as `x`."
+        },
+        {
+          "rung": "point",
+          "text": "The top is `dx @ dy`, a sum of products. The bottom is `dx @ dx`.",
+          "highlight": [
+            "line"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`dy = y - y.mean()` and `return (dx @ dy) / (dx @ dx)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Same beta, 1.275483, by a different route.",
+        "generic": "Some tests failed. For our ten days beta is about 1.275483, the same as `fit`.",
+        "byKey": {
+          "test-1": "Your beta differs from `fit`. Centre both arrays, and divide the cross sum by the sum of squares of `dx`.",
+          "error": "Your code stopped with an error. Fill in both `...` lines."
+        }
+      },
+      "explain": {
+        "text": "Both routes give 1.275483, because the slope formula came from the normal equations. A library mix-up to avoid: `np.cov` divides by $n - 1$ but `np.var` divides by $n$ by default. Dividing one by the other inflates beta by $n/(n - 1)$."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The missing column",
+      "prose": "A colleague builds $\\mathbf{A}$ from the market returns alone, with no column of ones. Their beta disagrees with ours.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> A0 = rm.reshape(-1, 1)      # market column only",
+            ">>> np.linalg.solve(A0.T @ A0, A0.T @ y)",
+            "array([1.34491018])",
+            ">>> A = np.column_stack([np.ones(10), rm])",
+            ">>> np.linalg.solve(A.T @ A, A.T @ y)",
+            "array([0.12882615, 1.27548291])"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Why do the two betas differ?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Without the ones column, the line must pass through $(0, 0)$, so beta tilts to absorb the stock's average return",
+            "correct": true
+          },
+          {
+            "id": "accuracy",
+            "text": "`np.linalg.solve` is inaccurate on only ten days",
+            "why": "You blamed rounding. `solve` is accurate to about 15 digits; these differ in the second decimal, so the model changed."
+          },
+          {
+            "id": "star",
+            "text": "The first fit should use `*` instead of `@`",
+            "why": "You reached for `*`. It multiplies entry by entry: `A0.T * A0` is a 10 by 10 table, not the sum of squares."
+          },
+          {
+            "id": "order",
+            "text": "The columns are in a different order",
+            "why": "You suspected column order. Swapping columns only swaps the entries of $\\hat{\\mathbf{x}}$; the slope stays the same."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the ones column let the line do?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at line 1: the colleague has no intercept.",
+          "highlight": [
+            "l1",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With no ones column, $\\alpha$ is forced to 0. The stock averages 0.59% a day, so the slope must tilt up to fit it."
+        }
+      ],
+      "feedback": {
+        "correct": "Forcing $\\alpha = 0$ changes beta.",
+        "generic": "Not quite right. Compare the two matrices on lines 1 and 4.",
+        "byKey": {
+          "accuracy": "You blamed rounding. The two answers differ by 0.07, far beyond floating-point error.",
+          "star": "You reached for `*`, which multiplies entry by entry. The bug is the missing column of ones."
+        }
+      },
+      "explain": {
+        "text": "The stock averages 0.588% a day and the market 0.36%. Through the origin, the line can only fit that with a steeper slope, 1.345. Keep the column of ones unless you have a reason to force $\\alpha = 0$.",
+        "canvas": {
+          "tone": {
+            "l3": "err",
+            "l6": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Residuals and $R^2$",
+      "prose": "The residual series $\\mathbf{e} = \\mathbf{y} - \\mathbf{A}\\hat{\\mathbf{x}}$ is the part of the stock's return the market does not explain. Then $R^2 = 1 - \\dfrac{\\mathbf{e}\\cdot\\mathbf{e}}{\\sum (y_i - \\bar y)^2}$.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1.2,
+              2.11
+            ],
+            [
+              -0.8,
+              -1.49
+            ],
+            [
+              0.9,
+              1.02
+            ],
+            [
+              0.6,
+              1.43
+            ],
+            [
+              -0.3,
+              -0.04
+            ],
+            [
+              1.5,
+              1.4
+            ],
+            [
+              0.4,
+              1.27
+            ],
+            [
+              -0.5,
+              -0.7
+            ],
+            [
+              0.8,
+              0.69
+            ],
+            [
+              -0.2,
+              0.19
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -1.5,
+            2
+          ],
+          "yRange": [
+            -2,
+            2.5
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1.2755,
+            "b": 0.1288
+          },
+          "residuals": "line"
+        }
+      },
+      "question": "Complete `r_squared`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef r_squared(rm, rs):\n    x = np.array(rm, dtype=float)\n    y = np.array(rs, dtype=float)\n    A = np.column_stack([np.ones(len(x)), x])\n    xhat = np.linalg.solve(A.T @ A, A.T @ y)\n    resid = ...\n    dy = y - y.mean()\n    return ...\n",
+        "solution": "import numpy as np\n\ndef r_squared(rm, rs):\n    x = np.array(rm, dtype=float)\n    y = np.array(rs, dtype=float)\n    A = np.column_stack([np.ones(len(x)), x])\n    xhat = np.linalg.solve(A.T @ A, A.T @ y)\n    resid = y - A @ xhat\n    dy = y - y.mean()\n    return 1 - (resid @ resid) / (dy @ dy)\n",
+        "examples": [
+          {
+            "call": "round(float(r_squared(rm, rs1)), 6)",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "0.805295",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(float(r_squared(rm, rs1)), 6)",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "0.805295",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(r_squared([0, 1, 2], [1, 3, 2])), 6)",
+            "expect": "0.25",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(r_squared(rm, rs2)), 6)",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "0.702928",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(r_squared([0, 1, 2], [1, 3, 5])), 6)",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(r_squared([-1, 0, 1, 2, 3], [-0.8, -0.5, 1.3, 3.1, 3.4])), 6)",
+            "expect": "0.941176",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests, each rounded to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The fitted values are `A @ xhat`."
+        },
+        {
+          "rung": "point",
+          "text": "The residual sum of squares is `resid @ resid`; the total is `dy @ dy`.",
+          "highlight": [
+            "line"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`resid = y - A @ xhat` and `return 1 - (resid @ resid) / (dy @ dy)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The market explains about 81% of this stock's daily moves here.",
+        "generic": "Some tests failed. For the points (0, 1), (1, 3), (2, 2) the answer is 0.25.",
+        "byKey": {
+          "test-1": "For our ten days $R^2$ is about 0.805. Check the residuals use `A @ xhat`, and that you subtract the ratio from 1.",
+          "error": "Your code stopped with an error. Fill in both `...` lines."
+        }
+      },
+      "explain": {
+        "text": "$R^2 \\approx 0.805$: the market explains about 81% of the variation over these ten days. The residuals are the stock-specific moves. A hedge with beta removes the market part and leaves them."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The whole recipe",
+      "prose": "Here is the full calculation from returns to beta and $R^2$, one line per step. Each line uses something the line before it made.",
+      "question": "Put the lines of code in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "c1",
+            "text": "`A = np.column_stack([np.ones(n), rm])`: the design matrix"
+          },
+          {
+            "id": "c2",
+            "text": "`xhat = np.linalg.solve(A.T @ A, A.T @ y)`: the normal equations"
+          },
+          {
+            "id": "c3",
+            "text": "`alpha, beta = xhat`: read the two entries"
+          },
+          {
+            "id": "c4",
+            "text": "`resid = y - (alpha + beta * rm)`: the residual series"
+          },
+          {
+            "id": "c5",
+            "text": "`r2 = 1 - (resid @ resid) / ((y - y.mean()) @ (y - y.mean()))`: share explained"
+          }
+        ],
+        "answer": [
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Nothing can be solved before $\\mathbf{A}$ exists."
+        },
+        {
+          "rung": "point",
+          "text": "The residuals need `alpha` and `beta`."
+        },
+        {
+          "rung": "step",
+          "text": "Design matrix, solve, unpack, residuals, $R^2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Each line feeds the next.",
+        "generic": "Not quite right. Find what each line needs, and put it after that.",
+        "byKey": {
+          "c4": "The residuals use `alpha` and `beta`, so unpack `xhat` first.",
+          "c2": "Solving needs `A`, so build it first."
+        }
+      },
+      "explain": {
+        "text": "Five lines carry the whole method. Here `beta * rm` multiplies an array by a number, so `*` is right. Between two matrices, use `@`."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Beta by matrix operations",
+      "prose": "Every step was the normal equations: $$\\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{y}, \\qquad \\mathbf{A} = [\\mathbf{1},\\ \\mathbf{r}_m].$$\n```python\nxhat = np.linalg.solve(A.T @ A, A.T @ y)\n```",
+      "question": "A fund holds a 2x leveraged version of the stock: every daily return is doubled. What happens to $\\hat\\beta$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It doubles, and so does $\\hat\\alpha$",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "It stays the same, since the market did not change",
+            "why": "You kept beta tied to the market alone. $\\hat{\\mathbf{x}}$ is linear in $\\mathbf{y}$, so doubling $\\mathbf{y}$ doubles it."
+          },
+          {
+            "id": "square",
+            "text": "It is multiplied by 4",
+            "why": "You squared the factor. Only $\\mathbf{y}$ is doubled, and $\\mathbf{A}^T\\mathbf{y}$ is linear in it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T(2\\mathbf{y}) = 2\\hat{\\mathbf{x}}$.",
+        "generic": "Not quite right. Look at where $\\mathbf{y}$ enters the formula."
+      },
+      "explain": {
+        "text": "$\\mathbf{y}$ enters once, through $\\mathbf{A}^T\\mathbf{y}$. Doubling it doubles both $\\hat\\alpha$ and $\\hat\\beta$. Leverage scales market exposure one for one."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Reading the fit",
+      "prose": "Rounded, our fit is $\\hat\\alpha = 0.13$ and $\\hat\\beta = 1.28$, both in per cent a day. Tomorrow the market falls 2%.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1.2,
+              2.11
+            ],
+            [
+              -0.8,
+              -1.49
+            ],
+            [
+              0.9,
+              1.02
+            ],
+            [
+              0.6,
+              1.43
+            ],
+            [
+              -0.3,
+              -0.04
+            ],
+            [
+              1.5,
+              1.4
+            ],
+            [
+              0.4,
+              1.27
+            ],
+            [
+              -0.5,
+              -0.7
+            ],
+            [
+              0.8,
+              0.69
+            ],
+            [
+              -0.2,
+              0.19
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2.5,
+            2
+          ],
+          "yRange": [
+            -3,
+            2.5
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1.28,
+            "b": 0.13
+          }
+        }
+      },
+      "question": "What return does the fit predict for the stock, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -2.43,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Predicted stock return in per cent",
+        "accept": "$-2.43$: $0.13 + 1.28 \\times (-2)$.",
+        "placeholder": "For example -1.5",
+        "wrong": [
+          {
+            "id": "no-alpha",
+            "value": -2.56,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "sign",
+            "value": 2.69,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "add-beta",
+            "value": -0.72,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The prediction is $\\hat\\alpha + \\hat\\beta r_m$."
+        },
+        {
+          "rung": "point",
+          "text": "Put $r_m = -2$ into the line.",
+          "highlight": [
+            "line"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.13 + 1.28 \\times (-2) = 0.13 - 2.56 = -2.43$."
+        }
+      ],
+      "feedback": {
+        "correct": "The fit predicts a fall of about 2.43%.",
+        "generic": "Not quite right. Compute $0.13 + 1.28 \\times (-2)$.",
+        "byKey": {
+          "no-alpha": "You left out $\\hat\\alpha$. The line starts at 0.13, not 0.",
+          "sign": "You treated the fall as a rise. With $r_m = -2$ the beta term is negative.",
+          "add-beta": "You added 1.28 to $-2$. Beta multiplies the market return."
+        }
+      },
+      "explain": {
+        "text": "The line at $r_m = -2$ is $0.13 - 2.56 = -2.43$. A beta above 1 amplifies market falls. The actual return will differ by that day's residual.",
+        "canvas": {
+          "line": {
+            "m": 1.28,
+            "b": 0.13
+          },
+          "points": {
+            "p10": {
+              "x": -2,
+              "y": -2.43
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two stocks, one market",
+      "prose": "A risk report needs the betas of two stocks against the same market series. Both fits share $\\mathbf{A}$, so they share $\\mathbf{A}^T\\mathbf{A}$. `np.linalg.solve` also accepts a matrix right-hand side: one column per stock.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "Market (%)",
+            "Stock 1 (%)",
+            "Stock 2 (%)"
+          ],
+          "rows": [
+            [
+              "1",
+              "1.2",
+              "2.11",
+              "0.57"
+            ],
+            [
+              "2",
+              "-0.8",
+              "-1.49",
+              "-0.13"
+            ],
+            [
+              "3",
+              "0.9",
+              "1.02",
+              "0.69"
+            ],
+            [
+              "4",
+              "0.6",
+              "1.43",
+              "0.11"
+            ],
+            [
+              "5",
+              "-0.3",
+              "-0.04",
+              "0.07"
+            ],
+            [
+              "6",
+              "1.5",
+              "1.4",
+              "1.15"
+            ],
+            [
+              "7",
+              "0.4",
+              "1.27",
+              "0.19"
+            ],
+            [
+              "8",
+              "-0.5",
+              "-0.7",
+              "0.05"
+            ],
+            [
+              "9",
+              "0.8",
+              "0.69",
+              "0.13"
+            ],
+            [
+              "10",
+              "-0.2",
+              "0.19",
+              "0.03"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `two_betas` so it returns the two betas, stock 1 first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef two_betas(rm, rs1, rs2):\n    x = np.array(rm, dtype=float)\n    A = np.column_stack([np.ones(len(x)), x])\n    # one fit per stock, or both at once\n    ...\n",
+        "solution": "import numpy as np\n\ndef two_betas(rm, rs1, rs2):\n    x = np.array(rm, dtype=float)\n    A = np.column_stack([np.ones(len(x)), x])\n    Y = np.column_stack([rs1, rs2])\n    X = np.linalg.solve(A.T @ A, A.T @ Y)\n    return X[1]\n",
+        "examples": [
+          {
+            "call": "[round(float(v), 6) for v in two_betas(rm, rs1, rs2)]",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "[1.275483, 0.426895]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(float(v), 6) for v in two_betas(rm, rs1, rs2)]",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "[1.275483, 0.426895]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in two_betas([0, 1, 2], [1, 3, 2], [1, 3, 5])]",
+            "expect": "[0.5, 2.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in two_betas(rm, rs2, rs1)]",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "[0.426895, 1.275483]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in two_betas([-1, 0, 1, 2, 3], [-0.8, -0.5, 1.3, 3.1, 3.4], [3.4, 3.1, 1.3, -0.5, -0.8])]",
+            "expect": "[1.2, -1.2]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in two_betas(rm, rs1, rs1)]",
+            "setup": "rm = [1.2, -0.8, 0.9, 0.6, -0.3, 1.5, 0.4, -0.5, 0.8, -0.2]; rs1 = [2.11, -1.49, 1.02, 1.43, -0.04, 1.4, 1.27, -0.7, 0.69, 0.19]; rs2 = [0.57, -0.13, 0.69, 0.11, 0.07, 1.15, 0.19, 0.05, 0.13, 0.03]",
+            "expect": "[1.275483, 1.275483]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each returns [beta1, beta2] rounded to 6 decimal places. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You can call the normal equations once per stock."
+        },
+        {
+          "rung": "point",
+          "text": "Or stack the stocks as columns of `Y`; then row 1 of the solution holds both betas.",
+          "highlight": [
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`Y = np.column_stack([rs1, rs2])`, `X = np.linalg.solve(A.T @ A, A.T @ Y)`, `return X[1]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Stock 1 has beta about 1.28 and stock 2 about 0.43.",
+        "generic": "Some tests failed. For our data the answer is about `[1.275483, 0.426895]`.",
+        "byKey": {
+          "test-1": "For our data the betas are about 1.275 and 0.427. Return the slopes, not the intercepts.",
+          "error": "Your code stopped with an error. Replace the `...` with code that returns two betas."
+        }
+      },
+      "explain": {
+        "text": "Stock 2 has beta 0.43: a defensive stock that moves less than half as much as the market. One `solve` with two columns fits both stocks.\n\n```python\nX = np.linalg.solve(A.T @ A, A.T @ Y)   # row 0: alphas, row 1: betas\n```",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Beta is the slope of a least squares line of stock returns on market returns, with $\\mathbf{A} = [\\mathbf{1},\\ \\mathbf{r}_m]$.",
+      "In NumPy, `np.linalg.solve(A.T @ A, A.T @ y)` returns $(\\hat\\alpha, \\hat\\beta)$; the covariance formula gives the same beta.",
+      "The residuals are the stock-specific moves, and $R^2$ is the share of variation the market explains."
+    ],
+    "formula": {
+      "name": "Beta",
+      "tex": "\\hat\\beta = \\dfrac{\\mathrm{Cov}(r_s, r_m)}{\\mathrm{Var}(r_m)}, \\qquad \\hat{\\mathbf{x}} = (\\mathbf{A}^T\\mathbf{A})^{-1}\\mathbf{A}^T\\mathbf{y}",
+      "note": "Keep the column of ones: forcing $\\alpha = 0$ changes beta."
+    },
+    "trap": "Dropping the column of ones forces the line through the origin and changes beta; `*` is not the matrix product."
+  },
+  "quiz": [
+    {
+      "id": "q-gram-shape",
+      "difficulty": 2,
+      "prose": "`A = np.column_stack([np.ones(250), rm])` for 250 trading days.",
+      "question": "What is `(A.T @ A).shape`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(2, 2)`",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "`(250, 250)`",
+            "why": "That is `A @ A.T`. With the transpose on the left, the 250 days are summed away."
+          },
+          {
+            "id": "a",
+            "text": "`(250, 2)`",
+            "why": "That is the shape of `A` itself."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One row and one column per unknown.",
+        "generic": "Not quite right. `A.T` is 2 by 250 and `A` is 250 by 2."
+      },
+      "explain": {
+        "text": "`A.T` is 2 by 250 and `A` is 250 by 2, so the product is 2 by 2. A year of data still gives a 2 by 2 solve."
+      }
+    },
+    {
+      "id": "q-star",
+      "difficulty": 2,
+      "prose": "With the same 250 by 2 matrix, someone writes `A.T * A`.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "NumPy raises a `ValueError`: shapes (2, 250) and (250, 2) do not broadcast",
+            "correct": true
+          },
+          {
+            "id": "gram",
+            "text": "It gives the 2 by 2 matrix $\\mathbf{A}^T\\mathbf{A}$",
+            "why": "You read `*` as the matrix product. It multiplies entry by entry and never sums."
+          },
+          {
+            "id": "outer",
+            "text": "It gives a 250 by 250 matrix",
+            "why": "That would be `A @ A.T`. Entry-by-entry products need matching or broadcastable shapes."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`*` is element-wise; `@` is the matrix product.",
+        "generic": "Not quite right. Think about what `*` does with arrays of different shapes."
+      },
+      "explain": {
+        "text": "`*` pairs up entries, so the shapes must match or broadcast. (2, 250) against (250, 2) fails at once. Use `@` for matrix products."
+      }
+    },
+    {
+      "id": "q-cov-var",
+      "difficulty": 3,
+      "prose": "Over a year, the sample covariance of a stock's and the market's daily returns is 0.6 (%²). The market's sample variance is 0.5 (%²).",
+      "question": "What is the stock's beta?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Beta",
+        "accept": "1.2: $0.6 / 0.5$.",
+        "wrong": [
+          {
+            "id": "flip",
+            "value": 0.8333,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "cov",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\beta = 0.6 / 0.5 = 1.2$.",
+        "generic": "Not quite right. Beta is the covariance divided by the market's variance.",
+        "byKey": {
+          "flip": "You divided the variance by the covariance. The covariance goes on top.",
+          "cov": "You stopped at the covariance. Divide by the market's variance."
+        }
+      },
+      "explain": {
+        "text": "$\\beta = \\mathrm{Cov}(r_s, r_m)/\\mathrm{Var}(r_m) = 0.6/0.5 = 1.2$. It equals the least squares slope from the normal equations."
+      }
+    },
+    {
+      "id": "q-no-ones",
+      "difficulty": 3,
+      "prose": "An analyst drops the column of ones from $\\mathbf{A}$ to \"keep it simple\".",
+      "question": "Which statement is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The line is forced through $(0, 0)$, so beta usually changes",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Beta is unchanged; only $\\alpha$ disappears",
+            "why": "You assumed the slope ignores the intercept. Forcing $\\alpha = 0$ tilts the line, so beta moves too."
+          },
+          {
+            "id": "resid",
+            "text": "The residuals still sum to 0",
+            "why": "That came from the ones column. Without it only $\\sum r_{m,i} e_i = 0$ is guaranteed."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Dropping the ones column forces $\\alpha = 0$ and moves beta.",
+        "generic": "Not quite right. Think about what the ones column lets the line do."
+      },
+      "explain": {
+        "text": "Without the ones column the line must pass through the origin. If the stock's average return is not beta times the market's, the slope tilts to compensate. In the lesson it moved from 1.275 to 1.345."
+      }
+    }
+  ]
+}

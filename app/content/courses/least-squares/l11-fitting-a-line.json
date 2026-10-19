@@ -1,0 +1,1393 @@
+{
+  "id": "l11-fitting-a-line",
+  "course": "least-squares",
+  "title": "Fitting a line by least squares",
+  "minutes": 14,
+  "objectives": [
+    "Fit a line to data with the normal equations."
+  ],
+  "skills": [
+    "ls-fit"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Seven trades",
+      "prose": "A desk logs seven trades: order size in £ millions against price impact in basis points. Move the line $\\hat y = \\alpha + \\beta x$ to make the sum of squared residuals small.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1,
+              3.5
+            ],
+            [
+              2,
+              3.0
+            ],
+            [
+              3,
+              4.5
+            ],
+            [
+              4,
+              6.5
+            ],
+            [
+              5,
+              8.0
+            ],
+            [
+              6,
+              8.5
+            ],
+            [
+              7,
+              8.0
+            ]
+          ],
+          "xLabel": "Order size (£m)",
+          "yLabel": "Impact (bps)",
+          "xRange": [
+            0,
+            8
+          ],
+          "yRange": [
+            0,
+            11
+          ]
+        },
+        "state": {
+          "params": {
+            "m": 0.5,
+            "b": 4
+          },
+          "line": {
+            "m": 0.5,
+            "b": 4
+          },
+          "residuals": "line",
+          "showSSE": true
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "min": 0,
+            "max": 2,
+            "step": 0.1,
+            "label": "Slope $\\beta$",
+            "start": 0.5
+          },
+          {
+            "bind": "b",
+            "min": 0,
+            "max": 6,
+            "step": 0.1,
+            "label": "Intercept $\\alpha$",
+            "start": 4
+          }
+        ],
+        "derive": {
+          "line.m": "m",
+          "line.b": "b"
+        }
+      },
+      "question": "Roughly which slope gives the smallest sum?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "flat",
+            "text": "0.5 bps per £m",
+            "why": "That line is too flat. The large orders sit well above it.",
+            "canvas": {
+              "params": {
+                "m": 0.5,
+                "b": 4
+              }
+            }
+          },
+          {
+            "id": "ends",
+            "text": "0.75 bps per £m",
+            "why": "You joined the first and last trades. The middle trades pull the best slope up.",
+            "canvas": {
+              "params": {
+                "m": 0.75,
+                "b": 2.75
+              }
+            }
+          },
+          {
+            "id": "right",
+            "text": "1 bp per £m",
+            "correct": true
+          },
+          {
+            "id": "steep",
+            "text": "1.5 bps per £m",
+            "why": "That line is too steep. It overshoots the largest orders.",
+            "canvas": {
+              "params": {
+                "m": 1.5,
+                "b": 0
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the slope first, then slide the intercept until the sum stops falling."
+        },
+        {
+          "rung": "point",
+          "text": "Try a slope of 1 with an intercept near 2.",
+          "highlight": [
+            "line"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "A slope of 1 with intercept 2 brings the sum down to 4.",
+        "generic": "Not quite right. For each slope, find its best intercept, then compare the sums."
+      },
+      "explain": {
+        "text": "The best line is $\\hat y = 2 + x$, with a sum of squared residuals of 4. Each extra £1m of order costs about 1 bp of impact. Next we find this line without searching.",
+        "canvas": {
+          "params": {
+            "m": 1,
+            "b": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two columns: ones and sizes",
+      "prose": "The fitted values are $\\mathbf{A}\\hat{\\mathbf{x}}$ with $\\hat{\\mathbf{x}} = (\\hat\\alpha, \\hat\\beta)$ and $\\mathbf{A} = [\\mathbf{1},\\ \\mathbf{x}]$: a column of ones and a column of sizes. So $\\mathbf{A}^T\\mathbf{A}$ is built from sums.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Size $x$ (£m)",
+            "Impact $y$ (bps)"
+          ],
+          "rows": [
+            [
+              "1",
+              "1",
+              "3.5"
+            ],
+            [
+              "2",
+              "2",
+              "3"
+            ],
+            [
+              "3",
+              "3",
+              "4.5"
+            ],
+            [
+              "4",
+              "4",
+              "6.5"
+            ],
+            [
+              "5",
+              "5",
+              "8"
+            ],
+            [
+              "6",
+              "6",
+              "8.5"
+            ],
+            [
+              "7",
+              "7",
+              "8"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in $\\mathbf{A}^T\\mathbf{A}$ for the seven trades.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Row",
+          "Column 1",
+          "Column 2"
+        ],
+        "rows": [
+          [
+            "Ones",
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 28,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Sizes",
+            {
+              "edit": true,
+              "answer": 28,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 140,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ones dotted with ones counts the trades."
+        },
+        {
+          "rung": "point",
+          "text": "Ones dotted with sizes is $\\sum x_i$. Sizes dotted with sizes is $\\sum x_i^2$.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$n = 7$, $\\sum x_i = 1 + 2 + \\dots + 7 = 28$ and $\\sum x_i^2 = 1 + 4 + \\dots + 49 = 140$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{A}^T\\mathbf{A}$ has rows $(7, 28)$ and $(28, 140)$.",
+        "generic": "Not quite right. Dot each column of $\\mathbf{A}$ with each column."
+      },
+      "explain": {
+        "text": "$\\mathbf{A}^T\\mathbf{A} = \\begin{pmatrix} n & \\sum x_i \\\\ \\sum x_i & \\sum x_i^2 \\end{pmatrix} = \\begin{pmatrix} 7 & 28 \\\\ 28 & 140 \\end{pmatrix}$. Every straight-line fit has this shape. Only the sums change.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The right-hand side",
+      "prose": "The other side of the normal equations is $\\mathbf{A}^T\\mathbf{y}$, where $\\mathbf{y}$ holds the impacts.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Size $x$ (£m)",
+            "Impact $y$ (bps)"
+          ],
+          "rows": [
+            [
+              "1",
+              "1",
+              "3.5"
+            ],
+            [
+              "2",
+              "2",
+              "3"
+            ],
+            [
+              "3",
+              "3",
+              "4.5"
+            ],
+            [
+              "4",
+              "4",
+              "6.5"
+            ],
+            [
+              "5",
+              "5",
+              "8"
+            ],
+            [
+              "6",
+              "6",
+              "8.5"
+            ],
+            [
+              "7",
+              "7",
+              "8"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in $\\mathbf{A}^T\\mathbf{y}$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Row",
+          "Entry"
+        ],
+        "rows": [
+          [
+            "Ones",
+            {
+              "edit": true,
+              "answer": 42,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Sizes",
+            {
+              "edit": true,
+              "answer": 196,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The ones row adds the impacts."
+        },
+        {
+          "rung": "point",
+          "text": "The sizes row is $\\sum x_i y_i$: multiply each size by its impact, then add.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sum y_i = 42$ and $\\sum x_i y_i = 3.5 + 6 + 13.5 + 26 + 40 + 51 + 56 = 196$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{A}^T\\mathbf{y} = (42, 196)$.",
+        "generic": "Not quite right. Dot the ones column, then the sizes column, with the impacts."
+      },
+      "explain": {
+        "text": "$\\mathbf{A}^T\\mathbf{y} = (\\sum y_i,\\ \\sum x_i y_i) = (42, 196)$. Now the normal equations are two equations in $\\hat\\alpha$ and $\\hat\\beta$.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Solve for the line",
+      "prose": "The normal equations are $7\\hat\\alpha + 28\\hat\\beta = 42$ and $28\\hat\\alpha + 140\\hat\\beta = 196$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "G",
+              "rows": [
+                [
+                  7,
+                  28
+                ],
+                [
+                  28,
+                  140
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{A}$"
+            },
+            {
+              "id": "X",
+              "rows": [
+                [
+                  "$\\hat\\alpha$"
+                ],
+                [
+                  "$\\hat\\beta$"
+                ]
+              ],
+              "label": "$\\hat{\\mathbf{x}}$"
+            },
+            {
+              "id": "R",
+              "rows": [
+                [
+                  42
+                ],
+                [
+                  196
+                ]
+              ],
+              "label": "$\\mathbf{A}^T\\mathbf{y}$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {}
+      },
+      "question": "Solve for $\\hat\\alpha$ and $\\hat\\beta$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Unknown",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\hat\\alpha$",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$\\hat\\beta$",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide row 1 by 7."
+        },
+        {
+          "rung": "point",
+          "text": "Row 1 becomes $\\hat\\alpha + 4\\hat\\beta = 6$. Take 28 times that from row 2.",
+          "highlight": [
+            "G-r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$140\\hat\\beta - 112\\hat\\beta = 196 - 168$, so $28\\hat\\beta = 28$ and $\\hat\\beta = 1$. Then $\\hat\\alpha = 6 - 4 = 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat\\alpha = 2$ and $\\hat\\beta = 1$: the line $\\hat y = 2 + x$.",
+        "generic": "Not quite right. Use row 1 to write $\\hat\\alpha$ in terms of $\\hat\\beta$, then substitute."
+      },
+      "explain": {
+        "text": "Row 1 divided by 7 says $\\hat\\alpha + 4\\hat\\beta = 6$: the line passes through the means $(\\bar x, \\bar y) = (4, 6)$. Then $\\hat\\beta = 1$ and $\\hat\\alpha = 2$, the line you found by hand.",
+        "canvas": {
+          "values": {
+            "X-0-0": 2,
+            "X-1-0": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The slope formula",
+      "prose": "The same steps work for any data. Write $\\bar x$ and $\\bar y$ for the means, so $\\sum x_i = n\\bar x$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d1",
+            "text": "$n\\hat\\alpha + \\hat\\beta\\sum x_i = \\sum y_i$, row 1 of the normal equations"
+          },
+          {
+            "id": "d2",
+            "text": "$\\hat\\alpha = \\bar y - \\hat\\beta\\bar x$, divide row 1 by $n$"
+          },
+          {
+            "id": "d3",
+            "text": "$(\\bar y - \\hat\\beta\\bar x)\\sum x_i + \\hat\\beta\\sum x_i^2 = \\sum x_i y_i$, put this $\\hat\\alpha$ into row 2"
+          },
+          {
+            "id": "d4",
+            "text": "$\\hat\\beta\\left(\\sum x_i^2 - n\\bar x^2\\right) = \\sum x_i y_i - n\\bar x\\bar y$, use $\\sum x_i = n\\bar x$ and collect $\\hat\\beta$"
+          },
+          {
+            "id": "d5",
+            "text": "$\\hat\\beta = \\dfrac{\\sum (x_i - \\bar x)(y_i - \\bar y)}{\\sum (x_i - \\bar x)^2}$, each bracket is a centred sum"
+          }
+        ],
+        "answer": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Row 1 gives $\\hat\\alpha$ most easily."
+        },
+        {
+          "rung": "point",
+          "text": "Once you have $\\hat\\alpha$, substitute it into row 2."
+        },
+        {
+          "rung": "step",
+          "text": "Row 1, solve for $\\hat\\alpha$, substitute into row 2, collect $\\hat\\beta$, then rewrite as centred sums."
+        }
+      ],
+      "feedback": {
+        "correct": "Row 1 gives $\\hat\\alpha$; row 2 then gives $\\hat\\beta$.",
+        "generic": "Not quite right. Find $\\hat\\alpha$ from row 1 before you touch row 2.",
+        "byKey": {
+          "d3": "Substituting needs $\\hat\\alpha = \\bar y - \\hat\\beta\\bar x$ first.",
+          "d5": "The centred form is the last step, after $\\hat\\beta$ is collected."
+        }
+      },
+      "explain": {
+        "text": "Expanding shows $\\sum (x_i - \\bar x)^2 = \\sum x_i^2 - n\\bar x^2$ and the same for the cross term. So the slope is centred cross-products over centred squares. The intercept makes the line pass through $(\\bar x, \\bar y)$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Centred sums",
+      "prose": "Here $\\bar x = 4$ and $\\bar y = 6$. The table shows each trade's distance from the means, and $\\sum (x_i - \\bar x)^2 = 28$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "$x_i - \\bar x$",
+            "$y_i - \\bar y$"
+          ],
+          "rows": [
+            [
+              "1",
+              "-3",
+              "-2.5"
+            ],
+            [
+              "2",
+              "-2",
+              "-3"
+            ],
+            [
+              "3",
+              "-1",
+              "-1.5"
+            ],
+            [
+              "4",
+              "0",
+              "0.5"
+            ],
+            [
+              "5",
+              "1",
+              "2"
+            ],
+            [
+              "6",
+              "2",
+              "2.5"
+            ],
+            [
+              "7",
+              "3",
+              "2"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $\\sum (x_i - \\bar x)(y_i - \\bar y)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 28,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Sum of centred cross-products",
+        "accept": "28: $7.5 + 6 + 1.5 + 0 + 2 + 5 + 6$.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "no-multiply",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the two numbers in each row first."
+        },
+        {
+          "rung": "point",
+          "text": "Row 1: $(-3)(-2.5) = 7.5$. Row 4 gives 0.",
+          "highlight": [
+            "r0",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$7.5 + 6 + 1.5 + 0 + 2 + 5 + 6 = 28$."
+        }
+      ],
+      "feedback": {
+        "correct": "The cross-products add to 28, so $\\hat\\beta = 28/28 = 1$.",
+        "generic": "Not quite right. Multiply within each row, then add the seven products.",
+        "byKey": {
+          "zero": "You added each column on its own. Deviations from the mean always sum to 0; multiply within each row first.",
+          "no-multiply": "You added the $y$ deviations and stopped. Multiply each by its $x$ deviation before adding."
+        }
+      },
+      "explain": {
+        "text": "The products add to 28, and the squared $x$ deviations add to 28 too. So $\\hat\\beta = 28/28 = 1$ and $\\hat\\alpha = 6 - 1 \\cdot 4 = 2$. The formula and the normal equations agree.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What the residuals add to",
+      "prose": "Here is the fitted line $\\hat y = 2 + x$ with its seven residuals $e_i = y_i - \\hat y_i$.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1,
+              3.5
+            ],
+            [
+              2,
+              3.0
+            ],
+            [
+              3,
+              4.5
+            ],
+            [
+              4,
+              6.5
+            ],
+            [
+              5,
+              8.0
+            ],
+            [
+              6,
+              8.5
+            ],
+            [
+              7,
+              8.0
+            ]
+          ],
+          "xLabel": "Order size (£m)",
+          "yLabel": "Impact (bps)",
+          "xRange": [
+            0,
+            8
+          ],
+          "yRange": [
+            0,
+            11
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1,
+            "b": 2
+          },
+          "residuals": "line"
+        }
+      },
+      "question": "What is the sum of the seven residuals, $\\sum e_i$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Sum of residuals",
+        "accept": "0 exactly: $0.5 - 1 - 0.5 + 0.5 + 1 + 0.5 - 1 = 0$.",
+        "wrong": [
+          {
+            "id": "sse",
+            "value": 4,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "abs",
+            "value": 5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read each residual off the plot: the point's height minus the line's."
+        },
+        {
+          "rung": "point",
+          "text": "Trade 1: $3.5 - 3 = 0.5$. Trade 2: $3 - 4 = -1$.",
+          "highlight": [
+            "p0",
+            "p1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The residuals are $0.5, -1, -0.5, 0.5, 1, 0.5, -1$. Add them with their signs."
+        }
+      ],
+      "feedback": {
+        "correct": "The residuals cancel exactly.",
+        "generic": "Not quite right. Keep the signs: points below the line have negative residuals.",
+        "byKey": {
+          "sse": "That is the sum of squared residuals. Add the residuals themselves, with their signs.",
+          "abs": "You added the sizes and dropped the signs. Points below the line count as negative."
+        }
+      },
+      "explain": {
+        "text": "Row 1 of $\\mathbf{A}^T\\mathbf{e} = \\mathbf{0}$ is the ones column dotted with $\\mathbf{e}$, which is $\\sum e_i$. So the residuals of any fit with an intercept sum to 0. A line forced through the origin has no ones column, and its residuals need not cancel.",
+        "canvas": {
+          "showSSE": true
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "How much is explained",
+      "prose": "Impact varies around its mean by $\\sum (y_i - \\bar y)^2 = 32$. The line leaves $\\sum e_i^2$ unexplained. The share explained is $$R^2 = 1 - \\frac{\\sum e_i^2}{\\sum (y_i - \\bar y)^2}.$$",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "$y_i$",
+            "$\\hat y_i$",
+            "$e_i$"
+          ],
+          "rows": [
+            [
+              "1",
+              "3.5",
+              "3",
+              "0.5"
+            ],
+            [
+              "2",
+              "3",
+              "4",
+              "-1"
+            ],
+            [
+              "3",
+              "4.5",
+              "5",
+              "-0.5"
+            ],
+            [
+              "4",
+              "6.5",
+              "6",
+              "0.5"
+            ],
+            [
+              "5",
+              "8",
+              "7",
+              "1"
+            ],
+            [
+              "6",
+              "8.5",
+              "8",
+              "0.5"
+            ],
+            [
+              "7",
+              "8",
+              "9",
+              "-1"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $R^2$ for this fit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.875,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "R squared",
+        "accept": "0.875: $1 - 4/32$.",
+        "wrong": [
+          {
+            "id": "unexplained",
+            "value": 0.125,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sse",
+            "value": 4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First square each residual and add."
+        },
+        {
+          "rung": "point",
+          "text": "The squares are $0.25, 1, 0.25, 0.25, 1, 0.25, 1$.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sum e_i^2 = 4$, so $R^2 = 1 - 4/32 = 0.875$."
+        }
+      ],
+      "feedback": {
+        "correct": "$R^2 = 0.875$: the line explains 87.5% of the variation in impact.",
+        "generic": "Not quite right. Find $\\sum e_i^2$, divide by 32, and subtract from 1.",
+        "byKey": {
+          "unexplained": "That is $4/32$, the share left unexplained. $R^2$ is 1 minus it.",
+          "sse": "That is $\\sum e_i^2$. Divide it by 32 and subtract from 1."
+        }
+      },
+      "explain": {
+        "text": "The residuals square to 4 out of a total of 32, so $R^2 = 0.875$. Order size explains 87.5% of the variation in impact. The other 12.5% is what the line misses.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Which distance?",
+      "prose": "A colleague says least squares finds the line closest to the points, measured the shortest way. The plot shows the residuals of our fit.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1,
+              3.5
+            ],
+            [
+              2,
+              3.0
+            ],
+            [
+              3,
+              4.5
+            ],
+            [
+              4,
+              6.5
+            ],
+            [
+              5,
+              8.0
+            ],
+            [
+              6,
+              8.5
+            ],
+            [
+              7,
+              8.0
+            ]
+          ],
+          "xLabel": "Order size (£m)",
+          "yLabel": "Impact (bps)",
+          "xRange": [
+            0,
+            8
+          ],
+          "yRange": [
+            0,
+            11
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1,
+            "b": 2
+          },
+          "residuals": "line"
+        }
+      },
+      "question": "Which distances does least squares make small?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The vertical gaps: the errors in impact, $y_i - \\hat y_i$",
+            "correct": true
+          },
+          {
+            "id": "perp",
+            "text": "The perpendicular distances from each point to the line",
+            "why": "You pictured the shortest distance to the line. Least squares measures errors in $y$ alone, since $\\mathbf{e} = \\mathbf{y} - \\mathbf{A}\\hat{\\mathbf{x}}$."
+          },
+          {
+            "id": "horiz",
+            "text": "The horizontal gaps: the errors in order size",
+            "why": "You swapped the roles of $x$ and $y$. Fitting size from impact gives a different, steeper line here.",
+            "canvas": {
+              "line": {
+                "m": 1.142857,
+                "b": 1.428571,
+                "dashed": true
+              },
+              "residuals": false
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which vector does $\\mathbf{e} = \\mathbf{y} - \\mathbf{A}\\hat{\\mathbf{x}}$ compare?"
+        },
+        {
+          "rung": "point",
+          "text": "Each residual compares an impact with a fitted impact at the same size.",
+          "highlight": [
+            "p4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The residual is measured straight up or down from the line, at fixed $x$."
+        }
+      ],
+      "feedback": {
+        "correct": "Least squares squares the vertical gaps, the errors in $y$.",
+        "generic": "Not quite right. Look at the direction of the segments on the plot.",
+        "byKey": {
+          "perp": "You pictured the shortest distance to the line. Least squares only measures errors in impact, straight up or down.",
+          "horiz": "You measured errors in order size. That is the regression of size on impact, a different line with slope 1.14 on these axes."
+        }
+      },
+      "explain": {
+        "text": "The residual vector is $\\mathbf{y} - \\mathbf{A}\\hat{\\mathbf{x}}$, a difference of impacts at fixed sizes. So the gaps are vertical. Regressing size on impact instead gives a steeper line here, with slope $32/28 \\approx 1.14$.",
+        "canvas": {
+          "line": {
+            "m": 1,
+            "b": 2
+          },
+          "residuals": "line"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Volume and spread",
+      "prose": "Six stocks: average daily volume in millions of shares against average bid-ask spread in bps. The means are $\\bar x = 7$ and $\\bar y = 5.5$, and $\\sum (x_i - \\bar x)^2 = 70$.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              2,
+              7.0
+            ],
+            [
+              4,
+              7.5
+            ],
+            [
+              6,
+              7.0
+            ],
+            [
+              8,
+              5.5
+            ],
+            [
+              10,
+              3.0
+            ],
+            [
+              12,
+              3.0
+            ]
+          ],
+          "xLabel": "Volume (m shares)",
+          "yLabel": "Spread (bps)",
+          "xRange": [
+            0,
+            14
+          ],
+          "yRange": [
+            0,
+            9
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the least squares slope $\\hat\\beta$, in bps per million shares?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Slope in bps per million shares",
+        "accept": "$-0.5$: the cross-products sum to $-35$, and $-35/70 = -0.5$.",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "swap",
+            "value": -1.6667,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "ends",
+            "value": -0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find each stock's $x_i - \\bar x$ and $y_i - \\bar y$."
+        },
+        {
+          "rung": "point",
+          "text": "The volume deviations are $-5, -3, -1, 1, 3, 5$. The spread deviations are $1.5, 2, 1.5, 0, -2.5, -2.5$.",
+          "highlight": [
+            "p0",
+            "p5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Cross-products: $-7.5 - 6 - 1.5 + 0 - 7.5 - 12.5 = -35$. Divide by 70."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat\\beta = -0.5$: each extra million shares a day goes with a spread 0.5 bps tighter.",
+        "generic": "Not quite right. Add the centred cross-products, then divide by 70.",
+        "byKey": {
+          "sign": "You dropped the minus sign. Spreads fall as volume rises, so the slope is negative.",
+          "swap": "You divided by $\\sum (y_i - \\bar y)^2 = 21$. That regresses volume on spread, the other way round.",
+          "ends": "You joined the first and last stocks. The middle stocks pull the slope to $-0.5$."
+        }
+      },
+      "explain": {
+        "text": "The cross-products sum to $-35$, so $\\hat\\beta = -35/70 = -0.5$ and $\\hat\\alpha = 5.5 + 0.5 \\cdot 7 = 9$. Liquid stocks trade tighter. A trader can use the fit to judge whether a stock's spread looks wide for its volume.",
+        "canvas": {
+          "line": {
+            "m": -0.5,
+            "b": 9
+          },
+          "residuals": "line"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "For a line, $\\mathbf{A} = [\\mathbf{1},\\ \\mathbf{x}]$, so the normal equations hold sums: $n$, $\\sum x_i$, $\\sum x_i^2$, $\\sum y_i$ and $\\sum x_i y_i$.",
+      "Solving them gives $\\hat\\beta$ as centred cross-products over centred squares, and $\\hat\\alpha = \\bar y - \\hat\\beta\\bar x$.",
+      "With an intercept the residuals sum to 0, and $R^2 = 1 - \\sum e_i^2 / \\sum (y_i - \\bar y)^2$ is the share of variation explained."
+    ],
+    "formula": {
+      "name": "Least squares line",
+      "tex": "\\hat\\beta = \\dfrac{\\sum (x_i - \\bar x)(y_i - \\bar y)}{\\sum (x_i - \\bar x)^2}, \\qquad \\hat\\alpha = \\bar y - \\hat\\beta\\bar x",
+      "note": "Least squares minimises the vertical gaps, the errors in $y$."
+    },
+    "trap": "Least squares measures vertical gaps. Regressing $x$ on $y$ and inverting gives a different, steeper line."
+  },
+  "quiz": [
+    {
+      "id": "q-intercept",
+      "difficulty": 2,
+      "prose": "A fit has $\\bar x = 5$, $\\bar y = 12$ and $\\hat\\beta = 1.6$.",
+      "question": "What is $\\hat\\alpha$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Intercept",
+        "accept": "4: $12 - 1.6 \\cdot 5$.",
+        "wrong": [
+          {
+            "id": "added",
+            "value": 20,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "no-slope",
+            "value": 7,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\hat\\alpha = 12 - 8 = 4$.",
+        "generic": "Not quite right. Use $\\hat\\alpha = \\bar y - \\hat\\beta\\bar x$.",
+        "byKey": {
+          "added": "You added $\\hat\\beta\\bar x$. The line passes through $(\\bar x, \\bar y)$, so subtract it.",
+          "no-slope": "You subtracted $\\bar x$ without multiplying by the slope."
+        }
+      },
+      "explain": {
+        "text": "The line passes through $(\\bar x, \\bar y)$. So $\\hat\\alpha = \\bar y - \\hat\\beta\\bar x = 12 - 1.6 \\cdot 5 = 4$."
+      }
+    },
+    {
+      "id": "q-origin",
+      "difficulty": 2,
+      "prose": "An analyst fits $\\hat y = \\beta x$ with no intercept, so $\\mathbf{A}$ has only the column $\\mathbf{x}$.",
+      "question": "What can you say about the sum of the residuals?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It need not be 0",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "It is always 0",
+            "why": "You carried over a property of fits with an intercept. That came from the ones column, which this $\\mathbf{A}$ lacks."
+          },
+          {
+            "id": "positive",
+            "text": "It is always positive",
+            "why": "Nothing forces a sign. Without the ones column the residuals can sum to anything."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only $\\sum x_i e_i = 0$ is guaranteed.",
+        "generic": "Not quite right. Which row of $\\mathbf{A}^T\\mathbf{e} = \\mathbf{0}$ gave $\\sum e_i = 0$?"
+      },
+      "explain": {
+        "text": "The normal equations give one condition per column. With only the $\\mathbf{x}$ column, we get $\\sum x_i e_i = 0$ and nothing about $\\sum e_i$. The ones column is what makes residuals cancel."
+      }
+    },
+    {
+      "id": "q-r2",
+      "difficulty": 3,
+      "prose": "A fit leaves $\\sum e_i^2 = 12$, and $\\sum (y_i - \\bar y)^2 = 48$.",
+      "question": "What is $R^2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "R squared",
+        "accept": "0.75: $1 - 12/48$.",
+        "wrong": [
+          {
+            "id": "unexplained",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$R^2 = 1 - 0.25 = 0.75$.",
+        "generic": "Not quite right. $R^2 = 1 - \\sum e_i^2 / \\sum (y_i - \\bar y)^2$.",
+        "byKey": {
+          "unexplained": "That is the unexplained share. Subtract it from 1.",
+          "ratio": "You divided the total by the residual sum. Put the residual sum on top."
+        }
+      },
+      "explain": {
+        "text": "The line leaves 12 of the 48 unexplained, a quarter. So it explains $R^2 = 0.75$, or 75%."
+      }
+    },
+    {
+      "id": "q-trend",
+      "difficulty": 3,
+      "prose": "A least squares trend fitted to a year of daily closes has $R^2 = 0.9$ and a slope of £0.20 a day.",
+      "question": "Why is it a poor forecast of next month's price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It describes the past window only. Nothing makes the trend carry on.",
+            "correct": true
+          },
+          {
+            "id": "r2",
+            "text": "Its $R^2$ is too low to trust",
+            "why": "You read $R^2$ as forecasting skill. A high $R^2$ only says the line fits the past window well."
+          },
+          {
+            "id": "vertical",
+            "text": "It minimises vertical rather than perpendicular gaps",
+            "why": "Vertical gaps are the right choice for predicting price from time. The problem is extrapolating beyond the data."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A fit describes the data it saw. Extending it is a separate bet.",
+        "generic": "Not quite right. Ask what the fit knows about days after the window."
+      },
+      "explain": {
+        "text": "Least squares finds the best line for the days it saw. Prices wander, so a strong past trend can stop at any time. The $R^2$ of a trend fitted to prices is high almost by default."
+      }
+    },
+    {
+      "id": "q-swap",
+      "difficulty": 3,
+      "prose": "Regressing $y$ on $x$ gives slope 0.5. Regressing $x$ on $y$ gives slope 1.2.",
+      "question": "Which slope should you use to predict $y$ from $x$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "0.5",
+            "correct": true
+          },
+          {
+            "id": "inverse",
+            "text": "$1/1.2 \\approx 0.83$",
+            "why": "You inverted the other regression. It minimises gaps in $x$, so it is a different line."
+          },
+          {
+            "id": "average",
+            "text": "The average of 0.5 and 0.83",
+            "why": "You split the difference. Predicting $y$ needs the fit that minimises errors in $y$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Predicting $y$ needs the line that minimises errors in $y$.",
+        "generic": "Not quite right. Which fit measured its errors in $y$?"
+      },
+      "explain": {
+        "text": "The $y$-on-$x$ fit minimises vertical gaps, which are errors in $y$. Inverting the $x$-on-$y$ slope gives 0.83, a steeper line. The two agree only when the points lie exactly on a line."
+      }
+    }
+  ]
+}
