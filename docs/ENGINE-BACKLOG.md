@@ -450,3 +450,11 @@ Raised later (numpy-pandas level 2):
 Raised later (pytest level 3):
 
 162. `boxes`: cards shrink but their text does not (overlap); empty containers default to one slot unless `capacity` is set (same family as 102, 111).
+
+Raised later (pytest level 2):
+
+163. Code widget: a hidden `prelude` field (Python run in the learner's namespace before the starter, not shown in the editor). pytest lessons carry an 18-line stand-in `pytest` class above the learner's code and a 100-line runner below; a prelude would hide both and keep the editor for the learner's own code. The stand-in needs `mark.parametrize`, `fixture`, `approx`, `raises(match=)`, `main()`, `outcome(fn=)` and `count(...)`; see `app/content/courses/pytest/l6-many-inputs.json` for the current shape. Resolves 160.
+164. `table` canvas: inline code in cells (backticks) shows literally (dup of 158; pytest level 2 removed the backticks as a workaround).
+165. `graph` canvas: labels shrink to unreadable sizes when nodes are close or the canvas is short; set a minimum font size and wrap or truncate instead (pytest level 2 widened the layout to work around it).
+
+Content note (pytest level 2): drawdowns are negative fractions (−0.25) so that "drawdown is never positive" holds; py-found Stage 1 returns them positive. Reconcile when either course is revised.
