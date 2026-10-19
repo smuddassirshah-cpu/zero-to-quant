@@ -13,7 +13,10 @@
     const n0 = (params.cells || []).length;
     const cap = Math.max(n0, params.capacity || 0, 1);
     const linked = mode === 'linked', stack = mode === 'stack';
-    const cw = linked ? Math.min(58, (W - 60) / cap - 26) : Math.min(52, Math.max(30, (W - 40) / cap));
+    const text0 = (v) => (v == null ? '' : typeof v === 'number' ? K.fmt(v, 3) : String(v));
+    /* item 119: cells widen to their text (dates, 102.50) as far as the column allows */
+    const widest = Math.max(0, ...(params.cells || []).map((v) => K.tw(text0(v).replace(/\$/g, ''), 13) + 16));
+    const cw = linked ? Math.min(Math.max(58, widest), (W - 60) / cap - 26) : Math.min(Math.max(52, widest), Math.max(30, (W - 40) / cap));
     const ch = 44;
     const H = params.height || (stack ? Math.max(200, cap * ch + 80) : 150);
     const text = (v) => (v == null ? '' : typeof v === 'number' ? K.fmt(v, 3) : String(v));
@@ -89,7 +92,8 @@
             o.append(svg('rect', { x, y, width: cw + 18, height: ch, rx: 6, class: 'cvb-cell cvb-tapbox cv-body' }), svg('line', { x1: x + cw, x2: x + cw, y1: y, y2: y + ch, class: 'cvb-ln thin' }), svg('circle', { cx: x + cw + 9, cy: y + ch / 2, r: 3, class: 'cvb-dot' }));
           } else o.append(svg('rect', { x, y, width: cw, height: ch, rx: 6, class: 'cvb-cell cvb-tapbox cv-body' + (cells[k] == null ? ' ghost' : '') }));
           const t = text(cells[k]);
-          o.append(t.includes('$') ? K.lab(x + cw / 2, y + ch / 2, t, { w: cw }) : K.txt(x + cw / 2, y + ch / 2, t, { size: t.length > 4 ? 13 : 16, weight: done.has(idx) ? 700 : 500 }));
+          const fs = t.length > 4 ? Math.max(10, Math.min(13, Math.floor(13 * (cw - 6) / Math.max(1, K.tw(t, 13))))) : 16;
+          o.append(t.includes('$') ? K.lab(x + cw / 2, y + ch / 2, t, { w: cw }) : K.txt(x + cw / 2, y + ch / 2, t, { size: fs, weight: done.has(idx) ? 700 : 500 }));
           if (params.showIndex !== false && !linked) { const [gx, gy] = G.pos(k); idxG.append(stack ? K.txt(gx - 10, gy + ch / 2, String(idx), { anchor: 'end', size: 12, cls: 'cvb-tick' }) : K.txt(gx + cw / 2, gy + ch + 14, String(idx), { size: 12, cls: 'cvb-tick' })); }
           if (R.active('drag') && !stack && !linked) { o.dataset.drag = String(k); o.classList.add('cvb-handle'); o.setAttribute('tabindex', '0'); o.setAttribute('role', 'button'); o.setAttribute('aria-label', `Cell ${idx}, value ${t}`); }
           R.tappable(o, id, `Cell ${idx}, value ${t}`);

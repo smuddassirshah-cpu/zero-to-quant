@@ -79,7 +79,8 @@
         /* spread row */
         const sy = top + A.length * rowH, so = K.obj('spread', '', 'ink');
         so.append(svg('rect', { x: 4, y: sy + 2, width: W - 8, height: rowH - 4, rx: 4, class: 'cvb-spreadrow' }), K.washRect(4, sy + 1, W - 8, rowH - 2, 4));
-        if (A.length && B.length) so.append(K.txt(cx, sy + rowH / 2, (params.spreadLabel || 'Spread') + ' ' + K.fmt(A[0][0] - B[0][0], dp + 2) + (params.showMid ? '   mid ' + fmtP((A[0][0] + B[0][0]) / 2) : ''), { size: 13, weight: 600, cls: 'cvb-muted' }));
+        /* item 124: spreadValue: false keeps the label but hides the computed number (the learner works it out) */
+        if (A.length && B.length) so.append(K.txt(cx, sy + rowH / 2, (params.spreadLabel || 'Spread') + (params.spreadValue === false ? '' : ' ' + K.fmt(A[0][0] - B[0][0], dp + 2)) + (params.showMid && params.spreadValue !== false ? '   mid ' + fmtP((A[0][0] + B[0][0]) / 2) : ''), { size: 13, weight: 600, cls: 'cvb-muted' }));
         g.append(so);
         B.forEach((l, i) => row('bid', i, l));
         /* order summary */

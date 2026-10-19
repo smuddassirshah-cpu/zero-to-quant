@@ -47,6 +47,7 @@
     const fr = C.frame(host, W, H, { cls: compact ? 'is-compact' : '', label: P.label || `Grid of ${rows} by ${cols} outcomes`, fit: true });
     const g = fr.g;
     if (P.text === 'marked') fr.wrap.classList.add('text-marked');
+    if (P.text === 'marked' && P.revealAfterGrade) fr.wrap.classList.add('reveal-after-grade'); // item 128: a tap selects without showing the text; grading shows it
 
     /* Labels and heads */
     if (P.colLabel) g.append(C.label(x0 + off(1) + (cols * s + (cols - 1) * gap) / 2, m + 9, P.colLabel, { cls: 'cv-muted cv-axis-label' }));

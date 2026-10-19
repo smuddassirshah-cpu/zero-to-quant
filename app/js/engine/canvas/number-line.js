@@ -127,12 +127,22 @@
     let lay = { pt: {}, iv: {}, up: 0, down: 0 };
     const belowY = () => (fracLabels ? 48 : 36) + 6; // under the tick labels
 
+    /* item 131: an interval label is text ("1/4 of the way") unless it is wrapped in $...$ */
+    const ivTex = (t) => (/\$/.test(String(t)) ? 'auto' : false);
     const draw = (st, prev, { instant, ms }) => {
       const P2 = st.points || [], I2 = st.intervals || [], A2 = st.arrows || [];
       lay = layout(P2, I2, A2);
+      /* item 126: arrows take side "below"; arrows on one side whose spans overlap stack in levels, 22px apart */
+      const lvl = {}, maxLvl = { above: -1, below: -1 };
+      ['above', 'below'].forEach(sd => {
+        const list = A2.filter(a => (a.side === 'below' ? 'below' : 'above') === sd).map(a => ({ id: a.id || `${a.from}-${a.to}`, lo: Math.min(a.from, a.to), hi: Math.max(a.from, a.to) })).sort((a, b) => (a.hi - a.lo) - (b.hi - b.lo) || a.lo - b.lo);
+        const placed = [];
+        list.forEach(a => { let k = 0; while (placed.some(q => q.k === k && q.lo < a.hi - 1e-9 && a.lo < q.hi - 1e-9)) k++; placed.push({ ...a, k }); lvl[a.id] = k; maxLvl[sd] = Math.max(maxLvl[sd], k); });
+      });
+      const aboveArrows = maxLvl.above >= 0, belowArrows = maxLvl.below >= 0;
       const anyLabel = P2.some(p => p.label && !(lay.pt[p.id] && lay.pt[p.id].below));
-      const top = 10 + (A2.length ? 66 : 0) + (anyLabel ? 22 + lay.up : 0) + ROW * Math.max(0, ...I2.map((iv, k) => rowOf(iv, k)));
-      const nextAxis = top + 12; H = nextAxis + (fracLabels ? 48 : 36) + lay.down;
+      const top = 10 + (aboveArrows ? 66 + 22 * maxLvl.above : 0) + (anyLabel ? 22 + lay.up : 0) + ROW * Math.max(0, ...I2.map((iv, k) => rowOf(iv, k)));
+      const nextAxis = top + 12; H = nextAxis + (fracLabels ? 48 : 36) + lay.down + (belowArrows ? 66 + 22 * maxLvl.below : 0);
       if (nextAxis !== axisY || H !== fr.h) { axisY = nextAxis; fr.resize(W, H); drawAxis(); }
       if (!axisG.childNodes.length) drawAxis();
 
@@ -157,7 +167,7 @@
         const id = a.id || `${a.from}-${a.to}`;
         let e = jumps.get(id);
         if (!e) { e = { g: svg('g', { class: 'cv-obj cv-jump', 'data-id': id }), path: svg('path', { class: 'cv-arc' }), head: svg('path', { class: 'cv-head' }), lab: svg('g'), fresh: true }; e.g.append(e.path, e.head, e.lab); arrG.append(e.g); jumps.set(id, e); }
-        e.spec = a;
+        e.spec = a; e.level = lvl[id] || 0;
       });
       for (const [id, e] of jumps) if (!seenA.has(id)) { e.g.remove(); jumps.delete(id); }
 
@@ -192,19 +202,21 @@
           const L = lay.iv[iv.id] || { side: 'above', dy: 0 };
           /* beside a ray's open end there is no room: the label sits above the bar at the drawing's edge instead */
           const rayL = iv.from == null || iv.from === '-inf', rayR = iv.to == null || iv.to === 'inf';
-          e.lab.replaceChildren(!iv.label ? '' : L.side === 'left' ? (rayL ? C.label(4, y - 14, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'start' }) : C.label(fa - 10, y, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'end' }))
-            : L.side === 'right' ? (rayR ? C.label(W - 4, y - 14, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'end' }) : C.label(fb + 10, y, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28, anchor: 'start' }))
-            : L.side === 'below' ? C.label((fa + fb) / 2, axisY + belowY() + L.dy, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28 })
-            : C.label((fa + fb) / 2, y - 14 + L.dy, iv.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28 }));
+          e.lab.replaceChildren(!iv.label ? '' : L.side === 'left' ? (rayL ? C.label(4, y - 14, iv.label, { tex: ivTex(iv.label), cls: 'cv-halo', w: 80, h: 28, anchor: 'start' }) : C.label(fa - 10, y, iv.label, { tex: ivTex(iv.label), cls: 'cv-halo', w: 80, h: 28, anchor: 'end' }))
+            : L.side === 'right' ? (rayR ? C.label(W - 4, y - 14, iv.label, { tex: ivTex(iv.label), cls: 'cv-halo', w: 80, h: 28, anchor: 'end' }) : C.label(fb + 10, y, iv.label, { tex: ivTex(iv.label), cls: 'cv-halo', w: 80, h: 28, anchor: 'start' }))
+            : L.side === 'below' ? C.label((fa + fb) / 2, axisY + belowY() + L.dy, iv.label, { tex: ivTex(iv.label), cls: 'cv-halo', w: 80, h: 28 })
+            : C.label((fa + fb) / 2, y - 14 + L.dy, iv.label, { tex: ivTex(iv.label), cls: 'cv-halo', w: 80, h: 28 }));
         }
         for (const e of jumps.values()) {
-          const a = e.spec, xa = sx(a.from), xb = sx(a.to), h = Math.max(20, Math.min(48, Math.abs(xb - xa) * 0.35)), y = axisY - 8;
-          const cy = y - h * 4 / 3, d = `M${xa} ${y}C${xa} ${cy} ${xb} ${cy} ${xb} ${y - 1}`;
+          const a = e.spec, below = a.side === 'below', s = below ? 1 : -1, xa0 = sx(a.from), xb = sx(a.to), zero = Math.abs(xb - xa0) < 1;
+          const xa = zero ? xb - 8 : xa0; // a zero-length jump is a small loop over its point
+          const h = (zero ? 16 : Math.max(20, Math.min(48, Math.abs(xb - xa) * 0.35))) + 22 * (e.level || 0), y = below ? axisY + belowY() - 4 : axisY - 8;
+          const cy = y + s * h * 4 / 3, d = zero ? `M${xa} ${y}C${xa - 10} ${cy} ${xb + 10} ${cy} ${xb} ${y + s}` : `M${xa} ${y}C${xa} ${cy} ${xb} ${cy} ${xb} ${y + s}`;
           attrs(e.path, { d });
-          const dir = Math.sign(xb - xa) || 1;
-          attrs(e.head, { d: `M${xb - 4.5} ${y - 8}L${xb} ${y}L${xb + 4.5} ${y - 8}`.replace(/NaN/g, '0') });
-          e.head.setAttribute('transform', `rotate(${dir * -12} ${xb} ${y})`);
-          e.lab.replaceChildren(a.label ? C.label((xa + xb) / 2, y - h - 10, a.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28 }) : '');
+          const dir = zero ? -1 : Math.sign(xb - xa) || 1;
+          attrs(e.head, { d: `M${xb - 4.5} ${y + s * 8}L${xb} ${y}L${xb + 4.5} ${y + s * 8}`.replace(/NaN/g, '0') });
+          e.head.setAttribute('transform', `rotate(${dir * s * 12} ${xb} ${y})`);
+          e.lab.replaceChildren(a.label ? C.label((xa + xb) / 2, y + s * (h + 10), a.label, { tex: 'auto', cls: 'cv-halo', w: 80, h: 28 }) : '');
           if (e.fresh && !instant) { const L = e.path.getTotalLength ? e.path.getTotalLength() : 200; e.path.style.strokeDasharray = L; e.path.style.strokeDashoffset = L * (1 - t); e.head.style.opacity = t > 0.9 ? 1 : 0; if (t === 1) { e.path.style.strokeDasharray = ''; e.path.style.strokeDashoffset = ''; e.fresh = false; } }
           else { e.head.style.opacity = 1; e.fresh = false; }
         }

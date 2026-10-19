@@ -26,9 +26,11 @@
       msg.hidden = false; msg.textContent = 'This task needs its diagram, which could not be drawn.';
       return { el, value: () => [], grade: () => ({ ok: false, key: null, detail: null }) };
     }
-    cv.enable('tap', { max: spec.max || null, only: spec.only || null });
+    /* item 132: only may use the canvas's set names (a grid's col7, row5, cross5), expanded to ids */
+    const only = Array.isArray(spec.only) ? (typeof cv.expand === 'function' ? cv.expand(spec.only) : spec.only).map(String) : null;
+    cv.enable('tap', { max: spec.max || null, only });
     /* The answer set: authored, or in count mode the first k of `among` (else of the tappable ids) */
-    const tappable = () => Array.from(cv.el.querySelectorAll('[data-tap]')).map(n => n.dataset.id).filter(id => !spec.only || spec.only.includes(id));
+    const tappable = () => Array.from(cv.el.querySelectorAll('[data-tap]')).map(n => n.dataset.id).filter(id => !only || only.includes(id));
     const answer = (spec.answer && spec.answer.length) || !count ? (spec.answer || []).map(String) : (among || tappable()).slice(0, count);
     const inAmong = (id) => !among || among.includes(id);
     const sel = () => ((cv.get() || {}).selected || []).map(String);
