@@ -704,3 +704,9 @@ Raised later (least-squares level 2):
 
 252. `matrix`: size KaTeX cells from the rendered width (`\tfrac{5}{6}` comes out wide and tiny); same root as 247.
 253. `vectors`: a vector with no `colour` takes slot i+1, so two vectors can share a colour by accident; document in README-B or assign distinct defaults.
+
+Raised later (least-squares level 1):
+
+254. `drag-point` widget: a line target, or a target checked by an expression (`2*v.x + v.y == 0`), so "drag until the dot product is 0" accepts any point on the orthogonal line.
+255. `vectors`: `sumLabel` collides with a vector label when the sum's head coincides with it; offset or suppress automatically.
+256. `matrix`: a cell highlight in an explanation patch that also un-hides the matrix does not show in the Why? panel (apply `hide` before `highlight`).
