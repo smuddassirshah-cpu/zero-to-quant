@@ -511,3 +511,10 @@ Raised later (numpy-pandas level 3):
 180. `table` canvas: a `dim` state for rows (like the grid's), so a join explore can show a dropped row greyed rather than blanked.
 181. `series` markers: `{value}` labels round to the canvas `decimals`; allow a per-marker `decimals`.
 182. Worker: pandas warnings on stderr (`pct_change` with NaN in pandas 2.2) appear in the learner's test output; filter `FutureWarning` lines, or set `fill_method=None` guidance in AUTHORING.md.
+
+Raised later (plotting level 3):
+
+183. `pair` canvas: tap mode on whole sides (ids `left` and `right`) so "tap the misleading chart" is a canvas action rather than a choice widget.
+184. `bars` canvas: opt-in `truncate: true` so `yMin` above 0 is honoured (to show a truncated-axis lie directly).
+185. `pair` canvas (stacked `series`): a shared-margin option so plot areas line up across panels (currently about 20 px out, from differing tick and line-label widths).
+186. `series` canvas: a second y axis (`y2` series list and scale) for the dual-axis trap.
