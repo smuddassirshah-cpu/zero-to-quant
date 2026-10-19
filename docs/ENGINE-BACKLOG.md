@@ -525,3 +525,10 @@ Raised later (limits level 2):
 188. `plane` and `pair`: `trace: true` on a `derive`-driven point leaves a trail, so a slope-tracing explore draws the $f'$ curve as the learner drags.
 189. `area` canvas: a `dim` state; and distinguish pre-shaded regions from a tap selection (different fill or hatch) so an `enter` shade is not read as a selection.
 190. `plane` tangents: a `labelOffset` so the slope label can be moved away from the point's own label on steep curves.
+
+Raised later (limits level 3):
+
+191. `area` canvas: let `colSizes` and `rowSizes` be patched from state or a control, so a rectangle with growing sides can drive the product-rule picture (built on `plane` polygons for now).
+192. `plane` canvas: implicit curves $F(x,y)=0$ and parametric curves as function entries, with `on` and `tangent` support (circles and ellipses are two half-functions, and a dragged point cannot go round; $x^3+y^3=6xy$ is 120 segments).
+193. `plane` with `sketch`: a draggable point looks like a sketch handle; give draggable points a distinct look while sketching.
+194. `pair` canvas in the Why? sheet: `stack: true` is ignored (sheet shows the pair side by side).
