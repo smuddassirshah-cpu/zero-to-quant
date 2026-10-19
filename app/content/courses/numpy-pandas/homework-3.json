@@ -1,0 +1,413 @@
+{
+  "id": "homework-3",
+  "course": "numpy-pandas",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-monthly-report",
+      "difficulty": 4,
+      "skills": [
+        "pd-time"
+      ],
+      "title": "A factsheet",
+      "prose": "A fund factsheet needs two things from daily closes in £: the monthly returns from month-end closes, rounded to 6 places, without the first month; and the annualised volatility of daily simple returns over the whole period, with 252 days, rounded to 4 places. Rows may arrive newest first.",
+      "question": "Complete `factsheet(close)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef factsheet(close):\n    monthly = ...\n    ann_vol = ...\n    return {\"monthly\": monthly, \"ann_vol\": ann_vol}\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef factsheet(close):\n    close = close.sort_index()\n    me = close.resample(\"ME\").last()\n    monthly = me.pct_change().dropna().round(6).tolist()\n    ann_vol = round(float(close.pct_change().std() * np.sqrt(252)), 4)\n    return {\"monthly\": monthly, \"ann_vol\": ann_vol}\n",
+        "tests": [
+          {
+            "setup": "close = pd.Series([24.80, 24.39, 24.58, 25.00, 24.85, 24.41, 24.43, 24.66, 25.11, 24.71, 24.28, 24.58, 24.81, 25.43, 25.85, 25.86, 25.81, 26.86, 26.79, 26.53, 26.13, 26.22, 26.33, 26.25, 26.27, 26.44, 26.76, 27.26, 27.40], index=pd.bdate_range(\"2024-01-02\", \"2024-04-30\")[::3])",
+            "call": "factsheet(close)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "factsheet(close)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([24.80, 24.39, 24.58, 25.00, 24.85, 24.41, 24.43, 24.66, 25.11, 24.71, 24.28, 24.58, 24.81, 25.43, 25.85, 25.86, 25.81, 26.86, 26.79, 26.53, 26.13, 26.22, 26.33, 26.25, 26.27, 26.44, 26.76, 27.26, 27.40], index=pd.bdate_range(\"2024-01-02\", \"2024-04-30\")[::3]); close = close.iloc[::-1]",
+            "call": "factsheet(close)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"])); close = close.iloc[::-1]",
+            "call": "factsheet(close)[\"monthly\"]",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "close = pd.Series([12.22, 12.05, 12.18, 12.31, 12.40, 12.25, 12.40, 12.71, 12.66], index=pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-01\", \"2024-02-02\", \"2024-02-28\", \"2024-02-29\", \"2024-03-01\", \"2024-03-27\", \"2024-03-28\"]))",
+            "call": "factsheet(close)",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on 9 to 29 daily closes, two newest first. Values must match exactly after rounding. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Monthly returns from month ends, and a volatility from daily returns.",
+        "generic": "Some tests failed. Check the order of the rows before each return.",
+        "byKey": {
+          "test-3": "Test 3 is newest first. `resample` sorts by itself, but `pct_change` on the daily closes does not: sort first.",
+          "test-1": "Test 1 expects `monthly` `[0.048256, 0.014313, 0.045004]`. Other numbers usually mean `mean` instead of `last`.",
+          "error": "Your code stopped with an error. Return plain floats: `round(float(...), 4)`."
+        }
+      },
+      "explain": {
+        "text": "Monthly returns come from month-end levels; the volatility comes from daily returns, which need date order. `resample` sorts its buckets, but `pct_change` uses row order, so sort once at the top."
+      }
+    },
+    {
+      "id": "h-book-pnl",
+      "difficulty": 5,
+      "skills": [
+        "pd-group",
+        "pd-time"
+      ],
+      "title": "P&L of a trading book",
+      "prose": "A book trades AZN and BARC. `trades` has `date`, `ticker` and `qty` (negative to sell), possibly several fills a day. `prices` is long, with `date`, `ticker` and `close` in £ for every day. Holdings change at each close. Return the book's daily P&L in £ from the second day, rounded to 2 places: yesterday's holdings times today's price change, summed over stocks.\n\n`trades.pivot_table(index=\"date\", columns=\"ticker\", values=\"qty\", aggfunc=\"sum\")` is `pivot` that adds up repeated cells.",
+      "question": "Complete `book_pnl(trades, prices)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef book_pnl(trades, prices):\n    px = prices.pivot(index=\"date\", columns=\"ticker\",\n                      values=\"close\").sort_index()\n    q = ...\n    held = ...\n    pnl = ...\n    return pnl.iloc[1:].round(2).tolist()\n",
+        "solution": "import pandas as pd\n\ndef book_pnl(trades, prices):\n    px = prices.pivot(index=\"date\", columns=\"ticker\",\n                      values=\"close\").sort_index()\n    q = trades.pivot_table(index=\"date\", columns=\"ticker\", values=\"qty\", aggfunc=\"sum\")\n    held = q.reindex(index=px.index, columns=px.columns).fillna(0).cumsum()\n    pnl = (held.shift(1) * px.diff()).sum(axis=1)\n    return pnl.iloc[1:].round(2).tolist()\n",
+        "tests": [
+          {
+            "setup": "dates = pd.bdate_range(\"2024-05-01\", periods=6); prices = pd.DataFrame({\"date\": list(dates) * 2, \"ticker\": [\"AZN\"] * 6 + [\"BARC\"] * 6, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19]}); trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-05-01\", \"2024-05-01\", \"2024-05-03\", \"2024-05-03\", \"2024-05-06\"]), \"ticker\": [\"AZN\", \"BARC\", \"AZN\", \"AZN\", \"BARC\"], \"qty\": [10, 1000, -5, -5, 500]})",
+            "call": "book_pnl(trades, prices)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "dates = pd.bdate_range(\"2024-05-01\", periods=6); prices = pd.DataFrame({\"date\": list(dates) * 2, \"ticker\": [\"AZN\"] * 6 + [\"BARC\"] * 6, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19]}); trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-05-02\"]), \"ticker\": [\"BARC\"], \"qty\": [-2000]})",
+            "call": "book_pnl(trades, prices)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "dates = pd.bdate_range(\"2024-05-01\", periods=6); prices = pd.DataFrame({\"date\": list(dates) * 2, \"ticker\": [\"AZN\"] * 6 + [\"BARC\"] * 6, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19]}); prices = prices.sample(frac=1, random_state=2); trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-05-03\", \"2024-05-01\"]), \"ticker\": [\"AZN\", \"AZN\"], \"qty\": [20, 30]})",
+            "call": "book_pnl(trades, prices)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "dates = pd.bdate_range(\"2024-05-01\", periods=6); prices = pd.DataFrame({\"date\": list(dates) * 2, \"ticker\": [\"AZN\"] * 6 + [\"BARC\"] * 6, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19]}); trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-05-01\", \"2024-05-01\", \"2024-05-03\", \"2024-05-03\", \"2024-05-06\"]), \"ticker\": [\"AZN\", \"BARC\", \"AZN\", \"AZN\", \"BARC\"], \"qty\": [10, 1000, -5, -5, 500]})",
+            "call": "round(sum(book_pnl(trades, prices)), 2)",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "dates = pd.bdate_range(\"2024-05-01\", periods=6); prices = pd.DataFrame({\"date\": list(dates) * 2, \"ticker\": [\"AZN\"] * 6 + [\"BARC\"] * 6, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19]}); trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-05-01\", \"2024-05-01\", \"2024-05-03\", \"2024-05-03\", \"2024-05-06\"]), \"ticker\": [\"AZN\", \"BARC\", \"AZN\", \"AZN\", \"BARC\"], \"qty\": [10, 1000, -5, -5, 500]})",
+            "call": "book_pnl(trades, prices)",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on 6 days of two stocks. Lists must match exactly after rounding to 2 places. `q.reindex(index=..., columns=...)` puts `q` on the price dates and tickers. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Positions from trades, aligned with prices, earning the next day's move.",
+        "generic": "Some tests failed. Check the holdings on each day and which day's holdings earn each price change.",
+        "byKey": {
+          "test-1": "Test 1 expects `[27.1, 38.9, -10.0, -15.0, 45.0]`. On 3 May AZN is sold down to 0, so 6 May's AZN move earns nothing.",
+          "test-2": "Test 2 sells 2000 BARC short on 2 May: P&L is 0.0 on 2 May, then −40.0 as BARC rises 2p.",
+          "error": "Your code stopped with an error. `held` must have the same dates and tickers as `px` before you multiply."
+        }
+      },
+      "explain": {
+        "text": "`pivot_table` adds same-day fills. `reindex` puts trades on every price date, with 0 on quiet days. `cumsum` turns trades into holdings. `held.shift(1)` means each day's move is earned by the position held overnight: no look-ahead."
+      }
+    },
+    {
+      "id": "h-best-month",
+      "difficulty": 4,
+      "skills": [
+        "pd-group",
+        "pd-time"
+      ],
+      "title": "Each stock's best month",
+      "prose": "`long` stacks daily closes with columns `date`, `ticker` and `close`. For each ticker, find its best month by return from month-end closes. Return a dict from ticker to the month as text such as `\"2024-03\"`.",
+      "question": "Complete `best_month(long)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef best_month(long):\n    wide = ...\n    me = ...\n    ret = me.pct_change().dropna()\n    return {t: ret[t].idxmax().strftime(\"%Y-%m\") for t in ret.columns}\n",
+        "solution": "import pandas as pd\n\ndef best_month(long):\n    wide = long.pivot(index=\"date\", columns=\"ticker\", values=\"close\")\n    me = wide.resample(\"ME\").last()\n    ret = me.pct_change().dropna()\n    return {t: ret[t].idxmax().strftime(\"%Y-%m\") for t in ret.columns}\n",
+        "tests": [
+          {
+            "setup": "d = pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-28\", \"2024-02-29\", \"2024-03-27\", \"2024-03-28\", \"2024-04-29\", \"2024-04-30\"]); long = pd.DataFrame({\"date\": list(d) * 2, \"ticker\": [\"AZN\"] * 8 + [\"BARC\"] * 8, \"close\": [107.10, 106.60, 103.40, 104.82, 107.20, 106.94, 111.20, 112.00, 1.62, 1.65, 1.80, 1.94, 2.06, 2.10, 2.08, 2.07]})",
+            "call": "best_month(long)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = pd.to_datetime([\"2024-10-31\", \"2024-11-29\", \"2024-12-31\", \"2024-10-31\", \"2024-11-29\", \"2024-12-31\"]); long = pd.DataFrame({\"date\": d, \"ticker\": [\"SHEL\"] * 3 + [\"BP\"] * 3, \"close\": [25.90, 26.20, 24.60, 3.86, 3.94, 3.92]}).sample(frac=1, random_state=1)",
+            "call": "best_month(long)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-28\", \"2024-02-29\", \"2024-03-27\", \"2024-03-28\"]); long = pd.DataFrame({\"date\": list(d) * 2, \"ticker\": [\"X\"] * 6 + [\"Y\"] * 6, \"close\": [10.00, 10.00, 9.00, 11.00, 12.50, 11.20, 5.00, 5.10, 5.20, 5.30, 5.25, 5.60]})",
+            "call": "best_month(long)",
+            "expect": "AUTO",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-28\", \"2024-02-29\", \"2024-03-27\", \"2024-03-28\", \"2024-04-29\", \"2024-04-30\"]); long = pd.DataFrame({\"date\": list(d) * 2, \"ticker\": [\"AZN\"] * 8 + [\"BARC\"] * 8, \"close\": [107.10, 106.60, 103.40, 104.82, 107.20, 106.94, 111.20, 112.00, 1.62, 1.65, 1.80, 1.94, 2.06, 2.10, 2.08, 2.07]})",
+            "call": "sorted(best_month(long))",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "d = pd.to_datetime([\"2024-01-30\", \"2024-01-31\", \"2024-02-28\", \"2024-02-29\", \"2024-03-27\", \"2024-03-28\", \"2024-04-29\", \"2024-04-30\"]); long = pd.DataFrame({\"date\": list(d) * 2, \"ticker\": [\"AZN\"] * 8 + [\"BARC\"] * 8, \"close\": [107.10, 106.60, 103.40, 104.82, 107.20, 106.94, 111.20, 112.00, 1.62, 1.65, 1.80, 1.94, 2.06, 2.10, 2.08, 2.07]})",
+            "call": "best_month(long)",
+            "expect": "AUTO",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on long tables of two tickers over 3 or 4 months, one shuffled. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Wide, monthly, returns, then the best label.",
+        "generic": "Some tests failed. Check that returns come from month-end closes of each ticker.",
+        "byKey": {
+          "test-1": "Test 1 expects `{'AZN': '2024-04', 'BARC': '2024-02'}`. Compare your month-end closes with the last close of each month.",
+          "test-3": "Test 3 expects `{'X': '2024-02', 'Y': '2024-03'}`. Getting them the other way round means monthly means instead of `last`.",
+          "error": "Your code stopped with an error. `wide` needs one column per ticker: `long.pivot(index=\"date\", columns=\"ticker\", values=\"close\")`."
+        }
+      },
+      "explain": {
+        "text": "Pivoting first gives each ticker a column. Then `resample` and `pct_change` work on all of them at once, never mixing stocks. `idxmax` returns the label of the largest return."
+      }
+    },
+    {
+      "id": "h-vol-target",
+      "difficulty": 3,
+      "skills": [
+        "pd-time"
+      ],
+      "title": "Sizing by volatility",
+      "prose": "A volatility-targeting rule scales its position each day: `w = 0.10 / vol`, where `vol` is the 20-day annualised rolling volatility up to and including that day's close. `r` holds daily returns.",
+      "question": "Which line gives the strategy's daily returns without look-ahead?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`w.shift(1) * r`",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "`w * r`",
+            "why": "`w` on day $t$ uses day $t$'s return. It would size a bet on a move already seen."
+          },
+          {
+            "id": "fwd",
+            "text": "`w.shift(-1) * r`",
+            "why": "That uses tomorrow's weight, which needs tomorrow's return."
+          },
+          {
+            "id": "vol",
+            "text": "`(0.10 / vol.shift(-1)) * r`",
+            "why": "Shifting the volatility up pulls in a future window."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Yesterday's weight earns today's return.",
+        "generic": "Not quite right. Which weight was known before today's return happened?"
+      },
+      "explain": {
+        "text": "`vol` on day $t$ includes day $t$'s return. A weight set at that close can only earn day $t + 1$'s return, so shift it down by one."
+      }
+    },
+    {
+      "id": "h-weekly",
+      "difficulty": 3,
+      "skills": [
+        "pd-time"
+      ],
+      "title": "Weekly returns",
+      "prose": "```python\ndays = pd.bdate_range(\"2024-07-01\", periods=10)\nw = pd.Series([50.00, 50.50, 51.00, 50.80, 51.20,\n               51.50, 51.00, 52.00, 52.40, 52.53],\n              index=days)\nwk = w.resample(\"W-FRI\").last()\nprint(round(wk.pct_change().iloc[1], 4))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.026,
+        "tol": {
+          "abs": 6e-05
+        },
+        "placeholder": "For example 0.0123",
+        "label": "Value printed",
+        "accept": "0.0260: 52.53 / 51.20 − 1.",
+        "wrong": [
+          {
+            "id": "first",
+            "value": 0.0506,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "mean",
+            "value": 0.0262,
+            "tol": {
+              "abs": 6e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Friday to Friday: $52.53 / 51.20 - 1 = 0.0260$.",
+        "generic": "Not quite right. Compare the two Friday closes.",
+        "byKey": {
+          "first": "You started from Monday 1 July. Weekly returns run between the weeks' last closes.",
+          "mean": "That compares weekly average closes. `last` uses Friday's close."
+        }
+      },
+      "explain": {
+        "text": "`\"W-FRI\"` makes weeks that end on Friday and `last` keeps each Friday close: 51.20 and 52.53. The first week has no return, so `iloc[1]` is the second week's."
+      }
+    },
+    {
+      "id": "h-dup-key",
+      "difficulty": 4,
+      "skills": [
+        "pd-group"
+      ],
+      "title": "A duplicated date",
+      "prose": "The price file holds 28 March twice: the original close, 12.66, and a correction, 12.68.\n\n```python\ntrades = pd.DataFrame({\"date\": d1,\n                       \"qty\": [500, -200, 300]})\nprices = pd.DataFrame({\"date\": d2,\n    \"close\": [12.70, 12.66, 12.68, 12.80]})\nvalued = pd.merge(trades, prices, on=\"date\")\n```\n`d1` is 27 March, 28 March and 2 April. `d2` is 27 March, 28 March, 28 March and 2 April.",
+      "question": "How many rows does `valued` have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Rows",
+        "accept": "4: the 28 March trade matches both price rows.",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four: the sale appears twice.",
+        "generic": "Not quite right. Each trade row pairs with every price row that has its date.",
+        "byKey": {
+          "three": "You expected one row per trade. The 28 March sale matches two price rows, so it appears twice and is counted twice.",
+          "five": "Only the 28 March date is duplicated, so only one trade doubles."
+        }
+      },
+      "explain": {
+        "text": "A join pairs every matching row, so the 28 March sale appears twice. The book's value drops to £5,122.00 instead of £7,654.00. Drop the stale row first: `prices.drop_duplicates(\"date\", keep=\"last\")`."
+      }
+    },
+    {
+      "id": "h-group-nan",
+      "difficulty": 3,
+      "skills": [
+        "pd-group"
+      ],
+      "title": "A gap inside a group",
+      "prose": "```python\nd = pd.DataFrame({\n    \"ticker\": [\"A\", \"B\", \"A\", \"B\", \"A\", \"B\"],\n    \"ret\": [0.02, 0.01, None, -0.03, -0.01, 0.05]})\nprint(d.groupby(\"ticker\")[\"ret\"].mean()[\"A\"])\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.005,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "For example 0.010",
+        "label": "Value printed",
+        "accept": "0.005: (0.02 − 0.01) / 2.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0.00333,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The gap is skipped: $(0.02 - 0.01) / 2$.",
+        "generic": "Not quite right. Average A's returns that are present.",
+        "byKey": {
+          "zero": "You counted the gap as a 0 and divided by 3. `mean` skips NaN and divides by 2."
+        }
+      },
+      "explain": {
+        "text": "`mean` skips missing values, so A's mean is $(0.02 - 0.01) / 2 = 0.005$. If the gap was a real flat day, fill it with 0 first; if not, leave it."
+      }
+    },
+    {
+      "id": "h-backtest-review",
+      "difficulty": 5,
+      "skills": [
+        "pd-time",
+        "pd-group"
+      ],
+      "title": "Review a backtest",
+      "kind": "longform",
+      "prompt": "A colleague's moving average backtest reports a strong strategy. The vendor file arrives newest first.\n\n```python\n# the file is newest first\ndf = pd.read_csv(io.StringIO(text), index_col=\"date\",\n                 parse_dates=True)\ndf[\"ret\"] = df[\"close\"].pct_change()\ndf[\"ma\"] = df[\"close\"].rolling(20).mean()\ndf[\"pos\"] = (df[\"close\"] > df[\"ma\"]).astype(int)\ndf[\"strat\"] = df[\"pos\"] * df[\"ret\"]\nmonthly = df[\"strat\"].resample(\"ME\").mean()\n```\n\n(a) What does the missing sort do to `ret` and to `ma`? (b) Find the look-ahead in `strat` and say why the backtest looks too good. (c) What is wrong with `monthly`? In one month the strategy earned 0.01, 0.02 and −0.01 on its three trading days; give the colleague's figure and the right one. (d) Write a corrected script.",
+      "model": "**(a)** `read_csv` keeps the file's order, so the rows run newest first. `pct_change` then divides each close by the *next* day's close, so every return runs backwards in time. `rolling(20)` takes each row and the 19 rows above it. Those are the 19 *later* days, so `ma` averages the future. Fix: `.sort_index()` straight after loading.\n\n**(b)** `pos` on day $t$ compares day $t$'s close with a mean that includes it. So it is only known at day $t$'s close. Multiplying by `ret` on the same row earns day $t$'s return, which happened before the position was set. The strategy holds on days it has already seen rise, so it looks far better than it is. Fix: `df[\"pos\"].shift(1) * df[\"ret\"]`.\n\n**(c)** Daily returns compound, so a month's return is the product of growth factors minus 1, not their mean. The colleague reports $(0.01 + 0.02 - 0.01) / 3 = 0.006667$. The right figure is $1.01 \\times 1.02 \\times 0.99 - 1 = 0.019898$. The mean also changes with the number of trading days, which a monthly return should not.\n\n**(d)**\n\n```python\ndf = pd.read_csv(io.StringIO(text), index_col=\"date\",\n                 parse_dates=True).sort_index()\ndf[\"ret\"] = df[\"close\"].pct_change()\ndf[\"ma\"] = df[\"close\"].rolling(20).mean()\ndf[\"pos\"] = (df[\"close\"] > df[\"ma\"]).astype(int)\ndf[\"strat\"] = df[\"pos\"].shift(1) * df[\"ret\"]\nmonthly = (1 + df[\"strat\"]).resample(\"ME\").prod() - 1\n```\n\nThe first 19 rows have no `ma`, so `pos` is 0 there and the strategy is out. The first `strat` is NaN, which `prod` skips. Each line now uses only prices known before the return it earns.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "(a) Says unsorted rows make `pct_change` divide by the next day's close and make `rolling` average later days; fixes with `sort_index()`."
+        },
+        {
+          "points": 2,
+          "text": "(b) Says `pos` uses day $t$'s close and earns day $t$'s return, a look-ahead that flatters the results."
+        },
+        {
+          "points": 1,
+          "text": "(b) Fixes it with `pos.shift(1) * ret`, or an equivalent that earns the next day's return."
+        },
+        {
+          "points": 1,
+          "text": "(c) Says daily returns compound, so the mean is the wrong monthly figure."
+        },
+        {
+          "points": 2,
+          "text": "(c) Gives the colleague's 0.006667 and the right 0.019898."
+        },
+        {
+          "points": 2,
+          "text": "(d) A corrected script that sorts, shifts the position and compounds by month, such as `(1 + strat).resample(\"ME\").prod() - 1`."
+        }
+      ]
+    }
+  ]
+}

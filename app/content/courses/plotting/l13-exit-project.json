@@ -1,0 +1,1048 @@
+{
+  "id": "l13-exit-project",
+  "course": "plotting",
+  "title": "Returns, volatility and drawdown from a CSV",
+  "minutes": 15,
+  "objectives": [
+    "Build the 1.1 exit project: one script from a price file to three charts",
+    "Compute annualised volatility and maximum drawdown and show them honestly"
+  ],
+  "skills": [
+    "pl-risk",
+    "pl-market",
+    "pl-figures"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The worst fall, by eye",
+      "prose": "The exit project starts from a file of daily closes, `prices.csv`, and ends with three charts: returns, volatility and drawdown. First, find the drawdown by eye.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-01",
+              "50.00"
+            ],
+            [
+              "2024-03-04",
+              "52.00"
+            ],
+            [
+              "2024-03-05",
+              "51.00"
+            ],
+            [
+              "2024-03-06",
+              "54.00"
+            ],
+            [
+              "2024-03-07",
+              "49.50"
+            ],
+            [
+              "2024-03-08",
+              "48.60"
+            ],
+            [
+              "2024-03-11",
+              "50.40"
+            ],
+            [
+              "2024-03-12",
+              "53.10"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv"
+        }
+      },
+      "question": "Tap the close where the deepest fall begins and the close where it ends.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r3c1",
+          "r5c1"
+        ],
+        "max": 2,
+        "countWord": "picked",
+        "only": [
+          "r0c1",
+          "r1c1",
+          "r2c1",
+          "r3c1",
+          "r4c1",
+          "r5c1",
+          "r6c1",
+          "r7c1"
+        ],
+        "wrong": [
+          {
+            "id": "next-day",
+            "set": [
+              "r3c1",
+              "r4c1"
+            ]
+          },
+          {
+            "id": "first",
+            "set": [
+              "r0c1",
+              "r5c1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A fall begins at a peak: the highest close so far."
+        },
+        {
+          "rung": "point",
+          "text": "The highest close is £54.00 on 6 March.",
+          "highlight": [
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From £54.00 the price falls for two days, to £48.60 on 8 March."
+        }
+      ],
+      "feedback": {
+        "correct": "£54.00 down to £48.60: a fall of 10%.",
+        "generic": "Not quite right. Start at a peak and follow the fall to its lowest close.",
+        "byKey": {
+          "next-day": "The fall carries on past 7 March. 8 March is lower still, at £48.60.",
+          "first": "The fall starts at the peak, £54.00, not at the first close."
+        }
+      },
+      "explain": {
+        "text": "You started at the peak and followed the fall to its lowest close: $48.60 / 54.00 - 1 = -0.10$. That is the maximum drawdown, the number our script must find for itself.",
+        "canvas": {
+          "highlight": [
+            "r3c1",
+            "r5c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The script, in order",
+      "prose": "The script turns `prices.csv` into a saved figure. A vendor file may arrive newest first, like this one.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-12",
+              "53.10"
+            ],
+            [
+              "2024-03-11",
+              "50.40"
+            ],
+            [
+              "2024-03-08",
+              "48.60"
+            ],
+            [
+              "2024-03-07",
+              "49.50"
+            ],
+            [
+              "2024-03-06",
+              "54.00"
+            ],
+            [
+              "2024-03-05",
+              "51.00"
+            ],
+            [
+              "2024-03-04",
+              "52.00"
+            ],
+            [
+              "2024-03-01",
+              "50.00"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv, newest first"
+        }
+      },
+      "question": "Put the steps of the script in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "read",
+            "text": "Read the text of the file into rows"
+          },
+          {
+            "id": "sort",
+            "text": "Sort the rows by date, oldest first"
+          },
+          {
+            "id": "ret",
+            "text": "Compute each day's return from consecutive closes"
+          },
+          {
+            "id": "vol",
+            "text": "Annualise the returns' standard deviation"
+          },
+          {
+            "id": "draw",
+            "text": "Draw returns, volatility and drawdown in panels sharing x"
+          },
+          {
+            "id": "save",
+            "text": "Save the figure at 150 dpi"
+          }
+        ],
+        "answer": [
+          "read",
+          "sort",
+          "ret",
+          "vol",
+          "draw",
+          "save"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which step needs every other step done first?"
+        },
+        {
+          "rung": "point",
+          "text": "Returns compare each close with the day before, so the rows must be in date order first."
+        },
+        {
+          "rung": "step",
+          "text": "Read, sort, returns, volatility, draw, save."
+        }
+      ],
+      "feedback": {
+        "correct": "Each step uses only what the steps before it made.",
+        "generic": "Not quite right. Ask what each step needs before it can run.",
+        "byKey": {
+          "sort": "Sorting needs rows to sort, so reading comes first.",
+          "ret": "Returns on unsorted rows run backwards in time. Sort before you compute.",
+          "save": "You can only save a figure once it is drawn."
+        }
+      },
+      "explain": {
+        "text": "Sorting must come before returns: on this file, unsorted rows would divide each close by the next day's. The figure is drawn from finished numbers and saved last."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Reading the file",
+      "prose": "`csv.DictReader` turns each line into a dictionary keyed by the header, with every value as text. ISO dates such as `2024-03-08` sort correctly as text. Finish `load_closes` so it returns the closes, oldest first, as floats.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-12",
+              "53.10"
+            ],
+            [
+              "2024-03-11",
+              "50.40"
+            ],
+            [
+              "2024-03-08",
+              "48.60"
+            ],
+            [
+              "2024-03-07",
+              "49.50"
+            ],
+            [
+              "2024-03-06",
+              "54.00"
+            ],
+            [
+              "2024-03-05",
+              "51.00"
+            ],
+            [
+              "2024-03-04",
+              "52.00"
+            ],
+            [
+              "2024-03-01",
+              "50.00"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The file in the second test"
+        }
+      },
+      "question": "Complete `load_closes(text)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import csv\nimport io\n\n\ndef load_closes(text):\n    rows = list(csv.DictReader(io.StringIO(text)))\n    # sort the rows by date, then return the closes as floats\n    ...\n",
+        "solution": "import csv\nimport io\n\n\ndef load_closes(text):\n    rows = list(csv.DictReader(io.StringIO(text)))\n    rows.sort(key=lambda r: r[\"date\"])\n    return [float(r[\"close\"]) for r in rows]\n",
+        "examples": [
+          {
+            "call": "load_closes(\"date,close\\n2024-03-05,51.00\\n2024-03-01,50.00\\n2024-03-04,52.00\\n\")",
+            "expect": "[50.0, 52.0, 51.0]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "load_closes(\"date,close\\n2024-03-05,51.00\\n2024-03-01,50.00\\n2024-03-04,52.00\\n\")",
+            "expect": "[50.0, 52.0, 51.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "text = \"date,close\\n2024-03-12,53.10\\n2024-03-11,50.40\\n2024-03-08,48.60\\n2024-03-07,49.50\\n2024-03-06,54.00\\n2024-03-05,51.00\\n2024-03-04,52.00\\n2024-03-01,50.00\\n\"",
+            "call": "load_closes(text)",
+            "expect": "[50.0, 52.0, 51.0, 54.0, 49.5, 48.6, 50.4, 53.1]",
+            "compare": "equal"
+          },
+          {
+            "call": "load_closes(\"date,close\\n2024-01-02,100.00\\n\")",
+            "expect": "[100.0]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. This one needs no matplotlib, so it runs quickly."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Sort `rows` by each row's `\"date\"`."
+        },
+        {
+          "rung": "point",
+          "text": "`rows.sort(key=lambda r: r[\"date\"])` puts them oldest first."
+        },
+        {
+          "rung": "step",
+          "text": "Then return `[float(r[\"close\"]) for r in rows]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Sorted by date, closes as floats.",
+        "generic": "Not quite right. Read the failing test: the second file arrives newest first."
+      },
+      "explain": {
+        "text": "Sorting the dictionaries by their date text puts them in time order, because ISO dates sort like numbers. `float` turns `\"48.60\"` into 48.6, ready for returns."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "From daily to annual",
+      "prose": "Daily returns have a standard deviation. Volatility is quoted per year, and with about 252 trading days a year it scales by $\\sqrt{252}$, not 252, because independent variances add.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-01",
+              "50.00"
+            ],
+            [
+              "2024-03-04",
+              "52.00"
+            ],
+            [
+              "2024-03-05",
+              "51.00"
+            ],
+            [
+              "2024-03-06",
+              "54.00"
+            ],
+            [
+              "2024-03-07",
+              "49.50"
+            ],
+            [
+              "2024-03-08",
+              "48.60"
+            ],
+            [
+              "2024-03-11",
+              "50.40"
+            ],
+            [
+              "2024-03-12",
+              "53.10"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "prices.csv"
+        }
+      },
+      "question": "A stock's daily returns have a standard deviation of 1.20%. What is its annualised volatility, in %?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1905,
+        "tol": {
+          "abs": 0.0006
+        },
+        "unit": "%",
+        "label": "Annualised volatility",
+        "placeholder": "For example 25.3",
+        "accept": "19.05%: 1.20% × √252.",
+        "wrong": [
+          {
+            "id": "times",
+            "value": 3.024,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "months",
+            "value": 0.0416,
+            "tol": {
+              "abs": 0.0006
+            }
+          },
+          {
+            "id": "same",
+            "value": 0.012,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Variances add over days; standard deviations do not."
+        },
+        {
+          "rung": "point",
+          "text": "A year's variance is 252 daily variances, so its standard deviation is √252 daily ones."
+        },
+        {
+          "rung": "step",
+          "text": "1.20% × √252 = 1.20% × 15.87 = 19.05%."
+        }
+      ],
+      "feedback": {
+        "correct": "1.20% × 15.87 = 19.05%.",
+        "generic": "Not quite right. Multiply by the square root of 252.",
+        "byKey": {
+          "times": "You multiplied by 252. Variances add over days, so the standard deviation grows with √252.",
+          "months": "That uses √12, for monthly returns. These returns are daily.",
+          "same": "That is the daily figure. Volatility is quoted per year."
+        }
+      },
+      "explain": {
+        "text": "Over 252 independent days the variance is $252\\sigma^2$, so the standard deviation is $\\sqrt{252}\\,\\sigma = 15.87 \\times 1.20\\% = 19.05\\%$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two numbers for the report",
+      "prose": "Finish `summary`: the annualised volatility of the daily returns, using `statistics.stdev`, and the maximum drawdown from the running peak. Both are fractions, so −10% is −0.1.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-03-01",
+              "50.00"
+            ],
+            [
+              "2024-03-04",
+              "52.00"
+            ],
+            [
+              "2024-03-05",
+              "51.00"
+            ],
+            [
+              "2024-03-06",
+              "54.00"
+            ],
+            [
+              "2024-03-07",
+              "49.50"
+            ],
+            [
+              "2024-03-08",
+              "48.60"
+            ],
+            [
+              "2024-03-11",
+              "50.40"
+            ],
+            [
+              "2024-03-12",
+              "53.10"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "The closes in the first test"
+        }
+      },
+      "question": "Complete `summary(closes)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\nimport statistics\n\n\ndef summary(closes):\n    rets = [closes[i] / closes[i - 1] - 1 for i in range(1, len(closes))]\n    vol = ...   # annualised volatility of rets\n    mdd = ...   # most negative drawdown from the running peak\n    return [round(vol, 4), round(mdd, 4)]\n",
+        "solution": "import math\nimport statistics\n\n\ndef summary(closes):\n    rets = [closes[i] / closes[i - 1] - 1 for i in range(1, len(closes))]\n    vol = statistics.stdev(rets) * math.sqrt(252)\n    peak, mdd = closes[0], 0.0\n    for p in closes:\n        peak = max(peak, p)\n        mdd = min(mdd, p / peak - 1)\n    return [round(vol, 4), round(mdd, 4)]\n",
+        "examples": [
+          {
+            "call": "summary([50.0, 52.0, 51.0, 54.0, 49.5, 48.6, 50.4, 53.1])",
+            "expect": "[0.8267, -0.1]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "summary([50.0, 52.0, 51.0, 54.0, 49.5, 48.6, 50.4, 53.1])",
+            "expect": "[0.8267, -0.1]",
+            "compare": "equal"
+          },
+          {
+            "call": "summary([40.0, 44.0, 52.0, 60.0, 57.0, 54.0, 58.0])",
+            "expect": "[1.5852, -0.1]",
+            "compare": "equal"
+          },
+          {
+            "call": "summary([100.0, 101.0, 102.5, 103.0])",
+            "expect": "[0.0792, 0.0]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests, each rounded to 4 places. No matplotlib here, so it runs quickly."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Volatility: `statistics.stdev(rets) * math.sqrt(252)`."
+        },
+        {
+          "rung": "point",
+          "text": "For the drawdown, carry the highest close so far through a loop."
+        },
+        {
+          "rung": "step",
+          "text": "In the loop: `peak = max(peak, p)`, then `mdd = min(mdd, p / peak - 1)`, starting from `mdd = 0.0`."
+        }
+      ],
+      "feedback": {
+        "correct": "Volatility per year and the worst fall from a peak.",
+        "generic": "Not quite right. Read the failing test: the second one hides its lowest close before its peak."
+      },
+      "explain": {
+        "text": "The running peak only ever rises, so each drawdown compares a close with the best close before it. The third test never falls, so its drawdown is exactly 0."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Highest and lowest",
+      "prose": "A second stock. A colleague computes its maximum drawdown as the gap between its highest and lowest close: $(60.00 - 40.00) / 60.00$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "close"
+          ],
+          "rows": [
+            [
+              "2024-05-01",
+              "40.00"
+            ],
+            [
+              "2024-05-02",
+              "44.00"
+            ],
+            [
+              "2024-05-03",
+              "52.00"
+            ],
+            [
+              "2024-05-06",
+              "60.00"
+            ],
+            [
+              "2024-05-07",
+              "57.00"
+            ],
+            [
+              "2024-05-08",
+              "54.00"
+            ],
+            [
+              "2024-05-09",
+              "58.00"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "A second stock's closes"
+        }
+      },
+      "question": "What is the stock's true maximum drawdown?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "−10.00%",
+            "correct": true
+          },
+          {
+            "id": "range",
+            "text": "−33.33%",
+            "why": "You took the highest and lowest closes. The £40.00 came before the £60.00 peak, so no one who held it lost that.",
+            "canvas": {
+              "highlight": [
+                "r0c1",
+                "r3c1"
+              ]
+            }
+          },
+          {
+            "id": "up",
+            "text": "−50.00%",
+            "why": "That is the £20 gap over the low, £40.00. The low came first, so it is not a fall at all."
+          },
+          {
+            "id": "last",
+            "text": "−5.26%",
+            "why": "That is one day's fall, £57.00 to £54.00. Measure from the peak, £60.00."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A drawdown is a fall from a peak that came before it."
+        },
+        {
+          "rung": "point",
+          "text": "The lowest close, £40.00, is the very first one.",
+          "highlight": [
+            "r3c1",
+            "r5c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After the £60.00 peak the lowest close is £54.00: $54.00 / 60.00 - 1 = -0.10$."
+        }
+      ],
+      "feedback": {
+        "correct": "From £60.00 down to £54.00: −10%.",
+        "generic": "Not quite right. Only a low after the peak counts.",
+        "byKey": {
+          "range": "You used the highest and lowest closes, ignoring their order. The £40.00 came first, before any peak. The real worst fall is £60.00 to £54.00: −10%."
+        }
+      },
+      "explain": {
+        "text": "Order matters: a drawdown runs from a peak to a later low. Here the low came first and the price rose from it. That is why `summary` tracks the running peak, the best close so far.",
+        "canvas": {
+          "highlight": [
+            "r3c1",
+            "r5c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Maximum drawdown, line by line",
+      "prose": "Your loop computed the maximum drawdown in three moves. Write each as a formula, with $p_t$ the close on day $t$.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "m",
+            "text": "$M_t = \\max(p_0, p_1, \\ldots, p_t)$, the running peak: the best close so far"
+          },
+          {
+            "id": "d",
+            "text": "$D_t = p_t / M_t - 1$, today's drawdown, 0 at a new peak"
+          },
+          {
+            "id": "mdd",
+            "text": "$\\text{MDD} = \\min_t D_t$, the deepest drawdown over the whole history"
+          }
+        ],
+        "answer": [
+          "m",
+          "d",
+          "mdd"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which quantity does each line need from the line before?"
+        },
+        {
+          "rung": "point",
+          "text": "$D_t$ divides by $M_t$, so $M_t$ comes first."
+        },
+        {
+          "rung": "step",
+          "text": "Peak, then drawdown, then the minimum of the drawdowns."
+        }
+      ],
+      "feedback": {
+        "correct": "Peak, drawdown, then the worst drawdown.",
+        "generic": "Not quite right. Each line uses the one above it.",
+        "byKey": {
+          "d": "$D_t$ divides by $M_t$, so the running peak must be defined first.",
+          "mdd": "The minimum is taken over drawdowns, so they must exist first."
+        }
+      },
+      "explain": {
+        "text": "For the trap's stock, $M_t$ reaches £60.00 on 6 May and stays there. $D_t$ is then 0, −5%, −10% and −3.3%, so the MDD is −10%. The early £40.00 never enters, since $M_0 = p_0$ gives $D_0 = 0$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The exit figure",
+      "prose": "Build the project's figure: three panels sharing x, for daily returns, 5-day rolling volatility and drawdown. Plot each with `plot`, and plot each return on the later day of its pair. Label the trough with `annotate` and the text `f\"Max drawdown {mdd:.1%}\"`, then save `exit.png` at 150 dpi, tight.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Close",
+              "values": [
+                50.0,
+                52.0,
+                51.0,
+                54.0,
+                49.5,
+                48.6,
+                50.4,
+                53.1
+              ]
+            }
+          ],
+          "x": "dates",
+          "dates": [
+            "2024-03-01",
+            "2024-03-04",
+            "2024-03-05",
+            "2024-03-06",
+            "2024-03-07",
+            "2024-03-08",
+            "2024-03-11",
+            "2024-03-12"
+          ],
+          "money": "£"
+        },
+        "state": {
+          "drawdown": true,
+          "caption": "The test closes, with the drawdown your annotation names"
+        }
+      },
+      "question": "Complete `exit_figure(closes)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw to files, not a window\nimport matplotlib.pyplot as plt\nimport math\nimport statistics\n\n\ndef returns(closes):\n    return [closes[i] / closes[i - 1] - 1 for i in range(1, len(closes))]\n\n\ndef rolling_vol(rets, n=5):\n    # (days, vols): annualised volatility of the n returns ending on each day\n    days = list(range(n, len(rets) + 1))\n    vols = [statistics.stdev(rets[d - n:d]) * math.sqrt(252) for d in days]\n    return days, vols\n\n\ndef drawdown(closes):\n    peak, out = closes[0], []\n    for p in closes:\n        peak = max(peak, p)\n        out.append(p / peak - 1)\n    return out\n\n\ndef exit_figure(closes):\n    # three rows sharing x: returns, rolling volatility, drawdown\n    # annotate the bottom panel at the trough, then save exit.png\n    fig, axes = ...\n\n    return fig, axes\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw to files, not a window\nimport matplotlib.pyplot as plt\nimport math\nimport statistics\n\n\ndef returns(closes):\n    return [closes[i] / closes[i - 1] - 1 for i in range(1, len(closes))]\n\n\ndef rolling_vol(rets, n=5):\n    # (days, vols): annualised volatility of the n returns ending on each day\n    days = list(range(n, len(rets) + 1))\n    vols = [statistics.stdev(rets[d - n:d]) * math.sqrt(252) for d in days]\n    return days, vols\n\n\ndef drawdown(closes):\n    peak, out = closes[0], []\n    for p in closes:\n        peak = max(peak, p)\n        out.append(p / peak - 1)\n    return out\n\n\ndef exit_figure(closes):\n    rets = returns(closes)\n    days, vols = rolling_vol(rets)\n    dd = drawdown(closes)\n    fig, axes = plt.subplots(3, 1, sharex=True, figsize=(8, 7))\n    axes[0].plot(range(1, len(closes)), rets)\n    axes[0].set_ylabel(\"Daily return\")\n    axes[1].plot(days, vols)\n    axes[1].set_ylabel(\"Volatility, annualised\")\n    axes[2].plot(range(len(closes)), dd)\n    axes[2].set_ylabel(\"Drawdown\")\n    mdd = min(dd)\n    t = dd.index(mdd)\n    axes[2].annotate(f\"Max drawdown {mdd:.1%}\", xy=(t, mdd))\n    fig.savefig(\"exit.png\", dpi=150, bbox_inches=\"tight\")\n    return fig, axes\n",
+        "examples": [
+          {
+            "setup": "import os; plt.close(\"all\"); fig, axes = exit_figure([50.0, 52.0, 51.0, 54.0, 49.5, 48.6, 50.4, 53.1])",
+            "call": "len(fig.axes)",
+            "expect": "3"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "import os; plt.close(\"all\"); fig, axes = exit_figure([50.0, 52.0, 51.0, 54.0, 49.5, 48.6, 50.4, 53.1])",
+            "call": "len(fig.axes)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "import os; plt.close(\"all\"); fig, axes = exit_figure([50.0, 52.0, 51.0, 54.0, 49.5, 48.6, 50.4, 53.1])",
+            "call": "axes[0].get_shared_x_axes().joined(axes[0], axes[2])",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "import os; plt.close(\"all\"); fig, axes = exit_figure([50.0, 52.0, 51.0, 54.0, 49.5, 48.6, 50.4, 53.1])",
+            "call": "[t.get_text() for t in axes[2].texts]",
+            "expect": "['Max drawdown -10.0%']",
+            "compare": "equal"
+          },
+          {
+            "setup": "import os; plt.close(\"all\"); fig, axes = exit_figure([50.0, 52.0, 51.0, 54.0, 49.5, 48.6, 50.4, 53.1])",
+            "call": "os.path.exists(\"exit.png\")",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on the figure your function returns. The first run loads matplotlib, a large package, so it can take up to 20 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with `plt.subplots(3, 1, sharex=True)`, then call the three helpers."
+        },
+        {
+          "rung": "point",
+          "text": "Plot returns against `range(1, len(closes))` and the drawdown against `range(len(closes))`."
+        },
+        {
+          "rung": "step",
+          "text": "For the label: `mdd = min(dd)`, `t = dd.index(mdd)`, `axes[2].annotate(f\"Max drawdown {mdd:.1%}\", xy=(t, mdd))`, then `fig.savefig(\"exit.png\", dpi=150, bbox_inches=\"tight\")`."
+        }
+      ],
+      "feedback": {
+        "correct": "Three aligned panels, the worst fall named, and a file a report can use.",
+        "generic": "Not quite right. Read the failing test: it names the panel it checked."
+      },
+      "explain": {
+        "text": "That is the 1.1 exit project: one script from a price file to returns, volatility and drawdown, drawn and saved. The annotation states the −10.0% at the trough, so no reader has to measure it."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Read, sort by date, then compute: returns on unsorted rows run backwards without any error.",
+      "Annualise daily volatility by $\\sqrt{252}$; measure drawdown from the running peak, never from the overall low.",
+      "Draw returns, volatility and drawdown in panels sharing x, annotate the worst fall with its number, and save at 150 dpi with a tight box."
+    ],
+    "formula": {
+      "name": "Maximum drawdown",
+      "tex": "\\text{MDD} = \\min_t \\left( \\dfrac{p_t}{\\max_{s \\le t} p_s} - 1 \\right)",
+      "note": "Only a low after a peak counts. Volatility per year is $\\sigma_{\\text{daily}} \\sqrt{252}$."
+    },
+    "trap": "The gap between the highest and lowest close is not the drawdown when the low comes first."
+  },
+  "quiz": [
+    {
+      "id": "q-annualise",
+      "difficulty": 2,
+      "prose": "A fund's daily returns have a standard deviation of 0.80%.",
+      "question": "What is its annualised volatility, in %? Use 252 trading days.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.127,
+        "tol": {
+          "abs": 0.0006
+        },
+        "unit": "%",
+        "label": "Annualised volatility",
+        "placeholder": "For example 25.3",
+        "accept": "12.70%: 0.80% × √252 = 0.80% × 15.87.",
+        "wrong": [
+          {
+            "id": "times",
+            "value": 2.016,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.80% × 15.87 = 12.70%.",
+        "generic": "Not quite right. Multiply by √252.",
+        "byKey": {
+          "times": "You multiplied by 252. The standard deviation grows with the square root of time."
+        }
+      },
+      "explain": {
+        "text": "Variances add over 252 independent days, so the standard deviation scales by $\\sqrt{252} \\approx 15.87$: $0.80\\% \\times 15.87 = 12.70\\%$."
+      }
+    },
+    {
+      "id": "q-mdd",
+      "difficulty": 2,
+      "prose": "Closes in £: 80.00, 100.00, 90.00, 120.00, 96.00, 110.00.",
+      "question": "What is the maximum drawdown, in %?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.2,
+        "tol": {
+          "abs": 0.0006
+        },
+        "unit": "%",
+        "label": "Maximum drawdown",
+        "placeholder": "For example -12.5",
+        "accept": "−20%: from £120.00 to £96.00.",
+        "wrong": [
+          {
+            "id": "range",
+            "value": -0.3333,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "first",
+            "value": -0.1,
+            "tol": {
+              "abs": 0.0006
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£120.00 to £96.00: −20%.",
+        "generic": "Not quite right. Track the best close so far and the worst fall from it.",
+        "byKey": {
+          "range": "You used the highest and lowest closes. £80.00 came before the peak.",
+          "first": "That is the first fall, £100.00 to £90.00. A deeper one follows the £120.00 peak."
+        }
+      },
+      "explain": {
+        "text": "The running peak reaches £120.00, and the next close, £96.00, is 20% below it. The earlier dip from £100.00 to £90.00 was only 10%."
+      }
+    },
+    {
+      "id": "q-sort-first",
+      "difficulty": 3,
+      "prose": "A script reads a newest-first file and computes returns without sorting.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Each return divides a close by the next day's, so every return runs backwards",
+            "correct": true
+          },
+          {
+            "id": "error",
+            "text": "Python raises an error on unsorted dates",
+            "why": "Nothing checks the order. The script runs and gives wrong numbers quietly."
+          },
+          {
+            "id": "vol",
+            "text": "Only the volatility is wrong; the drawdown is fine",
+            "why": "The drawdown needs time order too: the running peak would run backwards."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: returns do not depend on order",
+            "why": "A return compares a close with the one before it in time. Reversed rows reverse that."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Silent and wrong: sort first.",
+        "generic": "Not quite right. Ask what “the close before” means on reversed rows."
+      },
+      "explain": {
+        "text": "On reversed rows, \"the row above\" is tomorrow, so every return and every running peak runs backwards. No error appears, which is why the sort comes right after reading."
+      }
+    },
+    {
+      "id": "q-three-charts",
+      "difficulty": 3,
+      "prose": "The exit figure stacks daily returns, rolling volatility and drawdown.",
+      "question": "Which setting makes a date line up across all three panels?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`sharex=True` in `plt.subplots`",
+            "correct": true
+          },
+          {
+            "id": "sharey",
+            "text": "`sharey=True`",
+            "why": "The three panels measure different things, so one y range would flatten two of them."
+          },
+          {
+            "id": "tight",
+            "text": "`bbox_inches=\"tight\"` in `savefig`",
+            "why": "That trims the saved margins. It does not tie the axes."
+          },
+          {
+            "id": "size",
+            "text": "`figsize=(8, 7)`",
+            "why": "Size sets the figure's shape, not whether the panels share dates."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One shared x axis for all three.",
+        "generic": "Not quite right. Which axis carries the dates?"
+      },
+      "explain": {
+        "text": "The dates run along x, so `sharex=True` keeps them aligned. The y axes stay separate because returns, volatility and drawdown have different units and ranges."
+      }
+    }
+  ]
+}

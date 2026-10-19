@@ -1,0 +1,1701 @@
+{
+  "id": "l13-joining-on-dates",
+  "course": "numpy-pandas",
+  "title": "Joining two tables on dates",
+  "minutes": 15,
+  "objectives": [
+    "Merge and align two price tables with different trading days.",
+    "Pivot a long table to a wide one and compute a correlation matrix of returns."
+  ],
+  "skills": [
+    "pd-group",
+    "pd-time"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two calendars",
+      "prose": "Two stocks over Easter 2024. London was shut on Good Friday and Easter Monday. New York was shut on Good Friday but open on Easter Monday, 1 April.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "2024-03-26",
+                "12.62"
+              ],
+              [
+                "2024-03-27",
+                "12.70"
+              ],
+              [
+                "2024-03-28",
+                "12.66"
+              ],
+              [
+                "2024-04-02",
+                "12.80"
+              ],
+              [
+                "2024-04-03",
+                "12.74"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "lon: London"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "2024-03-26",
+                "38.40"
+              ],
+              [
+                "2024-03-27",
+                "38.95"
+              ],
+              [
+                "2024-03-28",
+                "39.10"
+              ],
+              [
+                "2024-04-01",
+                "38.70"
+              ],
+              [
+                "2024-04-02",
+                "39.25"
+              ],
+              [
+                "2024-04-03",
+                "39.60"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "ny: New York, in £"
+          }
+        },
+        "state": {}
+      },
+      "question": "How many dates appear in both tables?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Shared dates",
+        "accept": "5: every London date is also a New York date.",
+        "wrong": [
+          {
+            "id": "ny",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "both",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Go down `lon` and look for each date in `ny`."
+        },
+        {
+          "rung": "point",
+          "text": "Only one date sits in just one table.",
+          "highlight": [
+            "right:r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1 April is only in `ny`; the other 5 dates are in both."
+        }
+      ],
+      "feedback": {
+        "correct": "Five shared dates; 1 April is New York only.",
+        "generic": "Not quite right. Count the dates that appear in both tables.",
+        "byKey": {
+          "ny": "That counts every New York date. 1 April has no London price.",
+          "both": "That adds the two tables' lengths. Shared dates are counted once, and only if both have them.",
+          "four": "Check 3 April again: both tables have it."
+        }
+      },
+      "explain": {
+        "text": "Five dates match. 1 April is in `ny` alone, because London was shut for Easter Monday. Any table built from both must decide what to do with that row.",
+        "canvas": {
+          "right": {
+            "highlight": {
+              "rows": [
+                3
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Inner or left",
+      "prose": "`pd.merge` lines two frames up on a shared column, like a SQL join. Move the slider between the two settings of `how` and watch the 1 April row.\n\n```python\nm = pd.merge(ny, lon, on=\"date\", how=...)\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "ny",
+            "lon"
+          ],
+          "rows": [
+            [
+              "2024-03-26",
+              "38.40",
+              "12.62"
+            ],
+            [
+              "2024-03-27",
+              "38.95",
+              "12.70"
+            ],
+            [
+              "2024-03-28",
+              "39.10",
+              "12.66"
+            ],
+            [
+              "2024-04-01",
+              "38.70",
+              "NaN"
+            ],
+            [
+              "2024-04-02",
+              "39.25",
+              "12.80"
+            ],
+            [
+              "2024-04-03",
+              "39.60",
+              "12.74"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "params": {
+            "h": 0
+          },
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        },
+        "derive": {
+          "values.r3c0": "h == 0 ? '(dropped)' : '2024-04-01'",
+          "values.r3c1": "h == 0 ? '' : '38.70'",
+          "values.r3c2": "h == 0 ? '' : 'NaN'",
+          "caption": "{{h == 0 ? 'how=inner: 5 rows, only dates in both' : 'how=left: 6 rows, every date of ny'}}"
+        },
+        "controls": [
+          {
+            "bind": "h",
+            "min": 0,
+            "max": 1,
+            "step": 1,
+            "start": 0,
+            "label": "0 inner, 1 left"
+          }
+        ]
+      },
+      "question": "With `how=\"left\"`, what does the 1 April row hold under `lon`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "NaN",
+            "correct": true
+          },
+          {
+            "id": "carry",
+            "text": "12.66, the last London close",
+            "why": "`merge` does not carry prices forward. With no London row for 1 April, the cell is NaN."
+          },
+          {
+            "id": "zero",
+            "text": "0.0",
+            "why": "pandas never invents a price of 0. A missing match is NaN."
+          },
+          {
+            "id": "gone",
+            "text": "Nothing: the row is dropped",
+            "why": "That is `how=\"inner\"`. A left join keeps every row of the left frame, `ny`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the slider to 1 and read the highlighted row."
+        },
+        {
+          "rung": "point",
+          "text": "London has no 1 April close to match.",
+          "highlight": [
+            "r3c2"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "A left join keeps the row and marks the gap NaN.",
+        "generic": "Not quite right. Read the `lon` cell on 1 April with the slider at 1."
+      },
+      "explain": {
+        "text": "An **inner** join keeps only dates in both frames, so 1 April disappears. A **left** join keeps every row of the left frame and fills the missing London close with NaN. These match SQL's `INNER JOIN` and `LEFT JOIN`.",
+        "canvas": {
+          "params": {
+            "h": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Same column, two names",
+      "prose": "Both frames have a `close` column, so `suffixes` names the two copies. `how` defaults to `\"inner\"`.\n\n```python\nm = pd.merge(ny, lon, on=\"date\",\n             suffixes=(\"_ny\", \"_lon\"))\nprint(m[\"close_lon\"].iloc[3])\n```",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "2024-03-26",
+                "12.62"
+              ],
+              [
+                "2024-03-27",
+                "12.70"
+              ],
+              [
+                "2024-03-28",
+                "12.66"
+              ],
+              [
+                "2024-04-02",
+                "12.80"
+              ],
+              [
+                "2024-04-03",
+                "12.74"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "lon: London"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "2024-03-26",
+                "38.40"
+              ],
+              [
+                "2024-03-27",
+                "38.95"
+              ],
+              [
+                "2024-03-28",
+                "39.10"
+              ],
+              [
+                "2024-04-01",
+                "38.70"
+              ],
+              [
+                "2024-04-02",
+                "39.25"
+              ],
+              [
+                "2024-04-03",
+                "39.60"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "ny: New York, in £"
+          }
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.8,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 12.00",
+        "label": "Value printed",
+        "accept": "12.80: the inner join drops 1 April, so row 3 is 2 April.",
+        "wrong": [
+          {
+            "id": "ny",
+            "value": 39.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "prev",
+            "value": 12.66,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows survive an inner join?"
+        },
+        {
+          "rung": "point",
+          "text": "1 April is dropped, so the rows are 26, 27, 28 March, then 2 and 3 April.",
+          "highlight": [
+            "left:r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Row 3 is 2 April, where London closed at 12.80."
+        }
+      ],
+      "feedback": {
+        "correct": "Row 3 of the inner join is 2 April: 12.80.",
+        "generic": "Not quite right. Drop 1 April, then count rows from 0.",
+        "byKey": {
+          "ny": "39.25 is New York's close on 2 April. `close_lon` is the London column.",
+          "prev": "12.66 is 28 March, row 2. Row 3 comes after it, and 1 April is gone."
+        }
+      },
+      "explain": {
+        "text": "The default inner join keeps the 5 shared dates, so `iloc[3]` is 2 April. The suffixes turn the two `close` columns into `close_ny` and `close_lon`; without them pandas writes `close_x` and `close_y`.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "rows": [
+                3
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Aligned by the index",
+      "prose": "With dates as the index, arithmetic lines rows up by label, not by position.\n\n```python\na = ny.set_index(\"date\")[\"close\"]\nb = lon.set_index(\"date\")[\"close\"]\nratio = a / b\nprint(len(ratio), ratio.isna().sum())\n```",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "2024-03-26",
+                "12.62"
+              ],
+              [
+                "2024-03-27",
+                "12.70"
+              ],
+              [
+                "2024-03-28",
+                "12.66"
+              ],
+              [
+                "2024-04-02",
+                "12.80"
+              ],
+              [
+                "2024-04-03",
+                "12.74"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "lon: London"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "2024-03-26",
+                "38.40"
+              ],
+              [
+                "2024-03-27",
+                "38.95"
+              ],
+              [
+                "2024-03-28",
+                "39.10"
+              ],
+              [
+                "2024-04-01",
+                "38.70"
+              ],
+              [
+                "2024-04-02",
+                "39.25"
+              ],
+              [
+                "2024-04-03",
+                "39.60"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "ny: New York, in £"
+          }
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`6 1`",
+            "correct": true
+          },
+          {
+            "id": "five",
+            "text": "`5 0`",
+            "why": "Arithmetic keeps every label from either side, like an outer join. 1 April stays, holding NaN."
+          },
+          {
+            "id": "pos",
+            "text": "`6 0`",
+            "why": "pandas matches labels, not positions. If it went by position, 1 April's 38.70 would meet 2 April's 12.80."
+          },
+          {
+            "id": "err",
+            "text": "An error: the lengths differ",
+            "why": "Series of different lengths divide fine. pandas aligns them on the index first."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "pandas matches the two Series by date."
+        },
+        {
+          "rung": "point",
+          "text": "The union of the dates has 6 labels; one has no London price.",
+          "highlight": [
+            "right:r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "6 rows, with NaN on 1 April."
+        }
+      ],
+      "feedback": {
+        "correct": "Six labels, one NaN.",
+        "generic": "Not quite right. Arithmetic aligns on the union of the two indexes."
+      },
+      "explain": {
+        "text": "Before dividing, pandas aligns the two indexes and keeps every label, as an outer join would. 1 April has no London close, so its ratio is NaN. Aligning by label is what stops a price meeting the wrong day."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Long to wide",
+      "prose": "Often both stocks arrive stacked in one long table. `pivot` spreads it out: one row per date, one column per ticker.\n\n```python\nwide = long.pivot(index=\"date\", columns=\"ticker\",\n                  values=\"close\")\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "close"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-26",
+              "NY",
+              "38.40"
+            ],
+            [
+              "1",
+              "2024-03-27",
+              "NY",
+              "38.95"
+            ],
+            [
+              "2",
+              "2024-03-28",
+              "NY",
+              "39.10"
+            ],
+            [
+              "3",
+              "2024-04-01",
+              "NY",
+              "38.70"
+            ],
+            [
+              "4",
+              "2024-04-02",
+              "NY",
+              "39.25"
+            ],
+            [
+              "5",
+              "2024-04-03",
+              "NY",
+              "39.60"
+            ],
+            [
+              "6",
+              "2024-03-26",
+              "LON",
+              "12.62"
+            ],
+            [
+              "7",
+              "2024-03-27",
+              "LON",
+              "12.70"
+            ],
+            [
+              "8",
+              "2024-03-28",
+              "LON",
+              "12.66"
+            ],
+            [
+              "9",
+              "2024-04-02",
+              "LON",
+              "12.80"
+            ],
+            [
+              "10",
+              "2024-04-03",
+              "LON",
+              "12.74"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "long: 11 rows"
+        }
+      },
+      "question": "What shape is `wide`, and how many NaN does it hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "6 rows by 2 columns, with 1 NaN",
+            "correct": true
+          },
+          {
+            "id": "five",
+            "text": "5 rows by 2 columns, with no NaN",
+            "why": "`pivot` keeps every date from either ticker. 1 April gets a row, NaN under LON."
+          },
+          {
+            "id": "eleven",
+            "text": "11 rows by 2 columns",
+            "why": "Each date appears once in `wide`. The 5 shared dates collapse to one row each."
+          },
+          {
+            "id": "cols",
+            "text": "2 rows by 6 columns",
+            "why": "The index is the dates and the columns are the tickers, so dates run down the side."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the distinct dates and tickers."
+        },
+        {
+          "rung": "point",
+          "text": "There are 6 distinct dates and 2 tickers.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "6 rows by 2 columns; LON has no 1 April close."
+        }
+      ],
+      "feedback": {
+        "correct": "Six dates by two tickers, one gap.",
+        "generic": "Not quite right. One row per distinct date, one column per ticker."
+      },
+      "explain": {
+        "text": "`pivot` makes the dates the index and the tickers the columns. Each row compares the two stocks on one day. The wide frame is aligned by construction, ready for `pct_change` and `corr`."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The trade that vanished",
+      "prose": "Three London trades, and a price file that is missing 28 March. A colleague values the trades like this.\n\n```python\nvalued = pd.merge(trades, prices, on=\"date\")\nvalued[\"value\"] = valued[\"qty\"] * valued[\"close\"]\n```",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "qty"
+            ],
+            "rows": [
+              [
+                "2024-03-27",
+                "500"
+              ],
+              [
+                "2024-03-28",
+                "−200"
+              ],
+              [
+                "2024-04-02",
+                "300"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "trades"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "close"
+            ],
+            "rows": [
+              [
+                "2024-03-26",
+                "12.62"
+              ],
+              [
+                "2024-03-27",
+                "12.70"
+              ],
+              [
+                "2024-04-02",
+                "12.80"
+              ],
+              [
+                "2024-04-03",
+                "12.74"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "prices"
+          }
+        },
+        "state": {}
+      },
+      "question": "How many trades does `valued` hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Rows in valued",
+        "accept": "2: the inner join drops the 28 March trade.",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`merge` defaults to an inner join."
+        },
+        {
+          "rung": "point",
+          "text": "Which trade date has no price?",
+          "highlight": [
+            "left:r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "28 March has no price, so that trade is dropped: 2 rows."
+        }
+      ],
+      "feedback": {
+        "correct": "Two: the sale on 28 March silently disappears.",
+        "generic": "Not quite right. An inner join keeps only dates found in both frames.",
+        "byKey": {
+          "three": "You expected every trade to be kept. The default inner join drops the 28 March sale, because the price file has no 28 March row.",
+          "four": "The result follows the trades, not the price file. Prices without a trade are dropped too."
+        }
+      },
+      "explain": {
+        "text": "The inner join silently drops the sale, so the book looks 200 shares longer than it is. Use `how=\"left\"` with `trades` on the left: every trade stays, and a missing price shows as NaN you can see.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "rows": [
+                1
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Moving together",
+      "prose": "Once returns sit side by side, `corr` measures how closely they move together, from −1 to 1. Each dot is one day's returns, in %, for two banks.\n\n```python\nprint(round(rets[\"BARC\"].corr(rets[\"LLOY\"]), 2))\n```",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1.2,
+              0.9
+            ],
+            [
+              -0.8,
+              -0.5
+            ],
+            [
+              0.5,
+              0.7
+            ],
+            [
+              -1.5,
+              -1.1
+            ],
+            [
+              0.9,
+              0.4
+            ],
+            [
+              0.3,
+              0.1
+            ],
+            [
+              -0.4,
+              -0.6
+            ],
+            [
+              1.8,
+              1.3
+            ]
+          ],
+          "x": "BARC return (%)",
+          "y": "LLOY return (%)"
+        },
+        "state": {}
+      },
+      "question": "Which value does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`0.97`",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "`0.0`",
+            "why": "The dots rise from bottom left to top right, so the returns move together."
+          },
+          {
+            "id": "neg",
+            "text": "`-0.97`",
+            "why": "A negative value would mean one rises as the other falls. Here they rise and fall together."
+          },
+          {
+            "id": "big",
+            "text": "`1.6`",
+            "why": "A correlation never goes beyond 1. Even a perfect straight line gives exactly 1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Do the dots slope up, down or neither?"
+        },
+        {
+          "rung": "point",
+          "text": "They lie close to a rising line.",
+          "highlight": [
+            "p3",
+            "p7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Close to a rising line means close to +1: 0.97."
+        }
+      ],
+      "feedback": {
+        "correct": "The banks move almost in step.",
+        "generic": "Not quite right. Look at the slope and spread of the dots."
+      },
+      "explain": {
+        "text": "The dots hug a rising line, so the correlation is close to 1: 0.97. On a wide frame of returns, `rets.corr()` gives every pair at once, with 1 on the diagonal.",
+        "canvas": {
+          "showFit": true
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Joining, in one place",
+      "prose": "Every tool here lines rows up by a key, usually the date.\n\n```python\npd.merge(a, b, on=\"date\")              # inner\npd.merge(a, b, on=\"date\", how=\"left\")   # all of a\npd.merge(a, b, on=[\"date\", \"ticker\"])   # two keys\na_s / b_s            # aligned on the index\nwide = long.pivot(index=\"date\",\n    columns=\"ticker\", values=\"close\")\nwide.pct_change().corr()   # correlation matrix\n```",
+      "question": "You must value every trade, and see which ones lack a price. Which join?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "left",
+            "text": "`pd.merge(trades, prices, ..., how=\"left\")`",
+            "correct": true
+          },
+          {
+            "id": "inner",
+            "text": "`pd.merge(trades, prices, ...)`",
+            "why": "The default inner join drops trades with no price, so you never see them."
+          },
+          {
+            "id": "rightp",
+            "text": "`pd.merge(prices, trades, ..., how=\"left\")`",
+            "why": "That keeps every price day and drops nothing from prices; a trade with no price disappears."
+          },
+          {
+            "id": "outer",
+            "text": "`pd.merge(trades, prices, ..., how=\"outer\")`",
+            "why": "That keeps every trade, but also adds a row for every price day with no trade."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Trades on the left, so every trade stays.",
+        "generic": "Not quite right. Which frame must keep all of its rows?"
+      },
+      "explain": {
+        "text": "A left join keeps every row of the left frame. With `trades` on the left, each trade appears once, and a missing price is a visible NaN."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Value each trade",
+      "prose": "`trades` has `date`, `ticker` and `qty`. `prices` has `date`, `ticker` and `close`, in £. Return the value of each trade, `qty` times `close`, rounded to 2 places, in the order of `trades`. A trade with no price keeps its place, with NaN.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "ticker",
+              "qty"
+            ],
+            "rows": [
+              [
+                "2024-03-27",
+                "LON",
+                "500"
+              ],
+              [
+                "2024-03-28",
+                "LON",
+                "−200"
+              ],
+              [
+                "2024-04-02",
+                "NY",
+                "300"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "trades"
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "date",
+              "ticker",
+              "close"
+            ],
+            "rows": [
+              [
+                "2024-03-27",
+                "LON",
+                "12.70"
+              ],
+              [
+                "2024-03-28",
+                "LON",
+                "12.66"
+              ],
+              [
+                "2024-04-02",
+                "LON",
+                "12.80"
+              ],
+              [
+                "2024-03-27",
+                "NY",
+                "38.95"
+              ],
+              [
+                "2024-04-02",
+                "NY",
+                "39.25"
+              ]
+            ],
+            "rowHeads": true,
+            "align": [
+              "left",
+              "left",
+              "right"
+            ]
+          },
+          "state": {
+            "caption": "prices"
+          }
+        },
+        "stack": true,
+        "state": {}
+      },
+      "question": "Complete `trade_values(trades, prices)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef trade_values(trades, prices):\n    m = ...\n    value = m[\"qty\"] * m[\"close\"]\n    return value.round(2).tolist()\n",
+        "solution": "import pandas as pd\n\ndef trade_values(trades, prices):\n    m = pd.merge(trades, prices, on=[\"date\", \"ticker\"], how=\"left\")\n    value = m[\"qty\"] * m[\"close\"]\n    return value.round(2).tolist()\n",
+        "tests": [
+          {
+            "setup": "trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-27\", \"2024-03-28\", \"2024-04-02\"]), \"ticker\": [\"LON\", \"LON\", \"NY\"], \"qty\": [500, -200, 300]}); prices = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-27\", \"2024-03-28\", \"2024-04-02\", \"2024-03-27\", \"2024-04-02\"]), \"ticker\": [\"LON\", \"LON\", \"LON\", \"NY\", \"NY\"], \"close\": [12.70, 12.66, 12.80, 38.95, 39.25]})",
+            "call": "[None if v != v else v for v in trade_values(trades, prices)]",
+            "expect": "[6350.0, -2532.0, 11775.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-04-01\", \"2024-03-27\", \"2024-04-01\"]), \"ticker\": [\"NY\", \"LON\", \"LON\"], \"qty\": [100, 400, 250]}); prices = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-27\", \"2024-04-01\", \"2024-03-27\"]), \"ticker\": [\"LON\", \"NY\", \"NY\"], \"close\": [12.70, 38.70, 38.95]})",
+            "call": "[None if v != v else v for v in trade_values(trades, prices)]",
+            "expect": "[3870.0, 5080.0, None]",
+            "compare": "equal"
+          },
+          {
+            "setup": "trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-05-01\", \"2024-05-01\"]), \"ticker\": [\"AZN\", \"BARC\"], \"qty\": [-40, 2500]}); prices = pd.DataFrame({\"date\": pd.to_datetime([\"2024-05-01\", \"2024-05-01\", \"2024-05-02\"]), \"ticker\": [\"BARC\", \"AZN\", \"AZN\"], \"close\": [2.15, 118.40, 120.11]})",
+            "call": "[None if v != v else v for v in trade_values(trades, prices)]",
+            "expect": "[-4736.0, 5375.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-04-01\", \"2024-03-27\", \"2024-04-01\"]), \"ticker\": [\"NY\", \"LON\", \"LON\"], \"qty\": [100, 400, 250]}); prices = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-27\", \"2024-04-01\", \"2024-03-27\"]), \"ticker\": [\"LON\", \"NY\", \"NY\"], \"close\": [12.70, 38.70, 38.95]})",
+            "call": "len(trade_values(trades, prices))",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "trades = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-27\", \"2024-03-28\", \"2024-04-02\"]), \"ticker\": [\"LON\", \"LON\", \"NY\"], \"qty\": [500, -200, 300]}); prices = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-27\", \"2024-03-28\", \"2024-04-02\", \"2024-03-27\", \"2024-04-02\"]), \"ticker\": [\"LON\", \"LON\", \"LON\", \"NY\", \"NY\"], \"close\": [12.70, 12.66, 12.80, 38.95, 39.25]})",
+            "call": "[None if v != v else v for v in trade_values(trades, prices)]",
+            "expect": "[6350.0, -2532.0, 11775.0]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each list must match exactly after rounding; the test turns NaN into `None` so it can be compared. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Match on both the date and the ticker, and keep every trade."
+        },
+        {
+          "rung": "point",
+          "text": "`on=[\"date\", \"ticker\"]` matches both keys; `how=\"left\"` keeps all of `trades`.",
+          "highlight": [
+            "left:c0",
+            "left:c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`m = pd.merge(trades, prices, on=[\"date\", \"ticker\"], how=\"left\")`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every trade valued at its own stock's price that day.",
+        "generic": "Some tests failed. Check the join keys and which rows are kept.",
+        "byKey": {
+          "test-1": "Test 1 expects `[6350.0, -2532.0, 11775.0]`. Joining on the date alone pairs trades with the other stock's price too.",
+          "test-2": "Test 2 expects `[3870.0, 5080.0, None]`. A shorter list means an inner join dropped the unpriced trade; use `how=\"left\"`.",
+          "error": "Your code stopped with an error. `m` should come from `pd.merge(trades, prices, ...)`."
+        }
+      },
+      "explain": {
+        "text": "Joining on both keys gives each trade the close of its own stock on its own day. The left join keeps the trade order and every row: the London trade on 1 April has no price, and shows as NaN rather than vanishing."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Closes side by side",
+      "prose": "`long` stacks closes with columns `date`, `ticker` and `close`, rows in any order. Return a wide frame with dates as the index and one column per ticker. Keep only the dates on which every ticker has a close.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "close"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-26",
+              "NY",
+              "38.40"
+            ],
+            [
+              "1",
+              "2024-03-27",
+              "NY",
+              "38.95"
+            ],
+            [
+              "2",
+              "2024-03-28",
+              "NY",
+              "39.10"
+            ],
+            [
+              "3",
+              "2024-04-01",
+              "NY",
+              "38.70"
+            ],
+            [
+              "4",
+              "2024-04-02",
+              "NY",
+              "39.25"
+            ],
+            [
+              "5",
+              "2024-04-03",
+              "NY",
+              "39.60"
+            ],
+            [
+              "6",
+              "2024-03-26",
+              "LON",
+              "12.62"
+            ],
+            [
+              "7",
+              "2024-03-27",
+              "LON",
+              "12.70"
+            ],
+            [
+              "8",
+              "2024-03-28",
+              "LON",
+              "12.66"
+            ],
+            [
+              "9",
+              "2024-04-02",
+              "LON",
+              "12.80"
+            ],
+            [
+              "10",
+              "2024-04-03",
+              "LON",
+              "12.74"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "long in the first example"
+        }
+      },
+      "question": "Complete `aligned_closes(long)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef aligned_closes(long):\n    wide = ...\n    return wide.sort_index().dropna()\n",
+        "solution": "import pandas as pd\n\ndef aligned_closes(long):\n    wide = long.pivot(index=\"date\", columns=\"ticker\", values=\"close\")\n    return wide.sort_index().dropna()\n",
+        "tests": [
+          {
+            "setup": "long = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-26\", \"2024-03-27\", \"2024-03-28\", \"2024-04-01\", \"2024-04-02\", \"2024-04-03\", \"2024-03-26\", \"2024-03-27\", \"2024-03-28\", \"2024-04-02\", \"2024-04-03\"]), \"ticker\": [\"NY\"] * 6 + [\"LON\"] * 5, \"close\": [38.40, 38.95, 39.10, 38.70, 39.25, 39.60, 12.62, 12.70, 12.66, 12.80, 12.74]})",
+            "call": "aligned_closes(long).values.tolist()",
+            "expect": "[[12.62, 38.4], [12.7, 38.95], [12.66, 39.1], [12.8, 39.25], [12.74, 39.6]]",
+            "compare": "equal"
+          },
+          {
+            "setup": "long = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-26\", \"2024-03-27\", \"2024-03-28\", \"2024-04-01\", \"2024-04-02\", \"2024-04-03\", \"2024-03-26\", \"2024-03-27\", \"2024-03-28\", \"2024-04-02\", \"2024-04-03\"]), \"ticker\": [\"NY\"] * 6 + [\"LON\"] * 5, \"close\": [38.40, 38.95, 39.10, 38.70, 39.25, 39.60, 12.62, 12.70, 12.66, 12.80, 12.74]})",
+            "call": "[d.strftime(\"%m-%d\") for d in aligned_closes(long).index]",
+            "expect": "['03-26', '03-27', '03-28', '04-02', '04-03']",
+            "compare": "equal"
+          },
+          {
+            "setup": "long = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-26\", \"2024-03-27\", \"2024-03-28\", \"2024-04-01\", \"2024-04-02\", \"2024-04-03\", \"2024-03-26\", \"2024-03-27\", \"2024-03-28\", \"2024-04-02\", \"2024-04-03\"]), \"ticker\": [\"NY\"] * 6 + [\"LON\"] * 5, \"close\": [38.40, 38.95, 39.10, 38.70, 39.25, 39.60, 12.62, 12.70, 12.66, 12.80, 12.74]})",
+            "call": "list(aligned_closes(long).columns)",
+            "expect": "['LON', 'NY']",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = pd.bdate_range(\"2024-05-01\", periods=10); long = pd.DataFrame({\"date\": list(d) * 3, \"ticker\": [\"AZN\"] * 10 + [\"BARC\"] * 10 + [\"XYZ\"] * 10, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 121.09, 120.80, 122.90, 122.51, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19, 2.22, 2.22, 2.27, 2.23, 7.05, 6.98, 6.90, 6.92, 6.88, 6.88, 6.87, 6.86, 6.94, 7.03]}).sample(frac=1, random_state=4)",
+            "call": "aligned_closes(long).shape",
+            "expect": "(10, 3)",
+            "compare": "equal"
+          },
+          {
+            "setup": "long = pd.DataFrame({\"date\": pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\", \"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"]), \"ticker\": [\"SHEL\"] * 4 + [\"BP\"] * 4, \"close\": [27.80, 28.08, 27.94, 28.22, 4.70, 4.75, 4.71, 4.78]})",
+            "call": "aligned_closes(long)[\"BP\"].tolist()",
+            "expect": "[4.7, 4.75, 4.71, 4.78]",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "long = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-26\", \"2024-03-27\", \"2024-03-28\", \"2024-04-01\", \"2024-04-02\", \"2024-04-03\", \"2024-03-26\", \"2024-03-27\", \"2024-03-28\", \"2024-04-02\", \"2024-04-03\"]), \"ticker\": [\"NY\"] * 6 + [\"LON\"] * 5, \"close\": [38.40, 38.95, 39.10, 38.70, 39.25, 39.60, 12.62, 12.70, 12.66, 12.80, 12.74]})",
+            "call": "[d.strftime(\"%m-%d\") for d in aligned_closes(long).index]",
+            "expect": "['03-26', '03-27', '03-28', '04-02', '04-03']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on long tables of 2 or 3 tickers. One is shuffled, and one has a date only one ticker traded. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Spread the long table so that each ticker gets a column."
+        },
+        {
+          "rung": "point",
+          "text": "`long.pivot(index=..., columns=..., values=...)`.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`wide = long.pivot(index=\"date\", columns=\"ticker\", values=\"close\")`."
+        }
+      ],
+      "feedback": {
+        "correct": "One row per shared date, one column per ticker.",
+        "generic": "Some tests failed. Check what goes in the index, the columns and the values.",
+        "byKey": {
+          "test-1": "Test 1 expects 5 rows of `[LON, NY]` closes, without 1 April.",
+          "test-3": "Test 3 checks the columns: the tickers, sorted, `['LON', 'NY']`.",
+          "error": "Your code stopped with an error. `pivot` takes `index`, `columns` and `values` by name."
+        }
+      },
+      "explain": {
+        "text": "`pivot` puts dates down the side and tickers across the top, so each row is one day. `dropna` then keeps the dates where both traded, which is what a return comparison needs."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A correlation matrix",
+      "prose": "A risk model needs the correlation of daily returns between three stocks. `long` stacks their closes in £ with columns `date`, `ticker` and `close`. Return the correlation matrix of simple returns as a dict of dicts, rounded to 4 places.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "a",
+              "label": "AZN",
+              "values": [
+                100,
+                101.44,
+                103.04,
+                102.64,
+                102.31,
+                102.58,
+                102.27,
+                102.03,
+                103.8,
+                103.47
+              ]
+            },
+            {
+              "id": "b",
+              "label": "BARC",
+              "values": [
+                100,
+                100.47,
+                101.4,
+                100.93,
+                100.47,
+                101.86,
+                103.26,
+                103.26,
+                105.58,
+                103.72
+              ]
+            },
+            {
+              "id": "x",
+              "label": "XYZ",
+              "values": [
+                100,
+                99.01,
+                97.87,
+                98.16,
+                97.59,
+                97.59,
+                97.45,
+                97.3,
+                98.44,
+                99.72
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Trading days from 1 May 2024",
+          "yLabel": "Rebased to 100",
+          "height": 240
+        },
+        "state": {
+          "caption": "the three stocks in the first test, rebased to 100"
+        }
+      },
+      "question": "Complete `return_corr(long)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef return_corr(long):\n    wide = ...\n    rets = ...\n    return rets.corr().round(4).to_dict()\n",
+        "solution": "import pandas as pd\n\ndef return_corr(long):\n    wide = long.pivot(index=\"date\", columns=\"ticker\", values=\"close\").sort_index()\n    rets = wide.pct_change()\n    return rets.corr().round(4).to_dict()\n",
+        "tests": [
+          {
+            "setup": "d = pd.bdate_range(\"2024-05-01\", periods=10); long = pd.DataFrame({\"date\": list(d) * 3, \"ticker\": [\"AZN\"] * 10 + [\"BARC\"] * 10 + [\"XYZ\"] * 10, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 121.09, 120.80, 122.90, 122.51, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19, 2.22, 2.22, 2.27, 2.23, 7.05, 6.98, 6.90, 6.92, 6.88, 6.88, 6.87, 6.86, 6.94, 7.03]})",
+            "call": "return_corr(long)",
+            "expect": "{'AZN': {'AZN': 1.0, 'BARC': 0.6038, 'XYZ': -0.2182}, 'BARC': {'AZN': 0.6038, 'BARC': 1.0, 'XYZ': -0.1373}, 'XYZ': {'AZN': -0.2182, 'BARC': -0.1373, 'XYZ': 1.0}}",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = pd.bdate_range(\"2024-05-01\", periods=10); long = pd.DataFrame({\"date\": list(d) * 3, \"ticker\": [\"AZN\"] * 10 + [\"BARC\"] * 10 + [\"XYZ\"] * 10, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 121.09, 120.80, 122.90, 122.51, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19, 2.22, 2.22, 2.27, 2.23, 7.05, 6.98, 6.90, 6.92, 6.88, 6.88, 6.87, 6.86, 6.94, 7.03]}).sample(frac=1, random_state=4)",
+            "call": "return_corr(long)",
+            "expect": "{'AZN': {'AZN': 1.0, 'BARC': 0.6038, 'XYZ': -0.2182}, 'BARC': {'AZN': 0.6038, 'BARC': 1.0, 'XYZ': -0.1373}, 'XYZ': {'AZN': -0.2182, 'BARC': -0.1373, 'XYZ': 1.0}}",
+            "compare": "equal"
+          },
+          {
+            "setup": "long = pd.DataFrame({\"date\": pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\", \"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"]), \"ticker\": [\"SHEL\"] * 4 + [\"BP\"] * 4, \"close\": [27.80, 28.08, 27.94, 28.22, 4.70, 4.75, 4.71, 4.78]})",
+            "call": "return_corr(long)",
+            "expect": "{'BP': {'BP': 1.0, 'SHEL': 0.9849}, 'SHEL': {'BP': 0.9849, 'SHEL': 1.0}}",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = pd.bdate_range(\"2024-05-01\", periods=10); long = pd.DataFrame({\"date\": list(d) * 3, \"ticker\": [\"AZN\"] * 10 + [\"BARC\"] * 10 + [\"XYZ\"] * 10, \"close\": [118.40, 120.11, 122.00, 121.53, 121.14, 121.45, 121.09, 120.80, 122.90, 122.51, 2.15, 2.16, 2.18, 2.17, 2.16, 2.19, 2.22, 2.22, 2.27, 2.23, 7.05, 6.98, 6.90, 6.92, 6.88, 6.88, 6.87, 6.86, 6.94, 7.03]})",
+            "call": "return_corr(long)[\"AZN\"][\"AZN\"]",
+            "expect": "1.0",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "long = pd.DataFrame({\"date\": pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\", \"2024-06-03\", \"2024-06-04\", \"2024-06-05\", \"2024-06-06\"]), \"ticker\": [\"SHEL\"] * 4 + [\"BP\"] * 4, \"close\": [27.80, 28.08, 27.94, 28.22, 4.70, 4.75, 4.71, 4.78]})",
+            "call": "return_corr(long)",
+            "expect": "{'BP': {'BP': 1.0, 'SHEL': 0.9849}, 'SHEL': {'BP': 0.9849, 'SHEL': 1.0}}",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on 4 to 10 days of 2 or 3 stocks, one shuffled. Each dict must match exactly after rounding to 4 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Wide closes, then returns, then `corr`."
+        },
+        {
+          "rung": "point",
+          "text": "Pivot to one column per ticker and sort the dates before `pct_change`.",
+          "highlight": [
+            "a",
+            "b",
+            "x"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`wide = long.pivot(index=\"date\", columns=\"ticker\", values=\"close\").sort_index()` and `rets = wide.pct_change()`."
+        }
+      ],
+      "feedback": {
+        "correct": "A correlation for every pair of stocks.",
+        "generic": "Some tests failed. Check that you correlate returns, in date order.",
+        "byKey": {
+          "test-1": "Test 1 expects returns, not prices. Correlations near 0.9 or above for every pair usually mean you correlated the closes.",
+          "error": "Your code stopped with an error. `pivot` takes `index`, `columns` and `values` by name."
+        }
+      },
+      "explain": {
+        "text": "Prices trend, so prices of almost any two stocks look correlated. Returns show whether the daily moves go together. Here AZN and BARC move together while XYZ leans the other way."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`pd.merge(a, b, on=\"date\")` is an inner join: only dates in both survive. `how=\"left\"` keeps every row of `a` and fills gaps with NaN.",
+      "Arithmetic between Series aligns on the index and keeps every label, like an outer join.",
+      "`long.pivot(index=\"date\", columns=\"ticker\", values=\"close\")` gives one column per ticker; then `pct_change().corr()` gives the correlation matrix."
+    ],
+    "formula": {
+      "name": "Correlation",
+      "tex": "\\rho_{XY} = \\dfrac{\\operatorname{Cov}(X, Y)}{\\sigma_X \\sigma_Y}",
+      "note": "Always between −1 and 1; compute it on returns, not prices."
+    },
+    "trap": "The default inner join silently drops rows with no match, such as a trade whose price is missing. Use `how=\"left\"`."
+  },
+  "quiz": [
+    {
+      "id": "q-row-counts",
+      "difficulty": 2,
+      "prose": "`a` has prices on 250 dates and `b` on 245. Every date in `b` is also in `a`.",
+      "question": "How many rows do `pd.merge(a, b, on=\"date\")` and `pd.merge(a, b, on=\"date\", how=\"left\")` have?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "245 and 250",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "250 and 250",
+            "why": "The inner join keeps only dates in both, so the 5 extra dates of `a` go."
+          },
+          {
+            "id": "swap",
+            "text": "250 and 245",
+            "why": "That is the wrong way round. The left join keeps all of `a`."
+          },
+          {
+            "id": "sum",
+            "text": "495 and 250",
+            "why": "A join matches rows; it does not stack them."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Inner keeps the 245 shared dates; left keeps all 250 of `a`.",
+        "generic": "Not quite right. Inner keeps matches only; left keeps every row of the left frame."
+      },
+      "explain": {
+        "text": "The inner join keeps the 245 dates found in both. The left join keeps all 250 rows of `a`, with NaN in `b`'s columns on the 5 dates `b` lacks."
+      }
+    },
+    {
+      "id": "q-outer",
+      "difficulty": 2,
+      "prose": "`a` has dates 1, 2, 3 and 4 July. `b` has 2, 3, 4 and 5 July.",
+      "question": "How many rows does `pd.merge(a, b, on=\"date\", how=\"outer\")` have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Rows",
+        "accept": "5: every date from either frame, once.",
+        "wrong": [
+          {
+            "id": "inner",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sum",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Five dates, 1 to 5 July.",
+        "generic": "Not quite right. An outer join keeps every date found in either frame.",
+        "byKey": {
+          "inner": "3 is the inner join: dates in both.",
+          "sum": "Shared dates appear once, not twice.",
+          "four": "That is one frame's length. Outer adds the date only the other frame has."
+        }
+      },
+      "explain": {
+        "text": "An outer join keeps the union of the dates: 1 to 5 July, five rows. 1 July has NaN for `b` and 5 July has NaN for `a`."
+      }
+    },
+    {
+      "id": "q-corr-range",
+      "difficulty": 3,
+      "prose": "`rets.corr()` is computed on a wide frame of daily returns for four stocks.",
+      "question": "Which of these could not be an entry of the result?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "1.3",
+            "correct": true
+          },
+          {
+            "id": "neg",
+            "text": "−0.4",
+            "why": "Negative correlations happen: one stock tends to fall when the other rises."
+          },
+          {
+            "id": "one",
+            "text": "1.0",
+            "why": "Every diagonal entry is exactly 1: each stock with itself."
+          },
+          {
+            "id": "zero",
+            "text": "0.02",
+            "why": "Near 0 means the daily moves are almost unrelated, which is possible."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A correlation lies between −1 and 1.",
+        "generic": "Not quite right. What range can a correlation take?"
+      },
+      "explain": {
+        "text": "A correlation always lies between −1 and 1, with exactly 1 on the diagonal. 1.3 means a bug, such as dividing a covariance by the wrong spreads."
+      }
+    },
+    {
+      "id": "q-suffix",
+      "difficulty": 3,
+      "prose": "```python\nm = pd.merge(ny, lon, on=\"date\")\nprint(list(m.columns))\n```\nBoth `ny` and `lon` have the columns `date` and `close`.",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`['date', 'close_x', 'close_y']`",
+            "correct": true
+          },
+          {
+            "id": "dup",
+            "text": "`['date', 'close', 'close']`",
+            "why": "pandas will not make two columns with one name. It adds `_x` and `_y`."
+          },
+          {
+            "id": "two",
+            "text": "`['date', 'close']`",
+            "why": "Both `close` columns are kept; only the key `date` is shared."
+          },
+          {
+            "id": "dates",
+            "text": "`['date_x', 'date_y', 'close_x', 'close_y']`",
+            "why": "The key column `date` appears once, because both sides agree on it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The key once, the clashing column twice with suffixes.",
+        "generic": "Not quite right. What does pandas do with a non-key column found in both frames?"
+      },
+      "explain": {
+        "text": "The join key appears once. The two `close` columns become `close_x`, from the left frame, and `close_y`. Pass `suffixes=(\"_ny\", \"_lon\")` for clearer names."
+      }
+    }
+  ]
+}

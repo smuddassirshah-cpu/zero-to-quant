@@ -1,0 +1,429 @@
+{
+  "id": "homework-2",
+  "course": "plotting",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h1",
+      "difficulty": 5,
+      "skills": [
+        "pl-figures",
+        "pl-market",
+        "pl-risk"
+      ],
+      "prose": "This is the figure the 1.1 exit project asks for: from daily prices, the price, the returns and the drawdown, stacked on one shared day axis.",
+      "question": "Complete `exit_figure(prices)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef exit_figure(prices):\n    prices = np.array(prices, dtype=float)\n    days = np.arange(1, len(prices) + 1)\n    fig, axes = plt.subplots(3, 1, sharex=True)\n    # axes[0]: prices\n    # axes[1]: daily returns, each under the day it ends, with a zero line\n    # axes[2]: drawdown filled below zero, trough annotated as f\"{dd[i]:.1%}\"\n    return fig, axes\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef exit_figure(prices):\n    prices = np.array(prices, dtype=float)\n    days = np.arange(1, len(prices) + 1)\n    fig, axes = plt.subplots(3, 1, sharex=True)\n    rets = prices[1:] / prices[:-1] - 1\n    peak = np.maximum.accumulate(prices)\n    dd = prices / peak - 1\n    axes[0].plot(days, prices)\n    axes[1].plot(days[1:], rets)\n    axes[1].axhline(0, color=\"grey\", linewidth=0.8)\n    axes[2].fill_between(days, dd, 0, alpha=0.4)\n    i = np.argmin(dd)\n    axes[2].annotate(f\"{dd[i]:.1%}\", xy=(days[i], dd[i]), xytext=(days[i] + 1, dd[i] - 0.02),\n                     arrowprops=dict(arrowstyle=\"->\"))\n    return fig, axes\n",
+        "tests": [
+          {
+            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "call": "[len(axes), axes[0].get_shared_x_axes().joined(axes[0], axes[2])]",
+            "expect": "[3, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "call": "[round(float(y), 4) for y in axes[1].lines[0].get_ydata()]",
+            "expect": "[-0.048, 0.0393, 0.02, 0.0309, -0.04, -0.025, 0.031, 0.0311, 0.0294]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "call": "[float(x) for x in axes[1].lines[0].get_xdata()][:2]",
+            "expect": "[2.0, 3.0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "call": "[len(axes[2].collections), round(float(axes[2].collections[0].get_paths()[0].vertices[:, 1].min()), 4)]",
+            "expect": "[1, -0.064]",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "call": "axes[2].texts[0].get_text()",
+            "expect": "'-6.4%'",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "call": "[len(axes), axes[0].get_shared_x_axes().joined(axes[0], axes[2])]",
+            "expect": "[3, True]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on the chart your function returns. The first run loads matplotlib and numpy, which are large: allow 20 to 40 seconds. Later runs are quick."
+      },
+      "feedback": {
+        "correct": "Three aligned panels; the trough is day 7, −6.4%.",
+        "generic": "Some tests failed. Work through the panels one at a time against the tests.",
+        "byKey": {
+          "test-1": "Ask for three panels on one x axis: `plt.subplots(3, 1, sharex=True)`.",
+          "test-2": "The returns are off. Use `prices[1:] / prices[:-1] - 1`.",
+          "test-3": "Plot the returns against `days[1:]` so the first sits on day 2.",
+          "test-4": "The drawdown should come from the running peak, `np.maximum.accumulate(prices)`, filled with `fill_between`.",
+          "test-5": "The label should read -6.4%. Find the trough with `np.argmin(dd)`."
+        }
+      },
+      "explain": {
+        "text": "The running peak is £260.10 on day 5, and day 7's £243.45 is 6.4% below it. The lowest close, £238.00 on day 2, is only 4.8% below its peak. `np.argmin(prices)` would point at the wrong day. Sharing x keeps each return and each drawdown under its price."
+      }
+    },
+    {
+      "id": "h2",
+      "difficulty": 4,
+      "skills": [
+        "pl-honest"
+      ],
+      "prose": "An index's yearly closes from 1986 to 2025 rose from £100 to over £2,800, with a 38% crash in 2008.",
+      "question": "Complete `long_history(years, prices)` so equal % moves look equal, and label the axis to say so.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef long_history(years, prices):\n    fig, ax = plt.subplots()\n    ax.plot(years, prices)\n    # make equal % moves equal heights, and say so on the y label\n    return ax\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef long_history(years, prices):\n    fig, ax = plt.subplots()\n    ax.plot(years, prices)\n    ax.set_yscale(\"log\")\n    ax.set_ylabel(\"Price (£, log scale)\")\n    return ax\n",
+        "tests": [
+          {
+            "setup": "plt.close('all'); ax = long_history([1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], [100.0, 109.0, 118.81, 129.5, 141.16, 153.86, 167.71, 182.8, 199.26, 217.19, 236.74, 258.04, 281.27, 306.58, 334.17, 364.25, 397.03, 432.76, 471.71, 514.17, 560.44, 610.88, 412.83, 449.99, 791.11, 862.31, 939.92, 1024.51, 1116.71, 1217.22, 1326.77, 1446.18, 1576.33, 1718.2, 1872.84, 2041.4, 2225.12, 2425.38, 2643.67, 2881.6])",
+            "call": "ax.get_yscale()",
+            "expect": "'log'",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); ax = long_history([1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], [100.0, 109.0, 118.81, 129.5, 141.16, 153.86, 167.71, 182.8, 199.26, 217.19, 236.74, 258.04, 281.27, 306.58, 334.17, 364.25, 397.03, 432.76, 471.71, 514.17, 560.44, 610.88, 412.83, 449.99, 791.11, 862.31, 939.92, 1024.51, 1116.71, 1217.22, 1326.77, 1446.18, 1576.33, 1718.2, 1872.84, 2041.4, 2225.12, 2425.38, 2643.67, 2881.6])",
+            "call": "'log' in ax.get_ylabel().lower()",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); ax = long_history([1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], [100.0, 109.0, 118.81, 129.5, 141.16, 153.86, 167.71, 182.8, 199.26, 217.19, 236.74, 258.04, 281.27, 306.58, 334.17, 364.25, 397.03, 432.76, 471.71, 514.17, 560.44, 610.88, 412.83, 449.99, 791.11, 862.31, 939.92, 1024.51, 1116.71, 1217.22, 1326.77, 1446.18, 1576.33, 1718.2, 1872.84, 2041.4, 2225.12, 2425.38, 2643.67, 2881.6])",
+            "call": "len(ax.lines)",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "plt.close('all'); ax = long_history([1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025], [100.0, 109.0, 118.81, 129.5, 141.16, 153.86, 167.71, 182.8, 199.26, 217.19, 236.74, 258.04, 281.27, 306.58, 334.17, 364.25, 397.03, 432.76, 471.71, 514.17, 560.44, 610.88, 412.83, 449.99, 791.11, 862.31, 939.92, 1024.51, 1116.71, 1217.22, 1326.77, 1446.18, 1576.33, 1718.2, 1872.84, 2041.4, 2225.12, 2425.38, 2643.67, 2881.6])",
+            "call": "ax.get_yscale()",
+            "expect": "'log'",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests on the chart your function returns. The first run loads matplotlib and numpy, which are large: allow 20 to 40 seconds. Later runs are quick."
+      },
+      "feedback": {
+        "correct": "On a log axis the 2008 crash looks as deep as it felt.",
+        "generic": "Some tests failed. Check the y scale and the y label.",
+        "byKey": {
+          "test-1": "Set the y axis to a log scale: `ax.set_yscale(\"log\")`.",
+          "test-2": "Tell the reader: put \"log\" in the y label, for example \"Price (£, log scale)\"."
+        }
+      },
+      "explain": {
+        "text": "On a linear axis the 1987 to 2000 rises look flat beside recent years. With `set_yscale(\"log\")` each doubling takes the same height, so the 2008 fall reads at its true size. The label stops a reader taking the gaps between ticks as equal £ amounts."
+      }
+    },
+    {
+      "id": "h3",
+      "difficulty": 4,
+      "skills": [
+        "pl-risk",
+        "pl-market"
+      ],
+      "prose": "A fund sends 90 daily closes, not returns. Plot its annualised 20-day rolling volatility with the long-run level dashed.",
+      "question": "Complete `vol_from_prices(closes)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\ndef vol_from_prices(closes):\n    \"\"\"closes: daily closes in £, a pandas Series indexed by date.\"\"\"\n    fig, ax = plt.subplots()\n    # the annualised 20-day rolling volatility of the daily returns, as a line\n    # the long-run volatility of all the returns, as a dashed line\n    return ax\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\ndef vol_from_prices(closes):\n    \"\"\"closes: daily closes in £, a pandas Series indexed by date.\"\"\"\n    fig, ax = plt.subplots()\n    rets = closes.pct_change()\n    vol = rets.rolling(20).std() * np.sqrt(252)\n    ax.plot(vol.index, vol.values)\n    ax.axhline(rets.std() * np.sqrt(252), linestyle=\"--\", color=\"grey\")\n    return ax\n",
+        "tests": [
+          {
+            "setup": "plt.close('all'); closes = pd.Series(np.round(80 * np.cumprod(1 + np.random.default_rng(9).normal(0, 0.015, 90)), 2), index=pd.bdate_range('2025-06-02', periods=90)); ax = vol_from_prices(closes)",
+            "call": "int(np.isnan(np.asarray(ax.lines[0].get_ydata(), dtype=float)).sum())",
+            "expect": "20",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); closes = pd.Series(np.round(80 * np.cumprod(1 + np.random.default_rng(9).normal(0, 0.015, 90)), 2), index=pd.bdate_range('2025-06-02', periods=90)); ax = vol_from_prices(closes)",
+            "call": "round(float(np.asarray(ax.lines[0].get_ydata(), dtype=float)[-1]) / (float(closes.pct_change().iloc[-20:].std()) * 252 ** 0.5), 4)",
+            "expect": "1.0",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); closes = pd.Series(np.round(80 * np.cumprod(1 + np.random.default_rng(9).normal(0, 0.015, 90)), 2), index=pd.bdate_range('2025-06-02', periods=90)); ax = vol_from_prices(closes)",
+            "call": "round(float(ax.lines[1].get_ydata()[0]) / (float(closes.pct_change().std()) * 252 ** 0.5), 4)",
+            "expect": "1.0",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); closes = pd.Series(np.round(80 * np.cumprod(1 + np.random.default_rng(9).normal(0, 0.015, 90)), 2), index=pd.bdate_range('2025-06-02', periods=90)); ax = vol_from_prices(closes)",
+            "call": "ax.lines[1].get_linestyle()",
+            "expect": "'--'",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "plt.close('all'); closes = pd.Series(np.round(80 * np.cumprod(1 + np.random.default_rng(9).normal(0, 0.015, 90)), 2), index=pd.bdate_range('2025-06-02', periods=90)); ax = vol_from_prices(closes)",
+            "call": "int(np.isnan(np.asarray(ax.lines[0].get_ydata(), dtype=float)).sum())",
+            "expect": "20",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on the chart your function returns. The first run loads matplotlib and numpy and pandas, which are large: allow 20 to 40 seconds. Later runs are quick."
+      },
+      "feedback": {
+        "correct": "Twenty days of gap, then the rolling line against its long-run level.",
+        "generic": "Some tests failed. Start from returns, not prices.",
+        "byKey": {
+          "test-1": "The line should begin with 20 gaps: one from `pct_change`, then 19 while the window fills. Keep the NaNs.",
+          "test-2": "The rolling level is off. Take the rolling sd of the returns, not the prices, and annualise with $\\sqrt{252}$.",
+          "test-3": "The dashed line should be `rets.std() * np.sqrt(252)` over all the returns."
+        }
+      },
+      "explain": {
+        "text": "`pct_change` leaves the first day empty, so the first full 20-day window of returns ends on day 21: twenty gaps. Volatility of prices themselves would measure the price level, not risk."
+      }
+    },
+    {
+      "id": "h4",
+      "difficulty": 4,
+      "skills": [
+        "pl-risk",
+        "pl-figures"
+      ],
+      "prose": "A share's closes for eleven trading days in September 2025, by date. The desk wants the drawdown filled below zero and the trough labelled with its date on the axis.",
+      "question": "Complete `dd_chart(closes)`. Use pandas: `closes.cummax()` is the running peak and `dd.idxmin()` the trough's date.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\ndef dd_chart(closes):\n    \"\"\"closes: daily closes in £, a pandas Series indexed by date.\"\"\"\n    fig, ax = plt.subplots()\n    # the drawdown, filled below zero, against the dates\n    # an arrow to the trough, labelled like \"Max drawdown -12.3%\"\n    return ax\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\ndef dd_chart(closes):\n    \"\"\"closes: daily closes in £, a pandas Series indexed by date.\"\"\"\n    fig, ax = plt.subplots()\n    dd = closes / closes.cummax() - 1\n    ax.fill_between(dd.index, dd.values, 0, alpha=0.4)\n    t = dd.idxmin()\n    ax.annotate(f\"Max drawdown {dd.min():.1%}\", xy=(t, dd.min()), xytext=(t, dd.min() - 0.05),\n                arrowprops=dict(arrowstyle=\"->\"))\n    return ax\n",
+        "tests": [
+          {
+            "setup": "plt.close('all'); closes = pd.Series([380.0, 362.1, 385.0, 409.95, 426.1, 401.2, 388.05, 392.6, 405.85, 431.2, 425.0], index=pd.bdate_range('2025-09-01', periods=11)); ax = dd_chart(closes)",
+            "call": "len(ax.collections)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); closes = pd.Series([380.0, 362.1, 385.0, 409.95, 426.1, 401.2, 388.05, 392.6, 405.85, 431.2, 425.0], index=pd.bdate_range('2025-09-01', periods=11)); ax = dd_chart(closes)",
+            "call": "ax.texts[0].get_text()",
+            "expect": "'Max drawdown -8.9%'",
+            "compare": "equal"
+          },
+          {
+            "setup": "plt.close('all'); closes = pd.Series([380.0, 362.1, 385.0, 409.95, 426.1, 401.2, 388.05, 392.6, 405.85, 431.2, 425.0], index=pd.bdate_range('2025-09-01', periods=11)); ax = dd_chart(closes)",
+            "call": "str(pd.Timestamp(ax.texts[0].xy[0]).date())",
+            "expect": "'2025-09-09'",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "plt.close('all'); closes = pd.Series([380.0, 362.1, 385.0, 409.95, 426.1, 401.2, 388.05, 392.6, 405.85, 431.2, 425.0], index=pd.bdate_range('2025-09-01', periods=11)); ax = dd_chart(closes)",
+            "call": "len(ax.collections)",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests on the chart your function returns. The first run loads matplotlib and numpy and pandas, which are large: allow 20 to 40 seconds. Later runs are quick."
+      },
+      "feedback": {
+        "correct": "The trough is 9 September, 8.9% below the peak.",
+        "generic": "Some tests failed. Check the running peak and the date you point at.",
+        "byKey": {
+          "test-2": "The label should read \"Max drawdown -8.9%\". Divide by the running peak, `closes.cummax()`.",
+          "test-3": "Point the arrow at `dd.idxmin()`, the date of the deepest drawdown."
+        }
+      },
+      "explain": {
+        "text": "`closes.cummax()` is the running peak, £426.10 on 5 September. The deepest point is £388.05 on 9 September, 8.9% below it; the lowest close, £362.10 on 2 September, is a shallower fall. With dates as x, the arrow's `xy` takes the trough's Timestamp directly."
+      }
+    },
+    {
+      "id": "h5",
+      "difficulty": 3,
+      "skills": [
+        "pl-honest",
+        "pl-market"
+      ],
+      "prose": "A report shows ten years of a share's daily changes in £ and says: \"Risk has tripled since 2016.\" The share has tripled in price over the same period.",
+      "question": "What is the most likely truth?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "Risk in % terms may be unchanged; £ changes grow with the price.",
+            "correct": true
+          },
+          {
+            "id": "tripled",
+            "text": "Risk has tripled, as the chart shows.",
+            "why": "You read £ changes as risk. A 1% day at three times the price is three times the £ move."
+          },
+          {
+            "id": "fell",
+            "text": "Risk must have fallen to a third.",
+            "why": "The chart says nothing either way about % risk. Plot returns to find out."
+          },
+          {
+            "id": "log",
+            "text": "The chart needs a log y axis to fix it.",
+            "why": "A log axis needs positive values; £ changes are both signs. The fix is to plot returns."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Plot returns before comparing risk across years.",
+        "generic": "Not quite right. Ask what a £ change does when the price triples."
+      },
+      "explain": {
+        "text": "A £ change is roughly the return times the price. If the price tripled, £ moves triple with no change in % risk. A returns chart or rolling vol answers the question honestly."
+      }
+    },
+    {
+      "id": "h6",
+      "difficulty": 4,
+      "skills": [
+        "pl-risk"
+      ],
+      "prose": "A volatility-targeting fund of £1,000,000 holds $\\tfrac{15\\%}{\\sigma_t}$ of its capital in an index, where $\\sigma_t$ is the annualised 20-day vol. Today the index's daily returns over 20 days have a sd of 1.5%.",
+      "question": "How much is held in the index, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 629941.0,
+        "tol": {
+          "abs": 1000
+        },
+        "unit": "£",
+        "label": "Holding",
+        "accept": "About £629,941: $\\sigma_t = 1.5\\% \\times \\sqrt{252} = 23.81\\%$, and $\\tfrac{0.15}{0.2381} \\times 1{,}000{,}000$.",
+        "wrong": [
+          {
+            "id": "daily",
+            "value": 10000000,
+            "tol": {
+              "abs": 1000
+            }
+          },
+          {
+            "id": "times252",
+            "value": 39683,
+            "tol": {
+              "abs": 1000
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About £630,000 in the index.",
+        "generic": "Not quite right. Annualise the vol first, then divide 15% by it.",
+        "byKey": {
+          "daily": "You divided by the daily sd. Annualise it with $\\sqrt{252}$ first.",
+          "times252": "You annualised with 252. Use $\\sqrt{252}$."
+        }
+      },
+      "explain": {
+        "text": "$\\sigma_t = 0.015 \\times 15.87 = 0.2381$, so the fund holds $\\tfrac{0.15}{0.2381} = 0.63$ of its capital: about £630,000. When the rolling vol chart is above 15%, the fund holds less than all its capital."
+      }
+    },
+    {
+      "id": "h7",
+      "difficulty": 4,
+      "skills": [
+        "pl-honest",
+        "pl-risk"
+      ],
+      "prose": "A junior analyst sends a one-page risk pack for a fund over 15 years. Panel (a) is a linear price chart. Panel (b) charts daily £ changes. Panel (c) is a count histogram of returns, with a normal pdf lying flat along the bottom. Panel (d) is a 20-day rolling volatility line with no reference and an unlabelled y axis.",
+      "question": "Write a review: for each panel, what misleads and the matplotlib fix. Then say what single figure you would send instead.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "For each of panels (a) to (d), say what misleads a reader and how to fix it in matplotlib. Then describe the one figure you would send instead.",
+        "model": "**Panel (a), linear price chart.** Over 15 years the price rose several times over, so a linear axis makes late moves look large and early crashes look small. Fix: `ax.set_yscale(\"log\")` and say so in the y label, so equal % moves have equal heights. (Or keep it linear and add the drawdown panel below.)\n\n**Panel (b), daily £ changes.** A £ change grows with the price, so the chart shows rising \"risk\" that is only a rising price. Fix: plot returns, `prices[1:] / prices[:-1] - 1` against `days[1:]`, with `ax.axhline(0)` and `PercentFormatter(1.0)`.\n\n**Panel (c), the flat normal curve.** The bars are counts and the curve is a density, so the curve sits about $N \\times \\text{width}$ times too low. Fix: `ax.hist(rets, bins=50, density=True)`, then the pdf with the returns' own $\\mu$ and $\\sigma$. Check the bin edges cover `rets.min()` to `rets.max()`, or the worst days vanish.\n\n**Panel (d), rolling vol with no reference.** Without a long-run line the reader cannot tell a high regime from a normal one, and the axis is unlabelled. Fix: annualise with $\\sqrt{252}$, add `ax.axhline(rets.std() * np.sqrt(252), linestyle=\"--\")`, label the window (\"20-day\") and use % ticks. Warn that drops exactly 20 days after a shock are echoes.\n\n**What I would send.** One figure from `plt.subplots(3, 1, sharex=True)`: prices on a log axis, daily returns with a zero line, and the drawdown filled below zero with `fill_between`, its trough annotated with `ax.annotate` at `np.argmin(dd)`. The histogram and the rolling vol chart go on a second page, each fixed as above.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Panel (a): names the linear-axis exaggeration of late moves and fixes it with a log y axis (or a drawdown panel)."
+          },
+          {
+            "points": 2,
+            "text": "Panel (b): explains that £ changes scale with price and replaces them with returns, aligned with days[1:]."
+          },
+          {
+            "points": 2,
+            "text": "Panel (c): identifies counts against density and fixes it with density=True and the fitted μ and σ."
+          },
+          {
+            "points": 2,
+            "text": "Panel (d): adds a dashed long-run reference at the whole-period annualised vol (√252), with % ticks."
+          },
+          {
+            "points": 2,
+            "text": "Proposes the shared-x three-panel figure with a filled drawdown and the trough annotated."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your review with the model answer and tick the rubric.",
+        "generic": "Compare your review with the model answer and tick the rubric."
+      },
+      "explain": {
+        "text": "Each panel repeats one trap from this level: linear exaggeration, £ against %, counts against density, and a line with no reference. The exit figure puts price, returns and drawdown on one shared axis."
+      }
+    },
+    {
+      "id": "h8",
+      "difficulty": 3,
+      "skills": [
+        "pl-risk"
+      ],
+      "prose": "A chart shows a fund's wealth with its running peak dashed. On day 120 the wealth is at its lowest ever, 8% below the day 1 start. On day 300 it is 15% below a peak set on day 250.",
+      "question": "Where should the maximum drawdown annotation point?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "d300",
+            "text": "At day 300",
+            "correct": true
+          },
+          {
+            "id": "d120",
+            "text": "At day 120, the lowest wealth",
+            "why": "You took the lowest point. Day 120 is 8% under its peak; day 300 is 15% under a higher one."
+          },
+          {
+            "id": "d250",
+            "text": "At day 250, the peak",
+            "why": "The peak is where the fall starts. The annotation marks the trough."
+          },
+          {
+            "id": "both",
+            "text": "At day 1, where the measurement starts",
+            "why": "Drawdowns are measured from the running peak, which moves up over time."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The deepest fall from a peak, not the lowest level.",
+        "generic": "Not quite right. Compare each low with the peak before it."
+      },
+      "explain": {
+        "text": "The maximum drawdown is the most negative $D_t$, so −15% on day 300 beats −8% on day 120. `np.argmin(dd)` finds it; `np.argmin(wealth)` would pick day 120."
+      }
+    }
+  ]
+}

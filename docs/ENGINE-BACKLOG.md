@@ -478,3 +478,12 @@ Raised later (pytest level 2):
 165. `graph` canvas: labels shrink to unreadable sizes when nodes are close or the canvas is short; set a minimum font size and wrap or truncate instead (pytest level 2 widened the layout to work around it).
 
 Content note (pytest level 2): drawdowns are negative fractions (−0.25) so that "drawdown is never positive" holds; py-found Stage 1 returns them positive. Reconcile when either course is revised.
+
+Raised later (plotting level 1):
+
+166. Validator: accept `b{i}` bin ids in hint highlights on a `bars` canvas (README-B documents them; the validator only accepts `x...` ids).
+167. `bars` canvas: a bin-width binding (`params.bins` is fixed), so a slider in `canvas.controls` can re-bin a histogram without a `derive` workaround.
+168. `series` canvas: an optional title and a date-format param for the ticks (so the canvas can match matplotlib's `DateFormatter` output in a lesson about date formats).
+169. Worker: suppress matplotlib's "building the font cache" line in the Run examples output on the first import.
+
+Note (plotting level 1): matplotlib 3.8.4 and its eight dependency wheels were added to the local CDN folder used for sandbox playthroughs; in the browser they come from jsDelivr as usual.

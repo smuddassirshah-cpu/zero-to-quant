@@ -1,0 +1,1681 @@
+{
+  "id": "l12-split-apply-combine",
+  "course": "numpy-pandas",
+  "title": "Split, apply, combine",
+  "minutes": 15,
+  "objectives": [
+    "Summarise data by group with `groupby`.",
+    "Compute returns inside each stock of a long table."
+  ],
+  "skills": [
+    "pd-group",
+    "pd-time"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "One table, three stocks",
+      "prose": "Daily returns, in %, for three stocks, stacked in one long table: one row per stock per day. To summarise each stock we first pull its rows out.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "ret"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-04",
+              "BARC",
+              "−1.2"
+            ],
+            [
+              "1",
+              "2024-03-04",
+              "VOD",
+              "0.5"
+            ],
+            [
+              "2",
+              "2024-03-04",
+              "AZN",
+              "0.8"
+            ],
+            [
+              "3",
+              "2024-03-05",
+              "BARC",
+              "1.5"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "VOD",
+              "0.1"
+            ],
+            [
+              "5",
+              "2024-03-05",
+              "AZN",
+              "−0.4"
+            ],
+            [
+              "6",
+              "2024-03-06",
+              "BARC",
+              "0.6"
+            ],
+            [
+              "7",
+              "2024-03-06",
+              "VOD",
+              "−0.9"
+            ],
+            [
+              "8",
+              "2024-03-06",
+              "AZN",
+              "1.1"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "df: one row per stock per day"
+        }
+      },
+      "question": "Tap every BARC return.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0c3",
+          "r3c3",
+          "r6c3"
+        ],
+        "countWord": "picked",
+        "only": [
+          "r0c3",
+          "r1c3",
+          "r2c3",
+          "r3c3",
+          "r4c3",
+          "r5c3",
+          "r6c3",
+          "r7c3",
+          "r8c3"
+        ],
+        "wrong": [
+          {
+            "id": "day",
+            "set": [
+              "r0c3",
+              "r1c3",
+              "r2c3"
+            ],
+            "flash": [
+              "r1c3",
+              "r2c3"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read down the ticker column for BARC."
+        },
+        {
+          "rung": "point",
+          "text": "BARC comes first on each day.",
+          "highlight": [
+            "r0c2",
+            "r3c2",
+            "r6c2"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Three BARC rows, one per day.",
+        "generic": "Not quite right. Pick the returns whose ticker is BARC.",
+        "byKey": {
+          "day": "Those are the three stocks on 4 March. We want one stock across all three days."
+        }
+      },
+      "explain": {
+        "text": "Picking out one ticker's rows is the **split**. Each of the three tickers gets its own group of three rows, whatever order they sit in.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              3,
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One number per group",
+      "prose": "Now summarise one group.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "ret"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-04",
+              "BARC",
+              "−1.2"
+            ],
+            [
+              "1",
+              "2024-03-04",
+              "VOD",
+              "0.5"
+            ],
+            [
+              "2",
+              "2024-03-04",
+              "AZN",
+              "0.8"
+            ],
+            [
+              "3",
+              "2024-03-05",
+              "BARC",
+              "1.5"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "VOD",
+              "0.1"
+            ],
+            [
+              "5",
+              "2024-03-05",
+              "AZN",
+              "−0.4"
+            ],
+            [
+              "6",
+              "2024-03-06",
+              "BARC",
+              "0.6"
+            ],
+            [
+              "7",
+              "2024-03-06",
+              "VOD",
+              "−0.9"
+            ],
+            [
+              "8",
+              "2024-03-06",
+              "AZN",
+              "1.1"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              0,
+              3,
+              6
+            ]
+          }
+        }
+      },
+      "question": "What is BARC's mean daily return, in %?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "%",
+        "placeholder": "For example 0.2",
+        "label": "BARC mean return",
+        "accept": "0.3%: (−1.2 + 1.5 + 0.6) / 3.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 0.2333,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sum",
+            "value": 0.9,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "first",
+            "value": -1.2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add BARC's three returns, then divide by 3."
+        },
+        {
+          "rung": "point",
+          "text": "They are −1.2, 1.5 and 0.6.",
+          "highlight": [
+            "r0c3",
+            "r3c3",
+            "r6c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "(−1.2 + 1.5 + 0.6) / 3 = 0.3."
+        }
+      ],
+      "feedback": {
+        "correct": "0.3% a day on average.",
+        "generic": "Not quite right. Average only BARC's three returns.",
+        "byKey": {
+          "all": "That is the mean of all nine rows. Average only BARC's three.",
+          "sum": "That is BARC's total. Divide by its 3 days.",
+          "first": "That is BARC's first day only. Average all three."
+        }
+      },
+      "explain": {
+        "text": "$(-1.2 + 1.5 + 0.6) / 3 = 0.3$. Doing the same to each group is the **apply** step: AZN gives 0.5 and VOD gives −0.1.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c3",
+              "r3c3",
+              "r6c3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Split, apply, combine",
+      "prose": "`groupby` does all three steps: **split** the rows by a key, **apply** a summary to each group, **combine** the answers.\n\n```python\nprint(df.groupby(\"ticker\")[\"ret\"].mean())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "ret"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-04",
+              "BARC",
+              "−1.2"
+            ],
+            [
+              "1",
+              "2024-03-04",
+              "VOD",
+              "0.5"
+            ],
+            [
+              "2",
+              "2024-03-04",
+              "AZN",
+              "0.8"
+            ],
+            [
+              "3",
+              "2024-03-05",
+              "BARC",
+              "1.5"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "VOD",
+              "0.1"
+            ],
+            [
+              "5",
+              "2024-03-05",
+              "AZN",
+              "−0.4"
+            ],
+            [
+              "6",
+              "2024-03-06",
+              "BARC",
+              "0.6"
+            ],
+            [
+              "7",
+              "2024-03-06",
+              "VOD",
+              "−0.9"
+            ],
+            [
+              "8",
+              "2024-03-06",
+              "AZN",
+              "1.1"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "AZN 0.5, BARC 0.3, VOD −0.1, labelled by ticker",
+            "correct": true
+          },
+          {
+            "id": "order",
+            "text": "BARC 0.3, VOD −0.1, AZN 0.5, in the table's order",
+            "why": "`groupby` sorts its keys by default, so the result runs AZN, BARC, VOD."
+          },
+          {
+            "id": "one",
+            "text": "A single number, 0.2333",
+            "why": "That is `df[\"ret\"].mean()`, with no split. `groupby` gives one mean per ticker."
+          },
+          {
+            "id": "nine",
+            "text": "Nine rows, each holding its ticker's mean",
+            "why": "That shape comes from `transform(\"mean\")`. A plain `mean` gives one row per group."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One answer per group."
+        },
+        {
+          "rung": "point",
+          "text": "The groups are AZN, BARC and VOD; `groupby` sorts them.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "AZN 0.5, BARC 0.3, VOD −0.1."
+        }
+      ],
+      "feedback": {
+        "correct": "One mean per ticker, sorted by ticker.",
+        "generic": "Not quite right. `groupby` gives one value per group, with the groups as the index.",
+        "byKey": {
+          "order": "`groupby` sorts its keys by default, so the result runs AZN, BARC, VOD."
+        }
+      },
+      "explain": {
+        "text": "The result is a Series with the tickers as its index, one mean each, sorted alphabetically. Pass `sort=False` to keep the order of first appearance."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A missing return",
+      "prose": "Suppose VOD's return on 5 March is missing (NaN). `agg` applies several summaries at once.\n\n```python\ng = df.groupby(\"ticker\")[\"ret\"]\nprint(g.agg([\"mean\", \"count\", \"size\"]).loc[\"VOD\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "ret"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-04",
+              "BARC",
+              "−1.2"
+            ],
+            [
+              "1",
+              "2024-03-04",
+              "VOD",
+              "0.5"
+            ],
+            [
+              "2",
+              "2024-03-04",
+              "AZN",
+              "0.8"
+            ],
+            [
+              "3",
+              "2024-03-05",
+              "BARC",
+              "1.5"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "VOD",
+              "NaN"
+            ],
+            [
+              "5",
+              "2024-03-05",
+              "AZN",
+              "−0.4"
+            ],
+            [
+              "6",
+              "2024-03-06",
+              "BARC",
+              "0.6"
+            ],
+            [
+              "7",
+              "2024-03-06",
+              "VOD",
+              "−0.9"
+            ],
+            [
+              "8",
+              "2024-03-06",
+              "AZN",
+              "1.1"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              1,
+              4,
+              7
+            ]
+          }
+        }
+      },
+      "question": "What are VOD's `mean`, `count` and `size`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "−0.2, 2 and 3",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "−0.1333, 2 and 3",
+            "why": "You counted the gap as a 0 in the mean. `mean` skips NaN: (0.5 − 0.9) / 2."
+          },
+          {
+            "id": "same",
+            "text": "−0.2, 3 and 3",
+            "why": "`count` skips missing values. Only `size` counts every row."
+          },
+          {
+            "id": "nan",
+            "text": "NaN, 2 and 3",
+            "why": "One gap does not spoil the mean. pandas skips it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`count` and `size` differ in one way."
+        },
+        {
+          "rung": "point",
+          "text": "`count` counts values that are present; `size` counts rows.",
+          "highlight": [
+            "r1c3",
+            "r4c3",
+            "r7c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "VOD has 3 rows and 2 returns, mean (0.5 − 0.9) / 2 = −0.2."
+        }
+      ],
+      "feedback": {
+        "correct": "Two returns present, three rows.",
+        "generic": "Not quite right. Check how each summary treats the NaN."
+      },
+      "explain": {
+        "text": "`mean` and `count` skip NaN, so VOD's mean is $(0.5 - 0.9) / 2 = -0.2$ over 2 returns. `size` counts rows, 3. A gap between `count` and `size` flags missing data."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Grouping by weekday",
+      "prose": "The key can be anything with one value per row. Here it is the day of the week, from the date index.\n\n```python\nwd = r.groupby(r.index.day_name()).mean()\nprint(wd[\"Monday\"])\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "date",
+            "weekday",
+            "r"
+          ],
+          "rows": [
+            [
+              "2024-03-04",
+              "Mon",
+              "0.4"
+            ],
+            [
+              "2024-03-05",
+              "Tue",
+              "−0.2"
+            ],
+            [
+              "2024-03-06",
+              "Wed",
+              "0.6"
+            ],
+            [
+              "2024-03-07",
+              "Thu",
+              "0.1"
+            ],
+            [
+              "2024-03-08",
+              "Fri",
+              "−0.3"
+            ],
+            [
+              "2024-03-11",
+              "Mon",
+              "−0.8"
+            ],
+            [
+              "2024-03-12",
+              "Tue",
+              "0.5"
+            ],
+            [
+              "2024-03-13",
+              "Wed",
+              "0.2"
+            ],
+            [
+              "2024-03-14",
+              "Thu",
+              "0.3"
+            ],
+            [
+              "2024-03-15",
+              "Fri",
+              "0.7"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "r: one stock's daily returns in %"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "For example 0.1",
+        "label": "Value printed",
+        "accept": "−0.2: (0.4 − 0.8) / 2.",
+        "wrong": [
+          {
+            "id": "first",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "all",
+            "value": 0.15,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sum",
+            "value": -0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows fall on a Monday?"
+        },
+        {
+          "rung": "point",
+          "text": "4 March and 11 March.",
+          "highlight": [
+            "r0",
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "(0.4 − 0.8) / 2 = −0.2."
+        }
+      ],
+      "feedback": {
+        "correct": "The two Mondays average −0.2%.",
+        "generic": "Not quite right. Average the returns on the two Mondays.",
+        "byKey": {
+          "first": "That is the first Monday alone. The group holds both Mondays.",
+          "all": "That is the mean of all ten days. Keep only Mondays.",
+          "sum": "That is the Mondays' total. Divide by 2."
+        }
+      },
+      "explain": {
+        "text": "`r.index.day_name()` gives each row a weekday, and `groupby` splits on it. Two Mondays are far too few to claim a Monday effect; the code is the same for ten years of data.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              5
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A return between two stocks",
+      "prose": "Now closes in £, stacked by ticker, oldest first within each.\n\n```python\ndf[\"ret\"] = df[\"close\"].pct_change()\nprint(round(df.loc[3, \"ret\"], 4))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "close"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-04",
+              "AZN",
+              "118.40"
+            ],
+            [
+              "1",
+              "2024-03-05",
+              "AZN",
+              "119.35"
+            ],
+            [
+              "2",
+              "2024-03-06",
+              "AZN",
+              "118.87"
+            ],
+            [
+              "3",
+              "2024-03-04",
+              "BARC",
+              "2.15"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "BARC",
+              "2.18"
+            ],
+            [
+              "5",
+              "2024-03-06",
+              "BARC",
+              "2.16"
+            ],
+            [
+              "6",
+              "2024-03-04",
+              "VOD",
+              "0.72"
+            ],
+            [
+              "7",
+              "2024-03-05",
+              "VOD",
+              "0.71"
+            ],
+            [
+              "8",
+              "2024-03-06",
+              "VOD",
+              "0.73"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print for row 3, BARC on 4 March?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`-0.9819`",
+            "correct": true
+          },
+          {
+            "id": "nan",
+            "text": "`nan`",
+            "why": "You expected BARC's first day to have no return. `pct_change` ignores the ticker and divides by the row above, AZN's 118.87."
+          },
+          {
+            "id": "next",
+            "text": "`0.014`",
+            "why": "That is BARC's return on 5 March, row 4. Row 3 divides by the row above it."
+          },
+          {
+            "id": "zero",
+            "text": "`0.0`",
+            "why": "Nothing sets it to 0. It divides 2.15 by AZN's 118.87."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`pct_change` only looks at the row above."
+        },
+        {
+          "rung": "point",
+          "text": "The row above row 3 is AZN on 6 March, at 118.87.",
+          "highlight": [
+            "r2c3",
+            "r3c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "2.15 / 118.87 − 1 = −0.9819."
+        }
+      ],
+      "feedback": {
+        "correct": "A fake 98% loss from dividing BARC by AZN.",
+        "generic": "Not quite right. Which close sits in the row above row 3?",
+        "byKey": {
+          "nan": "That is the misconception. `pct_change` ignores the ticker and divides by the row above, AZN's 118.87, giving −0.9819."
+        }
+      },
+      "explain": {
+        "text": "On a stacked table, `pct_change` runs straight across the boundary between stocks. Each ticker's first row compares it with another stock. Group first: `df.groupby(\"ticker\")[\"close\"].pct_change()`.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r2c3",
+              "r3c3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Returns within each stock",
+      "prose": "Grouping first keeps every return inside one stock. The result has the same rows as `df`.\n\n```python\nret = df.groupby(\"ticker\")[\"close\"].pct_change()\nprint(ret.isna().sum())\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "close"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-04",
+              "AZN",
+              "118.40"
+            ],
+            [
+              "1",
+              "2024-03-05",
+              "AZN",
+              "119.35"
+            ],
+            [
+              "2",
+              "2024-03-06",
+              "AZN",
+              "118.87"
+            ],
+            [
+              "3",
+              "2024-03-04",
+              "BARC",
+              "2.15"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "BARC",
+              "2.18"
+            ],
+            [
+              "5",
+              "2024-03-06",
+              "BARC",
+              "2.16"
+            ],
+            [
+              "6",
+              "2024-03-04",
+              "VOD",
+              "0.72"
+            ],
+            [
+              "7",
+              "2024-03-05",
+              "VOD",
+              "0.71"
+            ],
+            [
+              "8",
+              "2024-03-06",
+              "VOD",
+              "0.73"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "3: each ticker's first day has no return.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each group starts afresh."
+        },
+        {
+          "rung": "point",
+          "text": "Rows 0, 3 and 6 are each ticker's first day.",
+          "highlight": [
+            "r0",
+            "r3",
+            "r6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Three first days give 3 NaN."
+        }
+      ],
+      "feedback": {
+        "correct": "One NaN per ticker.",
+        "generic": "Not quite right. Count the first day of each ticker.",
+        "byKey": {
+          "one": "That is the ungrouped count. Grouped, each ticker's first day is NaN.",
+          "zero": "The first day of each ticker has nothing before it in its group."
+        }
+      },
+      "explain": {
+        "text": "Inside each group `pct_change` starts again, so rows 0, 3 and 6 are NaN. BARC's 5 March return is $2.18 / 2.15 - 1 = 0.0140$. The rows keep their places, so the result can be a new column.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              3,
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Grouping, in one place",
+      "prose": "For each group $g$ with $n_g$ rows, the mean is $\\bar r_g = \\frac{1}{n_g}\\sum_{i \\in g} r_i$.\n\n```python\ng = df.groupby(\"ticker\")\ng[\"ret\"].mean()                  # one row per group\ng[\"ret\"].agg([\"mean\", \"std\", \"count\"])\ng[\"close\"].pct_change()           # one row per row\nr.groupby(r.index.day_name()).mean()\n```",
+      "question": "A long table holds 250 days for each of 4 tickers. How many rows does `df.groupby(\"ticker\")[\"ret\"].std()` have?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "four",
+            "text": "4",
+            "correct": true
+          },
+          {
+            "id": "thousand",
+            "text": "1000",
+            "why": "That is the table's length. A summary like `std` gives one row per group."
+          },
+          {
+            "id": "days",
+            "text": "250",
+            "why": "The groups are tickers, not days. Grouping by date would give 250."
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "One row would be `df[\"ret\"].std()`, with no grouping."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One standard deviation per ticker.",
+        "generic": "Not quite right. A summary gives one row per group."
+      },
+      "explain": {
+        "text": "Summaries such as `mean`, `std` and `count` give one row per group, so 4. `pct_change` gives one row per row instead, so it can sit beside the data."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Mean return by ticker",
+      "prose": "`df` is a long table with columns `date`, `ticker` and `close`, rows in any order. Return each ticker's mean daily simple return as a dict, rounded to 6 places. Returns must stay inside one ticker.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "date",
+            "ticker",
+            "close"
+          ],
+          "rows": [
+            [
+              "0",
+              "2024-03-04",
+              "AZN",
+              "118.40"
+            ],
+            [
+              "1",
+              "2024-03-05",
+              "AZN",
+              "119.35"
+            ],
+            [
+              "2",
+              "2024-03-06",
+              "AZN",
+              "118.87"
+            ],
+            [
+              "3",
+              "2024-03-04",
+              "BARC",
+              "2.15"
+            ],
+            [
+              "4",
+              "2024-03-05",
+              "BARC",
+              "2.18"
+            ],
+            [
+              "5",
+              "2024-03-06",
+              "BARC",
+              "2.16"
+            ],
+            [
+              "6",
+              "2024-03-04",
+              "VOD",
+              "0.72"
+            ],
+            [
+              "7",
+              "2024-03-05",
+              "VOD",
+              "0.71"
+            ],
+            [
+              "8",
+              "2024-03-06",
+              "VOD",
+              "0.73"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "df in the first example"
+        }
+      },
+      "question": "Complete `mean_by_ticker(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef mean_by_ticker(df):\n    df = df.sort_values(\"date\")\n    ret = ...\n    means = ...\n    return means.round(6).to_dict()\n",
+        "solution": "import pandas as pd\n\ndef mean_by_ticker(df):\n    df = df.sort_values(\"date\")\n    ret = df.groupby(\"ticker\")[\"close\"].pct_change()\n    means = ret.groupby(df[\"ticker\"]).mean()\n    return means.round(6).to_dict()\n",
+        "tests": [
+          {
+            "setup": "df = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-04\", \"2024-03-05\", \"2024-03-06\"] * 3), \"ticker\": [\"AZN\"] * 3 + [\"BARC\"] * 3 + [\"VOD\"] * 3, \"close\": [118.40, 119.35, 118.87, 2.15, 2.18, 2.16, 0.72, 0.71, 0.73]})",
+            "call": "mean_by_ticker(df)",
+            "expect": "{'AZN': 0.002001, 'BARC': 0.00239, 'VOD': 0.00714}",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-04\", \"2024-03-05\", \"2024-03-06\"] * 3), \"ticker\": [\"AZN\"] * 3 + [\"BARC\"] * 3 + [\"VOD\"] * 3, \"close\": [118.40, 119.35, 118.87, 2.15, 2.18, 2.16, 0.72, 0.71, 0.73]}); df = df.sample(frac=1, random_state=3)",
+            "call": "mean_by_ticker(df)",
+            "expect": "{'AZN': 0.002001, 'BARC': 0.00239, 'VOD': 0.00714}",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = pd.bdate_range(\"2024-04-01\", periods=8); df = pd.DataFrame({\"date\": list(d) * 3, \"ticker\": [\"AZN\"] * 8 + [\"BARC\"] * 8 + [\"VOD\"] * 8, \"close\": [118.40, 116.78, 115.23, 116.22, 113.08, 112.94, 109.94, 111.44, 2.15, 2.12, 2.13, 2.17, 2.22, 2.26, 2.26, 2.27, 0.72, 0.71, 0.70, 0.71, 0.71, 0.71, 0.70, 0.70]}).sort_values(\"date\")",
+            "call": "mean_by_ticker(df)",
+            "expect": "{'AZN': -0.008505, 'BARC': 0.007861, 'VOD': -0.003967}",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"date\": pd.to_datetime([\"2024-06-03\", \"2024-06-04\", \"2024-06-03\", \"2024-06-04\"]), \"ticker\": [\"SHEL\", \"SHEL\", \"ULVR\", \"ULVR\"], \"close\": [27.80, 28.08, 44.10, 43.66]})",
+            "call": "mean_by_ticker(df)",
+            "expect": "{'SHEL': 0.010072, 'ULVR': -0.009977}",
+            "compare": "equal"
+          },
+          {
+            "setup": "d = pd.bdate_range(\"2024-04-01\", periods=8); df = pd.DataFrame({\"date\": list(d) * 3, \"ticker\": [\"AZN\"] * 8 + [\"BARC\"] * 8 + [\"VOD\"] * 8, \"close\": [118.40, 116.78, 115.23, 116.22, 113.08, 112.94, 109.94, 111.44, 2.15, 2.12, 2.13, 2.17, 2.22, 2.26, 2.26, 2.27, 0.72, 0.71, 0.70, 0.71, 0.71, 0.71, 0.70, 0.70]}).sort_values(\"date\")",
+            "call": "sorted(mean_by_ticker(df))",
+            "expect": "['AZN', 'BARC', 'VOD']",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"date\": pd.to_datetime([\"2024-03-04\", \"2024-03-05\", \"2024-03-06\"] * 3), \"ticker\": [\"AZN\"] * 3 + [\"BARC\"] * 3 + [\"VOD\"] * 3, \"close\": [118.40, 119.35, 118.87, 2.15, 2.18, 2.16, 0.72, 0.71, 0.73]})",
+            "call": "mean_by_ticker(df)",
+            "expect": "{'AZN': 0.002001, 'BARC': 0.00239, 'VOD': 0.00714}",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on long tables of 2 or 3 tickers, some shuffled. Each dict must match exactly after rounding. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two groupings: one for the returns, one for the means."
+        },
+        {
+          "rung": "point",
+          "text": "`df.groupby(\"ticker\")[\"close\"].pct_change()` keeps each return inside its ticker.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then `means = ret.groupby(df[\"ticker\"]).mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Returns per ticker, then a mean per ticker.",
+        "generic": "Some tests failed. Check that no return crosses from one ticker to another.",
+        "byKey": {
+          "test-1": "Test 1 expects `{'AZN': 0.002001, 'BARC': 0.00239, 'VOD': 0.00714}`. A large negative mean means a return crossed between tickers.",
+          "test-2": "Test 2 is shuffled. Keep the `sort_values(\"date\")` line so each ticker's days are in order.",
+          "error": "Your code stopped with an error. `ret` is a Series as long as `df`; group it by `df[\"ticker\"]`."
+        }
+      },
+      "explain": {
+        "text": "`groupby(...).pct_change()` returns one value per row, so it lines up with `df`. Grouping that Series by `df[\"ticker\"]` then gives one mean per ticker. The NaN on each first day is skipped."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A summary per ticker",
+      "prose": "`df` has columns `ticker` and `ret`, one row per stock per day. Return a dict of dicts: for each ticker, `mean` and `vol` (the sample standard deviation) rounded to 6 places, and `days`, the number of returns.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "ticker",
+            "ret"
+          ],
+          "rows": [
+            [
+              "0",
+              "BARC",
+              "−0.012"
+            ],
+            [
+              "1",
+              "VOD",
+              "0.005"
+            ],
+            [
+              "2",
+              "AZN",
+              "0.008"
+            ],
+            [
+              "3",
+              "BARC",
+              "0.015"
+            ],
+            [
+              "4",
+              "VOD",
+              "0.001"
+            ],
+            [
+              "5",
+              "AZN",
+              "−0.004"
+            ],
+            [
+              "6",
+              "BARC",
+              "0.006"
+            ],
+            [
+              "7",
+              "VOD",
+              "−0.009"
+            ],
+            [
+              "8",
+              "AZN",
+              "0.011"
+            ]
+          ],
+          "rowHeads": true,
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "df in the first example"
+        }
+      },
+      "question": "Complete `ticker_summary(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\ndef ticker_summary(df):\n    s = df.groupby(\"ticker\")[\"ret\"].agg(\n        mean=..., vol=..., days=...)\n    return s.round(6).to_dict(\"index\")\n",
+        "solution": "import pandas as pd\n\ndef ticker_summary(df):\n    s = df.groupby(\"ticker\")[\"ret\"].agg(\n        mean=\"mean\", vol=\"std\", days=\"count\")\n    return s.round(6).to_dict(\"index\")\n",
+        "tests": [
+          {
+            "setup": "df = pd.DataFrame({\"ticker\": [\"BARC\", \"VOD\", \"AZN\"] * 3, \"ret\": [-0.012, 0.005, 0.008, 0.015, 0.001, -0.004, 0.006, -0.009, 0.011]})",
+            "call": "ticker_summary(df)",
+            "expect": "{'AZN': {'mean': 0.005, 'vol': 0.007937, 'days': 3}, 'BARC': {'mean': 0.003, 'vol': 0.013748, 'days': 3}, 'VOD': {'mean': -0.001, 'vol': 0.007211, 'days': 3}}",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"ticker\": [\"SHEL\", \"ULVR\", \"SHEL\", \"ULVR\", \"SHEL\", \"SHEL\"], \"ret\": [0.010, -0.002, 0.004, 0.006, -0.008, 0.012]})",
+            "call": "ticker_summary(df)",
+            "expect": "{'SHEL': {'mean': 0.0045, 'vol': 0.009, 'days': 4}, 'ULVR': {'mean': 0.002, 'vol': 0.005657, 'days': 2}}",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"ticker\": [\"BARC\", \"VOD\", \"AZN\"] * 3, \"ret\": [-0.012, 0.005, 0.008, 0.015, 0.001, -0.004, 0.006, -0.009, 0.011]}); df.loc[4, \"ret\"] = None",
+            "call": "ticker_summary(df)[\"VOD\"][\"days\"]",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "setup": "df = pd.DataFrame({\"ticker\": [\"BARC\", \"VOD\", \"AZN\"] * 3, \"ret\": [-0.012, 0.005, 0.008, 0.015, 0.001, -0.004, 0.006, -0.009, 0.011]})",
+            "call": "list(ticker_summary(df))",
+            "expect": "['AZN', 'BARC', 'VOD']",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "df = pd.DataFrame({\"ticker\": [\"BARC\", \"VOD\", \"AZN\"] * 3, \"ret\": [-0.012, 0.005, 0.008, 0.015, 0.001, -0.004, 0.006, -0.009, 0.011]})",
+            "call": "ticker_summary(df)",
+            "expect": "{'AZN': {'mean': 0.005, 'vol': 0.007937, 'days': 3}, 'BARC': {'mean': 0.003, 'vol': 0.013748, 'days': 3}, 'VOD': {'mean': -0.001, 'vol': 0.007211, 'days': 3}}",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests, one with a missing return. Each dict must match exactly after rounding to 6 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Named aggregation: `name=\"function\"` for each output column."
+        },
+        {
+          "rung": "point",
+          "text": "The functions are `\"mean\"`, `\"std\"` and a count of returns.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`mean=\"mean\", vol=\"std\", days=\"count\"`."
+        }
+      ],
+      "feedback": {
+        "correct": "Three summaries per ticker in one call.",
+        "generic": "Some tests failed. Check each named function.",
+        "byKey": {
+          "test-3": "Test 3 has a missing VOD return. `days` counts returns, so use `\"count\"`, which skips NaN, not `\"size\"`.",
+          "test-1": "Test 1 expects BARC's vol to be 0.013748. A smaller value such as 0.011225 is the population standard deviation; use `\"std\"`.",
+          "error": "Your code stopped with an error. Each function name is a string in quotes."
+        }
+      },
+      "explain": {
+        "text": "`agg(mean=\"mean\", vol=\"std\", days=\"count\")` names each output column. `std` uses $n - 1$, the sample version, and `count` skips gaps so `days` counts real returns."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Is there a Monday effect?",
+      "prose": "A researcher asks whether returns differ by weekday. `close` holds one stock's daily closes in £, dates as the index, in any order. Return the mean simple return for each weekday as a dict, Monday to Friday, rounded to 6 places.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "AZN",
+              "values": [
+                118.4,
+                116.78,
+                115.23,
+                116.22,
+                113.08,
+                112.94,
+                109.94,
+                111.44,
+                111.77,
+                113.65,
+                113.02,
+                113.61,
+                113.28,
+                112.33,
+                112.58,
+                110.94,
+                110.53,
+                111.5,
+                111.64,
+                111.14,
+                114.12
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Trading days from 5 April 2024",
+          "money": "£",
+          "height": 230
+        },
+        "state": {
+          "caption": "close in the first test"
+        }
+      },
+      "question": "Complete `weekday_means(close)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import pandas as pd\n\nDAYS = [\"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\"]\n\ndef weekday_means(close):\n    r = ...\n    means = ...\n    return means.reindex(DAYS).round(6).to_dict()\n",
+        "solution": "import pandas as pd\n\nDAYS = [\"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\"]\n\ndef weekday_means(close):\n    r = close.sort_index().pct_change()\n    means = r.groupby(r.index.day_name()).mean()\n    return means.reindex(DAYS).round(6).to_dict()\n",
+        "tests": [
+          {
+            "setup": "close = pd.Series([118.40, 116.78, 115.23, 116.22, 113.08, 112.94, 109.94, 111.44, 111.77, 113.65, 113.02, 113.61, 113.28, 112.33, 112.58, 110.94, 110.53, 111.50, 111.64, 111.14, 114.12], index=pd.bdate_range(\"2024-04-05\", periods=21))",
+            "call": "weekday_means(close)",
+            "expect": "{'Monday': -0.00968, 'Tuesday': 0.001561, 'Wednesday': 0.001106, 'Thursday': -0.003113, 'Friday': 0.001366}",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([118.40, 116.78, 115.23, 116.22, 113.08, 112.94, 109.94, 111.44, 111.77, 113.65, 113.02, 113.61, 113.28, 112.33, 112.58, 110.94, 110.53, 111.50, 111.64, 111.14, 114.12], index=pd.bdate_range(\"2024-04-05\", periods=21))",
+            "call": "list(weekday_means(close))",
+            "expect": "['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([50.00, 50.50, 50.00, 51.00, 51.51, 51.00, 50.49, 51.00, 51.51, 51.00, 52.02], index=pd.bdate_range(\"2024-06-07\", periods=11))",
+            "call": "weekday_means(close)",
+            "expect": "{'Monday': 0.0, 'Tuesday': 0.0001, 'Wednesday': 0.015, 'Thursday': 5e-05, 'Friday': 0.00505}",
+            "compare": "equal"
+          },
+          {
+            "setup": "close = pd.Series([50.00, 50.50, 50.00, 51.00, 51.51, 51.00, 50.49, 51.00, 51.51, 51.00, 52.02], index=pd.bdate_range(\"2024-06-07\", periods=11)); close = close.iloc[::-1]",
+            "call": "weekday_means(close)",
+            "expect": "{'Monday': 0.0, 'Tuesday': 0.0001, 'Wednesday': 0.015, 'Thursday': 5e-05, 'Friday': 0.00505}",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "close = pd.Series([50.00, 50.50, 50.00, 51.00, 51.51, 51.00, 50.49, 51.00, 51.51, 51.00, 52.02], index=pd.bdate_range(\"2024-06-07\", periods=11))",
+            "call": "weekday_means(close)",
+            "expect": "{'Monday': 0.0, 'Tuesday': 0.0001, 'Wednesday': 0.015, 'Thursday': 5e-05, 'Friday': 0.00505}",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on 11 to 21 trading days, one newest first. Each dict must match exactly after rounding to 6 places. The first run loads pandas, which can take ten seconds or more; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Returns first, in date order; then group them by weekday."
+        },
+        {
+          "rung": "point",
+          "text": "`r.index.day_name()` gives each return its weekday name.",
+          "highlight": [
+            "px"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`r = close.sort_index().pct_change()` and `means = r.groupby(r.index.day_name()).mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "A mean return for each weekday.",
+        "generic": "Some tests failed. Check the order of the closes and what you group by.",
+        "byKey": {
+          "test-4": "Test 4 is newest first. Sort the index before `pct_change`.",
+          "test-2": "Test 2 checks the order Monday to Friday. Keep the `reindex(DAYS)` line: `groupby` alone sorts the names alphabetically.",
+          "error": "Your code stopped with an error. Group `r` by `r.index.day_name()`."
+        }
+      },
+      "explain": {
+        "text": "Each return is grouped by the weekday it was earned on, then averaged. With four weeks each mean rests on four returns, far too few to trade on; the same code runs on ten years."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`groupby` splits rows by a key, applies a summary to each group and combines the answers. Keys come out sorted.",
+      "`agg` applies several summaries at once. `count` skips NaN; `size` counts rows.",
+      "In a long table, compute returns with `df.groupby(\"ticker\")[\"close\"].pct_change()`, which keeps one value per row."
+    ],
+    "formula": {
+      "name": "Group mean",
+      "tex": "\\bar r_g = \\dfrac{1}{n_g}\\sum_{i \\in g} r_i",
+      "note": "`df.groupby(\"ticker\")[\"ret\"].mean()`"
+    },
+    "trap": "`pct_change` on a stacked table divides each stock's first close by the stock above it. Group by ticker first."
+  },
+  "quiz": [
+    {
+      "id": "q-group-sum",
+      "difficulty": 2,
+      "prose": "```python\nt = pd.DataFrame({\"ticker\": [\"VOD\", \"BARC\", \"VOD\"],\n                  \"qty\": [300, 150, -100]})\nprint(t.groupby(\"ticker\")[\"qty\"].sum().tolist())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[150, 200]`",
+            "correct": true
+          },
+          {
+            "id": "order",
+            "text": "`[200, 150]`",
+            "why": "You kept the order the tickers first appear in. `groupby` sorts its keys, so BARC comes before VOD."
+          },
+          {
+            "id": "abs",
+            "text": "`[150, 400]`",
+            "why": "You added VOD's sizes without their signs. The sale of 100 counts as −100."
+          },
+          {
+            "id": "all",
+            "text": "`[350]`",
+            "why": "That is the total over every row. `groupby` gives one total per ticker."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "BARC 150, then VOD 300 − 100 = 200.",
+        "generic": "Not quite right. Add each ticker's quantities, signs included, with the keys sorted."
+      },
+      "explain": {
+        "text": "BARC has one row, 150. VOD has 300 and −100, which sum to 200. The keys come out sorted, so BARC is first."
+      }
+    },
+    {
+      "id": "q-count-size",
+      "difficulty": 2,
+      "prose": "A ticker's group has 20 rows, and 3 of its returns are NaN.",
+      "question": "What are its `count` and its `size`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "17 and 20",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "20 and 20",
+            "why": "`count` skips the missing values."
+          },
+          {
+            "id": "swap",
+            "text": "20 and 17",
+            "why": "That is the wrong way round: `size` counts rows, `count` counts values present."
+          },
+          {
+            "id": "three",
+            "text": "3 and 20",
+            "why": "`count` counts values that are present, not missing ones."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "17 values present, 20 rows.",
+        "generic": "Not quite right. `count` skips NaN; `size` does not."
+      },
+      "explain": {
+        "text": "`count` gives the 17 returns that exist and `size` the 20 rows. The 3 missing days are the difference."
+      }
+    },
+    {
+      "id": "q-long-returns",
+      "difficulty": 3,
+      "prose": "`df` stacks several stocks' closes, each in date order.",
+      "question": "Which line gives each stock's daily returns?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`df.groupby(\"ticker\")[\"close\"].pct_change()`",
+            "correct": true
+          },
+          {
+            "id": "plain",
+            "text": "`df[\"close\"].pct_change()`",
+            "why": "Each stock's first day would be divided by the last close of the stock above it."
+          },
+          {
+            "id": "mean",
+            "text": "`df.groupby(\"ticker\")[\"close\"].mean().pct_change()`",
+            "why": "That compares the average prices of different stocks, which means nothing."
+          },
+          {
+            "id": "date",
+            "text": "`df.groupby(\"date\")[\"close\"].pct_change()`",
+            "why": "Grouping by date compares different stocks on the same day."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Group by stock, then compare each day with the one before.",
+        "generic": "Not quite right. Each return must stay inside one stock."
+      },
+      "explain": {
+        "text": "Grouping by ticker restarts `pct_change` for every stock, so no return crosses between two of them."
+      }
+    },
+    {
+      "id": "q-day-order",
+      "difficulty": 3,
+      "prose": "```python\nwd = r.groupby(r.index.day_name()).mean()\nprint(wd.index[0])\n```\n`r` holds a year of daily returns.",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`Friday`",
+            "correct": true
+          },
+          {
+            "id": "mon",
+            "text": "`Monday`",
+            "why": "`groupby` sorts the names as text, so Friday comes first. Use `reindex` for calendar order."
+          },
+          {
+            "id": "first",
+            "text": "The weekday of the first date in `r`",
+            "why": "`groupby` sorts its keys rather than keeping the order they appear in."
+          },
+          {
+            "id": "zero",
+            "text": "`0`",
+            "why": "`day_name()` gives names. `dayofweek` would give numbers, with Monday as 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Alphabetical: Friday first.",
+        "generic": "Not quite right. How does `groupby` order text keys?"
+      },
+      "explain": {
+        "text": "Keys are sorted alphabetically: Friday, Monday, Thursday, Tuesday, Wednesday. Grouping by `r.index.dayofweek` instead sorts them 0 to 4, Monday first."
+      }
+    }
+  ]
+}

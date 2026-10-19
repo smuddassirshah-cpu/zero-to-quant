@@ -1,0 +1,449 @@
+{
+  "id": "review-3",
+  "course": "numpy-pandas",
+  "level": 3,
+  "items": [
+    {
+      "id": "r-shift-up",
+      "difficulty": 2,
+      "skills": [
+        "pd-time"
+      ],
+      "prose": "```python\ns = pd.Series([10.00, 11.00, 12.10])\nprint(s.shift(-1).tolist())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[11.0, 12.1, nan]`",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "`[nan, 10.0, 11.0]`",
+            "why": "That is `shift(1)`. A negative shift moves values up, so each row gets the next one."
+          },
+          {
+            "id": "short",
+            "text": "`[11.0, 12.1]`",
+            "why": "`shift` keeps the length; the last row becomes NaN."
+          },
+          {
+            "id": "same",
+            "text": "`[10.0, 11.0, 12.1]`",
+            "why": "Only `shift(0)` leaves the values in place."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Each row gets the next value; the last is NaN.",
+        "generic": "Not quite right. A negative shift pulls later values up."
+      },
+      "explain": {
+        "text": "`shift(-1)` puts tomorrow's value on today's row. On prices that is a look-ahead: no one knows tomorrow's close today."
+      }
+    },
+    {
+      "id": "r-compound",
+      "difficulty": 3,
+      "skills": [
+        "pd-time",
+        "pd-frames"
+      ],
+      "prose": "Two daily returns: +10% then −10%.\n\n```python\nr = pd.Series([0.10, -0.10])\nprint(round((1 + r).prod() - 1, 4))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.01,
+        "tol": {
+          "abs": 0.00005
+        },
+        "placeholder": "For example 0.0123",
+        "label": "Value printed",
+        "accept": "−0.01: 1.1 × 0.9 − 1.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 0,
+            "tol": {
+              "abs": 0.00005
+            }
+          },
+          {
+            "id": "prod",
+            "value": 0.99,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1.1 \\times 0.9 - 1 = -0.01$.",
+        "generic": "Not quite right. Multiply the growth factors, then subtract 1.",
+        "byKey": {
+          "sum": "You added the returns. Simple returns compound: a 10% loss on a bigger amount outweighs the 10% gain.",
+          "prod": "0.99 is the growth factor. Subtract 1 to get the return."
+        }
+      },
+      "explain": {
+        "text": "Simple returns compound, so the total is $(1.1)(0.9) - 1 = -0.01$. Log returns are the ones that add."
+      }
+    },
+    {
+      "id": "r-roll4",
+      "difficulty": 3,
+      "skills": [
+        "pd-time"
+      ],
+      "prose": "```python\ns = pd.Series([10.0, 12.0, 11.0, 13.0, 14.0])\nprint(s.rolling(4).mean().iloc[-1])\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 12.0",
+        "label": "Value printed",
+        "accept": "12.5: (12 + 11 + 13 + 14) / 4.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 12,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "first",
+            "value": 11.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "three",
+            "value": 12.6667,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The last 4 values average 12.5.",
+        "generic": "Not quite right. Average the last four values, the last one included.",
+        "byKey": {
+          "all": "That is the mean of all five values. The window holds only the last four.",
+          "first": "That is the first full window, on row 3. The last row's window is 12, 11, 13 and 14.",
+          "three": "That averages the three before the last. The window includes its own row."
+        }
+      },
+      "explain": {
+        "text": "The window on the last row holds rows 1 to 4: $(12 + 11 + 13 + 14) / 4 = 12.5$."
+      }
+    },
+    {
+      "id": "r-vol-nan",
+      "difficulty": 3,
+      "skills": [
+        "pd-time"
+      ],
+      "prose": "`close` holds 252 daily closes.\n\n```python\nvol = close.pct_change().rolling(20).std()\nprint(vol.isna().sum())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`20`",
+            "correct": true
+          },
+          {
+            "id": "nineteen",
+            "text": "`19`",
+            "why": "That counts the window alone. The first return is NaN too, so the first full window ends on row 21."
+          },
+          {
+            "id": "one",
+            "text": "`1`",
+            "why": "The window adds 19 more NaN rows to the one from `pct_change`."
+          },
+          {
+            "id": "twenty1",
+            "text": "`21`",
+            "why": "The window of 20 returns ending on row 21 is full, so row 21 has a value."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1 from the return plus 19 from the window.",
+        "generic": "Not quite right. Count the NaN rows each step adds."
+      },
+      "explain": {
+        "text": "`pct_change` makes row 1 NaN. The first 20 real returns are rows 2 to 21, so rows 1 to 20 are NaN: $1 + 19 = 20$."
+      }
+    },
+    {
+      "id": "r-feb-return",
+      "difficulty": 3,
+      "skills": [
+        "pd-time"
+      ],
+      "prose": "`close` holds daily closes in £, dates as the index. January ended at 100.00. February closed at 98.00, 103.00, then 104.50 on 29 February.\n\n```python\nme = close.resample(\"ME\").last()\nret = me.pct_change()\nprint(round(ret.loc[\"2024-02\"].iloc[0], 3))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.045,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "For example 0.010",
+        "label": "Value printed",
+        "accept": "0.045: 104.50 / 100.00 − 1.",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 0.0183,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "first",
+            "value": -0.02,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$104.50 / 100.00 - 1 = 0.045$.",
+        "generic": "Not quite right. Compare the two month-end closes.",
+        "byKey": {
+          "mean": "You used February's average close, 101.83. `last` takes 104.50.",
+          "first": "You used February's first close. `last` takes the month end."
+        }
+      },
+      "explain": {
+        "text": "`resample(\"ME\").last()` keeps 100.00 for January and 104.50 for February, so February's return is $0.045$."
+      }
+    },
+    {
+      "id": "r-interleaved",
+      "difficulty": 4,
+      "skills": [
+        "pd-group"
+      ],
+      "prose": "A long table holds AZN and BARC closes, sorted by date, so the tickers alternate: AZN, BARC, AZN, BARC and so on, for 10 days.\n\n```python\ndf[\"ret\"] = df[\"close\"].pct_change()\n```",
+      "question": "How many of the 19 non-NaN values in `ret` compare a stock with itself?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Same-stock returns",
+        "accept": "0: every row divides by the other stock's close.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 9,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "all",
+            "value": 19,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "None: every row sits below the other stock.",
+        "generic": "Not quite right. Which row is above each row?",
+        "byKey": {
+          "half": "You expected half of them to match. The tickers alternate, so the row above is always the other stock.",
+          "all": "`pct_change` ignores the ticker column. It divides by the row above, which is always the other stock."
+        }
+      },
+      "explain": {
+        "text": "With alternating rows, the row above an AZN row is BARC and vice versa, so every value is nonsense. `df.groupby(\"ticker\")[\"close\"].pct_change()` compares each stock with its own previous day."
+      }
+    },
+    {
+      "id": "r-left-count",
+      "difficulty": 3,
+      "skills": [
+        "pd-group"
+      ],
+      "prose": "`trades` has 40 rows on 12 dates. `prices` has one row per trading day, but the vendor missed 2 of those 12 dates, which held 7 trades. We join with `pd.merge(trades, prices, on=\"date\")`, then again with `how=\"left\"`.",
+      "question": "How many rows do the default inner join and the left join give?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "33 and 40",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "40 and 40",
+            "why": "The inner join drops the 7 trades whose dates have no price."
+          },
+          {
+            "id": "dates",
+            "text": "10 and 12",
+            "why": "The joins keep trade rows, not dates. Each trade is one row."
+          },
+          {
+            "id": "swap",
+            "text": "40 and 33",
+            "why": "That is the wrong way round. The left join keeps every trade."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The inner join loses 7 trades; the left join keeps all 40.",
+        "generic": "Not quite right. Which trades have a matching price row?"
+      },
+      "explain": {
+        "text": "The inner join keeps only trades whose date has a price: $40 - 7 = 33$. The left join keeps all 40, with NaN prices on the 7 you then need to chase."
+      }
+    },
+    {
+      "id": "r-align",
+      "difficulty": 4,
+      "skills": [
+        "pd-group",
+        "pd-time"
+      ],
+      "prose": "`a` has values on 1, 2 and 3 July. `b` has values on 2, 3 and 4 July. Both have dates as the index.\n\n```python\nq = a / b\nprint(len(q), q.isna().sum())\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`4 2`",
+            "correct": true
+          },
+          {
+            "id": "pos",
+            "text": "`3 0`",
+            "why": "pandas matches labels, not positions. It does not divide 1 July by 2 July."
+          },
+          {
+            "id": "inner",
+            "text": "`2 0`",
+            "why": "Arithmetic keeps every label, like an outer join, not just the shared ones."
+          },
+          {
+            "id": "err",
+            "text": "An error about the index",
+            "why": "Different indexes are fine. pandas aligns them first."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four labels; 1 and 4 July have no partner.",
+        "generic": "Not quite right. Arithmetic aligns on the union of the labels."
+      },
+      "explain": {
+        "text": "The union of the dates is 1 to 4 July. 1 July has no `b` and 4 July has no `a`, so both are NaN."
+      }
+    },
+    {
+      "id": "r-centred",
+      "difficulty": 4,
+      "skills": [
+        "pd-time"
+      ],
+      "prose": "A backtest decides at each close whether to hold the stock overnight.",
+      "question": "Which signal looks ahead?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`close > close.rolling(5, center=True).mean()`",
+            "correct": true
+          },
+          {
+            "id": "plain",
+            "text": "`close > close.rolling(5).mean()`",
+            "why": "This window ends on today's close, which is known at the close. It is safe when the position earns tomorrow's return."
+          },
+          {
+            "id": "lag",
+            "text": "`close.shift(1) > close.shift(1).rolling(5).mean()`",
+            "why": "This uses only yesterday and before. It is late by a day, but it does not look ahead."
+          },
+          {
+            "id": "ret",
+            "text": "`close.pct_change() > 0`",
+            "why": "Today's return needs only today's and yesterday's closes, both known at today's close."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A centred window averages days after today.",
+        "generic": "Not quite right. Which window reaches past today's row?"
+      },
+      "explain": {
+        "text": "`center=True` puts today in the middle of the window, so it averages the next two closes too. That information does not exist at today's close."
+      }
+    },
+    {
+      "id": "r-empty-month",
+      "difficulty": 3,
+      "skills": [
+        "pd-time"
+      ],
+      "prose": "A stock was suspended for the whole of May. `close` has rows in April and June only.\n\n```python\nme = close.resample(\"ME\").last()\nprint(len(me))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "A whole number",
+        "label": "Value printed",
+        "accept": "3: April, May (NaN) and June.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "May gets a bucket, holding NaN.",
+        "generic": "Not quite right. `resample` makes a bucket for every month in the range.",
+        "byKey": {
+          "two": "You expected May to be skipped. Every month from April to June gets a bucket, so May is a NaN row."
+        }
+      },
+      "explain": {
+        "text": "The buckets run from April to June. May's is empty, so `last` gives NaN there. Its return, and June's, need a decision: was the stock halted or is the file broken?"
+      }
+    }
+  ]
+}

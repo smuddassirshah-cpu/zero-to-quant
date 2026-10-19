@@ -1,0 +1,487 @@
+{
+  "id": "homework-1",
+  "course": "plotting",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-closes",
+      "difficulty": 3,
+      "skills": [
+        "pl-figures",
+        "pl-honest"
+      ],
+      "prose": "Write the standard closes chart for a share. Title it with the share's name followed by ` closes`, label the axes `Day` and `Close (£)`, and format the ticks as pounds and pence, like £1,250.00.",
+      "question": "Complete `closes_chart`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom matplotlib.ticker import StrMethodFormatter\n\ndef closes_chart(days, closes, name):\n    fig, ax = plt.subplots()\n    ax.plot(days, closes)\n    ...\n    return ax\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom matplotlib.ticker import StrMethodFormatter\n\ndef closes_chart(days, closes, name):\n    fig, ax = plt.subplots()\n    ax.plot(days, closes)\n    ax.set_title(name + \" closes\")\n    ax.set_xlabel(\"Day\")\n    ax.set_ylabel(\"Close (£)\")\n    ax.yaxis.set_major_formatter(StrMethodFormatter(\"£{x:,.2f}\"))\n    return ax\n",
+        "tests": [
+          {
+            "setup": "plt.close('all')",
+            "call": "closes_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_title()",
+            "expect": "'Harbour closes'"
+          },
+          {
+            "call": "closes_chart([1, 2], [18.50, 18.72], 'Kestrel').get_title()",
+            "expect": "'Kestrel closes'"
+          },
+          {
+            "call": "closes_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_ylabel()",
+            "expect": "'Close (£)'"
+          },
+          {
+            "call": "closes_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').yaxis.get_major_formatter()(412.3, 0)",
+            "expect": "'£412.30'"
+          },
+          {
+            "call": "closes_chart([1, 2], [1238.40, 1261.80], 'Fenwick').yaxis.get_major_formatter()(1250, 0)",
+            "expect": "'£1,250.00'"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "plt.close('all')",
+            "call": "closes_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_title()",
+            "expect": "'Harbour closes'"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on the axes your function returns. The first run loads matplotlib, which is large: allow 10 to 20 seconds."
+      },
+      "feedback": {
+        "correct": "Named, labelled and in pounds on every tick.",
+        "generic": "Some tests failed. Check the title is built from `name`, and the pattern is `£{x:,.2f}`.",
+        "byKey": {
+          "test-2": "The title must use `name`, not a fixed share: `name + \" closes\"`.",
+          "test-4": "The ticks do not read `£412.30`. Use `StrMethodFormatter(\"£{x:,.2f}\")` on `ax.yaxis`.",
+          "test-5": "The ticks need a thousands comma: `£1,250.00`. The pattern is `£{x:,.2f}`.",
+          "error": "Your code stopped with an error. Use the `set_` methods, and put the formatter on `ax.yaxis`."
+        }
+      },
+      "explain": {
+        "text": "The title is built from `name`, so one function serves every share. `,.2f` gives the comma and the pence.\n\n```python\nax.set_title(name + \" closes\")\nax.yaxis.set_major_formatter(StrMethodFormatter(\"£{x:,.2f}\"))\n```"
+      }
+    },
+    {
+      "id": "h-hist",
+      "difficulty": 4,
+      "skills": [
+        "pl-risk"
+      ],
+      "prose": "Draw a histogram of a share's daily returns **in percent** with 20 bins, labelled `Daily return (%)` across and `Days` up. A return of 0.0068 should count as 0.68.",
+      "question": "Complete `returns_hist_pct`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef returns_hist_pct(closes):\n    ...\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef returns_hist_pct(closes):\n    returns = [(b / a - 1) * 100 for a, b in zip(closes, closes[1:])]\n    fig, ax = plt.subplots()\n    ax.hist(returns, bins=20)\n    ax.set_xlabel(\"Daily return (%)\")\n    ax.set_ylabel(\"Days\")\n    return ax\n",
+        "tests": [
+          {
+            "setup": "plt.close('all')",
+            "call": "len(returns_hist_pct([412.30, 415.10, 409.80, 411.25, 418.60]).patches)",
+            "expect": "20"
+          },
+          {
+            "call": "float(sum(p.get_height() for p in returns_hist_pct([412.30, 415.10, 409.80, 411.25, 418.60]).patches))",
+            "expect": "4.0"
+          },
+          {
+            "call": "round(float(returns_hist_pct([412.30, 415.10, 409.80, 411.25, 418.60]).patches[0].get_x()), 6)",
+            "expect": "-1.276801",
+            "compare": "isclose"
+          },
+          {
+            "call": "returns_hist_pct([100.0, 101.0, 99.0]).get_xlabel()",
+            "expect": "'Daily return (%)'"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "plt.close('all')",
+            "call": "len(returns_hist_pct([412.30, 415.10, 409.80, 411.25, 418.60]).patches)",
+            "expect": "20"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on the axes your function returns. The first run loads matplotlib, which is large: allow 10 to 20 seconds."
+      },
+      "feedback": {
+        "correct": "Percent returns in 20 bins, with the unit on the axis.",
+        "generic": "Some tests failed. Five closes give four returns, each times 100.",
+        "byKey": {
+          "test-1": "There should be 20 rectangles. Pass `bins=20` to `ax.hist`.",
+          "test-2": "The heights should add to 4, one per return. Check you plotted the returns, not the closes.",
+          "test-3": "The first bin should start at −1.276801, the smallest return in percent. Multiply each return by 100.",
+          "test-4": "The x label should be `Daily return (%)`.",
+          "error": "Your code stopped with an error. The function must make `fig, ax`, draw, label and return `ax`."
+        }
+      },
+      "explain": {
+        "text": "Multiplying by 100 before plotting puts the axis in percent, which the label then states. The bins start at the smallest return, −1.28%, from £415.10 to £409.80.\n\n```python\nreturns = [(b / a - 1) * 100 for a, b in zip(closes, closes[1:])]\nax.hist(returns, bins=20)\n```"
+      }
+    },
+    {
+      "id": "h-scatter45",
+      "difficulty": 4,
+      "skills": [
+        "pl-market"
+      ],
+      "prose": "Scatter two shares' daily returns, A across and B up, and add the 45-degree line as a dashed line from the smallest return to the largest, taken over both shares.",
+      "question": "Complete `scatter_45`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef scatter_45(closes_a, closes_b):\n    ra = [b / a - 1 for a, b in zip(closes_a, closes_a[1:])]\n    rb = [b / a - 1 for a, b in zip(closes_b, closes_b[1:])]\n    fig, ax = plt.subplots()\n    ...\n    return ax\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef scatter_45(closes_a, closes_b):\n    ra = [b / a - 1 for a, b in zip(closes_a, closes_a[1:])]\n    rb = [b / a - 1 for a, b in zip(closes_b, closes_b[1:])]\n    fig, ax = plt.subplots()\n    ax.scatter(ra, rb)\n    lo, hi = min(ra + rb), max(ra + rb)\n    ax.plot([lo, hi], [lo, hi], linestyle=\"--\")\n    return ax\n",
+        "tests": [
+          {
+            "setup": "plt.close('all')",
+            "call": "scatter_45([100.0, 101.5, 99.47, 100.46], [40.0, 40.8, 39.58, 39.98]).collections[0].get_offsets().shape",
+            "expect": "(3, 2)"
+          },
+          {
+            "call": "len(scatter_45([100.0, 101.5, 99.47, 100.46], [40.0, 40.8, 39.58, 39.98]).lines)",
+            "expect": "1"
+          },
+          {
+            "call": "[round(v, 6) for v in scatter_45([100.0, 101.5, 99.47, 100.46], [40.0, 40.8, 39.58, 39.98]).lines[0].get_ydata().tolist()]",
+            "expect": "[-0.029902, 0.02]"
+          },
+          {
+            "call": "[round(v, 6) for v in scatter_45([100.0, 101.5, 99.47, 100.46], [40.0, 40.8, 39.58, 39.98]).lines[0].get_xdata().tolist()]",
+            "expect": "[-0.029902, 0.02]"
+          },
+          {
+            "call": "scatter_45([100.0, 101.5, 99.47, 100.46], [40.0, 40.8, 39.58, 39.98]).lines[0].get_linestyle()",
+            "expect": "'--'"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "plt.close('all')",
+            "call": "scatter_45([100.0, 101.5, 99.47, 100.46], [40.0, 40.8, 39.58, 39.98]).collections[0].get_offsets().shape",
+            "expect": "(3, 2)"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on the axes your function returns. The first run loads matplotlib, which is large: allow 10 to 20 seconds."
+      },
+      "feedback": {
+        "correct": "The points, and $y = x$ across the whole cloud.",
+        "generic": "Some tests failed. The line's two ends should be (lo, lo) and (hi, hi), over both shares' returns.",
+        "byKey": {
+          "test-1": "There should be one scatter of 3 points. Use `ax.scatter(ra, rb)`.",
+          "test-2": "There should be exactly one line: the 45-degree line drawn with `ax.plot`.",
+          "test-3": "The line should run from −0.029902 to 0.02: the smallest and largest of `ra + rb` together, not of one share alone.",
+          "test-5": "The line should be dashed: pass `linestyle=\"--\"`.",
+          "error": "Your code stopped with an error. Replace `...` with the scatter and the line."
+        }
+      },
+      "explain": {
+        "text": "`ra + rb` joins the two lists, so `min` and `max` span every point. Equal x and y at both ends make the line $y = x$.\n\n```python\nax.scatter(ra, rb)\nlo, hi = min(ra + rb), max(ra + rb)\nax.plot([lo, hi], [lo, hi], linestyle=\"--\")\n```"
+      }
+    },
+    {
+      "id": "h-pnl-bars",
+      "difficulty": 5,
+      "skills": [
+        "pl-honest",
+        "pl-figures"
+      ],
+      "prose": "A desk wants monthly P&L as bars, with loss months in a second colour so they stand out. Gains and flat months use `\"tab:green\"`; losses use `\"tab:red\"`. Label the y axis `P&L (£)`.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "Jan",
+              "label": "Jan",
+              "colour": 1
+            },
+            {
+              "id": "Feb",
+              "label": "Feb",
+              "colour": 2
+            },
+            {
+              "id": "Mar",
+              "label": "Mar",
+              "colour": 1
+            },
+            {
+              "id": "Apr",
+              "label": "Apr",
+              "colour": 2
+            },
+            {
+              "id": "May",
+              "label": "May",
+              "colour": 1
+            },
+            {
+              "id": "Jun",
+              "label": "Jun",
+              "colour": 1
+            }
+          ],
+          "yLabel": "P&L (£)",
+          "xLabel": "Month",
+          "showValues": true,
+          "money": "£"
+        },
+        "state": {
+          "values": {
+            "Jan": 1250.0,
+            "Feb": -430.5,
+            "Mar": 980.0,
+            "Apr": -1120.0,
+            "May": 310.25,
+            "Jun": 640.0
+          }
+        }
+      },
+      "question": "Complete `pnl_bars`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef pnl_bars(months, pnl):\n    fig, ax = plt.subplots()\n    colours = ...\n    ...\n    ax.set_ylabel(\"P&L (£)\")\n    return ax\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef pnl_bars(months, pnl):\n    fig, ax = plt.subplots()\n    colours = [\"tab:green\" if v >= 0 else \"tab:red\" for v in pnl]\n    ax.bar(months, pnl, color=colours)\n    ax.set_ylabel(\"P&L (£)\")\n    return ax\n",
+        "tests": [
+          {
+            "setup": "plt.close('all')",
+            "call": "len(pnl_bars(['Jan', 'Feb', 'Mar'], [1250.00, -430.50, 980.00]).patches)",
+            "expect": "3"
+          },
+          {
+            "call": "[float(p.get_height()) for p in pnl_bars(['Jan', 'Feb', 'Mar'], [1250.00, -430.50, 980.00]).patches]",
+            "expect": "[1250.0, -430.5, 980.0]"
+          },
+          {
+            "call": "len({p.get_facecolor() for p in pnl_bars(['Jan', 'Feb', 'Mar', 'Apr'], [1250.00, -430.50, 980.00, -1120.00]).patches})",
+            "expect": "2"
+          },
+          {
+            "call": "[p.get_facecolor() == pnl_bars(['Jan', 'Feb'], [100.0, -50.0]).patches[1].get_facecolor() for p in pnl_bars(['Jan', 'Feb', 'Mar'], [-430.50, 310.25, -1120.00]).patches]",
+            "expect": "[True, False, True]"
+          },
+          {
+            "call": "pnl_bars(['Jan', 'Feb', 'Mar'], [0.00, 640.00, -20.00]).patches[0].get_facecolor() == pnl_bars(['Jan', 'Feb', 'Mar'], [0.00, 640.00, -20.00]).patches[1].get_facecolor()",
+            "expect": "True"
+          }
+        ],
+        "examples": [
+          {
+            "setup": "plt.close('all')",
+            "call": "[float(p.get_height()) for p in pnl_bars(['Jan', 'Feb', 'Mar'], [1250.00, -430.50, 980.00]).patches]",
+            "expect": "[1250.0, -430.5, 980.0]"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on the axes your function returns. The first run loads matplotlib, which is large: allow 10 to 20 seconds."
+      },
+      "feedback": {
+        "correct": "One colour per bar, chosen by the sign of its P&L.",
+        "generic": "Some tests failed. Build one colour per month, then pass the list as `color=`.",
+        "byKey": {
+          "test-1": "There should be one bar per month. Use `ax.bar(months, pnl, color=colours)`.",
+          "test-3": "Gains and losses should use two different colours. Build `colours` from the sign of each value.",
+          "test-4": "Every loss must share the loss colour, and no gain may. Check the condition inside the list.",
+          "test-5": "A flat month, £0.00, should use the gain colour. Use `v >= 0`, not `v > 0`.",
+          "error": "Your code stopped with an error. `colours` must be a list of colour names, one per month."
+        }
+      },
+      "explain": {
+        "text": "`color=` takes one colour per bar, so a list built from the signs colours each month. The edge case is £0.00: `v >= 0` keeps a flat month green.\n\n```python\ncolours = [\"tab:green\" if v >= 0 else \"tab:red\" for v in pnl]\nax.bar(months, pnl, color=colours)\n```",
+        "canvas": {
+          "highlight": [
+            "Feb",
+            "Apr"
+          ]
+        }
+      }
+    },
+    {
+      "id": "h-fix",
+      "difficulty": 3,
+      "skills": [
+        "pl-honest",
+        "pl-market"
+      ],
+      "prose": "A chart plots a £3,150 share and a £14 share in pounds on one axis, with a legend. The meeting wants to know which did better this year.",
+      "question": "Which single change helps most?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rebase",
+            "text": "Rebase both to 100 on the first trading day",
+            "correct": true
+          },
+          {
+            "id": "twin",
+            "text": "Give the £14 share its own y axis on the right",
+            "why": "Two axes can be slid against each other so the lines cross anywhere. Rebasing gives one honest scale."
+          },
+          {
+            "id": "log",
+            "text": "Add grid lines",
+            "why": "Grid lines help to read prices. The £14 line is still squashed flat."
+          },
+          {
+            "id": "bigger",
+            "text": "Make the figure larger",
+            "why": "A larger figure scales both lines equally. The £14 share stays flat against £3,150."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Rebased, both start at 100 and growth compares directly.",
+        "generic": "Not quite right. What stops the meeting comparing the two now?"
+      },
+      "explain": {
+        "text": "On one pound axis the £14 share hugs zero. Rebasing each to 100 on the same day puts both on a growth scale, so the higher line at the end did better."
+      }
+    },
+    {
+      "id": "h-start",
+      "difficulty": 4,
+      "skills": [
+        "pl-market"
+      ],
+      "prose": "A share closed at £80.00 on day 1, £100.00 on day 20 and £90.00 on day 40. A colleague rebases it to 100 on day 20.",
+      "question": "What does the day 40 point read on that chart?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 90,
+        "tol": {
+          "abs": 0.05
+        },
+        "placeholder": "For example 101.5",
+        "label": "Rebased value",
+        "accept": "90: 90 / 100 × 100.",
+        "wrong": [
+          {
+            "id": "day1",
+            "value": 112.5,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "price",
+            "value": 0.9,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "90: from day 20 the share is down 10%.",
+        "generic": "Not quite right. Divide by the close on the start day, day 20.",
+        "byKey": {
+          "day1": "That rebases to day 1. From day 1 it is up 12.5%; from day 20 it is down 10%. The start day changes the story.",
+          "price": "Right ratio; multiply by 100 so the start day reads 100."
+        }
+      },
+      "explain": {
+        "text": "$\\dfrac{90}{100} \\times 100 = 90$: down 10% since day 20. Rebased to day 1 the same close reads 112.5. A rebased chart must name its start day."
+      }
+    },
+    {
+      "id": "h-review-chart",
+      "difficulty": 5,
+      "skills": [
+        "pl-honest",
+        "pl-figures",
+        "pl-market"
+      ],
+      "prose": "A colleague's script for the risk meeting:\n\n```python\nplt.savefig(\"pair.png\")\nax.plot(days, harbour, label=\"Harbour\")\nax.plot(days, kestrel)\nax.legend()\n```\n\n`days` holds 250 strings such as `\"2024-01-02\"`. Harbour trades near £420 and Kestrel near £19. The chart has no y label.",
+      "question": "List what is wrong and why, then write corrected code that lets the meeting compare the two shares.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Name each problem and its effect on the reader, then give corrected matplotlib code using `fig` and `ax`.",
+        "model": "**What is wrong**\n\n1. **Two prices on one pound axis.** Harbour (about £420) flattens Kestrel (about £19), so the meeting cannot compare their moves. Rebase each to 100 on the same start day.\n2. **Dates as strings.** All 250 dates become categories, so 250 labels pile up and the weekend gaps vanish. Convert with `date.fromisoformat`.\n3. **No y label.** The reader cannot tell pounds from pence. After rebasing, the label is `Rebased (2 Jan = 100)`, which also names the start day.\n4. **A line missing from the legend.** Kestrel has no `label=`, so `ax.legend()` lists Harbour alone.\n5. **Saved too early.** `plt.savefig` runs before plotting, so the file holds an empty chart. Save from `fig`, last.\n\n**Corrected code**\n\n```python\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom datetime import date\n\ndates = [date.fromisoformat(d) for d in days]\nfig, ax = plt.subplots()\nfor prices, name in [(harbour, \"Harbour\"), (kestrel, \"Kestrel\")]:\n    ax.plot(dates, [p / prices[0] * 100 for p in prices], label=name)\nax.set_title(\"Harbour and Kestrel, rebased\")\nax.set_xlabel(\"Date\")\nax.set_ylabel(\"Rebased (2 Jan = 100)\")\nax.legend()\nfig.autofmt_xdate()\nfig.savefig(\"pair.png\")\n```\n\n**Why rebasing, not a second y axis.** Two y axes let the author slide either scale, so any pair of lines can be made to cross. Rebasing puts both on one honest scale: growth since the same day.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Says the two prices share one pound axis, which flattens Kestrel, and fixes it by rebasing each to 100 by its own first close"
+          },
+          {
+            "points": 2,
+            "text": "Says the dates are strings, so every date gets its own crowded label, and converts them with `date.fromisoformat`"
+          },
+          {
+            "points": 1,
+            "text": "Adds a y label that names the quantity and the start day, such as `Rebased (2 Jan = 100)`"
+          },
+          {
+            "points": 1,
+            "text": "Notes Kestrel has no `label=`, so the legend omits it, and adds one"
+          },
+          {
+            "points": 2,
+            "text": "Notes the file is saved before anything is drawn, so it is empty, and saves with `fig.savefig` last"
+          },
+          {
+            "points": 1,
+            "text": "Uses `fig, ax = plt.subplots()` and `ax` methods throughout, with a title"
+          },
+          {
+            "points": 1,
+            "text": "Explains why rebasing beats a second y axis, or why the start day must be stated"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model and tick the rubric.",
+        "generic": "Compare your answer with the model and tick the rubric."
+      },
+      "explain": {
+        "text": "Five faults: one pound axis, string dates, no y label, an unnamed line and an early save. Rebasing, real dates, a full label, `label=` on every line and a final `fig.savefig` fix them."
+      }
+    },
+    {
+      "id": "h-bins",
+      "difficulty": 3,
+      "skills": [
+        "pl-risk"
+      ],
+      "prose": "A histogram of 30 daily returns uses `bins=60`. Most bars are empty and the rest are height 1.",
+      "question": "What is the best fix?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fewer",
+            "text": "Use fewer bins, around 6 to 10, so each holds several days",
+            "correct": true
+          },
+          {
+            "id": "more",
+            "text": "Use more bins to show more detail",
+            "why": "With more bins than days, most are already empty. More bins only add gaps."
+          },
+          {
+            "id": "line",
+            "text": "Switch to a line chart",
+            "why": "A line shows order in time. The question is how the returns spread, which needs a histogram."
+          },
+          {
+            "id": "data",
+            "text": "Drop the empty bins from `ax.patches`",
+            "why": "Empty bins are part of the picture: a gap is information. The trouble is too many bins for 30 days."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Bins should hold several values each.",
+        "generic": "Not quite right. How many returns can 60 bins share between them?"
+      },
+      "explain": {
+        "text": "Sixty bins for 30 returns leaves at most one day per bar, so no shape can appear. Six to ten bins give each several days and show the hump."
+      }
+    }
+  ]
+}
