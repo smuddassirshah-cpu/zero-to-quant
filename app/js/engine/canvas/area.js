@@ -26,7 +26,10 @@
     const hasTop = !!(L.top || P.colLabels), hasLeft = !!(L.left || P.rowLabels), hasBottom = !!L.bottom, hasRight = !!L.right;
     const sizes = (list, n) => { const a = (list && list.length === n ? list : Array(n).fill(1)).map(v => Math.abs(+v) || 1); const s = a.reduce((x, y) => x + y, 0); let acc = 0; return [0, ...a.map(v => (acc += v) / s)]; };
     const signOf = (list, k) => (list && +list[k] < 0 ? -1 : 1);
-    let cx = sizes(P.colSizes, cols), cy = sizes(P.rowSizes, rows);
+    /* items 127, 130, 191: colSizes and rowSizes may come from state (a patch or a control binding colSizes.0), so a cut
+       moves at true proportions */
+    let colS = P.colSizes, rowS = P.rowSizes;
+    let cx = sizes(colS, cols), cy = sizes(rowS, rows);
     let w, h;
     if (shape === 'circle') { w = h = 264; }
     else if (shape === 'square') { w = h = 264; }
@@ -59,16 +62,16 @@
     g.append(cellG, shadeG, coverG, lineG, inG, splitG, diagG, cellLabG, moveG, ptG, labG);
     const movePos = new Map(); // move id -> current top-left, for animating from there
     const cells = new Map();
-    let order = [], n = 0, gridKey = '';
+    let order = [], n = 0, gridKey = '', sizeKey = '';
     /* Cells and grid lines for rows x cols (a circle: sectors); called again when state.grid re-cuts the shape */
     const build = (r2, c2) => {
       if (shape === 'circle') { sectors = Math.max(1, c2); rows = 1; cols = sectors; } else { rows = Math.max(1, r2); cols = Math.max(1, c2); }
       const same = (list, k) => list && list.length === k;
-      cx = sizes(same(P.colSizes, cols) ? P.colSizes : null, cols); cy = sizes(same(P.rowSizes, rows) ? P.rowSizes : null, rows);
+      cx = sizes(same(colS, cols) ? colS : null, cols); cy = sizes(same(rowS, rows) ? rowS : null, rows);
       cellG.replaceChildren(); lineG.replaceChildren(); cells.clear();
       for (let i = 1; i <= rows; i++) for (let j = 1; j <= cols; j++) {
         const cid = cellId(i, j);
-        const neg = shape !== 'circle' && signOf(same(P.colSizes, cols) && P.colSizes, j - 1) * signOf(same(P.rowSizes, rows) && P.rowSizes, i - 1) < 0;
+        const neg = shape !== 'circle' && signOf(same(colS, cols) && colS, j - 1) * signOf(same(rowS, rows) && rowS, i - 1) < 0;
         const grp = svg('g', { class: 'cv-obj cv-acell' + (neg ? ' is-neg' : ''), 'data-id': cid, 'data-tap': '', 'data-label': (shape === 'circle' ? `Sector ${j} of ${sectors}` : `Row ${i}, column ${j}`) + (neg ? ', subtracted' : '') }, [cellShape(i, j, 'cv-body')]);
         cellG.append(grp); cells.set(cid, { grp, i, j });
       }
@@ -82,7 +85,7 @@
         /* subtracted pieces: hatched over any shading, with a dashed edge */
         for (const c of cells.values()) if (c.grp.classList.contains('is-neg')) { const b = cellBox(c.i, c.j); lineG.append(svg('rect', { class: 'cv-negpiece', x: b.x + 1, y: b.y + 1, width: Math.max(0, b.w - 2), height: Math.max(0, b.h - 2), fill: `url(#cv-hatch-${id}-neg)` })); }
       }
-      n = rows * cols; order = [...cells.keys()]; gridKey = `${rows}x${cols}`;
+      n = rows * cols; order = [...cells.keys()]; gridKey = `${rows}x${cols}`; sizeKey = JSON.stringify([cx, cy]);
     };
     build(rows, cols);
     /* Edge labels and per-row / per-column labels: from params, patchable through state (colLabels, rowLabels, labels) */
@@ -90,7 +93,7 @@
     const drawEdges = (st) => {
       const E = { ...L, ...Object.fromEntries(Object.entries(st.labels || {}).filter(([k]) => ['top', 'bottom', 'left', 'right'].includes(k))) };
       const colL = st.colLabels || P.colLabels, rowL = st.rowLabels || P.rowLabels;
-      const key = JSON.stringify([E.top, E.bottom, E.left, E.right, colL, rowL, gridKey]);
+      const key = JSON.stringify([E.top, E.bottom, E.left, E.right, colL, rowL, gridKey, sizeKey]);
       if (labG.dataset.key === key) return;
       labG.dataset.key = key; labG.replaceChildren();
       if (E.top) lab(ox + w / 2, oy - 18, E.top);
@@ -138,6 +141,10 @@
       });
     };
     const draw = (st, prev, { instant, ms }) => {
+      const cs = st.colSizes || P.colSizes, rs = st.rowSizes || P.rowSizes;
+      if (JSON.stringify([cs, rs]) !== JSON.stringify([colS, rowS])) { colS = cs; rowS = rs; build(rows, cols); shown = null; }
+      /* item 189: dim: [ids] fades pieces (a dropped row, the part not counted) */
+      const dimSet = new Set([].concat(st.dim || []).map(String));
       /* state.grid re-cuts the shape: [rows, cols], or n columns (n sectors on a circle) */
       if (st.grid != null) {
         const gg = [].concat(st.grid), r2 = gg.length > 1 ? +gg[0] : rows, c2 = +(gg.length > 1 ? gg[1] : gg[0]);
@@ -201,14 +208,15 @@
       moveG.querySelectorAll('.cv-apiece').forEach(n => { if (!keep.has(n.dataset.id)) { n.remove(); movePos.delete(n.dataset.id); } });
       /* text on a piece: params.labels and state.labels keyed by cell id ({ "c11": "3n" }); the state wins */
       const movedFrom = new Set(mv.map(m => m.from));
-      const pieceText = Object.assign({}, ...[L, st.labels || {}].map(m => Object.fromEntries(Object.entries(m || {}).filter(([k]) => cells.has(k) && !movedFrom.has(k)))));
-      const ptKey = JSON.stringify(pieceText) + gridKey + [...movedFrom].join();
+      const pieceText = Object.assign({}, ...[L, st.labels || {}].map(m => Object.fromEntries(Object.entries(m || {}).filter(([k]) => (cells.has(k) || spanOf(k)) && !movedFrom.has(k)))));
+      const ptKey = JSON.stringify(pieceText) + gridKey + sizeKey + [...movedFrom].join();
       if (cellLabG.dataset.key !== ptKey) {
         cellLabG.dataset.key = ptKey;
         cellLabG.replaceChildren(...Object.entries(pieceText).filter(([, t]) => t != null && t !== '').map(([cid, t]) => {
-          const c = cells.get(cid);
+          const c = cells.get(cid), sp = c ? null : spanOf(cid);
           let x, y;
-          if (shape === 'circle') { const a = (ang(c.j - 1) + ang(c.j)) / 2; x = ccx + R * 0.62 * Math.cos(a); y = ccy + R * 0.62 * Math.sin(a); }
+          if (sp) { x = sp.x + sp.w / 2; y = sp.y + sp.h / 2; }
+          else if (shape === 'circle') { const a = (ang(c.j - 1) + ang(c.j)) / 2; x = ccx + R * 0.62 * Math.cos(a); y = ccy + R * 0.62 * Math.sin(a); }
           else { const b = cellBox(c.i, c.j); x = b.x + b.w / 2; y = b.y + b.h / 2; }
           return C.label(x, y, t, { tex: 'auto', cls: 'cv-halo cv-alabel', w: 90, h: 30 });
         }));
@@ -221,6 +229,13 @@
         return svg('g', { class: 'cv-obj cv-apt' + (q.colour ? ' cv-k' + q.colour : ''), 'data-id': q.id, transform: `translate(${X} ${Y})` }, [svg('circle', { class: 'cv-body', r: 5 })]);
       }));
     };
+    /* item 130: a label keyed "c11-c16" spans the rectangle from the first cell to the second */
+    function spanOf(key) {
+      if (shape === 'circle') return null;
+      const m = String(key).match(/^(c\d+(?:-\d+)?)-(c\d+(?:-\d+)?)$/); if (!m || !cells.has(m[1]) || !cells.has(m[2])) return null;
+      const a = cells.get(m[1]), b = cells.get(m[2]), i0 = Math.min(a.i, b.i), i1 = Math.max(a.i, b.i), j0 = Math.min(a.j, b.j), j1 = Math.max(a.j, b.j);
+      const p = cellBox(i0, j0), q = cellBox(i1, j1); return { x: p.x, y: p.y, w: q.x + q.w - p.x, h: q.y + q.h - p.y };
+    }
     const I = C.instance({ kind: 'area', factory: area, params, ctx, fr, draw });
     I.api.cells = () => [...cells.keys()];
     /* Explore controls: re-cut with split or grid (see the header) */
@@ -228,6 +243,11 @@
     const curGrid = () => [rows, cols];
     I.api.setParam = (name, v) => {
       const [base, part] = String(name).split('.');
+      if ((base === 'colSizes' || base === 'rowSizes') && part != null) { // one entry, keeping its sign
+        const list = (I.state()[base] || P[base] || Array(base === 'colSizes' ? cols : rows).fill(1)).slice(), k = +part;
+        if (k >= 0 && k < list.length) { list[k] = (+list[k] < 0 ? -1 : 1) * Math.max(0.01, Math.abs(+v)); I.api.set({ [base]: list }, { instant: true }); }
+        return;
+      }
       if (base === 'shade') { I.api.set({ shade: Math.max(0, Math.min(1, +v)) }, { instant: true }); return; }
       v = Math.max(1, Math.round(+v));
       if (base === 'split') { const sp = curSplit() || [1, 1]; const next = part === 'rows' ? [v, sp[1]] : [sp[0], v]; I.api.set({ split: shape === 'circle' ? [next[1]] : next }, { instant: true }); }
@@ -235,12 +255,13 @@
     };
     { /* item 134: any other name is a free parameter in state.params, for a derive block to read */
       const own = I.api.setParam;
-      I.api.setParam = (name, v) => (['shade', 'split', 'grid'].includes(String(name).split('.')[0]) ? own(name, v) : I.api.set({ params: { [name]: +v } }, { instant: true }));
+      I.api.setParam = (name, v) => (['shade', 'split', 'grid', 'colSizes', 'rowSizes'].includes(String(name).split('.')[0]) ? own(name, v) : I.api.set({ params: { [name]: +v } }, { instant: true }));
     }
     I.api.getParam = (name) => {
       const [base, part] = String(name).split('.');
       const pair = base === 'split' ? curSplit() : base === 'grid' ? curGrid() : null;
       if (base === 'shade') { const sh = I.state().shade; return typeof sh === 'number' ? sh : undefined; }
+      if ((base === 'colSizes' || base === 'rowSizes') && part != null) { const list = I.state()[base] || P[base]; return list ? Math.abs(+list[+part]) : undefined; }
       return pair ? (part === 'rows' ? pair[0] : pair[1]) : (I.state().params || {})[name];
     };
     I.api.set({}, { instant: true });

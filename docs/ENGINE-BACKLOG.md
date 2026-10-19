@@ -557,3 +557,7 @@ Raised later (limits level 4):
 
 206. `plane` tangent `length`: measured along the line in data units, not in x units as the docs say; on steep curves with unequal axes the tangent is nearly invisible. Scale by x, or correct AUTHORING.md and README-B.md (authors use `lengthPx` meanwhile).
 207. `expression` widget: the numeric second opinion samples one variable only; two-variable answers such as $a/(2c)$ are unreliable (`0.5a/c` rejected). Sample every free symbol.
+
+Raised later (taylor level 1):
+
+208. `plane`: bindable view ranges (`state.view: { x, y }`) so a slider can zoom in on a curve near a point (the tangent-approximation hook fakes it by rescaling the function).
