@@ -249,6 +249,10 @@ Fourth pass (items 115 to 132 and 162 to 194):
 192. Done: plane parametric (`x`, `y`, `t`) and implicit (`implicit`, marching squares) curves as function entries, with `on` (nearest point, so a point goes round a circle) and `tangent` (`at` a point, or `t`).
 193. Done: while sketching, a plane draggable point is drawn as a square.
 194. Done: the Why? copy is built from the whole canvas spec, so a pair keeps `stack`, `active` and `shareMargins`.
+207. Done with 230: the numeric check samples every free symbol.
+230. Done: `exprEqual` no longer trusts Compute Engine's `simplify().isEqual()` alone. Whenever both sides evaluate, agreement at 6 seeded points (every free symbol from 0.3 to 3, away from 0 and 1, any number of variables) decides, so `5R` fails for `5\sqrt{R}` and `36\sqrt{xy}-9` for `36xy-9`. Requiring the symbolic check as well would reject true identities it misses (`e^{x+y}` and `e^xe^y`, `\ln(xy)` and `\ln x+\ln y` both come back unequal from it), so it decides only when neither side evaluates to a number (an equation, a set). Scratch test: 17 pairs including two-variable ones, all as expected.
+231. Done: AUTHORING.md section 3 notes that NumPy's `solve` and `inv` return nan for a singular matrix in Pyodide, so `raises` cases check `det` and raise in the learner's code.
+232. Done in part: parametric and implicit plane curves are documented in README-B (pass 4, 192); a `levels` contour family is not built yet.
 
 
 Raised later (equations level 2):
@@ -664,3 +668,9 @@ Raised later (vectors level 3, multivar level 3):
 233. `derive` writing an array target (`"g.v": "[...]"`) works but is undocumented; document it (and see 220).
 234. Negative numbers in fixed `table` widget cells and numeric `matrix` cells print a hyphen, not a minus sign; format like the table canvas.
 235. Live `{{...}}` values inside a typeset matrix cell do not update; allow caption-style substitution in matrix entries.
+
+Raised later (elimination level 1):
+
+236. Bug, `matrix`: the object form of `highlight` (`{ "A": { "rows": [1] } }`) never draws, because the initial `highlight` is `[]` and `ZQ.canvas.merge` treats the object as a keyed-list patch; use a non-array initial value or skip keyed merging when the existing list is empty.
+237. `manipulate` widget: a per-state `canvas` patch, so each tapped algebra step can animate the canvas (elimination steps on a `matrix`).
+238. `matrix`: an augmented bar (`bar: k`, a separator before column k) instead of two matrices with op "|"; a pivot circle that grows with wide cells; `rowOp` should default to the matrix that holds the rows named.

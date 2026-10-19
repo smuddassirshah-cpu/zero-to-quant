@@ -104,21 +104,34 @@
     mathsP = Promise.race([Promise.all([ml, ce]), deadline]).then(r => (r === 'timeout' ? { mathlive: false, ce: null } : { mathlive: r[0], ce: r[1] }));
     return mathsP;
   };
+  /* Item 230: Compute Engine's simplify().isEqual() can call x and sqrt(x) equal (they agree at 0 and 1), and it also
+     misses true identities (e^{x+y} and e^x e^y, ln(xy) and ln x + ln y). So whenever both sides evaluate, the deciding
+     test is numeric: agreement at 6 seeded points with every free symbol drawn from 0.3 to 3 (away from 0 and 1), with
+     any number of variables; a point where both sides are undefined is skipped, one side undefined fails. Only when
+     neither side evaluates to a number anywhere (an equation, a set) does the symbolic check decide. */
   const exprEqual = (ce, a, b) => {
     if (!ce || a == null || b == null || a === '' || b === '') return false;
     let A, B;
     try { A = ce.parse(String(a)); B = ce.parse(String(b)); } catch { return false; }
     if (A.isValid === false || B.isValid === false) return false;
-    try { if (A.simplify().isEqual(B.simplify())) return true; } catch { /* fall through to the numeric check */ }
-    // Second opinion: numeric agreement at 5 points (single variable) or at one point (no variables)
+    let sym = false;
+    try { sym = !!A.simplify().isEqual(B.simplify()); } catch { sym = false; }
     let vars = [];
     try { vars = [...new Set([...(A.unknowns || []), ...(B.unknowns || [])])]; } catch { vars = []; }
-    if (vars.length > 1) return false;
     const num = (E, sub) => { try { const v = (sub ? E.subs(sub) : E).N(); const x = v.re ?? v.valueOf(); return typeof x === 'number' ? x : NaN; } catch { return NaN; } };
-    const close = (x, y) => Number.isFinite(x) && Number.isFinite(y) && Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(x), Math.abs(y));
-    if (!vars.length) return close(num(A), num(B));
-    const pts = [0.37, 1.61, 2.93, -0.83, 4.27];
-    return pts.every(p => close(num(A, { [vars[0]]: p }), num(B, { [vars[0]]: p })));
+    const close = (x, y) => Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(x), Math.abs(y));
+    let seed = 20240531; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+    const draw = () => { let v; do { v = 0.3 + 2.7 * rnd(); } while (Math.abs(v - 1) < 0.08); return +v.toFixed(6); };
+    const pts = vars.length ? Array.from({ length: 6 }, () => Object.fromEntries(vars.map(v => [v, draw()]))) : [null];
+    let checked = 0, numeric = true;
+    for (const p of pts) {
+      const x = num(A, p), y = num(B, p), fx = Number.isFinite(x), fy = Number.isFinite(y);
+      if (!fx && !fy) continue;
+      if (fx !== fy || !close(x, y)) { numeric = false; break; }
+      checked++;
+    }
+    if (!checked && numeric) return sym; // nothing numeric to compare: the symbolic answer stands
+    return numeric;
   };
 
   /* ---------- Authored answers, in the shape each widget's set() accepts ---------- */

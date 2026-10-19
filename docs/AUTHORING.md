@@ -260,7 +260,7 @@ Any case may carry `setup`, a line of Python run just before `call` (`{ "setup":
 "tests": [{ "call": "RESULT", "expect": "0" }]
 ```
 
-In script mode both run on every case, around the program. Every run starts in a fresh, empty working directory, so files written by one run are gone in the next. `isclose` needs a real number: the text `"0.05"` fails it.
+In script mode both run on every case, around the program. Every run starts in a fresh, empty working directory, so files written by one run are gone in the next. `isclose` needs a real number: the text `"0.05"` fails it. In Pyodide's NumPy (2.0.2), `np.linalg.solve` and `np.linalg.inv` return `nan` for an exactly singular matrix instead of raising `LinAlgError`, so a `compare: "raises"` case cannot rely on NumPy's own singular-matrix error: have the learner's code check `np.linalg.det` and raise itself.
 
 The first run that imports a package (numpy, pandas, pytest) fetches it once; the results panel says "Loading numpy, pandas" meanwhile, and that time does not count against the tests' limit. pytest works (`pytest.approx`, `pytest.raises`): call test functions from a `setup` line or a `call`. Python's `sqlite3` works too, but `Connection.backup()` hangs in Pyodide: copy a database with `dst.executescript("".join(src.iterdump()))` instead. If the untouched starter itself stops with an error, Check says the starter is not finished yet and folds the traceback away.
 
