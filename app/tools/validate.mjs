@@ -30,7 +30,7 @@ const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(f
 /* ---------- Vocabulary ---------- */
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform']);
-const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'graph', 'array', 'payoff', 'orderbook', 'table']);
+const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console']);
 const SCREEN_TYPES = new Set(['title', 'explore', 'problem', 'ladder', 'demonstrate', 'trap', 'generalise', 'derive', 'transfer']);
 const GRADED = new Set(['problem', 'ladder', 'trap', 'transfer', 'derive']);
 const CANVAS_BOUND = new Set(['tap-regions', 'drag-point', 'sketch', 'balance', 'slider']);
@@ -150,6 +150,10 @@ const regionIds = (canvas) => {
     if (canvas.kind === 'plane') { (canvas.state.segments || []).concat(canvas.state.vectors || [], canvas.state.vlines || [], canvas.state.hlines || [], (canvas.params || {}).functions || []).forEach(q => { if (isObj(q) && q.id) ids.add(q.id); }); ['tangent', 'area', 'riemann', 'target', 'sketch'].forEach(k => ids.add(k)); }
     return ids;
   }
+  if (canvas.kind === 'console' && (Array.isArray(p.lines) || typeof p.text === 'string')) { // one-based line ids
+    const st = canvas.state || {}, n = Array.isArray(st.lines) ? Math.max(st.lines.length, (p.lines || String(p.text || '').replace(/\n$/, '').split('\n')).length) : (p.lines || String(p.text).replace(/\n$/, '').split('\n')).length;
+    return new Set(range(1, n).map(i => `l${i}`));
+  }
   if (canvas.kind === 'table' && Array.isArray(p.rows)) {
     const r = p.rows.length, c = Array.isArray(p.columns) ? p.columns.length : (p.rows[0] || []).length, ids = new Set();
     range(0, r).forEach(i => { ids.add(`r${i}`); range(0, c).forEach(j => ids.add(`r${i}c${j}`)); });
@@ -163,6 +167,7 @@ const PLAUSIBLE = {
   venn: /^(A|B|C|AB|AC|BC|ABC|none|[A-Za-z]{1,3})$/,
   area: /^(c\d+(-\d+)?|pt\d+|shade|split|point)$/,
   table: /^(r\d+|c\d+|r\d+c\d+)$/,
+  console: /^l\d+$/,
   matrix: /^[A-Za-z][A-Za-z0-9]*(-(r\d+|c\d+|\d+-\d+))?$/,
   walk: /^(path\d+|barrier-up|barrier-down)$/,
   orderbook: /^(bid\d+|ask\d+|spread)$/,
@@ -420,6 +425,9 @@ const checkCanvas = (file, where, c) => {
     if (S.labels != null && !isObj(S.labels)) err(file, `${where}.state.labels`, 'labels maps node ids to new labels');
     if (S.rotate != null && typeof S.rotate !== 'number') err(file, `${where}.state.rotate`, 'rotate is a number of seats');
   }
+  if (c.kind === 'console' && P.lines == null && typeof P.text !== 'string') err(file, `${where}.params`, 'a console needs lines (a list of strings) or text');
+  if (c.kind === 'console' && P.lines != null && !(Array.isArray(P.lines) && P.lines.every(l => typeof l === 'string'))) err(file, `${where}.params.lines`, 'lines is a list of strings, one per line');
+  if (c.kind === 'table' && P.tap != null && P.tap !== 'rows') err(file, `${where}.params.tap`, 'tap is "rows" (or leave it out to tap cells)');
   if (c.kind === 'tree' && S.current != null && typeof S.current !== 'string') err(file, `${where}.state.current`, 'current is a branch path such as "a-b", or "root"');
   if (c.kind === 'vectors' && P.points != null && !(Array.isArray(P.points) && P.points.every(q => isObj(q) && typeof q.x === 'number' && typeof q.y === 'number'))) err(file, `${where}.params.points`, 'points is a list of { id, x, y, label }');
   (c.controls || []).forEach((k, i) => {

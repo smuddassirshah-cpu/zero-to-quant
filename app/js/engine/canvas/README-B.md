@@ -306,6 +306,9 @@ Random walks or price paths from the seeded RNG.
 - `directed` (the default for all edges), `markov: true`, `nodeRadius`, `height`.
 - `layout: "ring"`: the nodes sit evenly round a circle in list order (seats round a table), ignoring `x` and `y`.
 - Without `nodeRadius` the radius grows to fit the longest label (22 up to 34); a label still too long shrinks (down to 10px).
+- A node may carry its own `r`, `shape: "pill"` (a rounded box as wide as its label, for branch names and variable names) and `dashed: true` (for example a fetched commit not yet merged). Edges stop at each node's rim.
+- `lanes: [{ "y": 0.15, "label": "origin" }, { "y": 0.85, "label": "local" }]`: labelled dotted lines behind the graph, at the same 0 to 1 heights as node `y`.
+- Names and objects (aliasing, mutation): draw each name as a pill node and each object as a node, with an edge from name to object; re-point a name by patching its edge (`{ "edges": { "e-b-obj1": null, "e-b-obj2": { "from": "b", "to": "obj2" } } }`), which animates.
 - `markov: true` makes edges directed and labels them with probabilities. Self-loops (`from` = `to`) point away from the graph's centre. A pair of opposite edges curves apart.
 
 **state**

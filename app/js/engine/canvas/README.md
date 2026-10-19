@@ -193,11 +193,11 @@ The unit circle.
 
 An HTML table in the canvas wrapper.
 
-**params**: `columns`, `rows` (2D array; a cell may be text, a number, `{ "text": "..." }`, or `{ "edit": true, "placeholder": "?" }`), `editable: ["r1c1"]` (more editable cells), `align` (`"left" | "right" | "center"` or one per column; default first column left, others right), `rowHeads` (first column as row headers).
+**params**: `columns`, `rows` (2D array; a cell may be text, a number, `{ "text": "..." }`, or `{ "edit": true, "placeholder": "?" }`), `editable: ["r1c1"]` (more editable cells), `align` (`"left" | "right" | "center"` or one per column; default first column left, others right), `rowHeads` (first column as row headers), `tap: "rows"` (tapping any cell selects the whole row, id `r{i}`: "tap the row the query returns first").
 
 **state**: `highlight` as ids or `{ "rows": [0], "cols": [2], "cells": ["r1c1"] }` (one ring around the union), `shade: [ids]` or `{ "<set>": [ids] }`, `values: { "r1c1": "0.5" }` (fills inputs or replaces cell text).
 
-Numbers print with the minus sign (−3), as does text that starts with a negative number ("-0.5 kg" reads −0.5 kg). `compact: true` (automatic above 6 columns) tightens the cells so a wide table fits the column; anything still wider scrolls sideways.
+Numbers print with the minus sign (−3), as does text that starts with a negative number ("-0.5 kg" reads −0.5 kg). `compact: true` (automatic above 6 columns) tightens the cells so a wide table fits the column; anything still wider scrolls sideways. Text cells and the caption render like prose (`$...$` maths, inline code in backticks, **bold**) and keep their spaces, so padded output lines up.
 
 **ids**: zero-based, as E2's table widget: `r{i}` a body row, `c{j}` a column (header and cells), `r{i}c{j}` a cell; `r0c0` is the first body cell. **methods**: `cells()` returns the editable inputs (each with `data-id`), `input(id)`. **events**: tap (non-editable cells).
 
@@ -207,6 +207,21 @@ Numbers print with the minus sign (−3), as does text that starts with a negati
 ```
 
 ---
+
+## console
+
+Terminal sessions, pytest output, tracebacks: a monospace block where every line keeps its indentation and long lines scroll sideways. HTML inside the canvas wrapper, like the table.
+
+**params**: `lines: ["$ pytest -q", "..F.", "E   assert 0.01 == 0.0"]` (or `text` with newlines), `title` (a small heading above the block, such as "Terminal"), `numbers: true` (line numbers in a gutter), `label` (accessible name). Lines starting with `$ `, `>>> ` or `... ` show the prompt muted and the command in bold.
+
+**state**: `shade: { "<set>": [ids] }` (series slots, a 3px bar on the left), `tone: { "l3": "err" | "ok" | "muted" }` (text colour per line), `lines` (replaces the text, for output that grows during an explanation), `highlight`, `caption` (rendered like prose).
+
+**ids**: `l1`, `l2`, ... one-based (l1 is the first line). **events**: tap (lines): `tap-regions` with `answer: ["l3"]` asks "tap the line that failed".
+
+```json
+{ "kind": "console", "params": { "title": "Terminal", "lines": ["$ pytest -q", "..F.", "E       assert 0.01 == 0.0", "1 failed, 3 passed"] },
+  "state": { "shade": { "fail": ["l3"] }, "tone": { "l4": "muted" } } }
+```
 
 ## pair
 
@@ -223,7 +238,8 @@ Two canvases side by side (stacked below 480px, or always with `stack: true`), f
 - **state** patches take `{ "left": {...}, "right": {...}, "caption": "..." }`; any other key goes to the `active` side (default `left`), which is also the side canvas-bound widgets (tap-regions, drag-point, sketch, balance) drive.
 - **ids** carry a prefix: `left:pt`, `right:P` in hints, `highlight`, marks and `explain.canvas`; an unprefixed id reaches both sides. A tap-regions answer on the active side uses its plain ids.
 - **derive** reads both sides (ids directly, or `left.p1` and `right.p1` when they share an id) and writes `left:` or `right:` targets; a plain target writes the active side, and `caption` the pair's caption.
-- **controls** bind `left:angle`, `right:a`, `right:points.P.x`; unprefixed binds reach the active side. The Why? copy is a pair too, with derive run on the explained state.
+- **controls** bind `left:angle`, `right:a`, `right:points.P.x`; unprefixed binds reach the active side.
+- **two tables** are drawn compact, and the pair stacks them (each at full width) whenever either would have to scroll side by side. The Why? copy is a pair too, with derive run on the explained state.
 
 ## Canvas-bound widgets
 

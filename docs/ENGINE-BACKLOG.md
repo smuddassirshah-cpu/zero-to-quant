@@ -100,7 +100,7 @@ Second pass (items 24 to 39):
 49. Done: plane tangent at a corner is not drawn unless `side` picks a one-sided slope; `lengthPx` gives a length in pixels.
 50. Done: series `drawdown: "money"` (and `"abs"`) labels the absolute fall; no division by a zero peak.
 
-Third pass (items 51 to 114, 123, 133 to 138 and 142 to 144):
+Third pass (items 51 to 114, 123, 133 to 161; 150 deferred):
 
 51. Done: area signed pieces: a negative `colSizes` or `rowSizes` entry makes its strip subtracted (hatched, dashed edge).
 52. Done: area `colLabels`, `rowLabels` and edge `labels` patchable through state.
@@ -176,6 +176,26 @@ Third pass (items 51 to 114, 123, 133 to 138 and 142 to 144):
 142. Kept: the worker's `loadPackagesFromImports(code)`; in script mode the code widget repeats the learner's import lines under `if False:` in the harness, so the worker sees them.
 143. Done: code widget `budget` (ms, added to the run limit; 30 s extra by default when the code imports numpy, pandas, scipy or matplotlib); `isclose` and `equal` compare arrays, Series and nested lists element by element via `tolist()`.
 144. Done: matrix scales the whole drawing to the column when it is wider than 540px.
+139. Done: inline code (`.lsn-ic`) and table cells use `white-space: pre-wrap`, so padded output keeps its spaces.
+140. Done: code cases take `argv` (script mode): `sys.argv` is `["main.py", ...argv]` for that run; the result row shows `python3 main.py ...`.
+141. Covered by graph: pill nodes for names, nodes for objects, and edges re-pointed by a keyed `edges` patch (add, `null` to remove, animated); README-B gives the recipe. No separate `refs` kind.
+145. Done: table cells and the table caption render through `ZQ.grade.inline` (with 158).
+146. Done: ` ```text ` and ` ```output ` blocks have no Copy button; on other blocks the button sits in a strip above the code (135).
+147. Done: see 139.
+148. Done: README-B series says marker `i` and shade `from`/`to` are 0-based indices whatever `indexFrom` says.
+149. Done: graph `lanes` (labelled dotted lines behind the graph) and node `dashed: true`.
+150. Not done: a simulated shell is a project of its own (a POSIX subset interpreter); left for a later pass.
+151. Done: `ZQ.canvas.merge` keyed patches remove an item set to `null` (and add a new id); explain clones use the same merge.
+152. Done: graph per-node `r` and `shape: "pill"` (sized to the label); edges stop at the rim.
+153. Done: table `tap: "rows"`: tapping a cell selects the row `r{i}`; rows take selection, grading colours and a badge in their last cell.
+154. Done: inline code wraps in choice options (139).
+155. Done: a pair of two tables draws both compact and stacks them whenever either would scroll side by side (ResizeObserver).
+156. Done: when the untouched starter errors, Check says the starter is not finished and folds the traceback into "Show the error".
+157. Done: AUTHORING.md section 3 notes the `Connection.backup()` hang and the `iterdump` copy.
+158. Done: see 145.
+159. Done: `console` canvas kind (lines `l1`..., prompt styling, shade, tone, highlight, tap mode); validator and gallery know it.
+160. Done: pytest loads from the CDN on first use like numpy (checked: `pytest.approx` and `pytest.raises` run in the widget); its load time is kept out of the limit (161) and counts as heavy for the default budget.
+161. Done: the worker posts `pkgs` start, message and end around `loadPackagesFromImports`; the code widget pauses the run's limit while packages load (two minutes of their own) and shows "Loading numpy, pandas" in the results panel.
 
 
 Raised later (equations level 2):
