@@ -202,7 +202,7 @@
       case 'place': return spec.mode === 'boxes' ? JSON.parse(JSON.stringify(spec.answer || {})) : spec.mode === 'order' ? (spec.order || []).slice() : Object.fromEntries((spec.slots || []).map(s => [s.id, (s.accepts || []).slice()]));
       case 'table': {
         const out = {};
-        (spec.rows || []).forEach((row, i) => row.forEach((c, j) => { if (c && typeof c === 'object' && c.edit) out[`r${i}c${j}`] = fmtNum(+c.answer); }));
+        (spec.rows || []).forEach((row, i) => row.forEach((c, j) => { if (c && typeof c === 'object' && c.edit) out[`r${i}c${j}`] = typeof c.answer === 'string' && !Number.isFinite(parseNum(c.answer)) ? c.answer : fmtNum(+c.answer); }));
         return out;
       }
       case 'manipulate': return manipulatePath(spec);

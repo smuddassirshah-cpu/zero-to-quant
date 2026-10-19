@@ -1,0 +1,1206 @@
+{
+  "id": "l11-bounding-error",
+  "course": "taylor",
+  "title": "Bounding the error",
+  "minutes": 14,
+  "objectives": [
+    "Bound the error of a Taylor polynomial with the remainder term."
+  ],
+  "skills": [
+    "ty-converge",
+    "ty-taylor"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "We want $e^{0.5}$ using only $+$, $-$, $\\times$ and $\\div$. The Maclaurin polynomial $T_n(x) = 1 + x + \\tfrac{x^2}{2!} + \\dots + \\tfrac{x^n}{n!}$ gets closer as $n$ grows. Slide $n$ and watch the error at $x = 0.5$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1,
+            2
+          ],
+          "y": [
+            0,
+            7.5
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(x)",
+              "label": "$e^x$",
+              "labelAt": 1.85
+            },
+            {
+              "id": "t",
+              "expr": "1 + c1*x + c2*x^2/2 + c3*x^3/6 + c4*x^4/24 + c5*x^5/120 + c6*x^6/720",
+              "label": "$T_n(x)$",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 1.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "n": 1,
+            "c1": 1,
+            "c2": 0,
+            "c3": 0,
+            "c4": 0,
+            "c5": 0,
+            "c6": 0
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p",
+              "x": 0.5,
+              "y": 1.648721
+            },
+            {
+              "id": "q",
+              "x": 0.5,
+              "y": 1.5,
+              "colour": 2
+            }
+          ],
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0.5,
+              "label": "x = 0.5"
+            }
+          ],
+          "caption": ""
+        },
+        "derive": {
+          "params.c1": "n >= 1 ? 1 : 0",
+          "params.c2": "n >= 2 ? 1 : 0",
+          "params.c3": "n >= 3 ? 1 : 0",
+          "params.c4": "n >= 4 ? 1 : 0",
+          "params.c5": "n >= 5 ? 1 : 0",
+          "params.c6": "n >= 6 ? 1 : 0",
+          "q.y": "1 + c1*0.5 + c2*pow(0.5, 2)/2 + c3*pow(0.5, 3)/6 + c4*pow(0.5, 4)/24 + c5*pow(0.5, 5)/120 + c6*pow(0.5, 6)/720",
+          "caption": "n = {{n}}: T(0.5) = {{fixed(q.y, 6)}}, error = {{fixed(exp(0.5) - q.y, 6)}}"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 0,
+            "max": 6,
+            "step": 1,
+            "label": "Degree $n$",
+            "start": 1
+          }
+        ]
+      },
+      "question": "What is the smallest $n$ that gets $e^{0.5}$ to within $0.0001$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Smallest degree n",
+        "accept": "5: the error drops from 0.000284 at $n = 4$ to 0.000023 at $n = 5$.",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 4
+          },
+          {
+            "id": "six",
+            "value": 6
+          },
+          {
+            "id": "three",
+            "value": 3
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the error in the caption for each $n$."
+        },
+        {
+          "rung": "point",
+          "text": "Look for the first error below 0.000100.",
+          "highlight": [
+            "t"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "At $n = 5$ the error is 0.000023, the first below 0.0001.",
+        "generic": "Not quite right. Step $n$ up one at a time and read the error.",
+        "byKey": {
+          "four": "At $n = 4$ the error is 0.000284, still above 0.0001.",
+          "six": "$n = 6$ works, but $n = 5$ already gives an error of 0.000023.",
+          "three": "At $n = 3$ the error is 0.0029, about 29 times too big."
+        }
+      },
+      "explain": {
+        "text": "The error falls from 0.000284 at $n = 4$ to 0.000023 at $n = 5$. But we read it off the true $e^{0.5}$, the very number we wanted. Next we bound the error without knowing the answer.",
+        "canvas": {
+          "params": {
+            "n": 5
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The error $R_n(x) = f(x) - T_n(x)$ is the **remainder**. Lagrange's form says it looks like the next term, with the derivative taken at an unknown $c$ between 0 and $x$. For $n = 0$ this is the mean value theorem. For $e^x$ at $x = 0.5$: $$R_2 = e^c\\,\\frac{0.5^3}{3!}, \\quad 0 < c < 0.5$$",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.7
+          ],
+          "y": [
+            0.9,
+            2.1
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(x)",
+              "label": "$e^x$",
+              "labelAt": 0.62
+            },
+            {
+              "id": "t",
+              "expr": "1 + x + x^2/2",
+              "label": "$T_2(x)$",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 0.65,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p",
+              "x": 0.5,
+              "y": 1.648721
+            },
+            {
+              "id": "q",
+              "x": 0.5,
+              "y": 1.625,
+              "colour": 2
+            }
+          ],
+          "segments": [
+            {
+              "id": "gap",
+              "from": "q",
+              "to": "p",
+              "label": "error",
+              "labelOffset": [
+                -48,
+                0
+              ]
+            }
+          ]
+        }
+      },
+      "question": "We do not know $c$, but $e^c < 2$ for $c < 0.5$. Using that, what is the largest $R_2$ can be?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0417,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Largest possible error",
+        "accept": "0.0417, which is $2 \\times \\tfrac{0.125}{6}$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "low",
+            "value": 0.0208,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-fact",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "circular",
+            "value": 0.0343,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which value of $e^c$ makes $R_2$ biggest?"
+        },
+        {
+          "rung": "point",
+          "text": "Replace $e^c$ by its upper limit, 2.",
+          "highlight": [
+            "gap"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\times \\dfrac{0.5^3}{6} = 2 \\times \\dfrac{0.125}{6} \\approx 0.0417$."
+        }
+      ],
+      "feedback": {
+        "correct": "$R_2 < 2 \\times \\tfrac{0.125}{6} \\approx 0.0417$.",
+        "generic": "Not quite right. Put the largest possible $e^c$ into $e^c \\tfrac{0.5^3}{3!}$.",
+        "byKey": {
+          "low": "That takes $e^c = 1$, its smallest value. A bound needs the largest, just under 2.",
+          "no-fact": "You left out the $3! = 6$ below the line.",
+          "circular": "That uses $e^{0.5}$ itself, the number we are trying to find. Use $e^c < 2$ instead."
+        }
+      },
+      "explain": {
+        "text": "With $e^c < 2$, $R_2 < 2 \\times \\tfrac{0.125}{6} \\approx 0.0417$. The true error is 0.0237, safely inside. Not knowing $c$ cost us a bound about 1.8 times the true error.",
+        "canvas": {
+          "highlight": [
+            "gap"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The same reasoning works for every $n$: $$|R_n| < 2\\,\\frac{0.5^{n+1}}{(n+1)!}$$ Black dots are this bound and orange dots the true error, on a log scale. At $n = 4$ the bound is $0.00052$, above the target $10^{-4}$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            7
+          ],
+          "y": [
+            1e-06,
+            1
+          ],
+          "yScale": "log",
+          "grid": true,
+          "xTicks": "integer",
+          "xLabel": "$n$",
+          "yLabel": "Error"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b1",
+              "x": 1,
+              "y": 0.25
+            },
+            {
+              "id": "b2",
+              "x": 2,
+              "y": 0.04167
+            },
+            {
+              "id": "b3",
+              "x": 3,
+              "y": 0.005208
+            },
+            {
+              "id": "b4",
+              "x": 4,
+              "y": 0.0005208
+            },
+            {
+              "id": "b6",
+              "x": 6,
+              "y": 3.1e-06
+            },
+            {
+              "id": "e1",
+              "x": 1,
+              "y": 0.1487,
+              "colour": 2
+            },
+            {
+              "id": "e2",
+              "x": 2,
+              "y": 0.02372,
+              "colour": 2
+            },
+            {
+              "id": "e3",
+              "x": 3,
+              "y": 0.002888,
+              "colour": 2
+            },
+            {
+              "id": "e4",
+              "x": 4,
+              "y": 0.0002838,
+              "colour": 2
+            },
+            {
+              "id": "e5",
+              "x": 5,
+              "y": 2.335e-05,
+              "colour": 2
+            },
+            {
+              "id": "e6",
+              "x": 6,
+              "y": 1.653e-06,
+              "colour": 2
+            }
+          ],
+          "hlines": [
+            {
+              "id": "target",
+              "y": 0.0001,
+              "label": "target"
+            }
+          ]
+        }
+      },
+      "question": "What is the bound at $n = 5$? Answer in units of $10^{-5}$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.34,
+        "tol": {
+          "abs": 0.02
+        },
+        "label": "Bound at n = 5, in units of 10 to the minus 5",
+        "accept": "4.34: $2 \\times \\tfrac{0.5^6}{720} = 4.34 \\times 10^{-5}$.",
+        "unit": "× 10⁻⁵",
+        "placeholder": "for example 1.23",
+        "wrong": [
+          {
+            "id": "no-two",
+            "value": 2.17,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "n-fact",
+            "value": 26.04,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "n4",
+            "value": 52.08,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $n = 5$ into $2\\,\\dfrac{0.5^{n+1}}{(n+1)!}$."
+        },
+        {
+          "rung": "point",
+          "text": "$0.5^6 = 0.015625$ and $6! = 720$.",
+          "highlight": [
+            "target"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\times \\dfrac{0.015625}{720} = 0.0000434 = 4.34 \\times 10^{-5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$4.34 \\times 10^{-5}$, below the target of $10^{-4}$.",
+        "generic": "Not quite right. Use the power $n + 1 = 6$ and the factorial $6!$.",
+        "byKey": {
+          "no-two": "You left out the factor 2 that bounds $e^c$.",
+          "n-fact": "You divided by $5!$. The remainder after $T_5$ has $6!$ below the line.",
+          "n4": "That is the bound at $n = 4$. Move one step on, to $n = 5$."
+        }
+      },
+      "explain": {
+        "text": "$2 \\times \\tfrac{0.5^6}{720} \\approx 4.34 \\times 10^{-5}$, below $10^{-4}$. So $T_5(0.5) = 1.648698$ is guaranteed close enough, and we never used $e^{0.5}$. The true error, $2.3 \\times 10^{-5}$, sits under the bound as it must.",
+        "canvas": {
+          "points": {
+            "b5": {
+              "x": 5,
+              "y": 4.34e-05
+            }
+          },
+          "highlight": [
+            "b5",
+            "target"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now $\\sin 0.3 \\approx 0.3 - \\tfrac{0.3^3}{6} = 0.2955$. Every derivative of $\\sin$ is $\\pm\\sin$ or $\\pm\\cos$, so $|f^{(n+1)}(c)| \\le 1$. Note that $x - \\tfrac{x^3}{6}$ is $T_3$ and also $T_4$, because the $x^4$ coefficient is 0.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3,
+            3
+          ],
+          "y": [
+            -2,
+            2
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "sin(x)",
+              "label": "$\\sin x$",
+              "labelAt": 1.6
+            },
+            {
+              "id": "t",
+              "expr": "x - x^3/6",
+              "label": "$x - \\frac{x^3}{6}$",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 2.5,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p",
+              "x": 0.3,
+              "y": 0.29552
+            }
+          ],
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0.3,
+              "label": "x = 0.3"
+            }
+          ]
+        }
+      },
+      "question": "Which is the smallest valid bound on the error?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "n3",
+            "text": "$\\dfrac{0.3^4}{4!} \\approx 3.4 \\times 10^{-4}$",
+            "why": "That bound is valid but loose. The same polynomial is $T_4$, so the $n = 4$ bound applies too."
+          },
+          {
+            "id": "right",
+            "text": "$\\dfrac{0.3^5}{5!} \\approx 2.0 \\times 10^{-5}$",
+            "correct": true
+          },
+          {
+            "id": "n6",
+            "text": "$\\dfrac{0.3^7}{7!} \\approx 4.3 \\times 10^{-8}$",
+            "why": "That bound belongs to $T_6$, which includes the $x^5$ term. Our polynomial stops at $x^3$."
+          },
+          {
+            "id": "used",
+            "text": "$\\dfrac{0.3^3}{3!} = 4.5 \\times 10^{-3}$",
+            "why": "That is the last term we used, not a bound on what we left out."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which values of $n$ describe the polynomial $x - \\tfrac{x^3}{6}$?"
+        },
+        {
+          "rung": "point",
+          "text": "It is $T_3$ and $T_4$, so the remainder can be written as $R_4$.",
+          "highlight": [
+            "p"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$|R_4| \\le \\dfrac{1 \\times 0.3^5}{5!} = 2.0 \\times 10^{-5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Treating it as $T_4$ gives $\\tfrac{0.3^5}{120} \\approx 2.0 \\times 10^{-5}$.",
+        "generic": "Not quite right. Decide which $T_n$ this polynomial is, taking the largest $n$ you can."
+      },
+      "explain": {
+        "text": "As $T_4$, $|R_4| \\le \\tfrac{0.3^5}{120} = 2.025 \\times 10^{-5}$. The true error is $2.021 \\times 10^{-5}$, so the bound is almost exact. A zero coefficient buys an extra power for free.",
+        "canvas": {
+          "highlight": [
+            "p"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The series $\\ln 1.5 = 0.5 - \\tfrac{0.5^2}{2} + \\tfrac{0.5^3}{3} - \\dots$ alternates, and its terms shrink. The dots are the running totals $S_1$ to $S_7$. They zigzag, each one crossing over the true value.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            8
+          ],
+          "y": [
+            0.36,
+            0.52
+          ],
+          "grid": true,
+          "xTicks": "integer",
+          "xLabel": "Terms added",
+          "yLabel": "Running total"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "s1",
+              "x": 1,
+              "y": 0.5,
+              "label": "$S_1$"
+            },
+            {
+              "id": "s2",
+              "x": 2,
+              "y": 0.375,
+              "label": "$S_2$"
+            },
+            {
+              "id": "s3",
+              "x": 3,
+              "y": 0.41667,
+              "label": "$S_3$"
+            },
+            {
+              "id": "s4",
+              "x": 4,
+              "y": 0.40104,
+              "label": "$S_4$"
+            },
+            {
+              "id": "s5",
+              "x": 5,
+              "y": 0.40729,
+              "label": "$S_5$"
+            },
+            {
+              "id": "s6",
+              "x": 6,
+              "y": 0.40469,
+              "label": "$S_6$"
+            },
+            {
+              "id": "s7",
+              "x": 7,
+              "y": 0.4058,
+              "label": "$S_7$"
+            }
+          ]
+        }
+      },
+      "question": "$S_3 = 0.41667$. Without knowing $\\ln 1.5$, what is the most its error can be?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0156,
+        "tol": {
+          "abs": 0.0002
+        },
+        "label": "Largest possible error of S3",
+        "accept": "0.0156, which is $\\tfrac{0.5^4}{4}$, the first term left out.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "last-used",
+            "value": 0.0417,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "two-terms",
+            "value": 0.0094,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the true value sit, relative to the dots?"
+        },
+        {
+          "rung": "point",
+          "text": "The true value lies between $S_3$ and $S_4$.",
+          "highlight": [
+            "s3",
+            "s4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$|S_4 - S_3| = \\tfrac{0.5^4}{4} = 0.0156$, so the error of $S_3$ is at most 0.0156."
+        }
+      ],
+      "feedback": {
+        "correct": "At most the gap to $S_4$: $\\tfrac{0.5^4}{4} = 0.0156$.",
+        "generic": "Not quite right. The true value sits between $S_3$ and $S_4$.",
+        "byKey": {
+          "last-used": "That is the last term you added, $\\tfrac{0.5^3}{3}$. The true value lies between $S_3$ and $S_4$, so their gap bounds the error.",
+          "two-terms": "That is the gap from $S_4$ to $S_5$. The error of $S_3$ is bounded by the next gap, $S_3$ to $S_4$."
+        }
+      },
+      "explain": {
+        "text": "The true value sits between neighbouring totals, so the error of $S_3$ is at most the first term left out, 0.0156. The true error is 0.0112. This **alternating series bound** needs alternating signs and terms that shrink to 0.",
+        "canvas": {
+          "hlines": [
+            {
+              "id": "true",
+              "y": 0.405465,
+              "label": "ln 1.5"
+            }
+          ],
+          "highlight": [
+            "s3",
+            "s4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A colleague bounds the error of $T_2(0.5) = 1.625$ for $e^{0.5}$ the same way: by the first term left out, $\\tfrac{0.5^3}{3!} = 0.0208$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.3,
+            0.7
+          ],
+          "y": [
+            1.6,
+            1.67
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "q",
+              "x": 0.5,
+              "y": 1.625,
+              "label": "T₂(0.5)",
+              "colour": 2,
+              "labelPos": "e"
+            },
+            {
+              "id": "c",
+              "x": 0.5,
+              "y": 1.645833,
+              "label": "T₂ + first left-out term",
+              "labelPos": "e"
+            }
+          ]
+        }
+      },
+      "question": "Is the error of $T_2(0.5)$ at most 0.0208?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "claim",
+            "text": "Yes: the error is at most the first term left out",
+            "why": "You used the alternating bound on a series with no sign changes. Every left-out term is positive, so together they exceed the first."
+          },
+          {
+            "id": "right",
+            "text": "No: every left-out term is positive, so the error exceeds 0.0208",
+            "correct": true
+          },
+          {
+            "id": "exact",
+            "text": "Yes: the error is exactly 0.0208",
+            "why": "The error is all the left-out terms together: $0.0208 + 0.0026 + 0.0003 + \\dots = 0.0237$."
+          },
+          {
+            "id": "cancel",
+            "text": "No: the error is smaller, because later terms cancel",
+            "why": "Nothing cancels: for $x > 0$ every term of the $e^x$ series is positive."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What signs do the left-out terms $\\tfrac{0.5^3}{3!}, \\tfrac{0.5^4}{4!}, \\dots$ have?"
+        },
+        {
+          "rung": "point",
+          "text": "All of them are positive, so the true value lies above the upper dot.",
+          "highlight": [
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The error is $0.0208 + 0.0026 + 0.0003 + \\dots \\approx 0.0237$."
+        }
+      ],
+      "feedback": {
+        "correct": "The whole positive tail is bigger than its first term.",
+        "generic": "Not quite right. Check whether the series alternates before using the first left-out term.",
+        "byKey": {
+          "claim": "You used the first-left-out-term rule on a series with no sign changes. Here the error is the whole positive tail, 0.0237."
+        }
+      },
+      "explain": {
+        "text": "The error is the whole tail, $0.0208 + 0.0026 + 0.0003 + \\dots = 0.0237$, bigger than its first term. The first-left-out-term rule needs alternating signs. For $e^x$ at $x > 0$ use Lagrange instead: $|R_2| < 0.0417$.",
+        "canvas": {
+          "points": {
+            "p": {
+              "x": 0.5,
+              "y": 1.648721,
+              "label": "e^0.5",
+              "labelPos": "e"
+            }
+          },
+          "highlight": [
+            "p",
+            "c"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You bounded the next derivative and kept the rest exact. That is the **Lagrange remainder**: $$R_n(x) = \\frac{f^{(n+1)}(c)}{(n+1)!}(x - a)^{n+1}$$ for some $c$ between $a$ and $x$. If $|f^{(n+1)}| \\le M$ there, $$|R_n(x)| \\le \\frac{M\\,|x - a|^{n+1}}{(n+1)!}$$",
+      "question": "For $\\ln(1 + x)$, $f^{(4)}(x) = -\\dfrac{6}{(1+x)^4}$. What is the best $M$ for $0 \\le c \\le 0.1$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$M = 6$",
+            "correct": true
+          },
+          {
+            "id": "min",
+            "text": "$M = \\tfrac{6}{1.1^4} \\approx 4.10$",
+            "why": "That is the smallest value of $|f^{(4)}|$ on the interval. A bound needs the largest, at $c = 0$."
+          },
+          {
+            "id": "neg",
+            "text": "$M = -6$",
+            "why": "$M$ bounds the size $|f^{(4)}|$, so it is positive."
+          },
+          {
+            "id": "one",
+            "text": "$M = 1$",
+            "why": "Only $\\sin$ and $\\cos$ have every derivative bounded by 1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where on $0 \\le c \\le 0.1$ is $\\dfrac{6}{(1+c)^4}$ largest?"
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{6}{(1+c)^4}$ is largest at $c = 0$, where it is 6.",
+        "generic": "Not quite right. Find the largest value of $|f^{(4)}(c)|$ on the interval."
+      },
+      "explain": {
+        "text": "$|f^{(4)}(c)| = \\tfrac{6}{(1+c)^4}$ is largest at $c = 0$, so $M = 6$. Then $|R_3(0.1)| \\le \\tfrac{6 \\times 0.1^4}{24} = 2.5 \\times 10^{-5}$. That matches the alternating bound, since this series alternates too."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "How many terms of $1 + 1 + \\tfrac{1}{2!} + \\tfrac{1}{3!} + \\dots$ guarantee $e$ to within $10^{-6}$? We use Lagrange at $x = 1$, without knowing $e$ exactly.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "lag",
+            "text": "$R_n(1) = \\dfrac{e^c}{(n+1)!}$ for some $0 < c < 1$: Lagrange with $a = 0$, $x = 1$"
+          },
+          {
+            "id": "bound",
+            "text": "$e^c < e < 3$: $e^x$ increases, and $e$ is below 3"
+          },
+          {
+            "id": "plug",
+            "text": "$|R_n(1)| < \\dfrac{3}{(n+1)!}$: put the largest $e^c$ in"
+          },
+          {
+            "id": "need",
+            "text": "We need $(n+1)! > 3{,}000{,}000$: so that $\\tfrac{3}{(n+1)!} < 10^{-6}$"
+          },
+          {
+            "id": "n",
+            "text": "$9! = 362{,}880$ is too small and $10! = 3{,}628{,}800$ is enough, so $n = 9$"
+          }
+        ],
+        "answer": [
+          "lag",
+          "bound",
+          "plug",
+          "need",
+          "n"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the Lagrange form at $x = 1$."
+        },
+        {
+          "rung": "step",
+          "text": "Remainder, bound $e^c$, plug in, set the target, then search the factorials."
+        }
+      ],
+      "feedback": {
+        "correct": "Degree 9 is enough: $T_9(1)$ is within $8.3 \\times 10^{-7}$ of $e$.",
+        "generic": "Not quite right. You need the remainder and a bound on $e^c$ before any factorials.",
+        "byKey": {
+          "need": "The target for $(n+1)!$ comes from the bound $\\tfrac{3}{(n+1)!}$, so that comes first.",
+          "n": "Checking factorials is the last step, once you know the target."
+        }
+      },
+      "explain": {
+        "text": "Bounding $e^c$ by 3 turns an unknown into a number. Then we only need $(n+1)! > 3 \\times 10^6$, and $10! = 3{,}628{,}800$ is the first factorial past it. So $T_9(1) = 2.7182815$ is within $8.3 \\times 10^{-7}$ of $e$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A desk values a £1,000,000 zero-coupon bond, due in 1 year at a 5% continuous rate, as $10^6 e^{-0.05}$. To save time it uses $e^{-x} \\approx 1 - x + \\tfrac{x^2}{2}$ with $x = 0.05$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0.3,
+            1.05
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-x)",
+              "label": "$e^{-x}$",
+              "labelAt": 0.85,
+              "labelSide": "below"
+            },
+            {
+              "id": "t",
+              "expr": "1 - x + x^2/2",
+              "label": "$1 - x + \\frac{x^2}{2}$",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 0.75
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p",
+              "x": 0.05,
+              "y": 0.951229
+            }
+          ],
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0.05,
+              "label": "x = 0.05"
+            }
+          ]
+        }
+      },
+      "question": "Use Lagrange with $|f'''(c)| \\le 1$. What is the most the pricing error can be, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20.83,
+        "tol": {
+          "abs": 0.3
+        },
+        "label": "Largest pricing error in pounds",
+        "accept": "£20.83: $10^6 \\times \\tfrac{0.05^3}{6}$. The true error is £20.58.",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "no-fact",
+            "value": 125,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "square",
+            "value": 1250,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "fourth",
+            "value": 0.26,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$f(x) = e^{-x}$ has $f'''(x) = -e^{-x}$. How big can that be for $0 < c < 0.05$?"
+        },
+        {
+          "rung": "point",
+          "text": "$|f'''(c)| = e^{-c} \\le 1$, so $|R_2| \\le \\dfrac{0.05^3}{3!}$.",
+          "highlight": [
+            "v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\dfrac{0.000125}{6} = 2.083 \\times 10^{-5}$ per pound, times £1,000,000."
+        }
+      ],
+      "feedback": {
+        "correct": "$10^6 \\times \\tfrac{0.05^3}{6} \\approx \\pounds 20.83$.",
+        "generic": "Not quite right. Bound $R_2$ per pound, then scale by £1,000,000.",
+        "byKey": {
+          "no-fact": "You left out the $3! = 6$.",
+          "square": "That is the size of the $\\tfrac{x^2}{2}$ term, which the desk included.",
+          "fourth": "You used the fourth power. After $T_2$ the remainder has $x^3$."
+        }
+      },
+      "explain": {
+        "text": "$|R_2| \\le \\tfrac{0.05^3}{3!} = 2.083 \\times 10^{-5}$, which is £20.83 on £1,000,000. The true error is £20.58, so the bound is tight. The desk knows its shortcut is never more than £21 out."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The remainder $R_n = f - T_n$ looks like the next term, with $f^{(n+1)}$ taken at an unknown $c$.",
+      "Bound it by the largest $|f^{(n+1)}|$ between $a$ and $x$, then pick $n$ to meet a target.",
+      "For an alternating series with shrinking terms, the error is at most the first term left out."
+    ],
+    "formula": {
+      "name": "Lagrange remainder",
+      "tex": "|R_n(x)| \\le \\dfrac{M\\,|x - a|^{n+1}}{(n+1)!}",
+      "note": "$M$ is the largest $|f^{(n+1)}(c)|$ for $c$ between $a$ and $x$."
+    },
+    "trap": "The first left-out term bounds the error only for alternating series. For $e^{0.5}$ it says 0.0208; the error is 0.0237."
+  },
+  "quiz": [
+    {
+      "id": "q-linear-bound",
+      "difficulty": 2,
+      "prose": "$e^{0.1} \\approx T_1(0.1) = 1.1$. For $0 < c < 0.1$, $e^c < 2$.",
+      "question": "What bound does Lagrange give on the error?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.01,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Bound on the error",
+        "accept": "0.01: $2 \\times \\tfrac{0.1^2}{2!}$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "no-two",
+            "value": 0.005,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "no-fact",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2 \\times \\tfrac{0.01}{2} = 0.01$. The true error is 0.0052.",
+        "generic": "Not quite right. Use $R_1 = e^c \\tfrac{0.1^2}{2!}$ with $e^c < 2$.",
+        "byKey": {
+          "no-two": "You took $e^c = 1$. A bound needs its largest value, below 2.",
+          "no-fact": "You left out the $2! = 2$."
+        }
+      },
+      "explain": {
+        "text": "$R_1 = e^c \\tfrac{0.1^2}{2}$ with $e^c < 2$ gives $|R_1| < 0.01$. The true error is $e^{0.1} - 1.1 = 0.0052$."
+      }
+    },
+    {
+      "id": "q-cos-alt",
+      "difficulty": 2,
+      "prose": "$\\cos 0.2 \\approx 1 - \\tfrac{0.2^2}{2} = 0.98$. The cosine series alternates and its terms shrink.",
+      "question": "What is the most the error can be?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\tfrac{0.2^4}{24} \\approx 6.7 \\times 10^{-5}$",
+            "correct": true
+          },
+          {
+            "id": "used",
+            "text": "$\\tfrac{0.2^2}{2} = 0.02$",
+            "why": "That is the last term used, not the first one left out."
+          },
+          {
+            "id": "cubic",
+            "text": "$\\tfrac{0.2^3}{6} \\approx 1.3 \\times 10^{-3}$",
+            "why": "The cosine series has no $x^3$ term. The first term left out is $\\tfrac{x^4}{24}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The first term left out is $\\tfrac{0.2^4}{4!} \\approx 6.7 \\times 10^{-5}$.",
+        "generic": "Not quite right. Find the first term of the cosine series that was left out."
+      },
+      "explain": {
+        "text": "$\\cos x = 1 - \\tfrac{x^2}{2} + \\tfrac{x^4}{24} - \\dots$ alternates with shrinking terms. So the error is at most $\\tfrac{0.2^4}{24} = 6.7 \\times 10^{-5}$. The true error is $6.6 \\times 10^{-5}$."
+      }
+    },
+    {
+      "id": "q-which-alt",
+      "difficulty": 3,
+      "prose": "You stop each series below after three terms and want to use the first left-out term as the error bound.",
+      "question": "For which one is that valid?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\ln 1.3 = 0.3 - \\tfrac{0.3^2}{2} + \\tfrac{0.3^3}{3} - \\dots$",
+            "correct": true
+          },
+          {
+            "id": "exp",
+            "text": "$e^{0.3} = 1 + 0.3 + \\tfrac{0.3^2}{2} + \\dots$",
+            "why": "Every term is positive, so the tail exceeds its first term."
+          },
+          {
+            "id": "lnneg",
+            "text": "$\\ln 0.7 = -0.3 - \\tfrac{0.3^2}{2} - \\tfrac{0.3^3}{3} - \\dots$",
+            "why": "Every term is negative: no sign changes, so the rule does not apply."
+          },
+          {
+            "id": "geo",
+            "text": "$\\tfrac{1}{0.7} = 1 + 0.3 + 0.3^2 + \\dots$",
+            "why": "All terms are positive. The tail is $\\tfrac{0.3^3}{0.7}$, more than $0.3^3$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only the series for $\\ln 1.3$ alternates with shrinking terms.",
+        "generic": "Not quite right. Look for the series whose signs alternate."
+      },
+      "explain": {
+        "text": "The rule needs alternating signs and shrinking terms. Only $\\ln(1 + x)$ at $x = 0.3$ alternates. At $x = -0.3$ every term is negative, so the error is bigger than the first left-out term."
+      }
+    },
+    {
+      "id": "q-e-thousandth",
+      "difficulty": 3,
+      "prose": "You want $e = e^1$ to within $0.001$, using $|R_n(1)| < \\dfrac{3}{(n+1)!}$.",
+      "question": "What is the smallest degree $n$ this bound guarantees?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Smallest degree n",
+        "accept": "6: $\\tfrac{3}{7!} = 0.0006 < 0.001$, while $\\tfrac{3}{6!} = 0.0042$.",
+        "wrong": [
+          {
+            "id": "seven",
+            "value": 7
+          },
+          {
+            "id": "five",
+            "value": 5
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$7! = 5{,}040 > 3{,}000$, so $n + 1 = 7$ and $n = 6$.",
+        "generic": "Not quite right. Find the first $(n+1)!$ above 3,000.",
+        "byKey": {
+          "seven": "$7!$ is the first factorial above 3,000, but it is $(n+1)!$. So $n = 6$.",
+          "five": "At $n = 5$ the bound is $\\tfrac{3}{720} = 0.0042$, too big."
+        }
+      },
+      "explain": {
+        "text": "We need $\\tfrac{3}{(n+1)!} < 0.001$, so $(n+1)! > 3{,}000$. $6! = 720$ is too small and $7! = 5{,}040$ works. So $n + 1 = 7$ and $n = 6$."
+      }
+    }
+  ]
+}

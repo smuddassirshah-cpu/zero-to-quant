@@ -17,7 +17,7 @@
     let cats = binned
       ? binsFor(binW)
       : (params.categories || []).map((c) => (K.isObj(c) ? { id: c.id || 'x' + c.label, label: String(c.label ?? c.id), colour: c.colour } : { id: 'x' + c, label: String(c) }));
-    const rebin = (view) => { const w = (view && view.binWidth) || params.bins.width; if (binned && w !== binW) { binW = w; cats = binsFor(w); } };
+    const rebin = (view) => { if (!binned) return; const w = (view && view.binWidth) || params.bins.width; if (w !== binW) { binW = w; cats = binsFor(w); } };
     const catIndex = (key) => {
       if (key == null) return -1; const k = String(key);
       let i = cats.findIndex((c) => c.id === k || c.label === k);

@@ -68,6 +68,9 @@
       const sets = Array.isArray(st.shade) ? [st.shade] : Object.values(st.shade || {});
       q('.is-shaded').forEach(n => n.classList.remove('is-shaded', 'cv-sh1', 'cv-sh2', 'cv-sh3', 'cv-sh4', 'cv-sh5', 'cv-sh6'));
       sets.forEach((ids, k) => (ids || []).flatMap(resolve).forEach(n => { if (!n.classList.contains('is-shaded')) n.classList.add('is-shaded', 'cv-sh' + (k + 1)); }));
+      /* item 180: dim: [ids] greys rows, columns or cells (a dropped row in a join) without blanking them */
+      q('.is-out').forEach(n => n.classList.remove('is-out'));
+      [].concat(st.dim || []).flatMap(resolve).forEach(n => n.classList.add('is-out'));
       for (const [id, v] of Object.entries(st.values || {})) {
         const inp = inputs.find(x => x.dataset.id === id);
         if (inp) { if (inp.value !== String(v)) inp.value = v; }

@@ -561,3 +561,9 @@ Raised later (limits level 4):
 Raised later (taylor level 1):
 
 208. `plane`: bindable view ranges (`state.view: { x, y }`) so a slider can zoom in on a curve near a point (the tangent-approximation hook fakes it by rescaling the function).
+
+Raised later (taylor level 2):
+
+209. Live captions: `^` in a caption formula is not a power (unlike curve formulas), so values go silently wrong; either accept `^` in captions or make the validator warn on it.
+210. `plane` curve formulas: a partial-sum helper (`sum(k, 0, n, term)`) so Taylor polynomials with a slider on $n$ need no per-term switches (see 197).
+211. Table widget beside a compact canvas pushes the table below the fold; allow a `canvas.height` cap or a side-by-side layout on wide screens.

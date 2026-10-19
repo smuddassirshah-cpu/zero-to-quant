@@ -28,7 +28,9 @@
 
     /* ---- Layout: containers side by side, bottoms aligned, labels below ---- */
     let pitchX = maxSz[0] + 8, pitchY = maxSz[1] + 6;
-    const capOf = (c) => c.capacity || (c.kind === 'row' ? (c.slots || c.items.length || 3) : c.kind === 'hand' ? Math.max(c.items.length, Math.min(total, 10), 3) : Math.max(c.items.length, 1));
+    /* item 162: an empty container without capacity holds as many as the fullest one (2 to 6), so items can be put in */
+    const fullest = Math.max(0, ...conts.map(c => c.items.length));
+    const capOf = (c) => c.capacity || (c.kind === 'row' ? (c.slots || c.items.length || 3) : c.kind === 'hand' ? Math.max(c.items.length, Math.min(total, 10), 3) : c.items.length ? c.items.length : Math.max(2, Math.min(6, fullest)));
     const geom = (c, px, py) => {
       const cap = capOf(c), lineish = c.kind === 'hand' || c.kind === 'row';
       const cols = c.cols || (lineish ? Math.min(cap, 10) : Math.min(6, Math.max(2, Math.ceil(Math.sqrt(cap * 1.4)))));
@@ -88,7 +90,7 @@
       const grp = svg('g', { class: `cv-obj cv-item cv-${it.kind}${colour ? ' cv-k' + colour : ' cv-plain'}`, 'data-id': it.id, 'data-tap': '', 'data-label': `${it.label || it.kind} ${it.id}` });
       const flip = svg('g', { class: 'cv-flip' });
       if (it.kind === 'card') {
-        flip.append(svg('rect', { class: 'cv-body', x: -w / 2, y: -h / 2, width: w, height: h, rx: 4 }), svg('g', { class: 'cv-back' }, [svg('rect', { x: -w / 2 + 3, y: -h / 2 + 3, width: w - 6, height: h - 6, rx: 2 })]), C.label(0, 0.5, it.label ?? '', { cls: 'cv-itext', size: 13 }));
+        flip.append(svg('rect', { class: 'cv-body', x: -w / 2, y: -h / 2, width: w, height: h, rx: 4 }), svg('g', { class: 'cv-back' }, [svg('rect', { x: -w / 2 + 3, y: -h / 2 + 3, width: w - 6, height: h - 6, rx: 2 })]), C.label(0, 0.5, it.label ?? '', { cls: 'cv-itext', size: Math.max(9, Math.round(13 * scaleItem)) })); // the text shrinks with the card (item 162)
       } else if (it.kind === 'bag') {
         /* a sealed bag: a tied sack, its label (often "?" or "n") on the front */
         flip.append(svg('path', { class: 'cv-body', d: `M${-w * 0.16} ${-h / 2 + 6}C${-w / 2} ${-h * 0.2} ${-w / 2} ${h / 2} ${-w * 0.3} ${h / 2}H${w * 0.3}C${w / 2} ${h / 2} ${w / 2} ${-h * 0.2} ${w * 0.16} ${-h / 2 + 6}Z` }),

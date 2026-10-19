@@ -145,7 +145,11 @@
       if (w.kind === 'place') return 'Drag the items into the containers';
       return '';
     };
-    const cbarHTML = (cap) => `<div class="lsn-cbar"><span class="t-caption lsn-cap">${Z.esc(cap || '')}</span>${mode === 'lesson' && w ? '<button type="button" class="link-btn lsn-so" disabled>Start over</button>' : ''}</div>`;
+    /* item 122: Start over only where there is something to put back: a canvas-bound widget, a canvas with controls or a
+       draggable point, or a widget whose pieces move (order, place, manipulate, table); not on choice or code screens */
+    const cvSpec = spec.canvas || {}, movable = (c) => !!(c && ((c.controls || []).length || ((c.state || {}).points || []).some(p => p && p.drag) || (c.params || {}).drag || (c.state || {}).drag));
+    const resettable = w && (bound || movable(cvSpec) || movable(cvSpec.left) || movable(cvSpec.right) || ['order', 'place', 'manipulate', 'table'].includes(w.kind));
+    const cbarHTML = (cap) => `<div class="lsn-cbar"><span class="t-caption lsn-cap">${Z.esc(cap || '')}</span>${mode === 'lesson' && resettable ? '<button type="button" class="link-btn lsn-so" disabled>Start over</button>' : ''}</div>`;
     if (bound && qLine) { const q = add(qLine); countEl = q.querySelector('.lsn-count'); }
     if (spec.canvas) {
       if (mode === 'lesson' && (w || spec.steps)) cbar = add(cbarHTML(tapHint()));

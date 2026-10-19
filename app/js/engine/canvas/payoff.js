@@ -20,6 +20,16 @@
       return sign * q * (pay - (pl ? l.premium : 0));
     };
     const total = (legs, S, pl) => legs.reduce((s, l) => s + legValue(l, S, pl), 0);
+    /* item 187: the value before expiry (Black-Scholes, volatility sigma, t years left, rate r), as a smooth curve */
+    const Ncdf = (x) => 0.5 * (1 + K.erf(x / Math.SQRT2));
+    const legNow = (l, S, v, pl) => {
+      const sign = l.side === 'short' ? -1 : 1, q = l.qty ?? 1, T = Math.max(1e-9, +v.t || 0), sg = Math.max(1e-9, +v.sigma || 0.2), r = +v.r || 0, K0 = l.strike;
+      if (l.type === 'stock') return sign * q * (S - K0);
+      const d1 = (Math.log(S / K0) + (r + sg * sg / 2) * T) / (sg * Math.sqrt(T)), d2 = d1 - sg * Math.sqrt(T);
+      const call = S * Ncdf(d1) - K0 * Math.exp(-r * T) * Ncdf(d2), val = l.type === 'put' ? call - S + K0 * Math.exp(-r * T) : call;
+      return sign * q * (val - (pl ? l.premium : 0));
+    };
+    const totalNow = (legs, S, v, pl) => legs.reduce((s, l) => s + legNow(l, S, v, pl), 0);
     /* Piecewise linear: breakpoints at strikes, so roots are exact per segment. */
     const breakevens = (legs, pl) => {
       const xs = [range[0], ...legs.filter((l) => l.type !== 'stock').map((l) => l.strike).filter((k) => k > range[0] && k < range[1]), range[1]].sort((a, b) => a - b);
@@ -102,6 +112,25 @@
           const lx = K.clamp(x, x0 + K.tw(t) / 2 + 2, x1 - K.tw(t) / 2 - 2);
           over.append(K.txt(lx, y1 + 6, t, { halo: true, cls: 'cvb-strong' })); fixed.push(K.boxOf({ x: lx, y: y1 + 6, text: t }));
         }
+        /* value before expiry, and a tangent on it (delta) */
+        const vv = view.value ?? params.value;
+        if (vv && (vv.t ?? 0) > 0) {
+          const N = 160, xs = Array.from({ length: N + 1 }, (_, i) => range[0] + (range[1] - range[0]) * i / N);
+          const d = 'M' + xs.map((S) => sx(S).toFixed(2) + ',' + sy(totalNow(legs, S, vv, pl)).toFixed(2)).join('L');
+          const o = K.obj('value', '', vv.colour || 4); o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' })); plot.append(o);
+          fixed.push(...K.lineBoxes(xs.map((S) => [sx(S), sy(totalNow(legs, S, vv, pl))]), 8, 4));
+          const lx = range[0] + (range[1] - range[0]) * 0.2; labels.push({ x: sx(lx), y: sy(totalNow(legs, lx, vv, pl)) - 12, text: vv.label || params.valueLabel || 'value now', anchor: 'middle' });
+          const tg = view.tangent ?? params.tangent;
+          if (tg) {
+            const at = typeof tg === 'object' && tg.at != null ? +tg.at : view.spot ?? (range[0] + range[1]) / 2, h = (range[1] - range[0]) * 1e-4;
+            const y = totalNow(legs, at, vv, pl), m = (totalNow(legs, at + h, vv, pl) - totalNow(legs, at - h, vv, pl)) / (2 * h), half = (range[1] - range[0]) / 7;
+            const dT = `M${sx(at - half)},${sy(y - m * half)}L${sx(at + half)},${sy(y + m * half)}`, t2 = K.obj('tangent', 'cvb-tangent', 'ink');
+            t2.append(K.washPath(dT), svg('path', { d: dT, class: 'cvb-ln' }), svg('circle', { cx: sx(at), cy: sy(y), r: 4, class: 'cvb-dot' }));
+            over.append(t2);
+            const off = typeof tg === 'object' && Array.isArray(tg.labelOffset) ? tg.labelOffset : [0, 0];
+            labels.push({ x: sx(at) + 10 + (+off[0] || 0), y: sy(y) + (m > 0 ? 16 : -16) + (+off[1] || 0), text: (typeof tg === 'object' && tg.label) ? String(tg.label).replace('{delta}', K.fmt(m, 2)) : 'delta ' + K.fmt(m, 2), anchor: 'start' });
+          }
+        }
         K.placeLabels(labels, fixed, { x0, x1, y0: y1, y1: y0 });
         for (const l of labels) over.append(K.lab(l.x, l.y, l.text, { anchor: l.anchor, halo: true, cls: 'cvb-strong', size: 12 }));
         /* strike handles on the axis */
@@ -115,6 +144,7 @@
       },
       methods: (R) => ({
         value: (S) => { const st = R.state; return total(legsOf(st), S, st.pl ?? params.pl ?? true); },
+        valueNow: (S) => { const st = R.state, vv = st.value ?? params.value; return vv ? totalNow(legsOf(st), S, vv, st.pl ?? params.pl ?? true) : NaN; },
         breakevens: () => breakevens(legsOf(R.state), R.state.pl ?? params.pl ?? true),
         points: () => Object.fromEntries(legsOf(R.state).filter((l) => l.type !== 'stock').map((l) => [l.id, { x: l.strike, y: 0 }])),
         place: (id, pos, opts = {}) => R.inst.set({ strike: { [id]: Array.isArray(pos) ? pos[0] : pos } }, opts),
