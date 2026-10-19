@@ -626,3 +626,10 @@ Raised later (taylor level 3):
 212. `series` canvas: horizontal reference lines (`hlines: [{ y, label, dashed }]`), for a limit such as $\pi^2/6$ across a partial-sum chart.
 213. Controls: a `scale: "log"` slider option (stops at 1, 10, 100, 1000) whose readout shows the value, not the exponent.
 214. `bars`: during integration pass 4 a `rebin` edit briefly broke every category bar chart (read `params.bins.width` with no bins); keep a gallery check of a category chart in the pass gate.
+
+Raised later (multivar level 1):
+
+215. `plane`: a contour mode (`{ "contour": "x^2+y^2", "levels": [...] }`) that draws closed level curves without the two-halves gap at vertical tangents (same need as 192).
+216. `plane`: a filled heat map of a two-variable expression (colour ramp over the view) as a background layer.
+217. `plane` function labels on dense contours get pushed to the plot edge and out of order; place labels along the curve at a chosen x instead.
+218. Controls on non-explore screens: allow `canvas.controls` on ladder and problem screens (read-only to grading) so a slice slider can persist through a ladder.
