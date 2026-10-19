@@ -717,3 +717,10 @@ Raised later (eigen level 2):
 258. `drag-point` widget on `plane`: `points()` filters on `drag: true`, so a point without it grades silently as its id; either document that `drag: true` is required or include ids the widget enabled.
 259. `scatter`: draw a curve over the cloud (implicit curve for a risk ellipse, or a `points` cloud style on `plane`).
 260. `matrix`: a scalar factor outside the brackets (`scale: "\\tfrac{1}{\\sqrt{2}}"`).
+
+Raised later (eigen level 1):
+
+261. Bug, `pair` Why? panel: an `explain.canvas` patch under the active side's key (`{"right": {...}}`) is overwritten because `get()` flattens the active side to the top level and `set()` applies it after the side patch; apply side patches last.
+262. `vectors`: `span` should allow two or more lines at once (several eigen-lines as bands); a plain line or segment without an arrowhead; a drag constraint to a line (same as 227, 254).
+263. `bars`: value labels for negative or near-zero bars sit on the category label at the baseline; offset them.
+264. `matrix`: operators between matrices accept KaTeX.

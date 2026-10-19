@@ -1,0 +1,1279 @@
+{
+  "id": "l10-biggest-pieces",
+  "course": "eigen",
+  "title": "Keeping the biggest pieces",
+  "minutes": 13,
+  "objectives": [
+    "Approximate a matrix with its largest singular values.",
+    "Measure how much of a matrix the first $k$ pieces keep",
+    "State the Eckart–Young result in words"
+  ],
+  "skills": [
+    "eg-svd"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Three pieces",
+      "prose": "The $3 \\times 3$ matrix $\\mathbf{A}$ is the sum of three pieces. Each piece has a special shape: every row is a multiple of one row. You may keep only two of them.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  6.4,
+                  5.6,
+                  -0.2
+                ],
+                [
+                  8.6,
+                  6.4,
+                  6.2
+                ],
+                [
+                  6.2,
+                  -0.2,
+                  11.9
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            },
+            {
+              "id": "P1",
+              "rows": [
+                [
+                  4,
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  4,
+                  8
+                ],
+                [
+                  8,
+                  4,
+                  8
+                ]
+              ],
+              "label": "Piece 1"
+            },
+            {
+              "id": "P2",
+              "rows": [
+                [
+                  2,
+                  4,
+                  -4
+                ],
+                [
+                  1,
+                  2,
+                  -2
+                ],
+                [
+                  -2,
+                  -4,
+                  4
+                ]
+              ],
+              "label": "Piece 2"
+            },
+            {
+              "id": "P3",
+              "rows": [
+                [
+                  0.4,
+                  -0.4,
+                  -0.2
+                ],
+                [
+                  -0.4,
+                  0.4,
+                  0.2
+                ],
+                [
+                  0.2,
+                  -0.2,
+                  -0.1
+                ]
+              ],
+              "label": "Piece 3"
+            }
+          ],
+          "ops": [
+            "=",
+            "+",
+            "+"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which piece do you drop to stay closest to $\\mathbf{A}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "p1",
+            "text": "Piece 1",
+            "why": "Piece 1 has entries up to 8. Dropping it moves some entries of $\\mathbf{A}$ by 8.",
+            "canvas": {
+              "highlight": {
+                "P1": {
+                  "rows": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": "p2",
+            "text": "Piece 2",
+            "why": "Piece 2 has entries up to 4. Dropping it moves some entries by 4.",
+            "canvas": {
+              "highlight": {
+                "P2": {
+                  "rows": [
+                    0,
+                    1,
+                    2
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": "p3",
+            "text": "Piece 3",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Dropping a piece changes $\\mathbf{A}$ by exactly that piece."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the sizes of the entries in the three pieces.",
+          "highlight": [
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Piece 3 has no entry bigger than 0.4. Dropping it changes every entry of $\\mathbf{A}$ by at most 0.4."
+        }
+      ],
+      "feedback": {
+        "correct": "Piece 3 is tiny: dropping it changes no entry by more than 0.4.",
+        "generic": "Not quite right. The error after dropping a piece is that piece itself."
+      },
+      "explain": {
+        "text": "You dropped the smallest piece, so what is left differs from $\\mathbf{A}$ by piece 3 alone. Its entries are at most 0.4. Pieces 1 and 2 carry nearly all of $\\mathbf{A}$.",
+        "canvas": {
+          "highlight": {
+            "P3": {
+              "rows": [
+                0,
+                1,
+                2
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Keep the biggest",
+      "prose": "Each piece has a size, shown as a bar: 18, 9 and 0.9. Slide $k$ to keep the $k$ biggest pieces and add them up. Compare the sum $\\mathbf{A}_k$ with $\\mathbf{A}$.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "s1",
+                "label": "$\\sigma_1$"
+              },
+              {
+                "id": "s2",
+                "label": "$\\sigma_2$"
+              },
+              {
+                "id": "s3",
+                "label": "$\\sigma_3$"
+              }
+            ],
+            "yLabel": "Size of piece",
+            "showValues": true,
+            "yMax": 20,
+            "height": 200
+          },
+          "state": {
+            "values": {
+              "s1": 18,
+              "s2": 9,
+              "s3": 0.9
+            },
+            "params": {
+              "k": 1
+            },
+            "highlight": [
+              "s1"
+            ]
+          }
+        },
+        "right": {
+          "kind": "matrix",
+          "params": {
+            "matrices": [
+              {
+                "id": "Ak",
+                "rows": [
+                  [
+                    4,
+                    2,
+                    4
+                  ],
+                  [
+                    8,
+                    4,
+                    8
+                  ],
+                  [
+                    8,
+                    4,
+                    8
+                  ]
+                ],
+                "label": "$\\mathbf{A}_k$, the kept pieces"
+              },
+              {
+                "id": "A",
+                "rows": [
+                  [
+                    6.4,
+                    5.6,
+                    -0.2
+                  ],
+                  [
+                    8.6,
+                    6.4,
+                    6.2
+                  ],
+                  [
+                    6.2,
+                    -0.2,
+                    11.9
+                  ]
+                ],
+                "label": "$\\mathbf{A}$"
+              }
+            ],
+            "ops": [
+              "≈"
+            ]
+          },
+          "state": {}
+        },
+        "derive": {
+          "right:values.Ak-0-0": "k >= 3 ? 6.4 : k >= 2 ? 6 : 4",
+          "right:values.Ak-0-1": "k >= 3 ? 5.6 : k >= 2 ? 6 : 2",
+          "right:values.Ak-0-2": "k >= 3 ? -0.2 : k >= 2 ? 0 : 4",
+          "right:values.Ak-1-0": "k >= 3 ? 8.6 : k >= 2 ? 9 : 8",
+          "right:values.Ak-1-1": "k >= 3 ? 6.4 : k >= 2 ? 6 : 4",
+          "right:values.Ak-1-2": "k >= 3 ? 6.2 : k >= 2 ? 6 : 8",
+          "right:values.Ak-2-0": "k >= 3 ? 6.2 : k >= 2 ? 6 : 8",
+          "right:values.Ak-2-1": "k >= 3 ? -0.2 : k >= 2 ? 0 : 4",
+          "right:values.Ak-2-2": "k >= 3 ? 11.9 : k >= 2 ? 12 : 8",
+          "left:highlight": "k >= 3 ? ['s1', 's2', 's3'] : k >= 2 ? ['s1', 's2'] : ['s1']",
+          "caption": "Kept (ringed): {{k}} of 3 pieces. Largest entry error: {{k >= 3 ? '0' : k >= 2 ? '0.4' : '4.2'}}"
+        },
+        "controls": [
+          {
+            "bind": "left:k",
+            "min": 1,
+            "max": 3,
+            "step": 1,
+            "label": "Pieces kept, $k$",
+            "start": 1
+          }
+        ]
+      },
+      "question": "What is the smallest $k$ that puts every entry of $\\mathbf{A}_k$ within 0.5 of $\\mathbf{A}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2: the sum of pieces 1 and 2 is within 0.4 everywhere",
+        "label": "Smallest k",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide to $k = 2$ and compare the two matrices entry by entry."
+        },
+        {
+          "rung": "point",
+          "text": "Row 2, column 1 is 9 in $\\mathbf{A}_2$ and 8.6 in $\\mathbf{A}$.",
+          "highlight": [
+            "right:Ak-1-0",
+            "right:A-1-0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $k = 1$ some entries are off by more than 4. At $k = 2$ the worst gap is 0.4."
+        }
+      ],
+      "feedback": {
+        "correct": "Two pieces already match every entry to within 0.4.",
+        "generic": "Not quite right. Compare $\\mathbf{A}_k$ with $\\mathbf{A}$ entry by entry at each $k$.",
+        "byKey": {
+          "one": "At $k = 1$ the bottom-right entry is 8 against 11.9. One piece is not enough.",
+          "three": "$k = 3$ matches exactly, but $k = 2$ is already within 0.5."
+        }
+      },
+      "explain": {
+        "text": "With $k = 2$ you get whole numbers, each within 0.4 of $\\mathbf{A}$. The third piece is twenty times smaller than the second. Keeping the biggest pieces first gets close fastest.",
+        "canvas": {
+          "left": {
+            "params": {
+              "k": 2
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The pieces are $\\sigma_i\\mathbf{u}_i\\mathbf{v}_i^T$ from the SVD, with $\\sigma = 18, 9, 0.9$. Keeping the $k$ biggest gives the **rank-$k$ approximation** $\\mathbf{A}_k$. Measure size by the sum of squared entries, the **energy**: for $\\mathbf{A}$ it is $405.81 = 18^2 + 9^2 + 0.9^2$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "e1",
+              "label": "$\\sigma_1^2$"
+            },
+            {
+              "id": "e2",
+              "label": "$\\sigma_2^2$"
+            },
+            {
+              "id": "e3",
+              "label": "$\\sigma_3^2$"
+            }
+          ],
+          "yLabel": "Energy",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 350
+        },
+        "state": {
+          "values": {
+            "e1": 324,
+            "e2": 81,
+            "e3": 0.81
+          },
+          "caption": "Total energy $324 + 81 + 0.81 = 405.81$"
+        }
+      },
+      "question": "What share of the energy does $\\mathbf{A}_1$ keep?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.798,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "79.8%: $324 / 405.81 = 0.798$",
+        "label": "Share kept",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "sigma",
+            "value": 0.6452,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "all",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The energy of piece $i$ is $\\sigma_i^2$."
+        },
+        {
+          "rung": "point",
+          "text": "Piece 1 has energy $18^2 = 324$.",
+          "highlight": [
+            "e1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$324 / 405.81 = 0.798$, so 79.8%."
+        }
+      ],
+      "feedback": {
+        "correct": "$324 / 405.81$ is 79.8%.",
+        "generic": "Not quite right. Divide $\\sigma_1^2$ by the total energy.",
+        "byKey": {
+          "sigma": "You divided $\\sigma_1$ by the sum of the $\\sigma$s, $18 / 27.9$. Energy squares them: use $\\sigma_i^2$.",
+          "all": "One piece keeps most, but not all, of the energy. Divide 324 by 405.81."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{A}_1$ keeps $\\sigma_1^2 = 324$ of the 405.81 total, which is 79.8%. Adding piece 2 brings it to $405 / 405.81$, or 99.8%. Squaring makes the small piece almost vanish.",
+        "canvas": {
+          "highlight": [
+            "e1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The error $\\mathbf{A} - \\mathbf{A}_1$ is piece 2 plus piece 3. Its energy is the sum of its squared entries.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "e1",
+              "label": "$\\sigma_1^2$"
+            },
+            {
+              "id": "e2",
+              "label": "$\\sigma_2^2$"
+            },
+            {
+              "id": "e3",
+              "label": "$\\sigma_3^2$"
+            }
+          ],
+          "yLabel": "Energy",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 350
+        },
+        "state": {
+          "values": {
+            "e1": 324,
+            "e2": 81,
+            "e3": 0.81
+          },
+          "highlight": [
+            "e2",
+            "e3"
+          ],
+          "caption": "Dropped by $\\mathbf{A}_1$: pieces 2 and 3"
+        }
+      },
+      "question": "What is the energy of $\\mathbf{A} - \\mathbf{A}_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 81.81,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "81.81",
+        "label": "Energy of the error",
+        "wrong": [
+          {
+            "id": "p2",
+            "value": 81,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "sig",
+            "value": 9.9,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "kept",
+            "value": 324,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The pieces are perpendicular, so their energies add."
+        },
+        {
+          "rung": "point",
+          "text": "The dropped pieces are 2 and 3.",
+          "highlight": [
+            "e2",
+            "e3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$81 + 0.81 = 81.81$."
+        }
+      ],
+      "feedback": {
+        "correct": "$81 + 0.81 = 81.81$.",
+        "generic": "Not quite right. Add the energies of the pieces you dropped.",
+        "byKey": {
+          "p2": "You counted piece 2 only. Piece 3 is dropped too: add 0.81.",
+          "sig": "$9 + 0.9$ adds the $\\sigma$s. Energy uses their squares.",
+          "kept": "324 is what $\\mathbf{A}_1$ keeps. The error is what it drops."
+        }
+      },
+      "explain": {
+        "text": "The error is $\\sigma_2^2 + \\sigma_3^2 = 81.81$. Kept plus dropped gives $324 + 81.81 = 405.81$: energy splits cleanly between the pieces. That works because the $\\mathbf{u}_i$ are perpendicular, and so are the $\\mathbf{v}_i$.",
+        "canvas": {
+          "highlight": [
+            "e2",
+            "e3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Why keep pieces",
+      "prose": "A piece $\\sigma\\mathbf{u}\\mathbf{v}^T$ is a column times a row. A $3 \\times 3$ piece is fixed by $3 + 3 + 1 = 7$ numbers, not 9. Now take 500 days of returns on 200 stocks, a $500 \\times 200$ matrix.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "u",
+              "rows": [
+                [
+                  "$u_1$"
+                ],
+                [
+                  "$u_2$"
+                ],
+                [
+                  "$u_3$"
+                ]
+              ],
+              "label": "$\\sigma\\mathbf{u}$"
+            },
+            {
+              "id": "v",
+              "rows": [
+                [
+                  "$v_1$",
+                  "$v_2$",
+                  "$v_3$"
+                ]
+              ],
+              "label": "$\\mathbf{v}^T$"
+            },
+            {
+              "id": "uv",
+              "rows": [
+                [
+                  "$u_1v_1$",
+                  "$u_1v_2$",
+                  "$u_1v_3$"
+                ],
+                [
+                  "$u_2v_1$",
+                  "$u_2v_2$",
+                  "$u_2v_3$"
+                ],
+                [
+                  "$u_3v_1$",
+                  "$u_3v_2$",
+                  "$u_3v_3$"
+                ]
+              ],
+              "label": "one piece"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many numbers store its rank-5 approximation?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3505,
+        "tol": {
+          "abs": 5
+        },
+        "accept": "3,505: five pieces of $500 + 200 + 1$ numbers (3,500 if each $\\sigma$ is folded into its $\\mathbf{u}$)",
+        "label": "Numbers stored",
+        "wrong": [
+          {
+            "id": "full",
+            "value": 100000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 701,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the numbers in one piece first."
+        },
+        {
+          "rung": "point",
+          "text": "One piece needs a column of 500, a row of 200 and one $\\sigma$.",
+          "highlight": [
+            "u",
+            "v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$5 \\times (500 + 200 + 1) = 3505$."
+        }
+      ],
+      "feedback": {
+        "correct": "3,505 numbers instead of 100,000.",
+        "generic": "Not quite right. Count one piece, then multiply by 5.",
+        "byKey": {
+          "full": "100,000 stores the whole matrix. The approximation stores only its five pieces.",
+          "one": "701 is one piece. The rank-5 approximation has five.",
+          "five": "Five is the number of pieces. Each piece needs 701 numbers."
+        }
+      },
+      "explain": {
+        "text": "Each piece needs a $\\mathbf{u}$ of length 500, a $\\mathbf{v}$ of length 200 and a $\\sigma$. Five pieces need 3,505 numbers, 3.5% of the full 100,000. That is why the biggest pieces are worth finding.",
+        "canvas": {
+          "highlight": [
+            "u",
+            "v"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "What rank 1 means",
+      "prose": "A colleague builds a rank-1 approximation of the same $\\mathbf{A}$ another way: keep its first row and first column, and set the rest to zero.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  6.4,
+                  5.6,
+                  -0.2
+                ],
+                [
+                  8.6,
+                  6.4,
+                  6.2
+                ],
+                [
+                  6.2,
+                  -0.2,
+                  11.9
+                ]
+              ],
+              "label": "$\\mathbf{A}$"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which matrix is the best rank-1 approximation $\\mathbf{A}_1$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "svd",
+            "text": "$\\begin{pmatrix} 4 & 2 & 4 \\\\ 8 & 4 & 8 \\\\ 8 & 4 & 8 \\end{pmatrix}$",
+            "correct": true
+          },
+          {
+            "id": "rowcol",
+            "text": "$\\begin{pmatrix} 6.4 & 5.6 & −0.2 \\\\ 8.6 & 0 & 0 \\\\ 6.2 & 0 & 0 \\end{pmatrix}$",
+            "why": "You kept the first row and column. That matrix has rank 2: rows $(6.4, 5.6, −0.2)$ and $(8.6, 0, 0)$ are not multiples. Its error energy is 221.05, not 81.81."
+          },
+          {
+            "id": "small",
+            "text": "$\\begin{pmatrix} 0.4 & −0.4 & −0.2 \\\\ −0.4 & 0.4 & 0.2 \\\\ 0.2 & −0.2 & −0.1 \\end{pmatrix}$",
+            "why": "You kept the smallest piece and dropped the biggest. Its error energy is 405, almost all of $\\mathbf{A}$."
+          },
+          {
+            "id": "big",
+            "text": "$\\begin{pmatrix} 6.4 & 5.6 & 0 \\\\ 8.6 & 6.4 & 6.2 \\\\ 6.2 & 0 & 11.9 \\end{pmatrix}$",
+            "why": "You zeroed the small entries. That still has rank 3; low rank is about rows sharing one direction, not about small entries."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In a rank-1 matrix every row is a multiple of one row."
+        },
+        {
+          "rung": "point",
+          "text": "Check which option has every row a multiple of $(2, 1, 2)$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Piece 1 has rows $2(2,1,2)$, $4(2,1,2)$, $4(2,1,2)$. It is $18\\,\\mathbf{u}_1\\mathbf{v}_1^T$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{A}_1 = 18\\,\\mathbf{u}_1\\mathbf{v}_1^T$, piece 1.",
+        "generic": "Not quite right. A rank-1 matrix has every row a multiple of one row.",
+        "byKey": {
+          "rowcol": "You kept the first row and column. That is not rank 1, and its error energy is 221.05 against 81.81 for piece 1."
+        }
+      },
+      "explain": {
+        "text": "Every row of piece 1 is a multiple of $(2, 1, 2)$, so it has rank 1. Its error energy, 81.81, is the smallest any rank-1 matrix can achieve. Keeping the first row and column throws away the 11.9 and is not even rank 1."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "No biggest piece",
+      "prose": "$\\mathbf{R}$ is a $3 \\times 3$ rotation. It turns the sphere but stretches nothing, so all three singular values are 1.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s1",
+              "label": "$\\sigma_1$"
+            },
+            {
+              "id": "s2",
+              "label": "$\\sigma_2$"
+            },
+            {
+              "id": "s3",
+              "label": "$\\sigma_3$"
+            }
+          ],
+          "yLabel": "Size of piece",
+          "showValues": true,
+          "yMax": 1.5
+        },
+        "state": {
+          "values": {
+            "s1": 1,
+            "s2": 1,
+            "s3": 1
+          }
+        }
+      },
+      "question": "What share of the energy does $\\mathbf{R}_1$ keep?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3333,
+        "tol": {
+          "abs": 0.002
+        },
+        "accept": "$\\tfrac{1}{3}$, about 33.3%",
+        "label": "Share kept",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "most",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each piece has energy $\\sigma_i^2 = 1$."
+        },
+        {
+          "rung": "point",
+          "text": "The total energy is $1 + 1 + 1$.",
+          "highlight": [
+            "s1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 / 3$, about 33.3%."
+        }
+      ],
+      "feedback": {
+        "correct": "One third: no piece stands out.",
+        "generic": "Not quite right. Divide $\\sigma_1^2$ by the sum of all three.",
+        "byKey": {
+          "all": "A rotation has three equal pieces. Keeping one loses two thirds.",
+          "most": "There are three equal pieces, not two."
+        }
+      },
+      "explain": {
+        "text": "With equal singular values every piece is as big as every other. $\\mathbf{R}_1$ keeps $1/3$ of the energy, and no rank-1 matrix does better. Low-rank approximation only pays when the singular values fall away."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You kept the biggest pieces of the SVD: $$\\mathbf{A}_k = \\sum_{i=1}^{k} \\sigma_i\\mathbf{u}_i\\mathbf{v}_i^T$$ The **Eckart–Young theorem** says no rank-$k$ matrix is closer to $\\mathbf{A}$ in squared entries. The error energy is $\\sigma_{k+1}^2 + \\sigma_{k+2}^2 + \\cdots$, what you dropped.",
+      "question": "A matrix has singular values 10, 4, 2 and 1. What is the error energy of its best rank-2 approximation?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "five",
+            "text": "5",
+            "correct": true
+          },
+          {
+            "id": "last",
+            "text": "1",
+            "why": "You dropped only $\\sigma_4$. Rank 2 keeps two pieces and drops two: $\\sigma_3$ and $\\sigma_4$."
+          },
+          {
+            "id": "kept",
+            "text": "116",
+            "why": "116 is what is kept, $10^2 + 4^2$. The error is what is dropped."
+          },
+          {
+            "id": "nosq",
+            "text": "3",
+            "why": "You added $2 + 1$. Energy adds the squares: $4 + 1$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2^2 + 1^2 = 5$.",
+        "generic": "Not quite right. Add the squares of the dropped singular values."
+      },
+      "explain": {
+        "text": "Rank 2 keeps $\\sigma_1 = 10$ and $\\sigma_2 = 4$. It drops $\\sigma_3 = 2$ and $\\sigma_4 = 1$, so the error energy is $4 + 1 = 5$. That is 4% of the total 121."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Why does the energy of $\\mathbf{A}$ equal $\\sum \\sigma_i^2$? Write $\\|\\mathbf{A}\\|^2$ for the sum of squared entries of a square $\\mathbf{A} = \\mathbf{U}\\boldsymbol{\\Sigma}\\mathbf{V}^T$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "trace",
+            "text": "$\\|\\mathbf{A}\\|^2 = \\operatorname{tr}(\\mathbf{A}^T\\mathbf{A})$: diagonal entry $j$ of $\\mathbf{A}^T\\mathbf{A}$ is the squared length of column $j$"
+          },
+          {
+            "id": "sub",
+            "text": "$= \\operatorname{tr}(\\mathbf{V}\\boldsymbol{\\Sigma}\\mathbf{U}^T\\mathbf{U}\\boldsymbol{\\Sigma}\\mathbf{V}^T)$: substitute the SVD; $\\boldsymbol{\\Sigma}$ is diagonal, so $\\boldsymbol{\\Sigma}^T = \\boldsymbol{\\Sigma}$"
+          },
+          {
+            "id": "uu",
+            "text": "$= \\operatorname{tr}(\\mathbf{V}\\boldsymbol{\\Sigma}^2\\mathbf{V}^T)$: $\\mathbf{U}^T\\mathbf{U} = \\mathbf{I}$"
+          },
+          {
+            "id": "cyc",
+            "text": "$= \\operatorname{tr}(\\boldsymbol{\\Sigma}^2\\mathbf{V}^T\\mathbf{V})$: a trace is unchanged when the factors are cycled"
+          },
+          {
+            "id": "end",
+            "text": "$= \\sigma_1^2 + \\sigma_2^2 + \\sigma_3^2$: $\\mathbf{V}^T\\mathbf{V} = \\mathbf{I}$, leaving the diagonal of $\\boldsymbol{\\Sigma}^2$"
+          }
+        ],
+        "answer": [
+          "trace",
+          "sub",
+          "uu",
+          "cyc",
+          "end"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by turning a sum of squares into a trace."
+        },
+        {
+          "rung": "point",
+          "text": "Substitute the SVD next, then cancel the orthogonal matrices one at a time."
+        },
+        {
+          "rung": "step",
+          "text": "Trace, substitute, cancel $\\mathbf{U}^T\\mathbf{U}$, cycle, cancel $\\mathbf{V}^T\\mathbf{V}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Each line uses one fact.",
+        "generic": "Not quite right. Begin with the trace, and cancel $\\mathbf{U}$ before cycling.",
+        "byKey": {
+          "cyc": "You cycled before cancelling $\\mathbf{U}^T\\mathbf{U}$. Cancel the inner pair first.",
+          "end": "The diagonal of $\\boldsymbol{\\Sigma}^2$ appears only once both orthogonal matrices are gone."
+        }
+      },
+      "explain": {
+        "text": "Turning lengths into a trace lets the orthogonal matrices cancel. Rotations keep lengths, so only the stretches $\\sigma_i$ are left. The same argument splits the error energy into the dropped $\\sigma_i^2$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "One factor for five banks",
+      "prose": "Five bank stocks have correlation 0.6 between every pair, and 1 on the diagonal. Each row of the correlation matrix $\\mathbf{C}$ sums to $1 + 4 \\times 0.6 = 3.4$. So $(1,1,1,1,1)$ is an eigenvector with eigenvalue 3.4: the market factor. The other four singular values are 0.4.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s1",
+              "label": "$\\sigma_1$"
+            },
+            {
+              "id": "s2",
+              "label": "$\\sigma_2$"
+            },
+            {
+              "id": "s3",
+              "label": "$\\sigma_3$"
+            },
+            {
+              "id": "s4",
+              "label": "$\\sigma_4$"
+            },
+            {
+              "id": "s5",
+              "label": "$\\sigma_5$"
+            }
+          ],
+          "yLabel": "Singular value",
+          "showValues": true,
+          "decimals": 1,
+          "yMax": 4
+        },
+        "state": {
+          "values": {
+            "s1": 3.4,
+            "s2": 0.4,
+            "s3": 0.4,
+            "s4": 0.4,
+            "s5": 0.4
+          },
+          "caption": "Singular values of $\\mathbf{C}$: one market factor and four equal noise pieces"
+        }
+      },
+      "question": "What share of the energy of $\\mathbf{C}$ does the one-factor approximation $\\mathbf{C}_1$ keep?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9475,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "94.8%: $3.4^2 / (3.4^2 + 4 \\times 0.4^2) = 11.56 / 12.2$",
+        "label": "Share kept",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "sigma",
+            "value": 0.68,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Energy is the sum of $\\sigma_i^2$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sigma_1^2 = 11.56$ and each of the other four is $0.16$.",
+          "highlight": [
+            "s1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$11.56 / (11.56 + 0.64) = 11.56 / 12.2 = 0.948$."
+        }
+      ],
+      "feedback": {
+        "correct": "One factor keeps 94.8% of the energy.",
+        "generic": "Not quite right. Divide $\\sigma_1^2$ by the sum of all five $\\sigma_i^2$.",
+        "byKey": {
+          "sigma": "You divided $3.4$ by $5$, the sum of the $\\sigma$s. Energy squares them: $11.56 / 12.2$.",
+          "one": "One of five factors is not one fifth of the energy. The market piece is far bigger than the rest."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{C}_1 = 3.4 \\times \\tfrac{1}{5}\\mathbf{J}$, with every entry $0.68$ ($\\mathbf{J}$ is all ones). It keeps 94.8% of the energy. The rest is noise: 0.32 on the diagonal and $-0.08$ off it.",
+        "canvas": {
+          "highlight": [
+            "s1"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The SVD writes $\\mathbf{A}$ as a sum of rank-1 pieces $\\sigma_i\\mathbf{u}_i\\mathbf{v}_i^T$, biggest first.",
+      "Keeping the $k$ biggest gives $\\mathbf{A}_k$, the closest rank-$k$ matrix in squared entries (Eckart–Young).",
+      "The energy $\\sum \\sigma_i^2$ splits cleanly: $\\mathbf{A}_k$ keeps the first $k$ terms and the error holds the rest."
+    ],
+    "formula": {
+      "name": "Rank-k approximation",
+      "tex": "\\mathbf{A}_k = \\sum_{i=1}^{k} \\sigma_i\\mathbf{u}_i\\mathbf{v}_i^T, \\qquad \\|\\mathbf{A} - \\mathbf{A}_k\\|^2 = \\sum_{i > k} \\sigma_i^2",
+      "note": "Share kept: $\\sum_{i \\le k}\\sigma_i^2 / \\sum_i \\sigma_i^2$."
+    },
+    "trap": "Rank 1 is not the first row and column: it is $\\sigma_1\\mathbf{u}_1\\mathbf{v}_1^T$, the biggest piece."
+  },
+  "quiz": [
+    {
+      "id": "q-share",
+      "difficulty": 2,
+      "prose": "A matrix has singular values 5, 2 and 1.",
+      "question": "What share of the energy does its best rank-1 approximation keep?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8333,
+        "tol": {
+          "abs": 0.002
+        },
+        "accept": "$25/30$, about 83.3%",
+        "label": "Share kept",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "nosq",
+            "value": 0.625,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$25 / 30 = 83.3\\%$.",
+        "generic": "Not quite right. Divide $\\sigma_1^2$ by $\\sigma_1^2 + \\sigma_2^2 + \\sigma_3^2$.",
+        "byKey": {
+          "nosq": "You divided $5$ by $8$. Energy squares the singular values: $25 / 30$."
+        }
+      },
+      "explain": {
+        "text": "Energy is $25 + 4 + 1 = 30$, and $\\mathbf{A}_1$ keeps $25$ of it."
+      }
+    },
+    {
+      "id": "q-error",
+      "difficulty": 2,
+      "prose": "The same matrix, with singular values 5, 2 and 1.",
+      "question": "What is the error energy of its best rank-1 approximation?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "$2^2 + 1^2 = 5$",
+        "label": "Error energy",
+        "wrong": [
+          {
+            "id": "nosq",
+            "value": 3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "kept",
+            "value": 25,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$4 + 1 = 5$.",
+        "generic": "Not quite right. Add the squares of the dropped singular values.",
+        "byKey": {
+          "nosq": "You added $2 + 1$. Square them first.",
+          "kept": "25 is the kept energy. The error is what is dropped."
+        }
+      },
+      "explain": {
+        "text": "Eckart–Young: the best rank-1 error is $\\sigma_2^2 + \\sigma_3^2 = 5$."
+      }
+    },
+    {
+      "id": "q-diag",
+      "difficulty": 3,
+      "prose": "$\\mathbf{D} = \\begin{pmatrix} 3 & 0 \\\\ 0 & 5 \\end{pmatrix}$.",
+      "question": "What is the best rank-1 approximation $\\mathbf{D}_1$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\begin{pmatrix} 0 & 0 \\\\ 0 & 5 \\end{pmatrix}$",
+            "correct": true
+          },
+          {
+            "id": "first",
+            "text": "$\\begin{pmatrix} 3 & 0 \\\\ 0 & 0 \\end{pmatrix}$",
+            "why": "You kept the first entry. $\\sigma_1$ is the largest singular value, 5, which sits in the second position here."
+          },
+          {
+            "id": "avg",
+            "text": "$\\begin{pmatrix} 4 & 0 \\\\ 0 & 4 \\end{pmatrix}$",
+            "why": "That has rank 2. A rank-1 approximation keeps one piece only."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Keep the biggest piece, 5, wherever it sits.",
+        "generic": "Not quite right. Keep the piece with the largest singular value."
+      },
+      "explain": {
+        "text": "The singular values are 5 and 3, so $\\sigma_1 = 5$ with $\\mathbf{u}_1 = \\mathbf{v}_1 = (0, 1)$. The error energy is $3^2 = 9$, against $25$ if you kept the 3."
+      }
+    },
+    {
+      "id": "q-entry",
+      "difficulty": 3,
+      "prose": "Four stocks have correlation 0.5 between every pair. The one-factor approximation of their correlation matrix puts the same number in every entry.",
+      "question": "What is that number?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.625,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "$\\sigma_1 / 4 = 2.5 / 4 = 0.625$",
+        "label": "Entry of the one-factor matrix",
+        "wrong": [
+          {
+            "id": "rho",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sig",
+            "value": 2.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2.5 / 4 = 0.625$.",
+        "generic": "Not quite right. Find $\\sigma_1$ from a row sum, then use $\\mathbf{u}_1 = \\tfrac{1}{2}(1,1,1,1)$.",
+        "byKey": {
+          "rho": "0.5 is the true off-diagonal correlation. The one-factor matrix also has to fit the diagonal 1s, so it lands in between.",
+          "sig": "2.5 is $\\sigma_1$. Each entry is $\\sigma_1 \\times \\tfrac12 \\times \\tfrac12$."
+        }
+      },
+      "explain": {
+        "text": "Each row sums to $1 + 3 \\times 0.5 = 2.5$, so $\\sigma_1 = 2.5$ with $\\mathbf{u}_1 = \\tfrac12(1,1,1,1)$. Every entry of $2.5\\,\\mathbf{u}_1\\mathbf{u}_1^T$ is $2.5 / 4 = 0.625$."
+      }
+    }
+  ]
+}
