@@ -580,21 +580,57 @@
       /* yScale: "log" (positive y range): log-price charts; ticks at 1, 2, 5 times powers of ten, labelled as prices with yFormat */
       return { m, sx: C.scale(xr, [m.l, size.w - m.r]), sy: params.yScale === 'log' ? K.logScale([Math.max(1e-9, yr[0]), yr[1]], [size.h - m.b, m.t]) : C.scale(yr, [size.h - m.b, m.t]) };
     };
+    /* item 173: hidden functions stay evaluable (a point can still ride one); only drawing skips them */
     const functionsOf = (view) => {
       const list = (params.functions || []).map((f, i) => ({ ...f, slot: f.colour || i + 1 }));
       for (const f of view.functions || []) {
         const j = list.findIndex((g) => g.id === f.id);
         if (j >= 0) list[j] = { ...list[j], ...f }; else list.push({ ...f, slot: f.colour || list.length + 1 });
       }
-      const hide = new Set(view.hide || []);
-      return list.filter((f) => !hide.has(f.id));
+      return list;
     };
     const evaluator = (view) => {
       const P = exprParams(view), names = Object.keys(P);
       const fns = {};
-      for (const f of functionsOf(view)) { const c = K.fnOf(f.expr, names); fns[f.id] = (x) => c(x, P); fns[f.id].def = f; }
+      for (const f of functionsOf(view)) { if (f.expr == null) continue; const c = K.fnOf(f.expr, names); fns[f.id] = (x) => c(x, P); fns[f.id].def = f; }
       return fns;
     };
+    /* item 192: curves that are not y = f(x). Parametric { x: "cos(t)", y: "sin(t)", t: [0, 6.2832] } and implicit
+       { implicit: "x^3 + y^3 - 6*x*y" } (the curve F(x, y) = 0). Each gives sample() for drawing, near(x, y) for a point
+       riding it (on: id) and slopeAt(x, y) for a tangent. */
+    const curvesOf = (view) => {
+      const P = exprParams(view), names = Object.keys(P), out = {};
+      for (const f of functionsOf(view)) {
+        if (f.x != null && f.y != null) {
+          const cx = K.fnOf(String(f.x), ['t', ...names]), cy = K.fnOf(String(f.y), ['t', ...names]), tr = f.t || [0, 2 * Math.PI];
+          const X = (t) => cx(0, { ...P, t }), Y = (t) => cy(0, { ...P, t });
+          const N = 600, ts = Array.from({ length: N + 1 }, (_, i) => tr[0] + (tr[1] - tr[0]) * i / N);
+          const tNear = (x, y) => { let best = ts[0], bd = Infinity; ts.forEach((t) => { const d = (X(t) - x) ** 2 + (Y(t) - y) ** 2; if (d < bd) { bd = d; best = t; } }); let h = (tr[1] - tr[0]) / N; for (let k = 0; k < 30; k++) { const a = best - h, b = best + h, da = (X(a) - x) ** 2 + (Y(a) - y) ** 2, db = (X(b) - x) ** 2 + (Y(b) - y) ** 2, d0 = (X(best) - x) ** 2 + (Y(best) - y) ** 2; if (da < d0 && a >= tr[0]) best = a; else if (db < d0 && b <= tr[1]) best = b; else h /= 2; } return best; };
+          out[f.id] = { def: f, kind: 'param', sample: () => [ts.map((t) => [X(t), Y(t)])], near: (x, y) => { const t = tNear(x, y); return [X(t), Y(t)]; }, slopeAt: (x, y) => { const t = tNear(x, y), h = 1e-5; const dx = X(t + h) - X(t - h), dy = Y(t + h) - Y(t - h); return dy / dx; }, at: (t) => [X(t), Y(t)] };
+        } else if (f.implicit != null) {
+          const c = K.fnOf(String(f.implicit), ['y', ...names]), F = (x, y) => c(x, { ...P, y });
+          const grad = (x, y) => { const h = 1e-5 * Math.max(1, xr[1] - xr[0]); return [(F(x + h, y) - F(x - h, y)) / (2 * h), (F(x, y + h) - F(x, y - h)) / (2 * h)]; };
+          const sample = () => { // marching squares on a 160 by 120 grid; returns separate short segments
+            const nx = 160, ny = 120, segs = [], gx = (i) => xr[0] + (xr[1] - xr[0]) * i / nx, gy = (j) => yr[0] + (yr[1] - yr[0]) * j / ny;
+            const v = []; for (let j = 0; j <= ny; j++) { v.push([]); for (let i = 0; i <= nx; i++) v[j].push(F(gx(i), gy(j))); }
+            const lerpZ = (x0, y0, f0, x1, y1, f1) => { const t = f0 / (f0 - f1); return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t]; };
+            for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+              const c4 = [[gx(i), gy(j), v[j][i]], [gx(i + 1), gy(j), v[j][i + 1]], [gx(i + 1), gy(j + 1), v[j + 1][i + 1]], [gx(i), gy(j + 1), v[j + 1][i]]];
+              if (c4.some((q) => !Number.isFinite(q[2]))) continue;
+              const cross = []; for (let k = 0; k < 4; k++) { const a = c4[k], b = c4[(k + 1) % 4]; if ((a[2] < 0) !== (b[2] < 0)) cross.push(lerpZ(a[0], a[1], a[2], b[0], b[1], b[2])); }
+              if (cross.length === 2) segs.push(cross); else if (cross.length === 4) segs.push([cross[0], cross[1]], [cross[2], cross[3]]);
+            }
+            return segs;
+          };
+          const near = (x, y) => { let p = [x, y]; for (let k = 0; k < 40; k++) { const v0 = F(p[0], p[1]), [gx0, gy0] = grad(p[0], p[1]), g2 = gx0 * gx0 + gy0 * gy0; if (!Number.isFinite(v0) || !(g2 > 1e-18)) break; p = [p[0] - v0 * gx0 / g2, p[1] - v0 * gy0 / g2]; if (Math.abs(v0) < 1e-10) break; } return p; };
+          out[f.id] = { def: f, kind: 'implicit', sample, near, slopeAt: (x, y) => { const [a, b] = grad(x, y); return -a / b; } };
+        }
+      }
+      return out;
+    };
+    /* item 174: a value at a hole (0/0 and the like) is the limit from both sides */
+    const valueAt = (f, x) => { const v = f(x); if (Number.isFinite(v)) return v; const h = Math.max(1e-9, (xr[1] - xr[0]) * 1e-7), a = f(x - h), b = f(x + h); return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) < 1e-4 * Math.max(1, Math.abs(a)) ? (a + b) / 2 : NaN; };
+    const traces = new Map(); // item 188: trails of points with trace: true
     const pointXY = (view, ref) => {
       if (Array.isArray(ref)) return ref;
       const p = (view.points || []).find((q) => q.id === ref); return p ? [p.x, p.y] : [0, 0];
@@ -688,7 +724,9 @@
         }
 
         /* Functions */
+        const hidden = new Set(view.hide || []);
         for (const [id, f] of Object.entries(fns)) {
+          if (hidden.has(id)) continue;
           const fd = f.def, dom = fd.domain || xr;
           const lo = Math.max(dom[0], xr[0]), hi = Math.min(dom[1], xr[1]); if (!(hi > lo)) continue;
           const a = sx(lo), b = sx(hi), n = Math.max(2, Math.ceil((b - a) * 2));
@@ -698,6 +736,8 @@
           const o = K.obj(id, 'cvb-fn', fd.slot);
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (fd.dashed ? ' cvb-dash' : '') }));
           plot.append(o);
+          /* item 175: holes: [x] draws an open circle at the limit, and the curve is broken there */
+          (fd.holes || []).forEach((hx) => { const y = valueAt(f, +hx); if (Number.isFinite(y)) over.append(svg('circle', { cx: sx(+hx), cy: sy(y), r: 4.5, class: 'cvb-end open ' + K.colourCls(fd.slot), 'data-hole': id })); });
           if (fd.endpoints) {
             [[lo, fd.endpoints[0]], [hi, fd.endpoints[1]]].forEach(([x, kind]) => { if (kind && kind !== 'none') { const y = f(x); if (Number.isFinite(y)) over.append(svg('circle', { cx: sx(x), cy: sy(y), r: 4.5, class: 'cvb-end ' + K.colourCls(fd.slot) + (kind === 'open' ? ' open' : '') })); } });
           }
@@ -712,11 +752,36 @@
           }
         }
 
+        /* Parametric and implicit curves (item 192) */
+        const curves = curvesOf(view);
+        for (const [id, cv] of Object.entries(curves)) {
+          if (hidden.has(id)) continue;
+          const fd = cv.def, runs = cv.sample();
+          let d = '';
+          if (cv.kind === 'param') { const pts = runs[0].map(([x, y]) => [sx(x), sy(y)]); d = K.brokenPath(pts, size.h, py1, py0); fixed.push(...K.lineBoxes(pts.filter((p) => p[1] >= py1 && p[1] <= py0))); }
+          else d = runs.map(([a, b]) => `M${sx(a[0]).toFixed(1)},${sy(a[1]).toFixed(1)}L${sx(b[0]).toFixed(1)},${sy(b[1]).toFixed(1)}`).join('');
+          const o = K.obj(id, 'cvb-fn', fd.slot);
+          o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (fd.dashed ? ' cvb-dash' : ''), 'stroke-linecap': 'round' }));
+          plot.append(o);
+          if (fd.label && fd.labelAt) { const [lx, ly] = Array.isArray(fd.labelAt) ? fd.labelAt : cv.kind === 'param' ? cv.at(+fd.labelAt) : [0, 0]; labels.push({ x: sx(lx) + 8, y: sy(ly) - 12, text: fd.label, id, anchor: 'start' }); }
+        }
+
         /* Tangent lines */
         for (const tg of [].concat(view.tangent || [])) {
+          const cvT = curves[tg.f];
+          if (cvT) { // tangent to a parametric or implicit curve at a point (at: point id or [x, y], or t for a parametric curve)
+            const [x0, y0] = tg.t != null && cvT.at ? cvT.at(+tg.t) : cvT.near(...(Array.isArray(tg.at) ? tg.at : pointXY(view, tg.at || tg.x)));
+            const mm = cvT.slopeAt(x0, y0), o = K.obj(tg.id || 'tangent', 'cvb-tangent', tg.colour || 'ink');
+            const L = (tg.length || (xr[1] - xr[0]) / 3) / 2, ux = Number.isFinite(mm) ? 1 / Math.sqrt(1 + mm * mm) : 0, uy = Number.isFinite(mm) ? mm * ux : 1;
+            const d = `M${sx(x0 - L * ux)},${sy(y0 - L * uy)}L${sx(x0 + L * ux)},${sy(y0 + L * uy)}`;
+            o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (tg.dashed ? ' cvb-dash' : '') }), svg('circle', { cx: sx(x0), cy: sy(y0), r: 4, class: 'cvb-dot' }));
+            plot.append(o);
+            if (tg.label) { const off = Array.isArray(tg.labelOffset) ? tg.labelOffset : [0, 0]; const text = tg.label === 'slope' || tg.label === true ? (Number.isFinite(mm) ? 'slope ' + K.fmt(mm, tg.dp ?? 2) : 'vertical') : String(tg.label).replace('{slope}', Number.isFinite(mm) ? K.fmt(mm, tg.dp ?? 2) : '∞'); labels.push({ x: sx(x0) + 10 + (+off[0] || 0), y: sy(y0) + (mm > 0 ? 16 : -16) + (+off[1] || 0), text, anchor: 'start', id: tg.id || 'tangent' }); }
+            continue;
+          }
           const f = fns[tg.f]; if (!f) continue;
           const x0 = typeof tg.x === 'string' ? pointXY(view, tg.x)[0] : tg.x;
-          const y0 = f(x0); let mm = deriv(f, x0); if (!Number.isFinite(y0) || !Number.isFinite(mm)) continue;
+          const y0 = valueAt(f, x0); let mm = deriv(f, x0); if (!Number.isFinite(y0) || !Number.isFinite(mm)) continue;
           /* at a corner the two one-sided slopes differ: use the side asked for (side: "left" | "right"), else draw none */
           const [sl, sr] = sides(f, x0);
           if (Math.abs(sl - sr) > 1e-3 * Math.max(1, Math.abs(sl), Math.abs(sr))) { if (tg.side === 'left') mm = sl; else if (tg.side === 'right') mm = sr; else continue; }
@@ -730,7 +795,8 @@
           plot.append(o);
           if (tg.label) {
             const text = tg.label === 'slope' || tg.label === true ? 'slope ' + K.fmt(mm, tg.dp ?? 2) : String(tg.label).replace('{slope}', K.fmt(mm, tg.dp ?? 2));
-            labels.push({ x: sx(x0) + 10, y: sy(y0) + (mm > 0 ? 16 : -16), text, anchor: 'start', id: tg.id || 'tangent' });
+            const off = Array.isArray(tg.labelOffset) ? tg.labelOffset : [0, 0]; // item 190: nudge the slope label clear of the point's own label
+            labels.push({ x: sx(x0) + 10 + (+off[0] || 0), y: sy(y0) + (mm > 0 ? 16 : -16) + (+off[1] || 0), text, anchor: 'start', id: tg.id || 'tangent' });
           }
         }
 
@@ -825,6 +891,16 @@
 
         /* Points (one outside the plot is not drawn: the plot is clipped) */
         const marks = [];
+        /* trails first, under the points (item 188) */
+        const live = new Set((view.points || []).filter((p) => p.trace).map((p) => p.id));
+        for (const id of [...traces.keys()]) if (!live.has(id)) traces.delete(id);
+        for (const p of view.points || []) {
+          if (!p.trace || !Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+          const tr = traces.get(p.id) || [], last = tr[tr.length - 1];
+          if (!last || Math.abs(last[0] - p.x) > 1e-9 || Math.abs(last[1] - p.y) > 1e-9) tr.push([p.x, p.y]);
+          traces.set(p.id, tr);
+          if (tr.length > 1) { const pts = (p.trace === 'x' ? tr.slice().sort((a, b) => a[0] - b[0]) : tr).map(([a, b]) => [sx(a), sy(b)]); const o = K.obj(p.id + '-trace', 'cvb-trace', p.traceColour || p.colour || 'manip'); o.append(svg('path', { d: K.brokenPath(pts, size.h, py1, py0), class: 'cvb-ln' })); plot.append(o); }
+        }
         for (const p of view.points || []) {
           const x = sx(p.x), y = sy(p.y);
           if (!Number.isFinite(x) || !Number.isFinite(y) || x < px0 - 4 || x > px1 + 4 || y < py1 - 4 || y > py0 + 4) continue;
@@ -832,9 +908,10 @@
           const o = K.obj(p.id, 'cvb-pt', p.drag ? 'manip' : (p.colour || 'ink'));
           o.append(K.washCircle(x, y, p.drag ? 15 : 11));
           if (p.drag && R.active() && (R.mode == null || R.mode === 'drag' || R.mode === 'slider')) o.append(K.handle(x, y, p.id, { label: p.ariaLabel || `Point ${p.label || p.id}` }));
+          else if (p.drag && R.mode === 'sketch') o.append(svg('rect', { x: x - 6, y: y - 6, width: 12, height: 12, rx: 2, class: 'cvb-hd-sq' })); // item 193: not mistaken for a sketch handle
           else if (p.drag) o.append(svg('circle', { cx: x, cy: y, r: 10, class: 'cvb-hd-o' }), svg('circle', { cx: x, cy: y, r: 7, class: 'cvb-hd' }));
-          else o.append(svg('circle', { cx: x, cy: y, r: R.mode === 'tap' ? 6 : 4.5, class: 'cvb-dot' + (p.open ? ' open' : '') + (R.mode === 'tap' ? ' cv-body' : '') }));
-          if (R.mode === 'tap' && !p.drag) { o.append(svg('circle', { cx: x, cy: y, r: 16, class: 'cvb-tapbox', fill: 'transparent' })); R.tappable(o, p.id, p.ariaLabel || `Point ${p.label || p.id} at (${K.fmt(p.x, 2)}, ${K.fmt(p.y, 2)})`); }
+          else o.append(svg('circle', { cx: x, cy: y, r: R.mode === 'tap' && p.tap !== false ? 6 : 4.5, class: 'cvb-dot' + (p.open ? ' open' : '') + (R.mode === 'tap' && p.tap !== false ? ' cv-body' : '') }));
+          if (R.mode === 'tap' && !p.drag && p.tap !== false) { // item 176: tap: false keeps a decorative point out of tap mode o.append(svg('circle', { cx: x, cy: y, r: 16, class: 'cvb-tapbox', fill: 'transparent' })); R.tappable(o, p.id, p.ariaLabel || `Point ${p.label || p.id} at (${K.fmt(p.x, 2)}, ${K.fmt(p.y, 2)})`); }
           over.append(o);
           if (p.label) {
             const pos = p.labelPos || 'ne', dx = pos.includes('e') ? 12 : pos.includes('w') ? -12 : 0, dy = pos.includes('n') ? -13 : pos.includes('s') ? 14 : 0;
@@ -899,7 +976,8 @@
         /* Curve y values of the sketch at xs, for grading. */
         sample: (xs) => { const pts = (R.state.sketch || {}).points || []; return xs.map((x) => crY(pts, x)); },
         /* Evaluate a named function at x with the current params. */
-        evaluate: (id, x) => { const f = evaluator(R.state)[id]; return f ? f(x) : NaN; },
+        evaluate: (id, x) => { const f = evaluator(R.state)[id]; return f ? valueAt(f, x) : NaN; },
+        clearTrace: () => { traces.clear(); R.redraw(); },
         /* Shared drag contract: positions of the movable points, and placing one (reveal, reset, resume). */
         points: () => Object.fromEntries((R.state.points || []).filter((q) => q.drag).map((q) => [q.id, { x: q.x, y: q.y }])),
         place: (id, pos, opts = {}) => { const [x, y] = Array.isArray(pos) ? pos : [pos, (R.state.points || []).find((q) => q.id === id)?.y ?? 0]; return R.inst.set({ points: { [id]: { x, y } } }, opts); },
@@ -911,7 +989,11 @@
       x = K.clamp(x, xr[0], xr[1]); y = K.clamp(y, yr[0], yr[1]);
       if (pt.snap) { x = K.snapTo(x, pt.snap); y = K.snapTo(y, pt.snap); }
       if (pt.snapX) x = K.snapTo(x, pt.snapX);
-      if (pt.on) { const f = evaluator(R.state)[pt.on]; if (f) { const dom = f.def && f.def.domain; if (dom) x = K.clamp(x, dom[0], dom[1]); y = f(x); } } // a point on f stays inside f's domain
+      if (pt.on) {
+        const f = evaluator(R.state)[pt.on], cv = f ? null : curvesOf(R.state)[pt.on];
+        if (f) { const dom = f.def && f.def.domain; if (dom) x = K.clamp(x, dom[0], dom[1]); y = valueAt(f, x); if (!Number.isFinite(y)) return; } // inside f's domain; a hole gives the limit (item 174)
+        else if (cv) [x, y] = cv.near(x, y); // the nearest point of a parametric or implicit curve (item 192)
+      }
       if (pt.lockX) x = pt.x; if (pt.lockY) y = pt.y;
       x = K.round(x, 6); y = K.round(y, 6);
       R.commit({ points: { [id]: { x, y } } });
