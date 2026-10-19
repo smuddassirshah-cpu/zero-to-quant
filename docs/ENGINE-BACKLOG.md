@@ -633,3 +633,8 @@ Raised later (multivar level 1):
 216. `plane`: a filled heat map of a two-variable expression (colour ramp over the view) as a background layer.
 217. `plane` function labels on dense contours get pushed to the plot edge and out of order; place labels along the curve at a chosen x instead.
 218. Controls on non-explore screens: allow `canvas.controls` on ladder and problem screens (read-only to grading) so a slice slider can persist through a ladder.
+
+Raised later (multivar level 2):
+
+219. `plane`: `labelAvoid: false` on a function so background contours do not push point and vector labels away (see 217).
+220. `derive`: writing one array component (`"g.v.0"`) turns the array into an object; either support numeric path segments or document that the whole vector must be set.
