@@ -552,3 +552,8 @@ Raised later (integrals level 3):
 203. `plane`: a function's `domain` should accept parameter expressions (stop a line at $u = b$ as a slider moves).
 204. `plane`: keep x-axis tick labels clear of a curve running just below $y=0$ (nudge labels below or add a halo).
 205. `playthrough.mjs`: an option to also screenshot each screen's explanation state after a wrong and a right answer (see 199).
+
+Raised later (limits level 4):
+
+206. `plane` tangent `length`: measured along the line in data units, not in x units as the docs say; on steep curves with unequal axes the tangent is nearly invisible. Scale by x, or correct AUTHORING.md and README-B.md (authors use `lengthPx` meanwhile).
+207. `expression` widget: the numeric second opinion samples one variable only; two-variable answers such as $a/(2c)$ are unreliable (`0.5a/c` rejected). Sample every free symbol.
