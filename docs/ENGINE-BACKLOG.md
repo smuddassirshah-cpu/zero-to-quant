@@ -699,3 +699,8 @@ Raised later (least-squares level 3):
 
 250. `scatter`: let `derive` read and `setParam` write `line.m` and `line.b` directly (authors bind free params and derive the line, and every Why? patch must then set `params` rather than `line`).
 251. `pair` of two `matrix` canvases scales each half until a 2x2 and a 3x3 are hard to read; keep a minimum font size and stack instead (same family as 155, 185).
+
+Raised later (least-squares level 2):
+
+252. `matrix`: size KaTeX cells from the rendered width (`\tfrac{5}{6}` comes out wide and tiny); same root as 247.
+253. `vectors`: a vector with no `colour` takes slot i+1, so two vectors can share a colour by accident; document in README-B or assign distinct defaults.
