@@ -495,3 +495,11 @@ Raised later (plotting level 2):
 172. `pair` canvas: a stacked `series` panel at height 190 shows one y tick even with `y` set; keep at least three ticks at small heights.
 
 Content note (plotting level 2): the log axis (l7 trap, homework h2) and the three-panel figure (homework h1) preview level 3's l9-log-axis, l10-panels and l13.
+
+Raised later (limits level 1):
+
+173. `plane`: a drag point with `on: "f"` cannot follow a function listed in `hide` (hidden functions drop out of the evaluator); keep hidden functions evaluable.
+174. `plane`: a dragged point that lands exactly on a hole gets NaN and vanishes with its handle; snap onto the continuation through the hole.
+175. `plane`: a per-function `holes: [x]` parameter (drawn as an open circle) instead of faking holes with `open: true` points or two pieces.
+176. `plane`: tap mode makes every non-drag point tappable; a per-point `tap: false` (or a `targets` list) so decorative points stay out of tap mode.
+177. Validator: the "ladder changes canvas kind" warning fires on table-to-plane ladders that are natural in limits; either downgrade it or add a table-and-plane `pair` pattern to the docs.
