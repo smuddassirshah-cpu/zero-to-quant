@@ -14,7 +14,7 @@ The prototype in `prototype/` becomes the app in `app/`. Its CSS, router, icons,
 - Mobile-specific layouts. Keep responsive CSS that already exists; add none.
 - Leagues, league board, notifications, planned breaks, achievements.
 - Block code (interaction 9). The code editor covers programming.
-- C++ drills in the browser. C++ items link out to the learner's own machine.
+- C++ drills in the browser (the `#drill` screen). C++ lessons, reviews and homework use the `code` widget's `language: "cpp"` mode (ENGINE-BACKLOG 304); larger C++ projects link out to the learner's own machine.
 - AI tutor or explainer.
 - A build step. Plain `<script>` files, no bundler, no framework, no TypeScript.
 
@@ -24,6 +24,7 @@ The prototype in `prototype/` becomes the app in `app/`. Its CSS, router, icons,
 - Chrome only, current version. ES2022 is fine. No transpilation.
 - KaTeX from `app/vendor/katex` (already vendored).
 - Pyodide from the jsDelivr CDN (`https://cdn.jsdelivr.net/pyodide/v0.27.7/full/`), loaded lazily by the drill worker. Drop `scripts/vendor.sh`.
+- YoWASP Clang (`@yowasp/clang@21.1.4-3`, about 26 MB compressed) from the jsDelivr CDN, loaded lazily by `js/screens/cpp-worker.js` on the first C++ code widget (AUTHORING.md section 3, C++).
 - MathLive and the CortexJS Compute Engine from jsDelivr, loaded lazily on the first expression widget. If they fail to load, the expression widget falls back to normalised string comparison against the accepted forms listed in the item.
 - Persistence: `localStorage` key `zq.state` (one JSON document) plus a JSON export and import on the You screen. The state module debounces writes.
 

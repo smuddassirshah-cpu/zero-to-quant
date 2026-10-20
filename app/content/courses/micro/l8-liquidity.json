@@ -1,0 +1,1353 @@
+{
+  "id": "l8-liquidity",
+  "course": "micro",
+  "title": "Measuring liquidity",
+  "minutes": 14,
+  "objectives": [
+    "Compare liquidity by spread, depth and volume.",
+    "Compute Amihud's ratio and the days needed to exit a position."
+  ],
+  "skills": [
+    "ms-costs",
+    "ms-book"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Two books for the same kind of share, both with a mid of £100.005. Book A (top) has a 1p spread; book B (bottom) has 3p. You must buy 2,000 shares at once.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "orderbook",
+          "params": {
+            "bids": [
+              [
+                100.0,
+                300
+              ],
+              [
+                99.99,
+                200
+              ],
+              [
+                99.95,
+                500
+              ]
+            ],
+            "asks": [
+              [
+                100.01,
+                300
+              ],
+              [
+                100.05,
+                400
+              ],
+              [
+                100.1,
+                2000
+              ]
+            ],
+            "currency": "£",
+            "dp": 2,
+            "bidLabel": "Book A: bid size",
+            "askLabel": "ask size"
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "orderbook",
+          "params": {
+            "bids": [
+              [
+                99.99,
+                3000
+              ],
+              [
+                99.98,
+                4000
+              ],
+              [
+                99.97,
+                4000
+              ]
+            ],
+            "asks": [
+              [
+                100.02,
+                3000
+              ],
+              [
+                100.03,
+                4000
+              ],
+              [
+                100.04,
+                4000
+              ]
+            ],
+            "currency": "£",
+            "dp": 2,
+            "bidLabel": "Book B: bid size",
+            "askLabel": "ask size"
+          },
+          "state": {}
+        },
+        "state": {},
+        "tap": "sides",
+        "leftLabel": "Book A",
+        "rightLabel": "Book B"
+      },
+      "question": "Tap the book where the 2,000 shares cost less.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "right"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A big order walks the book. How far does it walk in each?"
+        },
+        {
+          "rung": "point",
+          "text": "Book A has only 300 shares at its best ask. Book B has 3,000.",
+          "highlight": [
+            "left:ask0",
+            "right:ask0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Book B: all 2,000 fill at £100.02.",
+        "generic": "Not quite right. Walk 2,000 shares through each ask side.",
+        "byKey": {
+          "left": "You chose the tight spread. Book A has only 700 shares within 5p; the order has to reach £100.10."
+        }
+      },
+      "explain": {
+        "text": "Book B fills the whole order at £100.02. Book A fills 300 at £100.01, 400 at £100.05 and 1,300 at £100.10. The tight spread hid a thin book.",
+        "canvas": {
+          "left": {
+            "order": {
+              "side": "buy",
+              "size": 2000
+            }
+          },
+          "right": {
+            "order": {
+              "side": "buy",
+              "size": 2000
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Measure both buys from their mid, £100.005. In book B every share costs 1.5p over the mid, so the 2,000 shares cost £30 more than at the mid.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "orderbook",
+          "params": {
+            "bids": [
+              [
+                100.0,
+                300
+              ],
+              [
+                99.99,
+                200
+              ],
+              [
+                99.95,
+                500
+              ]
+            ],
+            "asks": [
+              [
+                100.01,
+                300
+              ],
+              [
+                100.05,
+                400
+              ],
+              [
+                100.1,
+                2000
+              ]
+            ],
+            "currency": "£",
+            "dp": 2,
+            "bidLabel": "Book A: bid size",
+            "askLabel": "ask size"
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "orderbook",
+          "params": {
+            "bids": [
+              [
+                99.99,
+                3000
+              ],
+              [
+                99.98,
+                4000
+              ],
+              [
+                99.97,
+                4000
+              ]
+            ],
+            "asks": [
+              [
+                100.02,
+                3000
+              ],
+              [
+                100.03,
+                4000
+              ],
+              [
+                100.04,
+                4000
+              ]
+            ],
+            "currency": "£",
+            "dp": 2,
+            "bidLabel": "Book B: bid size",
+            "askLabel": "ask size"
+          },
+          "state": {}
+        },
+        "state": {}
+      },
+      "question": "How much over the mid do the 2,000 shares cost in book A, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 143,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Cost over the mid in pounds",
+        "accept": "£143: $300 \\times 0.5\\text{p} + 400 \\times 4.5\\text{p} + 1{,}300 \\times 9.5\\text{p}$.",
+        "wrong": [
+          {
+            "id": "spread",
+            "value": 10,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "top-level",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "pence",
+            "value": 14300,
+            "tol": {
+              "abs": 5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk the order through book A's asks."
+        },
+        {
+          "rung": "point",
+          "text": "300 fill at £100.01, 400 at £100.05 and 1,300 at £100.10.",
+          "highlight": [
+            "left:ask0",
+            "left:ask1",
+            "left:ask2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pence over £100.005: $300 \\times 0.5 + 400 \\times 4.5 + 1{,}300 \\times 9.5 = 14{,}300$."
+        }
+      ],
+      "feedback": {
+        "correct": "£143 in book A against £30 in book B.",
+        "generic": "Not quite right. Fill each level of book A in turn and measure each from £100.005.",
+        "byKey": {
+          "spread": "You charged every share the half-spread, 0.5p. Only 300 shares fill at the best ask.",
+          "top-level": "You priced only the first 300 shares. The order needs 2,000.",
+          "pence": "That is the cost in pence. Divide by 100."
+        }
+      },
+      "explain": {
+        "text": "Book A charges £143, 7.1 bp; book B charges £30, 1.5 bp. The 1p spread was the cheaper quote and the dearer trade.",
+        "canvas": {
+          "left": {
+            "order": {
+              "side": "buy",
+              "size": 2000
+            }
+          },
+          "right": {
+            "order": {
+              "side": "buy",
+              "size": 2000
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "The **spread** is the cost of a small trade. **Depth** is the size offered near the touch, and it sets the cost of a large one. Here is book A again.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.0,
+              300
+            ],
+            [
+              99.99,
+              200
+            ],
+            [
+              99.95,
+              500
+            ]
+          ],
+          "asks": [
+            [
+              100.01,
+              300
+            ],
+            [
+              100.05,
+              400
+            ],
+            [
+              100.1,
+              2000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "caption": "Mid £100.005"
+        }
+      },
+      "question": "How many shares does book A offer within 5p above the mid, up to £100.055?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 700,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "shares",
+        "label": "Shares offered within 5p",
+        "accept": "700: 300 at £100.01 and 400 at £100.05.",
+        "wrong": [
+          {
+            "id": "top",
+            "value": 300,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 2700,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "both-sides",
+            "value": 1700,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which ask prices are at or below £100.055?"
+        },
+        {
+          "rung": "point",
+          "text": "£100.01 and £100.05 qualify; £100.10 does not.",
+          "highlight": [
+            "ask0",
+            "ask1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "700 shares: a thin book.",
+        "generic": "Not quite right. Add the ask sizes at prices up to £100.055.",
+        "byKey": {
+          "top": "That is the best level alone. £100.05 is also within 5p of the mid.",
+          "all": "You added every level. £100.10 is nearly 10p above the mid.",
+          "both-sides": "You added bids as well. A buyer only uses the asks."
+        }
+      },
+      "explain": {
+        "text": "Book A offers 700 shares within 5p; book B offers 11,000. Depth is what a large order uses, and book B has 15 times as much.",
+        "canvas": {
+          "highlight": [
+            "ask0",
+            "ask1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The third dimension is **volume**: how much trades in a day. Heavy trading refills the book quickly, so impact fades fast. A fund must buy £1m of one of these shares today; both have $\\sigma = 2\\%$ a day.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Share",
+            "Spread",
+            "Depth at the touch",
+            "Daily volume"
+          ],
+          "rows": [
+            [
+              "X",
+              "2 bp",
+              "£20,000",
+              "£5m"
+            ],
+            [
+              "Y",
+              "6 bp",
+              "£400,000",
+              "£200m"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Using half the spread plus square-root impact, which is cheaper to buy?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "y",
+            "text": "Y: about 17 bp, against about 90 bp for X",
+            "correct": true
+          },
+          {
+            "id": "x",
+            "text": "X: its spread is a third of Y's",
+            "why": "You judged by spread alone. £1m is 20% of X's daily volume, so impact swamps the 2 bp spread.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "id": "same",
+            "text": "About the same, since both have $\\sigma = 2\\%$",
+            "why": "You used volatility alone. The order is 20% of X's volume and 0.5% of Y's, which changes the impact a lot."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What fraction of each day's volume is £1m?"
+        },
+        {
+          "rung": "point",
+          "text": "X: 20%. Y: 0.5%.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "X: $0.02\\sqrt{0.2} = 89$ bp plus 1 bp. Y: $0.02\\sqrt{0.005} = 14$ bp plus 3 bp."
+        }
+      ],
+      "feedback": {
+        "correct": "Y costs about 17 bp; X about 90 bp.",
+        "generic": "Not quite right. Work out $Q/V$ for each share, then add the impact to half the spread."
+      },
+      "explain": {
+        "text": "In X the order is 20% of the day: impact $0.02\\sqrt{0.2} \\approx 89$ bp, plus 1 bp half-spread. In Y it is 0.5%: about 14 bp plus 3 bp. Spread, depth and volume all point the same way only by luck; check all three.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "One number mixes price moves with volume. **Amihud's illiquidity ratio** is $\\dfrac{|r|}{\\text{volume}}$: how far the price moves per £ traded. Bigger means less liquid.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Share",
+            "Return today",
+            "Volume today"
+          ],
+          "rows": [
+            [
+              "Z",
+              "−1.2%",
+              "£30m"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is Z's Amihud ratio today, in % per £1m traded?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.04,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "% per £1m",
+        "label": "Amihud ratio in percent per million pounds",
+        "accept": "0.04: $1.2\\% / 30$.",
+        "wrong": [
+          {
+            "id": "negative",
+            "value": -0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "inverse",
+            "value": 25,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "times",
+            "value": 36,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Take the size of the move, ignoring its sign."
+        },
+        {
+          "rung": "point",
+          "text": "Divide 1.2% by 30 (£ millions).",
+          "highlight": [
+            "r0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "0.04% per £1m traded.",
+        "generic": "Not quite right. Divide the absolute return, 1.2%, by the volume in £ millions, 30.",
+        "byKey": {
+          "negative": "You kept the minus sign. The ratio uses $|r|$, since a fall is as costly a move as a rise.",
+          "inverse": "You divided volume by the move. The ratio is the move per £ traded.",
+          "times": "You multiplied. Divide the move by the volume."
+        }
+      },
+      "explain": {
+        "text": "$1.2 / 30 = 0.04$: each £1m of trading went with a 0.04% move. In practice we average this over many days, since one day is noisy.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague wants the more liquid of two shares and picks P, because it trades twice the volume of Q.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Share",
+            "Typical daily move",
+            "Daily volume"
+          ],
+          "rows": [
+            [
+              "P",
+              "4.0%",
+              "£80m"
+            ],
+            [
+              "Q",
+              "1.0%",
+              "£40m"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "By Amihud's ratio, which share is more liquid?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "q",
+            "text": "Q: 0.025% per £1m, half P's 0.05%",
+            "correct": true
+          },
+          {
+            "id": "p",
+            "text": "P: it has twice the volume",
+            "why": "You judged by volume alone. P moves four times as much, so each £ traded comes with a bigger move.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  0
+                ]
+              }
+            }
+          },
+          {
+            "id": "same",
+            "text": "Neither: twice the volume cancels twice the move",
+            "why": "P's move is four times Q's, not twice. Divide each move by its volume."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide each share's move by its volume."
+        },
+        {
+          "rung": "point",
+          "text": "P: $4 / 80$. Q: $1 / 40$.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Q moves half as much per £ traded.",
+        "generic": "Not quite right. Compare $|r|$ / volume for each share.",
+        "byKey": {
+          "p": "High volume in a volatile share can still be costly. P's price moves 0.05% per £1m, twice Q's."
+        }
+      },
+      "explain": {
+        "text": "P: $4.0 / 80 = 0.05$; Q: $1.0 / 40 = 0.025$ % per £1m. P is busy because it is volatile, and each £ traded still moves it more. Volume alone, like spread alone, misleads.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Liquidity changes through the day. The chart shows a share's average spread for each hour of the London session. Spreads are wide just after the open and tightest before the close.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "sp",
+              "label": "Spread",
+              "values": [
+                12.0,
+                7.0,
+                5.0,
+                4.6,
+                4.4,
+                4.2,
+                4.0,
+                3.6,
+                3.2
+              ]
+            }
+          ],
+          "indexFrom": 8,
+          "xLabel": "Hour of the day",
+          "yLabel": "Spread (bp)",
+          "decimals": 1,
+          "y": [
+            0,
+            14
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "open",
+              "i": 0,
+              "label": "08:00: {value} bp"
+            },
+            {
+              "id": "close",
+              "i": 8,
+              "label": "16:00: {value} bp"
+            }
+          ]
+        }
+      },
+      "question": "How much more does a £500,000 round trip cost in spreads at 08:00 than at 16:00, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 440,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Extra cost in pounds",
+        "accept": "£440: $500{,}000 \\times (12 - 3.2) / 10{,}000$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 220,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "open-only",
+            "value": 600,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "bp",
+            "value": 8.8,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A round trip costs the whole spread."
+        },
+        {
+          "rung": "point",
+          "text": "12 bp at 08:00 and 3.2 bp at 16:00: a gap of 8.8 bp.",
+          "highlight": [
+            "open",
+            "close"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$500{,}000 \\times 0.00088$."
+        }
+      ],
+      "feedback": {
+        "correct": "£600 against £160: £440 more.",
+        "generic": "Not quite right. Find each round trip's cost, then subtract.",
+        "byKey": {
+          "half": "You charged one side. A round trip pays the whole spread.",
+          "open-only": "That is the whole cost at 08:00. Subtract the £160 it costs at 16:00.",
+          "bp": "That is the gap in basis points. Apply it to £500,000."
+        }
+      },
+      "explain": {
+        "text": "At 08:00 the round trip costs £600 and at 16:00 £160. After the open, makers are unsure of the price and quote wide; by the afternoon the price is known and volume is heavy. Patient orders wait.",
+        "canvas": {
+          "highlight": [
+            "open",
+            "close"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "In a crisis, market makers widen their quotes or step away. This share's daily average spread over two weeks of a market sell-off rose tenfold.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "sp",
+              "label": "Spread",
+              "values": [
+                4,
+                4,
+                5,
+                4,
+                6,
+                15,
+                40,
+                35,
+                22,
+                12,
+                8
+              ]
+            }
+          ],
+          "indexFrom": 1,
+          "xLabel": "Trading day",
+          "yLabel": "Spread (bp)",
+          "decimals": 0,
+          "y": [
+            0,
+            45
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "calm",
+              "i": 0,
+              "label": "calm: {value} bp"
+            },
+            {
+              "id": "peak",
+              "i": 6,
+              "label": "peak: {value} bp"
+            }
+          ],
+          "shade": [
+            {
+              "id": "stress",
+              "from": 5,
+              "to": 8,
+              "label": "sell-off",
+              "tone": "neg"
+            }
+          ]
+        }
+      },
+      "question": "At the peak, what does a £1m round trip cost in spreads, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4000,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "£",
+        "label": "Round-trip cost in pounds",
+        "accept": "£4,000: $1{,}000{,}000 \\times 0.0040$.",
+        "wrong": [
+          {
+            "id": "calm",
+            "value": 400,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "half",
+            "value": 2000,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the peak spread off the chart."
+        },
+        {
+          "rung": "point",
+          "text": "40 bp is 0.0040.",
+          "highlight": [
+            "peak"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "£4,000, ten times the calm £400.",
+        "generic": "Not quite right. Apply the peak spread, 40 bp, to £1m.",
+        "byKey": {
+          "calm": "That is the cost on a calm day. At the peak the spread is 40 bp.",
+          "half": "You charged one side. The round trip pays the whole spread."
+        }
+      },
+      "explain": {
+        "text": "40 bp of £1m is £4,000, against £400 on a calm day. Liquidity disappears exactly when everyone wants to sell. A model that assumes calm spreads understates the cost of getting out.",
+        "canvas": {
+          "highlight": [
+            "peak"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Desks size positions by how long they would take to exit. A common rule is to trade at most a fraction $p$ of daily volume $V$, often 10%, so the order adds little impact. A position is worth $X$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "rate",
+            "text": "At a fraction $p$ of daily volume we can sell $pV$ a day"
+          },
+          {
+            "id": "days",
+            "text": "So the exit takes $D = \\dfrac{X}{pV}$ days"
+          },
+          {
+            "id": "limit",
+            "text": "A limit of $D_{\\max}$ days caps the position at $X \\le D_{\\max}\\,pV$"
+          }
+        ],
+        "answer": [
+          "rate",
+          "days",
+          "limit"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with how much can be sold in one day."
+        },
+        {
+          "rung": "point",
+          "text": "Days are the position divided by the daily amount."
+        },
+        {
+          "rung": "step",
+          "text": "Then turn a limit on days around into a limit on size."
+        }
+      ],
+      "feedback": {
+        "correct": "Days to exit is size over the daily selling rate.",
+        "generic": "Not quite right. Daily rate first, then days, then the size limit.",
+        "byKey": {
+          "limit": "The size limit rearranges the days formula, so it comes last.",
+          "days": "Days need the daily selling rate first."
+        }
+      },
+      "explain": {
+        "text": "Selling $pV$ a day, a position $X$ takes $X/(pV)$ days. At 10% of a £50m daily volume, a £20m position takes $20 / 5 = 4$ days to exit."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "Your risk rule: any position must be exitable within 3 days at 10% of daily volume. A small-cap share trades £8m a day on average.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Rule",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Participation",
+              "10% of daily volume"
+            ],
+            [
+              "Daily volume",
+              "£8m"
+            ],
+            [
+              "Maximum days to exit",
+              "3"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the largest position you may hold, in £ millions?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.4,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£m",
+        "label": "Largest position in millions of pounds",
+        "accept": "£2.4m: $3 \\times 0.1 \\times 8$.",
+        "wrong": [
+          {
+            "id": "one-day",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "no-p",
+            "value": 24,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "divide",
+            "value": 0.267,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How much can you sell in one day?"
+        },
+        {
+          "rung": "point",
+          "text": "10% of £8m is £0.8m a day.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Three days of that."
+        }
+      ],
+      "feedback": {
+        "correct": "£2.4m: three days of £0.8m.",
+        "generic": "Not quite right. Multiply the daily selling rate, £0.8m, by 3 days.",
+        "byKey": {
+          "one-day": "That is one day's selling. The rule allows three days.",
+          "no-p": "You used the whole daily volume. The rule allows only 10% of it.",
+          "divide": "You divided by the days. More days allow a bigger position, so multiply."
+        }
+      },
+      "explain": {
+        "text": "At 10% you can sell £0.8m a day, so three days allows £2.4m. A £20m position here would take 25 days to unwind, far too long if bad news arrives.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A risk report gives a one-day 99% value at risk (VaR) of £300,000 for a portfolio. That figure uses mid prices and assumes the whole portfolio could be sold in a day.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "sp",
+              "label": "Spread",
+              "values": [
+                4,
+                4,
+                5,
+                4,
+                6,
+                15,
+                40,
+                35,
+                22,
+                12,
+                8
+              ]
+            }
+          ],
+          "indexFrom": 1,
+          "xLabel": "Trading day",
+          "yLabel": "Spread (bp)",
+          "decimals": 0,
+          "y": [
+            0,
+            45
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "peak",
+              "i": 6,
+              "label": "peak: {value} bp"
+            }
+          ]
+        }
+      },
+      "question": "How should a liquidity-adjusted VaR differ?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Add the cost of exiting, using stressed spreads, and use a horizon as long as the exit takes",
+            "correct": true
+          },
+          {
+            "id": "calm",
+            "text": "Add half of today's calm spread and keep the one-day horizon",
+            "why": "You priced the exit in calm conditions. The losses VaR is for come with wide spreads and slow exits."
+          },
+          {
+            "id": "same",
+            "text": "It should be the same: VaR already measures risk",
+            "why": "You treated price risk as the whole risk. VaR at mid prices ignores what it costs to get out."
+          },
+          {
+            "id": "smaller",
+            "text": "It should be smaller, since the spread is earned by makers",
+            "why": "The spread is earned by whoever provides liquidity. A portfolio forced to sell pays it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does selling cost in a stressed market?"
+        },
+        {
+          "rung": "point",
+          "text": "Spreads widen and the exit can take several days.",
+          "highlight": [
+            "peak"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Add the exit cost under stress and stretch the horizon.",
+        "generic": "Not quite right. Ask what it costs, and how long it takes, to sell in a bad market."
+      },
+      "explain": {
+        "text": "A liquidity-adjusted VaR adds half the stressed spread on everything to be sold, plus impact, and measures risk over the days the exit takes. For an illiquid book it can be far above the mid-price figure.",
+        "canvas": {
+          "highlight": [
+            "peak"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Liquidity has three dimensions: spread (the cost of a small trade), depth (what a large one meets) and volume (how fast the book refills).",
+      "Amihud's ratio $|r|/\\text{volume}$ measures how far the price moves per £ traded; bigger is less liquid.",
+      "Liquidity changes: wide after the open, tight before the close, and it vanishes in a crisis. Size positions by the days needed to exit."
+    ],
+    "formula": {
+      "name": "Days to exit",
+      "tex": "D = \\dfrac{X}{p\\,V}, \\qquad \\text{Amihud} = \\dfrac{|r|}{\\text{volume}}",
+      "note": "$X$ the position, $V$ daily volume, $p$ the share of volume you trade (often 0.1)."
+    },
+    "trap": "A tight spread with no depth, or high volume in a volatile share, can still be expensive to trade."
+  },
+  "quiz": [
+    {
+      "id": "q-no-quotes",
+      "difficulty": 2,
+      "prose": "A small share has bids from buyers but no sellers at all on the book this morning.",
+      "question": "What is its spread?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "Unbounded: there is no ask to buy at",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "Zero, as there is nothing to cross",
+            "why": "You read a missing ask as no gap. Without an ask, a buyer cannot trade at any price."
+          },
+          {
+            "id": "bid",
+            "text": "The best bid, as a percentage",
+            "why": "The spread needs both a bid and an ask. With one side missing it has no finite value."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "No ask means no finite spread.",
+        "generic": "Not quite right. The spread is the ask minus the bid."
+      },
+      "explain": {
+        "text": "With no ask, a market buy cannot fill at all: the spread is effectively infinite. A screen that hides this behind a last-traded price looks liquid when it is not."
+      }
+    },
+    {
+      "id": "q-amihud",
+      "difficulty": 2,
+      "prose": "On one day, share M fell 0.6% on volume of £15m.",
+      "question": "What is its Amihud ratio, in % per £1m traded?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.04,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "% per £1m",
+        "label": "Amihud ratio in percent per million pounds",
+        "accept": "0.04: $0.6 / 15$.",
+        "wrong": [
+          {
+            "id": "negative",
+            "value": -0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "inverse",
+            "value": 25,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.04% per £1m.",
+        "generic": "Not quite right. Divide the absolute move by the volume in £ millions.",
+        "byKey": {
+          "negative": "Use $|r|$: the size of the move, not its sign.",
+          "inverse": "You divided volume by the move. Divide the move by the volume."
+        }
+      },
+      "explain": {
+        "text": "$0.6 / 15 = 0.04$% per £1m traded."
+      }
+    },
+    {
+      "id": "q-exit",
+      "difficulty": 3,
+      "prose": "A fund holds £20m of a share that trades £50m a day. It will sell at most 10% of daily volume.",
+      "question": "How many days does the exit take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "days",
+        "label": "Days to exit",
+        "accept": "4 days: $20 / (0.1 \\times 50)$.",
+        "wrong": [
+          {
+            "id": "no-p",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "times",
+            "value": 100,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£5m a day for 4 days.",
+        "generic": "Not quite right. Divide the position by 10% of daily volume.",
+        "byKey": {
+          "no-p": "You used the whole day's volume. The fund sells only 10% of it.",
+          "times": "You multiplied. Divide the position by the daily selling rate."
+        }
+      },
+      "explain": {
+        "text": "10% of £50m is £5m a day, so £20m takes 4 days. Four days of price risk is part of the position's real risk."
+      }
+    },
+    {
+      "id": "q-flash",
+      "difficulty": 3,
+      "prose": "On 6 May 2010, US share prices fell about 9% within minutes and recovered most of it within the half hour. Some shares briefly traded at a penny.",
+      "question": "Which reading of that day fits this lesson?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Depth vanished as makers withdrew, so sell orders walked far down near-empty books",
+            "correct": true
+          },
+          {
+            "id": "value",
+            "text": "Investors suddenly learned the shares were worth 9% less",
+            "why": "You read the fall as news about value. Prices recovered within the half hour, which news would not allow."
+          },
+          {
+            "id": "volume",
+            "text": "Volume dried up, so prices could not move",
+            "why": "Volume was huge that afternoon. What vanished was depth near the touch."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A liquidity crash, not a value crash.",
+        "generic": "Not quite right. Think about what an order meets when the book is empty."
+      },
+      "explain": {
+        "text": "In the 2010 flash crash, liquidity providers pulled their quotes and market sell orders walked down books with almost nothing in them. A tight spread a minute earlier said nothing about the depth behind it."
+      }
+    }
+  ]
+}

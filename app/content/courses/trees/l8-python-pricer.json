@@ -1,0 +1,1034 @@
+{
+  "id": "l8-python-pricer",
+  "course": "trees",
+  "title": "A binomial pricer in Python",
+  "minutes": 15,
+  "objectives": [
+    "Write a binomial pricer in Python and test it against hand calculations.",
+    "Explain when one discount at the end gives the same price as a discount every step."
+  ],
+  "skills": [
+    "tp-multistep"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A step as a list",
+      "prose": "In code we store one step’s node values as a list `v`, where `v[j]` is the node with `j` up moves. The two-step call from this level ends as `v = [0, 0, 44]`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            0,
+            0,
+            44
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "`v[j]`: the call at year 2 after `j` up moves"
+        }
+      },
+      "question": "One step back, with $q = 0.625$ and a discount of 1.05, which list do you get?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[0.0, 26.19]`",
+            "correct": true
+          },
+          {
+            "id": "reversed",
+            "text": "`[26.19, 0.0]`",
+            "why": "You put the up node first. Index `j` counts up moves, so the £120 node has `j = 1` and goes last."
+          },
+          {
+            "id": "same-length",
+            "text": "`[0.0, 0.0, 26.19]`",
+            "why": "One step back has one node fewer. Step $i$ has $i + 1$ nodes."
+          },
+          {
+            "id": "no-disc",
+            "text": "`[0.0, 27.5]`",
+            "why": "You weighted without discounting. Divide by 1.05 for each step back."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many nodes does year 1 have?"
+        },
+        {
+          "rung": "point",
+          "text": "The new `v[1]` uses the old `v[1]` (down) and `v[2]` (up).",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "New `v[1]` $= (0.625 \\times 44 + 0.375 \\times 0)/1.05$; new `v[0]` uses two zeros."
+        }
+      ],
+      "feedback": {
+        "correct": "Two nodes at year 1: £0 and £26.19.",
+        "generic": "Not quite right. Each new entry uses two neighbouring old entries.",
+        "byKey": {
+          "reversed": "You put the up node first. Index `j` counts up moves, so the £120 node has `j = 1` and goes last.",
+          "same-length": "One step back has one node fewer. Step $i$ has $i + 1$ nodes."
+        }
+      },
+      "explain": {
+        "text": "New `v[j]` uses old `v[j]` (down) and `v[j + 1]` (up). The list shrinks by one each step, so after $n$ steps back one value is left: today’s price.",
+        "canvas": {
+          "cells": [
+            0,
+            26.19
+          ],
+          "caption": "One step back: year 1"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The leaves",
+      "prose": "An $n$-step tree has $n + 1$ leaves. The leaf with `j` ups and `n - j` downs is $Su^jd^{n-j}$.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            64,
+            96,
+            144
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "`leaves(100, 1.2, 0.8, 2)` should give these"
+        }
+      },
+      "question": "Complete `leaves(S, u, d, n)` so it returns the leaf prices, fewest ups first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def leaves(S, u, d, n):\n    \"\"\"Share prices after n steps, j = 0 to n ups.\"\"\"\n    return ...\n",
+        "solution": "def leaves(S, u, d, n):\n    \"\"\"Share prices after n steps, j = 0 to n ups.\"\"\"\n    return [S * u**j * d**(n - j) for j in range(n + 1)]\n",
+        "examples": [
+          {
+            "call": "leaves(100, 1.2, 0.8, 2)",
+            "expect": "[64.0, 96.0, 144.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "leaves(100, 1.2, 0.8, 2)",
+            "expect": "[64.0, 96.0, 144.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "leaves(100, 1.2, 0.8, 1)",
+            "expect": "[80.0, 120.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "leaves(100, 1.2, 0.8, 0)",
+            "expect": "[100.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "len(leaves(100, 1.2, 0.8, 7))",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
+            "call": "leaves(50, 1.1, 0.9, 3)",
+            "expect": "[36.45, 44.55, 54.45, 66.55]",
+            "compare": "isclose"
+          },
+          {
+            "call": "leaves(100, 1.2, 0.8, 3)",
+            "expect": "[51.2, 76.8, 115.2, 172.8]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: one, two and three steps, zero steps, another tree and the number of leaves. Values are compared with math.isclose."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`range(n + 1)` gives `j = 0, 1, ..., n`."
+        },
+        {
+          "rung": "point",
+          "text": "Use a list comprehension over `j`."
+        },
+        {
+          "rung": "step",
+          "text": "`return [S * u**j * d**(n - j) for j in range(n + 1)]`"
+        }
+      ],
+      "feedback": {
+        "correct": "$n + 1$ leaves, fewest ups first.",
+        "generic": "Some tests failed. Check that you return $n + 1$ prices and bracket the exponent `n - j`."
+      },
+      "explain": {
+        "text": "`range(n + 1)` runs `j` from 0 to `n`, one leaf per number of ups. The bracket in `d**(n - j)` matters; the trap screen shows why.\n\n```python\nreturn [S * u**j * d**(n - j) for j in range(n + 1)]\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One step back",
+      "prose": "Each step back replaces two neighbours with their $q$-weighted, discounted average. `disc` is one step’s discount factor, $1/1.05$ in the two-step tree.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            0,
+            0,
+            44
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "`step_back([0, 0, 44], 0.625, 1 / 1.05)` should give `[0.0, 26.19…]`"
+        }
+      },
+      "question": "Complete `step_back(v, q, disc)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def step_back(v, q, disc):\n    \"\"\"Node values one step earlier.\"\"\"\n    return ...\n",
+        "solution": "def step_back(v, q, disc):\n    \"\"\"Node values one step earlier.\"\"\"\n    return [disc * (q * v[j + 1] + (1 - q) * v[j])\n            for j in range(len(v) - 1)]\n",
+        "examples": [
+          {
+            "call": "step_back([0, 0, 44], 0.625, 1 / 1.05)",
+            "expect": "[0.0, 26.19047619047619]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "step_back([0, 0, 44], 0.625, 1 / 1.05)",
+            "expect": "[0.0, 26.19047619047619]",
+            "compare": "isclose"
+          },
+          {
+            "call": "step_back([0, 26.19047619047619], 0.625, 1 / 1.05)",
+            "expect": "[15.589569160997732]",
+            "compare": "isclose"
+          },
+          {
+            "call": "step_back([36, 4, 0], 0.625, 1 / 1.05)",
+            "expect": "[15.238095238095237, 1.4285714285714286]",
+            "compare": "isclose"
+          },
+          {
+            "call": "step_back([0, 10, 30], 0.5, 1)",
+            "expect": "[5.0, 20.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "step_back([7], 0.6, 0.98)",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: both steps of the two-step call, the put’s first step, a tree with no discount, and a single value (which has nothing before it)."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The new list has `len(v) - 1` entries."
+        },
+        {
+          "rung": "point",
+          "text": "Entry `j` uses `v[j]` as the down node and `v[j + 1]` as the up node."
+        },
+        {
+          "rung": "step",
+          "text": "`return [disc * (q * v[j + 1] + (1 - q) * v[j]) for j in range(len(v) - 1)]`"
+        }
+      ],
+      "feedback": {
+        "correct": "One entry fewer, each a discounted weighted average.",
+        "generic": "Some tests failed. Check that `q` weights the up neighbour `v[j + 1]` and that every entry is discounted."
+      },
+      "explain": {
+        "text": "The up neighbour of `v[j]` is `v[j + 1]`, because one more up move raises the index by one. Swapping the weights would price with $1 - q$ on up.\n\n```python\nreturn [disc * (q * v[j + 1] + (1 - q) * v[j])\n        for j in range(len(v) - 1)]\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The whole tree",
+      "prose": "Now join the pieces. `price_from_ud` takes level 1’s inputs: factors `u`, `d` and a simple rate per step. With `american=True` it compares with exercising at every node, as in the last lesson.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Call",
+            "Expected (£)"
+          ],
+          "rows": [
+            [
+              "One-step call, $K = 100$",
+              "11.90"
+            ],
+            [
+              "Two-step call",
+              "15.59"
+            ],
+            [
+              "Two-step put",
+              "6.29"
+            ],
+            [
+              "Two-step American put",
+              "7.99"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Hand values from this course: $S = 100$, $u = 1.2$, $d = 0.8$, 5% per step"
+        }
+      },
+      "question": "Replace the two `...` in `price_from_ud`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def leaves(S, u, d, n):\n    \"\"\"Share prices after n steps, j = 0 to n ups.\"\"\"\n    return [S * u**j * d**(n - j) for j in range(n + 1)]\n\n\ndef step_back(v, q, disc):\n    \"\"\"Node values one step earlier.\"\"\"\n    return [disc * (q * v[j + 1] + (1 - q) * v[j])\n            for j in range(len(v) - 1)]\n\n\ndef price_from_ud(S, K, r_period, u, d, n, kind,\n                  american=False):\n    \"\"\"Price on a tree with factors u, d and a simple\n    rate r_period per step. kind is \"call\" or \"put\".\"\"\"\n    q = (1 + r_period - d) / (u - d)\n    disc = 1 / (1 + r_period)\n\n    def payoff(s):\n        if kind == \"call\":\n            return max(s - K, 0)\n        return max(K - s, 0)\n\n    v = ...            # payoffs at the n + 1 leaves\n    for i in range(n - 1, -1, -1):\n        v = step_back(v, q, disc)\n        if american:\n            ...        # compare with exercising at step i\n    return v[0]\n",
+        "solution": "def leaves(S, u, d, n):\n    \"\"\"Share prices after n steps, j = 0 to n ups.\"\"\"\n    return [S * u**j * d**(n - j) for j in range(n + 1)]\n\n\ndef step_back(v, q, disc):\n    \"\"\"Node values one step earlier.\"\"\"\n    return [disc * (q * v[j + 1] + (1 - q) * v[j])\n            for j in range(len(v) - 1)]\n\n\ndef price_from_ud(S, K, r_period, u, d, n, kind,\n                  american=False):\n    \"\"\"Price on a tree with factors u, d and a simple\n    rate r_period per step. kind is \"call\" or \"put\".\"\"\"\n    q = (1 + r_period - d) / (u - d)\n    disc = 1 / (1 + r_period)\n\n    def payoff(s):\n        if kind == \"call\":\n            return max(s - K, 0)\n        return max(K - s, 0)\n\n    v = [payoff(s) for s in leaves(S, u, d, n)]\n    for i in range(n - 1, -1, -1):\n        v = step_back(v, q, disc)\n        if american:\n            ex = [payoff(s) for s in leaves(S, u, d, i)]\n            v = [max(h, e) for h, e in zip(v, ex)]\n    return v[0]\n",
+        "examples": [
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 2, \"call\")",
+            "expect": "15.589569160997737",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 1, \"call\")",
+            "expect": "11.904761904761905",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 1, \"put\")",
+            "expect": "7.142857142857142",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 2, \"call\")",
+            "expect": "15.589569160997737",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 2, \"put\")",
+            "expect": "6.292517006802716",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 2, \"put\", american=True)",
+            "expect": "7.993197278911562",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 2, \"call\", american=True)",
+            "expect": "15.589569160997737",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 100, 0.0, 1.2, 0.8, 2, \"put\", american=True)",
+            "expect": "11.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 150, 0.05, 1.2, 0.8, 2, \"call\")",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 3, \"put\", american=True)",
+            "expect": "8.904275996112727",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests against values computed by hand in this course: the one-step call and put from level 1, the two-step call and put, the American put and call, a zero rate, a strike no leaf reaches, and a three-step American put."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The leaves’ payoffs come from `payoff` applied to each leaf price."
+        },
+        {
+          "rung": "point",
+          "text": "At step `i` the exercise values are `payoff` of `leaves(S, u, d, i)`."
+        },
+        {
+          "rung": "step",
+          "text": "`v = [payoff(s) for s in leaves(S, u, d, n)]`, and inside the `if`: `v = [max(h, e) for h, e in zip(v, [payoff(s) for s in leaves(S, u, d, i)])]`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your pricer matches every hand value, including level 1’s £11.90 at $n = 1$.",
+        "generic": "Some tests failed. Check the payoffs at the leaves, then that the American max uses the prices at step `i`."
+      },
+      "explain": {
+        "text": "With $n = 1$ the loop runs once and reproduces level 1’s £11.90. The American line compares each node with exercising at that node’s own price, `leaves(S, u, d, i)`.\n\n```python\nv = [payoff(s) for s in leaves(S, u, d, n)]\n...\nex = [payoff(s) for s in leaves(S, u, d, i)]\nv = [max(h, e) for h, e in zip(v, ex)]\n```"
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A missing bracket",
+      "prose": "A colleague writes the leaves without the bracket round `n - j`. Python raises no error.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> S, u, d, n = 100, 1.2, 0.8, 2",
+            ">>> [S * u**j * d**n - j for j in range(n + 1)]",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does the second line return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[64.0, 75.8, 90.16]`",
+            "correct": true
+          },
+          {
+            "id": "meant",
+            "text": "`[64.0, 96.0, 144.0]`",
+            "why": "You read `d**n - j` as $d^{n-j}$. Python computes `d**n` first, multiplies, then subtracts `j`."
+          },
+          {
+            "id": "short",
+            "text": "`[64.0, 96.0]`",
+            "why": "That drops the last leaf, as `range(n)` would. Here `range(n + 1)` gives three leaves."
+          },
+          {
+            "id": "error",
+            "text": "A `TypeError`",
+            "why": "The line is valid Python. It runs and quietly gives wrong numbers, which is worse."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which binds tighter in Python: `**` or `-`?"
+        },
+        {
+          "rung": "point",
+          "text": "`**` binds tighter than `*`, and `*` binds tighter than `-`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The line computes $(Su^jd^n) - j$. For $j = 1$: $100 \\times 1.2 \\times 0.64 - 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "It computes $Su^jd^n - j$.",
+        "generic": "Not quite right. Work out `S * u**j * d**n - j` for `j = 1` by Python’s precedence.",
+        "byKey": {
+          "meant": "You read `d**n - j` as $d^{n-j}$. Python computes `d**n` first, multiplies, then subtracts `j`."
+        }
+      },
+      "explain": {
+        "text": "`**` binds tighter than `*` and `-`, so the line computes $Su^jd^n - j$: 64, 75.8 and 90.16. The fix is a bracket, `d**(n - j)`. No error is raised, which is why tests against hand values matter.",
+        "canvas": {
+          "lines": [
+            ">>> S, u, d, n = 100, 1.2, 0.8, 2",
+            ">>> [S * u**j * d**n - j for j in range(n + 1)]",
+            "[64.00000000000001, 75.80000000000001, 90.16000000000003]",
+            ">>> [S * u**j * d**(n - j) for j in range(n + 1)]",
+            "[64.00000000000001, 96.0, 144.0]"
+          ],
+          "tone": {
+            "l3": "err",
+            "l5": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Calibrated to volatility",
+      "prose": "Now the version a desk uses, with inputs $S, K, r, \\sigma, T, n$. Set $\\Delta t = T/n$, $u = e^{\\sigma\\sqrt{\\Delta t}}$ and $d = 1/u$. One step grows £1 to $e^{r\\Delta t}$, so a simple rate per step of $e^{r\\Delta t} - 1$ fits `price_from_ud`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Inputs",
+            "Expected (£)"
+          ],
+          "rows": [
+            [
+              "Call, $n = 4$",
+              "9.97"
+            ],
+            [
+              "Put, $n = 4$",
+              "5.09"
+            ],
+            [
+              "American put, $n = 4$",
+              "5.88"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "$S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$: the calibration lesson’s tree"
+        }
+      },
+      "question": "Complete `binomial_price` using `math.exp` and `math.sqrt`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def leaves(S, u, d, n):\n    \"\"\"Share prices after n steps, j = 0 to n ups.\"\"\"\n    return [S * u**j * d**(n - j) for j in range(n + 1)]\n\n\ndef step_back(v, q, disc):\n    \"\"\"Node values one step earlier.\"\"\"\n    return [disc * (q * v[j + 1] + (1 - q) * v[j])\n            for j in range(len(v) - 1)]\n\n\ndef price_from_ud(S, K, r_period, u, d, n, kind,\n                  american=False):\n    \"\"\"Price on a tree with factors u, d and a simple\n    rate r_period per step. kind is \"call\" or \"put\".\"\"\"\n    q = (1 + r_period - d) / (u - d)\n    disc = 1 / (1 + r_period)\n\n    def payoff(s):\n        if kind == \"call\":\n            return max(s - K, 0)\n        return max(K - s, 0)\n\n    v = [payoff(s) for s in leaves(S, u, d, n)]\n    for i in range(n - 1, -1, -1):\n        v = step_back(v, q, disc)\n        if american:\n            ex = [payoff(s) for s in leaves(S, u, d, i)]\n            v = [max(h, e) for h, e in zip(v, ex)]\n    return v[0]\n\n\nimport math\n\n\ndef binomial_price(S, K, r, sigma, T, n, kind,\n                   american=False):\n    \"\"\"CRR tree: r continuous per year, T in years.\"\"\"\n    dt = ...\n    u = ...\n    d = ...\n    r_period = ...     # one step grows £1 to exp(r * dt)\n    return price_from_ud(S, K, r_period, u, d, n, kind,\n                         american)\n",
+        "solution": "def leaves(S, u, d, n):\n    \"\"\"Share prices after n steps, j = 0 to n ups.\"\"\"\n    return [S * u**j * d**(n - j) for j in range(n + 1)]\n\n\ndef step_back(v, q, disc):\n    \"\"\"Node values one step earlier.\"\"\"\n    return [disc * (q * v[j + 1] + (1 - q) * v[j])\n            for j in range(len(v) - 1)]\n\n\ndef price_from_ud(S, K, r_period, u, d, n, kind,\n                  american=False):\n    \"\"\"Price on a tree with factors u, d and a simple\n    rate r_period per step. kind is \"call\" or \"put\".\"\"\"\n    q = (1 + r_period - d) / (u - d)\n    disc = 1 / (1 + r_period)\n\n    def payoff(s):\n        if kind == \"call\":\n            return max(s - K, 0)\n        return max(K - s, 0)\n\n    v = [payoff(s) for s in leaves(S, u, d, n)]\n    for i in range(n - 1, -1, -1):\n        v = step_back(v, q, disc)\n        if american:\n            ex = [payoff(s) for s in leaves(S, u, d, i)]\n            v = [max(h, e) for h, e in zip(v, ex)]\n    return v[0]\n\n\nimport math\n\n\ndef binomial_price(S, K, r, sigma, T, n, kind,\n                   american=False):\n    \"\"\"CRR tree: r continuous per year, T in years.\"\"\"\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    r_period = math.exp(r * dt) - 1\n    return price_from_ud(S, K, r_period, u, d, n, kind,\n                         american)\n",
+        "examples": [
+          {
+            "call": "binomial_price(100, 100, 0.05, 0.2, 1, 4, \"call\")",
+            "expect": "9.970522921901265",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "binomial_price(100, 100, 0.05, 0.2, 1, 4, \"call\")",
+            "expect": "9.970522921901265",
+            "compare": "isclose"
+          },
+          {
+            "call": "binomial_price(100, 100, 0.05, 0.2, 1, 4, \"put\")",
+            "expect": "5.093465371972652",
+            "compare": "isclose"
+          },
+          {
+            "call": "binomial_price(100, 100, 0.05, 0.2, 1, 4, \"put\", american=True)",
+            "expect": "5.882800351329434",
+            "compare": "isclose"
+          },
+          {
+            "call": "binomial_price(100, 100, 0.05, 0.2, 1, 1, \"call\")",
+            "expect": "12.162284964623943",
+            "compare": "isclose"
+          },
+          {
+            "call": "binomial_price(100, 100, 0.05, 0.2, 1, 256, \"call\")",
+            "expect": "10.44277599982445",
+            "compare": "isclose"
+          },
+          {
+            "call": "binomial_price(100, 100, 0.05, 0.2, 1, 64, \"call\") - binomial_price(100, 100, 0.05, 0.2, 1, 64, \"put\")",
+            "expect": "4.877057549928594",
+            "compare": "isclose"
+          },
+          {
+            "call": "price_from_ud(100, 100, 0.05, 1.2, 0.8, 1, \"call\")",
+            "expect": "11.904761904761905",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: the four-step call, put and American put from the calibration lesson, one step, 256 steps, put-call parity at 64 steps ($S - Ke^{-rT} = 4.877$), and level 1’s £11.90 through `price_from_ud`. Values are compared with math.isclose."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`dt` is the step length in years."
+        },
+        {
+          "rung": "point",
+          "text": "`u = math.exp(sigma * math.sqrt(dt))`, and `d` undoes it."
+        },
+        {
+          "rung": "step",
+          "text": "`dt = T / n`, `d = 1 / u`, `r_period = math.exp(r * dt) - 1`."
+        }
+      ],
+      "feedback": {
+        "correct": "£9.97 at four steps, as in the calibration lesson.",
+        "generic": "Some tests failed. Check `dt = T / n` and that `r_period` is one step’s growth minus 1."
+      },
+      "explain": {
+        "text": "Then `1 + r_period` is $e^{r\\Delta t}$, so the old code uses the right $q$ and discount. With $n = 1$ this gives £12.16, not £11.90, because $u = e^{0.2} = 1.2214$ rather than 1.2.\n\n```python\ndt = T / n\nu = math.exp(sigma * math.sqrt(dt))\nd = 1 / u\nr_period = math.exp(r * dt) - 1\n```"
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "One discount or many",
+      "prose": "Some pricers skip the discount inside the loop and multiply by $e^{-rT}$ once at the end. Write $D = e^{-r\\Delta t}$ for one step’s discount. Show when that is safe.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "European: $V_0 = D\\,E_q[V_1]$, one step back from step 1"
+          },
+          {
+            "id": "b",
+            "text": "$V_1 = D\\,E_q[V_2 \\mid S_1]$, so $V_0 = D^2E_q[V_2]$: averaging in two stages is one average"
+          },
+          {
+            "id": "c",
+            "text": "Repeat for all $n$ steps: $V_0 = D^nE_q[\\text{payoff}]$"
+          },
+          {
+            "id": "d",
+            "text": "$D^n = e^{-rn\\Delta t} = e^{-rT}$, since $n\\Delta t = T$: one discount at the end agrees"
+          },
+          {
+            "id": "e",
+            "text": "American: each node takes $\\max(D\\,E_q[\\cdot], K - S)$, and $D$ cannot pass through a max, so discount every step"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start one step from today."
+        },
+        {
+          "rung": "point",
+          "text": "Each step back multiplies by another $D$."
+        },
+        {
+          "rung": "step",
+          "text": "One step, two steps, $n$ steps, the product of discounts, then the American case."
+        }
+      ],
+      "feedback": {
+        "correct": "For European options the discounts multiply to $e^{-rT}$; American code must discount every step.",
+        "generic": "Not quite right. Build the European case step by step, then say why the American case differs.",
+        "byKey": {
+          "e": "The American case is the exception, so it comes after the European argument.",
+          "d": "Combining the factors needs all $n$ of them first."
+        }
+      },
+      "explain": {
+        "text": "For a European option the discounts are plain factors, so they can all wait until the end. An American max compares a discounted value with $K - S$ in today’s money at that node. Moving the discount past the max changes which side wins."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Towards Black-Scholes",
+      "prose": "Your `binomial_price` gives these prices as $n$ grows. The last column compares each with the Black-Scholes value, £10.45, which level 3 derives.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Steps $n$",
+            "Tree price (£)",
+            "Tree minus Black-Scholes (£)"
+          ],
+          "rows": [
+            [
+              "1",
+              "12.1623",
+              "1.7117"
+            ],
+            [
+              "4",
+              "9.9705",
+              "-0.4801"
+            ],
+            [
+              "16",
+              "10.3267",
+              "-0.1239"
+            ],
+            [
+              "64",
+              "10.4194",
+              "-0.0312"
+            ],
+            [
+              "256",
+              "10.4428",
+              "-0.0078"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "One-year call: $S = K = 100$, $\\sigma = 20\\%$, $r = 5\\%$. Black-Scholes value: £10.4506"
+        }
+      },
+      "question": "From $n = 16$ on, multiplying $n$ by 4 divides the error by about how much?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.2
+        },
+        "label": "Factor the error shrinks by",
+        "accept": "About 4: $0.1239/0.0312 = 3.97$ and $0.0312/0.0078 = 4.0$.",
+        "wrong": [
+          {
+            "id": "sqrt",
+            "value": 2,
+            "tol": {
+              "abs": 0.2
+            }
+          },
+          {
+            "id": "square",
+            "value": 16,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide one error by the next."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the $n = 16$ and $n = 64$ rows.",
+          "highlight": [
+            "r2c2",
+            "r3c2",
+            "r4c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.1239 / 0.0312$ and $0.0312 / 0.0078$."
+        }
+      ],
+      "feedback": {
+        "correct": "The error shrinks like $1/n$.",
+        "generic": "Not quite right. Divide the size of each error by the size of the next one.",
+        "byKey": {
+          "sqrt": "A factor of 2 would mean the error shrinks like $1/\\sqrt{n}$. The table shrinks faster.",
+          "square": "A factor of 16 would mean $1/n^2$. The table shrinks more slowly."
+        }
+      },
+      "explain": {
+        "text": "$0.1239/0.0312 = 3.97$ and $0.0312/0.0078 = 4.0$, so the error shrinks like $1/n$. At 256 steps this call is priced within 1p. Small $n$ can over- or undershoot, as $n = 1$ and $n = 4$ show.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A quote for a client",
+      "prose": "A client asks for a 6-month put on a £100 share, struck at £95. Volatility is 25% and $r = 4\\%$. The client may want it American or European. Your pricer is in the editor. The C++ course later asks you to rewrite it and time both.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Input",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Share $S$",
+              "£100"
+            ],
+            [
+              "Strike $K$",
+              "£95"
+            ],
+            [
+              "Rate $r$",
+              "4%"
+            ],
+            [
+              "Volatility $\\sigma$",
+              "25%"
+            ],
+            [
+              "Expiry $T$",
+              "0.5 years"
+            ],
+            [
+              "Steps $n$",
+              "500"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "The client’s put"
+        }
+      },
+      "question": "Complete `quote()` so it returns the European price, the American price and the early-exercise premium.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "budget": 5000,
+        "starter": "def leaves(S, u, d, n):\n    \"\"\"Share prices after n steps, j = 0 to n ups.\"\"\"\n    return [S * u**j * d**(n - j) for j in range(n + 1)]\n\n\ndef step_back(v, q, disc):\n    \"\"\"Node values one step earlier.\"\"\"\n    return [disc * (q * v[j + 1] + (1 - q) * v[j])\n            for j in range(len(v) - 1)]\n\n\ndef price_from_ud(S, K, r_period, u, d, n, kind,\n                  american=False):\n    \"\"\"Price on a tree with factors u, d and a simple\n    rate r_period per step. kind is \"call\" or \"put\".\"\"\"\n    q = (1 + r_period - d) / (u - d)\n    disc = 1 / (1 + r_period)\n\n    def payoff(s):\n        if kind == \"call\":\n            return max(s - K, 0)\n        return max(K - s, 0)\n\n    v = [payoff(s) for s in leaves(S, u, d, n)]\n    for i in range(n - 1, -1, -1):\n        v = step_back(v, q, disc)\n        if american:\n            ex = [payoff(s) for s in leaves(S, u, d, i)]\n            v = [max(h, e) for h, e in zip(v, ex)]\n    return v[0]\n\n\nimport math\n\n\ndef binomial_price(S, K, r, sigma, T, n, kind,\n                   american=False):\n    \"\"\"CRR tree: r continuous per year, T in years.\"\"\"\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    r_period = math.exp(r * dt) - 1\n    return price_from_ud(S, K, r_period, u, d, n, kind,\n                         american)\n\n\ndef quote():\n    \"\"\"[european, american, premium] for the client's\n    6-month put: S = 100, K = 95, r = 4%, sigma = 25%,\n    500 steps. Each rounded to 2 decimal places.\"\"\"\n    euro = ...\n    amer = ...\n    return [round(euro, 2), round(amer, 2),\n            round(amer - euro, 2)]\n",
+        "solution": "def leaves(S, u, d, n):\n    \"\"\"Share prices after n steps, j = 0 to n ups.\"\"\"\n    return [S * u**j * d**(n - j) for j in range(n + 1)]\n\n\ndef step_back(v, q, disc):\n    \"\"\"Node values one step earlier.\"\"\"\n    return [disc * (q * v[j + 1] + (1 - q) * v[j])\n            for j in range(len(v) - 1)]\n\n\ndef price_from_ud(S, K, r_period, u, d, n, kind,\n                  american=False):\n    \"\"\"Price on a tree with factors u, d and a simple\n    rate r_period per step. kind is \"call\" or \"put\".\"\"\"\n    q = (1 + r_period - d) / (u - d)\n    disc = 1 / (1 + r_period)\n\n    def payoff(s):\n        if kind == \"call\":\n            return max(s - K, 0)\n        return max(K - s, 0)\n\n    v = [payoff(s) for s in leaves(S, u, d, n)]\n    for i in range(n - 1, -1, -1):\n        v = step_back(v, q, disc)\n        if american:\n            ex = [payoff(s) for s in leaves(S, u, d, i)]\n            v = [max(h, e) for h, e in zip(v, ex)]\n    return v[0]\n\n\nimport math\n\n\ndef binomial_price(S, K, r, sigma, T, n, kind,\n                   american=False):\n    \"\"\"CRR tree: r continuous per year, T in years.\"\"\"\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    r_period = math.exp(r * dt) - 1\n    return price_from_ud(S, K, r_period, u, d, n, kind,\n                         american)\n\n\ndef quote():\n    \"\"\"[european, american, premium] for the client's\n    6-month put: S = 100, K = 95, r = 4%, sigma = 25%,\n    500 steps. Each rounded to 2 decimal places.\"\"\"\n    euro = binomial_price(100, 95, 0.04, 0.25, 0.5, 500, \"put\")\n    amer = binomial_price(100, 95, 0.04, 0.25, 0.5, 500, \"put\",\n                          american=True)\n    return [round(euro, 2), round(amer, 2),\n            round(amer - euro, 2)]\n",
+        "examples": [
+          {
+            "call": "len(quote())",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "quote()[0]",
+            "expect": "3.91",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote()[1]",
+            "expect": "4.01",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote()[2]",
+            "expect": "0.1",
+            "compare": "isclose"
+          },
+          {
+            "call": "len(quote())",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests: the European price £3.91, the American price £4.01, the premium £0.10 (from the unrounded prices) and the length of the list."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both prices use the same inputs; only `american` changes."
+        },
+        {
+          "rung": "point",
+          "text": "`binomial_price(100, 95, 0.04, 0.25, 0.5, 500, \"put\")` is the European price."
+        },
+        {
+          "rung": "step",
+          "text": "Add `american=True` for the American price."
+        }
+      ],
+      "feedback": {
+        "correct": "£3.91 European, £4.01 American: early exercise adds about 10p.",
+        "generic": "Some tests failed. Check the inputs: $T = 0.5$, $K = 95$, $\\sigma = 0.25$, 500 steps."
+      },
+      "explain": {
+        "text": "The European put is £3.91 and the American £4.01, so the early-exercise right adds about 10p. Black-Scholes gives £3.90 for the European, so 500 steps are within a penny.\n\n```python\neuro = binomial_price(100, 95, 0.04, 0.25, 0.5, 500, \"put\")\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Store a step as a list `v`, where `v[j]` has `j` ups: an $n$-step tree has $n + 1$ leaves.",
+      "Each step back replaces neighbours with their discounted $q$-average; American code then takes a max with exercise.",
+      "Test against hand values: $n = 1$ must give level 1’s £11.90, and prices settle towards Black-Scholes as $n$ grows."
+    ],
+    "formula": {
+      "name": "One step back in code",
+      "tex": "v_j \\leftarrow e^{-r\\Delta t}\\left(q\\,v_{j+1} + (1-q)\\,v_j\\right), \\quad j = 0, \\dots, i",
+      "note": "For an American option, then $v_j \\leftarrow \\max(v_j, \\text{payoff}(S_{i,j}))$."
+    },
+    "trap": "`d**n - j` is not `d**(n - j)`: Python raises no error, so test against hand values."
+  },
+  "quiz": [
+    {
+      "id": "q-leaves",
+      "difficulty": 2,
+      "prose": "A pricer builds a 50-step recombining tree.",
+      "question": "How many leaves must `leaves(S, u, d, 50)` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 51,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Number of leaves",
+        "accept": "51: from 0 to 50 up moves.",
+        "wrong": [
+          {
+            "id": "off-by-one",
+            "value": 50,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "paths",
+            "value": 1125899906842624,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$n + 1 = 51$.",
+        "generic": "Not quite right. Count the possible numbers of up moves.",
+        "byKey": {
+          "off-by-one": "That is `range(50)`, which misses the leaf with 50 ups. Use `range(n + 1)`.",
+          "paths": "That counts paths. Paths with the same number of ups share a leaf."
+        }
+      },
+      "explain": {
+        "text": "A leaf is set by its number of ups, from 0 to 50, so there are 51. `range(n)` would drop the top leaf: the off-by-one bug."
+      }
+    },
+    {
+      "id": "q-disc-once",
+      "difficulty": 2,
+      "prose": "A pricer leaves out the discount in `step_back` and multiplies the result by $e^{-rT}$ at the end.",
+      "question": "When does it give the right price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "For European options, but not for American ones",
+            "correct": true
+          },
+          {
+            "id": "always",
+            "text": "Always",
+            "why": "For American options the max compares undiscounted values with $K - S$, so the early-exercise test goes wrong."
+          },
+          {
+            "id": "never",
+            "text": "Never",
+            "why": "For European options the per-step discounts multiply to $e^{-rT}$, so the result is right."
+          },
+          {
+            "id": "american",
+            "text": "For American options only",
+            "why": "It is the other way round: the max breaks the American case."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The discounts commute with averages, not with a max.",
+        "generic": "Not quite right. Ask where the max sits in American code."
+      },
+      "explain": {
+        "text": "Per-step discounts multiply to $e^{-rT}$, so a European price is unchanged. In American code each node compares with $K - S$ in that node’s money, so the discount must be applied before the comparison."
+      }
+    },
+    {
+      "id": "q-n1",
+      "difficulty": 2,
+      "prose": "You run `price_from_ud(100, 100, 0.05, 1.2, 0.8, 1, \"call\")`.",
+      "question": "What should it return, to 2 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11.9,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Price, in £",
+        "accept": "£11.90: level 1’s one-step call.",
+        "wrong": [
+          {
+            "id": "no-disc",
+            "value": 12.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "crr",
+            "value": 12.16,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.625 \\times 20 / 1.05 = 11.90$.",
+        "generic": "Not quite right. One step: weight the £20 payoff by $q = 0.625$ and discount once.",
+        "byKey": {
+          "no-disc": "You left out the discount: $0.625 \\times 20 = 12.50$.",
+          "crr": "£12.16 is `binomial_price` with $n = 1$, where $u = e^{0.2}$. Here $u = 1.2$."
+        }
+      },
+      "explain": {
+        "text": "With $n = 1$ the loop runs once: $(0.625 \\times 20 + 0.375 \\times 0)/1.05 = 11.90$. That is level 1’s price, a useful first test for any pricer."
+      }
+    },
+    {
+      "id": "q-stepback",
+      "difficulty": 3,
+      "prose": "`step_back([0, 10, 30], 0.5, 1)` runs with $q = 0.5$ and no discount.",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "`[5.0, 20.0]`",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "`[5.0, 20.0, 30.0]`",
+            "why": "Each step back has one entry fewer. The last entry has no up neighbour."
+          },
+          {
+            "id": "mean",
+            "text": "`[13.33]`",
+            "why": "That averages all three. A step back pairs neighbours only."
+          },
+          {
+            "id": "reversed",
+            "text": "`[20.0, 5.0]`",
+            "why": "Entry 0 pairs `v[0]` and `v[1]`: $(0 + 10)/2 = 5$. It stays first."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(0 + 10)/2$ and $(10 + 30)/2$.",
+        "generic": "Not quite right. Average each pair of neighbours."
+      },
+      "explain": {
+        "text": "Entry 0 averages 0 and 10; entry 1 averages 10 and 30. So the result is `[5.0, 20.0]`, one entry shorter."
+      }
+    }
+  ]
+}

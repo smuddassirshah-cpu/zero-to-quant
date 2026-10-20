@@ -122,7 +122,8 @@
       const unitPx = sx(1) - sx(0), lw = K.tw(String(Math.round(Math.max(Math.abs(range[0]), Math.abs(range[1]))))) + 12;
       if (F.support && !F.support.every(Number.isInteger)) {
         const sp = supportIn(F, range[0], range[1]), gaps = sp.slice(1).map((v, i) => sx(v) - sx(sp[i]));
-        if (sp.length && (!gaps.length || Math.min(...gaps) >= Math.max(...sp.map((v) => K.tw(K.fmt(v, 3)))) + 8)) return { ticks: sp, step: F.gap || 1 };
+        const dp = Math.max(0, ...sp.map((v) => (String(+v.toFixed(6)).split('.')[1] || '').length));
+        if (sp.length && (!gaps.length || Math.min(...gaps) >= Math.max(...sp.map((v) => K.tw(K.fmt(v, 3)))) + 8)) return { ticks: sp, step: 10 ** -dp };
         return null;
       }
       const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
@@ -232,7 +233,14 @@
         /* Mean, median and sd markers */
         const showMean = view.showMean ?? params.showMean, showSd = view.showSd ?? params.showSd, showMedian = view.showMedian ?? params.showMedian;
         let markTop = top + 4;
-        const vmark = (id, xv, tex) => { const o = K.obj(id, '', 'ink'), x = sx(xv); o.append(K.washPath(`M${x},${base}L${x},${top + 14}`), svg('line', { x1: x, x2: x, y1: base, y2: top + 14, class: 'cvb-ln thin cvb-dash' })); o.append(K.lab(x + 4, markTop, tex, { anchor: x > (x0 + x1) / 2 + 120 ? 'end' : 'start', halo: true })); markTop += 22; over.append(o); };
+        let lastMark = null;
+        const vmark = (id, xv, tex) => {
+          const o = K.obj(id, '', 'ink'), x = sx(xv); o.append(K.washPath(`M${x},${base}L${x},${top + 14}`), svg('line', { x1: x, x2: x, y1: base, y2: top + 14, class: 'cvb-ln thin cvb-dash' }));
+          /* two close markers put their labels on opposite sides of their lines */
+          const right = lastMark && Math.abs(x - lastMark.x) < 110 ? lastMark.anchor === 'end' : x <= (x0 + x1) / 2 + 120;
+          const anchor = right ? 'start' : 'end', y = lastMark && Math.abs(x - lastMark.x) < 110 && lastMark.anchor !== anchor ? lastMark.y : markTop;
+          o.append(K.lab(x + (right ? 4 : -4), y, tex, { anchor, halo: true })); if (y === markTop) markTop += 22; lastMark = { x, anchor, y }; over.append(o);
+        };
         if (!cdfMode && showMean && Number.isFinite(F.mean) && F.mean >= range[0] && F.mean <= range[1]) vmark('mean', F.mean, `$\\mu = ${K.fmt(F.mean, 3)}$`);
         if (!cdfMode && showMedian && Number.isFinite(F.median) && F.median >= range[0] && F.median <= range[1]) vmark('median', F.median, `$\\text{median} = ${K.fmt(F.median, 3)}$`);
         if (!cdfMode && showSd && Number.isFinite(F.sd) && Number.isFinite(F.mean)) {
@@ -241,18 +249,9 @@
           o.append(K.lab(b + 6, y, `$\\pm\\sigma = ${K.fmt(F.sd, 3)}$`, { anchor: 'start', halo: true }));
           over.append(o);
         }
-        /* item 320: observed-value marker lines: observed: 2.1, { x, label } or a list */
-        [].concat(view.observed ?? []).forEach((ob, j) => {
-          const xv = num(typeof ob === 'object' && ob ? ob.x : ob, P); if (xv == null || xv < range[0] || xv > range[1]) return;
-          const o = K.obj((ob && ob.id) || (j ? 'observed' + j : 'observed'), 'cvb-observed', (ob && ob.colour) || 'ink'), x = sx(xv);
-          o.append(K.washPath(`M${x},${base}L${x},${top}`), svg('line', { x1: x, x2: x, y1: base, y2: top, class: 'cvb-ln' }));
-          const lt = ob && typeof ob === 'object' && ob.label != null ? String(ob.label).replace('{x}', K.fmt(xv, 3)) : `observed ${K.fmt(xv, 3).replace('-', '−')}`;
-          o.append(K.lab(x + (x > x1 - 110 ? -6 : 6), top + 8 + 22 * j, lt, { anchor: x > x1 - 110 ? 'end' : 'start', halo: true, cls: 'cvb-strong' }));
-          over.append(o);
-        });
-
         /* Shaded probability label: above the marks under it, else in a free top corner, on a backing pill. Several
            regions are summed: P(X ≤ a) + P(X ≥ b) = v */
+        let pillBox = null;
         if (hasShade && shadeMid && view.showProb !== false) {
           const v = Math.min(1, mainShades.reduce((t, q) => t + prob(F, q.from, q.to), 0));
           const text = view.probLabel || `$${mainShades.map((q) => lhsTex(F, q.from, q.to)).join(' + ')} = ${K.fmt(v, params.dp ?? 4)}$`;
@@ -270,10 +269,21 @@
           let lx = cands[1], ly = top + 12, found = false;
           for (const c of cands) { const yy = marksTop(c - w / 2, c + w / 2) - 18; if (yy >= reserved) { lx = c; ly = Math.min(yy, base - 40); found = true; break; } }
           if (!found) { ly = top + 12; lx = Math.abs(cands[1] - (showMean ? sx(F.mean) : -1e9)) > Math.abs(cands[2] - (showMean ? sx(F.mean) : -1e9)) ? cands[1] : cands[2]; }
-          const o = K.obj('prob', 'cvb-prob');
+          const o = K.obj('prob', 'cvb-prob'); pillBox = [lx - w / 2 - 6, lx + w / 2 + 6, ly + 12];
           o.append(svg('rect', { x: lx - w / 2 - 6, y: ly - 12, width: w + 12, height: 24, rx: 12, class: 'cvb-pill' }), K.lab(lx, ly, text, { w: w + 20, cls: 'cvb-strong' }));
           over.append(o);
         }
+
+        /* item 320: observed-value marker lines: observed: 2.1, { x, label } or a list */
+        [].concat(view.observed ?? []).forEach((ob, j) => {
+          const xv = num(typeof ob === 'object' && ob ? ob.x : ob, P); if (xv == null || xv < range[0] || xv > range[1]) return;
+          const o = K.obj((ob && ob.id) || (j ? 'observed' + j : 'observed'), 'cvb-observed', (ob && ob.colour) || 'ink'), x = sx(xv);
+          o.append(K.washPath(`M${x},${base}L${x},${top}`), svg('line', { x1: x, x2: x, y1: base, y2: top, class: 'cvb-ln' }));
+          const lt = ob && typeof ob === 'object' && ob.label != null ? String(ob.label).replace('{x}', K.fmt(xv, 3)) : `observed ${K.fmt(xv, 3).replace('-', '−')}`;
+          const lyO = pillBox && x > pillBox[0] - 120 && x < pillBox[1] + 120 ? pillBox[2] + 14 + 22 * j : top + 8 + 22 * j;
+          o.append(K.lab(x + (x > x1 - 110 ? -6 : 6), lyO, lt, { anchor: x > x1 - 110 ? 'end' : 'start', halo: true, cls: 'cvb-strong' }));
+          over.insertBefore(o, over.firstChild); // under the probability pill
+        });
 
         /* Drag handles on the first region's bounds: in drag mode, or (item 307) with drag: true on an explore screen */
         const sh0 = mainShades[0];

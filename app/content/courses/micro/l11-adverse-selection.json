@@ -1,0 +1,1503 @@
+{
+  "id": "l11-adverse-selection",
+  "course": "micro",
+  "title": "Trading against someone who knows more",
+  "minutes": 14,
+  "objectives": [
+    "Explain adverse selection and why it widens spreads.",
+    "Update the fair value after a trade with Bayes' rule",
+    "Derive the zero-profit half-spread $s = \\alpha\\delta$"
+  ],
+  "skills": [
+    "ms-mm",
+    "ms-costs"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You quote 498p bid and 502p ask around a fair value of 500p. A trader buys 100 shares at your 502p. Tomorrow results put the value at 510p, and this trader already knew.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              4.98,
+              100
+            ]
+          ],
+          "asks": [
+            [
+              5.02,
+              100
+            ]
+          ],
+          "currency": "£",
+          "dp": 2,
+          "bidLabel": "You buy",
+          "askLabel": "You sell"
+        },
+        "state": {
+          "highlight": [
+            "ask0"
+          ]
+        }
+      },
+      "question": "Measured at the true value of 510p, what did the sale make you, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -8.0,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "£",
+        "label": "Profit in pounds (negative for a loss)",
+        "accept": "−£8.00, a loss",
+        "wrong": [
+          {
+            "id": "spread",
+            "value": 2.0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "loss-sign",
+            "value": 8.0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "per-share",
+            "value": -0.08,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You sold at 502p something worth 510p."
+        },
+        {
+          "rung": "point",
+          "text": "Each share sold 8p below its true value.",
+          "highlight": [
+            "ask0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(502 - 510) \\times 100 = -800$p."
+        }
+      ],
+      "feedback": {
+        "correct": "You sold at 502p a share worth 510p: −8p on each of 100 shares.",
+        "generic": "Not quite right. Compare your sale price with the true value, share by share.",
+        "byKey": {
+          "spread": "You measured against your own 500p estimate. The buyer knew the value was 510p, so the 2p edge was never there.",
+          "loss-sign": "The size is right, but you sold below the true value. That is a loss: enter −8.",
+          "per-share": "That is the loss on one share, in pounds. The trade was 100 shares."
+        }
+      },
+      "explain": {
+        "text": "The buyer paid 502p for shares worth 510p, so you lost 8p a share, £8.00 in all. Your 2p half-spread is only an edge against traders who know no more than you. This trader knew more."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Now many traders. A share $\\alpha$ of them know the value is 510p or 490p, equally likely, and trade only the right way. The rest buy or sell at random. Slide $\\alpha$ and your half-spread.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            12
+          ],
+          "y": [
+            -10,
+            12
+          ],
+          "xStep": 1,
+          "yStep": 2,
+          "grid": true,
+          "height": 300,
+          "xLabel": "Half-spread $s$ (pence)",
+          "yLabel": "Average profit per buy (pence a share)",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x - a*10",
+              "label": "profit per buy",
+              "labelAt": 9
+            }
+          ],
+          "params": {
+            "a": 0.2
+          },
+          "hlines": [
+            {
+              "id": "zero",
+              "y": 0,
+              "label": "break even"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 1,
+              "y": -1,
+              "tap": false
+            }
+          ]
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 1,
+            "step": 0.1,
+            "start": 0.2,
+            "label": "Share informed $\\alpha$",
+            "decimals": 1
+          },
+          {
+            "bind": "points.P.x",
+            "min": 0,
+            "max": 12,
+            "step": 1,
+            "start": 1,
+            "label": "Half-spread $s$ (pence)"
+          }
+        ],
+        "derive": {
+          "P.y": "P.x - a*10",
+          "caption": "With $\\alpha$ = {{fixed(a, 1)}} and $s$ = {{P.x}}p, an average buy earns you {{fixed(P.x - a*10, 1)}}p a share."
+        }
+      },
+      "question": "With one trader in five informed ($\\alpha = 0.2$), which half-spread breaks even?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "s0",
+            "text": "0p",
+            "why": "At 0p you lose 2p a share on every buy: the informed take 10p from you one time in five."
+          },
+          {
+            "id": "s2",
+            "text": "2p",
+            "correct": true
+          },
+          {
+            "id": "s5",
+            "text": "5p",
+            "why": "At 5p an average buy earns 3p a share. That is above break even."
+          },
+          {
+            "id": "s10",
+            "text": "10p",
+            "why": "10p covers losing to every trader. Only one in five is informed."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $\\alpha$ to 0.2, then slide $s$ until the caption reads 0.0p."
+        }
+      ],
+      "feedback": {
+        "correct": "At 2p the informed losses and the uninformed gains cancel.",
+        "generic": "Not quite right. Keep $\\alpha = 0.2$ and find where the point crosses break even."
+      },
+      "explain": {
+        "text": "One buyer in five takes 10p from you; four in five give you $s$ on average. At $s = 2$p: $0.2 \\times (2 - 10) + 0.8 \\times 2 = 0$. Slide $\\alpha$ up and the break-even spread moves right.",
+        "canvas": {
+          "params": {
+            "a": 0.2
+          },
+          "points": {
+            "P": {
+              "x": 2,
+              "y": 0
+            }
+          },
+          "highlight": [
+            "P"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Losing to traders who know more is **adverse selection**. The tree has every case for one trader, with $\\alpha = \\tfrac15$. Informed traders buy at 510p and sell at 490p; uninformed ones toss a coin.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Value",
+              "branches": [
+                {
+                  "id": "h",
+                  "label": "510p",
+                  "p": "1/2"
+                },
+                {
+                  "id": "l",
+                  "label": "490p",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Trader",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Informed",
+                  "p": "1/5"
+                },
+                {
+                  "id": "u",
+                  "label": "Uninformed",
+                  "p": "4/5"
+                }
+              ]
+            },
+            {
+              "label": "Trade",
+              "branches": [
+                {
+                  "id": "b",
+                  "label": "Buy",
+                  "p": {
+                    "h-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                },
+                {
+                  "id": "s",
+                  "label": "Sell",
+                  "p": {
+                    "l-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "h-i-b": "1/10",
+            "h-u-b": "1/5",
+            "h-u-s": "1/5",
+            "l-i-s": "1/10",
+            "l-u-b": "1/5",
+            "l-u-s": "1/5"
+          }
+        },
+        "state": {}
+      },
+      "question": "Tap every path that ends in a buy.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "h-i-b",
+          "h-u-b",
+          "l-u-b"
+        ],
+        "countWord": "paths",
+        "wrong": [
+          {
+            "id": "informed-only",
+            "set": [
+              "h-i-b"
+            ]
+          },
+          {
+            "id": "high-only",
+            "set": [
+              "h-i-b",
+              "h-u-b"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "There are six paths. Look at the last branch of each."
+        },
+        {
+          "rung": "point",
+          "text": "Informed traders buy only when the value is 510p.",
+          "highlight": [
+            "h-i"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two uninformed paths end in a buy as well, one under each value."
+        }
+      ],
+      "feedback": {
+        "correct": "Three paths end in a buy: one informed, two uninformed.",
+        "generic": "Not quite right. Every path whose last branch says Buy counts.",
+        "byKey": {
+          "informed-only": "You found the informed buyer. Uninformed traders buy half the time too, under either value.",
+          "high-only": "You kept only the 510p paths. Uninformed traders also buy when the value is 490p.",
+          "h-i-s": "That path does not exist: an informed trader never sells at 510p.",
+          "h-u-s": "That uninformed trader sells.",
+          "l-i-s": "That informed trader sells, because the value is 490p.",
+          "l-u-s": "That uninformed trader sells."
+        }
+      },
+      "explain": {
+        "text": "The buy paths have chances $\\tfrac1{10}$, $\\tfrac15$ and $\\tfrac15$, which add to $\\tfrac12$. One of them is informed: chance $\\tfrac1{10}$, or one buy in five. That is the share of buyers who know more than you.",
+        "canvas": {
+          "highlight": [
+            "h-i-b",
+            "h-u-b",
+            "l-u-b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A buy has just arrived. You do not know who sent it. Use the tree to update your view of the value.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Value",
+              "branches": [
+                {
+                  "id": "h",
+                  "label": "510p",
+                  "p": "1/2"
+                },
+                {
+                  "id": "l",
+                  "label": "490p",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Trader",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Informed",
+                  "p": "1/5"
+                },
+                {
+                  "id": "u",
+                  "label": "Uninformed",
+                  "p": "4/5"
+                }
+              ]
+            },
+            {
+              "label": "Trade",
+              "branches": [
+                {
+                  "id": "b",
+                  "label": "Buy",
+                  "p": {
+                    "h-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                },
+                {
+                  "id": "s",
+                  "label": "Sell",
+                  "p": {
+                    "l-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "h-i-b": "1/10",
+            "h-u-b": "1/5",
+            "h-u-s": "1/5",
+            "l-i-s": "1/10",
+            "l-u-b": "1/5",
+            "l-u-s": "1/5"
+          }
+        },
+        "state": {
+          "shade": [
+            "h-i-b",
+            "h-u-b",
+            "l-u-b"
+          ]
+        }
+      },
+      "question": "What is $P(\\text{value } 510\\text{p} \\mid \\text{buy})$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Chance the value is 510p given a buy",
+        "placeholder": "fraction or decimal",
+        "accept": "0.6, or $\\tfrac35$",
+        "wrong": [
+          {
+            "id": "prior",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "alpha",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "joint",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which buy paths sit under 510p?"
+        },
+        {
+          "rung": "point",
+          "text": "Under 510p: $\\tfrac1{10} + \\tfrac15 = \\tfrac3{10}$. All buys: $\\tfrac12$.",
+          "highlight": [
+            "h-i-b",
+            "h-u-b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide: $\\tfrac{3/10}{1/2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{3/10}{1/2} = 0.6$.",
+        "generic": "Not quite right. Keep only the buy paths, then find the share of them under 510p.",
+        "byKey": {
+          "prior": "That is the chance before the buy. A buy is more likely when the value is high, so it raises the chance.",
+          "alpha": "That is the share of informed traders. The question asks about the value.",
+          "joint": "That is $P(510\\text{p and buy})$. Divide by $P(\\text{buy}) = \\tfrac12$."
+        }
+      },
+      "explain": {
+        "text": "Bayes, as in conditional probability: keep the buy paths, $\\tfrac12$ in all, and $\\tfrac3{10}$ of them sit under 510p. So a buy lifts the chance of 510p from 0.5 to 0.6. The order itself is information.",
+        "canvas": {
+          "highlight": [
+            "h-i-b",
+            "h-u-b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "After a buy the value is 510p with chance 0.6 and 490p with chance 0.4. A maker who sells at this expected value makes nothing on average.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Value",
+              "branches": [
+                {
+                  "id": "h",
+                  "label": "510p",
+                  "p": "1/2"
+                },
+                {
+                  "id": "l",
+                  "label": "490p",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Trader",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Informed",
+                  "p": "1/5"
+                },
+                {
+                  "id": "u",
+                  "label": "Uninformed",
+                  "p": "4/5"
+                }
+              ]
+            },
+            {
+              "label": "Trade",
+              "branches": [
+                {
+                  "id": "b",
+                  "label": "Buy",
+                  "p": {
+                    "h-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                },
+                {
+                  "id": "s",
+                  "label": "Sell",
+                  "p": {
+                    "l-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "h-i-b": "1/10",
+            "h-u-b": "1/5",
+            "h-u-s": "1/5",
+            "l-i-s": "1/10",
+            "l-u-b": "1/5",
+            "l-u-s": "1/5"
+          }
+        },
+        "state": {
+          "shade": [
+            "h-i-b",
+            "h-u-b",
+            "l-u-b"
+          ]
+        }
+      },
+      "question": "What is $E[\\text{value} \\mid \\text{buy}]$, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 502,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "p",
+        "label": "Expected value given a buy, in pence",
+        "accept": "502p",
+        "wrong": [
+          {
+            "id": "prior",
+            "value": 500,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "high",
+            "value": 510,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "swapped",
+            "value": 498,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight each value by its updated chance."
+        },
+        {
+          "rung": "point",
+          "text": "$0.6 \\times 510 + 0.4 \\times 490$."
+        },
+        {
+          "rung": "step",
+          "text": "$306 + 196$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.6 \\times 510 + 0.4 \\times 490 = 502$p.",
+        "generic": "Not quite right. Use the chances after the buy, 0.6 and 0.4.",
+        "byKey": {
+          "prior": "That uses the chances before the buy. After a buy, 510p is more likely.",
+          "high": "You assumed every buyer is informed. Only one buyer in five is.",
+          "swapped": "You swapped the weights. 0.6 goes with 510p."
+        }
+      },
+      "explain": {
+        "text": "$E[V \\mid \\text{buy}] = 502$p: exactly your ask. So a 2p half-spread is what the buy is worth, and no more. After the trade you also move your fair value to 502p and quote around it.",
+        "canvas": {
+          "highlight": [
+            "h-i-b",
+            "h-u-b",
+            "l-u-b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A colleague says each 100-share buy at your 502p ask earns £2.00, because 502p is 2p above 500p. Here $\\alpha = \\tfrac15$ and the value is 510p or 490p.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Value",
+              "branches": [
+                {
+                  "id": "h",
+                  "label": "510p",
+                  "p": "1/2"
+                },
+                {
+                  "id": "l",
+                  "label": "490p",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Trader",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Informed",
+                  "p": "1/5"
+                },
+                {
+                  "id": "u",
+                  "label": "Uninformed",
+                  "p": "4/5"
+                }
+              ]
+            },
+            {
+              "label": "Trade",
+              "branches": [
+                {
+                  "id": "b",
+                  "label": "Buy",
+                  "p": {
+                    "h-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                },
+                {
+                  "id": "s",
+                  "label": "Sell",
+                  "p": {
+                    "l-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "h-i-b": "1/10",
+            "h-u-b": "1/5",
+            "h-u-s": "1/5",
+            "l-i-s": "1/10",
+            "l-u-b": "1/5",
+            "l-u-s": "1/5"
+          }
+        },
+        "state": {
+          "shade": [
+            "h-i-b",
+            "h-u-b",
+            "l-u-b"
+          ]
+        }
+      },
+      "question": "What does a 100-share buy at 502p earn you on average?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "£0.00",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "£2.00",
+            "why": "You treated the spread as pure profit. One buyer in five is informed and takes 8p a share from you, which cancels the 2p from the others."
+          },
+          {
+            "id": "minus8",
+            "text": "−£8.00",
+            "why": "You assumed every buyer is informed. Four in five are not, and on those you make 2p a share on average."
+          },
+          {
+            "id": "four",
+            "text": "£4.00",
+            "why": "You counted the full 4p spread on a single trade. One trade earns at most the half-spread."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split the buyers by type. What share are informed?"
+        },
+        {
+          "rung": "point",
+          "text": "Informed buyers: one in five, and you lose 8p a share to each.",
+          "highlight": [
+            "h-i-b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.2 \\times (-8) + 0.8 \\times 2$ pence a share."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.2 \\times (-8) + 0.8 \\times 2 = 0$: the spread just pays for the informed.",
+        "generic": "Not quite right. Weight the informed and the uninformed buyers by their shares.",
+        "byKey": {
+          "two": "You treated the 2p as pure profit. The informed buyers take 8p a share, one buy in five, and that cancels it."
+        }
+      },
+      "explain": {
+        "text": "The 2p you earn from uninformed buyers pays for the 8p you lose to informed ones. In this model the whole spread is a fee for that risk, not a profit. That is why we called the £100,000 day earlier \"before adverse selection\".",
+        "canvas": {
+          "highlight": [
+            "h-i-b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Now suppose every trader is informed, $\\alpha = 1$. The line shows your average profit per buy at each half-spread.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            12
+          ],
+          "y": [
+            -10,
+            12
+          ],
+          "xStep": 1,
+          "yStep": 2,
+          "grid": true,
+          "height": 300,
+          "xLabel": "Half-spread $s$ (pence)",
+          "yLabel": "Average profit per buy (pence a share)",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x - a*10",
+              "label": "profit per buy",
+              "labelAt": 9
+            }
+          ],
+          "params": {
+            "a": 0.2
+          },
+          "hlines": [
+            {
+              "id": "zero",
+              "y": 0,
+              "label": "break even"
+            }
+          ]
+        },
+        "state": {
+          "params": {
+            "a": 1
+          },
+          "points": [
+            {
+              "id": "P",
+              "x": 10,
+              "y": 0,
+              "label": "$s = 10$",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "What happens to trading?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "The break-even quotes are 490p and 510p, and at those prices no one gains from trading, so no one trades",
+            "correct": true
+          },
+          {
+            "id": "normal",
+            "text": "Trading carries on with a 2p half-spread",
+            "why": "You kept $\\alpha = 0.2$. With everyone informed, a 2p half-spread loses 8p a share on every trade."
+          },
+          {
+            "id": "zero",
+            "text": "The spread falls to zero",
+            "why": "You swapped the edge cases. A spread of zero comes from $\\alpha = 0$, when nobody knows more than you."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At $\\alpha = 1$, which half-spread breaks even?"
+        },
+        {
+          "rung": "point",
+          "text": "The line crosses zero at $s = 10$p: ask 510p, bid 490p.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Would an informed trader pay 510p for a share worth 510p?"
+        }
+      ],
+      "feedback": {
+        "correct": "At $\\alpha = 1$ the market shuts: break-even quotes leave nothing to gain.",
+        "generic": "Not quite right. Find where the line crosses zero, then ask who would trade there.",
+        "byKey": {
+          "zero": "You swapped the edge cases. A zero spread comes from $\\alpha = 0$; here everyone knows more than you."
+        }
+      },
+      "explain": {
+        "text": "To break even you must quote 490p and 510p. An informed buyer only pays 510p when the value is 510p, so they gain nothing and do not bother. That is the edge case: with only informed traders, the market breaks down.",
+        "canvas": {
+          "highlight": [
+            "P"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You set each quote to the expected value given the trade: ask $E[V \\mid \\text{buy}]$, bid $E[V \\mid \\text{sell}]$. With a share $\\alpha$ informed about a move of $\\pm\\delta$: $$\\text{ask} = V + \\alpha\\delta, \\quad \\text{bid} = V - \\alpha\\delta, \\quad s = \\alpha\\delta$$ This is the Glosten-Milgrom idea.",
+      "question": "Before results day, informed traders know of a move of $\\delta = 30$p, not 10p. With $\\alpha = 0.2$, what is the zero-profit half-spread, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "p",
+        "label": "Half-spread in pence",
+        "accept": "6p",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "delta",
+            "value": 30,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $s = \\alpha\\delta$ with the new $\\delta$."
+        },
+        {
+          "rung": "step",
+          "text": "$0.2 \\times 30 = 6$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.2 \\times 30 = 6$p: three times as wide.",
+        "generic": "Not quite right. Multiply $\\alpha$ by the new $\\delta$.",
+        "byKey": {
+          "old": "That uses the old $\\delta = 10$p. Before results, the informed know of a bigger move.",
+          "delta": "That is $\\delta$ itself, the spread if everyone were informed. Only one in five is."
+        }
+      },
+      "explain": {
+        "text": "Spreads widen before announcements because $\\delta$, what the informed know, grows. They are wide in thin, small shares because $\\alpha$, the informed share of the flow, is larger there."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Now derive $s = \\alpha\\delta$ yourself. You sell to every buyer at $V + s$. The value is $V + \\delta$ or $V - \\delta$, equally likely.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Value",
+              "branches": [
+                {
+                  "id": "h",
+                  "label": "510p",
+                  "p": "1/2"
+                },
+                {
+                  "id": "l",
+                  "label": "490p",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Trader",
+              "branches": [
+                {
+                  "id": "i",
+                  "label": "Informed",
+                  "p": "1/5"
+                },
+                {
+                  "id": "u",
+                  "label": "Uninformed",
+                  "p": "4/5"
+                }
+              ]
+            },
+            {
+              "label": "Trade",
+              "branches": [
+                {
+                  "id": "b",
+                  "label": "Buy",
+                  "p": {
+                    "h-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                },
+                {
+                  "id": "s",
+                  "label": "Sell",
+                  "p": {
+                    "l-i": "1",
+                    "h-u": "1/2",
+                    "l-u": "1/2"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "h-i-b": "1/10",
+            "h-u-b": "1/5",
+            "h-u-s": "1/5",
+            "l-i-s": "1/10",
+            "l-u-b": "1/5",
+            "l-u-s": "1/5"
+          }
+        },
+        "state": {
+          "shade": [
+            "h-i-b",
+            "h-u-b",
+            "l-u-b"
+          ]
+        }
+      },
+      "question": "Put the lines in order, each with its reason.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d1",
+            "text": "$P(\\text{informed} \\mid \\text{buy}) = \\dfrac{\\alpha \\cdot \\tfrac12}{\\tfrac12} = \\alpha$: informed traders buy half the time, and so do all traders"
+          },
+          {
+            "id": "d2",
+            "text": "An informed buyer only buys when the value is $V + \\delta$, so selling at $V + s$ makes $s - \\delta$"
+          },
+          {
+            "id": "d3",
+            "text": "An uninformed buy says nothing about the value, so on average it makes $s$"
+          },
+          {
+            "id": "d4",
+            "text": "$E[\\text{profit} \\mid \\text{buy}] = \\alpha(s - \\delta) + (1 - \\alpha)s = s - \\alpha\\delta$: weight each type by its share of buyers"
+          },
+          {
+            "id": "d5",
+            "text": "Zero expected profit needs $s - \\alpha\\delta = 0$, so $s = \\alpha\\delta$"
+          },
+          {
+            "id": "d6",
+            "text": "With $\\alpha = 0.2$ and $\\delta = 10$p, $s = 2$p"
+          }
+        ],
+        "answer": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6"
+        ],
+        "same": [
+          [
+            "d1",
+            "d2",
+            "d3"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First establish who the buyers are and what each type makes."
+        },
+        {
+          "rung": "point",
+          "text": "The weighted average needs the share of informed buyers and the profit on each type.",
+          "highlight": [
+            "h-i-b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Shares and profits, then the average, then set it to zero, then the numbers."
+        }
+      ],
+      "feedback": {
+        "correct": "Who buys, what each buyer costs you, the average, then zero profit.",
+        "generic": "Not quite right. The average in the fourth line needs the three facts before it.",
+        "byKey": {
+          "d4": "The average needs the share of informed buyers and the profit on each type first.",
+          "d5": "Setting the profit to zero needs the formula $s - \\alpha\\delta$ first."
+        }
+      },
+      "explain": {
+        "text": "The first three lines are separate facts, in any order. The fourth averages them, and the fifth sets the average to zero. The bid works the same way with sellers, giving $V - \\alpha\\delta$.",
+        "canvas": {
+          "highlight": [
+            "h-i-b",
+            "h-u-b",
+            "l-u-b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "At 14:02 a 50,000-share buy order sweeps the best ask on five venues within one millisecond. You still show 100 shares at 502p on a sixth venue. Flow like this is called **toxic**: it is likely to be informed.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              4.98,
+              100
+            ],
+            [
+              4.97,
+              800
+            ]
+          ],
+          "asks": [
+            [
+              5.02,
+              100
+            ],
+            [
+              5.03,
+              600
+            ]
+          ],
+          "currency": "£",
+          "dp": 2,
+          "bidLabel": "Bid size",
+          "askLabel": "Ask size"
+        },
+        "state": {
+          "highlight": [
+            "ask0"
+          ]
+        }
+      },
+      "question": "What should you do with your quotes?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "widen",
+            "text": "Cancel and quote higher and wider, because $\\alpha$ and your fair value have both just risen",
+            "correct": true
+          },
+          {
+            "id": "keep",
+            "text": "Keep 502p: it is the best ask now, so you will be filled",
+            "why": "Being filled now is the problem. You would sell to the one buyer most likely to know more: the winner's curse."
+          },
+          {
+            "id": "lower",
+            "text": "Lower the ask to sell more while buyers are keen",
+            "why": "You read the buying as demand to serve. It is a signal the value is higher; a lower ask loses more."
+          },
+          {
+            "id": "tighter",
+            "text": "Tighten both quotes to win more of the flow",
+            "why": "Tighter quotes help against noise. Against informed flow, a narrower spread only loses faster."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a buy across five venues at once tell you about $\\alpha$?"
+        },
+        {
+          "rung": "point",
+          "text": "Each buy raises your estimate of the value, and a sweep is many buys at once.",
+          "highlight": [
+            "ask0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Raise your fair value and widen: $s = \\alpha\\delta$ with a bigger $\\alpha$."
+        }
+      ],
+      "feedback": {
+        "correct": "A sweep is strong evidence of informed buying: move up and widen.",
+        "generic": "Not quite right. Ask what the sweep says about who is trading.",
+        "byKey": {
+          "keep": "A fill now means you were the cheapest seller to someone who probably knows more. That is the winner's curse."
+        }
+      },
+      "explain": {
+        "text": "A fill is bad news when it comes from informed flow: you win the trade because you were wrong. Makers watch for sweeps and pull or move their quotes within microseconds. Waiting does not help; the informed simply trade when you do quote.",
+        "canvas": {
+          "highlight": [
+            "ask0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Simulating the flow",
+      "prose": "Test the model on 100,000 trades. Selling at $V + s$ a share worth $V + d$ makes $s - d$; buying at $V - s$ makes $d + s$. Keep the starter's random draws in their order, so the seeds match.",
+      "question": "Replace each `...` with the profit on that trade. With $\\alpha = 0.2$, $\\delta = 10$, $s = 3$, what should the average approach?",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\ndef maker_pnl(n, alpha, delta, s, seed):\n    \"\"\"Average profit per trade, in pence a share.\n    You buy at V - s and sell at V + s.\n    The value is V + delta or V - delta.\"\"\"\n    rng = random.Random(seed)\n    total = 0.0\n    for _ in range(n):\n        high = rng.random() < 0.5      # value is V + delta\n        informed = rng.random() < alpha\n        if informed:\n            buys = high                # they know the value\n        else:\n            buys = rng.random() < 0.5  # noise: a coin flip\n        d = delta if high else -delta  # value minus V\n        if buys:\n            total += ...               # you sold at V + s\n        else:\n            total += ...               # you bought at V - s\n    return total / n\n",
+        "solution": "import random\n\ndef maker_pnl(n, alpha, delta, s, seed):\n    \"\"\"Average profit per trade, in pence a share.\n    You buy at V - s and sell at V + s.\n    The value is V + delta or V - delta.\"\"\"\n    rng = random.Random(seed)\n    total = 0.0\n    for _ in range(n):\n        high = rng.random() < 0.5      # value is V + delta\n        informed = rng.random() < alpha\n        if informed:\n            buys = high                # they know the value\n        else:\n            buys = rng.random() < 0.5  # noise: a coin flip\n        d = delta if high else -delta  # value minus V\n        if buys:\n            total += s - d             # you sold at V + s\n        else:\n            total += s + d             # you bought at V - s\n    return total / n\n",
+        "examples": [
+          {
+            "call": "maker_pnl(10, 0.2, 10, 3, 42)",
+            "expect": "5.0",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "maker_pnl(100000, 0.2, 10, 3, 1)",
+            "expect": "0.9988",
+            "compare": "isclose"
+          },
+          {
+            "call": "maker_pnl(100000, 0.0, 10, 2, 3)",
+            "expect": "1.9884",
+            "compare": "isclose"
+          },
+          {
+            "call": "maker_pnl(100000, 0.5, 6, 2, 11)",
+            "expect": "-1.00012",
+            "compare": "isclose"
+          },
+          {
+            "call": "maker_pnl(100000, 0.2, 10, 2, 7)",
+            "expect": "0.0616",
+            "compare": "isclose"
+          },
+          {
+            "call": "maker_pnl(100000, 0.1, 20, 4, 2)",
+            "expect": "1.9988",
+            "compare": "isclose"
+          },
+          {
+            "call": "maker_pnl(1000, 1, 10, 3, 5)",
+            "expect": "-7.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "maker_pnl(500, 0.3, 0, 2, 9)",
+            "expect": "2.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "maker_pnl(10, 0.2, 10, 3, 42)",
+            "expect": "5.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, each a seeded run compared with math.isclose(actual, expected, rel_tol=1e-9). Two are exact without luck: every trader informed gives s − δ, and δ = 0 gives s."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`d` is the true value minus $V$. Your sale price minus $V$ is $s$."
+        },
+        {
+          "rung": "point",
+          "text": "Selling: price minus value is $(V + s) - (V + d) = s - d$."
+        },
+        {
+          "rung": "step",
+          "text": "Buying: value minus price is $(V + d) - (V - s) = s + d$."
+        }
+      ],
+      "feedback": {
+        "correct": "The average approaches $s - \\alpha\\delta = 3 - 2 = 1$p a trade.",
+        "generic": "Some tests failed. A sale makes `s - d` and a purchase makes `s + d`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that both `...` are replaced."
+        }
+      },
+      "explain": {
+        "text": "Seed 1 gives 0.9988p a trade; the long-run value is exactly $s - \\alpha\\delta = 1$p. Informed traders always cost you $\\delta - s$; noise traders pay you $s$ on average. Set $s = 2$ and the edge is exactly zero.\n\n```python\nif buys:\n    total += s - d\nelse:\n    total += s + d\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Informed traders trade only when you are wrong, so on average you lose to them and win from noise traders.",
+      "Each trade is evidence: a buy raises $P(\\text{high})$ and your fair value, a sell lowers them.",
+      "The zero-profit half-spread is $s = \\alpha\\delta$: zero when $\\alpha = 0$, and at $\\alpha = 1$ no one trades."
+    ],
+    "formula": {
+      "name": "Zero-profit quotes",
+      "tex": "\\text{ask} = E[V \\mid \\text{buy}] = V + \\alpha\\delta, \\qquad s = \\alpha\\delta",
+      "note": "Spreads widen when $\\delta$ grows (announcements) or $\\alpha$ grows (thin shares)."
+    },
+    "trap": "The spread is not pure profit: it pays for losses to the informed. And waiting does not avoid them; they trade whenever you quote."
+  },
+  "quiz": [
+    {
+      "id": "q-alpha0",
+      "difficulty": 2,
+      "prose": "In the same model, suppose no trader is informed: $\\alpha = 0$, with $\\delta = 10$p.",
+      "question": "What is the zero-profit half-spread, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "p",
+        "label": "Half-spread in pence",
+        "accept": "0p",
+        "wrong": [
+          {
+            "id": "delta",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$s = 0 \\times 10 = 0$.",
+        "generic": "Not quite right. Use $s = \\alpha\\delta$.",
+        "byKey": {
+          "delta": "That is the spread when everyone is informed. With nobody informed, no trade carries bad news."
+        }
+      },
+      "explain": {
+        "text": "With $\\alpha = 0$ no trade tells you anything, so nothing needs covering: $s = 0$. Real spreads stay positive because of costs and inventory risk, from the last two lessons."
+      }
+    },
+    {
+      "id": "q-alpha-delta",
+      "difficulty": 2,
+      "prose": "A small share: one trader in ten is informed, and they know of a move of $\\pm 20$p.",
+      "question": "What is the zero-profit half-spread, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "p",
+        "label": "Half-spread in pence",
+        "accept": "2p",
+        "wrong": [
+          {
+            "id": "delta",
+            "value": 20,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "half",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.1 \\times 20 = 2$p.",
+        "generic": "Not quite right. Multiply the informed share by the move they know about.",
+        "byKey": {
+          "delta": "That covers a loss to every trader. Only one in ten is informed.",
+          "half": "You halved it. The half-spread is $\\alpha\\delta$ itself."
+        }
+      },
+      "explain": {
+        "text": "$s = \\alpha\\delta = 0.1 \\times 20 = 2$p, so the quotes are $V \\pm 2$p."
+      }
+    },
+    {
+      "id": "q-after-sell",
+      "difficulty": 3,
+      "prose": "Fair value 500p; the value will be 510p or 490p, equally likely; $\\alpha = 0.2$. A trader sells to you.",
+      "question": "What is your updated fair value, $E[V \\mid \\text{sell}]$, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 498,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "p",
+        "label": "Updated fair value in pence",
+        "accept": "498p",
+        "wrong": [
+          {
+            "id": "prior",
+            "value": 500,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "up",
+            "value": 502,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "low",
+            "value": 490,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$P(510 \\mid \\text{sell}) = 0.4$, so $0.4 \\times 510 + 0.6 \\times 490 = 498$p.",
+        "generic": "Not quite right. A sell makes the low value more likely: find the new chances.",
+        "byKey": {
+          "prior": "You ignored the trade. A sell is evidence of the low value.",
+          "up": "You moved the wrong way. A sell lowers the expected value.",
+          "low": "You assumed the seller is informed. Only one seller in five is."
+        }
+      },
+      "explain": {
+        "text": "By symmetry with a buy, $P(490 \\mid \\text{sell}) = 0.6$. So $E[V \\mid \\text{sell}] = 498$p: your bid, and your new fair value."
+      }
+    },
+    {
+      "id": "q-thin",
+      "difficulty": 3,
+      "prose": "A large FTSE 100 share trades with a 1p spread. A small share at the same price trades with a 10p spread.",
+      "question": "In this lesson's model, which explains the gap best?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A bigger share of the small share's flow is informed, so $\\alpha$ is larger",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Makers in small shares are greedier",
+            "why": "You read the spread as profit. In this model it only covers expected losses to the informed."
+          },
+          {
+            "id": "c",
+            "text": "Small shares are cheaper to trade, so makers need more",
+            "why": "Cheaper per share does not appear in $s = \\alpha\\delta$. What matters is who is trading."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Fewer noise traders in a small share means a larger informed share $\\alpha$.",
+        "generic": "Not quite right. Look at the two inputs of $s = \\alpha\\delta$."
+      },
+      "explain": {
+        "text": "A big share has many noise traders, so $\\alpha$ is small. A thin share's flow is a larger share of insiders and specialists, so $\\alpha$, and the spread, is larger."
+      }
+    }
+  ]
+}

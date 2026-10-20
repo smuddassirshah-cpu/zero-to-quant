@@ -236,7 +236,7 @@ const PLAUSIBLE = {
   matrix: /^[A-Za-z][A-Za-z0-9]*(-(r\d+|c\d+|\d+-\d+))?$/,
   walk: /^(path\d+|barrier-up|barrier-down)$/,
   orderbook: /^(bid\d+|ask\d+|spread)$/,
-  distribution: /^(mean|sd|prob|curve|shade|x-?\d+|overlay\d+)$/,
+  distribution: /^(mean|median|sd|prob|curve|cdf|rug|shade\d*|observed\d*|x-?[\d.]+|overlay\d+)$/,
   scatter: /^(p\d+|line)$/,
   circle: /^(angle|sin|cos|tan|pt|arc|radius)$/,
   bars: /^(exact-)?(x[A-Za-z0-9.-]+|b\d+)$/,
@@ -248,8 +248,9 @@ const plausibleId = (canvas, id) => {
   if (canvas.kind === 'pair') { const m = String(id).match(/^(left|right):(.+)$/); const a = ['left', 'right'].includes(canvas.active) ? canvas.active : 'left'; return m ? plausibleId(canvas[m[1]], m[2]) : plausibleId(canvas[a], id) || plausibleId(canvas[a === 'left' ? 'right' : 'left'], id); }
   const ids = regionIds(canvas);
   if (ids && ids.has(id)) return true;
-  if (canvas.kind === 'grid' && ids) return /^(row|col|cross)\d+$/.test(id);
-  if (canvas.kind === 'distribution' && Array.isArray((canvas.params || {}).overlay) && canvas.params.overlay.some((o, j) => String(isObj(o) && o.id ? o.id : 'overlay' + j) === String(id))) return true; // overlay ids (item 170)
+  if (canvas.kind === 'grid' && ids) return id === 'all' || /^(row|col|cross)\d+(-\d+)?$/.test(id); // item 329: "all" highlights every cell
+  if (canvas.kind === 'distribution' && [(canvas.params || {}).overlay, (canvas.state || {}).overlay, (canvas.enter || {}).overlay].some((L) => Array.isArray(L) && L.some((o, j) => String(isObj(o) && o.id ? o.id : 'overlay' + j) === String(id)))) return true; // overlay ids in params or state (items 170, 329)
+  if (canvas.kind === 'distribution' && [(canvas.state || {}).shade, (canvas.state || {}).observed].some((L) => Array.isArray(L) && L.some((o) => isObj(o) && String(o.id) === String(id)))) return true; // named shade regions and observed markers
   const re = PLAUSIBLE[canvas.kind];
   return re ? re.test(String(id)) : /^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(String(id));
 };

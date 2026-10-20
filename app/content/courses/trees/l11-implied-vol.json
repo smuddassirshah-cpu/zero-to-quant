@@ -1,0 +1,1321 @@
+{
+  "id": "l11-implied-vol",
+  "course": "trees",
+  "title": "Volatility backed out of a price",
+  "minutes": 14,
+  "objectives": [
+    "Find implied volatility by solving the pricing formula for it",
+    "Read a volatility smile and tell implied from realised volatility"
+  ],
+  "skills": [
+    "tp-bs"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The market's number",
+      "prose": "The market quotes our one-year call ($S = K = 100$, $r = 5\\%$) at £12.00, not £10.45. Every input is known except $\\sigma$. The curve is the Black-Scholes price for each $\\sigma$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "mkt",
+              "y": 12,
+              "label": "market £12.00"
+            }
+          ],
+          "points": [
+            {
+              "id": "P",
+              "x": 0.1,
+              "y": 6.805,
+              "on": "c",
+              "drag": true
+            }
+          ],
+          "caption": "$\\sigma$ = 10.0%: price £6.80"
+        },
+        "derive": {
+          "caption": "$\\sigma$ = {{fixed(P.x * 100, 1)}}%: price £{{fixed(P.y, 2)}}"
+        }
+      },
+      "question": "Drag the point along the curve to the market price. What $\\sigma$ does £12.00 imply?",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "P",
+            "target": {
+              "on": "c",
+              "x": 0.2411
+            },
+            "tol": 0.01
+          }
+        ],
+        "wrong": [
+          {
+            "id": "twenty",
+            "region": {
+              "x": [
+                0.185,
+                0.215
+              ],
+              "y": [
+                0,
+                28
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the curve meet the dashed line?"
+        },
+        {
+          "rung": "point",
+          "text": "The price rises with $\\sigma$, and £12.00 is above the £10.45 at 20%.",
+          "highlight": [
+            "mkt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Move right of 0.2 until the caption reads about £12.00: near 0.24."
+        }
+      ],
+      "feedback": {
+        "correct": "The curve meets £12.00 at $\\sigma \\approx 0.241$.",
+        "generic": "Not quite right. Drag until the caption shows a price of about £12.00.",
+        "byKey": {
+          "twenty": "That is 20%, the volatility behind £10.45. The market pays more, so it implies more.",
+          "P": "Watch the caption: the price should read about £12.00."
+        }
+      },
+      "explain": {
+        "text": "The price rises with $\\sigma$, so exactly one $\\sigma$ gives £12.00: about 0.2411, or 24.1%. That number is the **implied volatility**: the $\\sigma$ the market's price implies. Next we make the search systematic.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0.2411,
+              "y": 12
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "A price too low",
+      "prose": "Now move the market price instead. The dashed line follows the slider. Watch where it meets the curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "mkt",
+              "y": 12,
+              "label": "market"
+            }
+          ],
+          "params": {
+            "m": 12
+          }
+        },
+        "derive": {
+          "mkt.y": "m",
+          "caption": "Market price £{{fixed(m, 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "m",
+            "min": 2,
+            "max": 26,
+            "step": 0.25,
+            "start": 12,
+            "label": "Market price (£)"
+          }
+        ]
+      },
+      "question": "Lower the market price. Below about what price does the line stop meeting the curve?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.88,
+        "tol": {
+          "abs": 0.15
+        },
+        "unit": "£",
+        "label": "Lowest price with a solution",
+        "accept": "£4.88: $S - Ke^{-rT} = 100 - 95.12$",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.2
+            }
+          },
+          {
+            "id": "bs",
+            "value": 10.45,
+            "tol": {
+              "abs": 0.2
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Below £4.88 no volatility fits.",
+        "generic": "Not quite right. Slide the price down and find where the line drops below the curve's left end.",
+        "byKey": {
+          "zero": "The curve never gets near zero. Even at $\\sigma = 0$ the call is worth more than nothing.",
+          "bs": "£10.45 is the price at 20%. Lower prices still meet the curve, down to its left end."
+        }
+      },
+      "explain": {
+        "text": "As $\\sigma \\to 0$ the call's price falls to $S - Ke^{-rT} = 100 - 95.12 = 4.88$. At exactly £4.88 the implied vol is zero. Below it no volatility fits, because the price breaks a no-arbitrage bound.",
+        "canvas": {
+          "params": {
+            "m": 4.88
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Newton's step",
+      "prose": "Newton's method (taylor, Newton's method) follows the tangent. The slope of price against $\\sigma$ is **vega**: $\\frac{\\partial c}{\\partial \\sigma} = S\\sqrt T\\,\\varphi(d_1)$. At $\\sigma_0 = 0.2$, the price is $c = 10.4506$ and vega is 37.524.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "mkt",
+              "y": 12,
+              "label": "market £12.00"
+            }
+          ],
+          "tangent": {
+            "f": "c",
+            "x": 0.2,
+            "label": "vega {slope}",
+            "length": 0.16
+          },
+          "points": [
+            {
+              "id": "s0",
+              "x": 0.2,
+              "y": 10.4506,
+              "label": "$\\sigma_0$",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "What is the next guess, $\\sigma_1 = \\sigma_0 - \\dfrac{c(\\sigma_0) - 12}{\\text{vega}}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2413,
+        "tol": {
+          "abs": 0.0002
+        },
+        "label": "sigma 1",
+        "accept": "0.2413: $0.2 + 1.5494/37.524$",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.1587,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "nodiv",
+            "value": 1.7494,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$c(\\sigma_0) - 12 = 10.4506 - 12 = -1.5494$."
+        },
+        {
+          "rung": "point",
+          "text": "Divide by vega: $-1.5494/37.524 = -0.0413$.",
+          "highlight": [
+            "tangent"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Subtracting a negative step moves up: $0.2 + 0.0413$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sigma_1 = 0.2 + 0.0413 = 0.2413$.",
+        "generic": "Not quite right. Find the gap to £12.00, divide by vega, and subtract.",
+        "byKey": {
+          "sign": "You moved down. The price is below £12.00, so $\\sigma$ must rise.",
+          "nodiv": "You subtracted the price gap itself. Divide it by vega first, to turn pounds into volatility."
+        }
+      },
+      "explain": {
+        "text": "$\\sigma_1 = 0.2 - \\frac{10.4506 - 12}{37.524} = 0.2413$. That is where the tangent meets £12.00. The curve bends a little, so we land just past the answer.",
+        "canvas": {
+          "points": {
+            "s1": {
+              "id": "s1",
+              "x": 0.2413,
+              "y": 12,
+              "label": "$\\sigma_1$",
+              "tap": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One more step",
+      "prose": "At $\\sigma_1 = 0.2413$ the price is $c = 12.0066$ and vega is 37.807.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "mkt",
+              "y": 12,
+              "label": "market £12.00"
+            }
+          ],
+          "tangent": {
+            "f": "c",
+            "x": 0.2413,
+            "label": "vega {slope}",
+            "length": 0.16
+          },
+          "points": [
+            {
+              "id": "s1",
+              "x": 0.2413,
+              "y": 12.0066,
+              "label": "$\\sigma_1$",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "What is $\\sigma_2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2411,
+        "tol": {
+          "abs": 0.0001
+        },
+        "label": "sigma 2",
+        "accept": "0.2411: $0.2413 - 0.0066/37.807$",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.2415,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The price is now just above £12.00."
+        },
+        {
+          "rung": "point",
+          "text": "$0.0066/37.807 = 0.00017$.",
+          "highlight": [
+            "mkt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.2413 - 0.00017 = 0.2411$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sigma_2 = 0.2411$.",
+        "generic": "Not quite right. The price is now a little high, so $\\sigma$ comes down slightly.",
+        "byKey": {
+          "sign": "You moved up. The price is above £12.00 now, so $\\sigma$ comes down."
+        }
+      },
+      "explain": {
+        "text": "$0.2413 - 0.0066/37.807 = 0.2411$. Newton roughly doubles the correct digits each step; the next guess is right to nine places. The implied vol is 24.11%."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A solver in code",
+      "prose": "`bs_call(S, K, r, sigma, T)` and `bs_vega(...)` are loaded. Finish `implied_vol` by bisection: keep the half of $[0.0001, 5]$ that holds the answer. Reject a price at or below $\\max(S - Ke^{-rT}, 0)$, or at or above $S$, with `ValueError`.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "mkt",
+              "y": 12,
+              "label": "market £12.00"
+            }
+          ]
+        }
+      },
+      "question": "Complete `implied_vol(price, S, K, r, T)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "from math import erf, exp, log, sqrt\n\ndef _cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_call(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * _cdf(d1) - K * exp(-r * T) * _cdf(d1 - sigma * sqrt(T))\n\ndef bs_vega(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * 3.141592653589793)\n",
+        "starter": "from math import exp\n\n# bs_call(S, K, r, sigma, T) and bs_vega(...) are loaded.\n\ndef implied_vol(price, S, K, r, T):\n    \"\"\"Volatility at which bs_call matches price.\"\"\"\n    lower = max(S - K * exp(-r * T), 0)\n    if ...:  # outside the no-arbitrage bounds\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi = 0.0001, 5.0\n    for _ in range(100):\n        mid = (lo + hi) / 2\n        ...\n    return (lo + hi) / 2\n",
+        "solution": "from math import exp\n\n# bs_call(S, K, r, sigma, T) and bs_vega(...) are loaded.\n\ndef implied_vol(price, S, K, r, T):\n    \"\"\"Volatility at which bs_call matches price.\"\"\"\n    lower = max(S - K * exp(-r * T), 0)\n    if price <= lower or price >= S:  # outside the no-arbitrage bounds\n        raise ValueError(\"no volatility fits this price\")\n    lo, hi = 0.0001, 5.0\n    for _ in range(100):\n        mid = (lo + hi) / 2\n        if bs_call(S, K, r, mid, T) > price:\n            hi = mid\n        else:\n            lo = mid\n    return (lo + hi) / 2\n",
+        "examples": [
+          {
+            "call": "round(implied_vol(12.0, 100, 100, 0.05, 1), 4)",
+            "expect": "0.2411",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "abs(implied_vol(12.0, 100, 100, 0.05, 1) - 0.2411168936821646) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = bs_call(100, 100, 0.05, 0.2, 1)",
+            "call": "abs(implied_vol(p, 100, 100, 0.05, 1) - 0.2) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = bs_call(100, 100, 0.05, 0.3, 1)",
+            "call": "abs(implied_vol(p, 100, 100, 0.05, 1) - 0.3) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = bs_call(100, 110, 0.05, 0.35, 0.5)",
+            "call": "abs(implied_vol(p, 100, 110, 0.05, 0.5) - 0.35) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = bs_call(100, 90, 0.05, 0.15, 0.25)",
+            "call": "abs(implied_vol(p, 100, 90, 0.05, 0.25) - 0.15) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = bs_call(50, 60, 0.02, 0.8, 2)",
+            "call": "abs(implied_vol(p, 50, 60, 0.02, 2) - 0.8) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "p = bs_call(100, 200, 0.05, 0.3, 1)",
+            "call": "abs(implied_vol(p, 100, 200, 0.05, 1) - 0.3) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "implied_vol(4.5, 100, 100, 0.05, 1)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "implied_vol(101, 100, 100, 0.05, 1)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "implied_vol(0, 100, 150, 0.05, 1)",
+            "expect": "ValueError",
+            "compare": "raises"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: the £12.00 call, six round trips through `bs_call` (each within 0.000001), and three prices with no answer, which must raise ValueError."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If the price at `mid` is too high, the answer is below `mid`."
+        },
+        {
+          "rung": "point",
+          "text": "Inside the loop: `if bs_call(S, K, r, mid, T) > price: hi = mid`, else `lo = mid`."
+        },
+        {
+          "rung": "step",
+          "text": "The bounds test is `price <= lower or price >= S`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your solver backs out every volatility and refuses the impossible prices.",
+        "generic": "Not quite right. Check which half you keep, and the bounds test."
+      },
+      "explain": {
+        "text": "Bisection halves the interval 100 times, far below any tolerance, and never fails on a price inside the bounds. Newton is faster but can overshoot where vega is small. Desks often start with Newton and fall back to bisection."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A price below the bound",
+      "prose": "A screen shows our one-year call ($S = K = 100$, $r = 5\\%$) offered at £4.50. A junior asks you for its implied volatility.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "mkt",
+              "y": 4.5,
+              "label": "offer £4.50"
+            }
+          ]
+        }
+      },
+      "question": "What implied volatility does £4.50 give?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "None: no volatility gives a price below £4.88",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0%, the lowest volatility there is",
+            "why": "At zero volatility the call is worth £4.88, not £4.50. Even 0% gives too high a price."
+          },
+          {
+            "id": "scale",
+            "text": "About 9%, scaling £10.45 at 20% down to £4.50",
+            "why": "Price is not proportional to $\\sigma$. At 10% the call is already £6.80."
+          },
+          {
+            "id": "neg",
+            "text": "A negative volatility",
+            "why": "Volatility is a standard deviation, so it cannot be negative. The quote itself is wrong."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the dashed line meet the curve anywhere?"
+        },
+        {
+          "rung": "point",
+          "text": "The curve's lowest point, at $\\sigma \\to 0$, is $S - Ke^{-rT}$.",
+          "highlight": [
+            "mkt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100 - 95.12 = 4.88$, which is above £4.50."
+        }
+      ],
+      "feedback": {
+        "correct": "The offer is below the no-arbitrage bound, so no $\\sigma$ fits.",
+        "generic": "Not quite right. Find the lowest price the curve ever reaches.",
+        "byKey": {
+          "zero": "You expected the solver to return its smallest value. At 0% the call is worth £4.88, so even that is too high.",
+          "scale": "You scaled the price with $\\sigma$. The curve is not a straight line through zero."
+        }
+      },
+      "explain": {
+        "text": "Every $\\sigma$ prices the call at £4.88 or more, so £4.50 has no implied vol. Buy the call, short the share and lend £95.12: you collect 38p today and never lose later. A solver should refuse such a quote, not return a number.",
+        "canvas": {
+          "hlines": [
+            {
+              "id": "mkt",
+              "y": 4.5,
+              "label": "offer £4.50"
+            },
+            {
+              "id": "bound",
+              "y": 4.8771,
+              "label": "bound £4.88"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Implied or realised",
+      "prose": "Over the past year the share's daily moves give a **realised** (historical) volatility of 16%. Our call, priced at £12.00, implies 24.1%.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Measure",
+            "From",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Realised volatility",
+              "the share's past daily returns",
+              "16%"
+            ],
+            [
+              "Implied volatility",
+              "today's option price",
+              "24.1%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Implied vol is the market's price for future volatility; realised vol measures the past.",
+            "correct": true
+          },
+          {
+            "id": "equal",
+            "text": "They must be equal, or there is an arbitrage.",
+            "why": "You treated the past as a promise. Traders can expect a calmer or wilder future; that is a view, not an arbitrage."
+          },
+          {
+            "id": "hist",
+            "text": "Implied vol is computed from past share prices.",
+            "why": "That describes realised volatility. Implied vol comes from the option's price."
+          },
+          {
+            "id": "over",
+            "text": "The call is overpriced: the formula with 16% gives the right price.",
+            "why": "Plugging in 16% assumes the past repeats. The market's 24.1% may price events ahead, such as results."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which number uses the option's price?"
+        },
+        {
+          "rung": "point",
+          "text": "Realised vol looks back; implied vol looks forward.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Implied vol is backed out of today's price, so it is the market's forecast, plus any premium for risk."
+        }
+      ],
+      "feedback": {
+        "correct": "One number looks back, the other forward.",
+        "generic": "Not quite right. Ask what data each number is computed from.",
+        "byKey": {
+          "hist": "You confused implied with historical volatility. Historical vol uses past share prices; implied vol uses today's option price."
+        }
+      },
+      "explain": {
+        "text": "Realised vol is a statistic of past returns. Implied vol is a price: what buyers pay today for future moves. They often differ, and the gap is what option traders bet on.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The smile",
+      "prose": "Black-Scholes would give one $\\sigma$ for every strike. Here are 3-month index options with the index at 100, each priced at the market and solved for its implied vol.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Strike",
+            "Option",
+            "Price (£)",
+            "Implied vol"
+          ],
+          "rows": [
+            [
+              "80",
+              "put",
+              "0.44",
+              "32%"
+            ],
+            [
+              "90",
+              "put",
+              "1.21",
+              "26%"
+            ],
+            [
+              "100",
+              "call",
+              "4.81",
+              "21%"
+            ],
+            [
+              "110",
+              "call",
+              "0.91",
+              "18%"
+            ],
+            [
+              "120",
+              "call",
+              "0.08",
+              "17%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does this pattern say about the market's view?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tail",
+            "text": "Large falls are priced as more likely than a lognormal with one $\\sigma$ allows.",
+            "correct": true
+          },
+          {
+            "id": "rise",
+            "text": "The market expects the index to rise, since high strikes are cheap.",
+            "why": "Low vol at high strikes is about the size of tail moves, not their direction."
+          },
+          {
+            "id": "noise",
+            "text": "Low strikes trade less, so their vols are noise.",
+            "why": "Noise would not slope one way, year after year. The pattern is steady across markets."
+          },
+          {
+            "id": "broken",
+            "text": "The formula is wrong, so implied vols carry no information.",
+            "why": "The formula is still the quoting convention. The pattern across strikes is exactly the information."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which strikes carry the highest vols?"
+        },
+        {
+          "rung": "point",
+          "text": "The 80 put, which pays only after a 20% fall, costs 32% vol.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Paying more vol for crash protection means the market's left tail is fatter than lognormal."
+        }
+      ],
+      "feedback": {
+        "correct": "The skew prices a fatter left tail than the model.",
+        "generic": "Not quite right. Compare the vol of the 80 put with the 120 call."
+      },
+      "explain": {
+        "text": "The 80 put costs 32% vol and the 120 call only 17%: a **skew**, a lopsided smile. Buyers pay up for crash protection, so the market's distribution has a fatter left tail than the lognormal. This is what breaks the constant-$\\sigma$ assumption.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Quoting in vol",
+      "prose": "Dealers quote options in volatility, which compares across strikes and dates. A client asks for our one-year at-the-money call, and the dealer says 24 vol. The VIX does the same for the S&P 500: it is a 30-day implied vol index.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "q",
+              "x": 0.24,
+              "label": "24 vol"
+            }
+          ]
+        }
+      },
+      "question": "What price in pounds is 24 vol?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11.96,
+        "tol": {
+          "abs": 0.02
+        },
+        "unit": "£",
+        "label": "Call price in pounds",
+        "accept": "£11.96 ± 0.02 (vega check: $10.45 + 37.52 \\times 0.04 = 11.95$)",
+        "wrong": [
+          {
+            "id": "twenty",
+            "value": 10.45,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "literal",
+            "value": 24,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $\\sigma = 0.24$ into the formula, or start from 20 vol."
+        },
+        {
+          "rung": "point",
+          "text": "At 20 vol the price is £10.45 and vega is 37.52 per unit of $\\sigma$.",
+          "highlight": [
+            "q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10.45 + 37.52 \\times 0.04 \\approx 11.95$; the formula gives £11.96."
+        }
+      ],
+      "feedback": {
+        "correct": "24 vol is £11.96.",
+        "generic": "Not quite right. Price the call at $\\sigma = 0.24$.",
+        "byKey": {
+          "twenty": "That is 20 vol. The dealer quoted 24.",
+          "literal": "24 vol means $\\sigma = 0.24$, not a price of £24."
+        }
+      },
+      "explain": {
+        "text": "Black-Scholes at $\\sigma = 0.24$ gives £11.96. Vega makes a quick check: four vol points at £0.375 each add £1.50 to £10.45. Quoting in vol lets a trader compare this call with any other strike or date."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Selling rich vol",
+      "prose": "A trader sells our call at 24 vol, £11.96, and hedges it. She expects the share to realise only 18%. If it does, her hedged profit is about the price gap between 24 and 18 vol.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "a",
+              "x": 0.18,
+              "label": "18"
+            },
+            {
+              "id": "b",
+              "x": 0.24,
+              "label": "24"
+            }
+          ]
+        }
+      },
+      "question": "About how much does she expect to make per call?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.26,
+        "tol": {
+          "abs": 0.1
+        },
+        "unit": "£",
+        "label": "Expected profit in pounds",
+        "accept": "about £2.26: $c(0.24) - c(0.18) = 11.96 - 9.70$",
+        "wrong": [
+          {
+            "id": "premium",
+            "value": 11.96,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "pts",
+            "value": 6,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Price the call at 18 vol."
+        },
+        {
+          "rung": "point",
+          "text": "Vega is about £0.375 per vol point near here.",
+          "highlight": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Six vol points at about £0.375 each is about £2.25; the formula gives £2.26."
+        }
+      ],
+      "feedback": {
+        "correct": "About £2.26 per call, if 18% is realised.",
+        "generic": "Not quite right. Find the price at 18 vol and subtract it from £11.96.",
+        "byKey": {
+          "premium": "She keeps the premium only if the hedge costs nothing. Hedging costs about the price at realised vol.",
+          "pts": "Six is the gap in vol points. Turn it into pounds with vega."
+        }
+      },
+      "explain": {
+        "text": "At 18 vol the call is worth £9.70, so the gap is £2.26. Hedging costs roughly the option's value at realised vol, so selling at a higher implied vol earns the gap. The last lesson of this level simulates exactly that hedge."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Implied volatility is the $\\sigma$ that makes Black-Scholes match a market price: 24.11% for our call at £12.00.",
+      "Solve for it by bisection or Newton's method, whose slope is vega; there is no answer outside the bounds $\\max(S - Ke^{-rT}, 0) < c < S$.",
+      "Implied vol is a forward-looking price; realised vol measures the past. Implied vols that vary by strike form the smile."
+    ],
+    "formula": {
+      "name": "Newton step for implied vol",
+      "tex": "\\sigma_{k+1} = \\sigma_k - \\frac{c(\\sigma_k) - c_{\\text{mkt}}}{\\text{vega}(\\sigma_k)},\\quad \\text{vega} = S\\sqrt T\\,\\varphi(d_1)",
+      "note": "Reject prices at or below $\\max(S - Ke^{-rT}, 0)$."
+    },
+    "trap": "A price below the no-arbitrage bound has no implied vol, not a vol of zero."
+  },
+  "quiz": [
+    {
+      "id": "q-newton",
+      "difficulty": 3,
+      "prose": "A call trades at £8.00. At $\\sigma_0 = 0.30$ the formula gives £9.20 and vega is 20.",
+      "question": "What is Newton's next guess $\\sigma_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.24,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "sigma 1",
+        "accept": "0.24: $0.30 - 1.20/20$",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.36,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.30 - 1.20/20 = 0.24$.",
+        "generic": "Not quite right. Subtract the price gap divided by vega.",
+        "byKey": {
+          "sign": "The model price is too high, so $\\sigma$ must fall, not rise."
+        }
+      },
+      "explain": {
+        "text": "The gap is $9.20 - 8.00 = 1.20$, and $1.20/20 = 0.06$. The price is too high, so $\\sigma$ falls to 0.24."
+      }
+    },
+    {
+      "id": "q-bound",
+      "difficulty": 2,
+      "prose": "A one-year call with $S = K = 100$ and $r = 5\\%$ trades at exactly £4.88, the value $S - Ke^{-rT}$.",
+      "question": "What is its implied volatility?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0%",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "There is none",
+            "why": "Below £4.88 there is none. At exactly £4.88 the curve's left end meets the price."
+          },
+          {
+            "id": "twenty",
+            "text": "20%",
+            "why": "20% gives £10.45."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At the bound the implied vol is zero.",
+        "generic": "Not quite right. Recall what the price tends to as $\\sigma \\to 0$."
+      },
+      "explain": {
+        "text": "As $\\sigma \\to 0$ the price falls to $S - Ke^{-rT} = 4.88$. So a price of exactly £4.88 implies zero volatility: the market expects no moves at all."
+      }
+    },
+    {
+      "id": "q-otm",
+      "difficulty": 3,
+      "prose": "A one-year call struck at £200 on a £100 share ($r = 5\\%$) is quoted at £0.01 or £0.02. Those prices imply 21.2% and 22.6% vol.",
+      "question": "Why does one penny move the implied vol so much?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "vega",
+            "text": "Far from the money vega is tiny, so a small price change needs a big change in $\\sigma$",
+            "correct": true
+          },
+          {
+            "id": "bound",
+            "text": "The price is below the no-arbitrage bound",
+            "why": "The bound here is $\\max(100 - 190.25, 0) = 0$, and both quotes are above it."
+          },
+          {
+            "id": "newton",
+            "text": "Newton's method has a bug for small prices",
+            "why": "Bisection gives the same two answers. The problem is the function, not the solver."
+          },
+          {
+            "id": "smile",
+            "text": "The smile makes far strikes worthless",
+            "why": "The smile changes vols by strike; it does not explain the sensitivity to one penny."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Tiny vega makes the solve ill-conditioned.",
+        "generic": "Not quite right. Think about the slope of price against $\\sigma$ at this strike."
+      },
+      "explain": {
+        "text": "At the 200 strike vega is about 0.3 per unit of $\\sigma$, against 37.5 at the money. A 1p change then moves $\\sigma$ by more than a point. Desks treat implied vols of far strikes with care."
+      }
+    },
+    {
+      "id": "q-vix",
+      "difficulty": 2,
+      "prose": "News reports say the VIX rose from 15 to 30 overnight.",
+      "question": "What does that mean?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "iv",
+            "text": "Options on the S&P 500 now imply about 30% volatility over the next 30 days",
+            "correct": true
+          },
+          {
+            "id": "real",
+            "text": "The S&P 500 moved 30% overnight",
+            "why": "You read it as a realised move. The VIX is implied from option prices, not a past move."
+          },
+          {
+            "id": "price",
+            "text": "The index fell by 15 points",
+            "why": "The VIX is a volatility, in percent a year, not an index level change."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The VIX is a 30-day implied vol index.",
+        "generic": "Not quite right. The VIX is built from option prices."
+      },
+      "explain": {
+        "text": "The VIX is the 30-day implied volatility of S&P 500 options. A jump from 15 to 30 means option buyers now pay for twice the expected movement."
+      }
+    }
+  ]
+}
