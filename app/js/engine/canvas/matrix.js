@@ -9,7 +9,10 @@
 
   C.register('matrix', (host, params, ctx) => {
     const K = Z.cvb;
-    const W = 540;
+    /* item 251: fit: true (the default inside a pair) narrows the frame to the matrices, so a side of a pair is not a
+       540-wide drawing shrunk to half; wider later content (a row operation) scales to the frame as before */
+    const fitW = params.fit === true;
+    let W = 540;
     const mats = (params.matrices || []).map((m, i) => ({ ...m, id: m.id || String.fromCharCode(65 + i) }));
     const ops = params.ops || [];
     const maxRows = Math.max(1, ...mats.map((m) => (m.rows || []).length));
@@ -51,7 +54,7 @@
     const def = {
       kind: 'matrix', aria: params.aria || 'Matrices',
       modes: ['tap'],
-      size: () => ({ w: W, h: H }),
+      size: () => { if (!fitW) return { w: W, h: H }; const L = mats.map((m) => { const rows = m.rows || []; return (rows[0] || []).length * cellW(rows) + 20 + (Array.isArray(m.rowLabels) ? 60 : 0) + (m.scale != null ? 50 : 0); }); W = Math.max(160, Math.min(540, Math.ceil(L.reduce((a, b) => a + b, 0) + Math.max(0, L.length - 1) * 36 + 24))); return { w: W, h: H, fit: true }; },
       skip: ['rows', 'values', 'product', 'rowOp', 'pivot', 'cell', 'hidden'],
       init: () => ({ highlight: null, pivot: null, rowOp: null, cell: null, hidden: [], rows: {}, values: {}, product: null }),
       hlIds: (view) => (Array.isArray(view.highlight) ? view.highlight.filter((x) => typeof x !== 'object').map(String) : []),

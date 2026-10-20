@@ -269,7 +269,7 @@
   const make = (host, params, ctx = {}, def) => {
     const uid = 'cvb' + (++uidN);
     const size = def.size ? def.size(params) : { w: 540, h: 320 };
-    const F = C.frame(host, size.w, size.h, { cls: 'cvb cv-' + def.kind, label: def.aria || def.kind });
+    const F = C.frame(host, size.w, size.h, { cls: 'cvb cv-' + def.kind, label: def.aria || def.kind, fit: !!size.fit });
     F.svg.classList.add('cvb-svg');
     const defs = svg('defs'); F.svg.insertBefore(defs, F.g);
     const extra = document.createElement('div'); extra.className = 'cvb-extra'; F.wrap.insertBefore(extra, F.svg.nextSibling);

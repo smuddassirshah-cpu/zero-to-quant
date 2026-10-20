@@ -559,7 +559,7 @@
     const twoTables = SIDES.every(k => (spec[k] || {}).kind === 'table');
     const hosts = {};
     /* item 185: shareMargins lines up the plot areas of two series (or other kinds with margins()) */
-    const build = (k, extra) => { const sp = spec[k] || { kind: 'table', params: {} }; return create(hosts[k], { ...sp, params: { ...(twoTables ? { compact: true } : {}), ...(sp.params || {}), ...(extra || {}) } }, ctx); };
+    const build = (k, extra) => { const sp = spec[k] || { kind: 'table', params: {} }; return create(hosts[k], { ...sp, params: { ...(twoTables ? { compact: true } : {}), ...(sp.kind === 'matrix' ? { fit: true } : {}), ...(sp.params || {}), ...(extra || {}) } }, ctx); };
     for (const k of SIDES) {
       const h = document.createElement('div'); h.className = 'cv-pair-side cv-pair-' + k; row.append(h); hosts[k] = h;
       side[k] = build(k);
