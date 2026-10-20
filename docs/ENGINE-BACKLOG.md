@@ -933,3 +933,9 @@ Raised later (estimation level 1):
 327. Simulations: a "statistic per sample" mode and a running statistic (running mean of the divide-by-$n$ variance), so convergence pictures need not be precomputed `series`.
 328. `grid`: a size cap for grids with many cells (a 10x10 grid is about 540 px tall and pushes the question below the fold).
 329. Validator: accept `"all"` in a grid hint highlight (the engine accepts it), and overlay ids on a `distribution` hint highlight when the overlay is given in `state`.
+
+Raised later (testing level 2):
+
+330. `distribution`: shade a second region under an overlay curve (α and β at once), extending 320.
+331. `plane` expressions: `erf(x)` and `Phi(x)` so power-against-n curves can be drawn as functions.
+332. `bars`: a horizontal reference line (`hlines`, as 212 asks for `series`).

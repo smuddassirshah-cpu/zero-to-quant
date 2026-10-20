@@ -1,0 +1,1945 @@
+{
+  "id": "l3-how-much-explained",
+  "course": "regression",
+  "title": "How much is explained?",
+  "minutes": 13,
+  "objectives": [
+    "Compute and interpret $R^2$.",
+    "Split the total sum of squares into explained and residual parts."
+  ],
+  "skills": [
+    "rg-fit"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "What the market buys us",
+      "prose": "The five days from the last lesson. The slider turns the line about the average day, from the flat line at $\\bar y = 1$, which ignores the market, to the least squares line. The corner shows each line's sum of squared residuals.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -1,
+              -2
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2,
+            4
+          ],
+          "yRange": [
+            -3,
+            5
+          ],
+          "height": 280,
+          "curves": [
+            {
+              "id": "mean",
+              "x": "1 + 0.085*cos(t)",
+              "y": "1 + 0.26*sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "colour": 3
+            }
+          ]
+        },
+        "state": {
+          "params": {
+            "t": 0
+          },
+          "line": {
+            "m": 0,
+            "b": 1
+          },
+          "residuals": "line",
+          "showSSE": true,
+          "caption": "0: the flat line at $\\bar y = 1$. 1: the least squares line."
+        },
+        "derive": {
+          "line.m": "1.3*t",
+          "line.b": "1 - 1.3*t"
+        },
+        "controls": [
+          {
+            "bind": "t",
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "start": 0,
+            "label": "From flat to fitted"
+          }
+        ]
+      },
+      "question": "What share of the flat line's sum does the least squares line remove?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.845,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "left",
+            "value": 0.155,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "amount",
+            "value": 0.169,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "unit": "%",
+        "label": "Share removed, in per cent",
+        "accept": "84.5%: $(20 - 3.1)/20$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the corner with the slider at 0, then at 1."
+        },
+        {
+          "rung": "point",
+          "text": "At 0 the sum is 20; at 1 it is 3.1.",
+          "highlight": [
+            "line"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The line removes $20 - 3.1 = 16.9$ of the 20."
+        }
+      ],
+      "feedback": {
+        "correct": "$(20 - 3.1)/20 = 0.845$, or 84.5%.",
+        "generic": "Not quite right. Find how much the sum falls from 0 to 1, then divide by the starting sum.",
+        "byKey": {
+          "left": "That is the share left over, $3.1/20$. The question asks for the share removed.",
+          "amount": "You typed the amount removed, 16.9, as a percentage. Divide it by the 20 first."
+        }
+      },
+      "explain": {
+        "text": "The flat line leaves 20 and the fitted line leaves 3.1. So the market removes $(20 - 3.1)/20 = 84.5$% of the squared spread in the stock's returns. That share is called $R^2$.",
+        "canvas": {
+          "params": {
+            "t": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Three sums",
+      "prose": "Name the sums. **SST** $= \\sum (y_i - \\bar y)^2$ is the total, the flat line's score. **SSE** $= \\sum e_i^2$ is what the fitted line leaves. **SSR** $= \\sum (\\hat y_i - \\bar y)^2$ is how far the fitted values move away from $\\bar y$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "sst",
+              "label": "SST"
+            },
+            {
+              "id": "ssr",
+              "label": "SSR"
+            },
+            {
+              "id": "sse",
+              "label": "SSE"
+            }
+          ],
+          "yLabel": "Sum of squares",
+          "yMax": 25,
+          "showValues": true,
+          "decimals": 1,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "sst": 20,
+            "ssr": 0,
+            "sse": 3.1
+          }
+        }
+      },
+      "question": "The fitted values are $-1.6$, $-0.3$, 1.0, 2.3 and 3.6, and $\\bar y = 1$. Set the SSR bar.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 25,
+        "step": 0.1,
+        "start": 0,
+        "bind": "ssr",
+        "label": "SSR",
+        "answer": 16.9,
+        "tol": 0.05,
+        "wrong": [
+          {
+            "id": "raw",
+            "from": 21.8,
+            "to": 22
+          },
+          {
+            "id": "gap",
+            "from": 3.05,
+            "to": 3.15
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract $\\bar y = 1$ from each fitted value, then square."
+        },
+        {
+          "rung": "point",
+          "text": "The fitted values sit $-2.6$, $-1.3$, 0, 1.3 and 2.6 from $\\bar y$.",
+          "highlight": [
+            "ssr"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$6.76 + 1.69 + 0 + 1.69 + 6.76$."
+        }
+      ],
+      "feedback": {
+        "correct": "SSR is 16.9, and $16.9 + 3.1 = 20$.",
+        "generic": "Not quite right. Square each fitted value's distance from $\\bar y = 1$, then add.",
+        "byKey": {
+          "raw": "You squared the fitted values themselves, getting 21.9. Measure each from $\\bar y = 1$ first.",
+          "gap": "That matches SSE. SSR measures the fitted values, not the residuals."
+        }
+      },
+      "explain": {
+        "text": "The fitted values sit $-2.6$, $-1.3$, 0, 1.3 and 2.6 from $\\bar y$, and their squares add to 16.9. So $16.9 + 3.1 = 20$: the explained and residual parts add up to the total. Some books swap the names SSR and SSE, so always check the definition.",
+        "canvas": {
+          "values": {
+            "ssr": 16.9
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why the parts add up",
+      "prose": "Why do the two parts add up exactly? Write each deviation as a fitted part plus a residual, then square and sum. *The error is perpendicular* (Orthogonality and Least Squares) supplies the key step.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "sst",
+              "label": "SST"
+            },
+            {
+              "id": "ssr",
+              "label": "SSR"
+            },
+            {
+              "id": "sse",
+              "label": "SSE"
+            }
+          ],
+          "yLabel": "Sum of squares",
+          "yMax": 25,
+          "showValues": true,
+          "decimals": 1,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "sst": 20,
+            "ssr": 16.9,
+            "sse": 3.1
+          }
+        }
+      },
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "t1",
+            "text": "$y_i - \\bar y = (\\hat y_i - \\bar y) + e_i$, adding and subtracting $\\hat y_i$"
+          },
+          {
+            "id": "t2",
+            "text": "$\\mathrm{SST} = \\mathrm{SSR} + \\mathrm{SSE} + 2\\sum (\\hat y_i - \\bar y)e_i$, squaring and summing"
+          },
+          {
+            "id": "t3",
+            "text": "$\\sum (\\hat y_i - \\bar y)e_i = \\sum \\hat y_i e_i - \\bar y\\sum e_i$, splitting the cross term"
+          },
+          {
+            "id": "t4",
+            "text": "$\\sum \\hat y_i e_i = 0$ and $\\sum e_i = 0$, since $\\mathbf{e}$ is perpendicular to $\\hat{\\mathbf{y}}$ and to $\\mathbf{1}$, both in $C(\\mathbf{A})$"
+          },
+          {
+            "id": "t5",
+            "text": "$\\mathrm{SST} = \\mathrm{SSR} + \\mathrm{SSE}$, as the cross term is 0"
+          }
+        ],
+        "answer": [
+          "t1",
+          "t2",
+          "t3",
+          "t4",
+          "t5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Begin with one day's deviation, before any squaring."
+        },
+        {
+          "rung": "point",
+          "text": "The whole proof hangs on the cross term vanishing.",
+          "highlight": [
+            "ssr",
+            "sse"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Split, square and sum, expand the cross term, use perpendicularity, conclude."
+        }
+      ],
+      "feedback": {
+        "correct": "The cross term vanishes because the residuals are perpendicular to the fit.",
+        "generic": "Not quite right. Start from one deviation, square, then deal with the cross term.",
+        "byKey": {
+          "t2": "Squaring needs the split from line 1 first.",
+          "t3": "Splitting the cross term only makes sense once it has appeared, after squaring.",
+          "t4": "The perpendicularity facts are used on the split cross term.",
+          "t5": "The conclusion comes last."
+        }
+      },
+      "explain": {
+        "text": "The cross term vanishes because $\\mathbf{e}$ is perpendicular to $\\hat{\\mathbf{y}}$ and to $\\mathbf{1}$. So $\\mathrm{SST} = \\mathrm{SSR} + \\mathrm{SSE}$ is Pythagoras for the vectors $\\mathbf{y} - \\bar y\\mathbf{1}$, $\\hat{\\mathbf{y}} - \\bar y\\mathbf{1}$ and $\\mathbf{e}$. A line not fitted by least squares has no such split."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "R squared",
+      "prose": "$R^2$ is the share of the total that the line explains: $$R^2 = \\frac{\\mathrm{SSR}}{\\mathrm{SST}} = 1 - \\frac{\\mathrm{SSE}}{\\mathrm{SST}}.$$ With one predictor it equals $r^2$, the squared correlation. Here $r^2 = 13^2/(10 \\times 20) = 0.845$ too.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "sst",
+              "label": "SST"
+            },
+            {
+              "id": "ssr",
+              "label": "SSR"
+            },
+            {
+              "id": "sse",
+              "label": "SSE"
+            }
+          ],
+          "yLabel": "Sum of squares",
+          "yMax": 25,
+          "showValues": true,
+          "decimals": 1,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "sst": 20,
+            "ssr": 16.9,
+            "sse": 3.1
+          }
+        }
+      },
+      "question": "Our slope is positive and $R^2 = 0.845$. What is the correlation $r$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.919,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "same",
+            "value": 0.845,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "negative",
+            "value": -0.919,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Correlation $r$",
+        "accept": "0.919: $+\\sqrt{0.845}$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$R^2 = r^2$, so take a square root. Which sign?"
+        }
+      ],
+      "feedback": {
+        "correct": "$r = +\\sqrt{0.845} = 0.919$.",
+        "generic": "Not quite right. Take the square root of $R^2$, with the sign of the slope.",
+        "byKey": {
+          "same": "$R^2$ is $r$ squared, so $r$ is its square root.",
+          "negative": "The slope is positive, so $r$ is positive too."
+        }
+      },
+      "explain": {
+        "text": "$r = +\\sqrt{0.845} = 0.919$, positive like the slope. $R^2 = r^2$ because $\\mathrm{SSR} = b^2 S_{xx} = S_{xy}^2/S_{xx}$, and dividing by $S_{yy}$ gives $S_{xy}^2/(S_{xx}S_{yy})$. Squaring loses the sign, so a falling line can have the same $R^2$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "R squared from the sums",
+      "prose": "Another regression, with only its sums reported: $S_{xx} = 40$, $S_{xy} = -12$ and $S_{yy} = 9$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "sst",
+              "label": "SST"
+            },
+            {
+              "id": "ssr",
+              "label": "SSR"
+            },
+            {
+              "id": "sse",
+              "label": "SSE"
+            }
+          ],
+          "yLabel": "Sum of squares",
+          "yMax": 10,
+          "showValues": true,
+          "decimals": 1,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "sst": 9,
+            "ssr": 0,
+            "sse": 0
+          },
+          "caption": "SST $= S_{yy} = 9$"
+        }
+      },
+      "question": "What is $R^2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "r",
+            "value": 0.632,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "neg-r",
+            "value": -0.632,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "slope",
+            "value": -0.3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "neg",
+            "value": -0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "$R^2$",
+        "accept": "0.4: $(-12)^2/(40 \\times 9)$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$R^2 = r^2 = S_{xy}^2/(S_{xx}S_{yy})$."
+        },
+        {
+          "rung": "point",
+          "text": "SST is $S_{yy} = 9$. SSR is $S_{xy}^2/S_{xx}$.",
+          "highlight": [
+            "sst"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$144/360$."
+        }
+      ],
+      "feedback": {
+        "correct": "$144/360 = 0.4$.",
+        "generic": "Not quite right. Square $S_{xy}$, then divide by $S_{xx}S_{yy}$.",
+        "byKey": {
+          "r": "That is $|r|$. $R^2$ is its square.",
+          "neg-r": "That is $r$, negative like the slope. $R^2$ is its square.",
+          "slope": "That is the slope, $-12/40$. $R^2$ compares sums of squares.",
+          "neg": "$R^2$ is a share of a sum of squares, so it is never negative."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{SSR} = S_{xy}^2/S_{xx} = 144/40 = 3.6$, so $R^2 = 3.6/9 = 0.4$ and $\\mathrm{SSE} = 5.4$. The negative slope, $-0.3$, vanishes once squared. The correlation is $r = -\\sqrt{0.4} = -0.63$.",
+        "canvas": {
+          "values": {
+            "ssr": 3.6,
+            "sse": 5.4
+          },
+          "caption": "SST $= 9$, SSR $= 3.6$, SSE $= 5.4$"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The two extremes",
+      "prose": "Two small datasets, each with its least squares line. On the left the points lie on a line. On the right they form a U, and the line is flat at $\\bar y = 0.6$.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "scatter",
+          "params": {
+            "points": [
+              [
+                -1,
+                -1
+              ],
+              [
+                0,
+                0.5
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                3.5
+              ],
+              [
+                3,
+                5
+              ]
+            ],
+            "xLabel": "$x$",
+            "yLabel": "$y$",
+            "xRange": [
+              -2,
+              4
+            ],
+            "yRange": [
+              -2,
+              6
+            ],
+            "fit": true,
+            "height": 240
+          },
+          "state": {
+            "residuals": "fit",
+            "caption": "Five points on a line"
+          }
+        },
+        "right": {
+          "kind": "scatter",
+          "params": {
+            "points": [
+              [
+                -1,
+                2
+              ],
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                -1
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                3,
+                2
+              ]
+            ],
+            "xLabel": "$x$",
+            "yLabel": "$y$",
+            "xRange": [
+              -2,
+              4
+            ],
+            "yRange": [
+              -2,
+              6
+            ],
+            "fit": true,
+            "height": 240
+          },
+          "state": {
+            "residuals": "fit",
+            "caption": "Five points in a U"
+          }
+        }
+      },
+      "question": "What are the two $R^2$ values, left then right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "1 and 0",
+            "correct": true
+          },
+          {
+            "id": "both-one",
+            "text": "1 and 1: both follow a clear pattern",
+            "why": "You scored the U as a perfect pattern. $R^2$ scores straight-line fit only, and the best straight line through the U is flat."
+          },
+          {
+            "id": "undefined",
+            "text": "1, and undefined on the right because the slope is 0",
+            "why": "A flat fit is allowed. SSR is 0 and SST is 7.2, so $R^2 = 0/7.2 = 0$."
+          },
+          {
+            "id": "half",
+            "text": "1 and 0.5, since half the U rises",
+            "why": "You split the U into halves. One line must serve all five points, and the rises and falls cancel."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On the left, what is SSE? On the right, what is SSR?"
+        },
+        {
+          "rung": "point",
+          "text": "The right-hand line is flat, so every fitted value equals $\\bar y$.",
+          "highlight": [
+            "right:p0",
+            "right:p4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Left: SSE $= 0$, so $R^2 = 1$. Right: SSR $= 0$, so $R^2 = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "A perfect fit gives 1; a flat fit gives 0.",
+        "generic": "Not quite right. Work out SSE on the left and SSR on the right.",
+        "byKey": {
+          "both-one": "You scored the U as a perfect pattern. $R^2$ scores straight-line fit only, and the best straight line through the U is flat.",
+          "undefined": "A flat fit is allowed. SSR is 0 and SST is 7.2, so $R^2 = 0$."
+        }
+      },
+      "explain": {
+        "text": "On the left every residual is 0, so SSE $= 0$ and $R^2 = 1$. On the right every fitted value is $\\bar y$, so SSR $= 0$ and $R^2 = 0$, though the points clearly follow a U. $R^2$ measures straight-line fit; lesson 4 reads the U from the residuals."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A better model?",
+      "prose": "A colleague regresses a stock's price on its index's level over 61 days and gets $R^2 = 0.92$. On the same days' returns the fit gives $R^2 = 0.30$. They call the price model three times better and use it to forecast tomorrow.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "scatter",
+          "params": {
+            "points": [
+              [
+                100.0,
+                50.0
+              ],
+              [
+                99.6,
+                49.59
+              ],
+              [
+                97.7,
+                48.75
+              ],
+              [
+                97.2,
+                49.0
+              ],
+              [
+                98.3,
+                49.39
+              ],
+              [
+                99.2,
+                49.36
+              ],
+              [
+                100.1,
+                49.91
+              ],
+              [
+                100.1,
+                49.8
+              ],
+              [
+                100.5,
+                49.73
+              ],
+              [
+                100.3,
+                49.23
+              ],
+              [
+                100.0,
+                49.1
+              ],
+              [
+                100.3,
+                49.28
+              ],
+              [
+                100.0,
+                49.47
+              ],
+              [
+                100.1,
+                49.2
+              ],
+              [
+                100.8,
+                49.72
+              ],
+              [
+                99.8,
+                49.84
+              ],
+              [
+                99.1,
+                49.43
+              ],
+              [
+                99.5,
+                49.7
+              ],
+              [
+                99.1,
+                49.34
+              ],
+              [
+                99.2,
+                48.92
+              ],
+              [
+                99.8,
+                49.14
+              ],
+              [
+                98.6,
+                49.19
+              ],
+              [
+                99.6,
+                49.46
+              ],
+              [
+                99.6,
+                48.91
+              ],
+              [
+                99.1,
+                48.45
+              ],
+              [
+                100.0,
+                49.13
+              ],
+              [
+                101.7,
+                49.46
+              ],
+              [
+                102.0,
+                50.35
+              ],
+              [
+                102.1,
+                50.06
+              ],
+              [
+                102.6,
+                49.91
+              ],
+              [
+                105.0,
+                50.32
+              ],
+              [
+                104.3,
+                50.19
+              ],
+              [
+                103.5,
+                49.94
+              ],
+              [
+                103.7,
+                50.28
+              ],
+              [
+                104.0,
+                50.92
+              ],
+              [
+                105.8,
+                50.84
+              ],
+              [
+                105.7,
+                50.4
+              ],
+              [
+                106.9,
+                50.66
+              ],
+              [
+                106.4,
+                50.94
+              ],
+              [
+                107.5,
+                50.87
+              ],
+              [
+                107.3,
+                51.34
+              ],
+              [
+                107.2,
+                51.58
+              ],
+              [
+                109.0,
+                51.64
+              ],
+              [
+                108.2,
+                51.81
+              ],
+              [
+                108.5,
+                51.82
+              ],
+              [
+                108.0,
+                51.26
+              ],
+              [
+                107.7,
+                51.71
+              ],
+              [
+                109.0,
+                51.88
+              ],
+              [
+                109.8,
+                51.77
+              ],
+              [
+                109.0,
+                51.95
+              ],
+              [
+                108.9,
+                51.69
+              ],
+              [
+                107.7,
+                51.1
+              ],
+              [
+                106.0,
+                50.58
+              ],
+              [
+                106.3,
+                50.58
+              ],
+              [
+                107.8,
+                51.05
+              ],
+              [
+                108.7,
+                51.38
+              ],
+              [
+                111.0,
+                52.21
+              ],
+              [
+                111.3,
+                53.02
+              ],
+              [
+                112.0,
+                53.1
+              ],
+              [
+                113.6,
+                53.9
+              ],
+              [
+                115.3,
+                54.12
+              ]
+            ],
+            "xLabel": "Index level",
+            "yLabel": "Stock price (£)",
+            "fit": true,
+            "height": 190
+          },
+          "state": {
+            "caption": "Levels: $R^2 = 0.92$"
+          }
+        },
+        "right": {
+          "kind": "scatter",
+          "params": {
+            "points": [
+              [
+                -0.4,
+                -0.82
+              ],
+              [
+                -1.91,
+                -1.69
+              ],
+              [
+                -0.51,
+                0.51
+              ],
+              [
+                1.13,
+                0.8
+              ],
+              [
+                0.92,
+                -0.06
+              ],
+              [
+                0.91,
+                1.11
+              ],
+              [
+                0.0,
+                -0.22
+              ],
+              [
+                0.4,
+                -0.14
+              ],
+              [
+                -0.2,
+                -1.01
+              ],
+              [
+                -0.3,
+                -0.26
+              ],
+              [
+                0.3,
+                0.37
+              ],
+              [
+                -0.3,
+                0.39
+              ],
+              [
+                0.1,
+                -0.55
+              ],
+              [
+                0.7,
+                1.06
+              ],
+              [
+                -0.99,
+                0.24
+              ],
+              [
+                -0.7,
+                -0.82
+              ],
+              [
+                0.4,
+                0.55
+              ],
+              [
+                -0.4,
+                -0.72
+              ],
+              [
+                0.1,
+                -0.85
+              ],
+              [
+                0.6,
+                0.45
+              ],
+              [
+                -1.2,
+                0.1
+              ],
+              [
+                1.01,
+                0.55
+              ],
+              [
+                0.0,
+                -1.11
+              ],
+              [
+                -0.5,
+                -0.94
+              ],
+              [
+                0.91,
+                1.4
+              ],
+              [
+                1.7,
+                0.67
+              ],
+              [
+                0.29,
+                1.8
+              ],
+              [
+                0.1,
+                -0.58
+              ],
+              [
+                0.49,
+                -0.3
+              ],
+              [
+                2.34,
+                0.82
+              ],
+              [
+                -0.67,
+                -0.26
+              ],
+              [
+                -0.77,
+                -0.5
+              ],
+              [
+                0.19,
+                0.68
+              ],
+              [
+                0.29,
+                1.27
+              ],
+              [
+                1.73,
+                -0.16
+              ],
+              [
+                -0.09,
+                -0.87
+              ],
+              [
+                1.14,
+                0.52
+              ],
+              [
+                -0.47,
+                0.55
+              ],
+              [
+                1.03,
+                -0.14
+              ],
+              [
+                -0.19,
+                0.92
+              ],
+              [
+                -0.09,
+                0.47
+              ],
+              [
+                1.68,
+                0.12
+              ],
+              [
+                -0.73,
+                0.33
+              ],
+              [
+                0.28,
+                0.02
+              ],
+              [
+                -0.46,
+                -1.08
+              ],
+              [
+                -0.28,
+                0.88
+              ],
+              [
+                1.21,
+                0.33
+              ],
+              [
+                0.73,
+                -0.21
+              ],
+              [
+                -0.73,
+                0.35
+              ],
+              [
+                -0.09,
+                -0.5
+              ],
+              [
+                -1.1,
+                -1.14
+              ],
+              [
+                -1.58,
+                -1.02
+              ],
+              [
+                0.28,
+                0.0
+              ],
+              [
+                1.41,
+                0.93
+              ],
+              [
+                0.83,
+                0.65
+              ],
+              [
+                2.12,
+                1.62
+              ],
+              [
+                0.27,
+                1.55
+              ],
+              [
+                0.63,
+                0.15
+              ],
+              [
+                1.43,
+                1.51
+              ],
+              [
+                1.5,
+                0.41
+              ]
+            ],
+            "xLabel": "Index return (%)",
+            "yLabel": "Stock return (%)",
+            "fit": true,
+            "height": 190
+          },
+          "state": {
+            "caption": "Returns: $R^2 = 0.30$"
+          }
+        }
+      },
+      "question": "What is wrong with their conclusion?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The two $R^2$ values explain different $y$ variables, so they cannot be compared. Prices that drift together score high whatever happens day to day.",
+            "correct": true
+          },
+          {
+            "id": "better",
+            "text": "Nothing: a higher $R^2$ always means a better model",
+            "why": "You compared $R^2$ across two different $y$ variables. Each is a share of its own total, and a shared drift gives price levels a huge total."
+          },
+          {
+            "id": "cause",
+            "text": "Nothing: the index drives the stock's price, and 0.92 proves it",
+            "why": "You read a high $R^2$ as cause. Two unrelated stocks that both rose over the period would also score high in levels."
+          },
+          {
+            "id": "long",
+            "text": "The price model is better, but only for forecasts a month or more ahead",
+            "why": "A high $R^2$ in levels says the two prices drifted together in the past. It says nothing about future moves at any horizon."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the $y$ in each regression?"
+        },
+        {
+          "rung": "point",
+          "text": "On the left, most of the spread in price is the slow drift over 61 days.",
+          "highlight": [
+            "left:p0",
+            "left:p60"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$R^2$ is a share of SST, and the two regressions have different SSTs. Tomorrow's question is about the change."
+        }
+      ],
+      "feedback": {
+        "correct": "Different $y$, different total: the two shares are not comparable.",
+        "generic": "Not quite right. Ask what each $R^2$ is a share of.",
+        "byKey": {
+          "better": "You compared $R^2$ across two different $y$ variables. Each is a share of its own total, and a shared drift gives price levels a huge total.",
+          "cause": "You read a high $R^2$ as cause. Two unrelated stocks that both rose over the period would also score high in levels."
+        }
+      },
+      "explain": {
+        "text": "Each $R^2$ is a share of its own SST, and drift gives price levels a large SST that any trending series can explain. Tomorrow's forecast is about the change, where the honest figure is 0.30. A high $R^2$ is not a cause either, and not a good forecast by itself."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How much risk is the stock's own?",
+      "prose": "A stock's daily returns have a standard deviation of 2%. Regressed on the market, they give $R^2 = 0.3$. The residuals are the stock-specific moves.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "tot",
+              "label": "Total"
+            },
+            {
+              "id": "mkt",
+              "label": "Market part"
+            },
+            {
+              "id": "own",
+              "label": "Stock-specific"
+            }
+          ],
+          "yLabel": "Daily variance (%²)",
+          "yMax": 4.5,
+          "showValues": true,
+          "decimals": 1,
+          "height": 220
+        },
+        "state": {
+          "values": {
+            "tot": 4,
+            "mkt": 0,
+            "own": 0
+          },
+          "caption": "Total variance $2^2 = 4$"
+        }
+      },
+      "question": "What is the daily standard deviation of the stock-specific part, in per cent?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.673,
+        "tol": {
+          "abs": 0.005
+        },
+        "wrong": [
+          {
+            "id": "vol-share",
+            "value": 1.4,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "r2-vol",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "market",
+            "value": 1.095,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "variance",
+            "value": 2.8,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ],
+        "label": "Stock-specific s.d., in per cent",
+        "accept": "1.67: $\\sqrt{0.7 \\times 4}$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$R^2$ splits the variance, not the standard deviation."
+        },
+        {
+          "rung": "point",
+          "text": "The stock-specific share of the variance is $1 - R^2 = 0.7$.",
+          "highlight": [
+            "own"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.7 \\times 4 = 2.8$, then take the square root."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sqrt{2.8} = 1.67$% a day.",
+        "generic": "Not quite right. Split the variance, $2^2 = 4$, using $1 - R^2$, then take a square root.",
+        "byKey": {
+          "vol-share": "You took 70% of the standard deviation. $R^2$ splits variance, so take 70% of $2^2 = 4$ and then the square root.",
+          "r2-vol": "That uses the market's share, 0.3, on the standard deviation. The stock-specific share is $1 - R^2$ of the variance.",
+          "market": "That is the market part, $\\sqrt{1.2}$. The residuals carry the other 70%.",
+          "variance": "2.8 is the stock-specific variance. Take its square root."
+        }
+      },
+      "explain": {
+        "text": "The residual variance is $(1 - R^2) \\times 2^2 = 2.8$, so its standard deviation is $\\sqrt{2.8} = 1.67$%. Most of the stock's day-to-day risk is its own, though the market part is still $\\sqrt{1.2} = 1.10$%. A market hedge removes only the 30%.",
+        "canvas": {
+          "values": {
+            "mkt": 1.2,
+            "own": 2.8
+          },
+          "caption": "Market part 1.2, stock-specific 2.8"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A tiny R squared",
+      "prose": "Typical $R^2$ values: a single stock on the market, 0.2 to 0.5; a forecast of tomorrow's return, about 0.01. Here a signal's value each day is plotted against the next day's return, for 80 days: $R^2 = 0.01$, with a positive slope.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              0.01,
+              0.43
+            ],
+            [
+              -0.26,
+              -0.93
+            ],
+            [
+              0.54,
+              -0.32
+            ],
+            [
+              -0.02,
+              -1.58
+            ],
+            [
+              -0.68,
+              -2.05
+            ],
+            [
+              0.25,
+              1.18
+            ],
+            [
+              1.23,
+              1.36
+            ],
+            [
+              0.86,
+              2.38
+            ],
+            [
+              -0.86,
+              -1.27
+            ],
+            [
+              -1.44,
+              2.41
+            ],
+            [
+              -0.77,
+              -0.52
+            ],
+            [
+              -0.08,
+              2.57
+            ],
+            [
+              -2.54,
+              -1.2
+            ],
+            [
+              -0.35,
+              -1.11
+            ],
+            [
+              -1.42,
+              0.16
+            ],
+            [
+              -0.88,
+              1.52
+            ],
+            [
+              -0.69,
+              0.2
+            ],
+            [
+              -0.45,
+              -0.9
+            ],
+            [
+              0.3,
+              -1.89
+            ],
+            [
+              0.96,
+              -1.82
+            ],
+            [
+              -0.26,
+              0.85
+            ],
+            [
+              1.29,
+              2.01
+            ],
+            [
+              -0.82,
+              -0.34
+            ],
+            [
+              0.24,
+              -1.49
+            ],
+            [
+              0.81,
+              1.71
+            ],
+            [
+              -0.03,
+              -1.88
+            ],
+            [
+              -0.9,
+              -1.22
+            ],
+            [
+              -1.08,
+              0.82
+            ],
+            [
+              -0.6,
+              -3.55
+            ],
+            [
+              0.1,
+              0.76
+            ],
+            [
+              -1.17,
+              -1.08
+            ],
+            [
+              -0.34,
+              0.21
+            ],
+            [
+              -0.29,
+              -0.06
+            ],
+            [
+              0.44,
+              0.56
+            ],
+            [
+              0.1,
+              1.24
+            ],
+            [
+              0.24,
+              -1.0
+            ],
+            [
+              -0.8,
+              2.15
+            ],
+            [
+              -0.26,
+              1.2
+            ],
+            [
+              0.69,
+              1.63
+            ],
+            [
+              1.42,
+              2.32
+            ],
+            [
+              -1.43,
+              1.0
+            ],
+            [
+              1.45,
+              1.82
+            ],
+            [
+              1.27,
+              0.57
+            ],
+            [
+              0.69,
+              -1.93
+            ],
+            [
+              0.15,
+              -0.04
+            ],
+            [
+              -0.45,
+              -1.19
+            ],
+            [
+              1.39,
+              -1.74
+            ],
+            [
+              1.91,
+              1.02
+            ],
+            [
+              1.74,
+              -0.31
+            ],
+            [
+              1.24,
+              -1.17
+            ],
+            [
+              0.25,
+              -1.44
+            ],
+            [
+              -1.38,
+              0.2
+            ],
+            [
+              -0.13,
+              0.66
+            ],
+            [
+              0.56,
+              2.34
+            ],
+            [
+              -1.46,
+              -0.27
+            ],
+            [
+              0.29,
+              1.83
+            ],
+            [
+              0.32,
+              2.41
+            ],
+            [
+              0.6,
+              2.08
+            ],
+            [
+              -1.35,
+              -3.92
+            ],
+            [
+              -0.81,
+              1.85
+            ],
+            [
+              -0.58,
+              0.51
+            ],
+            [
+              -1.34,
+              0.45
+            ],
+            [
+              1.68,
+              1.14
+            ],
+            [
+              -0.64,
+              0.57
+            ],
+            [
+              0.22,
+              0.69
+            ],
+            [
+              -0.39,
+              -0.53
+            ],
+            [
+              1.52,
+              -2.46
+            ],
+            [
+              1.25,
+              0.28
+            ],
+            [
+              0.53,
+              -0.99
+            ],
+            [
+              -2.41,
+              1.2
+            ],
+            [
+              -0.07,
+              -0.34
+            ],
+            [
+              0.58,
+              0.41
+            ],
+            [
+              0.92,
+              -0.97
+            ],
+            [
+              -0.77,
+              -0.87
+            ],
+            [
+              1.77,
+              0.57
+            ],
+            [
+              -1.5,
+              -2.58
+            ],
+            [
+              -0.81,
+              0.39
+            ],
+            [
+              0.85,
+              0.18
+            ],
+            [
+              -0.07,
+              -1.75
+            ],
+            [
+              1.95,
+              -3.13
+            ]
+          ],
+          "xLabel": "Signal (z-score)",
+          "yLabel": "Next-day return (%)",
+          "fit": true,
+          "height": 260
+        },
+        "state": {}
+      },
+      "question": "What is the correlation between the signal and the next day's return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "r2",
+            "value": 0.01,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "sq",
+            "value": 0.0001,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ],
+        "label": "Correlation",
+        "accept": "0.1: $\\sqrt{0.01}$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$R^2 = r^2$ with one predictor."
+        },
+        {
+          "rung": "point",
+          "text": "Days like the two marked, a low signal then a fall, tilt the line upwards. The slope is positive, so $r$ is too.",
+          "highlight": [
+            "p58",
+            "p39"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$r = \\sqrt{0.01}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$r = \\sqrt{0.01} = 0.1$.",
+        "generic": "Not quite right. Take the square root of $R^2$.",
+        "byKey": {
+          "r2": "0.01 is $R^2$. The correlation is its square root.",
+          "sq": "You squared $R^2$. Take the square root instead."
+        }
+      },
+      "explain": {
+        "text": "$r = \\sqrt{0.01} = 0.1$, and the cloud looks like noise. Yet a correlation of 0.1 with tomorrow's return is a strong signal: traded across hundreds of stocks each day, small edges add up. Returns are mostly noise, so even good forecasts explain little of any one day."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "SST $= \\sum (y_i - \\bar y)^2$ splits exactly into SSR $= \\sum (\\hat y_i - \\bar y)^2$ and SSE $= \\sum e_i^2$, because the residuals are perpendicular to the fit.",
+      "$R^2 = 1 - \\mathrm{SSE}/\\mathrm{SST}$ is the share of the variance explained; with one predictor it is $r^2$. It is 1 for a perfect fit and 0 for a flat one.",
+      "$R^2$ is not a test of the slope, not a cause, and not comparable across different $y$ variables. A tiny $R^2$ can still be a tradable signal."
+    ],
+    "formula": {
+      "name": "R squared",
+      "tex": "R^2 = \\dfrac{\\mathrm{SSR}}{\\mathrm{SST}} = 1 - \\dfrac{\\mathrm{SSE}}{\\mathrm{SST}} = r^2",
+      "note": "$1 - R^2$ is the stock-specific share of variance in a market regression."
+    },
+    "trap": "A high $R^2$ in price levels says the prices drifted together. It is not a forecast, not a cause, and not comparable with an $R^2$ on returns."
+  },
+  "quiz": [
+    {
+      "id": "q-r2",
+      "difficulty": 2,
+      "prose": "A regression has SST $= 50$ and SSE $= 35$.",
+      "question": "What is $R^2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "flip",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "$R^2$",
+        "accept": "0.3: $1 - 35/50$."
+      },
+      "feedback": {
+        "correct": "$1 - 35/50 = 0.3$.",
+        "generic": "Not quite right. Use $R^2 = 1 - \\mathrm{SSE}/\\mathrm{SST}$.",
+        "byKey": {
+          "flip": "0.7 is SSE over SST, the share left unexplained."
+        }
+      },
+      "explain": {
+        "text": "$R^2 = 1 - 35/50 = 0.3$. SSR $= 15$ is the explained part, and $15/50$ gives the same 0.3."
+      }
+    },
+    {
+      "id": "q-sign",
+      "difficulty": 2,
+      "prose": "A regression of a bond fund's returns on equity returns has a negative slope and $R^2 = 0.64$.",
+      "question": "What is the correlation?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$-0.8$",
+            "correct": true
+          },
+          {
+            "id": "pos",
+            "text": "0.8",
+            "why": "You took the square root but dropped the sign. A negative slope means a negative correlation."
+          },
+          {
+            "id": "r2",
+            "text": "$-0.64$",
+            "why": "$-0.64$ is $R^2$ with a sign attached. $r$ is the square root."
+          },
+          {
+            "id": "sq",
+            "text": "0.41",
+            "why": "You squared $R^2$. Take its square root."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$r = -\\sqrt{0.64} = -0.8$.",
+        "generic": "Not quite right. Take the square root and give it the sign of the slope."
+      },
+      "explain": {
+        "text": "$|r| = \\sqrt{0.64} = 0.8$, and the negative slope makes $r = -0.8$. $R^2$ alone cannot tell a rising line from a falling one."
+      }
+    },
+    {
+      "id": "q-luck",
+      "difficulty": 3,
+      "prose": "A regression of a stock on the market over just 4 days gives $R^2 = 0.81$. A colleague says this proves the stock moves with the market.",
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Four points can give a high $R^2$ by chance. Whether the slope is really non-zero needs a test.",
+            "correct": true
+          },
+          {
+            "id": "proof",
+            "text": "0.81 is above 0.5, so the link is proven",
+            "why": "You treated $R^2$ as a test. With so few points, unrelated data often give high $R^2$ values."
+          },
+          {
+            "id": "days",
+            "text": "The stock moves with the market on 81% of days",
+            "why": "$R^2$ is a share of squared spread, not a share of days."
+          },
+          {
+            "id": "cause",
+            "text": "The market explains 81% of the stock, so it causes 81% of its moves",
+            "why": "$R^2$ describes a fit. It says nothing about cause."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$R^2$ describes the fit; it does not test the slope.",
+        "generic": "Not quite right. Ask whether 4 random points could give such a fit."
+      },
+      "explain": {
+        "text": "With two unknowns and 4 points, only 2 degrees of freedom are left, and chance alone often gives a high $R^2$. Testing whether the slope is 0 needs its standard error. That is the next level."
+      }
+    },
+    {
+      "id": "q-sse",
+      "difficulty": 3,
+      "prose": "A regression has SST $= 12$ and $R^2 = 0.25$.",
+      "question": "What is SSE?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "ssr",
+            "value": 3,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "SSE",
+        "accept": "9: $(1 - 0.25) \\times 12$."
+      },
+      "feedback": {
+        "correct": "SSE $= 0.75 \\times 12 = 9$.",
+        "generic": "Not quite right. SSE is the unexplained share of SST.",
+        "byKey": {
+          "ssr": "3 is SSR, the explained part. SSE is the rest."
+        }
+      },
+      "explain": {
+        "text": "SSR $= 0.25 \\times 12 = 3$, and SSE $= 12 - 3 = 9$, because the two parts add up to SST."
+      }
+    }
+  ]
+}

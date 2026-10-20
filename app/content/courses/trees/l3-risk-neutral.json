@@ -1,0 +1,1054 @@
+{
+  "id": "l3-risk-neutral",
+  "course": "trees",
+  "title": "Risk-neutral probabilities",
+  "minutes": 14,
+  "objectives": [
+    "Derive risk-neutral probabilities and price by discounted expectation.",
+    "Explain why $q$ is a pricing weight and not a forecast."
+  ],
+  "skills": [
+    "tp-riskneutral"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "One weight",
+      "prose": "The call pays £20 or £0, and its copy costs £11.90. Look for one weight $q$ on the up state, with $1 - q$ on the down state, that reproduces the price.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            20
+          ],
+          "xStep": 0.25,
+          "yStep": 5,
+          "grid": true,
+          "height": 300,
+          "xLabel": "Weight on up, $q$",
+          "yLabel": "Price today (£)",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "20*x/1.05",
+              "label": "weighted payoff, discounted",
+              "labelAt": 0.95,
+              "labelSide": "below"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "copy",
+              "y": 11.9048,
+              "label": "copy: £11.90"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.5,
+              "y": 9.5238,
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "P.y": "20*P.x/1.05",
+          "caption": "Weight {{fixed(P.x, 3)}} on up: (20 × {{fixed(P.x, 3)}} + 0 × {{fixed(1 - P.x, 3)}}) / 1.05 = £{{fixed(P.y, 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "points.P.x",
+            "min": 0,
+            "max": 1,
+            "step": 0.005,
+            "label": "$q$",
+            "start": 0.5
+          }
+        ]
+      },
+      "question": "Which weight on up gives the copy’s price, £11.90?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.625,
+        "tol": {
+          "abs": 0.006
+        },
+        "label": "Weight on up",
+        "accept": "0.625: $0.625 \\times 20 / 1.05 = 11.90$.",
+        "placeholder": "a number between 0 and 1",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "no-discount",
+            "value": 0.595,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Move $q$ until the point meets the dashed line."
+        },
+        {
+          "rung": "point",
+          "text": "The dashed line is the copy’s cost.",
+          "highlight": [
+            "copy"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$q = 0.625$ reproduces £11.90.",
+        "generic": "Not quite right. Find the weight where the curve crosses the dashed line.",
+        "byKey": {
+          "half": "That is where the slider started. It gives £9.52, below the copy’s cost.",
+          "no-discount": "You solved $20q = 11.90$ without discounting. The £20 arrives in a year, so divide by 1.05 first."
+        }
+      },
+      "explain": {
+        "text": "At $q = 0.625$: $0.625 \\times 20 / 1.05 = \\text{£}11.90$, the copy’s cost. So the price is a discounted weighted average of the payoffs. Is 0.625 a chance, though?",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0.625,
+              "y": 11.9048
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The same weight on the share",
+      "prose": "Put the weight $q = 0.625$ on the share’s own prices, £120 and £80. We write $E_q[S_1] = qS_u + (1 - q)S_d$ for the share’s expected price under $q$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£120",
+                  "p": "$q = 0.625$"
+                },
+                {
+                  "id": "d",
+                  "label": "£80",
+                  "p": "$1 - q = 0.375$"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "The weights on the branches"
+        }
+      },
+      "question": "What is $E_q[S_1]$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 105,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Expected price under q, in £",
+        "accept": "£105: $0.625 \\times 120 + 0.375 \\times 80$.",
+        "wrong": [
+          {
+            "id": "today",
+            "value": 100,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "up-only",
+            "value": 75,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight each price by its branch."
+        },
+        {
+          "rung": "point",
+          "text": "$0.625 \\times 120 = 75$.",
+          "highlight": [
+            "u"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$75 + 0.375 \\times 80 = 75 + 30$."
+        }
+      ],
+      "feedback": {
+        "correct": "$75 + 30 = 105$.",
+        "generic": "Not quite right. Add the two prices, each times its weight.",
+        "byKey": {
+          "today": "You took today’s price. Weight the two prices in a year instead.",
+          "up-only": "You left out the down state. Add $0.375 \\times 80 = 30$."
+        }
+      },
+      "explain": {
+        "text": "$0.625 \\times 120 + 0.375 \\times 80 = 105$, which is £100 grown at 5%. Under $q$ the share earns the risk-free rate on average. That is why $q$ is called a **risk-neutral probability**.",
+        "canvas": {
+          "highlight": [
+            "u",
+            "d"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Find q on a new tree",
+      "prose": "A share costs £50 and ends at £55 or £45. The risk-free rate is 2%. Find the weight $q$ under which the share grows at the risk-free rate.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£50",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£55",
+                  "p": "$q$"
+                },
+                {
+                  "id": "d",
+                  "label": "£45",
+                  "p": "$1 - q$"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "$u = 1.1$, $d = 0.9$, $r = 2\\%$"
+        }
+      },
+      "question": "What is $q$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Risk-neutral probability q",
+        "accept": "0.6: $55q + 45(1 - q) = 51$.",
+        "placeholder": "a number between 0 and 1",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "swapped",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "rate",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Under $q$ the expected price is £50 grown at 2%."
+        },
+        {
+          "rung": "point",
+          "text": "$E_q[S_1] = 50 \\times 1.02 = 51$.",
+          "highlight": [
+            "root"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$55q + 45(1 - q) = 51$, so $45 + 10q = 51$."
+        }
+      ],
+      "feedback": {
+        "correct": "$45 + 10q = 51$ gives $q = 0.6$.",
+        "generic": "Not quite right. Solve $55q + 45(1 - q) = 51$.",
+        "byKey": {
+          "half": "With 0.5 the share grows to £50 on average, not £51. Lean the weight towards up.",
+          "swapped": "That is $1 - q$, the weight on down.",
+          "rate": "That is the rate. Use it to set the target, £51, then solve for $q$."
+        }
+      },
+      "explain": {
+        "text": "Solve $55q + 45(1 - q) = 51$: $10q = 6$, so $q = 0.6$. In factors, $q = (1.02 - 0.9)/(1.1 - 0.9)$. No forecast went in, only prices and the rate."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Price by q",
+      "prose": "Same tree, with $q = 0.6$. A call struck at £50 pays £5 if the share ends at £55 and £0 at £45.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£50",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£55",
+                  "p": "$q = 0.6$"
+                },
+                {
+                  "id": "d",
+                  "label": "£45",
+                  "p": "$1 - q = 0.4$"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "call £5",
+            "d": "call £0"
+          }
+        },
+        "state": {
+          "caption": "$r = 2\\%$"
+        }
+      },
+      "question": "Price the call with $q$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.9412,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "label": "Call price, in £",
+        "accept": "£2.94: $0.6 \\times 5 / 1.02 = 2.941\\ldots$",
+        "wrong": [
+          {
+            "id": "no-discount",
+            "value": 3,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "half",
+            "value": 2.451,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "payoff",
+            "value": 5,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight the payoffs, then discount one year."
+        },
+        {
+          "rung": "point",
+          "text": "$0.6 \\times 5 + 0.4 \\times 0 = 3$.",
+          "highlight": [
+            "val-u"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by 1.02: $3 / 1.02$."
+        }
+      ],
+      "feedback": {
+        "correct": "$3 / 1.02 = 2.94$.",
+        "generic": "Not quite right. Weight the payoffs by $q$ and $1 - q$, then divide by 1.02.",
+        "byKey": {
+          "no-discount": "You forgot to discount. The £3 is an average payoff in a year; divide by 1.02.",
+          "half": "You weighted the states 50/50. Use $q = 0.6$, the weight that makes the share earn 2%.",
+          "payoff": "That is the most the call can pay, in a year. Weight it and discount it."
+        }
+      },
+      "explain": {
+        "text": "$0.6 \\times 5 / 1.02 = \\text{£}2.94$. The copy agrees: $\\Delta = 5/10 = 0.5$, borrow $22.50/1.02 = \\text{£}22.06$, cost $25 - 22.06 = 2.94$. The weights are a shortcut for the copy."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "At the boundary",
+      "prose": "Back to £100 with $d = 0.8$ and $r = 5\\%$. Now the up factor shrinks to $u = 1.05$, the same growth as lending.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£105",
+                  "p": "×1.05"
+                },
+                {
+                  "id": "d",
+                  "label": "£80",
+                  "p": "×0.8"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "$q = \\frac{(1 + r) - d}{u - d}$"
+        }
+      },
+      "question": "What is $q$ now?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Risk-neutral probability q",
+        "accept": "1: $(1.05 - 0.8)/(1.05 - 0.8)$.",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 0.625,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $q = \\frac{(1 + r) - d}{u - d}$ with the new $u$."
+        },
+        {
+          "rung": "point",
+          "text": "Here $1 + r$ and $u$ are both 1.05.",
+          "highlight": [
+            "u"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(1.05 - 0.8)/(1.05 - 0.8) = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$q = 1$: all the weight sits on up.",
+        "generic": "Not quite right. Put $u = 1.05$ into the formula.",
+        "byKey": {
+          "old": "That is $q$ for $u = 1.2$. The up factor is now 1.05.",
+          "zero": "You put the weight on the wrong state. The top of the fraction is $1.05 - 0.8$, not zero."
+        }
+      },
+      "explain": {
+        "text": "$q = 1$: the share can grow at 5% on average only if it surely goes up. That is the arbitrage boundary from lesson 1. Any $u$ below 1.05 gives $q > 1$; a weight outside 0 to 1 signals an arbitrage."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The real chance",
+      "prose": "Back to £120 or £80 at 5%. Forecasters disagree about the real chance $p$ that the share rises. Move $p$ and compare two prices for the call.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            20
+          ],
+          "xStep": 0.25,
+          "yStep": 5,
+          "grid": true,
+          "height": 280,
+          "xLabel": "Real chance of up, $p$",
+          "yLabel": "Price today (£)",
+          "functions": [
+            {
+              "id": "ev",
+              "expr": "20*x/1.05",
+              "label": "discounted expected payoff",
+              "dashed": true,
+              "labelAt": 0.95,
+              "labelSide": "below"
+            },
+            {
+              "id": "copy",
+              "expr": "11.9048 + 0*x",
+              "label": "cost of the copy",
+              "colour": 2,
+              "labelAt": 0.4,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "params": {
+            "p": 0.3
+          },
+          "points": [
+            {
+              "id": "E",
+              "x": 0.3,
+              "y": 5.7143,
+              "tap": false
+            },
+            {
+              "id": "C",
+              "x": 0.3,
+              "y": 11.9048,
+              "tap": false,
+              "colour": 2
+            }
+          ]
+        },
+        "derive": {
+          "E.x": "p",
+          "E.y": "20*p/1.05",
+          "C.x": "p",
+          "caption": "p = {{fixed(p, 2)}}: the copy costs £11.90; the discounted expected payoff is £{{fixed(20*p/1.05, 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "p",
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "label": "Real chance $p$",
+            "start": 0.3
+          }
+        ]
+      },
+      "question": "As $p$ rises from 0.3 to 0.9, what happens to the call’s price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It stays at £11.90",
+            "correct": true
+          },
+          {
+            "id": "real",
+            "text": "It rises from £5.71 to £17.14",
+            "why": "You priced by the real chance. At £17.14 anyone could sell the call and buy the £11.90 copy: £5.24 riskless."
+          },
+          {
+            "id": "between",
+            "text": "It rises, but by less than the expected payoff",
+            "why": "You looked for a compromise between the two lines. The copy fixes the price exactly; there is no room to move."
+          },
+          {
+            "id": "falls",
+            "text": "It falls, since a likely rise is already priced in",
+            "why": "You read the forecast as moving the call. The share is given at £100, and the copy ties the call to it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which of the two lines is a price you could trade against?"
+        },
+        {
+          "rung": "point",
+          "text": "The copy can be bought for £11.90 at any $p$.",
+          "highlight": [
+            "copy"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "If the call cost anything else, sell the dearer of call and copy and buy the cheaper."
+        }
+      ],
+      "feedback": {
+        "correct": "The copy pins the call at £11.90, whatever the forecast.",
+        "generic": "Not quite right. Ask what the copy costs at each $p$.",
+        "byKey": {
+          "real": "You priced by the real chance. At £17.14 anyone could sell the call and buy the £11.90 copy: £5.24 riskless.",
+          "between": "You looked for a compromise between the two lines. The copy fixes the price exactly."
+        }
+      },
+      "explain": {
+        "text": "The copy uses only £120, £80 and 5%, so every forecaster must agree on £11.90. The two lines meet only at $p = 0.625 = q$. The real chance is already inside today’s £100 share price.",
+        "canvas": {
+          "params": {
+            "p": 0.625
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Where q comes from",
+      "prose": "Start from the copy and rewrite its cost. Write $S_u = uS_0$, $S_d = dS_0$, and $c_u$, $c_d$ for the option’s payoffs.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "$\\Delta S_0 u + (1 + r)B = c_u$ and $\\Delta S_0 d + (1 + r)B = c_d$: the copy pays the option in each state"
+          },
+          {
+            "id": "b",
+            "text": "$\\Delta S_0 = \\dfrac{c_u - c_d}{u - d}$ and $(1 + r)B = \\dfrac{u c_d - d c_u}{u - d}$: solve the two equations"
+          },
+          {
+            "id": "c",
+            "text": "$c_0 = \\Delta S_0 + B = \\dfrac{(1 + r)(c_u - c_d) + u c_d - d c_u}{(1 + r)(u - d)}$: add, over one denominator"
+          },
+          {
+            "id": "d",
+            "text": "$c_0 = \\dfrac{1}{1 + r}\\left[\\dfrac{(1 + r) - d}{u - d}\\,c_u + \\dfrac{u - (1 + r)}{u - d}\\,c_d\\right]$: collect the $c_u$ and $c_d$ terms"
+          },
+          {
+            "id": "e",
+            "text": "$c_0 = \\dfrac{q\\,c_u + (1 - q)\\,c_d}{1 + r}$ with $q = \\dfrac{(1 + r) - d}{u - d}$: the two weights add to 1"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Begin where lesson 2 began: one equation per state."
+        },
+        {
+          "rung": "point",
+          "text": "Solving gives $\\Delta$ and $B$; only then can you add them."
+        },
+        {
+          "rung": "step",
+          "text": "Equations, solve, add, collect, then name the weights."
+        }
+      ],
+      "feedback": {
+        "correct": "The copy’s cost is a discounted weighted average, with weights $q$ and $1 - q$.",
+        "generic": "Not quite right. Each line rewrites the one before it.",
+        "byKey": {
+          "e": "Naming $q$ needs the collected form first, so it comes last.",
+          "c": "Adding needs $\\Delta S_0$ and $B$ first, so it follows the solving line."
+        }
+      },
+      "explain": {
+        "text": "The weight on $c_u$ is $\\frac{(1 + r) - d}{u - d}$ and the weight on $c_d$ is $\\frac{u - (1 + r)}{u - d}$. They add to $\\frac{u - d}{u - d} = 1$. With $u = 1.2$, $d = 0.8$ and $r = 0.05$, $q = 0.25/0.4 = 0.625$."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "A name, not a belief",
+      "prose": "You priced with weights that make the share earn the risk-free rate: $$c_0 = \\frac{q\\,c_u + (1 - q)\\,c_d}{1 + r}, \\qquad q = \\frac{(1 + r) - d}{u - d}.$$ Risk-neutral names the weights, not the investors.",
+      "question": "What is $q = 0.625$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The weight under which the share grows at the risk-free rate",
+            "correct": true
+          },
+          {
+            "id": "forecast",
+            "text": "The market’s forecast that the share rises",
+            "why": "You read $q$ as a belief. It came from £120, £80 and 5% alone; no forecast went in."
+          },
+          {
+            "id": "investors",
+            "text": "Proof that investors ignore risk",
+            "why": "You took the name literally. The price came from copying, which works whatever investors feel about risk."
+          },
+          {
+            "id": "adjusted",
+            "text": "The real chance, adjusted for interest",
+            "why": "No real chance entered the formula. Change the real chance and $q$ stays at 0.625."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What went into the formula for $q$?"
+        },
+        {
+          "rung": "step",
+          "text": "Only $u$, $d$ and $r$. So $q$ cannot be anyone’s forecast."
+        }
+      ],
+      "feedback": {
+        "correct": "$q$ is the weight that makes $E_q[S_1] = (1 + r)S_0$.",
+        "generic": "Not quite right. Look at what the formula for $q$ uses."
+      },
+      "explain": {
+        "text": "$q$ is built from $u$, $d$ and $r$, so it is a pricing weight, not a forecast. It is the weight that makes $E_q[S_1] = (1 + r)S_0$. Real investors can hate risk and the price is still £11.90."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A put, and a check",
+      "prose": "A put struck at £100 on the same tree pays £0 if up and £20 if down. A call minus a put pays $S_1 - 100$ in both states, so $c - p = S_0 - K/(1 + r)$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£120",
+                  "p": "$q = 0.625$"
+                },
+                {
+                  "id": "d",
+                  "label": "£80",
+                  "p": "$1 - q = 0.375$"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "put £0",
+            "d": "put £20"
+          }
+        },
+        "state": {
+          "caption": "The call on this tree costs £11.90"
+        }
+      },
+      "question": "Price the put by $q$, then check the relation.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value (£)"
+        ],
+        "rows": [
+          [
+            "Put price $p$ by $q$",
+            {
+              "edit": true,
+              "answer": 7.1429,
+              "tol": {
+                "abs": 0.006
+              }
+            }
+          ],
+          [
+            "$c - p$",
+            {
+              "edit": true,
+              "answer": 4.7619,
+              "tol": {
+                "abs": 0.012
+              }
+            }
+          ],
+          [
+            "$S_0 - K/(1 + r)$",
+            {
+              "edit": true,
+              "answer": 4.7619,
+              "tol": {
+                "abs": 0.006
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight the put’s payoffs by $q$ and $1 - q$, then discount."
+        },
+        {
+          "rung": "point",
+          "text": "The put pays only in the down state, weight 0.375.",
+          "highlight": [
+            "d"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$p = 0.375 \\times 20 / 1.05$. Then $11.90 - p$, and $100 - 100/1.05$."
+        }
+      ],
+      "feedback": {
+        "correct": "£7.14, and both sides of the check give £4.76.",
+        "generic": "Not quite right. Price the put, then compute each side of the relation.",
+        "byKey": {
+          "r0c1": "The put pays £20 in the down state, weight $1 - q = 0.375$: $0.375 \\times 20 / 1.05$.",
+          "r1c1": "Subtract your put price from the call’s £11.90.",
+          "r2c1": "$100 - 100/1.05 = 100 - 95.24$."
+        }
+      },
+      "explain": {
+        "text": "$p = 0.375 \\times 20 / 1.05 = \\text{£}7.14$, the price you found by copying in lesson 2. Then $11.90 - 7.14 = 4.76 = 100 - 95.24$: **put-call parity** holds. One $q$ prices every payoff on the tree.",
+        "canvas": {
+          "values": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The copy’s cost can be rewritten as a discounted weighted average of the payoffs, with weights $q$ and $1 - q$.",
+      "$q$ is the weight under which the share grows at the risk-free rate: $E_q[S_1] = (1 + r)S_0$.",
+      "$q$ uses only $u$, $d$ and $r$. It lies in $(0, 1)$ exactly when there is no arbitrage."
+    ],
+    "formula": {
+      "name": "Risk-neutral pricing",
+      "tex": "c_0 = \\dfrac{q\\,c_u + (1 - q)\\,c_d}{1 + r}, \\quad q = \\dfrac{(1 + r) - d}{u - d}",
+      "note": "Risk-neutral is a name for the weights, not an assumption about investors."
+    },
+    "trap": "The real chance of up does not price the option. Using it, or reading $q$ as a forecast, gives a price someone can arbitrage."
+  },
+  "quiz": [
+    {
+      "id": "q-digital",
+      "difficulty": 2,
+      "prose": "On the £100 tree, $q = 0.625$ and $r = 5\\%$. A digital option pays £1 if the share rises and nothing if it falls.",
+      "question": "What is the digital option worth today?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5952,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "label": "Price, in £",
+        "accept": "£0.60: $0.625 / 1.05 = 0.595\\ldots$",
+        "wrong": [
+          {
+            "id": "no-discount",
+            "value": 0.625,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.4762,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.625 / 1.05 = 0.595$.",
+        "generic": "Not quite right. Weight the £1 by $q$, then discount.",
+        "byKey": {
+          "no-discount": "You forgot to discount. The £1 arrives in a year.",
+          "half": "You weighted the states 50/50. Use $q = 0.625$.",
+          "one": "That is the payoff if up, in a year. Weight it and discount it."
+        }
+      },
+      "explain": {
+        "text": "The digital pays £1 with weight $q$ and nothing otherwise: $0.625 \\times 1 / 1.05 = \\text{£}0.595$. A digital’s price is the discounted risk-neutral probability of its event."
+      }
+    },
+    {
+      "id": "q-find-q",
+      "difficulty": 2,
+      "prose": "A share at £80 ends at £100 or £60 in a year. The risk-free rate is 5%.",
+      "question": "What is $q$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Risk-neutral probability q",
+        "accept": "0.6: $(1.05 - 0.75)/(1.25 - 0.75)$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "swapped",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.30 / 0.50 = 0.6$.",
+        "generic": "Not quite right. Find $u$ and $d$, then use $q = \\frac{(1 + r) - d}{u - d}$.",
+        "byKey": {
+          "half": "With 0.5 the share grows to £80 on average, not £84.",
+          "swapped": "That is $1 - q$, the weight on down."
+        }
+      },
+      "explain": {
+        "text": "$u = 100/80 = 1.25$ and $d = 60/80 = 0.75$, so $q = (1.05 - 0.75)/0.5 = 0.6$. Check: $0.6 \\times 100 + 0.4 \\times 60 = 84 = 80 \\times 1.05$."
+      }
+    },
+    {
+      "id": "q-outside",
+      "difficulty": 3,
+      "prose": "A tree has $u = 1.1$, $d = 0.9$ and $r = 15\\%$. You compute $q = (1.15 - 0.9)/0.2 = 1.25$.",
+      "question": "What does $q = 1.25$ tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "There is an arbitrage: sell the share short and lend",
+            "correct": true
+          },
+          {
+            "id": "likely",
+            "text": "The share is very likely to rise",
+            "why": "You read $q$ as a chance. It is a weight from $u$, $d$ and $r$, and here it cannot be a probability at all."
+          },
+          {
+            "id": "negative",
+            "text": "The down weight is negative, so puts are worthless",
+            "why": "A negative weight does not price anything; it means the tree is broken. Lending at 15% beats the share’s best case of 10%."
+          },
+          {
+            "id": "round",
+            "text": "Nothing; round $q$ down to 1",
+            "why": "Rounding hides the problem. With $1 + r > u$, lending beats the share in every state."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1.15 > 1.1$: lending beats the share in every state.",
+        "generic": "Not quite right. A weight above 1 means $1 + r > u$."
+      },
+      "explain": {
+        "text": "$q > 1$ exactly when $1 + r > u$. Lending at 15% beats the share’s best case of 10%, so sell the share short and lend. Weights inside 0 to 1 mean no arbitrage."
+      }
+    },
+    {
+      "id": "q-forecast",
+      "difficulty": 2,
+      "prose": "On the £100 tree, a forecaster raises her chance of up from 0.5 to 0.7.",
+      "question": "What happens to the call’s price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It stays at £11.90",
+            "correct": true
+          },
+          {
+            "id": "rises",
+            "text": "It rises to £13.33",
+            "why": "You priced by her chance: $0.7 \\times 20 / 1.05$. The copy still costs £11.90."
+          },
+          {
+            "id": "falls",
+            "text": "It falls, since the rise is priced in",
+            "why": "Nothing about the call changed. Its copy uses only £120, £80 and 5%."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The copy, and so the call, ignores forecasts.",
+        "generic": "Not quite right. Ask what the copy costs."
+      },
+      "explain": {
+        "text": "The copy costs £11.90 whatever anyone believes. So $q$ stays at 0.625 and the call at £11.90."
+      }
+    }
+  ]
+}

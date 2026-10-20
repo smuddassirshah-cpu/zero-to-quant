@@ -1,0 +1,1765 @@
+{
+  "id": "l12-data-snooping",
+  "course": "testing",
+  "title": "Data snooping in backtests",
+  "minutes": 14,
+  "objectives": [
+    "Recognise data snooping, and see why factor research now asks for a $t$ statistic above 3."
+  ],
+  "skills": [
+    "ht-multiple"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Twelve lookbacks",
+      "prose": "A researcher backtests momentum with 12 lookbacks on 8 years of monthly data. The market is simulated with no momentum and no drift, seed 74. The table shows each lookback's Sharpe ratio on those 8 years.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Lookback (months)",
+            "In-sample Sharpe",
+            "Out-of-sample Sharpe"
+          ],
+          "rows": [
+            [
+              "1",
+              "0.53",
+              "?"
+            ],
+            [
+              "2",
+              "0.60",
+              "?"
+            ],
+            [
+              "3",
+              "0.86",
+              "?"
+            ],
+            [
+              "4",
+              "0.63",
+              "?"
+            ],
+            [
+              "5",
+              "0.33",
+              "?"
+            ],
+            [
+              "6",
+              "0.19",
+              "?"
+            ],
+            [
+              "7",
+              "0.11",
+              "?"
+            ],
+            [
+              "8",
+              "0.30",
+              "?"
+            ],
+            [
+              "9",
+              "0.39",
+              "?"
+            ],
+            [
+              "10",
+              "0.38",
+              "?"
+            ],
+            [
+              "11",
+              "0.25",
+              "?"
+            ],
+            [
+              "12",
+              "0.15",
+              "?"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ],
+          "compact": true
+        },
+        "state": {
+          "caption": "The next 7 years are hidden for now."
+        }
+      },
+      "question": "Which lookback will do best over the next 7 years?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "winner",
+            "text": "3 months, the in-sample winner",
+            "why": "You assumed the in-sample rank carries forward. The market has no momentum, so 0.86 is luck."
+          },
+          {
+            "id": "right",
+            "text": "None can be singled out: each has expected Sharpe 0",
+            "correct": true
+          },
+          {
+            "id": "long",
+            "text": "12 months, the longest and steadiest",
+            "why": "Longer lookbacks are not better when there is no momentum to find."
+          },
+          {
+            "id": "rebound",
+            "text": "7 months, the worst, as it is due a rebound",
+            "why": "You expected bad luck to be repaid. With no momentum, the past says nothing either way."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What could make one lookback better than another in this market?"
+        },
+        {
+          "rung": "point",
+          "text": "The market was built with no momentum at all.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With nothing to find, every lookback's future Sharpe has mean 0."
+        }
+      ],
+      "feedback": {
+        "correct": "In a market with no momentum, every lookback expects 0.",
+        "generic": "Not quite right. Ask what the market was built to contain.",
+        "byKey": {
+          "winner": "You assumed the in-sample rank carries forward. The market has no momentum, so 0.86 is luck."
+        }
+      },
+      "explain": {
+        "text": "Out of sample the 3-month winner made $-0.03$, and the 1-month lookback did best, at 0.54. In-sample rank told us nothing, because there was nothing to find. The spread in the middle column was luck.",
+        "canvas": {
+          "values": {
+            "r0c2": "0.54",
+            "r1c2": "0.16",
+            "r2c2": "-0.03",
+            "r3c2": "0.37",
+            "r4c2": "-0.12",
+            "r5c2": "0.04",
+            "r6c2": "0.25",
+            "r7c2": "0.06",
+            "r8c2": "0.05",
+            "r9c2": "-0.32",
+            "r10c2": "-0.29",
+            "r11c2": "-0.24"
+          },
+          "highlight": {
+            "rows": [
+              2
+            ]
+          },
+          "caption": "The next 7 years, now shown in the last column."
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The winner's next five years",
+      "prose": "Each run is a search over 50 noise rules for 5 years. Top: the best in-sample Sharpe. Bottom: that winner's Sharpe on the next 5 years of fresh data. With pure noise, the future is a new draw.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "bars",
+          "params": {
+            "bins": {
+              "min": -1.6,
+              "max": 2.4,
+              "width": 0.2
+            },
+            "xLabel": "Best in-sample Sharpe of 50 noise rules",
+            "yLabel": "Share",
+            "proportion": true,
+            "height": 190,
+            "sim": {
+              "trials": [
+                100,
+                1000
+              ],
+              "outcome": "max(n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n()) / sqrt(5)",
+              "seed": 12
+            }
+          },
+          "state": {
+            "ran": 0
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "bins": {
+              "min": -1.6,
+              "max": 2.4,
+              "width": 0.2
+            },
+            "xLabel": "The same winner, next 5 years",
+            "yLabel": "Share",
+            "proportion": true,
+            "height": 190,
+            "sim": {
+              "trials": [
+                100,
+                1000
+              ],
+              "outcome": "n() / sqrt(5)",
+              "seed": 13
+            }
+          },
+          "state": {
+            "ran": 0
+          }
+        }
+      },
+      "question": "Run both 1,000 times. Where does the bottom histogram centre?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Near 0",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "Near 0.5, half the winning Sharpe",
+            "why": "You expected the winner to keep half its edge. With pure noise it keeps none."
+          },
+          {
+            "id": "same",
+            "text": "Near 1.0, the same as the top",
+            "why": "You assumed a winner stays a winner. Its 1.0 came from being picked as the best."
+          },
+          {
+            "id": "neg",
+            "text": "Below 0, as winners reverse",
+            "why": "Noise has no reason to reverse. The fresh 5 years centre on 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run both and compare where the bars pile up."
+        },
+        {
+          "rung": "point",
+          "text": "The top piles up near 1.0. Look at the bottom.",
+          "highlight": [
+            "right:b8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bottom is a fresh draw of a no-skill Sharpe: mean 0."
+        }
+      ],
+      "feedback": {
+        "correct": "The winner's future centres on 0.",
+        "generic": "Not quite right. Look at where the bottom bars pile up."
+      },
+      "explain": {
+        "text": "At the top the best of 50 averages about 1.0, from luck alone. At the bottom the same winners average 0: fresh data owe nothing to an old maximum. The gap between the two is the selection bias that snooping hides.",
+        "canvas": {
+          "left": {
+            "ran": 1000
+          },
+          "right": {
+            "ran": 1000
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "In sample, out of sample",
+      "prose": "Here is the 3-month winner, £100 invested. The rule was chosen on the first 8 years: that period is **in sample**. The last 7 years are **out of sample**: data the choice never saw.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "ins",
+              "label": "in sample",
+              "values": [
+                100.0,
+                98.17,
+                102.45,
+                107.37,
+                107.47,
+                113.04,
+                119.07,
+                108.15,
+                112.19,
+                115.31,
+                113.55,
+                122.77,
+                122.46,
+                136.39,
+                136.4,
+                144.33,
+                134.19,
+                142.19,
+                145.98,
+                147.09,
+                152.27,
+                143.02,
+                144.15,
+                146.76,
+                145.98,
+                143.59,
+                149.87,
+                157.22,
+                151.31,
+                159.88,
+                166.34,
+                173.06,
+                169.76,
+                173.25,
+                176.75,
+                174.7,
+                175.88,
+                173.97,
+                170.89,
+                155.57,
+                176.27,
+                173.17,
+                168.34,
+                166.41,
+                171.77,
+                172.97,
+                178.92,
+                181.36,
+                178.88,
+                182.91,
+                184.76,
+                192.23,
+                193.82,
+                194.99,
+                200.47,
+                200.84,
+                204.32,
+                201.23,
+                203.99,
+                208.22,
+                207.78,
+                204.2,
+                209.95,
+                201.67,
+                211.25,
+                215.81,
+                204.71,
+                196.06,
+                204.58,
+                198.64,
+                202.0,
+                184.52,
+                193.97,
+                189.05,
+                178.3,
+                175.22,
+                178.58,
+                183.17,
+                190.26,
+                179.28,
+                180.6,
+                166.97,
+                172.71,
+                173.68,
+                181.91,
+                181.92,
+                187.49,
+                194.82,
+                197.81,
+                210.86,
+                218.18,
+                203.93,
+                210.27,
+                217.81,
+                234.23,
+                234.87,
+                244.12,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "colour": 1
+            },
+            {
+              "id": "oos",
+              "label": "out of sample",
+              "values": [
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                244.12,
+                248.19,
+                251.02,
+                243.41,
+                254.3,
+                256.52,
+                260.68,
+                261.12,
+                279.46,
+                285.92,
+                285.04,
+                292.2,
+                293.74,
+                290.2,
+                286.93,
+                281.26,
+                259.12,
+                259.22,
+                257.46,
+                260.01,
+                255.52,
+                266.73,
+                255.88,
+                234.11,
+                224.52,
+                222.78,
+                230.52,
+                231.41,
+                224.1,
+                227.7,
+                223.05,
+                216.12,
+                231.05,
+                236.04,
+                225.45,
+                231.23,
+                223.14,
+                224.55,
+                234.09,
+                220.84,
+                215.73,
+                215.41,
+                203.78,
+                206.1,
+                205.45,
+                208.72,
+                217.65,
+                234.16,
+                222.03,
+                214.42,
+                232.83,
+                229.6,
+                221.23,
+                237.51,
+                226.29,
+                231.0,
+                223.81,
+                225.34,
+                227.59,
+                239.32,
+                233.03,
+                224.92,
+                217.82,
+                205.52,
+                215.93,
+                218.24,
+                220.11,
+                224.0,
+                219.35,
+                218.06,
+                223.85,
+                223.48,
+                224.26,
+                238.0,
+                235.57,
+                241.94,
+                228.69,
+                223.98,
+                229.01,
+                219.74,
+                222.84,
+                231.69,
+                230.38,
+                220.51,
+                225.89
+              ],
+              "colour": 2
+            }
+          ],
+          "x": "index",
+          "money": "£",
+          "decimals": 0,
+          "xLabel": "Month",
+          "yLabel": "Value of £100"
+        },
+        "state": {
+          "shade": [
+            {
+              "id": "fit",
+              "from": 0,
+              "to": 96,
+              "label": "in sample: rule chosen here",
+              "tone": "neutral"
+            }
+          ],
+          "caption": "3-month rule: in-sample Sharpe 0.86, out-of-sample Sharpe −0.03"
+        }
+      },
+      "question": "Which part of the curve is evidence about whether the rule has an edge?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The out-of-sample part, after month 96",
+            "correct": true
+          },
+          {
+            "id": "ins",
+            "text": "The in-sample part, the shaded years",
+            "why": "That part chose the rule. It was picked because it looked good there, so it was bound to look good."
+          },
+          {
+            "id": "both",
+            "text": "Both parts equally",
+            "why": "The in-sample part is the reason the rule was chosen. It cannot also be the test."
+          },
+          {
+            "id": "neither",
+            "text": "Neither part",
+            "why": "The out-of-sample years played no part in the choice, so they are a fair test, if a short one."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which years did the researcher look at when choosing the lookback?"
+        },
+        {
+          "rung": "point",
+          "text": "The shaded years did the choosing.",
+          "highlight": [
+            "fit"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only data not used to choose can test the choice."
+        }
+      ],
+      "feedback": {
+        "correct": "Only the out-of-sample years test the rule.",
+        "generic": "Not quite right. Ask which years were used to pick the rule.",
+        "byKey": {
+          "ins": "That part chose the rule. It was picked because it looked good there, so it was bound to look good."
+        }
+      },
+      "explain": {
+        "text": "Choosing the rule on the first 8 years used them up as evidence. Only the last 7 years test it, and there it went nowhere: Sharpe $-0.03$. Fitting a rule to the data it is then judged on is **overfitting**, and the search that does it is **data snooping**.",
+        "canvas": {
+          "highlight": [
+            "oos"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Hundreds of factors",
+      "prose": "By 2012, journals had published over 300 return factors. Suppose all 300 were noise. Each $t$ statistic is then close to standard normal, and $P(|Z| > 2) = 0.0455$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            400
+          ],
+          "y": [
+            0,
+            20
+          ],
+          "xLabel": "Factors tried, all noise",
+          "yLabel": "Expected false factors",
+          "xStep": 100,
+          "yStep": 5,
+          "functions": [
+            {
+              "id": "t2",
+              "expr": "0.0455*x",
+              "label": "$|t| > 2$",
+              "domain": [
+                0,
+                400
+              ],
+              "labelAt": 150
+            },
+            {
+              "id": "t3",
+              "expr": "0.0027*x",
+              "label": "$|t| > 3$",
+              "domain": [
+                0,
+                400
+              ],
+              "colour": 2,
+              "labelSide": "above",
+              "labelAt": 150
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "n300",
+              "x": 300,
+              "label": "300 factors"
+            }
+          ]
+        }
+      },
+      "question": "How many of 300 noise factors would show $|t| > 2$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13.65,
+        "tol": {
+          "abs": 0.006
+        },
+        "label": "Expected false factors at the t > 2 bar",
+        "accept": "13.65: $300 \\times 0.0455$, give or take 0.005.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 15,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.0455,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each noise factor passes with chance 0.0455."
+        },
+        {
+          "rung": "point",
+          "text": "Read the $|t| > 2$ line where it crosses 300 factors.",
+          "highlight": [
+            "n300",
+            "t2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$300 \\times 0.0455$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 14 noise factors would pass $|t| > 2$.",
+        "generic": "Not quite right. Multiply the number of factors by the chance each passes.",
+        "byKey": {
+          "five": "You used 0.05. The two-sided chance of $|t| > 2$ is 0.0455, a little less.",
+          "one": "That is one factor's chance. There were 300."
+        }
+      },
+      "explain": {
+        "text": "$300 \\times 0.0455 = 13.65$: about 14 published factors from noise alone at the usual bar. Far more than 300 were tried and never published. That is why the bar had to move.",
+        "canvas": {
+          "highlight": [
+            "t2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The $t > 3$ rule",
+      "prose": "Harvey, Liu and Zhu (2016) argued that a new factor should clear $t > 3$, not 2. For a noise factor, $P(|Z| > 3) = 0.0027$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            400
+          ],
+          "y": [
+            0,
+            20
+          ],
+          "xLabel": "Factors tried, all noise",
+          "yLabel": "Expected false factors",
+          "xStep": 100,
+          "yStep": 5,
+          "functions": [
+            {
+              "id": "t2",
+              "expr": "0.0455*x",
+              "label": "$|t| > 2$",
+              "domain": [
+                0,
+                400
+              ],
+              "labelAt": 150
+            },
+            {
+              "id": "t3",
+              "expr": "0.0027*x",
+              "label": "$|t| > 3$",
+              "domain": [
+                0,
+                400
+              ],
+              "colour": 2,
+              "labelSide": "above",
+              "labelAt": 150
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "n300",
+              "x": 300,
+              "label": "300 factors"
+            }
+          ]
+        }
+      },
+      "question": "How many of 300 noise factors would clear $|t| > 3$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.81,
+        "tol": {
+          "abs": 0.006
+        },
+        "label": "Expected false factors at the t > 3 bar",
+        "accept": "0.81: $300 \\times 0.0027$, give or take 0.005.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 13.65,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.0027,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Same sum, new chance."
+        },
+        {
+          "rung": "point",
+          "text": "Read the $|t| > 3$ line where it crosses 300 factors.",
+          "highlight": [
+            "n300",
+            "t3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$300 \\times 0.0027$."
+        }
+      ],
+      "feedback": {
+        "correct": "$300 \\times 0.0027 = 0.81$.",
+        "generic": "Not quite right. Multiply 300 by 0.0027.",
+        "byKey": {
+          "two": "That is the count at the old bar of 2. Use $P(|Z| > 3) = 0.0027$.",
+          "one": "That is one factor's chance."
+        }
+      },
+      "explain": {
+        "text": "$300 \\times 0.0027 = 0.81$: under one false factor expected, down from 13.65. The bar of 3 is a multiple-testing correction for a field that has tried hundreds of ideas. Bonferroni for 300 tests would ask even more, $|t| > 3.76$.",
+        "canvas": {
+          "highlight": [
+            "t3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Peeking at the test set",
+      "prose": "A researcher holds out 2020 to 2024 as a test set. Her first rule fails there. She tweaks it and re-tests on the same years, 20 times, then keeps the best: attempt 16, with a test Sharpe of 1.11.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "1"
+            },
+            {
+              "id": "a2",
+              "label": "2"
+            },
+            {
+              "id": "a3",
+              "label": "3"
+            },
+            {
+              "id": "a4",
+              "label": "4"
+            },
+            {
+              "id": "a5",
+              "label": "5"
+            },
+            {
+              "id": "a6",
+              "label": "6"
+            },
+            {
+              "id": "a7",
+              "label": "7"
+            },
+            {
+              "id": "a8",
+              "label": "8"
+            },
+            {
+              "id": "a9",
+              "label": "9"
+            },
+            {
+              "id": "a10",
+              "label": "10"
+            },
+            {
+              "id": "a11",
+              "label": "11"
+            },
+            {
+              "id": "a12",
+              "label": "12"
+            },
+            {
+              "id": "a13",
+              "label": "13"
+            },
+            {
+              "id": "a14",
+              "label": "14"
+            },
+            {
+              "id": "a15",
+              "label": "15"
+            },
+            {
+              "id": "a16",
+              "label": "16",
+              "colour": 2
+            },
+            {
+              "id": "a17",
+              "label": "17"
+            },
+            {
+              "id": "a18",
+              "label": "18"
+            },
+            {
+              "id": "a19",
+              "label": "19"
+            },
+            {
+              "id": "a20",
+              "label": "20"
+            }
+          ],
+          "xLabel": "Attempt on the test set",
+          "yLabel": "Test Sharpe",
+          "showValues": false,
+          "yMin": -1.4,
+          "yMax": 1.4
+        },
+        "state": {
+          "values": {
+            "a1": -0.35,
+            "a2": 0.01,
+            "a3": -0.22,
+            "a4": -0.25,
+            "a5": -1.17,
+            "a6": 0.2,
+            "a7": 0.34,
+            "a8": 0.2,
+            "a9": -0.08,
+            "a10": -0.17,
+            "a11": 0.48,
+            "a12": 0.69,
+            "a13": 0.39,
+            "a14": -0.05,
+            "a15": 0.45,
+            "a16": 1.11,
+            "a17": -0.29,
+            "a18": 0.54,
+            "a19": -0.5,
+            "a20": -0.4
+          },
+          "caption": "Twenty rules with no edge, seed 50"
+        }
+      },
+      "question": "What is her test Sharpe of 1.11 now worth as evidence?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "held-out",
+            "text": "Strong: it was measured on held-out data",
+            "why": "You trusted the label test set. After 20 looks it has become training data: 1.11 is the best of 20 tries on it."
+          },
+          {
+            "id": "right",
+            "text": "Little: it is the best of 20 tries on the same data, so the test set is spent",
+            "correct": true
+          },
+          {
+            "id": "halve",
+            "text": "Strong, once halved for safety",
+            "why": "No fixed haircut repairs this. She ran 20 tests, and the hold-out is no longer held out."
+          },
+          {
+            "id": "never",
+            "text": "Nothing, since a test set is never valid",
+            "why": "A test set used once is valid. It is the 20 looks that spent it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many times did the test set judge a rule?"
+        },
+        {
+          "rung": "point",
+          "text": "Each bar is one look at the same five years.",
+          "highlight": [
+            "a16"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The best of 20 noise tries on 5 years averages about $1.87 / \\sqrt 5 = 0.84$."
+        }
+      ],
+      "feedback": {
+        "correct": "Twenty looks turned the test set into a search.",
+        "generic": "Not quite right. Count how many rules the test set has judged.",
+        "byKey": {
+          "held-out": "You trusted the label test set. After 20 looks it has become training data: 1.11 is the best of 20 tries on it."
+        }
+      },
+      "explain": {
+        "text": "Each re-test was a new test on the same 5 years. The best of 20 noise tries averages a Sharpe of $1.87 / \\sqrt 5 = 0.84$, so 1.11 is unremarkable. A test set tells the truth only the first time you look.",
+        "canvas": {
+          "highlight": [
+            "a16"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Snooping's cousins",
+      "prose": "Other mistakes also feed a backtest information it would not have had. **Survivorship bias** you met in *Survivorship bias*. **Look-ahead bias** uses data before it was available.",
+      "question": "Match each backtest to its flaw.",
+      "widget": {
+        "kind": "place",
+        "mode": "assign",
+        "tokens": [
+          {
+            "id": "t1",
+            "text": "Testing 50 lookbacks and reporting the best one"
+          },
+          {
+            "id": "t2",
+            "text": "Backtesting today's FTSE 100 members over 20 years"
+          },
+          {
+            "id": "t3",
+            "text": "Buying at the close on a signal computed from that same close"
+          }
+        ],
+        "slots": [
+          {
+            "id": "snoop",
+            "label": "Data snooping",
+            "accepts": [
+              "t1"
+            ]
+          },
+          {
+            "id": "surv",
+            "label": "Survivorship bias",
+            "accepts": [
+              "t2"
+            ]
+          },
+          {
+            "id": "look",
+            "label": "Look-ahead bias",
+            "accepts": [
+              "t3"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ask what each backtest knew that a trader at the time could not."
+        },
+        {
+          "rung": "point",
+          "text": "Today's index members are the firms that survived."
+        },
+        {
+          "rung": "step",
+          "text": "The best of 50 is snooping; today's members is survivorship; trading on a close you could not yet see is look-ahead."
+        }
+      ],
+      "feedback": {
+        "correct": "Selection, survivors and the future: three ways to know too much.",
+        "generic": "Not quite right. Ask what each backtest knew that a trader at the time could not."
+      },
+      "explain": {
+        "text": "Reporting the best of 50 hides 49 tests: snooping. Today's members leave out the firms that failed: survivorship. A signal from a close you cannot yet see uses the future: look-ahead."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Theory first",
+      "prose": "Edge case. In 2014 an economist publishes a model that predicts a carry effect, with the exact rule and test written down. The rule is then run once on 2015 to 2024 data: $t = 2.3$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0,
+            "sigma": 1
+          },
+          "x": [
+            -4,
+            4
+          ],
+          "xLabel": "$t$ statistic if there is no effect"
+        },
+        "state": {
+          "shade": {
+            "from": 2.3,
+            "to": null
+          }
+        }
+      },
+      "question": "How many tests should the correction count?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "One: the rule and the test were fixed before the data",
+            "correct": true
+          },
+          {
+            "id": "papers",
+            "text": "Every carry paper ever written",
+            "why": "Other people's tests on other data do not touch this one. This rule was fixed before any looking."
+          },
+          {
+            "id": "hundred",
+            "text": "Assume 100, to be safe",
+            "why": "Counting tests that never happened throws away real evidence."
+          },
+          {
+            "id": "zero",
+            "text": "None, since a theory needs no test",
+            "why": "The theory still has to meet the data, in one test at the usual bar."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many rules were tried on 2015 to 2024 data?"
+        },
+        {
+          "rung": "point",
+          "text": "The shaded tail is the chance a single no-effect test gives $t \\ge 2.3$.",
+          "highlight": [
+            "shade"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Fixed in advance and run once: $N = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "One test, so $t = 2.3$ meets the plain bar.",
+        "generic": "Not quite right. Count the rules that were run on the new data."
+      },
+      "explain": {
+        "text": "The rule was fixed before the data existed, and run once: $N = 1$. So $t = 2.3$ meets the plain bar, with one-sided $p = 0.011$. No snooping happened, so no penalty is due."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "An honest protocol",
+      "prose": "An honest backtest makes the count of tests known and the final test clean. Each step closes one door to snooping.",
+      "question": "Put the protocol in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "plan",
+            "text": "Write down the hypothesis, the rule and the hold-out period, before seeing the data"
+          },
+          {
+            "id": "tune",
+            "text": "Tune any parameters on the training data only"
+          },
+          {
+            "id": "once",
+            "text": "Run the final rule on the hold-out, once"
+          },
+          {
+            "id": "report",
+            "text": "Report the result with the count of everything tried"
+          }
+        ],
+        "answer": [
+          "plan",
+          "tune",
+          "once",
+          "report"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What has to happen before anyone looks at the data?"
+        },
+        {
+          "rung": "point",
+          "text": "The hold-out is used after all tuning is finished."
+        },
+        {
+          "rung": "step",
+          "text": "Plan, tune on training data, one run on the hold-out, then report."
+        }
+      ],
+      "feedback": {
+        "correct": "Plan, tune, test once, report everything.",
+        "generic": "Not quite right. Fix the plan first and touch the hold-out last.",
+        "byKey": {
+          "once": "The hold-out run must come after tuning, or tuning leaks into it.",
+          "plan": "The plan comes first, before any data are seen."
+        }
+      },
+      "explain": {
+        "text": "The plan fixes $N$ before the data can suggest anything. Tuning stays off the hold-out, and one run keeps it honest. Reporting the count lets any reader apply the right correction."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The best window",
+      "prose": "A momentum paper tries 50 lookback windows and reports the best: a Sharpe of 0.9 over 10 years, so $t = 0.9\\sqrt{10} = 2.85$. The one-sided Bonferroni bar for 50 tries is $z_{0.999} = 3.09$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            1.5
+          ],
+          "xLabel": "Lookbacks tried $N$",
+          "yLabel": "Sharpe the best must clear, 10 years",
+          "xStep": 20,
+          "yStep": 0.25,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "(sqrt(-2*ln(0.05/x)) - (2.515517 + 0.802853*sqrt(-2*ln(0.05/x)) + 0.010328*(-2*ln(0.05/x)))/(1 + 1.432788*sqrt(-2*ln(0.05/x)) + 0.189269*(-2*ln(0.05/x)) + 0.001308*(-2*ln(0.05/x))*sqrt(-2*ln(0.05/x))))/sqrt(10)",
+              "label": "bar for 10 years",
+              "domain": [
+                1,
+                100
+              ],
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p50",
+              "x": 50,
+              "y": 0.977,
+              "label": "N = 50: 0.98"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "paper",
+              "y": 0.9,
+              "label": "paper: 0.9"
+            }
+          ]
+        }
+      },
+      "question": "Does the reported window pass?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "Yes: 2.85 is far above 1.645",
+            "why": "You used the bar for one test. The paper tried 50 windows."
+          },
+          {
+            "id": "right",
+            "text": "No: 2.85 is below the bar of 3.09",
+            "correct": true
+          },
+          {
+            "id": "close",
+            "text": "Yes: 2.85 is close enough to 3",
+            "why": "Close is not past. The bar exists because the best of 50 often gets near it by luck."
+          },
+          {
+            "id": "small",
+            "text": "No: a Sharpe of 0.9 can never be significant",
+            "why": "It can, with a long enough record: 0.9 over 12 years gives $t = 3.12$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which bar applies to the best of 50?"
+        },
+        {
+          "rung": "point",
+          "text": "The marked point is the bar for 50 windows over 10 years; the paper's 0.9 is the dashed line.",
+          "highlight": [
+            "p50",
+            "paper"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3.09 / \\sqrt{10} = 0.98$, above 0.9."
+        }
+      ],
+      "feedback": {
+        "correct": "2.85 is short of 3.09: the window does not pass.",
+        "generic": "Not quite right. Compare $t = 2.85$ with the bar for the best of 50.",
+        "byKey": {
+          "one": "You used the bar for one test. The paper tried 50 windows."
+        }
+      },
+      "explain": {
+        "text": "The best of 50 must clear $t = 3.09$, a Sharpe of $3.09/\\sqrt{10} = 0.98$ over 10 years. At 0.9 the paper falls short. With 12 years the same Sharpe would give $t = 3.12$ and pass."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A model with a validation set",
+      "prose": "A preview of Stage 2. A machine-learning model is tuned over 200 hyperparameter settings, each scored on a validation set. The best scores a Sharpe of 1.3 there.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Data",
+            "Used for"
+          ],
+          "rows": [
+            [
+              "Training, 2010 to 2017",
+              "Fitting each model"
+            ],
+            [
+              "Validation, 2018 to 2020",
+              "Choosing the best of 200"
+            ],
+            [
+              "Test, 2021 to 2024",
+              "Not yet touched"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "Three slices of the data"
+        }
+      },
+      "question": "What is the honest next step?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Score the chosen model once on the untouched test years",
+            "correct": true
+          },
+          {
+            "id": "report",
+            "text": "Report 1.3 as the expected live Sharpe",
+            "why": "1.3 is the best of 200 on the validation data, so it is biased upward like any best-of-many."
+          },
+          {
+            "id": "pool",
+            "text": "Refit on validation and test together, then score on both",
+            "why": "Scoring on data used for fitting is in-sample. Nothing would be left to test with."
+          },
+          {
+            "id": "more",
+            "text": "Try 200 more settings to be sure",
+            "why": "More tries only raise the maximum that luck can reach on the validation set."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which slice has played no part in the choice?"
+        },
+        {
+          "rung": "point",
+          "text": "The validation slice chose the model, so it is spent.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Use the test years, once."
+        }
+      ],
+      "feedback": {
+        "correct": "One clean run on the test years.",
+        "generic": "Not quite right. Find the data that played no part in fitting or choosing."
+      },
+      "explain": {
+        "text": "The validation set picked the best of 200, so 1.3 carries the same selection bias as a backtest search. The test years are the hold-out: score once, and report that number with the count of 200. That is the honest protocol in machine-learning dress.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A rule chosen on some data looks good there by construction. Only data the choice never saw can test it.",
+      "With hundreds of factors tried, $|t| > 2$ lets about 14 noise factors through per 300. That is why factor research asks for $t > 3$.",
+      "Specify first, tune on training data, test once on a hold-out, and report everything tried. A rule fixed before the data needs no penalty."
+    ],
+    "formula": {
+      "name": "Expected false discoveries",
+      "tex": "E[\\text{false}] = N \\cdot P(|Z| > c)",
+      "note": "$P(|Z| > 2) = 0.0455$ and $P(|Z| > 3) = 0.0027$."
+    },
+    "trap": "Re-testing on the test set until it looks good turns the test set into training data."
+  },
+  "quiz": [
+    {
+      "id": "q-checklist",
+      "difficulty": 3,
+      "prose": "You are handed a backtest with a strong Sharpe ratio.",
+      "question": "Select all that apply: which questions belong on a checklist for reading any backtest?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "count",
+            "text": "How many variants were tried before this one?",
+            "correct": true
+          },
+          {
+            "id": "hold",
+            "text": "Was data held out, and looked at only once?",
+            "correct": true
+          },
+          {
+            "id": "dead",
+            "text": "Does the universe include firms that later failed?",
+            "correct": true
+          },
+          {
+            "id": "time",
+            "text": "Was every signal built only from data available at the time?",
+            "correct": true
+          },
+          {
+            "id": "high",
+            "text": "Is the in-sample Sharpe above 2?",
+            "why": "A high in-sample number is what snooping produces. It is not a check."
+          },
+          {
+            "id": "smooth",
+            "text": "Does the in-sample equity curve look smooth?",
+            "why": "A smooth curve in sample is easy to fit. It says nothing about the future."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Count the tries, check the hold-out, the survivors and the timing.",
+        "generic": "Not quite right. Keep the questions that expose snooping and its cousins."
+      },
+      "explain": {
+        "text": "The first four expose snooping, a spent hold-out, survivorship and look-ahead. The last two describe the result, not how it was made. A good-looking in-sample curve is exactly what a search produces."
+      }
+    },
+    {
+      "id": "q-500",
+      "difficulty": 2,
+      "prose": "A database holds 500 factor definitions, all of them noise. Use $P(|Z| > 3) = 0.0027$.",
+      "question": "How many are expected to clear $|t| > 3$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.35,
+        "tol": {
+          "abs": 0.006
+        },
+        "label": "Expected false factors",
+        "accept": "1.35: $500 \\times 0.0027$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 22.75,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.0027,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$500 \\times 0.0027 = 1.35$.",
+        "generic": "Not quite right. Multiply 500 by 0.0027.",
+        "byKey": {
+          "two": "That is the count at $|t| > 2$. Use 0.0027.",
+          "one": "That is one factor's chance."
+        }
+      },
+      "explain": {
+        "text": "$500 \\times 0.0027 = 1.35$. Even the stricter bar lets about one noise factor through in 500. The more factors a field tries, the higher the bar must go."
+      }
+    },
+    {
+      "id": "q-twelve",
+      "difficulty": 3,
+      "prose": "The 3-month lookback from the lesson had Sharpe 0.86 over 8 years, so $t = 0.86\\sqrt 8 = 2.43$. It was the best of 12. The one-sided Bonferroni bar for 12 is $z_{1 - 0.05/12} = 2.64$.",
+      "question": "Does it pass the corrected bar?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "No: 2.43 is below 2.64",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "Yes: 2.43 is above 1.645",
+            "why": "You used the one-test bar. It was the best of 12."
+          },
+          {
+            "id": "two",
+            "text": "Yes: 2.43 is above 2",
+            "why": "You used the rough two-sided bar for one test. It was chosen from 12."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2.43 falls short of 2.64, and the market had no momentum.",
+        "generic": "Not quite right. Compare 2.43 with the bar for the best of 12."
+      },
+      "explain": {
+        "text": "Against one test, 2.43 would look strong, with one-sided $p = 0.008$. As the best of 12, it must clear 2.64, and it does not. The correction got it right: the simulated market had no momentum."
+      }
+    },
+    {
+      "id": "q-nopenalty",
+      "difficulty": 2,
+      "prose": "Four strategies each show $t = 2.4$ on 10 years of data.",
+      "question": "Which one needs no snooping penalty?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "A rule set out in a 2014 paper, run once on 2015 to 2024",
+            "correct": true
+          },
+          {
+            "id": "tuned",
+            "text": "A rule whose threshold was tuned on 2015 to 2024",
+            "why": "Tuning on the same years makes them in-sample. The tuning was a search."
+          },
+          {
+            "id": "best",
+            "text": "The best of 8 rules run on 2015 to 2024",
+            "why": "That is a family of 8. The best must clear a higher bar."
+          },
+          {
+            "id": "survivor",
+            "text": "A rule tested on today's index members over 2015 to 2024",
+            "why": "No snooping, perhaps, but survivorship bias inflates the result."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Fixed in advance and run once: $N = 1$.",
+        "generic": "Not quite right. Find the rule that was fixed before the data were seen."
+      },
+      "explain": {
+        "text": "Only the 2014 rule was fixed before the data and run once, so $N = 1$. The tuned rule and the best of 8 are searches. The survivor test has its own bias."
+      }
+    }
+  ]
+}

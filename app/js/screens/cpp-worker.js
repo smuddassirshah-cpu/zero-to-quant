@@ -24,7 +24,7 @@
 
 /* The libc++ debug hardening mode turns an out-of-range vector[] or a bad iterator into a readable message
    ("libc++ Hardening assertion __n < size() failed: vector[] index out of bounds") instead of a silent wrong read */
-const FLAGS = ['-std=c++17', '-O1', '-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG', '-fno-color-diagnostics', '-fmessage-length=0', '-ferror-limit=10'];
+let FLAGS = ['-std=c++17', '-O1', '-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG', '-fno-color-diagnostics', '-fmessage-length=0', '-ferror-limit=10'];
 /* --stack-first: a stack overflow traps (memory access out of bounds) instead of overwriting the program's data */
 const LINK = ['-Wl,--stack-first,-z,stack-size=8388608'];
 
@@ -225,6 +225,7 @@ self.onmessage = async (e) => {
     const t0 = performance.now();
     try {
       if (typeof WebAssembly !== 'object') throw new Error('This browser has no WebAssembly support.');
+      if (/^-O[0-3s]$/.test(m.opt || '')) FLAGS = FLAGS.map(f => (/^-O/.test(f) ? m.opt : f)); // a benchmarking knob; the page sends none
       const reachable = async (u) => { try { const r = await fetch(u + 'bundle.js', { method: 'HEAD' }); return r.ok; } catch { return false; } };
       const base = (await reachable(m.base)) ? m.base : m.local && (await reachable(m.local)) ? m.local : null;
       if (!base) throw new Error('the compiler CDN (' + m.base + ') is unreachable and there is no local copy in vendor/yowasp-clang/.');
