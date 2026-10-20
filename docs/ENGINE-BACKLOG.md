@@ -994,3 +994,7 @@ Raised later (regression level 1, trees level 1):
 358. `scatter`: marked points that join neither the fit nor the SSE (an $(\bar x, \bar y)$ marker), a second readout (sum of absolute residuals), whole-number x ticks, and a label slot for a second straight line.
 359. `tree`: patchable `state.labels` and `state.leaves` (node and leaf values from state and from `derive`), so a slider can relabel nodes live and a learner can fill the tree in place (with 275 and 324).
 360. `table` widget: per-cell `wrong` values with their own feedback keys (the `numeric` widget's `wrong[]`), extending 356.
+
+Raised later (markets level 2):
+
+361. `plane`: a percent tick format for an axis (`xFormat: "%"`), and `series` values bindable to a slider (see 302).
