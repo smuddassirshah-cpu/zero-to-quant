@@ -998,3 +998,9 @@ Raised later (regression level 1, trees level 1):
 Raised later (markets level 2):
 
 361. `plane`: a percent tick format for an axis (`xFormat: "%"`), and `series` values bindable to a slider (see 302).
+
+Raised later (options level 2):
+
+362. `payoff`: per-leg label position (labels sit at 6% along the range, on the flat part of a call), extending 338.
+363. `payoff`: legs as patchable state (quantity, add or remove a leg), so a `place` of legs can build a position live.
+364. `place` widget: let placed tokens drive a canvas patch (`onPlace` state), so dropping a leg redraws the payoff.

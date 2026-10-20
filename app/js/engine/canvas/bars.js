@@ -28,44 +28,64 @@
     const exact = (params.exact || []).map((e) => ({ i: catIndex(e.x), y: +e.y })).filter((e) => e.i >= 0);
     const sim = params.sim || null;
     const proportion = params.proportion ?? (exact.length > 0);
+    /* item 279: groups: [{ id, label, colour }] draws two or more bars per category side by side, with a legend; their
+       heights come from state.values.<group id> ({ category: value }) or, with a sim whose outcome is a list
+       ([X, Y], item 303), from the list's entries in order */
+    const groups = Array.isArray(params.groups) && params.groups.length ? params.groups.map((q, i) => ({ id: String(q.id ?? 'g' + i), label: String(q.label ?? q.id ?? ''), colour: q.colour ?? i + 1 })) : null;
+    const G = groups ? groups.length : 1;
 
-    /* Seeded outcomes: outcomes[i] is the same trial every time, so 10 then 100 shows the first 110. */
-    const outcomes = [];
-    let simRng = null, simErr = null;
-    const ensure = (n) => {
+    /* Seeded outcomes: outcomes[i] is the same trial every time, so 10 then 100 shows the first 110. Items 326, 321,
+       286: the outcome reads params and state.params by name (a slider on n re-runs the stream), sim.let binds names
+       per trial, and sim.filter discards trials (they are not counted) */
+    let outcomes = [], discarded = 0, simRng = null, simErr = null, simKey = null, trialFn = null;
+    const simVars = (view) => ({ ...(params.params || {}), ...((view && view.params) || {}) });
+    const ensure = (n, view) => {
       if (!sim || simErr) return;
+      const vars = simVars(view); delete vars.trials;
+      const key = JSON.stringify(vars);
+      if (key !== simKey) { simKey = key; outcomes = []; discarded = 0; simRng = null; trialFn = null; }
       try {
         if (!simRng) simRng = K.rngFor(sim.seed ?? 1);
-        while (outcomes.length < n) outcomes.push(Z.sim.outcome(sim.outcome, simRng));
+        if (!trialFn) trialFn = Z.sim.trial ? Z.sim.trial(sim, vars) : ((r) => ({ value: Z.sim.outcome(sim.outcome, r), keep: true }));
+        let guard = 0;
+        while (outcomes.length < n && guard++ < 50 * n + 1000) { const t = trialFn(simRng); if (t.keep) outcomes.push(t.value); else discarded++; }
       } catch (e) { simErr = e; console.warn('bars sim:', e.message); }
     };
-    const tally = (n) => {
-      ensure(n); const counts = new Array(cats.length).fill(0);
-      for (let i = 0; i < Math.min(n, outcomes.length); i++) { const v = outcomes[i]; const j = binned ? catIndex(+v) : catIndex(typeof v === 'boolean' ? +v : v); if (j >= 0) counts[j]++; }
+    const tally = (n, view, g = 0) => {
+      ensure(n, view); const counts = new Array(cats.length).fill(0);
+      for (let i = 0; i < Math.min(n, outcomes.length); i++) { let v = outcomes[i]; if (Array.isArray(v)) v = v[g]; const j = binned ? catIndex(+v) : catIndex(typeof v === 'boolean' ? +v : v); if (j >= 0) counts[j]++; }
       return counts;
     };
-    const heights = (view) => {
+    /* heights of group g (0 without groups) */
+    const heights = (view, g = 0) => {
       rebin(view);
       if (binned && Array.isArray(params.data)) { // raw observations: counts (or proportions) in the current bins
         const counts = new Array(cats.length).fill(0); params.data.forEach((v) => { const j = catIndex(+v); if (j >= 0) counts[j]++; else if (+v === params.bins.max) counts[cats.length - 1]++; });
         return counts.map((c) => (proportion ? (params.data.length ? c / params.data.length : 0) : c));
       }
       if (sim && view.ran != null && !(view.values && Object.keys(view.values).length && !view.ran)) {
-        const n = Math.round(view.ran), counts = tally(n);
+        const n = Math.round(view.ran), counts = tally(n, view, g);
         return counts.map((c) => (proportion ? (n ? c / n : 0) : c));
       }
-      const v = view.values || {}; const out = new Array(cats.length).fill(0);
-      for (const [k, val] of Object.entries(v)) { const i = catIndex(k); if (i >= 0) out[i] = +val || 0; }
-      for (const [i, c] of (params.categories || []).entries()) if (K.isObj(c) && c.value != null && !(c.label in v) && !((c.id || 'x' + c.label) in v)) out[i] = +c.value;
+      const v0 = view.values || {}, v = groups ? (K.isObj(v0[groups[g].id]) ? v0[groups[g].id] : {}) : v0; const out = new Array(cats.length).fill(0);
+      for (const [k, val] of Object.entries(v)) { const i = catIndex(k); if (i >= 0) out[i] = Array.isArray(val) ? (+val[g] || 0) : (+val || 0); }
+      for (const [i, c] of (params.categories || []).entries()) if (K.isObj(c) && c.value != null && !(c.label in v) && !((c.id || 'x' + c.label) in v)) out[i] = Array.isArray(c.value) ? (+c.value[g] || 0) : +c.value;
       return out;
     };
+    const allHeights = (view) => (groups ? groups.flatMap((_, g) => heights(view, g)) : heights(view, 0));
+    /* item 272: yScale "log": positive heights on a log axis (ticks at 1, 2, 5 times powers of ten) */
+    const logY = params.yScale === 'log';
+    /* the numeric value of category i (its label), for value axes, curves and cuts */
+    const valOf = (i) => (binned ? (cats[i].lo + cats[i].hi) / 2 : Number(String(cats[i].label).replace('−', '-')));
     const yTop = (view, hs) => {
       if (params.yMax != null) return params.yMax;
+      if (logY) { const m = Math.max(...hs.filter((h) => h > 0), 1); return Math.pow(10, Math.ceil(Math.log10(m * 1.05))); }
       const m = Math.max(...hs, ...exact.map((e) => e.y * (sim ? 1.6 : 1.1)), proportion ? 0.05 : 1);
       const t = C.niceTicks(0, m * 1.08, 5); return t[t.length - 1] >= m * 1.02 ? t[t.length - 1] : m * 1.15;
     };
     /* item 133: negative values hang below a zero baseline; the axis runs down to a nice tick under the lowest bar */
     const yBot = (hs) => {
+      if (logY) { const m = Math.min(...hs.filter((h) => h > 0), 1); return params.yMin > 0 ? params.yMin : Math.pow(10, Math.floor(Math.log10(m))); }
       if (params.yMin != null) return params.truncate ? params.yMin : Math.min(0, params.yMin); // item 184: truncate: true keeps a yMin above 0 (the truncated-axis trick)
       const m = Math.min(0, ...hs); if (m >= 0) return 0;
       const t = C.niceTicks(m * 1.08, 0, 4); return t[0] <= m * 1.02 ? t[0] : m * 1.15;
