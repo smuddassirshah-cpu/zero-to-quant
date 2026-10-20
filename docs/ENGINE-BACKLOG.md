@@ -1004,3 +1004,9 @@ Raised later (options level 2):
 362. `payoff`: per-leg label position (labels sit at 6% along the range, on the flat part of a call), extending 338.
 363. `payoff`: legs as patchable state (quantity, add or remove a leg), so a `place` of legs can build a position live.
 364. `place` widget: let placed tokens drive a canvas patch (`onPlace` state), so dropping a leg redraws the payoff.
+
+Raised later (regression level 3):
+
+365. `scatter`: colour points by group (`group` per point with a legend).
+366. `plane`: document `derive` targets for `vlines` and `hlines` entries so limits can move with a slider.
+367. A canvas that regenerates a seeded residual or return series from a parameter (an AR(1) slider redrawing residuals); none can now.
