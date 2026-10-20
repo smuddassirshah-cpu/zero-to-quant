@@ -931,6 +931,13 @@
           const d = 'M' + vs.map(([x, y]) => `${sx(x).toFixed(2)},${sy(y).toFixed(2)}`).join('L') + 'Z';
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-poly-f' + (R.mode === 'tap' ? ' cv-body' : '') }), svg('path', { d, class: 'cvb-ln' + (pg.dashed ? ' cvb-dash' : '') }));
           if (R.mode === 'tap') R.tappable(o, pg.id, pg.ariaLabel || pg.label || 'Shape'); // item 195
+          /* item 244: glyph: true draws an "F" in the shape's own frame (first vertex, edges to the second and the last
+             vertex), so a linear map that flips orientation shows a mirrored F */
+          if (pg.glyph && !sec && vs.length >= 3) {
+            const [ox, oy] = vs[0], e1 = [vs[1][0] - ox, vs[1][1] - oy], e2 = [vs[vs.length - 1][0] - ox, vs[vs.length - 1][1] - oy];
+            const at = (u, w) => `${sx(ox + u * e1[0] + w * e2[0]).toFixed(2)},${sy(oy + u * e1[1] + w * e2[1]).toFixed(2)}`;
+            o.append(svg('path', { d: `M${at(0.34, 0.2)}L${at(0.34, 0.8)}L${at(0.68, 0.8)}M${at(0.34, 0.52)}L${at(0.6, 0.52)}`, class: 'cvb-ln cvb-glyph' }));
+          }
           plot.append(o);
           const cxm = vs.reduce((a, q) => a + q[0], 0) / vs.length, cym = vs.reduce((a, q) => a + q[1], 0) / vs.length;
           (pg.vertexLabels || []).forEach((t, k) => {

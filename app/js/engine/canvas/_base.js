@@ -505,7 +505,13 @@
         const list = (patch[listKey] || st[listKey]).map(it => (it && it.id === head ? setPath({ ...it }, rest, v) : it));
         const before = st[listKey].find(it => it && it.id === head);
         if (JSON.stringify(getPath(before, rest)) !== JSON.stringify(v)) patch[listKey] = list;
-      } else if (JSON.stringify(getPath(st, [head, ...rest])) !== JSON.stringify(v)) setPath(patch, [head, ...rest], v);
+      } else if (JSON.stringify(getPath(st, [head, ...rest])) !== JSON.stringify(v)) {
+        /* item 220: a numeric segment writes one component of an array ("g.v.0"): the array is copied whole into the
+           patch, so it stays an array */
+        const path = [head, ...rest]; let cur = patch, src = st;
+        path.slice(0, -1).forEach((k) => { src = src == null ? undefined : src[k]; if (cur[k] == null || typeof cur[k] !== 'object') cur[k] = Array.isArray(src) ? src.slice() : {}; else if (Array.isArray(src) && !Array.isArray(cur[k])) cur[k] = Object.assign(src.slice(), cur[k]); cur = cur[k]; });
+        cur[path[path.length - 1]] = v;
+      }
     };
     const patchFor = () => {
       const S = scope(), patch = {};
@@ -532,7 +538,7 @@
     apply();
   };
   const getPath = (o, path) => path.reduce((a, k) => (a == null ? undefined : a[k]), o);
-  const setPath = (o, path, v) => { let cur = o; path.slice(0, -1).forEach(k => { cur[k] = cur[k] && typeof cur[k] === 'object' ? { ...cur[k] } : {}; cur = cur[k]; }); cur[path[path.length - 1]] = v; return o; };
+  const setPath = (o, path, v) => { let cur = o; path.slice(0, -1).forEach(k => { cur[k] = Array.isArray(cur[k]) ? cur[k].slice() : cur[k] && typeof cur[k] === 'object' ? { ...cur[k] } : {}; cur = cur[k]; }); cur[path[path.length - 1]] = v; return o; };
 
   /* Registry */
   const kinds = {};
