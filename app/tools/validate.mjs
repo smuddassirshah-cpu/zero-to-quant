@@ -559,8 +559,8 @@ const checkCanvas = (file, where, c) => {
   if (c.kind === 'tree' && S.branching != null && !(typeof S.branching === 'number' || isObj(S.branching) || Array.isArray(S.branching))) err(file, `${where}.state.branching`, 'branching is a number, a list per level or { "0": n, ... }');
   if (c.derive != null) {
     if (!isObj(c.derive)) err(file, `${where}.derive`, 'derive maps a target ("p2.x", "caption") to an expression');
-    else Object.entries(c.derive).forEach(([t, e]) => {
-      if (typeof e !== 'string' && typeof e !== 'number') { err(file, `${where}.derive.${t}`, 'must be an expression string or a number'); return; }
+    else Object.entries(c.derive).flatMap(([t, e]) => (t === 'let' && isObj(e) ? Object.entries(e).map(([k, v]) => ['let.' + k, v]) : [[t, e]])).forEach(([t, e]) => {
+      if (typeof e !== 'string' && typeof e !== 'number') { err(file, `${where}.derive.${t}`, t === 'let' ? 'let maps names to expressions' : 'must be an expression string or a number'); return; }
       const parts = typeof e === 'string' ? (e.includes('{{') ? [...e.matchAll(/\{\{([^}]+)\}\}/g)].map(m => m[1]) : [e]) : [];
       parts.forEach(x => { if (/\^/.test(x.replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g, '""'))) warn(file, `${where}.derive.${t}`, `"^" in a derive formula is not a power (it is JavaScript's bitwise XOR): write pow(a, b) or a ** b, or put a curve formula in quotes inside sum() or integral() (${x})`); });
       parts.forEach(x => { if (/[;`{}]|=>|\bfunction\b|\bnew\b|\bthis\b|(^|[^=!<>])=(?!=)/.test(x.replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g, '""'))) err(file, `${where}.derive.${t}`, `not an expression: ${x}`); else { try { new Function('S', 'with (S) { return (' + x + '); }'); } catch (er) { err(file, `${where}.derive.${t}`, `does not parse: ${x}`); } } });

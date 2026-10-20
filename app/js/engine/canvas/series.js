@@ -10,7 +10,10 @@
   C.register('series', (host, params, ctx) => {
     const K = Z.cvb;
     const W = 540, H = params.height || 300;
-    const list = (params.series || []).map((s, i) => ({ ...s, id: s.id || 's' + i, slot: s.colour || i + 1 }));
+    /* item 327: a series may be simulated: sim: { outcome, seed, n: 1000, running: "mean" | "varp" | "var" | "sd" |
+       "sum" | "none", let, filter } draws n seeded outcomes (params read by name) and plots the running statistic */
+    const simValues = (sp, vars) => { try { const r = Z.sim.rng(sp.seed ?? 1), tr = Z.sim.trial(sp, vars), out = []; let guard = 0; const n = Math.max(1, Math.round(sp.n || 1000)); while (out.length < n && guard++ < 50 * n) { const t = tr(r); if (t.keep) out.push(+t.value); } return sp.running === 'none' ? out : Z.sim.running(out, sp.running || 'mean'); } catch (e) { console.warn('series sim:', e.message); return []; } };
+    const list = (params.series || []).map((s, i) => ({ ...s, id: s.id || 's' + i, slot: s.colour || i + 1, ...(s.sim ? { values: simValues(s.sim, { ...(params.params || {}) }) } : {}) }));
     const n = Math.max(1, ...list.map((s) => (s.values || s.ohlc || []).length));
     const dates = params.x === 'dates' ? (params.dates || []).map((d) => new Date(d + (String(d).length <= 10 ? 'T00:00:00Z' : ''))) : null;
     const fmtPct = (v, st) => K.fmtTick(v * 100, st * 100) + '%';
@@ -53,14 +56,18 @@
     const M = params.margins || {};
     const ml = M.left ?? K.yMargin(yRange[0], yRange[1], H - 60, fmtY, logY), mt = 26 + titleH, mb = params.xLabel ? 46 : 30, mr = M.right ?? Math.max(14, Math.min(150, labelW + y2W), y2W + 8);
     const hasCandles = list.some((s) => s.ohlc && (params.candles || s.candles)), padI = hasCandles ? 0.7 : 0;
-    const sx = C.scale([-padI, n - 1 + padI], [ml, W - mr]), sy = logY ? K.logScale(yRange, [H - mb, mt]) : C.scale(yRange, [H - mb, mt]); // yScale: "log", for log-price charts
+    /* item 310: xScale "log" spaces the index (from indexFrom, default 1) on a log axis, for long simulations; xStep fixes
+       the tick spacing (100 ticks every hundred) */
+    const logX = params.xScale === 'log' && !dates, ix0 = params.indexFrom ?? (logX ? 1 : 0);
+    const lsx = logX ? K.logScale([Math.max(1e-9, ix0), Math.max(ix0 + 1, ix0 + n - 1)], [ml, W - mr]) : null;
+    const sx = logX ? Object.assign((i) => lsx(i + ix0), { invert: (p) => lsx.invert(p) - ix0, range: [ml, W - mr], domain: [0, n - 1] }) : C.scale([-padI, n - 1 + padI], [ml, W - mr]), sy = logY ? K.logScale(yRange, [H - mb, mt]) : C.scale(yRange, [H - mb, mt]); // yScale: "log", for log-price charts
     const sy2 = y2Range ? C.scale(y2Range, [H - mb, mt]) : null, syOf = (s2) => (s2.axis === 2 && sy2 ? sy2 : sy);
     /* item 168: dateFormat for date ticks: %Y %y %m %d %e %b %B (for example "%b %Y", "%d/%m", "%Y-%m") */
     const MONTHS_L = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const strf = (d, f) => f.replace(/%([YymdebB%])/g, (_, c) => ({ Y: String(d.getUTCFullYear()), y: String(d.getUTCFullYear()).slice(2), m: String(d.getUTCMonth() + 1).padStart(2, '0'), d: String(d.getUTCDate()).padStart(2, '0'), e: String(d.getUTCDate()), b: MONTHS[d.getUTCMonth()], B: MONTHS_L[d.getUTCMonth()], '%': '%' })[c]);
     const fmtX = dates
       ? (i) => { const d = dates[Math.round(i)]; if (!d) return ''; if (params.dateFormat) return strf(d, String(params.dateFormat)); const span = (dates[dates.length - 1] - dates[0]) / 864e5; return span > 300 ? MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2) : d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; }
-      : (i) => K.fmt(i + (params.indexFrom || 0), 2);
+      : (i) => K.fmt(i + ix0, 2);
     const idxOf = (v) => { if (typeof v === 'number') return v; if (dates && typeof v === 'string') { const t = new Date(v + (v.length <= 10 ? 'T00:00:00Z' : '')).getTime(); let best = 0; dates.forEach((d, i) => { if (Math.abs(d - t) < Math.abs(dates[best] - t)) best = i; }); return best; } return 0; };
     /* Maximum drawdown: the largest fall from a running peak, as a share of the peak (abs: true measures the fall itself,
        for cumulative P&L that starts at zero) */
@@ -75,7 +82,9 @@
       prepare(patch) { if (Array.isArray(patch.window)) patch.window = { from: patch.window[0], to: patch.window[1] }; return patch; },
       render(view, R) {
         const g = R.F.g, x0 = ml, x1 = W - mr, y0 = H - mb, y1 = mt;
-        const xt = K.ticksFor(0, n - 1, x1 - x0, { minGap: 56, fmtF: (v) => fmtX(v) });
+        let xt = K.ticksFor(0, n - 1, x1 - x0, { minGap: 56, fmtF: (v) => fmtX(v) });
+        if (logX) { const lt = K.logTicks(Math.max(1e-9, ix0), ix0 + n - 1, x1 - x0, { minGap: 40 }); xt = { ticks: lt.ticks.map((v) => v - ix0), step: 1 }; }
+        else if (params.xStep && !dates) { const st = +params.xStep, t = []; for (let v = Math.ceil(ix0 / st) * st; v <= ix0 + n - 1 + 1e-9; v += st) t.push(Math.round(v - ix0)); xt = { ticks: t, step: 1 }; }
         xt.ticks = xt.ticks.filter((v) => Number.isInteger(v) && v >= 0 && v <= n - 1);
         K.chartAxes(g, sx, sy, { yLabel: params.yLabel, xLabel: params.xLabel, fmtY, fmtX: (v) => fmtX(v), xTicks: xt, baseline: logY ? null : params.baseline ?? (yRange[0] < 0 && yRange[1] > 0 ? 0 : null) });
         if (params.title) g.append(K.lab(x0, 14, String(params.title), { anchor: 'start', cls: 'cvb-title', size: 14 }));
@@ -171,7 +180,7 @@
         const labels = [];
         for (const m of view.markers || []) {
           const s = list.find((q) => q.id === m.series) || list[0]; if (!s) continue;
-          const i = idxOf(m.i ?? m.at), v = m.y ?? valuesOf(s)[Math.round(i)]; if (!Number.isFinite(v) || i > last + 1e-9) continue;
+          const i = m.i === 'reveal' || m.at === 'reveal' ? Math.round(last) : idxOf(m.i ?? m.at), v = m.y ?? valuesOf(s)[Math.round(i)]; if (!Number.isFinite(v) || i > last + 1e-9) continue;
           const o = K.obj(m.id, '', m.colour || 'ink'), cx = sx(i), cy = syOf(s)(v);
           o.append(K.washCircle(cx, cy, 11), svg('circle', { cx, cy, r: 5, class: 'cvb-dot' }));
           R.tappable(o, m.id, m.label);
@@ -182,6 +191,10 @@
         for (const l of labels) over.append(K.lab(l.x, l.y, l.text, { anchor: l.anchor, halo: true, cls: 'cvb-strong' }));
       },
       methods: (R) => ({
+        /* item 302: controls bind reveal (0 to 1), revealAt (an index: the series drawn up to that point) and a marker's
+           index as "markers.<id>.i"; a marker with i: "reveal" rides the end of the reveal */
+        setParam: (name, v) => { const nm = String(name); if (nm === 'reveal') R.inst.set({ reveal: K.clamp(+v, 0, 1) }, { instant: true }); else if (nm === 'revealAt') R.inst.set({ reveal: K.clamp((+v - (params.indexFrom || 0)) / Math.max(1, n - 1), 0, 1) }, { instant: true }); else R.inst.set(Z.canvas.paramPatch(nm, v), { instant: true }); },
+        getParam: (name) => { const nm = String(name); if (nm === 'reveal') return R.state.reveal ?? 1; if (nm === 'revealAt') return Math.round((R.state.reveal ?? 1) * (n - 1)) + (params.indexFrom || 0); let o = R.state; for (const k of nm.split('.')) o = o == null ? undefined : Array.isArray(o) ? o.find((it) => it && it.id === k) : o[k]; return typeof o === 'number' ? o : (R.state.params || {})[nm]; },
         margins: () => ({ left: ml, right: mr }),
         maxDrawdown: (id, abs) => { const s = list.find((q) => q.id === id) || list[0]; return s ? drawdown(valuesOf(s), !!abs) : null; },
       }),
