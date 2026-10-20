@@ -1,0 +1,1060 @@
+{
+  "id": "l12-skill-or-luck",
+  "course": "limits-thm",
+  "title": "How many trades until skill shows?",
+  "minutes": 14,
+  "objectives": [
+    "Use the central limit theorem to judge whether an average return is real",
+    "Compute a standard error, a $t$-ratio and a Sharpe ratio's standard error",
+    "Explain why many tests and short records mislead"
+  ],
+  "skills": [
+    "dl-clt",
+    "dl-lln"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two track records",
+      "prose": "Two traders show you their records. A traded for 3 months, B for 4 years. Their daily returns are equally noisy.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trader",
+            "Days",
+            "Average daily return",
+            "Daily sd"
+          ],
+          "rows": [
+            [
+              "A",
+              "63",
+              "0.12%",
+              "1%"
+            ],
+            [
+              "B",
+              "1,008",
+              "0.06%",
+              "1%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Whose average would be harder for a trader with no skill to match by luck?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "B",
+            "text": "B's, despite the smaller average",
+            "correct": true
+          },
+          {
+            "id": "A",
+            "text": "A's, because 0.12% is twice 0.06%",
+            "why": "You compared the averages alone. Over 63 noisy days a big average comes easily; over 1,008 days it does not."
+          },
+          {
+            "id": "same",
+            "text": "Equally hard, since the daily sd is the same",
+            "why": "The same daily noise averages out far more over 1,008 days than over 63."
+          },
+          {
+            "id": "unknown",
+            "text": "There is no way to tell without the full distribution",
+            "why": "The mean and sd are enough here, as the next screens show."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which average is built from more days?"
+        },
+        {
+          "rung": "step",
+          "text": "Noise in an average shrinks like $1/\\sqrt n$. Which record has more days to shrink it?"
+        }
+      ],
+      "feedback": {
+        "correct": "Four years of data make a small average hard to fake.",
+        "generic": "Not quite right. Weigh the length of each record, not just its average."
+      },
+      "explain": {
+        "text": "Luck moves a 63-day average a lot and a 1,008-day average very little. We will measure each record against the luck it could contain. A's turns out to be ordinary; B's is not.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The spread of luck",
+      "prose": "Picture a trader with no skill: true mean 0, daily sd 1%. The curve is their average over $n$ days. The shaded tail is the chance of averaging 0.12% or more.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0,
+            "sigma": 0.25
+          },
+          "x": [
+            -0.5,
+            0.5
+          ],
+          "xLabel": "Average daily return over $n$ days (%)",
+          "variable": "\\bar X",
+          "dp": 3
+        },
+        "state": {
+          "shade": {
+            "from": 0.12,
+            "to": null
+          },
+          "params": {
+            "n": 16,
+            "sigma": 0.25
+          }
+        },
+        "derive": {
+          "params.sigma": "1 / sqrt(n)",
+          "caption": "$n = {{n}}$ days: sd of the average $= 1\\% / \\sqrt{n} = {{fixed(1 / sqrt(n), 3)}}\\%$"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 16,
+            "max": 1600,
+            "step": 1,
+            "start": 16,
+            "label": "Days $n$"
+          }
+        ]
+      },
+      "question": "Set $n = 63$. Roughly how often does this no-skill trader average 0.12% or more?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "17",
+            "text": "About 17% of the time",
+            "correct": true
+          },
+          {
+            "id": "0",
+            "text": "Almost never",
+            "why": "That is the picture at 1,000 days or more. At 63 days the curve is still wide."
+          },
+          {
+            "id": "50",
+            "text": "About half the time",
+            "why": "Half the curve lies above 0, not above 0.12%. Read the shaded tail."
+          },
+          {
+            "id": "5",
+            "text": "About 5% of the time",
+            "why": "Read the label at $n = 63$ exactly; 5% needs a longer record."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide $n$ to 63 and read the shaded probability."
+        },
+        {
+          "rung": "step",
+          "text": "The label shows $P(\\bar X \\ge 0.12)$ for the current $n$."
+        }
+      ],
+      "feedback": {
+        "correct": "At 63 days, luck alone gives 0.12% or more about one time in six.",
+        "generic": "Not quite right. Slide to 63 days and read the label."
+      },
+      "explain": {
+        "text": "At 63 days the sd of the average is $1\\% / \\sqrt{63} \\approx 0.126\\%$. This sd of an average has a name: the **standard error**, $\\sigma / \\sqrt n$. A's 0.12% is less than one standard error, so it is ordinary luck.",
+        "canvas": {
+          "params": {
+            "n": 63
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Count the standard errors",
+      "prose": "B averaged 0.06% a day over 1,008 days, with daily sd 1%. B's standard error is $1\\% / \\sqrt{1008} \\approx 0.0315\\%$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0,
+            "sigma": 0.0315
+          },
+          "x": [
+            -0.12,
+            0.12
+          ],
+          "xLabel": "No-skill average over 1,008 days (%)",
+          "variable": "\\bar X",
+          "dp": 4
+        },
+        "state": {
+          "shade": {
+            "from": 0.06,
+            "to": null
+          }
+        }
+      },
+      "question": "How many standard errors above zero is B's average? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.9,
+        "tol": {
+          "abs": 0.02
+        },
+        "accept": "$0.06 / 0.0315 \\approx 1.90$",
+        "placeholder": "number",
+        "label": "Standard errors",
+        "wrong": [
+          {
+            "id": "inverse",
+            "value": 0.525,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "sd",
+            "value": 0.06,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "A",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the average by the standard error."
+        },
+        {
+          "rung": "step",
+          "text": "$0.06 / 0.0315$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 1.9 standard errors above zero.",
+        "generic": "Not quite right. Divide 0.06 by 0.0315.",
+        "byKey": {
+          "inverse": "You divided the standard error by the average. Put the average on top.",
+          "sd": "You divided by the daily sd, 1%. Use the standard error of the average.",
+          "A": "That is A's ratio, $0.12/0.126$. Use B's numbers."
+        }
+      },
+      "explain": {
+        "text": "B's average is $1.90$ standard errors above zero; A's was $0.95$. A no-skill trader beats 1.9 standard errors only about 3% of the time. Length of record, not size of average, carried the evidence.",
+        "canvas": {
+          "caption": "No-skill chance of 0.06% or more over 1,008 days: about 0.028"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How many days until skill shows?",
+      "prose": "Now suppose a strategy truly earns 0.05% a day with sd 1%. The curve is two standard errors, $2\\sigma / \\sqrt n$, against days $n$. Skill shows once the true mean clears that line.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            2500
+          ],
+          "y": [
+            0,
+            0.3
+          ],
+          "xLabel": "Days $n$",
+          "yLabel": "Return (%)",
+          "functions": [
+            {
+              "id": "band",
+              "expr": "2/sqrt(x)",
+              "label": "$2\\sigma/\\sqrt n$",
+              "domain": [
+                44,
+                2500
+              ],
+              "labelAt": 300
+            }
+          ]
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "mu",
+              "y": 0.05,
+              "label": "true mean 0.05%"
+            }
+          ],
+          "points": [
+            {
+              "id": "p",
+              "x": 400,
+              "y": 0.1,
+              "label": ""
+            }
+          ],
+          "params": {
+            "n": 400
+          }
+        },
+        "derive": {
+          "p.x": "n",
+          "p.y": "2 / sqrt(n)",
+          "caption": "{{n}} days: two standard errors $= {{fixed(2 / sqrt(n), 4)}}\\%$"
+        }
+      },
+      "question": "Slide $n$ until two standard errors equal the true mean of 0.05%.",
+      "widget": {
+        "kind": "slider",
+        "min": 100,
+        "max": 2500,
+        "step": 10,
+        "start": 400,
+        "bind": "n",
+        "label": "Days $n$",
+        "answer": 1600,
+        "tol": 20,
+        "wrong": [
+          {
+            "id": "early",
+            "from": 100,
+            "to": 1500
+          },
+          {
+            "id": "late",
+            "from": 1700,
+            "to": 2500
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption: stop when it reads 0.05%."
+        },
+        {
+          "rung": "point",
+          "text": "The dot must sit on the dashed line.",
+          "highlight": [
+            "band",
+            "mu"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Solve $2 \\times 1 / \\sqrt n = 0.05$, so $\\sqrt n = 40$."
+        }
+      ],
+      "feedback": {
+        "correct": "$n = (2\\sigma/\\mu)^2 = 40^2 = 1{,}600$ days.",
+        "generic": "Not quite right. Stop where the dot meets the dashed line.",
+        "byKey": {
+          "early": "Two standard errors are still above 0.05%. A real 0.05% edge cannot yet be told from luck.",
+          "late": "You went past the crossing. Two standard errors fall to 0.05% at 1,600 days."
+        }
+      },
+      "explain": {
+        "text": "Two standard errors fall to 0.05% when $\\sqrt n = 2\\sigma/\\mu = 40$, so $n = 1{,}600$ days. At 252 trading days a year, that is about 6.3 years. A genuine, decent edge takes years to prove.",
+        "canvas": {
+          "params": {
+            "n": 1600
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The t-ratio",
+      "prose": "Each time you divided an average by its standard error. That is the $t$-ratio: $$t = \\frac{\\bar X}{\\sigma / \\sqrt n} = \\frac{\\bar X \\sqrt n}{\\sigma}.$$ If the true mean is 0, the central limit theorem makes $t$ close to $N(0, 1)$. So $|t| > 2$ by luck has chance about 0.0455.",
+      "question": "A strategy shows $t = 2.5$ over 500 days. What does that tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rare",
+            "text": "Luck alone rarely gives a $t$ this large",
+            "correct": true
+          },
+          {
+            "id": "prob",
+            "text": "There is a 99% chance the strategy has skill",
+            "why": "You turned the chance of the data given no skill into a chance of skill. That swap is the prosecutor's fallacy."
+          },
+          {
+            "id": "mean",
+            "text": "The true mean is 2.5 times the daily sd",
+            "why": "$t$ counts standard errors, not daily sds. The mean itself may be tiny."
+          },
+          {
+            "id": "future",
+            "text": "The next 500 days will also give $t$ near 2.5",
+            "why": "A new sample gives a new $t$. Even a real edge produces a spread of $t$ values."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Under no skill, $t$ is roughly $N(0, 1)$. How often does that exceed 2.5?"
+        }
+      ],
+      "feedback": {
+        "correct": "A $t$ of 2.5 is unusual for luck alone, about one time in 160.",
+        "generic": "Not quite right. Read $t$ as a count of standard errors under no skill."
+      },
+      "explain": {
+        "text": "With no skill, $P(t > 2.5) \\approx 0.006$. That is a statement about the data assuming no skill. It is not the chance the strategy has skill; that needs a prior, as Bayes' rule showed."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The Sharpe ratio and its error",
+      "prose": "Daily returns have mean $\\mu$ and sd $\\sigma$, independent across 252 trading days a year. We record $T$ years.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "mean",
+            "text": "A year's return has mean $252\\mu$, by linearity of expectation"
+          },
+          {
+            "id": "sd",
+            "text": "and sd $\\sqrt{252}\\,\\sigma$, since 252 independent daily variances add"
+          },
+          {
+            "id": "sr",
+            "text": "So the annualised Sharpe ratio is $SR = \\dfrac{252\\mu}{\\sqrt{252}\\,\\sigma} = \\dfrac{\\mu\\sqrt{252}}{\\sigma}$"
+          },
+          {
+            "id": "t",
+            "text": "With $n = 252T$ days, $t = \\dfrac{\\bar X \\sqrt n}{\\sigma} = \\dfrac{\\bar X\\sqrt{252}}{\\sigma}\\sqrt T = \\widehat{SR}\\,\\sqrt T$"
+          },
+          {
+            "id": "se",
+            "text": "$t$ has sd about 1, so $\\widehat{SR} = t / \\sqrt T$ has standard error about $1 / \\sqrt T$"
+          }
+        ],
+        "answer": [
+          "mean",
+          "sd",
+          "sr",
+          "t",
+          "se"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build the yearly mean and sd first."
+        },
+        {
+          "rung": "step",
+          "text": "Mean, sd, Sharpe, then rewrite $t$ with $n = 252T$, then divide by $\\sqrt T$."
+        }
+      ],
+      "feedback": {
+        "correct": "Annualise, form the Sharpe ratio, link it to $t$, then read off its error.",
+        "generic": "Not quite right. Start from a year's mean and sd.",
+        "byKey": {
+          "sr": "The Sharpe ratio needs the yearly mean and sd first.",
+          "se": "The standard error comes last, once $\\widehat{SR}$ is tied to $t$."
+        }
+      },
+      "explain": {
+        "text": "For 0.05% a day with sd 1%, $SR = 0.05 \\times \\sqrt{252} \\approx 0.79$. Its standard error after $T$ years is about $1/\\sqrt T$. So $t = SR\\sqrt T$ reaches 2 at $T = (2/0.79)^2 \\approx 6.3$ years, as the slider showed."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A big average is not a big Sharpe",
+      "prose": "Two strategies ran for one year. P averaged 0.20% a day with daily sd 4%. Q averaged 0.05% a day with daily sd 0.5%.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Strategy",
+            "Mean a day",
+            "sd a day",
+            "$SR = \\mu\\sqrt{252}/\\sigma$"
+          ],
+          "rows": [
+            [
+              "P",
+              "0.20%",
+              "4%",
+              "?"
+            ],
+            [
+              "Q",
+              "0.05%",
+              "0.5%",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "After one year, which record is stronger evidence of skill?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "Q",
+            "text": "Q's: its Sharpe ratio is twice P's",
+            "correct": true
+          },
+          {
+            "id": "P",
+            "text": "P's: it earns four times as much a day",
+            "why": "You compared averages. P's average is buried in 4% daily noise; Q's sits clear of its 0.5% noise."
+          },
+          {
+            "id": "same",
+            "text": "Equal, since both ran for one year",
+            "why": "Equal length is not equal evidence. Evidence is $t = SR\\sqrt T$, and the Sharpe ratios differ."
+          },
+          {
+            "id": "neither",
+            "text": "Neither can be judged after a year",
+            "why": "One year is short, but $t$ still ranks them: about 0.8 for P and 1.6 for Q."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute each Sharpe ratio: mean over sd, times $\\sqrt{252} \\approx 15.87$."
+        },
+        {
+          "rung": "step",
+          "text": "P: $0.2/4 \\times 15.87$. Q: $0.05/0.5 \\times 15.87$."
+        }
+      ],
+      "feedback": {
+        "correct": "Q's Sharpe ratio is about 1.59; P's is about 0.79.",
+        "generic": "Not quite right. Divide each mean by its own sd before comparing.",
+        "byKey": {
+          "P": "You compared averages. P's average is buried in 4% daily noise; Q's sits clear of its 0.5% noise."
+        }
+      },
+      "explain": {
+        "text": "$SR_P = 0.05 \\times 15.87 \\approx 0.79$ and $SR_Q = 0.1 \\times 15.87 \\approx 1.59$. With $T = 1$, $t = SR$, so Q is at 1.6 standard errors and P at 0.8. Neither clears 2 yet.",
+        "canvas": {
+          "values": {
+            "r0c3": "0.79",
+            "r1c3": "1.59"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Twenty tries at luck",
+      "prose": "A researcher backtests 20 independent strategies, none of which has any skill. Each $t$-ratio is then close to $N(0, 1)$, so each has chance 0.0455 of $|t| > 2$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0,
+            "sigma": 1
+          },
+          "x": [
+            -4,
+            4
+          ],
+          "xLabel": "$t$ for one no-skill strategy",
+          "variable": "t"
+        },
+        "state": {
+          "shade": {
+            "from": 2,
+            "to": null
+          },
+          "caption": "Each tail beyond 2 has chance 0.0228; both together 0.0455"
+        }
+      },
+      "question": "What is the chance at least one of the 20 shows $|t| > 2$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.606,
+        "tol": {
+          "abs": 0.003
+        },
+        "accept": "$1 - (1 - 0.0455)^{20} \\approx 0.606$",
+        "placeholder": "decimal",
+        "label": "Chance",
+        "wrong": [
+          {
+            "id": "added",
+            "value": 0.91,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.0455,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "all",
+            "value": 0.0,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the chance that none of them does, then take it from 1."
+        },
+        {
+          "rung": "step",
+          "text": "$P(\\text{none}) = 0.9545^{20}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 - 0.9545^{20} \\approx 0.606$.",
+        "generic": "Not quite right. Work out the chance all 20 stay inside $\\pm 2$, then subtract from 1.",
+        "byKey": {
+          "added": "You added 20 chances of 0.0455. That double-counts the cases where two or more pass.",
+          "one": "That is for one strategy. With 20 tries the chance of a fluke grows.",
+          "all": "That is the chance all 20 pass. The question asks about at least one."
+        }
+      },
+      "explain": {
+        "text": "With 20 tries, a 2-sigma fluke turns up 61% of the time. Report the best of 20 and luck looks like skill. Count every strategy you tested before you trust the winner.",
+        "canvas": {
+          "shade": {
+            "from": null,
+            "to": -2
+          },
+          "caption": "The other tail counts too: $|t| > 2$"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A two-year track record",
+      "prose": "A fund shows an annualised Sharpe ratio of 1.0. The shaded band is the estimate plus or minus two standard errors, $1.0 \\pm 2/\\sqrt T$. Slide the length of the record $T$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 1,
+            "sigma": 0.707
+          },
+          "x": [
+            -2,
+            4
+          ],
+          "xLabel": "Plausible true Sharpe ratio"
+        },
+        "state": {
+          "params": {
+            "T": 2,
+            "sigma": 0.707
+          },
+          "shade": {
+            "from": -0.414,
+            "to": 2.414
+          }
+        },
+        "derive": {
+          "params.sigma": "1 / sqrt(T)",
+          "shade.from": "1 - 2 / sqrt(T)",
+          "shade.to": "1 + 2 / sqrt(T)",
+          "probLabel": "Band {{fixed(1 - 2 / sqrt(T), 2)}} to {{fixed(1 + 2 / sqrt(T), 2)}}",
+          "caption": "$T = {{T}}$ years: standard error $1/\\sqrt T = {{fixed(1 / sqrt(T), 2)}}$"
+        },
+        "controls": [
+          {
+            "bind": "T",
+            "min": 0.5,
+            "max": 10,
+            "step": 0.5,
+            "start": 2,
+            "label": "Years $T$"
+          }
+        ]
+      },
+      "question": "The fund's record is 2 years long. What can you conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "not",
+            "text": "The Sharpe ratio is not distinguishable from 0 at 95%",
+            "correct": true
+          },
+          {
+            "id": "sig",
+            "text": "It is clearly skill, since a Sharpe ratio of 1 is excellent",
+            "why": "You judged the size alone. At $T = 2$ the band runs from about $-0.41$ to $2.41$, and it contains 0."
+          },
+          {
+            "id": "exact",
+            "text": "The true Sharpe ratio is 1.0",
+            "why": "The record only estimates it. The band shows the truth could be far from 1.0."
+          },
+          {
+            "id": "short",
+            "text": "Nothing at all, since 2 years tells us nothing",
+            "why": "Two years does narrow things: the band excludes a Sharpe ratio of 3, say."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $T = 2$ and check whether 0 is inside the band."
+        },
+        {
+          "rung": "step",
+          "text": "$t = SR\\sqrt T = 1 \\times \\sqrt 2 \\approx 1.41$. Is that above 2?"
+        }
+      ],
+      "feedback": {
+        "correct": "$t \\approx 1.41$, so 0 is inside the band.",
+        "generic": "Not quite right. At $T = 2$, look at where the band starts."
+      },
+      "explain": {
+        "text": "The standard error is $1/\\sqrt 2 \\approx 0.71$, so $t \\approx 1.41$ and the band reaches below 0. Slide to $T = 4$: the band starts at exactly 0. A Sharpe ratio of 1.0 needs about 4 years to clear 2 standard errors.",
+        "canvas": {
+          "params": {
+            "T": 4
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A real edge, a losing year",
+      "prose": "A £10m book earns £5,000 a day on average, with daily sd £100,000. Days are independent; a year has 252 of them. Use $\\Phi(-0.794) = 0.2137$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 1.26,
+            "sigma": 1.587
+          },
+          "x": [
+            -4,
+            6.5
+          ],
+          "xLabel": "P&L over the year (£ millions)",
+          "showMean": true
+        },
+        "state": {
+          "shade": {
+            "from": null,
+            "to": 0
+          },
+          "showProb": false
+        }
+      },
+      "question": "What is the chance this book loses money over a year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2137,
+        "tol": {
+          "abs": 0.002
+        },
+        "accept": "Mean £1.26m, sd $£100{,}000 \\times \\sqrt{252} \\approx £1.587$m, so $\\Phi(-0.794) \\approx 0.214$",
+        "placeholder": "decimal",
+        "label": "Chance of a losing year",
+        "wrong": [
+          {
+            "id": "days",
+            "value": 0.4801,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "no-scale",
+            "value": 0.0,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "upper",
+            "value": 0.7863,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Year mean $252 \\times 5{,}000$; year sd $100{,}000 \\times \\sqrt{252}$."
+        },
+        {
+          "rung": "step",
+          "text": "Zero is $1.26 / 1.587 \\approx 0.794$ sds below the mean."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\Phi(-0.794) \\approx 0.21$: about one year in five.",
+        "generic": "Not quite right. Find the year's mean and sd, then standardise 0.",
+        "byKey": {
+          "days": "That is the chance of a losing day, $\\Phi(-0.05)$. A year adds 252 days.",
+          "no-scale": "You kept the daily sd of £100,000 for the whole year. Variances add, so the year's sd is $\\sqrt{252}$ times larger.",
+          "upper": "That is the chance of a winning year. Take the lower tail."
+        }
+      },
+      "explain": {
+        "text": "The year's P&L has mean £1.26m and sd £1.59m, so a losing year has chance about 0.21. This book's Sharpe ratio is 0.79, a real edge. Even so, one year in five is a loss.",
+        "canvas": {
+          "showProb": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The standard error of an average is $\\sigma / \\sqrt n$; the $t$-ratio $\\bar X\\sqrt n / \\sigma$ counts how many of them the average is from 0.",
+      "To show a true mean $\\mu$ at two standard errors needs $n = (2\\sigma/\\mu)^2$ days: 1,600 for 0.05% against 1%.",
+      "An annualised Sharpe ratio has standard error about $1/\\sqrt T$, so $t = SR\\sqrt T$; many tries make 2-sigma flukes common."
+    ],
+    "formula": {
+      "name": "Skill or luck",
+      "tex": "t = \\dfrac{\\bar X\\sqrt n}{\\sigma} = SR\\,\\sqrt T, \\qquad SE(\\widehat{SR}) \\approx \\dfrac{1}{\\sqrt T}",
+      "note": "With no skill, $t \\approx N(0, 1)$, so $|t| > 2$ has chance about 0.0455."
+    },
+    "trap": "A high average over a short or noisy record is weak evidence. Judge the Sharpe ratio and the length together."
+  },
+  "quiz": [
+    {
+      "id": "q-se-400",
+      "difficulty": 2,
+      "prose": "A strategy's daily returns have sd 1.5%.",
+      "question": "What is the standard error of its average daily return over 400 days? Give a percentage.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.00075,
+        "tol": {
+          "abs": 1e-05
+        },
+        "accept": "$1.5\\% / \\sqrt{400} = 0.075\\%$",
+        "unit": "%",
+        "placeholder": "for example 0.5",
+        "wrong": [
+          {
+            "id": "over-n",
+            "value": 3.75e-05,
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "id": "sd",
+            "value": 0.015,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1.5\\% / 20 = 0.075\\%$.",
+        "generic": "Not quite right. Divide the daily sd by $\\sqrt{400}$.",
+        "byKey": {
+          "over-n": "You divided by 400. The standard error uses $\\sqrt n$.",
+          "sd": "That is the daily sd. The average of 400 days is far less noisy."
+        }
+      },
+      "explain": {
+        "text": "Standard error $= \\sigma / \\sqrt n = 1.5\\% / 20 = 0.075\\%$."
+      }
+    },
+    {
+      "id": "q-three-months",
+      "difficulty": 3,
+      "prose": "A strategy shows an annualised Sharpe ratio of 2.0 over its first 3 months, so $T = 0.25$ years.",
+      "question": "How many standard errors from zero is that?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "$t = SR\\sqrt T = 2 \\times 0.5 = 1$",
+        "placeholder": "number",
+        "wrong": [
+          {
+            "id": "no-root",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "times-T",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "raw",
+            "value": 2,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$t = 2 \\times \\sqrt{0.25} = 1$.",
+        "generic": "Not quite right. Multiply the Sharpe ratio by $\\sqrt T$.",
+        "byKey": {
+          "no-root": "You multiplied by $T$. Use $\\sqrt T = 0.5$.",
+          "times-T": "You divided by $\\sqrt T$. Evidence grows with $\\sqrt T$, so multiply.",
+          "raw": "That is the Sharpe ratio itself. Over 3 months its standard error is $1/\\sqrt{0.25} = 2$."
+        }
+      },
+      "explain": {
+        "text": "The standard error of the Sharpe ratio is $1/\\sqrt{0.25} = 2$, as large as the estimate. A Sharpe of 2 over 3 months is one standard error: easily luck."
+      }
+    },
+    {
+      "id": "q-years",
+      "difficulty": 3,
+      "prose": "A strategy has a true annualised Sharpe ratio of 0.5.",
+      "question": "About how many years until its expected $t$-ratio reaches 2?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "$0.5\\sqrt T = 2$ gives $T = 16$",
+        "placeholder": "years",
+        "wrong": [
+          {
+            "id": "no-square",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "half",
+            "value": 1,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sqrt T = 4$, so $T = 16$ years.",
+        "generic": "Not quite right. Solve $0.5\\sqrt T = 2$.",
+        "byKey": {
+          "no-square": "That is $\\sqrt T$. Square it.",
+          "half": "You solved $2 \\times 0.5 = T$. Use $t = SR\\sqrt T$."
+        }
+      },
+      "explain": {
+        "text": "$t = SR\\sqrt T$, so $T = (2/0.5)^2 = 16$ years. Modest edges are very slow to prove."
+      }
+    },
+    {
+      "id": "q-one-sided",
+      "difficulty": 2,
+      "prose": "A no-skill strategy has $t$ close to $N(0, 1)$. Use $\\Phi(2) = 0.9772$.",
+      "question": "What is the chance it shows $t > 2$, an apparent positive edge?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0228,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "$1 - 0.9772 = 0.0228$",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "both",
+            "value": 0.0455,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "phi",
+            "value": 0.9772,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - \\Phi(2) = 0.0228$.",
+        "generic": "Not quite right. Take the upper tail beyond 2.",
+        "byKey": {
+          "both": "That counts both tails. Only $t > 2$ is asked.",
+          "phi": "That is $P(t \\le 2)$. Take 1 minus it."
+        }
+      },
+      "explain": {
+        "text": "$P(t > 2) = 1 - \\Phi(2) = 0.0228$: about one no-skill strategy in 44 looks good by luck."
+      }
+    }
+  ]
+}

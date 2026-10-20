@@ -14,6 +14,11 @@
      node app/tools/playthrough.mjs --lesson conditional/l3-shrinking     one lesson (add --routes for the routes too)
      node app/tools/playthrough.mjs --routes-only          only the routes
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
+     node app/tools/playthrough.mjs --shots out --mobile   also a 390 px wide screenshot of each (name-390.png)
+     node app/tools/playthrough.mjs --shots out --why      also each lesson task's Explanation sheet after the right
+                                                           answer (name-why.png), and after a wrong one where the
+                                                           tool can make one (a choice distractor, a numeric answer
+                                                           well off): name-wrong.png and name-wrong-why.png
      node app/tools/playthrough.mjs --local-cdn <dir>      serve cdn.jsdelivr.net from local npm packages (see below)
      node app/tools/playthrough.mjs --headed               watch it
 
@@ -50,12 +55,14 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], all: false };
+const opt = { mobile: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], all: false };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
   else if (a === '--shots') opt.shots = path.resolve(next());
   else if (a === '--local-cdn') { const v = argv[i + 1]; if (v && !v.startsWith('--')) { opt.localCdn = path.resolve(v); i++; } else opt.localCdn = process.env.ZQ_LOCAL_CDN ? path.resolve(process.env.ZQ_LOCAL_CDN) : die('--local-cdn needs a directory (or set ZQ_LOCAL_CDN)'); }
+  else if (a === '--mobile') opt.mobile = true;
+  else if (a === '--why') opt.why = true;
   else if (a === '--routes') opt.routes = true;
   else if (a === '--no-routes') opt.routes = false;
   else if (a === '--routes-only') { opt.routes = true; opt.lessonsOn = false; }
@@ -180,7 +187,14 @@ const main = async () => {
     page.on('requestfailed', (r) => { if (!IGNORE_HOSTS.test(hostOf(r.url()))) consoleErrors.push({ where, text: `request failed: ${r.url()} (${r.failure() && r.failure().errorText})` }); });
     page.on('response', (r) => { if (r.status() >= 400 && r.url().startsWith(base)) consoleErrors.push({ where, text: `HTTP ${r.status()} ${r.url().slice(base.length)}` }); });
 
-    const shot = async (name) => { if (opt.shots) { await page.waitForTimeout(300); await page.screenshot({ path: path.join(opt.shots, name.replace(/[^\w.-]+/g, '_') + '.png') }); } };
+    /* items 199, 205: --mobile adds a 390 px wide copy of every screenshot (the viewport narrows, then returns) */
+    const shot = async (name) => {
+      if (!opt.shots) return;
+      const file = (sfx) => path.join(opt.shots, name.replace(/[^\w.-]+/g, '_') + sfx + '.png');
+      await page.waitForTimeout(300); await page.screenshot({ path: file('') });
+      if (opt.mobile) { await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(350); await page.screenshot({ path: file('-390') }); await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
+    };
+    const whyShot = async (name) => { if (!opt.why || !opt.shots) return; if (await page.evaluate(() => !!(ZQ.test.why && ZQ.test.why()))) { await page.waitForTimeout(450); await shot(name); await page.evaluate(() => ZQ.test.closeWhy()); await page.waitForTimeout(250); } };
     const go = async (hash) => {
       await page.evaluate((h) => { location.hash = h; }, hash);
       await page.waitForFunction((h) => location.hash === '#' + h || location.hash.startsWith('#' + h.split('/')[0]), hash, { timeout: opt.timeout });
@@ -238,8 +252,14 @@ const main = async () => {
           if (c.state === 'idle' || c.state === 'engaged') {
             const py = await waitPython();
             if (py) { fails.push(`${c.phase} ${c.screenIndex} (${c.kind}): ${py}`); break; }
+            const nm = `${id}-${c.phase}-${String(c.screenIndex).padStart(2, '0')}-${c.kind}`;
+            if (opt.why && opt.shots && c.phase === 'lesson' && await page.evaluate(() => !!(ZQ.test.answerWrong && ZQ.test.answerWrong()))) {
+              const rw = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok } : null; });
+              if (rw && !rw.ok) { await shot(nm + '-wrong'); await whyShot(nm + '-wrong-why'); await page.evaluate(() => ZQ.test.tryAgain()); await page.waitForTimeout(200); }
+            }
             const applied = await page.evaluate(() => ZQ.test.answerCorrect());
             const r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null, pending: !!r.pending } : null; });
+            if (r && r.ok && !r.pending) await whyShot(nm + '-why');
             if (r && r.pending) { // long-form: the first check opens the self-marking, the second grades it
               await page.evaluate(() => ZQ.test.answerCorrect());
               const r2 = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null } : null; });

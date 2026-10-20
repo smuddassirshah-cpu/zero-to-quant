@@ -306,6 +306,13 @@
         widget.set(v);
         return true;
       },
+      /* item 205 (playthrough --why): a wrong answer where one is easy to make: a distractor, or a number well off */
+      answerWrong() {
+        if (!widget || !w) return false;
+        if (w.kind === 'choice') { const o = (w.options || []).find(q => !q.correct); if (!o) return false; widget.set(o.id); return true; }
+        if (w.kind === 'numeric' && Number.isFinite(+w.answer)) { widget.set(G().fmtNum(+w.answer * 3 + 17)); return true; }
+        return false;
+      },
       enter(later) {
         if (stepper) demo(0);
         if (spec.canvas && spec.canvas.enter && canvas && canvas.set) later(() => { try { canvas.set(spec.canvas.enter); } catch (e) { console.error(e); } }, Z.reducedMotion() ? 0 : 350);
@@ -949,6 +956,11 @@
         return Promise.resolve();
       },
       reveal: () => { reveal(); return Promise.resolve(); },
+      tryAgain: () => { if (S.st === 'no') tryAgain(); return Promise.resolve(); },
+      answerWrong: () => { if (!step || !step.answerWrong) return false; const ok = step.answerWrong(); if (ok) changed(); return ok; },
+      /* item 205: open the Explanation sheet (the Why? copy) and close it again, for screenshots */
+      why: () => { if (!step || !step.explainText) return false; hook._closeWhy = openExplain(step); return true; },
+      closeWhy: () => { if (hook._closeWhy) { try { hook._closeWhy(); } catch { /* closed */ } hook._closeWhy = null; } },
       goto: (i) => { S.anyCheck = true; return settle(i === 'quiz' ? enterQuiz(0) : i === 'done' ? enterComplete() : enterLesson(Math.max(0, Math.min(N - 1, i)))); },
       step: () => step,
     };

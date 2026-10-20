@@ -1,0 +1,1083 @@
+{
+  "id": "l13-approximating-binomial",
+  "course": "limits-thm",
+  "title": "Approximating a binomial",
+  "minutes": 13,
+  "objectives": [
+    "Approximate binomial probabilities with a normal curve and a continuity correction",
+    "Place the half-unit correction on the correct side of the event",
+    "Choose the Poisson instead when $p$ is near 0 or 1"
+  ],
+  "skills": [
+    "dl-clt",
+    "dl-discrete"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A bell over the bars",
+      "prose": "The bars are $X \\sim \\text{Bin}(30, p)$. The dashed curve is a normal with the same mean $np$ and variance $np(1-p)$. Slide $p$ and watch the fit.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 30,
+            "p": 0.5
+          },
+          "x": [
+            -0.5,
+            30.5
+          ],
+          "yMax": 0.45,
+          "xLabel": "Successes $X$ out of 30"
+        },
+        "state": {
+          "params": {
+            "n": 30,
+            "p": 0.5
+          },
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 15,
+                "sigma": 2.7386
+              },
+              "label": "normal"
+            }
+          ]
+        },
+        "derive": {
+          "nrm.params.mu": "30 * p",
+          "nrm.params.sigma": "sqrt(30 * p * (1 - p))",
+          "caption": "$p = {{fixed(p, 2)}}$: $np(1-p) = {{fixed(30 * p * (1 - p), 2)}}$"
+        },
+        "controls": [
+          {
+            "bind": "p",
+            "min": 0.05,
+            "max": 0.95,
+            "step": 0.05,
+            "start": 0.5,
+            "label": "$p$"
+          }
+        ]
+      },
+      "question": "Slide $p$ down to 0.05. How does the curve fit the bars now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "poor",
+            "text": "Poorly: the bars pile up against 0 and lean right",
+            "correct": true
+          },
+          {
+            "id": "good",
+            "text": "As well as at $p = 0.5$",
+            "why": "Compare the two ends. At 0.05 the curve spills below 0, where the bars cannot go."
+          },
+          {
+            "id": "better",
+            "text": "Better, because the bars are taller",
+            "why": "Taller bars mean the chance is squeezed into a few values near 0. The bell cannot squeeze against a wall."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the picture at $p = 0.5$ with the picture at $p = 0.05$."
+        },
+        {
+          "rung": "step",
+          "text": "Look at the left edge: where does the curve go that the bars cannot?"
+        }
+      ],
+      "feedback": {
+        "correct": "Near $p = 0$ the bars are lopsided and the bell is not.",
+        "generic": "Not quite right. Slide to 0.05 and look at the left edge."
+      },
+      "explain": {
+        "text": "At $p = 0.5$, $np(1-p) = 7.5$ and the bell hugs the bars. At $p = 0.05$ it is only 1.43: the bars lean against 0 and the curve spills below it. A common rule of thumb asks for $np(1-p) \\ge 10$.",
+        "canvas": {
+          "params": {
+            "p": 0.05
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where should the area start?",
+      "prose": "A trader wins each of 20 independent trades with chance 0.55, so $X \\sim \\text{Bin}(20, 0.55)$. We want $P(X \\ge 15)$. Bar 15 stands on the stretch from 14.5 to 15.5.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 20,
+            "p": 0.55
+          },
+          "x": [
+            -0.5,
+            20.5
+          ],
+          "yMax": 0.2,
+          "xLabel": "Wins $X$ out of 20"
+        },
+        "state": {
+          "shade": {
+            "from": 15,
+            "to": null
+          },
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 11,
+                "sigma": 2.2249
+              },
+              "label": "normal"
+            }
+          ],
+          "showProb": false
+        }
+      },
+      "question": "To cover bars 15 to 20 with area under the normal curve, where should that area start?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "145",
+            "text": "At 14.5",
+            "correct": true
+          },
+          {
+            "id": "15",
+            "text": "At 15",
+            "why": "Starting at 15 cuts bar 15 in half. Its left half, from 14.5 to 15, is missed."
+          },
+          {
+            "id": "155",
+            "text": "At 15.5",
+            "why": "Starting at 15.5 drops bar 15 altogether. You moved the cut the wrong way."
+          },
+          {
+            "id": "14",
+            "text": "At 14",
+            "why": "Starting at 14 adds half of bar 14, which is not in $X \\ge 15$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each bar is one unit wide, centred on its whole number."
+        },
+        {
+          "rung": "point",
+          "text": "Bar 15 spans 14.5 to 15.5.",
+          "highlight": [
+            "x15"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "To include all of bar 15, start at its left edge."
+        }
+      ],
+      "feedback": {
+        "correct": "Bar 15's left edge is 14.5.",
+        "generic": "Not quite right. Find the left edge of bar 15."
+      },
+      "explain": {
+        "text": "Each whole number $k$ owns the strip from $k - 0.5$ to $k + 0.5$. So $X \\ge 15$ is the area from 14.5 up. Moving the cut by half a unit is the **continuity correction**.",
+        "canvas": {
+          "highlight": [
+            "x15"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Put a number on it",
+      "prose": "$X$ has mean $np = 11$ and sd $\\sqrt{20 \\times 0.55 \\times 0.45} \\approx 2.225$. Use $\\Phi(1.573) = 0.9421$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 20,
+            "p": 0.55
+          },
+          "x": [
+            -0.5,
+            20.5
+          ],
+          "yMax": 0.2,
+          "xLabel": "Wins $X$ out of 20"
+        },
+        "state": {
+          "shade": {
+            "from": 15,
+            "to": null
+          },
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 11,
+                "sigma": 2.2249
+              },
+              "label": "normal"
+            }
+          ],
+          "showProb": false
+        }
+      },
+      "question": "What is the normal estimate of $P(X \\ge 15)$, starting the area at 14.5? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0579,
+        "tol": {
+          "abs": 0.0003
+        },
+        "accept": "$1 - \\Phi\\big((14.5 - 11)/2.225\\big) = 1 - 0.9421 = 0.0579$",
+        "placeholder": "decimal",
+        "label": "Normal estimate",
+        "wrong": [
+          {
+            "id": "phi",
+            "value": 0.9421,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "at15",
+            "value": 0.0361,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "at155",
+            "value": 0.0216,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Standardise 14.5: subtract 11, divide by 2.225."
+        },
+        {
+          "rung": "step",
+          "text": "$z = 3.5 / 2.225 \\approx 1.573$, and you want the area above it."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 - 0.9421 = 0.0579$.",
+        "generic": "Not quite right. Standardise 14.5, then take the upper tail.",
+        "byKey": {
+          "phi": "That is the area below 14.5. You want the area above it.",
+          "at15": "That starts the area at 15, without the correction.",
+          "at155": "That starts at 15.5, which drops bar 15."
+        }
+      },
+      "explain": {
+        "text": "The estimate is 0.0579. Summing the six bars exactly gives 0.0553. Half a unit made the difference between a good estimate and a poor one.",
+        "canvas": {
+          "showProb": true
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Exact against approximate",
+      "prose": "Compare the three answers for $P(X \\ge 15)$. Without the correction the area starts at 15: $z = 4 / 2.225 = 1.798$ and $\\Phi(1.798) = 0.9639$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 20,
+            "p": 0.55
+          },
+          "x": [
+            -0.5,
+            20.5
+          ],
+          "yMax": 0.2,
+          "xLabel": "Wins $X$ out of 20"
+        },
+        "state": {
+          "shade": {
+            "from": 15,
+            "to": null
+          },
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 11,
+                "sigma": 2.2249
+              },
+              "label": "normal"
+            }
+          ],
+          "caption": "Exact $P(X \\ge 15) = 0.0553$"
+        }
+      },
+      "question": "Fill the gaps. Give each error as estimate minus exact, to 4 decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Method",
+          "Estimate",
+          "Error"
+        ],
+        "rows": [
+          [
+            "Exact: add bars 15 to 20",
+            "0.0553",
+            "0"
+          ],
+          [
+            "Normal from 15",
+            {
+              "edit": true,
+              "answer": 0.0361,
+              "tol": {
+                "abs": 0.0002
+              },
+              "accept": "$1 - 0.9639 = 0.0361$"
+            },
+            {
+              "edit": true,
+              "answer": -0.0192,
+              "tol": {
+                "abs": 0.0003
+              },
+              "accept": "$0.0361 - 0.0553 = -0.0192$"
+            }
+          ],
+          [
+            "Normal from 14.5",
+            "0.0579",
+            {
+              "edit": true,
+              "answer": 0.0026,
+              "tol": {
+                "abs": 0.0003
+              },
+              "accept": "$0.0579 - 0.0553 = 0.0026$"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The uncorrected estimate is $1 - 0.9639$."
+        },
+        {
+          "rung": "step",
+          "text": "Subtract 0.0553 from each estimate. A low estimate gives a negative error."
+        }
+      ],
+      "feedback": {
+        "correct": "The correction cuts the error from about 0.019 to about 0.003.",
+        "generic": "Not quite right. Each error is estimate minus 0.0553."
+      },
+      "explain": {
+        "text": "Without the correction the estimate is a third too low. With it, the error is under 0.003. The correction costs nothing and fixes most of the gap."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Which way does the half go?",
+      "prose": "Same trader. Now we want $P(X < 9)$, the chance of fewer than 9 wins out of 20.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 20,
+            "p": 0.55
+          },
+          "x": [
+            -0.5,
+            20.5
+          ],
+          "yMax": 0.2,
+          "xLabel": "Wins $X$ out of 20"
+        },
+        "state": {
+          "shade": {
+            "from": null,
+            "to": 8
+          },
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 11,
+                "sigma": 2.2249
+              },
+              "label": "normal"
+            }
+          ],
+          "showProb": false
+        }
+      },
+      "question": "Where should the normal area end?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "85",
+            "text": "At 8.5",
+            "correct": true
+          },
+          {
+            "id": "95",
+            "text": "At 9.5",
+            "why": "You added a half to 9 by habit. But $X < 9$ means $X \\le 8$, and bar 8 ends at 8.5.",
+            "canvas": {
+              "highlight": [
+                "x9"
+              ]
+            }
+          },
+          {
+            "id": "9",
+            "text": "At 9",
+            "why": "Ending at 9 takes in half of bar 9, which is not in $X < 9$."
+          },
+          {
+            "id": "75",
+            "text": "At 7.5",
+            "why": "Ending at 7.5 drops bar 8. The correction widens the event to include whole bars."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Rewrite $X < 9$ with $\\le$ first."
+        },
+        {
+          "rung": "point",
+          "text": "Fewer than 9 means 8 or fewer: the shaded bars.",
+          "highlight": [
+            "x8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The last shaded bar is 8. Where is its right edge?"
+        }
+      ],
+      "feedback": {
+        "correct": "$X < 9$ is $X \\le 8$, whose last bar ends at 8.5.",
+        "generic": "Not quite right. Turn $X < 9$ into $X \\le 8$, then find the edge of bar 8.",
+        "byKey": {
+          "95": "You added a half to 9 by habit. But $X < 9$ means $X \\le 8$, and bar 8 ends at 8.5.",
+          "75": "You subtracted a half from 8. That drops bar 8; the correction must include whole bars."
+        }
+      },
+      "explain": {
+        "text": "Rewrite the event as whole bars first: $X \\le 8$. Then move to the outer edge of the last bar, 8.5. The estimate $\\Phi(-1.124) = 0.1306$ sits beside the exact 0.1308.",
+        "canvas": {
+          "showProb": true
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The rule",
+      "prose": "You widened each event to whole bars. For $X \\sim \\text{Bin}(n, p)$ with $np(1-p)$ large enough, $$P(X \\le k) \\approx \\Phi\\!\\left(\\frac{k + 0.5 - np}{\\sqrt{np(1-p)}}\\right).$$ For $P(X \\ge k)$, start the area at $k - 0.5$.",
+      "question": "Which interval of the normal estimates $P(X = 12)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "strip",
+            "text": "From 11.5 to 12.5",
+            "correct": true
+          },
+          {
+            "id": "point",
+            "text": "The single point 12",
+            "why": "A normal gives any single point probability 0. Bar 12 is a strip one unit wide."
+          },
+          {
+            "id": "half-up",
+            "text": "From 12 to 12.5",
+            "why": "That is only the right half of bar 12."
+          },
+          {
+            "id": "half-wide",
+            "text": "From 11 to 13",
+            "why": "That takes in half of bars 11 and 13 as well."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Bar 12 is one unit wide. Where are its edges?"
+        }
+      ],
+      "feedback": {
+        "correct": "Bar 12 is the strip from 11.5 to 12.5.",
+        "generic": "Not quite right. Find both edges of bar 12."
+      },
+      "explain": {
+        "text": "Each value $k$ owns $[k - 0.5, k + 0.5]$. For Bin(20, 0.55), $P(X = 12) \\approx \\Phi(0.674) - \\Phi(0.225) = 0.161$, against an exact 0.162. The rule of thumb $np(1-p) \\ge 10$ is cautious; near $p = 0.5$ the fit is good sooner."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why a binomial is nearly normal",
+      "prose": "Let $X \\sim \\text{Bin}(n, p)$ count successes in $n$ independent trials. Justify the approximation for $P(X \\ge k)$.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "sum",
+            "text": "$X = I_1 + \\dots + I_n$, where $I_j$ is 1 if trial $j$ succeeds and 0 otherwise"
+          },
+          {
+            "id": "moments",
+            "text": "Each $I_j$ has mean $p$ and variance $p(1-p)$, and the $I_j$ are independent"
+          },
+          {
+            "id": "clt",
+            "text": "By the central limit theorem, $X \\approx N\\big(np, np(1-p)\\big)$ for large $n$"
+          },
+          {
+            "id": "strip",
+            "text": "$X$ is a whole number, so $P(X \\ge k) = P(X > k - 0.5)$"
+          },
+          {
+            "id": "phi",
+            "text": "$\\approx 1 - \\Phi\\!\\left(\\dfrac{k - 0.5 - np}{\\sqrt{np(1-p)}}\\right)$, standardising"
+          }
+        ],
+        "answer": [
+          "sum",
+          "moments",
+          "clt",
+          "strip",
+          "phi"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by writing $X$ as a sum."
+        },
+        {
+          "rung": "step",
+          "text": "Sum, moments of one trial, the theorem, the half-unit, then standardise."
+        }
+      ],
+      "feedback": {
+        "correct": "A binomial is a sum of indicators, so the theorem applies.",
+        "generic": "Not quite right. The theorem needs a sum, so write $X$ as one first.",
+        "byKey": {
+          "clt": "The theorem needs the sum and the moments of each term first.",
+          "phi": "Standardising comes last, after the event is widened to $X > k - 0.5$."
+        }
+      },
+      "explain": {
+        "text": "The binomial is a sum of $n$ independent 0 or 1 draws, so it inherits the bell. The half-unit step is what makes a smooth curve fit whole-number bars. The lopsided 0 or 1 draws with $p$ near 0 are why small $np(1-p)$ fits badly."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "When the bell is the wrong tool",
+      "prose": "$X \\sim \\text{Bin}(100, 0.02)$, so $np = 2$ and $np(1-p) = 1.96$. For $P(X \\ge 5)$: exact 0.0508, Poisson(2) gives 0.0527, normal with the correction gives 0.0371.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 100,
+            "p": 0.02
+          },
+          "x": [
+            -0.5,
+            10.5
+          ],
+          "xLabel": "Defaults $X$ out of 100"
+        },
+        "state": {
+          "shade": {
+            "from": 5,
+            "to": null
+          },
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 2,
+                "sigma": 1.4
+              },
+              "label": "normal"
+            },
+            {
+              "id": "poi",
+              "family": "poisson",
+              "params": {
+                "lambda": 2
+              },
+              "label": "Poisson"
+            }
+          ]
+        }
+      },
+      "question": "Which approximation should you use here, and why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "poisson",
+            "text": "The Poisson, since $p$ is tiny and the bars lean against 0",
+            "correct": true
+          },
+          {
+            "id": "normal",
+            "text": "The normal, since $n = 100$ is large",
+            "why": "You looked at $n$ alone. What matters is $np(1-p) = 1.96$, far below 10."
+          },
+          {
+            "id": "either",
+            "text": "Either, since both are within 0.02 of the exact value",
+            "why": "The normal is 27% too low. In a tail estimate, that is a big miss."
+          },
+          {
+            "id": "none",
+            "text": "Neither: only the exact sum will do",
+            "why": "The Poisson is within 0.002 here, and far quicker by hand."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each estimate with 0.0508."
+        },
+        {
+          "rung": "step",
+          "text": "Then check $np(1-p)$ against the rule of thumb."
+        }
+      ],
+      "feedback": {
+        "correct": "Rare events in many trials are Poisson territory.",
+        "generic": "Not quite right. Compare the two estimates with the exact 0.0508."
+      },
+      "explain": {
+        "text": "With $p$ near 0, the binomial is lopsided, like the Poisson with $\\lambda = np$. The Poisson misses by 0.002; the normal by 0.014. For $p$ near 1, count failures instead and use the same idea.",
+        "canvas": {
+          "highlight": [
+            "poi"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Sixty wins from a coin",
+      "prose": "A strategy's trades are coin flips: each wins with chance 0.5, independently. Over 100 trades, $X \\sim \\text{Bin}(100, 0.5)$, with mean 50 and sd 5. Use $\\Phi(1.9) = 0.9713$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 100,
+            "p": 0.5
+          },
+          "x": [
+            29.5,
+            70.5
+          ],
+          "xLabel": "Winning trades $X$ out of 100"
+        },
+        "state": {
+          "shade": {
+            "from": 60,
+            "to": null
+          },
+          "showProb": false,
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 50,
+                "sigma": 5
+              },
+              "label": "normal"
+            }
+          ]
+        }
+      },
+      "question": "Estimate the chance of at least 60 winning trades, with the continuity correction. Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0287,
+        "tol": {
+          "abs": 0.0003
+        },
+        "accept": "$1 - \\Phi\\big((59.5 - 50)/5\\big) = 1 - 0.9713 = 0.0287$",
+        "placeholder": "decimal",
+        "label": "Chance of 60 or more wins",
+        "wrong": [
+          {
+            "id": "nocc",
+            "value": 0.0228,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "phi",
+            "value": 0.9713,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "wrongway",
+            "value": 0.0179,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At least 60 starts at the left edge of bar 60."
+        },
+        {
+          "rung": "step",
+          "text": "$z = (59.5 - 50)/5 = 1.9$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 - 0.9713 = 0.0287$.",
+        "generic": "Not quite right. Start the area at 59.5 and take the upper tail.",
+        "byKey": {
+          "nocc": "That starts at 60: $1 - \\Phi(2) = 0.0228$. Start at 59.5.",
+          "phi": "That is the area below 59.5. Take the upper tail.",
+          "wrongway": "That starts at 60.5, dropping bar 60."
+        }
+      },
+      "explain": {
+        "text": "The estimate is 0.0287 against an exact 0.0284. So a coin-flip strategy hits 60 wins in 100 about one time in 35. A 60% hit rate over 100 trades is suggestive, not proof.",
+        "canvas": {
+          "showProb": true
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Defaults in a loan book",
+      "prose": "A book holds 1,000 loans, each defaulting with chance 0.02, independently. So $np = 20$ and $np(1-p) = 19.6$. Use $\\Phi(2.146) = 0.9841$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 1000,
+            "p": 0.02
+          },
+          "x": [
+            4.5,
+            40.5
+          ],
+          "xLabel": "Defaults $X$ out of 1,000"
+        },
+        "state": {
+          "shade": {
+            "from": 30,
+            "to": null
+          },
+          "showProb": false,
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 20,
+                "sigma": 4.4272
+              },
+              "label": "normal"
+            }
+          ]
+        }
+      },
+      "question": "What is the quick normal estimate of the chance of 30 or more defaults? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0159,
+        "tol": {
+          "abs": 0.0003
+        },
+        "accept": "$1 - \\Phi\\big((29.5 - 20)/\\sqrt{19.6}\\big) = 1 - 0.9841 = 0.0159$",
+        "placeholder": "decimal",
+        "label": "Chance of 30 or more defaults",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 0.314,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "phi",
+            "value": 0.9841,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The sd is $\\sqrt{19.6} \\approx 4.427$."
+        },
+        {
+          "rung": "step",
+          "text": "$z = 9.5 / 4.427 \\approx 2.146$; take the upper tail."
+        }
+      ],
+      "feedback": {
+        "correct": "About 0.016.",
+        "generic": "Not quite right. Start at 29.5, divide by $\\sqrt{19.6}$, and take the upper tail.",
+        "byKey": {
+          "var": "You divided by 19.6, the variance. Use the sd, $\\sqrt{19.6} \\approx 4.43$.",
+          "phi": "That is the area below 29.5. Take the upper tail."
+        }
+      },
+      "explain": {
+        "text": "The normal says 0.0159; the exact answer is 0.0207, and the Poisson gives 0.0218. Even with $np(1-p) = 19.6$, the right tail is heavier than the bell. Real defaults are also correlated, which fattens that tail further.",
+        "canvas": {
+          "showProb": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$\\text{Bin}(n, p)$ is a sum of $n$ indicators, so it is close to $N(np, np(1-p))$ when $np(1-p)$ is large, 10 as a rule of thumb.",
+      "Each value $k$ owns the strip $[k - 0.5, k + 0.5]$: widen the event to whole bars before standardising.",
+      "When $p$ is near 0 or 1 the bars are lopsided; the Poisson with $\\lambda = np$ does better."
+    ],
+    "formula": {
+      "name": "Normal approximation with continuity correction",
+      "tex": "P(X \\le k) \\approx \\Phi\\!\\left(\\dfrac{k + 0.5 - np}{\\sqrt{np(1-p)}}\\right)",
+      "note": "For $P(X \\ge k)$ start at $k - 0.5$. Rewrite $<$ and $>$ as $\\le$ and $\\ge$ first."
+    },
+    "trap": "Adding 0.5 by habit: $P(X < 9)$ is $P(X \\le 8)$, which ends at 8.5, not 9.5."
+  },
+  "quiz": [
+    {
+      "id": "q-poll",
+      "difficulty": 2,
+      "prose": "A poll asks 1,000 random voters a yes or no question. The true share saying yes is 0.5.",
+      "question": "Within about how much of 0.5 does the poll's share land, 95% of the time?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "3",
+            "text": "About 3 percentage points",
+            "correct": true
+          },
+          {
+            "id": "16",
+            "text": "About 16 percentage points",
+            "why": "You used the sd of one voter, 0.5, over $\\sqrt{10}$. Divide by $\\sqrt{1000}$."
+          },
+          {
+            "id": "01",
+            "text": "About 0.1 of a percentage point",
+            "why": "You divided by 1,000, not $\\sqrt{1000}$."
+          },
+          {
+            "id": "50",
+            "text": "It could land anywhere",
+            "why": "Each voter is noisy, but the share of 1,000 is not."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "sd of the share $= \\sqrt{0.25/1000} \\approx 0.0158$, and 2 sds is about 0.03.",
+        "generic": "Not quite right. Find the sd of the share, then double it."
+      },
+      "explain": {
+        "text": "The count of yes votes is Bin(1000, 0.5), so the share has sd $\\sqrt{0.5 \\times 0.5 / 1000} \\approx 0.0158$. About 95% of polls land within $1.96 \\times 0.0158 \\approx 0.031$. That is the familiar plus or minus 3 points."
+      }
+    },
+    {
+      "id": "q-z-40",
+      "difficulty": 2,
+      "prose": "$X \\sim \\text{Bin}(100, 0.5)$, with mean 50 and sd 5. You want $P(X \\le 40)$ with the continuity correction.",
+      "question": "What $z$ value do you look up in $\\Phi$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1.9,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "$z = (40.5 - 50)/5 = -1.9$",
+        "placeholder": "number",
+        "wrong": [
+          {
+            "id": "nocc",
+            "value": -2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "wrongway",
+            "value": -2.1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(40.5 - 50)/5 = -1.9$.",
+        "generic": "Not quite right. End the area at the right edge of bar 40.",
+        "byKey": {
+          "nocc": "That ends at 40, without the correction.",
+          "wrongway": "That ends at 39.5, which drops bar 40."
+        }
+      },
+      "explain": {
+        "text": "$X \\le 40$ ends at 40.5, so $z = -1.9$ and $P \\approx \\Phi(-1.9) = 0.0287$. The exact value is 0.0284."
+      }
+    },
+    {
+      "id": "q-point-50",
+      "difficulty": 3,
+      "prose": "$X \\sim \\text{Bin}(100, 0.5)$, mean 50, sd 5. Use $\\Phi(0.1) = 0.5398$.",
+      "question": "Estimate $P(X = 50)$ with the continuity correction. Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0796,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "$\\Phi(0.1) - \\Phi(-0.1) = 2 \\times 0.5398 - 1 = 0.0796$",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5398,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.5398 - 0.4602 = 0.0796$.",
+        "generic": "Not quite right. Take the area from 49.5 to 50.5.",
+        "byKey": {
+          "zero": "A single point has zero area. Use the strip from 49.5 to 50.5.",
+          "half": "That is $\\Phi(0.1)$, the area below 50.5. Subtract the area below 49.5."
+        }
+      },
+      "explain": {
+        "text": "The strip from 49.5 to 50.5 is $z = -0.1$ to $0.1$, area $0.0796$. The exact value is 0.0796 too."
+      }
+    },
+    {
+      "id": "q-rule",
+      "difficulty": 2,
+      "prose": "The rule of thumb asks for $np(1-p) \\ge 10$ before using the normal.",
+      "question": "Which binomial passes it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "50",
+            "text": "$\\text{Bin}(50, 0.5)$",
+            "correct": true
+          },
+          {
+            "id": "1000",
+            "text": "$\\text{Bin}(1000, 0.005)$",
+            "why": "Large $n$, but $np(1-p) \\approx 4.98$. Use the Poisson."
+          },
+          {
+            "id": "30",
+            "text": "$\\text{Bin}(30, 0.1)$",
+            "why": "$np(1-p) = 2.7$, too small."
+          },
+          {
+            "id": "20",
+            "text": "$\\text{Bin}(20, 0.9)$",
+            "why": "$np(1-p) = 1.8$. The bars lean against 20."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$50 \\times 0.5 \\times 0.5 = 12.5$.",
+        "generic": "Not quite right. Compute $np(1-p)$ for each."
+      },
+      "explain": {
+        "text": "Only $\\text{Bin}(50, 0.5)$ reaches it: $12.5$. The others have $p$ near 0 or 1, where the bars are lopsided."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1038 @@
+{
+  "id": "l9-coin-flip-walk",
+  "course": "markov",
+  "title": "A coin-flip walk",
+  "minutes": 13,
+  "objectives": [
+    "Simulate a simple random walk and derive its mean and variance."
+  ],
+  "skills": [
+    "mc-walks"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "A fair coin moves you up 1 for heads and down 1 for tails. The path shows 10 tosses from 0. It ends at 2.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 10,
+          "p": 0.5,
+          "paths": 1,
+          "sim": {
+            "seed": 43
+          },
+          "y": [
+            -4,
+            4
+          ],
+          "height": 260,
+          "xLabel": "Toss",
+          "label": "ends at 2"
+        },
+        "state": {}
+      },
+      "question": "How many of the 10 steps went up?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "6 exactly: 6 up and 4 down.",
+        "unit": "steps",
+        "label": "Up steps",
+        "wrong": [
+          {
+            "id": "end",
+            "value": 2
+          },
+          {
+            "id": "downs",
+            "value": 4
+          },
+          {
+            "id": "half",
+            "value": 5
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Call the up steps $U$ and the down steps $D$. What do $U + D$ and $U - D$ equal?"
+        },
+        {
+          "rung": "point",
+          "text": "$U + D = 10$, the tosses, and $U - D = 2$, the end height.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add the two equations: $2U = 12$."
+        }
+      ],
+      "feedback": {
+        "correct": "6 up and 4 down: $6 - 4 = 2$.",
+        "generic": "Not quite right. The ups and downs add to 10, and ups minus downs is 2.",
+        "byKey": {
+          "end": "You read the end height as the number of ups. The end height is ups minus downs.",
+          "downs": "4 is the number of down steps. The ups are the other 6.",
+          "half": "Five ups and five downs would end at 0, not 2."
+        }
+      },
+      "explain": {
+        "text": "Ups and downs add to 10, and ups minus downs is the end height, 2. Adding the two gives $2U = 12$, so $U = 6$. Any endpoint fixes the number of up steps in this way.",
+        "canvas": {
+          "highlight": [
+            "path0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Here are 20 fair walks. Slide the number of steps to stretch them. Change the batch to draw 20 fresh paths.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 100,
+          "p": 0.5,
+          "paths": 20,
+          "sim": {
+            "seed": 7
+          },
+          "height": 300
+        },
+        "state": {
+          "params": {
+            "seed": 0
+          }
+        },
+        "derive": {
+          "run": "seed"
+        },
+        "controls": [
+          {
+            "bind": "steps",
+            "min": 25,
+            "max": 400,
+            "step": 25,
+            "label": "Steps $n$",
+            "start": 100
+          },
+          {
+            "bind": "seed",
+            "min": 0,
+            "max": 5,
+            "step": 1,
+            "label": "Batch",
+            "start": 0
+          }
+        ]
+      },
+      "question": "Compare $n = 100$ with $n = 400$. How does the spread of the endpoints change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "double",
+            "text": "It roughly doubles",
+            "correct": true
+          },
+          {
+            "id": "quad",
+            "text": "It roughly quadruples",
+            "why": "You scaled the spread with the number of steps. Four times the steps gives only about twice the spread."
+          },
+          {
+            "id": "same",
+            "text": "It stays about the same",
+            "why": "You expected the ups and downs to cancel. They cancel on average, but the leftover grows with $n$."
+          },
+          {
+            "id": "shrink",
+            "text": "It shrinks, as the paths are pulled back to 0",
+            "why": "You read the walk as returning to 0. Nothing pulls it back: each step is a fresh coin."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At $n = 100$, note roughly where the outer paths end. Then slide to 400."
+        },
+        {
+          "rung": "point",
+          "text": "At $n = 100$ most paths end within about 10 of 0.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $n = 400$ most end within about 20 of 0: twice as far, not four times."
+        }
+      ],
+      "feedback": {
+        "correct": "Four times the steps, about twice the spread.",
+        "generic": "Not quite right. Set $n$ to 100 and see how far the outer paths reach, then set it to 400."
+      },
+      "explain": {
+        "text": "The spread grows like $\\sqrt{n}$: four times the steps gives twice the spread. The dashed curves at $\\pm 2\\sqrt{n}$ hold about 95% of endpoints. The range of possible endpoints, $-n$ to $n$, grows much faster, like $n$.",
+        "canvas": {
+          "params": {
+            "steps": 400
+          },
+          "showSpread": 2,
+          "caption": "Dashed: $\\pm 2\\sqrt{n}$"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "You have been watching a **simple random walk**: $S_n = X_1 + X_2 + \\dots + X_n$. Each step $X_i$ is $+1$ with probability $p$ and $-1$ otherwise, independently. Here the coin is biased: $p = 0.6$.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 100,
+          "p": 0.6,
+          "paths": 30,
+          "sim": {
+            "seed": 11
+          },
+          "height": 280
+        },
+        "state": {}
+      },
+      "question": "Where does the average path end after 100 steps?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "20 exactly: $100 \\times (0.6 - 0.4)$.",
+        "label": "Average end position",
+        "wrong": [
+          {
+            "id": "ups",
+            "value": 60
+          },
+          {
+            "id": "excess",
+            "value": 10
+          },
+          {
+            "id": "step",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the average of a single step?"
+        },
+        {
+          "rung": "point",
+          "text": "One step averages $(+1)(0.6) + (-1)(0.4) = 0.2$.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The average of a sum is the sum of the averages: $100 \\times 0.2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$E[S_{100}] = 100 \\times 0.2 = 20$.",
+        "generic": "Not quite right. Find the average of one step, then add it up over 100 steps.",
+        "byKey": {
+          "ups": "60 is the expected number of up steps. Each of the 40 down steps takes one back.",
+          "excess": "You used $(0.6 - 0.5) \\times 100$. Each extra up is also one fewer down, so the gap counts twice.",
+          "step": "0.2 is the average of one step. The walk takes 100 of them."
+        }
+      },
+      "explain": {
+        "text": "Each step averages $0.6 - 0.4 = 0.2$, so 100 steps average 20. The dashed line is the mean path, rising 0.2 a step. We call that slope the **drift**.",
+        "canvas": {
+          "showMean": true
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Back to a fair walk, $p = 0.5$. Think of each step as a fair £1 bet, so $S_n$ is your profit or loss in pounds. One step has $E[X] = 0$, and $X^2 = 1$ always.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 100,
+          "p": 0.5,
+          "paths": 30,
+          "sim": {
+            "seed": 7
+          },
+          "height": 280,
+          "yLabel": "P&L (£)",
+          "xLabel": "Bet"
+        },
+        "state": {}
+      },
+      "question": "What is the standard deviation of $S_{100}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0.05
+        },
+        "accept": "10, in pounds: $\\sqrt{100}$.",
+        "unit": "£",
+        "label": "Standard deviation of the P&L",
+        "wrong": [
+          {
+            "id": "added",
+            "value": 100
+          },
+          {
+            "id": "mean",
+            "value": 0
+          },
+          {
+            "id": "half",
+            "value": 50
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $\\mathrm{Var}(X) = E[X^2] - E[X]^2$ for one step."
+        },
+        {
+          "rung": "point",
+          "text": "One step has variance $1 - 0^2 = 1$. Variances of independent steps add.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\mathrm{Var}(S_{100}) = 100$, so the standard deviation is $\\sqrt{100}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sqrt{100} = 10$: about £10 either way.",
+        "generic": "Not quite right. Find the variance of one step, add it up over 100 steps, then take the square root.",
+        "byKey": {
+          "added": "100 is the variance, or the standard deviations added. Variances add, then take the square root.",
+          "mean": "0 is the mean. The paths still spread out around it.",
+          "half": "You halved the 100 steps. Each step has variance 1, so the 100 steps have variance 100."
+        }
+      },
+      "explain": {
+        "text": "One step has variance 1, and the variances of independent steps add to 100. The standard deviation is $\\sqrt{100} = 10$. That is the band of about £10 you saw at $n = 100$.",
+        "canvas": {
+          "showSpread": true,
+          "caption": "Dashed: $\\pm\\sqrt{n}$"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The biased walk again, $p = 0.6$. A step is still $\\pm 1$, so $X^2 = 1$, but now its mean is $0.2$.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 100,
+          "p": 0.6,
+          "paths": 30,
+          "sim": {
+            "seed": 11
+          },
+          "height": 280
+        },
+        "state": {}
+      },
+      "question": "What is the standard deviation of $S_{100}$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9.8,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "9.80: $\\sqrt{100 \\times 0.96}$.",
+        "label": "Standard deviation of S_100",
+        "wrong": [
+          {
+            "id": "fair",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "coin",
+            "value": 4.9,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "var",
+            "value": 96,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the variance of one step first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\mathrm{Var}(X) = E[X^2] - E[X]^2 = 1 - 0.2^2$.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\mathrm{Var}(X) = 0.96$, so $\\mathrm{Var}(S_{100}) = 96$. Take the square root."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sqrt{96} \\approx 9.80$.",
+        "generic": "Not quite right. Subtract the squared mean from $E[X^2] = 1$, then add up over 100 steps.",
+        "byKey": {
+          "fair": "You kept the fair walk's step variance of 1. Subtract the squared mean: $1 - 0.2^2 = 0.96$.",
+          "coin": "You used $p(1 - p) = 0.24$, the variance of a 0-or-1 coin. A $\\pm 1$ step is twice as wide, so its variance is 4 times bigger.",
+          "var": "96 is the variance. The standard deviation is its square root."
+        }
+      },
+      "explain": {
+        "text": "One step has variance $1 - 0.04 = 0.96$, so 100 steps have variance 96. The standard deviation is $\\sqrt{96} \\approx 9.80$, just under the fair walk's 10. The drift moves the paths up; it barely narrows them.",
+        "canvas": {
+          "showMean": true,
+          "showSpread": true
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Push the coin to the limit: $p = 1$, so every step goes up. Here are 10 paths of 50 steps.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 50,
+          "p": 1,
+          "paths": 10,
+          "sim": {
+            "seed": 11
+          },
+          "height": 260
+        },
+        "state": {}
+      },
+      "question": "What is $\\mathrm{Var}(S_{50})$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "0 exactly: $S_{50} = 50$ on every path.",
+        "label": "Variance of S_50",
+        "wrong": [
+          {
+            "id": "pos",
+            "value": 50
+          },
+          {
+            "id": "four-n",
+            "value": 200
+          },
+          {
+            "id": "fair",
+            "value": 12.5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is anything random left?"
+        },
+        {
+          "rung": "point",
+          "text": "All 10 paths lie on top of each other.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$S_{50} = 50$ on every path, and a constant has variance 0."
+        }
+      ],
+      "feedback": {
+        "correct": "No randomness, no spread: the variance is 0.",
+        "generic": "Not quite right. Look at how much the 10 paths differ.",
+        "byKey": {
+          "pos": "50 is where the walk ends. It ends there every time, so there is no spread.",
+          "four-n": "You used $4n$ and dropped the factor $p(1 - p)$. With $p = 1$ that factor is 0.",
+          "fair": "You used $p = 0.5$ somewhere. Here $p = 1$, and every step is certain."
+        }
+      },
+      "explain": {
+        "text": "With $p = 1$ every path is the straight line $S_n = n$. A step's variance is $1 - 1^2 = 0$, so $\\mathrm{Var}(S_{50}) = 0$. The same happens at $p = 0$, with a straight line down.",
+        "canvas": {
+          "highlight": [
+            "path0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "You found the mean and spread for $p = 0.5$, $0.6$ and $1$. Now prove them for any $p$ and $n$. Derive the mean first, then the variance.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "m1",
+            "text": "One step: $E[X_i] = (+1)p + (-1)(1 - p) = 2p - 1$, by the definition of expectation."
+          },
+          {
+            "id": "m2",
+            "text": "All steps: $E[S_n] = \\sum_{i=1}^{n} E[X_i] = n(2p - 1)$, by linearity."
+          },
+          {
+            "id": "v1",
+            "text": "One step: $X_i^2 = 1$ always, so $\\mathrm{Var}(X_i) = E[X_i^2] - E[X_i]^2 = 1 - (2p - 1)^2$."
+          },
+          {
+            "id": "v2",
+            "text": "Expand: $1 - (4p^2 - 4p + 1) = 4p - 4p^2 = 4p(1 - p)$."
+          },
+          {
+            "id": "v3",
+            "text": "All steps: $\\mathrm{Var}(S_n) = \\sum_{i=1}^{n} \\mathrm{Var}(X_i) = 4np(1 - p)$, since independent steps have no covariance."
+          }
+        ],
+        "answer": [
+          "m1",
+          "m2",
+          "v1",
+          "v2",
+          "v3"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the mean of a single step."
+        },
+        {
+          "rung": "point",
+          "text": "The variance of a step uses $E[X_i] = 2p - 1$, so it comes after the mean lines."
+        },
+        {
+          "rung": "step",
+          "text": "Mean of one step, mean of the sum; then variance of one step, expand it, variance of the sum."
+        }
+      ],
+      "feedback": {
+        "correct": "One step, then the sum: once for the mean, once for the variance.",
+        "generic": "Not quite right. Each formula starts with a single step and then sums over the $n$ steps."
+      },
+      "explain": {
+        "text": "Linearity gives the mean with no conditions at all. The variance needs independence, so that the covariance terms vanish. Check: $p = 0.6$ and $n = 100$ give mean 20 and variance 96, as you found."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Where can a fair 20-step walk end? With $K$ up steps, $S_{20} = K - (20 - K) = 2K - 20$. The bars show $K \\sim \\text{Binomial}(20, 0.5)$. The dashed curve is the normal with the same mean and sd. Slide $n$ to watch the shape.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 20,
+            "p": 0.5
+          },
+          "xLabel": "Up steps $K$",
+          "variable": "K",
+          "height": 280
+        },
+        "state": {
+          "overlay": [
+            {
+              "id": "nrm",
+              "family": "normal",
+              "params": {
+                "mu": 10,
+                "sigma": 2.2361
+              },
+              "label": "normal"
+            }
+          ]
+        },
+        "derive": {
+          "nrm.params.mu": "n * p",
+          "nrm.params.sigma": "sqrt(n * p * (1 - p))"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 10,
+            "max": 100,
+            "step": 10,
+            "label": "Steps $n$",
+            "start": 20
+          }
+        ]
+      },
+      "question": "For $n = 20$, what is $P(S_{20} = 4)$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1201,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.1201: $\\binom{20}{12} / 2^{20} = 125970 / 1048576$.",
+        "label": "Probability, as a decimal",
+        "placeholder": "for example 0.25",
+        "wrong": [
+          {
+            "id": "k4",
+            "value": 0.0046,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "k14",
+            "value": 0.037,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many up steps make $2K - 20 = 4$?"
+        },
+        {
+          "rung": "point",
+          "text": "$K = 12$: 12 ups and 8 downs.",
+          "highlight": [
+            "x12"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$P(K = 12) = \\binom{20}{12} / 2^{20} = 125970 / 1048576$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\binom{20}{12} / 2^{20} \\approx 0.1201$.",
+        "generic": "Not quite right. Turn the endpoint 4 into a number of up steps first.",
+        "byKey": {
+          "k4": "You used $K = 4$. An endpoint of 4 needs 12 ups and 8 downs.",
+          "k14": "You added 4 ups to the 10 of a level path. Each extra up also removes a down, so $K = 10 + 4/2 = 12$."
+        }
+      },
+      "explain": {
+        "text": "$S_{20} = 4$ needs $K = 12$, with chance $\\binom{20}{12}/2^{20} \\approx 0.1201$. So the endpoint is a binomial, doubled and shifted. By the central limit theorem it looks more and more normal as $n$ grows.",
+        "canvas": {
+          "shade": {
+            "from": 12,
+            "to": 12
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A fair walk has run for 100 steps and now sits at 10. It has not been below 0 since step 1.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 100,
+          "p": 0.5,
+          "paths": 1,
+          "sim": {
+            "seed": 61
+          },
+          "height": 280,
+          "label": "now at 10"
+        },
+        "state": {}
+      },
+      "question": "What is the expected position after 100 more steps?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ten",
+            "text": "10",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0, as the walk drifts back to where it started",
+            "why": "You expected the walk to return to 0. Each new step is a fair coin, so on average it adds nothing."
+          },
+          {
+            "id": "five",
+            "text": "About 5, as the walk is pulled part of the way back",
+            "why": "You read the $\\sqrt{n}$ spread as a pull towards 0. The spread grows around wherever the walk is now."
+          },
+          {
+            "id": "twenty",
+            "text": "20, as it has been rising and will keep rising",
+            "why": "You read the past rise as momentum. The coin has no memory of it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the coin know where the walk has been?"
+        },
+        {
+          "rung": "point",
+          "text": "Write $S_{200} = S_{100} + (X_{101} + \\dots + X_{200})$.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The 100 new steps have mean 0, so $E[S_{200} \\mid S_{100} = 10] = 10 + 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "From 10, fair steps add 0 on average.",
+        "generic": "Not quite right. Split $S_{200}$ into where the walk is now plus the new steps.",
+        "byKey": {
+          "zero": "You expected a pull back to 0. A fair walk has no target: from 10 it is as likely to rise as to fall.",
+          "five": "A pull towards 0 would need the coin to remember 0. Each step is fresh, so the expected change is 0.",
+          "twenty": "You read the rise as a trend. The steps are independent, so the rise predicts nothing."
+        }
+      },
+      "explain": {
+        "text": "From 10, the next 100 steps add 0 on average, so the expected position stays 10. A fair walk does come back to 0 again and again, but slowly: about 7 returns in 100 steps. Long excursions are normal, not a sign of a pull.",
+        "canvas": {
+          "params": {
+            "start": 10,
+            "paths": 30
+          },
+          "showMean": true,
+          "caption": "30 continuations from 10: the mean path stays at 10"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A strategy makes £1 on 52% of trades and loses £1 on the rest, independently. Its P&L is a walk with $p = 0.52$. After 1,000 trades the mean P&L is $1000 \\times (2 \\times 0.52 - 1) = 40$ pounds.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 1000,
+          "p": 0.52,
+          "paths": 30,
+          "sim": {
+            "seed": 5
+          },
+          "height": 280,
+          "yLabel": "P&L (£)",
+          "xLabel": "Trade"
+        },
+        "state": {}
+      },
+      "question": "What is the standard deviation of the P&L after 1,000 trades? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 31.6,
+        "tol": {
+          "abs": 0.05
+        },
+        "accept": "31.6: $\\sqrt{4 \\times 1000 \\times 0.52 \\times 0.48} = \\sqrt{998.4}$.",
+        "unit": "£",
+        "label": "Standard deviation of the P&L",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 998.4,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "coin",
+            "value": 15.8,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "mean",
+            "value": 40
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $\\mathrm{Var}(S_n) = 4np(1 - p)$."
+        },
+        {
+          "rung": "point",
+          "text": "$4 \\times 1000 \\times 0.52 \\times 0.48 = 998.4$.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take the square root of 998.4."
+        }
+      ],
+      "feedback": {
+        "correct": "About £31.6, almost the same as a fair walk's $\\sqrt{1000} \\approx 31.6$.",
+        "generic": "Not quite right. Compute the variance $4np(1-p)$, then take its square root.",
+        "byKey": {
+          "var": "998.4 is the variance, in squared pounds. Take the square root.",
+          "coin": "You used $np(1 - p)$, the variance for 0-or-1 outcomes. A win or loss of £1 is a step of width 2, so multiply by 4.",
+          "mean": "£40 is the mean. The question asks for the spread around it."
+        }
+      },
+      "explain": {
+        "text": "The variance is $4 \\times 1000 \\times 0.52 \\times 0.48 = 998.4$, so the standard deviation is about £31.6. The mean of £40 is only 1.27 standard deviations above zero. About one run of 1,000 trades in ten still loses money.",
+        "canvas": {
+          "showMean": true,
+          "showSpread": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A simple random walk adds independent $\\pm 1$ steps: $S_n = X_1 + \\dots + X_n$, up with probability $p$.",
+      "Linearity gives the mean $n(2p - 1)$. Independence gives the variance $4np(1 - p)$, so the spread grows like $\\sqrt{n}$.",
+      "The endpoint is $2K - n$ with $K \\sim \\text{Binomial}(n, p)$, close to normal when $n$ is large."
+    ],
+    "formula": {
+      "name": "Mean and variance of a walk",
+      "tex": "E[S_n] = n(2p - 1), \\qquad \\mathrm{Var}(S_n) = 4np(1 - p)",
+      "note": "Linearity for the mean; independence for the variance."
+    },
+    "trap": "A fair walk has no pull back to 0. From wherever it is now, its expected future position is where it is now."
+  },
+  "quiz": [
+    {
+      "id": "q-parity",
+      "difficulty": 2,
+      "prose": "A walk takes 10 steps of $\\pm 1$ from 0.",
+      "question": "Which endpoint is impossible?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "5 ups and 5 downs give 0. It is the most likely endpoint of a fair walk."
+          },
+          {
+            "id": "minus10",
+            "text": "$-10$",
+            "why": "Ten downs in a row is rare, 1 in 1,024 for a fair coin, but possible."
+          },
+          {
+            "id": "four",
+            "text": "4",
+            "why": "7 ups and 3 downs give 4."
+          },
+          {
+            "id": "three",
+            "text": "3",
+            "correct": true
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An endpoint of 3 would need 6.5 up steps.",
+        "generic": "Not quite right. Write the endpoint as $2K - 10$ for $K$ up steps."
+      },
+      "explain": {
+        "text": "With $K$ up steps the endpoint is $2K - 10$, which is always even. An odd endpoint such as 3 would need $K = 6.5$. After an odd number of steps, only odd endpoints are possible."
+      }
+    },
+    {
+      "id": "q-var",
+      "difficulty": 2,
+      "prose": "A walk has $p = 0.25$ and takes $n = 40$ steps.",
+      "question": "What is $\\mathrm{Var}(S_{40})$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 30,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "30: $4 \\times 40 \\times 0.25 \\times 0.75$.",
+        "label": "Variance",
+        "wrong": [
+          {
+            "id": "coin",
+            "value": 7.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "mean",
+            "value": -20,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "fair",
+            "value": 40,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$4 \\times 40 \\times 0.25 \\times 0.75 = 30$.",
+        "generic": "Not quite right. Use $4np(1 - p)$.",
+        "byKey": {
+          "coin": "You used $np(1 - p)$. A $\\pm 1$ step has variance $4p(1 - p)$.",
+          "mean": "$-20$ is the mean, $40 \\times (2 \\times 0.25 - 1)$. The question asks for the variance.",
+          "fair": "40 is the variance of a fair walk. With $p = 0.25$ each step has variance 0.75."
+        }
+      },
+      "explain": {
+        "text": "Each step has variance $4p(1 - p) = 4 \\times 0.25 \\times 0.75 = 0.75$. Forty independent steps give $40 \\times 0.75 = 30$. The mean is $40 \\times (-0.5) = -20$."
+      }
+    },
+    {
+      "id": "q-down",
+      "difficulty": 3,
+      "prose": "The strategy from the lesson: after 1,000 trades its P&L has mean £40 and standard deviation £31.6, and is close to normal.",
+      "question": "About what is the chance the strategy is down after 1,000 trades? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "About 0.10: $\\Phi(-40 / 31.6) = \\Phi(-1.27)$. The exact binomial value is 0.097.",
+        "label": "Probability, as a decimal",
+        "wrong": [
+          {
+            "id": "never",
+            "value": 0
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "one-sd",
+            "value": 0.16,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\Phi(-1.27) \\approx 0.10$.",
+        "generic": "Not quite right. Standardise 0: how many standard deviations below the mean is it?",
+        "byKey": {
+          "never": "A positive mean does not rule out a loss. The spread is nearly as big as the mean.",
+          "half": "0.5 is the chance of a fair walk being down. The edge moves the centre to £40.",
+          "one-sd": "0.16 is the chance of falling 1 standard deviation below the mean. Zero is 1.27 below it."
+        }
+      },
+      "explain": {
+        "text": "Zero is $40 / 31.6 \\approx 1.27$ standard deviations below the mean. The normal gives $\\Phi(-1.27) \\approx 0.10$, and the exact binomial gives 0.097. A 52% edge needs far more than 1,000 trades to be sure of a profit."
+      }
+    },
+    {
+      "id": "q-returns",
+      "difficulty": 3,
+      "prose": "A fair walk returns to 0 about 7 times in its first 100 steps, on average. In its first 10,000 steps it returns about 79 times.",
+      "question": "Which statement fits these numbers?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rarer",
+            "text": "Returns keep coming, but the gaps between them grow",
+            "correct": true
+          },
+          {
+            "id": "steady",
+            "text": "The walk returns about every 14 steps, however long it runs",
+            "why": "You assumed a steady rate of returns. 100 times as many steps give only about 11 times as many returns."
+          },
+          {
+            "id": "pulled",
+            "text": "The longer the walk runs, the harder it is pulled back to 0",
+            "why": "You read the returns as a pull towards 0. Per step, returns get rarer as the walk runs."
+          },
+          {
+            "id": "stops",
+            "text": "After a while the walk stops returning to 0",
+            "why": "A fair walk keeps returning, with probability 1. Returns just get further apart."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The returns grow like $\\sqrt{n}$, much slower than $n$.",
+        "generic": "Not quite right. Compare 100 times the steps with how many times the returns grew."
+      },
+      "explain": {
+        "text": "Going from 100 to 10,000 steps multiplies the returns by about 11, close to $\\sqrt{100} = 10$. So returns grow like $\\sqrt{n}$ and the gaps between them stretch out. A fair walk always comes back, but it can take a very long time."
+      }
+    }
+  ]
+}

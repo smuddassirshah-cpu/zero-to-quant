@@ -1,0 +1,1247 @@
+{
+  "id": "l8-lognormal",
+  "course": "limits-thm",
+  "title": "Prices that cannot go negative",
+  "minutes": 15,
+  "objectives": [
+    "Model a price with the lognormal distribution.",
+    "Find lognormal probabilities by taking logs and standardising."
+  ],
+  "skills": [
+    "dl-normal",
+    "dl-continuous"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Double or halve",
+      "prose": "A £100 share will either double or halve over the year, each with chance $\\tfrac12$. In logs the two moves are $+\\ln 2$ and $-\\ln 2$: symmetric, averaging 0.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "down",
+              "label": "£50"
+            },
+            {
+              "id": "up",
+              "label": "£200"
+            }
+          ],
+          "yLabel": "Probability",
+          "xLabel": "Price in a year",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "down": 0.5,
+            "up": 0.5
+          }
+        }
+      },
+      "question": "What is the expected price in a year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 125,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Expected price",
+        "placeholder": "A number",
+        "accept": "£125: $\\tfrac12 \\times 200 + \\tfrac12 \\times 50$.",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "logs",
+            "value": 100,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "drop",
+            "value": 75,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Average the two prices, not the two moves."
+        },
+        {
+          "rung": "point",
+          "text": "Each price has weight $\\tfrac12$.",
+          "highlight": [
+            "up",
+            "down"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac12 \\times 200 + \\tfrac12 \\times 50$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac12 \\times 200 + \\tfrac12 \\times 50 = 125$.",
+        "generic": "Not quite right. Weight each price by its chance and add.",
+        "byKey": {
+          "logs": "You averaged the log moves, which cancel. The prices themselves average to more than £100.",
+          "drop": "You averaged the gain and the loss as $+100$ and $-50$, then took off 50. Average the prices: $\\tfrac12(200 + 50)$."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac12 \\times 200 + \\tfrac12 \\times 50 = 125$. The log moves cancel, so the middle of the log outcomes is still £100. Yet the average price is higher: symmetric in logs means skewed in prices."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Normal in logs",
+      "prose": "Now let the log of a price be normal: $\\ln S \\sim N(\\mu, \\sigma^2)$ with $\\mu = \\ln 100$. The curve is the density of $S$ itself. Slide $\\sigma$, the spread of $\\ln S$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            300
+          ],
+          "y": [
+            0,
+            0.045
+          ],
+          "grid": true,
+          "xLabel": "Price $s$ (£)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(ln(x) - m)^2/(2*s^2))/(x*s*sqrt(2*pi))",
+              "domain": [
+                0.5,
+                300
+              ],
+              "label": "$f(s)$",
+              "labelAt": 225.0,
+              "labelOffset": [
+                8,
+                -14
+              ]
+            }
+          ],
+          "params": {
+            "m": 4.60517,
+            "s": 0.3
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "med",
+              "x": 100,
+              "label": "median"
+            },
+            {
+              "id": "avg",
+              "x": 104.6,
+              "label": "mean"
+            }
+          ]
+        },
+        "derive": {
+          "med.x": "exp(m)",
+          "avg.x": "exp(m + s*s/2)",
+          "caption": "Median £{{fixed(exp(m), 2)}}, mean £{{fixed(exp(m + s*s/2), 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0.1,
+            "max": 0.8,
+            "step": 0.05,
+            "start": 0.3,
+            "label": "$\\sigma$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "What happens as $\\sigma$ grows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The median stays at £100 and the mean rises above it",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "The median and the mean both stay at £100",
+            "why": "Watch the mean line: it moves right as $\\sigma$ grows."
+          },
+          {
+            "id": "sym",
+            "text": "The curve stays symmetric about £100",
+            "why": "The right tail stretches out. Prices can rise without limit but cannot fall below 0."
+          },
+          {
+            "id": "below",
+            "text": "The mean falls below the median",
+            "why": "The long right tail pulls the mean up, not down."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try $\\sigma = 0.1$, then $\\sigma = 0.8$. Watch the two lines."
+        },
+        {
+          "rung": "point",
+          "text": "The caption gives both values.",
+          "highlight": [
+            "avg"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The median reads £100 throughout; the mean grows."
+        }
+      ],
+      "feedback": {
+        "correct": "The median stays at £100; the mean climbs with $\\sigma$.",
+        "generic": "Not quite right. Read the caption at a small and a large $\\sigma$."
+      },
+      "explain": {
+        "text": "The median stays at $e^{\\mu} = 100$ for every $\\sigma$. The curve is squashed against 0 and stretched to the right, so the mean rises: at $\\sigma = 0.8$ it is £137.71. The log of a price is the natural place for a symmetric model.",
+        "canvas": {
+          "params": {
+            "s": 0.8
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The median",
+      "prose": "A variable whose log is normal is **lognormal**. It is always positive. Since $\\ln$ is increasing, $S \\le e^{\\mu}$ exactly when $\\ln S \\le \\mu$, and that has chance $\\tfrac12$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            300
+          ],
+          "y": [
+            0,
+            0.016
+          ],
+          "grid": true,
+          "xLabel": "Price $s$ (£)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(ln(x) - m)^2/(2*s^2))/(x*s*sqrt(2*pi))",
+              "domain": [
+                0.5,
+                300
+              ],
+              "label": "$f(s)$",
+              "labelAt": 225.0,
+              "labelOffset": [
+                8,
+                -14
+              ]
+            }
+          ],
+          "params": {
+            "m": 4.7,
+            "s": 0.3
+          }
+        },
+        "state": {}
+      },
+      "question": "If $\\ln S \\sim N(4.7, 0.3^2)$, what is the median of $S$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 109.95,
+        "tol": {
+          "abs": 0.05
+        },
+        "label": "Median of S",
+        "placeholder": "A number",
+        "accept": "$e^{4.7} \\approx 109.95$.",
+        "wrong": [
+          {
+            "id": "log",
+            "value": 4.7,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "mean",
+            "value": 115.01,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The median of $\\ln S$ is 4.7. Undo the log."
+        },
+        {
+          "rung": "point",
+          "text": "$S = e^{\\ln S}$, and $e^x$ keeps order.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$e^{4.7}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$e^{4.7} \\approx 109.95$.",
+        "generic": "Not quite right. Exponentiate the median of $\\ln S$.",
+        "byKey": {
+          "log": "4.7 is the median of $\\ln S$. The median of $S$ is $e^{4.7}$.",
+          "mean": "115.01 is the mean, $e^{4.7 + 0.045}$. The median has no $\\sigma$ in it."
+        }
+      },
+      "explain": {
+        "text": "Half of $\\ln S$ lies below 4.7, so half of $S$ lies below $e^{4.7} \\approx 109.95$. The median passes straight through the exponential. The mean does not, as we show next.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "med",
+              "x": 109.95,
+              "label": "median"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The mean of $e^{\\sigma Z}$",
+      "prose": "Write $S = e^{\\mu + \\sigma Z}$ with $Z \\sim N(0, 1)$. Then $E[S] = e^{\\mu}\\,E[e^{\\sigma Z}]$. Find $E[e^{\\sigma Z}]$ by completing the square.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "$E[e^{\\sigma Z}] = \\displaystyle\\int e^{\\sigma z}\\,\\frac{1}{\\sqrt{2\\pi}}e^{-z^2/2}\\,dz$, the expectation of a function of $Z$"
+          },
+          {
+            "id": "comb",
+            "text": "$= \\displaystyle\\int \\frac{1}{\\sqrt{2\\pi}}e^{-(z^2 - 2\\sigma z)/2}\\,dz$, combining the exponents"
+          },
+          {
+            "id": "square",
+            "text": "$= e^{\\sigma^2/2}\\displaystyle\\int \\frac{1}{\\sqrt{2\\pi}}e^{-(z - \\sigma)^2/2}\\,dz$, since $z^2 - 2\\sigma z = (z - \\sigma)^2 - \\sigma^2$"
+          },
+          {
+            "id": "one",
+            "text": "$= e^{\\sigma^2/2}$, since the integral is the area under the $N(\\sigma, 1)$ density, which is 1"
+          }
+        ],
+        "answer": [
+          "def",
+          "comb",
+          "square",
+          "one"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from $E[g(Z)] = \\int g(z) f(z)\\,dz$."
+        },
+        {
+          "rung": "point",
+          "text": "Merge the two exponentials before completing the square."
+        },
+        {
+          "rung": "step",
+          "text": "Definition, combine, complete the square, total area 1."
+        }
+      ],
+      "feedback": {
+        "correct": "So $E[e^{\\sigma Z}] = e^{\\sigma^2/2}$, and $E[S] = e^{\\mu + \\sigma^2/2}$.",
+        "generic": "Not quite right. Write the integral first, and use 'area 1' last.",
+        "byKey": {
+          "square": "Completing the square needs a single exponent, so combine first.",
+          "one": "The area-1 step needs the shifted normal density in front of you.",
+          "comb": "Combining needs the integral written out first."
+        }
+      },
+      "explain": {
+        "text": "The leftover $\\sigma^2$ from completing the square comes out as $e^{\\sigma^2/2}$, and the rest is a shifted normal with area 1. So $E[S] = e^{\\mu + \\sigma^2/2}$, above the median $e^{\\mu}$ whenever $\\sigma > 0$. The convexity of $e^x$ is the reason: big rises outweigh equal falls in logs."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The mean",
+      "prose": "Back to $\\ln S \\sim N(4.7, 0.3^2)$, median £109.95. Now use $E[S] = e^{\\mu + \\sigma^2/2}$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            300
+          ],
+          "y": [
+            0,
+            0.016
+          ],
+          "grid": true,
+          "xLabel": "Price $s$ (£)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(ln(x) - m)^2/(2*s^2))/(x*s*sqrt(2*pi))",
+              "domain": [
+                0.5,
+                300
+              ],
+              "label": "$f(s)$",
+              "labelAt": 225.0,
+              "labelOffset": [
+                8,
+                -14
+              ]
+            }
+          ],
+          "params": {
+            "m": 4.7,
+            "s": 0.3
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "med",
+              "x": 109.95,
+              "label": "median"
+            }
+          ]
+        }
+      },
+      "question": "What is $E[S]$? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 115.01,
+        "tol": {
+          "abs": 0.05
+        },
+        "label": "Mean of S",
+        "placeholder": "A number",
+        "accept": "$e^{4.745} \\approx 115.01$.",
+        "wrong": [
+          {
+            "id": "median",
+            "value": 109.95,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "full-var",
+            "value": 120.3,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "sd-half",
+            "value": 127.74,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute $\\mu + \\tfrac{\\sigma^2}{2}$ first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sigma^2 = 0.09$, so $\\tfrac{\\sigma^2}{2} = 0.045$.",
+          "highlight": [
+            "med"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$e^{4.745}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$e^{4.7 + 0.045} = e^{4.745} \\approx 115.01$.",
+        "generic": "Not quite right. Exponentiate $\\mu + \\tfrac{\\sigma^2}{2}$.",
+        "byKey": {
+          "median": "That is the median, $e^{4.7}$. The mean adds $\\tfrac{\\sigma^2}{2}$ in the exponent.",
+          "full-var": "You added all of $\\sigma^2 = 0.09$. Add half of it.",
+          "sd-half": "You added $\\tfrac{\\sigma}{2} = 0.15$. The correction is $\\tfrac{\\sigma^2}{2} = 0.045$."
+        }
+      },
+      "explain": {
+        "text": "$e^{4.745} \\approx 115.01$, about 4.6% above the median. Check: $e^{4.7} \\times e^{0.045} = 109.95 \\times 1.046 = 115.01$.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "med",
+              "x": 109.95,
+              "label": "median"
+            },
+            {
+              "id": "avg",
+              "x": 115.01,
+              "label": "mean"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A price model",
+      "prose": "A standard model: $$S_T = S_0\\,e^{(m - \\sigma^2/2)T + \\sigma\\sqrt{T}\\,Z}.$$ The $-\\tfrac{\\sigma^2}{2}$ cancels the $e^{\\sigma^2 T/2}$ just found, so $E[S_T] = S_0e^{mT}$ for any $\\sigma$. It is the volatility drag from *Series and Approximation*. Here $S_0 = 100$, $m = 0.05$, $T = 1$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            250
+          ],
+          "y": [
+            0,
+            0.05
+          ],
+          "grid": true,
+          "xLabel": "Price in a year $s$ (£)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(ln(x) - ln(100) - mm + s^2/2)^2/(2*s^2))/(x*s*sqrt(2*pi))",
+              "domain": [
+                0.5,
+                250
+              ],
+              "label": "$f(s)$",
+              "labelAt": 190,
+              "labelOffset": [
+                8,
+                -14
+              ]
+            }
+          ],
+          "params": {
+            "mm": 0.05,
+            "s": 0.3
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "med",
+              "x": 100.5,
+              "label": "median"
+            },
+            {
+              "id": "avg",
+              "x": 105.13,
+              "label": "mean"
+            }
+          ]
+        },
+        "derive": {
+          "med.x": "100*exp(mm - s*s/2)",
+          "caption": "Median £{{fixed(100*exp(mm - s*s/2), 2)}}, mean £105.13"
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0.02,
+            "max": 0.5,
+            "step": 0.01,
+            "start": 0.3,
+            "label": "$\\sigma$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "Slide $\\sigma$ towards 0. Where does all the probability end up?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "At £105.13, which is $100e^{0.05}$",
+            "correct": true
+          },
+          {
+            "id": "today",
+            "text": "At £100, today's price",
+            "why": "The drift still acts when $\\sigma = 0$: the price grows at 5% a year."
+          },
+          {
+            "id": "med",
+            "text": "At £103.05, the median when $\\sigma = 0.2$",
+            "why": "The median is $100e^{0.05 - \\sigma^2/2}$, which keeps moving as $\\sigma$ shrinks. It tends to 105.13."
+          },
+          {
+            "id": "flat",
+            "text": "It spreads out evenly",
+            "why": "A smaller $\\sigma$ means less spread. The curve gets narrower and taller."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $\\sigma = 0.02$ and look at the curve and the two lines."
+        },
+        {
+          "rung": "point",
+          "text": "The median line slides towards the mean line.",
+          "highlight": [
+            "med",
+            "avg"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With $\\sigma = 0$, $S_1 = 100e^{0.05}$ exactly."
+        }
+      ],
+      "feedback": {
+        "correct": "With no randomness, $S_1 = 100e^{0.05} = 105.13$ for sure.",
+        "generic": "Not quite right. Put $\\sigma = 0$ into the model."
+      },
+      "explain": {
+        "text": "At $\\sigma = 0$ the model has no randomness: $S_1 = 100e^{0.05} \\approx 105.13$. The density collapses to a spike there, a point mass, and the median meets the mean. Every $\\sigma > 0$ pulls the median below the mean.",
+        "canvas": {
+          "params": {
+            "s": 0.02
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Expected up, but a coin flip",
+      "prose": "A volatile share: $S_0 = \\text{£}50$, drift $m = 8\\%$ a year, volatility $\\sigma = 40\\%$. Its expected price in a year is $50e^{0.08} = \\text{£}54.16$, so it is expected to rise 8%.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            200
+          ],
+          "y": [
+            0,
+            0.025
+          ],
+          "grid": true,
+          "xLabel": "Price $s$ (£)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(ln(x) - m)^2/(2*s^2))/(x*s*sqrt(2*pi))",
+              "domain": [
+                0.5,
+                200
+              ],
+              "label": "$f(s)$",
+              "labelAt": 150.0,
+              "labelOffset": [
+                8,
+                -14
+              ]
+            }
+          ],
+          "params": {
+            "m": 3.912023,
+            "s": 0.4
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "today",
+              "x": 50,
+              "label": "£50 today"
+            }
+          ],
+          "area": [
+            {
+              "id": "up",
+              "f": "f",
+              "from": 50,
+              "to": 200
+            }
+          ]
+        }
+      },
+      "question": "What is $P(S_1 > 50)$, the chance it ends the year up?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0.5$",
+            "correct": true
+          },
+          {
+            "id": "drift",
+            "text": "$0.5793$",
+            "why": "You used $m = 0.08$ as the drift of $\\ln S$. The log drifts at $m - \\tfrac{\\sigma^2}{2} = 0.08 - 0.08 = 0$."
+          },
+          {
+            "id": "normal",
+            "text": "$0.5732$",
+            "why": "You put a normal curve on $S$ itself, with mean 54.16. $S$ is lognormal: take logs before standardising."
+          },
+          {
+            "id": "sure",
+            "text": "More than 0.6, since it is expected to rise 8%",
+            "why": "A high mean does not make a rise likely. A few large gains carry the mean."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Take logs: $\\ln S_1 = \\ln 50 + (m - \\tfrac{\\sigma^2}{2}) + \\sigma Z$."
+        },
+        {
+          "rung": "point",
+          "text": "$m - \\tfrac{\\sigma^2}{2} = 0.08 - \\tfrac{0.16}{2}$.",
+          "highlight": [
+            "up"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The log drift is 0, so $P(S_1 > 50) = P(Z > 0)$."
+        }
+      ],
+      "feedback": {
+        "correct": "The log drift is $0.08 - 0.08 = 0$, so the chance is exactly $\\tfrac12$.",
+        "generic": "Not quite right. Work out the drift of $\\ln S$, including the $-\\tfrac{\\sigma^2}{2}$.",
+        "byKey": {
+          "drift": "You used $m$ without the $-\\tfrac{\\sigma^2}{2}$. The log of the price drifts at $0.08 - 0.08 = 0$.",
+          "normal": "You put a normal curve on $S$ itself. $S$ is lognormal: standardise $\\ln S$, not $S$."
+        }
+      },
+      "explain": {
+        "text": "The log drift is $m - \\tfrac{\\sigma^2}{2} = 0$, so the median price is £50 and a rise is a coin flip. The mean is still £54.16, carried by the long right tail. Expected return and the chance of a gain are different questions."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Take logs, then standardise",
+      "prose": "For $S_T = S_0\\,e^{(m - \\sigma^2/2)T + \\sigma\\sqrt T Z}$: $$P(S_T > K) = 1 - \\Phi\\left(\\frac{\\ln(K/S_0) - (m - \\tfrac12\\sigma^2)T}{\\sigma\\sqrt{T}}\\right).$$ The median is $S_0e^{(m - \\sigma^2/2)T}$ and the mean is $S_0e^{mT}$.",
+      "question": "With $m = 0$ and $\\sigma > 0$, how does $P(S_T > S_0)$ compare with $\\tfrac12$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It is less than $\\tfrac12$",
+            "correct": true
+          },
+          {
+            "id": "equal",
+            "text": "It is exactly $\\tfrac12$",
+            "why": "That needs the log drift $m - \\tfrac{\\sigma^2}{2}$ to be 0. With $m = 0$ it is $-\\tfrac{\\sigma^2}{2} < 0$."
+          },
+          {
+            "id": "more",
+            "text": "It is more than $\\tfrac12$",
+            "why": "With $m = 0$ the log drifts down, at $-\\tfrac{\\sigma^2}{2}$, so the median falls below $S_0$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $K = S_0$ and $m = 0$ into the formula."
+        },
+        {
+          "rung": "point",
+          "text": "$\\ln(K/S_0) = 0$, so the fraction is $\\tfrac{\\sigma^2 T/2}{\\sigma\\sqrt T} = \\tfrac{\\sigma\\sqrt T}{2}$."
+        },
+        {
+          "rung": "step",
+          "text": "$1 - \\Phi$ of a positive number is below $\\tfrac12$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 - \\Phi\\left(\\tfrac{\\sigma\\sqrt T}{2}\\right) < \\tfrac12$.",
+        "generic": "Not quite right. Substitute $K = S_0$ and $m = 0$ and check the sign of the $z$."
+      },
+      "explain": {
+        "text": "The $z$ is $\\tfrac{\\sigma\\sqrt T}{2} > 0$, so $P(S_T > S_0) = 1 - \\Phi\\left(\\tfrac{\\sigma\\sqrt T}{2}\\right) < \\tfrac12$. A share with zero expected return falls more often than it rises. Its mean holds up through rare large gains."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Will it reach £120?",
+      "prose": "A £100 share has drift $m = 5\\%$ and volatility $\\sigma = 20\\%$ a year. A trader holds a digital option that pays if the share ends the year above £120.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            250
+          ],
+          "y": [
+            0,
+            0.022
+          ],
+          "grid": true,
+          "xLabel": "Price in a year $s$ (£)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(ln(x) - ln(100) - mm + s^2/2)^2/(2*s^2))/(x*s*sqrt(2*pi))",
+              "domain": [
+                0.5,
+                250
+              ],
+              "label": "$f(s)$",
+              "labelAt": 190,
+              "labelOffset": [
+                8,
+                -14
+              ]
+            }
+          ],
+          "params": {
+            "mm": 0.05,
+            "s": 0.2
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "K",
+              "x": 120,
+              "label": "£120"
+            }
+          ],
+          "area": [
+            {
+              "id": "pay",
+              "f": "f",
+              "from": 120,
+              "to": 250
+            }
+          ]
+        }
+      },
+      "question": "What is $P(S_1 > 120)$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2231,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "P(S1 > 120)",
+        "placeholder": "A decimal",
+        "accept": "$1 - \\Phi(0.7616) \\approx 0.2231$.",
+        "wrong": [
+          {
+            "id": "normal",
+            "value": 0.2419,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "no-drag",
+            "value": 0.2541,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "simple",
+            "value": 0.2266,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "no-drift",
+            "value": 0.181,
+            "tol": {
+              "abs": 0.0003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\ln S_1 \\sim N\\left(\\ln 100 + 0.05 - 0.02,\\ 0.2^2\\right)$."
+        },
+        {
+          "rung": "point",
+          "text": "$z = \\tfrac{\\ln 1.2 - 0.03}{0.2} \\approx 0.7616$.",
+          "highlight": [
+            "pay"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`1 - phi(0.7616)`."
+        }
+      ],
+      "feedback": {
+        "correct": "$z = \\tfrac{0.1823 - 0.03}{0.2} \\approx 0.7616$, and $1 - \\Phi(z) \\approx 0.2231$.",
+        "generic": "Not quite right. Standardise $\\ln(120/100)$ with log drift $0.05 - 0.02$ and sd 0.2.",
+        "byKey": {
+          "normal": "You put a normal on $S_1$ with its mean and sd. $S_1$ is lognormal: standardise $\\ln S_1$.",
+          "no-drag": "You used $m = 0.05$ as the log drift. Subtract $\\tfrac{\\sigma^2}{2} = 0.02$ first.",
+          "simple": "You used the simple return 0.2 in place of $\\ln 1.2 \\approx 0.1823$.",
+          "no-drift": "You left out the drift. The log drifts up by $0.05 - 0.02 = 0.03$ in the year."
+        }
+      },
+      "explain": {
+        "text": "$\\ln 1.2 \\approx 0.1823$, so $z = \\tfrac{0.1823 - 0.03}{0.2} \\approx 0.7616$ and the option pays with chance 0.2231. The median price is $100e^{0.03} \\approx \\text{£}103.05$ and the mean is $100e^{0.05} \\approx \\text{£}105.13$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Below its own average",
+      "prose": "Same share: median price in a year £103.05, mean £105.13. A client asks how often the share ends the year below its expected price.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            250
+          ],
+          "y": [
+            0,
+            0.022
+          ],
+          "grid": true,
+          "xLabel": "Price in a year $s$ (£)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(ln(x) - ln(100) - mm + s^2/2)^2/(2*s^2))/(x*s*sqrt(2*pi))",
+              "domain": [
+                0.5,
+                250
+              ],
+              "label": "$f(s)$",
+              "labelAt": 190,
+              "labelOffset": [
+                8,
+                -14
+              ]
+            }
+          ],
+          "params": {
+            "mm": 0.05,
+            "s": 0.2
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "avg",
+              "x": 105.13,
+              "label": "mean £105.13"
+            }
+          ],
+          "area": [
+            {
+              "id": "below",
+              "f": "f",
+              "from": 0.5,
+              "to": 105.13
+            }
+          ]
+        }
+      },
+      "question": "What is $P(S_1 < 105.13)$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5398,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "P(S1 below its mean)",
+        "placeholder": "A decimal",
+        "accept": "$\\Phi(0.1) \\approx 0.5398$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "above",
+            "value": 0.4602,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Take logs: $\\ln(105.13/100) = 0.05$."
+        },
+        {
+          "rung": "point",
+          "text": "$z = \\tfrac{0.05 - 0.03}{0.2} = 0.1$.",
+          "highlight": [
+            "below"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\Phi(0.1)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$z = \\tfrac{0.05 - 0.03}{0.2} = 0.1$, and $\\Phi(0.1) \\approx 0.5398$.",
+        "generic": "Not quite right. Standardise $\\ln(105.13/100)$ as before.",
+        "byKey": {
+          "half": "0.5 is the chance of ending below the median, £103.05. The mean sits higher.",
+          "above": "0.4602 is the chance of ending above the mean."
+        }
+      },
+      "explain": {
+        "text": "$\\ln(105.13/100) = 0.05$, so $z = \\tfrac{0.05 - 0.03}{0.2} = 0.1$ and $\\Phi(0.1) \\approx 0.54$. In general $z = \\tfrac{\\sigma\\sqrt T}{2}$: more volatility, more years below the average. A few large gains carry the mean."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "If $\\ln S \\sim N(\\mu, \\sigma^2)$ then $S$ is lognormal: positive and right-skewed, with median $e^{\\mu}$ and mean $e^{\\mu + \\sigma^2/2}$.",
+      "$E[e^{\\sigma Z}] = e^{\\sigma^2/2}$, so the price model $S_T = S_0e^{(m - \\sigma^2/2)T + \\sigma\\sqrt T Z}$ has $E[S_T] = S_0e^{mT}$. The $-\\tfrac{\\sigma^2}{2}$ is the volatility drag.",
+      "For a probability, take logs and standardise: $P(S_T > K) = 1 - \\Phi\\left(\\tfrac{\\ln(K/S_0) - (m - \\sigma^2/2)T}{\\sigma\\sqrt T}\\right)$."
+    ],
+    "formula": {
+      "name": "Lognormal median and mean",
+      "tex": "\\text{median} = e^{\\mu}, \\qquad E[S] = e^{\\mu + \\sigma^2/2}",
+      "note": "The mean exceeds the median whenever $\\sigma > 0$."
+    },
+    "trap": "Do not put a normal curve on $S$, and do not use $m$ as the drift of $\\ln S$: the log drifts at $m - \\tfrac{\\sigma^2}{2}$."
+  },
+  "quiz": [
+    {
+      "id": "q-mean",
+      "difficulty": 2,
+      "prose": "$\\ln S \\sim N(2, 0.5^2)$.",
+      "question": "What is $E[S]$? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8.373,
+        "tol": {
+          "abs": 0.003
+        },
+        "label": "Mean of S",
+        "placeholder": "A number",
+        "accept": "$e^{2.125} \\approx 8.373$.",
+        "wrong": [
+          {
+            "id": "median",
+            "value": 7.389,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "full-var",
+            "value": 9.488,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$e^{2 + 0.125} \\approx 8.373$.",
+        "generic": "Not quite right. Use $e^{\\mu + \\sigma^2/2}$ with $\\sigma^2 = 0.25$.",
+        "byKey": {
+          "median": "7.389 is the median, $e^2$.",
+          "full-var": "You added all of $\\sigma^2$. Add half: 0.125."
+        }
+      },
+      "explain": {
+        "text": "$\\sigma^2 = 0.25$, so $E[S] = e^{2 + 0.125} \\approx 8.373$, above the median $e^2 \\approx 7.389$."
+      }
+    },
+    {
+      "id": "q-zero-drift",
+      "difficulty": 3,
+      "prose": "A share has $S_0 = 100$, $m = 0$ and $\\sigma = 25\\%$ a year.",
+      "question": "What is $P(S_4 > 100)$, the chance it is up after 4 years? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4013,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "P(S4 > 100)",
+        "placeholder": "A decimal",
+        "accept": "$1 - \\Phi(0.25) \\approx 0.4013$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "flip",
+            "value": 0.5987,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$z = \\tfrac{0.03125 \\times 4}{0.25 \\times 2} = 0.25$, and $1 - \\Phi(0.25) \\approx 0.4013$.",
+        "generic": "Not quite right. The log drifts at $-\\tfrac{\\sigma^2}{2}$ a year, and the log sd is $\\sigma\\sqrt T$.",
+        "byKey": {
+          "half": "With $m = 0$ the log still drifts down at $\\tfrac{\\sigma^2}{2}$ a year, so the median falls below 100.",
+          "flip": "0.5987 is the chance it is down."
+        }
+      },
+      "explain": {
+        "text": "$\\ln(S_4/100) \\sim N(-0.125, 0.5^2)$, so $z = \\tfrac{0 + 0.125}{0.5} = 0.25$ and the chance is $1 - \\Phi(0.25) \\approx 0.4013$. Zero expected return, yet down 6 times in 10."
+      }
+    },
+    {
+      "id": "q-facts",
+      "difficulty": 2,
+      "prose": "$S$ is lognormal with $\\sigma > 0$.",
+      "question": "Which statement is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$S > 0$, and its mean exceeds its median",
+            "correct": true
+          },
+          {
+            "id": "sym",
+            "text": "$S$ is symmetric about its mean",
+            "why": "$\\ln S$ is symmetric. $S$ itself has a long right tail."
+          },
+          {
+            "id": "neg",
+            "text": "$S$ can be negative when $\\sigma$ is large",
+            "why": "$S = e^{\\ln S}$ is positive whatever $\\ln S$ is."
+          },
+          {
+            "id": "mean",
+            "text": "Its mean is $e^{\\mu}$",
+            "why": "$e^{\\mu}$ is the median. The mean is $e^{\\mu + \\sigma^2/2}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An exponential is positive, and the right tail lifts the mean.",
+        "generic": "Not quite right. Recall what taking $e^x$ does to a symmetric normal."
+      },
+      "explain": {
+        "text": "$S = e^{\\ln S}$ is always positive. The exponential stretches the right side, so the mean $e^{\\mu + \\sigma^2/2}$ sits above the median $e^{\\mu}$."
+      }
+    },
+    {
+      "id": "q-median",
+      "difficulty": 3,
+      "prose": "A £100 share has drift $m = 10\\%$ and volatility $\\sigma = 30\\%$ a year.",
+      "question": "What is its median price in a year? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 105.65,
+        "tol": {
+          "abs": 0.02
+        },
+        "label": "Median price",
+        "placeholder": "A number",
+        "accept": "$100e^{0.1 - 0.045} \\approx \\text{£}105.65$.",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 110.52,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "sd-half",
+            "value": 95.12,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$100e^{0.1 - 0.045} = 100e^{0.055} \\approx 105.65$.",
+        "generic": "Not quite right. The median is $S_0e^{(m - \\sigma^2/2)T}$.",
+        "byKey": {
+          "mean": "£110.52 is the mean, $100e^{0.1}$. The median subtracts $\\tfrac{\\sigma^2}{2}$ in the exponent.",
+          "sd-half": "You subtracted $\\tfrac{\\sigma}{2} = 0.15$. Subtract $\\tfrac{\\sigma^2}{2} = 0.045$."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac{\\sigma^2}{2} = 0.045$, so the median is $100e^{0.055} \\approx \\text{£}105.65$, below the mean of £110.52."
+      }
+    }
+  ]
+}
