@@ -1,0 +1,1341 @@
+{
+  "id": "l2-walking-the-book",
+  "course": "micro",
+  "title": "Walking the book",
+  "minutes": 14,
+  "objectives": [
+    "Compute the average fill price of a market order that eats several levels.",
+    "Measure slippage against the best price and against the mid."
+  ],
+  "skills": [
+    "ms-book",
+    "ms-costs"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Sellers in this book offer 500 shares at £100.14, 600 at £100.16 and 700 at £100.18. You send an order to buy 1,500 shares at once, at whatever price it takes.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ],
+            [
+              100.08,
+              1200
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ],
+            [
+              100.18,
+              700
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {}
+      },
+      "question": "Tap every price level your order trades at.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "ask0",
+          "ask1",
+          "ask2"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "best-only",
+            "set": [
+              "ask0"
+            ]
+          },
+          {
+            "id": "two",
+            "set": [
+              "ask0",
+              "ask1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many shares are on offer at £100.14? Is that enough?"
+        },
+        {
+          "rung": "point",
+          "text": "500 at the best ask leaves 1,000 to find. The next sellers sit above it.",
+          "highlight": [
+            "ask0",
+            "ask1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "500 + 600 = 1,100, still 400 short, so the order reaches £100.18 too."
+        }
+      ],
+      "feedback": {
+        "correct": "The order needs all three ask levels.",
+        "generic": "Not quite right. Fill the order level by level, cheapest first, until 1,500 shares are bought.",
+        "byKey": {
+          "best-only": "You stopped at £100.14, but only 500 shares wait there. The other 1,000 must come from sellers further up.",
+          "two": "500 + 600 is 1,100 shares, still 400 short. The order reaches £100.18 as well.",
+          "bid0": "Bids are buyers. A buy order trades with sellers, on the ask side.",
+          "bid1": "Bids are buyers. A buy order trades with sellers, on the ask side.",
+          "bid2": "Bids are buyers. A buy order trades with sellers, on the ask side."
+        }
+      },
+      "explain": {
+        "text": "Your order takes all 500 at £100.14, all 600 at £100.16, and 400 of the 700 at £100.18. Each level it eats is gone, so the next buyer meets a best ask of £100.18.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 1500
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Now set the size yourself. The slider sends a market buy of that many shares, and the book shows what each level gives up.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ],
+            [
+              100.08,
+              1200
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ],
+            [
+              100.18,
+              700
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "order": {
+            "side": "buy",
+            "size": 300
+          }
+        },
+        "derive": {
+          "caption": "Average price: £{{fixed((100.14*min(order.size,500) + 100.16*min(max(order.size-500,0),600) + 100.18*min(max(order.size-1100,0),700))/max(min(order.size,1800),1), 4)}} a share"
+        },
+        "controls": [
+          {
+            "bind": "order.size",
+            "min": 100,
+            "max": 1800,
+            "step": 100,
+            "label": "Order size (shares)",
+            "start": 300
+          }
+        ]
+      },
+      "question": "Slide from 100 to 1,800 shares. Once the order passes 500, what does the average price do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "creeps",
+            "text": "It creeps up a little with every extra 100 shares",
+            "correct": true
+          },
+          {
+            "id": "jumps",
+            "text": "It jumps straight to £100.16",
+            "why": "You priced the whole order at the last level it reached. The first 500 shares still cost £100.14, so the average rises slowly."
+          },
+          {
+            "id": "flat",
+            "text": "It stays at £100.14, the best ask",
+            "why": "You assumed the whole order fills at the best ask. Only 500 shares wait there."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption as you pass 500, 600 and 700 shares."
+        }
+      ],
+      "feedback": {
+        "correct": "Each extra share costs more than the ones before it, so the average climbs.",
+        "generic": "Not quite right. Watch the caption as you slide past 500 shares."
+      },
+      "explain": {
+        "text": "Past 500 shares every extra share costs £100.16 or more, so the average creeps up. At 1,800 shares it reaches £100.1622. The more you buy at once, the worse your average.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 1800
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "A market order buys at once and **walks the book**: it trades level by level until it is done. Each trade is a **fill**. Write down the fills for the order of 1,500 shares.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ],
+            [
+              100.08,
+              1200
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ],
+            [
+              100.18,
+              700
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {},
+        "maxHeight": 200
+      },
+      "question": "Fill in the shares and the cost at each level.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Price (£)",
+          "Shares filled",
+          "Cost (£)"
+        ],
+        "rows": [
+          [
+            "100.14",
+            {
+              "edit": true,
+              "answer": 500,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 50070,
+              "tol": {
+                "abs": 0.5
+              }
+            }
+          ],
+          [
+            "100.16",
+            {
+              "edit": true,
+              "answer": 600,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 60096,
+              "tol": {
+                "abs": 0.5
+              }
+            }
+          ],
+          [
+            "100.18",
+            {
+              "edit": true,
+              "answer": 400,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 40072,
+              "tol": {
+                "abs": 0.5
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first two levels are eaten whole. How much is left for the third?"
+        },
+        {
+          "rung": "point",
+          "text": "1,500 − 500 − 600 shares fill at £100.18.",
+          "highlight": [
+            "ask2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Shares: 500, 600, 400. Cost at each level is shares times price, for example $500 \\times 100.14 = 50{,}070$."
+        }
+      ],
+      "feedback": {
+        "correct": "Fills of 500, 600 and 400 shares, costing £150,238 in all.",
+        "generic": "Not quite right. Fill level by level, and multiply each fill by its price.",
+        "byKey": {
+          "r2c1": "Only 400 shares are still needed when the order reaches £100.18: 1,500 − 500 − 600. It does not take the whole 700.",
+          "r2c2": "Price the 400 shares at £100.18: $400 \\times 100.18$.",
+          "r0c2": "Price the 500 shares at £100.14: $500 \\times 100.14$.",
+          "r1c2": "Price the 600 shares at £100.16: $600 \\times 100.16$."
+        }
+      },
+      "explain": {
+        "text": "£50,070 + £60,096 + £40,072 = £150,238 for 1,500 shares. The last level is only partly used: 300 shares stay at £100.18.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 1500
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Your fills cost £150,238 for 1,500 shares.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ],
+            [
+              100.08,
+              1200
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ],
+            [
+              100.18,
+              700
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "caption": "Fills: 500 at £100.14, 600 at £100.16, 400 at £100.18"
+        }
+      },
+      "question": "What is the average price per share? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100.1587,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "£",
+        "label": "Average price in pounds",
+        "accept": "£100.1587: $150{,}238 / 1{,}500 = 100.15867$.",
+        "wrong": [
+          {
+            "id": "unweighted",
+            "value": 100.16,
+            "tol": {
+              "abs": 4e-05
+            }
+          },
+          {
+            "id": "best",
+            "value": 100.14,
+            "tol": {
+              "abs": 4e-05
+            }
+          },
+          {
+            "id": "last",
+            "value": 100.18,
+            "tol": {
+              "abs": 4e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Average price is total cost over total shares."
+        },
+        {
+          "rung": "point",
+          "text": "Divide the £150,238 by 1,500.",
+          "highlight": [
+            "ask0",
+            "ask1",
+            "ask2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$150{,}238 / 1{,}500 = 100.15867$, so £100.1587."
+        }
+      ],
+      "feedback": {
+        "correct": "£100.1587 a share.",
+        "generic": "Not quite right. Divide the total cost by the number of shares.",
+        "byKey": {
+          "unweighted": "£100.16 is the plain average of the three prices (or the answer rounded to the penny). Give four places, from cost over shares.",
+          "best": "That is the best ask. Only the first 500 shares paid it.",
+          "last": "That is the last price the order reached. Only 400 shares paid it."
+        }
+      },
+      "explain": {
+        "text": "$150{,}238 / 1{,}500 = 100.1587$. The footer of the book rounds this to the penny, £100.16. Each price counts in proportion to the shares bought there.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 1500
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The gap between your average price and a reference price is **slippage**. First measure it against the best ask you saw before trading, £100.14.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ],
+            [
+              100.08,
+              1200
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ],
+            [
+              100.18,
+              700
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "caption": "Average fill £100.1587"
+        }
+      },
+      "question": "What is the slippage per share against the best ask, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.87,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "pence",
+        "label": "Slippage per share in pence",
+        "accept": "1.87p: £100.1587 − £100.14.",
+        "wrong": [
+          {
+            "id": "last-level",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "pounds",
+            "value": 0.0187,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "total",
+            "value": 28,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the best ask from your average price."
+        },
+        {
+          "rung": "point",
+          "text": "£100.1587 − £100.14, then turn pounds into pence.",
+          "highlight": [
+            "ask0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£0.0187 is 1.87p."
+        }
+      ],
+      "feedback": {
+        "correct": "1.87p a share, £28 over 1,500 shares.",
+        "generic": "Not quite right. Take the average price minus the best ask, in pence.",
+        "byKey": {
+          "last-level": "4p is the worst price minus the best. Most shares paid less than £100.18.",
+          "pounds": "That is right in pounds. In pence it is 100 times bigger: 1.87p.",
+          "total": "£28 is the total over 1,500 shares. The question asks per share."
+        }
+      },
+      "explain": {
+        "text": "£100.1587 − £100.14 = £0.0187, or 1.87p a share. Over 1,500 shares that is £28: the price of eating three levels instead of one."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Before you traded, the mid was £100.12. Against the mid you paid half the spread on every share, then the walk on top.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ],
+            [
+              100.08,
+              1200
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ],
+            [
+              100.18,
+              700
+            ]
+          ],
+          "currency": "£",
+          "dp": 2,
+          "showMid": true
+        },
+        "state": {
+          "highlight": [
+            "spread"
+          ],
+          "caption": "Mid £100.12, half-spread 2p"
+        }
+      },
+      "question": "How much more did your 1,500 shares cost than 1,500 shares at the mid, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 58,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Cost against the mid, in pounds",
+        "accept": "£58: £150,238 − 1,500 × £100.12.",
+        "wrong": [
+          {
+            "id": "best-ask",
+            "value": 28,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "half-only",
+            "value": 30,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "per-share",
+            "value": 0.0387,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At the mid, 1,500 shares would cost $1{,}500 \\times 100.12$."
+        },
+        {
+          "rung": "point",
+          "text": "That is £150,180. Compare it with what you paid.",
+          "highlight": [
+            "spread"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£150,238 − £150,180."
+        }
+      ],
+      "feedback": {
+        "correct": "£58: £30 of half-spread plus £28 of walking.",
+        "generic": "Not quite right. Compare what you paid with 1,500 shares at the mid.",
+        "byKey": {
+          "best-ask": "£28 is against the best ask. The mid is 2p lower, which adds £30 more.",
+          "half-only": "£30 is the half-spread alone: 2p on 1,500 shares. The walk up the book adds £28.",
+          "per-share": "That is per share, in pounds. Multiply by 1,500 shares."
+        }
+      },
+      "explain": {
+        "text": "£150,238 − £150,180 = £58, about 3.9 bp of the mid. It splits into £30 for the half-spread (2p a share) and £28 for walking the book. The mid is the fairer benchmark, because it does not ignore the spread."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now someone sends a market buy for 2,000 shares into the same book. The visible asks hold only 500 + 600 + 700 = 1,800 shares.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ],
+            [
+              100.08,
+              1200
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ],
+            [
+              100.18,
+              700
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "caption": "Visible asks: 1,800 shares"
+        }
+      },
+      "question": "What happens to the order?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "partial",
+            "text": "1,800 shares fill now; the last 200 find no visible seller, so they wait, are cancelled, or fill at worse prices",
+            "correct": true
+          },
+          {
+            "id": "stretch",
+            "text": "All 2,000 fill, the last 900 at £100.18",
+            "why": "You let the last level stretch. Only 700 shares wait at £100.18, and the order takes all of them."
+          },
+          {
+            "id": "cancel",
+            "text": "Nothing fills, because the book is too small",
+            "why": "A market order fills what it can. The first 1,800 shares trade at once; only the rest is in doubt."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many shares can the visible book supply in all?"
+        },
+        {
+          "rung": "point",
+          "text": "Add the three ask sizes and compare with 2,000.",
+          "highlight": [
+            "ask0",
+            "ask1",
+            "ask2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1,800 fill; 200 have no visible seller."
+        }
+      ],
+      "feedback": {
+        "correct": "The visible book runs out 200 shares short.",
+        "generic": "Not quite right. Add up the shares on offer and compare with the order."
+      },
+      "explain": {
+        "text": "The order empties every visible level and is still 200 short. What happens next depends on the exchange: the rest may be cancelled, or rest, or sweep into worse prices that appear. Never send a market order bigger than the book you can see.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 2000
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A smaller order: a market buy of 600 shares. It trades at two prices, £100.14 and £100.16.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ],
+            [
+              100.08,
+              1200
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ],
+            [
+              100.18,
+              700
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {}
+      },
+      "question": "What is the average price per share?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "unweighted",
+            "text": "£100.15",
+            "why": "You averaged the two prices as if each counted once. 500 shares paid £100.14 and only 100 paid £100.16.",
+            "canvas": {
+              "order": {
+                "side": "buy",
+                "size": 600
+              }
+            }
+          },
+          {
+            "id": "right",
+            "text": "£100.1433",
+            "correct": true
+          },
+          {
+            "id": "best",
+            "text": "£100.14",
+            "why": "You priced every share at the best ask. 100 of them had to pay £100.16.",
+            "canvas": {
+              "order": {
+                "side": "buy",
+                "size": 600
+              }
+            }
+          },
+          {
+            "id": "last",
+            "text": "£100.16",
+            "why": "That is the last price, which only 100 shares paid.",
+            "canvas": {
+              "order": {
+                "side": "buy",
+                "size": 600
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many of the 600 shares fill at each price?"
+        },
+        {
+          "rung": "point",
+          "text": "500 at £100.14 and 100 at £100.16. Weight each price by its shares.",
+          "highlight": [
+            "ask0",
+            "ask1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(500 \\times 100.14 + 100 \\times 100.16)/600 = 60{,}086/600$."
+        }
+      ],
+      "feedback": {
+        "correct": "£60,086 over 600 shares is £100.1433.",
+        "generic": "Not quite right. Weight each price by the shares that paid it.",
+        "byKey": {
+          "unweighted": "You averaged the two prices as if each counted once. 500 shares paid £100.14 and only 100 paid £100.16.",
+          "best": "You priced every share at the best ask. 100 of them had to pay £100.16."
+        }
+      },
+      "explain": {
+        "text": "Five in six shares paid £100.14, so the average sits a sixth of the way up to £100.16: £100.1433. Averaging the prices without their sizes gives £100.15, which overstates the cost by 0.67p a share.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 600
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Each time you weighted every price by the shares filled there. With $q_i$ shares filled at price $p_i$: $$\\bar{p} = \\dfrac{\\sum_i q_i \\, p_i}{\\sum_i q_i}, \\qquad \\text{slippage} = \\bar{p} - \\text{reference}$$",
+      "question": "In this formula, what is $q_i$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "filled",
+            "text": "The shares the order filled at level $i$",
+            "correct": true
+          },
+          {
+            "id": "size",
+            "text": "The size showing at level $i$",
+            "why": "You used the whole level. At the last level only part of the size fills, like 400 of the 700 at £100.18."
+          },
+          {
+            "id": "index",
+            "text": "The number of the level, 1, 2 or 3",
+            "why": "The level number only labels the price. The weight is how many shares traded there."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At £100.18, did the 1,500-share order use all 700 shares?"
+        },
+        {
+          "rung": "step",
+          "text": "The weight at £100.18 was 400, not 700."
+        }
+      ],
+      "feedback": {
+        "correct": "The weights are the fills, not the sizes on show.",
+        "generic": "Not quite right. Think about the last level of the 1,500-share order."
+      },
+      "explain": {
+        "text": "The weights are what you actually bought at each price. At the last level that is usually less than the size on show, as with 400 of the 700 at £100.18."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Walking the book in code",
+      "prose": "Turn the walk into a function. `asks` is a list of `(price, shares)` pairs, best price first. Take shares level by level until the order is done.",
+      "question": "Complete `avg_fill(asks, size)`. It returns the average price of a market buy, and raises `ValueError` if the book cannot fill it.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def avg_fill(asks, size):\n    \"\"\"Average price of a market buy of size shares.\n\n    asks: list of (price, shares), best price first.\n    Raise ValueError if the book cannot fill the order.\n    \"\"\"\n    left = size\n    cost = 0.0\n    for price, shares in asks:\n        take = ...  # shares bought at this level\n        cost += ...\n        left -= take\n        if left == 0:\n            break\n    if left > 0:\n        ...\n    return cost / size\n\n\nbook = [(100.14, 500), (100.16, 600), (100.18, 700)]\nprint(avg_fill(book, 1500))\n",
+        "solution": "def avg_fill(asks, size):\n    \"\"\"Average price of a market buy of size shares.\n\n    asks: list of (price, shares), best price first.\n    Raise ValueError if the book cannot fill the order.\n    \"\"\"\n    left = size\n    cost = 0.0\n    for price, shares in asks:\n        take = min(left, shares)  # shares bought at this level\n        cost += take * price\n        left -= take\n        if left == 0:\n            break\n    if left > 0:\n        raise ValueError('not enough shares in the book')\n    return cost / size\n\n\nbook = [(100.14, 500), (100.16, 600), (100.18, 700)]\nprint(avg_fill(book, 1500))\n",
+        "examples": [
+          {
+            "setup": "book = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "avg_fill(book, 1500)",
+            "expect": "100.15866666666666",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "avg_fill(book, 300)",
+            "expect": "100.14",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "book = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "avg_fill(book, 1500)",
+            "expect": "100.15866666666666",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "avg_fill(book, 300)",
+            "expect": "100.14",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "avg_fill(book, 500)",
+            "expect": "100.14",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "avg_fill(book, 600)",
+            "expect": "100.14333333333333",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "avg_fill(book, 1800)",
+            "expect": "100.16222222222223",
+            "compare": "isclose"
+          },
+          {
+            "setup": "book = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "avg_fill(book, 1801)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "avg_fill([(50.0, 100), (50.5, 100), (51.0, 100)], 250)",
+            "expect": "50.4",
+            "compare": "isclose"
+          },
+          {
+            "call": "avg_fill([(10.03, 2500)], 1000)",
+            "expect": "10.03",
+            "compare": "isclose"
+          },
+          {
+            "call": "avg_fill([(100.05, 2000), (100.1, 3000), (100.2, 3000), (100.4, 4000)], 10000)",
+            "expect": "100.18",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests, including an order that fits in the top level, one that empties the book exactly and one that is 1 share too big. Each average is accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At each level you can take at most what is left of the order, and at most what the level holds."
+        },
+        {
+          "rung": "point",
+          "text": "`take = min(left, shares)`, and that many shares cost `take * price`."
+        },
+        {
+          "rung": "step",
+          "text": "If `left` is still above 0 after the loop, `raise ValueError('not enough shares')`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your function walks the book, weighting each price by its fill.",
+        "generic": "Some tests failed. Compare the first failing test with a walk by hand.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that every `...` is replaced.",
+          "test-1": "For 1,500 shares the average is 100.1587. Check that the last level takes only the 400 shares still needed.",
+          "test-6": "An order of 1,801 shares is one share bigger than the book. After the loop, raise ValueError when shares are left."
+        }
+      },
+      "explain": {
+        "text": "`min(left, shares)` is the whole idea: take the level, or what you still need, whichever is smaller. Dividing by `size` only works once every share is filled, which is why the function raises first."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "You must buy 10,000 shares, about £1m. In a liquid share 12,000 shares wait at £100.01 against a mid of £100.00, so the order costs £100 more than the mid. This thin share also has a £100.00 mid.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              99.95,
+              2000
+            ],
+            [
+              99.9,
+              3000
+            ]
+          ],
+          "asks": [
+            [
+              100.05,
+              2000
+            ],
+            [
+              100.1,
+              3000
+            ],
+            [
+              100.2,
+              3000
+            ],
+            [
+              100.4,
+              4000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "caption": "Thin share: mid £100.00"
+        },
+        "maxHeight": 260
+      },
+      "question": "How much more than the mid does 10,000 shares of the thin share cost, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1800,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "£",
+        "label": "Cost against the mid, in pounds",
+        "accept": "£1,800: fills cost £1,001,800 against £1,000,000 at the mid.",
+        "wrong": [
+          {
+            "id": "half-spread",
+            "value": 500,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "liquid",
+            "value": 100,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "worst",
+            "value": 4000,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Walk the asks: how many shares fill at each level?"
+        },
+        {
+          "rung": "point",
+          "text": "2,000 at £100.05, 3,000 at £100.10, 3,000 at £100.20, and the last 2,000 at £100.40.",
+          "highlight": [
+            "ask0",
+            "ask1",
+            "ask2",
+            "ask3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Total cost $200{,}100 + 300{,}300 + 300{,}600 + 200{,}800 = 1{,}001{,}800$. Subtract $10{,}000 \\times 100$."
+        }
+      ],
+      "feedback": {
+        "correct": "£1,800, eighteen times the liquid share's £100.",
+        "generic": "Not quite right. Walk the asks for 10,000 shares, then compare with 10,000 shares at £100.00.",
+        "byKey": {
+          "half-spread": "£500 is the half-spread alone: 5p on 10,000 shares. The walk up four levels costs far more.",
+          "liquid": "£100 is the liquid share. The thin share's book is much shallower.",
+          "worst": "That prices every share at £100.40. Only the last 2,000 paid that."
+        }
+      },
+      "explain": {
+        "text": "The fills cost £1,001,800, an average of £100.18, so £1,800 above the mid: 18 bp against 1 bp. In a thin share the size of the order sets the cost. That is why large orders are split into pieces over time, the subject of level 2.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 10000
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A market order walks the book: it takes the best level, then the next, until it is filled.",
+      "The average fill price weights each price by the shares filled there, not by the size on show.",
+      "Slippage against the mid is half the spread plus the walk; an order bigger than the book cannot fully fill."
+    ],
+    "formula": {
+      "name": "Average fill price",
+      "tex": "\\bar{p} = \\dfrac{\\sum_i q_i \\, p_i}{\\sum_i q_i}",
+      "note": "$q_i$ is the number of shares filled at price $p_i$."
+    },
+    "trap": "Averaging the prices without their sizes: 500 at £100.14 and 100 at £100.16 average £100.1433, not £100.15."
+  },
+  "quiz": [
+    {
+      "id": "q-small",
+      "difficulty": 2,
+      "prose": "Asks: 500 shares at £100.14, then 600 at £100.16. You send a market buy for 300 shares.",
+      "question": "What is your average price per share?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100.14,
+        "tol": {
+          "abs": 5e-05
+        },
+        "unit": "£",
+        "label": "Average price in pounds",
+        "accept": "£100.14: every share fills at the best ask.",
+        "wrong": [
+          {
+            "id": "two-levels",
+            "value": 100.15,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The top level holds 500 shares, enough for all 300.",
+        "generic": "Not quite right. Check whether the first level can fill the whole order.",
+        "byKey": {
+          "two-levels": "You averaged the two prices, but the order never reaches £100.16. 300 shares fit inside the 500 at £100.14."
+        }
+      },
+      "explain": {
+        "text": "An order smaller than the top level fills at one price. All 300 shares pay £100.14, so there is no slippage against the best ask."
+      }
+    },
+    {
+      "id": "q-sell",
+      "difficulty": 2,
+      "prose": "Bids: 400 shares at £50.00, then 600 at £49.98. You send a market sell for 1,000 shares.",
+      "question": "What is your average price per share?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 49.988,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "£",
+        "label": "Average price in pounds",
+        "accept": "£49.988: $(400 \\times 50.00 + 600 \\times 49.98)/1{,}000$.",
+        "wrong": [
+          {
+            "id": "unweighted",
+            "value": 49.99,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "best",
+            "value": 50.0,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£49,988 for 1,000 shares.",
+        "generic": "Not quite right. A sell walks down the bids. Weight each price by its shares.",
+        "byKey": {
+          "unweighted": "You averaged the two prices equally. 600 of the 1,000 shares got the lower price.",
+          "best": "Only 400 shares get £50.00. The other 600 get £49.98."
+        }
+      },
+      "explain": {
+        "text": "A market sell walks down the bids. $400 \\times 50.00 + 600 \\times 49.98 = 49{,}988$, so the average is £49.988."
+      }
+    },
+    {
+      "id": "q-slip",
+      "difficulty": 3,
+      "prose": "Your 1,000-share sell from the last question averaged £49.988. The best bid before you traded was £50.00.",
+      "question": "What was the slippage per share against the best bid, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "pence",
+        "label": "Slippage in pence",
+        "accept": "1.2p: £50.00 − £49.988.",
+        "wrong": [
+          {
+            "id": "level-gap",
+            "value": 2,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "total",
+            "value": 12,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1.2p a share, £12 in all.",
+        "generic": "Not quite right. For a sell, slippage is the best bid minus your average price."
+      },
+      "explain": {
+        "text": "£50.00 − £49.988 = £0.012, or 1.2p a share. For a sell, slippage is how far below the reference price you sold."
+      }
+    },
+    {
+      "id": "q-split",
+      "difficulty": 3,
+      "prose": "Asks: 500 at £100.14, 600 at £100.16, 700 at £100.18. Trader X buys 1,500 shares in one market order. Trader Y buys 500 at a time, three times, and the book refills to the same prices between orders.",
+      "question": "Who pays the lower average price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "y",
+            "text": "Y, who pays £100.14 on every share",
+            "correct": true
+          },
+          {
+            "id": "x",
+            "text": "X, because one order pays the spread only once",
+            "why": "Each of Y's orders pays the same half-spread per share. X pays more because the big order walks up to £100.18."
+          },
+          {
+            "id": "same",
+            "text": "Both pay the same: they buy the same shares",
+            "why": "X's single order eats three levels. Y's small orders never leave the top level."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Small pieces stay at the best ask.",
+        "generic": "Not quite right. Ask how far up the book each order walks."
+      },
+      "explain": {
+        "text": "X averages £100.1587; Y pays £100.14 every time, saving £28. Real books do not refill for free, so splitting has its own costs. Level 2 weighs them."
+      }
+    }
+  ]
+}

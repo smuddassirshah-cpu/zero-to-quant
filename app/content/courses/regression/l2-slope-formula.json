@@ -1,0 +1,1637 @@
+{
+  "id": "l2-slope-formula",
+  "course": "regression",
+  "title": "The slope is covariance over variance",
+  "minutes": 14,
+  "objectives": [
+    "Derive the least squares slope and intercept.",
+    "Compute them from deviations, or from a correlation and two standard deviations."
+  ],
+  "skills": [
+    "rg-fit"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Five days and a ring",
+      "prose": "Five more days of a market's and a stock's returns, in per cent. The ring marks the average day, $(\\bar x, \\bar y) = (1, 1)$. Find the least squares line, then see where it runs.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -1,
+              -2
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2,
+            4
+          ],
+          "yRange": [
+            -3,
+            5
+          ],
+          "height": 280,
+          "curves": [
+            {
+              "id": "mean",
+              "x": "1 + 0.085*cos(t)",
+              "y": "1 + 0.26*sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "colour": 3,
+              "label": "$(\\bar x, \\bar y)$",
+              "labelAt": [
+                1.15,
+                0.45
+              ]
+            }
+          ]
+        },
+        "state": {
+          "params": {
+            "a": 0,
+            "b": 0
+          },
+          "line": {
+            "m": 0,
+            "b": 0
+          },
+          "residuals": "line",
+          "showSSE": true
+        },
+        "derive": {
+          "line.m": "b",
+          "line.b": "a"
+        }
+      },
+      "question": "Slide both until the sum of squared residuals is as small as you can make it.",
+      "widget": {
+        "kind": "sliders",
+        "sliders": [
+          {
+            "id": "b",
+            "bind": "b",
+            "min": -0.5,
+            "max": 2.5,
+            "step": 0.05,
+            "start": 0,
+            "label": "Slope $b$"
+          },
+          {
+            "id": "a",
+            "bind": "a",
+            "min": -1,
+            "max": 1,
+            "step": 0.05,
+            "start": 0,
+            "label": "Intercept $a$"
+          }
+        ],
+        "check": "25 - 10*a - 36*b + 5*a*a + 10*a*b + 15*b*b",
+        "value": 3.1,
+        "tol": 0.1,
+        "show": {
+          "a": -0.3,
+          "b": 1.3
+        },
+        "wrong": [
+          {
+            "id": "flat",
+            "check": "abs(b) < 0.4"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Tilt the line first, then move the intercept."
+        },
+        {
+          "rung": "point",
+          "text": "Days 1 and 5 sit far from the ring. They decide the tilt.",
+          "highlight": [
+            "p0",
+            "p4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Try slope 1.3 and intercept $-0.3$."
+        }
+      ],
+      "feedback": {
+        "correct": "The lowest sum is 3.1, at slope 1.3 and intercept $-0.3$.",
+        "generic": "Not quite right. Slide until the number in the corner stops falling whichever way you move.",
+        "byKey": {
+          "flat": "Your line is nearly flat, so days 1 and 5 miss by a lot. Tilt it upwards.",
+          "off": "Close, but not the lowest yet. Move one slider at a time and keep each move that lowers the corner."
+        }
+      },
+      "explain": {
+        "text": "The best line is $\\hat y = -0.3 + 1.3x$, with a sum of 3.1. It runs straight through the ring: at $x = 1$ it gives $-0.3 + 1.3 = 1 = \\bar y$. The derivation below shows this always happens.",
+        "canvas": {
+          "params": {
+            "a": -0.3,
+            "b": 1.3
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Measuring from the average day",
+      "prose": "Measure every day from the average day. Its **deviations** are $x_i - \\bar x$ and $y_i - \\bar y$, with $\\bar x = 1$ and $\\bar y = 1$. A positive deviation means above the average.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -1,
+              -2
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2,
+            4
+          ],
+          "yRange": [
+            -3,
+            5
+          ],
+          "height": 220,
+          "curves": [
+            {
+              "id": "mean",
+              "x": "1 + 0.085*cos(t)",
+              "y": "1 + 0.26*sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "colour": 3,
+              "label": "$(\\bar x, \\bar y)$",
+              "labelAt": [
+                1.15,
+                0.45
+              ]
+            }
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1.3,
+            "b": -0.3
+          }
+        }
+      },
+      "question": "Fill in the two deviations for each day.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "$x$",
+          "$y$",
+          "$x - \\bar x$",
+          "$y - \\bar y$"
+        ],
+        "rows": [
+          [
+            "1",
+            "-1",
+            "-2",
+            {
+              "edit": true,
+              "answer": -2,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": -3,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "2",
+            "0",
+            "0",
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "3",
+            "1",
+            "2",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "4",
+            "2",
+            "1",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "5",
+            "3",
+            "4",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract 1 from every $x$ and from every $y$."
+        },
+        {
+          "rung": "point",
+          "text": "Day 1 sits left of and below the ring, so both its deviations are negative.",
+          "highlight": [
+            "p0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 1: $-1 - 1 = -2$ and $-2 - 1 = -3$. Day 5: $3 - 1 = 2$ and $4 - 1 = 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "Each column of deviations adds to 0.",
+        "generic": "Not quite right. Each deviation is the value minus 1, the mean, keeping the sign."
+      },
+      "explain": {
+        "text": "Each deviation says how far a day sits from the average, and its sign says which side. Both columns add to 0, as deviations from a mean always do. Days 1 and 5 are far out on the same side in both directions.",
+        "canvas": {
+          "highlight": [
+            "p0",
+            "p4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Products and squares",
+      "prose": "For each day, multiply the two deviations, and square the $x$ deviation. Then add each column. We call the sums $S_{xy} = \\sum (x_i - \\bar x)(y_i - \\bar y)$ and $S_{xx} = \\sum (x_i - \\bar x)^2$.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -1,
+              -2
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2,
+            4
+          ],
+          "yRange": [
+            -3,
+            5
+          ],
+          "height": 220,
+          "curves": [
+            {
+              "id": "mean",
+              "x": "1 + 0.085*cos(t)",
+              "y": "1 + 0.26*sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "colour": 3,
+              "label": "$(\\bar x, \\bar y)$",
+              "labelAt": [
+                1.15,
+                0.45
+              ]
+            }
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1.3,
+            "b": -0.3
+          }
+        }
+      },
+      "question": "Fill in the products, the squares and the two sums.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Day",
+          "$x - \\bar x$",
+          "$y - \\bar y$",
+          "product",
+          "$(x - \\bar x)^2$"
+        ],
+        "rows": [
+          [
+            "1",
+            "-2",
+            "-3",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "2",
+            "-1",
+            "-1",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "3",
+            "0",
+            "1",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "4",
+            "1",
+            "0",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "5",
+            "2",
+            "3",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Sum",
+            "0",
+            "0",
+            {
+              "edit": true,
+              "answer": 13,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A product of two negatives is positive."
+        },
+        {
+          "rung": "point",
+          "text": "Day 1 gives $(-2)(-3) = 6$, the same as day 5.",
+          "highlight": [
+            "p0",
+            "p4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Products: 6, 1, 0, 0, 6, summing to 13. Squares: 4, 1, 0, 1, 4, summing to 10."
+        }
+      ],
+      "feedback": {
+        "correct": "$S_{xy} = 13$ and $S_{xx} = 10$.",
+        "generic": "Not quite right. Multiply across each row, keeping signs, and square the first deviation."
+      },
+      "explain": {
+        "text": "The products add to $S_{xy} = 13$ and the squares to $S_{xx} = 10$. Days 1 and 5 give the big products, because they sit far out on the same side in both. Day 3 has $x$ at its average, so it adds nothing to either sum.",
+        "canvas": {
+          "highlight": [
+            "p0",
+            "p4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Slope, then intercept",
+      "prose": "Divide the two sums: $S_{xy}/S_{xx} = 13/10 = 1.3$, the slope you found with the sliders. The line also ran through the ring, $(\\bar x, \\bar y) = (1, 1)$.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -1,
+              -2
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2,
+            4
+          ],
+          "yRange": [
+            -3,
+            5
+          ],
+          "height": 280,
+          "curves": [
+            {
+              "id": "mean",
+              "x": "1 + 0.085*cos(t)",
+              "y": "1 + 0.26*sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "colour": 3,
+              "label": "$(\\bar x, \\bar y)$",
+              "labelAt": [
+                1.15,
+                0.45
+              ]
+            }
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1.3,
+            "b": -0.3
+          }
+        }
+      },
+      "question": "Using the slope 1.3 and the ring, what is the intercept $a$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.3,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "mean",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "added",
+            "value": 2.3,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Intercept $a$",
+        "accept": "$-0.3$: $a = \\bar y - b\\bar x = 1 - 1.3$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The line passes through $(1, 1)$, so $1 = a + 1.3 \\times 1$."
+        },
+        {
+          "rung": "point",
+          "text": "Read where the line crosses $x = 0$.",
+          "highlight": [
+            "line"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$a = \\bar y - b\\bar x = 1 - 1.3 \\times 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$a = 1 - 1.3 = -0.3$, as the sliders found.",
+        "generic": "Not quite right. Put the point $(1, 1)$ into $y = a + 1.3x$ and solve for $a$.",
+        "byKey": {
+          "sign": "You worked out $b\\bar x - \\bar y$. The intercept is $\\bar y - b\\bar x$, which is negative here.",
+          "mean": "$\\bar y$ is the height at $x = 1$, not at $x = 0$. Step back one unit along the slope.",
+          "added": "You added $b\\bar x$ to $\\bar y$. Going back from $x = 1$ to $x = 0$ lowers the line by 1.3."
+        }
+      },
+      "explain": {
+        "text": "The line passes through $(1, 1)$, so $1 = a + 1.3$ and $a = -0.3$. In general $a = \\bar y - b\\bar x$. The line climbs 1.3 per unit, so at $x = 0$ it sits 1.3 below $\\bar y$.",
+        "canvas": {
+          "highlight": [
+            "line"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why the sums give the slope",
+      "prose": "Now the general case. Minimise $S(a, b) = \\sum (y_i - a - bx_i)^2$ by setting both partial derivatives to 0. *The normal equations* (Orthogonality and Least Squares) reached the same line by projection.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d1",
+            "text": "$\\partial S/\\partial a = -2\\sum (y_i - a - bx_i) = 0$, the condition for the intercept"
+          },
+          {
+            "id": "d2",
+            "text": "$\\bar y - a - b\\bar x = 0$, so $a = \\bar y - b\\bar x$, dividing by $-2n$"
+          },
+          {
+            "id": "d3",
+            "text": "$\\partial S/\\partial b = -2\\sum x_i (y_i - a - bx_i) = 0$, the condition for the slope"
+          },
+          {
+            "id": "d4",
+            "text": "$\\sum x_i \\big((y_i - \\bar y) - b(x_i - \\bar x)\\big) = 0$, substituting $a = \\bar y - b\\bar x$"
+          },
+          {
+            "id": "d5",
+            "text": "$\\sum (x_i - \\bar x)(y_i - \\bar y) = b\\sum (x_i - \\bar x)^2$, replacing $x_i$ by $x_i - \\bar x$, which subtracts $\\bar x$ times sums of deviations, both 0"
+          },
+          {
+            "id": "d6",
+            "text": "$b = S_{xy}/S_{xx}$, dividing by $S_{xx}$"
+          }
+        ],
+        "answer": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with the intercept's condition: it gives $a$ in terms of $b$."
+        },
+        {
+          "rung": "point",
+          "text": "The substitution line needs $a = \\bar y - b\\bar x$ already found."
+        },
+        {
+          "rung": "step",
+          "text": "Intercept condition, solve for $a$, slope condition, substitute, centre the $x_i$, divide."
+        }
+      ],
+      "feedback": {
+        "correct": "Two conditions, one substitution, one division.",
+        "generic": "Not quite right. Find $a$ from the first condition before substituting it into the second.",
+        "byKey": {
+          "d3": "The slope condition is used after we know $a$ in terms of $b$. Start with the intercept's condition.",
+          "d4": "Substituting needs $a = \\bar y - b\\bar x$ first, from the intercept's condition.",
+          "d5": "Centring the $x_i$ comes after the substitution.",
+          "d6": "Dividing by $S_{xx}$ is the last step."
+        }
+      },
+      "explain": {
+        "text": "Line 2 says the best line passes through $(\\bar x, \\bar y)$, which is why it ran through the ring. Line 6 is the slope you computed, $13/10$. The projection route gave the same formulas because both minimise the same sum."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Covariance over variance",
+      "prose": "Divide the top and bottom of $S_{xy}/S_{xx}$ by $n - 1$: $$b = \\frac{\\mathrm{Cov}(x, y)}{\\mathrm{Var}(x)} = r\\,\\frac{s_y}{s_x}, \\qquad a = \\bar y - b\\bar x.$$ The second form uses $r = \\mathrm{Cov}(x, y)/(s_x s_y)$ from *Moving together* (Random Variables).",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -1,
+              -2
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2,
+            4
+          ],
+          "yRange": [
+            -3,
+            5
+          ],
+          "height": 220,
+          "curves": [
+            {
+              "id": "mean",
+              "x": "1 + 0.085*cos(t)",
+              "y": "1 + 0.26*sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "colour": 3,
+              "label": "$(\\bar x, \\bar y)$",
+              "labelAt": [
+                1.15,
+                0.45
+              ]
+            }
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1.3,
+            "b": -0.3
+          }
+        }
+      },
+      "question": "For our five days, what is $\\mathrm{Cov}(x, y)$, dividing by $n - 1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.25,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "by-n",
+            "value": 2.6,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sum",
+            "value": 13,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Covariance",
+        "accept": "3.25: $13/4$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$S_{xy} = 13$ and $n - 1 = 4$."
+        }
+      ],
+      "feedback": {
+        "correct": "$13/4 = 3.25$.",
+        "generic": "Not quite right. Divide $S_{xy}$ by $n - 1$.",
+        "byKey": {
+          "by-n": "You divided by $n = 5$. With $n - 1 = 4$ it is 3.25; either way the divisor cancels in $b$ if you use it top and bottom.",
+          "sum": "13 is the sum of products. Divide it by $n - 1$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{Cov}(x, y) = 13/4 = 3.25$ and $\\mathrm{Var}(x) = 10/4 = 2.5$, so $b = 1.3$ again. The divisor cancels, so it only matters that top and bottom use the same one. Also $r = 13/\\sqrt{10 \\times 20} = 0.919$ and $0.919 \\times \\sqrt{20/10} = 1.3$."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Spread is not slope",
+      "prose": "Another stock has correlation $r = 0.4$ with the market. The market's daily standard deviation is 1.2%, and the stock's is 2.4%.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Correlation $r$",
+              "0.4"
+            ],
+            [
+              "Market s.d. $s_x$",
+              "1.2%"
+            ],
+            [
+              "Stock s.d. $s_y$",
+              "2.4%"
+            ]
+          ]
+        }
+      },
+      "question": "What is the slope of the stock's return on the market's?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "no-r",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "swapped",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "r-only",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Slope $b$",
+        "accept": "0.8: $0.4 \\times 2.4/1.2$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which form of the slope uses $r$ and the two standard deviations?"
+        },
+        {
+          "rung": "point",
+          "text": "$b = r\\,s_y/s_x$, with $y$ the stock.",
+          "highlight": [
+            "r1c1",
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$b = 0.4 \\times 2.4/1.2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.4 \\times 2 = 0.8$.",
+        "generic": "Not quite right. Use $b = r\\,s_y/s_x$, with the stock as $y$.",
+        "byKey": {
+          "no-r": "You divided the spreads and left out $r$. That is the slope only when every point lies on the line, $r = 1$.",
+          "swapped": "You put $s_x$ over $s_y$. We predict the stock from the market, so the stock's spread goes on top.",
+          "r-only": "$r$ is the slope only when both spreads are equal. Here the stock is twice as volatile."
+        }
+      },
+      "explain": {
+        "text": "$b = 0.4 \\times 2.4/1.2 = 0.8$. A stock twice as volatile as the market can still have a slope below 1, because only part of its movement goes with the market. Using $s_y/s_x = 2$ alone assumes a perfect fit.",
+        "canvas": {
+          "highlight": [
+            "r0c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The other regression",
+      "prose": "A colleague regresses the other way: market on stock, $\\hat x = c + dy$. Same five days, same sums, and $S_{yy} = \\sum (y_i - \\bar y)^2 = 20$. Their line is dashed, drawn on our axes.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -1,
+              -2
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2,
+            4
+          ],
+          "yRange": [
+            -3,
+            5
+          ],
+          "height": 280,
+          "curves": [
+            {
+              "id": "mean",
+              "x": "1 + 0.085*cos(t)",
+              "y": "1 + 0.26*sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "colour": 3,
+              "label": "$(\\bar x, \\bar y)$",
+              "labelAt": [
+                1.15,
+                0.45
+              ]
+            },
+            {
+              "id": "xony",
+              "expr": "(x - 0.35)/0.65",
+              "dashed": true,
+              "colour": 4,
+              "label": "market on stock",
+              "labelAt": [
+                -1.6,
+                -2.7
+              ]
+            }
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 1.3,
+            "b": -0.3
+          }
+        }
+      },
+      "question": "What is their slope $d$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.65,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.769,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "same",
+            "value": 1.3,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Slope $d$",
+        "accept": "0.65: $S_{xy}/S_{yy} = 13/20$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Swap the roles: now $y$ is the predictor."
+        },
+        {
+          "rung": "point",
+          "text": "The deviations of the predictor are squared on the bottom.",
+          "highlight": [
+            "p0",
+            "p4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$d = S_{xy}/S_{yy} = 13/20$."
+        }
+      ],
+      "feedback": {
+        "correct": "$d = 13/20 = 0.65$.",
+        "generic": "Not quite right. With $x$ predicted from $y$, divide $S_{xy}$ by $S_{yy}$.",
+        "byKey": {
+          "inverted": "You inverted our slope, $1/1.3$. The reverse regression minimises horizontal misses, so it has its own slope, $S_{xy}/S_{yy}$.",
+          "same": "Swapping the roles changes the slope. The bottom becomes the sum of squared $y$ deviations."
+        }
+      },
+      "explain": {
+        "text": "$d = S_{xy}/S_{yy} = 0.65$, not $1/1.3 = 0.77$. On our axes the dashed line climbs $1/0.65 = 1.54$ per unit, steeper than 1.3, though both lines pass through the ring. The two agree only when $r = \\pm 1$, since $b \\times d = r^2 = 0.845$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "When $r$ is 0",
+      "prose": "Five new points. Their products of deviations cancel exactly: $S_{xy} = 0$, so $r = 0$. The ring is their average day, $(1, 0.6)$.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -1,
+              2
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              -1
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              2
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Stock return (%)",
+          "xRange": [
+            -2,
+            4
+          ],
+          "yRange": [
+            -3,
+            5
+          ],
+          "height": 280,
+          "curves": [
+            {
+              "id": "mean",
+              "x": "1 + 0.085*cos(t)",
+              "y": "0.6 + 0.26*sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "colour": 3
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the least squares line?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "flat",
+            "text": "$\\hat y = 0.6$, a flat line at $\\bar y$",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "$\\hat y = 0$",
+            "why": "$r = 0$ makes the slope 0, not the intercept. The line still passes through $(\\bar x, \\bar y) = (1, 0.6)$.",
+            "canvas": {
+              "line": {
+                "m": 0,
+                "b": 0
+              }
+            }
+          },
+          {
+            "id": "none",
+            "text": "There is no line: with $r = 0$ there is nothing to fit",
+            "why": "There is always a least squares line. With $b = 0$ it is the best flat line."
+          },
+          {
+            "id": "steep",
+            "text": "$\\hat y = -0.1 + 0.7x$, through the ring and the last point",
+            "why": "You joined two points. The products on the left and right cancel, so any tilt raises the sum of squares.",
+            "canvas": {
+              "line": {
+                "m": 0.7,
+                "b": -0.1
+              },
+              "residuals": "line"
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does $b = r\\,s_y/s_x$ give when $r = 0$?"
+        },
+        {
+          "rung": "point",
+          "text": "The line must still pass through the ring.",
+          "highlight": [
+            "p2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$b = 0$, so $a = \\bar y = 0.6$."
+        }
+      ],
+      "feedback": {
+        "correct": "$b = 0$ and $a = \\bar y = 0.6$.",
+        "generic": "Not quite right. Work out $b$ from $r = 0$, then use $a = \\bar y - b\\bar x$.",
+        "byKey": {
+          "zero": "$r = 0$ makes the slope 0, not the intercept. The line still passes through $(1, 0.6)$.",
+          "none": "There is always a least squares line. With $b = 0$ it is the best flat line."
+        }
+      },
+      "explain": {
+        "text": "With $r = 0$ the slope is 0 and $a = \\bar y = 0.6$: the best flat line from lesson 1. Yet these points clearly follow a U. $r = 0$ means no straight-line relation, not no relation.",
+        "canvas": {
+          "line": {
+            "m": 0,
+            "b": 0.6
+          },
+          "residuals": "line"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Beta from a risk report",
+      "prose": "A risk report gives a technology stock an annual volatility of 30% and its index 15%. The correlation between their returns is 0.6.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Stock volatility $\\sigma_s$",
+              "30%"
+            ],
+            [
+              "Index volatility $\\sigma_m$",
+              "15%"
+            ],
+            [
+              "Correlation $\\rho$",
+              "0.6"
+            ]
+          ]
+        }
+      },
+      "question": "What is the stock's beta, the slope of its returns on the index's?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "no-rho",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "swapped",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "rho",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Beta",
+        "accept": "1.2: $0.6 \\times 30/15$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Beta is a slope, so $\\beta = \\rho\\,\\sigma_s/\\sigma_m$."
+        },
+        {
+          "rung": "point",
+          "text": "The stock is the $y$, so its volatility goes on top.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.6 \\times 30/15$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\beta = 0.6 \\times 2 = 1.2$.",
+        "generic": "Not quite right. Use $\\beta = \\rho\\,\\sigma_s/\\sigma_m$.",
+        "byKey": {
+          "no-rho": "You divided the volatilities and dropped the correlation. That would be beta only if the stock tracked the index perfectly.",
+          "swapped": "You put the index volatility on top. We regress the stock on the index, so the stock's goes on top.",
+          "rho": "The correlation alone ignores that the stock is twice as volatile as the index."
+        }
+      },
+      "explain": {
+        "text": "$\\beta = \\rho\\,\\sigma_s/\\sigma_m = 0.6 \\times 30/15 = 1.2$. Annual or daily volatilities give the same beta, as long as both use the same horizon. A beta of 1.2 is typical for a large technology stock.",
+        "canvas": {
+          "highlight": [
+            "r2c1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A hedge ratio",
+      "prose": "A desk holds £5m of a corporate bond and hedges it with gilt futures. The hedge ratio $h$ is the slope from regressing the bond's daily % changes on the future's. Over a year the figures are below.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Quantity",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Covariance of the two (%²)",
+              "0.30"
+            ],
+            [
+              "Variance of the future (%²)",
+              "0.40"
+            ],
+            [
+              "Variance of the bond (%²)",
+              "0.36"
+            ]
+          ]
+        }
+      },
+      "question": "How much of the future should the desk sell, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3750000,
+        "tol": {
+          "abs": 1000
+        },
+        "wrong": [
+          {
+            "id": "wrong-way",
+            "value": 4166667,
+            "tol": {
+              "abs": 5000
+            }
+          },
+          {
+            "id": "one-for-one",
+            "value": 5000000,
+            "tol": {
+              "abs": 1000
+            }
+          }
+        ],
+        "unit": "£",
+        "label": "Futures to sell, in pounds",
+        "accept": "£3,750,000: $h = 0.30/0.40 = 0.75$ times £5m."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The bond is $y$ and the future is $x$."
+        },
+        {
+          "rung": "point",
+          "text": "The slope divides the covariance by the predictor's variance.",
+          "highlight": [
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$h = 0.30/0.40 = 0.75$, and $0.75 \\times$ £5m."
+        }
+      ],
+      "feedback": {
+        "correct": "$h = 0.75$, so sell £3.75m of futures.",
+        "generic": "Not quite right. Compute $h = \\mathrm{Cov}/\\mathrm{Var}(\\text{future})$, then scale the £5m position.",
+        "byKey": {
+          "wrong-way": "You divided by the bond's variance, which regresses the future on the bond. The predictor is the future, so divide by its variance.",
+          "one-for-one": "Selling £5m assumes the bond moves one for one with the future. The regression says it moves 0.75 for 1."
+        }
+      },
+      "explain": {
+        "text": "$h = 0.30/0.40 = 0.75$, so the desk sells £3.75m of futures. Dividing by the bond's variance regresses the wrong way and over-hedges, at £4.17m. The residuals of this regression are the risk the hedge leaves behind.",
+        "canvas": {
+          "highlight": [
+            "r0c1",
+            "r1c1"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Setting both partial derivatives of $S(a, b)$ to 0 gives $a = \\bar y - b\\bar x$, so the line passes through $(\\bar x, \\bar y)$.",
+      "The slope is $b = S_{xy}/S_{xx} = \\mathrm{Cov}(x, y)/\\mathrm{Var}(x) = r\\,s_y/s_x$; the projection route in Orthogonality and Least Squares gives the same.",
+      "Regressing $x$ on $y$ gives a different line unless $r = \\pm 1$. With $r = 0$ the line is flat at $\\bar y$."
+    ],
+    "formula": {
+      "name": "Least squares slope and intercept",
+      "tex": "b = \\dfrac{\\mathrm{Cov}(x, y)}{\\mathrm{Var}(x)} = r\\,\\dfrac{s_y}{s_x}, \\qquad a = \\bar y - b\\bar x",
+      "note": "Beta is $\\rho\\,\\sigma_s/\\sigma_m$; a hedge ratio is the same slope for one asset's changes on another's."
+    },
+    "trap": "The ratio of spreads $s_y/s_x$ is not the slope: it needs the factor $r$, and swapping $x$ and $y$ gives a different line."
+  },
+  "quiz": [
+    {
+      "id": "q-intercept",
+      "difficulty": 2,
+      "prose": "A regression has $\\bar x = 0.2$, $\\bar y = 0.5$ and slope $b = 1.5$.",
+      "question": "What is the intercept $a$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "added",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sign",
+            "value": -0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Intercept $a$",
+        "accept": "0.2: $0.5 - 1.5 \\times 0.2$."
+      },
+      "feedback": {
+        "correct": "$a = 0.5 - 0.3 = 0.2$.",
+        "generic": "Not quite right. Use $a = \\bar y - b\\bar x$.",
+        "byKey": {
+          "added": "You added $b\\bar x$. The line must drop by $b\\bar x$ going back to $x = 0$.",
+          "sign": "You computed $b\\bar x - \\bar y$. Reverse it: $\\bar y - b\\bar x$."
+        }
+      },
+      "explain": {
+        "text": "The line passes through $(\\bar x, \\bar y)$, so $a = \\bar y - b\\bar x = 0.5 - 1.5 \\times 0.2 = 0.2$."
+      }
+    },
+    {
+      "id": "q-cov-var",
+      "difficulty": 2,
+      "prose": "For two return series, $\\mathrm{Cov}(x, y) = 1.8$, $\\mathrm{Var}(x) = 1.5$ and $\\mathrm{Var}(y) = 4$.",
+      "question": "What is the slope of $y$ on $x$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "var-y",
+            "value": 0.45,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "upside",
+            "value": 0.8333,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Slope $b$",
+        "accept": "1.2: $1.8/1.5$."
+      },
+      "feedback": {
+        "correct": "$1.8/1.5 = 1.2$.",
+        "generic": "Not quite right. Divide the covariance by the variance of the predictor.",
+        "byKey": {
+          "var-y": "You divided by $\\mathrm{Var}(y)$. That is the slope of $x$ on $y$.",
+          "upside": "You put the variance over the covariance. The covariance goes on top."
+        }
+      },
+      "explain": {
+        "text": "$b = \\mathrm{Cov}(x, y)/\\mathrm{Var}(x) = 1.8/1.5 = 1.2$. $\\mathrm{Var}(y)$ is not needed for the slope of $y$ on $x$."
+      }
+    },
+    {
+      "id": "q-reverse",
+      "difficulty": 3,
+      "prose": "For a stock on the market, $r = 0.5$, $s_x = 1$% and $s_y = 4$%, so the slope of $y$ on $x$ is $b = 2$.",
+      "question": "What is the slope of $x$ on $y$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "0.125",
+            "correct": true
+          },
+          {
+            "id": "inverse",
+            "text": "0.5, the inverse of 2",
+            "why": "You inverted $b$. The reverse regression has slope $r\\,s_x/s_y = 0.5 \\times 1/4$."
+          },
+          {
+            "id": "same",
+            "text": "2, the same line",
+            "why": "You assumed one line serves both ways. That holds only when $r = \\pm 1$."
+          },
+          {
+            "id": "r",
+            "text": "0.5, the correlation",
+            "why": "The correlation is the slope only when both spreads are equal."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$r\\,s_x/s_y = 0.5 \\times 0.25 = 0.125$.",
+        "generic": "Not quite right. Swap the roles in $r\\,s_y/s_x$."
+      },
+      "explain": {
+        "text": "With $y$ as the predictor the slope is $r\\,s_x/s_y = 0.5 \\times 1/4 = 0.125$. Check: $b \\times d = 2 \\times 0.125 = 0.25 = r^2$. Inverting 2 gives 0.5, which is a different line."
+      }
+    },
+    {
+      "id": "q-centre",
+      "difficulty": 3,
+      "prose": "Three points: $(1, 2)$, $(2, 3)$ and $(3, 7)$.",
+      "question": "What is the least squares slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 2.0714,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "upside",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Slope $b$",
+        "accept": "2.5: $S_{xy}/S_{xx} = 5/2$."
+      },
+      "feedback": {
+        "correct": "$S_{xy} = 5$ and $S_{xx} = 2$, so $b = 2.5$.",
+        "generic": "Not quite right. Centre both variables at their means, 2 and 4, first.",
+        "byKey": {
+          "raw": "You used $\\sum x_i y_i/\\sum x_i^2 = 29/14$ without centring. That is the slope of a line forced through the origin.",
+          "upside": "You divided $S_{xx}$ by $S_{xy}$. The products go on top."
+        }
+      },
+      "explain": {
+        "text": "The means are 2 and 4, so the deviations are $(-1, 0, 1)$ and $(-2, -1, 3)$. The products add to $2 + 0 + 3 = 5$ and the squares to 2, so $b = 2.5$ and $a = 4 - 5 = -1$."
+      }
+    }
+  ]
+}
