@@ -1,0 +1,388 @@
+{
+  "id": "homework-3",
+  "course": "regression",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-ovb",
+      "difficulty": 3,
+      "skills": [
+        "rg-multiple"
+      ],
+      "prose": "Slippage (bp) truly depends on order size and volatility: $\\beta_{\\text{size}} = 0.8$, $\\beta_{\\text{vol}} = 1.5$. Big orders come on volatile days: the slope of vol on size is 0.4.",
+      "question": "What slope on size does a regression on size alone report, on average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.4,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "label": "Slope on size alone",
+        "accept": "1.4: $0.8 + 1.5 \\times 0.4$.",
+        "wrong": [
+          {
+            "id": "true",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "prod",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.8 + 0.6 = 1.4$: size gets credit for volatility's cost.",
+        "generic": "Not quite right. Add $\\beta_{\\text{vol}}\\delta$ to $\\beta_{\\text{size}}$.",
+        "byKey": {
+          "true": "You reported the true effect. Leaving vol out adds $1.5 \\times 0.4 = 0.6$.",
+          "prod": "That is the bias alone. Add it to 0.8."
+        }
+      },
+      "explain": {
+        "text": "$\\beta_{\\text{size}} + \\beta_{\\text{vol}}\\delta = 0.8 + 1.5 \\times 0.4 = 1.4$ bp. A desk using 1.4 would overcharge big orders on calm days."
+      }
+    },
+    {
+      "id": "h-f-r2",
+      "difficulty": 4,
+      "skills": [
+        "rg-inference"
+      ],
+      "prose": "Show that the $F$-statistic can be written with $R^2$ alone.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "$F = \\dfrac{\\mathrm{SSR}/k}{\\mathrm{SSE}/(n - k - 1)}$, the definition"
+          },
+          {
+            "id": "split",
+            "text": "$\\mathrm{SST} = \\mathrm{SSR} + \\mathrm{SSE}$, since the residuals are orthogonal to the fitted values"
+          },
+          {
+            "id": "ratios",
+            "text": "$\\mathrm{SSR}/\\mathrm{SST} = R^2$ and $\\mathrm{SSE}/\\mathrm{SST} = 1 - R^2$, dividing that split by SST"
+          },
+          {
+            "id": "sub",
+            "text": "$F = \\dfrac{R^2/k}{(1 - R^2)/(n - k - 1)}$, dividing top and bottom of the definition by SST"
+          }
+        ],
+        "answer": [
+          "def",
+          "split",
+          "ratios",
+          "sub"
+        ],
+        "same": [
+          [
+            "def",
+            "split"
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "SST cancels, leaving $R^2$ and the degrees of freedom.",
+        "generic": "Not quite right. Establish the split of SST before rewriting $F$.",
+        "byKey": {
+          "sub": "Dividing by SST comes last: it needs both ratios first.",
+          "ratios": "The ratios need the split $\\mathrm{SST} = \\mathrm{SSR} + \\mathrm{SSE}$ first."
+        }
+      },
+      "explain": {
+        "text": "Dividing SSR and SSE by the same SST leaves $F$ unchanged, and turns them into $R^2$ and $1 - R^2$. So a summary's $R^2$, $n$ and $k$ are enough to check its $F$."
+      }
+    },
+    {
+      "id": "h-vif-n",
+      "difficulty": 4,
+      "skills": [
+        "rg-multiple",
+        "rg-diagnostics"
+      ],
+      "prose": "A signal has VIF 6.25 in a factor model fitted on 120 months. Collecting more months shrinks variances in proportion to $1/n$.",
+      "question": "How many months would give its coefficient the standard error it would have with uncorrelated predictors and 120 months?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 750,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "",
+        "label": "Months needed",
+        "accept": "750: $120 \\times 6.25$.",
+        "wrong": [
+          {
+            "id": "sqrt",
+            "value": 300,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "plus",
+            "value": 126,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "750 months, over 62 years: collinearity is expensive.",
+        "generic": "Not quite right. The variance is 6.25 times larger, and variance falls like $1/n$.",
+        "byKey": {
+          "sqrt": "You scaled by $\\sqrt{6.25} = 2.5$. The variance carries the full factor, so $n$ must grow 6.25 times."
+        }
+      },
+      "explain": {
+        "text": "Variance $\\propto \\mathrm{VIF}/n$. Matching $1/120$ needs $6.25/n = 1/120$, so $n = 750$ months. Dropping or combining the overlapping signal is far cheaper."
+      }
+    },
+    {
+      "id": "h-hc1-code",
+      "difficulty": 5,
+      "skills": [
+        "rg-diagnostics",
+        "rg-inference"
+      ],
+      "title": "White standard errors by hand",
+      "prose": "Write HC1 standard errors without statsmodels. Use the sandwich $(\\mathbf{X}^T\\mathbf{X})^{-1}\\left(\\sum_i e_i^2\\mathbf{x}_i\\mathbf{x}_i^T\\right)(\\mathbf{X}^T\\mathbf{X})^{-1}$, then multiply by $n/(n - k - 1)$ for HC1. `cols` is a list of predictor columns.",
+      "question": "Complete `hc1_se` so it returns one HC1 standard error per coefficient, the intercept first.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef hc1_se(cols, y):\n    y = np.array(y, dtype=float)\n    n, k = len(y), len(cols)\n    X = np.column_stack([np.ones(n)] + list(cols))\n    bread = np.linalg.inv(X.T @ X)\n    beta = bread @ X.T @ y\n    e = y - X @ beta\n    meat = ...\n    V = ...\n    return np.sqrt(np.diag(V))\n",
+        "solution": "import numpy as np\n\ndef hc1_se(cols, y):\n    y = np.array(y, dtype=float)\n    n, k = len(y), len(cols)\n    X = np.column_stack([np.ones(n)] + list(cols))\n    bread = np.linalg.inv(X.T @ X)\n    beta = bread @ X.T @ y\n    e = y - X @ beta\n    meat = (X * e[:, None] ** 2).T @ X\n    V = bread @ meat @ bread * n / (n - k - 1)\n    return np.sqrt(np.diag(V))\n",
+        "examples": [
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in hc1_se([mkt, value], y)]",
+            "expect": "[0.6519, 0.1108, 0.3589]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in hc1_se([mkt, value], y)]",
+            "expect": "[0.6519, 0.1108, 0.3589]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in hc1_se([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]], [2.4, 3.06, 3.48, 3.95, 4.69, 5.48, 5.66, 6.17, 5.27, 7.69, 7.07, 9.43])]",
+            "expect": "[0.2399, 0.0608]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in hc1_se([[1, 2, 3, 4, 5, 6, 7, 8], [2, 1, 4, 3, 6, 5, 8, 9]], [3.1, 2.4, 6.9, 4.6, 8.2, 9.5, 10.1, 14.2])]",
+            "expect": "[0.6202, 0.4409, 0.4071]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in hc1_se([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]], [1.1, 2.3, 2.8, 4.5, 4.9, 6.8, 6.6, 8.9, 8.7, 11.2])]",
+            "expect": "[0.252, 0.0618]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. Each list is rounded to 4 places and compared with statsmodels' `fit(cov_type=\"HC1\").bse`, computed once and fixed in the tests. The first run loads NumPy, which takes several seconds."
+      },
+      "feedback": {
+        "correct": "For the 15 months the HC1 errors are `[0.6519, 0.1108, 0.3589]`, against the usual `[0.6059, 0.183, 0.3838]`.",
+        "generic": "Some tests failed. For the 15 months the answer is `[0.6519, 0.1108, 0.3589]`.",
+        "byKey": {
+          "test-1": "Check the meat: `(X * e[:, None] ** 2).T @ X` weights each row's outer product by $e_i^2$. Then apply the factor $n/(n - k - 1)$.",
+          "error": "Your code stopped with an error. `e[:, None]` turns the residuals into a column so they broadcast across `X`."
+        }
+      },
+      "explain": {
+        "text": "`(X * e[:, None] ** 2).T @ X` equals $\\sum e_i^2\\mathbf{x}_i\\mathbf{x}_i^T$ without a loop. For the factor model the market's SE falls from 0.183 to 0.111: robust errors can be smaller as well as larger.\n\n```python\nmeat = (X * e[:, None] ** 2).T @ X\nV = bread @ meat @ bread * n / (n - k - 1)\n```"
+      }
+    },
+    {
+      "id": "h-overlap10",
+      "difficulty": 4,
+      "skills": [
+        "rg-diagnostics"
+      ],
+      "prose": "Regressing overlapping $h$-day returns on overlapping $h$-day returns inflates the naive $t$ by about $\\sqrt{1 + 2\\sum_{j=1}^{h-1}(1 - j/h)^2}$. A backtest with $h = 10$ reports a naive $t$ of 3.2.",
+      "question": "What is the honest $t$, roughly?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.236,
+        "tol": {
+          "abs": 0.02
+        },
+        "unit": "",
+        "label": "Honest t statistic",
+        "accept": "About 1.24: the factor is $\\sqrt{1 + 2 \\times 2.85} = 2.588$.",
+        "wrong": [
+          {
+            "id": "sqrt10",
+            "value": 1.012,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "nosqrt",
+            "value": 0.478,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sum_{j=1}^{9}(1 - j/10)^2 = 2.85$, the factor is 2.588, and $3.2/2.588 = 1.24$.",
+        "generic": "Not quite right. Compute the sum, then the square root, then divide.",
+        "byKey": {
+          "sqrt10": "You divided by $\\sqrt{10}$. The formula gives 2.588.",
+          "nosqrt": "You divided by $1 + 5.7 = 6.7$. Take its square root first."
+        }
+      },
+      "explain": {
+        "text": "$\\sum_{j=1}^{9}(j/10)^2 = 285/100 = 2.85$, so the factor is $\\sqrt{6.7} = 2.588$ and the honest $t \\approx 1.24$. The apparent effect is not significant."
+      }
+    },
+    {
+      "id": "h-s2-trap",
+      "difficulty": 3,
+      "skills": [
+        "rg-inference"
+      ],
+      "prose": "A hand-rolled tool fits 3 factors to 20 months and divides SSE by $n = 20$ to get $s^2$.",
+      "question": "By what factor are all its standard errors too small?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8944,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "",
+        "label": "Ratio of the tool's SE to the right SE",
+        "accept": "0.894: $\\sqrt{16/20}$.",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "n1",
+            "value": 0.9177,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sqrt{16/20} = 0.894$: every SE is about 11% too small and every $t$ 12% too large.",
+        "generic": "Not quite right. Compare $\\sqrt{\\mathrm{SSE}/20}$ with $\\sqrt{\\mathrm{SSE}/16}$.",
+        "byKey": {
+          "var": "That is the ratio of variances. Standard errors take its square root.",
+          "n1": "You used $n - k = 17$. The intercept costs one too: $20 - 3 - 1 = 16$."
+        }
+      },
+      "explain": {
+        "text": "The right divisor is $20 - 3 - 1 = 16$. The tool's SE is $\\sqrt{16/20} = 0.894$ of the right one, so its $t$-statistics are $1/0.894 = 1.12$ times too large."
+      }
+    },
+    {
+      "id": "h-collinear-reading",
+      "difficulty": 3,
+      "skills": [
+        "rg-multiple",
+        "rg-diagnostics"
+      ],
+      "prose": "Book-to-price and earnings-to-price have correlation 0.9. Together their slopes are $+1.4$ ($t = 1.1$) and $-0.6$ ($t = -0.5$). The $F$ test has $p = 0.002$.",
+      "question": "What is the best summary?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "value",
+            "text": "Cheapness predicts returns; the data cannot say which measure matters",
+            "correct": true
+          },
+          {
+            "id": "ep-bad",
+            "text": "Earnings-to-price predicts lower returns",
+            "why": "You read a collinear sign as real. Fitted alone, it would likely be positive."
+          },
+          {
+            "id": "none",
+            "text": "Neither predicts returns",
+            "why": "You read the small $t$ values alone. The joint $F$ test says the pair matters."
+          },
+          {
+            "id": "bp",
+            "text": "Only book-to-price matters, since its $t$ is larger",
+            "why": "With VIF $1/(1 - 0.81) = 5.3$ the split between them is unreliable."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A strong joint test with weak individual $t$s is the signature of collinearity.",
+        "generic": "Not quite right. Weigh the joint test against the individual $t$s."
+      },
+      "explain": {
+        "text": "The VIF is $1/(1 - 0.81) = 5.3$, so each SE is 2.3 times larger. The $F$ test shows cheapness matters. Average the two measures, or keep one."
+      }
+    },
+    {
+      "id": "h-report",
+      "difficulty": 5,
+      "skills": [
+        "rg-multiple",
+        "rg-diagnostics",
+        "rg-inference"
+      ],
+      "title": "Reviewing a backtest regression",
+      "kind": "longform",
+      "prompt": "A colleague sends this result. Each trading day for 4 years ($n = 1{,}000$), they regress the stock's next-21-day return on two signals measured that day: 12-month momentum and 11-month momentum (correlation 0.97). They report, with the usual standard errors: 12-month slope $0.84$, $t = 1.3$; 11-month slope $-0.52$, $t = -0.8$; $F = 41$, $p < 0.0001$; $R^2 = 0.08$; Durbin-Watson $0.09$. Their note says: \"Momentum is highly significant ($F$ test). The 11-month signal hurts, so short it against the 12-month one.\"\n\n(a) Explain what the collinearity does to the two slopes and their $t$-statistics, with a number.\n\n(b) Assess the claim about the 11-month signal.\n\n(c) Explain why the $F$ test's $p$-value cannot be trusted as reported, with a number.\n\n(d) Say what is still trustworthy in the output.\n\n(e) Propose a corrected analysis in three or four concrete steps.",
+      "model": "**(a) Collinearity.** With $r = 0.97$, $\\mathrm{VIF} = 1/(1 - 0.97^2) = 1/0.0591 = 16.9$. Each slope's standard error is $\\sqrt{16.9} = 4.1$ times what it would be with unrelated signals, so each $t$ is shrunk by about 4. The data pin down the combined effect, about $0.84 - 0.52 = 0.32$, but not the split between the two signals.\n\n**(b) The 11-month claim.** The negative sign is an artefact of collinearity. When two predictors move together, their estimates have a large negative covariance: one rising goes with the other falling. Its $t = -0.8$ is far from significant, and fitted alone the 11-month signal would almost certainly have a positive slope like the 12-month one. Shorting it against the 12-month signal trades the noise in the split, the thin direction $(1, -1)$ that the data barely see.\n\n**(c) The $F$ test.** The returns are 21-day windows sampled daily, so neighbouring windows share 20 days. The residuals are autocorrelated by construction, and $d = 0.09$ confirms it ($\\hat\\rho \\approx 1 - d/2 = 0.955$). The signals are persistent too. The usual standard errors treat 1,000 days as independent; with 21-day overlap on both sides the naive $t$ (and $\\sqrt F$) is inflated by roughly $\\sqrt{1 + 2\\sum_{j=1}^{20}(1 - j/21)^2} \\approx 3.7$. An $F$ of 41 corresponds to roughly $41/3.7^2 \\approx 3$ after correction: perhaps significant, perhaps not, and nowhere near $p < 0.0001$.\n\n**(d) What survives.** The coefficients are unbiased estimates if the model is right: autocorrelation and collinearity damage the standard errors and the split, not the fitted values. $R^2 = 0.08$ and the combined effect of the two signals are meaningful descriptions of the sample.\n\n**(e) A corrected analysis.**\n1. Replace the two signals by one: keep 12-month momentum, or use their average (the first principal component). Check its VIF is near 1.\n2. Use HAC (Newey-West) standard errors with at least 20 lags: `fit(cov_type=\"HAC\", cov_kwds={\"maxlags\": 20})`.\n3. As a cleaner check, refit on non-overlapping windows: every 21st day, about 47 observations. With no overlap, $d$ should be near 2 and the usual or HC errors are fine.\n4. Report the single signal's slope, its HAC $t$, and the non-overlapping result side by side before any trading decision.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Computes the VIF (about 17) or the SE factor (about 4) and explains that only the combined effect is identified"
+        },
+        {
+          "points": 2,
+          "text": "Rejects the short-11-month trade: the negative sign comes from collinearity, and the coefficient is not significant"
+        },
+        {
+          "points": 2,
+          "text": "Identifies overlapping 21-day windows as the source of autocorrelation, citing $d = 0.09$"
+        },
+        {
+          "points": 1,
+          "text": "Quantifies how much the naive statistic is inflated (a factor of about 3 to 4 on $t$, or an equivalent HAC argument)"
+        },
+        {
+          "points": 1,
+          "text": "States that the coefficients and $R^2$ remain usable while the standard errors are wrong"
+        },
+        {
+          "points": 2,
+          "text": "Proposes a concrete fix covering both problems: one combined signal and HAC errors with at least 20 lags, or non-overlapping samples"
+        }
+      ]
+    }
+  ]
+}

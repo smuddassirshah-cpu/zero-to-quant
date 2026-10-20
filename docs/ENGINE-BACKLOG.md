@@ -975,3 +975,10 @@ Raised later (regression level 2):
 349. `console`: a `compact` or font-size option so 80-column output (a statsmodels summary) shows verbatim (about 60 columns fit at 14px).
 350. `scatter` `curves`: a `thin` style or per-curve opacity for bands of resampled fits.
 351. Validator: accept `fit`, curve ids and residual ids (`r-p{i}`) as `scatter` highlight targets (the engine renders them).
+
+Raised later (micro level 1):
+
+352. `orderbook`: bid and ask levels as patchable state (add a resting limit order, remove a level), not params only.
+353. `orderbook`: a `decimals` option for the footer's average fill price, and a spread readout in pence or basis points (`spreadUnit`).
+354. `boxes`: patchable item labels (a card reading "You 200" then "You 300"), and a `row` drop position that is not always the end.
+355. `derive`: chained `params.*` rules (a value computed from another computed value) come out wrong in the explanation's copy of the canvas; evaluate rules in dependency order in the Why? copy too.

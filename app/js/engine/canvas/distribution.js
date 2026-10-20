@@ -31,11 +31,11 @@
       case 'uniform': {
         let a = pick(p, ['a', 'min'], 0), b = pick(p, ['b', 'max'], 1); if (b <= a) b = a + 1e-6;
         const f = (x) => (x >= a && x <= b ? 1 / (b - a) : 0), w = b - a;
-        return { discrete: false, f, cdf: (x) => K.clamp((x - a) / w, 0, 1), mean: (a + b) / 2, sd: w / Math.sqrt(12), range: [a - w * 0.25, b + w * 0.25], tex: `U(${K.fmt(a, 3)}, ${K.fmt(b, 3)})`, jumps: [a, b] };
+        return { discrete: false, f, cdf: (x) => K.clamp((x - a) / w, 0, 1), mean: (a + b) / 2, median: (a + b) / 2, sd: w / Math.sqrt(12), range: [a - w * 0.25, b + w * 0.25], tex: `U(${K.fmt(a, 3)}, ${K.fmt(b, 3)})`, jumps: [a, b] };
       }
       case 'exponential': {
         const l = Math.max(1e-9, pick(p, ['lambda', 'λ', 'rate'], 1));
-        return { discrete: false, f: (x) => (x < 0 ? 0 : l * Math.exp(-l * x)), cdf: (x) => (x < 0 ? 0 : 1 - Math.exp(-l * x)), mean: 1 / l, sd: 1 / l, range: [0, 5 / l], tex: `\\text{Exp}(${K.fmt(l, 3)})`, jumps: [0] };
+        return { discrete: false, f: (x) => (x < 0 ? 0 : l * Math.exp(-l * x)), cdf: (x) => (x < 0 ? 0 : 1 - Math.exp(-l * x)), mean: 1 / l, median: Math.LN2 / l, sd: 1 / l, range: [0, 5 / l], tex: `\\text{Exp}(${K.fmt(l, 3)})`, jumps: [0] };
       }
       case 't': {
         const v = Math.max(0.1, pick(p, ['nu', 'ν', 'df'], 5));
@@ -44,12 +44,37 @@
         const cdf = (x) => 0.5 + Math.sign(x) * K.simpson(f, 0, Math.abs(x), 600);
         return { discrete: false, f, cdf, mean: v > 1 ? 0 : NaN, sd: v > 2 ? Math.sqrt(v / (v - 2)) : NaN, range: [-5, 5], tex: `t_{${K.fmt(v, 2)}}` };
       }
+      case 'hypergeometric': { // item 300: N items, K successes among them, n drawn without replacement
+        const N = Math.max(1, Math.round(pick(p, ['N', 'population'], 20))), Ks = K.clamp(Math.round(pick(p, ['K', 'successes'], 7)), 0, N), n = K.clamp(Math.round(pick(p, ['n', 'draws'], 5)), 0, N);
+        const lc = (a, b) => (b < 0 || b > a ? -Infinity : K.lgamma(a + 1) - K.lgamma(b + 1) - K.lgamma(a - b + 1));
+        const lo = Math.max(0, n - (N - Ks)), hi = Math.min(n, Ks);
+        const f = (k) => (k < lo || k > hi || k !== Math.round(k) ? 0 : Math.exp(lc(Ks, k) + lc(N - Ks, n - k) - lc(N, n)));
+        const mean = n * Ks / N, v = N > 1 ? n * (Ks / N) * ((N - Ks) / N) * ((N - n) / (N - 1)) : 0;
+        return { discrete: true, f, lo, hi, mean, sd: Math.sqrt(v), range: [lo - 0.8, hi + 0.8], tex: `\\text{Hyp}(${N}, ${Ks}, ${n})` };
+      }
+      case 'discrete': case 'custom': { // item 291: a custom support, values with their probabilities
+        const xs = (p && Array.isArray(p.values) ? p.values : [0, 1]).map(Number), ps = (p && Array.isArray(p.probs) ? p.probs : xs.map(() => 1 / xs.length)).map(Number);
+        const pairs = xs.map((x, i) => [x, Number.isFinite(ps[i]) ? ps[i] : 0]).filter(([x]) => Number.isFinite(x)).sort((u, w) => u[0] - w[0]);
+        const f = (x) => pairs.reduce((t, [v, q]) => t + (Math.abs(v - x) < 1e-9 ? q : 0), 0);
+        const mean = pairs.reduce((t, [v, q]) => t + v * q, 0), v2 = pairs.reduce((t, [v, q]) => t + q * (v - mean) ** 2, 0);
+        const lo = pairs.length ? pairs[0][0] : 0, hi = pairs.length ? pairs[pairs.length - 1][0] : 1, gap = Math.max(1e-9, Math.min(1, ...pairs.slice(1).map(([v], i) => v - pairs[i][0]).filter((d) => d > 1e-9)));
+        return { discrete: true, f, lo, hi, support: [...new Set(pairs.map(([v]) => v))], gap, mean, sd: Math.sqrt(v2), range: [lo - 0.8 * gap, hi + 0.8 * gap], tex: 'X' };
+      }
+      case 'lognormal': { // item 305: log X ~ N(mu, sigma^2)
+        const mu = pick(p, ['mu', 'μ'], 0), s = Math.max(1e-9, pick(p, ['sigma', 'σ'], 0.5));
+        const f = (x) => (x <= 0 ? 0 : Math.exp(-0.5 * ((Math.log(x) - mu) / s) ** 2) / (x * s * Math.sqrt(2 * Math.PI)));
+        const mean = Math.exp(mu + s * s / 2);
+        return { discrete: false, f, cdf: (x) => (x <= 0 ? 0 : 0.5 * (1 + K.erf((Math.log(x) - mu) / (s * Math.SQRT2)))), mean, median: Math.exp(mu), sd: Math.sqrt(Math.expm1(s * s)) * mean, range: [0, Math.exp(mu + 2.6 * s)], tex: `\\text{LogN}(${K.fmt(mu, 3)}, ${K.fmt(s, 3)}^2)`, jumps: [0] };
+      }
       case 'normal': default: {
         const mu = pick(p, ['mu', 'μ', 'mean'], 0), s = Math.max(1e-9, pick(p, ['sigma', 'σ', 'sd'], 1));
-        return { discrete: false, f: (x) => Math.exp(-0.5 * ((x - mu) / s) ** 2) / (s * Math.sqrt(2 * Math.PI)), cdf: (x) => 0.5 * (1 + K.erf((x - mu) / (s * Math.SQRT2))), mean: mu, sd: s, range: [mu - 4 * s, mu + 4 * s], tex: `N(${K.fmt(mu, 3)}, ${K.fmt(s, 3)}^2)` };
+        return { discrete: false, f: (x) => Math.exp(-0.5 * ((x - mu) / s) ** 2) / (s * Math.sqrt(2 * Math.PI)), cdf: (x) => 0.5 * (1 + K.erf((x - mu) / (s * Math.SQRT2))), mean: mu, median: mu, sd: s, range: [mu - 4 * s, mu + 4 * s], tex: `N(${K.fmt(mu, 3)}, ${K.fmt(s, 3)}^2)` };
       }
     }
   };
+
+  /* the support points of a discrete family within [a, b] (integers lo..hi, or a custom list) */
+  const supportIn = (F, a, b) => (F.support ? F.support.filter((x) => x >= a - 1e-9 && x <= b + 1e-9) : (() => { const out = []; for (let k = Math.max(F.lo, Math.ceil(a - 1e-9)); k <= Math.min(F.hi, Math.floor(b + 1e-9), F.lo + 2000); k++) out.push(k); return out; })());
 
   C.register('distribution', (host, params, ctx) => {
     const K = Z.cvb;

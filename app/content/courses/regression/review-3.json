@@ -1,0 +1,398 @@
+{
+  "id": "review-3",
+  "course": "regression",
+  "level": 3,
+  "items": [
+    {
+      "id": "r-ovb",
+      "difficulty": 2,
+      "skills": [
+        "rg-multiple"
+      ],
+      "prose": "The true model is $y = \\beta_0 + 0.5x_1 + 2x_2 + \\varepsilon$. In the sample, the slope of $x_2$ on $x_1$ is $\\delta = -0.3$. An analyst regresses $y$ on $x_1$ alone.",
+      "question": "What slope on $x_1$ do they get?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.1,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "label": "Slope on x1 alone",
+        "accept": "$-0.1$: $0.5 + 2 \\times (-0.3)$.",
+        "wrong": [
+          {
+            "id": "true",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "plus",
+            "value": 1.1,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.5 + 2 \\times (-0.3) = -0.1$: the sign flips.",
+        "generic": "Not quite right. The one-predictor slope is $\\beta_1 + \\beta_2\\delta$.",
+        "byKey": {
+          "true": "You reported $\\beta_1$. Leaving $x_2$ out adds $\\beta_2\\delta = -0.6$.",
+          "plus": "You added $\\beta_2|\\delta|$. $\\delta$ is negative, so the bias is $-0.6$."
+        }
+      },
+      "explain": {
+        "text": "The omitted effect rides along: $\\beta_1 + \\beta_2\\delta = 0.5 - 0.6 = -0.1$. A positive effect looks negative because $x_1$ and $x_2$ move in opposite directions."
+      }
+    },
+    {
+      "id": "r-vif",
+      "difficulty": 3,
+      "skills": [
+        "rg-multiple",
+        "rg-diagnostics"
+      ],
+      "prose": "Regressing one predictor on the other three in a model gives $R_j^2 = 0.75$.",
+      "question": "By what factor is that coefficient's standard error inflated?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "",
+        "label": "Factor on the standard error",
+        "accept": "2: $\\sqrt{1/(1 - 0.75)} = \\sqrt{4}$.",
+        "wrong": [
+          {
+            "id": "vif",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "r",
+            "value": 1.333,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "VIF 4, so the standard error doubles.",
+        "generic": "Not quite right. Take the square root of $1/(1 - R_j^2)$.",
+        "byKey": {
+          "vif": "That is the VIF, the factor on the variance. The standard error grows by its square root.",
+          "r": "You computed $1/R_j^2$. The VIF uses $1 - R_j^2$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{VIF} = 1/0.25 = 4$, so the standard error is $\\sqrt 4 = 2$ times what it would be with an unrelated predictor."
+      }
+    },
+    {
+      "id": "r-which-hac",
+      "difficulty": 2,
+      "skills": [
+        "rg-diagnostics"
+      ],
+      "prose": "Three regressions and their Durbin-Watson statistics.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Regression",
+            "$d$"
+          ],
+          "rows": [
+            [
+              "Monthly fund returns on the market",
+              "2.04"
+            ],
+            [
+              "Overlapping 10-day returns, sampled daily",
+              "0.31"
+            ],
+            [
+              "Daily stock returns on the market",
+              "1.96"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which regression needs HAC standard errors?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "overlap",
+            "text": "Overlapping 10-day returns",
+            "correct": true
+          },
+          {
+            "id": "monthly",
+            "text": "Monthly fund returns",
+            "why": "$d = 2.04$ is close to 2, and months do not overlap."
+          },
+          {
+            "id": "daily",
+            "text": "Daily returns on the market",
+            "why": "$d = 1.96$ shows no autocorrelation to correct."
+          },
+          {
+            "id": "all",
+            "text": "All three: time series always need HAC",
+            "why": "You applied HAC by reflex. Only $d = 0.31$ signals autocorrelation."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Overlap builds in autocorrelation, and $d = 0.31$ confirms it.",
+        "generic": "Not quite right. Look for $d$ far below 2."
+      },
+      "explain": {
+        "text": "Neighbouring 10-day windows share 9 days, so their residuals move together: $d = 0.31$. The other two have $d$ near 2 and need no correction."
+      }
+    },
+    {
+      "id": "r-t",
+      "difficulty": 3,
+      "skills": [
+        "rg-inference"
+      ],
+      "prose": "A regression has $s^2 = 2.5$. The diagonal entry of $(\\mathbf{X}^T\\mathbf{X})^{-1}$ for a coefficient is 0.04, and the coefficient is 0.9.",
+      "question": "What is its $t$-statistic?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.846,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "label": "t statistic",
+        "accept": "2.846: $0.9/\\sqrt{2.5 \\times 0.04}$.",
+        "wrong": [
+          {
+            "id": "no-sqrt",
+            "value": 9.0,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "no-s2",
+            "value": 4.5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\mathrm{SE} = \\sqrt{0.1} = 0.3162$, so $t = 2.846$.",
+        "generic": "Not quite right. The SE is $\\sqrt{s^2 \\times 0.04}$.",
+        "byKey": {
+          "no-sqrt": "You divided by the variance, 0.1. Divide by its square root.",
+          "no-s2": "You used $\\sqrt{0.04}$ without $s^2$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{SE} = \\sqrt{2.5 \\times 0.04} = 0.3162$ and $t = 0.9/0.3162 = 2.846$."
+      }
+    },
+    {
+      "id": "r-adj",
+      "difficulty": 3,
+      "skills": [
+        "rg-multiple",
+        "rg-fit"
+      ],
+      "prose": "Two models of 30 months of returns. Model A has 2 predictors and $R^2 = 0.40$. Model B adds 3 more and has $R^2 = 0.43$.",
+      "question": "Which has the higher adjusted $R^2$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Model A, 0.356 against 0.311",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Model B, because its $R^2$ is higher",
+            "why": "You compared plain $R^2$. Extra predictors always raise it; adjusted $R^2$ falls from 0.356 to 0.311."
+          },
+          {
+            "id": "same",
+            "text": "They are equal",
+            "why": "A: $1 - 0.60 \\times 29/27 = 0.356$. B: $1 - 0.57 \\times 29/24 = 0.311$."
+          },
+          {
+            "id": "cannot",
+            "text": "Neither: adjusted $R^2$ cannot compare models with different $k$",
+            "why": "Comparing models with different $k$ is exactly what the adjustment is for."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Model A: the three extra predictors do not pay for themselves.",
+        "generic": "Not quite right. Compute $1 - (1 - R^2)\\tfrac{n-1}{n-k-1}$ for each."
+      },
+      "explain": {
+        "text": "A: $1 - 0.60 \\times \\tfrac{29}{27} = 0.356$. B: $1 - 0.57 \\times \\tfrac{29}{24} = 0.311$. B's extra 0.03 of $R^2$ costs three degrees of freedom."
+      }
+    },
+    {
+      "id": "r-dummies",
+      "difficulty": 4,
+      "skills": [
+        "rg-multiple",
+        "rg-diagnostics"
+      ],
+      "prose": "A regression of stock returns includes an intercept and a 0 or 1 column for each of three sectors. Every stock is in exactly one sector.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "singular",
+            "text": "The three sector columns add up to the ones column, so $\\mathbf{X}^T\\mathbf{X}$ is singular",
+            "correct": true
+          },
+          {
+            "id": "vif",
+            "text": "The VIFs are high but the fit is fine",
+            "why": "This is exact, not near, collinearity. There is no unique solution at all."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: each sector gets its own effect",
+            "why": "With an intercept too, one sector's effect can be moved into the intercept freely."
+          },
+          {
+            "id": "bias",
+            "text": "The sector coefficients are biased",
+            "why": "They are not identified, which is worse than biased: any shift between them fits equally well."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Drop one sector column, or the intercept.",
+        "generic": "Not quite right. Add the three sector columns row by row."
+      },
+      "explain": {
+        "text": "Each row has exactly one 1 among the sector columns, so they sum to the ones column. The columns of $\\mathbf{X}$ are dependent. Drop one sector: the others are then read relative to it."
+      }
+    },
+    {
+      "id": "r-cov-type",
+      "difficulty": 3,
+      "skills": [
+        "rg-diagnostics"
+      ],
+      "prose": "A beta regression on daily returns: residuals are independent from day to day, and much larger on volatile days.",
+      "question": "Which `fit` call gives sound standard errors?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "hc1",
+            "text": "`fit(cov_type=\"HC1\")`",
+            "correct": true
+          },
+          {
+            "id": "plain",
+            "text": "`fit()`",
+            "why": "You kept the usual errors. They assume one variance for every day."
+          },
+          {
+            "id": "hac",
+            "text": "`fit(cov_type=\"HAC\", cov_kwds={\"maxlags\": 20})`",
+            "why": "HAC is valid too, but with independent days its extra lags only add noise to the SE."
+          },
+          {
+            "id": "wls",
+            "text": "Drop the volatile days, then `fit()`",
+            "why": "Dropping the days that break the assumption throws away the most informative days."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Independent days with changing variance: HC1.",
+        "generic": "Not quite right. Match the fix to the failed assumption."
+      },
+      "explain": {
+        "text": "Volatility clustering makes the error variance move with the market: heteroscedasticity. With no autocorrelation, White's HC1 is the right correction."
+      }
+    },
+    {
+      "id": "r-f",
+      "difficulty": 4,
+      "skills": [
+        "rg-inference"
+      ],
+      "prose": "A regression of 40 observations on 4 predictors has explained sum of squares 12 and residual sum of squares 35.",
+      "question": "What is the $F$-statistic?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.0,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "",
+        "label": "F statistic",
+        "accept": "3.0: $(12/4)/(35/35)$.",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 0.343,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "n",
+            "value": 3.429,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "swap",
+            "value": 0.333,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(12/4)/(35/35) = 3.0$, with $p = 0.031$ on 4 and 35 degrees of freedom.",
+        "generic": "Not quite right. Divide each sum by its degrees of freedom: 4 and $40 - 4 - 1 = 35$.",
+        "byKey": {
+          "raw": "You divided 12 by 35 without the degrees of freedom.",
+          "n": "You divided SSE by 40. Use $n - k - 1 = 35$.",
+          "swap": "You put the residual part on top."
+        }
+      },
+      "explain": {
+        "text": "$F = \\frac{12/4}{35/35} = 3.0$. `scipy.stats.f.sf(3.0, 4, 35)` gives $p = 0.031$, so the predictors matter jointly at 5%."
+      }
+    }
+  ]
+}

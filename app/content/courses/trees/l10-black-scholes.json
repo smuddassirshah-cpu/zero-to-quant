@@ -1,0 +1,1425 @@
+{
+  "id": "l10-black-scholes",
+  "course": "trees",
+  "title": "The Black-Scholes formula",
+  "minutes": 14,
+  "objectives": [
+    "Use the Black-Scholes formula and explain each input",
+    "Check a price with put-call parity and code the formula"
+  ],
+  "skills": [
+    "tp-bs"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Five inputs, one curve",
+      "prose": "The tree's limit has a formula. The curve is our call's value today against the share price $S$; the dashed line is its payoff at expiry. Each slider is one input. Move them and watch the curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            0,
+            50
+          ],
+          "xLabel": "Share price $S$ (£)",
+          "yLabel": "Call value (£)",
+          "xStep": 10,
+          "functions": [
+            {
+              "id": "pay",
+              "expr": "max(x-K,0)",
+              "dashed": true,
+              "label": "payoff",
+              "labelAt": 135,
+              "labelSide": "below"
+            },
+            {
+              "id": "c",
+              "expr": "x*(0.5*(1+sign((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*exp(-(((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T))))*(((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*exp(-(((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T))))*(((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "label": "value today",
+              "labelAt": 75
+            }
+          ],
+          "params": {
+            "K": 100,
+            "r": 0.05,
+            "s": 0.2,
+            "T": 1
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 100,
+              "y": 10.4506,
+              "tap": false
+            }
+          ],
+          "vlines": [
+            {
+              "id": "spot",
+              "x": 100,
+              "label": "$S = 100$"
+            }
+          ]
+        },
+        "derive": {
+          "P.y": "100*(0.5+integral(0,(log(100/K)+(r+s*s/2)*T)/(s*sqrt(T)),\"exp(-x^2/2)\")/sqrt(2*pi))-K*exp(-r*T)*(0.5+integral(0,(log(100/K)+(r-s*s/2)*T)/(s*sqrt(T)),\"exp(-x^2/2)\")/sqrt(2*pi))",
+          "caption": "At $S = 100$ the call is worth £{{fixed(P.y, 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0.05,
+            "max": 0.6,
+            "step": 0.01,
+            "start": 0.2,
+            "label": "Volatility $\\sigma$",
+            "format": "percent"
+          },
+          {
+            "bind": "T",
+            "min": 0.01,
+            "max": 2,
+            "step": 0.01,
+            "start": 1,
+            "label": "Years left $T$"
+          },
+          {
+            "bind": "r",
+            "min": 0,
+            "max": 0.1,
+            "step": 0.005,
+            "start": 0.05,
+            "label": "Rate $r$",
+            "format": "percent"
+          },
+          {
+            "bind": "K",
+            "min": 80,
+            "max": 120,
+            "step": 1,
+            "start": 100,
+            "label": "Strike $K$"
+          }
+        ]
+      },
+      "question": "Raise the volatility $\\sigma$ from 20% to 40%. What happens to the call's value at $S = 100$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "up",
+            "text": "It rises, from £10.45 to about £18.02.",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "It falls, because a riskier share is worth less.",
+            "why": "You priced the share's risk into the call. The call keeps the upside, while its downside stays capped at zero."
+          },
+          {
+            "id": "none",
+            "text": "It does not change: volatility affects the share, not the option.",
+            "why": "Slide $\\sigma$ and watch the dot at $S = 100$. It climbs."
+          },
+          {
+            "id": "double",
+            "text": "It doubles, to £20.90.",
+            "why": "Value is not proportional to $\\sigma$. Read the caption at 40%: about £18.02."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "More spread means more upside for the call.",
+        "generic": "Not quite right. Set $\\sigma$ to 40% and read the caption."
+      },
+      "explain": {
+        "text": "Higher $\\sigma$ spreads the share's outcomes. The call gains from the spread above the strike and loses nothing extra below it, so £10.45 becomes £18.02. Of the five inputs, only $\\sigma$ cannot be read off a screen.",
+        "canvas": {
+          "params": {
+            "s": 0.4
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "No time left",
+      "prose": "Put $\\sigma$ back to 20%. Now slide $T$, the time left, down towards zero.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            0,
+            50
+          ],
+          "xLabel": "Share price $S$ (£)",
+          "yLabel": "Call value (£)",
+          "xStep": 10,
+          "functions": [
+            {
+              "id": "pay",
+              "expr": "max(x-K,0)",
+              "dashed": true,
+              "label": "payoff",
+              "labelAt": 135,
+              "labelSide": "below"
+            },
+            {
+              "id": "c",
+              "expr": "x*(0.5*(1+sign((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*exp(-(((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T))))*(((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*exp(-(((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T))))*(((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "label": "value today",
+              "labelAt": 75
+            }
+          ],
+          "params": {
+            "K": 100,
+            "r": 0.05,
+            "s": 0.2,
+            "T": 1
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 100,
+              "y": 10.4506,
+              "tap": false
+            }
+          ],
+          "vlines": [
+            {
+              "id": "spot",
+              "x": 100,
+              "label": "$S = 100$"
+            }
+          ]
+        },
+        "derive": {
+          "P.y": "100*(0.5+integral(0,(log(100/K)+(r+s*s/2)*T)/(s*sqrt(T)),\"exp(-x^2/2)\")/sqrt(2*pi))-K*exp(-r*T)*(0.5+integral(0,(log(100/K)+(r-s*s/2)*T)/(s*sqrt(T)),\"exp(-x^2/2)\")/sqrt(2*pi))",
+          "caption": "At $S = 100$ the call is worth £{{fixed(P.y, 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0.05,
+            "max": 0.6,
+            "step": 0.01,
+            "start": 0.2,
+            "label": "Volatility $\\sigma$",
+            "format": "percent"
+          },
+          {
+            "bind": "T",
+            "min": 0.01,
+            "max": 2,
+            "step": 0.01,
+            "start": 1,
+            "label": "Years left $T$"
+          },
+          {
+            "bind": "r",
+            "min": 0,
+            "max": 0.1,
+            "step": 0.005,
+            "start": 0.05,
+            "label": "Rate $r$",
+            "format": "percent"
+          },
+          {
+            "bind": "K",
+            "min": 80,
+            "max": 120,
+            "step": 1,
+            "start": 100,
+            "label": "Strike $K$"
+          }
+        ]
+      },
+      "question": "What does the curve become as $T$ falls towards 0?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "payoff",
+            "text": "The payoff, $\\max(S - K, 0)$",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "Zero everywhere",
+            "why": "At expiry a call still pays: £10 if the share is at £110."
+          },
+          {
+            "id": "line",
+            "text": "The line $S - K$, negative below the strike",
+            "why": "A call is never worth less than zero. You need not exercise it."
+          },
+          {
+            "id": "share",
+            "text": "The share price $S$ itself",
+            "why": "You moved $T$ the wrong way. A very long-dated call creeps towards $S$; a short one does not."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With no time left, can the share still move?"
+        },
+        {
+          "rung": "point",
+          "text": "Slide $T$ to 0.01 and compare the curve with the dashed line.",
+          "highlight": [
+            "pay"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With no time left the call is worth exactly what it pays."
+        }
+      ],
+      "feedback": {
+        "correct": "With no time left the value is the payoff.",
+        "generic": "Not quite right. Slide $T$ to its smallest value and compare the two lines.",
+        "byKey": {
+          "zero": "At expiry a call still pays what it is in the money: £10 if the share is at £110."
+        }
+      },
+      "explain": {
+        "text": "With no time left the share cannot move, so the call is worth its payoff. That is why the curve settles onto the dashed line. With a year left, the gap above the payoff is the time value.",
+        "canvas": {
+          "params": {
+            "T": 0.01
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The formula",
+      "prose": "The curve is the **Black-Scholes formula**, with $\\Phi$ the standard normal cdf: $$c = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),$$ $$d_1 = \\frac{\\ln(S/K) + (r + \\sigma^2/2)T}{\\sigma\\sqrt T},\\quad d_2 = d_1 - \\sigma\\sqrt T.$$",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Input",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Share price $S$",
+              "£100"
+            ],
+            [
+              "Strike $K$",
+              "£100"
+            ],
+            [
+              "Rate $r$",
+              "0.05"
+            ],
+            [
+              "Volatility $\\sigma$",
+              "0.20"
+            ],
+            [
+              "Years $T$",
+              "1"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Work out each piece for our call.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Piece",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\ln(S/K)$",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$(r + \\sigma^2/2)T$",
+            {
+              "edit": true,
+              "answer": 0.07,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$\\sigma\\sqrt T$",
+            {
+              "edit": true,
+              "answer": 0.2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$d_1$",
+            {
+              "edit": true,
+              "answer": 0.35,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$d_2$",
+            {
+              "edit": true,
+              "answer": 0.15,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\ln 1 = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "$r + \\sigma^2/2 = 0.05 + 0.02$.",
+          "highlight": [
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$d_1 = 0.07/0.2 = 0.35$ and $d_2 = 0.35 - 0.2 = 0.15$."
+        }
+      ],
+      "feedback": {
+        "correct": "$d_1 = 0.35$ and $d_2 = 0.15$.",
+        "generic": "Not quite right. Work down the table: each line uses the ones above it.",
+        "byKey": {
+          "r1c1": "$\\sigma^2/2 = 0.04/2 = 0.02$, so the line is $0.05 + 0.02 = 0.07$.",
+          "r3c1": "$d_1$ is $0.07$ divided by $\\sigma\\sqrt T = 0.2$. Dividing by $\\sigma^2$ instead is a classic slip.",
+          "r4c1": "$d_2 = d_1 - \\sigma\\sqrt T = 0.35 - 0.2$."
+        }
+      },
+      "explain": {
+        "text": "$\\ln(100/100) = 0$, so $d_1 = 0.07/0.2 = 0.35$ and $d_2 = 0.15$. Read $\\Phi(d_2)$ as the risk-neutral chance the call finishes in the money. $\\Phi(d_1)$ is the call's delta."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Finishing the price",
+      "prose": "Read $\\Phi$ from the table, then finish the price. You will need $e^{-0.05} = 0.951229$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$z$",
+            "$\\Phi(z)$"
+          ],
+          "rows": [
+            [
+              "0.10",
+              "0.5398"
+            ],
+            [
+              "0.15",
+              "0.5596"
+            ],
+            [
+              "0.20",
+              "0.5793"
+            ],
+            [
+              "0.25",
+              "0.5987"
+            ],
+            [
+              "0.30",
+              "0.6179"
+            ],
+            [
+              "0.35",
+              "0.6368"
+            ],
+            [
+              "0.40",
+              "0.6554"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in each line for $d_1 = 0.35$ and $d_2 = 0.15$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Piece",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\Phi(d_1)$",
+            {
+              "edit": true,
+              "answer": 0.6368,
+              "tol": {
+                "abs": 0.0001
+              }
+            }
+          ],
+          [
+            "$\\Phi(d_2)$",
+            {
+              "edit": true,
+              "answer": 0.5596,
+              "tol": {
+                "abs": 0.0001
+              }
+            }
+          ],
+          [
+            "$Ke^{-rT}$",
+            {
+              "edit": true,
+              "answer": 95.12,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "$c$ (£)",
+            {
+              "edit": true,
+              "answer": 10.45,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the rows for 0.35 and 0.15."
+        },
+        {
+          "rung": "point",
+          "text": "$\\Phi(0.35) = 0.6368$ and $\\Phi(0.15) = 0.5596$.",
+          "highlight": [
+            "r5",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$c = 100 \\times 0.6368 - 95.12 \\times 0.5596 = 63.68 - 53.23$."
+        }
+      ],
+      "feedback": {
+        "correct": "$c = 63.68 - 53.23 = 10.45$, the tree's limit.",
+        "generic": "Not quite right. Look up both values, discount the strike, then subtract.",
+        "byKey": {
+          "r2c1": "Discount the strike: $100 \\times 0.951229 = 95.12$.",
+          "r3c1": "$c = 100 \\times 0.6368 - 95.12 \\times 0.5596$."
+        }
+      },
+      "explain": {
+        "text": "$c = 100 \\times 0.6368 - 95.12 \\times 0.5596 = 10.45$. That is the 512-step tree's answer, from one line. The formula is the tree's limit as the steps shrink; we state that without proof.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              5
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A spreadsheet slip",
+      "prose": "A junior's spreadsheet prices the same call at £7.72. Its lines read: $d_1 = 0.35$, $d_2 = 0.15$, $\\Phi(d_1) = 0.6368$ and $\\Phi(d_2) = 0.5596$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Line",
+            "Junior's value"
+          ],
+          "rows": [
+            [
+              "$d_1$",
+              "0.35"
+            ],
+            [
+              "$d_2$",
+              "0.15"
+            ],
+            [
+              "$\\Phi(d_1)$",
+              "0.6368"
+            ],
+            [
+              "$\\Phi(d_2)$",
+              "0.5596"
+            ],
+            [
+              "$c$",
+              "£7.72"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              4
+            ]
+          }
+        }
+      },
+      "question": "Which slip explains £7.72?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "disc",
+            "text": "The strike was not discounted: $100 \\times 0.6368 - 100 \\times 0.5596$.",
+            "correct": true
+          },
+          {
+            "id": "sigma2",
+            "text": "$\\sigma^2$ was used under $d_1$ instead of $\\sigma$.",
+            "why": "With $\\sigma^2$ underneath, $d_1 = 0.07/0.04 = 1.75$, not the 0.35 on the sheet. The price would be £6.63."
+          },
+          {
+            "id": "days",
+            "text": "$T$ was entered in days.",
+            "why": "With $T = 365$ the call is worth almost £100, the share itself. And $d_1$ would not be 0.35."
+          },
+          {
+            "id": "put",
+            "text": "The put formula was used.",
+            "why": "The put is worth £5.57, not £7.72."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "All four lines on the sheet are right. The slip is in the last step."
+        },
+        {
+          "rung": "point",
+          "text": "Try $100 \\times 0.6368 - 100 \\times 0.5596$.",
+          "highlight": [
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The strike is paid in a year. What is it worth today?"
+        }
+      ],
+      "feedback": {
+        "correct": "£7.72 is the price with an undiscounted strike.",
+        "generic": "Not quite right. The four lines are correct, so the slip is in the final subtraction.",
+        "byKey": {
+          "sigma2": "Putting $\\sigma^2$ under $d_1$ is a real slip, but it changes $d_1$ to 1.75. This sheet shows 0.35.",
+          "days": "$T$ in days is a real slip, but it sends the price near £100.",
+          "put": "You matched it to the put. The put is £5.57."
+        }
+      },
+      "explain": {
+        "text": "$100 \\times 0.6368 - 100 \\times 0.5596 = 7.72$: the strike was not discounted. It is paid in a year, so today it is worth $Ke^{-rT} = 95.12$. The other classic slips give £6.63 ($\\sigma^2$ under $d_1$) and almost £100 ($T$ in days).",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              4
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The put, and parity",
+      "prose": "The put is $p = Ke^{-rT}\\Phi(-d_2) - S\\Phi(-d_1)$. Put-call parity says $c - p = S - Ke^{-rT}$. Check that the two formulas obey it, using $\\Phi(-z) = 1 - \\Phi(z)$.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "l1",
+            "text": "$c - p = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2) - Ke^{-rT}\\Phi(-d_2) + S\\Phi(-d_1)$, subtracting the formulas"
+          },
+          {
+            "id": "l2",
+            "text": "$= S[\\Phi(d_1) + \\Phi(-d_1)] - Ke^{-rT}[\\Phi(d_2) + \\Phi(-d_2)]$, grouping the $S$ and $K$ terms"
+          },
+          {
+            "id": "l3",
+            "text": "$= S - Ke^{-rT}$, since $\\Phi(z) + \\Phi(-z) = 1$"
+          },
+          {
+            "id": "l4",
+            "text": "$p = 10.45 - 100 + 95.12 = 5.57$, our put from parity"
+          }
+        ],
+        "answer": [
+          "l1",
+          "l2",
+          "l3",
+          "l4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by writing out $c - p$."
+        },
+        {
+          "rung": "point",
+          "text": "Collect everything multiplying $S$, then everything multiplying $Ke^{-rT}$."
+        },
+        {
+          "rung": "step",
+          "text": "Each bracket is $\\Phi(z) + \\Phi(-z) = 1$. The numbers come last."
+        }
+      ],
+      "feedback": {
+        "correct": "The formulas obey parity, and the put is £5.57.",
+        "generic": "Not quite right. Subtract, group, simplify, then put the numbers in.",
+        "byKey": {
+          "l4": "The numbers need the identity $c - p = S - Ke^{-rT}$ first.",
+          "l3": "Group the terms before using $\\Phi(z) + \\Phi(-z) = 1$."
+        }
+      },
+      "explain": {
+        "text": "The two brackets are each 1, so $c - p = S - Ke^{-rT}$ for any inputs. With our numbers, $p = 10.45 - 4.88 = 5.57$. Parity is a quick check on any pricer."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The formula in code",
+      "prose": "`math.erf` is the error function, and $\\Phi(z) = \\tfrac12\\left(1 + \\operatorname{erf}(z/\\sqrt2)\\right)$. Write `norm_cdf`, then `bs_call` and `bs_put`, with $T$ in years and rates as decimals.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Input",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Share price $S$",
+              "£100"
+            ],
+            [
+              "Strike $K$",
+              "£100"
+            ],
+            [
+              "Rate $r$",
+              "0.05"
+            ],
+            [
+              "Volatility $\\sigma$",
+              "0.20"
+            ],
+            [
+              "Years $T$",
+              "1"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `norm_cdf`, `bs_call` and `bs_put`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return ...\n\ndef bs_call(S, K, r, sigma, T):\n    d1 = ...\n    d2 = ...\n    return ...\n\ndef bs_put(S, K, r, sigma, T):\n    ...\n",
+        "solution": "from math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_call(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    return S * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n\ndef bs_put(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    return K * exp(-r * T) * norm_cdf(-d2) - S * norm_cdf(-d1)\n",
+        "examples": [
+          {
+            "call": "bs_call(100, 100, 0.05, 0.2, 1)",
+            "expect": "10.450583572185565",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_put(100, 100, 0.05, 0.2, 1)",
+            "expect": "5.573526022256971",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "bs_call(100, 100, 0.05, 0.2, 1)",
+            "expect": "10.450583572185565",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_put(100, 100, 0.05, 0.2, 1)",
+            "expect": "5.573526022256971",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_call(110, 100, 0.03, 0.25, 0.5)",
+            "expect": "14.466961084155471",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_put(110, 100, 0.03, 0.25, 0.5)",
+            "expect": "2.978155044461733",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_call(90, 100, 0.05, 0.3, 2)",
+            "expect": "14.91959189145902",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_put(90, 100, 0.05, 0.3, 2)",
+            "expect": "15.403333695054961",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_call(50, 48, 0.04, 0.3, 0.25)",
+            "expect": "4.319393203292755",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_put(50, 48, 0.04, 0.3, 0.25)",
+            "expect": "1.8417852232528205",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_call(100, 120, 0.0, 0.15, 0.75)",
+            "expect": "0.5170009929030179",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_put(100, 120, 0.0, 0.15, 0.75)",
+            "expect": "20.51700099290302",
+            "compare": "isclose"
+          },
+          {
+            "call": "bs_call(100, 100, 0.05, 0.2, 1) - bs_put(100, 100, 0.05, 0.2, 1)",
+            "expect": "4.877057549928594",
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(0)",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(1.96)",
+            "expect": "0.9750021048517796",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 13 hidden tests: five options, a parity check and two values of `norm_cdf`, each compared with math.isclose."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`norm_cdf(z)` is `0.5 * (1 + erf(z / sqrt(2)))`."
+        },
+        {
+          "rung": "point",
+          "text": "`d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))`."
+        },
+        {
+          "rung": "step",
+          "text": "The put is `K * exp(-r * T) * norm_cdf(-d2) - S * norm_cdf(-d1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your pricer matches the formula on every test.",
+        "generic": "Not quite right. Compare each line with the formula, and check $\\sigma\\sqrt T$ under $d_1$."
+      },
+      "explain": {
+        "text": "The only non-obvious line is `norm_cdf`: $\\Phi$ is the error function rescaled by $\\sqrt 2$. Everything else is the formula as written. Parity holds to the last digit."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What the model assumes",
+      "prose": "The formula is exact only inside a model of the market. Knowing its assumptions tells you where it breaks.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            0,
+            50
+          ],
+          "xLabel": "Share price $S$ (£)",
+          "yLabel": "Call value (£)",
+          "xStep": 10,
+          "functions": [
+            {
+              "id": "pay",
+              "expr": "max(x-K,0)",
+              "dashed": true,
+              "label": "payoff",
+              "labelAt": 135,
+              "labelSide": "below"
+            },
+            {
+              "id": "c",
+              "expr": "x*(0.5*(1+sign((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*exp(-(((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T))))*(((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*exp(-(((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T))))*(((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "label": "value today",
+              "labelAt": 75
+            }
+          ],
+          "params": {
+            "K": 100,
+            "r": 0.05,
+            "s": 0.2,
+            "T": 1
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 100,
+              "y": 10.4506,
+              "tap": false
+            }
+          ],
+          "vlines": [
+            {
+              "id": "spot",
+              "x": 100,
+              "label": "$S = 100$"
+            }
+          ]
+        },
+        "derive": {
+          "P.y": "100*(0.5+integral(0,(log(100/K)+(r+s*s/2)*T)/(s*sqrt(T)),\"exp(-x^2/2)\")/sqrt(2*pi))-K*exp(-r*T)*(0.5+integral(0,(log(100/K)+(r-s*s/2)*T)/(s*sqrt(T)),\"exp(-x^2/2)\")/sqrt(2*pi))",
+          "caption": "At $S = 100$ the call is worth £{{fixed(P.y, 2)}}"
+        }
+      },
+      "question": "Which does the Black-Scholes model assume? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "vol",
+            "text": "Volatility is constant over the option's life",
+            "correct": true
+          },
+          {
+            "id": "logn",
+            "text": "The share price is lognormal",
+            "correct": true
+          },
+          {
+            "id": "jumps",
+            "text": "The price moves without jumps",
+            "correct": true
+          },
+          {
+            "id": "hedge",
+            "text": "Hedging is continuous and costs nothing",
+            "correct": true
+          },
+          {
+            "id": "mu",
+            "text": "The share's expected return is known",
+            "why": "You looked for growth among the inputs. The expected return never appears; you moved all five inputs."
+          },
+          {
+            "id": "normal",
+            "text": "The share price is normally distributed",
+            "why": "Normal prices could go negative. The model makes log prices normal."
+          },
+          {
+            "id": "riskn",
+            "text": "Investors are risk-neutral",
+            "why": "Pricing uses risk-neutral probabilities, but nobody has to be risk-neutral. The hedge argument works for anyone."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Think back to the tree: what did it need, and what never entered?"
+        },
+        {
+          "rung": "point",
+          "text": "The tree used one $\\sigma$ for every step, and it rehedged at every step."
+        },
+        {
+          "rung": "step",
+          "text": "Constant $\\sigma$, lognormal prices, no jumps and continuous hedging. Growth never entered."
+        }
+      ],
+      "feedback": {
+        "correct": "Four assumptions, and expected growth is not one of them.",
+        "generic": "Not quite right. Keep what the tree needed, and drop what never entered the formula.",
+        "byKey": {
+          "mu": "You looked for growth among the inputs. The expected return never appears in the formula."
+        }
+      },
+      "explain": {
+        "text": "The model needs constant $\\sigma$, lognormal prices, no jumps and continuous, costless hedging. In markets, options at different strikes imply different $\\sigma$: the **smile**, in the next lesson. Discrete hedging and jumps come in the last lesson of this level."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Delta from the formula",
+      "prose": "The formula's slopes are the Greeks (options, How the price responds). Delta, the slope against $S$, is $\\Phi(d_1)$ for a call. A desk has sold 1,000 of our calls and wants to be flat against small moves.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            0,
+            50
+          ],
+          "xLabel": "Share price $S$ (£)",
+          "yLabel": "Call value (£)",
+          "xStep": 10,
+          "functions": [
+            {
+              "id": "pay",
+              "expr": "max(x-K,0)",
+              "dashed": true,
+              "label": "payoff",
+              "labelAt": 135,
+              "labelSide": "below"
+            },
+            {
+              "id": "c",
+              "expr": "x*(0.5*(1+sign((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*exp(-(((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T))))*(((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(x/K)+(r+s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*exp(-(((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T))))*(((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(x/K)+(r-s*s/2)*T)/(s*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "label": "value today",
+              "labelAt": 75
+            }
+          ],
+          "params": {
+            "K": 100,
+            "r": 0.05,
+            "s": 0.2,
+            "T": 1
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 100,
+              "y": 10.4506,
+              "tap": false
+            }
+          ],
+          "vlines": [
+            {
+              "id": "spot",
+              "x": 100,
+              "label": "$S = 100$"
+            }
+          ],
+          "tangent": {
+            "f": "c",
+            "x": 100,
+            "label": "slope {slope}",
+            "lengthPx": 120
+          }
+        },
+        "derive": {
+          "P.y": "100*(0.5+integral(0,(log(100/K)+(r+s*s/2)*T)/(s*sqrt(T)),\"exp(-x^2/2)\")/sqrt(2*pi))-K*exp(-r*T)*(0.5+integral(0,(log(100/K)+(r-s*s/2)*T)/(s*sqrt(T)),\"exp(-x^2/2)\")/sqrt(2*pi))",
+          "caption": "At $S = 100$ the call is worth £{{fixed(P.y, 2)}}"
+        }
+      },
+      "question": "How many shares should the desk hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 637,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "shares",
+        "label": "Number of shares",
+        "accept": "637: $1000 \\times \\Phi(0.35) = 636.8$",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1000
+          },
+          {
+            "id": "d2",
+            "value": 560,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "put",
+            "value": 363,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "half",
+            "value": 500
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Delta is $\\Phi(d_1)$, and $d_1 = 0.35$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\Phi(0.35) = 0.6368$ shares per call.",
+          "highlight": [
+            "tangent"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1000 \\times 0.6368 = 636.8$, so about 637 shares."
+        }
+      ],
+      "feedback": {
+        "correct": "$1000 \\times 0.6368 \\approx 637$ shares.",
+        "generic": "Not quite right. Multiply delta per call by the number of calls.",
+        "byKey": {
+          "one": "You hedged one share per call. That is the slope of the payoff deep in the money at expiry, not today's slope.",
+          "d2": "You used $\\Phi(d_2)$, the in-the-money chance. Delta is $\\Phi(d_1)$.",
+          "put": "0.363 is the size of the put's delta, $1 - \\Phi(d_1)$.",
+          "half": "An at-the-money call's delta is not exactly a half. Here it is 0.6368."
+        }
+      },
+      "explain": {
+        "text": "Delta is $\\Phi(0.35) = 0.6368$, the tangent's slope, so 637 shares. Gamma says how fast delta moves with $S$: 0.0188 here. Vega is the change for one vol point (£0.38), theta the decay per day (about −£0.018), rho the change with $r$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A put for a client",
+      "prose": "A client wants a 3-month put on a share at £50, struck at £48. The desk uses $r = 4\\%$ and $\\sigma = 30\\%$, so $T = 0.25$. You find $d_1 = 0.4138$ and $d_2 = 0.2638$, with $\\Phi(-d_1) = 0.3395$ and $\\Phi(-d_2) = 0.3960$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Input",
+            "Value"
+          ],
+          "rows": [
+            [
+              "$S$",
+              "£50"
+            ],
+            [
+              "$K$",
+              "£48"
+            ],
+            [
+              "$r$",
+              "0.04"
+            ],
+            [
+              "$\\sigma$",
+              "0.30"
+            ],
+            [
+              "$T$",
+              "0.25"
+            ],
+            [
+              "$e^{-rT}$",
+              "0.990050"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What should the desk charge for the put, before any margin?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.84,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Put price in pounds",
+        "accept": "£1.84 ± 0.01: $47.52 \\times 0.3960 - 50 \\times 0.3395$",
+        "wrong": [
+          {
+            "id": "nodisc",
+            "value": 2.03,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "signs",
+            "value": -4.32,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$p = Ke^{-rT}\\Phi(-d_2) - S\\Phi(-d_1)$."
+        },
+        {
+          "rung": "point",
+          "text": "$Ke^{-rT} = 48 \\times 0.990050 = 47.52$.",
+          "highlight": [
+            "r5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$47.52 \\times 0.3960 - 50 \\times 0.3395 = 18.82 - 16.98$."
+        }
+      ],
+      "feedback": {
+        "correct": "About £1.84 for the put.",
+        "generic": "Not quite right. Discount the strike, then use $\\Phi(-d_2)$ and $\\Phi(-d_1)$.",
+        "byKey": {
+          "nodisc": "You used £48 undiscounted. The strike is paid in 3 months, so use $48e^{-0.01}$.",
+          "signs": "A negative price means you used $\\Phi(d_1)$ and $\\Phi(d_2)$. The put needs $\\Phi(-d_1)$ and $\\Phi(-d_2)$."
+        }
+      },
+      "explain": {
+        "text": "$p = 47.52 \\times 0.3960 - 50 \\times 0.3395 = 1.84$. With $T = 90$ entered in days the sheet would show £0.56. The put's delta is $\\Phi(d_1) - 1 = -0.34$, so the desk hedges by shorting 0.34 shares per put."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Black-Scholes is the many-step tree in one line: $c = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2)$, £10.45 for our call.",
+      "Price rises with $S$, $\\sigma$, $T$ and $r$ and falls with $K$; as $T \\to 0$ it becomes the payoff, as $\\sigma \\to 0$ it becomes $\\max(S - Ke^{-rT}, 0)$.",
+      "The model assumes constant volatility, lognormal prices, no jumps and continuous hedging. Delta is $\\Phi(d_1)$."
+    ],
+    "formula": {
+      "name": "Black-Scholes",
+      "tex": "c = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),\\quad d_{1,2} = \\frac{\\ln(S/K) + (r \\pm \\sigma^2/2)T}{\\sigma\\sqrt T}",
+      "note": "$T$ in years; $\\sigma\\sqrt T$, not $\\sigma^2$, underneath; discount the strike."
+    },
+    "trap": "Forgetting $e^{-rT}$ on the strike turns £10.45 into £7.72."
+  },
+  "quiz": [
+    {
+      "id": "q-sigma0",
+      "difficulty": 2,
+      "prose": "Take our call ($S = K = 100$, $r = 5\\%$, $T = 1$) and let $\\sigma$ fall almost to zero.",
+      "question": "What is the call worth in the limit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.88,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Call value in pounds",
+        "accept": "£4.88: $\\max(S - Ke^{-rT}, 0) = 100 - 95.12$",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0
+          },
+          {
+            "id": "bs",
+            "value": 10.45,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$100 - 95.12 = 4.88$.",
+        "generic": "Not quite right. With no volatility the share grows at $r$ for sure.",
+        "byKey": {
+          "zero": "You used the payoff today, $\\max(100 - 100, 0)$. The share grows at $r$, so it ends at $100e^{0.05}$.",
+          "bs": "That is the price at 20% volatility."
+        }
+      },
+      "explain": {
+        "text": "With $\\sigma = 0$ the share ends at $100e^{0.05} = 105.13$ for sure. The call pays £5.13 in a year, worth $5.13e^{-0.05} = 4.88$ today. That is $\\max(S - Ke^{-rT}, 0)$."
+      }
+    },
+    {
+      "id": "q-rate",
+      "difficulty": 2,
+      "prose": "Hold $S$, $K$, $\\sigma$ and $T$ fixed and raise $r$ from 5% to 8%.",
+      "question": "What happens to the call's price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "up",
+            "text": "It rises: the strike, paid later, is worth less today",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "It falls: future payoffs are discounted more",
+            "why": "You discounted the payoff but forgot the strike. The call holder pays $K$ later, and that is the bigger effect."
+          },
+          {
+            "id": "same",
+            "text": "No change: the rate only matters for bonds",
+            "why": "$r$ appears twice in the formula, in $d_1$ and in $Ke^{-rT}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A higher rate shrinks $Ke^{-rT}$, so the call rises.",
+        "generic": "Not quite right. Look at the $Ke^{-rT}$ term."
+      },
+      "explain": {
+        "text": "At 8% the call is worth £12.11 against £10.45. The strike's present value falls from £95.12 to £92.31."
+      }
+    },
+    {
+      "id": "q-d1",
+      "difficulty": 3,
+      "prose": "A share is at £110, the strike is £100, $r = 0$, $\\sigma = 25\\%$ and $T = 4$ years.",
+      "question": "What is $d_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4406,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "d1",
+        "accept": "0.4406: $(\\ln 1.1 + 0.03125 \\times 4)/(0.25 \\times 2)$",
+        "wrong": [
+          {
+            "id": "sig2",
+            "value": 1.7625,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "nosqrt",
+            "value": 0.8812,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$d_1 = 0.2203/0.5 = 0.4406$.",
+        "generic": "Not quite right. The denominator is $\\sigma\\sqrt T = 0.25 \\times 2$.",
+        "byKey": {
+          "sig2": "You divided by $\\sigma^2\\sqrt T$. The denominator is $\\sigma\\sqrt T$.",
+          "nosqrt": "You divided by $\\sigma$ alone. The denominator is $\\sigma\\sqrt T = 0.5$."
+        }
+      },
+      "explain": {
+        "text": "$\\ln 1.1 = 0.0953$ and $(\\sigma^2/2)T = 0.03125 \\times 4 = 0.125$. The sum 0.2203 over $\\sigma\\sqrt T = 0.5$ gives 0.4406."
+      }
+    },
+    {
+      "id": "q-parity",
+      "difficulty": 2,
+      "prose": "A 6-month call on a £50 share, struck at £52, costs £6.00. The rate is $r = 4\\%$, so $Ke^{-rT} = 52e^{-0.02} = 50.97$.",
+      "question": "What must the matching put cost?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6.97,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Put price in pounds",
+        "accept": "£6.97: $6.00 - 50 + 50.97$",
+        "wrong": [
+          {
+            "id": "nodisc",
+            "value": 8,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "sign",
+            "value": 5.03,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$p = c - S + Ke^{-rT} = 6.97$.",
+        "generic": "Not quite right. Rearrange $c - p = S - Ke^{-rT}$.",
+        "byKey": {
+          "nodisc": "You used £52 undiscounted. Parity uses $Ke^{-rT}$.",
+          "sign": "You added $S - Ke^{-rT}$ instead of subtracting it. Rearrange $c - p = S - Ke^{-rT}$ for $p$."
+        }
+      },
+      "explain": {
+        "text": "$p = 6.00 - 50 + 50.97 = 6.97$. The put costs more than the call because the strike is above the share's forward price."
+      }
+    }
+  ]
+}

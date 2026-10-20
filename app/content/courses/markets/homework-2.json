@@ -1,0 +1,481 @@
+{
+  "id": "homework-2",
+  "course": "markets",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-price-7y",
+      "difficulty": 3,
+      "skills": [
+        "fi-bonds"
+      ],
+      "prose": "A 7-year bond pays a 3% annual coupon on £100 face. Its yield is 4%.",
+      "question": "What is its price, to the penny?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 94.0,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Price",
+        "accept": "£94.00 (exact: 93.9979).",
+        "placeholder": "For example 101.50",
+        "wrong": [
+          {
+            "id": "coupon-rate",
+            "value": 100,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "principal",
+            "value": 75.99,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£94.00, a discount.",
+        "generic": "Not quite right. Use the shortcut: $\\tfrac{C}{y}(1 - v^T) + Fv^T$.",
+        "byKey": {
+          "coupon-rate": "You discounted at the coupon rate.",
+          "principal": "You discounted the face and dropped the coupons."
+        }
+      },
+      "explain": {
+        "text": "$v^7 = 1/1.04^7 = 0.7599$. Coupons: $\\tfrac{3}{0.04}(1 - 0.7599) = 18.01$; face: $75.99$. Price £94.00."
+      }
+    },
+    {
+      "id": "h-ytm-97",
+      "difficulty": 4,
+      "skills": [
+        "fi-bonds"
+      ],
+      "prose": "A 3-year bond pays a 5% annual coupon on £100 face and trades at £97.00.",
+      "question": "Find its yield to maturity, to two decimal places of a percent.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0612,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "%",
+        "label": "Yield",
+        "accept": "6.12% (exact: 6.1249%).",
+        "placeholder": "For example 4.75",
+        "wrong": [
+          {
+            "id": "current",
+            "value": 0.0515,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "coupon",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "6.12%.",
+        "generic": "Not quite right. Bisect between 6% and 6.5%: price each midpoint and compare with £97.00.",
+        "byKey": {
+          "current": "That is the current yield, $5/97$. It ignores the £3 gain to par.",
+          "coupon": "At 5% the price is £100. It trades below par, so the yield is higher."
+        }
+      },
+      "explain": {
+        "text": "At 6% the price is £97.33 and at 6.5% £96.03, so the yield is in between. Bisecting further gives 6.1249%. Check: $\\tfrac{5}{1.0612} + \\tfrac{5}{1.0612^2} + \\tfrac{105}{1.0612^3} \\approx 97.00$."
+      }
+    },
+    {
+      "id": "h-par-proof",
+      "difficulty": 4,
+      "skills": [
+        "fi-bonds"
+      ],
+      "prose": "Show that a bond whose yield equals its coupon rate $c$ is priced at its face value $F$. Write $v = 1/(1+y)$.",
+      "question": "Put the lines of the proof in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "$P = \\dfrac{C}{y}\\left(1 - v^T\\right) + F v^T$, the price with the coupons summed as a geometric series"
+          },
+          {
+            "id": "s2",
+            "text": "$C = cF$, since the coupon is the coupon rate times the face"
+          },
+          {
+            "id": "s3",
+            "text": "With $y = c$: $\\dfrac{C}{y} = \\dfrac{cF}{c} = F$"
+          },
+          {
+            "id": "s4",
+            "text": "$P = F\\left(1 - v^T\\right) + F v^T$, substituting into the first line"
+          },
+          {
+            "id": "s5",
+            "text": "$P = F$, because the $F v^T$ terms cancel"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "same": [
+          [
+            "s1",
+            "s2"
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "At $y = c$ the coupons are worth exactly $F(1 - v^T)$, and the face supplies the rest.",
+        "generic": "Not quite right. Start from the price formula, then substitute $C = cF$ and $y = c$."
+      },
+      "explain": {
+        "text": "With $y = c$, the coupons are worth $F(1 - v^T)$ and the face $Fv^T$. They add to $F$ for every maturity $T$. That is why a par bond's yield equals its coupon."
+      }
+    },
+    {
+      "id": "h-ytm-code",
+      "difficulty": 4,
+      "skills": [
+        "fi-bonds"
+      ],
+      "title": "A yield solver",
+      "prose": "Write a yield solver for annual-coupon bonds. `bond_price` is given. Bisect on `[0, 1]`: the price falls as the yield rises.",
+      "question": "Complete `ytm(price, face, coupon, years)` so it returns the yield to maturity as a decimal.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def bond_price(face, coupon, years, yld):\n    p = sum(face * coupon / (1 + yld) ** t\n            for t in range(1, years + 1))\n    return p + face / (1 + yld) ** years\n\ndef ytm(price, face, coupon, years):\n    lo, hi = 0.0, 1.0\n    for _ in range(100):\n        mid = (lo + hi) / 2\n        if ...:\n            lo = mid\n        else:\n            hi = mid\n    return (lo + hi) / 2\n",
+        "solution": "def bond_price(face, coupon, years, yld):\n    p = sum(face * coupon / (1 + yld) ** t\n            for t in range(1, years + 1))\n    return p + face / (1 + yld) ** years\n\ndef ytm(price, face, coupon, years):\n    lo, hi = 0.0, 1.0\n    for _ in range(100):\n        mid = (lo + hi) / 2\n        if bond_price(face, coupon, years, mid) > price:\n            lo = mid\n        else:\n            hi = mid\n    return (lo + hi) / 2\n",
+        "examples": [
+          {
+            "call": "round(ytm(92, 100, 0.04, 5), 6)",
+            "expect": "0.058937",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(ytm(92, 100, 0.04, 5), 6)",
+            "expect": "0.058937",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(ytm(100, 100, 0.04, 5), 6)",
+            "expect": "0.04",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(ytm(95.6705, 100, 0.04, 5), 6)",
+            "expect": "0.05",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(ytm(61.3913, 100, 0.0, 10), 6)",
+            "expect": "0.05",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(ytm(1027.2325, 1000, 0.06, 3), 6)",
+            "expect": "0.05",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(ytm(97, 100, 0.05, 3), 6)",
+            "expect": "0.061249",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(ytm(110, 100, 0.06, 10), 6)",
+            "expect": "0.047224",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(ytm(50, 100, 0.0, 20), 6)",
+            "expect": "0.035265",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Each yield is rounded to 6 decimal places and compared with the exact value."
+      },
+      "feedback": {
+        "correct": "A price above the target means the yield is higher than the midpoint, so the low end moves up.",
+        "generic": "Some tests failed. Compare the price at `mid` with the target price.",
+        "byKey": {
+          "error": "Your code stopped with an error. Replace the `...` with a comparison.",
+          "test-1": "Check the direction: if the price at `mid` is too high, the yield must be above `mid`."
+        }
+      },
+      "explain": {
+        "text": "If `bond_price(..., mid)` exceeds the target, `mid` is too low a yield, so the low end moves up. A hundred halvings shrink the interval far below a basis point. The condition is `bond_price(face, coupon, years, mid) > price`."
+      }
+    },
+    {
+      "id": "h-rights",
+      "difficulty": 3,
+      "skills": [
+        "fi-equity"
+      ],
+      "prose": "A share trades at £6.00. The company offers two new shares at £4.00 for every five held, and all holders take them up.",
+      "question": "What should each share trade at afterwards, to the penny?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.43,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Price after",
+        "accept": "£5.43 (exact: 5.4286), $(5 \\times 6 + 2 \\times 4)/7$.",
+        "placeholder": "For example 4.25",
+        "wrong": [
+          {
+            "id": "unchanged",
+            "value": 6,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "average",
+            "value": 5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£5.43.",
+        "generic": "Not quite right. Add the value of five old shares and the cash for two new ones, then divide by 7.",
+        "byKey": {
+          "unchanged": "Shares sold below £6.00 pull the average price down.",
+          "average": "You averaged £6 and £4. There are five old shares for every two new ones."
+        }
+      },
+      "explain": {
+        "text": "Five old shares are worth £30.00, and two new ones bring £8.00 of cash. That £38.00 is spread over 7 shares: £5.43 each. A holder who takes up the rights loses nothing."
+      }
+    },
+    {
+      "id": "h-implied-g",
+      "difficulty": 4,
+      "skills": [
+        "fi-equity"
+      ],
+      "prose": "A share trades at £60.00. Its next dividend is £2.40, and investors require 8% a year.",
+      "question": "What steady growth rate is the price assuming?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.04,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "%",
+        "label": "Growth rate",
+        "accept": "4%: $g = r - D/P = 0.08 - 0.04$.",
+        "placeholder": "For example 2.5",
+        "wrong": [
+          {
+            "id": "plus",
+            "value": 0.12,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 0.0333,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "4%.",
+        "generic": "Not quite right. Rearrange $P = D/(r - g)$ for $g$.",
+        "byKey": {
+          "plus": "You added the dividend yield to $r$. Growth is $r$ minus the yield.",
+          "ratio": "You divided by the required return. Subtract instead: $g = r - D/P$."
+        }
+      },
+      "explain": {
+        "text": "$r - g = D/P = 2.40/60 = 0.04$, so $g = 0.08 - 0.04 = 4\\%$. The price is a bet on 4% growth for ever."
+      }
+    },
+    {
+      "id": "h-record",
+      "difficulty": 4,
+      "skills": [
+        "fi-equity"
+      ],
+      "prose": "A fund returned +25%, −20% and +10% in three years. Its manager quotes the 5% arithmetic average.",
+      "question": "What is its annualised return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0323,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "%",
+        "label": "Annualised return",
+        "accept": "3.23%: $1.1^{1/3} - 1$, where $1.25 \\times 0.8 \\times 1.1 = 1.1$.",
+        "placeholder": "For example 3.5",
+        "wrong": [
+          {
+            "id": "average",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "total",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "divide",
+            "value": 0.0333,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "3.23% a year: a 10% total over three years.",
+        "generic": "Not quite right. Multiply the growth factors, then take the cube root.",
+        "byKey": {
+          "average": "That is the arithmetic average the manager quotes. Compound instead.",
+          "total": "That is the total return. Annualise it.",
+          "divide": "You divided 10% by 3. Take the cube root of 1.1 instead."
+        }
+      },
+      "explain": {
+        "text": "$1.25 \\times 0.80 \\times 1.10 = 1.10$, a 10% total. Annualised, $1.1^{1/3} - 1 = 3.23\\%$. The 5% average overstates it because the returns swung."
+      }
+    },
+    {
+      "id": "h-bond-hold",
+      "difficulty": 5,
+      "skills": [
+        "fi-bonds",
+        "fi-equity"
+      ],
+      "prose": "You buy the 5-year 4% annual bond for £95.67 at a 5% yield. One year later you receive the £4 coupon, and yields are 6%. You sell the bond, which now has 4 years left.",
+      "question": "What is your total return for the year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0146,
+        "tol": {
+          "abs": 0.0002
+        },
+        "unit": "%",
+        "label": "Total return",
+        "accept": "1.46%: $(93.07 + 4 - 95.67)/95.67$.",
+        "placeholder": "For example 3.5",
+        "wrong": [
+          {
+            "id": "unchanged",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "no-coupon",
+            "value": -0.0272,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "five-year",
+            "value": 0.0154,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1.46%: the coupon is mostly eaten by the fall in price.",
+        "generic": "Not quite right. Price the remaining 4 years at 6%, add the coupon, and divide the gain by £95.67.",
+        "byKey": {
+          "unchanged": "That would be the return had yields stayed at 5%. They rose, so the price fell.",
+          "no-coupon": "You left out the £4 coupon. Total return includes income.",
+          "five-year": "You priced 5 years at 6%. One year has passed, so 4 remain."
+        }
+      },
+      "explain": {
+        "text": "With 4 years left at 6%, the bond is worth £93.07. You gain $93.07 + 4 - 95.67 = 1.40$, or 1.46%. Had yields stayed at 5%, the return would have been exactly 5%."
+      }
+    },
+    {
+      "id": "h-bond-and-share",
+      "difficulty": 5,
+      "skills": [
+        "fi-bonds",
+        "fi-equity",
+        "fi-interest"
+      ],
+      "title": "A bond and a share, start to finish",
+      "kind": "longform",
+      "prompt": "A 4-year bond pays a 5% annual coupon on £100 face. Its yield is 6%.\n\n(a) Find its price.\n\n(b) Find its current yield, and say why it differs from the yield to maturity.\n\n(c) Find its modified duration, and use it to estimate the price change if yields rise to 6.5%. Compare with the true price.\n\n(d) You hold the bond for one year and yields stay at 6%. Find your total return, coupon included.\n\n(e) A share will pay £3.00 next year, growing 2% a year for ever, and investors require 8%. Value it, then value it again at a 9% required return.\n\n(f) Explain why both prices fall when rates rise, and why the share falls by more.",
+      "model": "**(a) Price.** Discount each cash flow at 6%:\n$$P = \\frac{5}{1.06} + \\frac{5}{1.06^2} + \\frac{5}{1.06^3} + \\frac{105}{1.06^4} = 4.7170 + 4.4500 + 4.1981 + 83.1698 = 96.5349.$$\nThe price is £96.53, a discount, because the 5% coupon is below the 6% yield.\n\n**(b) Current yield.** $5/96.53 = 5.18\\%$. It is below the 6% yield to maturity, which also counts the £3.47 rise to £100 at maturity.\n\n**(c) Duration and a 0.5-point rise.** The slope is $P'(y) = -\\sum t\\,c_t/(1+y)^{t+1} = -(4.4500 + 8.3962 + 11.8814 + 313.8484) = -338.58$. So $D = 338.58/96.53 = 3.51$. For $\\Delta y = 0.005$ the tangent gives $\\Delta P \\approx -3.51 \\times 96.53 \\times 0.005 = -1.69$. The true price at 6.5% is £94.86, a fall of £1.67: the curve bends up, so the true fall is a little smaller.\n\n**(d) Holding for a year.** If yields stay at 6%, after one year the bond has 3 years left and is worth\n$$\\frac{5}{1.06} + \\frac{5}{1.06^2} + \\frac{105}{1.06^3} = 97.33.$$\nWith the £5 coupon, the total return is $(97.33 + 5 - 96.53)/96.53 = 6.00\\%$, exactly the yield: an unchanged yield earns the yield.\n\n**(e) The share.** $P = D/(r - g) = 3/(0.08 - 0.02) = \\text{£}50.00$. At $r = 9\\%$, $P = 3/0.07 = \\text{£}42.86$, a fall of 14.3%.\n\n**(f) Why both fall, and why the share falls more.** Both are present values of fixed or forecast cash flows, so a higher discount rate lowers both. The share's cash flows run for ever and grow, so much of its value is far in the future. Its sensitivity is $-\\tfrac{1}{P}\\tfrac{dP}{dr} = \\tfrac{1}{r - g} = 16.7$, against 3.51 for the bond. A 1-point rise therefore cuts the share by about 14% and the bond by about 3.5%.",
+      "rubric": [
+        {
+          "points": 1,
+          "text": "Prices the bond at £96.53 by discounting all four cash flows, face value included, at 6%."
+        },
+        {
+          "points": 1,
+          "text": "Gives the current yield 5.18% and explains that the yield to maturity also counts the rise to par."
+        },
+        {
+          "points": 2,
+          "text": "Finds $D = 3.51$ from the slope, estimates a fall of about £1.69, and finds the true price £94.86."
+        },
+        {
+          "points": 1,
+          "text": "States that the true fall is smaller than the tangent's because the price curve bends up."
+        },
+        {
+          "points": 2,
+          "text": "Prices the 3-year bond at £97.33 after a year and finds a total return of 6.00%, including the coupon."
+        },
+        {
+          "points": 1,
+          "text": "Values the share at £50.00 and £42.86 with $D/(r - g)$, a 14.3% fall."
+        },
+        {
+          "points": 2,
+          "text": "Explains that both are present values that fall as the discount rate rises, and that the share's far, growing cash flows give it the larger sensitivity, $1/(r - g) = 16.7$."
+        }
+      ]
+    }
+  ]
+}
