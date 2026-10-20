@@ -1,0 +1,1245 @@
+{
+  "id": "l9-measuring-spread",
+  "course": "random-vars",
+  "title": "Measuring spread",
+  "minutes": 13,
+  "objectives": [
+    "Compute variance and standard deviation, and say what each measures."
+  ],
+  "skills": [
+    "rv-variance"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Same average, different ride",
+      "prose": "Two trades each have expected P&L £0. Trade A makes or loses £1, each with chance 1/2. Trade B makes or loses £3.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              -3,
+              -2,
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "xLabel": "Trade A: P&L (£)",
+            "yLabel": "Probability",
+            "yMax": 0.6
+          },
+          "state": {
+            "values": {
+              "-3": 0,
+              "-2": 0,
+              "-1": 0.5,
+              "0": 0,
+              "1": 0.5,
+              "2": 0,
+              "3": 0
+            }
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              -3,
+              -2,
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "xLabel": "Trade B: P&L (£)",
+            "yLabel": "Probability",
+            "yMax": 0.6
+          },
+          "state": {
+            "values": {
+              "-3": 0.5,
+              "-2": 0,
+              "-1": 0,
+              "0": 0,
+              "1": 0,
+              "2": 0,
+              "3": 0.5
+            }
+          }
+        },
+        "state": {
+          "caption": "Each trade has expected P&L £0"
+        }
+      },
+      "question": "Which trade is riskier?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "b",
+            "text": "Trade B",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Neither: both average £0",
+            "why": "You judged risk by the average alone. Both average £0, but B lands £3 from it every time, A only £1."
+          },
+          {
+            "id": "a",
+            "text": "Trade A",
+            "why": "You picked the trade with the smaller swings. A never moves more than £1 from its average; B always moves £3."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How far from £0 does each trade land?"
+        },
+        {
+          "rung": "point",
+          "text": "B's outcomes sit three times as far from the centre.",
+          "highlight": [
+            "right:x-3",
+            "right:x3"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "B lands further from its average every time.",
+        "generic": "Not quite right. Compare how far each trade lands from its average of £0."
+      },
+      "explain": {
+        "text": "Both trades average £0, so the mean cannot tell them apart. What differs is the distance from the mean: £1 for A, £3 for B. We need a number for that distance.",
+        "canvas": {
+          "right": {
+            "highlight": [
+              "x-3",
+              "x3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Measuring the distance",
+      "prose": "Drag the slider to set the trade's size: it makes or loses £$a$, each with chance 1/2. Watch the average of $X - \\mu$, the signed distance from the mean.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            -3,
+            -2,
+            -1,
+            0,
+            1,
+            2,
+            3
+          ],
+          "xLabel": "P&L (£)",
+          "yLabel": "Probability",
+          "yMax": 1,
+          "params": {
+            "a": 1
+          }
+        },
+        "state": {
+          "values": {
+            "-3": 0,
+            "-2": 0,
+            "-1": 0.5,
+            "0": 0,
+            "1": 0.5,
+            "2": 0,
+            "3": 0
+          },
+          "params": {
+            "a": 1
+          }
+        },
+        "derive": {
+          "values.0": "a < 0.5 ? 1 : 0",
+          "values.1": "abs(a - 1) < 0.01 ? 0.5 : 0",
+          "values.-1": "abs(a - 1) < 0.01 ? 0.5 : 0",
+          "values.2": "abs(a - 2) < 0.01 ? 0.5 : 0",
+          "values.-2": "abs(a - 2) < 0.01 ? 0.5 : 0",
+          "values.3": "abs(a - 3) < 0.01 ? 0.5 : 0",
+          "values.-3": "abs(a - 3) < 0.01 ? 0.5 : 0",
+          "caption": "P&L of ±£{{a}}. Mean £0, and the average of $X - \\mu$ is £0 too"
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 3,
+            "step": 1,
+            "label": "Size £$a$",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Set the size to 2. The signed distances average to £0. What is the average of the **squared** distance, $(X - \\mu)^2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a number",
+        "label": "Average squared distance",
+        "accept": "4: both outcomes are £2 from the mean, and $2^2 = 4$.",
+        "wrong": [
+          {
+            "id": "signed",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "abs",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At size 2 the outcomes are −£2 and +£2. How far is each from the mean of £0?"
+        },
+        {
+          "rung": "point",
+          "text": "Each outcome is 2 from the mean, on opposite sides.",
+          "highlight": [
+            "x-2",
+            "x2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Square each distance: $(-2)^2 = 4$ and $2^2 = 4$. Average them with weights 1/2."
+        }
+      ],
+      "feedback": {
+        "correct": "Both squares are 4, so their average is 4.",
+        "generic": "Not quite right. Square each outcome's distance from £0, then average.",
+        "byKey": {
+          "signed": "That is the signed average, which is always 0. The −2 cancels the +2; squaring stops that.",
+          "abs": "You averaged the distances, 2 and 2. Square each one first: $2^2 = 4$."
+        }
+      },
+      "explain": {
+        "text": "You squared −2 and +2 to get 4 and 4, then averaged. Squaring stops the minus signs cancelling. At size 0 the trade is a sure £0 and the average squared distance is 0.",
+        "canvas": {
+          "params": {
+            "a": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Variance",
+      "prose": "The average squared distance from the mean is the **variance**: $$\\mathrm{Var}(X) = E[(X - \\mu)^2], \\quad \\mu = E[X].$$ This P&L is lopsided, so first find its mean.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            1,
+            3,
+            7
+          ],
+          "xLabel": "P&L (£)",
+          "yLabel": "Probability",
+          "yMax": 0.6,
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "1": 0.5,
+            "3": 0.25,
+            "7": 0.25
+          }
+        }
+      },
+      "question": "What is $\\mathrm{Var}(X)$ for this P&L?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a number",
+        "label": "Variance",
+        "accept": "6, in £².",
+        "wrong": [
+          {
+            "id": "signed",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "abs",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "raw",
+            "value": 15,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "unweighted",
+            "value": 6.6667,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "mean",
+            "value": 3,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First, $\\mu = 1(0.5) + 3(0.25) + 7(0.25)$."
+        },
+        {
+          "rung": "point",
+          "text": "The mean is 3, so the distances are −2, 0 and 4.",
+          "highlight": [
+            "x7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Square them: 4, 0 and 16. Weight by the chances: $4(0.5) + 0(0.25) + 16(0.25)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$4(0.5) + 0(0.25) + 16(0.25) = 6$.",
+        "generic": "Not quite right. Find $\\mu$, square each distance from it, then weight by the chances.",
+        "byKey": {
+          "signed": "You averaged $X - \\mu$ without squaring. That is 0 for every pmf.",
+          "abs": "You averaged the distances 2, 0 and 4 without squaring them.",
+          "raw": "You averaged $X^2$, not $(X - \\mu)^2$. Subtract the mean of 3 before squaring.",
+          "unweighted": "You gave the three squares equal weight. The £1 outcome has chance 0.5, so its square counts double.",
+          "mean": "That is the mean, £3. The variance measures distance from it."
+        }
+      },
+      "explain": {
+        "text": "The mean is £3, so the distances are −2, 0 and 4. Their squares, weighted by chance, give $2 + 0 + 4 = 6$. The rare £7 outcome supplies two thirds of the variance, because squaring magnifies big distances.",
+        "canvas": {
+          "highlight": [
+            "x7"
+          ],
+          "caption": "Squared distances 4, 0, 16; weighted sum 6"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One die, by hand",
+      "prose": "A fair die has mean 3.5. Fill in each squared distance from 3.5, then their average. The square root of the variance is the **standard deviation**.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "xLabel": "Die shows",
+          "yLabel": "Probability",
+          "yMax": 0.3,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "1": 0.1667,
+            "2": 0.1667,
+            "3": 0.1667,
+            "4": 0.1667,
+            "5": 0.1667,
+            "6": 0.1667
+          },
+          "caption": "One fair die: mean 3.5"
+        }
+      },
+      "question": "Complete the table.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$x$",
+          "$(x - 3.5)^2$"
+        ],
+        "rows": [
+          [
+            "1",
+            "6.25"
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 2.25,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 0.25,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 0.25,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "5",
+            {
+              "edit": true,
+              "answer": 2.25,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "6",
+            {
+              "edit": true,
+              "answer": 6.25,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Average: $\\mathrm{Var}(X)$",
+            {
+              "edit": true,
+              "answer": 2.9167,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Square root: sd",
+            {
+              "edit": true,
+              "answer": 1.7078,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For $x = 2$: $2 - 3.5 = -1.5$. Square it."
+        },
+        {
+          "rung": "point",
+          "text": "The table is symmetric about 3.5: 1 and 6 match, 2 and 5 match.",
+          "highlight": [
+            "x1",
+            "x6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The squares are 6.25, 2.25, 0.25, 0.25, 2.25, 6.25. They add to 17.5, so the average is $17.5 / 6$."
+        }
+      ],
+      "feedback": {
+        "correct": "Variance 35/12 ≈ 2.9167, standard deviation ≈ 1.7078.",
+        "generic": "Not quite right. Square each distance from 3.5; the average uses weight 1/6 for each face.",
+        "byKey": {
+          "r1c1": "$2 - 3.5 = -1.5$, and $(-1.5)^2 = 2.25$. A square is never negative.",
+          "r2c1": "$3 - 3.5 = -0.5$, and $(-0.5)^2 = 0.25$.",
+          "r6c1": "Add the six squares, 17.5, and divide by 6.",
+          "r7c1": "Take the square root of the variance, $\\sqrt{2.9167}$."
+        }
+      },
+      "explain": {
+        "text": "The six squares add to 17.5, so $\\mathrm{Var}(X) = 17.5/6 = 35/12 \\approx 2.9167$. The standard deviation is $\\sqrt{35/12} \\approx 1.7078$. A roll typically lands about 1.7 from 3.5, in the same units as the die.",
+        "canvas": {
+          "caption": "Variance 2.9167, standard deviation 1.7078"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "How small can it be?",
+      "prose": "This P&L is £5 for sure: a fixed coupon. Every outcome sits exactly on the mean.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "xLabel": "P&L (£)",
+          "yLabel": "Probability",
+          "yMax": 1.1
+        },
+        "state": {
+          "values": {
+            "3": 0,
+            "4": 0,
+            "5": 1,
+            "6": 0,
+            "7": 0
+          },
+          "caption": "£5 with chance 1"
+        }
+      },
+      "question": "Select all that apply. Which numbers could be the variance of some P&L?",
+      "widget": {
+        "kind": "multi",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "$0$",
+            "correct": true
+          },
+          {
+            "id": "pos",
+            "text": "$2.5$",
+            "correct": true
+          },
+          {
+            "id": "neg",
+            "text": "$-1$",
+            "why": "You allowed a negative variance. It is an average of squares, and a square is never negative."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the variance of the sure £5?"
+        },
+        {
+          "rung": "point",
+          "text": "Every distance from the mean is 0 here.",
+          "highlight": [
+            "x5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Squares are 0 or positive, so their weighted average is 0 or positive."
+        }
+      ],
+      "feedback": {
+        "correct": "0 and 2.5 are possible; −1 is not.",
+        "generic": "Not quite right. A variance averages squares. Which values can that give?",
+        "byKey": {
+          "neg": "You allowed a negative variance. It averages squares, and none of them is negative.",
+          "zero": "You ruled out 0. The sure £5 has every distance 0, so its variance is 0."
+        }
+      },
+      "explain": {
+        "text": "The sure £5 has variance 0: no outcome is away from the mean. Any spread at all makes some square positive. So a variance is never negative, and it is 0 only for a constant."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Reporting the risk",
+      "prose": "A trade loses £1 with chance 0.8 and makes £4 with chance 0.2. Its mean is £0. Your desk reports risk in £.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            -1,
+            4
+          ],
+          "xLabel": "P&L (£)",
+          "yLabel": "Probability",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 1
+        },
+        "state": {
+          "values": {
+            "-1": 0.8,
+            "4": 0.2
+          }
+        }
+      },
+      "question": "What is the standard deviation of this P&L, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Standard deviation",
+        "accept": "£2: the variance is 4 £², and its square root is £2.",
+        "wrong": [
+          {
+            "id": "signed",
+            "value": 0,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "abs",
+            "value": 1.6,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "var",
+            "value": 4,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The distances from the mean are −1 and 4."
+        },
+        {
+          "rung": "point",
+          "text": "Square them and weight: $1(0.8) + 16(0.2)$."
+        },
+        {
+          "rung": "step",
+          "text": "That gives a variance of 4, in £². The risk in £ is its square root."
+        }
+      ],
+      "feedback": {
+        "correct": "Variance 4 £², standard deviation £2.",
+        "generic": "Not quite right. Square the distances, average with the chances, then take the square root.",
+        "byKey": {
+          "var": "You reported the variance, 4, as a risk in £. Variance is in £², so take the square root: £2.",
+          "abs": "You averaged the distances without squaring: $1(0.8) + 4(0.2) = 1.6$. The standard deviation squares first, then takes a root.",
+          "signed": "You averaged $X - \\mu$, which is always 0. Square the distances first."
+        }
+      },
+      "explain": {
+        "text": "The squares are 1 and 16, weighted to $0.8 + 3.2 = 4$. That is a variance of 4 £², pounds squared. The standard deviation $\\sqrt{4} = £2$ is back in pounds, so it is the number to report.",
+        "canvas": {
+          "highlight": [
+            "x4"
+          ],
+          "caption": "Variance 4 £², standard deviation £2"
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "A shortcut",
+      "prose": "Subtracting the mean from every outcome is slow. Expand the square instead. Here $\\mu = E[X]$ is a fixed number.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "$\\mathrm{Var}(X) = E[(X - \\mu)^2]$, the definition"
+          },
+          {
+            "id": "expand",
+            "text": "$= E[X^2 - 2\\mu X + \\mu^2]$, expand the square"
+          },
+          {
+            "id": "lin",
+            "text": "$= E[X^2] - 2\\mu E[X] + \\mu^2$, linearity, with $\\mu$ a constant"
+          },
+          {
+            "id": "sub",
+            "text": "$= E[X^2] - 2\\mu^2 + \\mu^2$, since $E[X] = \\mu$"
+          },
+          {
+            "id": "done",
+            "text": "$= E[X^2] - \\mu^2$, collect the $\\mu^2$ terms"
+          }
+        ],
+        "answer": [
+          "def",
+          "expand",
+          "lin",
+          "sub",
+          "done"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the definition."
+        },
+        {
+          "rung": "point",
+          "text": "Before linearity can act, the square must be multiplied out."
+        },
+        {
+          "rung": "step",
+          "text": "Definition, expand, linearity, replace $E[X]$ by $\\mu$, collect."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathrm{Var}(X) = E[X^2] - \\mu^2$.",
+        "generic": "Not quite right. Start from the definition and change one thing per line.",
+        "byKey": {
+          "lin": "Linearity needs a sum of terms, so the square must be expanded first.",
+          "sub": "Replace $E[X]$ by $\\mu$ only after linearity has pulled $E[X]$ out."
+        }
+      },
+      "explain": {
+        "text": "Check it on the die: $E[X^2] = 91/6 \\approx 15.1667$. Then $15.1667 - 3.5^2 = 2.9167$, matching your table. The shortcut needs one sum of $x^2$ values and one subtraction."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Variance in code",
+      "prose": "A pmf can be a Python dict from each value to its chance. The starter also simulates 100,000 die rolls with a fixed seed.",
+      "question": "Complete `variance(pmf)` so it returns $\\mathrm{Var}(X)$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\ndef variance(pmf):\n    \"\"\"pmf maps each value x to P(X = x).\"\"\"\n    mu = sum(x * p for x, p in pmf.items())\n    return ...\n\n# A check by simulation: 100,000 rolls of a fair die\nrandom.seed(9)\nrolls = [random.randint(1, 6) for _ in range(100_000)]\nm = sum(rolls) / len(rolls)\nprint(sum((r - m) ** 2 for r in rolls) / len(rolls))\n",
+        "solution": "import random\n\ndef variance(pmf):\n    \"\"\"pmf maps each value x to P(X = x).\"\"\"\n    mu = sum(x * p for x, p in pmf.items())\n    return sum((x - mu) ** 2 * p for x, p in pmf.items())\n\n# A check by simulation: 100,000 rolls of a fair die\nrandom.seed(9)\nrolls = [random.randint(1, 6) for _ in range(100_000)]\nm = sum(rolls) / len(rolls)\nprint(sum((r - m) ** 2 for r in rolls) / len(rolls))\n",
+        "examples": [
+          {
+            "call": "variance({-1: 0.5, 1: 0.5})",
+            "expect": "1.0",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "variance({-1: 0.5, 1: 0.5})",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "variance({-3: 0.5, 3: 0.5})",
+            "expect": "9.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "variance({1: 1/6, 2: 1/6, 3: 1/6, 4: 1/6, 5: 1/6, 6: 1/6})",
+            "expect": "2.9166666666666665",
+            "compare": "isclose"
+          },
+          {
+            "call": "variance({1: 0.5, 3: 0.25, 7: 0.25})",
+            "expect": "6.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "variance({-1: 0.8, 4: 0.2})",
+            "expect": "4.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "variance({5: 1.0})",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "variance({-200: 0.4, 300: 0.6})",
+            "expect": "60000.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Each answer is accepted when it is within a relative error of 1e-9 of the exact variance."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each term is a squared distance from `mu` times its chance."
+        },
+        {
+          "rung": "point",
+          "text": "Loop over `pmf.items()`, as the line for `mu` does."
+        },
+        {
+          "rung": "step",
+          "text": "Return `sum((x - mu) ** 2 * p for x, p in pmf.items())`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your function matches the definition on every test.",
+        "generic": "Some tests failed. Square each distance from `mu`, multiply by its chance, and add.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that the `...` is replaced."
+        }
+      },
+      "explain": {
+        "text": "Each term is $(x - \\mu)^2 P(X = x)$, and the sum is the variance; `E[X^2] - mu**2` works too. The seeded simulation prints 2.9207. As the number of rolls grows, it converges to $35/12 \\approx 2.9167$.\n\n```python\nreturn sum((x - mu) ** 2 * p for x, p in pmf.items())\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two strategies",
+      "prose": "Two strategies both expect £100 a day. Strategy B's daily standard deviation is £500.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Strategy",
+            "Daily P&L",
+            "Chance"
+          ],
+          "rows": [
+            [
+              "A",
+              "−£200",
+              "0.4"
+            ],
+            [
+              "A",
+              "+£300",
+              "0.6"
+            ],
+            [
+              "B",
+              "−£400",
+              "0.5"
+            ],
+            [
+              "B",
+              "+£600",
+              "0.5"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      },
+      "question": "What is strategy A's daily standard deviation, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 244.95,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Standard deviation of A",
+        "accept": "£244.95 ± 0.50: the square root of 60,000.",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 60000,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "raw",
+            "value": 264.58,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "abs",
+            "value": 240,
+            "tol": {
+              "abs": 0.4
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $E[X^2] - \\mu^2$ with $\\mu = 100$."
+        },
+        {
+          "rung": "point",
+          "text": "$E[X^2] = 40{,}000(0.4) + 90{,}000(0.6)$.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$E[X^2] = 70{,}000$, so $\\mathrm{Var}(X) = 70{,}000 - 10{,}000 = 60{,}000$. Take the square root."
+        }
+      ],
+      "feedback": {
+        "correct": "A's standard deviation is about £245, half of B's.",
+        "generic": "Not quite right. Find the variance with $E[X^2] - \\mu^2$, then take the square root.",
+        "byKey": {
+          "var": "That is the variance, in £². The risk in £ is its square root.",
+          "raw": "You took the root of $E[X^2]$ and forgot to subtract $\\mu^2 = 10{,}000$.",
+          "abs": "You averaged the distances 300 and 200 without squaring. That is close, but it is not the standard deviation."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{Var}(X) = 70{,}000 - 100^2 = 60{,}000$ £², so the standard deviation is £244.95. Both strategies expect £100 a day, but B swings about twice as far. For the same expected P&L, a desk prefers A.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "What the sd misses",
+      "prose": "A lottery-like trade loses £1 on most days and wins £99 rarely. Selling insurance is the mirror image.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Lottery-like",
+            "Selling insurance"
+          ],
+          "rows": [
+            [
+              "Usual day (0.99)",
+              "−£1",
+              "+£1"
+            ],
+            [
+              "Rare day (0.01)",
+              "+£99",
+              "−£99"
+            ],
+            [
+              "Mean",
+              "£0",
+              "£0"
+            ],
+            [
+              "Standard deviation",
+              "£9.95",
+              "£9.95"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Both have mean £0 and standard deviation £9.95. What does the standard deviation miss?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "skew",
+            "text": "Which side the rare big move is on: a rare £99 gain or a rare £99 loss",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Nothing: equal mean and sd mean equal risk",
+            "why": "You trusted two numbers to describe the whole pmf. One trade can lose £99 in a day; the other never loses more than £1."
+          },
+          {
+            "id": "bigger",
+            "text": "Nothing: the insurance seller's £99 loss already gives it the larger sd",
+            "why": "You expected the loss to raise the sd. Squaring treats −£99 and +£99 alike, so both sds are £9.95."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Square the distance of −£99 and of +£99 from 0."
+        },
+        {
+          "rung": "point",
+          "text": "Both squares are 9,801, so both variances are $0.99 + 98.01 = 99$."
+        },
+        {
+          "rung": "step",
+          "text": "The sd sees only the size of each distance. Ask what it cannot see."
+        }
+      ],
+      "feedback": {
+        "correct": "The sd measures size of swings, not their direction.",
+        "generic": "Not quite right. Compare the worst day of each trade.",
+        "byKey": {
+          "same": "You treated equal mean and sd as equal risk. The insurance seller can lose £99 in a day; the lottery never loses more than £1."
+        }
+      },
+      "explain": {
+        "text": "Squaring throws away the sign, so a rare £99 win and a rare £99 loss give the same sd. That lopsidedness is called skew. Strategies that sell insurance often show a small sd until the rare day arrives.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Distances from the mean average to zero, so we square them before averaging.",
+      "Variance is $E[(X - \\mu)^2] = E[X^2] - \\mu^2$. It is never negative, and it is 0 only for a constant.",
+      "The standard deviation $\\sqrt{\\mathrm{Var}(X)}$ is in the units of $X$; variance is in squared units."
+    ],
+    "formula": {
+      "name": "Variance",
+      "tex": "\\mathrm{Var}(X) = E[(X - \\mu)^2] = E[X^2] - \\mu^2",
+      "note": "The standard deviation is its square root, in the units of $X$."
+    },
+    "trap": "The average of $X - \\mu$ is always 0, and a variance in £² is not a risk in £. Square, average, then take the root."
+  },
+  "quiz": [
+    {
+      "id": "q-two-point",
+      "difficulty": 2,
+      "prose": "$X$ is 0 or 4, each with chance 1/2.",
+      "question": "What is $\\mathrm{Var}(X)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Variance",
+        "accept": "4",
+        "wrong": [
+          {
+            "id": "abs",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "raw",
+            "value": 8,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "signed",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The mean is 2, and both outcomes are 2 away: $2^2 = 4$.",
+        "generic": "Not quite right. Find the mean, then average the squared distances from it.",
+        "byKey": {
+          "abs": "You averaged the distances, 2 and 2, without squaring.",
+          "raw": "You averaged $X^2$, 0 and 16. Subtract $\\mu^2 = 4$.",
+          "signed": "You averaged $X - \\mu$, which is always 0."
+        }
+      },
+      "explain": {
+        "text": "$\\mu = 2$. Each outcome is 2 from it, so each squared distance is 4. Their average is 4."
+      }
+    },
+    {
+      "id": "q-units",
+      "difficulty": 2,
+      "prose": "A daily P&L has variance 16 £².",
+      "question": "What is its standard deviation?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "four",
+            "text": "£4",
+            "correct": true
+          },
+          {
+            "id": "sixteen",
+            "text": "£16",
+            "why": "You reported the variance as a risk in £. It is in £², so take the square root."
+          },
+          {
+            "id": "eight",
+            "text": "£8",
+            "why": "You halved 16. The standard deviation is the square root, not half."
+          },
+          {
+            "id": "big",
+            "text": "£256",
+            "why": "You squared the variance. Go the other way: take the square root."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sqrt{16} = 4$, back in pounds.",
+        "generic": "Not quite right. The standard deviation is the square root of the variance."
+      },
+      "explain": {
+        "text": "Variance is in £², so its square root, £4, is in pounds. That is the number a risk report shows."
+      }
+    },
+    {
+      "id": "q-constant",
+      "difficulty": 2,
+      "prose": "A bond pays exactly £7 tomorrow, whatever happens.",
+      "question": "What is the variance of tomorrow's payment?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Variance",
+        "accept": "0 exactly.",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 49,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "mean",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A sure payment has variance 0.",
+        "generic": "Not quite right. How far is the payment from its mean?",
+        "byKey": {
+          "raw": "You computed $E[X^2] = 49$ and stopped. Subtract $\\mu^2 = 49$ as well.",
+          "mean": "That is the mean. Every outcome equals it, so every distance is 0."
+        }
+      },
+      "explain": {
+        "text": "The only outcome equals the mean, so every squared distance is 0. A constant has variance 0, and nothing has less."
+      }
+    },
+    {
+      "id": "q-shortcut",
+      "difficulty": 3,
+      "prose": "For a P&L $X$ in £, you know $E[X] = 3$ and $E[X^2] = 13$.",
+      "question": "What is $\\mathrm{Var}(X)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Variance",
+        "accept": "4, in £².",
+        "wrong": [
+          {
+            "id": "nosq",
+            "value": 10,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 4.3333,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sd",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$13 - 3^2 = 4$.",
+        "generic": "Not quite right. Use $\\mathrm{Var}(X) = E[X^2] - \\mu^2$.",
+        "byKey": {
+          "nosq": "You subtracted $\\mu = 3$. The shortcut subtracts $\\mu^2 = 9$.",
+          "ratio": "You divided by 3. The shortcut subtracts $\\mu^2$.",
+          "sd": "That is the standard deviation. The question asks for the variance."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{Var}(X) = E[X^2] - \\mu^2 = 13 - 9 = 4$ £². The standard deviation is £2."
+      }
+    }
+  ]
+}

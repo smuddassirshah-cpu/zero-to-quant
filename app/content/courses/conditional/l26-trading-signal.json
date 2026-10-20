@@ -1,0 +1,1268 @@
+{
+  "id": "l26-trading-signal",
+  "course": "conditional",
+  "title": "Bayes on a trading signal",
+  "minutes": 14,
+  "objectives": [
+    "Decide how far a signal with a known hit rate should move your view",
+    "Combine a signal with a base rate and with other independent evidence",
+    "Size a bet from the posterior, and discount correlated signals"
+  ],
+  "skills": [
+    "bayes",
+    "cond-indep"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "A trading signal flashes before some days. In years of data it flashed before 60% of up days and before 40% of down days. Up and down days were equally common.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Day",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Up",
+                  "p": "1/2"
+                },
+                {
+                  "id": "d",
+                  "label": "Down",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Signal",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Flash",
+                  "p": {
+                    "u": "3/5",
+                    "d": "2/5"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "No flash",
+                  "p": {
+                    "u": "2/5",
+                    "d": "3/5"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "The signal flashes today. What is the chance today is an up day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "any form equal to $\\tfrac{3}{5}$",
+        "label": "Chance of an up day given a flash",
+        "wrong": [
+          {
+            "id": "joint",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "prior",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "flash",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep only the paths where the signal flashes."
+        },
+        {
+          "rung": "point",
+          "text": "Two paths end in a flash.",
+          "highlight": [
+            "u-f",
+            "d-f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Up and flash: $\\tfrac{1}{2} \\times \\tfrac{3}{5} = 0.3$. Down and flash: $\\tfrac{1}{2} \\times \\tfrac{2}{5} = 0.2$. The chance is $\\tfrac{0.3}{0.5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.3 of the 0.5 that flash are up days.",
+        "generic": "Not quite right. Divide the up-and-flash path by both flash paths.",
+        "byKey": {
+          "joint": "That is $P(\\text{up and flash})$. Divide it by the chance of a flash, 0.5.",
+          "prior": "That is the chance before the signal. The flash is evidence: use it."
+        }
+      },
+      "explain": {
+        "text": "$P(\\text{up} \\mid \\text{flash}) = \\tfrac{0.3}{0.3 + 0.2} = 0.6$. Here it equals the 60% hit rate, but only because the prior is 50–50 and the false alarms are 40%. Change either and the two numbers part.",
+        "canvas": {
+          "shade": [
+            "u-f"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Keep the false-alarm rate at 40% of down days. Slide the hit rate and the prior, and watch the view before and after a flash.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "pre",
+              "label": "Before the flash",
+              "colour": 3
+            },
+            {
+              "id": "post",
+              "label": "After the flash",
+              "colour": 1
+            }
+          ],
+          "yLabel": "Chance of an up day",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "pre": 0.5,
+            "post": 0.6
+          },
+          "params": {
+            "h": 0.6,
+            "pr": 0.5
+          }
+        },
+        "derive": {
+          "values.pre": "pr",
+          "values.post": "pr * h / (pr * h + (1 - pr) * 0.4)",
+          "caption": "Likelihood ratio {{fixed(h / 0.4, 2)}}: the view moves from {{fixed(pr, 2)}} to {{fixed(pr * h / (pr * h + (1 - pr) * 0.4), 3)}}"
+        },
+        "controls": [
+          {
+            "bind": "h",
+            "min": 0.3,
+            "max": 0.9,
+            "step": 0.05,
+            "start": 0.6,
+            "label": "Hit rate on up days",
+            "format": "percent"
+          },
+          {
+            "bind": "pr",
+            "min": 0.2,
+            "max": 0.8,
+            "step": 0.05,
+            "start": 0.5,
+            "label": "Prior chance of up",
+            "format": "percent"
+          }
+        ]
+      },
+      "question": "Keep the prior at 50%. Which hit rate leaves the view exactly where it was?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "forty",
+            "text": "40%",
+            "correct": true
+          },
+          {
+            "id": "fifty",
+            "text": "50%",
+            "why": "At 50% the signal still flashes more on up days than on down days, 0.5 against 0.4, so it moves the view to 0.556."
+          },
+          {
+            "id": "sixty",
+            "text": "60%",
+            "why": "At 60% the view moves from 0.5 to 0.6. Slide lower."
+          },
+          {
+            "id": "none",
+            "text": "None: every signal moves the view",
+            "why": "Slide the hit rate down to the false-alarm rate and watch the two bars meet."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the two bars as you slide the hit rate."
+        },
+        {
+          "rung": "point",
+          "text": "The false-alarm rate is fixed at 40%.",
+          "highlight": [
+            "pre",
+            "post"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "When the hit rate equals the false-alarm rate, the likelihood ratio is 1."
+        }
+      ],
+      "feedback": {
+        "correct": "A hit rate equal to the false-alarm rate tells you nothing.",
+        "generic": "Not quite right. Slide the hit rate until the two bars are level."
+      },
+      "explain": {
+        "text": "At a 40% hit rate the signal flashes as often on down days as on up days. Its likelihood ratio is $\\tfrac{0.4}{0.4} = 1$, so the view does not move. A hit rate means something only next to the false-alarm rate.",
+        "canvas": {
+          "params": {
+            "h": 0.4
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "In odds form, a flash multiplies the odds of an up day by the **likelihood ratio** $\\dfrac{P(\\text{flash} \\mid \\text{up})}{P(\\text{flash} \\mid \\text{down})}$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Day",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Up",
+                  "p": "1/2"
+                },
+                {
+                  "id": "d",
+                  "label": "Down",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Signal",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Flash",
+                  "p": {
+                    "u": "3/5",
+                    "d": "2/5"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "No flash",
+                  "p": {
+                    "u": "2/5",
+                    "d": "3/5"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "u-f",
+            "d-f"
+          ]
+        }
+      },
+      "question": "What is the likelihood ratio of a flash for our signal?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "accept": "$\\tfrac{0.6}{0.4} = 1.5$",
+        "label": "Likelihood ratio",
+        "wrong": [
+          {
+            "id": "flip",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "diff",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "hit",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the hit rate by the false-alarm rate."
+        },
+        {
+          "rung": "point",
+          "text": "The two flash branches carry 3/5 and 2/5.",
+          "highlight": [
+            "u-f",
+            "d-f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac{0.6}{0.4}$."
+        }
+      ],
+      "feedback": {
+        "correct": "A flash is 1.5 times as likely on an up day as on a down day.",
+        "generic": "Not quite right. Put the up-day flash rate on top and the down-day flash rate below.",
+        "byKey": {
+          "flip": "You put the false-alarm rate on top. The ratio for up against down puts 0.6 on top.",
+          "diff": "You subtracted the rates. The likelihood ratio divides them.",
+          "hit": "That is the hit rate alone. Divide it by the false-alarm rate."
+        }
+      },
+      "explain": {
+        "text": "$\\text{LR} = \\tfrac{0.6}{0.4} = 1.5$. From even odds, 1 to 1, a flash gives odds 1.5 to 1, which is the 0.6 we found. Every use of this signal is now one multiplication.",
+        "canvas": {
+          "shade": [
+            "u-f"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Over the years, 55% of days were up days, not 50%. The signal is the same: it flashes before 60% of up days and 40% of down days.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Day",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Up",
+                  "p": "11/20"
+                },
+                {
+                  "id": "d",
+                  "label": "Down",
+                  "p": "9/20"
+                }
+              ]
+            },
+            {
+              "label": "Signal",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Flash",
+                  "p": {
+                    "u": "3/5",
+                    "d": "2/5"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "No flash",
+                  "p": {
+                    "u": "2/5",
+                    "d": "3/5"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "The signal flashes. What is the chance today is an up day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6471,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "any form equal to $\\tfrac{11}{17}$, or $0.6471 \\pm 0.0005$",
+        "label": "Chance of an up day given a flash",
+        "wrong": [
+          {
+            "id": "even",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "prior",
+            "value": 0.55,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "prob",
+            "value": 0.825,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "odds",
+            "value": 1.8333,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Turn the prior into odds first."
+        },
+        {
+          "rung": "point",
+          "text": "Prior odds are $\\tfrac{0.55}{0.45} = \\tfrac{11}{9}$.",
+          "highlight": [
+            "u-f",
+            "d-f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Posterior odds $\\tfrac{11}{9} \\times 1.5 = \\tfrac{11}{6} \\approx 1.833$. Then $p = \\tfrac{1.833}{2.833}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Odds of 11 to 6, a chance of about 0.647.",
+        "generic": "Not quite right. Multiply the prior odds, not the prior chance, by 1.5.",
+        "byKey": {
+          "even": "You kept the 50–50 prior. Up days are 55% of days, so start from odds of 11 to 9.",
+          "prior": "That is the base rate before the flash. The flash should move it.",
+          "prob": "You multiplied the probability 0.55 by 1.5. The likelihood ratio multiplies odds, not probabilities.",
+          "odds": "That is the posterior odds, 11 to 6. Turn it into a probability: $\\tfrac{11}{11 + 6}$."
+        }
+      },
+      "explain": {
+        "text": "Odds $\\tfrac{55}{45} \\times 1.5 = 1.8333$, so $p = \\tfrac{1.8333}{2.8333} = \\tfrac{11}{17} \\approx 0.6471$. The same flash lands higher because the view started higher. Always start from the base rate of up days.",
+        "canvas": {
+          "shade": [
+            "u-f"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Back to a 50% prior. Two different signals, each with a likelihood ratio of 1.5, are built from unrelated data. Given the day’s direction, they flash independently. Both flash today.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Day",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Up",
+                  "p": "1/2"
+                },
+                {
+                  "id": "d",
+                  "label": "Down",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Signal",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Flash",
+                  "p": {
+                    "u": "3/5",
+                    "d": "2/5"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "No flash",
+                  "p": {
+                    "u": "2/5",
+                    "d": "3/5"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the chance today is an up day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6923,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "any form equal to $\\tfrac{9}{13}$, or $0.6923 \\pm 0.0005$",
+        "label": "Chance of an up day given two flashes",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "add",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "odds",
+            "value": 2.25,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each independent flash multiplies the odds by 1.5."
+        },
+        {
+          "rung": "point",
+          "text": "Two flashes multiply the odds by $1.5^2$.",
+          "highlight": [
+            "u-f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Odds $1 \\times 1.5 \\times 1.5 = 2.25$, so $p = \\tfrac{2.25}{3.25}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Two independent flashes take the odds to 2.25.",
+        "generic": "Not quite right. Multiply the odds by 1.5 once per independent flash.",
+        "byKey": {
+          "one": "You used only one flash. The second is independent evidence, so multiply by 1.5 again.",
+          "add": "You added 0.1 per flash. Evidence multiplies odds; it does not add to probabilities.",
+          "odds": "That is the posterior odds. Turn it into a probability: $\\tfrac{2.25}{1 + 2.25}$."
+        }
+      },
+      "explain": {
+        "text": "Odds $1.5^2 = 2.25$, so $p = \\tfrac{2.25}{3.25} = \\tfrac{9}{13} \\approx 0.692$. The multiplication is valid only because the signals are independent given the day. The next screen breaks that."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Edge case. A second signal is the first one’s indicator, lightly smoothed. In the data it flashes on exactly the same days as the first. Both flash today.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Day",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Up",
+                  "p": "1/2"
+                },
+                {
+                  "id": "d",
+                  "label": "Down",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Signal",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Flash",
+                  "p": {
+                    "u": "3/5",
+                    "d": "2/5"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "No flash",
+                  "p": {
+                    "u": "2/5",
+                    "d": "3/5"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the chance today is an up day?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "0.6, the same as one flash",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "About 0.692, as for two signals",
+            "why": "You multiplied by 1.5 twice. The second signal copies the first, so its flash adds no new evidence."
+          },
+          {
+            "id": "more",
+            "text": "Higher than 0.692, because they agree",
+            "why": "Agreement between copies is guaranteed. It tells you nothing new about the day."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Given the first flash, how likely is the second?"
+        },
+        {
+          "rung": "point",
+          "text": "The second flashes whenever the first does, on up and down days alike.",
+          "highlight": [
+            "u-f",
+            "d-f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Its likelihood ratio, given the first, is $\\tfrac{1}{1} = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "A copy of a signal counts once.",
+        "generic": "Not quite right. Ask what the second flash adds once you have seen the first."
+      },
+      "explain": {
+        "text": "Given the first flash, the second flashes for certain on up and down days alike: a likelihood ratio of 1. So the view stays at 0.6. Correlated signals count as fewer, and a perfect copy counts as none."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A vendor sells a signal with a “60% hit rate”: it flashes before 60% of up days. The small print says it also flashes before 60% of down days. Up days are 55% of days.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Day",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Up",
+                  "p": "11/20"
+                },
+                {
+                  "id": "d",
+                  "label": "Down",
+                  "p": "9/20"
+                }
+              ]
+            },
+            {
+              "label": "Signal",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Flash",
+                  "p": {
+                    "u": "3/5",
+                    "d": "3/5"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "No flash",
+                  "p": {
+                    "u": "2/5",
+                    "d": "2/5"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "The signal flashes. What is the chance today is an up day?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "base",
+            "text": "0.55",
+            "correct": true
+          },
+          {
+            "id": "hit",
+            "text": "0.60, the hit rate",
+            "why": "You took the hit rate as the probability of an up day. The hit rate is $P(\\text{flash} \\mid \\text{up})$; you need $P(\\text{up} \\mid \\text{flash})$."
+          },
+          {
+            "id": "old",
+            "text": "About 0.647",
+            "why": "That uses a 40% false-alarm rate. This signal flashes on 60% of down days."
+          },
+          {
+            "id": "mult",
+            "text": "0.825",
+            "why": "You multiplied 0.55 by 1.5. The likelihood ratio here is $\\tfrac{0.6}{0.6} = 1$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare how often it flashes on up days and on down days."
+        },
+        {
+          "rung": "point",
+          "text": "Both flash branches carry 3/5.",
+          "highlight": [
+            "u-f",
+            "d-f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The likelihood ratio is $\\tfrac{0.6}{0.6} = 1$, so the view stays at the base rate."
+        }
+      ],
+      "feedback": {
+        "correct": "A signal that flashes equally on up and down days is worthless.",
+        "generic": "Not quite right. Find the likelihood ratio before you use the hit rate.",
+        "byKey": {
+          "hit": "You took the hit rate as the probability of an up day. A 60% hit rate with 60% false alarms gives a likelihood ratio of 1."
+        }
+      },
+      "explain": {
+        "text": "The signal flashes on 60% of days whatever the direction, so its likelihood ratio is 1. $P(\\text{up} \\mid \\text{flash}) = 0.55$, the base rate. A hit rate quoted without its false-alarm rate tells you nothing.",
+        "canvas": {
+          "shade": [
+            "u-f",
+            "d-f"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "From a 50% prior, how many independent flashes of our signal does it take to be at least 80% sure of an up day?",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "prior",
+            "text": "Prior odds $= \\dfrac{0.5}{0.5} = 1$"
+          },
+          {
+            "id": "n",
+            "text": "After $n$ independent flashes, odds $= 1 \\times 1.5^n$, one factor of 1.5 per flash"
+          },
+          {
+            "id": "need",
+            "text": "We need $1.5^n \\ge 4$, since 80% is odds of $\\dfrac{0.8}{0.2} = 4$"
+          },
+          {
+            "id": "logs",
+            "text": "$n \\ge \\dfrac{\\ln 4}{\\ln 1.5} \\approx 3.42$, taking logs of both sides"
+          },
+          {
+            "id": "four",
+            "text": "So $n = 4$: three flashes give 0.771, four give 0.835"
+          }
+        ],
+        "answer": [
+          "prior",
+          "n",
+          "need",
+          "logs",
+          "four"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the odds before any flash."
+        },
+        {
+          "rung": "point",
+          "text": "The condition on $1.5^n$ needs the odds after $n$ flashes first."
+        },
+        {
+          "rung": "step",
+          "text": "Prior odds, odds after $n$ flashes, the target of 4, take logs, round up."
+        }
+      ],
+      "feedback": {
+        "correct": "Four flashes are the fewest that clear 80%.",
+        "generic": "Not quite right. Start from the prior odds and multiply once per flash.",
+        "byKey": {
+          "need": "The target is a condition on the odds after $n$ flashes, so that line comes first.",
+          "four": "Rounding up comes after taking logs, so it is last."
+        }
+      },
+      "explain": {
+        "text": "$\\ln 4 / \\ln 1.5 = 1.386 / 0.405 \\approx 3.42$, so 3 flashes fall short and 4 suffice. Three give odds 3.375, a chance of 0.771; four give odds 5.06, a chance of 0.835. This holds only if the flashes really are independent."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "After a flash your chance of an up day is 0.6. You can make an even-money bet on it: win or lose the stake. The Kelly rule stakes a fraction $2p - 1$ of capital.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "up",
+              "label": "Up day: win the stake",
+              "colour": 3
+            },
+            {
+              "id": "down",
+              "label": "Down day: lose the stake",
+              "colour": 4
+            }
+          ],
+          "yLabel": "Chance",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "up": 0.6,
+            "down": 0.4
+          }
+        }
+      },
+      "question": "With £10,000 of capital, how much does the Kelly rule stake?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2000,
+        "tol": {
+          "abs": 0.5
+        },
+        "placeholder": "for example 1500",
+        "accept": "£2,000: $(2 \\times 0.6 - 1) \\times 10{,}000$",
+        "unit": "£",
+        "label": "Kelly stake",
+        "wrong": [
+          {
+            "id": "p",
+            "value": 6000,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "all",
+            "value": 10000,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "edge",
+            "value": 1000,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out $2p - 1$ first."
+        },
+        {
+          "rung": "point",
+          "text": "Here $p = 0.6$.",
+          "highlight": [
+            "up",
+            "down"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\times 0.6 - 1 = 0.2$, and $0.2 \\times 10{,}000 = 2{,}000$."
+        }
+      ],
+      "feedback": {
+        "correct": "Kelly stakes a fifth of capital.",
+        "generic": "Not quite right. Multiply the capital by $2p - 1$.",
+        "byKey": {
+          "p": "You staked $p$ of your capital. Kelly stakes $2p - 1$, the edge: 0.2.",
+          "all": "Staking everything risks ruin on a 40% loss. Kelly stakes $2p - 1 = 0.2$.",
+          "edge": "You used $p - 0.5 = 0.1$. Kelly for an even-money bet is $p - (1 - p) = 0.2$."
+        }
+      },
+      "explain": {
+        "text": "$f = 2 \\times 0.6 - 1 = 0.2$, so £2,000. If the 60% hit rate does not survive out of sample and your true chance is 0.55, Kelly is only 0.1. An overstated hit rate means betting double what the edge supports."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "Up days are 55% of days. Today the signal flashes (likelihood ratio 1.5). An analyst also calls “up”: she makes that call on 70% of up days and 30% of down days, independently of the signal.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Day",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Up",
+                  "p": "11/20"
+                },
+                {
+                  "id": "d",
+                  "label": "Down",
+                  "p": "9/20"
+                }
+              ]
+            },
+            {
+              "label": "Signal",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Flash",
+                  "p": {
+                    "u": "3/5",
+                    "d": "2/5"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "No flash",
+                  "p": {
+                    "u": "2/5",
+                    "d": "3/5"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the chance today is an up day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8105,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "any form equal to $\\tfrac{77}{95}$, or $0.8105 \\pm 0.0005$",
+        "label": "Chance of an up day",
+        "wrong": [
+          {
+            "id": "signal",
+            "value": 0.6471,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "analyst",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-base",
+            "value": 0.7778,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "odds",
+            "value": 4.2778,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the analyst’s likelihood ratio, then multiply both into the prior odds."
+        },
+        {
+          "rung": "point",
+          "text": "The analyst’s ratio is $\\tfrac{0.7}{0.3} \\approx 2.333$.",
+          "highlight": [
+            "u-f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Odds $\\tfrac{11}{9} \\times 1.5 \\times \\tfrac{7}{3} = \\tfrac{77}{18} \\approx 4.278$. Then $p = \\tfrac{4.278}{5.278}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Two independent pieces of evidence on a 55% base rate give about 0.81.",
+        "generic": "Not quite right. Multiply the prior odds by both likelihood ratios, then convert.",
+        "byKey": {
+          "signal": "That uses the signal alone. Multiply by the analyst’s ratio too.",
+          "analyst": "That is the analyst’s 70%, taken as the chance of an up day. It is $P(\\text{call} \\mid \\text{up})$.",
+          "no-base": "You started from even odds. Up days are 55% of days, so start from odds of 11 to 9.",
+          "odds": "That is the posterior odds. Turn it into a probability: $\\tfrac{4.278}{1 + 4.278}$."
+        }
+      },
+      "explain": {
+        "text": "Odds $\\tfrac{55}{45} \\times 1.5 \\times \\tfrac{7}{3} = \\tfrac{77}{18} \\approx 4.278$, so $p = \\tfrac{77}{95} \\approx 0.81$. This is valid only if the two are independent given the day. If the analyst watches the same signal, her call counts for much less."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A hit rate is $P(\\text{flash} \\mid \\text{up})$. What moves your view is the likelihood ratio: hit rate over false-alarm rate.",
+      "Start from the base rate of up days, in odds, and multiply by one likelihood ratio per independent piece of evidence.",
+      "Correlated signals count as fewer, and a hit rate is worth only what survives out of sample."
+    ],
+    "formula": {
+      "name": "Posterior odds",
+      "tex": "\\dfrac{P(U \\mid F)}{P(D \\mid F)} = \\dfrac{P(U)}{P(D)} \\times \\dfrac{P(F \\mid U)}{P(F \\mid D)}",
+      "note": "One factor per independent signal. Kelly stakes $2p - 1$ on an even-money bet."
+    },
+    "trap": "Taking the hit rate as the probability of an up day."
+  },
+  "quiz": [
+    {
+      "id": "q-prior40",
+      "difficulty": 2,
+      "prose": "A signal has a likelihood ratio of 1.5. In a quiet market only 40% of days are up days. The signal flashes.",
+      "question": "What is the chance today is an up day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "$\\tfrac{0.4}{0.6} \\times 1.5 = 1$, so $p = 0.5$",
+        "label": "Chance of an up day",
+        "wrong": [
+          {
+            "id": "prob",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "prior",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Odds of 1 to 1: a coin flip.",
+        "generic": "Not quite right. Turn 40% into odds, multiply by 1.5, then convert back.",
+        "byKey": {
+          "prob": "You multiplied the probability 0.4 by 1.5. Multiply the odds, $\\tfrac{2}{3}$, instead.",
+          "prior": "That is the chance before the flash."
+        }
+      },
+      "explain": {
+        "text": "Prior odds $\\tfrac{0.4}{0.6} = \\tfrac{2}{3}$. Times 1.5 gives odds of 1, so $p = 0.5$. The same flash that took a 50% prior to 60% takes a 40% prior to 50%."
+      }
+    },
+    {
+      "id": "q-meaning",
+      "difficulty": 2,
+      "prose": "A research note says a signal has a “70% hit rate on up days”.",
+      "question": "Which probability is that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$P(\\text{flash} \\mid \\text{up}) = 0.7$",
+            "correct": true
+          },
+          {
+            "id": "swap",
+            "text": "$P(\\text{up} \\mid \\text{flash}) = 0.7$",
+            "why": "You took the hit rate as the probability of an up day. That needs the base rate and the false-alarm rate too."
+          },
+          {
+            "id": "joint",
+            "text": "$P(\\text{up and flash}) = 0.7$",
+            "why": "The hit rate is a share of up days, not of all days."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The hit rate is a share of up days.",
+        "generic": "Not quite right. Ask which group the 70% is a share of."
+      },
+      "explain": {
+        "text": "“On up days, it flashed 70% of the time” conditions on the day: $P(\\text{flash} \\mid \\text{up}) = 0.7$. To get $P(\\text{up} \\mid \\text{flash})$ you also need how often it flashes on down days, and the base rate."
+      }
+    },
+    {
+      "id": "q-oos",
+      "difficulty": 3,
+      "prose": "A researcher tries 200 signal designs on the same ten years of data and keeps the one with the best hit rate, 62%. False alarms are 40% for all of them.",
+      "question": "What should you expect of the kept signal’s hit rate on new data?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "lower",
+            "text": "Lower than 62%, perhaps much lower",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "About 62%: that is what was measured",
+            "why": "The best of 200 tries is partly luck. Selecting on the result inflates it, as with false discoveries."
+          },
+          {
+            "id": "higher",
+            "text": "Higher than 62%, as more data arrives",
+            "why": "More data does not reward a lucky pick. The luck tends to wash out, pulling the rate down."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The winner of many tries regresses on new data.",
+        "generic": "Not quite right. Ask how much of the 62% came from picking the best of 200."
+      },
+      "explain": {
+        "text": "The kept signal is conditioned on having the best in-sample result, so its 62% includes luck. On new data the luck does not repeat. Size bets on the out-of-sample hit rate, not the in-sample one."
+      }
+    },
+    {
+      "id": "q-kelly",
+      "difficulty": 3,
+      "prose": "Your chance of winning an even-money bet is 0.55.",
+      "question": "What fraction of capital does the Kelly rule stake?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "accept": "$2 \\times 0.55 - 1 = 0.1$",
+        "label": "Kelly fraction",
+        "wrong": [
+          {
+            "id": "p",
+            "value": 0.55,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A tenth of capital.",
+        "generic": "Not quite right. Use $2p - 1$.",
+        "byKey": {
+          "p": "You staked $p$. Kelly stakes $2p - 1$.",
+          "half": "You used $p - 0.5$. Kelly for an even-money bet is $p - (1 - p)$."
+        }
+      },
+      "explain": {
+        "text": "$f = 2 \\times 0.55 - 1 = 0.1$. A 5-point edge over a coin flip supports a 10% stake."
+      }
+    }
+  ]
+}
