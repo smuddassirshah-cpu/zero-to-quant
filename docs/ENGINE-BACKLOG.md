@@ -732,3 +732,11 @@ Raised later (counting-chance level 1):
 Raised later (eigen level 3):
 
 266. `bars`: a `dim` state (or per-bar `dim: true`) to de-emphasise bars, for "keep the largest singular values".
+
+Raised later (counting-chance level 2):
+
+267. `expression` grading: Compute Engine 0.30.2 cannot parse `\binom` and never equates symbolic factorial ratios (`\frac{n!}{(n-k)!}`); pre-process `\binom{n}{k}` and `n!` into a product form (or a `Binomial` function the numeric check can evaluate) before equivalence testing. Until then, counting answers must be polynomials.
+268. `tree`: probability labels on the third level of a tree with 7 or more leaves overlap between neighbouring subtrees; stagger or shrink labels on deep trees.
+269. `tree`: let a control drive the number of branches per level (`derive` on `levels` or `branching`), for "options per stage" sliders.
+270. `array`: a drag-to-place widget (drag bars between stars) rather than `tap-regions`.
+271. Validator: ★ is treated as an emoji; whitelist common geometric symbols (★ ● ■ ▲) used as tokens.
