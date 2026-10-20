@@ -1,0 +1,1554 @@
+{
+  "id": "l2-transition-matrix",
+  "course": "markov",
+  "title": "The transition matrix",
+  "minutes": 14,
+  "objectives": [
+    "Compute multi-step probabilities with powers of the transition matrix.",
+    "Move a distribution forward with a row vector, $\\boldsymbol{\\pi}_{k} = \\boldsymbol{\\pi}_0\\mathbf{P}^k$"
+  ],
+  "skills": [
+    "mc-chains"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The chain as a table",
+      "prose": "Here is the weather chain again, with its arrows written as a table. Each row is today's weather. Each column is tomorrow's.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "active": "right",
+        "left": {
+          "kind": "graph",
+          "params": {
+            "markov": true,
+            "height": 260,
+            "nodes": [
+              {
+                "id": "S",
+                "label": "Sunny",
+                "x": 0.5,
+                "y": 0.12
+              },
+              {
+                "id": "C",
+                "label": "Cloudy",
+                "x": 0.12,
+                "y": 0.88
+              },
+              {
+                "id": "R",
+                "label": "Rain",
+                "x": 0.88,
+                "y": 0.88
+              }
+            ],
+            "edges": [
+              {
+                "from": "S",
+                "to": "S",
+                "w": 0.6
+              },
+              {
+                "from": "S",
+                "to": "C",
+                "w": 0.3
+              },
+              {
+                "from": "S",
+                "to": "R",
+                "w": 0.1
+              },
+              {
+                "from": "C",
+                "to": "S",
+                "w": 0.3
+              },
+              {
+                "from": "C",
+                "to": "C",
+                "w": 0.4
+              },
+              {
+                "from": "C",
+                "to": "R",
+                "w": 0.3
+              },
+              {
+                "from": "R",
+                "to": "S",
+                "w": 0.2
+              },
+              {
+                "from": "R",
+                "to": "C",
+                "w": 0.5
+              },
+              {
+                "from": "R",
+                "to": "R",
+                "w": 0.3
+              }
+            ]
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "Today \\ tomorrow",
+              "Sunny",
+              "Cloudy",
+              "Rain"
+            ],
+            "rows": [
+              [
+                "Sunny",
+                "0.6",
+                "0.3",
+                "0.1"
+              ],
+              [
+                "Cloudy",
+                "0.3",
+                "0.4",
+                "0.3"
+              ],
+              [
+                "Rain",
+                "0.2",
+                "0.5",
+                "0.3"
+              ]
+            ],
+            "rowHeads": true
+          },
+          "state": {}
+        }
+      },
+      "question": "Tap the entry that gives the chance of Rain tomorrow when today is Cloudy.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c3"
+        ],
+        "max": 1,
+        "only": [
+          "r0c1",
+          "r0c2",
+          "r0c3",
+          "r1c1",
+          "r1c2",
+          "r1c3",
+          "r2c1",
+          "r2c2",
+          "r2c3"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Today picks the row. Tomorrow picks the column."
+        },
+        {
+          "rung": "point",
+          "text": "Today is Cloudy, so stay in this row.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In the Cloudy row, move across to the Rain column."
+        }
+      ],
+      "feedback": {
+        "correct": "Row Cloudy, column Rain: 0.3.",
+        "generic": "Not quite right. Find the Cloudy row first, then move across to Rain.",
+        "byKey": {
+          "r2c2": "You read today down the columns. That cell is Rain today, Cloudy tomorrow: the arrow from Rain to Cloudy, 0.5.",
+          "r2c3": "That is Rain today and Rain tomorrow. Today is Cloudy, so use the Cloudy row.",
+          "r0c3": "That is Sunny today. Use the Cloudy row."
+        }
+      },
+      "explain": {
+        "text": "You went to the Cloudy row and across to the Rain column: 0.3, the arrow from Cloudy to Rain. Written this way the table is the **transition matrix** $\\mathbf{P}$, with $p_{ij} = P(\\text{next} = j \\mid \\text{now} = i)$. Each row is one state's arrows, so each row adds to 1.",
+        "canvas": {
+          "right": {
+            "highlight": {
+              "rows": [
+                1
+              ],
+              "cells": [
+                "r1c3"
+              ]
+            }
+          },
+          "left": {
+            "highlight": [
+              "e-C-R"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Several days ahead",
+      "prose": "Today it is raining. The bars show the chance of each kind of weather $k$ days from now, worked out exactly from the chain. Slide $k$ and watch the chances move.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "S",
+              "label": "Sunny"
+            },
+            {
+              "id": "C",
+              "label": "Cloudy"
+            },
+            {
+              "id": "R",
+              "label": "Rain"
+            }
+          ],
+          "yLabel": "Chance",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "S": 0,
+            "C": 0,
+            "R": 1
+          },
+          "params": {
+            "k": 0
+          }
+        },
+        "derive": {
+          "values.S": "[0.0, 0.2, 0.33, 0.373, 0.3885, 0.394, 0.396, 0.3967, 0.3969, 0.397, 0.397][k]",
+          "values.C": "[0.0, 0.5, 0.41, 0.393, 0.3861, 0.3837, 0.3828, 0.3825, 0.3824, 0.3824, 0.3824][k]",
+          "values.R": "[1.0, 0.3, 0.26, 0.234, 0.2254, 0.2223, 0.2212, 0.2208, 0.2207, 0.2206, 0.2206][k]",
+          "caption": "{{k}} days after a rainy day"
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 10,
+            "step": 1,
+            "label": "Days ahead $k$",
+            "start": 0
+          }
+        ]
+      },
+      "question": "What does the Sunny bar read at $k = 2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.33,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.33, read from the bar at $k = 2$.",
+        "label": "Chance of Sunny in two days",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "one-day",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            },
+            "canvas": {
+              "params": {
+                "k": 1
+              }
+            }
+          },
+          {
+            "id": "later",
+            "value": 0.373,
+            "tol": {
+              "abs": 0.001
+            },
+            "canvas": {
+              "params": {
+                "k": 3
+              }
+            }
+          },
+          {
+            "id": "rain",
+            "value": 0.26,
+            "tol": {
+              "abs": 0.001
+            },
+            "canvas": {
+              "params": {
+                "k": 2
+              }
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.33 for Sunny two days after rain.",
+        "generic": "Not quite right. Put the slider on 2 and read the Sunny bar.",
+        "byKey": {
+          "one-day": "That is the bar at $k = 1$, tomorrow. Move the slider one more step.",
+          "later": "That is the bar at $k = 3$. Move the slider back one step.",
+          "rain": "That is the Rain bar at $k = 2$. Read the Sunny bar."
+        }
+      },
+      "explain": {
+        "text": "At $k = 2$ the bars read 0.33, 0.41 and 0.26, and they still add to 1. Next we find where 0.33 comes from. By $k = 10$ the bars barely move, a settling the next level studies.",
+        "canvas": {
+          "params": {
+            "k": 2
+          },
+          "highlight": [
+            "xS"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Where 0.33 comes from",
+      "prose": "To be Sunny in two days, the chain passes through some state tomorrow. The tree splits the two days by that middle state, $m$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "Rain today",
+          "levels": [
+            {
+              "label": "Tomorrow",
+              "branches": [
+                {
+                  "id": "S",
+                  "label": "Sunny",
+                  "p": "0.2"
+                },
+                {
+                  "id": "C",
+                  "label": "Cloudy",
+                  "p": "0.5"
+                },
+                {
+                  "id": "R",
+                  "label": "Rain",
+                  "p": "0.3"
+                }
+              ]
+            },
+            {
+              "label": "In two days",
+              "branches": [
+                {
+                  "id": "S",
+                  "label": "Sunny",
+                  "p": {
+                    "S": "0.6",
+                    "C": "0.3",
+                    "R": "0.2"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "S-S": "0.12",
+            "C-S": "0.15",
+            "R-S": "0.06"
+          }
+        },
+        "state": {
+          "highlight": [
+            "S-S",
+            "C-S",
+            "R-S"
+          ]
+        }
+      },
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "split",
+            "text": "$P(X_2 = S \\mid X_0 = R) = \\sum_m P(X_1 = m,\\, X_2 = S \\mid X_0 = R)$, split by tomorrow's state"
+          },
+          {
+            "id": "mult",
+            "text": "$= \\sum_m P(X_1 = m \\mid X_0 = R)\\, P(X_2 = S \\mid X_1 = m,\\, X_0 = R)$, the multiplication rule"
+          },
+          {
+            "id": "markov",
+            "text": "$= \\sum_m p_{Rm}\\, p_{mS}$, the Markov property drops $X_0 = R$"
+          },
+          {
+            "id": "nums",
+            "text": "$= 0.2(0.6) + 0.5(0.3) + 0.3(0.2) = 0.33$, the three branches"
+          }
+        ],
+        "answer": [
+          "split",
+          "mult",
+          "markov",
+          "nums"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by naming every way to get there: through each possible middle day."
+        },
+        {
+          "rung": "point",
+          "text": "Each branch is two steps. The multiplication rule turns a branch into a product.",
+          "highlight": [
+            "S-S",
+            "C-S",
+            "R-S"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Split by $X_1$, apply the multiplication rule, drop $X_0$ by the Markov property, then put in the numbers."
+        }
+      ],
+      "feedback": {
+        "correct": "Split, multiply, forget the past, add.",
+        "generic": "Not quite right. Begin with the sum over the middle state, then turn each term into a product.",
+        "byKey": {
+          "markov": "The Markov property simplifies a product that is not written yet. Use the multiplication rule first.",
+          "mult": "The product needs a sum to sit inside. Split by the middle state first.",
+          "nums": "The numbers come last, once each term is a product of two arrows."
+        }
+      },
+      "explain": {
+        "text": "Each branch through a middle state $m$ is the product of two arrows, $p_{Rm}p_{mS}$, and the branches cannot both happen, so they add. The tree's leaves, 0.12, 0.15 and 0.06, add to 0.33, the value on the bars. The sum is row Rain of $\\mathbf{P}$ times column Sunny of $\\mathbf{P}$.",
+        "canvas": {
+          "highlight": [
+            "S-S",
+            "C-S",
+            "R-S"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The two-step matrix",
+      "prose": "Row $i$ of $\\mathbf{P}$ times column $j$ of $\\mathbf{P}$ is entry $(i, j)$ of the matrix product $\\mathbf{P}^2$. So $\\mathbf{P}^2$ holds every two-step chance. States run Sunny, Cloudy, Rain.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  0.6,
+                  0.3,
+                  0.1
+                ],
+                [
+                  0.3,
+                  0.4,
+                  0.3
+                ],
+                [
+                  0.2,
+                  0.5,
+                  0.3
+                ]
+              ],
+              "label": "$\\mathbf{P}$"
+            },
+            {
+              "id": "B",
+              "rows": [
+                [
+                  0.6,
+                  0.3,
+                  0.1
+                ],
+                [
+                  0.3,
+                  0.4,
+                  0.3
+                ],
+                [
+                  0.2,
+                  0.5,
+                  0.3
+                ]
+              ],
+              "label": "$\\mathbf{P}$"
+            },
+            {
+              "id": "C",
+              "rows": [
+                [
+                  0.47,
+                  0.35,
+                  0.18
+                ],
+                [
+                  0.36,
+                  0.4,
+                  0.24
+                ],
+                [
+                  0.33,
+                  0.41,
+                  0.26
+                ]
+              ],
+              "label": "$\\mathbf{P}^2$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "hidden": [
+            "C"
+          ],
+          "highlight": {
+            "A": {
+              "rows": [
+                0
+              ]
+            },
+            "B": {
+              "cols": [
+                2
+              ]
+            }
+          }
+        }
+      },
+      "question": "Today is Sunny. What is the chance of Rain in two days?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.18,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.18: $0.6(0.1) + 0.3(0.3) + 0.1(0.3)$.",
+        "label": "Chance of Rain in two days",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "squared",
+            "value": 0.01,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-path",
+            "value": 0.06,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "rain-row",
+            "value": 0.26,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-step",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which row of the first $\\mathbf{P}$ and which column of the second?"
+        },
+        {
+          "rung": "point",
+          "text": "Row Sunny of the first, column Rain of the second.",
+          "highlight": [
+            "A-r0",
+            "B-c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Multiply pairwise and add: $0.6(0.1) + 0.3(0.3) + 0.1(0.3)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.06 + 0.09 + 0.03 = 0.18$.",
+        "generic": "Not quite right. Run along row Sunny and down column Rain, multiplying in pairs, then add.",
+        "byKey": {
+          "squared": "You squared the one-step entry 0.1. That is the path Sunny, Rain, Rain only; the chain may pass through Sunny or Cloudy.",
+          "one-path": "That is one path, through Sunny tomorrow. Add the paths through Cloudy and Rain.",
+          "rain-row": "That is Rain to Rain in two days. Today is Sunny, so use row Sunny.",
+          "one-step": "That is tomorrow's chance. In two days the chain has taken two steps."
+        }
+      },
+      "explain": {
+        "text": "Row Sunny is $(0.6, 0.3, 0.1)$ and column Rain is $(0.1, 0.3, 0.3)$, one term per middle state. Their products add to $0.06 + 0.09 + 0.03 = 0.18$. Every row of $\\mathbf{P}^2$ adds to 1, as a row of chances must.",
+        "canvas": {
+          "product": {
+            "a": "A",
+            "b": "B",
+            "c": "C",
+            "i": 0,
+            "j": 2
+          },
+          "cell": [
+            "C-0-0",
+            "C-0-1",
+            "C-0-2",
+            "C-1-0",
+            "C-1-1",
+            "C-1-2",
+            "C-2-0",
+            "C-2-1",
+            "C-2-2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "When today is uncertain",
+      "prose": "A forecast for Monday says Sunny 0.7, Cloudy 0, Rain 0.3. Write it as a row vector $\\boldsymbol{\\pi}_0$. Tuesday's chances are the row vector times the matrix: $\\boldsymbol{\\pi}_1 = \\boldsymbol{\\pi}_0\\mathbf{P}$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "V",
+              "rows": [
+                [
+                  0.7,
+                  0,
+                  0.3
+                ]
+              ],
+              "label": "$\\boldsymbol{\\pi}_0$"
+            },
+            {
+              "id": "A",
+              "rows": [
+                [
+                  0.6,
+                  0.3,
+                  0.1
+                ],
+                [
+                  0.3,
+                  0.4,
+                  0.3
+                ],
+                [
+                  0.2,
+                  0.5,
+                  0.3
+                ]
+              ],
+              "label": "$\\mathbf{P}$"
+            },
+            {
+              "id": "C",
+              "rows": [
+                [
+                  0.48,
+                  0.36,
+                  0.16
+                ]
+              ],
+              "label": "$\\boldsymbol{\\pi}_1$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "hidden": [
+            "C"
+          ],
+          "highlight": {
+            "A": {
+              "cols": [
+                2
+              ]
+            }
+          }
+        }
+      },
+      "question": "What is the chance of Rain on Tuesday?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.16,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.16: $0.7(0.1) + 0(0.3) + 0.3(0.3)$.",
+        "label": "Chance of Rain on Tuesday",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "col-conv",
+            "value": 0.23,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "col-sum",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "sunny-only",
+            "value": 0.07,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "rain-only",
+            "value": 0.09,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split by Monday's weather, as on the tree, weighting each row by Monday's chance."
+        },
+        {
+          "rung": "point",
+          "text": "Use the Rain column of $\\mathbf{P}$, weighted by $\\boldsymbol{\\pi}_0$.",
+          "highlight": [
+            "A-c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.7 \\times 0.1 + 0 \\times 0.3 + 0.3 \\times 0.3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.07 + 0 + 0.09 = 0.16$.",
+        "generic": "Not quite right. Weight each entry of the Rain column by Monday's chance of that row.",
+        "byKey": {
+          "col-conv": "You multiplied the Rain row by the forecast, as in $\\mathbf{P}\\boldsymbol{\\pi}$. With rows as today, the vector goes on the left and meets a column.",
+          "col-sum": "You added the Rain column without weights. Each entry counts only as much as Monday's chance of its row.",
+          "sunny-only": "That is the Sunny part only. A rainy Monday can lead to Rain too.",
+          "rain-only": "That is the rainy-Monday part only. A sunny Monday can lead to Rain too."
+        }
+      },
+      "explain": {
+        "text": "Each Monday state contributes its chance times its arrow to Rain: $0.7(0.1) + 0(0.3) + 0.3(0.3) = 0.16$. That is the row vector $\\boldsymbol{\\pi}_0$ times column Rain of $\\mathbf{P}$. The whole of $\\boldsymbol{\\pi}_1$ is $(0.48, 0.36, 0.16)$, which adds to 1.",
+        "canvas": {
+          "cell": [
+            "C-0-0",
+            "C-0-1",
+            "C-0-2"
+          ],
+          "highlight": {
+            "A": {
+              "cols": [
+                2
+              ]
+            },
+            "C": {
+              "cells": [
+                [
+                  0,
+                  2
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Zero steps",
+      "prose": "Put the slider of the bars back to $k = 0$ in your mind: the chances were the start itself, Rain with chance 1. The zero-step matrix $\\mathbf{P}^0$ must do the same for every start.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "V",
+              "rows": [
+                [
+                  0.7,
+                  0,
+                  0.3
+                ]
+              ],
+              "label": "$\\boldsymbol{\\pi}_0$"
+            },
+            {
+              "id": "Z",
+              "rows": [
+                [
+                  "?",
+                  "?",
+                  "?"
+                ],
+                [
+                  "?",
+                  "?",
+                  "?"
+                ],
+                [
+                  "?",
+                  "?",
+                  "?"
+                ]
+              ],
+              "label": "$\\mathbf{P}^0$"
+            },
+            {
+              "id": "C",
+              "rows": [
+                [
+                  0.7,
+                  0,
+                  0.3
+                ]
+              ],
+              "label": "$\\boldsymbol{\\pi}_0$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $\\mathbf{P}^0$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "I",
+            "text": "The identity matrix $\\mathbf{I}$: 1 on the diagonal, 0 elsewhere",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "The zero matrix",
+            "why": "Zero steps does not wipe the chances out. The zero matrix would send every forecast to $(0, 0, 0)$."
+          },
+          {
+            "id": "P",
+            "text": "$\\mathbf{P}$ itself",
+            "why": "$\\mathbf{P}$ takes one step. With zero steps the forecast must come back unchanged."
+          },
+          {
+            "id": "ones",
+            "text": "Every entry 1",
+            "why": "A row of 1s adds to 3, and the forecast would come back as $(1, 1, 1)$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After zero steps the chain is where it started. What must $\\boldsymbol{\\pi}_0\\mathbf{P}^0$ equal?"
+        },
+        {
+          "rung": "point",
+          "text": "We need $\\boldsymbol{\\pi}_0\\mathbf{P}^0 = \\boldsymbol{\\pi}_0$ for every $\\boldsymbol{\\pi}_0$.",
+          "highlight": [
+            "Z"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In zero steps state $i$ goes to state $i$ with chance 1, and nowhere else."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{P}^0 = \\mathbf{I}$: each state stays put.",
+        "generic": "Not quite right. Zero steps must leave every forecast unchanged."
+      },
+      "explain": {
+        "text": "In zero steps state $i$ is still state $i$, so row $i$ of $\\mathbf{P}^0$ has a 1 in column $i$ and 0s elsewhere. That is $\\mathbf{I}$, and $\\boldsymbol{\\pi}_0\\mathbf{I} = \\boldsymbol{\\pi}_0$. It also keeps the rule $\\mathbf{P}^{m}\\mathbf{P}^{n} = \\mathbf{P}^{m+n}$ true at $m = 0$.",
+        "canvas": {
+          "rows": {
+            "Z": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Square the entries?",
+      "prose": "A colleague wants the two-day chances fast, so they square every entry of $\\mathbf{P}$. Their sheet says Sunny to Sunny in two days is $0.6^2 = 0.36$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  0.6,
+                  0.3,
+                  0.1
+                ],
+                [
+                  0.3,
+                  0.4,
+                  0.3
+                ],
+                [
+                  0.2,
+                  0.5,
+                  0.3
+                ]
+              ],
+              "label": "$\\mathbf{P}$"
+            },
+            {
+              "id": "Q",
+              "rows": [
+                [
+                  0.36,
+                  0.09,
+                  0.01
+                ],
+                [
+                  0.09,
+                  0.16,
+                  0.09
+                ],
+                [
+                  0.04,
+                  0.25,
+                  0.09
+                ]
+              ],
+              "label": "entries squared"
+            }
+          ],
+          "ops": [
+            "→"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "Q": {
+              "cells": [
+                [
+                  0,
+                  0
+                ]
+              ]
+            }
+          }
+        }
+      },
+      "question": "What is the true chance of Sunny in two days, given Sunny today?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.47,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.47: $0.6(0.6) + 0.3(0.3) + 0.1(0.2)$.",
+        "label": "Chance of Sunny in two days",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "squared",
+            "value": 0.36,
+            "tol": {
+              "abs": 0.0005
+            },
+            "canvas": {
+              "highlight": {
+                "Q": {
+                  "rows": [
+                    0
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": "one-step",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "forgot-rain",
+            "value": 0.45,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Squaring 0.6 follows one path: Sunny, Sunny, Sunny. Which paths are missing?"
+        },
+        {
+          "rung": "point",
+          "text": "Row Sunny of $\\mathbf{P}$ times column Sunny of $\\mathbf{P}$.",
+          "highlight": [
+            "A-r0",
+            "A-c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.6(0.6) + 0.3(0.3) + 0.1(0.2)$: through Sunny, Cloudy and Rain tomorrow."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.36 + 0.09 + 0.02 = 0.47$.",
+        "generic": "Not quite right. Add every path through tomorrow's state, not only the one that stays.",
+        "byKey": {
+          "squared": "You squared the entry, which keeps only the path that stays Sunny. Squared rows add to $0.36 + 0.09 + 0.01 = 0.46$, so they cannot be chances.",
+          "one-step": "That is tomorrow's chance. Two days needs the two-step entry.",
+          "forgot-rain": "You added the paths through Sunny and Cloudy. A rainy middle day can also lead back to Sunny, with $0.1 \\times 0.2$."
+        }
+      },
+      "explain": {
+        "text": "Squaring an entry keeps one path, the one that stays put. The matrix product adds every path: $0.36 + 0.09 + 0.02 = 0.47$. The squared sheet's first row adds to 0.46, not 1, which gives the mistake away.",
+        "canvas": {
+          "highlight": {
+            "A": {
+              "rows": [
+                0
+              ],
+              "cols": [
+                0
+              ]
+            },
+            "Q": {
+              "rows": [
+                0
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Powers of the matrix",
+      "prose": "Each extra day multiplied by $\\mathbf{P}$ once more. So the $k$-step chances are the entries of $\\mathbf{P}^k$: $$P(X_{n+k} = j \\mid X_n = i) = (\\mathbf{P}^k)_{ij}, \\qquad \\boldsymbol{\\pi}_k = \\boldsymbol{\\pi}_0\\mathbf{P}^k, \\qquad \\mathbf{P}^{m+n} = \\mathbf{P}^m\\mathbf{P}^n.$$",
+      "question": "Which gives the chances for the weather 5 days from now, from today's row vector $\\boldsymbol{\\pi}_0$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\boldsymbol{\\pi}_0\\mathbf{P}^5$",
+            "correct": true
+          },
+          {
+            "id": "col",
+            "text": "$\\mathbf{P}^5\\boldsymbol{\\pi}_0$",
+            "why": "That is the column convention, for matrices whose columns add to 1. Our rows add to 1, so the row vector goes on the left."
+          },
+          {
+            "id": "times",
+            "text": "$5\\,\\boldsymbol{\\pi}_0\\mathbf{P}$",
+            "why": "Multiplying by 5 scales the chances to add to 5. Each day multiplies by $\\mathbf{P}$ again."
+          },
+          {
+            "id": "entries",
+            "text": "$\\boldsymbol{\\pi}_0$ times $\\mathbf{P}$ with each entry raised to the 5th power",
+            "why": "That keeps only the paths that never change state, as the squared sheet did."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Five days, five factors of $\\mathbf{P}$, vector on the left.",
+        "generic": "Not quite right. Each day is one more multiplication by $\\mathbf{P}$ on the right."
+      },
+      "explain": {
+        "text": "Each day multiplies the row vector by $\\mathbf{P}$ once, so five days give $\\boldsymbol{\\pi}_0\\mathbf{P}\\mathbf{P}\\mathbf{P}\\mathbf{P}\\mathbf{P} = \\boldsymbol{\\pi}_0\\mathbf{P}^5$. The last rule, the **Chapman–Kolmogorov equation**, is the tree with a middle day: go $m$ steps, then $n$ more."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Three years of ratings",
+      "prose": "A bank models a loan's rating each year: A, B or Default (D). Rows are this year, columns next year. Default is never left. A loan is rated A today.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.9,
+                  0.09,
+                  0.01
+                ],
+                [
+                  0.05,
+                  0.85,
+                  0.1
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "label": "$\\mathbf{P}$, order A, B, D"
+            }
+          ]
+        },
+        "state": {
+          "highlight": {
+            "M": {
+              "rows": [
+                0
+              ]
+            }
+          }
+        }
+      },
+      "question": "What is the chance the loan is in default in 3 years? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0519,
+        "tol": {
+          "abs": 0.0002
+        },
+        "unit": "",
+        "accept": "0.0519 (exactly 0.051895): row A of $\\mathbf{P}^2$ is $(0.8145, 0.1575, 0.028)$, then $0.8145(0.01) + 0.1575(0.1) + 0.028(1)$.",
+        "label": "Chance of default in 3 years",
+        "placeholder": "for example 0.1234",
+        "wrong": [
+          {
+            "id": "three-times",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "no-migration",
+            "value": 0.0297,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "two-years",
+            "value": 0.028,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "cubed",
+            "value": 1e-06,
+            "tol": {
+              "abs": 5e-07
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find row A of $\\mathbf{P}^2$ first, then take one more step to D."
+        },
+        {
+          "rung": "point",
+          "text": "Row A of $\\mathbf{P}^2$: A $0.8145$, B $0.1575$, D $0.028$.",
+          "highlight": [
+            "M-c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.8145 \\times 0.01 + 0.1575 \\times 0.1 + 0.028 \\times 1 = 0.051895$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(\\mathbf{P}^3)_{AD} = 0.0519$.",
+        "generic": "Not quite right. Compute row A of $\\mathbf{P}^2$, then multiply by column D of $\\mathbf{P}$.",
+        "byKey": {
+          "three-times": "You added 0.01 for each year. A loan can slip to B first, where default is ten times as likely.",
+          "no-migration": "You used $1 - 0.99^3$, as if the loan stayed rated A. Loans that slip to B default at 0.1 a year.",
+          "two-years": "That is $(\\mathbf{P}^2)_{AD}$, two years. Take one more step.",
+          "cubed": "You cubed the entry 0.01, which keeps the impossible path D, D, D from A. Multiply the matrices instead."
+        }
+      },
+      "explain": {
+        "text": "Row A of $\\mathbf{P}^2$ is $(0.8145, 0.1575, 0.028)$. One more step to D: $0.8145(0.01) + 0.1575(0.1) + 0.028(1) = 0.051895$. The B route, $0.01575$, is half again the A route, which is why migration matters.",
+        "canvas": {
+          "highlight": {
+            "M": {
+              "cols": [
+                2
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Regimes a week ahead",
+      "prose": "A desk tracks three volatility regimes: Calm, Normal and Stressed. `R3` is its daily matrix, rows today. Today is Normal. We want the chances for each regime five trading days ahead.",
+      "question": "Complete `step` (one day: the row vector times the matrix) and `after` (`k` days).",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "W = [[0.6, 0.3, 0.1], [0.3, 0.4, 0.3], [0.2, 0.5, 0.3]]\nR3 = [[0.8, 0.15, 0.05], [0.2, 0.7, 0.1], [0.1, 0.3, 0.6]]\nB = [[0.9, 0.1], [0.2, 0.8]]\n",
+        "starter": "R3 = [[0.8, 0.15, 0.05], [0.2, 0.7, 0.1], [0.1, 0.3, 0.6]]\n\ndef step(pi, P):\n    \"\"\"Return the row vector pi times the matrix P.\"\"\"\n    n = len(P)\n    return [... for j in range(n)]\n\ndef after(pi, P, k):\n    \"\"\"Return the distribution after k steps.\"\"\"\n    ...\n\nprint(after([0, 1, 0], R3, 5))\n",
+        "solution": "R3 = [[0.8, 0.15, 0.05], [0.2, 0.7, 0.1], [0.1, 0.3, 0.6]]\n\ndef step(pi, P):\n    \"\"\"Return the row vector pi times the matrix P.\"\"\"\n    n = len(P)\n    return [sum(pi[i] * P[i][j] for i in range(n)) for j in range(n)]\n\ndef after(pi, P, k):\n    \"\"\"Return the distribution after k steps.\"\"\"\n    for _ in range(k):\n        pi = step(pi, P)\n    return pi\n\nprint(after([0, 1, 0], R3, 5))\n",
+        "examples": [
+          {
+            "call": "step([0, 0, 1], W)",
+            "expect": "[0.2, 0.5, 0.3]",
+            "compare": "isclose"
+          },
+          {
+            "call": "after([0, 0, 1], W, 2)",
+            "expect": "[0.33, 0.41, 0.26]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "step([0, 0, 1], W)",
+            "expect": "[0.2, 0.5, 0.3]",
+            "compare": "isclose"
+          },
+          {
+            "call": "step([0.7, 0, 0.3], W)",
+            "expect": "[0.48, 0.36, 0.16]",
+            "compare": "isclose"
+          },
+          {
+            "call": "after([0, 0, 1], W, 2)",
+            "expect": "[0.33, 0.41, 0.26]",
+            "compare": "isclose"
+          },
+          {
+            "call": "after([0, 1, 0], R3, 0)",
+            "expect": "[0, 1, 0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "after([0, 1, 0], R3, 5)",
+            "expect": "[0.428785, 0.4122775, 0.1589375]",
+            "compare": "isclose"
+          },
+          {
+            "call": "after([1, 0], B, 3)",
+            "expect": "[0.781, 0.219]",
+            "compare": "isclose"
+          },
+          {
+            "call": "after([0.5, 0.5], B, 1)",
+            "expect": "[0.55, 0.45]",
+            "compare": "isclose"
+          },
+          {
+            "call": "step([1, 0], [[1, 0], [0, 1]])",
+            "expect": "[1, 0]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Each list is accepted when every entry is within a relative error of 1e-9 of the exact value."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Entry $j$ of $\\boldsymbol{\\pi}\\mathbf{P}$ is a sum over today's state $i$."
+        },
+        {
+          "rung": "point",
+          "text": "`sum(pi[i] * P[i][j] for i in range(n))` is entry `j`. For `after`, apply `step` `k` times."
+        },
+        {
+          "rung": "step",
+          "text": "In `after`, loop `for _ in range(k): pi = step(pi, P)`, then `return pi`. With `k = 0` the loop never runs, so `pi` comes back unchanged."
+        }
+      ],
+      "feedback": {
+        "correct": "Five steps from Normal: Calm 0.4288, Normal 0.4123, Stressed 0.1589.",
+        "generic": "Some tests failed. Check that entry `j` sums over the rows `i`, and that `after` applies `step` exactly `k` times.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that every `...` is replaced."
+        }
+      },
+      "explain": {
+        "text": "`step` weights each row of the matrix by today's chance and adds, which is $\\boldsymbol{\\pi}\\mathbf{P}$. `after` repeats it, which is $\\boldsymbol{\\pi}_0\\mathbf{P}^k$; with `k = 0` it returns the start, as $\\mathbf{P}^0 = \\mathbf{I}$ does. From Normal, a week ahead the desk sees Stressed with chance 0.1589.\n\n```python\nreturn [sum(pi[i] * P[i][j] for i in range(n)) for j in range(n)]\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The transition matrix has $p_{ij} = P(\\text{next} = j \\mid \\text{now} = i)$: rows are now, columns are next, and each row adds to 1.",
+      "Two-step chances sum over the middle state, $\\sum_m p_{im}p_{mj}$, which is the matrix product: $k$ steps is $\\mathbf{P}^k$, and zero steps is $\\mathbf{I}$.",
+      "A distribution moves as a row vector: $\\boldsymbol{\\pi}_1 = \\boldsymbol{\\pi}_0\\mathbf{P}$ and $\\boldsymbol{\\pi}_k = \\boldsymbol{\\pi}_0\\mathbf{P}^k$."
+    ],
+    "formula": {
+      "name": "k-step chances",
+      "tex": "P(X_{n+k} = j \\mid X_n = i) = (\\mathbf{P}^k)_{ij}, \\qquad \\boldsymbol{\\pi}_k = \\boldsymbol{\\pi}_0\\mathbf{P}^k",
+      "note": "Rows add to 1 here. With columns adding to 1, as in the eigen course, write $\\mathbf{M}^k\\mathbf{s}_0$ instead."
+    },
+    "trap": "Squaring the entries keeps only the path that stays put. Multiply the matrices, and check that each row of the answer adds to 1."
+  },
+  "quiz": [
+    {
+      "id": "q-two-step",
+      "difficulty": 2,
+      "prose": "A regime chain has $\\mathbf{P} = \\begin{pmatrix} 0.9 & 0.1 \\\\ 0.2 & 0.8 \\end{pmatrix}$, with states bull then bear.",
+      "question": "Today is bear. What is the chance of bull in two periods?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.34,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.34: $0.2(0.9) + 0.8(0.2)$.",
+        "label": "Chance of bull in two periods",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "squared",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-path",
+            "value": 0.18,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "other",
+            "value": 0.16,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.18 + 0.16 = 0.34$.",
+        "generic": "Not quite right. Sum over the middle period: bull or bear.",
+        "byKey": {
+          "squared": "You squared 0.2. That keeps one path and drops the route that stays in bear first.",
+          "one-path": "That is the route through bull: bear, bull, bull. Add the route bear, bear, bull.",
+          "other": "That is the route through bear only. Add the route through bull."
+        }
+      },
+      "explain": {
+        "text": "Row bear is $(0.2, 0.8)$ and column bull is $(0.9, 0.2)$. So $(\\mathbf{P}^2)_{\\text{bear, bull}} = 0.2(0.9) + 0.8(0.2) = 0.34$."
+      }
+    },
+    {
+      "id": "q-one-step-vector",
+      "difficulty": 2,
+      "prose": "Same regime chain. Today's regime is unclear: bull or bear with chance 0.5 each.",
+      "question": "What is the chance of bull next period?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.55,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.55: $0.5(0.9) + 0.5(0.2)$.",
+        "label": "Chance of bull next period",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "row",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "col-sum",
+            "value": 1.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "bull-only",
+            "value": 0.45,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\boldsymbol{\\pi}_1 = (0.55, 0.45)$.",
+        "generic": "Not quite right. Weight column bull by today's chances.",
+        "byKey": {
+          "row": "You used the bull row, $0.5(0.9) + 0.5(0.1)$. The vector meets a column: the arrows into bull.",
+          "col-sum": "You added the column without weights. Each entry counts with today's chance of its row.",
+          "bull-only": "That is the bull part only. A bear today can turn bull too."
+        }
+      },
+      "explain": {
+        "text": "$\\boldsymbol{\\pi}_1 = \\boldsymbol{\\pi}_0\\mathbf{P}$, so the bull entry is $0.5(0.9) + 0.5(0.2) = 0.55$. The bear entry is $0.45$, and they add to 1."
+      }
+    },
+    {
+      "id": "q-columns",
+      "difficulty": 3,
+      "prose": "A paper writes the same chain as $\\mathbf{M} = \\mathbf{P}^{\\mathsf{T}}$, so each column of $\\mathbf{M}$ adds to 1, as in the eigen course. Its distributions are column vectors $\\mathbf{s}$.",
+      "question": "How does the paper move a distribution forward one step?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\mathbf{s}_1 = \\mathbf{M}\\mathbf{s}_0$",
+            "correct": true
+          },
+          {
+            "id": "left",
+            "text": "$\\mathbf{s}_1 = \\mathbf{s}_0\\mathbf{M}$",
+            "why": "That is our row rule applied to the transposed matrix. With columns adding to 1, the matrix goes on the left."
+          },
+          {
+            "id": "trans",
+            "text": "$\\mathbf{s}_1 = \\mathbf{M}^{\\mathsf{T}}\\mathbf{M}\\mathbf{s}_0$",
+            "why": "One step needs one factor of the matrix. $\\mathbf{M}^{\\mathsf{T}}\\mathbf{M}$ mixes the two conventions."
+          },
+          {
+            "id": "same",
+            "text": "Either order gives the same answer",
+            "why": "Matrix products do not commute. $\\mathbf{M}\\mathbf{s}$ and the row form agree only after a transpose."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Columns add to 1, so the matrix acts on the left.",
+        "generic": "Not quite right. Transpose our rule: $(\\boldsymbol{\\pi}\\mathbf{P})^{\\mathsf{T}} = \\mathbf{P}^{\\mathsf{T}}\\boldsymbol{\\pi}^{\\mathsf{T}}$."
+      },
+      "explain": {
+        "text": "Transposing $\\boldsymbol{\\pi}_1 = \\boldsymbol{\\pi}_0\\mathbf{P}$ gives $\\boldsymbol{\\pi}_1^{\\mathsf{T}} = \\mathbf{P}^{\\mathsf{T}}\\boldsymbol{\\pi}_0^{\\mathsf{T}}$, which is $\\mathbf{s}_1 = \\mathbf{M}\\mathbf{s}_0$. Same chances, other side. Always check which way a matrix's chances add to 1 before multiplying."
+      }
+    },
+    {
+      "id": "q-chapman",
+      "difficulty": 3,
+      "prose": "You have $\\mathbf{P}^2$ and $\\mathbf{P}^3$ for a chain, already computed.",
+      "question": "Which product gives the 5-step chances?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\mathbf{P}^2\\mathbf{P}^3$",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "$\\mathbf{P}^2 + \\mathbf{P}^3$",
+            "why": "Adding gives rows that add to 2. Steps chain together by multiplying."
+          },
+          {
+            "id": "pow6",
+            "text": "$(\\mathbf{P}^2)^3$",
+            "why": "That is $\\mathbf{P}^6$: three blocks of two steps."
+          },
+          {
+            "id": "entry",
+            "text": "Multiply them entry by entry",
+            "why": "Entry by entry keeps one route through the middle. The matrix product adds every route."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two steps, then three: $\\mathbf{P}^{2+3}$.",
+        "generic": "Not quite right. Go two steps, then three more."
+      },
+      "explain": {
+        "text": "Going 2 steps and then 3 more sums over the state after step 2: $(\\mathbf{P}^5)_{ij} = \\sum_m (\\mathbf{P}^2)_{im}(\\mathbf{P}^3)_{mj}$. That sum is the matrix product $\\mathbf{P}^2\\mathbf{P}^3$."
+      }
+    }
+  ]
+}

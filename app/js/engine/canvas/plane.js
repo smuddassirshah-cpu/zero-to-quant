@@ -892,8 +892,9 @@
           if (Math.abs(sl - sr) > 1e-3 * Math.max(1, Math.abs(sl), Math.abs(sr))) { if (tg.side === 'left') mm = sl; else if (tg.side === 'right') mm = sr; else continue; }
           /* length in x units, or lengthPx in pixels along the line */
           const pxPerX = Math.hypot(sx(1) - sx(0), mm * (sy(0) - sy(1)));
-          const half = tg.lengthPx ? (tg.lengthPx / 2) * Math.sqrt(1 + mm * mm) / (pxPerX || 1) : tg.length ? tg.length / 2 : null;
-          const xa = half ? x0 - half / Math.sqrt(1 + mm * mm) : xr[0], xb = half ? x0 + half / Math.sqrt(1 + mm * mm) : xr[1];
+          /* item 206: length spans that many x units (as documented), so a steep tangent is not cut to a stub */
+          const halfX = tg.lengthPx ? (tg.lengthPx / 2) / (pxPerX || 1) : tg.length ? tg.length / 2 : null;
+          const xa = halfX ? x0 - halfX : xr[0], xb = halfX ? x0 + halfX : xr[1];
           const o = K.obj(tg.id || 'tangent', 'cvb-tangent', tg.colour || 'ink');
           const d = `M${sx(xa)},${sy(y0 + mm * (xa - x0))}L${sx(xb)},${sy(y0 + mm * (xb - x0))}`;
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (tg.dashed ? ' cvb-dash' : '') }), svg('circle', { cx: sx(x0), cy: sy(y0), r: 4, class: 'cvb-dot' }));

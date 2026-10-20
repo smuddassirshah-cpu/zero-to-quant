@@ -1,0 +1,1168 @@
+{
+  "id": "l5-where-it-settles",
+  "course": "markov",
+  "title": "Where the chain settles",
+  "minutes": 13,
+  "objectives": [
+    "Find a stationary distribution by solving $\\pi P = \\pi$.",
+    "Read $\\pi$ as the long-run share of time in each state."
+  ],
+  "skills": [
+    "mc-longrun"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Two starts",
+      "prose": "The bull and bear chain has $P = \\begin{pmatrix}0.9 & 0.1\\\\ 0.2 & 0.8\\end{pmatrix}$, rows and columns in the order bull, bear. The bars show the chance of a bull market after $k$ steps, from a bull start and from a bear start. Slide $k$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "fromBull",
+              "label": "Bull start"
+            },
+            {
+              "id": "fromBear",
+              "label": "Bear start"
+            }
+          ],
+          "yLabel": "P(bull after k steps)",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "fromBull": 1,
+            "fromBear": 0
+          },
+          "params": {
+            "k": 0
+          }
+        },
+        "derive": {
+          "values.fromBull": "round(2/3 + pow(0.7, k) / 3, 6)",
+          "values.fromBear": "round(2/3 - 2 * pow(0.7, k) / 3, 6)",
+          "caption": "After {{k}} steps."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 30,
+            "step": 1,
+            "label": "Steps $k$",
+            "start": 0
+          }
+        ]
+      },
+      "question": "Where do both bars head as $k$ grows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Both to about 0.667, whatever the start",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "Both to 0.5: bull and bear even out",
+            "why": "You assumed the two regimes balance. Slide $k$ to 30: both bars sit near 0.667, because bull is stickier than bear."
+          },
+          {
+            "id": "stay",
+            "text": "Each stays near its start: 1 for bull, 0 for bear",
+            "why": "You read 0.9 as bull lasting for ever. Slide $k$ to 30: the bull start falls to 0.667."
+          },
+          {
+            "id": "nine",
+            "text": "Both to 0.9, the chance bull stays bull",
+            "why": "You took the one-step chance 0.9 as the long-run answer. The bull bar falls below it after one step."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag the slider all the way to 30 and read both bars."
+        }
+      ],
+      "feedback": {
+        "correct": "Both bars meet at about 0.667, and the start is forgotten.",
+        "generic": "Not quite right. Slide $k$ to 30 and read both bars."
+      },
+      "explain": {
+        "text": "By $k = 30$ both bars read 0.667. The bull start falls and the bear start rises until they meet. The chain forgets where it began.",
+        "canvas": {
+          "params": {
+            "k": 30
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A split that does not move",
+      "prose": "Suppose today is bull with chance $\\tfrac23$ and bear with chance $\\tfrac13$. Write this as the row vector $\\pi = (\\tfrac23, \\tfrac13)$. Tomorrow's chances are $\\pi P$: each entry weights one column of $P$ by today's chances.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "pi",
+              "rows": [
+                [
+                  "$\\tfrac23$",
+                  "$\\tfrac13$"
+                ]
+              ],
+              "label": "$\\pi$"
+            },
+            {
+              "id": "P",
+              "rows": [
+                [
+                  0.9,
+                  0.1
+                ],
+                [
+                  0.2,
+                  0.8
+                ]
+              ],
+              "label": "$P$"
+            },
+            {
+              "id": "R",
+              "rows": [
+                [
+                  "$\\tfrac23$",
+                  "$\\tfrac13$"
+                ]
+              ],
+              "label": "$\\pi P$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "hidden": [
+            "R"
+          ],
+          "caption": "Columns of $P$: bull, then bear."
+        }
+      },
+      "question": "Fill in tomorrow's chances, as decimals.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Tomorrow",
+          "Chance"
+        ],
+        "rows": [
+          [
+            "Bull",
+            {
+              "edit": true,
+              "answer": 0.6667,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "Bear",
+            {
+              "edit": true,
+              "answer": 0.3333,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Bull tomorrow can follow a bull day or a bear day."
+        },
+        {
+          "rung": "point",
+          "text": "Use the bull column of $P$: 0.9 from bull and 0.2 from bear.",
+          "highlight": [
+            "P-c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bull: $\\tfrac23 \\times 0.9 + \\tfrac13 \\times 0.2 = 0.6 + 0.0667$. Bear: $\\tfrac23 \\times 0.1 + \\tfrac13 \\times 0.8$."
+        }
+      ],
+      "feedback": {
+        "correct": "Tomorrow's split is today's split: $(\\tfrac23, \\tfrac13)$.",
+        "generic": "Not quite right. Weight each column of $P$ by today's chances, then add.",
+        "byKey": {
+          "r0c1": "Check the bull entry: $\\tfrac23 \\times 0.9 + \\tfrac13 \\times 0.2$. It uses the first column of $P$, not the first row.",
+          "r1c1": "Check the bear entry: $\\tfrac23 \\times 0.1 + \\tfrac13 \\times 0.8$. It uses the second column of $P$."
+        }
+      },
+      "explain": {
+        "text": "One step leaves $(\\tfrac23, \\tfrac13)$ where it was. A distribution with $\\pi P = \\pi$ is called **stationary**. It is where both bars settled on the last screen.",
+        "canvas": {
+          "hidden": [],
+          "highlight": [
+            "R"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Solve for it",
+      "prose": "A trading signal is on or off each day. On stays on with chance 0.95; off stays off with chance 0.85. Write $\\pi = (x, 1 - x)$, with $x$ the long-run chance the signal is on.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "P",
+              "rows": [
+                [
+                  0.95,
+                  0.05
+                ],
+                [
+                  0.15,
+                  0.85
+                ]
+              ],
+              "label": "$P$"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Rows and columns in the order on, off."
+        }
+      },
+      "question": "Solve the first column of $\\pi P = \\pi$: $0.95x + 0.15(1 - x) = x$. What is $x$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.002
+        },
+        "placeholder": "decimal or fraction",
+        "label": "Long-run chance the signal is on",
+        "accept": "0.75, or $\\tfrac34$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "swap",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 3,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "diag",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Collect the $x$ terms on one side."
+        },
+        {
+          "rung": "point",
+          "text": "$0.15(1 - x) = x - 0.95x = 0.05x$."
+        },
+        {
+          "rung": "step",
+          "text": "$0.15 - 0.15x = 0.05x$, so $0.15 = 0.2x$."
+        }
+      ],
+      "feedback": {
+        "correct": "$x = 0.15 / 0.2 = 0.75$.",
+        "generic": "Not quite right. Expand $0.15(1 - x)$, then collect the $x$ terms.",
+        "byKey": {
+          "half": "You split the time evenly. The signal leaves on less often than it leaves off, so it is on more than half the time.",
+          "swap": "0.25 is the share of days off. You solved for $1 - x$.",
+          "ratio": "3 is the ratio of on days to off days. Writing $\\pi = (x, 1 - x)$ makes the shares add to 1, so $x = \\tfrac34$.",
+          "diag": "0.95 is the one-day chance that on stays on. The long-run share also counts days that start off."
+        }
+      },
+      "explain": {
+        "text": "Flow out of on is $0.05x$, and flow into on is $0.15(1 - x)$. They balance at $x = 0.75$. Check: $0.95 \\times 0.75 + 0.15 \\times 0.25 = 0.75$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Three states by elimination",
+      "prose": "Write $\\pi = (\\pi_L, \\pi_M, \\pi_H)$ for this chain. Column L of $\\pi P = \\pi$ says $0.75\\pi_L + 0.10\\pi_M = \\pi_L$. Column H says $0.15\\pi_M + 0.75\\pi_H = \\pi_H$.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 230,
+          "nodes": [
+            {
+              "id": "L",
+              "label": "L",
+              "x": 0.08,
+              "y": 0.6
+            },
+            {
+              "id": "M",
+              "label": "M",
+              "x": 0.5,
+              "y": 0.6
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.92,
+              "y": 0.6
+            }
+          ],
+          "edges": [
+            {
+              "from": "L",
+              "to": "L",
+              "w": 0.75
+            },
+            {
+              "from": "L",
+              "to": "M",
+              "w": 0.25
+            },
+            {
+              "from": "M",
+              "to": "L",
+              "w": 0.1
+            },
+            {
+              "from": "M",
+              "to": "M",
+              "w": 0.75
+            },
+            {
+              "from": "M",
+              "to": "H",
+              "w": 0.15
+            },
+            {
+              "from": "H",
+              "to": "M",
+              "w": 0.25
+            },
+            {
+              "from": "H",
+              "to": "H",
+              "w": 0.75
+            }
+          ]
+        },
+        "state": {
+          "caption": "Weekly volatility regimes: low (L), medium (M), high (H)."
+        }
+      },
+      "question": "Eliminate down to $\\pi_L$, then fill in the table.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Step",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$\\pi_M$ as a multiple of $\\pi_L$",
+            {
+              "edit": true,
+              "answer": 2.5,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$\\pi_H$ as a multiple of $\\pi_L$",
+            {
+              "edit": true,
+              "answer": 1.5,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "$\\pi_L$, using $\\pi_L + \\pi_M + \\pi_H = 1$",
+            {
+              "edit": true,
+              "answer": 0.2,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "$\\pi_M$",
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "$\\pi_H$",
+            {
+              "edit": true,
+              "answer": 0.3,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Column L gives $0.10\\pi_M = 0.25\\pi_L$."
+        },
+        {
+          "rung": "point",
+          "text": "Column H gives $0.25\\pi_H = 0.15\\pi_M$, so $\\pi_H = 0.6\\pi_M$."
+        },
+        {
+          "rung": "step",
+          "text": "$\\pi_M = 2.5\\pi_L$ and $\\pi_H = 0.6 \\times 2.5\\pi_L = 1.5\\pi_L$. Then $5\\pi_L = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\pi = (0.2, 0.5, 0.3)$.",
+        "generic": "Not quite right. Write $\\pi_M$ and $\\pi_H$ in terms of $\\pi_L$, then make the three add to 1.",
+        "byKey": {
+          "r0c1": "From column L, $0.10\\pi_M = 0.25\\pi_L$. Divide by 0.10.",
+          "r1c1": "From column H, $\\pi_H = 0.6\\pi_M$. Then use $\\pi_M = 2.5\\pi_L$.",
+          "r2c1": "Use the normalising equation: $\\pi_L(1 + 2.5 + 1.5) = 1$."
+        }
+      },
+      "explain": {
+        "text": "Columns L and H each tie two shares together, and the shares adding to 1 fixes the scale. So $\\pi = (0.2, 0.5, 0.3)$. Column M then holds by itself: $0.05 + 0.375 + 0.075 = 0.5$.",
+        "canvas": {
+          "distribution": {
+            "L": 0.2,
+            "M": 0.5,
+            "H": 0.3
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A state you never leave",
+      "prose": "A loan is performing (Perf) or in default (Def). Each year a performing loan defaults with chance 0.03. A defaulted loan stays defaulted. Slide the years and watch where the probability goes.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 200,
+          "nodes": [
+            {
+              "id": "Perf",
+              "label": "Perf",
+              "x": 0.2,
+              "y": 0.55
+            },
+            {
+              "id": "Def",
+              "label": "Def",
+              "x": 0.8,
+              "y": 0.55
+            }
+          ],
+          "edges": [
+            {
+              "from": "Perf",
+              "to": "Perf",
+              "w": 0.97
+            },
+            {
+              "from": "Perf",
+              "to": "Def",
+              "w": 0.03
+            },
+            {
+              "from": "Def",
+              "to": "Def",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "distribution": {
+            "Perf": 1,
+            "Def": 0
+          },
+          "params": {
+            "k": 0
+          }
+        },
+        "derive": {
+          "distribution.Perf": "round(pow(0.97, k), 4)",
+          "distribution.Def": "round(1 - pow(0.97, k), 4)",
+          "caption": "After {{k}} years."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 100,
+            "step": 5,
+            "label": "Years",
+            "start": 0
+          }
+        ]
+      },
+      "question": "What is the stationary distribution $(\\pi_{\\text{Perf}}, \\pi_{\\text{Def}})$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$(0, 1)$",
+            "correct": true
+          },
+          {
+            "id": "row",
+            "text": "$(0.97, 0.03)$",
+            "why": "You read the performing row as the long-run split. That row is one year's move from Perf."
+          },
+          {
+            "id": "even",
+            "text": "$(0.5, 0.5)$",
+            "why": "You split evenly between the states. Default is never left, so it collects everything."
+          },
+          {
+            "id": "none",
+            "text": "There is none",
+            "why": "You took absorption as the chain stopping. It sits in Def for ever, and $(0, 1)P = (0, 1)$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide the years to 100. Where is the probability?"
+        },
+        {
+          "rung": "point",
+          "text": "Column Perf of $\\pi P = \\pi$ reads $0.97\\pi_{\\text{Perf}} = \\pi_{\\text{Perf}}$."
+        },
+        {
+          "rung": "step",
+          "text": "That forces $\\pi_{\\text{Perf}} = 0$, and the shares add to 1."
+        }
+      ],
+      "feedback": {
+        "correct": "All the probability ends in the absorbing state.",
+        "generic": "Not quite right. Solve $0.97\\pi_{\\text{Perf}} = \\pi_{\\text{Perf}}$ first."
+      },
+      "explain": {
+        "text": "$0.97\\pi_{\\text{Perf}} = \\pi_{\\text{Perf}}$ holds only when $\\pi_{\\text{Perf}} = 0$. So $\\pi = (0, 1)$: an absorbing state takes all the long-run mass. After 100 years only $0.97^{100} \\approx 0.048$ is still performing.",
+        "canvas": {
+          "params": {
+            "k": 100
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Rows, not columns",
+      "prose": "A colleague codes the volatility chain. Her code finds $\\mathbf{v}$ with $P\\mathbf{v} = \\mathbf{v}$, as in the eigenvalue course, then scales it to add to 1. It reports $(\\tfrac13, \\tfrac13, \\tfrac13)$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "P",
+              "rows": [
+                [
+                  0.75,
+                  0.25,
+                  0
+                ],
+                [
+                  0.1,
+                  0.75,
+                  0.15
+                ],
+                [
+                  0,
+                  0.25,
+                  0.75
+                ]
+              ],
+              "label": "$P$"
+            },
+            {
+              "id": "v",
+              "rows": [
+                [
+                  "$\\tfrac13$"
+                ],
+                [
+                  "$\\tfrac13$"
+                ],
+                [
+                  "$\\tfrac13$"
+                ]
+              ],
+              "label": "her $\\mathbf{v}$"
+            },
+            {
+              "id": "w",
+              "rows": [
+                [
+                  "$\\tfrac13$"
+                ],
+                [
+                  "$\\tfrac13$"
+                ],
+                [
+                  "$\\tfrac13$"
+                ]
+              ],
+              "label": ""
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "caption": "Rows and columns in the order L, M, H. Each row adds to 1."
+        }
+      },
+      "question": "What is the long-run share of high-volatility weeks?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0.3$",
+            "correct": true
+          },
+          {
+            "id": "col",
+            "text": "$\\tfrac13$",
+            "why": "You trusted $P\\mathbf{v} = \\mathbf{v}$. Each row of $P$ adds to 1, so $(1, 1, 1)$ solves it for every chain."
+          },
+          {
+            "id": "unit",
+            "text": "$0.577$",
+            "why": "That is $1/\\sqrt{3}$, a length-1 scaling of her vector. Shares add to 1, and her equation is the wrong one."
+          },
+          {
+            "id": "diag",
+            "text": "$0.75$",
+            "why": "0.75 is the chance high stays high for one week. The long run also counts weeks that start low or medium."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Do the rows or the columns of $P$ add to 1?"
+        },
+        {
+          "rung": "point",
+          "text": "Rows add to 1, so the distribution multiplies $P$ from the left: $\\pi P = \\pi$."
+        },
+        {
+          "rung": "step",
+          "text": "You solved $\\pi P = \\pi$ for this chain by elimination two screens ago."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\pi = (0.2, 0.5, 0.3)$, so 30% of weeks are high volatility.",
+        "generic": "Not quite right. The long-run split solves $\\pi P = \\pi$, with $\\pi$ on the left.",
+        "byKey": {
+          "col": "You solved $P\\mathbf{v} = \\mathbf{v}$, the column convention. Here rows add to 1, so the long-run split solves $\\pi P = \\pi$."
+        }
+      },
+      "explain": {
+        "text": "With rows adding to 1, $P(1, 1, 1)^T = (1, 1, 1)^T$ for every chain, so her answer says nothing. The eigenvalue course had columns adding to 1, where $M\\mathbf{s} = \\mathbf{s}$ was right. Here we need $\\pi P = \\pi$, which gives 0.3.",
+        "canvas": {
+          "highlight": [
+            "P-r0",
+            "P-r1",
+            "P-r2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Any two-state chain",
+      "prose": "Generalise the signal calculation. Take $P = \\begin{pmatrix}1-a & a\\\\ b & 1-b\\end{pmatrix}$ with $a + b > 0$. We need $\\pi P = \\pi$ and the **normalising equation** $\\pi_1 + \\pi_2 = 1$. Without it, any multiple of $\\pi$ also solves $\\pi P = \\pi$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "o1",
+            "text": "$\\pi_1 = (1 - a)\\pi_1 + b\\pi_2$, the first column of $\\pi P = \\pi$"
+          },
+          {
+            "id": "o2",
+            "text": "$a\\pi_1 = b\\pi_2$, subtract $(1 - a)\\pi_1$: flow out of state 1 equals flow in"
+          },
+          {
+            "id": "o3",
+            "text": "$a\\pi_1 = b(1 - \\pi_1)$, the normalising equation gives $\\pi_2 = 1 - \\pi_1$"
+          },
+          {
+            "id": "o4",
+            "text": "$(a + b)\\pi_1 = b$, collect the $\\pi_1$ terms"
+          },
+          {
+            "id": "o5",
+            "text": "$\\pi_1 = \\dfrac{b}{a + b}$ and $\\pi_2 = \\dfrac{a}{a + b}$, divide by $a + b > 0$"
+          }
+        ],
+        "answer": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from one column of $\\pi P = \\pi$."
+        },
+        {
+          "rung": "point",
+          "text": "Next, simplify it into a balance of flows."
+        },
+        {
+          "rung": "step",
+          "text": "Column, balance, normalise, collect, divide."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\pi_1 = \\dfrac{b}{a + b}$.",
+        "generic": "Not quite right. Begin with the column equation, and use the normalising equation only once it is simplified.",
+        "byKey": {
+          "o2": "The balance of flows comes from simplifying a column equation, so that equation must come first.",
+          "o3": "Substituting $\\pi_2 = 1 - \\pi_1$ needs the simplified balance $a\\pi_1 = b\\pi_2$ first.",
+          "o4": "Collecting terms needs the line with $\\pi_2$ already replaced.",
+          "o5": "Dividing by $a + b$ is the last step."
+        }
+      },
+      "explain": {
+        "text": "Both columns of $\\pi P = \\pi$ give the same equation, $a\\pi_1 = b\\pi_2$. The normalising equation supplies the missing one. For the regime chain, $a = 0.1$ and $b = 0.2$, so $\\pi_1 = \\tfrac{0.2}{0.3} = \\tfrac23$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Time spent in each state",
+      "prose": "$\\pi$ is also the long-run share of *time* in each state. Test it. `share_in_bull(days, seed)` runs the regime chain from a bear day and returns the share of days spent in bull. One line is missing.",
+      "question": "Replace `...` so the function counts the bull days.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\nP = [[0.9, 0.1],    # from bull\n     [0.2, 0.8]]    # from bear\n\ndef share_in_bull(days, seed):\n    rng = random.Random(seed)\n    state = 1                  # 0 is bull, 1 is bear\n    bull_days = 0\n    for _ in range(days):\n        if rng.random() < P[state][0]:\n            state = 0          # bull next\n        else:\n            state = 1          # bear next\n        bull_days += ...\n    return bull_days / days\n",
+        "solution": "import random\n\nP = [[0.9, 0.1],    # from bull\n     [0.2, 0.8]]    # from bear\n\ndef share_in_bull(days, seed):\n    rng = random.Random(seed)\n    state = 1                  # 0 is bull, 1 is bear\n    bull_days = 0\n    for _ in range(days):\n        if rng.random() < P[state][0]:\n            state = 0          # bull next\n        else:\n            state = 1          # bear next\n        bull_days += (state == 0)\n    return bull_days / days\n",
+        "examples": [
+          {
+            "call": "share_in_bull(10, 3)",
+            "expect": "0.5",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "abs(share_in_bull(200000, 1) - 2/3) < 0.015",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(share_in_bull(200000, 2) - 2/3) < 0.015",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(share_in_bull(200000, 7) - 2/3) < 0.015",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "share_in_bull(10, 3)",
+            "expect": "0.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "share_in_bull(1, 1)",
+            "expect": "1.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Over 200,000 days each share must be within 0.015 of $\\tfrac23$, and two short runs must match exactly."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What should be added on a bull day, and what on a bear day?"
+        },
+        {
+          "rung": "point",
+          "text": "After the `if`, `state` is 0 on a bull day."
+        },
+        {
+          "rung": "step",
+          "text": "Add `(state == 0)`: Python counts `True` as 1 and `False` as 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Each bull day adds 1, each bear day adds 0.",
+        "generic": "Some tests failed. Add 1 to `bull_days` exactly when the new state is bull.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that `...` is replaced by an expression."
+        }
+      },
+      "explain": {
+        "text": "`bull_days += (state == 0)` adds 1 on a bull day and 0 otherwise. With seeds 1, 2 and 7 the shares are 0.666255, 0.668935 and 0.66784. They converge to exactly $\\tfrac23$, the stationary chance of bull.\n\n```python\nbull_days += (state == 0)   # True counts as 1\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The long-run average return",
+      "prose": "Treat each step of the regime chain as one month. A bull month returns 2% on average and a bear month loses 3%. Over many months, each regime counts in proportion to its share of time: the average is $\\sum_i \\pi_i \\mu_i$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Regime",
+            "$\\pi_i$",
+            "Mean return $\\mu_i$"
+          ],
+          "rows": [
+            [
+              "Bull",
+              "$\\tfrac23$",
+              "0.02"
+            ],
+            [
+              "Bear",
+              "$\\tfrac13$",
+              "-0.03"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Monthly returns as decimals."
+        }
+      },
+      "question": "What is the long-run average monthly return? Give a percentage.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.003333,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "%",
+        "label": "Average monthly return",
+        "accept": "0.33%, from $\\tfrac23(0.02) + \\tfrac13(-0.03) = 0.0033$.",
+        "wrong": [
+          {
+            "id": "simple",
+            "value": -0.005,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "diag",
+            "value": 0.015,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "swapped",
+            "value": -0.013333,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight each regime's mean by its long-run share."
+        },
+        {
+          "rung": "point",
+          "text": "The weights are $\\pi = (\\tfrac23, \\tfrac13)$."
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac23 \\times 0.02 = 0.0133$ and $\\tfrac13 \\times (-0.03) = -0.01$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 0.33% a month.",
+        "generic": "Not quite right. Multiply each mean by its long-run share, then add.",
+        "byKey": {
+          "simple": "You averaged the two returns equally. Bull months are twice as common as bear months.",
+          "diag": "You weighted by 0.9 and 0.1, the bull row of $P$. The weights are the long-run shares, $\\tfrac23$ and $\\tfrac13$.",
+          "swapped": "You gave bear the weight $\\tfrac23$. Bull is the regime with share $\\tfrac23$."
+        }
+      },
+      "explain": {
+        "text": "Each month's mean depends only on its regime, and $\\pi$ says how often each regime occurs. So the long-run mean is $\\tfrac23(0.02) + \\tfrac13(-0.03) \\approx 0.0033$, about 0.33% a month. The bear months cost a lot, but they are only a third of the time.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A stationary distribution is not moved by a step: $\\pi P = \\pi$, with $\\pi$ a row vector because the rows of $P$ add to 1.",
+      "The equations of $\\pi P = \\pi$ are dependent. Add the normalising equation $\\sum_i \\pi_i = 1$, then solve by elimination.",
+      "The regime chain settles at $\\pi$ from any start, and $\\pi_i$ is the long-run share of time in state $i$."
+    ],
+    "formula": {
+      "name": "Stationary distribution",
+      "tex": "\\pi P = \\pi, \\qquad \\sum_i \\pi_i = 1",
+      "note": "Two states: $\\pi_1 = \\dfrac{b}{a + b}$, where $a = P_{12}$ and $b = P_{21}$."
+    },
+    "trap": "Solving $P\\mathbf{v} = \\mathbf{v}$ uses columns. When rows add to 1 it always returns the all-equal vector, whatever the chain."
+  },
+  "quiz": [
+    {
+      "id": "q-trend-range",
+      "difficulty": 2,
+      "prose": "A stock trends or ranges each day. $P = \\begin{pmatrix}0.6 & 0.4\\\\ 0.2 & 0.8\\end{pmatrix}$, rows and columns in the order trending, ranging.",
+      "question": "What is the long-run chance the stock is trending?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\tfrac13$",
+            "correct": true
+          },
+          {
+            "id": "diag",
+            "text": "$0.6$",
+            "why": "0.6 is the one-day chance that trending stays trending, not a long-run share."
+          },
+          {
+            "id": "swap",
+            "text": "$\\tfrac23$",
+            "why": "You used $a/(a + b)$. The share of state 1 is $b/(a + b) = 0.2/0.6$."
+          },
+          {
+            "id": "half",
+            "text": "$\\tfrac12$",
+            "why": "You split the days evenly. Ranging is stickier, so it gets more of the time."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\pi_1 = 0.2 / (0.4 + 0.2) = \\tfrac13$.",
+        "generic": "Not quite right. Balance the flows: $0.4\\pi_1 = 0.2\\pi_2$."
+      },
+      "explain": {
+        "text": "Flow out of trending is $0.4\\pi_1$ and flow in is $0.2\\pi_2$. With $\\pi_1 + \\pi_2 = 1$, $\\pi_1 = \\tfrac{0.2}{0.6} = \\tfrac13$. Check: $\\tfrac13 \\times 0.6 + \\tfrac23 \\times 0.2 = \\tfrac13$."
+      }
+    },
+    {
+      "id": "q-half-half",
+      "difficulty": 2,
+      "prose": "The regime chain has $P = \\begin{pmatrix}0.9 & 0.1\\\\ 0.2 & 0.8\\end{pmatrix}$. Today is bull or bear with chance $\\tfrac12$ each.",
+      "question": "What is the chance of bull tomorrow?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.55,
+        "tol": {
+          "abs": 0.002
+        },
+        "placeholder": "decimal",
+        "label": "Chance of bull tomorrow",
+        "accept": "0.55, from $0.5 \\times 0.9 + 0.5 \\times 0.2$.",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "bear",
+            "value": 0.45,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.45 + 0.10 = 0.55$, so $(\\tfrac12, \\tfrac12)$ is not stationary.",
+        "generic": "Not quite right. Weight the bull column, 0.9 and 0.2, by $\\tfrac12$ each.",
+        "byKey": {
+          "same": "You assumed the split stays put. Only the stationary split does that, and $(\\tfrac12, \\tfrac12)$ is not it.",
+          "bear": "0.45 is the chance of bear tomorrow. You used the bear column."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac12 \\times 0.9 + \\tfrac12 \\times 0.2 = 0.55$. The split moved, so $(\\tfrac12, \\tfrac12)$ is not stationary. Each step pulls it towards $(\\tfrac23, \\tfrac13)$."
+      }
+    },
+    {
+      "id": "q-loan-book",
+      "difficulty": 3,
+      "prose": "A bank's £200m loan book is rated A or B. Each year an A loan stays A with chance 0.9; a B loan moves up to A with chance 0.3. Ignore defaults and repayments.",
+      "question": "In the long run, how many millions of pounds of the book are rated A?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 150,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£m",
+        "placeholder": "millions",
+        "label": "Long-run A-rated amount, £m",
+        "accept": "150, from $\\pi_A = \\tfrac{0.3}{0.1 + 0.3} = 0.75$.",
+        "wrong": [
+          {
+            "id": "even",
+            "value": 100,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "diag",
+            "value": 180,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "swap",
+            "value": 50,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.75 \\times \\text{£}200\\text{m} = \\text{£}150\\text{m}$.",
+        "generic": "Not quite right. Find $\\pi_A$ with $a = 0.1$ and $b = 0.3$, then scale by 200.",
+        "byKey": {
+          "even": "You split the book evenly. Loans leave A less often than they leave B.",
+          "diag": "You used 0.9, the chance an A loan stays A. The long-run share is $0.3/(0.1 + 0.3)$.",
+          "swap": "£50m is the B part of the book. You used $a/(a + b)$."
+        }
+      },
+      "explain": {
+        "text": "Downgrades are $0.1\\pi_A$ and upgrades are $0.3\\pi_B$, so $\\pi_A = 3\\pi_B$ and $\\pi_A = 0.75$. Three quarters of £200m is £150m. The mix holds even as single loans move between ratings."
+      }
+    },
+    {
+      "id": "q-normalise",
+      "difficulty": 3,
+      "prose": "For the regime chain, both columns of $\\pi P = \\pi$ reduce to $0.1\\pi_1 = 0.2\\pi_2$. A student says this has infinitely many solutions, so there is no single long-run split.",
+      "question": "Which reply is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Add $\\pi_1 + \\pi_2 = 1$; then $\\pi = (\\tfrac23, \\tfrac13)$",
+            "correct": true
+          },
+          {
+            "id": "agree",
+            "text": "The student is right: the long-run split is not unique",
+            "why": "You stopped at $\\pi P = \\pi$. Probabilities must add to 1, which picks one solution."
+          },
+          {
+            "id": "one",
+            "text": "Set $\\pi_2 = 1$, so $\\pi = (2, 1)$",
+            "why": "That solves $\\pi P = \\pi$ but adds to 3. Divide by 3 to get probabilities."
+          },
+          {
+            "id": "small",
+            "text": "$\\pi = (0.2, 0.1)$, reading $\\pi_1$ off the coefficient 0.2",
+            "why": "You read the coefficients off the equation. $(0.2, 0.1)$ solves $\\pi P = \\pi$ but adds to 0.3, so it is not a distribution."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The normalising equation picks the one solution that adds to 1.",
+        "generic": "Not quite right. Ask which solutions are probability distributions."
+      },
+      "explain": {
+        "text": "Every multiple of $(2, 1)$ solves $\\pi P = \\pi$, so that system alone is singular. The extra fact that probabilities add to 1 picks out $(\\tfrac23, \\tfrac13)$. Always pair $\\pi P = \\pi$ with $\\sum_i \\pi_i = 1$."
+      }
+    }
+  ]
+}

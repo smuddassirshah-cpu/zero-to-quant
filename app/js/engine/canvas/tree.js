@@ -143,7 +143,10 @@
     /* ---- Painting one frame of positions ---- */
     const anchorOut = (n, p) => (n === root ? (rootLabel ? (tb ? { x: p.x, y: p.y + PH / 2 } : { x: p.x + rootW / 2, y: p.y }) : { x: p.x, y: p.y }) : tb ? { x: p.x, y: p.y + PH / 2 } : { x: p.x + el.get(n.path).w / 2, y: p.y });
     const anchorIn = (n, p) => (tb ? { x: p.x, y: p.y - PH / 2 } : { x: p.x - el.get(n.path).w / 2, y: p.y });
-    const subIdx = (n) => { const gp = n.parent.parent; return gp ? gp.children.indexOf(n.parent) : 0; };
+    /* the parent's place among all nodes of its depth, top to bottom, so neighbouring subtrees alternate even across
+       different grandparents */
+    const rankAt = new Map(); { const seen = {}; for (const n of all) { seen[n.depth] = (seen[n.depth] || 0) + 1; rankAt.set(n, seen[n.depth] - 1); } }
+    const subIdx = (n) => (n.parent === root ? 0 : rankAt.get(n.parent));
     let crowd = 0;
     const paint = (vis, showP, unknown, showVals) => {
       { const nL = all.filter(n => vis.get(n.path).o > 0.5 && !n.children.some(c => vis.get(c.path).o > 0.5)).length; crowd = nL >= 9 ? 3 : nL >= 7 ? 2 : 0; }
