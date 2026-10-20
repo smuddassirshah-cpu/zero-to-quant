@@ -1,0 +1,1588 @@
+{
+  "id": "l1-only-now",
+  "course": "markov",
+  "title": "The future depends only on now",
+  "minutes": 13,
+  "objectives": [
+    "Model a process with states and transition probabilities.",
+    "Recognise when a process is not Markov in its stated states, and enlarge the state to fix it"
+  ],
+  "skills": [
+    "mc-chains"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Tomorrow's weather",
+      "prose": "Each arrow gives the chance of tomorrow's weather, given today's. The blue ring marks today: it is raining.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 330,
+          "nodes": [
+            {
+              "id": "S",
+              "label": "Sunny",
+              "x": 0.5,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "Cloudy",
+              "x": 0.12,
+              "y": 0.88
+            },
+            {
+              "id": "R",
+              "label": "Rain",
+              "x": 0.88,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "S",
+              "to": "S",
+              "w": 0.6
+            },
+            {
+              "from": "S",
+              "to": "C",
+              "w": 0.3
+            },
+            {
+              "from": "S",
+              "to": "R",
+              "w": 0.1
+            },
+            {
+              "from": "C",
+              "to": "S",
+              "w": 0.3
+            },
+            {
+              "from": "C",
+              "to": "C",
+              "w": 0.4
+            },
+            {
+              "from": "C",
+              "to": "R",
+              "w": 0.3
+            },
+            {
+              "from": "R",
+              "to": "S",
+              "w": 0.2
+            },
+            {
+              "from": "R",
+              "to": "C",
+              "w": 0.5
+            },
+            {
+              "from": "R",
+              "to": "R",
+              "w": 0.3
+            }
+          ]
+        },
+        "state": {
+          "current": "R"
+        }
+      },
+      "question": "Tap tomorrow's most likely weather.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "C"
+        ],
+        "max": 1,
+        "countWord": "selected"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only arrows that start at Rain describe tomorrow."
+        },
+        {
+          "rung": "point",
+          "text": "These three arrows leave Rain.",
+          "highlight": [
+            "e-R-S",
+            "e-R-C",
+            "e-R-R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From Rain the arrows say 0.2 to Sunny, 0.5 to Cloudy and 0.3 back to Rain. Tap the largest."
+        }
+      ],
+      "feedback": {
+        "correct": "Cloudy, with chance 0.5.",
+        "generic": "Not quite right. Read only the arrows that leave Rain, and pick the largest.",
+        "byKey": {
+          "R": "You expected the rain to carry on. The loop from Rain to Rain says 0.3, less than the 0.5 to Cloudy.",
+          "S": "You picked the biggest number on the graph, Sunny's loop of 0.6. That arrow starts at Sunny, and today is Rain."
+        }
+      },
+      "explain": {
+        "text": "You read the three arrows leaving Rain: 0.2, 0.5 and 0.3. Cloudy has the largest, so it is tomorrow's most likely weather. Arrows that start at Sunny or Cloudy say nothing about tomorrow.",
+        "canvas": {
+          "highlight": [
+            "e-R-S",
+            "e-R-C",
+            "e-R-R",
+            "C"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A simulated path",
+      "prose": "We ran the chain for 20 days with a fixed seed: each day's weather was drawn from the arrows leaving the day before. Slide the day and watch the ring move. Days 4 and 19 are both Rain.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "graph",
+          "params": {
+            "markov": true,
+            "height": 300,
+            "nodes": [
+              {
+                "id": "S",
+                "label": "Sunny",
+                "x": 0.5,
+                "y": 0.12
+              },
+              {
+                "id": "C",
+                "label": "Cloudy",
+                "x": 0.12,
+                "y": 0.88
+              },
+              {
+                "id": "R",
+                "label": "Rain",
+                "x": 0.88,
+                "y": 0.88
+              }
+            ],
+            "edges": [
+              {
+                "from": "S",
+                "to": "S",
+                "w": 0.6
+              },
+              {
+                "from": "S",
+                "to": "C",
+                "w": 0.3
+              },
+              {
+                "from": "S",
+                "to": "R",
+                "w": 0.1
+              },
+              {
+                "from": "C",
+                "to": "S",
+                "w": 0.3
+              },
+              {
+                "from": "C",
+                "to": "C",
+                "w": 0.4
+              },
+              {
+                "from": "C",
+                "to": "R",
+                "w": 0.3
+              },
+              {
+                "from": "R",
+                "to": "S",
+                "w": 0.2
+              },
+              {
+                "from": "R",
+                "to": "C",
+                "w": 0.5
+              },
+              {
+                "from": "R",
+                "to": "R",
+                "w": 0.3
+              }
+            ]
+          },
+          "state": {
+            "current": "S"
+          }
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              "S",
+              "S",
+              "C",
+              "R",
+              "C",
+              "C",
+              "C",
+              "C",
+              "R",
+              "S",
+              "S",
+              "C",
+              "C",
+              "R",
+              "S",
+              "S",
+              "C",
+              "S",
+              "R",
+              "R"
+            ],
+            "indexFrom": 1,
+            "showIndex": true,
+            "height": 110
+          },
+          "state": {
+            "pointers": [
+              {
+                "id": "today",
+                "at": 1,
+                "label": "today"
+              }
+            ],
+            "highlight": [
+              "c4",
+              "c19"
+            ]
+          }
+        },
+        "state": {
+          "params": {
+            "k": 1
+          }
+        },
+        "derive": {
+          "left:current": "'SSCRCCCCRSSCCRSSCSRR'[k - 1]",
+          "right:today.at": "k",
+          "caption": "Day {{k}}: {{'SSCRCCCCRSSCCRSSCSRR'[k - 1] == 'S' ? 'Sunny' : 'SSCRCCCCRSSCCRSSCSRR'[k - 1] == 'C' ? 'Cloudy' : 'Rain'}}. S is Sunny, C is Cloudy, R is Rain."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 1,
+            "max": 20,
+            "step": 1,
+            "label": "Day",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Day 3 was Cloudy and day 18 was Sunny. How do the chances for day 5 compare with those for day 20?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "The same: 0.2, 0.5 and 0.3, read from Rain's arrows",
+            "correct": true
+          },
+          {
+            "id": "day18",
+            "text": "Day 20 leans Sunny, because day 18 was Sunny",
+            "why": "You carried day 18 forward. Day 20 is drawn from the arrows leaving day 19, which is Rain.",
+            "canvas": {
+              "params": {
+                "k": 19
+              }
+            }
+          },
+          {
+            "id": "day3",
+            "text": "Day 5 leans Cloudy, because Rain followed Cloudy on day 3",
+            "why": "You let day 3 steer day 5. Day 5 is drawn from the arrows leaving day 4, which is Rain.",
+            "canvas": {
+              "params": {
+                "k": 4
+              }
+            }
+          },
+          {
+            "id": "all",
+            "text": "We need the whole 20-day history to say",
+            "why": "The simulation drew each day from the day before alone. Once today is known, older days add nothing.",
+            "canvas": {
+              "params": {
+                "k": 19
+              }
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Rain's three arrows decide both days.",
+        "generic": "Not quite right. Put the slider on day 4, then day 19, and look at the arrows leaving the ring."
+      },
+      "explain": {
+        "text": "On day 4 and on day 19 the ring sits on Rain. The next day is drawn from the same three arrows both times: 0.2, 0.5 and 0.3. How the chain reached Rain does not enter.",
+        "canvas": {
+          "params": {
+            "k": 19
+          },
+          "left": {
+            "highlight": [
+              "e-R-S",
+              "e-R-C",
+              "e-R-R"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One label is missing",
+      "prose": "This is a **Markov chain**: a list of **states**, and for each state the chances of the next one, its **transition probabilities**. The arrows leaving a state list everything that can happen next.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 330,
+          "nodes": [
+            {
+              "id": "S",
+              "label": "Sunny",
+              "x": 0.5,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "Cloudy",
+              "x": 0.12,
+              "y": 0.88
+            },
+            {
+              "id": "R",
+              "label": "Rain",
+              "x": 0.88,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "S",
+              "to": "S",
+              "w": 0.6
+            },
+            {
+              "from": "S",
+              "to": "C",
+              "w": 0.3
+            },
+            {
+              "from": "S",
+              "to": "R",
+              "w": 0.1
+            },
+            {
+              "from": "C",
+              "to": "S",
+              "w": 0.3
+            },
+            {
+              "from": "C",
+              "to": "C",
+              "w": 0.4
+            },
+            {
+              "from": "C",
+              "to": "R",
+              "w": 0.3,
+              "label": "?"
+            },
+            {
+              "from": "R",
+              "to": "S",
+              "w": 0.2
+            },
+            {
+              "from": "R",
+              "to": "C",
+              "w": 0.5
+            },
+            {
+              "from": "R",
+              "to": "R",
+              "w": 0.3
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the chance that a Cloudy day is followed by Rain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "accept": "0.3 exactly: $1 - 0.3 - 0.4$.",
+        "label": "Chance Cloudy is followed by Rain",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "into-rain",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            },
+            "canvas": {
+              "highlight": [
+                "e-S-R",
+                "e-R-R"
+              ]
+            }
+          },
+          {
+            "id": "one-arrow",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.001
+            },
+            "canvas": {
+              "highlight": [
+                "e-C-C"
+              ]
+            }
+          },
+          {
+            "id": "loop",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            },
+            "canvas": {
+              "highlight": [
+                "e-C-S",
+                "e-C-C"
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Tomorrow is certainly one of the three states. What must the arrows leaving Cloudy add to?"
+        },
+        {
+          "rung": "point",
+          "text": "These are the arrows that leave Cloudy.",
+          "highlight": [
+            "e-C-S",
+            "e-C-C",
+            "e-C-R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The arrows leaving Cloudy add to 1. Two of them are 0.3 and 0.4."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.3 + 0.4 + 0.3 = 1$.",
+        "generic": "Not quite right. Add the arrows that leave Cloudy, and fill the gap up to 1.",
+        "byKey": {
+          "into-rain": "You used the arrows that arrive at Rain, 0.1 and 0.3. The ones that must add to 1 all leave Cloudy.",
+          "one-arrow": "You took away only the 0.3 to Sunny. The loop from Cloudy back to Cloudy, 0.4, also leaves Cloudy.",
+          "loop": "That is Cloudy's loop back to itself. The missing arrow goes from Cloudy to Rain."
+        }
+      },
+      "explain": {
+        "text": "Tomorrow is certain to be Sunny, Cloudy or Rain, so the arrows leaving Cloudy add to 1. That leaves $1 - 0.3 - 0.4 = 0.3$ for Rain. Arrows arriving at a state need not add to anything.",
+        "canvas": {
+          "highlight": [
+            "e-C-S",
+            "e-C-C",
+            "e-C-R"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two days ahead, one path",
+      "prose": "Today is Rain again. We want one particular path: Sunny tomorrow, then Sunny the day after.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 330,
+          "nodes": [
+            {
+              "id": "S",
+              "label": "Sunny",
+              "x": 0.5,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "Cloudy",
+              "x": 0.12,
+              "y": 0.88
+            },
+            {
+              "id": "R",
+              "label": "Rain",
+              "x": 0.88,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "S",
+              "to": "S",
+              "w": 0.6
+            },
+            {
+              "from": "S",
+              "to": "C",
+              "w": 0.3
+            },
+            {
+              "from": "S",
+              "to": "R",
+              "w": 0.1
+            },
+            {
+              "from": "C",
+              "to": "S",
+              "w": 0.3
+            },
+            {
+              "from": "C",
+              "to": "C",
+              "w": 0.4
+            },
+            {
+              "from": "C",
+              "to": "R",
+              "w": 0.3
+            },
+            {
+              "from": "R",
+              "to": "S",
+              "w": 0.2
+            },
+            {
+              "from": "R",
+              "to": "C",
+              "w": 0.5
+            },
+            {
+              "from": "R",
+              "to": "R",
+              "w": 0.3
+            }
+          ]
+        },
+        "state": {
+          "current": "R",
+          "highlight": [
+            "e-R-S",
+            "e-S-S"
+          ]
+        }
+      },
+      "question": "What is the chance of that path?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.12,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.12: $0.2 \\times 0.6$.",
+        "label": "Chance of Sunny, then Sunny",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "added",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "second",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "first",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "from-rain-twice",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First the chain must get to Sunny. Then it must stay there."
+        },
+        {
+          "rung": "point",
+          "text": "The path uses these two arrows, one after the other.",
+          "highlight": [
+            "e-R-S",
+            "e-S-S"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rain to Sunny is 0.2. Then, from Sunny, Sunny to Sunny is 0.6. Both must happen."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.2 \\times 0.6 = 0.12$.",
+        "generic": "Not quite right. The path needs both arrows to happen, one after the other.",
+        "byKey": {
+          "added": "You added the two arrows. Both steps must happen, so multiply them.",
+          "second": "That is only the second step. First the chain has to leave Rain for Sunny.",
+          "first": "That is only tomorrow. The day after must be Sunny as well.",
+          "from-rain-twice": "You used Rain's arrow twice. The second step starts at Sunny, so it uses Sunny's loop, 0.6."
+        }
+      },
+      "explain": {
+        "text": "You multiplied along the path: $0.2$ to reach Sunny, then $0.6$ to stay. The second chance is read from Sunny's arrows because tomorrow's state is all the second step needs. So $P(\\text{S, S} \\mid \\text{R}) = 0.2 \\times 0.6 = 0.12$.",
+        "canvas": {
+          "highlight": [
+            "e-R-S",
+            "e-S-S"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Every arrow is a 1",
+      "prose": "An exchange's trading phases follow a fixed cycle. Each phase leads to the next with chance 1, and Closed leads back to Pre-open.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "pre",
+              "label": "Pre-open",
+              "x": 0.5,
+              "y": 0.1
+            },
+            {
+              "id": "open",
+              "label": "Open",
+              "x": 0.88,
+              "y": 0.9
+            },
+            {
+              "id": "closed",
+              "label": "Closed",
+              "x": 0.12,
+              "y": 0.9
+            }
+          ],
+          "edges": [
+            {
+              "from": "pre",
+              "to": "open",
+              "w": 1
+            },
+            {
+              "from": "open",
+              "to": "closed",
+              "w": 1
+            },
+            {
+              "from": "closed",
+              "to": "pre",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "current": "open"
+        }
+      },
+      "question": "The market is Open now. Which phase will it be in 7 steps from now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "closed",
+            "text": "Closed",
+            "correct": true
+          },
+          {
+            "id": "open",
+            "text": "Open",
+            "why": "You returned to the start, but 7 is not a multiple of 3. After 6 steps it is Open; one more step is Closed.",
+            "canvas": {
+              "current": "closed"
+            }
+          },
+          {
+            "id": "pre",
+            "text": "Pre-open",
+            "why": "You stopped one step early or went round backwards. After 6 steps it is Open; the 7th step goes to Closed.",
+            "canvas": {
+              "current": "closed"
+            }
+          },
+          {
+            "id": "random",
+            "text": "It cannot be known: the future is random",
+            "why": "Every arrow here is 1, so nothing is random. The path is fixed from the start."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many steps take the market round the cycle once?"
+        },
+        {
+          "rung": "point",
+          "text": "Each lap is three arrows: Open to Closed, Closed to Pre-open, Pre-open to Open.",
+          "highlight": [
+            "e-open-closed",
+            "e-closed-pre",
+            "e-pre-open"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Six steps make two full laps and land on Open. Take one more step."
+        }
+      ],
+      "feedback": {
+        "correct": "Two laps of 3, then one more step.",
+        "generic": "Not quite right. Each lap of the cycle is 3 steps. Count laps first, then the steps left over."
+      },
+      "explain": {
+        "text": "Each lap takes 3 steps, so after 6 steps the market is Open again; step 7 moves it to Closed. Every row has a single 1, so the chain is **deterministic**, and still Markov. The smallest chain of all has one state with a loop of chance 1.",
+        "canvas": {
+          "current": "closed",
+          "highlight": [
+            "e-open-closed"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "When today is not enough",
+      "prose": "A trader fits a rule to a stock's daily moves. The chance of an up day tomorrow depends on the last two days.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Yesterday",
+            "Today",
+            "$P(\\text{up tomorrow})$"
+          ],
+          "rows": [
+            [
+              "Up",
+              "Up",
+              "0.7"
+            ],
+            [
+              "Down",
+              "Up",
+              "0.4"
+            ],
+            [
+              "Up",
+              "Down",
+              "0.5"
+            ],
+            [
+              "Down",
+              "Down",
+              "0.3"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Today was an up day. What is the chance tomorrow is up?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "seventy",
+            "text": "0.7",
+            "why": "You assumed yesterday was up too. After a down yesterday the rule gives 0.4.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  0,
+                  1
+                ]
+              }
+            }
+          },
+          {
+            "id": "average",
+            "text": "0.55",
+            "why": "You averaged the two Up rows, as if yesterday were up or down with equal chance. Nothing tells us that.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  0,
+                  1
+                ]
+              }
+            }
+          },
+          {
+            "id": "forty",
+            "text": "0.4",
+            "why": "You took the row with a down yesterday. Nothing says yesterday was down.",
+            "canvas": {
+              "highlight": {
+                "rows": [
+                  0,
+                  1
+                ]
+              }
+            }
+          },
+          {
+            "id": "cannot",
+            "text": "It cannot be found from today alone",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many rows have Up in the Today column?"
+        },
+        {
+          "rung": "point",
+          "text": "Two rows match an up day today, and they disagree.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Up today could mean 0.7 or 0.4, and only yesterday picks one. So today alone does not fix the chance."
+        }
+      ],
+      "feedback": {
+        "correct": "Today's move does not fix tomorrow's chance here.",
+        "generic": "Not quite right. Find every row with an up day today, then ask what picks between them.",
+        "byKey": {
+          "seventy": "You treated today's move as the whole present. This rule needs yesterday as well, so Up alone does not give 0.7.",
+          "average": "You averaged the two rows. That needs the chance that yesterday was up, which we do not have."
+        }
+      },
+      "explain": {
+        "text": "An up day today leaves two rows, 0.7 and 0.4, and only yesterday decides between them. So with the states Up and Down this process is **not Markov**: the present state does not carry enough. The fix is a bigger state.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A bigger state",
+      "prose": "Make the state the pair (yesterday, today). DU means down yesterday, up today. Tomorrow's chance now depends only on the current pair, so this chain is Markov. Today the state is DU.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "UU",
+              "label": "UU",
+              "x": 0.12,
+              "y": 0.15
+            },
+            {
+              "id": "DU",
+              "label": "DU",
+              "x": 0.88,
+              "y": 0.15
+            },
+            {
+              "id": "UD",
+              "label": "UD",
+              "x": 0.12,
+              "y": 0.85
+            },
+            {
+              "id": "DD",
+              "label": "DD",
+              "x": 0.88,
+              "y": 0.85
+            }
+          ],
+          "edges": []
+        },
+        "state": {
+          "current": "DU"
+        }
+      },
+      "question": "Tap every state the chain can be in tomorrow.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "UU",
+          "UD"
+        ],
+        "wrong": [
+          {
+            "id": "stay",
+            "set": [
+              "DU"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Tomorrow's pair is (today, tomorrow). What was today's move?"
+        },
+        {
+          "rung": "point",
+          "text": "Tomorrow's pair must start with today's move, which was up.",
+          "highlight": [
+            "UU",
+            "UD"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Today was up, so tomorrow's pair is UU (up again) or UD (down tomorrow)."
+        }
+      ],
+      "feedback": {
+        "correct": "UU with chance 0.4, UD with chance 0.6.",
+        "generic": "Not quite right. Shift the pair along one day: today's move becomes the first letter.",
+        "byKey": {
+          "stay": "You kept the pair as it is. Tomorrow the pair moves on a day, so its first letter is today's up.",
+          "DU": "DU starts with a down, but tomorrow's pair starts with today's move, an up.",
+          "DD": "DD starts with a down, but tomorrow's pair starts with today's move, an up.",
+          "UU": "UU is one of them. Tomorrow could also be a down day."
+        }
+      },
+      "explain": {
+        "text": "Tomorrow's pair is (today, tomorrow), and today was up, so the chain moves to UU or UD. From the trader's table, after DU an up day has chance 0.4. So the arrows are 0.4 to UU and 0.6 to UD, and they add to 1.",
+        "canvas": {
+          "edges": {
+            "e-DU-UU": {
+              "from": "DU",
+              "to": "UU",
+              "w": 0.4
+            },
+            "e-DU-UD": {
+              "from": "DU",
+              "to": "UD",
+              "w": 0.6
+            }
+          },
+          "highlight": [
+            "UU",
+            "UD"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The Markov property",
+      "prose": "Write $X_n$ for the state on day $n$. You read tomorrow from today's arrows alone, and the arrows out of each state added to 1: $$P(X_{n+1} = j \\mid X_n = i, X_{n-1}, \\dots, X_0) = P(X_{n+1} = j \\mid X_n = i) = p_{ij}, \\qquad \\sum_j p_{ij} = 1.$$",
+      "question": "In a Markov chain, which history is enough to give the chances for $X_6$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "now",
+            "text": "$X_5$ alone",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "$X_5$ and $X_4$",
+            "why": "That is what the trader's two-day rule needed. In a Markov chain the state $X_5$ already carries everything that matters."
+          },
+          {
+            "id": "all",
+            "text": "All of $X_0$ to $X_5$",
+            "why": "Once $X_5$ is known, the earlier states change nothing: that is the property itself."
+          },
+          {
+            "id": "start",
+            "text": "$X_0$, the starting state",
+            "why": "The start matters only through where it led. Six steps on, $X_5$ is what counts."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The present state is enough.",
+        "generic": "Not quite right. Look at the left of the equation: which conditions survive on the right?"
+      },
+      "explain": {
+        "text": "The equation drops every condition except $X_n = i$. That is the **Markov property**: given the present, the past adds nothing. The number $p_{ij}$ is the arrow from $i$ to $j$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "An order's life",
+      "prose": "A desk models a resting limit order minute by minute. It is New, Partially filled, Filled or Cancelled. The arrows are fitted from last month's orders.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 320,
+          "nodes": [
+            {
+              "id": "new",
+              "label": "New",
+              "x": 0.1,
+              "y": 0.5
+            },
+            {
+              "id": "part",
+              "label": "Partial",
+              "x": 0.5,
+              "y": 0.5
+            },
+            {
+              "id": "fill",
+              "label": "Filled",
+              "x": 0.9,
+              "y": 0.12
+            },
+            {
+              "id": "canc",
+              "label": "Cancelled",
+              "x": 0.9,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "new",
+              "to": "new",
+              "w": 0.5
+            },
+            {
+              "from": "new",
+              "to": "part",
+              "w": 0.3
+            },
+            {
+              "from": "new",
+              "to": "fill",
+              "w": 0.15,
+              "bend": -40
+            },
+            {
+              "from": "new",
+              "to": "canc",
+              "w": 0.05,
+              "bend": 40
+            },
+            {
+              "from": "part",
+              "to": "part",
+              "w": 0.6
+            },
+            {
+              "from": "part",
+              "to": "fill",
+              "w": 0.35
+            },
+            {
+              "from": "part",
+              "to": "canc",
+              "w": 0.05
+            },
+            {
+              "from": "fill",
+              "to": "fill",
+              "w": 1
+            },
+            {
+              "from": "canc",
+              "to": "canc",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "current": "new"
+        }
+      },
+      "question": "A new order goes Partial, stays Partial, then fills. What is the chance of that exact path over the next three minutes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.063,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.063: $0.3 \\times 0.6 \\times 0.35$.",
+        "label": "Chance of the path",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "added",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "last",
+            "value": 0.35,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "direct",
+            "value": 0.15,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "two",
+            "value": 0.105,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply along the path, one arrow per minute."
+        },
+        {
+          "rung": "point",
+          "text": "The path uses these three arrows.",
+          "highlight": [
+            "e-new-part",
+            "e-part-part",
+            "e-part-fill"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "New to Partial is 0.3, Partial to Partial is 0.6, Partial to Filled is 0.35. Multiply them."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.3 \\times 0.6 \\times 0.35 = 0.063$.",
+        "generic": "Not quite right. Each minute uses the arrow out of that minute's state. Multiply the three.",
+        "byKey": {
+          "added": "You added the arrows. All three minutes must go this way, so multiply.",
+          "last": "That is only the final minute. The order first has to reach Partial and stay there.",
+          "direct": "That is the arrow straight from New to Filled, a different path.",
+          "two": "You left out the minute spent in Partial. The path stays Partial once, so multiply by 0.6 too."
+        }
+      },
+      "explain": {
+        "text": "You multiplied one arrow per minute: $0.3 \\times 0.6 \\times 0.35 = 0.063$. Each factor needs only the current state, never how long the order has rested. Filled and Cancelled have loops of 1: once there, the order stays.",
+        "canvas": {
+          "highlight": [
+            "e-new-part",
+            "e-part-part",
+            "e-part-fill"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Up days and down days",
+      "prose": "A stock's day is Up or Down. After an up day it rises again with chance 0.6. After a down day it falls again with chance 0.55. The chart is one path simulated from this chain.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Price",
+              "values": [
+                100.0,
+                101.0,
+                102.01,
+                100.99,
+                99.98,
+                98.98,
+                99.97,
+                100.97,
+                101.98,
+                100.96,
+                101.97,
+                102.99,
+                104.02,
+                105.06,
+                104.01,
+                105.05,
+                106.1,
+                105.04,
+                106.09,
+                105.03,
+                106.08,
+                107.14,
+                108.21,
+                109.29,
+                110.38,
+                111.48,
+                112.59,
+                113.72,
+                114.86,
+                116.01,
+                114.85,
+                113.7,
+                114.84,
+                115.99,
+                114.83,
+                113.68,
+                112.54,
+                113.67,
+                112.53,
+                113.66,
+                112.52
+              ]
+            }
+          ],
+          "money": "£",
+          "xLabel": "Day",
+          "height": 240
+        },
+        "state": {
+          "caption": "Each day moves 1% up or down; a run of the same move shows the persistence."
+        }
+      },
+      "question": "Today was a down day. What is the chance of two up days in a row next?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.27,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.27: $0.45 \\times 0.6$.",
+        "label": "Chance of up, then up",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "from-up",
+            "value": 0.36,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "down-row",
+            "value": 0.2025,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "used-055",
+            "value": 0.33,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "added",
+            "value": 1.05,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First find the chance of an up day after a down day. The two chances out of Down add to 1."
+        },
+        {
+          "rung": "point",
+          "text": "From Down: down again 0.55, so up 0.45. Then the second step starts from Up."
+        },
+        {
+          "rung": "step",
+          "text": "Multiply $P(\\text{up} \\mid \\text{down}) = 0.45$ by $P(\\text{up} \\mid \\text{up}) = 0.6$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.45 \\times 0.6 = 0.27$.",
+        "generic": "Not quite right. Step one leaves Down, step two leaves Up. Use each state's own row.",
+        "byKey": {
+          "from-up": "You used 0.6 twice, as if today were up. Today was down, so the first step is $1 - 0.55 = 0.45$.",
+          "down-row": "You used 0.45 for both steps. After the first up day, the chain is in Up, so the second step is 0.6.",
+          "used-055": "You used 0.55 as the chance of an up day after a down day. That is the chance of falling again.",
+          "added": "You added the two steps. Both must happen, so multiply."
+        }
+      },
+      "explain": {
+        "text": "The first step leaves Down: $1 - 0.55 = 0.45$. The second leaves Up: 0.6. So the chance is $0.45 \\times 0.6 = 0.27$, and the runs in the chart come from those sticky rows."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A Markov chain is a set of states with, for each state, the chances of the next one. Given the present, the past adds nothing.",
+      "The arrows leaving a state add to 1. The chance of a path is the product of its arrows.",
+      "A process that needs yesterday as well as today is not Markov in those states. Make the state the pair (yesterday, today) and it is."
+    ],
+    "formula": {
+      "name": "Markov property",
+      "tex": "P(X_{n+1} = j \\mid X_n = i, X_{n-1}, \\dots, X_0) = p_{ij}, \\quad \\sum_j p_{ij} = 1",
+      "note": "Each row of chances, the arrows out of one state, adds to 1."
+    },
+    "trap": "If two histories that end in the same state give different chances, the state is too small. Enlarge it until today is enough."
+  },
+  "quiz": [
+    {
+      "id": "q-path",
+      "difficulty": 2,
+      "prose": "In the weather chain, Sunny goes to Cloudy with chance 0.3, and Cloudy goes to Rain with chance 0.3.",
+      "question": "Today is Sunny. What is the chance of Cloudy tomorrow and Rain the day after?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.09,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.09: $0.3 \\times 0.3$.",
+        "label": "Chance of the path",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "added",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.3 \\times 0.3 = 0.09$.",
+        "generic": "Not quite right. Multiply the two arrows along the path.",
+        "byKey": {
+          "added": "You added the arrows. Both steps must happen, so multiply.",
+          "one": "That is one step. The path takes two."
+        }
+      },
+      "explain": {
+        "text": "Each step uses the arrow out of the current state: 0.3 from Sunny to Cloudy, then 0.3 from Cloudy to Rain. Both must happen, so $0.3 \\times 0.3 = 0.09$."
+      }
+    },
+    {
+      "id": "q-rating-row",
+      "difficulty": 2,
+      "prose": "A rating model says a bond rated A this year is rated A next year with chance 0.92, and B with chance 0.07. Default is the only other outcome.",
+      "question": "What is the chance an A bond defaults next year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.01,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "",
+        "accept": "0.01: $1 - 0.92 - 0.07$.",
+        "label": "Chance of default",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "minus-b",
+            "value": 0.93,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "minus-a",
+            "value": 0.08,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The row adds to 1, so default takes 0.01.",
+        "generic": "Not quite right. The chances out of A add to 1.",
+        "byKey": {
+          "minus-b": "You took away only the 0.07. Staying at A, 0.92, is also an outcome.",
+          "minus-a": "You took away only the 0.92. Moving to B, 0.07, is also an outcome."
+        }
+      },
+      "explain": {
+        "text": "Next year the bond is A, B or in default, so the row adds to 1. Default gets $1 - 0.92 - 0.07 = 0.01$."
+      }
+    },
+    {
+      "id": "q-one-state",
+      "difficulty": 2,
+      "prose": "A chain has a single state: a fixed peg, which a currency board always holds.",
+      "question": "What is the only possible transition probability?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "1: the chain stays put with certainty",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0: nothing ever happens",
+            "why": "Staying is something that happens. The one row must add to 1, and its only entry is the loop."
+          },
+          {
+            "id": "half",
+            "text": "0.5: stay or leave",
+            "why": "There is nowhere to leave to. With one state the loop takes the whole row."
+          },
+          {
+            "id": "any",
+            "text": "Any number from 0 to 1",
+            "why": "The row must add to 1, and it has one entry, so that entry is 1."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A single row with a single entry adding to 1.",
+        "generic": "Not quite right. The row of chances out of a state adds to 1."
+      },
+      "explain": {
+        "text": "A one-state chain has one row with one entry, and the row adds to 1. So the loop has chance 1: the chain is deterministic and never moves. It is still a Markov chain, the smallest one."
+      }
+    },
+    {
+      "id": "q-three-days",
+      "difficulty": 3,
+      "prose": "A momentum signal's chance of an up day depends on the signs of the last three daily returns, up or down.",
+      "question": "How many states does the smallest Markov chain for it need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "states",
+        "accept": "8: each of the three days is up or down, $2^3 = 8$.",
+        "label": "Number of states",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2
+          },
+          {
+            "id": "three",
+            "value": 3
+          },
+          {
+            "id": "six",
+            "value": 6
+          },
+          {
+            "id": "four",
+            "value": 4
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2 \\times 2 \\times 2 = 8$ triples.",
+        "generic": "Not quite right. The state must hold the last three signs.",
+        "byKey": {
+          "two": "Up and Down alone forget the two earlier days, which the signal uses.",
+          "three": "You counted the days. Each day can be up or down, so count the triples.",
+          "six": "You added 2 for each day. The choices multiply: $2 \\times 2 \\times 2$.",
+          "four": "Four pairs would hold two days. The signal looks back three."
+        }
+      },
+      "explain": {
+        "text": "The state must hold everything the next step uses: the last three signs. Each is up or down, so there are $2^3 = 8$ triples, from UUU to DDD. From each triple only two arrows leave, because the next triple drops the oldest sign."
+      }
+    }
+  ]
+}

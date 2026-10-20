@@ -578,6 +578,19 @@
       if (typeof ResizeObserver === 'function') { let lastW = -1; new ResizeObserver(() => { const w = wrap.clientWidth; if (w !== lastW) { lastW = w; fit(); } }).observe(wrap); }
       requestAnimationFrame(fit);
     }
+    /* item 251: a pair with a matrix side (or any pair with minScale) stacks when side by side would shrink a drawing
+       below minScale of its own size (0.8 for matrices: a 3x3 beside a 2x2 stays legible on a phone) */
+    const minS = spec.minScale ?? (SIDES.some(k => (spec[k] || {}).kind === 'matrix') ? 0.8 : null);
+    if (!twoTables && !spec.stack && minS) {
+      const fitS = () => {
+        if (!wrap.isConnected) return;
+        wrap.classList.remove('is-stacked');
+        const small = SIDES.some(k => { const sv = side[k] && side[k].el && side[k].el.querySelector('svg.cv-svg'); if (!sv) return false; const vb = (sv.getAttribute('viewBox') || '').split(/\s+/).map(Number), w = sv.getBoundingClientRect().width; return vb[2] > 0 && w > 0 && w / vb[2] < minS; });
+        wrap.classList.toggle('is-stacked', small);
+      };
+      if (typeof ResizeObserver === 'function') { let lastW = -1; new ResizeObserver(() => { const w = wrap.clientWidth; if (w !== lastW) { lastW = w; fitS(); } }).observe(wrap); }
+      requestAnimationFrame(fitS);
+    }
     const A = side[active];
     let caption = '';
     const route = (ids) => { const out = { left: [], right: [] }; [].concat(ids || []).forEach(id => { const m = String(id).match(/^(left|right):(.+)$/); if (m) out[m[1]].push(m[2]); else { out.left.push(id); out.right.push(id); } }); return out; };

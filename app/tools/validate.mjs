@@ -45,7 +45,11 @@ const AMERICAN = [
   [/\btraveled\b/i, 'travelled'], [/\bcanceled\b/i, 'cancelled'], [/\bliter\b/i, 'litre'], [/\bmeters?\b/i, 'metre'], [/\bjewelry\b/i, 'jewellery'],
   [/\bcheck(s)? (?=out of)/i, 'cheque'], [/\bsquare off\b/i, null],
 ].filter(([, b]) => b);
-const EMOJI = /\p{Extended_Pictographic}/u;
+const EMOJI_RAW = /\p{Extended_Pictographic}/u;
+/* items 271, 274: plain geometric symbols and card suits used as tokens (stars and bars, a hand of cards) are text,
+   unless written with the emoji presentation selector U+FE0F */
+const TOKEN_SYMBOLS = /[★☆●○■□▲△▼◀▶◆♠♥♦♣♤♡♢♧](?!\uFE0F)/gu;
+const EMOJI = { test: (s) => EMOJI_RAW.test(String(s).replace(TOKEN_SYMBOLS, '')) };
 
 /* ---------- Text helpers ---------- */
 const stripMathsAndCode = (s) => String(s).replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ').replace(/\$\$[\s\S]*?\$\$/g, ' ').replace(/\$[^$]*\$/g, ' ');

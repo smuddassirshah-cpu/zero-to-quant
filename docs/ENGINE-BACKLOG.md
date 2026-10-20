@@ -794,3 +794,8 @@ Raised later (random-vars level 3):
 296. `scatter`: a native `rho` parameter or a seeded `sim` option that generates correlated pairs, so a live correlation slider needs no per-point `derive` rules.
 297. Validator: warn when a set item gives both `prose` and `prompt` (`prose` silently replaces `prompt`).
 298. `bars`: a movable category axis (values as positions) so $aX + b$ can slide along the axis without moving to `plane`.
+
+Raised later (limits-thm level 1):
+
+299. `distribution`, discrete families: x ticks drop to every second integer (or only 0) on narrow ranges; always tick every integer on a discrete support, and keep the range right when a slider changes $n$.
+300. `distribution`: a `hypergeometric` family (N, K, n).
