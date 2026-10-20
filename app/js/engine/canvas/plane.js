@@ -395,7 +395,13 @@
         patch = { ...patch };
         if (def.prepare) patch = def.prepare(patch, state, R) || patch;
         for (const k of def.listKeys || []) {
-          if (isObj(patch[k]) && Array.isArray(state[k])) patch[k] = state[k].map((it) => (isObj(it) && it.id in patch[k] ? { ...it, ...patch[k][it.id] } : it));
+          /* a keyed patch merges by id, adds a new id and removes an id set to null (item 243: new ids used to be dropped
+             on the live canvas while the Why? copy, which goes through ZQ.canvas.merge, drew them) */
+          if (isObj(patch[k]) && (Array.isArray(state[k]) || state[k] == null)) {
+            const cur = Array.isArray(state[k]) ? state[k] : [], kp = patch[k];
+            patch[k] = cur.filter((it) => !(isObj(it) && kp[it.id] === null)).map((it) => (isObj(it) && isObj(kp[it.id]) ? { ...it, ...kp[it.id] } : it))
+              .concat(Object.entries(kp).filter(([id, v]) => isObj(v) && !cur.some((it) => isObj(it) && it.id === id)).map(([id, v]) => ({ id, ...v })));
+          }
         }
         const prev = state;
         state = C.merge(state, patch);

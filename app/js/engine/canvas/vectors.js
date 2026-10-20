@@ -23,11 +23,19 @@
       listKeys: ['vectors', 'points'],
       init: () => ({ vectors: base.map((v) => ({ ...v })), points: (params.points || []).map((p, i) => ({ ...p, id: p.id || 'p' + i })), show: [], scale: Object.fromEntries(base.map((v) => [v.id, 1])), drag: null, basis: null, highlight: [], selected: [] }),
       render(view, R) {
-        const g = R.F.g, vs = view.vectors || [], byId = Object.fromEntries(vs.map((v) => [v.id, v]));
+        /* items 245, 253: every vector gets a colour slot, patched-in ones too; unset ones take the first slots no other
+           vector names, so two vectors never share a colour by accident */
+        const used = new Set((view.vectors || []).map((v) => v.colour).filter((c) => c != null));
+        let nextSlot = 1; const freeSlot = () => { while (used.has(nextSlot)) nextSlot++; used.add(nextSlot); return nextSlot; };
+        const vs = (view.vectors || []).map((v) => ({ ...v, slot: v.colour ?? freeSlot() }));
+        const g = R.F.g, byId = Object.fromEntries(vs.map((v) => [v.id, v]));
         const show = new Set([].concat(view.show || []));
         const x0 = m.l, x1 = W - m.r, y0 = H - m.b, y1 = m.t;
         /* basis grid replaces the standard grid when given */
-        const basis = view.basis;
+        /* item 249: state.matrix [[a, b], [c, d]] (or transform { angle, shear, scale }) gives the basis (its columns)
+           and draws the image of the unit square */
+        const mtx = view.transform ? (() => { const t = view.transform, a = (+t.angle || 0) * Math.PI / 180, k = +t.shear || 0, sc = t.scale ?? 1; const c = Math.cos(a) * sc, s2 = Math.sin(a) * sc; return [[c, c * k - s2], [s2, s2 * k + c]]; })() : view.matrix;
+        const basis = mtx ? [[mtx[0][0], mtx[1][0]], [mtx[0][1], mtx[1][1]]] : view.basis;
         if (basis) {
           K.planeAxes(g, sx, sy, { grid: false, xLabel: params.xLabel, yLabel: params.yLabel });
           const gg = svg('g', { 'clip-path': R.clipRect(x0, y1, x1 - x0, y0 - y1, 'basis') });
@@ -35,6 +43,7 @@
           const fam = (dir, step, cls) => { for (let k = -N; k <= N; k++) { const o = mul(k, step), a = add(o, mul(-span, dir)), b = add(o, mul(span, dir)); gg.append(svg('line', { x1: sx(a[0]), y1: sy(a[1]), x2: sx(b[0]), y2: sy(b[1]), class: 'cvb-basis ' + cls })); } };
           fam(b2, b1, 'cvb-c1'); fam(b1, b2, 'cvb-c2');
           g.append(gg);
+          if (mtx) { const sq = svg('path', { d: `M${sx(0)},${sy(0)}L${sx(b1[0])},${sy(b1[1])}L${sx(b1[0] + b2[0])},${sy(b1[1] + b2[1])}L${sx(b2[0])},${sy(b2[1])}Z`, class: 'cvb-unitsq' }); const o = K.obj('square', '', 3); o.append(sq); g.append(o); }
           [['b1', b1, 1, params.basisLabels?.[0] ?? '$\\mathbf{b}_1$'], ['b2', b2, 2, params.basisLabels?.[1] ?? '$\\mathbf{b}_2$']].forEach(([id, b, slot, lb]) => {
             const o = K.obj(id, '', slot); o.append(K.washPath(`M${sx(0)},${sy(0)}L${sx(b[0])},${sy(b[1])}`), K.arrow(sx(0), sy(0), sx(b[0]), sy(b[1]), { cls: 'cvb-ln bold' })); g.append(o);
             g.append(K.lab(sx(b[0]) + 6, sy(b[1]) + 12, lb, { anchor: 'start', halo: true }));
@@ -44,7 +53,8 @@
         const over = svg('g'); g.append(over);
         const labels = [];
         const head = (v) => { const k = (view.scale && view.scale[v.id]) ?? 1; return mul(k, v.v); };
-        const tail = (v) => (v.from ? (typeof v.from === 'string' ? head(byId[v.from]) : v.from) : [0, 0]);
+        /* item 240: a vector drawn from another starts at that vector's tip (its own tail plus its head), so chains of any length need no derive */
+        const tail = (v, depth = 0) => { if (!v.from) return [0, 0]; if (typeof v.from !== 'string') return v.from; const u = byId[v.from]; return u && depth < 12 ? add(tail(u, depth + 1), head(u)) : [0, 0]; };
 
         /* span */
         if (show.has('span') || view.span) {
@@ -66,7 +76,9 @@
             plot.append(ghost);
             o.append(K.washPath(`M${sx(0)},${sy(0)}L${sx(s[0])},${sy(s[1])}`), K.arrow(sx(0), sy(0), sx(s[0]), sy(s[1]), { cls: 'cvb-ln' }));
             plot.append(o);
-            labels.push({ x: sx(s[0]) + 8, y: sy(s[1]) - 12, text: view.sumLabel || params.sumLabel || `${a.label || a.id} + ${b.label || b.id}`.replace(/\$ \+ \$/, ' + '), anchor: 'start' });
+            /* item 255: when the sum ends where a labelled vector ends, its label moves below so the two never sit on each other */
+            const clash = vs.some((v) => v.label && v.id !== a.id && v.id !== b.id && Math.hypot(...add(tail(v), head(v)).map((q, i2) => q - s[i2])) < 1e-6);
+            labels.push({ x: sx(s[0]) + 8, y: sy(s[1]) + (clash ? 18 : -12), text: view.sumLabel || params.sumLabel || `${a.label || a.id} + ${b.label || b.id}`.replace(/\$ \+ \$/, ' + '), anchor: 'start' });
           }
         }
         /* projection of one vector onto another, with the perpendicular */
@@ -104,7 +116,7 @@
           plot.append(o);
           const canDrag = !v.from && R.active() && ((dragSet && dragSet.has(v.id)) || (!dragSet && R.mode === 'drag'));
           if (canDrag) over.append(K.handle(sx(h[0]), sy(h[1]), v.id, { r: 7, label: `Head of ${v.label || v.id}` }));
-          const lt = k !== 1 && v.label ? (/^\$.*\$$/.test(v.label) ? `$${K.fmt(k, 3)}${v.label.slice(1, -1)}$` : K.fmt(k, 3) + v.label) : v.label;
+          const lt = k !== 1 && v.label ? (/^\$.*\$$/.test(v.label) ? `$${K.fmt(k, 3)}${v.label.slice(1, -1)}$` : K.fmt(k, 3) + (/^[A-Za-z]{2,}/.test(v.label) ? ' × ' : '') + v.label) : v.label; // item 228: "0.6 × Equity fund", not "0.6Equity fund"
           if (lt) {
             /* labelPos (item 106): "end" (default, past the head), "mid" (beside the middle) or "start" (by the tail); labelSide flips the side */
             const dx = h[0] - t[0], dy = h[1] - t[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, side = v.labelSide === 'right' ? -1 : 1;
