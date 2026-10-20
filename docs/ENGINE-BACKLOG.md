@@ -961,3 +961,11 @@ Raised later (testing level 3):
 341. `plane` and `derive` expressions: `qnorm`, `pnorm` (with 331's `erf` and `Phi`).
 342. `bars` sim: `maxn(k, expr)` or a `repeat` helper, and a catch-all category (`"4+"`) so capped outcomes need no `min` trick.
 343. AUTHORING.md: document the lesson `code` widget's `solution` field (used by the playthrough).
+
+Raised later (estimation level 3):
+
+344. `distribution`: a `beta` family (a, b) with shading, for posteriors and credible intervals.
+345. `plane` reference lines: spread labels apart when two labelled lines sit close (one label vanishes now).
+346. A native intervals chart (many confidence intervals from repeated samples with a "count misses" readout); 100 intervals now take 300 `derive` rules.
+347. `bars` histograms: bin edges that fall on the data's grid of values put boundary values in different bins than a node check does; document the half-open convention and make it `[lo, hi)`.
+348. `number-line`: negative tick labels print a hyphen rather than a minus sign (same family as 234).
