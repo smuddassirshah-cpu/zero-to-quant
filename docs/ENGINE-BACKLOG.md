@@ -982,3 +982,8 @@ Raised later (micro level 1):
 353. `orderbook`: a `decimals` option for the footer's average fill price, and a spread readout in pence or basis points (`spreadUnit`).
 354. `boxes`: patchable item labels (a card reading "You 200" then "You 300"), and a `row` drop position that is not always the end.
 355. `derive`: chained `params.*` rules (a value computed from another computed value) come out wrong in the explanation's copy of the canvas; evaluate rules in dependency order in the Why? copy too.
+
+Raised later (markets level 1):
+
+356. `table` widget: per-cell `byValue` feedback (name a specific wrong value) alongside 287's `%` unit.
+357. Controls: a `stops` list for a slider (1, 2, 4, 12, 52, 365) in addition to 213's log scale.
