@@ -1,0 +1,609 @@
+/* C++ mode of the code widget (language: "cpp"; docs/AUTHORING.md section 3, C++ addendum; ENGINE-BACKLOG 304).
+   code.js hands a spec with language "cpp" to Z.cppCode(host, spec, ctx), defined here; the widget handle has the
+   same shape as the Python one (value, set, answer, ready, dirty, grade, lock, unlock, markGraded, reveal, reset,
+   focus, destroy), so the player, sets, exams and the playthrough drive it unchanged.
+
+   Runtime: js/screens/cpp-worker.js. One long-lived compiler worker (YoWASP Clang 21 from the jsDelivr CDN, the npm
+   package @yowasp/clang, or vendor/yowasp-clang/ when the CDN cannot be reached) and a cheap runner worker that is
+   killed and replaced when a case passes its time limit, so the compiler survives an endless loop.
+
+   One compile per Check. Function mode: the learner's code is followed by a generated harness with one function per
+   case and a main that runs the case named by argv[1]; each case runs as its own process (a fresh instance of the
+   compiled module), so a crash in one case does not hide the others. The case prints its value after a \x1eZQR
+   marker as "<C++ type>\x1f<JSON>", and this file compares it with expect. Script mode (any stdout case, stdin, argv,
+   or a raises case without call): the learner's program is compiled as it is and run once per case with that
+   case's stdin. Hidden prelude and postlude code sit before and after the learner's code; #line directives keep the
+   learner's line numbers (main.cpp), and a case's call is reported as "test N". Compile time is not charged to the
+   cases: each case has its own limit (5 s, plus spec.budget). */
+(function () {
+  'use strict';
+  const Z = window.ZQ;
+  /* Where the compiler comes from: the npm package, served by jsDelivr. To self-host, copy the package's gen/ folder
+     (bundle.js, llvm*.wasm, llvm-resources.tar) to a static host with CORS and change this URL, or put it in
+     app/vendor/yowasp-clang/, which is used when the CDN cannot be reached. */
+  const CLANG = 'https://cdn.jsdelivr.net/npm/@yowasp/clang@21.1.4-3/gen/';
+  const LOCAL = 'vendor/yowasp-clang/';
+  const TEST_MS = 5000, LOAD_MS = 300000, COMPILE_MS = 90000;
+  const OUT = '\u001eZQR', EXC = '\u001eZQX', SEP = '\u001f';
+
+  /* ---------- One shared compiler and runner ---------- */
+  const Cpp = (() => {
+    const url = () => new URL('js/screens/cpp-worker.js', location.href).href;
+    let cw = null, rw = null, status = 'idle', reason = '', progress = '', gen = 0, seq = 0, loadTimer = 0;
+    const subs = new Set(), pend = new Map(), warmed = new Set(), wantWarm = new Set(), cache = new Map();
+    const notify = () => subs.forEach(f => f(status));
+    const set = (s) => { status = s; notify(); };
+    const killC = (why) => {
+      clearTimeout(loadTimer);
+      if (cw) { cw.onmessage = null; cw.onerror = null; cw.terminate(); cw = null; }
+      pend.forEach(p => { clearTimeout(p.timer); p.resolve({ ok: false, diag: why || 'The compiler stopped.', crashed: true }); });
+      pend.clear();
+    };
+    const unavailable = (msg) => { killC(msg); reason = msg; progress = ''; set('unavailable'); };
+    const start = (restart = false) => {
+      killC('The compiler was restarted.');
+      const my = ++gen;
+      warmed.clear(); progress = '';
+      set(restart ? 'restarting' : 'loading');
+      if (typeof WebAssembly !== 'object' || typeof Worker !== 'function') { unavailable('This browser cannot run WebAssembly in a background worker.'); return; }
+      try { cw = new Worker(url(), { type: 'module' }); } catch (err) { unavailable(String((err && err.message) || err)); return; }
+      cw.onmessage = (e) => {
+        if (my !== gen) return;
+        const m = e.data || {};
+        if (m.type === 'progress') { progress = String(m.text || ''); notify(); return; }
+        if (m.type === 'ready') { clearTimeout(loadTimer); progress = ''; set('ready'); wantWarm.forEach(h => warm(h)); return; }
+        if (m.type === 'fail') { unavailable(m.message); return; }
+        if (m.type === 'compiled') { const p = pend.get(m.id); if (!p) return; pend.delete(m.id); clearTimeout(p.timer); p.resolve(m); }
+      };
+      cw.onerror = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        if (my !== gen) return;
+        const msg = (e && e.message) || 'The C++ compiler worker could not start.';
+        if (status === 'ready') start(true); else unavailable(msg);
+      };
+      cw.postMessage({ type: 'init', base: CLANG, local: new URL(LOCAL, location.href).href });
+      loadTimer = setTimeout(() => { if (my === gen) unavailable('The C++ compiler took more than five minutes to load.'); }, LOAD_MS);
+    };
+    /* The precompiled header for a widget's starter headers is built while the learner reads the question */
+    const warm = (head) => {
+      if (!head) return;
+      wantWarm.add(head);
+      if (status !== 'ready' || !cw || warmed.has(head)) return;
+      warmed.add(head); cw.postMessage({ type: 'warm', head });
+    };
+    const compile = (u) => new Promise((resolve) => {
+      const hit = cache.get(u.src);
+      if (hit) { resolve(hit); return; }
+      if (status !== 'ready' || !cw) { resolve({ ok: false, notReady: true }); return; }
+      const id = ++seq;
+      const timer = setTimeout(() => { pend.delete(id); resolve({ ok: false, diag: 'The compiler took more than ' + COMPILE_MS / 1000 + ' seconds, so it was stopped and restarted. Try again.' }); start(true); }, COMPILE_MS);
+      pend.set(id, { resolve: (m) => { if (m.ok || (m.diag && !m.crashed)) { cache.set(u.src, m); while (cache.size > 8) cache.delete(cache.keys().next().value); } resolve(m); }, timer });
+      warmed.add(u.head);
+      cw.postMessage({ type: 'compile', id, src: u.src, srcPch: u.srcPch, head: u.head });
+    });
+    /* Runs the module once per case; resolves to { results: [..], timeout: index or null, crash } */
+    const run = (wasm, cases, limit) => new Promise((resolve) => {
+      if (!rw) { try { rw = new Worker(url(), { type: 'module' }); } catch (err) { resolve({ results: [], timeout: null, crash: String((err && err.message) || err) }); return; } }
+      const w = rw, id = ++seq, results = new Array(cases.length).fill(null);
+      let timer = 0, crash = null, done = false;
+      const guard = () => { clearTimeout(timer); timer = setTimeout(() => fin({ timeout: null, crash: 'The program runner did not respond.' }, true), 20000); };
+      const fin = (extra, kill) => {
+        if (done) return; done = true;
+        clearTimeout(timer); w.onmessage = null; w.onerror = null;
+        if (kill) { w.terminate(); if (rw === w) rw = null; }
+        resolve({ results, timeout: null, crash: null, ...extra });
+      };
+      w.onmessage = (e) => {
+        const m = e.data || {};
+        if (m.id !== id) return;
+        if (m.type === 'case' && m.phase === 'start') { clearTimeout(timer); timer = setTimeout(() => fin({ timeout: m.i }, true), limit); }
+        else if (m.type === 'case') { results[m.i] = m; guard(); }
+        else if (m.type === 'crash') crash = m.message;
+        else if (m.type === 'done') fin({ crash });
+      };
+      w.onerror = (e) => { if (e && e.preventDefault) e.preventDefault(); fin({ crash: (e && e.message) || 'The program runner stopped.' }, true); };
+      guard();
+      w.postMessage({ type: 'exec', id, wasm, cases });
+    });
+    return {
+      ensure() { if (status === 'idle') start(); },
+      warm, compile, run, sub(f) { subs.add(f); return () => subs.delete(f); },
+      get status() { return status; }, get reason() { return reason; }, get progress() { return progress; },
+    };
+  })();
+
+  /* ---------- C++ literals from JSON case values ---------- */
+  const cStr = (s) => '"' + Array.from(String(s), (ch) => {
+    const c = ch.codePointAt(0);
+    if (ch === '\\') return '\\\\';
+    if (ch === '"') return '\\"';
+    if (ch === '\n') return '\\n';
+    if (ch === '\t') return '\\t';
+    if (ch === '\r') return '\\r';
+    if (c < 0x20 || c === 0x7f) return '\\' + c.toString(8).padStart(3, '0');
+    return ch;
+  }).join('') + '"';
+  const INT_MAX = 2147483647;
+  const numLit = (v, asDouble) => {
+    if (typeof v !== 'number' || !isFinite(v)) throw new Error('a case value is not a finite number: ' + JSON.stringify(v));
+    const s = String(v);
+    if (asDouble) return /[.eE]/.test(s) ? s : s + '.0';
+    if (Number.isInteger(v)) return Math.abs(v) > INT_MAX ? s + 'LL' : s;
+    return s;
+  };
+  const inner = (t) => { const m = String(t).replace(/\s+/g, ' ').trim().match(/^(?:std::)?vector\s*<\s*(.+)\s*>$/); return m ? m[1].trim() : null; };
+  /* lit(value, type): with a type the literal is written out in full (std::vector<double>{1.0, 2.0}); without one a
+     list is a braced list, which converts to the parameter's vector type, and a string is a std::string */
+  const lit = (v, t, top = true) => {
+    const T = t == null ? null : String(t).trim();
+    if (T) {
+      const e = inner(T);
+      if (e != null) {
+        if (!Array.isArray(v)) throw new Error(`a value for ${T} is not a list: ${JSON.stringify(v)}`);
+        return `${T}{${v.map(x => lit(x, e, false)).join(', ')}}`;
+      }
+      if (/^(?:std::)?string$/.test(T)) return top ? `std::string(${cStr(v)})` : cStr(v);
+      if (T === 'bool') return v ? 'true' : 'false';
+      if (T === 'double' || T === 'float') return numLit(v, true);
+      if (T === 'long long' || T === 'long') return typeof v === 'number' && Number.isInteger(v) ? String(v) + 'LL' : numLit(v);
+      if (T === 'int') return numLit(v);
+      if (Array.isArray(v)) return `${T}{${v.map(x => lit(x, null, false)).join(', ')}}`;
+      return `${T}(${lit(v, null, false)})`;
+    }
+    if (typeof v === 'boolean') return v ? 'true' : 'false';
+    if (typeof v === 'number') return numLit(v);
+    if (typeof v === 'string') return top ? `std::string(${cStr(v)})` : cStr(v);
+    if (Array.isArray(v)) return `{${v.map(x => lit(x, null, false)).join(', ')}}`;
+    throw new Error('a case value must be a number, a boolean, a string or a list: ' + JSON.stringify(v));
+  };
+  /* The expression a case runs: call with args (a function name and JSON values) or call alone (C++ source) */
+  const callOf = (c) => Array.isArray(c.args) ? `${String(c.call).trim()}(${c.args.map((v, k) => lit(v, Array.isArray(c.types) ? c.types[k] : null)).join(', ')})` : String(c.call ?? '');
+
+  /* ---------- Translation unit ---------- */
+  /* The leading block of a source (blank lines, comments, #include <...>) goes into the precompiled header; srcPch
+     keeps every other line where it was, so line numbers do not move */
+  const splitHead = (src) => {
+    const lines = String(src).split('\n'), inc = new Set();
+    let block = false;
+    for (let i = 0; i < lines.length; i++) {
+      const t = lines[i].trim();
+      if (block) { const k = t.indexOf('*/'); if (k >= 0) { block = false; if (t.slice(k + 2).trim()) break; } continue; }
+      if (!t || t.startsWith('//')) continue;
+      if (t.startsWith('/*')) { const k = t.indexOf('*/', 2); if (k < 0) block = true; else if (t.slice(k + 2).trim()) break; continue; }
+      if (/^#\s*include\s*<[^>]+>\s*(\/\/.*)?$/.test(t)) { inc.add(i); continue; }
+      break;
+    }
+    return { head: [...inc].map(k => lines[k].trim().replace(/\s*\/\/.*$/, '')), blank: lines.map((l, k) => inc.has(k) ? '' : l).join('\n') };
+  };
+  const LIB = String.raw`
+#line 1 "zq_harness"
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <iterator>
+namespace zq {
+inline void num(std::string& o, double v) {
+  if (v != v) { o += "{\"$num\":\"NaN\"}"; return; }
+  if (__builtin_isinf(v)) { o += v > 0 ? "{\"$num\":\"Infinity\"}" : "{\"$num\":\"-Infinity\"}"; return; }
+  char b[40]; std::snprintf(b, sizeof b, "%.17g", v); o += b;
+}
+inline void str(std::string& o, const std::string& s) {
+  o += '"';
+  for (unsigned char c : s) {
+    if (c == '"' || c == '\\') { o += '\\'; o += (char)c; }
+    else if (c == '\n') o += "\\n"; else if (c == '\t') o += "\\t"; else if (c == '\r') o += "\\r";
+    else if (c < 0x20 || c == 0x7f) { char b[8]; std::snprintf(b, sizeof b, "\\u%04x", c); o += b; }
+    else o += (char)c;
+  }
+  o += '"';
+}
+template <class T, class = void> struct seq : std::false_type {};
+template <class T> struct seq<T, std::void_t<decltype(std::begin(std::declval<const T&>())), decltype(std::end(std::declval<const T&>()))>> : std::true_type {};
+template <class T> struct pair : std::false_type {};
+template <class A, class B> struct pair<std::pair<A, B>> : std::true_type {};
+template <class T> void put(std::string& o, const T& v) {
+  using U = std::remove_cv_t<std::remove_reference_t<T>>;
+  if constexpr (std::is_same_v<U, bool>) o += v ? "true" : "false";
+  else if constexpr (std::is_same_v<U, char>) str(o, std::string(1, v));
+  else if constexpr (std::is_integral_v<U>) o += std::to_string(v);
+  else if constexpr (std::is_floating_point_v<U>) num(o, (double)v);
+  else if constexpr (std::is_enum_v<U>) o += std::to_string((long long)v);
+  else if constexpr (std::is_convertible_v<const U&, std::string>) str(o, std::string(v));
+  else if constexpr (pair<U>::value) { o += '['; put(o, v.first); o += ','; put(o, v.second); o += ']'; }
+  else if constexpr (seq<U>::value) { o += '['; bool first = true; for (const auto& x : v) { if (!first) o += ','; first = false; put(o, x); } o += ']'; }
+  else o += "{\"$unprintable\":true}";
+}
+template <class T> std::string tname() { std::string s = __PRETTY_FUNCTION__; auto a = s.find("[T = "); if (a == std::string::npos) return "?"; s = s.substr(a + 5); auto b = s.rfind(']'); return b == std::string::npos ? s : s.substr(0, b); }
+template <class F> void emit(std::string& o, F&& f) {
+  if constexpr (std::is_void_v<decltype(f())>) { f(); o = "void\x1fnull"; }
+  else { decltype(auto) v = f(); o = tname<std::remove_cv_t<std::remove_reference_t<decltype(v)>>>(); o += '\x1f'; put(o, v); }
+}
+inline void finish(const std::string& o) {
+#ifdef _LIBCPP_IOSTREAM
+  std::cout.flush();
+#endif
+  std::fflush(stdout);
+  std::fputs("\x1eZQR", stdout); std::fputs(o.c_str(), stdout); std::fputs("\n", stdout);
+  std::fflush(stdout);
+}
+}
+`;
+  const harness = (cases) => LIB + cases.map((c, i) => `
+#line 1 "test ${i + 1}"
+static void zq_case_${i}(std::string& zq_o) {
+${c.setup == null ? '' : String(c.setup)}
+zq::emit(zq_o, [&]() -> decltype(auto) { return
+${callOf(c)}
+; });
+}
+`).join('') + `
+#line 1 "zq_harness_main"
+int main(int argc, char** argv) {
+  std::string zq_o;
+  switch (argc > 1 ? std::atoi(argv[1]) : -1) {
+${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
+  default: return 3;
+  }
+  zq::finish(zq_o);
+  return 0;
+}
+`;
+  /* In function mode a main the learner wrote (to try things out) is renamed, so it does not clash with the harness */
+  const unit = (spec, src, cases, script) => {
+    const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
+    const P = splitHead(pre), L = splitHead(src);
+    const head = [...new Set([...P.head, ...L.head])].join('\n');
+    const build = (p, s) => (p.trim() ? `#line 1 "prelude.cpp"\n${p}\n` : '') + (script ? '' : '#define main zq_learner_main\n') + `#line 1 "main.cpp"\n${s}\n` + (script ? '' : '#undef main\n') + (post.trim() ? `#line 1 "postlude.cpp"\n${post}\n` : '') + (script ? '' : harness(cases));
+    return { src: build(pre, src), srcPch: build(P.blank, L.blank), head: head ? head + '\n' : '' };
+  };
+
+  /* ---------- Reading results ---------- */
+  const cleanType = (t) => String(t || '').replace(/std::__1::/g, 'std::').replace(/std::basic_string<char(?:, std::char_traits<char>, std::allocator<char>)?>/g, 'std::string');
+  const plain = (t) => String(t || '').replace(/std::__1::/g, 'std::').replace(/^std::/, '').trim();
+  const revive = (k, v) => (v && typeof v === 'object' && !Array.isArray(v) && '$num' in v ? Number(v.$num) : v);
+  const parseErr = (err) => {
+    const lines = String(err || '').split('\n');
+    const at = lines.findIndex(l => l.startsWith(EXC));
+    const exc = at >= 0 ? lines[at].slice(EXC.length).split('|').map(cleanType) : null;
+    if (at >= 0) lines.splice(at, 1);
+    /* hardening messages name the header's path; the learner needs only the message */
+    return { exc, text: lines.join('\n').replace(/^\/usr\/include\/c\+\+\/v1\/[^:\s]+:\d+: /gm, '').replace(/\n+$/, '') };
+  };
+  const TRAPS = [
+    [/unreachable/, 'The program crashed (RuntimeError: unreachable). That is abort(), a failed assert or a libc++ check, or a function that should return a value reaching its end without a return.'],
+    [/out of bounds/, 'The program crashed (RuntimeError: memory access out of bounds): it read or wrote memory it does not own, through a bad pointer or index, or the stack overflowed.'],
+    [/divide by zero|division by zero/, 'The program crashed: integer division by zero.'],
+    [/call stack|Maximum call stack/, 'The program crashed: the call stack ran out (a recursion that never stops?).'],
+    [/integer overflow|unrepresentable/, 'The program crashed: an integer division overflowed (INT_MIN / -1).'],
+  ];
+  const trapLine = (t) => { const hit = TRAPS.find(([re]) => re.test(t)); return hit ? hit[1] : 'The program crashed: ' + t; };
+  /* What went wrong in a run, as the learner should read it (or null for a clean exit 0) */
+  const runError = (r, e) => {
+    if (r.trap) return [e.text, trapLine(r.trap)].filter(Boolean).join('\n');
+    if (e.exc || r.code === 134) return e.text || 'The program was stopped by an uncaught exception.';
+    if (r.code !== 0) return [e.text, `The program ended with exit status ${r.code}.`].filter(Boolean).join('\n');
+    return null;
+  };
+  const fmt = (v) => {
+    if (v === null || v === undefined) return 'nothing (void)';
+    if (Array.isArray(v)) return '{' + v.map(fmt).join(', ') + '}';
+    if (typeof v === 'string') return JSON.stringify(v);
+    if (typeof v === 'number') return Number.isNaN(v) ? 'nan' : v === Infinity ? 'inf' : v === -Infinity ? '-inf' : String(v);
+    if (v && typeof v === 'object' && v.$unprintable) return '(a value the tests cannot print)';
+    return String(v);
+  };
+  const close = (a, e) => a === e || (isFinite(a) && isFinite(e) && Math.abs(a - e) <= Math.max(1e-9 * Math.max(Math.abs(a), Math.abs(e)), 1e-12));
+  const same = (a, e, mode) => {
+    if (Array.isArray(e)) return Array.isArray(a) && a.length === e.length && a.every((x, i) => same(x, e[i], mode));
+    if (typeof e === 'number') return typeof a === 'number' && (mode === 'isclose' ? close(a, e) : a === e);
+    return a === e;
+  };
+  const norm = (t) => { const ls = String(t).replace(/\r\n/g, '\n').split('\n').map(l => l.replace(/\s+$/, '')); while (ls.length && !ls[0]) ls.shift(); while (ls.length && !ls[ls.length - 1]) ls.pop(); return ls.join('\n'); };
+  const excMatch = (names, want) => !!names && names.some(n => plain(n) === plain(want));
+  /* compare "raises": expect names an exception type (it or a base class must be thrown and not caught); with no
+     expect any abnormal end passes (an uncaught exception, a crash, or a non-zero exit status) */
+  const raisesRow = (row, r, e) => {
+    const want = row.expect == null ? '' : String(row.expect).trim();
+    if (e.exc) { row.ok = want ? excMatch(e.exc, want) : true; row.actual = 'threw ' + e.exc[0]; row.detail = row.ok ? '' : e.text; return; }
+    if (r.trap) { row.ok = !want; row.actual = 'a crash'; row.detail = trapLine(r.trap); return; }
+    if (r.code !== 0) { row.ok = !want; row.actual = `exit status ${r.code}`; return; }
+    row.ok = false;
+    row.actual = row.hasValue ? 'no error, the value was ' + fmt(row.value) : 'no error: the program ran to the end';
+  };
+  const isOut = (c) => c.compare === 'stdout' || (c.call == null && c.expect != null && c.compare == null);
+  const scriptMode = (cases) => cases.some(c => isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null));
+  /* Compiler output for the learner: the generated harness's notes are dropped, test N keeps no line number, the
+     linker's temporary file names and libc++'s inline namespace go */
+  const cleanDiag = (d) => {
+    const L = String(d || '').replace(/\r/g, '').split('\n'), out = [];
+    for (let i = 0; i < L.length; i++) {
+      const ln = L[i];
+      if (/^zq_harness(_main)?:\d+:\d+: note:/.test(ln) || /^In file included from zq_harness/.test(ln)) { while (L[i + 1] != null && /^\s|^\s*\d+ \|/.test(L[i + 1])) i++; continue; }
+      if (/^clang\S*: error: linker command failed/.test(ln)) continue;
+      out.push(ln.replace(/^(test \d+):\d+:\d+: /, '$1: ').replace(/^wasm-ld: error: \S+?\.o: /, 'linker error: ').replace(/std::__1::/g, 'std::'));
+    }
+    let txt = out.join('\n').replace(/\n+$/, '');
+    if (/linker error: undefined symbol/.test(txt)) txt += '\n\nThe linker could not find a function the code calls: it is declared but not defined, or its definition has different parameter types.';
+    return txt.length > 6000 ? txt.slice(0, 6000) + '\n[compiler output cut at 6,000 characters]' : txt;
+  };
+  /* Warnings about the learner's own code (main.cpp), shown above the results when the compile succeeded */
+  const learnerWarnings = (d) => {
+    const L = String(d || '').split('\n'), out = [];
+    let keep = false;
+    L.forEach(ln => {
+      if (/^\S[^:]*:\d+:\d+: (warning|error|note):/.test(ln)) keep = /^main\.cpp:\d+:\d+: (warning|note):/.test(ln);
+      else if (/^\d+ warnings? generated\.$|^In file included from/.test(ln)) keep = false;
+      if (keep) out.push(ln);
+    });
+    return out.join('\n').trim();
+  };
+
+  /* ---------- C++ highlighting and editor (the Python editor's behaviour; indent after an open brace) ---------- */
+  const KW = new Set('alignas alignof auto bool break case catch char class const constexpr const_cast continue decltype default delete do double dynamic_cast else enum explicit extern false final float for friend goto if inline int long mutable namespace new noexcept nullptr operator override private protected public reinterpret_cast return short signed sizeof static static_assert static_cast struct switch template this throw true try typedef typename union unsigned using virtual void volatile while'.split(' '));
+  const BI = new Set('std cout cin cerr endl string vector map set unordered_map unordered_set pair size_t array deque queue stack list optional tuple unique_ptr shared_ptr make_unique make_shared move swap sort accumulate min max abs sqrt pow exp log printf scanf puts getline to_string stoi stod size begin end push_back emplace_back runtime_error invalid_argument out_of_range exception'.split(' '));
+  const TOK = /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(^[ \t]*#[ \t]*\w+)|("(?:[^"\\\n]|\\.)*"?|'(?:[^'\\\n]|\\.)*'?|<[\w./]+>(?=[ \t]*(?:\/\/[^\n]*)?$))|(\b\d[\d']*(?:\.\d*)?(?:[eE][+-]?\d+)?[uUlLfF]*|\.\d+(?:[eE][+-]?\d+)?[fF]?)|([A-Za-z_]\w*)/gm;
+  const escH = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const highlight = (src) => {
+    let out = '', last = 0, pre = false;
+    src.replace(TOK, (m, com, dir, str, nm, id, at) => {
+      out += escH(src.slice(last, at)); last = at + m.length;
+      let cls = '';
+      if (com) cls = 'com';
+      else if (dir) cls = 'kw';
+      else if (str) cls = str[0] !== '<' || pre ? 'str' : ''; // <vector> is a header name only after #include
+      else if (nm) cls = 'num';
+      else if (id) cls = KW.has(id) ? 'kw' : BI.has(id) ? 'bi' : '';
+      pre = !!dir && /include/.test(dir);
+      out += cls ? `<span class="tok-${cls}">${escH(m)}</span>` : escH(m);
+      return m;
+    });
+    return out + escH(src.slice(last));
+  };
+  function Editor(host, { value, label, onInput, onRun }) {
+    host.innerHTML = `<div class="wd-gut" aria-hidden="true"><div class="wd-gut-in"></div></div>
+      <div class="wd-ed-main"><pre class="wd-hl" aria-hidden="true"><code></code></pre>
+        <textarea class="wd-ta" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="${Z.esc(label)}"></textarea></div>`;
+    const ta = host.querySelector('textarea'), code = host.querySelector('code'), gut = host.querySelector('.wd-gut-in');
+    let lines = 0, cur = -1, escArmed = false;
+    const lineStartOf = (v, i) => v.lastIndexOf('\n', i - 1) + 1;
+    const scroll = () => { code.style.transform = `translate(${-ta.scrollLeft}px, ${-ta.scrollTop}px)`; gut.style.transform = `translateY(${-ta.scrollTop}px)`; };
+    const mark = () => {
+      const line = ta.value.slice(0, ta.selectionStart).split('\n').length - 1;
+      if (line === cur) return;
+      if (gut.children[cur]) gut.children[cur].classList.remove('cur');
+      cur = line;
+      if (gut.children[cur]) gut.children[cur].classList.add('cur');
+    };
+    const paint = () => {
+      const v = ta.value;
+      code.innerHTML = highlight(v) + '\n';
+      const n = v.split('\n').length;
+      if (n !== lines) { lines = n; gut.innerHTML = Array.from({ length: n }, (_, i) => `<span>${i + 1}</span>`).join(''); cur = -1; }
+      host.style.setProperty('--wd-lines', Math.max(6, Math.min(18, n + 1)));
+      mark(); scroll();
+    };
+    const edit = (start, end, text, selStart, selEnd = selStart) => {
+      ta.focus(); ta.setSelectionRange(start, end);
+      let ok = false;
+      if (start !== end || text) {
+        try { ok = text ? document.execCommand('insertText', false, text) : document.execCommand('delete'); } catch { ok = false; }
+        if (!ok) { ta.setRangeText(text, start, end, 'end'); paint(); onInput(ta.value); }
+      }
+      ta.setSelectionRange(selStart, selEnd); mark();
+    };
+    const indent = (out) => {
+      const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+      const multi = v.slice(s, e).includes('\n');
+      if (!multi && !out) { edit(s, e, '    ', s + 4); return; }
+      const a = lineStartOf(v, s);
+      const endAt = e > s && v[e - 1] === '\n' ? e - 1 : e;
+      let b = v.indexOf('\n', endAt); if (b < 0) b = v.length;
+      const old = v.slice(a, b);
+      let first = 0, total = 0;
+      const next = old.split('\n').map((ln, k) => {
+        if (!out) { if (k === 0) first = 4; total += 4; return '    ' + ln; }
+        const n = ln.match(/^ {0,4}/)[0].length; if (k === 0) first = -n; total -= n; return ln.slice(n);
+      }).join('\n');
+      if (next === old) return;
+      edit(a, b, next, Math.max(a, s + first), multi ? e + total : Math.max(a, e + first));
+    };
+    const newline = () => {
+      const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+      const line = v.slice(lineStartOf(v, s), s);
+      let ind = line.match(/^ */)[0];
+      const bare = line.replace(/\/\/.*$/, '').trimEnd();
+      if (/[{(]$/.test(bare)) ind += '    ';
+      edit(s, e, '\n' + ind, s + 1 + ind.length);
+    };
+    ta.addEventListener('keydown', (ev) => {
+      if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); onRun(); return; }
+      if (ev.key === 'Escape') { escArmed = true; return; }
+      if (ev.key === 'Tab' && !ev.ctrlKey && !ev.altKey && !ev.metaKey) {
+        if (escArmed) { escArmed = false; return; }
+        ev.preventDefault(); indent(ev.shiftKey); return;
+      }
+      if (ev.key !== 'Shift') escArmed = false;
+      if (ev.key === 'Enter' && !ev.isComposing && !ev.shiftKey && !ev.altKey) { ev.preventDefault(); ev.stopPropagation(); newline(); return; }
+      if (ev.key === '}' && ta.selectionStart === ta.selectionEnd) { // a closing brace on an empty line moves back one level
+        const v = ta.value, s = ta.selectionStart, before = v.slice(lineStartOf(v, s), s);
+        if (before.length >= 4 && /^ +$/.test(before)) { ev.preventDefault(); edit(s - 4, s, '}', s - 3); return; }
+      }
+      if (ev.key === 'Backspace' && ta.selectionStart === ta.selectionEnd) {
+        const v = ta.value, s = ta.selectionStart, before = v.slice(lineStartOf(v, s), s);
+        if (before.length && /^ +$/.test(before)) { const n = before.length % 4 || 4; ev.preventDefault(); edit(s - n, s, '', s - n); }
+      }
+    });
+    ta.addEventListener('input', () => { paint(); onInput(ta.value); });
+    ta.addEventListener('scroll', scroll, { passive: true });
+    ['keyup', 'click', 'focus', 'select'].forEach(t => ta.addEventListener(t, mark));
+    ta.value = value; paint();
+    return { ta, get value() { return ta.value; }, set(v) { ta.value = v; paint(); onInput(v); }, readOnly(v) { ta.readOnly = v; } };
+  }
+
+  /* ---------- The widget ---------- */
+  Z.cppCode = (host, spec, ctx) => {
+    const examples = spec.examples || [], tests = spec.tests || [];
+    const script = scriptMode([...examples, ...tests]);
+    const el = Z.h(`<div class="wd-code wd-cpp">
+      <div class="wd-code-head">
+        <span class="t-label">C++</span>
+        <span class="wd-py t-caption" aria-live="polite"></span>
+        <button type="button" class="btn secondary wd-run" disabled>${Z.icon('play', 'sm')} Run examples</button>
+      </div>
+      <div class="wd-ed"></div>
+      <p class="t-caption wd-code-keys"><kbd>Tab</kbd> indents. <kbd>Esc</kbd> then <kbd>Tab</kbd> leaves the editor. <kbd>Ctrl</kbd> <kbd>Enter</kbd> runs the examples. Check compiles your code and runs the hidden tests.</p>
+      ${spec.how ? `<p class="t-caption wd-code-how">${Z.grade.inline(spec.how)}</p>` : ''}
+      <div class="wd-res" aria-live="polite"></div>
+    </div>`);
+    host.append(el);
+    const runBtn = el.querySelector('.wd-run'), stEl = el.querySelector('.wd-py'), res = el.querySelector('.wd-res'), edHost = el.querySelector('.wd-ed');
+    let alive = true, busy = false, cache = null, locked = false, saveT = 0, quiet = false;
+    const D = Z.state && Z.state.drills && typeof Z.state.drills.draft === 'function' && ctx.draftKey ? Z.state.drills : null;
+    const draft = (v) => { try { return D ? D.draft(ctx.draftKey, v) : null; } catch (e) { console.error(e); return null; } };
+    const saved = D ? draft() : null;
+    const ed = Editor(edHost, { value: typeof saved === 'string' && saved.trim() ? saved : spec.starter || '', label: 'C++ code editor', onInput: () => {
+      if (D && !quiet) { clearTimeout(saveT); saveT = setTimeout(() => draft(ed.value === (spec.starter || '') ? null : ed.value), 400); }
+      ctx.change && ctx.change({ code: ed.value });
+    }, onRun: () => runExamples() });
+    const sync = (s = Cpp.status) => {
+      if (!alive) return;
+      const txt = { idle: 'C++ not loaded', loading: Cpp.progress || 'Loading the C++ compiler', restarting: 'Restarting the C++ compiler', ready: 'C++ ready', unavailable: 'C++ is not available here' }[s] || '';
+      stEl.textContent = busy && s === 'ready' ? busy : txt; stEl.dataset.s = s;
+      runBtn.disabled = !!busy || locked || s !== 'ready';
+      ctx.change && ctx.change({ code: ed.value, status: s });
+    };
+    const unsub = Cpp.sub(sync);
+    Cpp.ensure();
+    Cpp.warm(unit(spec, spec.starter || '', [], script).head);
+    sync();
+
+    const pre = (t, cls = 'wd-res-out') => `<pre class="${cls} t-code">${Z.esc(t)}</pre>`;
+    const label = (r) => r.out ? (r.stdin ? 'what it prints with this input' : 'what it prints') : r.call ? `${r.setup ? `<code class="lsn-ic">${Z.esc(r.setup)}</code> then ` : ''}<code class="lsn-ic">${Z.esc(r.call)}</code>` : 'the whole program';
+    const outRow = (r) => {
+      const said = r.stdout.trim() ? pre(r.stdout) : '<div class="t-caption">Your program printed nothing.</div>';
+      const input = (r.argv && r.argv.length ? `<div class="t-caption">Run as</div>${pre('./main ' + r.argv.map(a => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' '), 'wd-res-out wd-res-in')}` : '') + (r.stdin ? `<div class="t-caption">Input</div>${pre(r.stdin.replace(/\n$/, ''), 'wd-res-out wd-res-in')}` : '');
+      if (r.error) return `${input}${pre(r.error, 'wd-res-err')}${r.stdout.trim() ? `<div class="t-caption">Printed before the error</div>${said}` : ''}`;
+      if (r.ok) return `${input}<div class="t-caption">Printed the expected output</div>${said}`;
+      return `${input}<div class="t-caption">Expected output</div>${pre(String(r.expect).replace(/\n$/, ''))}<div class="t-caption">Your program printed</div>${said}`;
+    };
+    const valRow = (r) => {
+      if (r.error) return pre(r.error, 'wd-res-err') + (r.stdout ? `<div class="t-caption">Printed before the error</div>${pre(r.stdout)}` : '');
+      const exp = r.raises ? (r.expect ? `Expected it to throw <code class="lsn-ic">${Z.esc(r.expect)}</code>` : 'Expected it to stop with an error') : `Expected <code class="lsn-ic">${Z.esc(fmt(r.expect))}</code>`;
+      const got = r.actual == null ? 'nothing' : r.actual;
+      const ty = !r.raises && !r.ok && r.type && r.type !== 'void' ? ` <span class="muted">(${Z.esc(r.type)})</span>` : '';
+      return `<div class="t-caption">${exp}, got <code class="lsn-ic">${Z.esc(got)}</code>${ty}</div>${r.detail ? pre(r.detail, 'wd-res-err') : ''}${r.stdout ? pre(r.stdout) : ''}`;
+    };
+    const row = (r, name) => `<li class="wd-res-row ${r.ok ? 'ok' : 'bad'}">
+        <span class="wd-res-ic" aria-hidden="true">${Z.icon(r.ok ? 'check' : 'cross', 'xs')}</span>
+        <div class="wd-res-b"><div class="wd-res-h"><b>${name}</b> ${label(r)}</div>${r.out ? outRow(r) : valRow(r)}</div></li>`;
+    const render = (title, rows, cases, extra = '', list = true) => {
+      const n = rows.filter(r => r.ok).length;
+      res.innerHTML = `<div class="wd-res-top"><span class="t-label">${title}</span><span class="t-caption">${list ? `${n} of ${cases.length} passed` : 'no test ran'}</span></div>${extra}${list ? `<ol class="wd-res-list">${rows.map((r, i) => row(r, (title === 'Examples' ? 'Example ' : 'Test ') + (i + 1))).join('')}</ol>` : ''}`;
+    };
+    const progressNote = (t) => { if (alive) res.innerHTML = `<p class="t-caption wd-res-load" aria-live="polite">${Z.esc(t)}</p>`; };
+
+    /* Compile once, run every case; resolves to { rows, error, compileError, warnings, ms } */
+    const runCases = async (cases) => {
+      const rows = cases.map(c => {
+        let call = '';
+        try { call = c.call == null ? '' : callOf(c); } catch (e) { call = String(c.call); }
+        return { argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call, raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: c.expect, out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, type: '', error: null, stdout: '', detail: '' };
+      });
+      if (Cpp.status !== 'ready') return { rows, error: Cpp.status === 'unavailable' ? 'The C++ compiler could not load: ' + Cpp.reason : 'The C++ compiler is still loading. Try again in a moment.' };
+      let u;
+      try { u = unit(spec, ed.value, cases, script); } catch (e) { return { rows, error: 'This exercise has a case the tests cannot write in C++: ' + e.message }; }
+      busy = 'Compiling'; sync(); progressNote('Compiling...');
+      const t0 = performance.now();
+      const c = await Cpp.compile(u);
+      const compileMs = Math.round(performance.now() - t0);
+      if (!c.ok) {
+        busy = false; sync();
+        if (c.notReady) return { rows, error: 'The C++ compiler is still loading. Try again in a moment.' };
+        return { rows, error: cleanDiag(c.diag), compileError: true, compileMs };
+      }
+      busy = 'Running'; sync(); progressNote('Running...');
+      const limit = TEST_MS + (spec.budget != null ? Math.max(0, +spec.budget || 0) : 0);
+      const runs = await Cpp.run(c.wasm, cases.map((cs, i) => (script ? { argv: cs.argv || [], stdin: cs.stdin == null ? '' : String(cs.stdin) } : { argv: [String(i)], stdin: '' })), limit);
+      busy = false; sync();
+      runs.results.forEach((r, i) => {
+        const row = rows[i];
+        if (!r) return;
+        const e = parseErr(r.err);
+        const k = script ? -1 : r.out.lastIndexOf(OUT);
+        row.stdout = k >= 0 ? r.out.slice(0, k) : r.out;
+        if (!row.out) row.stdout = row.stdout.replace(/\n+$/, '');
+        if (k >= 0) {
+          const line = r.out.slice(k + OUT.length).replace(/\n$/, ''), j = line.indexOf(SEP);
+          row.type = cleanType(line.slice(0, j));
+          try { row.value = JSON.parse(line.slice(j + 1), revive); row.hasValue = true; } catch { row.value = undefined; }
+        }
+        if (row.raises) { raisesRow(row, r, e); return; }
+        const err = runError(r, e);
+        if (row.out) {
+          if (err) { row.error = err; return; }
+          row.ok = cases[i].exact ? row.stdout === String(row.expect) : norm(row.stdout) === norm(row.expect);
+          return;
+        }
+        if (err || !row.hasValue) { row.error = err || 'The test did not report a value.'; return; }
+        row.actual = row.type === 'void' ? 'nothing (void)' : fmt(row.value);
+        row.ok = same(row.value, cases[i].expect, cases[i].compare === 'isclose' ? 'isclose' : 'equal');
+      });
+      let error = null;
+      if (runs.timeout != null) {
+        const r = rows[runs.timeout];
+        if (r) r.error = `Stopped after ${limit / 1000} s. Look for a loop that never ends${script ? ', or a read from std::cin waiting for input the test does not give' : ''}.`;
+        rows.forEach((x, i) => { if (i > runs.timeout && !runs.results[i]) x.error = 'Not run: an earlier test went past the time limit.'; });
+      } else if (runs.crash) error = 'The program runner stopped: ' + runs.crash;
+      return { rows, error, warnings: learnerWarnings(c.diag), compileMs, ms: c.ms };
+    };
+    const extraOf = (r, untouched) => {
+      if (r.compileError) return untouched ? `<p class="t-caption">The starter is not finished yet, so it does not compile. Fill in what it asks for and check again.</p><details class="wd-res-more"><summary class="t-caption">Show the compiler's message</summary>${pre(r.error, 'wd-res-err')}</details>`
+        : `<div class="t-caption">Your code did not compile, so no test ran</div>${pre(r.error, 'wd-res-err')}`;
+      return (r.error ? pre(r.error, 'wd-res-err') : '') + (r.warnings ? `<div class="t-caption">The compiler warned</div>${pre(r.warnings, 'wd-res-err')}` : '');
+    };
+    const runExamples = async () => {
+      if (busy || locked || Cpp.status !== 'ready' || !examples.length) return;
+      const r = await runCases(examples);
+      if (!alive) return;
+      render('Examples', r.rows, examples, extraOf(r, false), !r.compileError);
+      sync();
+    };
+    runBtn.addEventListener('click', runExamples);
+    if (!examples.length) runBtn.hidden = true;
+
+    return {
+      el,
+      value: () => ed.value,
+      set(v) { quiet = true; ed.set(String(v ?? '')); quiet = false; cache = null; },
+      answer: () => spec.solution ?? null,
+      ready: () => !busy && ed.value.trim() !== '' && (Cpp.status === 'ready' || Cpp.status === 'unavailable'),
+      dirty: () => ed.value !== (spec.starter || ''),
+      async grade() {
+        const src = ed.value;
+        if (cache && cache.src === src) return cache.result;
+        if (Cpp.status === 'unavailable') return { ok: false, key: 'unavailable', line: 'The C++ compiler could not load in this browser, so the tests cannot run.', detail: null };
+        const r = await runCases(tests);
+        const n = r.rows.filter(x => x.ok).length;
+        const first = r.rows.findIndex(x => !x.ok);
+        const ok = !r.error && n === tests.length && tests.length > 0;
+        const untouched = !!r.compileError && src.trim() === String(spec.starter || '').trim();
+        const line = ok ? null : untouched ? 'The starter does not compile yet on its own: fill in the parts it asks for, then check again.' : r.compileError ? 'Your code did not compile. The compiler\'s message is shown below the editor.' : r.error ? 'The tests could not finish. The reason is shown below the editor.' : `${n} of ${tests.length} tests passed. The first failure is test ${first + 1}.`;
+        const result = { ok, key: ok ? null : r.compileError ? 'compile' : r.error ? 'error' : `test-${first + 1}`, line, detail: { passed: n, total: tests.length, rows: r.rows, compileMs: r.compileMs } };
+        if (alive) render('Tests', r.rows, tests, extraOf(r, untouched), !r.compileError);
+        if (!r.error || r.compileError) cache = { src, result }; // a runner or loading failure is worth retrying
+        return result;
+      },
+      lock() { locked = true; ed.readOnly(true); sync(); },
+      unlock() { locked = false; ed.readOnly(false); el.classList.remove('is-ok', 'is-bad'); sync(); },
+      markGraded(r) { el.classList.toggle('is-ok', !!r.ok); el.classList.toggle('is-bad', !r.ok); },
+      reveal() { quiet = true; if (spec.solution) ed.set(spec.solution); quiet = false; locked = true; ed.readOnly(true); el.classList.add('wd-rev'); sync(); },
+      reset() { clearTimeout(saveT); if (D) draft(null); quiet = true; ed.set(spec.starter || ''); quiet = false; res.innerHTML = ''; cache = null; locked = false; ed.readOnly(false); el.classList.remove('is-ok', 'is-bad', 'wd-rev'); sync(); },
+      focus() { ed.ta.focus({ preventScroll: true }); },
+      destroy() { alive = false; unsub(); if (D && saveT) { clearTimeout(saveT); draft(ed.value === (spec.starter || '') ? null : ed.value); } },
+    };
+  };
+  /* For tools and tests: the pure helpers */
+  Z.cppCode.lib = { lit, callOf, splitHead, unit, cleanDiag, same, norm, fmt, scriptMode };
+})();

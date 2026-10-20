@@ -343,6 +343,7 @@ def __zq_case(_i):
   };
 
   Z.widgets.register('code', (host, spec, ctx) => {
+    if (spec.language === 'cpp' && Z.cppCode) return Z.cppCode(host, spec, ctx); // item 304: C++ is compiled and graded by js/engine/widgets/cpp-grade.js
     const examples = spec.examples || [], tests = spec.tests || [];
     const el = Z.h(`<div class="wd-code">
       <div class="wd-code-head">

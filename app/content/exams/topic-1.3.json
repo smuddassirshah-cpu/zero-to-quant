@@ -84,13 +84,14 @@
         "params": {
           "x": [
             -0.3,
-            2.3
+            2.4
           ],
           "y": [
             -0.4,
-            4.4
+            4.8
           ],
           "grid": true,
+          "xStep": 0.5,
           "functions": [
             {
               "id": "f",
@@ -99,7 +100,8 @@
               "domain": [
                 0,
                 2.1
-              ]
+              ],
+              "labelAt": 1.6
             }
           ]
         },
@@ -650,6 +652,7 @@
             4.5
           ],
           "grid": true,
+          "xStep": 1,
           "functions": [
             {
               "id": "fp",
@@ -1429,13 +1432,13 @@
         "ty-finance"
       ],
       "title": "A bond's yield by Newton's method",
-      "prose": "A bond pays a coupon $c$ each year for $T$ years, then its face value $F$. At yield $y$ its price is $P(y) = \\sum_{t=1}^{T} \\mathit{cf}_t(1 + y)^{-t}$. Find the yield $y$ with $P(y)$ equal to the market price, by Newton's method on $g(y) = P(y) - \\text{price}$.",
+      "prose": "A bond pays a coupon $c$ each year for $T$ years, then its face value $F$. Write $\\mathit{cf}_t$ for the cash flow in year $t$. At yield $y$ the price is $P(y) = \\sum_{t=1}^{T} \\mathit{cf}_t(1 + y)^{-t}$. Find the yield $y$ with $P(y)$ equal to the market price, by Newton's method on $g(y) = P(y) - \\text{price}$.",
       "question": "Complete `bond_yield` so it returns the yield, rounded to 6 decimal places.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import numpy as np\n\ndef bond_yield(price, coupon, face, years):\n    t = np.arange(1, years + 1)         # payment times 1, 2, ..., years\n    cf = np.full(years, float(coupon))  # a coupon every year\n    cf[-1] += face                      # the face value comes back at the end\n    y = 0.05                            # first guess\n    for _ in range(50):\n        # 1. g: the price at y minus the market price\n        # 2. dg: the derivative of the price with respect to y\n        # 3. the Newton step: y = y - g / dg\n        ...\n    return round(float(y), 6)\n",
-        "solution": "import numpy as np\n\ndef bond_yield(price, coupon, face, years):\n    t = np.arange(1, years + 1)         # payment times 1, 2, ..., years\n    cf = np.full(years, float(coupon))  # a coupon every year\n    cf[-1] += face                      # the face value comes back at the end\n    y = 0.05                            # first guess\n    for _ in range(50):\n        # 1. g: the price at y minus the market price\n        g = np.sum(cf * (1 + y) ** -t) - price\n        # 2. dg: the derivative of the price with respect to y\n        dg = np.sum(-t * cf * (1 + y) ** (-t - 1))\n        # 3. the Newton step: y = y - g / dg\n        y = y - g / dg\n    return round(float(y), 6)\n",
+        "starter": "import numpy as np\n\ndef bond_yield(price, coupon, face, years):\n    t = np.arange(1, years + 1)   # years 1 to T\n    cf = np.full(years, float(coupon))\n    cf[-1] += face                # face paid at T\n    y = 0.05                      # first guess\n    for _ in range(50):\n        # 1. g = price at y - market price\n        # 2. dg = dP/dy at y\n        # 3. Newton step: y = y - g / dg\n        ...\n    return round(float(y), 6)\n",
+        "solution": "import numpy as np\n\ndef bond_yield(price, coupon, face, years):\n    t = np.arange(1, years + 1)   # years 1 to T\n    cf = np.full(years, float(coupon))\n    cf[-1] += face                # face paid at T\n    y = 0.05                      # first guess\n    for _ in range(50):\n        # 1. g = price at y - market price\n        g = np.sum(cf * (1 + y) ** -t) - price\n        # 2. dg = dP/dy at y\n        dg = np.sum(-t * cf * (1 + y) ** (-t - 1))\n        # 3. Newton step: y = y - g / dg\n        y = y - g / dg\n    return round(float(y), 6)\n",
         "examples": [
           {
             "call": "bond_yield(100, 5, 100, 10)",
@@ -1570,7 +1573,7 @@
       ],
       "title": "Duration and convexity of a zero",
       "kind": "longform",
-      "prompt": "A zero-coupon bond pays £100 in $T$ years. At an annual yield $y$ its price is $P(y) = 100(1 + y)^{-T}$. (a) Find $P'(y)$ and $P''(y)$. (b) Show that the modified duration $D = -\\frac{P'}{P}$ is $\\frac{T}{1 + y}$ and the convexity $C = \\frac{P''}{P}$ is $\\frac{T(T + 1)}{(1 + y)^2}$. (c) Explain where $\\frac{\\Delta P}{P} \\approx -D\\,\\Delta y + \\frac12 C\\,(\\Delta y)^2$ comes from. (d) Take $T = 10$ and $y = 0.05$. Estimate the price change for a rise of 0.01 and for a fall of 0.01, and compare each with the exact change. (e) Say why the two moves are not equal in size, and what the remaining error is.",
+      "prompt": "A zero-coupon bond pays £100 in $T$ years. At an annual yield $y$ its price is $P(y) = 100(1 + y)^{-T}$.\n\n(a) Find $P'(y)$ and $P''(y)$.\n\n(b) Show that the modified duration $D = -\\frac{P'}{P}$ is $\\frac{T}{1 + y}$ and the convexity $C = \\frac{P''}{P}$ is $\\frac{T(T + 1)}{(1 + y)^2}$.\n\n(c) Explain where $\\frac{\\Delta P}{P} \\approx -D\\,\\Delta y + \\frac12 C\\,(\\Delta y)^2$ comes from.\n\n(d) Take $T = 10$ and $y = 0.05$. Estimate the price change for a rise of 0.01 and for a fall of 0.01, and compare each with the exact change.\n\n(e) Say why the two moves are not equal in size, and what the remaining error is.",
       "model": "**(a)** By the chain rule on $(1 + y)^{-T}$, $$P'(y) = -100T(1 + y)^{-T-1}, \\qquad P''(y) = 100T(T + 1)(1 + y)^{-T-2}.$$\n\n**(b)** Divide by $P = 100(1 + y)^{-T}$: the factor $100(1 + y)^{-T}$ cancels. So $D = -\\frac{P'}{P} = \\frac{T}{1 + y}$ and $C = \\frac{P''}{P} = \\frac{T(T + 1)}{(1 + y)^2}$.\n\n**(c)** The second-order Taylor polynomial of $P$ about $y$ is $P(y + \\Delta y) \\approx P + P'\\,\\Delta y + \\frac12 P''(\\Delta y)^2$. Subtract $P$ and divide by $P$: $\\frac{\\Delta P}{P} \\approx \\frac{P'}{P}\\Delta y + \\frac12\\frac{P''}{P}(\\Delta y)^2 = -D\\,\\Delta y + \\frac12 C\\,(\\Delta y)^2$.\n\n**(d)** With $T = 10$ and $y = 0.05$: $P = \\frac{100}{1.05^{10}} = £61.39$, $D = \\frac{10}{1.05} = 9.524$ and $C = \\frac{110}{1.1025} = 99.77$.\n\n- Rise of 0.01: $\\frac{\\Delta P}{P} \\approx -0.09524 + \\frac12(99.77)(0.0001) = -0.09025$, so $\\Delta P \\approx -£5.54$. Exactly, $\\frac{100}{1.06^{10}} - 61.39 = -£5.55$. Duration alone gives $-£5.85$.\n- Fall of 0.01: $\\frac{\\Delta P}{P} \\approx +0.09524 + 0.00499 = +0.10023$, so $\\Delta P \\approx +£6.15$. Exactly, $\\frac{100}{1.04^{10}} - 61.39 = +£6.17$. Duration alone gives $+£5.85$.\n\n**(e)** $P'' > 0$, so the price curve bends up. The convexity term $\\frac12 C(\\Delta y)^2$ is positive for either sign of $\\Delta y$: it softens the fall and adds to the gain. So a fall in yield gains more than an equal rise loses. The leftover error, about 1p here, is the cubic term of the Taylor series, of order $(\\Delta y)^3$.",
       "rubric": [
         {

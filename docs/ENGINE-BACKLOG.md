@@ -907,3 +907,10 @@ Raised later (markov level 1):
 313. `array`: cells never shrink below 30px, so more than about 16 cells clip in the Why? modal; add a `wrap` option or a smaller minimum width.
 314. `graph`: a per-node choice of side for the distribution value label (it always draws under the node and collides with downward self-loops; see 312).
 315. `walk`: a seeded Markov-chain mode (`states`, `P`, `start`) so state paths can be simulated live rather than precomputed and indexed in `derive`.
+
+Raised later (estimation level 2):
+
+316. `bars` and `distribution`: overlay a fitted curve on a data histogram in one chart (an `exact` curve as a state patch), so a fit need not be a `pair` with misaligned axes (see 308).
+317. `plane` and `distribution`: a data-rug option (density sticks at given x values) for likelihood-as-a-product pictures.
+318. `plane`: an option to draw the y axis at the left edge rather than at $x = 0$; and keep a long `xLabel` clear of `state.caption`.
+319. Docs: on a `pair`, the right side's same-named parameters override the left's in `derive`; document and prefer distinct names.
