@@ -1,0 +1,1381 @@
+{
+  "id": "l7-how-long",
+  "course": "markov",
+  "title": "How long until absorbed?",
+  "minutes": 14,
+  "objectives": [
+    "Compute the expected steps to absorption with first-step analysis.",
+    "Solve the resulting linear system and spot when the answer is infinite."
+  ],
+  "skills": [
+    "mc-firststep"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Still walking?",
+      "prose": "A walk on 0, 1, 2, 3 starts at 1. From 1 or 2 it steps left or right with chance $\\tfrac12$ each. At 0 or 3 it stops for good: those states are absorbing. Each node fills with its chance after $k$ steps. Slide $k$.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 190,
+          "nodes": [
+            {
+              "id": "s0",
+              "label": "0",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "x": 0.3533,
+              "y": 0.5
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "x": 0.6467,
+              "y": 0.5
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "x": 0.94,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "s0",
+              "to": "s0",
+              "w": 1
+            },
+            {
+              "from": "s1",
+              "to": "s2",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s1",
+              "to": "s0",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s2",
+              "to": "s3",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s2",
+              "to": "s1",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s3",
+              "to": "s3",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "distribution": {
+            "s0": 0,
+            "s1": 1,
+            "s2": 0,
+            "s3": 0
+          },
+          "params": {
+            "k": 0
+          }
+        },
+        "derive": {
+          "distribution.s0": "round(2/3 * (1 - pow(0.25, ceil(k / 2))), 6)",
+          "distribution.s3": "round(1/3 * (1 - pow(0.25, floor(k / 2))), 6)",
+          "distribution.s1": "round((1 + pow(-1, k)) / 2 * pow(0.5, k), 6)",
+          "distribution.s2": "round((1 - pow(-1, k)) / 2 * pow(0.5, k), 6)",
+          "caption": "After {{k}} steps."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 10,
+            "step": 1,
+            "label": "Steps $k$",
+            "start": 0
+          }
+        ]
+      },
+      "question": "How does the chance that the walk is still moving change with each step?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It halves each step",
+            "correct": true
+          },
+          {
+            "id": "quarter",
+            "text": "It falls by a quarter each step",
+            "why": "Read steps 1, 2 and 3 at nodes 1 and 2: 0.5, 0.25, 0.125. Each is half the last."
+          },
+          {
+            "id": "three",
+            "text": "It reaches 0 after three steps",
+            "why": "You expected the walk to cross three steps and stop. At step 3 it is still moving with chance 0.125."
+          },
+          {
+            "id": "flat",
+            "text": "It stays at $\\tfrac12$",
+            "why": "Only the first step leaves $\\tfrac12$ moving. Slide to $k = 2$: the inner nodes hold 0.25 in total."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the chances at nodes 1 and 2 for $k = 1, 2, 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "Still moving: $\\tfrac12, \\tfrac14, \\tfrac18, \\ldots$",
+        "generic": "Not quite right. Add the chances at nodes 1 and 2 for a few values of $k$."
+      },
+      "explain": {
+        "text": "Wherever the walk is, at 1 or at 2, one of its two moves ends it. So each step stops the walk with chance $\\tfrac12$. After $k$ steps it is still moving with chance $(\\tfrac12)^k$.",
+        "canvas": {
+          "params": {
+            "k": 3
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The average wait",
+      "prose": "Let $T$ be the number of steps until the walk is absorbed at 0 or 3. Each step ends the walk with chance $\\tfrac12$, whatever happened before.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 190,
+          "nodes": [
+            {
+              "id": "s0",
+              "label": "0",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "x": 0.3533,
+              "y": 0.5
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "x": 0.6467,
+              "y": 0.5
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "x": 0.94,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "s0",
+              "to": "s0",
+              "w": 1
+            },
+            {
+              "from": "s1",
+              "to": "s2",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s1",
+              "to": "s0",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s2",
+              "to": "s3",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s2",
+              "to": "s1",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s3",
+              "to": "s3",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "current": "s1"
+        }
+      },
+      "question": "What is $E[T]$, starting at 1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "number of steps",
+        "label": "Expected steps",
+        "unit": "steps",
+        "accept": "2, from $E[T] = 1/p$ with $p = \\tfrac12$.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "This is a wait for the first success."
+        },
+        {
+          "rung": "point",
+          "text": "In random variables you met $E[N] = 1/p$ for a wait with success chance $p$ each trial.",
+          "highlight": [
+            "s0",
+            "s3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Here $p = \\tfrac12$, so $E[T] = 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$E[T] = 1/p = 2$.",
+        "generic": "Not quite right. Treat each step as a trial that ends the walk with chance $\\tfrac12$.",
+        "byKey": {
+          "one": "One step is the shortest walk, not the average. Half the time the walk needs more.",
+          "half": "$\\tfrac12$ is the chance per step. The average wait is its reciprocal.",
+          "three": "You counted the three gaps from 0 to 3. The walk starts at 1, and each step ends it with chance $\\tfrac12$."
+        }
+      },
+      "explain": {
+        "text": "$T$ is a geometric wait with $p = \\tfrac12$, so $E[T] = 1/p = 2$. That shortcut needed every state to have the same exit chance. Next comes a method that works for any chain."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "First-step analysis",
+      "prose": "Let $t_i$ be the expected steps to absorption from state $i$. Condition on the first step: one step is used, then the walk starts afresh from where it lands. This is **first-step analysis**.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 190,
+          "nodes": [
+            {
+              "id": "s0",
+              "label": "0",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "x": 0.3533,
+              "y": 0.5
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "x": 0.6467,
+              "y": 0.5
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "x": 0.94,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "s0",
+              "to": "s0",
+              "w": 1
+            },
+            {
+              "from": "s1",
+              "to": "s2",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s1",
+              "to": "s0",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s2",
+              "to": "s3",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s2",
+              "to": "s1",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s3",
+              "to": "s3",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "current": "s1",
+          "highlight": [
+            "e-s1-s0",
+            "e-s1-s2"
+          ]
+        }
+      },
+      "question": "Put the lines in order to find $t_1$.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "o1",
+            "text": "$t_1 = 1 + \\tfrac12 t_0 + \\tfrac12 t_2$, one step, then the average from where it lands"
+          },
+          {
+            "id": "o2",
+            "text": "$t_1 = 1 + \\tfrac12 t_2$, since $t_0 = 0$: at 0 the walk has stopped"
+          },
+          {
+            "id": "o3",
+            "text": "$t_1 = 1 + \\tfrac12\\left(1 + \\tfrac12 t_1\\right)$, substitute $t_2 = 1 + \\tfrac12 t_1$, the same reasoning from 2"
+          },
+          {
+            "id": "o4",
+            "text": "$\\tfrac34 t_1 = \\tfrac32$, expand and collect the $t_1$ terms"
+          },
+          {
+            "id": "o5",
+            "text": "$t_1 = 2$, divide by $\\tfrac34$"
+          }
+        ],
+        "answer": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by conditioning on the first step from 1."
+        },
+        {
+          "rung": "point",
+          "text": "Then use what you know at the absorbing state 0.",
+          "highlight": [
+            "s0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Condition, use $t_0 = 0$, substitute $t_2$, collect, divide."
+        }
+      ],
+      "feedback": {
+        "correct": "$t_1 = 2$, as the geometric wait said.",
+        "generic": "Not quite right. Condition on the first step before simplifying anything.",
+        "byKey": {
+          "o2": "$t_0 = 0$ simplifies the first-step equation, so that equation must come first.",
+          "o3": "Substituting $t_2$ needs the simplified equation $t_1 = 1 + \\tfrac12 t_2$.",
+          "o4": "Collecting terms needs the line where $t_2$ has been replaced.",
+          "o5": "Dividing is the last step."
+        }
+      },
+      "explain": {
+        "text": "Each equation counts the step just taken, the 1, and averages over where it lands. At an absorbing state no steps remain, so $t_0 = t_3 = 0$. The answer $t_1 = 2$ matches the geometric wait."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A longer walk",
+      "prose": "Now a fair walk on 0 to 4, absorbed at 0 and 4. First-step analysis gives $t_1 = 1 + \\tfrac12 t_2$, $t_2 = 1 + \\tfrac12 t_1 + \\tfrac12 t_3$ and $t_3 = 1 + \\tfrac12 t_2$.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 190,
+          "nodes": [
+            {
+              "id": "s0",
+              "label": "0",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "s1",
+              "label": "1",
+              "x": 0.28,
+              "y": 0.5
+            },
+            {
+              "id": "s2",
+              "label": "2",
+              "x": 0.5,
+              "y": 0.5
+            },
+            {
+              "id": "s3",
+              "label": "3",
+              "x": 0.72,
+              "y": 0.5
+            },
+            {
+              "id": "s4",
+              "label": "4",
+              "x": 0.94,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "s0",
+              "to": "s0",
+              "w": 1
+            },
+            {
+              "from": "s1",
+              "to": "s2",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s1",
+              "to": "s0",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s2",
+              "to": "s3",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s2",
+              "to": "s1",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s3",
+              "to": "s4",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s3",
+              "to": "s2",
+              "w": 0.5,
+              "label": "1/2"
+            },
+            {
+              "from": "s4",
+              "to": "s4",
+              "w": 1
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Solve the system and fill in the table.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Start",
+          "Expected steps"
+        ],
+        "rows": [
+          [
+            "$t_1$",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "$t_2$",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "$t_3$",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "By symmetry, $t_1 = t_3$."
+        },
+        {
+          "rung": "point",
+          "text": "Substitute $t_1 = t_3 = 1 + \\tfrac12 t_2$ into the middle equation.",
+          "highlight": [
+            "s2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$t_2 = 1 + (1 + \\tfrac12 t_2) = 2 + \\tfrac12 t_2$, so $t_2 = 4$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t = (3, 4, 3)$.",
+        "generic": "Not quite right. Use the symmetry $t_1 = t_3$, solve for $t_2$, then back-substitute.",
+        "byKey": {
+          "r0c1": "Back-substitute: $t_1 = 1 + \\tfrac12 t_2 = 1 + 2$.",
+          "r1c1": "Check the middle equation: $t_2 = 1 + \\tfrac12 t_1 + \\tfrac12 t_3$ with $t_1 = t_3 = 1 + \\tfrac12 t_2$.",
+          "r2c1": "By symmetry $t_3 = t_1$."
+        }
+      },
+      "explain": {
+        "text": "$t = (3, 4, 3)$: the middle is slowest, furthest from both ends. Each equation checks: $1 + \\tfrac12 \\times 4 = 3$ and $1 + \\tfrac12 \\times 3 + \\tfrac12 \\times 3 = 4$. The pattern $t_i = i(4 - i)$ returns in gambler's ruin.",
+        "canvas": {
+          "highlight": [
+            "s2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Years to default",
+      "prose": "A bond is investment grade (IG) or high yield (HY) each year, until it defaults (D). Write $t_{\\text{IG}}$ and $t_{\\text{HY}}$ for the expected years to default. Then $t_{\\text{IG}} = 1 + 0.85t_{\\text{IG}} + 0.14t_{\\text{HY}}$ and $t_{\\text{HY}} = 1 + 0.05t_{\\text{IG}} + 0.90t_{\\text{HY}}$, with $t_D = 0$.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 260,
+          "nodes": [
+            {
+              "id": "IG",
+              "label": "IG",
+              "x": 0.12,
+              "y": 0.2
+            },
+            {
+              "id": "HY",
+              "label": "HY",
+              "x": 0.88,
+              "y": 0.2
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.5,
+              "y": 0.9
+            }
+          ],
+          "edges": [
+            {
+              "from": "IG",
+              "to": "IG",
+              "w": 0.85
+            },
+            {
+              "from": "IG",
+              "to": "HY",
+              "w": 0.14
+            },
+            {
+              "from": "IG",
+              "to": "D",
+              "w": 0.01
+            },
+            {
+              "from": "HY",
+              "to": "IG",
+              "w": 0.05
+            },
+            {
+              "from": "HY",
+              "to": "HY",
+              "w": 0.9
+            },
+            {
+              "from": "HY",
+              "to": "D",
+              "w": 0.05
+            },
+            {
+              "from": "D",
+              "to": "D",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each year. D (default) is absorbing."
+        }
+      },
+      "question": "Solve the pair and fill in the table.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Start",
+          "Expected years to default"
+        ],
+        "rows": [
+          [
+            "IG",
+            {
+              "edit": true,
+              "answer": 30,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "HY",
+            {
+              "edit": true,
+              "answer": 25,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Move the $t$ terms left: $0.15t_{\\text{IG}} - 0.14t_{\\text{HY}} = 1$ and $-0.05t_{\\text{IG}} + 0.10t_{\\text{HY}} = 1$."
+        },
+        {
+          "rung": "point",
+          "text": "The second gives $t_{\\text{HY}} = 10 + 0.5t_{\\text{IG}}$.",
+          "highlight": [
+            "e-IG-D",
+            "e-HY-D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Substitute: $0.15t_{\\text{IG}} - 1.4 - 0.07t_{\\text{IG}} = 1$, so $0.08t_{\\text{IG}} = 2.4$."
+        }
+      ],
+      "feedback": {
+        "correct": "30 years from IG, 25 from HY.",
+        "generic": "Not quite right. Write both equations with $t_D = 0$, then eliminate one unknown.",
+        "byKey": {
+          "r0c1": "Eliminate: $t_{\\text{HY}} = 10 + 0.5t_{\\text{IG}}$, then $0.08t_{\\text{IG}} = 2.4$. If you used $1/0.01 = 100$, the downgrade route was left out.",
+          "r1c1": "Use $t_{\\text{HY}} = 10 + 0.5t_{\\text{IG}}$ with $t_{\\text{IG}} = 30$. If you used $1/0.05 = 20$, the upgrades were left out."
+        }
+      },
+      "explain": {
+        "text": "$t_{\\text{IG}} = 30$ and $t_{\\text{HY}} = 25$ years. A 1% annual default alone would suggest 100 years, but the downgrade route cuts it to 30. HY's upgrades stretch its naive 20 years to 25.",
+        "canvas": {
+          "highlight": [
+            "e-IG-HY",
+            "e-HY-IG"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Zero and infinity",
+      "prose": "A new chain. From A the chain stays with chance $\\tfrac12$ or is absorbed at X. C and D swap with each other for ever.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 220,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.2,
+              "y": 0.12
+            },
+            {
+              "id": "X",
+              "label": "X",
+              "x": 0.2,
+              "y": 0.88
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.5
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.96,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "A",
+              "w": 0.5
+            },
+            {
+              "from": "A",
+              "to": "X",
+              "w": 0.5
+            },
+            {
+              "from": "X",
+              "to": "X",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 1
+            },
+            {
+              "from": "D",
+              "to": "C",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "caption": "X is the only absorbing state."
+        }
+      },
+      "question": "Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "options": [
+          {
+            "id": "x0",
+            "text": "$t_X = 0$",
+            "correct": true
+          },
+          {
+            "id": "a2",
+            "text": "$t_A = 2$",
+            "correct": true
+          },
+          {
+            "id": "cinf",
+            "text": "$t_C$ is infinite",
+            "correct": true
+          },
+          {
+            "id": "x1",
+            "text": "$t_X = 1$",
+            "why": "You counted a step at X. The chain is already absorbed there, so no steps remain."
+          },
+          {
+            "id": "c0",
+            "text": "$t_C = 0$",
+            "why": "Zero would mean C is already absorbed. From C the chain never reaches X."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many steps are left once the chain is at X?"
+        },
+        {
+          "rung": "point",
+          "text": "From A: $t_A = 1 + \\tfrac12 t_A + \\tfrac12 t_X$.",
+          "highlight": [
+            "C",
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From C: $t_C = 1 + t_D$ and $t_D = 1 + t_C$. Can both hold for finite numbers?"
+        }
+      ],
+      "feedback": {
+        "correct": "0 at X, 2 from A, and no finite answer from C.",
+        "generic": "Not quite right. Check each state on its own.",
+        "byKey": {
+          "x1": "You counted a step at X. The chain is already absorbed there, so no steps remain.",
+          "c0": "Zero would mean C is already absorbed. From C the chain never reaches X."
+        }
+      },
+      "explain": {
+        "text": "At X no step is needed, so $t_X = 0$. From A, $t_A = 1 + \\tfrac12 t_A$ gives 2. From C the chain loops C, D, C for ever, and $t_C = 1 + t_D$, $t_D = 1 + t_C$ have no finite solution.",
+        "canvas": {
+          "highlight": [
+            "X",
+            "C",
+            "D"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Two slips",
+      "prose": "A lazy walk on 0 to 3: from 1 or 2 it pauses with chance $\\tfrac12$, else steps left or right with chance $\\tfrac14$ each. One colleague drops the $+1$ from the equations. Another sets $t = 1$ at 0 and 3.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "P",
+              "rows": [
+                [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  "$\\tfrac14$",
+                  "$\\tfrac12$",
+                  "$\\tfrac14$",
+                  0
+                ],
+                [
+                  0,
+                  "$\\tfrac14$",
+                  "$\\tfrac12$",
+                  "$\\tfrac14$"
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "label": "$P$"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Rows and columns in the order 0, 1, 2, 3."
+        }
+      },
+      "question": "What is the correct $t_1$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$4$",
+            "correct": true
+          },
+          {
+            "id": "drop",
+            "text": "$0$",
+            "why": "You dropped the $+1$ for the step taken. Then $t = 0$ solves every equation, as if the walk never moved."
+          },
+          {
+            "id": "ends",
+            "text": "$5$",
+            "why": "You set $t = 1$ at 0 and 3. The walk is already absorbed there, so no steps remain."
+          },
+          {
+            "id": "fair",
+            "text": "$2$",
+            "why": "You ignored the pauses. Each pause is a step too, and half the steps are pauses."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write $t_1 = 1 + \\tfrac14 t_0 + \\tfrac12 t_1 + \\tfrac14 t_2$."
+        },
+        {
+          "rung": "point",
+          "text": "Use $t_0 = 0$ and the symmetry $t_1 = t_2$.",
+          "highlight": [
+            "P-r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$t_1 = 1 + \\tfrac34 t_1$, so $\\tfrac14 t_1 = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t_1 = 4$: the pauses double the fair walk's 2 steps.",
+        "generic": "Not quite right. Count the step taken, and use $t = 0$ at the absorbing ends.",
+        "byKey": {
+          "drop": "You dropped the $+1$ for the step taken. Without it, $t = 0$ solves every equation."
+        }
+      },
+      "explain": {
+        "text": "With $t_0 = 0$ and $t_1 = t_2$, the equation $t_1 = 1 + \\tfrac34 t_1$ gives 4. Pausing half the time doubles the fair walk's 2 steps. Dropping the $+1$ gives 0, and $t = 1$ at the ends gives 5.",
+        "canvas": {
+          "highlight": [
+            "P-r1",
+            "P-r2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The general system",
+      "prose": "Every chain so far followed one rule. For each transient state $i$, $$t_i = 1 + \\sum_j P_{ij}\\, t_j, \\qquad t_i = 0 \\text{ at absorbing } i.$$ Let $Q$ be the part of $P$ between transient states, and $t$ the vector of the $t_i$. Then $t = \\mathbf{1} + Qt$.",
+      "question": "Which linear system gives $t$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$(I - Q)t = \\mathbf{1}$",
+            "correct": true
+          },
+          {
+            "id": "noleft",
+            "text": "$Qt = \\mathbf{1}$",
+            "why": "You dropped the $t$ on the left of $t = \\mathbf{1} + Qt$. Move $Qt$ across instead."
+          },
+          {
+            "id": "zero",
+            "text": "$(I - Q)t = \\mathbf{0}$",
+            "why": "You dropped the $+1$. Then $t = \\mathbf{0}$ solves it, as in the trap."
+          },
+          {
+            "id": "allp",
+            "text": "$(I - P)t = \\mathbf{1}$",
+            "why": "You used all of $P$. Its absorbing rows say $0 = 1$, because no step is taken there."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Move $Qt$ to the left: $(I - Q)t = \\mathbf{1}$.",
+        "generic": "Not quite right. Start from $t = \\mathbf{1} + Qt$ and collect the $t$ terms."
+      },
+      "explain": {
+        "text": "Subtracting $Qt$ from both sides gives $(I - Q)t = \\mathbf{1}$, which you solved by elimination each time. For the walk on 0 to 3, $Q = \\begin{pmatrix}0 & \\tfrac12\\\\ \\tfrac12 & 0\\end{pmatrix}$ and $t = (2, 2)$. The inverse $(I - Q)^{-1}$ returns next lesson."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How long an order lives",
+      "prose": "A limit order rests in a queue. Each minute, at the back it stays with chance 0.6, moves to the front with 0.3, or is cancelled with 0.1. At the front it stays with 0.5, fills with 0.4, or is cancelled with 0.1.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "Back",
+              "label": "Back",
+              "x": 0.08,
+              "y": 0.25
+            },
+            {
+              "id": "Front",
+              "label": "Front",
+              "x": 0.55,
+              "y": 0.25
+            },
+            {
+              "id": "Filled",
+              "label": "Filled",
+              "x": 0.92,
+              "y": 0.85,
+              "shape": "pill"
+            },
+            {
+              "id": "Cancelled",
+              "label": "Cancelled",
+              "x": 0.3,
+              "y": 0.9,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "Back",
+              "to": "Back",
+              "w": 0.6
+            },
+            {
+              "from": "Back",
+              "to": "Front",
+              "w": 0.3
+            },
+            {
+              "from": "Back",
+              "to": "Cancelled",
+              "w": 0.1
+            },
+            {
+              "from": "Front",
+              "to": "Front",
+              "w": 0.5
+            },
+            {
+              "from": "Front",
+              "to": "Filled",
+              "w": 0.4
+            },
+            {
+              "from": "Front",
+              "to": "Cancelled",
+              "w": 0.1
+            }
+          ]
+        },
+        "state": {
+          "caption": "Each minute. Filled and Cancelled end the order."
+        }
+      },
+      "question": "A new order joins at the back. What is its expected lifetime, in minutes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "minutes",
+        "placeholder": "minutes",
+        "label": "Expected lifetime",
+        "accept": "4, from $t_F = 2$ and $0.4t_B = 1 + 0.3 \\times 2$.",
+        "wrong": [
+          {
+            "id": "back-only",
+            "value": 2.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "add",
+            "value": 4.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "cancel",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "front",
+            "value": 2,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with the front: $t_F = 1 + 0.5t_F$."
+        },
+        {
+          "rung": "point",
+          "text": "Then $t_B = 1 + 0.6t_B + 0.3t_F$, since filled and cancelled orders need no more minutes.",
+          "highlight": [
+            "Front"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$t_F = 2$, so $0.4t_B = 1 + 0.6 = 1.6$."
+        }
+      ],
+      "feedback": {
+        "correct": "4 minutes on average.",
+        "generic": "Not quite right. Find $t_F$ first, then use it in the equation for $t_B$.",
+        "byKey": {
+          "back-only": "2.5 minutes is the average stay at the back alone. Three quarters of orders then spend time at the front.",
+          "add": "You added 2.5 and 2. Only three quarters of orders reach the front, so its 2 minutes count three quarters of the time.",
+          "cancel": "You used $1/0.1$, as if cancelling were the only way out. Filling ends orders too.",
+          "front": "2 minutes is the lifetime from the front. The order starts at the back."
+        }
+      },
+      "explain": {
+        "text": "At the front, $t_F = 1 + 0.5t_F$ gives 2 minutes. At the back, $t_B = 1 + 0.6t_B + 0.3 \\times 2$ gives 4. A quarter of orders are cancelled before reaching the front, so the answer is below $2.5 + 2$.",
+        "canvas": {
+          "highlight": [
+            "Back",
+            "Front"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Condition on the first step: one step is used, then the chain starts afresh from where it lands.",
+      "$t_i = 1 + \\sum_j P_{ij} t_j$ for each transient $i$, with $t_i = 0$ at absorbing states. In matrix form $(I - Q)t = \\mathbf{1}$, solved by elimination.",
+      "A state that cannot reach absorption has an infinite expected time, and its equations have no finite solution."
+    ],
+    "formula": {
+      "name": "Expected steps to absorption",
+      "tex": "t_i = 1 + \\sum_j P_{ij}\\, t_j, \\qquad t_{\\text{absorbing}} = 0",
+      "note": "The 1 is the step just taken."
+    },
+    "trap": "Dropping the $+1$ makes $t = 0$ a solution. Setting $t = 1$ at absorbing states counts a step that never happens."
+  },
+  "quiz": [
+    {
+      "id": "q-one-state",
+      "difficulty": 2,
+      "prose": "An order at the front of the queue stays there each minute with chance 0.8. Otherwise it is filled or cancelled.",
+      "question": "What is its expected remaining lifetime, in minutes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "minutes",
+        "placeholder": "minutes",
+        "label": "Expected minutes",
+        "accept": "5, from $t = 1 + 0.8t$.",
+        "wrong": [
+          {
+            "id": "inv",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "p",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$t = 1 + 0.8t$ gives $t = 5$.",
+        "generic": "Not quite right. Write $t = 1 + 0.8t$ and solve.",
+        "byKey": {
+          "inv": "You used $1/0.8$. The chance of leaving each minute is 0.2, not 0.8.",
+          "four": "You dropped the current minute. $t = 1 + 0.8t$ counts it."
+        }
+      },
+      "explain": {
+        "text": "One minute passes, then with chance 0.8 the order faces the same wait again: $t = 1 + 0.8t$. So $0.2t = 1$ and $t = 5$. It is a geometric wait with exit chance 0.2."
+      }
+    },
+    {
+      "id": "q-t-zero",
+      "difficulty": 2,
+      "prose": "The fair walk on 0, 1, 2, 3 is absorbed at 0 and 3.",
+      "question": "What is $t_0$, the expected steps to absorption from 0?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0$",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "$1$",
+            "why": "You counted a step at 0. The walk is already absorbed there."
+          },
+          {
+            "id": "two",
+            "text": "$2$",
+            "why": "2 is $t_1$, the expectation from state 1."
+          },
+          {
+            "id": "inf",
+            "text": "Infinite, since it never leaves",
+            "why": "Staying at 0 for ever is the absorption itself. No further steps are needed."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Already absorbed: no steps remain.",
+        "generic": "Not quite right. Ask how many more steps are needed once the walk is at 0."
+      },
+      "explain": {
+        "text": "At an absorbing state the walk has already stopped, so $t_0 = 0$. That boundary value is what makes the system solvable. Setting it to 1 adds a step that never happens."
+      }
+    },
+    {
+      "id": "q-missing-one",
+      "difficulty": 3,
+      "prose": "For the fair walk on 0 to 4, a colleague writes $t_1 = \\tfrac12 t_0 + \\tfrac12 t_2$, with $t_0 = 0$.",
+      "question": "What is wrong with the equation?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It drops the $+1$ for the step taken",
+            "correct": true
+          },
+          {
+            "id": "t0",
+            "text": "$t_0$ should be 1",
+            "why": "At 0 the walk is already absorbed, so $t_0 = 0$ is right."
+          },
+          {
+            "id": "t3",
+            "text": "It should use $t_3$ as well",
+            "why": "From 1 the walk can only reach 0 or 2 in one step."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing",
+            "why": "Without the $+1$ the system is solved by $t = 0$, which says the walk takes no time."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$t_1 = 1 + \\tfrac12 t_0 + \\tfrac12 t_2$.",
+        "generic": "Not quite right. Check that the equation counts the step being taken."
+      },
+      "explain": {
+        "text": "Every first-step equation for $t$ starts with 1, the step just taken. Without it, $t = 0$ solves the whole system. With it, $t_1 = 3$."
+      }
+    },
+    {
+      "id": "q-front-back",
+      "difficulty": 3,
+      "prose": "An order at the back of a queue stays there with chance 0.5 each minute, or moves to the front. At the front it is always filled the next minute.",
+      "question": "From the back, what is the expected lifetime in minutes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "minutes",
+        "placeholder": "minutes",
+        "label": "Expected lifetime from the back",
+        "accept": "3, from $t_F = 1$ and $t_B = 1 + 0.5t_B + 0.5t_F$.",
+        "wrong": [
+          {
+            "id": "back",
+            "value": 2,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$t_F = 1$, then $0.5t_B = 1.5$.",
+        "generic": "Not quite right. Find $t_F$, then solve $t_B = 1 + 0.5t_B + 0.5t_F$.",
+        "byKey": {
+          "back": "2 minutes is the average time at the back. Add the one minute at the front.",
+          "four": "You may have set $t = 1$ at the filled state. Once filled, no minutes remain."
+        }
+      },
+      "explain": {
+        "text": "At the front one minute remains, so $t_F = 1$. At the back, $t_B = 1 + 0.5t_B + 0.5 \\times 1$, so $t_B = 3$. That is 2 minutes at the back plus 1 at the front."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1229 @@
+{
+  "id": "l6-maximising",
+  "course": "estimation",
+  "title": "Maximising the likelihood",
+  "minutes": 14,
+  "objectives": [
+    "Derive the maximum likelihood estimate for a coin and for a normal mean.",
+    "Check that a stationary point is a maximum, and check the boundaries."
+  ],
+  "skills": [
+    "es-mle"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where the slope is zero",
+      "prose": "A coin lands heads 7 times in 10 flips. Its likelihood is $L(p) = p^7(1 - p)^3$, drawn here 1000 times larger. The line at P is the tangent, labelled with its slope.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            2.6
+          ],
+          "grid": true,
+          "xLabel": "$p$",
+          "yLabel": "$1000 \\times L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1000*x^7*(1-x)^3",
+              "label": "$L(p)$",
+              "labelAt": 0.35,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.3,
+              "y": 0.2401,
+              "drag": true,
+              "on": "f",
+              "snapX": 0.01,
+              "label": "P"
+            }
+          ],
+          "tangent": {
+            "f": "f",
+            "x": "P",
+            "label": "slope {slope}",
+            "dp": 2,
+            "lengthPx": 110
+          }
+        }
+      },
+      "question": "Drag P to the top of the curve, where the tangent is flat.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "P",
+            "target": {
+              "on": "f",
+              "x": 0.7
+            },
+            "tol": 0.02
+          }
+        ],
+        "wrong": [
+          {
+            "id": "half",
+            "region": {
+              "x": [
+                0.45,
+                0.55
+              ],
+              "y": [
+                -1,
+                3
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the slope positive or negative where P starts?"
+        },
+        {
+          "rung": "point",
+          "text": "The slope changes sign between 0.6 and 0.8.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Drag P to $p = 0.7$. The slope there reads 0.00."
+        }
+      ],
+      "feedback": {
+        "correct": "The tangent is flat at $p = 0.7$.",
+        "generic": "Not quite right. Move P until the slope label reads 0.",
+        "byKey": {
+          "half": "You stopped near a fair coin. The slope there is still positive, so the curve is still rising.",
+          "P": "The slope label is not 0 there yet. Move P towards the side where the curve is higher."
+        }
+      },
+      "explain": {
+        "text": "You found the flat tangent at $p = 0.7$. Left of it the slope is positive, right of it negative, so this is the peak. That is 7 heads out of 10.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0.7,
+              "y": 2.2236
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Change the data with the control: $k$ heads in 10 flips. Each curve is scaled so its peak height is 1, which keeps every shape visible.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1.1
+          ],
+          "grid": true,
+          "xLabel": "$p$",
+          "yLabel": "$L(p)$, peak scaled to 1",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^k*(1-x)^(10-k)/((k/10)^k*(1-k/10)^(10-k))",
+              "label": "$L(p)$",
+              "labelAt": 0.08
+            }
+          ],
+          "params": {
+            "k": 7
+          }
+        },
+        "state": {
+          "caption": "$k$ heads in 10 flips"
+        },
+        "derive": {
+          "caption": "{{k}} heads in 10 flips"
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 10,
+            "step": 1,
+            "start": 7,
+            "label": "Heads $k$"
+          }
+        ]
+      },
+      "question": "Try several values of $k$. Where is the peak each time?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "At $p = k/10$, the share of heads",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "Always at $p = \\tfrac{1}{2}$",
+            "why": "Set $k = 2$ and look: the peak moves left to 0.2. It follows the data."
+          },
+          {
+            "id": "laplace",
+            "text": "At $p = (k + 1)/12$",
+            "why": "That is a different estimate, with one extra head and tail added. The peak itself sits at $k/10$: check $k = 0$."
+          },
+          {
+            "id": "k",
+            "text": "At $p = k$",
+            "why": "$k$ is a count from 0 to 10, but $p$ is a chance between 0 and 1. Divide by the 10 flips."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The peak sits at the share of heads.",
+        "generic": "Not quite right. Read off the peak for $k = 2$ and $k = 7$."
+      },
+      "explain": {
+        "text": "The peak tracks the data: 0.2 for 2 heads, 0.7 for 7. At $k = 0$ and $k = 10$ it sits at the ends, 0 and 1. Next we prove the peak is always at $k/10$.",
+        "canvas": {
+          "params": {
+            "k": 2
+          },
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.2,
+              "label": "$p = 0.2$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The maximum likelihood estimate",
+      "prose": "The $p$ at the peak is the **maximum likelihood estimate**, written $\\hat p$. To find it without sliding, differentiate. For 7 heads in 10, the product rule gives $L'(p) = 7p^6(1-p)^3 - 3p^7(1-p)^2$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            2.6
+          ],
+          "grid": true,
+          "xLabel": "$p$",
+          "yLabel": "$1000 \\times L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1000*x^7*(1-x)^3",
+              "label": "$L(p)$",
+              "labelAt": 0.35,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "tangent": {
+            "f": "f",
+            "x": 0.7,
+            "lengthPx": 110
+          }
+        }
+      },
+      "question": "Take out the common factor: $L'(p) = p^6(1-p)^2 \\times (\\;?\\;)$. Enter the bracket.",
+      "widget": {
+        "kind": "expression",
+        "answer": "7-10p",
+        "accept": [
+          "7-10p",
+          "7-10*p",
+          "-10p+7"
+        ],
+        "wrong": [
+          {
+            "id": "no-expand",
+            "tex": "7-3p"
+          },
+          {
+            "id": "sign",
+            "tex": "10p-7"
+          }
+        ],
+        "keyboard": "algebra",
+        "label": "Bracket"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both terms contain $p^6$ and $(1-p)^2$. What is left of each?"
+        },
+        {
+          "rung": "point",
+          "text": "The first term leaves $7(1-p)$ and the second leaves $3p$. The tangent at the peak is flat.",
+          "highlight": [
+            "tangent"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$7(1-p) - 3p = 7 - 7p - 3p = 7 - 10p$."
+        }
+      ],
+      "feedback": {
+        "correct": "$L'(p) = p^6(1-p)^2(7 - 10p)$, zero at $p = 0.7$.",
+        "generic": "Not quite right. Divide each term by $p^6(1-p)^2$ and simplify.",
+        "byKey": {
+          "no-expand": "You left out the $(1 - p)$ from the first term. It leaves $7(1 - p)$, not 7.",
+          "sign": "That is the bracket with the sign flipped. The first term is positive, so the bracket starts $7 - \\dots$"
+        }
+      },
+      "explain": {
+        "text": "Taking out $p^6(1 - p)^2$ leaves $7(1 - p) - 3p = 7 - 10p$. The factor in front is positive for $0 < p < 1$. So $L'(p) = 0$ only when $7 - 10p = 0$, at $\\hat p = 0.7$.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.7,
+              "label": "$\\hat p = 0.7$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Now any data: $k$ heads in $n$ flips, with $0 < k < n$. Build the proof that $\\hat p = k/n$, including the check that it is a maximum.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "w",
+            "text": "$L(p) = p^k (1 - p)^{n - k}$, the chance of the flips we saw"
+          },
+          {
+            "id": "d",
+            "text": "$L'(p) = k p^{k - 1}(1 - p)^{n - k} - (n - k) p^k (1 - p)^{n - k - 1}$, by the product and chain rules"
+          },
+          {
+            "id": "f",
+            "text": "$L'(p) = p^{k - 1}(1 - p)^{n - k - 1}\\big[k(1 - p) - (n - k)p\\big]$, taking out the common factors"
+          },
+          {
+            "id": "s",
+            "text": "$L'(p) = p^{k - 1}(1 - p)^{n - k - 1}(k - np)$, since $k - kp - np + kp = k - np$"
+          },
+          {
+            "id": "z",
+            "text": "The front factors are positive for $0 < p < 1$, so $L'(p) = 0$ only at $p = k/n$"
+          },
+          {
+            "id": "m",
+            "text": "$L' > 0$ below $k/n$ and $L' < 0$ above it, so $\\hat p = k/n$ is the maximum"
+          }
+        ],
+        "answer": [
+          "w",
+          "d",
+          "f",
+          "s",
+          "z",
+          "m"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the likelihood, then differentiate it."
+        },
+        {
+          "rung": "point",
+          "text": "After differentiating, factor, then simplify the bracket."
+        },
+        {
+          "rung": "step",
+          "text": "The order is: likelihood, derivative, factor, simplify, solve, then check the sign on each side."
+        }
+      ],
+      "feedback": {
+        "correct": "Write, differentiate, factor, solve, check: $\\hat p = k/n$.",
+        "generic": "Not quite right. Each line must follow from the one above it.",
+        "byKey": {
+          "m": "The sign check uses $k - np$, so it comes after the zero is found.",
+          "z": "You can only read off the zero once the bracket is simplified to $k - np$."
+        }
+      },
+      "explain": {
+        "text": "The sign of $L'(p)$ is the sign of $k - np$: positive below $k/n$, negative above. So $L$ rises to $k/n$ and falls after it. The estimate is the share of heads, $\\hat p = k/n$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A new coin lands tails all 10 times, so $k = 0$. The likelihood is $L(p) = (1 - p)^{10}$, and $L'(p) = -10(1 - p)^9$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1.1
+          ],
+          "grid": true,
+          "xLabel": "$p$",
+          "yLabel": "$L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "(1-x)^10",
+              "label": "$L(p) = (1-p)^{10}$",
+              "labelAt": 0.3
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "$L'(p)$ is never 0 for $0 < p < 1$. What is $\\hat p$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "$\\hat p = 0$, the end of the range",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "There is no MLE, because $L'(p) = 0$ has no solution",
+            "why": "You only looked for a flat tangent. $L$ falls the whole way, so its highest point is the endpoint $p = 0$."
+          },
+          {
+            "id": "tenth",
+            "text": "$\\hat p = \\tfrac{1}{10}$, since one head is the least we can allow",
+            "why": "You added a head the data does not have. $L(0.1) = 0.35$, while $L(0) = 1$."
+          },
+          {
+            "id": "half",
+            "text": "$\\hat p = \\tfrac{1}{2}$, the safe default",
+            "why": "With 10 tails a fair coin has $L = 0.001$. The data points firmly to $p$ near 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is $L'(p)$ positive or negative between 0 and 1?"
+        },
+        {
+          "rung": "point",
+          "text": "Where is the curve highest?",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$L' < 0$ throughout, so $L$ falls from $L(0) = 1$. The highest point is the left end."
+        }
+      ],
+      "feedback": {
+        "correct": "The MLE can sit at a boundary: $\\hat p = 0$.",
+        "generic": "Not quite right. Look at the whole curve, ends included."
+      },
+      "explain": {
+        "text": "$L'(p) < 0$ everywhere inside, so $L$ is largest at the left end, $p = 0$. That still matches $k/n = 0/10$. A boundary maximum has no flat tangent, so always check the ends.",
+        "canvas": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0,
+              "y": 1,
+              "label": "$\\hat p = 0$",
+              "labelPos": "e",
+              "tap": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A coin is known to favour tails, so $p \\le 0.5$. It lands heads 7 times in 10. The solid part of the curve is the allowed range.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            2.6
+          ],
+          "grid": true,
+          "xLabel": "$p$",
+          "yLabel": "$1000 \\times L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1000*x^7*(1-x)^3",
+              "label": "allowed",
+              "domain": [
+                0,
+                0.5
+              ],
+              "labelAt": 0.3
+            },
+            {
+              "id": "g",
+              "expr": "1000*x^7*(1-x)^3",
+              "label": "ruled out",
+              "domain": [
+                0.5,
+                1
+              ],
+              "dashed": true,
+              "labelAt": 0.88,
+              "colour": 3
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.5,
+              "label": "$p \\le 0.5$"
+            }
+          ]
+        }
+      },
+      "question": "What is the maximum likelihood estimate of $p$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "root",
+            "text": "$\\hat p = 0.7$, where $L'(p) = 0$",
+            "why": "You set $L'(p) = 0$ and stopped. That root lies outside the allowed range, so it cannot be the estimate."
+          },
+          {
+            "id": "edge",
+            "text": "$\\hat p = 0.5$, the edge of the allowed range",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "$\\hat p = 0$, the other end",
+            "why": "$L(0) = 0$, the lowest point. Checking the ends means comparing $L$ there, not taking either end."
+          },
+          {
+            "id": "none",
+            "text": "No estimate exists in the range",
+            "why": "$L$ rises across the whole allowed range, so it has a highest point there: the right edge."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Inside $0 \\le p \\le 0.5$, is $L$ rising or falling?"
+        },
+        {
+          "rung": "point",
+          "text": "$L'(p)$ has the sign of $7 - 10p$, which is positive for every allowed $p$.",
+          "highlight": [
+            "f",
+            "v1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$L$ climbs all the way to the edge, so compare $L(0) = 0$ with $L(0.5)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$L$ rises up to the edge, so $\\hat p = 0.5$.",
+        "generic": "Not quite right. Find the highest point of the solid curve.",
+        "byKey": {
+          "root": "You set $L'(p) = 0$ and stopped. That root lies outside the allowed range, so check where $L$ is largest inside it."
+        }
+      },
+      "explain": {
+        "text": "Inside the allowed range $L'(p)$ has the sign of $7 - 10p$, which stays positive. So $L$ climbs to the edge, and $\\hat p = 0.5$. A zero of $L'$ is only a candidate: check the ends and the sign.",
+        "canvas": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.5,
+              "y": 0.9766,
+              "label": "$\\hat p = 0.5$",
+              "labelPos": "w",
+              "tap": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now a normal model. Three observations, 1.2, 2.0 and 3.7, come from a normal with $\\sigma = 1$ and unknown mean $\\mu$. Each stick is the density at one observation. The likelihood is their product.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1,
+            6
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "grid": true,
+          "xLabel": "$x$",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(x-mu)^2/2)/sqrt(2*pi)",
+              "label": "$N(\\mu, 1)$",
+              "labelAt": 4.8
+            }
+          ],
+          "params": {
+            "mu": 1
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "d1",
+              "x": 1.2,
+              "y": 0.391,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "d2",
+              "x": 2.0,
+              "y": 0.242,
+              "label": "",
+              "tap": false
+            },
+            {
+              "id": "d3",
+              "x": 3.7,
+              "y": 0.0104,
+              "label": "",
+              "tap": false
+            }
+          ],
+          "segments": [
+            {
+              "id": "s1",
+              "from": [
+                1.2,
+                0
+              ],
+              "to": "d1",
+              "colour": 2
+            },
+            {
+              "id": "s2",
+              "from": [
+                2.0,
+                0
+              ],
+              "to": "d2",
+              "colour": 2
+            },
+            {
+              "id": "s3",
+              "from": [
+                3.7,
+                0
+              ],
+              "to": "d3",
+              "colour": 2
+            }
+          ]
+        },
+        "derive": {
+          "d1.y": "exp(-pow(1.2-mu, 2)/2)/sqrt(2*pi)",
+          "d2.y": "exp(-pow(2.0-mu, 2)/2)/sqrt(2*pi)",
+          "d3.y": "exp(-pow(3.7-mu, 2)/2)/sqrt(2*pi)",
+          "caption": "$\\mu$ = {{fixed(mu, 1)}}: product of the three heights = {{fixed(exp(-pow(1.2-mu, 2)/2)/sqrt(2*pi)*exp(-pow(2.0-mu, 2)/2)/sqrt(2*pi)*exp(-pow(3.7-mu, 2)/2)/sqrt(2*pi), 4)}}"
+        }
+      },
+      "question": "Slide $\\mu$ to make the product as large as possible.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 5,
+        "step": 0.1,
+        "start": 1,
+        "bind": "mu",
+        "label": "$\\mu$",
+        "decimals": 1,
+        "answer": 2.3,
+        "tol": 0.1,
+        "wrong": [
+          {
+            "id": "middle",
+            "from": 1.9,
+            "to": 2.1
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption. Where does the product stop rising?"
+        },
+        {
+          "rung": "point",
+          "text": "The best $\\mu$ keeps all three sticks reasonably tall.",
+          "highlight": [
+            "s1",
+            "s2",
+            "s3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Slide to 2.3, the average of 1.2, 2.0 and 3.7. The product peaks at 0.0124."
+        }
+      ],
+      "feedback": {
+        "correct": "The product peaks at $\\mu = 2.3$, the average of the data.",
+        "generic": "Not quite right. Keep sliding until the caption stops rising.",
+        "byKey": {
+          "middle": "You centred the curve on the middle observation, 2.0. The 3.7 pulls the best $\\mu$ a little higher."
+        }
+      },
+      "explain": {
+        "text": "The product peaks at $\\mu = 2.3$, which is $(1.2 + 2.0 + 3.7)/3$. Moving right shortens the stick at 1.2 but lengthens the one at 3.7. The balance point is the sample mean.",
+        "canvas": {
+          "params": {
+            "mu": 2.3
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Prove what you saw. Observations $x_1, \\dots, x_n$ are independent draws from $N(\\mu, \\sigma^2)$, with $\\sigma$ known. Show that the MLE of $\\mu$ is $\\bar x$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "w",
+            "text": "$L(\\mu) = \\prod_{i=1}^n \\frac{1}{\\sigma\\sqrt{2\\pi}}\\, e^{-(x_i - \\mu)^2 / (2\\sigma^2)}$, since independent densities multiply"
+          },
+          {
+            "id": "c",
+            "text": "$L(\\mu) = C\\, e^{-S(\\mu) / (2\\sigma^2)}$ with $S(\\mu) = \\sum (x_i - \\mu)^2$, collecting constants into $C > 0$ and adding exponents"
+          },
+          {
+            "id": "e",
+            "text": "$L$ is largest where $S(\\mu)$ is smallest, because $e^{-t}$ falls as $t$ rises"
+          },
+          {
+            "id": "d",
+            "text": "$S'(\\mu) = -2\\sum (x_i - \\mu) = -2\\big(\\sum x_i - n\\mu\\big)$, by the chain rule on each square"
+          },
+          {
+            "id": "z",
+            "text": "$S'(\\mu) = 0$ gives $\\hat\\mu = \\frac{1}{n}\\sum x_i = \\bar x$, dividing by $n$"
+          },
+          {
+            "id": "m",
+            "text": "$S''(\\mu) = 2n > 0$, so $\\bar x$ minimises $S$ and maximises $L$"
+          }
+        ],
+        "answer": [
+          "w",
+          "c",
+          "e",
+          "d",
+          "z",
+          "m"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the product of the densities."
+        },
+        {
+          "rung": "point",
+          "text": "Turn the product of exponentials into one exponential, then switch to minimising $S$."
+        },
+        {
+          "rung": "step",
+          "text": "Order: product, one exponential, minimise $S$, differentiate $S$, solve, check $S'' > 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "The MLE of a normal mean is the sample mean.",
+        "generic": "Not quite right. Each line must use only what the lines above it give.",
+        "byKey": {
+          "e": "You need $L$ written as one exponential of $S(\\mu)$ before you can switch to minimising $S$.",
+          "m": "The second-derivative check comes after the zero of $S'$ is found."
+        }
+      },
+      "explain": {
+        "text": "Maximising $L$ is the same as minimising $S(\\mu) = \\sum (x_i - \\mu)^2$. Its derivative vanishes at $\\bar x$, and $S'' = 2n > 0$ confirms a minimum of $S$. The known $\\sigma$ never enters the answer."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Both times you followed one recipe. Write $L(\\theta) = \\prod f(x_i \\mid \\theta)$. Solve $\\dfrac{dL}{d\\theta} = 0$ for $\\theta$, not for the data. Then check the sign either side, and the ends of the range.\n\n$$\\hat p = \\frac{k}{n}, \\qquad \\hat\\mu = \\bar x$$",
+      "question": "Four observations, 2, 3, 4 and 11, come from a normal with known $\\sigma$. What is $\\hat\\mu$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "label": "MLE of the mean",
+        "accept": "5 exactly: $(2 + 3 + 4 + 11)/4$.",
+        "placeholder": "a number",
+        "wrong": [
+          {
+            "id": "median",
+            "value": 3.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sum",
+            "value": 20,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\hat\\mu = \\bar x = 5$.",
+        "generic": "Not quite right. The derivation gave $\\hat\\mu = \\bar x$.",
+        "byKey": {
+          "median": "You took the middle value, the median. The normal likelihood is maximised by the mean, which the 11 pulls up.",
+          "sum": "You added the observations but did not divide by $n = 4$."
+        }
+      },
+      "explain": {
+        "text": "The recipe gave $\\hat\\mu = \\bar x$, so $\\hat\\mu = 20/4 = 5$. The 11 pulls it above the median of 3.5. Squared distances weigh far observations heavily."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A strategy's track record",
+      "prose": "A strategy won 23 of its 40 trades. Its daily returns over its first week are in the table. Model wins as independent with chance $h$, and daily returns as normal with mean $\\mu$ and a known sd.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "rows": [
+            [
+              "Return (%)",
+              "0.4",
+              "-0.2",
+              "0.9",
+              "-0.5",
+              "0.6"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in the two maximum likelihood estimates.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "MLE"
+        ],
+        "rows": [
+          [
+            "Hit rate $\\hat h$",
+            {
+              "edit": true,
+              "answer": 0.575,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "Mean daily return $\\hat\\mu$ (%)",
+            {
+              "edit": true,
+              "answer": 0.24,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both are recipes you derived: a share for the wins, a mean for the returns."
+        },
+        {
+          "rung": "point",
+          "text": "$\\hat h = k/n$ with $k = 23$, $n = 40$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\hat h = 23/40 = 0.575$. $\\hat\\mu = (0.4 - 0.2 + 0.9 - 0.5 + 0.6)/5$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat h = 0.575$ and $\\hat\\mu = 0.24\\%$.",
+        "generic": "Not quite right. Use $\\hat h = k/n$ and $\\hat\\mu = \\bar x$."
+      },
+      "explain": {
+        "text": "The hit rate is $k/n = 23/40 = 0.575$. The mean return is $1.2/5 = 0.24\\%$ a day. Five days is very little data, as level 3 will make precise."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Trades per minute",
+      "prose": "Trades arrive in a quiet stock at a rate of $\\lambda$ per minute. A Poisson model gives $P(X = x) = e^{-\\lambda}\\lambda^x / x!$. For the six minutes in the table, $L(\\lambda) = C\\, e^{-6\\lambda}\\lambda^{24}$, where $C$ does not depend on $\\lambda$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Minute",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6"
+          ],
+          "rows": [
+            [
+              "Trades",
+              "3",
+              "5",
+              "2",
+              "4",
+              "6",
+              "4"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "24 trades in 6 minutes"
+        }
+      },
+      "question": "Differentiate, set $L'(\\lambda) = 0$, and give $\\hat\\lambda$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "per minute",
+        "label": "MLE of the rate",
+        "accept": "4 exactly: $\\hat\\lambda = 24/6$.",
+        "placeholder": "trades per minute",
+        "wrong": [
+          {
+            "id": "total",
+            "value": 24,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "minutes",
+            "value": 6,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the product rule on $e^{-6\\lambda}\\lambda^{24}$."
+        },
+        {
+          "rung": "point",
+          "text": "$L'(\\lambda) = C\\lambda^{23}e^{-6\\lambda}(24 - 6\\lambda)$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The front factors are positive for $\\lambda > 0$, so $24 - 6\\lambda = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat\\lambda = 4$ trades per minute, the mean count.",
+        "generic": "Not quite right. Factor $L'(\\lambda)$ and find where the bracket is zero.",
+        "byKey": {
+          "total": "That is the total count. The rate is per minute, so divide by the 6 minutes.",
+          "minutes": "That is the number of minutes. The rate is total trades over minutes."
+        }
+      },
+      "explain": {
+        "text": "$L'(\\lambda) = C\\lambda^{23}e^{-6\\lambda}(24 - 6\\lambda)$ is zero at $\\hat\\lambda = 4 = \\bar x$, positive below and negative above. Check: $L(5)/L(4) = 0.52$ and $L(3)/L(4) = 0.40$. For a Poisson sample, the MLE of the rate is the sample mean.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The maximum likelihood estimate $\\hat\\theta$ is the parameter value at the peak of $L(\\theta)$.",
+      "Find it by solving $L'(\\theta) = 0$ for the parameter, then check the sign either side and the ends.",
+      "For a coin $\\hat p = k/n$; for a normal mean $\\hat\\mu = \\bar x$; for a Poisson rate $\\hat\\lambda = \\bar x$."
+    ],
+    "formula": {
+      "name": "MLE of a coin's chance",
+      "tex": "\\hat p = \\dfrac{k}{n}",
+      "note": "From $L'(p) \\propto k - np$, positive below $k/n$ and negative above."
+    },
+    "trap": "A zero of $L'$ is only a candidate. A boundary such as $p = 0$, or the edge of an allowed range, can be the maximum."
+  },
+  "quiz": [
+    {
+      "id": "q-share",
+      "difficulty": 2,
+      "prose": "A strategy wins 18 of 30 trades, each independently with chance $h$.",
+      "question": "What is $\\hat h$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "label": "MLE of the hit rate",
+        "accept": "any form equal to $\\tfrac{18}{30} = 0.6$.",
+        "placeholder": "fraction or decimal",
+        "wrong": [
+          {
+            "id": "odds",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "count",
+            "value": 18,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\hat h = 18/30 = 0.6$.",
+        "generic": "Not quite right. Use $\\hat h = k/n$.",
+        "byKey": {
+          "odds": "You divided wins by losses, $18/12$. That is the odds; the chance divides by all 30 trades.",
+          "count": "That is the number of wins. A chance divides it by the 30 trades."
+        }
+      },
+      "explain": {
+        "text": "The MLE is the share of wins: $\\hat h = 18/30 = 0.6$."
+      }
+    },
+    {
+      "id": "q-wrt",
+      "difficulty": 2,
+      "prose": "For 7 heads in 10 flips, $L(p) = p^7(1 - p)^3$. A student treats the count 7 as the variable and differentiates with respect to it.",
+      "question": "What should be differentiated, and with respect to what?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$L$, with respect to the parameter $p$, with the data held fixed",
+            "correct": true
+          },
+          {
+            "id": "data",
+            "text": "$L$, with respect to the data, since the data varies",
+            "why": "The data is already observed and fixed. We ask which $p$ best explains it, so $p$ is the variable."
+          },
+          {
+            "id": "both",
+            "text": "$L$ with respect to $p$ and the count, set both to zero",
+            "why": "The count is not a free choice: it is what you saw. Only $p$ moves."
+          },
+          {
+            "id": "prob",
+            "text": "The chance of $p$, with respect to the data",
+            "why": "$L$ is not a distribution over $p$. We maximise $L$ itself over $p$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The data is fixed; the parameter moves.",
+        "generic": "Not quite right. Ask which quantity is unknown."
+      },
+      "explain": {
+        "text": "The likelihood is a function of the parameter with the data fixed. So we differentiate with respect to $p$ and solve for $p$."
+      }
+    },
+    {
+      "id": "q-normal-mean",
+      "difficulty": 2,
+      "prose": "Four observations, 1.5, 2.5, 3.5 and 0.5, come from a normal with $\\sigma = 2$ known.",
+      "question": "What is $\\hat\\mu$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "label": "MLE of the mean",
+        "accept": "2 exactly: $8/4$.",
+        "placeholder": "a number",
+        "wrong": [
+          {
+            "id": "sigma",
+            "value": 4,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "n-1",
+            "value": 2.6667,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\hat\\mu = \\bar x = 2$.",
+        "generic": "Not quite right. The known $\\sigma$ does not enter $\\hat\\mu$.",
+        "byKey": {
+          "sigma": "You multiplied by $\\sigma$. The known $\\sigma$ drops out: $\\hat\\mu$ is just the mean.",
+          "n-1": "You divided by $n - 1 = 3$. The MLE of the mean divides by $n$."
+        }
+      },
+      "explain": {
+        "text": "$\\hat\\mu = \\bar x = (1.5 + 2.5 + 3.5 + 0.5)/4 = 2$. The value of $\\sigma$ scales $L$ but does not move its peak."
+      }
+    },
+    {
+      "id": "q-poisson-zeros",
+      "difficulty": 3,
+      "prose": "A Poisson model for trades per minute. Five minutes show 1, 0, 2, 0 and 2 trades.",
+      "question": "What is $\\hat\\lambda$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "label": "MLE of the rate",
+        "accept": "1 exactly: $5/5$.",
+        "placeholder": "trades per minute",
+        "wrong": [
+          {
+            "id": "total",
+            "value": 5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "nonzero",
+            "value": 1.6667,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\hat\\lambda = 5/5 = 1$ trade per minute.",
+        "generic": "Not quite right. The MLE of a Poisson rate is the mean count.",
+        "byKey": {
+          "total": "That is the total. Divide by the 5 minutes.",
+          "nonzero": "You dropped the quiet minutes. A minute with no trades is data too."
+        }
+      },
+      "explain": {
+        "text": "$L(\\lambda) \\propto e^{-5\\lambda}\\lambda^5$, which peaks at $\\hat\\lambda = 5/5 = 1$. The two empty minutes count: they pull the rate down."
+      }
+    }
+  ]
+}

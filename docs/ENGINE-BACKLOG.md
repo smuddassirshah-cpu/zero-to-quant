@@ -811,3 +811,9 @@ Raised later (limits-thm level 2):
 305. `distribution`: a `lognormal` family (μ, σ) with shading and median and mean markers; shading bounds that bind to parameters directly (authors use `derive` on `shade.from` and `shade.to` now).
 306. `plane` functions: a `zeroOutside: true` option so a density is 0 beyond its `domain` rather than undefined (areas past the end then shade correctly).
 307. `distribution`: drag handles on an explore screen without a graded widget (handles turn on only through `drag-point` now).
+
+Raised later (limits-thm level 3):
+
+308. `bars`: a continuous overlay curve (`curve: { expr }`) that follows parameters, so unstandardised sums can be compared against $N(n\mu, n\sigma^2)$ as $n$ changes.
+309. `distribution` and `bars`: shade an overlay curve's area from a cut (the continuity-correction strips) separately from the bar wash.
+310. `series`: a scaled or log x axis (`xScale`, `xStep`) so long simulations need no thinning to "tens" or "hundreds".
