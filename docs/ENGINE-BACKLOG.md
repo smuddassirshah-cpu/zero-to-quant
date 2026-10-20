@@ -945,3 +945,12 @@ Raised later (exams 1.3 and 1.4):
 333. `graph` on phones: the canvas draws in a fixed 540px frame so labels shrink to 7 to 8px at 390px width; scale the layout to the viewport and keep the 12px minimum from 165.
 334. Code editor on phones: lines scroll sideways at 390px; soft-wrap long lines or shrink the gutter.
 335. `playthrough.mjs --why`: cover exam and set items' explanation sheets, not only lessons (see 205).
+
+Raised later (options level 1):
+
+336. `payoff`: tap targets on legs (`strike-{id}`, `breakeven`) so `tap-regions` can ask "tap the strike".
+337. `payoff`: a draggable `spot` handle for "drag the expiry price" (only a slider bound to `spot` moves it now).
+338. `payoff`: `showTotal: false` to hide the combined line, and a per-leg label position, so several positions at one strike read clearly.
+339. `payoff`: a leg option to draw without its floor (`floor: false`) for the "forgot the right not to exercise" picture.
+
+Content note (pytest): level 1 (l4, review-1, homework-1) still uses the pytest stand-in; convert to the shared `postlude` pattern that levels 2 and 3 now use.
