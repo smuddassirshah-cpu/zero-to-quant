@@ -1015,3 +1015,7 @@ Raised later (C++ runtime):
 
 368. C++ runtime: the YoWASP sysroot has no unwinder, so `try`/`catch` cannot work (a `throw` ends the program); find or build a sysroot with exception support, or document that the C++ courses teach exceptions by reading and `raises` cases only.
 369. C++ runtime: show whatever a case printed before a timeout; add a C++ section to AUTHORING.md section 7 (validation rules); re-check the `bundle.js` file-write patch on any YoWASP version bump.
+
+Raised later (micro level 2):
+
+370. `orderbook`: bid and ask sizes as slider and patch targets (`bids.0.1`), with 352; and a `midDecimals` option so a £50.005 mid is not rounded to the price decimals.
