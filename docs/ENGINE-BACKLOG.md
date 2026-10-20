@@ -914,3 +914,9 @@ Raised later (estimation level 2):
 317. `plane` and `distribution`: a data-rug option (density sticks at given x values) for likelihood-as-a-product pictures.
 318. `plane`: an option to draw the y axis at the left edge rather than at $x = 0$; and keep a long `xLabel` clear of `state.caption`.
 319. Docs: on a `pair`, the right side's same-named parameters override the left's in `derive`; document and prefer distinct names.
+
+Raised later (testing level 1):
+
+320. `distribution`: more than one shaded interval (`shade: [{from, to}, ...]`) for two-sided tails, and an observed-value marker line.
+321. `bars` simulation: simple local bindings in outcome expressions (or a built-in `tstat(n)` sampler) so a statistic such as $\bar x/(s/\sqrt n)$ can be simulated.
+322. `bars`: a rule-driven colour threshold (`state.colours` from one rule, or `highlightAbove: x`) so a slider can recolour every bar beyond a cut.

@@ -29,14 +29,16 @@
    four calls: current().kind is 'start' (continue() begins), 'item' (answer, check, continue), 'submit', then 'done';
    a review must be recorded with every item right, a homework marked with every item right, an exam passed with
    every question right.
-   A screen with a code widget is checked only after its Python status reads ready; if Python cannot load (no CDN
-   access without --local-cdn) that is a failure, and an answer that applies with nothing to check is a failure too.
+   A screen with a code widget is checked only after its Python (or C++ compiler) status reads ready; if it cannot load
+   (no CDN access without --local-cdn) that is a failure, and an answer that applies with nothing to check is a failure too.
 
    --local-cdn <dir>: for machines without access to cdn.jsdelivr.net. <dir> holds unpacked npm tarballs:
      <dir>/pyodide-0.27.7/package/...                      for /pyodide/v0.27.7/full/...
      <dir>/mathlive-0.105.0/package/...                    for /npm/mathlive@0.105.0/...
      <dir>/cortex-js-compute-engine-0.30.2/package/...     for /npm/@cortex-js/compute-engine@0.30.2/...
-   (npm pack pyodide@0.27.7 mathlive@0.105.0 @cortex-js/compute-engine@0.30.2, then untar each into <name>-<version>/.)
+     <dir>/yowasp-clang-21.1.4-3/package/...               for /npm/@yowasp/clang@21.1.4-3/... (the C++ compiler)
+   (npm pack pyodide@0.27.7 mathlive@0.105.0 @cortex-js/compute-engine@0.30.2 @yowasp/clang@21.1.4-3, then untar each
+   into <name>-<version>/.)
    The directory can also come from the ZQ_LOCAL_CDN environment variable. Google Fonts are stubbed with empty CSS.
    Without the flag those requests go to the network, and their failures are not counted as errors.
 
@@ -224,13 +226,17 @@ const main = async () => {
 
     /* Lessons */
     /* Item 112: a code screen is checked only once Python is ready (or has failed to load, which is a failure) */
+    /* item 304: a C++ code widget (.wd-cpp) waits up to 5 minutes for the compiler (about 26 MB to download, then a
+       warm-up compile), and its load failure is a failure with the reason the widget gives */
     const waitPython = async () => {
-      if (!(await page.evaluate(() => !!document.querySelector('.wd-py')))) return null;
+      const has = await page.evaluate(() => ({ any: !!document.querySelector('.wd-py'), cpp: !!document.querySelector('.wd-cpp .wd-py') }));
+      if (!has.any) return null;
+      const lang = has.cpp ? 'The C++ compiler' : 'Python', wait = has.cpp ? 300000 : 90000;
       try {
-        await page.waitForFunction(() => ![...document.querySelectorAll('.wd-py')].some(e => ['idle', 'loading', 'restarting', 'running'].includes(e.dataset.s)), null, { timeout: Math.max(opt.timeout, 90000) });
-      } catch { return 'Python did not become ready within 90 s'; }
-      const bad = await page.evaluate(() => [...document.querySelectorAll('.wd-py')].some(e => e.dataset.s === 'unavailable'));
-      return bad ? 'Python could not load, so the code tests did not run (pass --local-cdn without CDN access)' : null;
+        await page.waitForFunction(() => ![...document.querySelectorAll('.wd-py')].some(e => ['idle', 'loading', 'restarting', 'running'].includes(e.dataset.s)), null, { timeout: Math.max(opt.timeout, wait) });
+      } catch { return `${lang} did not become ready within ${wait / 1000} s`; }
+      const bad = await page.evaluate(() => { const e = [...document.querySelectorAll('.wd-py')].find(x => x.dataset.s === 'unavailable'); return e ? (e.title || 'unavailable') : null; });
+      return bad ? `${lang} could not load, so the code tests did not run (pass --local-cdn without CDN access): ${bad}` : null;
     };
 
     for (const id of lessons) {

@@ -1,0 +1,1479 @@
+{
+  "id": "l10-correcting",
+  "course": "testing",
+  "title": "Correcting for many tests",
+  "minutes": 14,
+  "objectives": [
+    "Apply the Bonferroni correction and control the false discovery rate."
+  ],
+  "skills": [
+    "ht-multiple"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A budget of 5%",
+      "prose": "You will run 20 tests on signals that may all be noise. You want at most a 5% chance of any false alarm in the whole family. Each test needs its own, stricter threshold.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.05
+          ],
+          "y": [
+            0,
+            0.7
+          ],
+          "xLabel": "Threshold for each test",
+          "yLabel": "P(any false alarm in 20 tests)",
+          "xStep": 0.01,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1 - (1 - x)^20",
+              "label": "$1 - (1 - t)^{20}$",
+              "domain": [
+                0,
+                0.05
+              ]
+            }
+          ]
+        },
+        "state": {
+          "params": {
+            "t": 0.05
+          },
+          "points": [
+            {
+              "id": "p1",
+              "x": 0.05,
+              "y": 0.6415,
+              "label": ""
+            }
+          ],
+          "hlines": [
+            {
+              "id": "h5",
+              "y": 0.05,
+              "label": "0.05"
+            }
+          ]
+        },
+        "derive": {
+          "p1.x": "t",
+          "p1.y": "1 - pow(1 - t, 20)",
+          "caption": "Each test at {{fixed(t, 4)}}: P(any false alarm) = {{fixed(1 - pow(1 - t, 20), 3)}}"
+        }
+      },
+      "question": "Slide to the largest per-test threshold that keeps the family's chance at or below 0.05.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 0.05,
+        "step": 0.0005,
+        "start": 0.05,
+        "bind": "t",
+        "decimals": 4,
+        "label": "Threshold for each test",
+        "answer": 0.0025,
+        "tol": 0.0001,
+        "wrong": [
+          {
+            "id": "uncorrected",
+            "from": 0.04,
+            "to": 0.05
+          },
+          {
+            "id": "over",
+            "from": 0.003,
+            "to": 0.0395
+          },
+          {
+            "id": "strict",
+            "from": 0,
+            "to": 0.002
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at 0.05 and slide left. Watch the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The dashed line is 0.05. The point must sit on or below it.",
+          "highlight": [
+            "h5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Try the 5% split evenly over 20 tests: $0.05 / 20$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.0025 per test keeps the family at 0.049.",
+        "generic": "Not quite right. Find the last step before the caption goes above 0.05.",
+        "byKey": {
+          "uncorrected": "You left the threshold near 0.05. With 20 tests that gives the family about 64%.",
+          "over": "The family's chance is still above 0.05 there. Slide further left.",
+          "strict": "That keeps the family safe, but it is stricter than needed. Slide right until the next step would cross 0.05."
+        }
+      },
+      "explain": {
+        "text": "At 0.0025 each, the family's chance is $1 - 0.9975^{20} = 0.049$. The next step, 0.003, gives 0.058. You split the 5% budget evenly: $0.05 / 20 = 0.0025$.",
+        "canvas": {
+          "params": {
+            "t": 0.0025
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Bonferroni",
+      "prose": "You divided $\\alpha$ by the number of tests. That is the **Bonferroni correction**: test each of $N$ at $\\alpha / N$. The exact cut-off for independent tests is the **Šidák** threshold $1 - (1 - \\alpha)^{1/N}$: 0.00256 for $N = 20$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.005
+          ],
+          "y": [
+            0,
+            0.25
+          ],
+          "xLabel": "Threshold for each test",
+          "yLabel": "P(any false alarm in 50 tests)",
+          "xStep": 0.001,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1 - (1 - x)^50",
+              "label": "$1 - (1 - t)^{50}$",
+              "domain": [
+                0,
+                0.005
+              ]
+            }
+          ]
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "h5",
+              "y": 0.05,
+              "label": "0.05"
+            }
+          ]
+        }
+      },
+      "question": "A screen runs 50 tests with a family-wise target of 0.05. What Bonferroni threshold does each test use?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.001,
+        "tol": {
+          "abs": 1e-06
+        },
+        "label": "Bonferroni threshold per test",
+        "accept": "0.001 exactly: $0.05 / 50$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0.05,
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "id": "times",
+            "value": 2.5,
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "id": "twenty",
+            "value": 0.0025,
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the family's budget by the number of tests."
+        },
+        {
+          "rung": "point",
+          "text": "The family has 50 members and a budget of 0.05.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.05 / 50$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.05 / 50 = 0.001$ per test.",
+        "generic": "Not quite right. Bonferroni uses $\\alpha / N$.",
+        "byKey": {
+          "none": "That leaves every test at 0.05, with no correction at all.",
+          "times": "You multiplied by 50. The threshold must shrink as tests are added.",
+          "twenty": "That is the threshold for 20 tests. This screen has 50."
+        }
+      },
+      "explain": {
+        "text": "$0.05 / 50 = 0.001$ per test, and the family's chance is then $1 - 0.999^{50} = 0.0488$. Šidák would allow 0.00103. Bonferroni is a touch stricter than it needs to be, so it is called conservative.",
+        "canvas": {
+          "points": [
+            {
+              "id": "pb",
+              "x": 0.001,
+              "y": 0.0488,
+              "label": "0.001"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Eight signals",
+      "prose": "A researcher tests 8 signals and sorts their $p$-values from smallest to largest. With $\\alpha = 0.05$ and $N = 8$, Bonferroni compares every one with $0.05 / 8 = 0.00625$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Rank $k$",
+            "Signal",
+            "$p_{(k)}$"
+          ],
+          "rows": [
+            [
+              "1",
+              "Earnings drift",
+              "0.004"
+            ],
+            [
+              "2",
+              "Short interest",
+              "0.012"
+            ],
+            [
+              "3",
+              "Carry",
+              "0.016"
+            ],
+            [
+              "4",
+              "Momentum",
+              "0.041"
+            ],
+            [
+              "5",
+              "Value",
+              "0.1"
+            ],
+            [
+              "6",
+              "Low volatility",
+              "0.22"
+            ],
+            [
+              "7",
+              "Size",
+              "0.48"
+            ],
+            [
+              "8",
+              "Seasonality",
+              "0.73"
+            ]
+          ],
+          "tap": "rows"
+        },
+        "state": {
+          "caption": "Sorted $p$-values: $p_{(1)}$ is the smallest"
+        }
+      },
+      "question": "Tap every signal that Bonferroni rejects.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r0"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each $p$-value with 0.00625."
+        },
+        {
+          "rung": "point",
+          "text": "Only the top of the table can be that small.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.004 is below 0.00625. The next, 0.012, is not."
+        }
+      ],
+      "feedback": {
+        "correct": "Only earnings drift, $p = 0.004$, clears 0.00625.",
+        "generic": "Not quite right. Keep only the rows with $p \\le 0.00625$.",
+        "byKey": {
+          "r1": "Short interest has $p = 0.012$, above 0.00625. It passes 0.05 alone, but not Bonferroni.",
+          "r2": "Carry has $p = 0.016$, above 0.00625. It would pass a lone test, not the corrected one.",
+          "r3": "Momentum has $p = 0.041$, far above 0.00625."
+        }
+      },
+      "explain": {
+        "text": "Only earnings drift, $p = 0.004$, sits below 0.00625. Short interest (0.012) and carry (0.016) would pass at 0.05 alone. Bonferroni gives them up to keep the chance of any false rejection at 5%.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A bar for each rank",
+      "prose": "**Benjamini-Hochberg** (BH) gives each rank its own bar. Rank $k$ is compared with $k\\alpha / N$: the sloped line on the chart. Ranks 5 to 8 sit above the top of the chart.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            8.5
+          ],
+          "y": [
+            0,
+            0.06
+          ],
+          "xLabel": "Rank $k$",
+          "yLabel": "$p$-value",
+          "xTicks": "integer",
+          "xStep": 1,
+          "yStep": 0.01,
+          "functions": [
+            {
+              "id": "bh",
+              "expr": "0.05 * x / 8",
+              "label": "BH line $k\\alpha/N$",
+              "domain": [
+                0,
+                8.5
+              ],
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p1",
+              "x": 1,
+              "y": 0.004,
+              "label": "1"
+            },
+            {
+              "id": "p2",
+              "x": 2,
+              "y": 0.012,
+              "label": "2"
+            },
+            {
+              "id": "p3",
+              "x": 3,
+              "y": 0.016,
+              "label": "3"
+            },
+            {
+              "id": "p4",
+              "x": 4,
+              "y": 0.041,
+              "label": "4"
+            },
+            {
+              "id": "p5",
+              "x": 5,
+              "y": 0.1,
+              "label": "5"
+            },
+            {
+              "id": "p6",
+              "x": 6,
+              "y": 0.22,
+              "label": "6"
+            },
+            {
+              "id": "p7",
+              "x": 7,
+              "y": 0.48,
+              "label": "7"
+            },
+            {
+              "id": "p8",
+              "x": 8,
+              "y": 0.73,
+              "label": "8"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "bonf",
+              "y": 0.00625,
+              "label": "Bonferroni 0.00625"
+            }
+          ]
+        }
+      },
+      "question": "Fill in the bar $k\\alpha/N$ for each rank, with $\\alpha = 0.05$ and $N = 8$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Rank $k$",
+          "$p_{(k)}$",
+          "Bar $k\\alpha/N$"
+        ],
+        "rows": [
+          [
+            "1",
+            "0.004",
+            {
+              "edit": true,
+              "answer": 0.00625,
+              "tol": {
+                "abs": 1e-05
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "2",
+            "0.012",
+            {
+              "edit": true,
+              "answer": 0.0125,
+              "tol": {
+                "abs": 1e-05
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "3",
+            "0.016",
+            {
+              "edit": true,
+              "answer": 0.01875,
+              "tol": {
+                "abs": 1e-05
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "4",
+            "0.041",
+            {
+              "edit": true,
+              "answer": 0.025,
+              "tol": {
+                "abs": 1e-05
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "5",
+            "0.1",
+            {
+              "edit": true,
+              "answer": 0.03125,
+              "tol": {
+                "abs": 1e-05
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "6",
+            "0.22",
+            {
+              "edit": true,
+              "answer": 0.0375,
+              "tol": {
+                "abs": 1e-05
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "7",
+            "0.48",
+            {
+              "edit": true,
+              "answer": 0.04375,
+              "tol": {
+                "abs": 1e-05
+              },
+              "placeholder": "?"
+            }
+          ],
+          [
+            "8",
+            "0.73",
+            {
+              "edit": true,
+              "answer": 0.05,
+              "tol": {
+                "abs": 1e-05
+              },
+              "placeholder": "?"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Rank 1's bar is the Bonferroni bar, $0.05 / 8$."
+        },
+        {
+          "rung": "point",
+          "text": "Each rank adds another 0.00625.",
+          "highlight": [
+            "bh"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bars run 0.00625, 0.0125, 0.01875, and so on up to 0.05."
+        }
+      ],
+      "feedback": {
+        "correct": "The bars climb from 0.00625 to 0.05 in equal steps.",
+        "generic": "Not quite right. Multiply the rank $k$ by $0.05 / 8 = 0.00625$.",
+        "byKey": {
+          "r0c2": "Rank 1's bar is $1 \\times 0.05 / 8 = 0.00625$, the Bonferroni bar.",
+          "r7c2": "The last rank's bar is $8 \\times 0.05 / 8 = 0.05$: plain $\\alpha$."
+        }
+      },
+      "explain": {
+        "text": "The bars climb in steps of $0.05/8 = 0.00625$, from 0.00625 at rank 1 to 0.05 at rank 8. Rank 1 faces the Bonferroni bar and the last rank faces plain $\\alpha$. That is why BH is less strict than Bonferroni.",
+        "canvas": {
+          "highlight": [
+            "bh"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The largest rank under the line",
+      "prose": "BH finds the **largest** rank $k$ with $p_{(k)} \\le k\\alpha / N$, then rejects ranks 1 to $k$. The dots are the sorted $p$-values from the table.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            8.5
+          ],
+          "y": [
+            0,
+            0.06
+          ],
+          "xLabel": "Rank $k$",
+          "yLabel": "$p$-value",
+          "xTicks": "integer",
+          "xStep": 1,
+          "yStep": 0.01,
+          "functions": [
+            {
+              "id": "bh",
+              "expr": "0.05 * x / 8",
+              "label": "BH line $k\\alpha/N$",
+              "domain": [
+                0,
+                8.5
+              ],
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p1",
+              "x": 1,
+              "y": 0.004,
+              "label": "1"
+            },
+            {
+              "id": "p2",
+              "x": 2,
+              "y": 0.012,
+              "label": "2"
+            },
+            {
+              "id": "p3",
+              "x": 3,
+              "y": 0.016,
+              "label": "3"
+            },
+            {
+              "id": "p4",
+              "x": 4,
+              "y": 0.041,
+              "label": "4"
+            },
+            {
+              "id": "p5",
+              "x": 5,
+              "y": 0.1,
+              "label": "5"
+            },
+            {
+              "id": "p6",
+              "x": 6,
+              "y": 0.22,
+              "label": "6"
+            },
+            {
+              "id": "p7",
+              "x": 7,
+              "y": 0.48,
+              "label": "7"
+            },
+            {
+              "id": "p8",
+              "x": 8,
+              "y": 0.73,
+              "label": "8"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "bonf",
+              "y": 0.00625,
+              "label": "Bonferroni 0.00625"
+            }
+          ]
+        }
+      },
+      "question": "Tap the signals that BH rejects.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "p1",
+          "p2",
+          "p3"
+        ],
+        "countWord": "tapped",
+        "only": [
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5",
+          "p6",
+          "p7",
+          "p8"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which dots sit on or under the sloped line?"
+        },
+        {
+          "rung": "point",
+          "text": "Rank 4 is the first dot clearly above the line. Check the dots before it.",
+          "highlight": [
+            "p4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.004, 0.012 and 0.016 are under 0.00625, 0.0125 and 0.01875. Rank 4, at 0.041, is above 0.025."
+        }
+      ],
+      "feedback": {
+        "correct": "BH rejects ranks 1, 2 and 3: three signals.",
+        "generic": "Not quite right. Find the last dot under the line, and reject it and every dot before it.",
+        "byKey": {
+          "p4": "Rank 4 has $p = 0.041$, above its bar of 0.025. So do all later ranks.",
+          "p1": "Earnings drift is rejected, but so are ranks 2 and 3, which sit under their bars too."
+        }
+      },
+      "explain": {
+        "text": "Ranks 1, 2 and 3 sit under the line: 0.004, 0.012 and 0.016 against 0.00625, 0.0125 and 0.01875. Rank 4 is above its bar, and so is every later rank. BH rejects 3 where Bonferroni rejected 1.",
+        "canvas": {
+          "highlight": [
+            "p1",
+            "p2",
+            "p3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "What BH promises",
+      "prose": "BH controls the **false discovery rate** (FDR): the share of rejections that are false, on average. Bonferroni controls the FWER. Here BH at 5% rejected 3 signals.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            8.5
+          ],
+          "y": [
+            0,
+            0.06
+          ],
+          "xLabel": "Rank $k$",
+          "yLabel": "$p$-value",
+          "xTicks": "integer",
+          "xStep": 1,
+          "yStep": 0.01,
+          "functions": [
+            {
+              "id": "bh",
+              "expr": "0.05 * x / 8",
+              "label": "BH line $k\\alpha/N$",
+              "domain": [
+                0,
+                8.5
+              ],
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p1",
+              "x": 1,
+              "y": 0.004,
+              "label": "1"
+            },
+            {
+              "id": "p2",
+              "x": 2,
+              "y": 0.012,
+              "label": "2"
+            },
+            {
+              "id": "p3",
+              "x": 3,
+              "y": 0.016,
+              "label": "3"
+            },
+            {
+              "id": "p4",
+              "x": 4,
+              "y": 0.041,
+              "label": "4"
+            },
+            {
+              "id": "p5",
+              "x": 5,
+              "y": 0.1,
+              "label": "5"
+            },
+            {
+              "id": "p6",
+              "x": 6,
+              "y": 0.22,
+              "label": "6"
+            },
+            {
+              "id": "p7",
+              "x": 7,
+              "y": 0.48,
+              "label": "7"
+            },
+            {
+              "id": "p8",
+              "x": 8,
+              "y": 0.73,
+              "label": "8"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "bonf",
+              "y": 0.00625,
+              "label": "Bonferroni 0.00625"
+            }
+          ],
+          "selected": [
+            "p1",
+            "p2",
+            "p3"
+          ]
+        }
+      },
+      "question": "Which statement about the 3 rejected signals is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fwer",
+            "text": "There is at most a 5% chance that any of the 3 is false",
+            "why": "You read BH's 5% as a family-wise rate. That is Bonferroni's promise. BH bounds the average share of false rejections."
+          },
+          {
+            "id": "right",
+            "text": "On average, at most 5% of BH's rejections are false",
+            "correct": true
+          },
+          {
+            "id": "each",
+            "text": "Each of the 3 has a 95% chance of being real",
+            "why": "You turned 5% into a chance for each signal. BH bounds an average share over many studies, not any one signal."
+          },
+          {
+            "id": "count",
+            "text": "Exactly 0.15 of the 3 signals are false",
+            "why": "You took 5% of 3 as an exact count. The 5% is a bound on an average, not a count for this study."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "FWER is about the chance of even one false rejection. FDR is about a share."
+        },
+        {
+          "rung": "point",
+          "text": "Read the definition at the top: a share, on average. These are the 3 rejections it is a share of.",
+          "highlight": [
+            "p1",
+            "p2",
+            "p3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "BH's 5% bounds the expected share of rejections that are false."
+        }
+      ],
+      "feedback": {
+        "correct": "FDR is an average share of false rejections, not the chance of any.",
+        "generic": "Not quite right. Ask whether 5% is a chance of any error or an average share.",
+        "byKey": {
+          "fwer": "You read BH's 5% as a family-wise rate. That is Bonferroni's promise, and it bought only 1 rejection here."
+        }
+      },
+      "explain": {
+        "text": "BH promises that false rejections make up at most 5% of its rejections, on average over studies (for independent tests). It does not promise a 95% chance of no false ones. That stronger promise is Bonferroni's, and it kept only 1 signal here."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A family of one",
+      "prose": "Edge case. A researcher runs a single test, fixed in advance, at $\\alpha = 0.05$. So $N = 1$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Method",
+            "Bar for each test",
+            "Controls"
+          ],
+          "rows": [
+            [
+              "Bonferroni",
+              "$\\alpha / N$",
+              "FWER"
+            ],
+            [
+              "Šidák",
+              "$1 - (1 - \\alpha)^{1/N}$",
+              "FWER, independent tests"
+            ],
+            [
+              "BH",
+              "rank $k$: $k\\alpha / N$",
+              "FDR"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "The three rules, for $N$ tests"
+        }
+      },
+      "question": "Which method changes the threshold for a single test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "bonf",
+            "text": "Bonferroni",
+            "why": "$\\alpha / N$ with $N = 1$ is $\\alpha$ itself. Nothing changes."
+          },
+          {
+            "id": "sidak",
+            "text": "Šidák",
+            "why": "$1 - (1 - \\alpha)^{1/1} = \\alpha$. Nothing changes."
+          },
+          {
+            "id": "bh",
+            "text": "BH",
+            "why": "Rank 1 of 1 has bar $1 \\times \\alpha / 1 = \\alpha$. Nothing changes."
+          },
+          {
+            "id": "right",
+            "text": "None of them",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $N = 1$ into each rule."
+        },
+        {
+          "rung": "point",
+          "text": "With one test the only rank is $k = 1$.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\alpha/1$, $1 - (1-\\alpha)^1$ and $1 \\cdot \\alpha/1$ are all $\\alpha$."
+        }
+      ],
+      "feedback": {
+        "correct": "With $N = 1$ every rule gives plain $\\alpha$.",
+        "generic": "Not quite right. Substitute $N = 1$ into each rule in the table."
+      },
+      "explain": {
+        "text": "Put $N = 1$ into each rule: $\\alpha/1$, $1 - (1-\\alpha)^1$ and $1 \\cdot \\alpha / 1$ all equal $\\alpha$. The corrections bite only when there is more than one test. A single test, fixed in advance, needs none."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why Bonferroni works",
+      "prose": "Why does $\\alpha/N$ hold the FWER at $\\alpha$, even when tests are dependent? Let $A_i$ be the event that true null $i$ is rejected. You met the union bound in *The rules every probability obeys*.",
+      "question": "Put the lines of the proof in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "$\\text{FWER} = P(A_1 \\cup A_2 \\cup \\dots \\cup A_N)$, at least one false rejection"
+          },
+          {
+            "id": "union",
+            "text": "$\\le P(A_1) + P(A_2) + \\dots + P(A_N)$, by the union bound"
+          },
+          {
+            "id": "each",
+            "text": "$= N \\cdot \\dfrac{\\alpha}{N}$, since each true null is rejected with chance $\\alpha / N$"
+          },
+          {
+            "id": "cancel",
+            "text": "$= \\alpha$, as the $N$ cancels"
+          }
+        ],
+        "answer": [
+          "def",
+          "union",
+          "each",
+          "cancel"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from what FWER means as an event."
+        },
+        {
+          "rung": "point",
+          "text": "The inequality comes from the union bound, before any numbers go in."
+        },
+        {
+          "rung": "step",
+          "text": "Event, union bound, each term $\\alpha/N$, then cancel."
+        }
+      ],
+      "feedback": {
+        "correct": "Event, bound, substitute, cancel.",
+        "generic": "Not quite right. Write the FWER as a union first, then bound it.",
+        "byKey": {
+          "each": "Substituting $\\alpha / N$ needs the sum of the $P(A_i)$ first, from the union bound."
+        }
+      },
+      "explain": {
+        "text": "The union bound needs no independence, so Bonferroni holds whatever the dependence between tests. The price is slack: overlaps are counted twice, so the true FWER is usually below $\\alpha$. That slack is what conservative means."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Screening 500 stocks",
+      "prose": "You test 500 stocks for a momentum effect, one test each, and run BH with $q = 0.10$. The six smallest $p$-values are below. Every later rank is above its bar.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Rank $k$",
+            "Stock",
+            "$p_{(k)}$"
+          ],
+          "rows": [
+            [
+              "1",
+              "Stock 117",
+              "0.00002"
+            ],
+            [
+              "2",
+              "Stock 342",
+              "0.00011"
+            ],
+            [
+              "3",
+              "Stock 8",
+              "0.00035"
+            ],
+            [
+              "4",
+              "Stock 455",
+              "0.00070"
+            ],
+            [
+              "5",
+              "Stock 61",
+              "0.00110"
+            ],
+            [
+              "6",
+              "Stock 230",
+              "0.00190"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "BH bar for rank $k$: $k \\times 0.10 / 500 = 0.0002k$"
+        }
+      },
+      "question": "How many stocks survive BH at 10%?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Number of stocks BH rejects",
+        "accept": "4 exactly: ranks 1 to 4 are under their bars, rank 5 is not.",
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "bonf",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "first",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out each rank's bar, $0.0002k$."
+        },
+        {
+          "rung": "point",
+          "text": "Rank 5 has $p = 0.0011$ against a bar of 0.0010.",
+          "highlight": [
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Ranks 1 to 4: 0.00002, 0.00011, 0.00035 and 0.0007 are under 0.0002, 0.0004, 0.0006 and 0.0008."
+        }
+      ],
+      "feedback": {
+        "correct": "Four stocks survive: ranks 1 to 4.",
+        "generic": "Not quite right. Compare each $p_{(k)}$ with $0.0002k$, and keep up to the largest rank that passes.",
+        "byKey": {
+          "bonf": "That is Bonferroni at 10%: $p \\le 0.0002$ for every test. BH lets later ranks face higher bars.",
+          "all": "Rank 5 (0.0011) and rank 6 (0.0019) are above their bars, 0.0010 and 0.0012.",
+          "first": "Rank 1 passes, but ranks 2 to 4 pass their own, higher bars too.",
+          "five": "Rank 5 has $p = 0.0011$, just above its bar of 0.0010."
+        }
+      },
+      "explain": {
+        "text": "The bars are 0.0002, 0.0004, 0.0006, 0.0008, 0.0010 and 0.0012. Ranks 1 to 4 sit under theirs; ranks 5 and 6 do not. With FDR held at 10%, we expect at most about 0.4 of the 4 to be false.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "BH in code",
+      "prose": "A screen of hundreds of signals needs BH done by code. Sort the indices by $p$-value, find the largest rank $r$ with $p_{(r)} \\le rq/n$, and reject the first $r$. The function returns the rejected indices in their original order.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected output",
+          "lines": [
+            "$ python3 main.py",
+            "[0, 1, 2]"
+          ]
+        },
+        "state": {
+          "caption": "The 8 signals from the table: BH rejects the first three."
+        }
+      },
+      "question": "Complete `bh_reject`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def bh_reject(pvals, q=0.05):\n    \"\"\"Indices, in the original order, that BH rejects at level q.\"\"\"\n    n = len(pvals)\n    order = sorted(range(n), key=lambda i: pvals[i])\n    k = 0\n    # find the largest rank r (1 to n) with p_(r) <= r * q / n\n    ...\n    return sorted(order[:k])\n\nprint(bh_reject([0.004, 0.012, 0.016, 0.041, 0.10, 0.22, 0.48, 0.73]))\n",
+        "solution": "def bh_reject(pvals, q=0.05):\n    \"\"\"Indices, in the original order, that BH rejects at level q.\"\"\"\n    n = len(pvals)\n    order = sorted(range(n), key=lambda i: pvals[i])\n    k = 0\n    # find the largest rank r (1 to n) with p_(r) <= r * q / n\n    for r, i in enumerate(order, start=1):\n        if pvals[i] <= r * q / n:\n            k = r\n    return sorted(order[:k])\n\nprint(bh_reject([0.004, 0.012, 0.016, 0.041, 0.10, 0.22, 0.48, 0.73]))\n",
+        "examples": [
+          {
+            "call": "bh_reject([0.004, 0.012, 0.016, 0.041, 0.10, 0.22, 0.48, 0.73])",
+            "expect": "[0, 1, 2]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "bh_reject([0.004, 0.012, 0.016, 0.041, 0.10, 0.22, 0.48, 0.73])",
+            "expect": "[0, 1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_reject([0.48, 0.016, 0.73, 0.004, 0.22, 0.041, 0.012, 0.10])",
+            "expect": "[1, 3, 6]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_reject([0.003, 0.014, 0.017, 0.30, 0.5, 0.6, 0.7, 0.9])",
+            "expect": "[0, 1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_reject([0.2, 0.5, 0.9])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_reject([0.01, 0.02, 0.03])",
+            "expect": "[0, 1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_reject([0.04])",
+            "expect": "[0]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_reject([0.06])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_reject(p, q=0.10)",
+            "expect": "[0, 1, 2, 3]",
+            "compare": "equal",
+            "setup": "p = [0.00002, 0.00011, 0.00035, 0.0007, 0.0011, 0.0019] + [0.002 + 0.002 * i for i in range(494)]"
+          },
+          {
+            "call": "bh_reject([0.01, 0.01, 0.5])",
+            "expect": "[0, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_reject([0.004, 0.012, 0.016, 0.041], q=0.01)",
+            "expect": "[]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests, each compared for equality with the list of rejected indices. They include shuffled input, a rank that fails before a later one passes, $n = 1$, ties and a 500-stock screen at $q = 0.10$. Pure Python is enough; numpy and scipy are available but load slowly the first time."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop over `enumerate(order, start=1)` to get each rank `r` and index `i`."
+        },
+        {
+          "rung": "point",
+          "text": "Do not stop at the first failure: a later rank can still pass.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Inside the loop: `if pvals[i] <= r * q / n: k = r`."
+        }
+      ],
+      "feedback": {
+        "correct": "BH keeps the largest passing rank, then rejects everything up to it.",
+        "generic": "Not quite right. Keep the largest rank that passes, even after a failure."
+      },
+      "explain": {
+        "text": "The loop records the last rank under its bar, so a failure part-way does not stop it. `order[:k]` are the indices of the $k$ smallest $p$-values. Sorting them returns the original order."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Bonferroni tests each of $N$ at $\\alpha/N$. The union bound keeps the family-wise error rate at or below $\\alpha$, for any dependence.",
+      "Benjamini-Hochberg compares the $k$-th smallest $p$-value with $k\\alpha/N$ and rejects up to the largest $k$ that passes. It controls the false discovery rate.",
+      "FWER bounds the chance of any false rejection; FDR bounds their average share. With $N = 1$ every method is plain $\\alpha$."
+    ],
+    "formula": {
+      "name": "Benjamini-Hochberg",
+      "tex": "\\text{reject } p_{(1)}, \\dots, p_{(k)} \\text{ for the largest } k \\text{ with } p_{(k)} \\le \\dfrac{k\\alpha}{N}",
+      "note": "Bonferroni is the flat bar $\\alpha/N$ at every rank."
+    },
+    "trap": "BH at 5% is not a 5% chance of any false discovery. That is the FWER, Bonferroni's promise."
+  },
+  "quiz": [
+    {
+      "id": "q-stepup",
+      "difficulty": 3,
+      "prose": "Eight tests at $\\alpha = 0.05$. The four smallest $p$-values are 0.003, 0.014, 0.017 and 0.30; the BH bars for ranks 1 to 4 are 0.00625, 0.0125, 0.01875 and 0.025.",
+      "question": "How many hypotheses does BH reject?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Number BH rejects",
+        "accept": "3 exactly: rank 3 passes, so ranks 1 to 3 are rejected.",
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "stop",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three: rank 3 is the largest rank under its bar.",
+        "generic": "Not quite right. Find the largest rank under its bar, then reject everything up to it.",
+        "byKey": {
+          "stop": "You stopped at rank 2, the first $p$ above its bar. BH looks for the largest passing rank, so rank 3 rescues rank 2.",
+          "two": "Rank 2 (0.014) is above its bar of 0.0125, but rank 3 passes, and BH rejects every rank up to it.",
+          "four": "Rank 4 has $p = 0.30$, far above 0.025."
+        }
+      },
+      "explain": {
+        "text": "Rank 3 has $0.017 \\le 0.01875$, and no later rank passes. So BH rejects ranks 1 to 3, including rank 2, which missed its own bar. BH asks for the largest passing rank, not the first failure."
+      }
+    },
+    {
+      "id": "q-forty",
+      "difficulty": 2,
+      "prose": "A desk tests 40 signals and wants a family-wise error rate of at most 0.05.",
+      "question": "What Bonferroni threshold should each test use?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.00125,
+        "tol": {
+          "abs": 1e-06
+        },
+        "label": "Bonferroni threshold",
+        "accept": "0.00125: $0.05 / 40$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0.05,
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "id": "times",
+            "value": 2,
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.05 / 40 = 0.00125$.",
+        "generic": "Not quite right. Divide $\\alpha$ by the number of tests.",
+        "byKey": {
+          "none": "That is no correction at all.",
+          "times": "You multiplied by 40. The threshold must shrink."
+        }
+      },
+      "explain": {
+        "text": "Bonferroni splits the 0.05 budget over 40 tests: $0.05 / 40 = 0.00125$ each. The union bound then keeps the FWER at or below 0.05, whatever the dependence."
+      }
+    },
+    {
+      "id": "q-which",
+      "difficulty": 2,
+      "prose": "A team wants to bound the average share of its discoveries that are false, and accepts a few false ones.",
+      "question": "Which method fits?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "bonf",
+            "text": "Bonferroni",
+            "why": "Bonferroni bounds the chance of any false discovery, the FWER. It is stricter than this team needs."
+          },
+          {
+            "id": "sidak",
+            "text": "Šidák",
+            "why": "Šidák also bounds the FWER, for independent tests."
+          },
+          {
+            "id": "right",
+            "text": "Benjamini-Hochberg",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "No correction",
+            "why": "With no correction, the share of false discoveries is not bounded at all."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "BH controls the false discovery rate.",
+        "generic": "Not quite right. Match an average share of false discoveries to its method."
+      },
+      "explain": {
+        "text": "An average share of false discoveries is the false discovery rate, which BH controls. Bonferroni and Šidák control the chance of even one false discovery. That is stricter, and finds less."
+      }
+    },
+    {
+      "id": "q-sidak",
+      "difficulty": 3,
+      "prose": "For 10 independent tests and a family-wise target of 0.05, the Šidák threshold is $1 - (1 - 0.05)^{1/10}$.",
+      "question": "Compute it to 6 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.005116,
+        "tol": {
+          "abs": 1e-06
+        },
+        "label": "Šidák threshold for 10 tests",
+        "accept": "0.005116, give or take 0.000001.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "bonf",
+            "value": 0.005,
+            "tol": {
+              "abs": 5e-07
+            }
+          },
+          {
+            "id": "pow",
+            "value": 0.598737,
+            "tol": {
+              "abs": 2e-06
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 0.95^{0.1} = 0.005116$.",
+        "generic": "Not quite right. Raise 0.95 to the power 0.1, then subtract from 1.",
+        "byKey": {
+          "bonf": "That is Bonferroni, $0.05/10$. Šidák is a little larger.",
+          "pow": "You raised 0.95 to the power 10. The power is $1/10$."
+        }
+      },
+      "explain": {
+        "text": "$0.95^{0.1} = 0.994884$, so the threshold is $1 - 0.994884 = 0.005116$. Bonferroni's 0.005 is just below it. The gap is why Bonferroni is called conservative."
+      }
+    }
+  ]
+}

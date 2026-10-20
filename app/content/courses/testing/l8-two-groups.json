@@ -1,0 +1,1415 @@
+{
+  "id": "l8-two-groups",
+  "course": "testing",
+  "title": "Comparing two groups",
+  "minutes": 14,
+  "objectives": [
+    "Test a difference between two means."
+  ],
+  "skills": [
+    "ht-setup",
+    "ht-pvalue"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Two pairs of desks, 60 days each. In both pairs, desk A beats desk B by £6,000 a day on average. The curves show how each desk's daily P&L spreads.",
+      "canvas": {
+        "kind": "pair",
+        "tap": "sides",
+        "leftLabel": "Pair 1",
+        "rightLabel": "Pair 2",
+        "left": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              -30,
+              45
+            ],
+            "y": [
+              0,
+              0.22
+            ],
+            "grid": false,
+            "height": 240,
+            "xLabel": "Daily P&L (£k)",
+            "yLabel": "density",
+            "functions": [
+              {
+                "id": "fa",
+                "expr": "exp(-((x-9)/2)^2/2)/(2*sqrt(2*pi))",
+                "label": "A",
+                "colour": 2
+              },
+              {
+                "id": "fb",
+                "expr": "exp(-((x-3)/2)^2/2)/(2*sqrt(2*pi))",
+                "label": "B",
+                "colour": 1
+              }
+            ]
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              -30,
+              45
+            ],
+            "y": [
+              0,
+              0.036
+            ],
+            "grid": false,
+            "height": 240,
+            "xLabel": "Daily P&L (£k)",
+            "yLabel": "density",
+            "functions": [
+              {
+                "id": "fa",
+                "expr": "exp(-((x-9)/12)^2/2)/(12*sqrt(2*pi))",
+                "label": "A",
+                "colour": 2
+              },
+              {
+                "id": "fb",
+                "expr": "exp(-((x-3)/12)^2/2)/(12*sqrt(2*pi))",
+                "label": "B",
+                "colour": 1
+              }
+            ]
+          },
+          "state": {}
+        }
+      },
+      "question": "Tap the pair where the £6,000 gap is more convincing.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "left"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In which pair could luck alone easily move the averages by £6,000?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the gap with how widely each desk's P&L swings from day to day.",
+          "highlight": [
+            "left",
+            "right"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "On the left, daily swings are about £2,000, so a £6,000 gap is large. Tap the left pair."
+        }
+      ],
+      "feedback": {
+        "correct": "The same gap means more when the days are less noisy.",
+        "generic": "Not quite right. Compare the £6,000 gap with each pair's daily swings.",
+        "byKey": {
+          "right": "You tapped the noisy pair. There a £6,000 gap is half of one day's typical swing, so luck could produce it."
+        }
+      },
+      "explain": {
+        "text": "Both gaps are £6,000, but on the left the daily sd is £2,000 and on the right £12,000. A gap only means something next to the noise. So we divide the gap by its standard error.",
+        "canvas": {
+          "highlight": [
+            "left"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Back to one real pair. Desk A's daily P&L has sd £41k and desk B's £28k, and A leads by £9.3k a day. The curve is the gap we would see with no real difference. Drag the number of days per desk.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -35,
+            35
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": false,
+          "height": 280,
+          "xLabel": "Gap in mean daily P&L, A minus B (£k)",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(x/se)^2/2)/(se*sqrt(2*pi))",
+              "label": "no real gap",
+              "colour": 1
+            }
+          ],
+          "params": {
+            "n": 60,
+            "se": 6.4096
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "obs",
+              "x": 9.3,
+              "label": "gap 9.3"
+            }
+          ],
+          "area": [
+            {
+              "id": "tr",
+              "f": "f",
+              "from": 9.3,
+              "to": 80,
+              "colour": 2
+            },
+            {
+              "id": "tl",
+              "f": "f",
+              "from": -80,
+              "to": -9.3,
+              "colour": 2
+            }
+          ]
+        },
+        "derive": {
+          "params.se": "sqrt(2465/n)",
+          "caption": "{{n}} days each: SE = £{{fixed(se, 2)}}k, t = {{fixed(9.3/se, 2)}}, two-sided p ≈ {{fixed(values.tr + values.tl, 3)}}"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 10,
+            "max": 300,
+            "step": 1,
+            "label": "days per desk",
+            "start": 60
+          }
+        ]
+      },
+      "question": "About how many days per desk would make this £9.3k gap reach $t = 1.96$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sixty",
+            "text": "About 60",
+            "why": "At 60 days the caption shows $t = 1.45$. The gap is not yet far enough out."
+          },
+          {
+            "id": "right",
+            "text": "About 110",
+            "correct": true
+          },
+          {
+            "id": "two-fifty",
+            "text": "About 250",
+            "why": "At 250 days $t$ is near 2.96, well past 1.96."
+          },
+          {
+            "id": "thousand",
+            "text": "About 1,000",
+            "why": "You need far fewer. Watch $t$ in the caption as you drag."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Near 110 days the gap sits 1.96 standard errors out.",
+        "generic": "Not quite right. Drag until the caption shows $t$ close to 1.96."
+      },
+      "explain": {
+        "text": "More days shrink the standard error, $\\sqrt{(41^2 + 28^2)/n}$, so the curve narrows round 0. At 110 days, $\\text{SE} = 4.73$ and $t = 1.96$. At 60 days the same gap is only 1.45 standard errors out.",
+        "canvas": {
+          "params": {
+            "n": 110
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Over a quarter, desk A made £12,400 a day on average, sd £41,000. Desk B made £3,100, sd £28,000. Each traded 60 days. The two-sample statistic is $$t = \\frac{\\bar x_A - \\bar x_B}{\\sqrt{s_A^2/n_A + s_B^2/n_B}}.$$",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -35,
+            35
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": false,
+          "height": 280,
+          "xLabel": "Gap in mean daily P&L, A minus B (£k)",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(x/se)^2/2)/(se*sqrt(2*pi))",
+              "label": "no real gap",
+              "colour": 1
+            }
+          ],
+          "params": {
+            "n": 60,
+            "se": 6.4096
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "obs",
+              "x": 9.3,
+              "label": "gap 9.3"
+            }
+          ],
+          "area": [
+            {
+              "id": "tr",
+              "f": "f",
+              "from": 9.3,
+              "to": 80,
+              "colour": 2
+            },
+            {
+              "id": "tl",
+              "f": "f",
+              "from": -80,
+              "to": -9.3,
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "Compute $t$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.451,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "1.451 ± 0.005",
+        "wrong": [
+          {
+            "id": "no-n",
+            "value": 0.187,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "added-sds",
+            "value": 1.044,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "a-alone",
+            "value": 2.343,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out each variance of a mean, $s^2/n$, first."
+        },
+        {
+          "rung": "point",
+          "text": "$41{,}000^2/60 = 28.0$ million and $28{,}000^2/60 = 13.1$ million.",
+          "highlight": [
+            "obs"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "SE $= \\sqrt{41.1 \\text{ million}} = 6{,}410$, so $t = 9{,}300/6{,}410$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t = 9{,}300/6{,}410 = 1.45$.",
+        "generic": "Not quite right. Add the two variances of the means, take the root, and divide the gap by it.",
+        "byKey": {
+          "no-n": "You left out the $n$s. Each variance must be divided by its 60 days.",
+          "added-sds": "You added the two sds before dividing by $\\sqrt{60}$. Variances add, not sds.",
+          "a-alone": "That tests desk A against zero. The question is A against B."
+        }
+      },
+      "explain": {
+        "text": "SE $= \\sqrt{41{,}000^2/60 + 28{,}000^2/60} = £6{,}410$, so $t = 9{,}300/6{,}410 = 1.45$. This is **Welch's** $t$: it keeps each desk's own variance. With 104 degrees of freedom the two-sided $p$ is 0.15, so A's lead could well be luck.",
+        "canvas": {
+          "highlight": [
+            "tr",
+            "tl"
+          ],
+          "caption": "$t = 1.45$, two-sided $p = 0.15$"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Suppose desk B's 60 days were exactly desk A's 60 days, number for number.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -35,
+            35
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": false,
+          "height": 280,
+          "xLabel": "Gap in mean daily P&L, A minus B (£k)",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(x/se)^2/2)/(se*sqrt(2*pi))",
+              "label": "no real gap",
+              "colour": 1
+            }
+          ],
+          "params": {
+            "n": 60,
+            "se": 6.4096
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "obs",
+              "x": 0,
+              "label": "gap 0"
+            }
+          ],
+          "area": [
+            {
+              "id": "tr",
+              "f": "f",
+              "from": 0,
+              "to": 80,
+              "colour": 2
+            },
+            {
+              "id": "tl",
+              "f": "f",
+              "from": -80,
+              "to": 0,
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "What are $t$ and the two-sided $p$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$t = 0$ and $p = 1$",
+            "correct": true
+          },
+          {
+            "id": "p-zero",
+            "text": "$t = 0$ and $p = 0$",
+            "why": "$p$ is the chance of a gap at least this big under $H_0$. Every gap is at least 0, so $p = 1$."
+          },
+          {
+            "id": "undefined",
+            "text": "$t$ is undefined: the standard error is 0",
+            "why": "The SE uses each desk's own spread, which is still large. Only the gap is 0."
+          },
+          {
+            "id": "one",
+            "text": "$t = 1$ and $p = 0.32$",
+            "why": "A $t$ of 1 needs a gap of one standard error. Here the gap is 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the gap between the two means?"
+        },
+        {
+          "rung": "point",
+          "text": "The gap is 0, but each desk's spread is unchanged.",
+          "highlight": [
+            "tr",
+            "tl"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$t = 0/\\text{SE} = 0$. Both shaded tails now cover the whole curve, so $p = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "A zero gap gives $t = 0$, and every gap is at least that extreme.",
+        "generic": "Not quite right. Start from the gap between the means."
+      },
+      "explain": {
+        "text": "Identical samples have a gap of 0, so $t = 0$ whatever the SE. The tails past $\\pm 0$ cover the whole curve, so $p = 1$. This is the least evidence of a difference that data can give.",
+        "canvas": {
+          "highlight": [
+            "tr",
+            "tl"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "A desk tests a new execution algorithm on alternating days: old on day 1, new on day 2, and so on. Each pair of days shares market conditions. Over 8 pairs, the slippage saved has mean $\\bar d = 0.95$ bp and sd $s_d = 0.707$ bp.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.5,
+            8.8
+          ],
+          "y": [
+            0,
+            14
+          ],
+          "grid": false,
+          "height": 260,
+          "xLabel": "Pair of days",
+          "yLabel": "Slippage (bp)",
+          "xTicks": "integer",
+          "xStep": 1
+        },
+        "state": {
+          "segments": [
+            {
+              "id": "o0",
+              "from": [
+                1,
+                6.1
+              ],
+              "to": [
+                2,
+                9.8
+              ],
+              "colour": 1
+            },
+            {
+              "id": "o1",
+              "from": [
+                2,
+                9.8
+              ],
+              "to": [
+                3,
+                4.3
+              ],
+              "colour": 1
+            },
+            {
+              "id": "o2",
+              "from": [
+                3,
+                4.3
+              ],
+              "to": [
+                4,
+                12.5
+              ],
+              "colour": 1
+            },
+            {
+              "id": "o3",
+              "from": [
+                4,
+                12.5
+              ],
+              "to": [
+                5,
+                7.2
+              ],
+              "colour": 1
+            },
+            {
+              "id": "o4",
+              "from": [
+                5,
+                7.2
+              ],
+              "to": [
+                6,
+                5.0
+              ],
+              "colour": 1
+            },
+            {
+              "id": "o5",
+              "from": [
+                6,
+                5.0
+              ],
+              "to": [
+                7,
+                10.9
+              ],
+              "colour": 1
+            },
+            {
+              "id": "o6",
+              "from": [
+                7,
+                10.9
+              ],
+              "to": [
+                8,
+                8.0
+              ],
+              "colour": 1
+            },
+            {
+              "id": "n0",
+              "from": [
+                1,
+                5.2
+              ],
+              "to": [
+                2,
+                8.2
+              ],
+              "colour": 2
+            },
+            {
+              "id": "n1",
+              "from": [
+                2,
+                8.2
+              ],
+              "to": [
+                3,
+                4.1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "n2",
+              "from": [
+                3,
+                4.1
+              ],
+              "to": [
+                4,
+                11.1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "n3",
+              "from": [
+                4,
+                11.1
+              ],
+              "to": [
+                5,
+                6.1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "n4",
+              "from": [
+                5,
+                6.1
+              ],
+              "to": [
+                6,
+                5.3
+              ],
+              "colour": 2
+            },
+            {
+              "id": "n5",
+              "from": [
+                6,
+                5.3
+              ],
+              "to": [
+                7,
+                9.1
+              ],
+              "colour": 2
+            },
+            {
+              "id": "n6",
+              "from": [
+                7,
+                9.1
+              ],
+              "to": [
+                8,
+                7.1
+              ],
+              "colour": 2
+            }
+          ],
+          "points": [
+            {
+              "id": "po0",
+              "x": 1,
+              "y": 6.1,
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "po1",
+              "x": 2,
+              "y": 9.8,
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "po2",
+              "x": 3,
+              "y": 4.3,
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "po3",
+              "x": 4,
+              "y": 12.5,
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "po4",
+              "x": 5,
+              "y": 7.2,
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "po5",
+              "x": 6,
+              "y": 5.0,
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "po6",
+              "x": 7,
+              "y": 10.9,
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "po7",
+              "x": 8,
+              "y": 8.0,
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "pn0",
+              "x": 1,
+              "y": 5.2,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "pn1",
+              "x": 2,
+              "y": 8.2,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "pn2",
+              "x": 3,
+              "y": 4.1,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "pn3",
+              "x": 4,
+              "y": 11.1,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "pn4",
+              "x": 5,
+              "y": 6.1,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "pn5",
+              "x": 6,
+              "y": 5.3,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "pn6",
+              "x": 7,
+              "y": 9.1,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "pn7",
+              "x": 8,
+              "y": 7.1,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "lo",
+              "x": 8,
+              "y": 8.0,
+              "label": "old",
+              "labelPos": "ne",
+              "tap": false,
+              "colour": 1
+            },
+            {
+              "id": "ln",
+              "x": 8,
+              "y": 7.1,
+              "label": "new",
+              "labelPos": "se",
+              "tap": false,
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "What is the paired statistic $t = \\bar d/(s_d/\\sqrt n)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.8,
+        "tol": {
+          "abs": 0.02
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "3.80 ± 0.02",
+        "wrong": [
+          {
+            "id": "no-root-n",
+            "value": 1.344,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "n-not-root",
+            "value": 10.75,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "unpaired",
+            "value": 0.72,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Here $n$ is the number of pairs, 8."
+        },
+        {
+          "rung": "point",
+          "text": "$s_d/\\sqrt 8 = 0.707/2.828 = 0.25$.",
+          "highlight": [
+            "o0",
+            "n0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$t = 0.95/0.25$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t = 0.95/0.25 = 3.80$.",
+        "generic": "Not quite right. Divide $s_d$ by $\\sqrt 8$, then divide $\\bar d$ by that.",
+        "byKey": {
+          "no-root-n": "You divided $\\bar d$ by $s_d$ alone. The standard error of $\\bar d$ is $s_d/\\sqrt n$.",
+          "n-not-root": "You divided $s_d$ by 8. The standard error uses $\\sqrt 8$.",
+          "unpaired": "That is Welch's $t$ on the two columns, which treats the pairs as independent. Use the differences."
+        }
+      },
+      "explain": {
+        "text": "$t = 0.95/(0.707/\\sqrt 8) = 3.80$, $p = 0.007$ with 7 df. Treated as two independent samples, the same 16 days give $t = 0.72$, $p = 0.48$. The two lines move together, and pairing cancels that shared swing.",
+        "canvas": {
+          "caption": "Paired: $t = 3.80$, $p = 0.007$. Unpaired: $t = 0.72$, $p = 0.48$."
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "Back to the two desks. Tested against zero, desk A's mean P&L has $p = 0.023$ and desk B's has $p = 0.39$. A manager writes: “A is significant and B is not, so A is the better desk.”",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -35,
+            35
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": false,
+          "height": 280,
+          "xLabel": "Gap in mean daily P&L, A minus B (£k)",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-(x/se)^2/2)/(se*sqrt(2*pi))",
+              "label": "no real gap",
+              "colour": 1
+            }
+          ],
+          "params": {
+            "n": 60,
+            "se": 6.4096
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "obs",
+              "x": 9.3,
+              "label": "gap 9.3"
+            }
+          ],
+          "area": [
+            {
+              "id": "tr",
+              "f": "f",
+              "from": 9.3,
+              "to": 80,
+              "colour": 2
+            },
+            {
+              "id": "tl",
+              "f": "f",
+              "from": -80,
+              "to": -9.3,
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "What does the direct comparison of A with B say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The gap is not significant: $t = 1.45$, $p = 0.15$",
+            "correct": true
+          },
+          {
+            "id": "verdicts",
+            "text": "A beats B, because only A is significant",
+            "why": "You compared two separate verdicts. The difference between significant and not significant is not itself significant."
+          },
+          {
+            "id": "a-p",
+            "text": "A beats B with $p = 0.023$",
+            "why": "0.023 tests A against zero, not against B."
+          },
+          {
+            "id": "b-zero",
+            "text": "B earns nothing, so A leads by the full £12,400",
+            "why": "B's mean is £3,100, not 0. Not significant does not mean zero."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which number tests A against B, rather than each against zero?"
+        },
+        {
+          "rung": "point",
+          "text": "The comparison uses the gap, £9,300, and its standard error, £6,410.",
+          "highlight": [
+            "obs"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That is the $t = 1.45$ you computed, with $p = 0.15$."
+        }
+      ],
+      "feedback": {
+        "correct": "Only the test of the gap compares the desks.",
+        "generic": "Not quite right. Test the gap itself, not each desk against zero.",
+        "byKey": {
+          "verdicts": "You compared the desks by whether each is significant on its own. A test of A against B must use the gap between them."
+        }
+      },
+      "explain": {
+        "text": "A's $p = 0.023$ and B's $p = 0.39$ test each desk against zero. The gap between the desks gives $t = 1.45$, $p = 0.15$. One desk crossing 0.05 while the other does not is no evidence they differ.",
+        "canvas": {
+          "highlight": [
+            "tr",
+            "tl"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "For two independent samples you divided the gap by its combined standard error. For pairs you worked on the differences: $$t = \\frac{\\bar x_1 - \\bar x_2}{\\sqrt{s_1^2/n_1 + s_2^2/n_2}}, \\qquad t_{\\text{paired}} = \\frac{\\bar d}{s_d/\\sqrt n}.$$ The first is Welch's test. It keeps each group's own variance rather than pooling them.",
+      "question": "When should you use the paired test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "When each observation in one group has a natural partner in the other",
+            "correct": true
+          },
+          {
+            "id": "same-size",
+            "text": "Whenever the two groups are the same size",
+            "why": "Equal sizes are needed but not enough. The partners must share something, such as the same day."
+          },
+          {
+            "id": "variances",
+            "text": "When the two variances differ",
+            "why": "Unequal variances call for Welch's test, not for pairing."
+          },
+          {
+            "id": "never",
+            "text": "Never: pairing throws away data",
+            "why": "Pairing keeps every observation. It removes the noise the partners share, which raises power."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Pairs need partners that share their noise.",
+        "generic": "Not quite right. Ask what makes two observations a pair."
+      },
+      "explain": {
+        "text": "Pairing works when partners share a source of noise: the same day, the same stock, the same client. Their difference cancels it. Unpaired data, like the two desks, use Welch."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "We derive the standard error of $\\bar X_1 - \\bar X_2$ for two independent samples.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "$\\mathrm{Var}(\\bar X_1 - \\bar X_2) = \\mathrm{Var}(\\bar X_1) + \\mathrm{Var}(\\bar X_2) - 2\\,\\mathrm{Cov}(\\bar X_1, \\bar X_2)$: variance of a difference"
+          },
+          {
+            "id": "s2",
+            "text": "$= \\mathrm{Var}(\\bar X_1) + \\mathrm{Var}(\\bar X_2)$: independent samples have zero covariance"
+          },
+          {
+            "id": "s3",
+            "text": "$= \\dfrac{\\sigma_1^2}{n_1} + \\dfrac{\\sigma_2^2}{n_2}$: the variance of a mean of $n$ draws is $\\sigma^2/n$"
+          },
+          {
+            "id": "s4",
+            "text": "$\\mathrm{SE} = \\sqrt{s_1^2/n_1 + s_2^2/n_2}$: estimate each $\\sigma^2$ by $s^2$ and take the root"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the general rule for the variance of a difference."
+        },
+        {
+          "rung": "point",
+          "text": "Independence removes one term."
+        },
+        {
+          "rung": "step",
+          "text": "Variance of a difference, drop the covariance, use $\\sigma^2/n$, then estimate and take the root."
+        }
+      ],
+      "feedback": {
+        "correct": "General rule, independence, variance of a mean, estimate.",
+        "generic": "Not quite right. Each line simplifies the one before it.",
+        "byKey": {
+          "s1": "The general rule for a difference comes first.",
+          "s2": "Dropping the covariance needs the general rule first.",
+          "s3": "Replacing each variance by $\\sigma^2/n$ comes after the covariance is gone.",
+          "s4": "Estimating with $s^2$ is the last step."
+        }
+      },
+      "explain": {
+        "text": "Line 1 also explains pairing. On shared days the covariance is positive, so subtracting $2\\,\\mathrm{Cov}$ shrinks the variance. The two algorithm series had correlation 0.99, which is why pairing turned $t = 0.72$ into 3.80."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Welch's test in code",
+      "prose": "`desk_a` and `desk_b` are loaded with the two desks' 60 days of P&L. Finish `welch_t` by hand. The last line asks SciPy for the same test, so you can compare.",
+      "question": "Complete `welch_t(a, b)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import sqrt\nfrom scipy import stats\n\n# desk_a and desk_b each hold 60 days of P&L in pounds.\n\ndef welch_t(a, b):\n    \"\"\"Welch t statistic for mean(a) - mean(b).\"\"\"\n    na, nb = len(a), len(b)\n    ma, mb = sum(a) / na, sum(b) / nb\n    va = sum((x - ma) ** 2 for x in a) / (na - 1)\n    vb = ...\n    return ...\n\nprint(round(welch_t(desk_a, desk_b), 4))\nprint(stats.ttest_ind(desk_a, desk_b, equal_var=False))\n",
+        "solution": "from math import sqrt\nfrom scipy import stats\n\n# desk_a and desk_b each hold 60 days of P&L in pounds.\n\ndef welch_t(a, b):\n    \"\"\"Welch t statistic for mean(a) - mean(b).\"\"\"\n    na, nb = len(a), len(b)\n    ma, mb = sum(a) / na, sum(b) / nb\n    va = sum((x - ma) ** 2 for x in a) / (na - 1)\n    vb = sum((x - mb) ** 2 for x in b) / (nb - 1)\n    return (ma - mb) / sqrt(va / na + vb / nb)\n\nprint(round(welch_t(desk_a, desk_b), 4))\nprint(stats.ttest_ind(desk_a, desk_b, equal_var=False))\n",
+        "prelude": "desk_a = [-61030, 40900, 26120, -91050, -5520, 36140, 18140, -66460, 15640, 84720, -5470, 62080, 48980, 55880, 17850, -27130, 28190, -6280, 52740, 47770, 690, 30910, 3940, 69080, 16850, 23910, 73290, 22020, -24820, 20340, 55610, -130830, 41150, -60, 9680, 41010, -49900, -47100, 3910, 360, 12770, 40350, 29990, -5020, 10450, -49450, -3100, 44140, 54640, 38300, 4650, 56800, 41770, 21500, 41540, 14780, -10040, 8100, 13100, -53520]\ndesk_b = [30870, 10350, 41880, -3240, 66630, 3920, 7540, -13840, -14710, -15600, -32250, 19710, 13230, -33570, -60360, 30850, 21290, 13670, -17850, 6380, -36170, -22760, 11990, 11950, -31800, 16380, 66280, -52690, 18460, -14960, -37130, 12590, 6910, 13920, -10070, 24510, -36600, -2590, 3240, 9620, 31950, -49760, 20810, 5730, 22410, -10060, 11140, 57980, -11670, -6770, 27550, -230, -2170, 22450, 13610, 39070, -10060, 41390, -49050, 5700]\n",
+        "examples": [
+          {
+            "call": "welch_t([1, 2, 3, 4], [1, 2, 3, 4])",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "welch_t(desk_a, desk_b)",
+            "expect": "1.4509479438457364",
+            "compare": "isclose"
+          },
+          {
+            "call": "welch_t(desk_b, desk_a)",
+            "expect": "-1.4509479438457364",
+            "compare": "isclose"
+          },
+          {
+            "call": "welch_t([1, 2, 3, 4], [1, 2, 3, 4])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "welch_t([5, 7, 9], [1, 2, 3, 4, 5])",
+            "expect": "2.9541957835039856",
+            "compare": "isclose"
+          },
+          {
+            "call": "welch_t([0.2, 0.4, 0.1, 0.5], [0.1, 0.0, 0.3])",
+            "expect": "1.3130643285972257",
+            "compare": "isclose"
+          },
+          {
+            "call": "welch_t([10, 12, 11, 15, 9, 13], [8, 30, -4, 22])",
+            "expect": "-0.3078596479934798",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, each compared with math.isclose. The starter imports SciPy, which loads slowly the first time (several seconds)."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`vb` mirrors the line for `va`, using `b` and `mb`."
+        },
+        {
+          "rung": "point",
+          "text": "The standard error is `sqrt(va / na + vb / nb)`."
+        },
+        {
+          "rung": "step",
+          "text": "Return `(ma - mb) / sqrt(va / na + vb / nb)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your function matches SciPy's Welch statistic on every test.",
+        "generic": "Some tests failed. Use $n - 1$ in each variance and add the two $s^2/n$ terms.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that both `...` are replaced."
+        }
+      },
+      "explain": {
+        "text": "Your function prints 1.4509. SciPy prints `statistic=1.4509`, `pvalue=0.1498` and `df=104.2`, the Welch degrees of freedom. With equal sizes a pooled test gives the same $t$; pooling only changes $t$ when sizes and variances both differ.\n\n```python\nvb = sum((x - mb) ** 2 for x in b) / (nb - 1)\nreturn (ma - mb) / sqrt(va / na + vb / nb)\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "Two strategies ran on the same 750 days. Strategy X had a Sharpe ratio of 1.2 and strategy Y had 0.8. An analyst runs Welch's test on their daily returns to show X has the higher Sharpe.",
+      "question": "Why is that the wrong test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It compares means, not mean over sd, and treats same-day returns as independent",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "It is fine: a Sharpe ratio is just a scaled mean",
+            "why": "Each Sharpe divides by its own estimated sd. That adds noise a test of means ignores."
+          },
+          {
+            "id": "pooled",
+            "text": "It should pool the variances instead",
+            "why": "A pooled test still compares means, and still treats same-day returns as independent."
+          },
+          {
+            "id": "untestable",
+            "text": "Sharpe ratios cannot be compared by any test",
+            "why": "They can. Tests built for Sharpe ratios exist, such as Jobson and Korkie's, or a bootstrap."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a Sharpe ratio divide by?"
+        },
+        {
+          "rung": "point",
+          "text": "Both strategies traded on the same days. Are their returns independent?"
+        },
+        {
+          "rung": "step",
+          "text": "Welch tests a gap in means between independent samples. Neither part fits here."
+        }
+      ],
+      "feedback": {
+        "correct": "A Sharpe gap needs a test built for Sharpe ratios.",
+        "generic": "Not quite right. Compare what Welch tests with what a Sharpe ratio is."
+      },
+      "explain": {
+        "text": "A Sharpe ratio is a mean over an estimated sd, and both estimates are noisy. Same-day returns are correlated, so the samples are not independent. Use a test built for it, such as Jobson and Korkie with Memmel's correction, or a paired bootstrap."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "To compare two means, divide the gap by $\\sqrt{s_1^2/n_1 + s_2^2/n_2}$. Welch's test keeps each group's own variance.",
+      "When observations come in pairs, test the differences: the shared noise cancels and power rises.",
+      "Compare groups directly. One significant and one not does not make them different."
+    ],
+    "formula": {
+      "name": "Welch's two-sample statistic",
+      "tex": "t = \\dfrac{\\bar x_1 - \\bar x_2}{\\sqrt{s_1^2/n_1 + s_2^2/n_2}}",
+      "note": "Paired data: $t = \\bar d/(s_d/\\sqrt n)$ on the differences."
+    },
+    "trap": "“A is significant, B is not” is not a test of A against B. Test the difference itself."
+  },
+  "quiz": [
+    {
+      "id": "q-pooling",
+      "difficulty": 3,
+      "prose": "Group 1: 10 days, mean 4, sd 5. Group 2: 40 days, mean 1, sd 1. A pooled test gives $t = 3.62$.",
+      "question": "What is Welch's $t$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.888,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "1.888 ± 0.005",
+        "wrong": [
+          {
+            "id": "pooled",
+            "value": 3.618,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "no-n",
+            "value": 0.588,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "SE $= \\sqrt{25/10 + 1/40} = 1.589$, so $t = 1.89$.",
+        "generic": "Not quite right. Divide each variance by its own $n$, add, and take the root.",
+        "byKey": {
+          "pooled": "That is the pooled $t$. Pooling lets the 40 calm days shrink the noisy group's variance.",
+          "no-n": "You left out the $n$s: divide each variance by its group size."
+        }
+      },
+      "explain": {
+        "text": "Welch: $\\sqrt{25/10 + 1/40} = 1.589$, so $t = 3/1.589 = 1.89$, $p = 0.09$. Pooling gives 3.62, $p = 0.0007$, because it pretends the small noisy group is as calm as the large one. With unequal variances, use Welch."
+      }
+    },
+    {
+      "id": "q-paired-loss",
+      "difficulty": 2,
+      "prose": "Take the algorithm test from the lesson. A paired test gave $p = 0.007$. Treating the 16 days as two independent samples gave $p = 0.48$.",
+      "question": "Why do the two analyses differ so much?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Pairing cancels the market swings both days of a pair share",
+            "correct": true
+          },
+          {
+            "id": "more-data",
+            "text": "The paired test uses more data",
+            "why": "Both use the same 16 days. Pairing uses them differently."
+          },
+          {
+            "id": "wrong-paired",
+            "text": "The paired test is wrong: it double counts",
+            "why": "Each day is used once, inside its pair's difference."
+          },
+          {
+            "id": "variances",
+            "text": "The unpaired test assumes equal variances",
+            "why": "Welch does not assume that. The loss comes from ignoring the pairs."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The shared noise cancels in each difference.",
+        "generic": "Not quite right. Ask what the two days in a pair have in common."
+      },
+      "explain": {
+        "text": "Slippage swings with market conditions, which both days of a pair share. The differences cancel that swing, so $s_d$ is small. Treating paired data as independent throws away power."
+      }
+    },
+    {
+      "id": "q-welch-returns",
+      "difficulty": 3,
+      "prose": "Over 250 days each, strategy P returned 0.08% a day with sd 1.1%. Strategy Q returned 0.03% with sd 0.9%. They traded different markets, so treat them as independent.",
+      "question": "What is Welch's $t$ for P minus Q?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.556,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "0.556 ± 0.005",
+        "wrong": [
+          {
+            "id": "added-sds",
+            "value": 0.395,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "p-alone",
+            "value": 1.15,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "SE $= \\sqrt{(1.21 + 0.81)/250} = 0.0899$, so $t = 0.56$.",
+        "generic": "Not quite right. Square each sd, divide by 250, add, then take the root.",
+        "byKey": {
+          "added-sds": "You added the sds before dividing. Variances add, not sds.",
+          "p-alone": "That tests P against zero, not against Q."
+        }
+      },
+      "explain": {
+        "text": "SE $= \\sqrt{1.1^2/250 + 0.9^2/250} = 0.0899$ (in percent), so $t = 0.05/0.0899 = 0.56$. A year of data cannot tell these two strategies apart."
+      }
+    },
+    {
+      "id": "q-pair-sd",
+      "difficulty": 3,
+      "prose": "Two algorithms run on the same days. Each day's slippage has sd 2 bp for both, and the two are correlated with $\\rho = 0.9$. Use $\\mathrm{Var}(D) = \\sigma_1^2 + \\sigma_2^2 - 2\\rho\\sigma_1\\sigma_2$.",
+      "question": "What is the sd of the daily difference $D$, in bp?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.894,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "0.894 ± 0.005",
+        "wrong": [
+          {
+            "id": "independent",
+            "value": 2.828,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "variance",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sqrt{4 + 4 - 7.2} = \\sqrt{0.8} = 0.894$.",
+        "generic": "Not quite right. Subtract $2\\rho\\sigma_1\\sigma_2 = 7.2$ from $4 + 4$, then take the root.",
+        "byKey": {
+          "independent": "You treated the days as independent, leaving out the covariance term.",
+          "variance": "0.8 is the variance. Take its square root."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{Var}(D) = 4 + 4 - 2 \\times 0.9 \\times 2 \\times 2 = 0.8$, so sd $= 0.894$ bp. Independent days would give 2.83 bp, more than three times as noisy."
+      }
+    }
+  ]
+}

@@ -84,6 +84,61 @@ const readJSON = (file) => {
 };
 const listJSON = (dir) => { try { return fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort(); } catch { return []; } };
 const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
+/* item 304: the C++ code widget (docs/AUTHORING.md section 3, C++). Function mode: call (a C++ expression, or a
+   function name with args as JSON values and optional types), expect as a JSON value. Script mode (a stdout case,
+   stdin, argv, or a raises case without call): the program's own main runs once per case. */
+const CPP_TYPES = ['int', 'long long', 'double', 'bool', 'std::string', 'std::vector<int>', 'std::vector<double>', 'std::vector<std::string>', 'std::vector<std::vector<double>>'];
+const cppValue = (v) => (typeof v === 'number' && Number.isFinite(v)) || typeof v === 'boolean' || typeof v === 'string' || (Array.isArray(v) && v.every(cppValue));
+const cppNumbers = (v) => (typeof v === 'number' && Number.isFinite(v)) || (Array.isArray(v) && v.every(cppNumbers));
+const cppCodeWidget = (file, where, w) => {
+  if (!Array.isArray(w.tests) || w.tests.length < 3) err(file, `${where}.tests`, 'at least 3 tests');
+  else if (w.tests.length > 15) err(file, `${where}.tests`, 'at most 15 tests');
+  if (w.examples != null && !Array.isArray(w.examples)) err(file, `${where}.examples`, 'examples is a list of cases');
+  const cases = [...(Array.isArray(w.tests) ? w.tests.map((t, i) => [t, `${where}.tests[${i}]`]) : []), ...(Array.isArray(w.examples) ? w.examples.map((t, i) => [t, `${where}.examples[${i}]`]) : [])];
+  const isOut = (t) => t.compare === 'stdout' || (t.call == null && t.expect != null && t.compare == null);
+  const objs = cases.filter(([t]) => t && typeof t === 'object');
+  const script = objs.some(([t]) => isOut(t) || t.stdin != null || t.argv != null || (t.compare === 'raises' && t.call == null));
+  cases.forEach(([t, at]) => {
+    if (!t || typeof t !== 'object') { err(file, at, 'each case is an object'); return; }
+    if (t.compare && !['isclose', 'equal', 'stdout', 'raises'].includes(t.compare)) err(file, `${at}.compare`, 'a C++ case compares isclose, equal, stdout or raises');
+    if (t.stdin != null && typeof t.stdin !== 'string') err(file, `${at}.stdin`, 'stdin is a string, the text std::cin reads ("250\\n262.5\\n")');
+    if (t.exact != null && typeof t.exact !== 'boolean') err(file, `${at}.exact`, 'exact is true or false');
+    if (t.exact != null && !isOut(t)) warn(file, `${at}.exact`, 'exact only applies to compare: "stdout"');
+    if (t.argv != null && !(Array.isArray(t.argv) && t.argv.every(x => typeof x === 'string' || typeof x === 'number'))) err(file, `${at}.argv`, 'argv is a list of strings, the words after ./main');
+    if (t.setup != null && typeof t.setup !== 'string') err(file, `${at}.setup`, 'setup is C++ statements run before call ("std::vector<double> xs{1, 2};")');
+    if (script && t.call != null) err(file, `${at}.call`, 'this widget is in script mode (a stdout, stdin, argv or whole-program raises case), where the program runs its own main; a C++ case cannot also have call');
+    if (script && t.setup != null) err(file, `${at}.setup`, 'setup needs function mode (cases with call)');
+    if (t.compare === 'raises') {
+      if (t.expect != null && (typeof t.expect !== 'string' || !/^[A-Za-z_][\w:]*$/.test(t.expect.trim()))) err(file, `${at}.expect`, 'a raises case names the exception type ("std::invalid_argument"), or leaves expect out to accept any error exit');
+    } else if (isOut(t)) {
+      if (typeof t.expect !== 'string') err(file, `${at}.expect`, 'a stdout case needs expect: the printed text, as a string ("Return: 5.00%\\n")');
+      if (t.call != null) err(file, `${at}.call`, 'a stdout case has no call (it compares what the whole program prints)');
+    } else {
+      if (typeof t.call !== 'string' || !t.call.trim()) err(file, `${at}.call`, 'a value case needs call: a C++ expression ("mean({1.0, 2.0})") or a function name with args');
+      if (t.expect === undefined || t.expect === null) err(file, `${at}.expect`, 'a value case needs expect, a JSON value (2.5, true, "abc", [1, 2])');
+      else if (!cppValue(t.expect)) err(file, `${at}.expect`, 'expect is a number, a boolean, a string or a list of those');
+      else if (t.compare === 'isclose' && !cppNumbers(t.expect)) err(file, `${at}.expect`, 'isclose needs a number (or a list of numbers) as expect, not text: write 2.5, not "2.5"');
+      else if (typeof t.expect === 'string' && /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(t.expect.trim())) warn(file, `${at}.expect`, `expect is the text "${t.expect}"; C++ cases take JSON values, so a number is written without quotes`);
+      if (typeof t.expect === 'number' && !Number.isInteger(t.expect) && t.compare !== 'isclose') warn(file, `${at}.compare`, 'equal compares a double exactly; use compare: "isclose" for a computed double');
+    }
+    if (t.args != null) {
+      if (!Array.isArray(t.args)) err(file, `${at}.args`, 'args is a list of JSON values, one per parameter');
+      else {
+        if (typeof t.call === 'string' && !/^[A-Za-z_][\w:]*$/.test(t.call.trim())) err(file, `${at}.call`, 'with args, call is the function name alone ("mean")');
+        t.args.forEach((v, k) => { if (!cppValue(v)) err(file, `${at}.args[${k}]`, 'an argument is a number, a boolean, a string or a list of those'); });
+      }
+    }
+    if (t.types != null) {
+      if (!Array.isArray(t.args)) err(file, `${at}.types`, 'types goes with args (one C++ type per argument)');
+      else if (!Array.isArray(t.types) || t.types.length !== t.args.length || !t.types.every(x => x == null || typeof x === 'string')) err(file, `${at}.types`, 'types is a list of C++ type names, one per argument (null to infer one)');
+      else t.types.forEach((x, k) => { if (x != null && !CPP_TYPES.includes(x.replace(/\s+/g, ' ').replace(/\s*([<>,])\s*/g, '$1').replace('long long', 'long long'))) warn(file, `${at}.types[${k}]`, `${x} is not one of the supported types (${CPP_TYPES.join(', ')}); it is written as ${x}{...} or ${x}(value)`); });
+    }
+  });
+  ['prelude', 'postlude'].forEach(k => { if (w[k] != null && typeof w[k] !== 'string') err(file, `${where}.${k}`, `${k} is C++ source, a string`); });
+  if (w.solution == null) warn(file, `${where}.solution`, 'no solution: Show solution and the playthrough need one');
+  if (w.budget != null && !(typeof w.budget === 'number' && w.budget >= 0 && w.budget <= 120000)) err(file, `${where}.budget`, 'budget is extra milliseconds for each case, 0 to 120000');
+  if (!w.how) warn(file, `${where}.how`, 'say how it is checked');
+};
 const req = (file, where, obj, fields) => fields.forEach(f => { if (obj == null || obj[f] === undefined || obj[f] === null || obj[f] === '') err(file, where ? `${where}.${f}` : f, 'required field missing'); });
 
 /* Art kinds from js/art.js, so course art always draws */
@@ -378,6 +433,10 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       break;
     case 'code':
       req(file, where, w, ['language', 'starter']);
+      /* item 304: language is "python" (Pyodide) or "cpp" (clang in the browser); a starter with #include is C++ */
+      if (w.language != null && !['python', 'cpp'].includes(w.language)) err(file, `${where}.language`, 'language is "python" or "cpp"');
+      if (typeof w.starter === 'string' && /^\s*#\s*include\b/m.test(w.starter) && w.language !== 'cpp') err(file, `${where}.language`, 'the starter has #include, so it is C++: set language: "cpp"');
+      if (w.language === 'cpp') { cppCodeWidget(file, where, w); keys.add('*'); break; }
       if (!Array.isArray(w.tests) || w.tests.length < 3) err(file, `${where}.tests`, 'at least 3 tests');
       else if (w.tests.length > 15) err(file, `${where}.tests`, 'at most 15 tests');
       /* Item 109: a stdout case needs only expect (a string) and may carry stdin and exact; other cases need call */

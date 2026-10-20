@@ -471,6 +471,7 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
       if (!alive) return;
       const txt = { idle: 'C++ not loaded', loading: Cpp.progress || 'Loading the C++ compiler', restarting: 'Restarting the C++ compiler', ready: 'C++ ready', unavailable: 'C++ is not available here' }[s] || '';
       stEl.textContent = busy && s === 'ready' ? busy : txt; stEl.dataset.s = s;
+      stEl.title = s === 'unavailable' ? Cpp.reason : '';
       runBtn.disabled = !!busy || locked || s !== 'ready';
       ctx.change && ctx.change({ code: ed.value, status: s });
     };

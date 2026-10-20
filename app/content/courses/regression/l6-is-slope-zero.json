@@ -1,0 +1,1095 @@
+{
+  "id": "l6-is-slope-zero",
+  "course": "regression",
+  "title": "Is the slope zero?",
+  "minutes": 14,
+  "objectives": [
+    "Test a coefficient with a $t$ statistic.",
+    "Build a confidence interval for a slope and test against values other than zero"
+  ],
+  "skills": [
+    "rg-inference"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Is the signal real?",
+      "prose": "Twelve months of a trading signal against the next month's return. The fitted slope is $\\hat\\beta = 0.30$: each point of signal adds 0.30% to the return. Its standard error is 0.20.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              -2.1,
+              1.15
+            ],
+            [
+              -1.6,
+              -1.2
+            ],
+            [
+              -1.2,
+              0.49
+            ],
+            [
+              -0.8,
+              0.06
+            ],
+            [
+              -0.5,
+              0.19
+            ],
+            [
+              -0.2,
+              0.39
+            ],
+            [
+              0.1,
+              -0.51
+            ],
+            [
+              0.4,
+              0.53
+            ],
+            [
+              0.8,
+              0.28
+            ],
+            [
+              1.1,
+              2.61
+            ],
+            [
+              1.6,
+              1.06
+            ],
+            [
+              2.4,
+              0.94
+            ]
+          ],
+          "xLabel": "Signal score",
+          "yLabel": "Next month's return (%)",
+          "xRange": [
+            -3,
+            3
+          ],
+          "yRange": [
+            -2,
+            3.5
+          ],
+          "fit": true
+        },
+        "state": {
+          "caption": "12 months. Fit: $\\hat\\beta = 0.30$, $\\mathrm{SE}(\\hat\\beta) = 0.20$"
+        }
+      },
+      "question": "How many standard errors is $\\hat\\beta$ from zero?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "",
+        "label": "Distance from zero in standard errors",
+        "placeholder": "a number",
+        "accept": "1.5: $0.30 / 0.20$.",
+        "wrong": [
+          {
+            "id": "product",
+            "value": 0.06,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "gap",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "flip",
+            "value": 0.667,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Distance in standard errors means dividing by the standard error."
+        },
+        {
+          "rung": "point",
+          "text": "The distance from zero is 0.30.",
+          "highlight": [
+            "p0",
+            "p11"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.30 / 0.20$."
+        }
+      ],
+      "feedback": {
+        "correct": "1.5 standard errors.",
+        "generic": "Not quite right. Divide the slope's distance from zero by its standard error.",
+        "byKey": {
+          "product": "You multiplied the slope by its error. Divide instead: $0.30 / 0.20$.",
+          "gap": "You subtracted the error from the slope. A distance in errors is a ratio: $0.30 / 0.20$.",
+          "flip": "You divided the error by the slope. Put the slope on top: $0.30 / 0.20 = 1.5$."
+        }
+      },
+      "explain": {
+        "text": "$0.30 / 0.20 = 1.5$. Suppose the true slope were zero. How often would noise alone push a fit 1.5 errors away? Answering that is a test of the slope.",
+        "canvas": {
+          "line": {
+            "m": 0,
+            "b": 0.6,
+            "dashed": true,
+            "label": "slope 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "How rare is 1.5?",
+      "prose": "If the true slope is zero, the ratio $\\hat\\beta / \\mathrm{SE}$ follows a $t$ distribution. The shaded tail is the chance of a ratio at least this large. Move both sliders and watch the tail.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "t",
+          "params": {
+            "nu": 10
+          },
+          "x": [
+            -5,
+            5
+          ],
+          "xLabel": "$t$"
+        },
+        "state": {
+          "shade": {
+            "from": 1.5,
+            "to": null
+          },
+          "params": {
+            "t": 1.5,
+            "nu": 10
+          }
+        },
+        "derive": {
+          "shade.from": "t",
+          "params.nu": "nu",
+          "caption": "Degrees of freedom {{nu}}. Shaded: ratios of {{fixed(t, 1)}} or more"
+        },
+        "controls": [
+          {
+            "bind": "t",
+            "min": 0,
+            "max": 4,
+            "step": 0.1,
+            "label": "Ratio $\\hat\\beta / \\mathrm{SE}$",
+            "start": 1.5,
+            "decimals": 1
+          },
+          {
+            "bind": "nu",
+            "min": 1,
+            "max": 30,
+            "step": 1,
+            "label": "Degrees of freedom",
+            "start": 10
+          }
+        ]
+      },
+      "question": "With ratio 1.5 and 10 degrees of freedom, what is the chance of a ratio at least 1.5 away from 0, in either direction?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1645,
+        "tol": {
+          "abs": 0.004
+        },
+        "unit": "",
+        "label": "Chance of a ratio this far out",
+        "placeholder": "a number",
+        "accept": "0.165, within 0.004: twice the shaded tail, $2 \\times 0.0823$.",
+        "wrong": [
+          {
+            "id": "one-tail",
+            "value": 0.0823,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "inside",
+            "value": 0.8355,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "left",
+            "value": 0.9177,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the sliders back to 1.5 and 10."
+        },
+        {
+          "rung": "point",
+          "text": "The shaded tail covers only the right side.",
+          "highlight": [
+            "shade"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The left tail below $-1.5$ is the same size. Double the shaded value."
+        }
+      ],
+      "feedback": {
+        "correct": "0.165: about one data set in six.",
+        "generic": "Not quite right. Read the shaded tail at 1.5 and 10, then count both tails.",
+        "byKey": {
+          "one-tail": "That is the right tail only. A slope of $-0.30$ would be just as surprising, so double it.",
+          "inside": "That is the chance of a ratio closer to 0 than 1.5. The question asks for the far side.",
+          "left": "That is everything below 1.5. The test needs the tails beyond $\\pm 1.5$."
+        }
+      },
+      "explain": {
+        "text": "The tail beyond 1.5 holds 0.082, and the tail below $-1.5$ holds the same. Together that is 0.165, the **$p$-value**: about one data set in six shows a slope this far from zero by luck. Fewer degrees of freedom fatten the tails.",
+        "canvas": {
+          "params": {
+            "t": 1.5,
+            "nu": 10
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Counting degrees of freedom",
+      "prose": "The ratio is the **$t$ statistic**, $t = \\hat\\beta / \\mathrm{SE}(\\hat\\beta)$. Its degrees of freedom are those of $s$: the number of points minus the two numbers the line estimated.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "t",
+          "params": {
+            "nu": 10
+          },
+          "x": [
+            -5,
+            5
+          ],
+          "xLabel": "$t$"
+        },
+        "state": {
+          "shade": {
+            "from": 1.5,
+            "to": null
+          },
+          "caption": "$t = 1.5$ for the signal"
+        }
+      },
+      "question": "Our signal fit used 12 months. How many degrees of freedom does its $t$ statistic have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "label": "Degrees of freedom",
+        "placeholder": "a whole number",
+        "accept": "10: $12 - 2$.",
+        "wrong": [
+          {
+            "id": "n1",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "n",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many numbers did the line estimate?"
+        },
+        {
+          "rung": "point",
+          "text": "The line estimated $\\hat\\alpha$ and $\\hat\\beta$.",
+          "highlight": [
+            "curve"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$12 - 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$n - 2 = 10$.",
+        "generic": "Not quite right. Subtract the number of estimated coefficients from the number of points.",
+        "byKey": {
+          "n1": "You used $n - 1$, as for a one-sample test. A line estimates two numbers, so subtract 2.",
+          "n": "You used all 12 points. Two were spent fitting $\\hat\\alpha$ and $\\hat\\beta$."
+        }
+      },
+      "explain": {
+        "text": "$s$ came from $\\mathrm{SSE}/(n - 2)$, so the statistic carries $n - 2 = 10$ degrees of freedom. With 10 the tails are a little fatter than the normal's. With 1,000 they are almost the same.",
+        "canvas": {
+          "highlight": [
+            "shade"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A range of plausible slopes",
+      "prose": "The 95% confidence interval is $\\hat\\beta \\pm t_{0.975}\\,\\mathrm{SE}(\\hat\\beta)$. Here $t_{0.975}$ cuts off 2.5% in each tail. With 10 degrees of freedom $t_{0.975} = 2.228$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "t",
+          "params": {
+            "nu": 10
+          },
+          "x": [
+            -5,
+            5
+          ],
+          "xLabel": "$t$"
+        },
+        "state": {
+          "shade": {
+            "from": -2.228,
+            "to": 2.228
+          },
+          "caption": "The middle 95% of $t_{10}$ runs from $-2.228$ to $2.228$"
+        }
+      },
+      "question": "What is the upper end of the 95% interval for the signal's slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.7456,
+        "tol": {
+          "abs": 0.003
+        },
+        "unit": "",
+        "label": "Upper end of the interval",
+        "placeholder": "a number",
+        "accept": "0.746, within 0.003: $0.30 + 2.228 \\times 0.20$.",
+        "wrong": [
+          {
+            "id": "normal",
+            "value": 0.692,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "one-se",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "no-se",
+            "value": 2.528,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the cut-off by the standard error first."
+        },
+        {
+          "rung": "point",
+          "text": "$2.228 \\times 0.20 = 0.446$.",
+          "highlight": [
+            "shade"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add 0.446 to 0.30."
+        }
+      ],
+      "feedback": {
+        "correct": "0.746. The interval runs from $-0.146$ to $0.746$.",
+        "generic": "Not quite right. Add $2.228 \\times 0.20$ to 0.30.",
+        "byKey": {
+          "normal": "You used 1.96, the normal cut-off. With 10 degrees of freedom the cut-off is 2.228.",
+          "one-se": "You added one standard error. A 95% interval reaches 2.228 errors out.",
+          "no-se": "You added 2.228 itself. The cut-off is in standard errors, so multiply by 0.20 first."
+        }
+      },
+      "explain": {
+        "text": "$0.30 \\pm 2.228 \\times 0.20$ gives $-0.146$ to $0.746$. The interval contains 0, which matches $p = 0.165 > 0.05$. At the same level the interval and the test always agree."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Testing against 1",
+      "prose": "A stock's beta from 60 months is $\\hat\\beta = 1.30$ with standard error 0.25. The question is not whether beta is zero, but whether the stock moves more than the market: is $\\beta = 1$?",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "t",
+          "params": {
+            "nu": 58
+          },
+          "x": [
+            -5,
+            5
+          ],
+          "xLabel": "$t$"
+        },
+        "state": {
+          "shade": {
+            "from": 1.2,
+            "to": null
+          },
+          "caption": "$t_{58}$, shaded beyond the statistic"
+        }
+      },
+      "question": "What is the $t$ statistic for testing $\\beta = 1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "",
+        "label": "t statistic",
+        "placeholder": "a number",
+        "accept": "1.2: $(1.30 - 1) / 0.25$.",
+        "wrong": [
+          {
+            "id": "vs-zero",
+            "value": 5.2,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "no-se",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "flip",
+            "value": -1.2,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Measure the distance from the null value, not from 0."
+        },
+        {
+          "rung": "point",
+          "text": "The distance from 1 is 0.30.",
+          "highlight": [
+            "prob"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(1.30 - 1) / 0.25$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t = 1.2$, so $p = 0.235$.",
+        "generic": "Not quite right. Subtract 1, then divide by 0.25.",
+        "byKey": {
+          "vs-zero": "You tested against 0: $1.30 / 0.25 = 5.2$. The question is about 1, so subtract 1 first.",
+          "no-se": "0.30 is the gap in beta units. Divide by the error, 0.25, to put it in standard errors.",
+          "flip": "You subtracted the wrong way round. The estimate minus the null value is $+0.30$."
+        }
+      },
+      "explain": {
+        "text": "$t = (1.30 - 1)/0.25 = 1.2$ on 58 degrees of freedom, so $p = 0.235$. The beta is far from 0 but not clearly above 1. Always test against the value that matters."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Three points",
+      "prose": "A fit to just $n = 3$ points gives $\\hat\\beta = 2.0$ with standard error 0.5, so $t = 4.0$. That leaves $3 - 2 = 1$ degree of freedom.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "t",
+          "params": {
+            "nu": 1
+          },
+          "x": [
+            -15,
+            15
+          ],
+          "xLabel": "$t$"
+        },
+        "state": {
+          "shade": {
+            "from": 4,
+            "to": null
+          },
+          "caption": "$t_1$: the 5% two-sided cut-off is 12.71"
+        }
+      },
+      "question": "Is the slope significantly different from zero at 5%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "No: with 1 degree of freedom, $p = 0.156$",
+            "correct": true
+          },
+          {
+            "id": "normal",
+            "text": "Yes: 4.0 is far beyond 1.96",
+            "why": "You used the normal cut-off. With 1 degree of freedom the cut-off is 12.71."
+          },
+          {
+            "id": "normal-p",
+            "text": "Yes: $p = 0.00006$",
+            "why": "That is the normal tail beyond 4. The $t_1$ tails are far fatter."
+          },
+          {
+            "id": "cannot",
+            "text": "The test cannot be computed with 3 points",
+            "why": "It can: $s$ exists with one degree of freedom. The test is just very weak."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which cut-off applies with 1 degree of freedom?"
+        },
+        {
+          "rung": "point",
+          "text": "The caption gives the 5% cut-off for $t_1$.",
+          "highlight": [
+            "prob"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4.0 is below 12.71, so $p > 0.05$."
+        }
+      ],
+      "feedback": {
+        "correct": "Not significant: $p = 0.156$.",
+        "generic": "Not quite right. Compare 4.0 with the $t_1$ cut-off, 12.71.",
+        "byKey": {
+          "normal": "You used 1.96, the normal cut-off. One degree of freedom makes $s$ very noisy, and the cut-off rises to 12.71.",
+          "normal-p": "You read the normal tail. With one degree of freedom the two tails beyond 4 hold 0.156."
+        }
+      },
+      "explain": {
+        "text": "One degree of freedom leaves $s$ almost unknown, so the $t$ tails are very fat. The 5% cut-off is 12.71, not 1.96. With three points only an enormous slope would count as evidence."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Not significant",
+      "prose": "A signal's slope from 24 months is $\\hat\\beta = 0.40$ with standard error 0.30, so $t = 1.33$ and $p = 0.196$. The 95% interval runs from $-0.22$ to $1.02$. An analyst writes: the signal has no relationship with returns.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "t",
+          "params": {
+            "nu": 22
+          },
+          "x": [
+            -5,
+            5
+          ],
+          "xLabel": "$t$"
+        },
+        "state": {
+          "shade": {
+            "from": 1.333,
+            "to": null
+          },
+          "caption": "$t_{22}$, shaded beyond 1.33"
+        }
+      },
+      "question": "What do the data actually say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "They cannot tell: slopes from $-0.22$ to $1.02$ all fit",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "The signal has no relationship with returns",
+            "why": "You read not significant as zero. The interval holds 1.02, a strong effect, as well as 0."
+          },
+          {
+            "id": "prob-null",
+            "text": "There is a 19.6% chance the true slope is zero",
+            "why": "You read $p$ as the chance the null is true. It is the chance of data this extreme if the slope were zero."
+          },
+          {
+            "id": "exact",
+            "text": "The signal adds exactly 0.40% per point",
+            "why": "You took the estimate at face value. Its error is 0.30, almost as large as the slope."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What range of slopes is consistent with the data?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at the interval, not just the $p$-value.",
+          "highlight": [
+            "shade"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The interval contains 0, but it also contains slopes near 1."
+        }
+      ],
+      "feedback": {
+        "correct": "Absence of evidence is not evidence of absence.",
+        "generic": "Not quite right. Ask which slopes the interval rules out.",
+        "byKey": {
+          "none": "You read not significant as no relationship. With 24 months the test has low power: a real slope of 0.40 is missed more often than not.",
+          "prob-null": "You read $p$ as the chance the slope is zero. A $p$-value assumes the slope is zero and asks how surprising the data are."
+        }
+      },
+      "explain": {
+        "text": "The test failed to reject zero, but the interval also holds slopes up to 1.02. With 24 months a true slope of 0.40 is detected only about a quarter of the time: the test has low power (testing, lesson 6). The honest summary is that we do not know yet."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why a $t$ with $n - 2$",
+      "prose": "Under the model $y_i = \\alpha + \\beta x_i + \\epsilon_i$ with $\\epsilon_i \\sim N(0, \\sigma^2)$ independent, build the statistic step by step.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "z",
+            "text": "$Z = \\dfrac{\\hat\\beta - \\beta}{\\sigma / \\sqrt{S_{xx}}} \\sim N(0, 1)$: $\\hat\\beta$ is a weighted sum of normal $y_i$ with variance $\\sigma^2 / S_{xx}$"
+          },
+          {
+            "id": "chi",
+            "text": "$V = (n - 2)s^2 / \\sigma^2 \\sim \\chi^2_{n-2}$, independent of $Z$: the residuals have $n - 2$ free directions"
+          },
+          {
+            "id": "ratio",
+            "text": "$T = \\dfrac{Z}{\\sqrt{V / (n - 2)}} \\sim t_{n-2}$: the definition of a $t$ variable"
+          },
+          {
+            "id": "cancel",
+            "text": "$T = \\dfrac{\\hat\\beta - \\beta}{s / \\sqrt{S_{xx}}} = \\dfrac{\\hat\\beta - \\beta}{\\mathrm{SE}(\\hat\\beta)}$: the unknown $\\sigma$ cancels"
+          }
+        ],
+        "answer": [
+          "z",
+          "chi",
+          "ratio",
+          "cancel"
+        ],
+        "same": [
+          [
+            "z",
+            "chi"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A $t$ variable is a standard normal over the root of a scaled chi-squared."
+        },
+        {
+          "rung": "point",
+          "text": "Build the two ingredients first, in either order."
+        },
+        {
+          "rung": "step",
+          "text": "Standardise $\\hat\\beta$, then use $s^2$, then form the ratio, then cancel $\\sigma$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sigma$ cancels, leaving a statistic we can compute.",
+        "generic": "Not quite right. Make the normal and the chi-squared pieces before you divide.",
+        "byKey": {
+          "ratio": "The ratio needs both $Z$ and $V$ defined first.",
+          "cancel": "Cancelling $\\sigma$ is the last step, once $T$ is a ratio."
+        }
+      },
+      "explain": {
+        "text": "$Z$ uses the unknown $\\sigma$, and $V$ uses it too. In the ratio $\\sigma$ cancels, and what is left is $(\\hat\\beta - \\beta)/\\mathrm{SE}$. Its $n - 2$ degrees of freedom come from $s^2$."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The test in one line",
+      "prose": "To test $\\beta = \\beta_0$: $$t = \\frac{\\hat\\beta - \\beta_0}{\\mathrm{SE}(\\hat\\beta)} \\sim t_{n-2}, \\qquad p = 2P(T_{n-2} > |t|).$$ The 95% interval is $\\hat\\beta \\pm t_{0.975,\\,n-2}\\,\\mathrm{SE}(\\hat\\beta)$. Usually $\\beta_0 = 0$; for a stock's beta it is often 1.",
+      "question": "The 95% interval excludes $\\beta_0$ exactly when which holds?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$|t| > t_{0.975,\\,n-2}$",
+            "correct": true
+          },
+          {
+            "id": "p-big",
+            "text": "$p > 0.05$",
+            "why": "You flipped the rule. A large $p$ means $\\beta_0$ is inside the interval."
+          },
+          {
+            "id": "normal",
+            "text": "$|t| > 1.96$, whatever $n$ is",
+            "why": "1.96 is right only for large $n$. With few points the cut-off is larger."
+          },
+          {
+            "id": "se",
+            "text": "$\\mathrm{SE}(\\hat\\beta) < \\hat\\beta$",
+            "why": "You compared the error with the estimate. The gap to $\\beta_0$ must exceed $t_{0.975}$ errors."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The interval is $\\hat\\beta$ plus or minus a number of errors."
+        },
+        {
+          "rung": "point",
+          "text": "$\\beta_0$ is outside when the gap is more than $t_{0.975}$ errors."
+        },
+        {
+          "rung": "step",
+          "text": "Divide the gap by the error: that is $|t|$."
+        }
+      ],
+      "feedback": {
+        "correct": "The interval and the two-sided 5% test always agree.",
+        "generic": "Not quite right. Write when $|\\hat\\beta - \\beta_0|$ exceeds $t_{0.975}\\,\\mathrm{SE}$."
+      },
+      "explain": {
+        "text": "$\\beta_0$ lies outside $\\hat\\beta \\pm t_{0.975}\\mathrm{SE}$ when $|\\hat\\beta - \\beta_0| > t_{0.975}\\mathrm{SE}$. Dividing by the error gives $|t| > t_{0.975}$. That is the same as $p < 0.05$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Is the alpha real?",
+      "prose": "A strategy's 36-month record, regressed on the market, gives a monthly alpha of 0.45% with standard error 0.30%. Write a test you can reuse. `stats.t.sf(x, df)` is $P(T > x)$.",
+      "question": "Complete `t_test` so it returns $t$ and the two-sided $p$-value with $n - 2$ degrees of freedom.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from scipy import stats\n\ndef t_test(est, se, n, null=0.0):\n    t = ...\n    p = ...   # two-sided, n - 2 degrees of freedom\n    return t, p\n",
+        "solution": "from scipy import stats\n\ndef t_test(est, se, n, null=0.0):\n    t = (est - null) / se\n    p = 2 * stats.t.sf(abs(t), n - 2)\n    return t, p\n",
+        "examples": [
+          {
+            "call": "[round(float(v), 6) for v in t_test(0.45, 0.30, 36)]",
+            "expect": "[1.5, 0.142844]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(float(v), 6) for v in t_test(0.45, 0.30, 36)]",
+            "expect": "[1.5, 0.142844]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in t_test(1.30, 0.25, 60, null=1.0)]",
+            "expect": "[1.2, 0.235018]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in t_test(2.0, 0.5, 3)]",
+            "expect": "[4.0, 0.155958]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in t_test(-0.40, 0.30, 24)]",
+            "expect": "[-1.333333, 0.196065]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in t_test(0.30, 0.20, 12)]",
+            "expect": "[1.5, 0.164507]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 6) for v in t_test(0.85, 0.05, 60, null=1.0)]",
+            "expect": "[-3.0, 0.003974]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each returns [t, p] rounded to 6 places and compared with math.isclose. The first run loads SciPy, which takes 10 to 20 seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$t$ is the distance from `null` in standard errors."
+        },
+        {
+          "rung": "point",
+          "text": "`stats.t.sf(abs(t), n - 2)` is one tail beyond $|t|$."
+        },
+        {
+          "rung": "step",
+          "text": "Double the one tail for a two-sided $p$-value."
+        }
+      ],
+      "feedback": {
+        "correct": "For the strategy, $t = 1.5$ and $p = 0.143$: not evidence of skill yet.",
+        "generic": "Not quite right. Check the sign handling with `abs(t)` and the degrees of freedom, $n - 2$."
+      },
+      "explain": {
+        "text": "The alpha is 1.5 errors from zero, and $p = 0.143$. One strategy in seven with no skill would look this good over 36 months. The same function tests a beta against 1 with `null=1.0`."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$t = (\\hat\\beta - \\beta_0)/\\mathrm{SE}(\\hat\\beta)$ measures the gap to the null value in standard errors, with $n - 2$ degrees of freedom.",
+      "The two-sided $p$-value counts both tails. The 95% interval $\\hat\\beta \\pm t_{0.975}\\mathrm{SE}$ excludes $\\beta_0$ exactly when $p < 0.05$.",
+      "Significant does not mean causal, and not significant does not mean zero: read the interval."
+    ],
+    "formula": {
+      "name": "t test for a slope",
+      "tex": "t = \\dfrac{\\hat\\beta - \\beta_0}{\\mathrm{SE}(\\hat\\beta)} \\sim t_{n-2}",
+      "note": "With very few points the cut-off is huge: 12.71 for $n = 3$."
+    },
+    "trap": "Not significant is not no relationship. With little data the test has low power, so the interval is wide."
+  },
+  "quiz": [
+    {
+      "id": "q-coverage",
+      "difficulty": 2,
+      "prose": "Across 500 stocks, next year's return is regressed on the number of analysts covering each stock. The slope has $t = 4.1$.",
+      "question": "What can we conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Coverage and returns are related; this alone does not show coverage causes returns",
+            "correct": true
+          },
+          {
+            "id": "cause",
+            "text": "Adding an analyst raises a stock's return",
+            "why": "You read significance as cause. Large, liquid firms attract analysts and differ in many other ways."
+          },
+          {
+            "id": "size",
+            "text": "Each analyst adds 4.1% to the return",
+            "why": "You read the $t$ statistic as the slope. $t$ measures evidence, not size."
+          },
+          {
+            "id": "certain",
+            "text": "The effect is real with probability 0.9999",
+            "why": "You read $1 - p$ as the chance the effect is real. A $p$-value is not that."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Significant means unlikely to be luck, not causal.",
+        "generic": "Not quite right. Separate evidence of a link from evidence of cause."
+      },
+      "explain": {
+        "text": "$t = 4.1$ says the slope is very unlikely to be zero. It says nothing about why. A third factor, such as firm size, can drive both coverage and returns."
+      }
+    },
+    {
+      "id": "q-ci-lower",
+      "difficulty": 2,
+      "prose": "A fit to $n = 22$ points gives $\\hat\\beta = 0.80$ with standard error 0.25. With 20 degrees of freedom $t_{0.975} = 2.086$.",
+      "question": "What is the lower end of the 95% confidence interval?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2785,
+        "tol": {
+          "abs": 0.003
+        },
+        "unit": "",
+        "label": "Lower end",
+        "placeholder": "a number",
+        "accept": "0.279, within 0.003: $0.80 - 2.086 \\times 0.25$.",
+        "wrong": [
+          {
+            "id": "normal",
+            "value": 0.31,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "one-se",
+            "value": 0.55,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.80 - 0.52 = 0.28$.",
+        "generic": "Not quite right. Subtract $2.086 \\times 0.25$ from 0.80.",
+        "byKey": {
+          "normal": "You used 1.96. With 20 degrees of freedom the cut-off is 2.086.",
+          "one-se": "You went one error down. A 95% interval reaches 2.086 errors."
+        }
+      },
+      "explain": {
+        "text": "$2.086 \\times 0.25 = 0.522$, so the interval runs from 0.279 to 1.322. It excludes 0, so the slope is significant at 5%."
+      }
+    },
+    {
+      "id": "q-defensive",
+      "difficulty": 3,
+      "prose": "A utility stock's beta from 60 months is $\\hat\\beta = 0.85$ with standard error 0.05.",
+      "question": "Test $\\beta = 1$. What do you conclude at 5%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$t = -3.0$, $p = 0.004$: beta is below 1",
+            "correct": true
+          },
+          {
+            "id": "vs-zero",
+            "text": "$t = 17$: beta is above 1",
+            "why": "You tested against 0: $0.85 / 0.05 = 17$. Subtract 1 first."
+          },
+          {
+            "id": "close",
+            "text": "0.85 is close to 1, so beta is 1",
+            "why": "You judged the gap by eye. The error is only 0.05, so a gap of 0.15 is three errors."
+          },
+          {
+            "id": "one-sided",
+            "text": "$t = 3.0$: beta is above 1",
+            "why": "You subtracted the wrong way round. $0.85 - 1 = -0.15$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three errors below 1: a defensive stock.",
+        "generic": "Not quite right. Compute $(0.85 - 1)/0.05$."
+      },
+      "explain": {
+        "text": "$t = (0.85 - 1)/0.05 = -3.0$ on 58 degrees of freedom, and $p = 0.004$. The stock moves clearly less than the market."
+      }
+    },
+    {
+      "id": "q-p-value",
+      "difficulty": 3,
+      "prose": "A slope has $t = 2.5$ on 30 degrees of freedom. $P(T_{30} > 2.5) = 0.0091$.",
+      "question": "What is the two-sided $p$-value?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0181,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "label": "Two-sided p-value",
+        "placeholder": "a number",
+        "accept": "0.018: $2 \\times 0.0091$.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.0091,
+            "tol": {
+              "abs": 0.0003
+            }
+          },
+          {
+            "id": "complement",
+            "value": 0.9909,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$p = 0.018$.",
+        "generic": "Not quite right. Count both tails.",
+        "byKey": {
+          "one": "That is one tail. A slope as far below zero counts too, so double it.",
+          "complement": "That is the chance of a smaller statistic. The $p$-value is the far tails."
+        }
+      },
+      "explain": {
+        "text": "Each tail beyond $\\pm 2.5$ holds 0.0091, so $p = 0.018$. The slope is significant at 5% but not at 1%."
+      }
+    }
+  ]
+}

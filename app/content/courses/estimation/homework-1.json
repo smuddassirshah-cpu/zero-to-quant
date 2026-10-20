@@ -1,0 +1,501 @@
+{
+  "id": "homework-1",
+  "course": "estimation",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-pnl-se",
+      "difficulty": 3,
+      "skills": [
+        "es-estimators"
+      ],
+      "title": "A desk's average P&L",
+      "prose": "A trading desk's daily P&L has sd £12,000. Over 64 trading days its average daily P&L was £2,100.",
+      "question": "What is the standard error of that average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1500,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "£",
+        "label": "Standard error in pounds",
+        "placeholder": "for example 900",
+        "accept": "£1,500: $12{,}000 / \\sqrt{64}$.",
+        "wrong": [
+          {
+            "id": "over-n",
+            "value": 187.5,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "sd",
+            "value": 12000,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£12,000 / 8 = £1,500.",
+        "generic": "Not quite right. Divide the daily sd by $\\sqrt{64}$.",
+        "byKey": {
+          "over-n": "You divided by 64. The standard error divides by $\\sqrt{64} = 8$.",
+          "sd": "£12,000 is the spread of one day. The average of 64 days spreads far less."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{SE} = £12{,}000 / \\sqrt{64} = £1{,}500$. The average of £2,100 is 1.4 standard errors from zero: suggestive, not conclusive."
+      }
+    },
+    {
+      "id": "h-days-needed",
+      "difficulty": 3,
+      "skills": [
+        "es-estimators"
+      ],
+      "title": "How many days",
+      "prose": "Same desk, daily P&L sd £12,000. The head of trading wants the standard error of the average daily P&L down to £500.",
+      "question": "How many trading days are needed?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 576,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "days",
+        "label": "Days needed",
+        "placeholder": "a whole number",
+        "accept": "576: $\\sqrt n = 12{,}000 / 500 = 24$.",
+        "wrong": [
+          {
+            "id": "root",
+            "value": 24,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "linear",
+            "value": 192,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$24^2 = 576$ days, more than two years.",
+        "generic": "Not quite right. Solve $12{,}000 / \\sqrt n = 500$.",
+        "byKey": {
+          "root": "24 is $\\sqrt n$. Square it.",
+          "linear": "You scaled the days in line with the error, $64 \\times 3$. The error falls with $\\sqrt n$, so the days grow with the square: $64 \\times 9$."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt n = 24$, so $n = 576$ days. Cutting the error from £1,500 to £500, a factor of 3, needs 9 times the data. Precision about a mean is slow to buy."
+      }
+    },
+    {
+      "id": "h-bias-vn",
+      "difficulty": 4,
+      "skills": [
+        "es-estimators",
+        "es-biasvar"
+      ],
+      "title": "The bias of dividing by n",
+      "prose": "Let $V = \\tfrac{1}{n}\\sum_{i=1}^n (X_i - \\bar X)^2$ for independent draws with variance $\\sigma^2$. Use the lesson's result $E\\left[\\sum (X_i - \\bar X)^2\\right] = (n - 1)\\sigma^2$.",
+      "question": "Put the lines of the derivation of the bias in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "lin",
+            "text": "$E[V] = \\tfrac{1}{n}E\\left[\\sum (X_i - \\bar X)^2\\right]$: a constant comes out of an expectation"
+          },
+          {
+            "id": "sub",
+            "text": "$= \\tfrac{1}{n}(n - 1)\\sigma^2$: the lesson's result"
+          },
+          {
+            "id": "split",
+            "text": "$= \\sigma^2 - \\tfrac{\\sigma^2}{n}$: multiply out"
+          },
+          {
+            "id": "bias",
+            "text": "$\\mathrm{bias}(V) = E[V] - \\sigma^2 = -\\tfrac{\\sigma^2}{n}$: the definition of bias"
+          }
+        ],
+        "answer": [
+          "lin",
+          "sub",
+          "split",
+          "bias"
+        ]
+      },
+      "feedback": {
+        "correct": "The bias is $-\\sigma^2 / n$: always low, less so for big $n$.",
+        "generic": "Not quite right. Find $E[V]$ first, then subtract $\\sigma^2$.",
+        "byKey": {
+          "bias": "The bias needs $E[V]$ first, so it comes last.",
+          "sub": "The lesson's result is about the sum. Take the $\\tfrac{1}{n}$ out of the expectation first."
+        }
+      },
+      "explain": {
+        "text": "$E[V] = \\tfrac{n - 1}{n}\\sigma^2 = \\sigma^2 - \\sigma^2 / n$, so the bias is $-\\sigma^2 / n$. With $n = 5$ and $\\sigma^2 = 1$ that is −0.2, the shortfall in the lesson's simulation."
+      }
+    },
+    {
+      "id": "h-best-weight",
+      "difficulty": 4,
+      "skills": [
+        "es-biasvar"
+      ],
+      "title": "The best shrinkage weight",
+      "prose": "For the estimator $w\\bar X$ of $\\mu$, write $a = \\mu^2$ and $v = \\mathrm{Var}(\\bar X)$. Then $$\\mathrm{MSE}(w) = w^2 v + (1 - w)^2 a.$$",
+      "question": "Find the weight $w^*$ that minimises the MSE, in terms of $a$ and $v$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "\\frac{a}{a+v}",
+        "accept": [
+          "a/(a+v)",
+          "a/(v+a)",
+          "1/(1+v/a)"
+        ],
+        "keyboard": "algebra",
+        "label": "Best weight",
+        "placeholder": "in terms of a and v",
+        "wrong": [
+          {
+            "id": "flip",
+            "tex": "\\frac{v}{a+v}"
+          },
+          {
+            "id": "ratio",
+            "tex": "\\frac{a}{v}"
+          },
+          {
+            "id": "half",
+            "tex": "\\frac{1}{2}"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$w^* = \\dfrac{a}{a + v} = \\dfrac{\\mu^2}{\\mu^2 + \\sigma^2 / n}$.",
+        "generic": "Not quite right. Differentiate $w^2 v + (1 - w)^2 a$ in $w$ and set it to 0.",
+        "byKey": {
+          "flip": "You swapped the roles. More noise $v$ should mean a smaller weight on the data, so $v$ belongs on the bottom only.",
+          "ratio": "Setting the derivative $2wv - 2(1 - w)a$ to 0 gives $w(a + v) = a$. Solve for $w$ from there.",
+          "half": "$\\tfrac{1}{2}$ is right only when $a = v$, as in the lesson."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac{d}{dw}\\mathrm{MSE} = 2wv - 2(1 - w)a = 0$ gives $w^* = \\tfrac{a}{a + v}$. In the lesson $a = v = 0.04$, so $w^* = 0.5$. The more noise, the harder we shrink; but $w^*$ depends on the unknown $\\mu$, which is why practical rules pick a target and a fixed weight."
+      }
+    },
+    {
+      "id": "h-mse-vn",
+      "difficulty": 4,
+      "skills": [
+        "es-biasvar"
+      ],
+      "title": "The MSE of dividing by n",
+      "prose": "For a normal sample, $SS = \\sum (X_i - \\bar X)^2$ has mean $(n - 1)\\sigma^2$ and variance $2(n - 1)\\sigma^4$. Take $n = 10$ and $\\sigma^2 = 4$ (%²).",
+      "question": "What is the MSE of $SS / n$, in (%²)²? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.04,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "MSE of SS over n",
+        "placeholder": "a number",
+        "accept": "3.04: variance $288 / 100 = 2.88$, bias $3.6 - 4 = -0.4$, and $2.88 + 0.16$.",
+        "wrong": [
+          {
+            "id": "var-only",
+            "value": 2.88,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "s2",
+            "value": 3.5556,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "unsquared",
+            "value": 2.48,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2.88 + 0.16 = 3.04$, below $s^2$'s 3.56.",
+        "generic": "Not quite right. Find the variance $2(n - 1)\\sigma^4 / n^2$ and the bias $-\\sigma^2 / n$, then combine.",
+        "byKey": {
+          "var-only": "2.88 is the variance. Add the bias squared, $(-0.4)^2$.",
+          "s2": "3.56 is the MSE of $s^2$, dividing by 9. This divides by 10.",
+          "unsquared": "You added the bias, −0.4, without squaring it."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{Var}(SS / 10) = 2 \\times 9 \\times 16 / 100 = 2.88$ and the bias is $3.6 - 4 = -0.4$. So the MSE is $2.88 + 0.16 = 3.04$. The unbiased $s^2$ has MSE $288 / 81 \\approx 3.56$, larger."
+      }
+    },
+    {
+      "id": "h-grand-mean",
+      "difficulty": 3,
+      "skills": [
+        "es-biasvar"
+      ],
+      "title": "Pulling a hot stock back",
+      "prose": "Over three years a stock averaged 20% a year. The 50 stocks in its sector averaged 6%. A researcher puts weight 0.4 on the stock's own mean and 0.6 on the sector mean.",
+      "question": "What is her shrunk expected return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.116,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "label": "Shrunk expected return, in %",
+        "placeholder": "for example 9.5",
+        "accept": "11.6%: $0.4 \\times 20\\% + 0.6 \\times 6\\%$.",
+        "wrong": [
+          {
+            "id": "swapped",
+            "value": 0.152,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "mid",
+            "value": 0.13,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$8\\% + 3.6\\% = 11.6\\%$.",
+        "generic": "Not quite right. Weight 20% by 0.4 and 6% by 0.6.",
+        "byKey": {
+          "swapped": "You put 0.6 on the stock and 0.4 on the sector. The sector gets the larger weight here.",
+          "mid": "13% is halfway. The weights are 0.4 and 0.6, not a half each."
+        }
+      },
+      "explain": {
+        "text": "$0.4 \\times 20\\% + 0.6 \\times 6\\% = 11.6\\%$. Three years of one stock is a noisy estimate, so most of the weight goes to the steadier sector mean. A portfolio built on 11.6% bets far less on luck than one built on 20%."
+      }
+    },
+    {
+      "id": "h-enumerate",
+      "difficulty": 4,
+      "skills": [
+        "es-estimators",
+        "es-biasvar"
+      ],
+      "title": "Every sample, by code",
+      "prose": "Lesson 3 listed all 9 samples of 2 from $\\{-1, 0, 1\\}$ and averaged the divide-by-$n$ variance. Write `expected_vn(values, n)`: the population is `values`, each equally likely; average $\\tfrac{1}{n}\\sum (x_i - \\bar x)^2$ over every ordered sample of size `n`, drawn with replacement. `itertools.product(values, repeat=n)` lists them.",
+      "question": "Complete `expected_vn`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from itertools import product\n\ndef expected_vn(values, n):\n    total = 0.0\n    count = 0\n    for sample in product(values, repeat=n):\n        ...\n    return total / count\n",
+        "solution": "from itertools import product\n\ndef expected_vn(values, n):\n    total = 0.0\n    count = 0\n    for sample in product(values, repeat=n):\n        m = sum(sample) / n\n        total += sum((x - m) ** 2 for x in sample) / n\n        count += 1\n    return total / count\n",
+        "examples": [
+          {
+            "call": "round(expected_vn([-1, 0, 1], 2), 6)",
+            "expect": "0.333333",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(expected_vn([-1, 0, 1], 2), 6)",
+            "expect": "0.333333",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_vn([-1, 0, 1], 3), 6)",
+            "expect": "0.444444",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_vn([0, 10], 2), 6)",
+            "expect": "12.5",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_vn([1, 2, 3, 4], 3), 6)",
+            "expect": "0.833333",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_vn([-2, 0, 0, 3], 2), 6)",
+            "expect": "1.59375",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_vn([1, 2, 3, 4], 1), 6)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(expected_vn([5], 4), 6)",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, each rounded to 6 decimal places. Pure Python is enough here. If you import NumPy, the first run is slow while it loads in the browser: allow 20 to 40 seconds."
+      },
+      "feedback": {
+        "correct": "Every answer equals $\\tfrac{n - 1}{n}\\sigma^2$ exactly.",
+        "generic": "Some tests failed. For each sample compute its mean, then the average squared deviation from it, and add that to `total`.",
+        "byKey": {
+          "test-1": "For $\\{-1, 0, 1\\}$ and $n = 2$ the answer is $\\tfrac{1}{3}$. Check that you divide by $n$ inside the loop and count every sample.",
+          "error": "Your code stopped with an error. Replace the `...` with lines that update `total` and `count`."
+        }
+      },
+      "explain": {
+        "text": "The tests check $\\tfrac{n - 1}{n}\\sigma^2$ exactly: for $[0, 10]$, $\\sigma^2 = 25$ and $n = 2$ give 12.5. With $n = 1$ every sample has zero spread, the edge case. Change the `/ n` to `/ (n - 1)` and you get $\\sigma^2$ for every $n \\ge 2$."
+      }
+    },
+    {
+      "id": "h-backtest-claim",
+      "difficulty": 3,
+      "skills": [
+        "es-estimators"
+      ],
+      "title": "Reading a backtest",
+      "prose": "A backtest of 30 trades shows a mean return of 0.5% per trade with sd 3%. The pitch deck says \"expected return 0.5% per trade, give or take 3%\".",
+      "question": "What should the \"give or take\" be?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "About 0.55%, the standard error $3\\% / \\sqrt{30}$",
+            "correct": true
+          },
+          {
+            "id": "sd",
+            "text": "3% is right: it is the sd of the trades",
+            "why": "You used the spread of single trades. The uncertainty in their average is $3\\% / \\sqrt{30}$."
+          },
+          {
+            "id": "over-n",
+            "text": "0.1%, which is $3\\% / 30$",
+            "why": "You divided by $n$. The sd of an average divides by $\\sqrt n$."
+          },
+          {
+            "id": "none",
+            "text": "Zero: the backtest measured the mean exactly",
+            "why": "You treated the sample mean as the true mean. Thirty more trades would give a different average."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$3\\% / \\sqrt{30} \\approx 0.55\\%$.",
+        "generic": "Not quite right. The uncertainty of a mean is the standard error."
+      },
+      "explain": {
+        "text": "The standard error is $3\\% / \\sqrt{30} \\approx 0.55\\%$, larger than the 0.5% mean. The deck overstates the noise per average and understates the real problem: the edge is within one standard error of zero."
+      }
+    },
+    {
+      "id": "h-average-s",
+      "difficulty": 3,
+      "skills": [
+        "es-estimators",
+        "es-biasvar"
+      ],
+      "title": "Averaging volatilities",
+      "prose": "Fifty desks each compute $s$ from 5 days of returns of the same index. A risk manager averages the fifty values of $s$ to estimate the index's $\\sigma$.",
+      "question": "What should she expect?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The average will tend to come out below $\\sigma$",
+            "correct": true
+          },
+          {
+            "id": "exact",
+            "text": "It will be close to $\\sigma$, since each $s$ uses $n - 1$",
+            "why": "You carried the $n - 1$ over to $s$. It makes $s^2$ unbiased; the square root makes $s$ low on average."
+          },
+          {
+            "id": "above",
+            "text": "It will tend to come out above $\\sigma$",
+            "why": "You expected the $n - 1$ to overshoot. On average $s$ falls short of $\\sigma$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$E[s] < \\sigma$, so the average of many $s$ sits low.",
+        "generic": "Not quite right. Recall the grid of $s$ values in lesson 3."
+      },
+      "explain": {
+        "text": "Averaging fifty values of $s$ removes the noise but not the bias: it settles near $E[s]$, below $\\sigma$. Averaging the fifty values of $s^2$ and then taking the root comes closer. With $n = 5$ normal days, $E[s] \\approx 0.94\\sigma$."
+      }
+    },
+    {
+      "id": "h-long-n-plus-one",
+      "difficulty": 5,
+      "skills": [
+        "es-estimators",
+        "es-biasvar"
+      ],
+      "title": "The best divisor for a variance",
+      "kind": "longform",
+      "prompt": "A risk desk estimates the daily variance $\\sigma^2$ of a strategy from $n$ independent normal returns, using $\\hat\\sigma^2_c = SS / c$ with $SS = \\sum_{i=1}^n (X_i - \\bar X)^2$. You may use $E[SS] = (n - 1)\\sigma^2$ and $\\mathrm{Var}(SS) = 2(n - 1)\\sigma^4$.\n\n1. Find the bias and the variance of $\\hat\\sigma^2_c$ in terms of $n$, $c$ and $\\sigma^2$.\n2. Show that $\\mathrm{MSE}(c) = \\sigma^4\\,\\dfrac{2(n - 1) + (n - 1 - c)^2}{c^2}$.\n3. Show that the MSE is smallest at $c = n + 1$.\n4. For $n = 20$ and $\\sigma^2 = 1$, compute the MSE for $c = 19$, $20$ and $21$.\n5. In two or three sentences, say when the desk might still prefer $c = n - 1$.",
+      "model": "**1. Bias and variance.** By linearity, $E[\\hat\\sigma^2_c] = \\tfrac{n - 1}{c}\\sigma^2$, so $$\\mathrm{bias} = \\frac{n - 1}{c}\\sigma^2 - \\sigma^2 = \\frac{n - 1 - c}{c}\\sigma^2.$$ A constant comes out of a variance squared, so $\\mathrm{Var}(\\hat\\sigma^2_c) = \\tfrac{2(n - 1)\\sigma^4}{c^2}$.\n\n**2. MSE.** MSE is variance plus bias squared: $$\\mathrm{MSE}(c) = \\frac{2(n - 1)\\sigma^4}{c^2} + \\frac{(n - 1 - c)^2\\sigma^4}{c^2} = \\sigma^4\\,\\frac{2(n - 1) + (n - 1 - c)^2}{c^2}.$$\n\n**3. Minimum.** Write $k = n - 1$. Then $\\mathrm{MSE}/\\sigma^4 = \\dfrac{2k + (k - c)^2}{c^2} = \\dfrac{k^2 + 2k}{c^2} - \\dfrac{2k}{c} + 1$. Differentiating in $c$: $$-\\frac{2(k^2 + 2k)}{c^3} + \\frac{2k}{c^2} = 0 \\iff kc = k^2 + 2k \\iff c = k + 2 = n + 1.$$ The derivative is negative below $n + 1$ and positive above it, so this is a minimum.\n\n**4. Numbers.** With $n = 20$, $k = 19$, $\\sigma^4 = 1$:\n- $c = 19$: $38 / 361 \\approx 0.1053$ (unbiased)\n- $c = 20$: $(38 + 1) / 400 = 0.0975$\n- $c = 21$: $(38 + 4) / 441 \\approx 0.0952$ (smallest)\n\nDividing by 21 cuts the MSE by about 10% against $s^2$.\n\n**5. When to prefer $n - 1$.** If the variance estimates are averaged or pooled over many periods or desks, bias adds up while noise averages away, so an unbiased estimate is better. Unbiasedness also makes the number easy to audit and compare. The MSE gain at $n = 20$ is small, and it relies on normality, which fat-tailed returns break.",
+      "rubric": [
+        {
+          "points": 1,
+          "text": "Finds $E[\\hat\\sigma^2_c] = \\tfrac{n - 1}{c}\\sigma^2$ and the bias $\\tfrac{n - 1 - c}{c}\\sigma^2$."
+        },
+        {
+          "points": 1,
+          "text": "Finds the variance $2(n - 1)\\sigma^4 / c^2$, with the constant squared."
+        },
+        {
+          "points": 2,
+          "text": "Combines variance and bias squared into the stated MSE."
+        },
+        {
+          "points": 2,
+          "text": "Differentiates (or completes the square) and solves to $c = n + 1$."
+        },
+        {
+          "points": 1,
+          "text": "Checks it is a minimum (sign change of the derivative, or another valid argument)."
+        },
+        {
+          "points": 2,
+          "text": "Gets 0.1053, 0.0975 and 0.0952 for $c = 19$, 20, 21."
+        },
+        {
+          "points": 1,
+          "text": "Gives a sound reason to keep $c = n - 1$: pooling or averaging, auditability, or reliance on normality."
+        }
+      ]
+    }
+  ]
+}

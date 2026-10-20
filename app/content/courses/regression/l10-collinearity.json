@@ -1,0 +1,1419 @@
+{
+  "id": "l10-collinearity",
+  "course": "regression",
+  "title": "Predictors that move together",
+  "minutes": 14,
+  "objectives": [
+    "Recognise collinearity and its effect on coefficients and their errors."
+  ],
+  "skills": [
+    "rg-multiple",
+    "rg-diagnostics"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two months, two stories",
+      "prose": "A desk regresses next-hour returns (bp) on two signals, A and B. Both measure order-book imbalance, so they move almost together. The model was fitted on two separate months.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "$\\hat\\beta_A$",
+            "$\\hat\\beta_B$",
+            "$R^2$"
+          ],
+          "rows": [
+            [
+              "Month 1",
+              "1.392",
+              "-0.335",
+              "0.779"
+            ],
+            [
+              "Month 2",
+              "-0.482",
+              "1.560",
+              "0.772"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Same model, two months of 20 days. Signals A and B have correlation 0.98."
+        }
+      },
+      "question": "Which quantity did the two months agree on?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sum",
+            "text": "$\\hat\\beta_A + \\hat\\beta_B$",
+            "correct": true
+          },
+          {
+            "id": "a",
+            "text": "$\\hat\\beta_A$",
+            "why": "Month 1 says 1.392 and month 2 says $-0.482$: not even the same sign.",
+            "canvas": {
+              "highlight": {
+                "cols": [
+                  1
+                ]
+              }
+            }
+          },
+          {
+            "id": "b",
+            "text": "$\\hat\\beta_B$",
+            "why": "$\\hat\\beta_B$ moves from $-0.335$ to 1.560, a swing of nearly 1.9.",
+            "canvas": {
+              "highlight": {
+                "cols": [
+                  2
+                ]
+              }
+            }
+          },
+          {
+            "id": "diff",
+            "text": "$\\hat\\beta_A - \\hat\\beta_B$",
+            "why": "That is 1.727 in month 1 and $-2.042$ in month 2. Try adding instead."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both $R^2$ values are close. Look for a combination of the two coefficients that is close too."
+        },
+        {
+          "rung": "point",
+          "text": "Add the two coefficients in each row.",
+          "highlight": [
+            "r0c1",
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Month 1: $1.392 - 0.335 = 1.057$. Month 2: $-0.482 + 1.560 = 1.078$."
+        }
+      ],
+      "feedback": {
+        "correct": "The sum is 1.057 in month 1 and 1.078 in month 2.",
+        "generic": "Not quite right. Combine the two coefficients in each row, then compare the months.",
+        "byKey": {
+          "a": "You compared $\\hat\\beta_A$ across months. It flips sign, so it is the least stable number here."
+        }
+      },
+      "explain": {
+        "text": "Each coefficient swings and even flips sign, yet the sum stays near 1.06 and $R^2$ near 0.78. When A and B move together, the data show what one unit of both does, not how to split it. That is **collinearity**.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Squeezing the predictors together",
+      "prose": "The ellipse holds the plausible pairs $(\\beta_A, \\beta_B)$ from a fit of 100 days, true values $(0.5, 0.5)$. The slider sets the correlation $r$ between the two signals. Everything else stays the same.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2,
+            3
+          ],
+          "y": [
+            -2,
+            3
+          ],
+          "equal": true,
+          "grid": true,
+          "xLabel": "$\\beta_A$",
+          "yLabel": "$\\beta_B$",
+          "functions": [
+            {
+              "id": "ell",
+              "implicit": "(x - 0.5)^2 + 2*r*(x - 0.5)*(y - 0.5) + (y - 0.5)^2 - 0.0599",
+              "colour": 1
+            },
+            {
+              "id": "sum",
+              "expr": "1 - x",
+              "dashed": true,
+              "colour": 4,
+              "label": "$\\beta_A + \\beta_B = 1$",
+              "labelAt": 2.3,
+              "labelAvoid": false
+            }
+          ],
+          "params": {
+            "r": 0
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "T",
+              "x": 0.5,
+              "y": 0.5,
+              "tap": false
+            }
+          ]
+        },
+        "controls": [
+          {
+            "bind": "r",
+            "min": 0,
+            "max": 0.99,
+            "step": 0.01,
+            "start": 0,
+            "label": "Correlation $r$",
+            "decimals": 2
+          }
+        ],
+        "derive": {
+          "caption": "SE of $\\hat\\beta_A$: {{fixed(0.1/sqrt(1 - r*r), 3)}}, which is {{fixed(1/sqrt(1 - r*r), 2)}} times its value at $r = 0$"
+        }
+      },
+      "question": "Set $r = 0.95$. How many times larger is the standard error of $\\hat\\beta_A$ than at $r = 0$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.2,
+        "tol": {
+          "abs": 0.02
+        },
+        "unit": "",
+        "label": "Factor on the standard error",
+        "accept": "3.20 ± 0.02: $1/\\sqrt{1 - 0.95^2} = 3.20$.",
+        "wrong": [
+          {
+            "id": "variance",
+            "value": 10.26,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "r",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag the slider to 0.95 and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The caption gives the factor directly. Watch the ellipse as you go.",
+          "highlight": [
+            "ell"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $r = 0.95$ the factor is $1/\\sqrt{1 - 0.9025} = 3.20$."
+        }
+      ],
+      "feedback": {
+        "correct": "At $r = 0.95$ the standard error is 3.2 times as large.",
+        "generic": "Not quite right. Set the slider to 0.95 and read the factor in the caption.",
+        "byKey": {
+          "variance": "That is the factor on the variance, $1/(1 - r^2)$. The standard error is its square root.",
+          "r": "That is the correlation itself. Read the factor from the caption at $r = 0.95$."
+        }
+      },
+      "explain": {
+        "text": "As $r$ rises the ellipse stretches along the dashed line $\\beta_A + \\beta_B = 1$. Across that line it stays thin: the sum is pinned. Along it, the split between A and B becomes almost anything.",
+        "canvas": {
+          "params": {
+            "r": 0.95
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The variance inflation factor",
+      "prose": "You found the standard error 3.20 times larger at $r = 0.95$. The **variance** grows by the square of that factor. We call that square the **variance inflation factor**, VIF.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            12
+          ],
+          "grid": true,
+          "xLabel": "Correlation $r$",
+          "yLabel": "Factor",
+          "functions": [
+            {
+              "id": "se",
+              "expr": "1/sqrt(1 - x^2)",
+              "domain": [
+                0,
+                0.97
+              ],
+              "label": "SE factor",
+              "colour": 1
+            },
+            {
+              "id": "vif",
+              "expr": "1/(1 - x^2)",
+              "domain": [
+                0,
+                0.97
+              ],
+              "label": "VIF",
+              "colour": 2
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v95",
+              "x": 0.95,
+              "label": "$r = 0.95$"
+            }
+          ]
+        }
+      },
+      "question": "What is the VIF at $r = 0.95$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.26,
+        "tol": {
+          "abs": 0.03
+        },
+        "unit": "",
+        "label": "Variance inflation factor",
+        "accept": "10.26 ± 0.03: $1/(1 - 0.9025)$.",
+        "wrong": [
+          {
+            "id": "se",
+            "value": 3.2,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "no-square",
+            "value": 20.0,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Square the factor 3.20."
+        },
+        {
+          "rung": "point",
+          "text": "Or compute $1/(1 - r^2)$ directly.",
+          "highlight": [
+            "vif",
+            "v95"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1/(1 - 0.9025) = 1/0.0975 = 10.26$."
+        }
+      ],
+      "feedback": {
+        "correct": "A VIF of 10.26: the variance is ten times what it would be with uncorrelated signals.",
+        "generic": "Not quite right. The VIF is $1/(1 - r^2)$, the square of the standard error factor.",
+        "byKey": {
+          "se": "That is the standard error factor. The VIF is its square.",
+          "no-square": "You used $1/(1 - r)$. The formula squares the correlation: $1/(1 - r^2)$."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{VIF} = 1/(1 - 0.95^2) = 10.26$. A VIF above 10 is the usual warning sign. It means the data carry as much information about $\\beta_A$ as about a tenth as many days.",
+        "canvas": {
+          "highlight": [
+            "vif",
+            "v95"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Why $\\mathbf{X}^T\\mathbf{X}$ is the culprit",
+      "prose": "Centre both signals and scale them to variance 1. Then $\\mathbf{X}^T\\mathbf{X} = n\\begin{bmatrix} 1 & r \\\\ r & 1 \\end{bmatrix}$ for the slopes, and $\\mathrm{Var}(\\hat{\\boldsymbol\\beta}) = \\sigma^2(\\mathbf{X}^T\\mathbf{X})^{-1}$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  "1",
+                  "r"
+                ],
+                [
+                  "r",
+                  "1"
+                ]
+              ],
+              "label": "$\\tfrac{1}{n}\\mathbf{X}^T\\mathbf{X}$"
+            },
+            {
+              "id": "I",
+              "rows": [
+                [
+                  "1",
+                  "-r"
+                ],
+                [
+                  "-r",
+                  "1"
+                ]
+              ],
+              "label": "its inverse",
+              "scale": "\\tfrac{1}{1 - r^2}"
+            }
+          ],
+          "ops": [
+            "$\\to$"
+          ]
+        },
+        "state": {}
+      },
+      "question": "At $r = 0.99$, what is the top-left entry of the inverse?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 50.25,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "",
+        "label": "Top-left entry of the inverse",
+        "accept": "50.25 ± 0.05: $1/(1 - 0.9801)$.",
+        "wrong": [
+          {
+            "id": "no-sq",
+            "value": 100.0,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "det",
+            "value": 0.0199,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The top-left entry is $\\tfrac{1}{1 - r^2} \\times 1$."
+        },
+        {
+          "rung": "point",
+          "text": "At $r = 0.99$, $r^2 = 0.9801$.",
+          "highlight": [
+            "I-0-0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1/(1 - 0.9801) = 1/0.0199 = 50.25$."
+        }
+      ],
+      "feedback": {
+        "correct": "50.25: the variance of $\\hat\\beta_A$ is 50 times its uncorrelated value.",
+        "generic": "Not quite right. Compute $\\tfrac{1}{1 - r^2}$ at $r = 0.99$.",
+        "byKey": {
+          "no-sq": "You used $1/(1 - r)$. The determinant is $1 - r^2$.",
+          "det": "That is the determinant, $1 - r^2$. The entry is its reciprocal."
+        }
+      },
+      "explain": {
+        "text": "The determinant $1 - r^2 = 0.0199$ is nearly 0, so the inverse is huge: 50.25 on the diagonal. The off-diagonal $-r/(1 - r^2)$ is just as large and negative. That negative covariance is why one coefficient rises when the other falls.",
+        "canvas": {
+          "highlight": {
+            "I": {
+              "cells": [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The condition number",
+      "prose": "The eigenvalues of $\\begin{bmatrix} 1 & r \\\\ r & 1 \\end{bmatrix}$ are $1 + r$, along $(1, 1)$, and $1 - r$, along $(1, -1)$. The **condition number** is the largest over the smallest. The eigenvalues course used it to measure how close a matrix is to singular.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "R",
+              "rows": [
+                [
+                  "1",
+                  "0.95"
+                ],
+                [
+                  "0.95",
+                  "1"
+                ]
+              ],
+              "label": "$r = 0.95$"
+            },
+            {
+              "id": "L",
+              "rows": [
+                [
+                  "1.95",
+                  "0"
+                ],
+                [
+                  "0",
+                  "0.05"
+                ]
+              ],
+              "label": "eigenvalues"
+            }
+          ],
+          "ops": [
+            "$\\to$"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the condition number at $r = 0.95$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 39,
+        "tol": {
+          "abs": 0.1
+        },
+        "unit": "",
+        "label": "Condition number",
+        "accept": "39: $1.95 / 0.05$.",
+        "wrong": [
+          {
+            "id": "vif",
+            "value": 10.26,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "inv",
+            "value": 0.0256,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the larger eigenvalue by the smaller."
+        },
+        {
+          "rung": "point",
+          "text": "The eigenvalues are 1.95 and 0.05.",
+          "highlight": [
+            "L-0-0",
+            "L-1-1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.95 / 0.05 = 39$."
+        }
+      ],
+      "feedback": {
+        "correct": "39: the matrix is 39 times stiffer in one direction than the other.",
+        "generic": "Not quite right. Divide $1 + r$ by $1 - r$.",
+        "byKey": {
+          "vif": "That is the VIF. The condition number compares the two eigenvalues.",
+          "inv": "You divided the small eigenvalue by the large one. Put the larger on top."
+        }
+      },
+      "explain": {
+        "text": "The data spread widely along $(1, 1)$, so the sum $\\beta_A + \\beta_B$ is well measured. Along $(1, -1)$ the eigenvalue is 0.05: almost no days separate A from B. That thin direction is the long axis of the ellipse.",
+        "canvas": {
+          "highlight": {
+            "L": {
+              "cells": [
+                [
+                  1,
+                  1
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "When one signal is a copy",
+      "prose": "A data error stores signal B as exactly $2 \\times$ signal A. Now $r = 1$, and the columns of $\\mathbf{X}$ are dependent.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "X",
+              "rows": [
+                [
+                  "1",
+                  "0.3",
+                  "0.6"
+                ],
+                [
+                  "1",
+                  "-1.1",
+                  "-2.2"
+                ],
+                [
+                  "1",
+                  "0.8",
+                  "1.6"
+                ],
+                [
+                  "1",
+                  "-0.2",
+                  "-0.4"
+                ]
+              ],
+              "label": "$\\mathbf{X}$",
+              "colLabels": [
+                "1",
+                "A",
+                "B"
+              ]
+            },
+            {
+              "id": "G",
+              "rows": [
+                [
+                  "4",
+                  "-0.2",
+                  "-0.4"
+                ],
+                [
+                  "-0.2",
+                  "1.98",
+                  "3.96"
+                ],
+                [
+                  "-0.4",
+                  "3.96",
+                  "7.92"
+                ]
+              ],
+              "label": "$\\mathbf{X}^T\\mathbf{X}$"
+            }
+          ],
+          "ops": [
+            "$\\to$"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does least squares give for $\\beta_A$ and $\\beta_B$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "line",
+            "text": "No single answer: every pair with the same $\\beta_A + 2\\beta_B$ fits equally well",
+            "correct": true
+          },
+          {
+            "id": "huge",
+            "text": "One answer, with very large standard errors",
+            "why": "That is near collinearity. With an exact copy $\\mathbf{X}^T\\mathbf{X}$ is singular and has no inverse at all."
+          },
+          {
+            "id": "zero",
+            "text": "$\\beta_B = 0$, since B adds nothing new",
+            "why": "Some software drops a column for you. The equations themselves allow a whole line of answers."
+          },
+          {
+            "id": "half",
+            "text": "$\\beta_A = \\beta_B$, splitting the effect evenly",
+            "why": "Nothing in the data prefers an even split. Any pair on the line fits the same."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Column B is twice column A. What does that do to $\\mathbf{X}\\boldsymbol\\beta$?"
+        },
+        {
+          "rung": "point",
+          "text": "$\\beta_A A + \\beta_B B = (\\beta_A + 2\\beta_B) A$.",
+          "highlight": [
+            "X-c1",
+            "X-c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only $\\beta_A + 2\\beta_B$ affects the fit, so $\\mathbf{X}^T\\mathbf{X}$ is singular and the solution is a line."
+        }
+      ],
+      "feedback": {
+        "correct": "Only $\\beta_A + 2\\beta_B$ is identified; the split is not.",
+        "generic": "Not quite right. Write $\\beta_A A + \\beta_B B$ using $B = 2A$.",
+        "byKey": {
+          "huge": "You treated exact collinearity like near collinearity. Here $\\det(\\mathbf{X}^T\\mathbf{X}) = 0$, so there is no inverse.",
+          "zero": "You let the software choose. Mathematically $\\beta_B = 0$ is just one point on the line of solutions."
+        }
+      },
+      "explain": {
+        "text": "Row 3 of $\\mathbf{X}^T\\mathbf{X}$ is twice row 2, so its determinant is 0. Every pair with the same $\\beta_A + 2\\beta_B$ gives identical fitted values. NumPy's `solve` returns `nan` or raises, depending on the build.",
+        "canvas": {
+          "highlight": {
+            "G": {
+              "rows": [
+                1,
+                2
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Two weak signals?",
+      "prose": "Next-month stock returns (%) on 6-month and 12-month momentum, over 120 months. The signals have correlation 0.95. A colleague says: neither $t$ clears 1.96, so drop both.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "statsmodels summary (trimmed)",
+          "lines": [
+            "                OLS Regression Results",
+            "==========================================",
+            "Dep. Variable:      ret   R-squared: 0.124",
+            "No. Observations:   120   F-statistic: 8.299",
+            "Df Residuals:       117   Prob (F): 0.000426",
+            "==========================================",
+            "          coef  std err       t   P>|t|",
+            "------------------------------------------",
+            "const   0.6865    0.140   4.900   0.000",
+            "mom6    0.7245    0.431   1.682   0.095",
+            "mom12  -0.1936    0.437  -0.443   0.659",
+            "=========================================="
+          ]
+        },
+        "state": {}
+      },
+      "question": "What do these numbers support?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "joint",
+            "text": "Together they predict returns; the data cannot split the credit",
+            "correct": true
+          },
+          {
+            "id": "drop",
+            "text": "Neither signal matters, so drop both",
+            "why": "You read each small $t$ as no effect. The $F$ test asks about both at once: $p = 0.0004$.",
+            "canvas": {
+              "tone": {
+                "l4": "ok"
+              },
+              "highlight": [
+                "l4"
+              ]
+            }
+          },
+          {
+            "id": "keep6",
+            "text": "Keep mom6 and drop mom12, the weaker one",
+            "why": "You chose by $t$, but with $r = 0.95$ either one alone looks strong. Alone, mom12 has $t = 3.68$."
+          },
+          {
+            "id": "neg",
+            "text": "Long 12-month momentum loses money: its coefficient is negative",
+            "why": "You read the sign swing as a real effect. Alone, mom12 has slope $+0.505$ and $t = 3.68$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which line tests both signals together?"
+        },
+        {
+          "rung": "point",
+          "text": "The $F$-statistic asks whether both slopes are zero at once.",
+          "highlight": [
+            "l4",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$F = 8.3$ with $p = 0.0004$: together they matter. The large standard errors come from $r = 0.95$, a VIF of 10.3."
+        }
+      ],
+      "feedback": {
+        "correct": "The joint test is strong; the individual $t$ values are small because the signals share their information.",
+        "generic": "Not quite right. Compare the individual $t$ values with the joint $F$ test.",
+        "byKey": {
+          "drop": "You read each small $t$ as no effect. Collinearity inflated both standard errors by $\\sqrt{10.3} = 3.2$; the $F$ test is clear.",
+          "neg": "You read a collinear coefficient's sign as real. Fitted alone, mom12 has slope $+0.505$ and $t = 3.68$."
+        }
+      },
+      "explain": {
+        "text": "Alone, mom6 has $t = 4.06$ and mom12 has $t = 3.68$. Together their VIF is 10.3, so each standard error is 3.2 times larger and each $t$ shrinks. The $F$ test, with $p = 0.0004$, says the pair matters.",
+        "canvas": {
+          "shade": {
+            "joint": [
+              "l4",
+              "l5"
+            ],
+            "weak": [
+              "l10",
+              "l11"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Deriving the VIF",
+      "prose": "Why is the factor $1/(1 - r^2)$? Centre both predictors and scale them to variance 1, so the intercept separates out. Put the steps in order.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "var",
+            "text": "$\\mathrm{Var}(\\hat{\\boldsymbol\\beta}) = \\sigma^2(\\mathbf{X}^T\\mathbf{X})^{-1}$, the covariance of least squares coefficients"
+          },
+          {
+            "id": "xtx",
+            "text": "$\\mathbf{X}^T\\mathbf{X} = n\\begin{bmatrix} 1 & r \\\\ r & 1 \\end{bmatrix}$, since each scaled column has $\\sum x^2 = n$ and $\\sum x_A x_B = nr$"
+          },
+          {
+            "id": "inv",
+            "text": "$(\\mathbf{X}^T\\mathbf{X})^{-1} = \\dfrac{1}{n(1 - r^2)}\\begin{bmatrix} 1 & -r \\\\ -r & 1 \\end{bmatrix}$, the 2 by 2 inverse"
+          },
+          {
+            "id": "read",
+            "text": "$\\mathrm{Var}(\\hat\\beta_A) = \\dfrac{\\sigma^2}{n}\\cdot\\dfrac{1}{1 - r^2}$, the top-left entry times $\\sigma^2$"
+          },
+          {
+            "id": "ratio",
+            "text": "At $r = 0$ this is $\\sigma^2/n$, so the inflation factor is $1/(1 - r^2)$"
+          }
+        ],
+        "answer": [
+          "var",
+          "xtx",
+          "inv",
+          "read",
+          "ratio"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the general covariance formula."
+        },
+        {
+          "rung": "point",
+          "text": "Build $\\mathbf{X}^T\\mathbf{X}$ before inverting it."
+        },
+        {
+          "rung": "step",
+          "text": "Formula, then the matrix, then its inverse, then read off the entry, then compare with $r = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "The factor comes from the determinant $1 - r^2$ of the correlation matrix.",
+        "generic": "Not quite right. You need $\\mathbf{X}^T\\mathbf{X}$ before you can invert it.",
+        "byKey": {
+          "inv": "You inverted before building the matrix. Write $\\mathbf{X}^T\\mathbf{X}$ first.",
+          "ratio": "The comparison with $r = 0$ comes last, once $\\mathrm{Var}(\\hat\\beta_A)$ is written down."
+        }
+      },
+      "explain": {
+        "text": "With more predictors the same steps give $\\mathrm{VIF}_j = 1/(1 - R_j^2)$. Here $R_j^2$ is the $R^2$ from regressing $x_j$ on all the other predictors. With two predictors, $R_j^2 = r^2$."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The rule",
+      "prose": "For predictor $j$, regress $x_j$ on all the other predictors and call that fit's $R^2$ $R_j^2$. Then $$\\mathrm{SE}(\\hat\\beta_j) = \\frac{\\sigma}{\\sqrt{\\textstyle\\sum (x_{ij} - \\bar x_j)^2}}\\sqrt{\\mathrm{VIF}_j}, \\qquad \\mathrm{VIF}_j = \\frac{1}{1 - R_j^2}.$$ The fitted values and $R^2$ are unaffected; only the split between predictors is.",
+      "question": "Regressing $x_3$ on $x_1$ and $x_2$ gives $R^2 = 0.90$. What is $\\mathrm{VIF}_3$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ten",
+            "text": "10",
+            "correct": true
+          },
+          {
+            "id": "onepoint",
+            "text": "1.11",
+            "why": "You computed $1/R_j^2$. The VIF is $1/(1 - R_j^2)$."
+          },
+          {
+            "id": "sqrt",
+            "text": "3.16",
+            "why": "That is $\\sqrt{10}$, the factor on the standard error, not the variance."
+          },
+          {
+            "id": "point9",
+            "text": "0.90",
+            "why": "That is $R_j^2$ itself."
+          }
+        ],
+        "shuffle": false
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $1/(1 - R_j^2)$."
+        },
+        {
+          "rung": "point",
+          "text": "$1 - 0.90 = 0.10$."
+        },
+        {
+          "rung": "step",
+          "text": "$1/0.10 = 10$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1/(1 - 0.90) = 10$.",
+        "generic": "Not quite right. Compute $1/(1 - R_j^2)$."
+      },
+      "explain": {
+        "text": "$\\mathrm{VIF}_3 = 1/0.10 = 10$, so the standard error of $\\hat\\beta_3$ is $\\sqrt{10} = 3.16$ times what it would be if $x_3$ were unrelated to the others."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "What to do about it",
+      "prose": "Back to mom6 and mom12, with correlation 0.95 and VIF 10.3. You want a model you can trade and explain.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "slope",
+            "$t$",
+            "$R^2$"
+          ],
+          "rows": [
+            [
+              "mom6 alone",
+              "0.543",
+              "4.06",
+              "0.123"
+            ],
+            [
+              "mom12 alone",
+              "0.505",
+              "3.68",
+              "0.103"
+            ],
+            [
+              "both",
+              "0.72, -0.19",
+              "1.68, -0.44",
+              "0.124"
+            ],
+            [
+              "average of the two",
+              "0.538",
+              "3.93",
+              "0.116"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Select all that apply: which are sound responses?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "drop",
+            "text": "Keep one signal and drop the other",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "Combine them into one signal, such as their average",
+            "correct": true
+          },
+          {
+            "id": "pca",
+            "text": "Replace them with their first principal component",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "Keep both, but report only the combined effect",
+            "correct": true
+          },
+          {
+            "id": "t",
+            "text": "Keep the one with the larger $t$ in the joint fit and call the other useless",
+            "why": "You judged by the joint $t$. Alone, mom12 has $t = 3.68$; it is not useless, just redundant."
+          },
+          {
+            "id": "more",
+            "text": "Add a third momentum signal to break the tie",
+            "why": "You added more of the same. A third correlated signal raises every VIF further."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A remedy either removes the overlap or stops asking the data to split it."
+        },
+        {
+          "rung": "point",
+          "text": "Principal components come from the eigenvectors of the correlation matrix; the first is the $(1, 1)$ direction.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Four are sound: drop one, average them, use the first principal component, or report only the sum."
+        }
+      ],
+      "feedback": {
+        "correct": "All four sound remedies either remove the overlap or stop asking for the split.",
+        "generic": "Not quite right. Ask of each option: does it remove the overlap, or still ask the data to split the credit?",
+        "byKey": {
+          "t": "You judged by $t$ inside the collinear fit. That $t$ is shrunk by the overlap, not by weakness.",
+          "more": "You added another correlated signal. That makes $\\mathbf{X}^T\\mathbf{X}$ closer to singular, not further."
+        }
+      },
+      "explain": {
+        "text": "Dropping one or averaging both gives $t$ near 4 and almost the same $R^2$. The first principal component is the $(1, 1)$ eigenvector, which is the average up to scale. Reporting only the sum accepts that only the sum is identified.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A VIF check for a signal set",
+      "prose": "Before a backtest, a quant screens ten stocks' signals for overlap: 6-month momentum, 12-month momentum and size. Write the check. For each column, regress it on the others plus a constant, and turn that $R^2$ into a VIF.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Stock",
+            "mom6",
+            "mom12",
+            "size"
+          ],
+          "rows": [
+            [
+              "1",
+              "1.2",
+              "1.0",
+              "0.5"
+            ],
+            [
+              "2",
+              "-0.4",
+              "-0.6",
+              "1.2"
+            ],
+            [
+              "3",
+              "0.8",
+              "1.1",
+              "-0.3"
+            ],
+            [
+              "4",
+              "2.1",
+              "1.8",
+              "0.8"
+            ],
+            [
+              "5",
+              "-1.5",
+              "-1.2",
+              "-0.1"
+            ],
+            [
+              "6",
+              "0.3",
+              "0.6",
+              "-1.4"
+            ],
+            [
+              "7",
+              "-0.9",
+              "-1.0",
+              "0.9"
+            ],
+            [
+              "8",
+              "1.6",
+              "1.3",
+              "0.2"
+            ],
+            [
+              "9",
+              "0.1",
+              "-0.2",
+              "-0.7"
+            ],
+            [
+              "10",
+              "-2.0",
+              "-1.7",
+              "1.0"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {},
+        "maxHeight": 260
+      },
+      "question": "Complete `vifs` so it returns one VIF per column.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef vifs(cols):\n    X = np.column_stack(cols).astype(float)\n    n, p = X.shape\n    out = []\n    for j in range(p):\n        target = X[:, j]\n        others = np.delete(X, j, axis=1)\n        A = np.column_stack([np.ones(n), others])\n        coef = np.linalg.lstsq(A, target, rcond=None)[0]\n        resid = ...\n        dev = target - target.mean()\n        r2 = ...\n        out.append(...)\n    return out\n",
+        "solution": "import numpy as np\n\ndef vifs(cols):\n    X = np.column_stack(cols).astype(float)\n    n, p = X.shape\n    out = []\n    for j in range(p):\n        target = X[:, j]\n        others = np.delete(X, j, axis=1)\n        A = np.column_stack([np.ones(n), others])\n        coef = np.linalg.lstsq(A, target, rcond=None)[0]\n        resid = target - A @ coef\n        dev = target - target.mean()\n        r2 = 1 - (resid @ resid) / (dev @ dev)\n        out.append(1 / (1 - r2))\n    return out\n",
+        "examples": [
+          {
+            "setup": "mom6 = [1.2, -0.4, 0.8, 2.1, -1.5, 0.3, -0.9, 1.6, 0.1, -2.0]; mom12 = [1.0, -0.6, 1.1, 1.8, -1.2, 0.6, -1.0, 1.3, -0.2, -1.7]; size = [0.5, 1.2, -0.3, 0.8, -0.1, -1.4, 0.9, 0.2, -0.7, 1.0]",
+            "call": "[round(float(v), 4) for v in vifs([mom6, mom12, size])]",
+            "expect": "[34.9197, 36.3583, 1.3979]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "mom6 = [1.2, -0.4, 0.8, 2.1, -1.5, 0.3, -0.9, 1.6, 0.1, -2.0]; mom12 = [1.0, -0.6, 1.1, 1.8, -1.2, 0.6, -1.0, 1.3, -0.2, -1.7]; size = [0.5, 1.2, -0.3, 0.8, -0.1, -1.4, 0.9, 0.2, -0.7, 1.0]",
+            "call": "[round(float(v), 4) for v in vifs([mom6, mom12, size])]",
+            "expect": "[34.9197, 36.3583, 1.3979]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in vifs([[1.2, -0.4, 0.8, 2.1, -1.5, 0.3, -0.9, 1.6, 0.1, -2.0], [0.5, 1.2, -0.3, 0.8, -0.1, -1.4, 0.9, 0.2, -0.7, 1.0]])]",
+            "expect": "[1.0239, 1.0239]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in vifs([[1, -1, 1, -1], [1, 1, -1, -1]])]",
+            "expect": "[1.0, 1.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in vifs([[8.2, 3.1, 15.6, 1.2, 40.3, 6.5, 2.4, 22.0, 4.8, 11.7], [2.1041, 1.1314, 2.7473, 0.1823, 3.6964, 1.8718, 0.8755, 3.091, 1.5686, 2.4596]])]",
+            "expect": "[4.7194, 4.7194]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in vifs([[1.2, -0.4, 0.8, 2.1, -1.5, 0.3, -0.9, 1.6, 0.1, -2.0], [1.0, -0.6, 1.1, 1.8, -1.2, 0.6, -1.0, 1.3, -0.2, -1.7]])]",
+            "expect": "[26.6316, 26.6316]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. Each list of VIFs is rounded to 4 places and compared with math.isclose; the expected values match statsmodels' `variance_inflation_factor`. The first run loads NumPy, which takes several seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The residual is the target minus its fitted values, `A @ coef`."
+        },
+        {
+          "rung": "point",
+          "text": "$R_j^2 = 1 - \\mathrm{SSE}/\\mathrm{SST}$, with `resid @ resid` and `dev @ dev`.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`resid = target - A @ coef`, `r2 = 1 - (resid @ resid) / (dev @ dev)`, `out.append(1 / (1 - r2))`."
+        }
+      ],
+      "feedback": {
+        "correct": "For the ten stocks the VIFs are about 34.9, 36.4 and 1.40.",
+        "generic": "Some tests failed. Two uncorrelated columns, such as `[1, -1, 1, -1]` and `[1, 1, -1, -1]`, must give `[1.0, 1.0]`.",
+        "byKey": {
+          "test-1": "For the ten stocks the answer is about `[34.9197, 36.3583, 1.3979]`. Check that the residual uses `A @ coef`.",
+          "error": "Your code stopped with an error. Replace each `...` with an expression."
+        }
+      },
+      "explain": {
+        "text": "Running `vifs([mom6, mom12, size])` gives about 34.9 and 36.4 for the momentum pair and 1.40 for size. Market cap and its log give VIFs near 4.7: the same information twice. Keep one of each pair before the backtest.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "When predictors move together, the data pin down their combined effect but not the split, so single coefficients swing and their standard errors balloon.",
+      "$\\mathrm{VIF}_j = 1/(1 - R_j^2)$ measures the damage; correlations and the condition number of the correlation matrix diagnose it. Fitted values and $R^2$ are unaffected.",
+      "Remedies: drop one, combine them, use principal components, or report only the sum. An exact copy makes $\\mathbf{X}^T\\mathbf{X}$ singular."
+    ],
+    "formula": {
+      "name": "Variance inflation factor",
+      "tex": "\\mathrm{VIF}_j = \\dfrac{1}{1 - R_j^2}, \\qquad \\mathrm{SE}(\\hat\\beta_j) \\propto \\sqrt{\\mathrm{VIF}_j}",
+      "note": "With two predictors $R_j^2 = r^2$; a VIF above 10 is the usual alarm."
+    },
+    "trap": "A small $t$ on a collinear predictor does not mean it is useless, and a sign that flips is not a real effect: check the joint $F$ test and the VIFs first."
+  },
+  "quiz": [
+    {
+      "id": "q-vif-r",
+      "difficulty": 2,
+      "prose": "Two predictors have correlation 0.8.",
+      "question": "By what factor is the standard error of each slope inflated, compared with uncorrelated predictors?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.667,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "label": "Factor on the standard error",
+        "accept": "1.667: $1/\\sqrt{1 - 0.64} = 1/0.6$.",
+        "wrong": [
+          {
+            "id": "vif",
+            "value": 2.778,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "no-sq",
+            "value": 5.0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1/\\sqrt{0.36} = 1/0.6 = 1.667$.",
+        "generic": "Not quite right. The standard error factor is $\\sqrt{\\mathrm{VIF}} = 1/\\sqrt{1 - r^2}$.",
+        "byKey": {
+          "vif": "That is the VIF, the factor on the variance. Take its square root.",
+          "no-sq": "You used $1/(1 - r)$. Square the correlation first."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{VIF} = 1/(1 - 0.64) = 2.78$, so the standard error grows by $\\sqrt{2.78} = 1.67$. Correlation 0.8 sounds high but costs much less than 0.95."
+      }
+    },
+    {
+      "id": "q-size-mcap",
+      "difficulty": 3,
+      "prose": "A model of stock returns includes both size (log market cap) and market cap in £bn. Each slope has $|t| < 1$, the $F$ test has $p = 0.001$, and the VIFs are both near 9.",
+      "question": "What is the best reading?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "redundant",
+            "text": "The two predictors carry the same information; together they matter",
+            "correct": true
+          },
+          {
+            "id": "neither",
+            "text": "Size has no effect on returns",
+            "why": "You read each small $t$ alone. The $F$ test says the pair matters."
+          },
+          {
+            "id": "bad-r2",
+            "text": "The $R^2$ is unreliable because of collinearity",
+            "why": "Collinearity leaves $R^2$ and the fitted values unchanged; only the split is unstable."
+          },
+          {
+            "id": "biased",
+            "text": "Both coefficients are biased",
+            "why": "Collinearity makes the estimates noisy, not biased: their average over samples is still right."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Same information twice: keep one of them.",
+        "generic": "Not quite right. Read the joint test and the VIFs together."
+      },
+      "explain": {
+        "text": "Log market cap and market cap rank stocks almost identically, so VIFs near 9 are expected. The $F$ test shows size matters; the data just cannot split the credit. Keep one measure."
+      }
+    },
+    {
+      "id": "q-exact",
+      "difficulty": 3,
+      "prose": "A dataset has columns for a stock's return in % and the same return as a decimal. Both go into one regression with an intercept.",
+      "question": "What happens to $\\mathbf{X}^T\\mathbf{X}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "singular",
+            "text": "It is singular: one column is 100 times the other",
+            "correct": true
+          },
+          {
+            "id": "big-se",
+            "text": "It is invertible, with large standard errors",
+            "why": "That is near collinearity. An exact multiple makes the determinant exactly 0."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: the units differ, so the columns differ",
+            "why": "Different units are just a rescaling. The columns are still exact multiples."
+          },
+          {
+            "id": "ones",
+            "text": "It is singular only if there is no intercept",
+            "why": "The problem is between the two return columns, with or without the ones."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Exact multiples make the columns dependent and $\\mathbf{X}^T\\mathbf{X}$ singular.",
+        "generic": "Not quite right. Compare the two return columns."
+      },
+      "explain": {
+        "text": "The % column is 100 times the decimal column, so $\\mathbf{X}$ has dependent columns and $\\det(\\mathbf{X}^T\\mathbf{X}) = 0$. Only $100\\beta_{\\%}$ plus $\\beta_{\\text{dec}}$ is identified."
+      }
+    },
+    {
+      "id": "q-cond",
+      "difficulty": 2,
+      "prose": "Two standardised signals have correlation 0.9.",
+      "question": "What is the condition number of their correlation matrix?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "",
+        "label": "Condition number",
+        "accept": "19: $1.9/0.1$.",
+        "wrong": [
+          {
+            "id": "vif",
+            "value": 5.263,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "inv",
+            "value": 0.0526,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(1 + 0.9)/(1 - 0.9) = 19$.",
+        "generic": "Not quite right. The eigenvalues are $1 + r$ and $1 - r$.",
+        "byKey": {
+          "vif": "That is the VIF, $1/(1 - r^2)$. The condition number divides the eigenvalues.",
+          "inv": "You put the small eigenvalue on top."
+        }
+      },
+      "explain": {
+        "text": "The eigenvalues are 1.9 and 0.1, so the condition number is 19. It grows without bound as $r \\to 1$."
+      }
+    }
+  ]
+}
