@@ -109,10 +109,13 @@
     }
 
     /* ---- Layout for a collapse set ---- */
-    const layout = (collapse) => {
+    /* item 269: branching (a number, or per level { "0": 3, "1": 2 } / [3, 2], level 0 the first) shows only the
+       first k branches under each node of that level; a control bound to "branching.1" or "branching" drives it */
+    const limitOf = (br, d) => { if (br == null) return Infinity; const v = typeof br === 'object' ? br[d] : br; return v == null || !isFinite(+v) ? Infinity : Math.max(1, Math.round(+v)); };
+    const layout = (collapse, branching) => {
       const col = new Set(collapse || []);
       const vis = new Map(); // path -> {x, y}
-      const kids = (n) => (col.has(n.path) ? [] : n.children);
+      const kids = (n) => (col.has(n.path) ? [] : n.children.slice(0, limitOf(branching, n.depth)));
       const leaves = []; const dfs = (n) => { const k = kids(n); if (!k.length && n !== root) leaves.push(n); k.forEach(dfs); }; dfs(root);
       const nL = Math.max(1, leaves.length);
       /* the drawing is sized by the leaves (left to right) or the depth (top to bottom) actually shown */
@@ -157,10 +160,12 @@
           const dev = tb ? dx : dy, want = dev < -1 ? -1 : dev > 1 ? 1 : (tb ? 1 : -1); // outer side; straight branches: above (lr) or right (tb)
           if (Math.sign(tb ? nx : ny) !== want) { nx = -nx; ny = -ny; }
           /* item 268: on a crowded tree (7 or more leaves) labels from the second level on alternate along
-             their branch by subtree (neighbouring subtrees' labels no longer meet at the same x), and shrink
-             a little when the leaves are closer still */
+             their branch by subtree (neighbouring subtrees' labels no longer meet at the same x), an inner
+             branch of a fan of three or more puts its label near the far end, and labels shrink a little
+             when the leaves are closer still (items 268, 276) */
           const sc = crowd > 1 && n.depth >= 2 ? (crowd > 2 ? 0.82 : 0.9) : 1;
-          const t = crowd > 1 && n.depth >= 2 ? (subIdx(n) % 2 ? 0.64 : 0.36) : 0.5;
+          const sib = n.parent.children, inner = sib.length > 2 && n !== sib[0] && n !== sib[sib.length - 1];
+          const t = crowd > 1 && n.depth >= 2 ? (inner ? 0.72 : subIdx(n) % 2 ? 0.64 : 0.36) : 0.5; // an inner branch's label goes where its fan is widest
           const off = (Math.abs(nx) * e.pb.w / 2 + Math.abs(ny) * e.pb.h / 2) * sc + 5;
           const mx = a.x + dx * t + nx * off, my = a.y + dy * t + ny * off;
           attrs(e.pg, { transform: `translate(${mx} ${my})` + (sc !== 1 ? ` scale(${sc})` : '') });
@@ -189,7 +194,7 @@
       const curP = st.current == null ? null : String(st.current) === 'root' ? '' : String(st.current);
       rootDot.classList.toggle('is-current', curP === '');
       for (const n of all) el.get(n.path).g.classList.toggle('is-current', curP === n.path);
-      const next = layout(st.collapse);
+      const next = layout(st.collapse, st.branching ?? (st.params || {}).branching);
       if (next.H && next.H !== fr.h) fr.resize(W, next.H);
       const from = cur;
       if (instant) { anim.stop(); cur = next; paint(next, showP, unknown, showVals); return; }
@@ -203,6 +208,8 @@
     const I = C.instance({ kind: 'tree', factory: tree, params, ctx, fr, draw, resolve, defaults: { show: 'p' } });
     fr.wrap.classList.add(tb ? 'is-tb' : 'is-lr');
     I.api.paths = () => [...nodes.keys()];
+    I.api.setParam = (name, v) => { const n = String(name); if (n === 'branching' || n.startsWith('branching.')) { const st = I.api.get(); const k = n.slice(10); I.api.set({ branching: k ? { ...(st.branching && typeof st.branching === 'object' ? st.branching : {}), [k]: +v } : +v }); } else I.api.set(C.paramPatch(n, v)); };
+    I.api.getParam = (name) => { const n = String(name), br = I.api.get().branching; if (n === 'branching') return typeof br === 'number' ? br : undefined; if (n.startsWith('branching.')) { const v = br && typeof br === 'object' ? br[n.slice(10)] : br; return v == null ? undefined : +v; } return undefined; };
     I.api.set({}, { instant: true });
     return I.api;
   }
