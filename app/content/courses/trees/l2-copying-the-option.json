@@ -1,0 +1,1245 @@
+{
+  "id": "l2-copying-the-option",
+  "course": "trees",
+  "title": "Copying the option with stock and cash",
+  "minutes": 14,
+  "objectives": [
+    "Price an option by building a portfolio with the same payoff.",
+    "Use the law of one price to find an arbitrage when an option is mispriced."
+  ],
+  "skills": [
+    "tp-replicate"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "What the call pays",
+      "prose": "A call struck at £100 gives you the right to buy the share for £100 in a year. The share ends at £120 or £80.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£120",
+                  "p": "×1.2"
+                },
+                {
+                  "id": "d",
+                  "label": "£80",
+                  "p": "×0.8"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "call £20",
+            "d": "call £0"
+          }
+        },
+        "state": {
+          "values": false,
+          "caption": "The share today and in a year"
+        }
+      },
+      "question": "Fill in the call’s payoff in each state.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "State",
+          "Call pays (£)"
+        ],
+        "rows": [
+          [
+            "Up, £120",
+            {
+              "edit": true,
+              "answer": 20,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Down, £80",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Would you pay £100 for the share in each state?"
+        },
+        {
+          "rung": "point",
+          "text": "At £120 you buy for £100 a share worth £120.",
+          "highlight": [
+            "u"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Up: $\\max(120 - 100, 0) = 20$. Down: $\\max(80 - 100, 0) = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "£20 if up, nothing if down.",
+        "generic": "Not quite right. The call pays $\\max(S_1 - 100, 0)$ in each state.",
+        "byKey": {
+          "r0c1": "At £120 you buy for £100 a share worth £120: $\\max(120 - 100, 0) = 20$.",
+          "r1c1": "At £80 nobody pays £100 for the share, so the call pays $\\max(80 - 100, 0) = 0$, not a negative amount."
+        }
+      },
+      "explain": {
+        "text": "The call pays £20 if up and nothing if down. What is that worth today? We will build it from things we can already price: shares and cash.",
+        "canvas": {
+          "values": true
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Shares and cash",
+      "prose": "Hold $\\Delta$ shares and some cash, received in a year if positive and owed if negative. In a year the holding is worth $\\Delta S_1$ plus the cash: a straight line in the share price $S_1$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            -40,
+            50
+          ],
+          "xStep": 20,
+          "yStep": 20,
+          "grid": true,
+          "height": 300,
+          "xLabel": "Share price in a year (£)",
+          "yLabel": "Value in a year (£)",
+          "functions": [
+            {
+              "id": "call",
+              "expr": "max(x - 100, 0)",
+              "label": "call",
+              "labelAt": 132
+            },
+            {
+              "id": "copy",
+              "expr": "D*x + L",
+              "label": "your holding",
+              "colour": 2,
+              "labelAt": 68,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "D": 0,
+            "L": 0
+          }
+        },
+        "state": {
+          "params": {
+            "D": 0,
+            "L": 0
+          },
+          "points": [
+            {
+              "id": "Cd",
+              "x": 80,
+              "y": 0,
+              "tap": false
+            },
+            {
+              "id": "Cu",
+              "x": 120,
+              "y": 20,
+              "tap": false
+            },
+            {
+              "id": "Pd",
+              "x": 80,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "Pu",
+              "x": 120,
+              "y": 0,
+              "tap": false,
+              "colour": 2
+            }
+          ],
+          "segments": [
+            {
+              "id": "gap-d",
+              "from": "Pd",
+              "to": "Cd",
+              "dashed": true
+            },
+            {
+              "id": "gap-u",
+              "from": "Pu",
+              "to": "Cu",
+              "dashed": true
+            }
+          ]
+        },
+        "derive": {
+          "Pd.y": "80*D + L",
+          "Pu.y": "120*D + L",
+          "caption": "Up: holding £{{fixed(120*D + L, 2)}}, call £20.00. Down: holding £{{fixed(80*D + L, 2)}}, call £0.00."
+        },
+        "controls": [
+          {
+            "bind": "D",
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "label": "Shares $\\Delta$",
+            "start": 0
+          },
+          {
+            "bind": "L",
+            "min": -60,
+            "max": 20,
+            "step": 1,
+            "label": "Cash in a year (£)",
+            "start": 0
+          }
+        ]
+      },
+      "question": "Make the line pass through both call payoffs. How many shares $\\Delta$ does that take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Number of shares",
+        "accept": "0.5 shares, with £40 owed in a year.",
+        "placeholder": "a number such as 0.25",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Between £80 and £120 the call gains £20. How many shares gain £20 over that range?"
+        },
+        {
+          "rung": "point",
+          "text": "The slope of the line is $\\Delta$. It must climb £20 over £40.",
+          "highlight": [
+            "Pu",
+            "Cu"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Half a share, with £40 owed in a year, matches both points.",
+        "generic": "Not quite right. Get both dashed gaps to zero, then read off the shares.",
+        "byKey": {
+          "one": "One share gains £40 between the states, twice what the call gains. The line is too steep.",
+          "none": "With no shares the line is flat, but the call pays more when the share is higher."
+        }
+      },
+      "explain": {
+        "text": "Half a share gains £20 between the two states, exactly what the call gains. Owing £40 then sets the level: $0.5 \\times 80 - 40 = 0$ and $0.5 \\times 120 - 40 = 20$. The line meets the kinked payoff at both prices the tree allows.",
+        "canvas": {
+          "params": {
+            "D": 0.5,
+            "L": -40
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Cash today",
+      "prose": "Your holding is $\\Delta = 0.5$ shares and £40 owed in a year. You borrow today at 5%, and the debt grows by 5% over the year.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            60,
+            140
+          ],
+          "y": [
+            -40,
+            50
+          ],
+          "xStep": 20,
+          "yStep": 20,
+          "grid": true,
+          "height": 300,
+          "xLabel": "Share price in a year (£)",
+          "yLabel": "Value in a year (£)",
+          "functions": [
+            {
+              "id": "call",
+              "expr": "max(x - 100, 0)",
+              "label": "call",
+              "labelAt": 132
+            },
+            {
+              "id": "copy",
+              "expr": "D*x + L",
+              "label": "your holding",
+              "colour": 2,
+              "labelAt": 68,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "D": 0.5,
+            "L": -40
+          }
+        },
+        "state": {
+          "params": {
+            "D": 0.5,
+            "L": -40
+          },
+          "points": [
+            {
+              "id": "Cd",
+              "x": 80,
+              "y": 0,
+              "tap": false
+            },
+            {
+              "id": "Cu",
+              "x": 120,
+              "y": 20,
+              "tap": false
+            },
+            {
+              "id": "Pd",
+              "x": 80,
+              "y": 0.0,
+              "tap": false,
+              "colour": 2
+            },
+            {
+              "id": "Pu",
+              "x": 120,
+              "y": 20.0,
+              "tap": false,
+              "colour": 2
+            }
+          ],
+          "segments": [
+            {
+              "id": "gap-d",
+              "from": "Pd",
+              "to": "Cd",
+              "dashed": true
+            },
+            {
+              "id": "gap-u",
+              "from": "Pu",
+              "to": "Cu",
+              "dashed": true
+            }
+          ]
+        },
+        "derive": {
+          "Pd.y": "80*D + L",
+          "Pu.y": "120*D + L",
+          "caption": "Up: holding £{{fixed(120*D + L, 2)}}, call £20.00. Down: holding £{{fixed(80*D + L, 2)}}, call £0.00."
+        }
+      },
+      "question": "How much do you borrow today?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 38.0952,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "label": "Borrowed today, in £",
+        "accept": "£38.10: $40 / 1.05 = 38.095\\ldots$",
+        "wrong": [
+          {
+            "id": "no-discount",
+            "value": 40,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "add-interest",
+            "value": 42,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "subtract",
+            "value": 38,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If you borrow $B$ today, how much do you owe in a year?"
+        },
+        {
+          "rung": "point",
+          "text": "You owe $1.05$ times what you borrow."
+        },
+        {
+          "rung": "step",
+          "text": "$1.05 \\times \\text{borrowed} = 40$, so divide 40 by 1.05."
+        }
+      ],
+      "feedback": {
+        "correct": "£38.10 today grows to $38.10 \\times 1.05 \\approx 40$.",
+        "generic": "Not quite right. Find the amount that grows to £40 at 5%.",
+        "byKey": {
+          "no-discount": "That is what you owe in a year. Borrowing it today would leave you owing £42.",
+          "add-interest": "You added interest to £40. The £40 is the debt in a year, so take the interest out: $40/1.05$.",
+          "subtract": "You took 5% off £40. But $38 \\times 1.05 = 39.90$, so divide by 1.05 instead."
+        }
+      },
+      "explain": {
+        "text": "Borrowing £38.10 today means owing $40$ in a year. So the copy is 0.5 shares and a loan of £38.10: a **replicating portfolio**. We write $B = -38.10$, cash today, negative when borrowed."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The copy, state by state",
+      "prose": "The copy holds 0.5 shares and borrows £38.10 at 5%. Fill in the loan and the copy in a year, then what the copy costs today.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£120",
+                  "p": "×1.2"
+                },
+                {
+                  "id": "d",
+                  "label": "£80",
+                  "p": "×0.8"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "call £20",
+            "d": "call £0"
+          }
+        },
+        "state": {
+          "caption": "The call to copy: £20 or £0"
+        }
+      },
+      "question": "Complete the table.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Part",
+          "Today (£)",
+          "Up (£)",
+          "Down (£)"
+        ],
+        "rows": [
+          [
+            "0.5 shares",
+            "50.00",
+            "60.00",
+            "40.00"
+          ],
+          [
+            "Loan",
+            "−38.10",
+            {
+              "edit": true,
+              "answer": -40,
+              "tol": {
+                "abs": 0.01
+              }
+            },
+            {
+              "edit": true,
+              "answer": -40,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "Copy",
+            {
+              "edit": true,
+              "answer": 11.9048,
+              "tol": {
+                "abs": 0.006
+              }
+            },
+            {
+              "edit": true,
+              "answer": 20,
+              "tol": {
+                "abs": 0.01
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Owing is negative. How much do you owe in a year?"
+        },
+        {
+          "rung": "point",
+          "text": "The loan grows by 5%: $38.10 \\times 1.05$."
+        },
+        {
+          "rung": "step",
+          "text": "Loan: $-40$ in both states. Copy: add each column, so today $50 - 38.10$."
+        }
+      ],
+      "feedback": {
+        "correct": "The copy pays £20 or £0 and costs £11.90 today.",
+        "generic": "Not quite right. Owing is negative, and each copy cell is the sum of the column above it.",
+        "byKey": {
+          "r1c2": "The loan grows by 5%: you owe $38.10 \\times 1.05 = 40$, written $-40$.",
+          "r1c3": "You owe the same £40 in the down state. The loan does not care how the share did.",
+          "r2c1": "The copy costs the shares less what you borrowed: $50 - 38.10$.",
+          "r2c2": "Add the up column: $60 - 40$.",
+          "r2c3": "Add the down column: $40 - 40$."
+        }
+      },
+      "explain": {
+        "text": "The copy pays £20 up and £0 down, exactly like the call. It costs $50 - 38.10 = \\text{£}11.90$ today. So the call must cost £11.90 too.",
+        "canvas": {
+          "highlight": [
+            "val-u",
+            "val-d"
+          ],
+          "caption": "Copy and call both pay £20 or £0; the copy costs £11.90"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A call at £14",
+      "prose": "Suppose the call trades at £14 in the market. You can still build its copy for £11.90.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Today (£)",
+            "Up (£)",
+            "Down (£)"
+          ],
+          "rows": [
+            [
+              "Sell 1 call",
+              "14.00",
+              "−20.00",
+              "0.00"
+            ],
+            [
+              "Buy the copy",
+              "−11.90",
+              "20.00",
+              "0.00"
+            ],
+            [
+              "Net",
+              "?",
+              "0.00",
+              "0.00"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Sell the dear one, buy the cheap one"
+        }
+      },
+      "question": "How much do you keep today?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.0952,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "label": "Kept today, in £",
+        "accept": "£2.10: $14 - 11.90$, more exactly $14 - 11.9048 = 2.0952$.",
+        "wrong": [
+          {
+            "id": "sale-only",
+            "value": 14,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "sign",
+            "value": -2.0952,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "added",
+            "value": 25.9048,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Selling brings cash in; buying sends it out."
+        },
+        {
+          "rung": "point",
+          "text": "The net row adds the column above it.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$14.00 - 11.90$."
+        }
+      ],
+      "feedback": {
+        "correct": "You keep £2.10 now and owe nothing net later.",
+        "generic": "Not quite right. Add the two cash flows today.",
+        "byKey": {
+          "sale-only": "You counted only the sale. Buying the copy costs £11.90.",
+          "sign": "You receive £14 and pay £11.90, so you keep money.",
+          "added": "You added the copy’s cost. Buying it sends £11.90 out."
+        }
+      },
+      "explain": {
+        "text": "You keep £2.10 today, and the two trades cancel in both states. Two things with the same payoff in every state must have the same price: the **law of one price**. At any other price the gap is an arbitrage.",
+        "canvas": {
+          "values": {
+            "r2c1": "2.10"
+          },
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Copying a put",
+      "prose": "A put struck at £100 pays £0 if the share ends at £120 and £20 if it ends at £80. Copy it with $\\Delta$ shares and cash $B$ today, at 5%.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£120",
+                  "p": "×1.2"
+                },
+                {
+                  "id": "d",
+                  "label": "£80",
+                  "p": "×0.8"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "put £0",
+            "d": "put £20"
+          }
+        },
+        "state": {
+          "caption": "The put pays when the share falls"
+        }
+      },
+      "question": "Find the copy and the put’s price.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Shares $\\Delta$ (negative for short)",
+            {
+              "edit": true,
+              "answer": -0.5,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Cash today $B$ (£, negative if borrowed)",
+            {
+              "edit": true,
+              "answer": 57.1429,
+              "tol": {
+                "abs": 0.006
+              }
+            }
+          ],
+          [
+            "Put price (£)",
+            {
+              "edit": true,
+              "answer": 7.1429,
+              "tol": {
+                "abs": 0.006
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The put loses £20 as the share rises by £40. Which way must the shares face?"
+        },
+        {
+          "rung": "point",
+          "text": "A short position loses when the share rises: $\\Delta$ is negative."
+        },
+        {
+          "rung": "step",
+          "text": "$\\Delta = (0 - 20)/(120 - 80) = -0.5$. Up state: $-60 + 1.05B = 0$, so $B = 60/1.05$."
+        }
+      ],
+      "feedback": {
+        "correct": "Short half a share and lend £57.14: the put costs £7.14.",
+        "generic": "Not quite right. Match the put in both states, then price the copy.",
+        "byKey": {
+          "r0c1": "The put falls by £20 as the share rises by £40. That needs a short position: $\\Delta = -0.5$, not $+0.5$.",
+          "r1c1": "Use the up state: $120\\Delta + 1.05B = 0$ with $\\Delta = -0.5$. Cash is positive here: you lend.",
+          "r2c1": "Price the copy: $100\\Delta + B = -50 + 57.14$."
+        }
+      },
+      "explain": {
+        "text": "Short half a share and lend £57.14: up, $-60 + 60 = 0$; down, $-40 + 60 = 20$. The put costs $-50 + 57.14 = \\text{£}7.14$. A put is copied by selling shares and lending, the mirror of the call."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Using the odds",
+      "prose": "Analysts give the share a 0.8 chance of rising. A colleague prices the call at its expected payoff, discounted: $0.8 \\times 20 / 1.05 = \\text{£}15.24$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£120",
+                  "p": "0.8"
+                },
+                {
+                  "id": "d",
+                  "label": "£80",
+                  "p": "0.2"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "call £20",
+            "d": "call £0"
+          }
+        },
+        "state": {
+          "caption": "Branches show the analysts’ chances"
+        }
+      },
+      "question": "What should the call cost?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "£11.90",
+            "correct": true
+          },
+          {
+            "id": "ev",
+            "text": "£15.24",
+            "why": "You weighted the payoffs by the real chances. At £15.24 you could sell the call and buy the £11.90 copy, keeping £3.33 riskless."
+          },
+          {
+            "id": "ev-undiscounted",
+            "text": "£16.00",
+            "why": "You took the expected payoff and did not discount it. And the real chance does not price the call anyway: the copy does."
+          },
+          {
+            "id": "no-interest",
+            "text": "£10.00",
+            "why": "You borrowed £40, the amount owed in a year. Today you can borrow only $40/1.05 = \\text{£}38.10$, so the copy costs £11.90."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the copy cost, and does it depend on the 0.8?"
+        },
+        {
+          "rung": "point",
+          "text": "The copy pays £20 or £0 whichever state happens."
+        },
+        {
+          "rung": "step",
+          "text": "The copy costs £11.90 whatever the chances, so the call must too."
+        }
+      ],
+      "feedback": {
+        "correct": "£11.90, the cost of the copy, whatever the chances.",
+        "generic": "Not quite right. Price the call by its copy, not by a forecast.",
+        "byKey": {
+          "ev": "You weighted the payoffs by the real chances. At £15.24 you could sell the call and buy the £11.90 copy, keeping £3.33 riskless.",
+          "no-interest": "You borrowed £40, the amount owed in a year. Today you can borrow only $40/1.05 = \\text{£}38.10$."
+        }
+      },
+      "explain": {
+        "text": "The copy pays the call’s payoff in both states, whatever the chances. So the call costs what the copy costs, £11.90. The 0.8 never entered your working.",
+        "canvas": {
+          "highlight": [
+            "val-u",
+            "val-d"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Two equations",
+      "prose": "Write the copy’s two conditions, one per state, and solve them as in vectors. Here $B$ is cash today, so it is worth $1.05B$ in a year.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "e1",
+            "text": "$120\\Delta + 1.05B = 20$ and $80\\Delta + 1.05B = 0$: the copy pays what the call pays in each state"
+          },
+          {
+            "id": "e2",
+            "text": "$40\\Delta = 20$: subtract the second equation from the first, so the cash cancels"
+          },
+          {
+            "id": "e3",
+            "text": "$\\Delta = 0.5$: divide both sides by 40"
+          },
+          {
+            "id": "e4",
+            "text": "$1.05B = -40$, so $B = -38.10$: put $\\Delta = 0.5$ into the down equation, then divide by 1.05"
+          },
+          {
+            "id": "e5",
+            "text": "$c_0 = 100\\Delta + B = 50 - 38.10 = 11.90$: the copy’s cost today is the call’s price"
+          }
+        ],
+        "answer": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the two conditions, one per state."
+        },
+        {
+          "rung": "point",
+          "text": "Subtracting the equations removes $B$ first."
+        },
+        {
+          "rung": "step",
+          "text": "Conditions, subtract, divide, substitute, then price."
+        }
+      ],
+      "feedback": {
+        "correct": "Subtract to find $\\Delta$, substitute to find $B$, then price.",
+        "generic": "Not quite right. Each line needs the one before it.",
+        "byKey": {
+          "e4": "$B$ needs $\\Delta$ first, so it comes after $\\Delta = 0.5$.",
+          "e5": "The price needs both $\\Delta$ and $B$, so it comes last."
+        }
+      },
+      "explain": {
+        "text": "Subtracting removes the cash, since it pays the same in both states. That leaves the shares to match the call’s £20 gain over the share’s £40. Then either equation gives $B$."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Any one-step option",
+      "prose": "You solved the same two equations each time. For any one-step tree, $$\\Delta = \\frac{c_u - c_d}{S_u - S_d}, \\quad B = \\frac{c_d - \\Delta S_d}{1 + r}, \\quad c_0 = \\Delta S_0 + B.$$",
+      "question": "Which number never appeared in your working?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The chance the share goes up",
+            "correct": true
+          },
+          {
+            "id": "rate",
+            "text": "The interest rate",
+            "why": "You used it to discount the loan: $B = -40/1.05$."
+          },
+          {
+            "id": "prices",
+            "text": "The two share prices in a year",
+            "why": "They set $\\Delta$: the call’s gain over the share’s gain, $20/40$."
+          },
+          {
+            "id": "strike",
+            "text": "The strike",
+            "why": "The strike fixed the call’s payoffs, £20 and £0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look back at the two equations. What went into them?"
+        },
+        {
+          "rung": "step",
+          "text": "Prices, payoffs and the rate went in. Nothing about how likely each state is."
+        }
+      ],
+      "feedback": {
+        "correct": "No chance of up appears anywhere.",
+        "generic": "Not quite right. List what the two equations used."
+      },
+      "explain": {
+        "text": "The copy uses the two prices, the payoffs and the rate. It never asks how likely each state is. That is why every trader, whatever their forecast, must agree on £11.90."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A bank prices a call",
+      "prose": "A bank sells a client a one-year call on a share at £250, struck at £260. The share ends at £300 or £200. The bank borrows at 4% and prices the call by its copy.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£250",
+          "levels": [
+            {
+              "label": "In one year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£300",
+                  "p": "×1.2"
+                },
+                {
+                  "id": "d",
+                  "label": "£200",
+                  "p": "×0.8"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "call £40",
+            "d": "call £0"
+          }
+        },
+        "state": {
+          "caption": "The bank’s one-step model of the share"
+        }
+      },
+      "question": "Find the copy per call and the price.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Shares per call $\\Delta$",
+            {
+              "edit": true,
+              "answer": 0.4,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Borrowed per call today (£)",
+            {
+              "edit": true,
+              "answer": 76.9231,
+              "tol": {
+                "abs": 0.006
+              }
+            }
+          ],
+          [
+            "Price per call (£)",
+            {
+              "edit": true,
+              "answer": 23.0769,
+              "tol": {
+                "abs": 0.006
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The call gains £40 while the share gains £100."
+        },
+        {
+          "rung": "point",
+          "text": "$\\Delta = 40/100$. In the down state the shares are worth $0.4 \\times 200 = 80$."
+        },
+        {
+          "rung": "step",
+          "text": "Borrow $80/1.04$. The price is $0.4 \\times 250$ minus that."
+        }
+      ],
+      "feedback": {
+        "correct": "0.4 shares and £76.92 borrowed: the call is worth £23.08.",
+        "generic": "Not quite right. Match the call in both states, discounting at 4%.",
+        "byKey": {
+          "r0c1": "The call gains $40 - 0$ while the share gains $300 - 200$. Divide the first by the second.",
+          "r1c1": "In the down state the loan must cancel $0.4 \\times 200 = 80$. Borrow $80/1.04$ today.",
+          "r2c1": "The copy costs $0.4 \\times 250 - 76.92$."
+        }
+      },
+      "explain": {
+        "text": "$\\Delta = 40/100 = 0.4$, and the bank borrows $80/1.04 = \\text{£}76.92$ per call. The copy costs $100 - 76.92 = \\text{£}23.08$. Charging less would cost the bank money on its hedge."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Hold $\\Delta$ shares and cash $B$ so that the holding pays what the option pays in both states.",
+      "Solve two equations: $\\Delta = \\frac{c_u - c_d}{S_u - S_d}$, then $B$ from either state, discounting at $1 + r$.",
+      "The option costs what its copy costs: the law of one price. The real chance of up never enters."
+    ],
+    "formula": {
+      "name": "Replication price",
+      "tex": "c_0 = \\Delta S_0 + B, \\quad \\Delta = \\dfrac{c_u - c_d}{S_u - S_d}, \\quad B = \\dfrac{c_d - \\Delta S_d}{1 + r}",
+      "note": "$B < 0$ means borrowing. A put has $\\Delta < 0$ and $B > 0$: short shares and lend."
+    },
+    "trap": "Pricing by the expected payoff with real chances gives the wrong price; so does forgetting the interest on the loan."
+  },
+  "quiz": [
+    {
+      "id": "q-price-50",
+      "difficulty": 2,
+      "prose": "A share at £50 ends at £60 or £40 in a year, and the rate is 5%. A call struck at £50 pays £10 or £0.",
+      "question": "What does the call cost today?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.9524,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "label": "Call price, in £",
+        "accept": "£5.95: $\\Delta = 0.5$, borrow $20/1.05 = 19.05$, cost $25 - 19.05$.",
+        "wrong": [
+          {
+            "id": "no-interest",
+            "value": 5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "half",
+            "value": 4.7619,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "payoff",
+            "value": 10,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$25 - 20/1.05 = 5.95$.",
+        "generic": "Not quite right. Find $\\Delta$ and the loan, then price the copy.",
+        "byKey": {
+          "no-interest": "You borrowed £20, the amount owed in a year. Borrow $20/1.05$ today.",
+          "half": "You weighted the payoffs 50/50 and discounted. The copy, not a guess at the chances, sets the price.",
+          "payoff": "That is the most the call can pay, in a year. Price the copy today."
+        }
+      },
+      "explain": {
+        "text": "$\\Delta = 10/20 = 0.5$. In the down state $0.5 \\times 40 = 20$, so borrow $20/1.05 = \\text{£}19.05$. The copy costs $25 - 19.05 = \\text{£}5.95$."
+      }
+    },
+    {
+      "id": "q-call-13",
+      "difficulty": 2,
+      "prose": "On the £100 tree the call’s copy costs £11.90. The call trades at £13.",
+      "question": "Which trade locks in a riskless profit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Sell the call and buy the copy",
+            "correct": true
+          },
+          {
+            "id": "reverse",
+            "text": "Buy the call and sell the copy",
+            "why": "That pays £11.90 for the copy’s mirror and £13 for the call: you lose £1.10."
+          },
+          {
+            "id": "buy",
+            "text": "Buy the call and hold it",
+            "why": "That is a bet on the share rising. If it falls, the call pays nothing."
+          },
+          {
+            "id": "naked",
+            "text": "Sell the call and hold nothing",
+            "why": "If the share rises you owe £20 with nothing to pay it from."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Sell the dear call, buy the cheap copy: £1.10 now.",
+        "generic": "Not quite right. Sell what is too dear and buy its copy."
+      },
+      "explain": {
+        "text": "You receive £13 and pay £11.90, keeping £1.10. In a year the copy pays exactly what you owe on the call, in both states."
+      }
+    },
+    {
+      "id": "q-put-copy",
+      "difficulty": 3,
+      "prose": "Same tree: £50 today, £60 or £40 in a year, rate 5%. A put struck at £50 pays £0 or £10.",
+      "question": "Which holding copies the put?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "call-copy",
+            "text": "Buy 0.5 shares and borrow £19.05",
+            "why": "That is the call’s copy. The put pays when the share falls, so you need to be short."
+          },
+          {
+            "id": "right",
+            "text": "Short 0.5 shares and lend £28.57",
+            "correct": true
+          },
+          {
+            "id": "one-share",
+            "text": "Short 1 share and lend £50",
+            "why": "Check the up state: $-60 + 52.50 = -7.50$, not 0. One share is twice too many."
+          },
+          {
+            "id": "no-discount",
+            "text": "Short 0.5 shares and lend £30",
+            "why": "£30 is what you need in a year. Lend $30/1.05 = \\text{£}28.57$ today."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Up: $-30 + 30 = 0$. Down: $-20 + 30 = 10$.",
+        "generic": "Not quite right. Check each holding in both states."
+      },
+      "explain": {
+        "text": "$\\Delta = (0 - 10)/20 = -0.5$. In the up state the short costs $30$, so lend $30/1.05 = \\text{£}28.57$. The put costs $-25 + 28.57 = \\text{£}3.57$."
+      }
+    }
+  ]
+}

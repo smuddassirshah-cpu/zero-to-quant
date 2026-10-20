@@ -1,0 +1,1264 @@
+{
+  "id": "l11-is-sharpe-real",
+  "course": "testing",
+  "title": "Is this Sharpe ratio real?",
+  "minutes": 14,
+  "objectives": [
+    "Test a strategy’s Sharpe ratio and adjust for the number of strategies tried."
+  ],
+  "skills": [
+    "ht-multiple",
+    "ht-pvalue"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A 1.5 Sharpe over two years",
+      "prose": "A manager shows a Sharpe ratio of 1.5 over 2 years. Suppose she has no skill: her true Sharpe is 0. The curve is her measured Sharpe across many imagined 2-year records.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0,
+            "sigma": 0.7071
+          },
+          "x": [
+            -3,
+            3
+          ],
+          "xLabel": "Measured Sharpe ratio of a no-skill strategy"
+        },
+        "state": {
+          "shade": {
+            "from": 1.5,
+            "to": null
+          },
+          "showProb": false
+        }
+      },
+      "question": "How often would a no-skill manager measure 1.5 or more over 2 years?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "never",
+            "text": "Almost never, under 1 in 10,000",
+            "why": "You treated the measured Sharpe as precise. Over 2 years it wanders by about 0.7 either way."
+          },
+          {
+            "id": "right",
+            "text": "About 1 in 60",
+            "correct": true
+          },
+          {
+            "id": "quarter",
+            "text": "About 1 in 4",
+            "why": "That would need a spread near 2.2. Here 1.5 sits about 2.1 spreads above 0."
+          },
+          {
+            "id": "half",
+            "text": "About half the time",
+            "why": "Half of no-skill records land above 0, not above 1.5."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How wide is the curve? Most of it sits between about $-1.4$ and $1.4$."
+        },
+        {
+          "rung": "point",
+          "text": "The shaded tail is the share at 1.5 or more.",
+          "highlight": [
+            "shade"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The spread is $1/\\sqrt 2 = 0.71$, so 1.5 is 2.12 spreads above 0. $P(Z \\ge 2.12) = 0.017$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 1 in 60: $P(Z \\ge 2.12) = 0.017$.",
+        "generic": "Not quite right. Judge 1.5 against the width of the curve, not against 0 alone."
+      },
+      "explain": {
+        "text": "Over 2 years a no-skill Sharpe has spread $1/\\sqrt 2 = 0.71$. So 1.5 sits $1.5 / 0.71 = 2.12$ spreads above 0, and $P(Z \\ge 2.12) = 0.017$. Rare for one manager, but common if 60 were tried.",
+        "canvas": {
+          "showProb": true
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Longer records",
+      "prose": "Slide the length of the record $T$. The spread of a no-skill Sharpe shrinks as $T$ grows. The shaded tail is still 1.5 or more.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0,
+            "sigma": 0.7071
+          },
+          "x": [
+            -3,
+            3
+          ],
+          "xLabel": "Measured Sharpe ratio of a no-skill strategy"
+        },
+        "state": {
+          "shade": {
+            "from": 1.5,
+            "to": null
+          },
+          "params": {
+            "T": 2,
+            "sigma": 0.7071
+          }
+        },
+        "derive": {
+          "params.sigma": "1 / sqrt(T)",
+          "caption": "$T = {{T}}$ years: spread {{fixed(1 / sqrt(T), 3)}}, so 1.5 sits {{fixed(1.5 * sqrt(T), 2)}} spreads above 0"
+        },
+        "controls": [
+          {
+            "bind": "T",
+            "min": 1,
+            "max": 16,
+            "step": 1,
+            "start": 2,
+            "label": "Years of record $T$"
+          }
+        ]
+      },
+      "question": "Find the shortest record for which 1.5 sits at least 3 spreads above 0.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Years of record",
+        "accept": "4 years exactly: the spread is $1/\\sqrt 4 = 0.5$, and $1.5 / 0.5 = 3$.",
+        "placeholder": "whole number",
+        "unit": "years",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nine",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide $T$ up and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The caption gives how many spreads 1.5 sits above 0."
+        },
+        {
+          "rung": "step",
+          "text": "You need a spread of $1.5 / 3 = 0.5$, so $1/\\sqrt T = 0.5$."
+        }
+      ],
+      "feedback": {
+        "correct": "$T = 4$: spread 0.5, and 1.5 is 3 spreads out.",
+        "generic": "Not quite right. Slide until the caption first reads 3.00 or more.",
+        "byKey": {
+          "linear": "At 2 years 1.5 is only 2.12 spreads out. The spread shrinks with $\\sqrt T$, not $T$.",
+          "nine": "At 9 years 1.5 is 4.5 spreads out. A shorter record already reaches 3.",
+          "three": "At 3 years the spread is 0.577, so 1.5 is 2.60 spreads out, short of 3."
+        }
+      },
+      "explain": {
+        "text": "At $T = 4$ the spread is $1/\\sqrt 4 = 0.5$, so 1.5 sits exactly 3 spreads above 0. Going from 2.12 to 3 spreads took twice the data. That square root is why track records must be long.",
+        "canvas": {
+          "params": {
+            "T": 4
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The $t$ statistic of a Sharpe ratio",
+      "prose": "You divided the Sharpe ratio by its spread, the **standard error** $1/\\sqrt T$. That gives its $t$ statistic: $$t = \\frac{\\mathrm{SR}}{1/\\sqrt T} = \\mathrm{SR}\\sqrt T,$$ with SR annualised and $T$ in years.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0,
+            "sigma": 0.3333
+          },
+          "x": [
+            -1.5,
+            1.5
+          ],
+          "xLabel": "Measured Sharpe ratio of a no-skill strategy"
+        },
+        "state": {
+          "shade": {
+            "from": 0.8,
+            "to": null
+          },
+          "caption": "No-skill Sharpe over 9 years: standard error $1/3$"
+        }
+      },
+      "question": "A strategy has a Sharpe ratio of 0.8 over 9 years. What is its $t$ statistic?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.4,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "t statistic",
+        "accept": "2.4 exactly: $0.8 \\times \\sqrt 9$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "times",
+            "value": 7.2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "divide",
+            "value": 0.2667,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "divT",
+            "value": 0.0889,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the Sharpe ratio by $\\sqrt T$."
+        },
+        {
+          "rung": "point",
+          "text": "Here $\\sqrt 9 = 3$."
+        },
+        {
+          "rung": "step",
+          "text": "$0.8 \\times 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t = 0.8 \\times 3 = 2.4$.",
+        "generic": "Not quite right. Use $t = \\mathrm{SR}\\sqrt T$.",
+        "byKey": {
+          "times": "You multiplied by $T$. The standard error falls with $\\sqrt T$, so multiply by $\\sqrt 9 = 3$.",
+          "divide": "You divided by $\\sqrt T$. Dividing by the standard error $1/\\sqrt T$ multiplies by $\\sqrt T$.",
+          "divT": "You divided by $T$. Multiply by $\\sqrt T$ instead."
+        }
+      },
+      "explain": {
+        "text": "$t = 0.8 \\times \\sqrt 9 = 2.4$: the Sharpe sits 2.4 standard errors above 0. A no-skill strategy does this with chance $P(Z \\ge 2.4) = 0.008$. For one strategy chosen in advance, that is strong evidence."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The best of a hundred",
+      "prose": "Now a researcher tries 100 strategies over 5 years. Every one has true Sharpe 0. She keeps the best. Each run below is one such search, and the bars show the best Sharpe it found.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "bins": {
+            "min": 0,
+            "max": 2.4,
+            "width": 0.1
+          },
+          "xLabel": "Best Sharpe among 100 noise strategies, 5 years",
+          "yLabel": "Share of searches",
+          "proportion": true,
+          "sim": {
+            "trials": [
+              10,
+              100,
+              1000
+            ],
+            "outcome": "max(n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n()) / sqrt(5)",
+            "seed": 77
+          }
+        },
+        "state": {
+          "ran": 0
+        },
+        "derive": {
+          "caption": "{{(ran).toLocaleString('en-GB')}} searches. Average best Sharpe: {{fixed(0.05 * values.b0 + 0.15 * values.b1 + 0.25 * values.b2 + 0.35 * values.b3 + 0.45 * values.b4 + 0.55 * values.b5 + 0.65 * values.b6 + 0.75 * values.b7 + 0.85 * values.b8 + 0.95 * values.b9 + 1.05 * values.b10 + 1.15 * values.b11 + 1.25 * values.b12 + 1.35 * values.b13 + 1.45 * values.b14 + 1.55 * values.b15 + 1.65 * values.b16 + 1.75 * values.b17 + 1.85 * values.b18 + 1.95 * values.b19 + 2.05 * values.b20 + 2.15 * values.b21 + 2.25 * values.b22 + 2.35 * values.b23, 2)}}"
+        }
+      },
+      "question": "Run at least 1,000 searches. What is the average best Sharpe?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.12,
+        "tol": {
+          "abs": 0.05
+        },
+        "label": "Average best Sharpe",
+        "accept": "any value from 1.07 to 1.17. The exact mean is $E[\\max] / \\sqrt 5 = 2.508 / 2.236 = 1.12$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.03
+            }
+          },
+          {
+            "id": "se",
+            "value": 0.447,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Press Run 1,000 and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The caption averages the best Sharpe over the searches you ran."
+        },
+        {
+          "rung": "step",
+          "text": "It settles near 1.1."
+        }
+      ],
+      "feedback": {
+        "correct": "About 1.12, from strategies with no skill at all.",
+        "generic": "Not quite right. Run 1,000 searches and read the average in the caption.",
+        "byKey": {
+          "zero": "You expected noise to average 0. Each strategy does, but the best of 100 does not.",
+          "se": "That is one strategy's standard error, $1/\\sqrt 5$. The best of 100 sits much higher."
+        }
+      },
+      "explain": {
+        "text": "The best of 100 noise strategies averages a Sharpe of about 1.12 over 5 years. Its $t$ is $1.12 \\times \\sqrt 5 = 2.5$, which looks significant for one test. Every one of these strategies is noise.",
+        "canvas": {
+          "ran": 1000
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A Sharpe of 1.0 from nothing",
+      "prose": "Same searches. A Sharpe of 1.0 over 5 years would impress most investors. How often does the best of 100 noise strategies reach it?",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "bins": {
+            "min": 0,
+            "max": 2.4,
+            "width": 0.1
+          },
+          "xLabel": "Best Sharpe among 100 noise strategies, 5 years",
+          "yLabel": "Share of searches",
+          "proportion": true,
+          "sim": {
+            "trials": [
+              10,
+              100,
+              1000
+            ],
+            "outcome": "max(n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n(), n()) / sqrt(5)",
+            "seed": 77
+          }
+        },
+        "state": {
+          "ran": 0
+        },
+        "derive": {
+          "caption": "{{(ran).toLocaleString('en-GB')}} searches. Share with best Sharpe 1.0 or more: {{fixed(total(['b10', 'b11', 'b12', 'b13', 'b14', 'b15', 'b16', 'b17', 'b18', 'b19', 'b20', 'b21', 'b22', 'b23']), 3)}}"
+        }
+      },
+      "question": "Run at least 1,000 searches. What share found a best Sharpe of 1.0 or more?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.72,
+        "tol": {
+          "abs": 0.04
+        },
+        "label": "Share of searches reaching 1.0",
+        "accept": "any value from 0.68 to 0.76. Exactly, $1 - \\Phi(\\sqrt 5)^{100} = 0.72$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.0127,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "rest",
+            "value": 0.28,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run 1,000 and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The caption adds the bars from 1.0 upwards."
+        },
+        {
+          "rung": "step",
+          "text": "It settles near 0.72."
+        }
+      ],
+      "feedback": {
+        "correct": "About 72% of searches over pure noise reach 1.0.",
+        "generic": "Not quite right. Run 1,000 searches and read the share in the caption.",
+        "byKey": {
+          "one": "That is the chance for one strategy, $1 - \\Phi(\\sqrt 5) = 0.013$. The search had 100 tries.",
+          "rest": "That is the share that stayed below 1.0."
+        }
+      },
+      "explain": {
+        "text": "About 72% of searches over noise find a best Sharpe of 1.0 or more. Exactly, $1 - \\Phi(\\sqrt 5)^{100} = 0.72$. A 1.0 that was the best of 100 is what no skill usually produces.",
+        "canvas": {
+          "ran": 1000
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Raise the bar with $N$",
+      "prose": "After trying $N$ strategies, the best must clear a Bonferroni bar: $t \\ge z_{1 - 0.05/N}$, one-sided. Dividing by $\\sqrt T$ turns that into a Sharpe. The curve is that bar for a 5-year record.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            2.0
+          ],
+          "xLabel": "Strategies tried $N$",
+          "yLabel": "Sharpe the best must clear",
+          "xStep": 20,
+          "yStep": 0.5,
+          "params": {
+            "T": 5
+          },
+          "functions": [
+            {
+              "id": "f",
+              "expr": "(sqrt(-2*ln(0.05/x)) - (2.515517 + 0.802853*sqrt(-2*ln(0.05/x)) + 0.010328*(-2*ln(0.05/x)))/(1 + 1.432788*sqrt(-2*ln(0.05/x)) + 0.189269*(-2*ln(0.05/x)) + 0.001308*(-2*ln(0.05/x))*sqrt(-2*ln(0.05/x))))/sqrt(T)",
+              "label": "bar for 5 years",
+              "domain": [
+                1,
+                100
+              ],
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p1",
+              "x": 1,
+              "y": 0.736,
+              "on": "f",
+              "label": ""
+            }
+          ]
+        },
+        "derive": {
+          "caption": "$N = {{p1.x}}$: the best needs a Sharpe of {{fixed(p1.y, 2)}} over 5 years"
+        },
+        "controls": [
+          {
+            "bind": "points.p1.x",
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "start": 1,
+            "label": "Strategies tried $N$"
+          }
+        ]
+      },
+      "question": "Set $N = 50$. What Sharpe must the best of 50 clear? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.38,
+        "tol": {
+          "abs": 0.011
+        },
+        "label": "Sharpe the best of 50 must clear",
+        "accept": "1.38: $z_{0.999} / \\sqrt 5 = 3.09 / 2.236$, give or take 0.01.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.74,
+            "tol": {
+              "abs": 0.011
+            }
+          },
+          {
+            "id": "t",
+            "value": 3.09,
+            "tol": {
+              "abs": 0.011
+            }
+          },
+          {
+            "id": "rule",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.011
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide $N$ to 50 and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The bar is $z_{1 - 0.05/50} / \\sqrt 5$, and $z_{0.999} = 3.09$.",
+          "highlight": [
+            "p1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3.09 / 2.236$."
+        }
+      ],
+      "feedback": {
+        "correct": "1.38 over 5 years for the best of 50.",
+        "generic": "Not quite right. Read the caption at $N = 50$, or compute $3.09 / \\sqrt 5$.",
+        "byKey": {
+          "one": "That is the bar for one strategy, $1.645 / \\sqrt 5$. Set $N = 50$.",
+          "t": "That is the bar on $t$. Divide by $\\sqrt 5$ to turn it into a Sharpe ratio.",
+          "rule": "That is the bar for 20 strategies. Set $N = 50$."
+        }
+      },
+      "explain": {
+        "text": "For $N = 50$ the bar is $z_{0.999} / \\sqrt 5 = 3.09 / 2.236 = 1.38$. With one strategy it was $1.645 / 2.236 = 0.74$. The bar rises fast at first, then slowly: raise it with every strategy tried.",
+        "canvas": {
+          "points": {
+            "p1": {
+              "x": 50
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "The best of fifty",
+      "prose": "A manager reports a Sharpe of 1.5 over 2 years, so $t = 1.5\\sqrt 2 = 2.12$. Later you learn it was the best of 50 strategies she ran. The curve is the bar for a 2-year record.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            3.0
+          ],
+          "xLabel": "Strategies tried $N$",
+          "yLabel": "Sharpe the best must clear",
+          "xStep": 20,
+          "yStep": 0.5,
+          "params": {
+            "T": 2
+          },
+          "functions": [
+            {
+              "id": "f",
+              "expr": "(sqrt(-2*ln(0.05/x)) - (2.515517 + 0.802853*sqrt(-2*ln(0.05/x)) + 0.010328*(-2*ln(0.05/x)))/(1 + 1.432788*sqrt(-2*ln(0.05/x)) + 0.189269*(-2*ln(0.05/x)) + 0.001308*(-2*ln(0.05/x))*sqrt(-2*ln(0.05/x))))/sqrt(T)",
+              "label": "bar for 2 years",
+              "domain": [
+                1,
+                100
+              ],
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p50",
+              "x": 50,
+              "y": 2.185,
+              "label": "N = 50: 2.19"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "hers",
+              "y": 1.5,
+              "label": "her 1.5"
+            }
+          ]
+        }
+      },
+      "question": "Is her record evidence of skill?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one-test",
+            "text": "Yes: $t = 2.12$ clears 1.96",
+            "why": "You used the bar for one test. She ran 50, so the best must clear $z_{0.999} = 3.09$."
+          },
+          {
+            "id": "right",
+            "text": "No: the best of 50 over 2 years must clear a Sharpe of about 2.19",
+            "correct": true
+          },
+          {
+            "id": "size",
+            "text": "Yes: a Sharpe of 1.5 is high for any fund",
+            "why": "You judged the size, not the noise. Over 2 years the standard error is 0.71, so 1.5 is only 2.1 errors from 0."
+          },
+          {
+            "id": "never",
+            "text": "No: a Sharpe ratio cannot be tested",
+            "why": "It can: $t = \\mathrm{SR}\\sqrt T$. This one simply fails the bar for 50 tries."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many strategies did she try?"
+        },
+        {
+          "rung": "point",
+          "text": "The marked point is the bar for $N = 50$; her 1.5 is the dashed line.",
+          "highlight": [
+            "p50",
+            "hers"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3.09 / \\sqrt 2 = 2.19$, above 1.5."
+        }
+      ],
+      "feedback": {
+        "correct": "1.5 is well short of the 2.19 bar for the best of 50.",
+        "generic": "Not quite right. Compare her 1.5 with the bar for 50 strategies over 2 years.",
+        "byKey": {
+          "one-test": "You used the bar for one test. She ran 50, so the best must clear $z_{0.999} = 3.09$, a Sharpe of 2.19."
+        }
+      },
+      "explain": {
+        "text": "Over 2 years the bar for the best of 50 is $3.09 / \\sqrt 2 = 2.19$, well above her 1.5. Even alone, 1.5 has standard error 0.71 and only $t = 2.12$. Two years and 50 tries cannot tell skill from luck."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "One rule, 25 years",
+      "prose": "Edge case. A pension fund fixed one rule in advance and has run it, unchanged, for 25 years. Nothing else was tried, so $N = 1$. Its Sharpe ratio is 0.5.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "normal",
+          "params": {
+            "mu": 0,
+            "sigma": 0.2
+          },
+          "x": [
+            -1,
+            1
+          ],
+          "xLabel": "Measured Sharpe ratio of a no-skill strategy"
+        },
+        "state": {
+          "shade": {
+            "from": 0.5,
+            "to": null
+          },
+          "caption": "No-skill Sharpe over 25 years: standard error 0.2"
+        }
+      },
+      "question": "What is its $t$ statistic?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "t statistic",
+        "accept": "2.5 exactly: $0.5 \\times \\sqrt{25}$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "times",
+            "value": 12.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "divide",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $t = \\mathrm{SR}\\sqrt T$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sqrt{25} = 5$.",
+          "highlight": [
+            "shade"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.5 \\times 5$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t = 0.5 \\times 5 = 2.5$, with no haircut needed.",
+        "generic": "Not quite right. Multiply the Sharpe by $\\sqrt{25}$.",
+        "byKey": {
+          "times": "You multiplied by $T$. Multiply by $\\sqrt T = 5$.",
+          "divide": "You divided by $\\sqrt T$. Multiply by it."
+        }
+      },
+      "explain": {
+        "text": "$t = 0.5 \\times \\sqrt{25} = 2.5$, and with $N = 1$ there is no bar to raise: one-sided $p = 0.006$. A modest Sharpe on a long, single, pre-set record is real evidence. Length and honesty about $N$ matter more than size."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why the best grows so slowly",
+      "prose": "Let $Z_1, \\dots, Z_N$ be the $t$ statistics of $N$ noise strategies, each close to a standard normal. How large is their maximum likely to be?",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "event",
+            "text": "$P(\\max_i Z_i > x) = P(\\text{some } Z_i > x)$, since the max passes $x$ exactly when one $Z_i$ does"
+          },
+          {
+            "id": "union",
+            "text": "$\\le N \\, P(Z > x)$, by the union bound"
+          },
+          {
+            "id": "tail",
+            "text": "$\\le N e^{-x^2/2}$, since a standard normal tail is at most $e^{-x^2/2}$ for $x \\ge 0$"
+          },
+          {
+            "id": "solve",
+            "text": "The bound falls below 1 once $x > \\sqrt{2 \\ln N}$, so the max seldom goes far past it"
+          },
+          {
+            "id": "sharpe",
+            "text": "Best noise Sharpe $\\approx \\sqrt{2 \\ln N} / \\sqrt T$, dividing $t$ by $\\sqrt T$"
+          }
+        ],
+        "answer": [
+          "event",
+          "union",
+          "tail",
+          "solve",
+          "sharpe"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by turning the maximum into an event about some $Z_i$."
+        },
+        {
+          "rung": "point",
+          "text": "The union bound comes before the normal tail."
+        },
+        {
+          "rung": "step",
+          "text": "Event, union bound, tail bound, solve for $x$, then divide by $\\sqrt T$."
+        }
+      ],
+      "feedback": {
+        "correct": "A union bound and a tail bound give $\\sqrt{2 \\ln N}$.",
+        "generic": "Not quite right. Bound the chance first, then solve for where the bound reaches 1.",
+        "byKey": {
+          "tail": "The tail bound applies to each term, so the union bound must come first.",
+          "solve": "Solving needs the bound $N e^{-x^2/2}$ first."
+        }
+      },
+      "explain": {
+        "text": "The bound says the max of $N$ noise $t$ statistics seldom passes $\\sqrt{2\\ln N}$: 3.03 for $N = 100$. Its actual mean is lower, 2.51, so the rule is a generous bar. Over 5 years it gives $3.03/\\sqrt 5 = 1.36$, against the 1.12 your searches found."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The flagship fund",
+      "prose": "A fund markets a 3-year Sharpe ratio of 1.2. Its parent firm ran 30 internal strategies over those 3 years and launched the best. The curve is the rule of thumb for the best of $N$ noise strategies.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            60
+          ],
+          "y": [
+            0,
+            2.5
+          ],
+          "xLabel": "Strategies tried $N$",
+          "yLabel": "Best noise Sharpe, 3 years",
+          "xStep": 10,
+          "yStep": 0.5,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "sqrt(2*ln(x))/sqrt(3)",
+              "label": "$\\sqrt{2 \\ln N}/\\sqrt 3$",
+              "domain": [
+                1,
+                60
+              ],
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "fund",
+              "y": 1.2,
+              "label": "fund: 1.2"
+            }
+          ]
+        }
+      },
+      "question": "By the rule of thumb, what Sharpe would the best of 30 noise strategies reach over 3 years? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.51,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Best noise Sharpe of 30 over 3 years",
+        "accept": "1.51: $\\sqrt{2 \\ln 30} / \\sqrt 3 = 2.608 / 1.732$, give or take 0.01.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "nosqrt",
+            "value": 2.61,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "se",
+            "value": 0.58,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "fund",
+            "value": 1.2,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $\\sqrt{2 \\ln N} / \\sqrt T$ with $N = 30$ and $T = 3$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\ln 30 = 3.401$.",
+          "highlight": [
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{6.802} = 2.608$, then divide by $\\sqrt 3 = 1.732$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 1.51: above the fund's 1.2.",
+        "generic": "Not quite right. Compute $\\sqrt{2 \\ln 30}$, then divide by $\\sqrt 3$.",
+        "byKey": {
+          "nosqrt": "That is $\\sqrt{2 \\ln 30}$, a $t$ statistic. Divide by $\\sqrt 3$ for a Sharpe ratio.",
+          "se": "That is one strategy's standard error, $1/\\sqrt 3$.",
+          "fund": "That is the fund's own figure. The question asks what noise alone would give."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt{2 \\ln 30} / \\sqrt 3 = 2.608 / 1.732 = 1.51$. A simulation gives a mean best of 1.18, so 1.2 is just what the best of 30 noise strategies looks like. The marketed number is not evidence of skill.",
+        "canvas": {
+          "points": [
+            {
+              "id": "p30",
+              "x": 30,
+              "y": 1.506,
+              "label": "N = 30: 1.51"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How long a record?",
+      "prose": "Same fund, best of 30. To pass a Bonferroni bar, its $t$ must clear $z_{1 - 0.05/30} = 2.94$. Suppose its Sharpe stays at 1.2.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            12
+          ],
+          "y": [
+            0,
+            3
+          ],
+          "xLabel": "Years of record $T$",
+          "yLabel": "Sharpe the best of 30 must clear",
+          "xStep": 2,
+          "yStep": 0.5,
+          "functions": [
+            {
+              "id": "h",
+              "expr": "2.935/sqrt(x)",
+              "label": "$2.94/\\sqrt T$",
+              "domain": [
+                0.5,
+                12
+              ]
+            }
+          ]
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "fund",
+              "y": 1.2,
+              "label": "fund: 1.2"
+            }
+          ]
+        }
+      },
+      "question": "How many years of record would a Sharpe of 1.2 need to clear the bar? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6.0,
+        "tol": {
+          "abs": 0.15
+        },
+        "label": "Years of record needed",
+        "accept": "6.0 years: $(2.94 / 1.2)^2 = 5.98$, give or take 0.15.",
+        "placeholder": "decimal",
+        "unit": "years",
+        "wrong": [
+          {
+            "id": "nosquare",
+            "value": 2.45,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "one-test",
+            "value": 1.9,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Solve $1.2\\sqrt T = 2.94$."
+        },
+        {
+          "rung": "point",
+          "text": "The record is long enough where the curve meets the dashed line.",
+          "highlight": [
+            "h",
+            "fund"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt T = 2.94 / 1.2 = 2.45$, so $T = 2.45^2$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 6 years.",
+        "generic": "Not quite right. Solve $1.2 \\sqrt T = 2.94$ for $T$.",
+        "byKey": {
+          "nosquare": "That is $\\sqrt T$. Square it to get $T$.",
+          "one-test": "That uses the one-test bar, 1.645. The fund was the best of 30."
+        }
+      },
+      "explain": {
+        "text": "Solve $1.2\\sqrt T = 2.94$: $T = (2.94 / 1.2)^2 = 6.0$ years. Even a fund whose true Sharpe is 1.2 clears that bar only about half the time after 6 years. Ask for the number of strategies tried and the record length together.",
+        "canvas": {
+          "points": [
+            {
+              "id": "cross",
+              "x": 5.98,
+              "y": 1.2,
+              "label": "6.0 years"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A Sharpe ratio over $T$ years has standard error about $1/\\sqrt T$, so $t = \\mathrm{SR}\\sqrt T$: 1.5 over 2 years is only $t = 2.12$.",
+      "The best of $N$ noise strategies has a Sharpe near $\\sqrt{2\\ln N}/\\sqrt T$, or a little below: about 1.1 for 100 strategies over 5 years.",
+      "Raise the bar with $N$: the best must clear $z_{1-\\alpha/N}/\\sqrt T$. One pre-set strategy with a long record needs no haircut."
+    ],
+    "formula": {
+      "name": "t statistic of a Sharpe ratio",
+      "tex": "t = \\mathrm{SR}\\sqrt{T}",
+      "note": "SR annualised, $T$ in years. The standard error $1/\\sqrt T$ holds for modest Sharpe ratios."
+    },
+    "trap": "A high Sharpe over a short record, chosen as the best of many, is what luck usually produces."
+  },
+  "quiz": [
+    {
+      "id": "q-se",
+      "difficulty": 2,
+      "prose": "A strategy has a 4-year track record.",
+      "question": "What is the standard error of its annualised Sharpe ratio?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Standard error",
+        "accept": "0.5: $1/\\sqrt 4$.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "quarter",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1/\\sqrt 4 = 0.5$.",
+        "generic": "Not quite right. The standard error is $1/\\sqrt T$.",
+        "byKey": {
+          "quarter": "That is $1/T$. Use $1/\\sqrt T$.",
+          "two": "That is $\\sqrt T$. Take its reciprocal."
+        }
+      },
+      "explain": {
+        "text": "The standard error is $1/\\sqrt T = 1/2 = 0.5$. So a measured Sharpe of 1.0 over 4 years is only 2 standard errors from 0."
+      }
+    },
+    {
+      "id": "q-best20",
+      "difficulty": 3,
+      "prose": "A strategy shows a Sharpe of 1.0 over 4 years, so $t = 2.0$. It was the best of 20 tried. The one-sided Bonferroni bar for 20 is $z_{0.9975} = 2.81$.",
+      "question": "What do you conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Not significant: $t = 2.0$ is below 2.81",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "Significant: $t = 2.0$ is above 1.645",
+            "why": "You used the one-test bar. It was the best of 20, so it must clear 2.81."
+          },
+          {
+            "id": "big",
+            "text": "Significant: a Sharpe of 1.0 is large",
+            "why": "Size alone is not evidence. Over 4 years the standard error is 0.5."
+          },
+          {
+            "id": "double",
+            "text": "Significant once the Sharpe is doubled for 4 years",
+            "why": "There is no doubling rule. Compare $t$ with the corrected bar."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2.0 falls short of 2.81.",
+        "generic": "Not quite right. Compare $t$ with the bar for the best of 20."
+      },
+      "explain": {
+        "text": "The best of 20 needs $t \\ge 2.81$, a Sharpe of $2.81 / 2 = 1.40$ over 4 years. At 1.0 it falls short. The same record from one strategy fixed in advance would pass at 1.645."
+      }
+    },
+    {
+      "id": "q-rule",
+      "difficulty": 3,
+      "prose": "Use the rule of thumb $\\sqrt{2 \\ln N} / \\sqrt T$.",
+      "question": "Roughly what Sharpe does the best of 50 noise strategies reach over 4 years? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.4,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Best noise Sharpe",
+        "accept": "1.40: $\\sqrt{2 \\ln 50} / 2 = 2.797 / 2$, give or take 0.01.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "nosqrt",
+            "value": 2.8,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "T",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2.797 / 2 = 1.40$.",
+        "generic": "Not quite right. Compute $\\sqrt{2 \\ln 50}$, then divide by $\\sqrt 4$.",
+        "byKey": {
+          "nosqrt": "That is the $t$ value. Divide by $\\sqrt 4 = 2$.",
+          "T": "You divided by $T = 4$. Divide by $\\sqrt T = 2$."
+        }
+      },
+      "explain": {
+        "text": "$2 \\ln 50 = 7.824$, whose square root is 2.797. Dividing by $\\sqrt 4 = 2$ gives 1.40. The true mean best is a little lower, $2.249 / 2 = 1.12$."
+      }
+    },
+    {
+      "id": "q-strongest",
+      "difficulty": 3,
+      "prose": "Three records, each with its one-sided Bonferroni bar on $t$.",
+      "question": "Which record is evidence of skill?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Sharpe 0.6 over 16 years, one rule fixed in advance: $t = 2.4$, bar 1.645",
+            "correct": true
+          },
+          {
+            "id": "short",
+            "text": "Sharpe 2.0 over 1 year, best of 10: $t = 2.0$, bar 2.58",
+            "why": "You were drawn by the big Sharpe. Its $t$ of 2.0 misses the bar of 2.58 for 10 tries."
+          },
+          {
+            "id": "mid",
+            "text": "Sharpe 1.5 over 2 years, best of 5: $t = 2.12$, bar 2.33",
+            "why": "$t = 2.12$ misses the bar of 2.33 for 5 tries."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only the 16-year, single-rule record clears its bar.",
+        "generic": "Not quite right. Compare each $t$ with its own bar."
+      },
+      "explain": {
+        "text": "Only the first record clears its bar: $0.6 \\times 4 = 2.4 > 1.645$. The other two have bigger Sharpe ratios but short records and several tries. Each falls below its corrected bar."
+      }
+    }
+  ]
+}
