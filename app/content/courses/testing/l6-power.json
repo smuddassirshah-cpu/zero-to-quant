@@ -1,0 +1,1310 @@
+{
+  "id": "l6-power",
+  "course": "testing",
+  "title": "Power and sample size",
+  "minutes": 14,
+  "objectives": [
+    "Compute the power of a test and choose a sample size."
+  ],
+  "skills": [
+    "ht-errors"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "A desk tries a new execution algorithm on 25 orders. If it works, it saves 0.2 basis points per order, with an sd of 1 bp. We test $H_0$: no saving, and reject when $z > 1.645$. If the saving is real, $z$ follows the $H_1$ curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3.5,
+            6.5
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "grid": false,
+          "height": 300,
+          "xLabel": "$z$",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f0",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$H_0$",
+              "colour": 1
+            },
+            {
+              "id": "f1",
+              "expr": "exp(-(x-k*sqrt(n))^2/2)/sqrt(2*pi)",
+              "label": "$H_1$",
+              "colour": 2
+            }
+          ],
+          "params": {
+            "n": 25,
+            "k": 0.2
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "cut",
+              "x": 1.645,
+              "label": "1.645"
+            }
+          ],
+          "area": [
+            {
+              "id": "alpha",
+              "f": "f0",
+              "from": 1.645,
+              "to": 9,
+              "colour": 1
+            },
+            {
+              "id": "power",
+              "f": "f1",
+              "from": 1.645,
+              "to": 14,
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "If the saving is real, about how likely is the test to reject $H_0$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "quarter",
+            "text": "About 26%",
+            "correct": true
+          },
+          {
+            "id": "ninety-five",
+            "text": "About 95%",
+            "why": "95% is $1 - \\alpha$, the chance of keeping $H_0$ when it is true. Under $H_1$, most of the curve sits left of the cut-off."
+          },
+          {
+            "id": "five",
+            "text": "About 5%",
+            "why": "5% is $\\alpha$, the chance of rejecting when there is no saving. The $H_1$ curve has more past the cut-off."
+          },
+          {
+            "id": "half",
+            "text": "About 50%",
+            "why": "That needs $H_1$ centred on the cut-off. Its centre, 1, is left of 1.645."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Rejecting means $z$ lands past 1.645. Under $H_1$, how much of the curve is there?"
+        },
+        {
+          "rung": "point",
+          "text": "The shaded part of the $H_1$ curve is the chance of rejecting.",
+          "highlight": [
+            "power"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$H_1$ is centred at 1, so the cut-off is 0.645 sd above its centre. About a quarter of a normal lies that far up."
+        }
+      ],
+      "feedback": {
+        "correct": "Only about a quarter of the $H_1$ curve lies past the cut-off.",
+        "generic": "Not quite right. Compare the shaded part of $H_1$ with the whole curve."
+      },
+      "explain": {
+        "text": "Under $H_1$ the statistic is centred at $0.2\\sqrt{25} = 1$, left of the cut-off. The test rejects only in the shaded tail: $\\Phi(1 - 1.645) = 0.26$. With 25 orders it usually misses a real saving.",
+        "canvas": {
+          "highlight": [
+            "power"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Now drag $n$, the number of orders in the test. The cut-off stays at 1.645. Watch where the $H_1$ curve sits, and the shaded share past the cut-off.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3.5,
+            6.5
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "grid": false,
+          "height": 300,
+          "xLabel": "$z$",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f0",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$H_0$",
+              "colour": 1
+            },
+            {
+              "id": "f1",
+              "expr": "exp(-(x-k*sqrt(n))^2/2)/sqrt(2*pi)",
+              "label": "$H_1$",
+              "colour": 2
+            }
+          ],
+          "params": {
+            "n": 25,
+            "k": 0.2
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "cut",
+              "x": 1.645,
+              "label": "1.645"
+            }
+          ],
+          "area": [
+            {
+              "id": "alpha",
+              "f": "f0",
+              "from": 1.645,
+              "to": 9,
+              "colour": 1
+            },
+            {
+              "id": "power",
+              "f": "f1",
+              "from": 1.645,
+              "to": 14,
+              "colour": 2
+            }
+          ]
+        },
+        "derive": {
+          "caption": "$n$ = {{n}} orders: $H_1$ centred at {{fixed(k*sqrt(n), 2)}}, chance of rejecting = {{fixed(values.power, 3)}}"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 1,
+            "max": 400,
+            "step": 1,
+            "label": "$n$",
+            "start": 25
+          }
+        ]
+      },
+      "question": "About how many orders give the test an 80% chance of rejecting?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "forty",
+            "text": "About 40",
+            "why": "At 40 orders the caption shows a chance near 0.35. Keep going."
+          },
+          {
+            "id": "hundred",
+            "text": "About 100",
+            "why": "At 100 orders the chance is about 0.64. You need more."
+          },
+          {
+            "id": "right",
+            "text": "About 155",
+            "correct": true
+          },
+          {
+            "id": "four-hundred",
+            "text": "About 400",
+            "why": "At 400 the chance is 0.99. 80% arrives much sooner."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Near 155 orders the shaded share reaches 0.80.",
+        "generic": "Not quite right. Drag $n$ until the caption reads about 0.800."
+      },
+      "explain": {
+        "text": "More orders push the $H_1$ centre, $0.2\\sqrt n$, further right while $H_0$ stays put. The centre has to reach about 2.49 for 80%. That happens at $n \\approx 155$.",
+        "canvas": {
+          "params": {
+            "n": 155
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The chance of rejecting $H_0$ when $H_1$ is true is the **power** of the test, $1 - \\beta$. Under $H_1$, $z$ is centred at $\\delta\\sqrt n/\\sigma$, here $0.2\\sqrt n$. Useful values: $\\Phi(0.355) = 0.639$, $\\Phi(2) = 0.977$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3.5,
+            6.5
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "grid": false,
+          "height": 300,
+          "xLabel": "$z$",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f0",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$H_0$",
+              "colour": 1
+            },
+            {
+              "id": "f1",
+              "expr": "exp(-(x-k*sqrt(n))^2/2)/sqrt(2*pi)",
+              "label": "$H_1$",
+              "colour": 2
+            }
+          ],
+          "params": {
+            "n": 100,
+            "k": 0.2
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "cut",
+              "x": 1.645,
+              "label": "1.645"
+            }
+          ],
+          "area": [
+            {
+              "id": "alpha",
+              "f": "f0",
+              "from": 1.645,
+              "to": 9,
+              "colour": 1
+            },
+            {
+              "id": "power",
+              "f": "f1",
+              "from": 1.645,
+              "to": 14,
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "What is the power with 100 orders?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.639,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "0.639 ± 0.002",
+        "wrong": [
+          {
+            "id": "beta",
+            "value": 0.361,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "no-cutoff",
+            "value": 0.977,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "alpha",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where is the $H_1$ curve centred when $n = 100$?"
+        },
+        {
+          "rung": "point",
+          "text": "The centre is $0.2\\sqrt{100} = 2$. Power is the $H_1$ area past 1.645.",
+          "highlight": [
+            "power"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Power $= P(z > 1.645) = \\Phi(2 - 1.645) = \\Phi(0.355)$."
+        }
+      ],
+      "feedback": {
+        "correct": "Power $= \\Phi(2 - 1.645) = 0.639$.",
+        "generic": "Not quite right. Find the centre of $H_1$, then the area past 1.645.",
+        "byKey": {
+          "beta": "0.361 is $\\beta$, the part of $H_1$ left of the cut-off. Power is the part past it.",
+          "no-cutoff": "$\\Phi(2)$ measures from the centre to 0, not to the cut-off. Subtract 1.645 first.",
+          "alpha": "0.05 is $\\alpha$, measured under $H_0$. Power is measured under $H_1$."
+        }
+      },
+      "explain": {
+        "text": "With 100 orders, $H_1$ is centred at 2, which is 0.355 past the cut-off. So power $= \\Phi(0.355) = 0.639$. Four times the data, from 25 to 100, took power from 0.26 to 0.64.",
+        "canvas": {
+          "highlight": [
+            "power"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Suppose the algorithm saves nothing, so $\\delta = 0$. Watch the $H_1$ curve. Any sample size gives the same picture.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3.5,
+            6.5
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "grid": false,
+          "height": 300,
+          "xLabel": "$z$",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f0",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$H_0$",
+              "colour": 1
+            },
+            {
+              "id": "f1",
+              "expr": "exp(-(x-k*sqrt(n))^2/2)/sqrt(2*pi)",
+              "label": "$H_1$",
+              "colour": 2
+            }
+          ],
+          "params": {
+            "n": 100,
+            "k": 0.2
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "cut",
+              "x": 1.645,
+              "label": "1.645"
+            }
+          ],
+          "area": [
+            {
+              "id": "alpha",
+              "f": "f0",
+              "from": 1.645,
+              "to": 9,
+              "colour": 1
+            },
+            {
+              "id": "power",
+              "f": "f1",
+              "from": 1.645,
+              "to": 14,
+              "colour": 2
+            }
+          ]
+        },
+        "enter": {
+          "params": {
+            "k": 0
+          }
+        }
+      },
+      "question": "What is the power of the test now?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.05,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "0.05",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "keep",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "old",
+            "value": 0.639,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the $H_1$ curve sit when $\\delta = 0$?"
+        },
+        {
+          "rung": "point",
+          "text": "With $\\delta = 0$ the $H_1$ curve lies on top of the $H_0$ curve.",
+          "highlight": [
+            "f1",
+            "f0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The chance of passing 1.645 is now the $H_0$ tail, which is $\\alpha$."
+        }
+      ],
+      "feedback": {
+        "correct": "With no effect, power equals $\\alpha = 0.05$.",
+        "generic": "Not quite right. With $\\delta = 0$, $H_1$ and $H_0$ are the same curve.",
+        "byKey": {
+          "zero": "You expected the test never to reject when there is nothing to find. It still rejects 5% of the time, by luck.",
+          "keep": "0.95 is the chance of keeping $H_0$. Power is the chance of rejecting.",
+          "old": "That was the power with a 0.2 bp saving. With no saving the $H_1$ curve has moved."
+        }
+      },
+      "explain": {
+        "text": "With $\\delta = 0$ the $H_1$ curve sits on the $H_0$ curve. The test rejects only by luck, so power $= \\alpha = 0.05$. No sample size can raise it.",
+        "canvas": {
+          "highlight": [
+            "alpha"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "For 80% power, the $H_1$ centre must sit $z_\\beta = 0.842$ past the cut-off $z_\\alpha = 1.645$. So we need $0.2\\sqrt n = 1.645 + 0.842$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3.5,
+            6.5
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "grid": false,
+          "height": 300,
+          "xLabel": "$z$",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f0",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$H_0$",
+              "colour": 1
+            },
+            {
+              "id": "f1",
+              "expr": "exp(-(x-k*sqrt(n))^2/2)/sqrt(2*pi)",
+              "label": "$H_1$",
+              "colour": 2
+            }
+          ],
+          "params": {
+            "n": 25,
+            "k": 0.2
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "cut",
+              "x": 1.645,
+              "label": "1.645"
+            }
+          ],
+          "area": [
+            {
+              "id": "alpha",
+              "f": "f0",
+              "from": 1.645,
+              "to": 9,
+              "colour": 1
+            },
+            {
+              "id": "power",
+              "f": "f1",
+              "from": 1.645,
+              "to": 14,
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "How many orders is that? Round up to a whole order.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 155,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "",
+        "placeholder": "orders",
+        "accept": "155 (154.6, rounded up)",
+        "wrong": [
+          {
+            "id": "no-square",
+            "value": 12.4,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "no-zbeta",
+            "value": 67.7,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "flipped",
+            "value": 0.247,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "rounded-down",
+            "value": 154,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Solve $0.2\\sqrt n = 2.487$ for $\\sqrt n$ first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sqrt n = 2.487 / 0.2 = 12.435$.",
+          "highlight": [
+            "f1",
+            "cut"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Square it: $n = 12.435^2 = 154.6$. Round up, since 154 orders fall just short."
+        }
+      ],
+      "feedback": {
+        "correct": "$n = (2.487/0.2)^2 = 154.6$, so 155 orders.",
+        "generic": "Not quite right. Divide 2.487 by 0.2, then square.",
+        "byKey": {
+          "no-square": "That is $\\sqrt n$. Square it to get $n$.",
+          "no-zbeta": "You set the centre on 1.645 plus nothing. That gives 50% power; 80% needs the extra 0.842.",
+          "flipped": "You multiplied by 0.2 instead of dividing. A small effect needs many orders, not few.",
+          "rounded-down": "154 orders give power just under 0.80. Round a sample size up."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt n = 2.487/0.2 = 12.435$, so $n = 154.6$, and we round up to 155. That matches what you found with the slider.",
+        "canvas": {
+          "params": {
+            "n": 155
+          },
+          "caption": "$n$ = 155: power = 0.801"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "The desk had already run the 25-order test. The result was not significant. The head of trading wrote: “The new algorithm does nothing.”",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3.5,
+            6.5
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "grid": false,
+          "height": 300,
+          "xLabel": "$z$",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f0",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$H_0$",
+              "colour": 1
+            },
+            {
+              "id": "f1",
+              "expr": "exp(-(x-k*sqrt(n))^2/2)/sqrt(2*pi)",
+              "label": "$H_1$",
+              "colour": 2
+            }
+          ],
+          "params": {
+            "n": 25,
+            "k": 0.2
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "cut",
+              "x": 1.645,
+              "label": "1.645"
+            }
+          ],
+          "area": [
+            {
+              "id": "alpha",
+              "f": "f0",
+              "from": 1.645,
+              "to": 9,
+              "colour": 1
+            },
+            {
+              "id": "beta",
+              "f": "f1",
+              "from": -6,
+              "to": 1.645,
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "What does the result actually show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "little",
+            "text": "Little: a real 0.2 bp saving would be missed 74% of the time",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "The algorithm saves nothing",
+            "why": "You read a miss as proof of no effect. With power 0.26, missing a real saving is the likely outcome."
+          },
+          {
+            "id": "ninety-five",
+            "text": "There is a 95% chance the algorithm saves nothing",
+            "why": "You turned $1 - \\alpha$ into a chance about the algorithm. 0.95 is the chance of keeping $H_0$ if it is true."
+          },
+          {
+            "id": "smaller",
+            "text": "The saving must be below 0.2 bp",
+            "why": "A real 0.2 bp saving gives this result 74% of the time. The data cannot rule it out."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If the saving were real, how often would this test fail to reject?"
+        },
+        {
+          "rung": "point",
+          "text": "That chance is $\\beta$, the shaded part of $H_1$.",
+          "highlight": [
+            "beta"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\beta = 1 - 0.26 = 0.74$. A miss is what we would usually see even if the saving is real."
+        }
+      ],
+      "feedback": {
+        "correct": "Not significant, with power 0.26, says very little.",
+        "generic": "Not quite right. Work out how often a real saving would also give a non-significant result.",
+        "byKey": {
+          "nothing": "You read a non-significant result as no effect. That reading needs high power, and this test had only 0.26."
+        }
+      },
+      "explain": {
+        "text": "Under $H_1$ this test keeps $H_0$ with chance $\\beta = 0.74$. So “not significant” was the likely outcome even with a real saving. A miss is evidence of no effect only when power is high.",
+        "canvas": {
+          "highlight": [
+            "beta"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You moved the $H_1$ centre to $\\delta\\sqrt n/\\sigma$ and read off the area past $z_\\alpha$: $$1 - \\beta = \\Phi\\left(\\frac{\\delta\\sqrt n}{\\sigma} - z_\\alpha\\right), \\qquad n = \\left(\\frac{(z_\\alpha + z_\\beta)\\,\\sigma}{\\delta}\\right)^2.$$ At 5% and 80% power, $z_\\alpha = 1.645$ and $z_\\beta = 0.842$.",
+      "question": "What is $(1.645 + 0.842)^2$, the constant in front of $(\\sigma/\\delta)^2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6.185,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "6.18 or 6.19 (6.185)",
+        "wrong": [
+          {
+            "id": "no-square",
+            "value": 2.487,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "sum-squares",
+            "value": 3.415,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2.487^2 = 6.185$; with unrounded $z$ values it is 6.18.",
+        "generic": "Not quite right. Add the two $z$ values, then square the sum.",
+        "byKey": {
+          "no-square": "That is the sum. Square it.",
+          "sum-squares": "You squared each term and added. Square the sum instead."
+        }
+      },
+      "explain": {
+        "text": "$(1.645 + 0.842)^2 = 2.487^2 = 6.185$, or 6.18 with unrounded $z$ values. So $n = 6.18\\,(\\sigma/\\delta)^2$ for 80% power at 5%. Halve the effect and the sample size quadruples."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "We derive the power formula. The test rejects when $z = \\bar x/(\\sigma/\\sqrt n)$ exceeds $z_\\alpha$. Under $H_1$ the true mean is $\\delta$, and $Z$ is standard normal.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Power $= P(z > z_\\alpha \\mid H_1)$: we reject when $z$ passes the cut-off"
+          },
+          {
+            "id": "s2",
+            "text": "Under $H_1$, $z = \\dfrac{\\delta\\sqrt n}{\\sigma} + Z$: the mean $\\delta$ is divided by the standard error $\\sigma/\\sqrt n$"
+          },
+          {
+            "id": "s3",
+            "text": "Power $= P\\left(Z > z_\\alpha - \\dfrac{\\delta\\sqrt n}{\\sigma}\\right)$: subtract the shift from both sides"
+          },
+          {
+            "id": "s4",
+            "text": "Power $= \\Phi\\left(\\dfrac{\\delta\\sqrt n}{\\sigma} - z_\\alpha\\right)$: by symmetry, $P(Z > -a) = \\Phi(a)$"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from what power means."
+        },
+        {
+          "rung": "point",
+          "text": "Next, say what $z$ looks like when $H_1$ is true."
+        },
+        {
+          "rung": "step",
+          "text": "Definition, then the shifted statistic, then subtract the shift, then use symmetry of the normal."
+        }
+      ],
+      "feedback": {
+        "correct": "Definition, shift, rearrange, symmetry.",
+        "generic": "Not quite right. Each line rewrites the one before it.",
+        "byKey": {
+          "s1": "The definition of power comes first.",
+          "s2": "You need the shifted form of $z$ before you can subtract the shift.",
+          "s3": "Subtracting the shift needs the shifted form of $z$ first.",
+          "s4": "Symmetry turns an upper tail into $\\Phi$, so it comes last."
+        }
+      },
+      "explain": {
+        "text": "Under $H_1$ the statistic is a standard normal shifted right by $\\delta\\sqrt n/\\sigma$. Power is the chance the shifted normal passes $z_\\alpha$. Setting it to $\\Phi(z_\\beta)$ and solving gives the sample size formula."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Power in code",
+      "prose": "`math.erf` gives the normal cdf, as `Phi` in the starter shows. Finish `power` so it returns $\\Phi(\\delta\\sqrt n/\\sigma - z_\\alpha)$. The loop prints the power at four sample sizes.",
+      "question": "Complete `power(delta, sigma, n, z_alpha)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import erf, sqrt\n\ndef Phi(x):\n    return 0.5 * (1 + erf(x / sqrt(2)))\n\ndef power(delta, sigma, n, z_alpha=1.645):\n    \"\"\"Power of a one-sided z test of mean 0 against mean delta.\"\"\"\n    shift = ...\n    return ...\n\nfor n in (25, 100, 155, 400):\n    print(n, round(power(0.2, 1, n), 3))\n",
+        "solution": "from math import erf, sqrt\n\ndef Phi(x):\n    return 0.5 * (1 + erf(x / sqrt(2)))\n\ndef power(delta, sigma, n, z_alpha=1.645):\n    \"\"\"Power of a one-sided z test of mean 0 against mean delta.\"\"\"\n    shift = delta * sqrt(n) / sigma\n    return Phi(shift - z_alpha)\n\nfor n in (25, 100, 155, 400):\n    print(n, round(power(0.2, 1, n), 3))\n",
+        "examples": [
+          {
+            "call": "power(0.2, 1, 25)",
+            "expect": "0.2594635928547797",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "power(0.2, 1, 25)",
+            "expect": "0.2594635928547797",
+            "compare": "isclose"
+          },
+          {
+            "call": "power(0.2, 1, 100)",
+            "expect": "0.6387052043836872",
+            "compare": "isclose"
+          },
+          {
+            "call": "power(0.2, 1, 155)",
+            "expect": "0.8009389746783474",
+            "compare": "isclose"
+          },
+          {
+            "call": "power(0.05, 1, 2473)",
+            "expect": "0.7999557961878343",
+            "compare": "isclose"
+          },
+          {
+            "call": "power(0, 1, 50)",
+            "expect": "0.04998490553912138",
+            "compare": "isclose"
+          },
+          {
+            "call": "power(0.5, 2, 64)",
+            "expect": "0.6387052043836872",
+            "compare": "isclose"
+          },
+          {
+            "call": "power(0.1, 1, 100, z_alpha=2.326)",
+            "expect": "0.09241984869059044",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, each compared with math.isclose. NumPy and SciPy are available but load slowly; this task needs only math."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The shift is the $H_1$ centre on the $z$ scale."
+        },
+        {
+          "rung": "point",
+          "text": "`shift = delta * sqrt(n) / sigma`."
+        },
+        {
+          "rung": "step",
+          "text": "Return `Phi(shift - z_alpha)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your function matches the formula on every test.",
+        "generic": "Some tests failed. Compute the shift $\\delta\\sqrt n/\\sigma$, subtract $z_\\alpha$, then apply `Phi`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that both `...` are replaced."
+        }
+      },
+      "explain": {
+        "text": "The loop prints 0.259, 0.639, 0.801 and 0.991. Power climbs fast at first, then flattens as it nears 1. With `delta = 0` the function returns $\\Phi(-1.645) = 0.05$, which is $\\alpha$.\n\n```python\nshift = delta * sqrt(n) / sigma\nreturn Phi(shift - z_alpha)\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A strategy's true mean daily return is 0.05%, with a daily sd of 1%. We test $H_0$: mean 0, one-sided at 5%, and want 80% power. Use $n = 6.18\\,(\\sigma/\\delta)^2$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -3.5,
+            6.5
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "grid": false,
+          "height": 300,
+          "xLabel": "$z$",
+          "yLabel": "density",
+          "functions": [
+            {
+              "id": "f0",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$H_0$",
+              "colour": 1
+            },
+            {
+              "id": "f1",
+              "expr": "exp(-(x-k*sqrt(n))^2/2)/sqrt(2*pi)",
+              "label": "$H_1$",
+              "colour": 2
+            }
+          ],
+          "params": {
+            "n": 25,
+            "k": 0.05
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "cut",
+              "x": 1.645,
+              "label": "1.645"
+            }
+          ],
+          "area": [
+            {
+              "id": "alpha",
+              "f": "f0",
+              "from": 1.645,
+              "to": 9,
+              "colour": 1
+            },
+            {
+              "id": "power",
+              "f": "f1",
+              "from": 1.645,
+              "to": 14,
+              "colour": 2
+            }
+          ]
+        },
+        "enter": {
+          "params": {
+            "n": 400
+          },
+          "caption": "400 days: $H_1$ centred at $0.05\\sqrt{400} = 1$"
+        }
+      },
+      "question": "How many trading days of returns does the test need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2473,
+        "tol": {
+          "rel": 0.002
+        },
+        "unit": "",
+        "placeholder": "days",
+        "accept": "About 2,473 days (2,472 with 6.18)",
+        "wrong": [
+          {
+            "id": "no-square",
+            "value": 123.6,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "root",
+            "value": 49.7,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "flipped",
+            "value": 0.0155,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out $\\sigma/\\delta$ first, in the same units."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sigma/\\delta = 1/0.05 = 20$.",
+          "highlight": [
+            "f1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$n = 6.18 \\times 20^2 = 6.18 \\times 400$."
+        }
+      ],
+      "feedback": {
+        "correct": "$n = 6.18 \\times 400 \\approx 2{,}473$ days: almost ten years.",
+        "generic": "Not quite right. Square $\\sigma/\\delta$ and multiply by 6.18.",
+        "byKey": {
+          "no-square": "You multiplied by $\\sigma/\\delta = 20$. The formula squares it.",
+          "root": "That is $\\sqrt n$. Square it to get the number of days.",
+          "flipped": "You used $\\delta/\\sigma$. A small edge needs many days, so the ratio is $\\sigma/\\delta = 20$."
+        }
+      },
+      "explain": {
+        "text": "$n = 6.18 \\times (1/0.05)^2 = 6.18 \\times 400 \\approx 2{,}473$ days, about 9.8 years of 252 trading days. The canvas shows 400 days: $H_1$ is centred at only 1. Most backtests are shorter than ten years, so most cannot reliably find an edge this size.",
+        "canvas": {
+          "caption": "400 days: power = 0.26"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Power is the chance a test rejects $H_0$ when the effect is real: $1 - \\beta$.",
+      "Power grows with $\\delta\\sqrt n/\\sigma$: a bigger effect, more data or less noise. With no effect it equals $\\alpha$.",
+      "For 80% power at 5%, $n = 6.18\\,(\\sigma/\\delta)^2$: halving the effect quadruples the data."
+    ],
+    "formula": {
+      "name": "Power of a one-sided z test",
+      "tex": "1 - \\beta = \\Phi\\left(\\dfrac{\\delta\\sqrt n}{\\sigma} - z_\\alpha\\right)",
+      "note": "Sample size for power $1 - \\beta$: $n = \\left((z_\\alpha + z_\\beta)\\,\\sigma/\\delta\\right)^2$."
+    },
+    "trap": "Not significant is not the same as no effect. With low power, missing a real effect is the likely outcome."
+  },
+  "quiz": [
+    {
+      "id": "q-double-n",
+      "difficulty": 2,
+      "prose": "The execution test has power 0.639 with 100 orders. With 200 orders, $H_1$ is centred at $0.2\\sqrt{200} = 2.828$. Useful value: $\\Phi(1.183) = 0.882$.",
+      "question": "What is the power with 200 orders?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.882,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "",
+        "placeholder": "decimal",
+        "accept": "0.882 ± 0.002",
+        "wrong": [
+          {
+            "id": "doubled",
+            "value": 1.278,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "old",
+            "value": 0.639,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "beta",
+            "value": 0.118,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Power $= \\Phi(2.828 - 1.645) = 0.882$.",
+        "generic": "Not quite right. Subtract the cut-off from the new centre, then use $\\Phi$.",
+        "byKey": {
+          "doubled": "You doubled the power with the data. Power is a chance, at most 1, and it grows with $\\sqrt n$ through $\\Phi$.",
+          "beta": "0.118 is $\\beta$. Power is $1 - \\beta$."
+        }
+      },
+      "explain": {
+        "text": "Doubling $n$ moves the centre by a factor of $\\sqrt 2$, from 2 to 2.828. Power rises from 0.639 to $\\Phi(1.183) = 0.882$, not to double."
+      }
+    },
+    {
+      "id": "q-fill-rate",
+      "difficulty": 3,
+      "prose": "A new order router may raise the fill rate from 60% to 61%. Each order fills or not, so $\\sigma = \\sqrt{0.6 \\times 0.4} = 0.49$. We test against the old 60%, one-sided at 5%, with 80% power.",
+      "question": "About how many orders does the test need? Use $n = 6.18\\,(\\sigma/\\delta)^2$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 14832,
+        "tol": {
+          "rel": 0.01
+        },
+        "unit": "",
+        "placeholder": "orders",
+        "accept": "About 14,800 orders ($6.18 \\times 0.24 / 0.0001$)",
+        "wrong": [
+          {
+            "id": "no-square",
+            "value": 303,
+            "tol": {
+              "rel": 0.02
+            }
+          },
+          {
+            "id": "delta-unsquared",
+            "value": 148,
+            "tol": {
+              "rel": 0.02
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$n = 6.18 \\times 0.24/0.01^2 \\approx 14{,}800$ orders.",
+        "generic": "Not quite right. With $\\delta = 0.01$, square $\\sigma/\\delta = 49$ and multiply by 6.18.",
+        "byKey": {
+          "no-square": "You multiplied by $\\sigma/\\delta$ without squaring it.",
+          "delta-unsquared": "You divided $\\sigma^2$ by $\\delta$, not by $\\delta^2$."
+        }
+      },
+      "explain": {
+        "text": "$\\sigma^2 = 0.24$ and $\\delta^2 = 0.0001$, so $n = 6.18 \\times 2{,}400 \\approx 14{,}832$ orders. A one-point gain in a rate is a tiny effect, so it needs thousands of trades."
+      }
+    },
+    {
+      "id": "q-halve-effect",
+      "difficulty": 2,
+      "prose": "A test needs 400 days to detect a mean return of 0.1% a day with 80% power.",
+      "question": "How many days does it need to detect 0.05% a day with the same power and sd?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1600,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "placeholder": "days",
+        "accept": "1,600",
+        "wrong": [
+          {
+            "id": "doubled",
+            "value": 800,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "same",
+            "value": 400,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "halved",
+            "value": 200,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Half the effect needs four times the data: 1,600 days.",
+        "generic": "Not quite right. $n$ grows with $(\\sigma/\\delta)^2$.",
+        "byKey": {
+          "doubled": "You doubled $n$ for half the effect. $n$ depends on $1/\\delta^2$, so it quadruples.",
+          "halved": "A smaller effect is harder to see, so it needs more data, not less."
+        }
+      },
+      "explain": {
+        "text": "$n \\propto (\\sigma/\\delta)^2$, so halving $\\delta$ multiplies $n$ by 4: $400 \\times 4 = 1{,}600$ days."
+      }
+    },
+    {
+      "id": "q-raise-alpha",
+      "difficulty": 3,
+      "prose": "The execution test has 100 orders and power 0.639 at $\\alpha = 0.05$. The desk relaxes the test to $\\alpha = 0.10$, so $z_\\alpha$ falls to 1.282.",
+      "question": "What happens to the power?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "up",
+            "text": "It rises, to $\\Phi(2 - 1.282) = 0.764$",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "It falls, because the test is weaker",
+            "why": "A lower cut-off rejects more often, under $H_1$ as well as under $H_0$."
+          },
+          {
+            "id": "same",
+            "text": "It stays at 0.639: power depends only on $n$",
+            "why": "Power depends on the cut-off too. Moving it left adds $H_1$ area past it."
+          },
+          {
+            "id": "ninety",
+            "text": "It becomes 0.90, which is $1 - \\alpha$",
+            "why": "$1 - \\alpha$ is the chance of keeping a true $H_0$. Power is measured under $H_1$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A lower cut-off buys power with more false alarms.",
+        "generic": "Not quite right. Move the cut-off to 1.282 and find the $H_1$ area past it."
+      },
+      "explain": {
+        "text": "Power $= \\Phi(2 - 1.282) = \\Phi(0.718) = 0.764$. The price is $\\alpha$ doubling to 0.10. Power and $\\alpha$ rise and fall together for a fixed $n$."
+      }
+    }
+  ]
+}

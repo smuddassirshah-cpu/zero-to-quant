@@ -1,0 +1,538 @@
+{
+  "id": "review-1",
+  "course": "markov",
+  "level": 1,
+  "items": [
+    {
+      "id": "rv-which-markov",
+      "difficulty": 2,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "Four processes, each described with the states given.",
+      "question": "Which one is a Markov chain in those states?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rating",
+            "text": "A bond's rating, where next year's chances depend only on this year's rating",
+            "correct": true
+          },
+          {
+            "id": "two-day",
+            "text": "A stock's day, Up or Down, where tomorrow depends on today and yesterday",
+            "why": "Tomorrow needs yesterday too, so Up or Down alone is not enough. The pair (yesterday, today) would be Markov."
+          },
+          {
+            "id": "age",
+            "text": "A trade, Open or Closed, where the chance of closing grows with how long it has been open",
+            "why": "The chance depends on the trade's age, which the state Open does not record."
+          },
+          {
+            "id": "ma",
+            "text": "A signal, Above or Below its 20-day average, with the next state set by the last 20 closes",
+            "why": "The next state depends on 20 past prices, not on Above or Below alone."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only the rating chain needs nothing but the present state.",
+        "generic": "Not quite right. Ask whether the stated state alone fixes the next step's chances."
+      },
+      "explain": {
+        "text": "A Markov chain's next step depends only on its current state. The rating chain says so directly. The other three use history the states do not hold: yesterday's move, the trade's age, the last 20 closes."
+      }
+    },
+    {
+      "id": "rv-missing-entry",
+      "difficulty": 2,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "A three-state chain has transition matrix, rows now and columns next, with one entry hidden.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.7,
+                  0.2,
+                  0.1
+                ],
+                [
+                  0.15,
+                  "?",
+                  0.25
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "label": "$\\mathbf{P}$"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the missing entry?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "accept": "0.6: the second row must add to 1, $1 - 0.15 - 0.25$.",
+        "label": "Missing entry",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "column",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one-only",
+            "value": 0.85,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 0.15 - 0.25 = 0.6$.",
+        "generic": "Not quite right. Each row of chances adds to 1.",
+        "byKey": {
+          "column": "You made the middle column add to 1. Rows add to 1: each row lists where one state goes next.",
+          "one-only": "You took away only 0.15. The 0.25 in the same row also counts."
+        }
+      },
+      "explain": {
+        "text": "Row 2 lists every place state 2 can go next, so it adds to 1: $0.15 + ? + 0.25 = 1$ gives 0.6. Columns need not add to anything."
+      }
+    },
+    {
+      "id": "rv-one-step",
+      "difficulty": 3,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "The regime chain $\\mathbf{P} = \\begin{pmatrix} 0.9 & 0.1 \\\\ 0.2 & 0.8 \\end{pmatrix}$, rows bull then bear. A model gives today's regime as bull 0.2, bear 0.8.",
+      "question": "What is the chance of bull next period?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.34,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.34: $0.2(0.9) + 0.8(0.2)$.",
+        "label": "Chance of bull next period",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "col-conv",
+            "value": 0.26,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "unweighted",
+            "value": 1.1,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "today",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\boldsymbol{\\pi}_1 = (0.34, 0.66)$.",
+        "generic": "Not quite right. Weight the bull column by today's chances.",
+        "byKey": {
+          "col-conv": "You multiplied the bull row by the vector, as in $\\mathbf{P}\\boldsymbol{\\pi}$. With rows as now, use $\\boldsymbol{\\pi}\\mathbf{P}$: the vector meets the bull column.",
+          "unweighted": "You added the bull column without weights.",
+          "today": "That is today's chance. One step moves it."
+        }
+      },
+      "explain": {
+        "text": "$\\boldsymbol{\\pi}_1 = \\boldsymbol{\\pi}_0\\mathbf{P}$, so the bull entry is $0.2(0.9) + 0.8(0.2) = 0.18 + 0.16 = 0.34$."
+      }
+    },
+    {
+      "id": "rv-two-step",
+      "difficulty": 3,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "The weather chain, states Sunny, Cloudy, Rain.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.6,
+                  0.3,
+                  0.1
+                ],
+                [
+                  0.3,
+                  0.4,
+                  0.3
+                ],
+                [
+                  0.2,
+                  0.5,
+                  0.3
+                ]
+              ],
+              "label": "$\\mathbf{P}$, order Sunny, Cloudy, Rain"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Today is Cloudy. What is the chance of Rain in two days?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.24,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.24: $0.3(0.1) + 0.4(0.3) + 0.3(0.3)$.",
+        "label": "Chance of Rain in two days",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "squared",
+            "value": 0.09,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-path",
+            "value": 0.12,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-step",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.03 + 0.12 + 0.09 = 0.24$.",
+        "generic": "Not quite right. Row Cloudy times column Rain: one term per middle day.",
+        "byKey": {
+          "squared": "You squared 0.3. That is only the path that rains tomorrow and the day after.",
+          "one-path": "That is the path through Cloudy tomorrow. Add the paths through Sunny and Rain.",
+          "one-step": "That is tomorrow's chance."
+        }
+      },
+      "explain": {
+        "text": "Sum over tomorrow's weather: through Sunny $0.3 \\times 0.1$, through Cloudy $0.4 \\times 0.3$, through Rain $0.3 \\times 0.3$. Total $0.24$, entry (Cloudy, Rain) of $\\mathbf{P}^2$."
+      }
+    },
+    {
+      "id": "rv-transient",
+      "difficulty": 3,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "A four-state chain, rows now and columns next.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  0.2,
+                  0.8,
+                  0,
+                  0
+                ],
+                [
+                  0.6,
+                  0.4,
+                  0,
+                  0
+                ],
+                [
+                  0.1,
+                  0,
+                  0.6,
+                  0.3
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "label": "$\\mathbf{P}$, states 1 to 4"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which states are transient? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "s1",
+            "text": "State 1",
+            "why": "1 and 2 send the chain only to each other, so each is revisited for ever: recurrent."
+          },
+          {
+            "id": "s2",
+            "text": "State 2",
+            "why": "2 and 1 send the chain only to each other, so each is revisited for ever: recurrent."
+          },
+          {
+            "id": "s3",
+            "text": "State 3",
+            "correct": true
+          },
+          {
+            "id": "s4",
+            "text": "State 4",
+            "why": "State 4 is absorbing, which makes it recurrent."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only state 3 can be left for good.",
+        "generic": "Not quite right. A state is transient when the chain can reach somewhere with no way back."
+      },
+      "explain": {
+        "text": "From 3 the chain can move to 1 or to 4, and neither leads back. So 3 is transient. States 1 and 2 form a closed class, and 4 is absorbing: all recurrent."
+      }
+    },
+    {
+      "id": "rv-ruin",
+      "difficulty": 3,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "You hold £1 and bet £1 at a time on a fair coin, stopping at £0 or £3.",
+      "question": "What is the chance the game is over within 2 bets?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "accept": "0.75: lose at once (0.5), or win then win (0.25).",
+        "label": "Chance the game is over",
+        "placeholder": "a decimal",
+        "wrong": [
+          {
+            "id": "one-bet",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "win-end",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "certain",
+            "value": 1
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.5 + 0.5 \\times 0.5 = 0.75$.",
+        "generic": "Not quite right. List where you can be after one bet, then after two.",
+        "byKey": {
+          "one-bet": "That is ending at £0 on the first bet. You can also win twice and reach £3.",
+          "win-end": "That is reaching £3 only. Going broke on the first bet also ends it.",
+          "certain": "Win then lose leaves you at £1 after two bets, still playing."
+        }
+      },
+      "explain": {
+        "text": "The first bet loses with chance 0.5 and you are absorbed at £0. Otherwise you are at £2, and the next bet reaches £3 with chance 0.5. So the game is over within 2 bets with chance $0.5 + 0.25 = 0.75$."
+      }
+    },
+    {
+      "id": "rv-duration",
+      "difficulty": 2,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "A high-volatility regime persists with chance 0.75 each day.",
+      "question": "How many days does it last on average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "days",
+        "accept": "4: $1/(1 - 0.75)$.",
+        "label": "Mean run",
+        "wrong": [
+          {
+            "id": "recip",
+            "value": 1.3333,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "odds",
+            "value": 3,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1/0.25 = 4$ days.",
+        "generic": "Not quite right. Divide 1 by the daily chance of leaving.",
+        "byKey": {
+          "recip": "You used $1/0.75$. Divide by the chance of leaving, 0.25.",
+          "odds": "You used $0.75/0.25$, which leaves out the first day."
+        }
+      },
+      "explain": {
+        "text": "The run length is geometric with exit chance 0.25 a day, so its mean is $1/0.25 = 4$ days."
+      }
+    },
+    {
+      "id": "rv-overdue",
+      "difficulty": 3,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "A strategy's drawdown state persists with chance 0.9 a week. The current drawdown has lasted 10 weeks, its average length.",
+      "question": "In the model, what is the chance the drawdown ends this week?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "0.1",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "0.5: it has reached its average, so it is as likely to end as not",
+            "why": "The average is not a deadline. The exit chance is 0.1 every week."
+          },
+          {
+            "id": "cum",
+            "text": "$1 - 0.9^{10} \\approx 0.65$",
+            "why": "That is the chance a fresh drawdown ends within 10 weeks. This one has already lasted them."
+          },
+          {
+            "id": "high",
+            "text": "Close to 1: drawdowns rarely outlast their average",
+            "why": "Many runs outlast the mean; the run length is geometric, with a long tail."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Memoryless: 0.1 a week, whatever the age.",
+        "generic": "Not quite right. The chain's next step depends only on the current state."
+      },
+      "explain": {
+        "text": "Only the current state, drawdown, matters, so the chance of leaving is $1 - 0.9 = 0.1$ this week as on the first. The expected time still to come is again 10 weeks."
+      }
+    },
+    {
+      "id": "rv-fit",
+      "difficulty": 4,
+      "skills": [
+        "mc-chains"
+      ],
+      "prose": "A model labels each day Calm or Stressed. Over the history, the moves out of Stressed are: 10 to Calm and 15 to Stressed.",
+      "question": "What is the estimated mean length of a Stressed regime, in days?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "days",
+        "accept": "2.5: $\\hat p = 15/25 = 0.6$, so $1/(1 - 0.6)$.",
+        "label": "Mean Stressed run",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "recip-stay",
+            "value": 1.6667,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "total",
+            "value": 25,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\hat p = 0.6$, so $1/0.4 = 2.5$ days.",
+        "generic": "Not quite right. Estimate the stay chance from the moves out of Stressed, then use $1/(1 - \\hat p)$.",
+        "byKey": {
+          "ratio": "You divided 15 by 10. The stay chance is 15 out of all 25 moves from Stressed.",
+          "recip-stay": "You used $1/\\hat p$. The mean run is 1 over the chance of leaving, $0.4$.",
+          "total": "That is the number of moves out of Stressed, not a run length."
+        }
+      },
+      "explain": {
+        "text": "From Stressed there were 25 moves, 15 of them staying, so $\\hat p = 0.6$ and the exit chance is $0.4$. The estimated mean run is $1/0.4 = 2.5$ days. The 10 moves to Calm also say there were about 10 Stressed runs."
+      }
+    }
+  ]
+}

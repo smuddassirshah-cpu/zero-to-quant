@@ -901,3 +901,9 @@ Raised later (markov level 2):
 312. `graph`: a per-edge `loopAngle` for self-loops (they always point away from the centroid and collide with neighbour edges on a line layout).
 
 Content note (markov): level 2 writes plain $P$ and $\pi$ to match the course.json objective; the notation rule says bold capitals for matrices. Settle one convention for the course when level 1 lands.
+
+Raised later (markov level 1):
+
+313. `array`: cells never shrink below 30px, so more than about 16 cells clip in the Why? modal; add a `wrap` option or a smaller minimum width.
+314. `graph`: a per-node choice of side for the distribution value label (it always draws under the node and collides with downward self-loops; see 312).
+315. `walk`: a seeded Markov-chain mode (`states`, `P`, `start`) so state paths can be simulated live rather than precomputed and indexed in `derive`.

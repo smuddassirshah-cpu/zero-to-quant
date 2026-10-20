@@ -1,0 +1,1330 @@
+{
+  "id": "l4-bias-against-variance",
+  "course": "estimation",
+  "title": "Bias against variance",
+  "minutes": 14,
+  "objectives": [
+    "Compare estimators by mean squared error.",
+    "Show that MSE is variance plus bias squared, and use shrinkage on betas and expected returns."
+  ],
+  "skills": [
+    "es-biasvar"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two analysts",
+      "prose": "A signal's true mean return per trade is $\\mu = 0.2\\%$. Eight times, a sample of 100 trades is drawn. Analyst A reports the sample mean $\\bar x$. Analyst B always reports half of it.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.5,
+            8.6
+          ],
+          "y": [
+            -0.15,
+            0.6
+          ],
+          "xTicks": "integer",
+          "xLabel": " ",
+          "yLabel": "Estimate (%)",
+          "height": 300,
+          "hlines": [
+            {
+              "id": "truth",
+              "y": 0.2,
+              "label": "true $\\mu = 0.2\\%$"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a1",
+              "x": 1,
+              "y": 0.2,
+              "colour": 1,
+              "tap": false,
+              "label": "A",
+              "labelPos": "e"
+            },
+            {
+              "id": "a2",
+              "x": 2,
+              "y": 0.41,
+              "colour": 1,
+              "tap": false,
+              "label": "A",
+              "labelPos": "e"
+            },
+            {
+              "id": "a3",
+              "x": 3,
+              "y": 0.35,
+              "colour": 1,
+              "tap": false,
+              "label": "A",
+              "labelPos": "e"
+            },
+            {
+              "id": "a4",
+              "x": 4,
+              "y": 0.34,
+              "colour": 1,
+              "tap": false,
+              "label": "A",
+              "labelPos": "e"
+            },
+            {
+              "id": "a5",
+              "x": 5,
+              "y": 0.52,
+              "colour": 1,
+              "tap": false,
+              "label": "A",
+              "labelPos": "e"
+            },
+            {
+              "id": "a6",
+              "x": 6,
+              "y": -0.04,
+              "colour": 1,
+              "tap": false,
+              "label": "",
+              "labelPos": "e"
+            },
+            {
+              "id": "a7",
+              "x": 7,
+              "y": 0.07,
+              "colour": 1,
+              "tap": false,
+              "label": "",
+              "labelPos": "e"
+            },
+            {
+              "id": "a8",
+              "x": 8,
+              "y": -0.06,
+              "colour": 1,
+              "tap": false,
+              "label": "",
+              "labelPos": "e"
+            },
+            {
+              "id": "b1",
+              "x": 1,
+              "y": 0.1,
+              "colour": 2,
+              "tap": false,
+              "label": "B",
+              "labelPos": "e"
+            },
+            {
+              "id": "b2",
+              "x": 2,
+              "y": 0.205,
+              "colour": 2,
+              "tap": false,
+              "label": "B",
+              "labelPos": "e"
+            },
+            {
+              "id": "b3",
+              "x": 3,
+              "y": 0.175,
+              "colour": 2,
+              "tap": false,
+              "label": "B",
+              "labelPos": "e"
+            },
+            {
+              "id": "b4",
+              "x": 4,
+              "y": 0.17,
+              "colour": 2,
+              "tap": false,
+              "label": "B",
+              "labelPos": "e"
+            },
+            {
+              "id": "b5",
+              "x": 5,
+              "y": 0.26,
+              "colour": 2,
+              "tap": false,
+              "label": "B",
+              "labelPos": "e"
+            },
+            {
+              "id": "b6",
+              "x": 6,
+              "y": -0.02,
+              "colour": 2,
+              "tap": false,
+              "label": "",
+              "labelPos": "e"
+            },
+            {
+              "id": "b7",
+              "x": 7,
+              "y": 0.035,
+              "colour": 2,
+              "tap": false,
+              "label": "",
+              "labelPos": "e"
+            },
+            {
+              "id": "b8",
+              "x": 8,
+              "y": -0.03,
+              "colour": 2,
+              "tap": false,
+              "label": "",
+              "labelPos": "e"
+            }
+          ],
+          "caption": "Samples 1 to 8. Blue: A reports $\\bar x$. Orange: B reports $0.5\\,\\bar x$ from the same sample."
+        }
+      },
+      "question": "Whose estimates are usually closer to the true 0.2%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "B's: they are off-centre but tightly bunched",
+            "correct": true
+          },
+          {
+            "id": "a",
+            "text": "A's: they are centred on the truth",
+            "why": "You judged by the centre alone. A's dots are centred on 0.2 but scatter from −0.06 to 0.52; B's miss by less on six of the eight samples."
+          },
+          {
+            "id": "same",
+            "text": "Neither: they use the same data, so they are equally close",
+            "why": "Same data, different rules. Halving shrinks every miss caused by noise, at the price of a fixed miss of 0.1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each sample, compare how far A's dot and B's dot sit from the dashed line."
+        },
+        {
+          "rung": "point",
+          "text": "A's widest misses are samples 5 and 8: 0.52 and −0.06.",
+          "highlight": [
+            "a5",
+            "a8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "B is closer on six of the eight samples. On average B's squared miss is 0.018 against A's 0.041."
+        }
+      ],
+      "feedback": {
+        "correct": "B is biased, yet usually closer.",
+        "generic": "Not quite right. Look at how far each dot is from 0.2, not at where the dots centre."
+      },
+      "explain": {
+        "text": "B is closer on six of the eight samples. The average squared miss, the **mean squared error**, is 0.018 for B and 0.041 for A. B pays a steady miss of 0.1 to cut the noise in half.",
+        "canvas": {
+          "highlight": [
+            "b1",
+            "b2",
+            "b3",
+            "b4",
+            "b5",
+            "b6",
+            "b7",
+            "b8"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Any weight you like",
+      "prose": "Generalise B: report $w\\bar x$ for a weight $w$ between 0 and 1. Here $\\bar x$ has variance $\\sigma^2 / n = 0.04$ (%²), from 100 trades with sd 2%. Drag P along the solid curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.05
+          ],
+          "xLabel": " ",
+          "yLabel": "Error (%²)",
+          "height": 300,
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "0.04*x^2 + 0.04*(1-x)^2",
+              "label": "MSE"
+            },
+            {
+              "id": "var",
+              "expr": "0.04*x^2",
+              "label": "variance",
+              "dashed": true,
+              "colour": 2,
+              "labelSide": "below"
+            },
+            {
+              "id": "bias2",
+              "expr": "0.04*(1-x)^2",
+              "label": "bias²",
+              "dashed": true,
+              "colour": 3,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 1.0,
+              "y": 0.04,
+              "on": "f",
+              "drag": true,
+              "label": "P"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "Weight on the sample mean $w = {{fixed(P.x, 2)}}$: MSE {{fixed(0.04 * P.x * P.x + 0.04 * (1 - P.x) * (1 - P.x), 4)}}"
+        }
+      },
+      "question": "Which weight gives the smallest mean squared error?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "one",
+            "text": "$w = 1$",
+            "why": "You stayed at the unbiased rule. Drag P left from 1: the curve falls at first."
+          },
+          {
+            "id": "right",
+            "text": "$w = 0.5$",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "$w = 0$",
+            "why": "At $w = 0$ the estimate ignores the data and always says 0. The curve rises back to 0.04 there."
+          },
+          {
+            "id": "eight",
+            "text": "$w = 0.8$",
+            "why": "At 0.8 the MSE is 0.0272, still above the bottom. Keep dragging left."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drag P and watch the MSE in the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The lowest point of the solid curve is where the two dashed curves cross.",
+          "highlight": [
+            "f",
+            "var",
+            "bias2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $w = 0.5$ the MSE is 0.02, half the plain mean's 0.04."
+        }
+      ],
+      "feedback": {
+        "correct": "At $w = 0.5$ the MSE halves, from 0.04 to 0.02.",
+        "generic": "Not quite right. Find the lowest point of the solid curve."
+      },
+      "explain": {
+        "text": "Shrinking $\\bar x$ towards 0 trades a little bias for less variance. Here the best weight is $w = 0.5$, where the MSE is 0.02. The variance falls as $w^2$ while the bias grows only as $1 - w$.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0.5,
+              "y": 0.02
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Bias and variance by name",
+      "prose": "For an estimator $\\hat\\theta$ of $\\theta$: the **bias** is $E[\\hat\\theta] - \\theta$, the **variance** is $\\mathrm{Var}(\\hat\\theta)$, and the **MSE** is $E[(\\hat\\theta - \\theta)^2]$. Here $E[\\bar X] = 0.2$ and $\\mathrm{Var}(\\bar X) = 0.04$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.05
+          ],
+          "xLabel": " ",
+          "yLabel": "Error (%²)",
+          "height": 300,
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "0.04*x^2 + 0.04*(1-x)^2",
+              "label": "MSE"
+            },
+            {
+              "id": "var",
+              "expr": "0.04*x^2",
+              "label": "variance",
+              "dashed": true,
+              "colour": 2,
+              "labelSide": "below"
+            },
+            {
+              "id": "bias2",
+              "expr": "0.04*(1-x)^2",
+              "label": "bias²",
+              "dashed": true,
+              "colour": 3,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.5,
+              "y": 0.02,
+              "on": "f",
+              "drag": false,
+              "label": "P"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "Weight on the sample mean $w = {{fixed(P.x, 2)}}$: MSE {{fixed(0.04 * P.x * P.x + 0.04 * (1 - P.x) * (1 - P.x), 4)}}"
+        }
+      },
+      "question": "Fill in the row for B's rule, $0.5\\bar X$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Estimator",
+          "Bias (%)",
+          "Variance (%²)",
+          "MSE (%²)"
+        ],
+        "rows": [
+          [
+            "$\\bar X$",
+            "0",
+            "0.04",
+            "0.04"
+          ],
+          [
+            "$0.5\\,\\bar X$",
+            {
+              "edit": true,
+              "answer": -0.1,
+              "tol": {
+                "abs": 0.0005
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0.01,
+              "tol": {
+                "abs": 0.0005
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0.02,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$E[0.5\\bar X] = 0.5 \\times 0.2$, and a constant comes out of a variance squared."
+        },
+        {
+          "rung": "point",
+          "text": "Read the MSE off the curve at P.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bias $0.1 - 0.2 = -0.1$; variance $0.25 \\times 0.04 = 0.01$; MSE 0.02."
+        }
+      ],
+      "feedback": {
+        "correct": "Bias −0.1, variance 0.01, MSE 0.02.",
+        "generic": "Not quite right. Work out $E[0.5\\bar X]$ and $\\mathrm{Var}(0.5\\bar X)$ from the two given facts.",
+        "byKey": {
+          "r1c1": "The bias is $E[0.5\\bar X] - \\mu = 0.1 - 0.2$. It is negative: B aims low.",
+          "r1c2": "$\\mathrm{Var}(0.5\\bar X) = 0.5^2 \\times 0.04$. The constant comes out squared.",
+          "r1c3": "Read the MSE where P sits on the solid curve, at $w = 0.5$."
+        }
+      },
+      "explain": {
+        "text": "B's rule has bias −0.1, variance 0.01 and MSE 0.02. Notice $0.01 + (-0.1)^2 = 0.02$. The MSE is the variance plus the bias squared, and the next screen proves it.",
+        "canvas": {
+          "caption": "At $w = 0.5$: variance 0.01, bias² 0.01, MSE 0.02"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Ignore the data",
+      "prose": "At $w = 0$ the rule always reports 0, whatever the trades did. A constant has no variance at all. P sits at $w = 0$: its MSE is 0.04, the same as the plain mean's.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.05
+          ],
+          "xLabel": " ",
+          "yLabel": "Error (%²)",
+          "height": 300,
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "0.04*x^2 + 0.04*(1-x)^2",
+              "label": "MSE"
+            },
+            {
+              "id": "var",
+              "expr": "0.04*x^2",
+              "label": "variance",
+              "dashed": true,
+              "colour": 2,
+              "labelSide": "below"
+            },
+            {
+              "id": "bias2",
+              "expr": "0.04*(1-x)^2",
+              "label": "bias²",
+              "dashed": true,
+              "colour": 3,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.0,
+              "y": 0.04,
+              "on": "f",
+              "drag": false,
+              "label": "P"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "Weight on the sample mean $w = {{fixed(P.x, 2)}}$: MSE {{fixed(0.04 * P.x * P.x + 0.04 * (1 - P.x) * (1 - P.x), 4)}}"
+        }
+      },
+      "question": "If the true mean were 0.5% instead, what would the MSE of \"always 0\" be, in %²?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.25,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "MSE of always reporting 0",
+        "placeholder": "a number",
+        "accept": "0.25: variance 0, bias $0 - 0.5$, so MSE $= 0.5^2$.",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "unsquared",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "var-only",
+            "value": 0,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A constant never varies, so all its error is bias."
+        },
+        {
+          "rung": "point",
+          "text": "The bias is $0 - \\mu$.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bias $-0.5$, squared: $0.25$."
+        }
+      ],
+      "feedback": {
+        "correct": "Zero variance, all bias: $0.5^2 = 0.25$.",
+        "generic": "Not quite right. With no variance, the MSE is the bias squared.",
+        "byKey": {
+          "old": "0.04 is the answer when the truth is 0.2%. The bias grows with the truth: $0 - 0.5$.",
+          "unsquared": "0.5 is the size of the bias. The MSE squares it.",
+          "var-only": "The variance is 0, but the bias is not. A constant that is wrong is wrong every time."
+        }
+      },
+      "explain": {
+        "text": "\"Always 0\" has zero variance, so its MSE is all bias: $0.5^2 = 0.25$, six times the plain mean's 0.04. That is the edge case: a constant is only as good as the guess behind it. Shrinkage helps only when the target is near the truth.",
+        "canvas": {
+          "caption": "At $w = 0$: variance 0, so MSE $= \\mathrm{bias}^2 = \\mu^2$"
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Why the MSE splits",
+      "prose": "Show that for any estimator, $\\mathrm{MSE} = \\mathrm{Var}(\\hat\\theta) + \\mathrm{bias}^2$. Write $m = E[\\hat\\theta]$, a fixed number.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "add",
+            "text": "$E[(\\hat\\theta - \\theta)^2] = E\\left[\\left((\\hat\\theta - m) + (m - \\theta)\\right)^2\\right]$: add and subtract $m$"
+          },
+          {
+            "id": "expand",
+            "text": "$= E[(\\hat\\theta - m)^2] + 2(m - \\theta)E[\\hat\\theta - m] + (m - \\theta)^2$: expand, and take the constant $m - \\theta$ outside $E$"
+          },
+          {
+            "id": "zero",
+            "text": "$= E[(\\hat\\theta - m)^2] + 0 + (m - \\theta)^2$: $E[\\hat\\theta - m] = m - m = 0$"
+          },
+          {
+            "id": "name",
+            "text": "$= \\mathrm{Var}(\\hat\\theta) + \\mathrm{bias}^2$: the first term is the variance, and $m - \\theta$ is the bias"
+          }
+        ],
+        "answer": [
+          "add",
+          "expand",
+          "zero",
+          "name"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by splitting the error into \"noise about $m$\" plus \"how far $m$ is from $\\theta$\"."
+        },
+        {
+          "rung": "point",
+          "text": "The cross term vanishes before the terms are named."
+        },
+        {
+          "rung": "step",
+          "text": "Add and subtract $m$, expand, kill the cross term, then name what is left."
+        }
+      ],
+      "feedback": {
+        "correct": "The cross term dies because $\\hat\\theta - m$ averages 0.",
+        "generic": "Not quite right. Begin by adding and subtracting $m$, then expand.",
+        "byKey": {
+          "zero": "The cross term has to appear before it can vanish. Expand first.",
+          "name": "Naming the pieces comes last, once the cross term has gone."
+        }
+      },
+      "explain": {
+        "text": "The error splits into noise around $m$ and a fixed offset $m - \\theta$. They do not interact, because the noise averages zero. So $\\mathrm{MSE} = \\mathrm{Var} + \\mathrm{bias}^2$, as $0.01 + 0.01 = 0.02$ showed."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Three ways to estimate $\\sigma^2$",
+      "prose": "Divide the sum of squares $SS = \\sum (x_i - \\bar x)^2$ by $c$. With $n = 5$: $c = 4$ gives $s^2$, and $c = 5$ is in the table. Use $E[SS / c] = 4 / c$ and $\\mathrm{Var}(SS / c) = 8 / c^2$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Fact, for 5 normal draws with $\\sigma^2 = 1$",
+            "Value"
+          ],
+          "rows": [
+            [
+              "$E\\left[\\sum (X_i - \\bar X)^2\\right] = (n - 1)\\sigma^2$",
+              "4"
+            ],
+            [
+              "$\\mathrm{Var}\\left(\\sum (X_i - \\bar X)^2\\right) = 2(n - 1)\\sigma^4$",
+              "8"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in bias, variance and MSE for $c = 4$ and $c = 6$. Give 3 decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Divide by $c$",
+          "Bias",
+          "Variance",
+          "MSE"
+        ],
+        "rows": [
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.002
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.002
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "5",
+            "−0.200",
+            "0.320",
+            "0.360"
+          ],
+          [
+            "6",
+            {
+              "edit": true,
+              "answer": -0.3333,
+              "tol": {
+                "abs": 0.002
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0.2222,
+              "tol": {
+                "abs": 0.002
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0.3333,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Bias is $4 / c - 1$; variance is $8 / c^2$; MSE is variance plus bias squared."
+        },
+        {
+          "rung": "point",
+          "text": "Check the $c = 5$ row: $0.8 - 1 = -0.2$, $8 / 25 = 0.32$, $0.32 + 0.04 = 0.36$.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$c = 4$: 0, 0.5, 0.5. $c = 6$: $-\\tfrac{1}{3}$, $\\tfrac{2}{9}$, $\\tfrac{2}{9} + \\tfrac{1}{9} = \\tfrac{1}{3}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Dividing by $n + 1 = 6$ gives the smallest MSE, 0.333.",
+        "generic": "Not quite right. Use bias $= 4 / c - 1$, variance $= 8 / c^2$, and add the bias squared.",
+        "byKey": {
+          "r0c3": "For $c = 4$ the bias is 0, so the MSE equals the variance, 0.5.",
+          "r2c1": "$4 / 6 - 1 = -0.333$. Dividing by more than $n - 1$ aims low.",
+          "r2c2": "$8 / 36 = 0.222$.",
+          "r2c3": "Add the bias squared: $0.222 + 0.111 = 0.333$."
+        }
+      },
+      "explain": {
+        "text": "The unbiased $s^2$ has MSE 0.5; dividing by 6 gets 0.333, a third lower. For normal samples, dividing by $n + 1$ always minimises the MSE. Unbiased is one virtue, not the only one.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Two volatility forecasts",
+      "prose": "Two models forecast next month's volatility for an options desk. Over many months, model A's errors average 0 with sd 3 vol points. Model B's errors average −1 vol point with sd 2.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Bias (vol points)",
+            "sd of error (vol points)"
+          ],
+          "rows": [
+            [
+              "A",
+              "0",
+              "3"
+            ],
+            [
+              "B",
+              "−1",
+              "2"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which model's forecasts have the smaller mean squared error?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A, because it is unbiased",
+            "why": "You read MSE as bias alone. A's variance is 9; B's MSE is $4 + 1 = 5$."
+          },
+          {
+            "id": "right",
+            "text": "B: its MSE is 5 against A's 9",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "They are equal, since each is out by about 3 overall",
+            "why": "You added the bias and the sd. MSE adds the variance and the bias squared: 9 against $4 + 1$."
+          },
+          {
+            "id": "cannot",
+            "text": "We cannot compare a biased model with an unbiased one",
+            "why": "MSE exists to compare them. It counts both kinds of error on one scale."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Square the sd to get each variance."
+        },
+        {
+          "rung": "point",
+          "text": "A: $3^2 + 0^2$. B: $2^2 + (-1)^2$.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A has MSE 9 and B has MSE 5."
+        }
+      ],
+      "feedback": {
+        "correct": "B misses by less on average, despite its bias.",
+        "generic": "Not quite right. Compute variance plus bias squared for each.",
+        "byKey": {
+          "a": "You read MSE as bias alone. A's variance is 9; B's MSE is $4 + 1 = 5$."
+        }
+      },
+      "explain": {
+        "text": "A: $0^2 + 3^2 = 9$. B: $(-1)^2 + 2^2 = 5$. B is steadier, and its known bias of −1 can even be added back. A desk that hedges on these forecasts trades less noise with B.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Bias against variance",
+      "prose": "Every estimator's error has two parts: $$E[(\\hat\\theta - \\theta)^2] = \\mathrm{Var}(\\hat\\theta) + \\left(E[\\hat\\theta] - \\theta\\right)^2.$$ Unbiased estimators set the second part to 0. Shrinking towards a target lowers the first part and raises the second.",
+      "question": "When does shrinking an estimate towards a target lower its MSE?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "When the variance it removes is more than the squared bias it adds",
+            "correct": true
+          },
+          {
+            "id": "always",
+            "text": "Always: less variance is always better",
+            "why": "You forgot the bias it adds. \"Always 0\" had no variance and an MSE of 0.25 when $\\mu = 0.5$."
+          },
+          {
+            "id": "never",
+            "text": "Never: any bias makes an estimator worse",
+            "why": "You ranked bias above everything. At $w = 0.5$ the MSE fell from 0.04 to 0.02."
+          },
+          {
+            "id": "target",
+            "text": "Only when the target is exactly the true value",
+            "why": "The target need not be exact. With $\\mu = 0.2$, shrinking towards 0 still halved the MSE."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Think of the two dashed curves on the MSE chart."
+        },
+        {
+          "rung": "step",
+          "text": "Shrinking pays while the fall in variance beats the rise in bias squared."
+        }
+      ],
+      "feedback": {
+        "correct": "Shrinkage is a trade, and it pays when the noise is large.",
+        "generic": "Not quite right. Weigh the two parts of the MSE against each other."
+      },
+      "explain": {
+        "text": "Shrinking from $w = 1$ to $w = 0.5$ removed 0.03 of variance and added 0.01 of bias squared. Noisy estimates, from short samples, gain most. That is why practitioners shrink betas and expected returns."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Shrinking a beta",
+      "prose": "A stock's beta, estimated from two years of weekly returns, is $\\hat\\beta = 1.6$. Betas across the market average about 1, and extreme estimates are partly noise. The Blume adjustment reports $0.67\\hat\\beta + 0.33$.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 2,
+          "step": 0.25,
+          "labels": 2
+        },
+        "state": {
+          "points": [
+            {
+              "id": "raw",
+              "x": 1.6,
+              "label": "raw $\\hat\\beta$",
+              "colour": 1
+            },
+            {
+              "id": "one",
+              "x": 1,
+              "label": "market average 1",
+              "colour": 3,
+              "labelPos": "below"
+            }
+          ]
+        }
+      },
+      "question": "What is the adjusted beta?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.402,
+        "tol": {
+          "abs": 0.003
+        },
+        "label": "Adjusted beta",
+        "placeholder": "a number",
+        "accept": "1.402: $0.67 \\times 1.6 + 0.33$.",
+        "wrong": [
+          {
+            "id": "no-add",
+            "value": 1.072,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "swapped",
+            "value": 1.198,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the raw beta by 0.67, then add 0.33."
+        },
+        {
+          "rung": "point",
+          "text": "The adjusted beta lies between the raw 1.6 and 1.",
+          "highlight": [
+            "raw",
+            "one"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.67 \\times 1.6 = 1.072$, and $1.072 + 0.33 = 1.402$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.072 + 0.33 = 1.402$: about a third of the way back to 1.",
+        "generic": "Not quite right. Compute $0.67 \\times 1.6 + 0.33$.",
+        "byKey": {
+          "no-add": "1.072 is $0.67 \\times 1.6$ alone. Add the 0.33 that pulls it towards 1.",
+          "swapped": "You swapped the weights: $0.33 \\times 1.6 + 0.67$. The raw estimate gets the larger weight, 0.67."
+        }
+      },
+      "explain": {
+        "text": "Blume's rule is shrinkage with $w = 0.67$ towards a target of 1. It moves 1.6 to 1.40, a third of the way to 1. The adjusted beta is biased towards 1, but it forecasts next period's beta better.",
+        "canvas": {
+          "points": {
+            "adj": {
+              "x": 1.402,
+              "label": "adjusted 1.40",
+              "colour": 2
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Shrinking expected returns",
+      "prose": "A portfolio manager has three stocks' average annual returns over five years: 14%, 2% and 8%. Their grand mean is 8%. Five years is short, so she moves each estimate halfway to the grand mean before building the portfolio.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a",
+              "label": "Stock A"
+            },
+            {
+              "id": "b",
+              "label": "Stock B"
+            },
+            {
+              "id": "c",
+              "label": "Stock C"
+            }
+          ],
+          "yLabel": "Expected return (%)",
+          "showValues": true,
+          "yMax": 16
+        },
+        "state": {
+          "values": {
+            "a": 14,
+            "b": 2,
+            "c": 8
+          },
+          "caption": "Sample means; grand mean 8%"
+        }
+      },
+      "question": "What is stock A's shrunk estimate?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.11,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "label": "Shrunk expected return for stock A, in %",
+        "placeholder": "for example 9.5",
+        "accept": "11%: $0.5 \\times 14\\% + 0.5 \\times 8\\%$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.07,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "grand",
+            "value": 0.08,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Halfway between 14% and 8%."
+        },
+        {
+          "rung": "point",
+          "text": "The grand mean is the target, as 1 was for beta.",
+          "highlight": [
+            "a",
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.5 \\times 14 + 0.5 \\times 8 = 11$."
+        }
+      ],
+      "feedback": {
+        "correct": "11%: halfway from 14% to the grand mean.",
+        "generic": "Not quite right. Move 14% halfway towards 8%.",
+        "byKey": {
+          "half": "7% is half of 14%: that shrinks towards 0. The target here is the grand mean, 8%.",
+          "grand": "8% is the target itself. Moving halfway stops at 11%."
+        }
+      },
+      "explain": {
+        "text": "The shrunk estimates are 11%, 5% and 8%: the spread between stocks halves. An optimiser fed raw means bets heavily on stock A's 14%, much of which is noise. Shrinking trades a little bias for far steadier weights.",
+        "canvas": {
+          "values": {
+            "a": 11,
+            "b": 5,
+            "c": 8
+          },
+          "caption": "Shrunk halfway to the grand mean: 11%, 5%, 8%"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "**Bias** is $E[\\hat\\theta] - \\theta$; the **mean squared error** $E[(\\hat\\theta - \\theta)^2]$ counts bias and noise together.",
+      "$\\mathrm{MSE} = \\mathrm{Var}(\\hat\\theta) + \\mathrm{bias}^2$, so a biased but steady estimator can beat an unbiased noisy one. A constant has zero variance and all bias.",
+      "Shrinking towards a sensible target, such as a beta towards 1 or returns towards the grand mean, trades a little bias for much less variance."
+    ],
+    "formula": {
+      "name": "Bias and variance",
+      "tex": "E[(\\hat\\theta - \\theta)^2] = \\mathrm{Var}(\\hat\\theta) + \\left(E[\\hat\\theta] - \\theta\\right)^2",
+      "note": "For normal samples, $\\tfrac{1}{n + 1}\\sum (x_i - \\bar x)^2$ has a smaller MSE than the unbiased $s^2$."
+    },
+    "trap": "Unbiased does not mean best, and MSE is not bias alone. Model A, unbiased with sd 3, has MSE 9; model B, bias −1 and sd 2, has MSE 5."
+  },
+  "quiz": [
+    {
+      "id": "q-mse-sum",
+      "difficulty": 2,
+      "prose": "An estimator has bias 0.1 and variance 0.03.",
+      "question": "What is its mean squared error?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.04,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "Mean squared error",
+        "placeholder": "a number",
+        "accept": "0.04: $0.03 + 0.1^2$.",
+        "wrong": [
+          {
+            "id": "unsquared",
+            "value": 0.13,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "var",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.03 + 0.01 = 0.04$.",
+        "generic": "Not quite right. Add the variance and the bias squared.",
+        "byKey": {
+          "unsquared": "You added the bias without squaring it. $0.1^2 = 0.01$.",
+          "var": "0.03 is the variance alone. The bias adds its square."
+        }
+      },
+      "explain": {
+        "text": "$\\mathrm{MSE} = \\mathrm{Var} + \\mathrm{bias}^2 = 0.03 + 0.01 = 0.04$. Squaring keeps the bias in the same units as the variance."
+      }
+    },
+    {
+      "id": "q-blume-low",
+      "difficulty": 2,
+      "prose": "A utility stock's raw beta is $\\hat\\beta = 0.4$.",
+      "question": "What is its Blume-adjusted beta, $0.67\\hat\\beta + 0.33$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.598,
+        "tol": {
+          "abs": 0.003
+        },
+        "label": "Adjusted beta",
+        "placeholder": "a number",
+        "accept": "0.598: $0.268 + 0.33$.",
+        "wrong": [
+          {
+            "id": "no-add",
+            "value": 0.268,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.598: pulled up towards 1.",
+        "generic": "Not quite right. Compute $0.67 \\times 0.4 + 0.33$.",
+        "byKey": {
+          "no-add": "0.268 is $0.67 \\times 0.4$ alone. Add 0.33."
+        }
+      },
+      "explain": {
+        "text": "$0.67 \\times 0.4 + 0.33 = 0.598$. Shrinkage towards 1 pulls low betas up and high betas down."
+      }
+    },
+    {
+      "id": "q-best-divisor",
+      "difficulty": 3,
+      "prose": "You estimate $\\sigma^2$ from a normal sample of size $n$ by $\\tfrac{1}{c}\\sum (x_i - \\bar x)^2$.",
+      "question": "Which $c$ gives the smallest mean squared error?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "n1",
+            "text": "$c = n - 1$",
+            "why": "You picked the unbiased choice. Its variance is large enough that a little bias pays."
+          },
+          {
+            "id": "n",
+            "text": "$c = n$",
+            "why": "Dividing by $n$ is better than $n - 1$ on MSE, but not the best. With $n = 5$ it gave 0.36 against 0.333."
+          },
+          {
+            "id": "right",
+            "text": "$c = n + 1$",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "As large as possible",
+            "why": "A huge $c$ shrinks the estimate to 0: no variance, but bias $-\\sigma^2$, so MSE $\\sigma^4$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$c = n + 1$ minimises the MSE for normal samples.",
+        "generic": "Not quite right. Recall the table for $n = 5$."
+      },
+      "explain": {
+        "text": "With $n = 5$ the MSEs were 0.5, 0.36 and 0.333 for $c = 4$, 5 and 6. In general the MSE is $\\sigma^4 \\frac{2(n - 1) + (n - 1 - c)^2}{c^2}$, smallest at $c = n + 1$. Unbiasedness is not the same as accuracy."
+      }
+    },
+    {
+      "id": "q-constant",
+      "difficulty": 2,
+      "prose": "A lazy analyst reports a beta of 1 for every stock, whatever the data.",
+      "question": "Which describes this estimator?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Zero variance; all its error is bias, $(1 - \\beta)^2$",
+            "correct": true
+          },
+          {
+            "id": "unbiased",
+            "text": "Unbiased, because the market beta is 1",
+            "why": "The average stock has beta near 1, but this stock may not. For a stock with $\\beta = 1.5$ it is out by 0.5 every time."
+          },
+          {
+            "id": "noisy",
+            "text": "High variance, because it ignores the data",
+            "why": "Ignoring the data removes all variance. The same answer every time cannot vary."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A constant never varies, so its MSE is bias squared.",
+        "generic": "Not quite right. Does the estimate change from sample to sample?"
+      },
+      "explain": {
+        "text": "The estimate is 1 on every sample, so its variance is 0. Its MSE is $(1 - \\beta)^2$: perfect if $\\beta = 1$, poor if $\\beta = 2$. Blume's rule sits between this and the raw estimate."
+      }
+    }
+  ]
+}
