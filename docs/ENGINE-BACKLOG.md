@@ -805,3 +805,9 @@ Raised later (random-vars level 2):
 301. A native `seesaw` canvas (masses at values, draggable pivot graded against the mean) or a `bars` option for a draggable mean marker; the see-saw is built on `plane` polygons now.
 302. `series`: bind `reveal` and a marker index to a slider directly, without `derive`.
 303. `bars` simulations: allow a trial to return two values (X and Y side by side) rather than stacking two simulations in a `pair`.
+
+Raised later (limits-thm level 2):
+
+305. `distribution`: a `lognormal` family (μ, σ) with shading and median and mean markers; shading bounds that bind to parameters directly (authors use `derive` on `shade.from` and `shade.to` now).
+306. `plane` functions: a `zeroOutside: true` option so a density is 0 beyond its `domain` rather than undefined (areas past the end then shade correctly).
+307. `distribution`: drag handles on an explore screen without a graded widget (handles turn on only through `drag-point` now).
