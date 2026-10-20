@@ -1,0 +1,1587 @@
+{
+  "id": "l2-level-by-level",
+  "course": "graphs-dp",
+  "title": "Searching level by level",
+  "minutes": 14,
+  "objectives": [
+    "Implement breadth-first search with a queue.",
+    "Mark nodes seen as they join the queue, and use `deque` for the queue"
+  ],
+  "skills": [
+    "gd-traversal"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A rumour spreads",
+      "prose": "A rumour starts at A on day 0. Each day, everyone who knows it tells all their neighbours.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "current": "A",
+          "caption": "Day 0: only A knows"
+        }
+      },
+      "question": "Tap every node that first hears the rumour on day 2.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "C",
+          "E",
+          "F"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "cumulative",
+            "set": [
+              "B",
+              "C",
+              "D",
+              "E",
+              "F"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Who hears on day 1? Then who do they tell?"
+        },
+        {
+          "rung": "point",
+          "text": "B and D hear on day 1.",
+          "highlight": [
+            "B",
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "B tells E. D tells C and F. A already knows."
+        }
+      ],
+      "feedback": {
+        "correct": "C, E and F hear on day 2.",
+        "generic": "Not quite right. Find day 1 first, then the new nodes next to day 1.",
+        "byKey": {
+          "cumulative": "You tapped everyone who knows by day 2. Tap only the nodes hearing it for the first time.",
+          "G": "G hears on day 3: every route from A to G has three edges.",
+          "H": "H hears on day 3, through B and then E.",
+          "B": "B is next to A, so B hears on day 1."
+        }
+      },
+      "explain": {
+        "text": "Day 1 is A's neighbours, B and D. Day 2 is the new nodes next to them: E, C and F. Spreading one ring at a time is **breadth-first search**, or BFS.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "D",
+            "E",
+            "C",
+            "F"
+          ],
+          "highlight": [
+            "C",
+            "E",
+            "F"
+          ],
+          "caption": "Day 0: A. Day 1: B, D. Day 2: E, C, F. Day 3: G, H."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The visit order",
+      "prose": "BFS processes one node at a time. It takes the earliest-found node next, and it reads each node's neighbours in alphabetical order.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "caption": "The same graph, from A"
+        }
+      },
+      "question": "Put the nodes in the order BFS processes them, starting from A.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "A",
+            "text": "A"
+          },
+          {
+            "id": "B",
+            "text": "B"
+          },
+          {
+            "id": "C",
+            "text": "C"
+          },
+          {
+            "id": "D",
+            "text": "D"
+          },
+          {
+            "id": "E",
+            "text": "E"
+          },
+          {
+            "id": "F",
+            "text": "F"
+          },
+          {
+            "id": "G",
+            "text": "G"
+          },
+          {
+            "id": "H",
+            "text": "H"
+          }
+        ],
+        "answer": [
+          "A",
+          "B",
+          "D",
+          "E",
+          "C",
+          "F",
+          "G",
+          "H"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A is first. Then A's neighbours, in alphabetical order."
+        },
+        {
+          "rung": "point",
+          "text": "B was found before D, so B's new neighbours come before D's.",
+          "highlight": [
+            "B",
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A, then B, D. B finds E; D finds C and F. E finds G and H."
+        }
+      ],
+      "feedback": {
+        "correct": "A, B, D, E, C, F, G, H.",
+        "generic": "Not quite right. Finish each day before starting the next, in the order nodes were found.",
+        "byKey": {
+          "C": "You sorted day 2 by name. E was found by B, and B came before D, so E goes before C.",
+          "E": "E belongs to day 2. Process B and D, all of day 1, first.",
+          "G": "G is on day 3. Finish E, C and F first."
+        }
+      },
+      "explain": {
+        "text": "Within a day the order is the order of discovery, not the alphabet. B came before D, so B's discovery E comes before D's C and F. A line where the first in is the first out is a **queue**.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "D",
+            "E",
+            "C",
+            "F",
+            "G",
+            "H"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Inside the queue",
+      "prose": "A is processed: B and D were found and joined the back of the queue. Now B is processed. It leaves the front, and every neighbour not yet found joins the back.",
+      "canvas": {
+        "kind": "boxes",
+        "params": {
+          "itemKind": "card",
+          "containers": [
+            {
+              "id": "done",
+              "label": "Processed",
+              "kind": "box",
+              "items": [
+                {
+                  "id": "A",
+                  "label": "A"
+                }
+              ],
+              "capacity": 4
+            },
+            {
+              "id": "queue",
+              "label": "Queue: front on the left",
+              "kind": "row",
+              "slots": 5,
+              "items": [
+                {
+                  "id": "B",
+                  "label": "B"
+                },
+                {
+                  "id": "D",
+                  "label": "D"
+                }
+              ]
+            },
+            {
+              "id": "unseen",
+              "label": "Not yet found",
+              "kind": "box",
+              "items": [
+                {
+                  "id": "C",
+                  "label": "C"
+                },
+                {
+                  "id": "E",
+                  "label": "E"
+                },
+                {
+                  "id": "F",
+                  "label": "F"
+                },
+                {
+                  "id": "G",
+                  "label": "G"
+                },
+                {
+                  "id": "H",
+                  "label": "H"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Drag the cards to show the queue after B is processed.",
+      "widget": {
+        "kind": "place",
+        "mode": "boxes",
+        "answer": {
+          "queue": [
+            "D",
+            "E"
+          ],
+          "done": [
+            "A",
+            "B"
+          ]
+        },
+        "ordered": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "B leaves the queue. Which of B's neighbours has not been found yet?"
+        },
+        {
+          "rung": "point",
+          "text": "B's neighbours are A and E. A is already processed.",
+          "highlight": [
+            "B",
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Move B to Processed. Move E to the back of the queue, after D."
+        }
+      ],
+      "feedback": {
+        "correct": "The queue is D, then E.",
+        "generic": "Not quite right. B leaves the front, and only its new neighbour joins, at the back.",
+        "byKey": {
+          "A": "A is already processed. A node joins the queue once, when it is first found.",
+          "B": "B has just been processed, so it leaves the queue for Processed.",
+          "E": "E is B's only new neighbour. It joins at the back, behind D.",
+          "D": "D was waiting before E arrived, so D stays at the front."
+        }
+      },
+      "explain": {
+        "text": "A queue hands back nodes in the order they arrived. D was found before E, so D is processed next. That first-in, first-out rule is what makes BFS finish one day before the next."
+      }
+    },
+    {
+      "type": "demonstrate",
+      "title": "BFS step by step",
+      "prose": "Each node is marked **seen** the moment it joins the queue, so nothing joins twice.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "current": "A",
+          "caption": "Queue: A"
+        }
+      },
+      "steps": [
+        {
+          "caption": "Start: A is seen and queued.",
+          "canvas": {
+            "current": "A",
+            "visited": [],
+            "caption": "Queue: A"
+          }
+        },
+        {
+          "caption": "Process A. B and D are new: mark them seen and queue them.",
+          "canvas": {
+            "current": "A",
+            "visited": [
+              "A"
+            ],
+            "highlight": [
+              "B",
+              "D"
+            ],
+            "caption": "Queue: B, D"
+          }
+        },
+        {
+          "caption": "Process B. A is seen already; E is new.",
+          "canvas": {
+            "current": "B",
+            "visited": [
+              "A",
+              "B"
+            ],
+            "highlight": [
+              "E"
+            ],
+            "caption": "Queue: D, E"
+          }
+        },
+        {
+          "caption": "Process D. C and F are new.",
+          "canvas": {
+            "current": "D",
+            "visited": [
+              "A",
+              "B",
+              "D"
+            ],
+            "highlight": [
+              "C",
+              "F"
+            ],
+            "caption": "Queue: E, C, F"
+          }
+        },
+        {
+          "caption": "Process E. G and H are new.",
+          "canvas": {
+            "current": "E",
+            "visited": [
+              "A",
+              "B",
+              "D",
+              "E"
+            ],
+            "highlight": [
+              "G",
+              "H"
+            ],
+            "caption": "Queue: C, F, G, H"
+          }
+        },
+        {
+          "caption": "C finds G already seen, so G is not queued again. The rest find nothing new.",
+          "canvas": {
+            "current": null,
+            "visited": [
+              "A",
+              "B",
+              "D",
+              "E",
+              "C",
+              "F",
+              "G",
+              "H"
+            ],
+            "highlight": [],
+            "caption": "Visit order: A, B, D, E, C, F, G, H"
+          }
+        }
+      ]
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Write BFS",
+      "prose": "Return the visit order. Take neighbours in sorted order, `for v in sorted(adj[u])`, so every graph has a single right answer. Use `deque`: `popleft()` takes from the front in one step.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "caption": "`bfs(adj, \"A\")` should return A, B, D, E, C, F, G, H"
+        },
+        "maxHeight": 200
+      },
+      "question": "Write `bfs(adj, start)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\ndef bfs(adj, start):\n    ...\n",
+        "solution": "from collections import deque\n\ndef bfs(adj, start):\n    seen = {start}\n    queue = deque([start])\n    order = []\n    while queue:\n        u = queue.popleft()\n        order.append(u)\n        for v in sorted(adj[u]):\n            if v not in seen:\n                seen.add(v)\n                queue.append(v)\n    return order\n",
+        "examples": [
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "bfs(adj, \"A\")",
+            "expect": "['A', 'B', 'D', 'E', 'C', 'F', 'G', 'H']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "bfs(adj, \"A\")",
+            "expect": "['A', 'B', 'D', 'E', 'C', 'F', 'G', 'H']",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "bfs(adj, \"H\")",
+            "expect": "['H', 'E', 'B', 'G', 'A', 'C', 'D', 'F']",
+            "compare": "equal"
+          },
+          {
+            "call": "bfs({\"A\": [\"B\", \"C\"], \"B\": [\"A\", \"D\"], \"C\": [\"A\", \"D\"], \"D\": [\"B\", \"C\"]}, \"A\")",
+            "expect": "['A', 'B', 'C', 'D']",
+            "compare": "equal"
+          },
+          {
+            "call": "bfs({\"X\": [], \"Y\": [\"Z\"], \"Z\": [\"Y\"]}, \"X\")",
+            "expect": "['X']",
+            "compare": "equal"
+          },
+          {
+            "call": "bfs({\"X\": [], \"Y\": [\"Z\"], \"Z\": [\"Y\"]}, \"Y\")",
+            "expect": "['Y', 'Z']",
+            "compare": "equal"
+          },
+          {
+            "call": "bfs({1: [3, 2], 2: [4], 3: [4], 4: []}, 1)",
+            "expect": "[1, 2, 3, 4]",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {i: [i - 1, i + 1] for i in range(1, 2999)}; adj[0] = [1]; adj[2999] = [2998]",
+            "call": "bfs(adj, 0) == list(range(3000))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on fixed graphs, including a start with no neighbours, a disconnected graph, a directed graph and a 3,000-node path. Neighbours must be taken in sorted order, so each answer is a single list."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep three things: a `seen` set, a `deque` and the `order` list."
+        },
+        {
+          "rung": "point",
+          "text": "Mark a node seen when it is queued, as D and B were.",
+          "highlight": [
+            "B",
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pop `u` with `popleft()` and append it to `order`. For each `v` in `sorted(adj[u])` not in `seen`: add it to `seen`, then queue it."
+        }
+      ],
+      "feedback": {
+        "correct": "One `seen` set, one queue, and every node processed once.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 is a square: D is next to both B and C. If D appears twice, mark nodes seen when you queue them, not when you pop them.",
+          "test-4": "Test 4 starts at X, which has no neighbours. The answer is just `[\"X\"]`.",
+          "test-7": "Test 7 is a path of 3,000 nodes. If it timed out, use `deque.popleft()` rather than `list.pop(0)`."
+        }
+      },
+      "explain": {
+        "text": "The `seen` check guards the queue, so each node is queued once and each edge is looked at once from each end. That makes BFS $O(V + E)$. Sorting neighbours only fixes the order for the tests.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "D",
+            "E",
+            "C",
+            "F",
+            "G",
+            "H"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Marking too late",
+      "prose": "This version marks a node seen when it leaves the queue, not when it joins.\n\n```python\nqueue = deque([\"A\"])\nseen, order = set(), []\nwhile queue:\n    u = queue.popleft()\n    seen.add(u)\n    order.append(u)\n    for v in sorted(adj[u]):\n        if v not in seen:\n            queue.append(v)\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "highlight": [
+            "G"
+          ]
+        },
+        "maxHeight": 200
+      },
+      "question": "What is `order` at the end?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "dup",
+            "text": "`['A', 'B', 'D', 'E', 'C', 'F', 'G', 'H', 'G']`",
+            "correct": true
+          },
+          {
+            "id": "right",
+            "text": "`['A', 'B', 'D', 'E', 'C', 'F', 'G', 'H']`",
+            "why": "You expected the `seen` check to stop repeats. E queues G, and C queues G again before either copy is processed."
+          },
+          {
+            "id": "loop",
+            "text": "It never stops",
+            "why": "Each popped node is marked seen, so no node is queued after it has been processed. The queue does empty."
+          },
+          {
+            "id": "short",
+            "text": "`['A', 'B', 'D', 'E', 'C', 'F']`",
+            "why": "G and H are still reached through E. The bug adds visits; it does not lose any."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When is G marked seen in this version?"
+        },
+        {
+          "rung": "point",
+          "text": "G is a neighbour of E and of C.",
+          "highlight": [
+            "E",
+            "C",
+            "G"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "E queues G. C is processed before G, sees G is not yet marked, and queues it again."
+        }
+      ],
+      "feedback": {
+        "correct": "G is queued twice and processed twice.",
+        "generic": "Not quite right. Track the queue: G is a neighbour of both E and C.",
+        "byKey": {
+          "right": "You assumed `seen` blocks the second copy of G. G is only marked once popped, and C runs before that.",
+          "loop": "You expected an infinite loop. Popped nodes are marked, so nothing is queued after it is processed."
+        }
+      },
+      "explain": {
+        "text": "Between joining and leaving the queue, G is not marked, so C queues it a second time. On a dense graph a node can be queued once per neighbour, which is $O(E)$ copies. Mark a node when it joins the queue.",
+        "canvas": {
+          "highlight": [
+            "G",
+            "e-E-G",
+            "e-C-G"
+          ],
+          "caption": "G queued by E, then again by C"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Nodes BFS never meets",
+      "prose": "Two edges are gone. BFS from A follows edges only, so it cannot jump to a part with no path from A.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "current": "A"
+        }
+      },
+      "question": "Tap every node that `bfs(adj, \"A\")` leaves out.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "C",
+          "G"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which nodes can you still reach from A by walking along edges?"
+        },
+        {
+          "rung": "point",
+          "text": "C and G are joined only to each other now.",
+          "highlight": [
+            "C",
+            "G"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From A you reach B, D, E, F and H. C and G form a separate piece."
+        }
+      ],
+      "feedback": {
+        "correct": "C and G form a separate piece, so BFS from A never finds them.",
+        "generic": "Not quite right. Follow edges out from A and tap only what you cannot reach.",
+        "byKey": {
+          "H": "H is still joined to E, which is joined to B. BFS from A reaches it.",
+          "F": "F is still joined to D, a neighbour of A.",
+          "A": "A is the start, so it is the first node in the result."
+        }
+      },
+      "explain": {
+        "text": "BFS returns only the start's **connected component**. C and G are unreachable, so they never enter the queue. To visit every node, start a new BFS from each node not yet seen.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "D",
+            "E",
+            "F",
+            "H"
+          ],
+          "highlight": [
+            "C",
+            "G"
+          ],
+          "caption": "Reached: A, B, D, E, F, H"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The BFS pattern",
+      "prose": "```python\nseen = {start}\nqueue = deque([start])\nwhile queue:\n    u = queue.popleft()\n    for v in adj[u]:\n        if v not in seen:\n            seen.add(v)      # mark on joining\n            queue.append(v)\n```\nEach node joins once and each edge is read twice: $O(V + E)$. A node first found in round $d$ is $d$ edges from the start, the fewest possible.",
+      "question": "A colleague uses a plain list, `queue = [start]`, with `queue.pop(0)`. What changes on a graph of 100,000 nodes?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "quad",
+            "text": "Each `pop(0)` shifts every remaining item, so the search can take $O(V^2)$ steps",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Nothing: `pop(0)` and `popleft()` cost the same",
+            "why": "A list keeps its items side by side, so removing the first one moves every other one left. A `deque` removes it in one step."
+          },
+          {
+            "id": "order",
+            "text": "The visit order changes",
+            "why": "Both take from the front, so the order is the same. Only the cost differs."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Same order, but up to $V$ shifts per pop.",
+        "generic": "Not quite right. Ask what a list must do to remove its first item."
+      },
+      "explain": {
+        "text": "With 100,000 nodes in the queue, each `pop(0)` moves up to 100,000 pointers. That is up to $10^{10}$ moves in all, against $10^5$ with `deque.popleft()`. The answer is right either way, which is why the bug survives testing on small graphs."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Contagion from a default",
+      "prose": "Firm Cedar has defaulted. Risk wants every firm at most `k` trading links away: they face losses first. The graph is undirected.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "Cedar",
+              "label": "Cedar",
+              "x": 0.42,
+              "y": 0.5
+            },
+            {
+              "id": "Birch",
+              "label": "Birch",
+              "x": 0.2,
+              "y": 0.22
+            },
+            {
+              "id": "Elm",
+              "label": "Elm",
+              "x": 0.62,
+              "y": 0.22
+            },
+            {
+              "id": "Alder",
+              "label": "Alder",
+              "x": 0.06,
+              "y": 0.62
+            },
+            {
+              "id": "Oak",
+              "label": "Oak",
+              "x": 0.3,
+              "y": 0.9
+            },
+            {
+              "id": "Fir",
+              "label": "Fir",
+              "x": 0.86,
+              "y": 0.18
+            },
+            {
+              "id": "Hazel",
+              "label": "Hazel",
+              "x": 0.94,
+              "y": 0.62
+            },
+            {
+              "id": "Larch",
+              "label": "Larch",
+              "x": 0.62,
+              "y": 0.85
+            }
+          ],
+          "edges": [
+            {
+              "from": "Cedar",
+              "to": "Birch"
+            },
+            {
+              "from": "Cedar",
+              "to": "Elm"
+            },
+            {
+              "from": "Birch",
+              "to": "Alder"
+            },
+            {
+              "from": "Alder",
+              "to": "Oak"
+            },
+            {
+              "from": "Elm",
+              "to": "Fir"
+            },
+            {
+              "from": "Fir",
+              "to": "Hazel"
+            },
+            {
+              "from": "Cedar",
+              "to": "Larch"
+            },
+            {
+              "from": "Larch",
+              "to": "Oak"
+            }
+          ],
+          "height": 260
+        },
+        "state": {
+          "current": "Cedar",
+          "caption": "Counterparty links; Cedar has defaulted"
+        }
+      },
+      "question": "Write `within_hops(adj, start, k)`: the sorted names of every firm at most `k` edges from `start`, not counting `start`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\ndef within_hops(adj, start, k):\n    ...\n",
+        "solution": "from collections import deque\n\ndef within_hops(adj, start, k):\n    dist = {start: 0}\n    queue = deque([start])\n    while queue:\n        u = queue.popleft()\n        if dist[u] == k:\n            continue\n        for v in adj[u]:\n            if v not in dist:\n                dist[v] = dist[u] + 1\n                queue.append(v)\n    return sorted(f for f in dist if f != start)\n",
+        "examples": [
+          {
+            "setup": "adj = {\"Cedar\": [\"Birch\", \"Elm\", \"Larch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Alder\": [\"Birch\", \"Oak\"], \"Oak\": [\"Alder\", \"Larch\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"], \"Larch\": [\"Cedar\", \"Oak\"]}",
+            "call": "within_hops(adj, \"Cedar\", 2)",
+            "expect": "['Alder', 'Birch', 'Elm', 'Fir', 'Larch', 'Oak']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "adj = {\"Cedar\": [\"Birch\", \"Elm\", \"Larch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Alder\": [\"Birch\", \"Oak\"], \"Oak\": [\"Alder\", \"Larch\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"], \"Larch\": [\"Cedar\", \"Oak\"]}",
+            "call": "within_hops(adj, \"Cedar\", 2)",
+            "expect": "['Alder', 'Birch', 'Elm', 'Fir', 'Larch', 'Oak']",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {\"Cedar\": [\"Birch\", \"Elm\", \"Larch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Alder\": [\"Birch\", \"Oak\"], \"Oak\": [\"Alder\", \"Larch\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"], \"Larch\": [\"Cedar\", \"Oak\"]}",
+            "call": "within_hops(adj, \"Cedar\", 1)",
+            "expect": "['Birch', 'Elm', 'Larch']",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {\"Cedar\": [\"Birch\", \"Elm\", \"Larch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Alder\": [\"Birch\", \"Oak\"], \"Oak\": [\"Alder\", \"Larch\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"], \"Larch\": [\"Cedar\", \"Oak\"]}",
+            "call": "within_hops(adj, \"Cedar\", 0)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {\"Cedar\": [\"Birch\", \"Elm\", \"Larch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Alder\": [\"Birch\", \"Oak\"], \"Oak\": [\"Alder\", \"Larch\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"], \"Larch\": [\"Cedar\", \"Oak\"]}",
+            "call": "within_hops(adj, \"Hazel\", 3)",
+            "expect": "['Cedar', 'Elm', 'Fir']",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {\"Cedar\": [\"Birch\", \"Elm\", \"Larch\"], \"Birch\": [\"Alder\", \"Cedar\"], \"Elm\": [\"Cedar\", \"Fir\"], \"Alder\": [\"Birch\", \"Oak\"], \"Oak\": [\"Alder\", \"Larch\"], \"Fir\": [\"Elm\", \"Hazel\"], \"Hazel\": [\"Fir\"], \"Larch\": [\"Cedar\", \"Oak\"]}",
+            "call": "within_hops(adj, \"Cedar\", 10)",
+            "expect": "['Alder', 'Birch', 'Elm', 'Fir', 'Hazel', 'Larch', 'Oak']",
+            "compare": "equal"
+          },
+          {
+            "call": "within_hops({\"Solo\": [], \"P\": [\"Q\"], \"Q\": [\"P\"]}, \"Solo\", 2)",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "within_hops({\"A\": [\"B\", \"C\"], \"B\": [\"A\", \"C\"], \"C\": [\"A\", \"B\"]}, \"A\", 1)",
+            "expect": "['B', 'C']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on counterparty graphs, including k = 0, a k larger than the graph and a firm with no counterparties. Return the names sorted."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run BFS, but record each firm's distance when it is found."
+        },
+        {
+          "rung": "point",
+          "text": "Birch, Elm and Larch are 1 edge from Cedar.",
+          "highlight": [
+            "Birch",
+            "Elm",
+            "Larch"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep `dist = {start: 0}`. Do not expand a firm whose distance is already `k`. Return the sorted names other than `start`."
+        }
+      ],
+      "feedback": {
+        "correct": "BFS with distances stops cleanly at `k` hops.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects the firms 1 or 2 edges from Cedar. If Hazel appeared, you expanded a firm already at distance `k`.",
+          "test-3": "Test 3 has `k = 0`: no firm other than Cedar is within 0 edges, so return `[]`.",
+          "test-7": "Test 7 is a triangle. Each neighbour should appear once, so mark firms when they are found."
+        }
+      },
+      "explain": {
+        "text": "BFS finds each firm at its fewest hops, so `dist` is exact when a firm is first seen. Within two hops of Cedar are Alder, Birch, Elm, Fir, Larch, Oak. Fir links to Hazel, but Hazel is three hops out.",
+        "canvas": {
+          "highlight": [
+            "Alder",
+            "Birch",
+            "Elm",
+            "Fir",
+            "Larch",
+            "Oak"
+          ],
+          "caption": "Within 2 hops of Cedar"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Breadth-first search processes nodes in the order they were found, using a queue. It finishes every node at distance $d$ before any at $d + 1$.",
+      "Mark a node seen when it joins the queue, and pop with `deque.popleft()`. Then BFS runs in $O(V + E)$.",
+      "BFS reaches only the start's connected component, and the round a node is found in is its fewest edges from the start."
+    ],
+    "formula": {
+      "name": "BFS cost",
+      "tex": "O(V + E)",
+      "note": "Each node joins once; each edge is read once from each end."
+    },
+    "trap": "Marking a node seen only when it is popped lets it join the queue once per neighbour."
+  },
+  "quiz": [
+    {
+      "id": "q-queue-kind",
+      "difficulty": 2,
+      "prose": "BFS must finish every node at distance 1 before any node at distance 2.",
+      "question": "Which structure gives it that order?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "queue",
+            "text": "A queue: first in, first out",
+            "correct": true
+          },
+          {
+            "id": "stack",
+            "text": "A stack: last in, first out",
+            "why": "A stack hands back the newest node first, so the search dives deep instead. That is depth-first search, the next lesson."
+          },
+          {
+            "id": "set",
+            "text": "A set",
+            "why": "A set has no order at all, so it cannot say which node comes next. BFS uses a set only for `seen`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Nodes leave in the order they were found.",
+        "generic": "Not quite right. Ask which node the structure hands back next."
+      },
+      "explain": {
+        "text": "Nodes found at distance 1 join the queue before any at distance 2. A queue hands them back in that same order, so one level finishes before the next starts."
+      }
+    },
+    {
+      "id": "q-star",
+      "difficulty": 2,
+      "prose": "A star graph: one centre joined to 6 outer nodes, and no other edges. BFS starts at the centre.",
+      "question": "How many nodes are in the queue just after the centre is processed?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Nodes in the queue",
+        "accept": "6: the outer nodes.",
+        "wrong": [
+          {
+            "id": "centre",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All 6 outer nodes are found at once.",
+        "generic": "Not quite right. The centre leaves; each new neighbour joins.",
+        "byKey": {
+          "centre": "You kept the centre in the queue. It leaves when it is processed.",
+          "one": "BFS queues every new neighbour of the centre, not just the first."
+        }
+      },
+      "explain": {
+        "text": "Processing the centre removes it and queues each of its 6 unseen neighbours. So the queue holds 6 nodes, all at distance 1."
+      }
+    },
+    {
+      "id": "q-fx-chain",
+      "difficulty": 3,
+      "prose": "A desk can convert only between quoted pairs. BFS from GBP over the quoted pairs first finds JPY in round 3.",
+      "question": "What does that tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fewest",
+            "text": "The shortest chain of conversions from GBP to JPY uses 3 trades",
+            "correct": true
+          },
+          {
+            "id": "cheapest",
+            "text": "The cheapest way to buy yen takes 3 trades",
+            "why": "BFS counts edges, not costs. The cheapest chain needs the rates as weights: Dijkstra, in level 2."
+          },
+          {
+            "id": "count",
+            "text": "There are exactly 3 chains from GBP to JPY",
+            "why": "BFS finds the fewest edges to each node, not the number of routes."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Round 3 means three edges, and no chain is shorter.",
+        "generic": "Not quite right. BFS rounds count edges from the start."
+      },
+      "explain": {
+        "text": "A node first found in round $d$ is exactly $d$ edges from the start. So no chain shorter than 3 trades reaches JPY; lesson 6 builds on this."
+      }
+    },
+    {
+      "id": "q-disconnected",
+      "difficulty": 2,
+      "prose": "```python\nadj = {\"X\": [\"Y\"], \"Y\": [\"X\"], \"Z\": []}\nprint(bfs(adj, \"X\"))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "xy",
+            "text": "`['X', 'Y']`",
+            "correct": true
+          },
+          {
+            "id": "xyz",
+            "text": "`['X', 'Y', 'Z']`",
+            "why": "You expected BFS to visit every key. It follows edges, and no edge reaches Z."
+          },
+          {
+            "id": "err",
+            "text": "`KeyError: 'Z'`",
+            "why": "Z is a key with an empty list, and BFS never even looks it up."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Z has no edges, so a search from X never reaches it.",
+        "generic": "Not quite right. BFS only meets nodes joined to the start by a path."
+      },
+      "explain": {
+        "text": "BFS from X finds Y and stops. Z is a separate component, so it never joins the queue."
+      }
+    }
+  ]
+}

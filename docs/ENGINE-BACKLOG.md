@@ -1019,3 +1019,9 @@ Raised later (C++ runtime):
 Raised later (micro level 2):
 
 370. `orderbook`: bid and ask sizes as slider and patch targets (`bids.0.1`), with 352; and a `midDecimals` option so a £50.005 mid is not rounded to the price decimals.
+
+Raised later (markets level 3):
+
+371. `payoff`: stock legs (forwards and shorts) get a draggable entry price (or an `F` marker) and a kink label, so "drag F until the payoff is X" works.
+372. `plane` sketch: the x-axis title collision check should include the sketch's own control points.
+373. `series`: a step style (or a vertical top-up marker) for balances that jump, such as a margin account after a call.

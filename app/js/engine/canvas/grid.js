@@ -6,8 +6,39 @@
   'use strict';
   const Z = window.ZQ, C = Z.canvas, { svg, attrs } = C;
 
+  /* item 282: population mode. params.population: 1000 draws that many small dots in rows of `cols` (default 40);
+     state.groups: [{ id, count, colour, label }] shades consecutive runs of dots, in order; each group is one tap
+     target by its id (tap-regions answer ["sick-pos"]). For natural-frequency pictures. */
+  function population(host, P, ctx) {
+    const N = Math.max(1, Math.round(P.population)), cols = Math.max(5, Math.round(P.cols || (N >= 400 ? 40 : N >= 100 ? 20 : 10))), rows = Math.ceil(N / cols);
+    const W = 540, pitch = (W - 16) / cols, r = Math.max(2, Math.min(9, pitch * 0.36)), legendH = 0, H = 12 + rows * pitch + 8;
+    const fr = C.frame(host, W, H, { cls: 'is-population', label: P.label || `${N} people` });
+    const dotsG = svg('g', { class: 'cv-pop' }); fr.g.append(dotsG);
+    const pos = (k) => [8 + (k % cols) * pitch + pitch / 2, 12 + Math.floor(k / cols) * pitch + pitch / 2];
+    const draw = (st) => {
+      dotsG.replaceChildren();
+      let k = 0; const groups = Array.isArray(st.groups) ? st.groups : [];
+      const used = groups.map((q, gi) => { const n = Math.max(0, Math.round(+q.count || 0)), from = k; k += n; return { ...q, id: String(q.id ?? 'g' + gi), from, to: Math.min(N, k), slot: q.colour ?? [3, 2, 4, 5, 6, 1][gi % 6] }; });
+      const rest = svg('g', { class: 'cv-pop-rest' });
+      for (let i = k; i < N; i++) { const [x, y] = pos(i); rest.append(svg('circle', { cx: x, cy: y, r, class: 'cv-pop-dot' })); }
+      dotsG.append(rest);
+      used.forEach((q) => {
+        const gEl = svg('g', { class: `cv-obj cv-pop-g cv-sh${q.slot}`, 'data-id': q.id, 'data-tap': '', 'data-label': q.label ? `${q.label}: ${q.to - q.from}` : `${q.to - q.from} people` });
+        for (let i = q.from; i < q.to; i++) { const [x, y] = pos(i); gEl.append(svg('circle', { cx: x, cy: y, r: r + (pitch * 0.5 - r) * 0.9, class: 'cv-pop-hit' }), svg('circle', { cx: x, cy: y, r, class: 'cv-pop-dot cv-body' })); }
+        dotsG.append(gEl);
+      });
+    };
+    const I = C.instance({ kind: 'grid', factory: grid, params: P, ctx, fr, draw, defaults: { groups: [] } });
+    I.api.values = () => Object.fromEntries((I.api.get().groups || []).map((q, gi) => [String(q.id ?? 'g' + gi), +q.count || 0]));
+    I.api.ids = () => (I.api.get().groups || []).map((q, gi) => String(q.id ?? 'g' + gi));
+    I.api.expand = (l) => [].concat(l || []).map(String);
+    I.api.set({}, { instant: true });
+    return I.api;
+  }
+
   function grid(host, params, ctx = {}) {
     const P = params || {};
+    if (P.population) return population(host, P, ctx);
     const rows = Math.max(1, P.rows || 6), cols = Math.max(1, P.cols || 6), compact = !!P.compact;
     const range = (n) => Array.from({ length: n }, (_, i) => i + 1);
     const rowHeads = P.rowHeads === false ? null : (P.rowHeads || range(rows)).map(String);
@@ -38,7 +69,11 @@
     const target = Math.min(540, (compact ? 344 : 420) + Math.max(0, eff - 6) * 48);
     const s = Math.max(24, Math.min(compact ? 56 : 72, Math.floor((target - 2 * m - labelW - headW - (eff - 1) * gap) / eff)));
     const x0 = m + labelW + headW, y0 = m + labelH + headH, pitch = s + gap;
-    const W = x0 + cols * s + (cols - 1) * gap + maxOff * pitch + m, H = y0 + rows * s + (rows - 1) * gap + m;
+    /* item 293: margins: true adds a column of row sums and a row of column sums (and the total) outside the cells,
+       computed from the cells' numbers (state.cells included) or given as { rows: [..], cols: [..], total };
+       state.margins false hides them until a patch shows them. They are not cells: row1 and the like skip them. */
+    const marg = P.margins ? 1 : 0;
+    const W = x0 + cols * s + (cols - 1) * gap + maxOff * pitch + m + marg * pitch, H = y0 + rows * s + (rows - 1) * gap + m + marg * pitch;
     const off = (i) => (offs[i - 1] || 0) * pitch;
     const cx = (j, i = 1) => x0 + off(i) + (j - 1) * pitch, cy = (i) => y0 + (i - 1) * pitch;
     const X = (c) => x0 + c * pitch - gap / 2, Y = (r) => y0 + r * pitch - gap / 2; // lattice lines in the gutters
@@ -87,6 +122,22 @@
       cellsG.append(n); cell.set(id, n); ctext.set(id, t); baseText.set(id, txt);
     }
     if (!lattice) g.append(pathsG);
+    const margG = svg('g', { class: 'cv-margins' }); if (marg) g.append(margG);
+    const drawMargins = (st) => {
+      if (!marg) return;
+      margG.replaceChildren();
+      const on = st.margins !== false, M = typeof P.margins === 'object' ? P.margins : {};
+      margG.classList.toggle('is-hidden', !on);
+      const num = (id) => { const v = parseFloat(String(ctext.get(id).textContent).replace('−', '-')); return Number.isFinite(v) ? v : 0; };
+      const rs = range(rows).map((i) => (Array.isArray(M.rows) && M.rows[i - 1] != null ? M.rows[i - 1] : range(cols).reduce((t, j) => t + num(`r${i}c${j}`), 0)));
+      const cs = range(cols).map((j) => (Array.isArray(M.cols) && M.cols[j - 1] != null ? M.cols[j - 1] : range(rows).reduce((t, i) => t + num(`r${i}c${j}`), 0)));
+      const tot = M.total ?? rs.reduce((t, v) => t + (+v || 0), 0);
+      const fmt = (v) => (typeof v === 'number' ? C.fmtNum(+v.toFixed(10), 4).replace(/^-/, '−') : String(v));
+      const xR = cx(cols, 1) + s + gap + maxOff * pitch, yB = cy(rows) + s + gap;
+      rs.forEach((v, k) => margG.append(svg('g', { class: 'cv-obj cv-marg', 'data-id': `rsum${k + 1}` }, [svg('rect', { x: xR + 1, y: cy(k + 1) + 1, width: s - 2, height: s - 2, rx: 6, class: 'cv-marg-b' }), C.label(xR + s / 2, cy(k + 1) + s / 2 + 0.5, fmt(v), { cls: 'cv-ctext cv-marg-t', size: fs })])));
+      cs.forEach((v, k) => margG.append(svg('g', { class: 'cv-obj cv-marg', 'data-id': `csum${k + 1}` }, [svg('rect', { x: cx(k + 1, rows) + 1, y: yB + 1, width: s - 2, height: s - 2, rx: 6, class: 'cv-marg-b' }), C.label(cx(k + 1, rows) + s / 2, yB + s / 2 + 0.5, fmt(v), { cls: 'cv-ctext cv-marg-t', size: fs })])));
+      margG.append(svg('g', { class: 'cv-obj cv-marg is-total', 'data-id': 'total' }, [svg('rect', { x: xR + 1, y: yB + 1, width: s - 2, height: s - 2, rx: 6, class: 'cv-marg-b' }), C.label(xR + s / 2, yB + s / 2 + 0.5, fmt(tot), { cls: 'cv-ctext cv-marg-t', size: fs })]));
+    };
     const outline = svg('path', { class: 'cv-outline', d: '' });
     const hlLayer = svg('g', { class: 'cv-hl-layer' }), ptLayer = svg('g', { class: 'cv-pt-layer' }), markLayer = svg('g', { class: 'cv-mark-layer' });
     g.append(outline, hlLayer, ptLayer, markLayer);
@@ -198,6 +249,7 @@
       }
       if ('point' in patch) point(st.point);
       applyText(st.cells);
+      drawMargins(st);
       drawPaths(st.paths, instant);
     };
 
