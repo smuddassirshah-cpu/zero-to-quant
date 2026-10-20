@@ -920,3 +920,9 @@ Raised later (testing level 1):
 320. `distribution`: more than one shaded interval (`shade: [{from, to}, ...]`) for two-sided tails, and an observed-value marker line.
 321. `bars` simulation: simple local bindings in outcome expressions (or a built-in `tstat(n)` sampler) so a statistic such as $\bar x/(s/\sqrt n)$ can be simulated.
 322. `bars`: a rule-driven colour threshold (`state.colours` from one rule, or `highlightAbove: x`) so a slider can recolour every bar beyond a cut.
+
+Raised later (markov level 3):
+
+323. `walk`: `showHits` should count hits per barrier (top and bottom separately); whole-number x ticks (`xStep: 1`); a documented re-seed control (`controls: [{ "reseed": true }]`).
+324. `tree`: leaf labels patchable from state (reveal prices in an explanation).
+325. `distribution`: document addressing an overlay by id in `derive` (`nrm.params.mu`) or bind overlay parameters to sliders directly.
