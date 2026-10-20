@@ -728,3 +728,7 @@ Raised later (eigen level 1):
 Raised later (counting-chance level 1):
 
 265. `grid`: the default shade colour (slot 1) is the same blue as `selected`, so a pre-shaded event on a tap screen needs an explicit `colour`; pick a distinct default and document it.
+
+Raised later (eigen level 3):
+
+266. `bars`: a `dim` state (or per-bar `dim: true`) to de-emphasise bars, for "keep the largest singular values".
