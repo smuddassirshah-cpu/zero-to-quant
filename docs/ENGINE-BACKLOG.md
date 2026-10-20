@@ -1010,3 +1010,8 @@ Raised later (regression level 3):
 365. `scatter`: colour points by group (`group` per point with a legend).
 366. `plane`: document `derive` targets for `vlines` and `hlines` entries so limits can move with a slider.
 367. A canvas that regenerates a seeded residual or return series from a parameter (an AR(1) slider redrawing residuals); none can now.
+
+Raised later (C++ runtime):
+
+368. C++ runtime: the YoWASP sysroot has no unwinder, so `try`/`catch` cannot work (a `throw` ends the program); find or build a sysroot with exception support, or document that the C++ courses teach exceptions by reading and `raises` cases only.
+369. C++ runtime: show whatever a case printed before a timeout; add a C++ section to AUTHORING.md section 7 (validation rules); re-check the `bundle.js` file-write patch on any YoWASP version bump.

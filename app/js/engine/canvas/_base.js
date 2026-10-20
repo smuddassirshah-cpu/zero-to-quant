@@ -93,17 +93,30 @@
   const FN = { sin: Math.sin, cos: Math.cos, tan: Math.tan, exp: Math.exp, ln: Math.log, log: Math.log, log10: Math.log10, sqrt: Math.sqrt, abs: Math.abs, max: Math.max, min: Math.min, floor: Math.floor, ceil: Math.ceil, pow: Math.pow, pi: Math.PI, e: Math.E, atan: Math.atan, asin: Math.asin, acos: Math.acos, sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, sign: Math.sign, round: Math.round,
     /* item 210: sum(k, a, b, term) in a curve formula is a partial sum (Taylor polynomials with a slider on n); fact(n) */
     sum: (a, b, f) => { let s = 0; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s += f(k); return s; },
-    fact: (n) => { n = Math.round(n); if (n < 0) return NaN; let p = 1; for (let k = 2; k <= n && k < 171; k++) p *= k; return n > 170 ? Infinity : p; } };
+    fact: (n) => { n = Math.round(n); if (n < 0) return NaN; let p = 1; for (let k = 2; k <= n && k < 171; k++) p *= k; return n > 170 ? Infinity : p; },
+    /* item 273: prod(k, a, b, term) a running product over whole k; lgamma(x) = ln Γ(x) (the exact birthday product
+       without Stirling: exp(lgamma(366) - lgamma(366 - n) - n * ln(365))); item 331: erf(x) and Phi(x), the standard
+       normal CDF, so power-against-n curves draw as functions */
+    prod: (a, b, f) => { let s = 1; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s *= f(k); return s; } };
+  FN.lgamma = (x) => { // Lanczos, g = 7
+    const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    if (x < 0.5) return Math.log(Math.PI / Math.abs(Math.sin(Math.PI * x))) - FN.lgamma(1 - x);
+    x -= 1; let a = c[0]; const t = x + 7.5; for (let i = 1; i < 9; i++) a += c[i] / (x + i);
+    return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+  };
+  FN.erf = (x) => { const s = Math.sign(x), a = Math.abs(x), t = 1 / (1 + 0.3275911 * a), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-a * a); return s * y; };
+  FN.Phi = (x) => 0.5 * (1 + FN.erf(x / Math.SQRT2));
   /* sum(k, a, b, term) becomes F.sum(a, b, (k) => term): split the call's arguments at top-level commas */
   const sumCalls = (src) => {
     for (let guard = 0; guard < 20; guard++) {
-      const i = src.search(/(^|[^\w.])sum\s*\(/); if (i < 0) break;
+      const i = src.search(/(^|[^\w.])(sum|prod)\s*\(/); if (i < 0) break;
+      const fname = /prod\s*\($/.test(src.slice(i, src.indexOf('(', i) + 1)) ? 'prod' : 'sum';
       const open = src.indexOf('(', i); let d = 0, j = open, parts = [], last = open + 1;
       for (; j < src.length; j++) { const c = src[j]; if (c === '(') d++; else if (c === ')') { if (--d === 0) break; } else if (c === ',' && d === 1) { parts.push(src.slice(last, j)); last = j + 1; } }
       if (j >= src.length) break; parts.push(src.slice(last, j));
       if (parts.length !== 4 || !/^\s*[A-Za-z_]\w*\s*$/.test(parts[0])) break;
-      const start = src[i] === 's' ? i : i + 1;
-      src = src.slice(0, start) + `F.sum((${parts[1]}),(${parts[2]}),(${parts[0].trim()})=>(${parts[3]}))` + src.slice(j + 1);
+      const start = /[sp]/.test(src[i]) && (i === 0 || !/[\w.]/.test(src[i - 1])) ? i : i + 1;
+      src = src.slice(0, start) + `F.${fname}((${parts[1]}),(${parts[2]}),(${parts[0].trim()})=>(${parts[3]}))` + src.slice(j + 1);
     }
     return src;
   };
@@ -134,7 +147,7 @@
     return src;
   };
   const compile = (expr, paramNames = []) => {
-    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact)\b(?!\s*[:\w])/g, 'F.$1'));
+    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact|lgamma|erf|Phi)\b(?!\s*[:\w])/g, 'F.$1'));
     if (!paramNames.includes('e')) src = src.replace(/(^|[^\w.])e(?![\w(])/g, '$1F.e'); // Euler's number, not the e of 1e5
     src = wrapUnaryPow(src);
     if (/[^\w\s+\-*/().,<>=?:!&|%]/.test(src.replace(/F\./g, ''))) throw new Error('Bad expression: ' + expr);
@@ -466,6 +479,13 @@
   DERIVE_FN.sum = (a, b, src, ...rest) => { const names = namesOf(rest), f = compile(String(src), ['k', ...Object.keys(names)]); let s = 0; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s += f(0, { ...names, k }); return s; };
   DERIVE_FN.integral = (a, b, src, ...rest) => { const names = namesOf(rest), f = compile(String(src), Object.keys(names)), g = (x) => f(x, names); const n = 400, h = (b - a) / n; if (!h) return 0; let s = g(a) + g(b); for (let i = 1; i < n; i++) s += (i % 2 ? 4 : 2) * g(a + i * h); return s * h / 3; };
   DERIVE_FN.fact = FN.fact;
+  /* items 273, 331, 311: prod(a, b, "term in k"), lgamma, erf, Phi; matrices: matmul(A, B), matpow(P, k) (k rounded,
+     at least 0), vecmat(v, P) (a row vector times P), so a slider on k drives pi0 P^k */
+  DERIVE_FN.prod = (a, b, src, ...rest) => { const names = namesOf(rest), f = compile(String(src), ['k', ...Object.keys(names)]); let s = 1; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s *= f(0, { ...names, k }); return s; };
+  DERIVE_FN.lgamma = FN.lgamma; DERIVE_FN.erf = FN.erf; DERIVE_FN.Phi = FN.Phi;
+  DERIVE_FN.matmul = (A, B) => A.map((row) => B[0].map((_, j) => row.reduce((t, a, k) => t + a * B[k][j], 0)));
+  DERIVE_FN.matpow = (P, k) => { let n = Math.max(0, Math.round(+k || 0)), R = P.map((r, i) => r.map((_, j) => +(i === j))), B = P; while (n > 0) { if (n & 1) R = DERIVE_FN.matmul(R, B); B = DERIVE_FN.matmul(B, B); n >>= 1; } return R; };
+  DERIVE_FN.vecmat = (v, P) => P[0].map((_, j) => v.reduce((t, a, k) => t + a * P[k][j], 0));
   const deriveCache = {};
   const deriveExpr = (src) => {
     if (deriveCache[src]) return deriveCache[src];
@@ -476,7 +496,9 @@
     return (deriveCache[src] = f);
   };
   const attachDerive = (inst, spec) => {
-    const rules = Object.entries(spec.derive || {});
+    /* item 280: derive.let { name: expr } are named intermediates, evaluated in order before the rules and never written */
+    const lets = Object.entries(isPlain((spec.derive || {}).let) ? spec.derive.let : {});
+    const rules = Object.entries(spec.derive || {}).filter(([k]) => k !== 'let');
     if (!rules.length || !inst || !inst.set) return;
     const rawSet = inst.set.bind(inst);
     const sides = inst.sides || null; // a pair: { left, right } and the side widgets drive (inst.activeSide)
@@ -486,6 +508,8 @@
       Object.assign(S, (params || {}).params || {}, st.params || {});
       const vals = Object.assign({}, st.values || {}); try { if (typeof one.values === 'function') Object.assign(vals, one.values() || {}); } catch { /* no heights */ }
       S.values = vals;
+      /* item 285: params reads the canvas's own params (params.data[n]); arrays in params.params read by name (data[n]) */
+      S.params = Object.assign({}, one.params && typeof one.params === 'object' ? one.params : {}, (params || {}), (params || {}).params || {}, st.params || {});
       /* item 224: the tap selection, and total(ids) summing values over ids (a grid's tapped cells) */
       S.selected = Array.isArray(st.selected) ? st.selected.slice() : [];
       S.total = (ids) => [].concat(ids || []).reduce((a, id) => a + (Number.isFinite(+vals[id]) ? +vals[id] : 0), 0);
@@ -523,6 +547,7 @@
     };
     const patchFor = () => {
       const S = scope(), patch = {};
+      for (const [k, e] of lets) { try { S[k] = evalOne(e, S); } catch (er) { console.warn(er.message || er); } }
       for (const [target, expr] of rules) {
         let v; try { v = evalOne(expr, S); } catch (e) { console.warn(e.message || e); continue; }
         if (typeof v === 'number' && !Number.isFinite(v)) continue;

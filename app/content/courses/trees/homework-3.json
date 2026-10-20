@@ -1,0 +1,418 @@
+{
+  "id": "homework-3",
+  "course": "trees",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-crr-code",
+      "difficulty": 4,
+      "skills": [
+        "tp-multistep",
+        "tp-bs"
+      ],
+      "title": "A pricer that converges",
+      "prose": "Write `crr_call(S, K, r, sigma, T, n)`: a European call on an $n$-step CRR tree with $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$, growth $e^{r\\Delta t}$ per step and $q = \\frac{e^{r\\Delta t} - d}{u - d}$. Price the leaves, then work backwards.",
+      "question": "Complete `crr_call`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import exp, sqrt\n\ndef crr_call(S, K, r, sigma, T, n):\n    dt = T / n\n    u = ...\n    d = ...\n    q = ...\n    disc = exp(-r * dt)\n    # leaf payoffs, j up moves\n    v = ...\n    # step back from n to 0\n    ...\n    return v[0]\n",
+        "solution": "from math import exp, sqrt\n\ndef crr_call(S, K, r, sigma, T, n):\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    q = (exp(r * dt) - d) / (u - d)\n    disc = exp(-r * dt)\n    v = [max(S * u ** j * d ** (n - j) - K, 0) for j in range(n + 1)]\n    for i in range(n, 0, -1):\n        v = [disc * (q * v[j + 1] + (1 - q) * v[j]) for j in range(i)]\n    return v[0]\n",
+        "examples": [
+          {
+            "call": "crr_call(100, 100, 0.05, 0.2, 1, 1)",
+            "expect": "12.162284964623943",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "crr_call(100, 100, 0.05, 0.2, 1, 1)",
+            "expect": "12.162284964623943",
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_call(100, 100, 0.05, 0.2, 1, 2)",
+            "expect": "9.540501338582947",
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_call(100, 100, 0.05, 0.2, 1, 64)",
+            "expect": "10.419400102763928",
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_call(100, 100, 0.05, 0.2, 1, 65)",
+            "expect": "10.477590478892918",
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_call(100, 100, 0.05, 0.2, 1, 256)",
+            "expect": "10.44277599982445",
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_call(110, 100, 0.03, 0.25, 0.5, 50)",
+            "expect": "14.456023013458935",
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_call(90, 100, 0.05, 0.3, 2, 101)",
+            "expect": "14.933603433370978",
+            "compare": "isclose"
+          },
+          {
+            "call": "crr_call(100, 120, 0.0, 0.15, 0.75, 40)",
+            "expect": "0.5206217098667542",
+            "compare": "isclose"
+          },
+          {
+            "call": "abs(crr_call(100, 100, 0.05, 0.2, 1, 500) - 10.450583572185565) < 0.005",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: odd and even trees for our call, three other options, and a 500-step tree within half a penny of Black-Scholes."
+      },
+      "feedback": {
+        "correct": "Your tree reproduces the sawtooth and converges to £10.45.",
+        "generic": "Not quite right. Check $q$ uses $e^{r\\Delta t}$, and that each backward step discounts by $e^{-r\\Delta t}$."
+      },
+      "explain": {
+        "text": "The 1-step tree gives £12.16, 64 steps £10.42, 65 steps £10.48 and 500 steps £10.45. Matching both the hand value and the formula is the test that a pricer is right."
+      }
+    },
+    {
+      "id": "h-atm-d1",
+      "difficulty": 3,
+      "skills": [
+        "tp-bs"
+      ],
+      "prose": "Take an at-the-money call, $S = K$, with $r = 0$.",
+      "question": "Write $d_1$ in terms of $\\sigma$ and $T$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "\\frac{\\sigma\\sqrt{T}}{2}",
+        "accept": [
+          "sigma*sqrt(T)/2",
+          "(sigma*sqrt(T))/2",
+          "0.5*sigma*sqrt(T)",
+          "\\frac{1}{2}\\sigma\\sqrt{T}"
+        ],
+        "wrong": [
+          {
+            "id": "sq",
+            "tex": "\\frac{\\sigma^2 T}{2}"
+          },
+          {
+            "id": "nohalf",
+            "tex": "\\sigma\\sqrt{T}"
+          }
+        ],
+        "keyboard": "algebra"
+      },
+      "feedback": {
+        "correct": "$d_1 = \\frac{(\\sigma^2/2)T}{\\sigma\\sqrt T} = \\frac{\\sigma\\sqrt T}{2}$.",
+        "generic": "Not quite right. With $S = K$ and $r = 0$, only $(\\sigma^2/2)T$ is left on top.",
+        "byKey": {
+          "sq": "That is the numerator. Divide it by $\\sigma\\sqrt T$.",
+          "nohalf": "Keep the half from $\\sigma^2/2$."
+        }
+      },
+      "explain": {
+        "text": "$\\ln(S/K) = 0$ and $r = 0$, so the top is $\\sigma^2 T/2$. Dividing by $\\sigma\\sqrt T$ leaves $\\sigma\\sqrt T/2$, and $d_2 = -\\sigma\\sqrt T/2$."
+      }
+    },
+    {
+      "id": "h-atm-order",
+      "difficulty": 4,
+      "skills": [
+        "tp-bs"
+      ],
+      "prose": "Traders price at-the-money options in their heads with $c \\approx 0.4\\,S\\sigma\\sqrt T$. Derive it, for $S = K$ and $r = 0$.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "$c = S\\left[\\Phi(\\tfrac12\\sigma\\sqrt T) - \\Phi(-\\tfrac12\\sigma\\sqrt T)\\right]$, the formula with $d_{1,2} = \\pm\\tfrac12\\sigma\\sqrt T$"
+          },
+          {
+            "id": "b",
+            "text": "$\\approx S \\cdot \\varphi(0) \\cdot \\sigma\\sqrt T$, since $\\Phi(x) - \\Phi(-x) \\approx 2x\\varphi(0)$ for small $x$"
+          },
+          {
+            "id": "c",
+            "text": "$= \\frac{S\\sigma\\sqrt T}{\\sqrt{2\\pi}}$, because $\\varphi(0) = 1/\\sqrt{2\\pi}$"
+          },
+          {
+            "id": "d",
+            "text": "$\\approx 0.4\\,S\\sigma\\sqrt T$, as $1/\\sqrt{2\\pi} = 0.3989$"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      },
+      "feedback": {
+        "correct": "The tangent at 0 does the work: $c \\approx 0.4\\,S\\sigma\\sqrt T$.",
+        "generic": "Not quite right. Start from the formula, linearise $\\Phi$ near 0, then put in $\\varphi(0)$."
+      },
+      "explain": {
+        "text": "Near zero $\\Phi$ is close to its tangent, with slope $\\varphi(0)$. So the gap between $\\Phi(x)$ and $\\Phi(-x)$ is about $2x\\varphi(0)$. For our call with $r = 0$ this gives $0.4 \\times 100 \\times 0.2 = £8.00$ against the exact £7.97."
+      }
+    },
+    {
+      "id": "h-put-iv",
+      "difficulty": 4,
+      "skills": [
+        "tp-bs"
+      ],
+      "prose": "Our one-year put ($S = K = 100$, $r = 5\\%$) trades at £7.00. Implied vols of a put and a call at the same strike agree, by parity.",
+      "question": "Turn the put into a call price with parity, then take one Newton step from $\\sigma_0 = 0.2$ (price £10.4506, vega 37.524). What is $\\sigma_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.238,
+        "tol": {
+          "abs": 0.0005
+        },
+        "label": "sigma 1",
+        "accept": "0.2380: call $= 7.00 + 4.88 = 11.88$, then $0.2 + 1.4265/37.524$",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.162,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sigma_1 \\approx 0.2380$; the exact implied vol is 0.2379.",
+        "generic": "Not quite right. First $c = p + S - Ke^{-rT}$, then the Newton step.",
+        "byKey": {
+          "sign": "The call at £11.88 is above £10.45, so $\\sigma$ rises."
+        }
+      },
+      "explain": {
+        "text": "Parity gives $c = 7.00 + 100 - 95.12 = 11.88$. Newton: $0.2 + (11.877 - 10.4506)/37.524 = 0.2380$. Stepping the put directly, from £5.57 at 20%, gives the same answer, since puts and calls share vega. The exact implied vol is 0.2379."
+      }
+    },
+    {
+      "id": "h-day-error",
+      "difficulty": 4,
+      "skills": [
+        "tp-bs"
+      ],
+      "prose": "You are short our call, delta-hedged, with $r = 0$ for simplicity. Gamma is 0.01876, $S = 100$, $\\sigma = 0.2$, and one day is $\\delta t = 1/252$. Today the share moves £3.",
+      "question": "What is today's hedging P&L per call, $\\tfrac12\\Gamma S^2\\left(\\sigma^2\\delta t - (\\delta S/S)^2\\right)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0695,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "£",
+        "label": "P&L in pounds",
+        "accept": "−£0.0695: $93.8 \\times (0.000159 - 0.0009)$",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.0695,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About −7p per call: a 3% day is big for 20% vol.",
+        "generic": "Not quite right. $(\\delta S/S)^2 = 0.0009$ and $\\sigma^2\\delta t = 0.000159$.",
+        "byKey": {
+          "sign": "A move bigger than expected costs the short-gamma seller. The bracket is negative."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac12 \\times 0.01876 \\times 10{,}000 = 93.8$, and the bracket is $0.000159 - 0.0009 = -0.000741$. So the day costs 7p per call. A typical day for 20% vol is about a 1.26% move."
+      }
+    },
+    {
+      "id": "h-bound-arb",
+      "difficulty": 5,
+      "skills": [
+        "tp-bs",
+        "tp-replicate"
+      ],
+      "prose": "A 6-month call with $S = 100$, $K = 90$ and $r = 5\\%$ is offered at £11.50. Your implied-vol solver raises an error.",
+      "question": "Buy the call, short the share and lend $Ke^{-rT}$. How much do you lock in today, per call?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.72,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Profit today in pounds",
+        "accept": "£0.72: $100 - 90e^{-0.025} - 11.50 = 12.22 - 11.50$",
+        "wrong": [
+          {
+            "id": "nodisc",
+            "value": -1.5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "payoff",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£0.72 today, and the position never loses later.",
+        "generic": "Not quite right. Today you receive £100 for the share, lend $90e^{-0.025}$ and pay £11.50.",
+        "byKey": {
+          "nodisc": "You compared with $S - K = 10$. The bound uses the discounted strike, $90e^{-0.025} = 87.78$."
+        }
+      },
+      "explain": {
+        "text": "The bound is $100 - 87.78 = 12.22$, so the offer is 72p too cheap. At expiry the loan returns £90: exercise if $S_T > 90$, else buy the share back for less. Either way nothing is lost, so the 72p is an arbitrage, and no $\\sigma$ fits."
+      }
+    },
+    {
+      "id": "h-time",
+      "difficulty": 3,
+      "skills": [
+        "tp-multistep"
+      ],
+      "prose": "A 200-step tree takes 8 ms per option. Risk wants errors five times smaller for a book of 2,000 options.",
+      "question": "How many seconds does one revaluation take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 400,
+        "tol": {
+          "abs": 2
+        },
+        "unit": "seconds",
+        "label": "Seconds",
+        "accept": "400 s: 1,000 steps, $25 \\times 8$ ms each, times 2,000",
+        "wrong": [
+          {
+            "id": "lin",
+            "value": 80,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "now",
+            "value": 16,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1,000 steps cost 25 times as much: 400 seconds.",
+        "generic": "Not quite right. Error goes like $1/n$, work like $n^2$.",
+        "byKey": {
+          "lin": "You scaled the time with $n$. Nodes grow like $n^2$.",
+          "now": "That is the run at 200 steps."
+        }
+      },
+      "explain": {
+        "text": "Five times smaller error needs 1,000 steps, and the work grows 25-fold to 200 ms per option. Over 2,000 options that is 400 seconds, nearly seven minutes."
+      }
+    },
+    {
+      "id": "h-long-client",
+      "difficulty": 5,
+      "skills": [
+        "tp-bs",
+        "tp-replicate"
+      ],
+      "title": "Selling a call to a client",
+      "kind": "longform",
+      "prompt": "A client wants to buy 10,000 six-month at-the-money calls on a share at £50. The desk uses $r = 4\\%$ and an implied vol of 25%. (a) Price one call with Black-Scholes, showing $d_1$, $d_2$, $\\Phi(d_1) = 0.5799$ and $\\Phi(d_2) = 0.5099$. (b) How many shares does the desk buy to hedge, and why must it trade again? (c) The share then realises 35% instead of 25%. Estimate the desk's loss, using vega $= 13.82$ per unit of $\\sigma$. (d) Name two features of real markets that break the model, and what each does to the desk.",
+      "model": "**(a)** $d_1 = \\frac{\\ln 1 + (0.04 + 0.03125) \\times 0.5}{0.25\\sqrt{0.5}} = \\frac{0.035625}{0.1768} = 0.2015$ and $d_2 = d_1 - 0.1768 = 0.0247$. $Ke^{-rT} = 50e^{-0.02} = 49.01$. So $c = 50 \\times 0.5799 - 49.01 \\times 0.5099 = 4.00$ per call, £40,040 for 10,000.\n\n**(b)** Delta is $\\Phi(d_1) = 0.5799$, so the desk buys about 5,799 shares against the short calls. Delta changes as the share moves (gamma is 0.0442 per call) and as time passes, so the desk must rebalance, buying as the share rises and selling as it falls.\n\n**(c)** Hedging at 25% when the share realises 35% costs about vega times the gap: $13.82 \\times 0.10 = 1.38$ per call, about £13,821 for the book. The cause is gamma: each move is bigger than the hedge assumes, and the desk keeps buying high and selling low.\n\n**(d)** Jumps: a gap moves the share before the desk can rehedge, and the short-gamma book loses $\\tfrac12\\Gamma(\\delta S)^2$ on the whole gap. The smile: implied vol differs by strike and moves over time, so one $\\sigma$ cannot price and hedge every option, and a rise in implied vol marks the short book down by vega per point. Discrete hedging and trading costs also leave a residual error.",
+      "rubric": [
+        {
+          "points": 1,
+          "text": "Computes $d_1 \\approx 0.2015$ and $d_2 \\approx 0.0247$."
+        },
+        {
+          "points": 2,
+          "text": "Prices the call at about £4.00, discounting the strike to £49.01."
+        },
+        {
+          "points": 1,
+          "text": "Hedges with about 5,799 shares, $\\Phi(d_1) \\times 10{,}000$."
+        },
+        {
+          "points": 1,
+          "text": "Explains that delta moves with the share and time, so the hedge is rebalanced."
+        },
+        {
+          "points": 2,
+          "text": "Estimates the loss as vega times the gap, about £1.38 per call or £13,800 for the book."
+        },
+        {
+          "points": 1,
+          "text": "Attributes the loss to gamma on moves bigger than the hedge assumes."
+        },
+        {
+          "points": 2,
+          "text": "Names two breaks (jumps, the smile or moving implied vol, discrete hedging or costs) with the effect of each on a short book."
+        }
+      ]
+    },
+    {
+      "id": "h-sawtooth",
+      "difficulty": 3,
+      "skills": [
+        "tp-multistep"
+      ],
+      "prose": "A junior shows a chart: the 10-step tree prices our call at £10.25 and the 11-step tree at £10.61. She concludes the 11-step tree is wrong.",
+      "question": "What do you tell her?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "saw",
+            "text": "Both are right: odd trees sit above the limit and even trees below",
+            "correct": true
+          },
+          {
+            "id": "wrong",
+            "text": "She is right: more steps should always move the price closer from below",
+            "why": "Prices do not approach from one side. Odd and even trees alternate around £10.45."
+          },
+          {
+            "id": "bug",
+            "text": "Tree prices should not depend on $n$ at all",
+            "why": "Each $n$ gives a different discrete model; only the limit is fixed."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The sawtooth is expected at the money.",
+        "generic": "Not quite right. Recall what odd and even trees do around the strike."
+      },
+      "explain": {
+        "text": "Even trees put a leaf on the strike and underprice; odd trees overprice. Averaging the 10- and 11-step prices gives £10.43, close to £10.45."
+      }
+    }
+  ]
+}
