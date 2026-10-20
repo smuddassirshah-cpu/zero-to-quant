@@ -1,0 +1,1471 @@
+{
+  "id": "l7-where-is-the-price",
+  "course": "micro",
+  "title": "Where is the price, really?",
+  "minutes": 14,
+  "objectives": [
+    "Compare the mid price with a size-weighted microprice.",
+    "Compute the order imbalance and use it as a short-term signal."
+  ],
+  "skills": [
+    "ms-book",
+    "ms-costs"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Buyers wait for 5,000 shares at the best bid. Sellers offer only 1,000 at the best ask. Market buys and market sells arrive at about the same rate.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              5000
+            ],
+            [
+              100.09,
+              4000
+            ],
+            [
+              100.08,
+              3000
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              1000
+            ],
+            [
+              100.15,
+              4000
+            ],
+            [
+              100.16,
+              3000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "highlight": [
+            "bid0",
+            "ask0"
+          ]
+        }
+      },
+      "question": "Which way is the mid most likely to move next?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "up",
+            "text": "Up: the 1,000 at the ask will run out first",
+            "correct": true
+          },
+          {
+            "id": "down",
+            "text": "Down: the big bid is a wall of supply",
+            "why": "You read the bid as selling. The 5,000 at the bid are buyers; they hold the price up, not down."
+          },
+          {
+            "id": "even",
+            "text": "Either way with equal chance: the mid is the fair price",
+            "why": "You treated the mid as the whole story. It ignores how much waits on each side."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A level disappears when market orders use up its shares."
+        },
+        {
+          "rung": "point",
+          "text": "Which side has less to use up?",
+          "highlight": [
+            "ask0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The thin side goes first, so the mid will most likely tick up.",
+        "generic": "Not quite right. Ask which best level market orders will use up first."
+      },
+      "explain": {
+        "text": "Market buys eat the ask and market sells eat the bid. With equal flow, 1,000 shares go long before 5,000 do. When the ask empties, the next ask is £100.15 and the mid rises.",
+        "canvas": {
+          "highlight": [
+            "ask0"
+          ],
+          "caption": "1,000 against 5,000: the ask goes first"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "The bars are the sizes at the best bid and best ask. The dot is a price that takes size into account. Move both sliders and watch the dot.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            100.085,
+            100.155
+          ],
+          "y": [
+            0,
+            6.6
+          ],
+          "grid": false,
+          "xLabel": "Price (£)",
+          "yLabel": "Size at the touch (thousand shares)",
+          "xStep": 0.01,
+          "params": {
+            "qb": 3,
+            "qa": 3
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b1",
+              "x": 100.0965,
+              "y": 3,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "b2",
+              "x": 100.1035,
+              "y": 3,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "a1",
+              "x": 100.1365,
+              "y": 3,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "a2",
+              "x": 100.1435,
+              "y": 3,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "mu",
+              "x": 100.12,
+              "y": 0.35,
+              "label": "microprice",
+              "labelPos": "n",
+              "tap": false
+            }
+          ],
+          "polygons": [
+            {
+              "id": "bidbar",
+              "points": [
+                [
+                  100.0965,
+                  0
+                ],
+                [
+                  100.1035,
+                  0
+                ],
+                "b2",
+                "b1"
+              ],
+              "colour": 3
+            },
+            {
+              "id": "askbar",
+              "points": [
+                [
+                  100.1365,
+                  0
+                ],
+                [
+                  100.1435,
+                  0
+                ],
+                "a2",
+                "a1"
+              ],
+              "colour": 2
+            }
+          ],
+          "vlines": [
+            {
+              "id": "midline",
+              "x": 100.12,
+              "label": "mid"
+            }
+          ]
+        },
+        "derive": {
+          "b1.y": "qb",
+          "b2.y": "qb",
+          "a1.y": "qa",
+          "a2.y": "qa",
+          "mu.x": "(100.14*qb + 100.10*qa)/(qa + qb)",
+          "caption": "Bid £100.10 × {{qb * 1000}}, ask £100.14 × {{qa * 1000}}: microprice £{{fixed((100.14*qb + 100.10*qa)/(qa + qb), 3)}}"
+        },
+        "controls": [
+          {
+            "bind": "qb",
+            "min": 0.5,
+            "max": 6,
+            "step": 0.5,
+            "label": "Bid size (thousand)",
+            "start": 3
+          },
+          {
+            "bind": "qa",
+            "min": 0.5,
+            "max": 6,
+            "step": 0.5,
+            "label": "Ask size (thousand)",
+            "start": 3
+          }
+        ]
+      },
+      "question": "Make the bid size much bigger than the ask size. Where does the dot sit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ask",
+            "text": "Near the ask, the side with less size",
+            "correct": true
+          },
+          {
+            "id": "bid",
+            "text": "Near the bid, the side with more size",
+            "why": "You expected the heavy side to pull the dot. The dot leans the other way: towards the side about to be used up."
+          },
+          {
+            "id": "mid",
+            "text": "On the mid, whatever the sizes",
+            "why": "The dot only sits on the mid when the sizes match. Make them different and watch it move."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the bid slider near 6 and the ask slider near 1."
+        },
+        {
+          "rung": "point",
+          "text": "Which bar is short? The dot moves towards it.",
+          "highlight": [
+            "mu"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "A thin ask pulls the dot up towards £100.14.",
+        "generic": "Not quite right. Set a big bid and a small ask, then look again."
+      },
+      "explain": {
+        "text": "With a big bid and a small ask, the dot leans towards the ask. It is pricing in that the thin side is likely to be traded through first.",
+        "canvas": {
+          "params": {
+            "qb": 5,
+            "qa": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "The dot is the **microprice**. It weights each price by the size on the *other* side: $$P_\\mu = \\dfrac{P_a Q_b + P_b Q_a}{Q_a + Q_b}$$ A big bid size $Q_b$ puts weight on the ask price $P_a$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            100.085,
+            100.155
+          ],
+          "y": [
+            0,
+            6.6
+          ],
+          "grid": false,
+          "xLabel": "Price (£)",
+          "yLabel": "Size at the touch (thousand shares)",
+          "xStep": 0.01,
+          "params": {
+            "qb": 5,
+            "qa": 1
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b1",
+              "x": 100.0965,
+              "y": 5,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "b2",
+              "x": 100.1035,
+              "y": 5,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "a1",
+              "x": 100.1365,
+              "y": 1,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "a2",
+              "x": 100.1435,
+              "y": 1,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "mu",
+              "x": 100.12,
+              "y": 0.35,
+              "label": "microprice",
+              "labelPos": "n",
+              "tap": false
+            }
+          ],
+          "polygons": [
+            {
+              "id": "bidbar",
+              "points": [
+                [
+                  100.0965,
+                  0
+                ],
+                [
+                  100.1035,
+                  0
+                ],
+                "b2",
+                "b1"
+              ],
+              "colour": 3
+            },
+            {
+              "id": "askbar",
+              "points": [
+                [
+                  100.1365,
+                  0
+                ],
+                [
+                  100.1435,
+                  0
+                ],
+                "a2",
+                "a1"
+              ],
+              "colour": 2
+            }
+          ],
+          "vlines": [
+            {
+              "id": "midline",
+              "x": 100.12,
+              "label": "mid"
+            }
+          ]
+        },
+        "derive": {
+          "b1.y": "qb",
+          "b2.y": "qb",
+          "a1.y": "qa",
+          "a2.y": "qa",
+          "mu.x": "(100.14*qb + 100.10*qa)/(qa + qb)",
+          "caption": "Bid £100.10 × {{qb * 1000}}, ask £100.14 × {{qa * 1000}}: microprice £{{fixed((100.14*qb + 100.10*qa)/(qa + qb), 3)}}"
+        }
+      },
+      "question": "Bid £100.10 for 5,000, ask £100.14 for 1,000. What is the microprice? Give three decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100.1333,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "£",
+        "label": "Microprice in pounds",
+        "accept": "£100.133: $(100.14 \\times 5{,}000 + 100.10 \\times 1{,}000) / 6{,}000$.",
+        "wrong": [
+          {
+            "id": "mid",
+            "value": 100.12,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "same-side",
+            "value": 100.1067,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply each price by the size on the opposite side."
+        },
+        {
+          "rung": "point",
+          "text": "$100.14 \\times 5{,}000 + 100.10 \\times 1{,}000 = 600{,}800$.",
+          "highlight": [
+            "mu"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by the total size, 6,000."
+        }
+      ],
+      "feedback": {
+        "correct": "£100.133: well above the mid, towards the ask.",
+        "generic": "Not quite right. Weight the ask price by the bid size and the bid price by the ask size.",
+        "byKey": {
+          "mid": "That is the mid, which ignores the sizes. Weight each price by the other side's size.",
+          "same-side": "You weighted each price by its own side's size. That leans towards the heavy bid, the wrong way."
+        }
+      },
+      "explain": {
+        "text": "$600{,}800 / 6{,}000 = 100.1333$. The microprice sits 1.3p above the mid, two thirds of the way from the mid to the ask.",
+        "canvas": {
+          "highlight": [
+            "mu"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Why lean towards the thin side? Suppose market buys and market sells each arrive at 500 shares a second, and nobody adds new orders.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              5000
+            ],
+            [
+              100.09,
+              4000
+            ],
+            [
+              100.08,
+              3000
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              1000
+            ],
+            [
+              100.15,
+              4000
+            ],
+            [
+              100.16,
+              3000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "highlight": [
+            "bid0",
+            "ask0"
+          ]
+        }
+      },
+      "question": "How many seconds until the 1,000 shares at the best ask are gone?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "seconds",
+        "label": "Seconds until the ask is used up",
+        "accept": "2 seconds: $1{,}000 / 500$.",
+        "wrong": [
+          {
+            "id": "bid",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "both",
+            "value": 12,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Buys use up the ask at 500 shares a second."
+        },
+        {
+          "rung": "point",
+          "text": "$1{,}000$ shares at 500 a second.",
+          "highlight": [
+            "ask0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "2 seconds, against 10 for the bid.",
+        "generic": "Not quite right. Divide the ask size by the rate of market buys.",
+        "byKey": {
+          "bid": "That is how long the bid lasts. Market buys eat the ask, which holds only 1,000.",
+          "both": "You added both sides. Only market buys use up the ask."
+        }
+      },
+      "explain": {
+        "text": "The ask lasts 2 seconds and the bid 10, so the ask is very likely to go first. Then the best ask becomes £100.15 and the mid rises to £100.125. The microprice prices that in ahead of time.",
+        "canvas": {
+          "highlight": [
+            "ask0",
+            "ask1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Later the book is balanced: 3,000 shares at £100.10 and 3,000 at £100.14.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              3000
+            ],
+            [
+              100.09,
+              4000
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              3000
+            ],
+            [
+              100.15,
+              4000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "highlight": [
+            "bid0",
+            "ask0"
+          ]
+        }
+      },
+      "question": "What is the microprice now?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100.12,
+        "tol": {
+          "abs": 0.0002
+        },
+        "unit": "£",
+        "label": "Microprice in pounds",
+        "accept": "£100.12, the mid: equal weights on both prices.",
+        "wrong": [
+          {
+            "id": "bid",
+            "value": 100.1,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "ask",
+            "value": 100.14,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each price gets weight 3,000 out of 6,000."
+        },
+        {
+          "rung": "point",
+          "text": "Equal weights give a plain average.",
+          "highlight": [
+            "bid0",
+            "ask0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Equal sizes give the mid.",
+        "generic": "Not quite right. With equal sizes the two weights are both a half.",
+        "byKey": {
+          "bid": "The sizes are equal, so neither side wins. The microprice is halfway.",
+          "ask": "The sizes are equal, so neither side wins. The microprice is halfway."
+        }
+      },
+      "explain": {
+        "text": "With $Q_a = Q_b$ both weights are a half, so the microprice is the mid. The mid is the special case of a balanced book.",
+        "canvas": {
+          "highlight": [
+            "spread"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Traders sum up the lean in one number, the **order imbalance**: $$I = \\dfrac{Q_b - Q_a}{Q_b + Q_a}$$ It runs from $-1$, all size on the ask, to $+1$, all on the bid.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              5000
+            ],
+            [
+              100.09,
+              4000
+            ],
+            [
+              100.08,
+              3000
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              1000
+            ],
+            [
+              100.15,
+              4000
+            ],
+            [
+              100.16,
+              3000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "highlight": [
+            "bid0",
+            "ask0"
+          ]
+        }
+      },
+      "question": "What is the imbalance of this book's best levels? Give three decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6667,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "",
+        "label": "Order imbalance",
+        "accept": "0.667: $(5{,}000 - 1{,}000) / 6{,}000 = 2/3$.",
+        "wrong": [
+          {
+            "id": "reversed",
+            "value": -0.6667,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "no-divide",
+            "value": 4000,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the sizes at the best bid and best ask only."
+        },
+        {
+          "rung": "point",
+          "text": "$Q_b - Q_a = 4{,}000$ and $Q_b + Q_a = 6{,}000$.",
+          "highlight": [
+            "bid0",
+            "ask0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$I = 2/3$: strongly bid-heavy.",
+        "generic": "Not quite right. Subtract the ask size from the bid size, then divide by the total.",
+        "byKey": {
+          "reversed": "You subtracted the bid from the ask. $I$ is positive when the bid has more size.",
+          "no-divide": "That is the difference in shares. Divide by the total, 6,000, to get a number between −1 and 1.",
+          "ratio": "That is the ratio of the sizes. The imbalance is the difference over the total."
+        }
+      },
+      "explain": {
+        "text": "$I = 4{,}000 / 6{,}000 = 0.667$. A positive imbalance means more waiting to buy than to sell at the touch, so the next mid move is more likely up.",
+        "canvas": {
+          "highlight": [
+            "bid0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague computes a size-weighted price for this book as $\\dfrac{P_b Q_b + P_a Q_a}{Q_a + Q_b}$, weighting each price by its own side's size. He gets £100.107 and says the price is about to fall.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            100.085,
+            100.155
+          ],
+          "y": [
+            0,
+            6.6
+          ],
+          "grid": false,
+          "xLabel": "Price (£)",
+          "yLabel": "Size at the touch (thousand shares)",
+          "xStep": 0.01,
+          "params": {
+            "qb": 5,
+            "qa": 1
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "b1",
+              "x": 100.0965,
+              "y": 5,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "b2",
+              "x": 100.1035,
+              "y": 5,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "a1",
+              "x": 100.1365,
+              "y": 1,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "a2",
+              "x": 100.1435,
+              "y": 1,
+              "hidden": true,
+              "tap": false
+            },
+            {
+              "id": "mu",
+              "x": 100.12,
+              "y": 0.35,
+              "label": "microprice",
+              "labelPos": "n",
+              "tap": false
+            },
+            {
+              "id": "wrong",
+              "x": 100.1067,
+              "y": 0.35,
+              "label": "his price",
+              "labelPos": "n",
+              "tap": false
+            }
+          ],
+          "polygons": [
+            {
+              "id": "bidbar",
+              "points": [
+                [
+                  100.0965,
+                  0
+                ],
+                [
+                  100.1035,
+                  0
+                ],
+                "b2",
+                "b1"
+              ],
+              "colour": 3
+            },
+            {
+              "id": "askbar",
+              "points": [
+                [
+                  100.1365,
+                  0
+                ],
+                [
+                  100.1435,
+                  0
+                ],
+                "a2",
+                "a1"
+              ],
+              "colour": 2
+            }
+          ],
+          "vlines": [
+            {
+              "id": "midline",
+              "x": 100.12,
+              "label": "mid"
+            }
+          ]
+        },
+        "derive": {
+          "b1.y": "qb",
+          "b2.y": "qb",
+          "a1.y": "qa",
+          "a2.y": "qa",
+          "mu.x": "(100.14*qb + 100.10*qa)/(qa + qb)",
+          "caption": "Bid £100.10 × {{qb * 1000}}, ask £100.14 × {{qa * 1000}}: microprice £{{fixed((100.14*qb + 100.10*qa)/(qa + qb), 3)}}"
+        }
+      },
+      "question": "Where is the microprice, and which way does it lean?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "£100.133, leaning up towards the thin ask",
+            "correct": true
+          },
+          {
+            "id": "own",
+            "text": "£100.107, leaning down towards the big bid",
+            "why": "You weighted each price by its own size, so the heavy bid pulled the price down. The thin ask is the side likely to be lifted, so the lean is up.",
+            "canvas": {
+              "highlight": [
+                "wrong"
+              ]
+            }
+          },
+          {
+            "id": "mid",
+            "text": "£100.12: the mid is the price",
+            "why": "You took the mid as the price. It ignores a 5-to-1 difference in size."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which side is likely to be used up first?"
+        },
+        {
+          "rung": "point",
+          "text": "The microprice should lean towards the thin side.",
+          "highlight": [
+            "mu",
+            "wrong"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Weight the ask by the bid's 5,000 and the bid by the ask's 1,000."
+        }
+      ],
+      "feedback": {
+        "correct": "Opposite sizes as weights: £100.133, leaning up.",
+        "generic": "Not quite right. Weight each price by the size on the other side.",
+        "byKey": {
+          "own": "Own-side weights get the lean backwards. A big bid makes a rise more likely, not a fall.",
+          "mid": "The mid is the right answer only for a balanced book."
+        }
+      },
+      "explain": {
+        "text": "Own-side weights put the dot near the heavy bid, the side least likely to be traded through. The microprice swaps the weights, and leans towards the thin ask instead. Both are size-weighted; only one gets the direction right.",
+        "canvas": {
+          "highlight": [
+            "mu",
+            "wrong"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "The microprice and the imbalance are linked. Write the mid as $m$ and the spread as $s$, so $P_a = m + \\tfrac{s}{2}$ and $P_b = m - \\tfrac{s}{2}$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "$P_\\mu = \\dfrac{P_a Q_b + P_b Q_a}{Q_a + Q_b}$, the definition"
+          },
+          {
+            "id": "sub",
+            "text": "$= \\dfrac{(m + \\frac{s}{2})Q_b + (m - \\frac{s}{2})Q_a}{Q_a + Q_b}$, each price as the mid plus or minus half the spread"
+          },
+          {
+            "id": "split",
+            "text": "$= m + \\dfrac{s}{2}\\cdot\\dfrac{Q_b - Q_a}{Q_a + Q_b}$, the $m$ terms add to $m(Q_a + Q_b)$"
+          },
+          {
+            "id": "imb",
+            "text": "$= m + I\\,\\dfrac{s}{2}$, naming the imbalance $I$"
+          }
+        ],
+        "answer": [
+          "def",
+          "sub",
+          "split",
+          "imb"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the definition."
+        },
+        {
+          "rung": "point",
+          "text": "Substitute for both prices before collecting anything."
+        },
+        {
+          "rung": "step",
+          "text": "Collect the $m$ terms, then the $\\frac{s}{2}$ terms."
+        }
+      ],
+      "feedback": {
+        "correct": "The microprice is the mid shifted by $I$ half-spreads.",
+        "generic": "Not quite right. Define, substitute, collect, then name.",
+        "byKey": {
+          "imb": "Naming $I$ is the last step: it needs the fraction $\\frac{Q_b - Q_a}{Q_a + Q_b}$ first.",
+          "split": "You need the substitution before you can collect the $m$ terms."
+        }
+      },
+      "explain": {
+        "text": "$P_\\mu = m + I\\,s/2$. For our book, $100.12 + \\tfrac{2}{3} \\times 0.02 = 100.1333$. At $I = 0$ it is the mid; at $I = \\pm 1$ it reaches the ask or the bid."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A market maker quotes one bid and one ask, 4p apart, on 1p ticks. Centred on the mid it would quote £100.10 and £100.14. The thin ask in this book suggests the mid is about to rise.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              5000
+            ],
+            [
+              100.09,
+              4000
+            ],
+            [
+              100.08,
+              3000
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              1000
+            ],
+            [
+              100.15,
+              4000
+            ],
+            [
+              100.16,
+              3000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "caption": "Mid £100.12, microprice £100.133"
+        }
+      },
+      "question": "Which quote is centred closest to the microprice?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "£100.11 / £100.15",
+            "correct": true
+          },
+          {
+            "id": "mid",
+            "text": "£100.10 / £100.14",
+            "why": "You centred on the mid. Selling at £100.14 when fair value is £100.133 leaves little room, and the thin ask is likely to be lifted."
+          },
+          {
+            "id": "far",
+            "text": "£100.12 / £100.16",
+            "why": "That is centred on £100.14, past the microprice. You leaned all the way to the ask."
+          },
+          {
+            "id": "back",
+            "text": "£100.09 / £100.13",
+            "why": "You leaned the wrong way, towards the heavy bid. Its centre, £100.11, is below the mid."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A 4p quote sits 2p either side of its centre."
+        },
+        {
+          "rung": "point",
+          "text": "The microprice is £100.133. Which centre is closest on 1p ticks?",
+          "highlight": [
+            "ask0",
+            "bid0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Centre £100.13: quote £100.11 and £100.15."
+        }
+      ],
+      "feedback": {
+        "correct": "Centred on £100.13, a tick above the mid.",
+        "generic": "Not quite right. Find each quote's centre and compare it with £100.133."
+      },
+      "explain": {
+        "text": "Quoting around the microprice raises both prices a penny. The maker sells less often just before a rise and buys a little higher, which is what the book is signalling. Level 3 builds this into a full quoting rule.",
+        "canvas": {
+          "highlight": [
+            "ask0",
+            "bid0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A trading system receives the book as two lists of `(price, size)` pairs, best level first. Write the two signals it needs. A one-sided book has no mid, so return `None` there.",
+      "question": "Complete `microprice` and `imbalance`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def microprice(bids, asks):\n    \"\"\"Size-weighted microprice of the best levels.\n\n    bids and asks are lists of (price, size), best first.\n    Return None if either side is empty.\n    \"\"\"\n    ...\n\ndef imbalance(bids, asks):\n    \"\"\"(Qb - Qa) / (Qb + Qa) at the best levels, or None.\"\"\"\n    ...\n",
+        "solution": "def microprice(bids, asks):\n    \"\"\"Size-weighted microprice of the best levels.\n\n    bids and asks are lists of (price, size), best first.\n    Return None if either side is empty.\n    \"\"\"\n    if not bids or not asks:\n        return None\n    pb, qb = bids[0]\n    pa, qa = asks[0]\n    return (pa * qb + pb * qa) / (qa + qb)\n\ndef imbalance(bids, asks):\n    \"\"\"(Qb - Qa) / (Qb + Qa) at the best levels, or None.\"\"\"\n    if not bids or not asks:\n        return None\n    qb, qa = bids[0][1], asks[0][1]\n    return (qb - qa) / (qb + qa)\n",
+        "examples": [
+          {
+            "call": "microprice([(100.10, 5000)], [(100.14, 1000)])",
+            "expect": "100.13333333333334",
+            "compare": "isclose"
+          },
+          {
+            "call": "imbalance([(100.10, 5000)], [(100.14, 1000)])",
+            "expect": "0.6666666666666666",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "microprice([(100.10, 5000)], [(100.14, 1000)])",
+            "expect": "100.13333333333334",
+            "compare": "isclose"
+          },
+          {
+            "call": "imbalance([(100.10, 5000)], [(100.14, 1000)])",
+            "expect": "0.6666666666666666",
+            "compare": "isclose"
+          },
+          {
+            "call": "microprice([(100.10, 3000), (100.09, 9000)], [(100.14, 3000), (100.15, 100)])",
+            "expect": "100.12",
+            "compare": "isclose"
+          },
+          {
+            "call": "imbalance([(100.10, 3000), (100.09, 9000)], [(100.14, 3000), (100.15, 100)])",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "microprice([(9.99, 1000)], [(10.01, 9000)])",
+            "expect": "9.992",
+            "compare": "isclose"
+          },
+          {
+            "call": "imbalance([(9.99, 1000)], [(10.01, 9000)])",
+            "expect": "-0.8",
+            "compare": "isclose"
+          },
+          {
+            "call": "microprice([(250.0, 40), (249.9, 500)], [(250.2, 10)])",
+            "expect": "250.16",
+            "compare": "isclose"
+          },
+          {
+            "call": "imbalance([(250.0, 40), (249.9, 500)], [(250.2, 10)])",
+            "expect": "0.6",
+            "compare": "isclose"
+          },
+          {
+            "call": "microprice([], [(10.0, 100)]) is None",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "imbalance([(50.0, 200)], []) is None",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests. Numbers are accepted within a relative error of 1e-9; one-sided books must return None."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use only `bids[0]` and `asks[0]`."
+        },
+        {
+          "rung": "point",
+          "text": "Unpack `pb, qb = bids[0]` and `pa, qa = asks[0]`, after checking neither list is empty."
+        },
+        {
+          "rung": "step",
+          "text": "`return (pa * qb + pb * qa) / (qa + qb)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both signals, with the one-sided book handled.",
+        "generic": "Some tests failed. Check that each price is weighted by the other side's size, and that deeper levels are ignored.",
+        "byKey": {
+          "error": "Your code stopped with an error. An empty list has no `[0]`: check for it first."
+        }
+      },
+      "explain": {
+        "text": "Both functions read only the best level of each side. The `None` case matters in practice: in a halt or at the open one side can be empty, and dividing would crash or mislead.\n\n```python\nif not bids or not asks:\n    return None\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "An execution algorithm must buy 20,000 shares within the hour. Right now the best bid holds 1,000 shares and the best ask 9,000, so $I = -0.8$.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              1000
+            ],
+            [
+              100.09,
+              6000
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              9000
+            ],
+            [
+              100.15,
+              5000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "caption": "Imbalance −0.8: microprice £100.104"
+        }
+      },
+      "question": "What should the algorithm do with its next slice?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "wait",
+            "text": "Wait: the thin bid is likely to go, and the price to tick down",
+            "correct": true
+          },
+          {
+            "id": "now",
+            "text": "Buy now, before the price rises",
+            "why": "You read the imbalance backwards. Negative means the ask is heavy and the bid thin, so a fall is more likely."
+          },
+          {
+            "id": "ignore",
+            "text": "Buy now: imbalance says nothing about the next move",
+            "why": "You treated the book as the mid alone. A 9-to-1 size difference is a short-term signal."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the imbalance positive or negative, and what does that say?"
+        },
+        {
+          "rung": "point",
+          "text": "The microprice, £100.104, is below the mid.",
+          "highlight": [
+            "bid0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A buyer gains by waiting for a likely fall."
+        }
+      ],
+      "feedback": {
+        "correct": "Waiting a moment buys more cheaply on average.",
+        "generic": "Not quite right. The microprice is below the mid, so the mid is more likely to fall."
+      },
+      "explain": {
+        "text": "$P_\\mu = 100.12 - 0.8 \\times 0.02 = 100.104$, below the mid. A buyer expects a better price shortly, so it holds back; when $I$ turns positive it buys before the ask is lifted. Over many slices that saves a fraction of the spread each time.",
+        "canvas": {
+          "highlight": [
+            "bid0"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The mid ignores size. The microprice weights each price by the size on the other side, so it leans towards the thin side.",
+      "The thin side is likely to be used up first, so the microprice predicts the next mid better than the mid does.",
+      "The imbalance $I = \\frac{Q_b - Q_a}{Q_b + Q_a}$ sums up the lean: $P_\\mu = m + I\\,\\frac{s}{2}$."
+    ],
+    "formula": {
+      "name": "Microprice",
+      "tex": "P_\\mu = \\dfrac{P_a Q_b + P_b Q_a}{Q_a + Q_b} = m + I\\,\\dfrac{s}{2}",
+      "note": "Equal sizes give the mid; a one-sided book has neither."
+    },
+    "trap": "Weighting each price by its own side's size gets the lean backwards."
+  },
+  "quiz": [
+    {
+      "id": "q-micro",
+      "difficulty": 2,
+      "prose": "Best bid £50.00 for 2,000 shares; best ask £50.04 for 6,000 shares.",
+      "question": "What is the microprice?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 50.01,
+        "tol": {
+          "abs": 0.0002
+        },
+        "unit": "£",
+        "label": "Microprice in pounds",
+        "accept": "£50.01: $(50.04 \\times 2{,}000 + 50.00 \\times 6{,}000) / 8{,}000$.",
+        "wrong": [
+          {
+            "id": "mid",
+            "value": 50.02,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "own",
+            "value": 50.03,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£50.01, leaning towards the thin bid.",
+        "generic": "Not quite right. Weight each price by the other side's size.",
+        "byKey": {
+          "mid": "That is the mid. The sizes differ three to one, so the microprice leans.",
+          "own": "You weighted each price by its own side. The lean goes towards the thin bid, not the heavy ask."
+        }
+      },
+      "explain": {
+        "text": "$I = (2{,}000 - 6{,}000)/8{,}000 = -0.5$, so $P_\\mu = 50.02 - 0.5 \\times 0.02 = 50.01$. The thin bid is likely to be hit first."
+      }
+    },
+    {
+      "id": "q-imbalance",
+      "difficulty": 2,
+      "prose": "A book has imbalance $I = 0.5$, a mid of £20.00 and a spread of 2p.",
+      "question": "What is the microprice?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "£20.005",
+            "correct": true
+          },
+          {
+            "id": "full",
+            "text": "£20.01",
+            "why": "You moved by $I$ times the whole spread. The shift is $I$ times half the spread."
+          },
+          {
+            "id": "down",
+            "text": "£19.995",
+            "why": "You moved the wrong way. Positive imbalance means a heavy bid, so the microprice is above the mid."
+          },
+          {
+            "id": "mid",
+            "text": "£20.00",
+            "why": "That is the mid. Only $I = 0$ leaves the microprice there."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$20.00 + 0.5 \\times 0.01 = 20.005$.",
+        "generic": "Not quite right. Use $P_\\mu = m + I\\,s/2$."
+      },
+      "explain": {
+        "text": "Half the spread is 1p, and $I = 0.5$ moves the microprice half of that above the mid: £20.005."
+      }
+    },
+    {
+      "id": "q-one-sided",
+      "difficulty": 3,
+      "prose": "In a trading halt, a book shows bids at £8.00 and £7.95 but no asks at all.",
+      "question": "What can you say about its mid and microprice?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Neither exists: both need a best ask",
+            "correct": true
+          },
+          {
+            "id": "bid",
+            "text": "Both equal the best bid, £8.00",
+            "why": "You used the only price on offer. A mid needs two sides; £8.00 is just what buyers will pay."
+          },
+          {
+            "id": "zero",
+            "text": "The microprice is £8.00 because the ask size is zero",
+            "why": "You put zero ask size into the formula. With no ask there is no $P_a$ to weight, so the formula has nothing to work with."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "No ask, no mid, no microprice.",
+        "generic": "Not quite right. Both formulas use the best ask."
+      },
+      "explain": {
+        "text": "The mid and the microprice both need a best ask. A one-sided book has a price at which some can trade, but no middle; code should return None rather than invent one."
+      }
+    },
+    {
+      "id": "q-predict",
+      "difficulty": 3,
+      "prose": "A researcher measures how well two prices predict the mid one second later, across a day of quotes.",
+      "question": "Which result would you expect?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The microprice predicts it better, because it uses the sizes",
+            "correct": true
+          },
+          {
+            "id": "mid",
+            "text": "The mid predicts it better, because it is the market's price",
+            "why": "You treated the mid as the price. It throws away the sizes, which say which side is likely to go next."
+          },
+          {
+            "id": "same",
+            "text": "They predict equally, because they are always equal",
+            "why": "They are equal only when the sizes match. Most of the time the book is lopsided."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The sizes carry information about the next move.",
+        "generic": "Not quite right. Which one uses more of the book?"
+      },
+      "explain": {
+        "text": "The microprice equals the mid plus $I\\,s/2$. When the imbalance tells us which side is likely to go first, that shift points the right way more often than not."
+      }
+    }
+  ]
+}

@@ -331,7 +331,7 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
      expect any abnormal end passes (an uncaught exception, a crash, or a non-zero exit status) */
   const raisesRow = (row, r, e) => {
     const want = row.expect == null ? '' : String(row.expect).trim();
-    if (e.exc) { row.ok = want ? excMatch(e.exc, want) : true; row.actual = 'threw ' + e.exc[0]; row.detail = row.ok ? '' : e.text; return; }
+    if (e.exc) { row.ok = want ? excMatch(e.exc, want) : true; row.actual = 'an uncaught ' + e.exc[0]; row.detail = row.ok ? '' : e.text; return; }
     if (r.trap) { row.ok = !want; row.actual = 'a crash'; row.detail = row.ok ? '' : [e.text, trapLine(r.trap)].filter(Boolean).join('\n'); return; }
     if (r.code !== 0) { row.ok = !want; row.actual = `exit status ${r.code}`; row.detail = row.ok ? '' : e.text; return; }
     row.ok = false;

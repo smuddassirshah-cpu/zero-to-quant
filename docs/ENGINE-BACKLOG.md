@@ -969,3 +969,9 @@ Raised later (estimation level 3):
 346. A native intervals chart (many confidence intervals from repeated samples with a "count misses" readout); 100 intervals now take 300 `derive` rules.
 347. `bars` histograms: bin edges that fall on the data's grid of values put boundary values in different bins than a node check does; document the half-open convention and make it `[lo, hi)`.
 348. `number-line`: negative tick labels print a hyphen rather than a minus sign (same family as 234).
+
+Raised later (regression level 2):
+
+349. `console`: a `compact` or font-size option so 80-column output (a statsmodels summary) shows verbatim (about 60 columns fit at 14px).
+350. `scatter` `curves`: a `thin` style or per-curve opacity for bands of resampled fits.
+351. Validator: accept `fit`, curve ids and residual ids (`r-p{i}`) as `scatter` highlight targets (the engine renders them).

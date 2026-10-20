@@ -155,6 +155,17 @@
       widget: { kind: 'tap-regions', answer: ['l3'], countWord: 'tapped' } } },
     { name: 'tap-regions (vectors)', kind: 'tap-regions', item: { question: 'Tap the vector that points up and to the left.', canvas: { kind: 'vectors', params: { x: [-4, 4], y: [-1, 4], vectors: [{ id: 'u', v: [3, 1], label: '$\\mathbf{u}$' }, { id: 'w', v: [-2, 3], label: '$\\mathbf{w}$' }] } },
       widget: { kind: 'tap-regions', answer: ['w'], countWord: 'tapped' } } },
+    /* item 304: the C++ mode in both shapes; they load the compiler (about 26 MB) only on request */
+    { name: 'code (C++ function)', kind: 'code', item: { question: 'Write `double mean(const std::vector<double>& xs)`.', widget: { kind: 'code', language: 'cpp', starter: '#include <vector>\n\ndouble mean(const std::vector<double>& xs) {\n    return 0;\n}\n',
+      solution: '#include <vector>\n\ndouble mean(const std::vector<double>& xs) {\n    double total = 0;\n    for (double x : xs) total += x;\n    return xs.empty() ? 0 : total / xs.size();\n}\n',
+      examples: [{ call: 'mean', args: [[1, 2, 3, 4]], expect: 2.5, compare: 'isclose' }],
+      tests: [{ call: 'mean', args: [[1, 2, 3, 4]], expect: 2.5, compare: 'isclose' }, { call: 'mean({0.1, 0.2, 0.3})', expect: 0.2, compare: 'isclose' }, { setup: 'std::vector<double> xs(10, 7.5);', call: 'mean(xs)', expect: 7.5, compare: 'isclose' }],
+      how: 'Check compiles your code once and runs 3 hidden tests.' } } },
+    { name: 'code (C++ program)', kind: 'code', item: { question: 'Read two prices from `std::cin` and print the return.', widget: { kind: 'code', language: 'cpp', starter: '#include <iostream>\n#include <iomanip>\n\nint main() {\n    double old_price, new_price;\n    std::cin >> old_price >> new_price;\n}\n',
+      solution: '#include <iostream>\n#include <iomanip>\n\nint main() {\n    double old_price, new_price;\n    std::cin >> old_price >> new_price;\n    std::cout << "Return: " << std::fixed << std::setprecision(2) << (new_price - old_price) / old_price * 100 << "%\\n";\n}\n',
+      examples: [{ compare: 'stdout', stdin: '250\n262.5\n', expect: 'Return: 5.00%\n' }],
+      tests: [{ compare: 'stdout', stdin: '250\n262.5\n', expect: 'Return: 5.00%\n' }, { compare: 'stdout', stdin: '100 90', expect: 'Return: -10.00%\n' }, { compare: 'stdout', stdin: '1\n2\n', expect: 'Return: 100.00%\n', exact: true }],
+      how: 'Check runs your program three times with different input.' } } },
     { name: 'code (stdout and stdin)', kind: 'code', item: { question: 'Read two prices with `input()` and print the return.', widget: { kind: 'code', language: 'python', starter: 'old = float(input())\nnew = float(input())\n', solution: 'old = float(input())\nnew = float(input())\nprint(f"Return: {(new - old) / old * 100:.2f}%")\n',
       examples: [{ compare: 'stdout', stdin: '250\n262.5\n', expect: 'Return: 5.00%\n' }],
       tests: [{ compare: 'stdout', stdin: '250\n262.5\n', expect: 'Return: 5.00%\n' }, { compare: 'stdout', stdin: '100\n90\n', expect: 'Return: -10.00%\n' }, { stdin: '1\n2\n', call: 'len(printed)', expect: '1' }], how: 'Check runs your program three times with different input.' } } },
@@ -300,15 +311,16 @@
         const extra = variants.find(x => x.name === name);
         const kind = name, item = extra ? extra.item : WIDGET_SAMPLES[kind];
         if (!item) { wg.append(missing(kind, 'item')); return; }
-        const lazy = kind === 'code';
+        const lazy = kind === 'code', cpp = !!(extra && extra.item.widget && extra.item.widget.language === 'cpp'); // item 304: C++ cards load the compiler on request too
         const el = card(kind, null, item.widget || item, `<div class="ds-acts">
-            ${lazy ? '<button type="button" class="btn secondary" data-load>Load Python and render</button>' : ''}
-            <button type="button" class="btn secondary" data-fill${lazy ? ' hidden' : ''}>Fill answer</button>
-            <button type="button" class="btn" data-check${lazy ? ' hidden' : ''}>Check</button>
-            <button type="button" class="link-btn" data-reset${lazy ? ' hidden' : ''}>Reset</button>
+            ${lazy || cpp ? `<button type="button" class="btn secondary" data-load>${cpp ? 'Load the C++ compiler and render' : 'Load Python and render'}</button>` : ''}
+            <button type="button" class="btn secondary" data-fill${lazy || cpp ? ' hidden' : ''}>Fill answer</button>
+            <button type="button" class="btn" data-check${lazy || cpp ? ' hidden' : ''}>Check</button>
+            <button type="button" class="link-btn" data-reset${lazy || cpp ? ' hidden' : ''}>Reset</button>
             <span class="t-caption ds-out" role="status" aria-live="polite"></span></div>`);
         wg.append(el);
-        if (lazy) el.querySelector('.ds-card-b').innerHTML = '<p class="t-caption muted">The code widget loads Python (about 10 MB) from the jsDelivr CDN, so it renders on request.</p>';
+        if (cpp) el.querySelector('.ds-card-b').innerHTML = '<p class="t-caption muted">The C++ code widget loads clang (about 26 MB) from the jsDelivr CDN, so it renders on request.</p>';
+        else if (lazy) el.querySelector('.ds-card-b').innerHTML = '<p class="t-caption muted">The code widget loads Python (about 10 MB) from the jsDelivr CDN, so it renders on request.</p>';
         else mountWidget(el, kind, item);
         el.addEventListener('click', async (e) => {
           const out = el.querySelector('.ds-out');
