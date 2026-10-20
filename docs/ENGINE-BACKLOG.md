@@ -746,3 +746,10 @@ Raised later (counting-chance level 3):
 272. `bars`: `yScale: "log"`; or category labels on a `plane` x axis (`xLabels`), so a log-scale chart by category needs no numeric stand-in axis.
 273. `plane` expressions and `derive`: `lgamma`, `prod(k, a, b, term)` and a running product over integers (the exact birthday product needs a Stirling workaround now; see 197, 210).
 274. Validator: allow the card suits ♠ ♥ ♦ ♣ in prose alongside 271's symbols.
+
+Raised later (conditional level 1):
+
+275. `tree` with the `table` widget: a tree-bound fill mode (tap a branch, type its probability, see it drawn on the branch) rather than values appearing only in the Why? sheet.
+276. `tree`: automatic label spacing on 8-leaf and 3-branch trees (same as 268).
+277. `grid`: `dim` on blank cells is invisible; hatch or grey the cell background.
+278. `playthrough.mjs --shots`: capture after `enter` animations settle (wait for the animation promise, not a fixed 300 ms).

@@ -8,6 +8,7 @@
   'use strict';
   const Z = window.ZQ;
 
+  const fixedCell = (c) => (typeof c === 'number' ? Z.esc(Z.grade.fmtNum(c)).replace(/^-/, '−') : Z.grade.inline(String(c ?? '').replace(/^-(?=\d|\.\d)/, '−')));
   Z.widgets.register('table', (host, spec, ctx) => {
     const cols = spec.columns || [];
     const rows = spec.rows || [];
@@ -20,7 +21,8 @@
           const label = `${cols[j] ? String(cols[j]).replace(/\$/g, '') : 'Column ' + (j + 1)}, row ${i + 1}`;
           return `<td class="wd-td-edit"><input type="text" inputmode="${typeof c.answer === 'string' && !Number.isFinite(Z.grade.parseNum(c.answer)) ? 'text' : 'decimal'}" autocomplete="off" spellcheck="false" data-cell="r${i}c${j}" aria-label="${Z.esc(label)}" placeholder="${Z.esc(c.placeholder || '?')}"></td>`;
         }
-        return j === 0 ? `<th scope="row">${Z.grade.inline(c ?? '')}</th>` : `<td>${Z.grade.inline(c ?? '')}</td>`;
+        const t = fixedCell(c); // item 234: numbers and negative-number text use the minus sign
+        return j === 0 ? `<th scope="row">${t}</th>` : `<td>${t}</td>`;
       }).join('')}</tr>`).join('')}</tbody></table>
       <p class="t-caption wd-accept" hidden></p></div>`);
     host.append(el);
