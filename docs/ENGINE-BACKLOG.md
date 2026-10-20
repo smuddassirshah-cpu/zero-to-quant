@@ -740,3 +740,9 @@ Raised later (counting-chance level 2):
 269. `tree`: let a control drive the number of branches per level (`derive` on `levels` or `branching`), for "options per stage" sliders.
 270. `array`: a drag-to-place widget (drag bars between stars) rather than `tap-regions`.
 271. Validator: ★ is treated as an emoji; whitelist common geometric symbols (★ ● ■ ▲) used as tokens.
+
+Raised later (counting-chance level 3):
+
+272. `bars`: `yScale: "log"`; or category labels on a `plane` x axis (`xLabels`), so a log-scale chart by category needs no numeric stand-in axis.
+273. `plane` expressions and `derive`: `lgamma`, `prod(k, a, b, term)` and a running product over integers (the exact birthday product needs a Stirling workaround now; see 197, 210).
+274. Validator: allow the card suits ♠ ♥ ♦ ♣ in prose alongside 271's symbols.

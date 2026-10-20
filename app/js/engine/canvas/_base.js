@@ -639,5 +639,7 @@
     register, create, kinds, svg, attrs, label, scale, niceTicks, fmtNum, compile, tween, pulse, clearHighlight, merge, frame, emitter, series, SERIES, INK, NS,
     // added by E3: shared instance and helpers (see header)
     instance, GRADED, ease, animator, lerp, flash, badge, texOf, textW, toLocal, dragger, cellOutline, nextInDirection,
+    /* fill {{expression}} in a string with derive's functions and the given names (matrix cells, item 235) */
+    template: (text, names = {}) => String(text).replace(/\{\{([^}]+)\}\}/g, (_, e) => { try { const v = deriveExpr(e.trim())(Object.assign({}, DERIVE_FN, names)); return typeof v === 'number' ? (Number.isFinite(v) ? fmtNum(v, 4).replace(/^-/, '−') : '') : String(v); } catch { return ''; } }),
   };
 })();
