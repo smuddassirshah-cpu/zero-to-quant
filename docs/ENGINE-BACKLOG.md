@@ -926,3 +926,10 @@ Raised later (markov level 3):
 323. `walk`: `showHits` should count hits per barrier (top and bottom separately); whole-number x ticks (`xStep: 1`); a documented re-seed control (`controls: [{ "reseed": true }]`).
 324. `tree`: leaf labels patchable from state (reveal prices in an explanation).
 325. `distribution`: document addressing an overlay by id in `derive` (`nrm.params.mu`) or bind overlay parameters to sliders directly.
+
+Raised later (estimation level 1):
+
+326. `bars` simulation: let `sim.outcome` read `state.params` (so a slider on sample size re-runs the simulation) and add `mean(k, expr)` and `var(k, expr)` helpers (an outcome now repeats a 100-value `pick` ten times).
+327. Simulations: a "statistic per sample" mode and a running statistic (running mean of the divide-by-$n$ variance), so convergence pictures need not be precomputed `series`.
+328. `grid`: a size cap for grids with many cells (a 10x10 grid is about 540 px tall and pushes the question below the fold).
+329. Validator: accept `"all"` in a grid hint highlight (the engine accepts it), and overlay ids on a `distribution` hint highlight when the overlay is given in `state`.

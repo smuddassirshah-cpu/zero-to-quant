@@ -27,6 +27,8 @@
   const OUT = '\u001eZQR', EXC = '\u001eZQX', SEP = '\u001f';
 
   /* ---------- One shared compiler and runner ---------- */
+  /* Timings for the record (read by tools): load, and the last compile and run */
+  const stats = { loadMs: null, workerMs: null, version: '', last: null };
   const Cpp = (() => {
     const url = () => new URL('js/screens/cpp-worker.js', location.href).href;
     let cw = null, rw = null, status = 'idle', reason = '', progress = '', gen = 0, seq = 0, loadTimer = 0;
@@ -42,7 +44,7 @@
     const unavailable = (msg) => { killC(msg); reason = msg; progress = ''; set('unavailable'); };
     const start = (restart = false) => {
       killC('The compiler was restarted.');
-      const my = ++gen;
+      const my = ++gen, t0 = performance.now();
       warmed.clear(); progress = '';
       set(restart ? 'restarting' : 'loading');
       if (typeof WebAssembly !== 'object' || typeof Worker !== 'function') { unavailable('This browser cannot run WebAssembly in a background worker.'); return; }
@@ -51,7 +53,7 @@
         if (my !== gen) return;
         const m = e.data || {};
         if (m.type === 'progress') { progress = String(m.text || ''); notify(); return; }
-        if (m.type === 'ready') { clearTimeout(loadTimer); progress = ''; set('ready'); wantWarm.forEach(h => warm(h)); return; }
+        if (m.type === 'ready') { clearTimeout(loadTimer); progress = ''; stats.loadMs = Math.round(performance.now() - t0); stats.workerMs = m.ms; stats.version = m.version; set('ready'); wantWarm.forEach(h => warm(h)); return; }
         if (m.type === 'fail') { unavailable(m.message); return; }
         if (m.type === 'compiled') { const p = pend.get(m.id); if (!p) return; pend.delete(m.id); clearTimeout(p.timer); p.resolve(m); }
       };
@@ -528,6 +530,7 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
       const limit = TEST_MS + (spec.budget != null ? Math.max(0, +spec.budget || 0) : 0);
       const runs = await Cpp.run(c.wasm, cases.map((cs, i) => (script ? { argv: cs.argv || [], stdin: cs.stdin == null ? '' : String(cs.stdin) } : { argv: [String(i)], stdin: '' })), limit);
       busy = false; sync();
+      stats.last = { compileWallMs: compileMs, compileMs: c.ms, pch: !!c.pch, runMs: Math.round(runs.results.reduce((a, r) => a + (r ? r.ms : 0), 0) * 10) / 10, cases: cases.length };
       runs.results.forEach((r, i) => {
         const row = rows[i];
         if (!r) return;
@@ -607,4 +610,5 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
   };
   /* For tools and tests: the pure helpers */
   Z.cppCode.lib = { lit, callOf, splitHead, unit, cleanDiag, same, norm, fmt, scriptMode };
+  Z.cppCode.stats = stats;
 })();
