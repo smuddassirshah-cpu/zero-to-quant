@@ -799,3 +799,9 @@ Raised later (limits-thm level 1):
 
 299. `distribution`, discrete families: x ticks drop to every second integer (or only 0) on narrow ranges; always tick every integer on a discrete support, and keep the range right when a slider changes $n$.
 300. `distribution`: a `hypergeometric` family (N, K, n).
+
+Raised later (random-vars level 2):
+
+301. A native `seesaw` canvas (masses at values, draggable pivot graded against the mean) or a `bars` option for a draggable mean marker; the see-saw is built on `plane` polygons now.
+302. `series`: bind `reveal` and a marker index to a slider directly, without `derive`.
+303. `bars` simulations: allow a trial to return two values (X and Y side by side) rather than stacking two simulations in a `pair`.
