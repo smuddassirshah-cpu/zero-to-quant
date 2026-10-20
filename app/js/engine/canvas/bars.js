@@ -116,9 +116,20 @@
       countEl = document.createElement('span'); countEl.className = 'cvb-count'; countEl.setAttribute('aria-live', 'polite'); R.extra.append(countEl);
     };
 
+    let geo = null;
+    const canDrag = (view, R) => R.active('drag') || (!!(view.drag ?? params.drag) && R.active());
     const def = {
       kind: 'bars', aria: params.aria || 'Bar chart',
-      modes: ['tap', 'slider'],
+      modes: ['tap', 'slider', 'drag'],
+      drag: {
+        start: (id, p, R) => (id === 'pivot' && canDrag(R.state, R) && geo && geo.pxOf ? { id } : null),
+        move(info, p, R, end) {
+          let lo = -1e6, hi = 1e6; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; if (geo.pxOf(m) < p.x) lo = m; else hi = m; }
+          const v = K.round(K.snapTo((lo + hi) / 2, params.snap || 0.1), 6);
+          R.commit({ pivot: v }); R.emit({ type: 'drag', id: 'pivot', x: v, y: 0, phase: end ? 'end' : 'move' });
+        },
+        key(id, dx, dy, R) { const v = K.round(+R.state.pivot + (dx || dy) * (params.snap || 0.1), 6); R.commit({ pivot: v }); R.emit({ type: 'drag', id: 'pivot', x: v, y: 0, phase: 'end' }); },
+      },
       size: () => ({ w: W, h: H }),
       listKeys: ['hlines', 'curves'],
       init: () => ({ values: {}, ran: sim ? 0 : undefined, highlight: [], params: {}, hlines: [], curves: [] }),
@@ -239,6 +250,20 @@
         });
         /* item 322: the cut line itself, with its label */
         if (cut && pxOf && cut.line !== false) { const px = pxOf(+cut.at) + (binned ? 0 : (cut.side === 'below' ? 1 : -1) * band / 2); const o = K.obj('cut', '', 'ink'); o.append(svg('line', { x1: px, x2: px, y1: sy(bot), y2: sy(top), class: 'cvb-ln thin cvb-dash' })); if (cut.label) o.append(K.lab(px + 4, sy(top) + 8, String(cut.label).replace('{at}', K.fmt(+cut.at, 3)), { anchor: 'start', halo: true, cls: 'cvb-strong' })); g.append(o); }
+        /* item 301: a balance point. state.pivot (a value on the category axis) draws a fulcrum under the axis, draggable
+           in drag mode or with drag: true (a drag-point target is then a number); showMean draws the weighted mean */
+        geo = { pxOf: valueAxis ? sxv : pxOf, ml, mr, band, binned };
+        const bottomPx = sy(bot);
+        if (pxOf && (view.showMean ?? params.showMean)) {
+          let sw = 0, sv = 0; hsG[0].forEach((h, k) => { const v = valOf(k); if (Number.isFinite(v) && h > 0) { sw += h; sv += h * (valueAxis ? ta * v + tb : v); } });
+          if (sw > 0) { const m = sv / sw, px = valueAxis ? sxv(m) : pxOf(m), o = K.obj('mean', '', 'ink'); o.append(svg('line', { x1: px, x2: px, y1: bottomPx, y2: sy(top), class: 'cvb-ln thin cvb-dash' }), K.lab(px + 4, sy(top) + 8, `$\\text{mean} = ${K.fmt(m, 3)}$`, { anchor: 'start', halo: true })); g.append(o); }
+        }
+        if (pxOf && view.pivot != null && Number.isFinite(+view.pivot)) {
+          const pv = +view.pivot, px = valueAxis ? sxv(pv) : pxOf(pv), o = K.obj('pivot', 'cvb-pivot', canDrag(view, R) ? 'manip' : 'ink');
+          o.append(svg('path', { d: `M${px},${bottomPx}L${px - 9},${bottomPx + 14}L${px + 9},${bottomPx + 14}Z`, class: 'cvb-head' }));
+          g.append(o);
+          if (canDrag(view, R)) g.append(K.handle(px, bottomPx + 8, 'pivot', { r: 9, label: 'Balance point' }));
+        }
         /* exact value lines over each bar: dashed ink */
         if (exact.length && view.showExact !== false) {
           const eg = K.obj('exact', 'cvb-exact-g', 'ink');
@@ -269,6 +294,8 @@
         values: () => (groups ? Object.fromEntries(groups.flatMap((q, k) => { const hs = heights(R.state, k); return cats.map((c, i) => [`${c.id}-${q.id}`, hs[i]]); })) : Object.fromEntries(cats.map((c, i) => [c.id, heights(R.state)[i]]))),
         counts: () => Object.fromEntries(cats.map((c, i) => [c.id, tally(Math.round(R.state.ran || 0), R.state)[i]])),
         discarded: () => discarded,
+        points: () => (R.state.pivot != null ? { pivot: { x: +R.state.pivot, y: 0 } } : {}),
+        place: (id, pos, opts = {}) => (id === 'pivot' ? R.inst.set({ pivot: Array.isArray(pos) ? pos[0] : +pos }, opts) : Promise.resolve()),
         /* Explore controls: bind a category (its label or id, or "values.<label>") to move that bar's height */
         /* a name that is no category is a free parameter in state.params, for a derive block to read */
         setParam: (name, v) => { if (binned && (name === 'binWidth' || name === 'bins.width')) { R.inst.set({ binWidth: +v }, { instant: true }); return; } const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); else R.inst.set(Z.canvas.paramPatch(name, v), { instant: true }); },
