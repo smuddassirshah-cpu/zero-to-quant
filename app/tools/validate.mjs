@@ -616,6 +616,8 @@ const checkItem = (file, where, it, ctx) => {
   if (!it.id || !KEBAB.test(String(it.id))) err(file, `${where}.id`, 'item id must be kebab-case');
   if (it.difficulty != null || ctx.needDifficulty !== false) checkDifficulty(file, `${where}.difficulty`, it.difficulty, ctx.lo, ctx.hi, ctx.label);
   if (it.hints) err(file, `${where}.hints`, `${ctx.label} items have no hints`);
+  /* item 297: on a longform item, prose takes the place of prompt on screen, so the prompt would never show */
+  if (typeof it.prose === 'string' && it.prose.trim() && typeof (it.prompt || (isObj(it.widget) && it.widget.kind === 'longform' && it.widget.prompt)) === 'string' && String(it.prompt || it.widget.prompt).trim()) warn(file, where, 'this item has both prose and prompt: prose replaces prompt on screen, so the prompt is never shown (merge them into one)');
   if (ctx.skillsRequired && (!Array.isArray(it.skills) || !it.skills.length)) err(file, `${where}.skills`, 'name at least one skill');
   (it.skills || []).forEach(s => { if (ctx.skills && !ctx.skills.has(s)) err(file, `${where}.skills`, `unknown skill "${s}"`); });
   if (it.kind === 'longform' || (it.widget && it.widget.kind === 'longform')) {

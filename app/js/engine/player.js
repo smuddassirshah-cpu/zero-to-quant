@@ -133,7 +133,7 @@
     let canvas = null, born = null, widget = null, cvHost = null, cbar = null, countEl = null, stepper = null;
 
     if (spec.title && type !== 'title') add(`<h2 class="t-h1 lsn-h">${G().inline(spec.title)}</h2>`);
-    const proseSrc = spec.prose || (spec.kind === 'longform' ? spec.prompt : '');
+    const proseSrc = spec.prose || (spec.kind === 'longform' ? spec.prompt : w && w.kind === 'longform' ? w.prompt || '' : ''); // a longform widget's prompt shows when there is no prose (item 297)
     if (proseSrc) G().prose(proseSrc).split(/(?=<p class|<div class="lsn-code|<ul class="lsn-list|<ol class="lsn-list)/).filter(Boolean).forEach(h => add(h));
     const qLine = spec.question ? `<h2 class="t-h2 lsn-q">${G().inline(spec.question)}<span class="lsn-count tnum" aria-live="polite" hidden></span></h2>` : '';
     const tapHint = () => {

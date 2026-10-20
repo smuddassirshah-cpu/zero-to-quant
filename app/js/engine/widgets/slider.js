@@ -43,6 +43,10 @@
 
     const drive = (v, instant = true) => {
       const c = ctx.canvas; if (!c || !spec.bind) return;
+      /* item 292: the same route as canvas.controls: the canvas's own setParam first (a bars category label moves
+         that bar, a number-line point id moves the point), else the state path or state.params */
+      const listPath = /^(points|intervals|arrows|markers|vectors|segments|pointers)\./.test(String(spec.bind));
+      if (c.setParam && !listPath) { c.setParam(spec.bind, v); return; }
       const parts = String(spec.bind).split('.');
       const patch = parts.length === 1 ? { params: { [parts[0]]: v } } : parts.reduceRight((acc, k) => ({ [k]: acc }), v);
       c.set(patch, { instant });
