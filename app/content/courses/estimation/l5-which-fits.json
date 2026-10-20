@@ -1,0 +1,1177 @@
+{
+  "id": "l5-which-fits",
+  "course": "estimation",
+  "title": "Which parameter fits best?",
+  "minutes": 13,
+  "objectives": [
+    "Write a likelihood and read it as a function of the parameter.",
+    "Compare two parameter values by their likelihood ratio."
+  ],
+  "skills": [
+    "es-mle"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which coin made this?",
+      "prose": "A coin with unknown chance of heads $p$ is flipped three times: H, H, T. For any $p$, the chance of exactly this sequence is $p \\cdot p \\cdot (1 - p)$. The curve plots that chance against $p$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": true,
+          "xLabel": "$p$, the chance of heads",
+          "yLabel": "$L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2*(1-x)",
+              "label": "$L(p)$",
+              "labelAt": 0.25,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.3,
+              "y": 0.063,
+              "label": "",
+              "tap": false
+            }
+          ],
+          "caption": "Slide $p$ and watch the point."
+        },
+        "derive": {
+          "P.x": "p",
+          "P.y": "p*p*(1-p)",
+          "caption": "At $p$ = {{fixed(p, 2)}} the chance of H, H, T is {{fixed(p*p*(1-p), 4)}}"
+        }
+      },
+      "question": "Slide $p$ to the value that makes H, H, T most likely.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "start": 0.3,
+        "bind": "p",
+        "label": "$p$",
+        "decimals": 2,
+        "answer": 0.667,
+        "tol": 0.02,
+        "wrong": [
+          {
+            "id": "fair",
+            "from": 0.45,
+            "to": 0.55
+          },
+          {
+            "id": "top",
+            "from": 0.9,
+            "to": 1
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the number in the caption. Where does it stop rising?"
+        },
+        {
+          "rung": "point",
+          "text": "The highest point of the curve is between 0.6 and 0.7.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Slide slowly from 0.6 to 0.7. The caption peaks at 0.1481, near 0.67."
+        }
+      ],
+      "feedback": {
+        "correct": "The chance of H, H, T is largest near $p = 0.67$.",
+        "generic": "Not quite right. Slide until the caption stops rising and starts to fall.",
+        "byKey": {
+          "fair": "You stopped near a fair coin. Keep sliding right: the caption still rises after 0.5.",
+          "top": "A coin near $p = 1$ almost never gives the T. The caption falls towards 0 there."
+        }
+      },
+      "explain": {
+        "text": "You stopped at the top of the curve, $p = \\tfrac{2}{3}$. There the chance of H, H, T is $\\tfrac{4}{27} \\approx 0.148$, more than at any other $p$. Two heads in three flips is best explained by a coin that shows heads two thirds of the time.",
+        "canvas": {
+          "params": {
+            "p": 0.6667
+          },
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.6667,
+              "label": "$p = 2/3$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Now change the data. The control $k$ sets how many of the three flips were heads, and the curve becomes $p^k (1 - p)^{3 - k}$. Try each $k$, and slide $p$ along the curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1.05
+          ],
+          "grid": true,
+          "xLabel": "$p$, the chance of heads",
+          "yLabel": "Chance of the data",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^k*(1-x)^(3-k)",
+              "label": "$L(p)$",
+              "labelAt": 0.5
+            }
+          ],
+          "params": {
+            "k": 2
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.5,
+              "y": 0.125,
+              "label": "",
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "P.x": "p",
+          "P.y": "pow(p, k)*pow(1-p, 3-k)",
+          "caption": "{{k}} heads in 3: at $p$ = {{fixed(p, 2)}} the chance is {{fixed(pow(p, k)*pow(1-p, 3-k), 4)}}"
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 3,
+            "step": 1,
+            "start": 2,
+            "label": "Heads $k$"
+          },
+          {
+            "bind": "p",
+            "min": 0,
+            "max": 1,
+            "step": 0.01,
+            "start": 0.5,
+            "label": "$p$",
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "Set $k = 3$, so all three flips were heads. Where is the curve highest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "At $p = 1$, the right-hand end",
+            "correct": true
+          },
+          {
+            "id": "old",
+            "text": "At $p = \\tfrac{2}{3}$, as before",
+            "why": "You kept the peak from H, H, T. With $k = 3$ the curve is $p^3$, which rises all the way to $p = 1$."
+          },
+          {
+            "id": "half",
+            "text": "At $p = \\tfrac{1}{2}$",
+            "why": "You assumed the coin is fair. With three heads and no tails, a fair coin explains the data less well than a two-headed one."
+          },
+          {
+            "id": "none",
+            "text": "Nowhere: the curve has no peak",
+            "why": "The curve has no flat top, but it still has a highest point. It is at the end of the range, $p = 1$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All heads is explained best by a coin that always lands heads.",
+        "generic": "Not quite right. Set $k = 3$ and slide $p$ to both ends."
+      },
+      "explain": {
+        "text": "With $k = 3$ the curve is $p^3$, which keeps rising until $p = 1$. A coin that always shows heads gives H, H, H with chance 1. The best $p$ can sit at the very end of its range.",
+        "canvas": {
+          "params": {
+            "k": 3,
+            "p": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The likelihood",
+      "prose": "The curve you slid along has a name. With the data fixed at H, H, T, the **likelihood** is $L(p) = P(\\text{H, H, T} \\mid p) = p^2(1 - p)$. It is the chance of the data, read as a function of the parameter $p$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": true,
+          "xLabel": "$p$, the chance of heads",
+          "yLabel": "$L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2*(1-x)",
+              "label": "$L(p)$",
+              "labelAt": 0.25,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.5,
+              "label": "$p = 1/2$"
+            }
+          ]
+        }
+      },
+      "question": "A fair coin has $p = \\tfrac{1}{2}$. What is $L(\\tfrac{1}{2})$, the chance of exactly H, H, T?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.125,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "",
+        "label": "L(1/2)",
+        "accept": "any form equal to $\\tfrac{1}{8} = 0.125$.",
+        "placeholder": "fraction or decimal",
+        "wrong": [
+          {
+            "id": "orders",
+            "value": 0.375,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "heads-only",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "just-p",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each flip has its own factor. What are the three factors at $p = \\tfrac{1}{2}$?"
+        },
+        {
+          "rung": "point",
+          "text": "The curve crosses the line $p = \\tfrac{1}{2}$ just above 0.12.",
+          "highlight": [
+            "v1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Multiply $\\tfrac{1}{2} \\times \\tfrac{1}{2} \\times \\tfrac{1}{2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$L(\\tfrac{1}{2}) = \\tfrac{1}{8}$.",
+        "generic": "Not quite right. Multiply one factor per flip: $p$ for each head and $1 - p$ for the tail.",
+        "byKey": {
+          "orders": "You counted all three orders of two heads and a tail. The data is the one sequence H, H, T.",
+          "heads-only": "You multiplied the two heads and left out the tail. The T contributes a factor $1 - p$ too.",
+          "just-p": "That is the chance of one head. The data is three flips, so three factors multiply."
+        }
+      },
+      "explain": {
+        "text": "You multiplied one factor per flip: $\\tfrac{1}{2} \\cdot \\tfrac{1}{2} \\cdot \\tfrac{1}{2} = \\tfrac{1}{8}$. Counting all three orders would multiply every $L(p)$ by 3, which moves no peak. Either version is a valid likelihood.",
+        "canvas": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.5,
+              "y": 0.125,
+              "label": "$(\\tfrac12, \\tfrac18)$",
+              "tap": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "To compare two values of $p$, divide their likelihoods. The **likelihood ratio** says how many times better one explains the data than the other.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": true,
+          "xLabel": "$p$, the chance of heads",
+          "yLabel": "$L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2*(1-x)",
+              "label": "$L(p)$",
+              "labelAt": 0.25,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.5,
+              "y": 0.125,
+              "label": "$p = 1/2$",
+              "labelPos": "w",
+              "tap": false
+            },
+            {
+              "id": "B",
+              "x": 0.6667,
+              "y": 0.1481,
+              "label": "$p = 2/3$",
+              "labelPos": "n",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "What is $L(\\tfrac{2}{3}) / L(\\tfrac{1}{2})$? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.185,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "",
+        "label": "Likelihood ratio",
+        "accept": "any value from 1.18 to 1.19. Exactly $\\tfrac{4/27}{1/8} = \\tfrac{32}{27} \\approx 1.185$.",
+        "placeholder": "for example 1.5",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.844,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "difference",
+            "value": 0.023,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You already have $L(\\tfrac{1}{2})$. Work out $L(\\tfrac{2}{3}) = (\\tfrac{2}{3})^2 \\cdot \\tfrac{1}{3}$."
+        },
+        {
+          "rung": "point",
+          "text": "$L(\\tfrac{2}{3}) = \\tfrac{4}{27}$ and $L(\\tfrac{1}{2}) = \\tfrac{1}{8}$.",
+          "highlight": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide: $\\tfrac{4}{27} \\div \\tfrac{1}{8} = \\tfrac{32}{27}$."
+        }
+      ],
+      "feedback": {
+        "correct": "The data is about 1.19 times as likely under $p = \\tfrac{2}{3}$.",
+        "generic": "Not quite right. Divide $L(\\tfrac{2}{3})$ by $L(\\tfrac{1}{2})$.",
+        "byKey": {
+          "inverted": "You divided the other way round. Put $L(\\tfrac{2}{3})$ on top.",
+          "difference": "You subtracted the likelihoods. A ratio compares them by division, so the scale of $L$ drops out."
+        }
+      },
+      "explain": {
+        "text": "You divided $\\tfrac{4}{27}$ by $\\tfrac{1}{8}$ to get $\\tfrac{32}{27} \\approx 1.19$. The best $p$ beats a fair coin, but only by 19%. Three flips cannot tell these two coins apart with any confidence."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Same data, H, H, T. Two other candidates: $p = 0.45$ and $p = 0.85$. The second is closer to the peak at $\\tfrac{2}{3}$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": true,
+          "xLabel": "$p$, the chance of heads",
+          "yLabel": "$L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2*(1-x)",
+              "label": "$L(p)$",
+              "labelAt": 0.25,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.45,
+              "label": "0.45"
+            },
+            {
+              "id": "v2",
+              "x": 0.85,
+              "label": "0.85"
+            }
+          ]
+        }
+      },
+      "question": "Which value explains H, H, T better?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "low",
+            "text": "$p = 0.45$",
+            "correct": true
+          },
+          {
+            "id": "close",
+            "text": "$p = 0.85$, because it is closer to the peak",
+            "why": "You judged by distance from the peak. The curve falls faster on the right, so $L(0.85) = 0.108$ is below $L(0.45) = 0.111$."
+          },
+          {
+            "id": "same",
+            "text": "Neither: they are about equally far from the peak",
+            "why": "You assumed the curve is symmetric about its peak. It is not: it drops steeply towards $p = 1$."
+          },
+          {
+            "id": "heads",
+            "text": "$p = 0.85$, because the data is mostly heads",
+            "why": "Mostly heads favours $p$ above $\\tfrac{1}{2}$, but $0.85$ makes the tail too unlikely. Compute both likelihoods."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute $L(0.45)$ and $L(0.85)$ from $p^2(1 - p)$."
+        },
+        {
+          "rung": "point",
+          "text": "Compare where each dashed line meets the curve.",
+          "highlight": [
+            "v1",
+            "v2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$L(0.45) = 0.2025 \\times 0.55 = 0.111$ and $L(0.85) = 0.7225 \\times 0.15 = 0.108$."
+        }
+      ],
+      "feedback": {
+        "correct": "$L(0.45) = 0.111$ edges out $L(0.85) = 0.108$.",
+        "generic": "Not quite right. Compute $p^2(1 - p)$ at both values and compare."
+      },
+      "explain": {
+        "text": "You compared $L(0.45) = 0.111$ with $L(0.85) = 0.108$, a ratio of 1.03. The likelihood is not symmetric about its peak. Only the heights matter, not the distances.",
+        "canvas": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.45,
+              "y": 0.1114,
+              "label": "0.111",
+              "labelPos": "n",
+              "tap": false
+            },
+            {
+              "id": "B",
+              "x": 0.85,
+              "y": 0.1084,
+              "label": "0.108",
+              "labelPos": "n",
+              "tap": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "Ana reads the curve and says: \"$L(\\tfrac{2}{3}) = 0.148$, so there is a 14.8% chance that this coin has $p = \\tfrac{2}{3}$.\" The shaded area is everything under the curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.2
+          ],
+          "grid": true,
+          "xLabel": "$p$, the chance of heads",
+          "yLabel": "$L(p)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2*(1-x)",
+              "label": "$L(p)$",
+              "labelAt": 0.25,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "f": "f",
+            "from": 0,
+            "to": 1,
+            "label": "area {value}",
+            "dp": 4
+          },
+          "points": [
+            {
+              "id": "B",
+              "x": 0.6667,
+              "y": 0.1481,
+              "label": "0.148",
+              "labelPos": "n",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "What is wrong with Ana's statement?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "0.148 is the chance of the data if $p = \\tfrac{2}{3}$, not a chance about $p$",
+            "correct": true
+          },
+          {
+            "id": "posterior",
+            "text": "Nothing: $L(p)$ is the chance of $p$ given the data",
+            "why": "You read $L(p)$ as $P(p \\mid \\text{data})$. The area under the curve is $\\tfrac{1}{12}$, not 1, so these heights are not chances for $p$."
+          },
+          {
+            "id": "orders",
+            "text": "She should multiply by 3 for the orders: a 44.4% chance",
+            "why": "Multiplying by 3 changes the chance of the data, not of $p$. The statement still runs the wrong way round."
+          },
+          {
+            "id": "next",
+            "text": "0.148 is the chance that the next flip is heads",
+            "why": "If $p = \\tfrac{2}{3}$, the next flip is heads with chance $\\tfrac{2}{3}$. The likelihood is about the flips already seen."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which way round is the condition in $P(\\text{H, H, T} \\mid p)$?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at the shaded area. A distribution over $p$ would have area 1.",
+          "highlight": [
+            "area"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$L(p)$ fixes $p$ and asks about the data. A chance about $p$ would need a starting belief about $p$."
+        }
+      ],
+      "feedback": {
+        "correct": "The likelihood is the chance of the data, for each fixed $p$.",
+        "generic": "Not quite right. Ask what $L(p)$ conditions on.",
+        "byKey": {
+          "posterior": "You read $L(p)$ as $P(p \\mid \\text{data})$. The area under the curve is $\\tfrac{1}{12}$, not 1, so these heights are not chances for $p$."
+        }
+      },
+      "explain": {
+        "text": "$L(\\tfrac{2}{3})$ is $P(\\text{data} \\mid p = \\tfrac{2}{3})$, with the condition on $p$. Its area is $\\tfrac{1}{12}$, so it is not a distribution over $p$. Turning it into $P(p \\mid \\text{data})$ needs a prior belief about $p$, which we meet in level 3.",
+        "canvas": {
+          "area": {
+            "f": "f",
+            "from": 0,
+            "to": 1,
+            "label": "area {value}, not 1",
+            "dp": 4
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Every time, you multiplied one factor per observation. For data $x_1, \\dots, x_n$, independent given the parameter $\\theta$:\n\n$$L(\\theta) = P(\\text{data} \\mid \\theta) = \\prod_{i=1}^{n} f(x_i \\mid \\theta)$$\n\nThe data stays fixed and $\\theta$ moves. Compare two values of $\\theta$ by the ratio $L(\\theta_1) / L(\\theta_2)$.",
+      "question": "Five flips: H, T, T, H, T. Which is the likelihood $L(p)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$p^2 (1 - p)^3$",
+            "correct": true
+          },
+          {
+            "id": "swap",
+            "text": "$p^3 (1 - p)^2$",
+            "why": "You gave the heads the tails' count. There are two heads, so $p$ appears twice."
+          },
+          {
+            "id": "add",
+            "text": "$2p + 3(1 - p)$",
+            "why": "You added the factors. Independent flips multiply, one factor each."
+          },
+          {
+            "id": "pair",
+            "text": "$\\big(p(1 - p)\\big)^5$",
+            "why": "That gives every flip both factors. Each flip is either a head ($p$) or a tail ($1 - p$), not both."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two factors of $p$ and three of $1 - p$.",
+        "generic": "Not quite right. Write one factor per flip and multiply them."
+      },
+      "explain": {
+        "text": "Each head gives a factor $p$ and each tail $1 - p$, and independence multiplies them. The order does not matter, so H, T, T, H, T gives $p^2(1 - p)^3$."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Write the likelihood yourself. A coin with chance of heads $p$ is flipped four times, independently, and gives H, T, H, H.",
+      "question": "Enter $L(p)$, the chance of this sequence.",
+      "widget": {
+        "kind": "expression",
+        "answer": "p^3(1-p)",
+        "accept": [
+          "p^3*(1-p)",
+          "p^3(1-p)",
+          "(1-p)p^3",
+          "p^3-p^4",
+          "p*p*p*(1-p)"
+        ],
+        "wrong": [
+          {
+            "id": "swap",
+            "tex": "p(1-p)^3"
+          },
+          {
+            "id": "add",
+            "tex": "3p+1-p"
+          },
+          {
+            "id": "orders",
+            "tex": "4p^3(1-p)"
+          }
+        ],
+        "keyboard": "algebra",
+        "label": "L(p)"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write one factor per flip, in order."
+        },
+        {
+          "rung": "point",
+          "text": "H gives $p$ and T gives $1 - p$."
+        },
+        {
+          "rung": "step",
+          "text": "$p \\cdot (1 - p) \\cdot p \\cdot p = p^3(1 - p)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$L(p) = p^3(1 - p)$.",
+        "generic": "Not quite right. Three heads and one tail: multiply one factor for each.",
+        "byKey": {
+          "swap": "You swapped the counts. There are three heads, so $p$ appears three times.",
+          "add": "You added the factors. The flips are independent, so their chances multiply.",
+          "orders": "You counted the 4 orders of three heads and a tail. The data is this one sequence, so leave out the 4."
+        }
+      },
+      "explain": {
+        "text": "Each head contributes $p$ and the tail $1 - p$: $L(p) = p^3(1 - p)$. Sliding along this curve would put the peak at $p = \\tfrac{3}{4}$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A strategy's hit rate",
+      "prose": "A strategy's backtest shows 12 winning trades out of 20. Treat each trade as winning with chance $h$, independently. The curve is the likelihood of that exact record, $L(h) = h^{12}(1 - h)^{8}$, drawn in millionths.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1.6
+          ],
+          "grid": true,
+          "xLabel": "$h$, the chance a trade wins",
+          "yLabel": "$10^6 \\times L(h)$",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "1000000*x^12*(1-x)^8",
+              "label": "$L(h)$",
+              "labelAt": 0.3
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.4,
+              "y": 0.4,
+              "label": "",
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "P.x": "h",
+          "P.y": "1000000*pow(h, 12)*pow(1-h, 8)",
+          "caption": "$h$ = {{fixed(h, 2)}}: $L(h)$ = {{fixed(1000000*pow(h, 12)*pow(1-h, 8), 3)}} millionths"
+        }
+      },
+      "question": "Slide $h$ to the hit rate that best explains the record.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "start": 0.4,
+        "bind": "h",
+        "label": "$h$",
+        "decimals": 2,
+        "answer": 0.6,
+        "tol": 0.02,
+        "wrong": [
+          {
+            "id": "fair",
+            "from": 0.45,
+            "to": 0.55
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption. Where does it stop rising?"
+        },
+        {
+          "rung": "point",
+          "text": "The peak is between 0.55 and 0.65.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Slide to 0.60. The caption reads about 1.427 millionths, its largest value."
+        }
+      ],
+      "feedback": {
+        "correct": "The record is most likely when $h = 0.6$, its win share.",
+        "generic": "Not quite right. Slide until the caption is as large as it gets.",
+        "byKey": {
+          "fair": "You stopped near a coin-flip strategy. The caption still rises past 0.5."
+        }
+      },
+      "explain": {
+        "text": "The peak is at $h = 0.6$, the share of winning trades. But $L(0.5) / L(0.6) = 0.67$, so a coin-flip strategy explains the record two thirds as well. Twenty trades are weak evidence of skill.",
+        "canvas": {
+          "params": {
+            "h": 0.6
+          },
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.6,
+              "label": "$h = 0.6$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Calm or volatile?",
+      "prose": "A stock's returns for one week are in the table, in %. Model each day as normal with mean 0 and sd $\\sigma$, independently. The table gives each day's density under $\\sigma = 1\\%$ and under $\\sigma = 2\\%$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "Return (%)",
+            "$f(r \\mid \\sigma = 1)$",
+            "$f(r \\mid \\sigma = 2)$"
+          ],
+          "rows": [
+            [
+              "1",
+              "1.2",
+              "0.1942",
+              "0.1666"
+            ],
+            [
+              "2",
+              "-0.8",
+              "0.2897",
+              "0.1841"
+            ],
+            [
+              "3",
+              "0.5",
+              "0.3521",
+              "0.1933"
+            ],
+            [
+              "4",
+              "-1.5",
+              "0.1295",
+              "0.1506"
+            ],
+            [
+              "5",
+              "0.3",
+              "0.3814",
+              "0.1972"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Densities with returns measured in %"
+        }
+      },
+      "question": "What is the likelihood ratio $L(\\sigma = 1\\%) / L(\\sigma = 2\\%)$ for the week?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.554,
+        "tol": {
+          "rel": 0.02
+        },
+        "unit": "",
+        "label": "Likelihood ratio",
+        "accept": "any value within 2% of 5.55. Exactly $2^5 e^{-0.375 \\times 4.67} \\approx 5.554$.",
+        "placeholder": "for example 2.5",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.18,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "added",
+            "value": 1.51,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each $L$ is the product of its column, because the days are independent."
+        },
+        {
+          "rung": "point",
+          "text": "It is quicker to divide day by day: day 1 gives $0.1942 / 0.1666 = 1.166$.",
+          "highlight": [
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The five daily ratios are 1.166, 1.573, 1.821, 0.860 and 1.934. Multiply them."
+        }
+      ],
+      "feedback": {
+        "correct": "The calm model explains the week about 5.6 times better.",
+        "generic": "Not quite right. Multiply each column, then divide the two products.",
+        "byKey": {
+          "inverted": "You divided the 2% likelihood by the 1% one. Put $\\sigma = 1\\%$ on top.",
+          "added": "You added the densities. Independent days multiply, so take the product of each column."
+        }
+      },
+      "explain": {
+        "text": "You multiplied five daily densities in each column and divided: $0.000978 / 0.000176 \\approx 5.55$. Only day 4, the 1.5% fall, favoured the volatile model. Small moves are much more likely under the calm one.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The likelihood $L(\\theta)$ is the chance of the data you saw, read as a function of the parameter.",
+      "Its peak is the parameter value that best explains the data, and it can sit at the end of the range.",
+      "Compare two parameter values by the ratio of their likelihoods. $L$ is not a distribution over $\\theta$."
+    ],
+    "formula": {
+      "name": "Likelihood of independent data",
+      "tex": "L(\\theta) = \\prod_{i=1}^{n} f(x_i \\mid \\theta)",
+      "note": "The data is fixed; $\\theta$ moves. Its area need not be 1."
+    },
+    "trap": "$L(\\tfrac{2}{3}) = 0.148$ is the chance of the data when $p = \\tfrac{2}{3}$, not the chance that $p = \\tfrac{2}{3}$."
+  },
+  "quiz": [
+    {
+      "id": "q-ratio-four",
+      "difficulty": 2,
+      "prose": "A coin gives H, H, H, T.",
+      "question": "What is $L(0.75) / L(0.5)$? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.6875,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "",
+        "label": "Likelihood ratio",
+        "accept": "any value from 1.68 to 1.69. Exactly $\\tfrac{0.75^3 \\times 0.25}{0.5^4} = \\tfrac{27}{16}$.",
+        "placeholder": "for example 1.2",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.5926,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{0.1055}{0.0625} = 1.69$.",
+        "generic": "Not quite right. Compute $p^3(1 - p)$ at both values, then divide.",
+        "byKey": {
+          "inverted": "You divided the other way round. Put $L(0.75)$ on top."
+        }
+      },
+      "explain": {
+        "text": "$L(0.75) = 0.75^3 \\times 0.25 = 0.1055$ and $L(0.5) = 0.5^4 = 0.0625$. The ratio is $\\tfrac{27}{16} \\approx 1.69$."
+      }
+    },
+    {
+      "id": "q-all-tails",
+      "difficulty": 2,
+      "prose": "A coin is flipped five times and lands tails every time.",
+      "question": "Which value of $p$, the chance of heads, makes this data most likely?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "$p = 0$",
+            "correct": true
+          },
+          {
+            "id": "fifth",
+            "text": "$p = 0.2$",
+            "why": "You kept some chance of heads in reserve. $L(p) = (1 - p)^5$ is largest when $1 - p$ is largest, at $p = 0$."
+          },
+          {
+            "id": "half",
+            "text": "$p = 0.5$",
+            "why": "You assumed the coin is fair. A fair coin gives five tails with chance only $\\tfrac{1}{32}$."
+          },
+          {
+            "id": "none",
+            "text": "No value: there are no heads to estimate from",
+            "why": "$L(p) = (1 - p)^5$ still has a highest point. It sits at the end of the range."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(1 - p)^5$ is largest at $p = 0$.",
+        "generic": "Not quite right. Write $L(p)$ and see where it is largest."
+      },
+      "explain": {
+        "text": "Five tails give $L(p) = (1 - p)^5$, which falls as $p$ rises. Its highest point is the end of the range, $p = 0$, where $L = 1$."
+      }
+    },
+    {
+      "id": "q-not-prob",
+      "difficulty": 2,
+      "prose": "For the flips H, H, T, the likelihood is $L(p) = p^2(1 - p)$.",
+      "question": "Which statement is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$L(0.6)$ is the chance of H, H, T when $p = 0.6$",
+            "correct": true
+          },
+          {
+            "id": "post",
+            "text": "$L(0.6)$ is the chance that $p = 0.6$, given H, H, T",
+            "why": "That reads the condition the wrong way round. Chances about $p$ need a prior."
+          },
+          {
+            "id": "area",
+            "text": "The area under $L(p)$ from 0 to 1 must be 1",
+            "why": "That holds for a density over $p$. The area under this $L$ is $\\tfrac{1}{12}$."
+          },
+          {
+            "id": "sum",
+            "text": "$L(p) + L(1 - p) = 1$ for every $p$",
+            "why": "At $p = \\tfrac{1}{2}$ that gives $\\tfrac{1}{8} + \\tfrac{1}{8} = \\tfrac{1}{4}$, not 1."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The likelihood conditions on $p$.",
+        "generic": "Not quite right. $L(p) = P(\\text{data} \\mid p)$: ask what is fixed."
+      },
+      "explain": {
+        "text": "$L(p)$ fixes $p$ and gives the chance of the data. It is not a distribution over $p$; its area here is $\\tfrac{1}{12}$."
+      }
+    },
+    {
+      "id": "q-trader-ratio",
+      "difficulty": 3,
+      "prose": "A trader wins 6 trades and loses 4. Compare a win chance of 0.55 with one of 0.45.",
+      "question": "What is $L(0.55) / L(0.45)$? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.4938,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "",
+        "label": "Likelihood ratio",
+        "accept": "any value from 1.49 to 1.50. Exactly $\\left(\\tfrac{11}{9}\\right)^6 \\left(\\tfrac{9}{11}\\right)^4 = \\left(\\tfrac{11}{9}\\right)^2$.",
+        "placeholder": "for example 1.2",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 0.6694,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "wins-only",
+            "value": 3.3368,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(11/9)^2 \\approx 1.49$.",
+        "generic": "Not quite right. Write each likelihood as $h^6(1 - h)^4$ and divide.",
+        "byKey": {
+          "inverted": "You divided the other way round. Put $L(0.55)$ on top.",
+          "wins-only": "You compared the wins and left out the losses. Each loss contributes $1 - h$."
+        }
+      },
+      "explain": {
+        "text": "The ratio is $\\left(\\tfrac{0.55}{0.45}\\right)^6 \\left(\\tfrac{0.45}{0.55}\\right)^4 = \\left(\\tfrac{11}{9}\\right)^2 \\approx 1.49$. Four of the six wins cancel against the four losses."
+      }
+    }
+  ]
+}

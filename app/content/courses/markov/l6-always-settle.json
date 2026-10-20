@@ -1,0 +1,1335 @@
+{
+  "id": "l6-always-settle",
+  "course": "markov",
+  "title": "Does it always settle?",
+  "minutes": 14,
+  "objectives": [
+    "Recognise periodic and reducible chains that do not converge.",
+    "State when a chain converges to a unique $\\pi$ from every start."
+  ],
+  "skills": [
+    "mc-longrun",
+    "mc-chains"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A chain that swaps",
+      "prose": "A two-state chain switches every step: $P = \\begin{pmatrix}0 & 1\\\\ 1 & 0\\end{pmatrix}$. The bars show the chance of being at A and at B after $k$ steps. Slide $k$, then try other starting chances.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "A",
+            "B"
+          ],
+          "yLabel": "Chance",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "A": 1,
+            "B": 0
+          },
+          "params": {
+            "k": 0,
+            "a": 1
+          }
+        },
+        "derive": {
+          "values.A": "round(0.5 + (a - 0.5) * pow(-1, k), 6)",
+          "values.B": "round(0.5 - (a - 0.5) * pow(-1, k), 6)",
+          "caption": "Step {{k}}."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 20,
+            "step": 1,
+            "label": "Steps $k$",
+            "start": 0
+          },
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 1,
+            "step": 0.1,
+            "label": "Start: chance at A",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Start surely at A. What does the chance of being at A do as $k$ grows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It alternates 1, 0, 1, 0, for ever",
+            "correct": true
+          },
+          {
+            "id": "settle",
+            "text": "It settles at 0.5",
+            "why": "You expected the bars to meet, as the regime chain's did. Step $k$ one at a time: A reads 1, 0, 1, 0."
+          },
+          {
+            "id": "stay",
+            "text": "It stays at 1",
+            "why": "You kept the start. After one step the chain is surely at B, so the A bar drops to 0."
+          },
+          {
+            "id": "damp",
+            "text": "It swings less and less, towards 0.5",
+            "why": "You expected damped swings. Here every swing is full size: 1 at even steps, 0 at odd ones."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the start to 1, then move $k$ one step at a time."
+        }
+      ],
+      "feedback": {
+        "correct": "Every step flips the chain, so the chance flips too.",
+        "generic": "Not quite right. Step $k$ from 0 to 4 and read the A bar each time."
+      },
+      "explain": {
+        "text": "From A the chain is at A after every even number of steps and at B after every odd number. So $P^k$ is $I$ for even $k$ and $P$ for odd $k$, and never converges. Start at 0.5, though, and the bars never move.",
+        "canvas": {
+          "params": {
+            "k": 7,
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Count days instead",
+      "prose": "The chances never settle, but count days instead. From A the swap chain is at A on days 0, 2, 4 and so on. The bars show the share of the first $k$ days spent at each state.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "A",
+            "B"
+          ],
+          "yLabel": "Share of days so far",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "A": 1,
+            "B": 0
+          },
+          "params": {
+            "k": 1
+          }
+        },
+        "derive": {
+          "values.A": "round(ceil(k / 2) / k, 6)",
+          "values.B": "round(1 - ceil(k / 2) / k, 6)",
+          "caption": "First {{k}} days: {{ceil(k / 2)}} at A."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 1,
+            "max": 40,
+            "step": 1,
+            "label": "Days $k$",
+            "start": 1
+          }
+        ]
+      },
+      "question": "What share of days does the chain spend at A in the long run?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "decimal or fraction",
+        "label": "Long-run share of days at A",
+        "accept": "0.5, or $\\tfrac12$.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide the days to 40."
+        },
+        {
+          "rung": "point",
+          "text": "A gets every other day.",
+          "highlight": [
+            "xA"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Half the days: 0.5."
+        }
+      ],
+      "feedback": {
+        "correct": "Every other day is spent at A.",
+        "generic": "Not quite right. Slide to 40 days and read the A bar.",
+        "byKey": {
+          "one": "You counted the start only. The odd days are all spent at B.",
+          "zero": "From A the chain is back at A on every even day."
+        }
+      },
+      "explain": {
+        "text": "The share of days at A heads to $\\tfrac12$, and $\\pi = (\\tfrac12, \\tfrac12)$ solves $\\pi P = \\pi$. The chain returns to A only at even steps: it is **periodic** with period 2. A periodic chain still has a stationary $\\pi$, read as a share of time.",
+        "canvas": {
+          "params": {
+            "k": 40
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A small self-loop",
+      "prose": "Change the swap slightly. Each step the chain stays put with chance 0.1 and switches with chance 0.9: $P = \\begin{pmatrix}0.1 & 0.9\\\\ 0.9 & 0.1\\end{pmatrix}$. It starts at A. Slide $k$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "A",
+            "B"
+          ],
+          "yLabel": "Chance",
+          "yMax": 1,
+          "showValues": true,
+          "decimals": 3
+        },
+        "state": {
+          "values": {
+            "A": 1,
+            "B": 0
+          },
+          "params": {
+            "k": 0
+          }
+        },
+        "derive": {
+          "values.A": "round(0.5 + 0.5 * pow(-0.8, k), 6)",
+          "values.B": "round(0.5 - 0.5 * pow(-0.8, k), 6)",
+          "caption": "Step {{k}}."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 30,
+            "step": 1,
+            "label": "Steps $k$",
+            "start": 0
+          }
+        ]
+      },
+      "question": "What does the chance of being at A do now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It swings, but the swings shrink and it settles at 0.5",
+            "correct": true
+          },
+          {
+            "id": "flip",
+            "text": "It alternates for ever, like the swap",
+            "why": "You expected a 0.1 stay chance to change nothing. Slide to $k = 20$: A reads 0.506."
+          },
+          {
+            "id": "tenth",
+            "text": "It settles at 0.1",
+            "why": "0.1 is the one-step chance of staying put. It is not a long-run share."
+          },
+          {
+            "id": "ninety",
+            "text": "It settles at 0.9",
+            "why": "0.9 is the one-step chance of switching. The bars settle where both states are equally likely."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare $k = 1, 2, 3$ with $k = 19, 20, 21$."
+        },
+        {
+          "rung": "point",
+          "text": "The swings around 0.5 get smaller each step.",
+          "highlight": [
+            "xA"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $k = 20$ the A bar reads 0.506, and it keeps closing in."
+        }
+      ],
+      "feedback": {
+        "correct": "The self-loop breaks the period, so the chain settles.",
+        "generic": "Not quite right. Slide $k$ to 30 and read the A bar."
+      },
+      "explain": {
+        "text": "Staying put lets the chain return to A in one step, so returns are no longer locked to even steps. The chain is **aperiodic**, and $P(\\text{at A}) = 0.5 + 0.5(-0.8)^k$, so the swing shrinks by 0.8 each step. At $k = 20$ that is 0.506.",
+        "canvas": {
+          "params": {
+            "k": 20
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A three-step cycle",
+      "prose": "Periods can be longer than 2. Three states in a ring: A goes to B, B to C and C back to A, each with chance 1. The chain starts at A.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 240,
+          "layout": "ring",
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A"
+            },
+            {
+              "id": "B",
+              "label": "B"
+            },
+            {
+              "id": "C",
+              "label": "C"
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "w": 1
+            },
+            {
+              "from": "B",
+              "to": "C",
+              "w": 1
+            },
+            {
+              "from": "C",
+              "to": "A",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "current": "A"
+        }
+      },
+      "question": "What is $P(X_{100} = \\text{A} \\mid X_0 = \\text{A})$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0$",
+            "correct": true
+          },
+          {
+            "id": "third",
+            "text": "$\\tfrac13$",
+            "why": "You used the stationary share $\\tfrac13$. That is the share of time at A, not the chance at one step."
+          },
+          {
+            "id": "one",
+            "text": "$1$",
+            "why": "The chain is back at A at multiples of 3, and 100 is not one: $100 = 3 \\times 33 + 1$."
+          },
+          {
+            "id": "tiny",
+            "text": "$\\tfrac{1}{100}$",
+            "why": "You expected the chance to shrink with time. Here the chain's position is certain at every step."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At which steps is the chain at A?"
+        },
+        {
+          "rung": "point",
+          "text": "At steps 0, 3, 6, 9 and so on.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100 = 99 + 1$, and 99 is a multiple of 3. So step 100 is one step past A."
+        }
+      ],
+      "feedback": {
+        "correct": "Step 100 is one step past A, so the chain is at B.",
+        "generic": "Not quite right. Find the remainder when 100 is divided by 3."
+      },
+      "explain": {
+        "text": "The chain is at A exactly when $k$ is a multiple of 3, so $X_{100} = \\text{B}$ for sure. Its period is 3. Still, $\\pi = (\\tfrac13, \\tfrac13, \\tfrac13)$ is stationary, and a third of all steps are spent at A.",
+        "canvas": {
+          "current": "B"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "States you can reach",
+      "prose": "A five-state chain. A state is reachable from A if some path of arrows leads there from A.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.5,
+              "y": 0.05
+            },
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.1,
+              "y": 0.55
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.95
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.7,
+              "y": 0.95
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.9,
+              "y": 0.55
+            }
+          ],
+          "edges": [
+            {
+              "from": "E",
+              "to": "A",
+              "w": 0.5
+            },
+            {
+              "from": "E",
+              "to": "C",
+              "w": 0.5
+            },
+            {
+              "from": "A",
+              "to": "A",
+              "w": 0.5
+            },
+            {
+              "from": "A",
+              "to": "B",
+              "w": 0.5
+            },
+            {
+              "from": "B",
+              "to": "A",
+              "w": 0.25
+            },
+            {
+              "from": "B",
+              "to": "B",
+              "w": 0.75
+            },
+            {
+              "from": "C",
+              "to": "C",
+              "w": 0.8
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 0.2
+            },
+            {
+              "from": "D",
+              "to": "C",
+              "w": 0.2
+            },
+            {
+              "from": "D",
+              "to": "D",
+              "w": 0.8
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every state the chain can visit after starting at A.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "A",
+          "B"
+        ],
+        "countWord": "states",
+        "wrong": [
+          {
+            "id": "all",
+            "set": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E"
+            ]
+          },
+          {
+            "id": "with-e",
+            "set": [
+              "A",
+              "B",
+              "E"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the arrows out of A, then out of each state you reach."
+        },
+        {
+          "rung": "point",
+          "text": "From A the chain can stay at A or go to B. From B it can go back to A or stay.",
+          "highlight": [
+            "e-A-B",
+            "e-B-A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No arrow leaves the pair A, B. So A and B are the whole answer."
+        }
+      ],
+      "feedback": {
+        "correct": "From A the chain never leaves A and B.",
+        "generic": "Not quite right. Follow only arrows that point away from the states you have reached.",
+        "byKey": {
+          "all": "You assumed every state connects to every other. No arrow leaves the pair A, B.",
+          "with-e": "E points into A, but no arrow points from A or B to E. Arrows only work one way.",
+          "E": "E sends the chain to A, not the other way round.",
+          "C": "No arrow leads from A or B to C. Only E reaches C.",
+          "D": "D is reached only through C, and C only from E."
+        }
+      },
+      "explain": {
+        "text": "From A the chain can only reach A and B, since no arrow leaves that pair. A set the chain never leaves is a **closed class**. C and D form a second one, so this chain is **reducible**: not every state reaches every other.",
+        "canvas": {
+          "highlight": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The start decides",
+      "prose": "Inside A and B the chain settles at $(\\tfrac13, \\tfrac23)$; inside C and D at $(\\tfrac12, \\tfrac12)$. So in the order A, B, C, D, E, both $(\\tfrac13, \\tfrac23, 0, 0, 0)$ and $(0, 0, \\tfrac12, \\tfrac12, 0)$ solve $\\pi P = \\pi$.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.5,
+              "y": 0.05
+            },
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.1,
+              "y": 0.55
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.95
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.7,
+              "y": 0.95
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.9,
+              "y": 0.55
+            }
+          ],
+          "edges": [
+            {
+              "from": "E",
+              "to": "A",
+              "w": 0.5
+            },
+            {
+              "from": "E",
+              "to": "C",
+              "w": 0.5
+            },
+            {
+              "from": "A",
+              "to": "A",
+              "w": 0.5
+            },
+            {
+              "from": "A",
+              "to": "B",
+              "w": 0.5
+            },
+            {
+              "from": "B",
+              "to": "A",
+              "w": 0.25
+            },
+            {
+              "from": "B",
+              "to": "B",
+              "w": 0.75
+            },
+            {
+              "from": "C",
+              "to": "C",
+              "w": 0.8
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 0.2
+            },
+            {
+              "from": "D",
+              "to": "C",
+              "w": 0.2
+            },
+            {
+              "from": "D",
+              "to": "D",
+              "w": 0.8
+            }
+          ]
+        },
+        "state": {
+          "current": "E"
+        }
+      },
+      "question": "Start at E. What is the long-run chance the chain is at B?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3333,
+        "tol": {
+          "abs": 0.003
+        },
+        "placeholder": "decimal or fraction",
+        "label": "Long-run chance at B, from E",
+        "accept": "$\\tfrac13$, or 0.333.",
+        "wrong": [
+          {
+            "id": "inside",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "fifth",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "From E, which class does the chain join, and with what chance?"
+        },
+        {
+          "rung": "point",
+          "text": "It joins A and B with chance 0.5, and C and D with chance 0.5.",
+          "highlight": [
+            "e-E-A",
+            "e-E-C"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then it spends $\\tfrac23$ of its time at B: $0.5 \\times \\tfrac23$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.5 \\times \\tfrac23 = \\tfrac13$.",
+        "generic": "Not quite right. Weight each class's long-run split by the chance the chain joins it.",
+        "byKey": {
+          "inside": "$\\tfrac23$ is the share of B inside its class. From E the chain joins that class only half the time.",
+          "fifth": "You spread the time evenly over five states. The chain leaves E at once, and the classes have their own splits.",
+          "half": "0.5 is the chance of joining A and B. Inside that class only $\\tfrac23$ of the time is at B."
+        }
+      },
+      "explain": {
+        "text": "From E the chain joins A and B or C and D, with chance 0.5 each, and never leaves. So its limit is $0.5(\\tfrac13, \\tfrac23, 0, 0, 0) + 0.5(0, 0, \\tfrac12, \\tfrac12, 0)$, giving $\\tfrac13$ at B. From A it would be $\\tfrac23$, and from C it would be 0.",
+        "canvas": {
+          "highlight": [
+            "B"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "One answer for every start?",
+      "prose": "A colleague solves $\\pi P = \\pi$ for this chain with software. It returns $\\pi = (\\tfrac16, \\tfrac13, \\tfrac14, \\tfrac14, 0)$, in the order A, B, C, D, E. She uses it as the long-run split for every starting state.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.5,
+              "y": 0.05
+            },
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.1,
+              "y": 0.55
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.95
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.7,
+              "y": 0.95
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.9,
+              "y": 0.55
+            }
+          ],
+          "edges": [
+            {
+              "from": "E",
+              "to": "A",
+              "w": 0.5
+            },
+            {
+              "from": "E",
+              "to": "C",
+              "w": 0.5
+            },
+            {
+              "from": "A",
+              "to": "A",
+              "w": 0.5
+            },
+            {
+              "from": "A",
+              "to": "B",
+              "w": 0.5
+            },
+            {
+              "from": "B",
+              "to": "A",
+              "w": 0.25
+            },
+            {
+              "from": "B",
+              "to": "B",
+              "w": 0.75
+            },
+            {
+              "from": "C",
+              "to": "C",
+              "w": 0.8
+            },
+            {
+              "from": "C",
+              "to": "D",
+              "w": 0.2
+            },
+            {
+              "from": "D",
+              "to": "C",
+              "w": 0.2
+            },
+            {
+              "from": "D",
+              "to": "D",
+              "w": 0.8
+            }
+          ]
+        },
+        "state": {
+          "current": "C"
+        }
+      },
+      "question": "The chain starts at C. What is its long-run chance of being at A?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0$",
+            "correct": true
+          },
+          {
+            "id": "unique",
+            "text": "$\\tfrac16$",
+            "why": "You used her $\\pi$ for a start at C. From C the chain never reaches A."
+          },
+          {
+            "id": "inside",
+            "text": "$\\tfrac13$",
+            "why": "That is A's share inside its own class. A start at C never enters that class."
+          },
+          {
+            "id": "fifth",
+            "text": "$\\tfrac15$",
+            "why": "You spread the time evenly over five states. From C the chain only visits C and D."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which states can the chain reach from C?"
+        },
+        {
+          "rung": "point",
+          "text": "Only C and D: no arrow leaves them.",
+          "highlight": [
+            "C",
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So the chance of being at A is 0 at every step."
+        }
+      ],
+      "feedback": {
+        "correct": "From C the chain stays in C and D for ever.",
+        "generic": "Not quite right. Check which states are reachable from C.",
+        "byKey": {
+          "unique": "You assumed $\\pi P = \\pi$ has one solution. This chain is reducible, so it has many, and the start picks the limit."
+        }
+      },
+      "explain": {
+        "text": "Her vector is one stationary distribution among many: every mix of $(\\tfrac13, \\tfrac23, 0, 0, 0)$ and $(0, 0, \\tfrac12, \\tfrac12, 0)$ works. It is the limit only for a start at E. From C the limit is $(0, 0, \\tfrac12, \\tfrac12, 0)$.",
+        "canvas": {
+          "highlight": [
+            "C",
+            "D"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "When it always settles",
+      "prose": "A chain is **irreducible** if every state can reach every other, and **aperiodic** if returns are not locked to multiples of some $d > 1$. The theorem, stated without proof: a finite chain that is both has a unique $\\pi$, and $$\\pi_0 P^k \\to \\pi \\text{ from every start } \\pi_0.$$",
+      "question": "Which chain is sure to converge to one $\\pi$ from every start?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\begin{pmatrix}0.1 & 0.9\\\\ 0.9 & 0.1\\end{pmatrix}$",
+            "correct": true
+          },
+          {
+            "id": "swap",
+            "text": "$\\begin{pmatrix}0 & 1\\\\ 1 & 0\\end{pmatrix}$",
+            "why": "You checked irreducible but not aperiodic. The swap has period 2, so its $P^k$ alternates."
+          },
+          {
+            "id": "identity",
+            "text": "$\\begin{pmatrix}1 & 0\\\\ 0 & 1\\end{pmatrix}$",
+            "why": "Each state is its own closed class, so the chain is reducible. Its limit is wherever it starts."
+          },
+          {
+            "id": "cycle",
+            "text": "The three-state cycle A, B, C",
+            "why": "Every state reaches every other, but returns take multiples of 3 steps. It is periodic."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Irreducible, with self-loops that break any period.",
+        "generic": "Not quite right. Check both conditions for each chain."
+      },
+      "explain": {
+        "text": "The self-loop chain is irreducible and aperiodic, so the theorem applies. The swap and the cycle fail aperiodicity; the identity fails irreducibility. Each still has a stationary distribution, but not one that attracts every start."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why the swap never settles",
+      "prose": "Prove that $P^k$ never converges for the swap $P = \\begin{pmatrix}0 & 1\\\\ 1 & 0\\end{pmatrix}$, yet its time average does.",
+      "question": "Put the lines of the proof in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d1",
+            "text": "$P^2 = \\begin{pmatrix}0 & 1\\\\ 1 & 0\\end{pmatrix}\\begin{pmatrix}0 & 1\\\\ 1 & 0\\end{pmatrix} = I$, multiply rows by columns"
+          },
+          {
+            "id": "d2",
+            "text": "$P^{2m} = (P^2)^m = I$, a power of $P^2$"
+          },
+          {
+            "id": "d3",
+            "text": "$P^{2m+1} = P^{2m}P = P$, so $P^k$ flips between $I$ and $P$ and has no limit"
+          },
+          {
+            "id": "d4",
+            "text": "$\\tfrac12(P^{2m} + P^{2m+1}) = \\tfrac12(I + P)$, whose rows are both $(\\tfrac12, \\tfrac12) = \\pi$: the time average settles"
+          }
+        ],
+        "answer": [
+          "d1",
+          "d2",
+          "d3",
+          "d4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with the smallest power that is simple."
+        },
+        {
+          "rung": "point",
+          "text": "Even powers come from $P^2$; odd powers add one more $P$."
+        },
+        {
+          "rung": "step",
+          "text": "Square, even powers, odd powers, then average a pair."
+        }
+      ],
+      "feedback": {
+        "correct": "Even and odd powers differ, but their average is $\\pi$ in every row.",
+        "generic": "Not quite right. Each line uses the one before it.",
+        "byKey": {
+          "d2": "Even powers need $P^2 = I$ first.",
+          "d3": "Odd powers are built from the even ones, so they come after them.",
+          "d4": "The average needs both the even and the odd powers."
+        }
+      },
+      "explain": {
+        "text": "$P^2 = I$ makes every even power $I$ and every odd power $P$, so the sequence never settles. Averaging one even and one odd step gives $\\tfrac12(I + P)$, every row of which is $\\pi$. That is why $\\pi$ still describes the share of time."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A rule that flips",
+      "prose": "A trading rule holds Long, Flat or Short each day. After Long or Short it always goes Flat. After Flat it goes Long or Short with chance $\\tfrac12$ each. It is Flat on day 0.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 180,
+          "nodes": [
+            {
+              "id": "L",
+              "label": "Long",
+              "x": 0.08,
+              "y": 0.5
+            },
+            {
+              "id": "F",
+              "label": "Flat",
+              "x": 0.5,
+              "y": 0.5
+            },
+            {
+              "id": "S",
+              "label": "Short",
+              "x": 0.92,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "L",
+              "to": "F",
+              "w": 1
+            },
+            {
+              "from": "F",
+              "to": "L",
+              "w": 0.5
+            },
+            {
+              "from": "F",
+              "to": "S",
+              "w": 0.5
+            },
+            {
+              "from": "S",
+              "to": "F",
+              "w": 1
+            }
+          ]
+        },
+        "state": {
+          "current": "F",
+          "caption": "Day 0: Flat."
+        }
+      },
+      "question": "Fill in the table.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Long-run share of days Flat",
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "$P(\\text{Flat on day } 101)$",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$P(\\text{Flat on day } 100)$",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When can the rule be Flat?"
+        },
+        {
+          "rung": "point",
+          "text": "Solve $\\pi P = \\pi$: $\\pi_F = \\pi_L + \\pi_S$ and $\\pi_L = \\pi_S = \\tfrac12\\pi_F$.",
+          "highlight": [
+            "F"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\pi = (\\tfrac14, \\tfrac12, \\tfrac14)$. From Flat on day 0, it is Flat on every even day and never on an odd day."
+        }
+      ],
+      "feedback": {
+        "correct": "Flat half the time, but only ever on even days.",
+        "generic": "Not quite right. Separate the share of days from the chance on one particular day.",
+        "byKey": {
+          "r0c1": "Solve $\\pi P = \\pi$ with the shares adding to 1: $\\pi_F = \\tfrac12$.",
+          "r1c1": "You used the long-run share for one day. Day 101 is odd, and the rule is never Flat on an odd day.",
+          "r2c1": "You used the long-run share for one day. Day 100 is even, and the rule is Flat on every even day."
+        }
+      },
+      "explain": {
+        "text": "The rule is Flat on every even day, so $P(\\text{Flat})$ flips between 1 and 0. Yet half of all days are Flat: $\\pi = (\\tfrac14, \\tfrac12, \\tfrac14)$. A backtest that samples only even days would see a strategy that never trades.",
+        "canvas": {
+          "highlight": [
+            "F"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A periodic chain, such as the swap, still has a stationary $\\pi$, but $P^k$ cycles and never converges. $\\pi$ is then the long-run share of time.",
+      "A reducible chain has several closed classes and many stationary distributions. The start decides which one the chain ends in.",
+      "A finite chain that is irreducible and aperiodic has one $\\pi$, and $\\pi_0 P^k \\to \\pi$ from every start. A self-loop breaks a period."
+    ],
+    "formula": {
+      "name": "Convergence theorem",
+      "tex": "\\text{irreducible and aperiodic} \\;\\Rightarrow\\; \\pi_0 P^k \\to \\pi \\text{ for every } \\pi_0",
+      "note": "For a finite chain. Irreducible alone still gives a unique $\\pi$, as a share of time."
+    },
+    "trap": "An alternating $P^k$ does not mean there is no $\\pi$. And when the chain is reducible, a solution of $\\pi P = \\pi$ is not the limit from every start."
+  },
+  "quiz": [
+    {
+      "id": "q-swap-pi",
+      "difficulty": 2,
+      "prose": "For the swap chain $P = \\begin{pmatrix}0 & 1\\\\ 1 & 0\\end{pmatrix}$, a student says: $P^k$ never converges, so the chain has no stationary distribution.",
+      "question": "Which reply is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$(\\tfrac12, \\tfrac12)$ is stationary; only the convergence fails",
+            "correct": true
+          },
+          {
+            "id": "agree",
+            "text": "The student is right",
+            "why": "You read the alternating $P^k$ as no stationary distribution. Check $(\\tfrac12, \\tfrac12)P = (\\tfrac12, \\tfrac12)$."
+          },
+          {
+            "id": "start",
+            "text": "$(1, 0)$ is stationary, because the chain starts at A",
+            "why": "One step sends $(1, 0)$ to $(0, 1)$, so it is not fixed."
+          },
+          {
+            "id": "both",
+            "text": "$(1, 0)$ and $(0, 1)$ are both stationary",
+            "why": "Each is sent to the other by one step. You mixed up periodic with reducible."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A stationary distribution exists; it describes time, not one step.",
+        "generic": "Not quite right. Test $(\\tfrac12, \\tfrac12)$ in $\\pi P = \\pi$."
+      },
+      "explain": {
+        "text": "$(\\tfrac12, \\tfrac12)P = (\\tfrac12, \\tfrac12)$, so a stationary distribution exists. What fails is $\\pi_0 P^k \\to \\pi$, because the chain has period 2. Half of all steps are spent in each state."
+      }
+    },
+    {
+      "id": "q-classes",
+      "difficulty": 2,
+      "prose": "$P = \\begin{pmatrix}0.5 & 0.5 & 0\\\\ 0.5 & 0.5 & 0\\\\ 0 & 0 & 1\\end{pmatrix}$, states 1, 2, 3.",
+      "question": "How many closed classes does the chain have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "label": "Number of closed classes",
+        "accept": "2: the pair 1, 2 and the single state 3.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\{1, 2\\}$ and $\\{3\\}$, so $\\pi$ is not unique.",
+        "generic": "Not quite right. Group the states that reach each other and that no arrow leaves.",
+        "byKey": {
+          "one": "States 1 and 2 never reach 3, and 3 never reaches them. They cannot be one class.",
+          "three": "1 and 2 reach each other, so they belong to the same class."
+        }
+      },
+      "explain": {
+        "text": "1 and 2 move between themselves and never reach 3, and 3 stays put. That is two closed classes, so the chain is reducible. Both $(\\tfrac12, \\tfrac12, 0)$ and $(0, 0, 1)$ are stationary."
+      }
+    },
+    {
+      "id": "q-self-loop",
+      "difficulty": 3,
+      "prose": "$P = \\begin{pmatrix}0.2 & 0.8\\\\ 1 & 0\\end{pmatrix}$. State 2 always moves to state 1, and state 1 sometimes stays.",
+      "question": "What is the long-run chance of state 1, from any start?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5556,
+        "tol": {
+          "abs": 0.003
+        },
+        "placeholder": "decimal or fraction",
+        "label": "Long-run chance of state 1",
+        "accept": "$\\tfrac59$, or 0.556.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "stay",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "swap",
+            "value": 0.4444,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\pi_1 = \\tfrac{1}{0.8 + 1} = \\tfrac59$.",
+        "generic": "Not quite right. Balance the flows: $0.8\\pi_1 = 1 \\cdot \\pi_2$.",
+        "byKey": {
+          "half": "You treated it as a swap. The self-loop at state 1 keeps the chain there a little longer.",
+          "stay": "0.2 is the one-step chance that state 1 stays. It is not a long-run share.",
+          "swap": "$\\tfrac49$ is the share of state 2. You used $a/(a + b)$."
+        }
+      },
+      "explain": {
+        "text": "The chain is irreducible, and the self-loop at state 1 makes it aperiodic, so it converges. $0.8\\pi_1 = \\pi_2$ with $\\pi_1 + \\pi_2 = 1$ gives $\\pi_1 = \\tfrac{1}{1.8} = \\tfrac59$. The theorem says every start ends there."
+      }
+    },
+    {
+      "id": "q-ring4",
+      "difficulty": 3,
+      "prose": "Four states in a ring, A to B to C to D and back to A, each with chance 1. The chain starts at A.",
+      "question": "What is $P(X_{10} = \\text{A})$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0$",
+            "correct": true
+          },
+          {
+            "id": "quarter",
+            "text": "$\\tfrac14$",
+            "why": "You used the stationary share. That is the share of time at A, not the chance at step 10."
+          },
+          {
+            "id": "one",
+            "text": "$1$",
+            "why": "Returns to A come at multiples of 4, and 10 is not one."
+          },
+          {
+            "id": "half",
+            "text": "$\\tfrac12$",
+            "why": "Nothing here is random: the chain's position at each step is certain."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10 = 4 \\times 2 + 2$, so the chain is at C.",
+        "generic": "Not quite right. Divide 10 by the period, 4."
+      },
+      "explain": {
+        "text": "The chain is at A only at steps 0, 4, 8, 12 and so on. Step 10 is two past 8, so the chain is at C. The period is 4, and $\\pi = (\\tfrac14, \\tfrac14, \\tfrac14, \\tfrac14)$ describes time only."
+      }
+    }
+  ]
+}

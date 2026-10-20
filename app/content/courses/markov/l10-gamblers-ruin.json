@@ -1,0 +1,1058 @@
+{
+  "id": "l10-gamblers-ruin",
+  "course": "markov",
+  "title": "Gambler’s ruin",
+  "minutes": 14,
+  "objectives": [
+    "Solve gambler’s ruin for fair and unfair walks."
+  ],
+  "skills": [
+    "mc-walks",
+    "mc-firststep"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You have £3 and make fair £1 bets. You stop when you reach £10 or go broke. The chart shows 30 such games.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 150,
+          "p": 0.5,
+          "paths": 30,
+          "start": 3,
+          "barriers": [
+            0,
+            10
+          ],
+          "sim": {
+            "seed": 11
+          },
+          "height": 300,
+          "upLabel": "£10",
+          "downLabel": "£0",
+          "yLabel": "Bankroll (£)",
+          "xLabel": "Bet"
+        },
+        "state": {
+          "stopAtBarrier": true
+        }
+      },
+      "question": "What is the chance you reach £10 before you go broke?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "half",
+            "text": "$\\tfrac{1}{2}$, as every bet is fair",
+            "why": "You gave both ends the same chance. The broke end is 3 bets away; the target is 7 away."
+          },
+          {
+            "id": "three-tenths",
+            "text": "$\\tfrac{3}{10}$",
+            "correct": true
+          },
+          {
+            "id": "three-sevenths",
+            "text": "$\\tfrac{3}{7}$",
+            "why": "You compared the two distances, 3 to 7. The chance is your share of the whole range, 3 out of 10."
+          },
+          {
+            "id": "seven-tenths",
+            "text": "$\\tfrac{7}{10}$",
+            "why": "That is the chance of going broke. You are nearer £0 than £10."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which end is closer to £3?"
+        },
+        {
+          "rung": "point",
+          "text": "£0 is 3 bets away and £10 is 7 bets away.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count the games on the chart that end at £10: about 9 of 30."
+        }
+      ],
+      "feedback": {
+        "correct": "In this batch 9 of the 30 games reached £10.",
+        "generic": "Not quite right. Count the games on the chart that finish at £10."
+      },
+      "explain": {
+        "text": "Nine of these 30 games reached £10, close to $\\tfrac{3}{10}$ of them. A fair game does not give the two ends equal chances: the nearer end is more likely. We prove the exact value, $\\tfrac{3}{10}$, in two screens.",
+        "canvas": {
+          "highlight": [
+            "barrier-up"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Same game: fair £1 bets, stop at £0 or £10. Slide your starting bankroll and watch how long the games last.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 120,
+          "p": 0.5,
+          "paths": 20,
+          "start": 5,
+          "barriers": [
+            0,
+            10
+          ],
+          "sim": {
+            "seed": 3
+          },
+          "height": 300,
+          "upLabel": "£10",
+          "downLabel": "£0",
+          "yLabel": "Bankroll (£)",
+          "xLabel": "Bet"
+        },
+        "state": {
+          "stopAtBarrier": true
+        },
+        "controls": [
+          {
+            "bind": "start",
+            "min": 1,
+            "max": 9,
+            "step": 1,
+            "label": "Start (£)",
+            "start": 5
+          }
+        ]
+      },
+      "question": "From which starting bankroll do the games last longest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "£1",
+            "why": "From £1 half the games end on the very first bet."
+          },
+          {
+            "id": "five",
+            "text": "£5, in the middle",
+            "correct": true
+          },
+          {
+            "id": "nine",
+            "text": "£9, the most money",
+            "why": "More money helps only up to the target. From £9 one win ends the game."
+          },
+          {
+            "id": "same",
+            "text": "It makes no difference",
+            "why": "Slide from £1 to £5 and compare. Games near an end stop much sooner."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the start at £1 with the start at £5."
+        },
+        {
+          "rung": "point",
+          "text": "Near either end, one short run of bets finishes the game.",
+          "highlight": [
+            "barrier-down",
+            "barrier-up"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The middle is furthest from both ends, so games from £5 run longest."
+        }
+      ],
+      "feedback": {
+        "correct": "From the middle, both ends are far away.",
+        "generic": "Not quite right. Slide the start to £1, then to £5, and compare how far right the paths reach."
+      },
+      "explain": {
+        "text": "Games from the middle run longest because both ends are 5 bets away. From £1 or £9 a single bet can end the game. We will count the expected number of bets exactly soon.",
+        "canvas": {
+          "params": {
+            "start": 5
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "This is the **gambler's ruin** problem. Let $P_i$ be the chance of reaching £$N$ before £0, starting from £$i$. The ends are fixed: $P_0 = 0$ and $P_N = 1$. We find $P_i$ by first-step analysis.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "Condition on the first bet: $P_i = \\tfrac{1}{2} P_{i+1} + \\tfrac{1}{2} P_{i-1}$ for $0 < i < N$."
+          },
+          {
+            "id": "b",
+            "text": "Multiply by 2 and rearrange: $P_{i+1} - P_i = P_i - P_{i-1}$. Every gap is the same, say $d$."
+          },
+          {
+            "id": "c",
+            "text": "Add $i$ gaps, starting from $P_0 = 0$: $P_i = i\\,d$."
+          },
+          {
+            "id": "d",
+            "text": "Use $P_N = 1$: $N d = 1$, so $d = \\tfrac{1}{N}$ and $P_i = \\tfrac{i}{N}$."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with what one bet does: it moves you to $i + 1$ or $i - 1$."
+        },
+        {
+          "rung": "point",
+          "text": "The equal-gaps line rearranges the first-step equation, so it comes second."
+        },
+        {
+          "rung": "step",
+          "text": "First-step equation, equal gaps, add up the gaps from $P_0$, then use $P_N = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$P_i = \\tfrac{i}{N}$: from £3 with $N = 10$, that is $\\tfrac{3}{10}$.",
+        "generic": "Not quite right. Start from the first bet, and use the two ends last."
+      },
+      "explain": {
+        "text": "The first-step equation says each $P_i$ is the average of its neighbours, so the $P_i$ lie on a straight line. The two ends pin the line from 0 to 1. So $P_i = i/N$, and from £3 of £10 the chance is $\\tfrac{3}{10}$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "First-step analysis also counts the bets. Let $D_i$ be the expected number of bets from £$i$. One bet is used, then the game restarts next door: $$D_i = 1 + \\tfrac{1}{2} D_{i+1} + \\tfrac{1}{2} D_{i-1}, \\quad D_0 = D_N = 0.$$ Its solution is $D_i = i(N - i)$.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 8000,
+          "p": 0.5,
+          "paths": 20,
+          "start": 50,
+          "barriers": [
+            0,
+            100
+          ],
+          "sim": {
+            "seed": 28
+          },
+          "height": 280,
+          "upLabel": "£100",
+          "downLabel": "£0",
+          "yLabel": "Bankroll (£)",
+          "xLabel": "Bet"
+        },
+        "state": {
+          "stopAtBarrier": true
+        }
+      },
+      "question": "You start with £50 and stop at £100 or £0. How many fair £1 bets does the game last on average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2500,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2500 exactly: $50 \\times (100 - 50)$.",
+        "unit": "bets",
+        "label": "Expected number of bets",
+        "wrong": [
+          {
+            "id": "distance",
+            "value": 50
+          },
+          {
+            "id": "target",
+            "value": 100
+          },
+          {
+            "id": "i-times-n",
+            "value": 5000
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $i = 50$ and $N = 100$ into $D_i = i(N - i)$."
+        },
+        {
+          "rung": "point",
+          "text": "$D_{50} = 50 \\times 50$.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$50 \\times 50 = 2500$. Check the formula on a small case: $D_1$ with $N = 2$ is $1 \\times 1 = 1$ bet."
+        }
+      ],
+      "feedback": {
+        "correct": "$50 \\times 50 = 2500$ bets, on average.",
+        "generic": "Not quite right. Use $D_i = i(N - i)$ with $i = 50$ and $N = 100$.",
+        "byKey": {
+          "distance": "50 bets would be enough only if every bet went the same way. The walk wanders back and forth.",
+          "target": "100 is the target in pounds. The walk needs far more bets than that to reach an end.",
+          "i-times-n": "You used $i \\times N$. The second factor is the distance to the target, $N - i = 50$."
+        }
+      },
+      "explain": {
+        "text": "$D_{50} = 50 \\times 50 = 2500$: the walk needs about $50^2$ bets to wander 50 away. In this batch the 20 games averaged 2,398 bets. Check the formula: $1 + \\tfrac{1}{2}[(i+1)(N-i-1) + (i-1)(N-i+1)]$ simplifies to $i(N - i)$.",
+        "canvas": {
+          "highlight": [
+            "path0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Now a casino edge: each £1 bet wins with chance $p = 0.49$. With $r = \\tfrac{1-p}{p}$, first-step analysis gives $$P_i = \\frac{1 - r^i}{1 - r^N}.$$ The curve shows $P_i$ for a target of £100. Slide $p$ and compare it with the dashed fair line.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xStep": 10,
+          "yStep": 0.2,
+          "grid": true,
+          "height": 300,
+          "xLabel": "Starting bankroll $i$ (£)",
+          "yLabel": "Chance of reaching £100",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "(1 - ((1 - p - 0.000000001) / (p + 0.000000001))^x) / (1 - ((1 - p - 0.000000001) / (p + 0.000000001))^100)",
+              "label": "$p$ as set",
+              "labelAt": 80
+            },
+            {
+              "id": "fair",
+              "expr": "x / 100",
+              "label": "fair",
+              "dashed": true,
+              "colour": 3,
+              "labelAt": 25
+            }
+          ],
+          "params": {
+            "p": 0.49
+          }
+        },
+        "state": {},
+        "controls": [
+          {
+            "bind": "p",
+            "min": 0.45,
+            "max": 0.55,
+            "step": 0.01,
+            "label": "$p$",
+            "start": 0.49,
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "With $p = 0.49$, what is the chance of turning £50 into £100? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1192,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.1192: $r = 51/49$ and $\\dfrac{1 - r^{50}}{1 - r^{100}} \\approx 0.11917$.",
+        "label": "Probability, as a decimal",
+        "placeholder": "for example 0.25",
+        "wrong": [
+          {
+            "id": "fair",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "p",
+            "value": 0.49,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "flip",
+            "value": 0.8808,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First find $r = \\tfrac{0.51}{0.49}$."
+        },
+        {
+          "rung": "point",
+          "text": "$r = \\tfrac{51}{49} \\approx 1.0408$, so $r^{50} \\approx 7.39$ and $r^{100} \\approx 54.6$.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$P_{50} = \\dfrac{1 - 7.39}{1 - 54.6} \\approx 0.1192$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 0.1192: under 12%, against 50% for a fair game.",
+        "generic": "Not quite right. Compute $r = 51/49$, then $\\dfrac{1 - r^{50}}{1 - r^{100}}$.",
+        "byKey": {
+          "fair": "That is the fair-game answer, $50/100$. The edge drags it far below.",
+          "p": "0.49 is the chance of winning one bet. Reaching £100 takes many more wins than losses on the way.",
+          "flip": "0.8808 is the answer for $p = 0.51$. You may have used $r = 49/51$; here the bets favour the casino."
+        }
+      },
+      "explain": {
+        "text": "With $r = 51/49$ the formula gives about 0.1192. A 2-point edge per bet cuts the chance from 0.5 to under 0.12, because the game lasts thousands of bets. The curve sags far below the fair line in the middle.",
+        "canvas": {
+          "points": [
+            {
+              "id": "A",
+              "x": 50,
+              "y": 0.1192,
+              "label": "0.1192"
+            }
+          ],
+          "params": {
+            "p": 0.49
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "You have £50 and need £100 tonight. Every bet at this table wins with chance 0.49 and pays even money. The point marks £1 bets; the dashed line marks a single bet of the whole £50.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xStep": 10,
+          "yStep": 0.2,
+          "grid": true,
+          "height": 300,
+          "xLabel": "Starting bankroll $i$ (£)",
+          "yLabel": "Chance of reaching £100",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "(1 - ((1 - p - 0.000000001) / (p + 0.000000001))^x) / (1 - ((1 - p - 0.000000001) / (p + 0.000000001))^100)",
+              "label": "$p$ as set",
+              "labelAt": 80
+            },
+            {
+              "id": "fair",
+              "expr": "x / 100",
+              "label": "fair",
+              "dashed": true,
+              "colour": 3,
+              "labelAt": 25
+            }
+          ],
+          "params": {
+            "p": 0.49
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 50,
+              "y": 0.1192,
+              "label": "£1 bets: 0.1192"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "bold",
+              "y": 0.49,
+              "label": "one £50 bet: 0.49"
+            }
+          ]
+        }
+      },
+      "question": "Which plan gives the better chance of reaching £100?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "small",
+            "text": "Many £1 bets, to spread the risk",
+            "why": "You expected small bets to smooth out the edge. Over thousands of bets the edge compounds: 0.1192 against 0.49."
+          },
+          {
+            "id": "bold",
+            "text": "One bet of £50",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Both are the same, as the odds per bet are the same",
+            "why": "The odds per bet match, but the number of bets does not. More bets give the edge more chances to work."
+          },
+          {
+            "id": "ten",
+            "text": "£10 bets, a middle path",
+            "why": "£10 bets are 5 steps from either end, giving about 0.450. That beats £1 bets but not one bold bet."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many bets does each plan need?"
+        },
+        {
+          "rung": "point",
+          "text": "The single bet has chance 0.49. The £1 plan is the point on the curve.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Compare 0.49 with 0.1192."
+        }
+      ],
+      "feedback": {
+        "correct": "One bold bet: 0.49 against 0.1192.",
+        "generic": "Not quite right. Compare the dashed line with the point.",
+        "byKey": {
+          "small": "You expected small bets to dilute the edge. They do the opposite: each bet adds a little more of it.",
+          "same": "You matched the odds per bet. The plans differ in how many bets they take, and the edge acts on each one.",
+          "ten": "£10 bets give 0.450, which is better than £1 bets. One bet of £50 is better still."
+        }
+      },
+      "explain": {
+        "text": "When every bet loses on average, fewer bets give the edge fewer chances to work: one £50 bet gives 0.49. With the odds in your favour it flips: at $p = 0.51$, £1 bets give 0.8808 and one bet only 0.51. Bet big when the odds are against you, small when they are for you.",
+        "canvas": {
+          "params": {
+            "p": 0.51
+          },
+          "points": [
+            {
+              "id": "A",
+              "x": 50,
+              "y": 0.8808,
+              "label": "£1 bets at p = 0.51: 0.8808"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "bold",
+              "y": 0.51,
+              "label": "one bet: 0.51"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "In every case you used one rule. For fair bets $P_i = \\tfrac{i}{N}$; otherwise, with $r = \\tfrac{1 - p}{p}$, $$P_i = \\frac{1 - r^i}{1 - r^N}.$$ Now face a casino with endless money: it never runs out, so $N \\to \\infty$.",
+      "question": "With $p = 0.49$, what does your chance of eventual ruin tend to as $N \\to \\infty$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "1: ruin is certain",
+            "correct": true
+          },
+          {
+            "id": "lose-one",
+            "text": "0.51",
+            "why": "That is the chance of losing one bet. Ruin needs a run of losses, but with endless time it comes."
+          },
+          {
+            "id": "r-i",
+            "text": "$r^i$, less than 1",
+            "why": "That is the ruin chance when $p > \\tfrac{1}{2}$, where $r < 1$. Here $r > 1$."
+          },
+          {
+            "id": "half",
+            "text": "$\\tfrac{1}{2}$",
+            "why": "You treated the edge as too small to matter. Over endless bets even a small edge decides the game."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With $p = 0.49$, is $r$ above or below 1?"
+        },
+        {
+          "rung": "point",
+          "text": "$r = 51/49 > 1$, so $r^N$ grows without limit."
+        },
+        {
+          "rung": "step",
+          "text": "So $P_i \\to 0$ as $N \\to \\infty$, and the chance of ruin is $1 - P_i \\to 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "Against endless money, a player with $p \\le \\tfrac{1}{2}$ is ruined for sure.",
+        "generic": "Not quite right. Ask what $r^N$ does as $N$ grows when $r > 1$."
+      },
+      "explain": {
+        "text": "With $r > 1$, $r^N \\to \\infty$, so $P_i \\to 0$ and ruin is certain. For fair bets $P_i = i/N \\to 0$ too. Only with $p > \\tfrac{1}{2}$ can you survive for ever, with ruin chance $r^i$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A trader has £20,000. Each trade wins or loses £1,000, and wins 49% of the time. She stops when she doubles to £40,000 or loses everything. In units of £1,000 this is gambler's ruin with $i = 20$ and $N = 40$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            1
+          ],
+          "xStep": 10,
+          "yStep": 0.2,
+          "grid": true,
+          "height": 300,
+          "xLabel": "Starting bankroll $i$ (£)",
+          "yLabel": "Chance of reaching £100",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "(1 - ((1 - p - 0.000000001) / (p + 0.000000001))^x) / (1 - ((1 - p - 0.000000001) / (p + 0.000000001))^100)",
+              "label": "$p$ as set",
+              "labelAt": 80
+            },
+            {
+              "id": "fair",
+              "expr": "x / 100",
+              "label": "fair",
+              "dashed": true,
+              "colour": 3,
+              "labelAt": 25
+            }
+          ],
+          "params": {
+            "p": 0.49
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "T",
+              "x": 50,
+              "y": 0.31,
+              "label": "?"
+            }
+          ]
+        }
+      },
+      "question": "What is the chance she doubles her money before going broke? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.31,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "0.31: $\\dfrac{1 - r^{20}}{1 - r^{40}}$ with $r = 51/49$, about 0.3100.",
+        "label": "Probability, as a decimal",
+        "wrong": [
+          {
+            "id": "fair",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "p",
+            "value": 0.49,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "small-bets",
+            "value": 0.12,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work in units of £1,000: $i = 20$, $N = 40$, $r = 51/49$."
+        },
+        {
+          "rung": "point",
+          "text": "$r^{20} \\approx 2.23$ and $r^{40} \\approx 4.95$.",
+          "highlight": [
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\dfrac{1 - 2.23}{1 - 4.95} \\approx 0.31$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 0.31, not the 0.5 a fair coin would give.",
+        "generic": "Not quite right. Count in units of £1,000, then use the unfair formula.",
+        "byKey": {
+          "fair": "0.5 ignores the edge. Forty steps wide, the 49% win rate costs a lot.",
+          "p": "0.49 is one trade. Doubling takes many more wins than losses along the way.",
+          "small-bets": "About 0.12 is the chance for £1 steps from 50 to 100. Here each trade is a twentieth of the bankroll, so there are fewer steps."
+        }
+      },
+      "explain": {
+        "text": "With $r = 51/49$, $\\dfrac{1 - r^{20}}{1 - r^{40}} \\approx 0.31$. Bigger trades mean fewer steps, so the edge hurts less than with £1 bets. But a 49% strategy still loses its stake about 69% of the time.",
+        "canvas": {
+          "points": [
+            {
+              "id": "T",
+              "x": 50,
+              "y": 0.31,
+              "label": "0.31"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A market maker's inventory moves up or down 1 lot with each trade, with equal chance. Risk limits sit at $+10$ and $-10$ lots. She starts flat and is forced to hedge when she hits a limit.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 400,
+          "p": 0.5,
+          "paths": 20,
+          "start": 0,
+          "barriers": [
+            -10,
+            10
+          ],
+          "sim": {
+            "seed": 8
+          },
+          "height": 280,
+          "upLabel": "+10 lots",
+          "downLabel": "−10 lots",
+          "yLabel": "Inventory (lots)",
+          "xLabel": "Trade"
+        },
+        "state": {
+          "stopAtBarrier": true
+        }
+      },
+      "question": "How many trades, on average, until she first hits a limit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "100 exactly: shift by 10, so $i = 10$, $N = 20$, and $10 \\times 10 = 100$.",
+        "unit": "trades",
+        "label": "Expected trades",
+        "wrong": [
+          {
+            "id": "ten",
+            "value": 10
+          },
+          {
+            "id": "twenty",
+            "value": 20
+          },
+          {
+            "id": "four-hundred",
+            "value": 400
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Shift the levels up by 10. Where does she start, and where are the ends?"
+        },
+        {
+          "rung": "point",
+          "text": "Shifted, she starts at 10 with ends at 0 and 20.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$D_{10} = 10 \\times (20 - 10) = 100$."
+        }
+      ],
+      "feedback": {
+        "correct": "$10 \\times 10 = 100$ trades.",
+        "generic": "Not quite right. Shift the levels so the lower limit is 0, then use $D_i = i(N - i)$.",
+        "byKey": {
+          "ten": "10 trades would be enough only if every trade went the same way.",
+          "twenty": "20 is the width between the limits, not the expected time to reach one.",
+          "four-hundred": "You used the full width squared, $20^2$. She starts in the middle, 10 from each limit: $10 \\times 10$."
+        }
+      },
+      "explain": {
+        "text": "Shifting by 10 turns this into gambler's ruin from 10 with ends 0 and 20. The expected time is $10 \\times 10 = 100$ trades; these 20 paths averaged 102. Doubling the limits to $\\pm 20$ would make it 400 trades.",
+        "canvas": {
+          "highlight": [
+            "path0"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "With absorbing barriers at £0 and £$N$, first-step analysis gives fair-game odds $P_i = i/N$ and expected length $i(N - i)$ bets.",
+      "With an edge, $r = (1-p)/p$ and $P_i = (1 - r^i)/(1 - r^N)$: a small edge per bet becomes a large one over many bets.",
+      "Against endless money a player with $p \\le \\tfrac{1}{2}$ is ruined for sure; when the odds are against you, fewer and bigger bets are better."
+    ],
+    "formula": {
+      "name": "Gambler’s ruin",
+      "tex": "P_i = \\frac{1 - r^i}{1 - r^N}, \\quad r = \\frac{1-p}{p}; \\qquad P_i = \\frac{i}{N} \\text{ when } p = \\tfrac{1}{2}",
+      "note": "Fair game: expected duration $D_i = i(N - i)$."
+    },
+    "trap": "A small edge is not harmless. A 49% bet repeated thousands of times turns a 50% chance into under 12%."
+  },
+  "quiz": [
+    {
+      "id": "q-edges",
+      "difficulty": 2,
+      "prose": "Fair £1 bets with target £$N$. The rule is $P_i = \\tfrac{i}{N}$ and $D_i = i(N - i)$.",
+      "question": "What do the rules give when you start at $i = N$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "done",
+            "text": "$P_N = 1$ and $D_N = 0$: you have already won",
+            "correct": true
+          },
+          {
+            "id": "one-bet",
+            "text": "$P_N = 1$ and $D_N = 1$: one bet confirms it",
+            "why": "You counted a bet at the target. The game stops as soon as you reach £$N$, so no bets are made."
+          },
+          {
+            "id": "undefined",
+            "text": "Neither applies at the ends",
+            "why": "The rules hold at the ends too: they are the boundary values we started from."
+          },
+          {
+            "id": "half",
+            "text": "$P_N = \\tfrac{1}{2}$: one more fair bet decides it",
+            "why": "At £$N$ the game is over. There is no more bet to make."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At the target the game is already over.",
+        "generic": "Not quite right. Put $i = N$ into both formulas."
+      },
+      "explain": {
+        "text": "At $i = N$ you have reached the target, so $P_N = 1$ and no bets are needed. At $i = 0$ you are already broke: $P_0 = 0$ and $D_0 = 0$. These ends are the boundary values the derivation used."
+      }
+    },
+    {
+      "id": "q-duration",
+      "difficulty": 2,
+      "prose": "You start with £2 and make fair £1 bets until you have £8 or nothing.",
+      "question": "How many bets does the game last on average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "12: $2 \\times (8 - 2)$.",
+        "unit": "bets",
+        "wrong": [
+          {
+            "id": "prob",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "i-n",
+            "value": 16
+          },
+          {
+            "id": "dist",
+            "value": 6
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2 \\times 6 = 12$ bets.",
+        "generic": "Not quite right. Use $D_i = i(N - i)$.",
+        "byKey": {
+          "prob": "0.25 is the chance of reaching £8. The question asks for the number of bets.",
+          "i-n": "You used $i \\times N$. The second factor is the distance to the target, $8 - 2$.",
+          "dist": "6 bets would do only if every bet won."
+        }
+      },
+      "explain": {
+        "text": "$D_2 = 2 \\times (8 - 2) = 12$ bets on average. The chance of reaching £8 is $\\tfrac{2}{8} = 0.25$."
+      }
+    },
+    {
+      "id": "q-favour",
+      "difficulty": 3,
+      "prose": "Each bet wins with chance $p = 0.6$. You start with £2 and stop at £4 or £0.",
+      "question": "What is the chance you reach £4? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6923,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.6923, which is $\\tfrac{9}{13}$: $r = \\tfrac{2}{3}$ and $\\dfrac{1 - 4/9}{1 - 16/81}$.",
+        "label": "Probability, as a decimal",
+        "wrong": [
+          {
+            "id": "fair",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "p",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "inverted",
+            "value": 0.3077,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{5/9}{65/81} = \\tfrac{9}{13} \\approx 0.6923$.",
+        "generic": "Not quite right. Use $r = \\tfrac{1-p}{p} = \\tfrac{2}{3}$ in $\\dfrac{1 - r^2}{1 - r^4}$.",
+        "byKey": {
+          "fair": "0.5 is the fair-game answer. Here the bets favour you.",
+          "p": "0.6 is one bet. You need two more wins than losses before going broke.",
+          "inverted": "0.3077 is the chance of going broke. You may have used $r = p/(1-p)$."
+        }
+      },
+      "explain": {
+        "text": "$r = \\tfrac{0.4}{0.6} = \\tfrac{2}{3}$, so $P_2 = \\dfrac{1 - 4/9}{1 - 16/81} = \\dfrac{5/9}{65/81} = \\dfrac{9}{13} \\approx 0.6923$. Check: $1 - r^i$ over $1 - r^N$ is $\\tfrac{1}{1 + r^2}$ when $N = 2i$, and $\\tfrac{1}{1 + 4/9} = \\tfrac{9}{13}$."
+      }
+    },
+    {
+      "id": "q-fraction",
+      "difficulty": 3,
+      "prose": "Two traders each start with £10,000 and a 49% win rate. One stakes a fixed £1,000 a trade. The other stakes 10% of whatever she has, each trade.",
+      "question": "Why can the second trader never be wiped out to exactly £0?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fraction",
+            "text": "A loss takes 10% of what is left, so 90% always remains",
+            "correct": true
+          },
+          {
+            "id": "edge",
+            "text": "Her edge is better",
+            "why": "Both have the same 49% win rate. The difference is in the stake size."
+          },
+          {
+            "id": "fewer",
+            "text": "She makes fewer trades",
+            "why": "She can trade as often as the other. Her stake shrinks as she loses, so no loss empties the account."
+          },
+          {
+            "id": "safe",
+            "text": "Proportional betting means she cannot lose money",
+            "why": "She can lose most of her money: stakes shrink but losses still pile up. She just never reaches exactly 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Each loss leaves 90% of the bankroll, so it shrinks but never reaches 0.",
+        "generic": "Not quite right. Follow the bankroll after a run of losses for each trader."
+      },
+      "explain": {
+        "text": "Fixed £1,000 stakes make the bankroll a walk with an absorbing barrier at 0, so gambler's ruin applies. Staking a fraction makes the bankroll multiply by 1.1 or 0.9 each trade, and a product of positive factors never hits 0. Choosing that fraction well is the Kelly question in the limits course."
+      }
+    }
+  ]
+}
