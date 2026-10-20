@@ -1,0 +1,1201 @@
+{
+  "id": "l9-both-sides",
+  "course": "micro",
+  "title": "Quoting both sides",
+  "minutes": 13,
+  "objectives": [
+    "Set a two-sided quote around a fair value.",
+    "Compute expected profit per minute from the half-spread and the arrival rate",
+    "Find the half-spread that balances spread against volume"
+  ],
+  "skills": [
+    "ms-mm"
+  ],
+  "screens": [
+    {
+      "type": "title",
+      "title": "Quoting both sides",
+      "prose": "A market maker stands ready to buy and to sell the same share all day. We will see how that earns money, and how wide to quote.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              4.98,
+              100
+            ]
+          ],
+          "asks": [
+            [
+              5.02,
+              100
+            ]
+          ],
+          "currency": "£",
+          "dp": 2,
+          "bidLabel": "You buy",
+          "askLabel": "You sell"
+        },
+        "state": {
+          "caption": "A buy order below £5.00 and a sell order above it"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You think a share is worth £5.00. You post two orders: buy 100 at £4.98 and sell 100 at £5.02. A buyer takes your 100 at £5.02. Later a seller sells you 100 at £4.98.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              4.98,
+              100
+            ]
+          ],
+          "asks": [
+            [
+              5.02,
+              100
+            ]
+          ],
+          "currency": "£",
+          "dp": 2,
+          "bidLabel": "You buy",
+          "askLabel": "You sell"
+        },
+        "state": {}
+      },
+      "question": "You hold no shares again. How much cash have you made?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.0,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "£",
+        "label": "Cash made in pounds",
+        "accept": "£4.00",
+        "wrong": [
+          {
+            "id": "one-side",
+            "value": 2.0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "per-share",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the cash: what came in on the sale, and what went out on the purchase?"
+        },
+        {
+          "rung": "point",
+          "text": "You sold 100 at £5.02 and bought 100 at £4.98.",
+          "highlight": [
+            "ask0",
+            "bid0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Cash in is £502.00 and cash out is £498.00."
+        }
+      ],
+      "feedback": {
+        "correct": "£502.00 in, £498.00 out: £4.00 on the pair of trades.",
+        "generic": "Not quite right. Add the cash from the sale and take away the cash for the purchase.",
+        "byKey": {
+          "one-side": "You counted one trade's 2p a share against £5.00. Both trades earned 2p a share, so the pair earns 4p a share.",
+          "per-share": "4p is the gain on one share. You traded 100 shares each way.",
+          "half": "That is one side on one share. Both sides traded, 100 shares each."
+        }
+      },
+      "explain": {
+        "text": "You sold at £5.02 and bought back at £4.98, keeping the 4p gap on 100 shares. That gap is the **spread**, and a buy plus a sell is a **round trip**. Each trade earned 2p a share against the £5.00 you think it is worth.",
+        "canvas": {
+          "highlight": [
+            "spread"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Now choose how far each quote sits from £5.00. Close quotes attract many traders; far quotes attract few. Slide the distance and watch your profit per minute. Each trade is 100 shares.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10
+          ],
+          "y": [
+            0,
+            16
+          ],
+          "xStep": 1,
+          "yStep": 2,
+          "grid": true,
+          "xLabel": "Distance of each quote from £5.00 (pence)",
+          "yLabel": "£ per minute",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "20*x*exp(-0.5*x)",
+              "label": "profit",
+              "labelAt": 6.5
+            }
+          ]
+        },
+        "state": {
+          "hide": [
+            "f"
+          ],
+          "points": [
+            {
+              "id": "P",
+              "x": 1,
+              "y": 12.1306,
+              "trace": "x",
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "P.y": "20*P.x*exp(-0.5*P.x)",
+          "caption": "Bid £{{fixed(5 - P.x/100, 2)}}, ask £{{fixed(5 + P.x/100, 2)}}. Trades a minute on each side: {{fixed(10*exp(-0.5*P.x), 2)}}. Profit: £{{fixed(20*P.x*exp(-0.5*P.x), 2)}} a minute."
+        },
+        "controls": [
+          {
+            "bind": "points.P.x",
+            "min": 0,
+            "max": 10,
+            "step": 1,
+            "start": 1,
+            "label": "Distance from £5.00 (pence)"
+          }
+        ]
+      },
+      "question": "Which distance earns the most per minute?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "d1",
+            "text": "1p",
+            "why": "At 1p you trade often but keep only 1p a share. Slide to 2p: profit rises from £12.13 to £14.72 a minute."
+          },
+          {
+            "id": "d2",
+            "text": "2p",
+            "correct": true
+          },
+          {
+            "id": "d4",
+            "text": "4p",
+            "why": "At 4p each trade earns more, but trades fall to 1.35 a minute on each side. Profit drops to £10.83."
+          },
+          {
+            "id": "d10",
+            "text": "10p",
+            "why": "At 10p almost no one trades: 0.07 trades a minute on each side. Profit is £1.35 a minute."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide from 0 to 10 and read the profit in the caption each time."
+        }
+      ],
+      "feedback": {
+        "correct": "2p earns £14.72 a minute, the top of the hump.",
+        "generic": "Not quite right. Slide through every distance and compare the profit."
+      },
+      "explain": {
+        "text": "Closer quotes win more trades but earn less on each one. The product peaks at 2p, £14.72 a minute. Either side of 2p, profit falls.",
+        "canvas": {
+          "hide": [],
+          "points": {
+            "P": {
+              "x": 2,
+              "y": 14.7152
+            }
+          },
+          "highlight": [
+            "P"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The fair value is $V = $ £5.00. The distance from $V$ to each quote is the **half-spread** $s$. Traders on each side arrive at a rate of $\\lambda(s) = 10e^{-0.5s}$ a minute, with $s$ in pence.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10
+          ],
+          "y": [
+            0,
+            16
+          ],
+          "xStep": 1,
+          "yStep": 2,
+          "grid": true,
+          "xLabel": "Half-spread $s$ (pence)",
+          "yLabel": "£ per minute",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "20*x*exp(-0.5*x)",
+              "label": "$2s\\lambda(s)$",
+              "labelAt": 6.5
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 3,
+              "y": 13.3878,
+              "label": "$s = 3$",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "Set $s = 3$p. Each trade is 100 shares. What is your expected profit per minute?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13.39,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Profit per minute in pounds",
+        "accept": "£13.39 (13.388 to two places)",
+        "wrong": [
+          {
+            "id": "one-side",
+            "value": 6.69,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "full-spread",
+            "value": 26.78,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "per-share",
+            "value": 0.1339,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-fall",
+            "value": 60.0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the number of trades a minute on each side first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\lambda(3) = 10e^{-1.5} \\approx 2.231$ trades a minute on each side.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each trade earns 3p on 100 shares, £3.00. Two sides: $2 \\times 2.231 \\times 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2 \\times 2.231 \\times 3 = 13.39$: £13.39 a minute.",
+        "generic": "Not quite right. Multiply the trades a minute by what each trade earns, then count both sides.",
+        "byKey": {
+          "one-side": "You counted only the buyers at your ask. Sellers hit your bid at the same rate, so double it.",
+          "full-spread": "You charged each trade the whole 6p spread. One trade earns only $s = 3$p against fair value.",
+          "per-share": "That is the profit on one-share trades, in pounds. Each trade here is 100 shares.",
+          "no-fall": "You used 10 trades a minute, the rate at $s = 0$. At 3p the rate falls to $10e^{-1.5} \\approx 2.231$."
+        }
+      },
+      "explain": {
+        "text": "Each side trades 2.231 times a minute, and each trade earns 3p on 100 shares, £3.00. Two sides give $2 \\times 2.231 \\times 3 = 13.39$. That is £13.39 a minute, a little below the £14.72 at 2p.",
+        "canvas": {
+          "highlight": [
+            "P"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A rival quotes at fair value: bid £5.00 and ask £5.00, so $s = 0$. Traders arrive fastest there, 10 a minute on each side.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10
+          ],
+          "y": [
+            0,
+            16
+          ],
+          "xStep": 1,
+          "yStep": 2,
+          "grid": true,
+          "xLabel": "Half-spread $s$ (pence)",
+          "yLabel": "£ per minute",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "20*x*exp(-0.5*x)",
+              "label": "$2s\\lambda(s)$",
+              "labelAt": 6.5
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0,
+              "y": 0,
+              "label": "$s = 0$",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "What is the rival's expected profit per minute, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "£",
+        "label": "Profit per minute in pounds",
+        "accept": "£0.00 exactly",
+        "wrong": [
+          {
+            "id": "trades",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does one trade earn against £5.00?"
+        },
+        {
+          "rung": "point",
+          "text": "Buying at £5.00 something worth £5.00 gains nothing.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\times 0 \\times 10 = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "Every trade is at fair value, so it earns nothing.",
+        "generic": "Not quite right. Work out what each trade earns against £5.00 first.",
+        "byKey": {
+          "trades": "20 is the number of trades a minute. Each one earns 0p against £5.00, so the busiest quote earns nothing.",
+          "ten": "10 is the trades a minute on one side. Each trade earns 0p, so the profit is zero."
+        }
+      },
+      "explain": {
+        "text": "At $s = 0$ the rival buys and sells at the value itself. It is busy, but every trade is worth zero. That is the edge case: a zero spread pays nothing however much you trade.",
+        "canvas": {
+          "highlight": [
+            "P"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A colleague wants to quote $s = 10$p. Each trade would then earn 10p a share, five times as much as at 2p.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10
+          ],
+          "y": [
+            0,
+            16
+          ],
+          "xStep": 1,
+          "yStep": 2,
+          "grid": true,
+          "xLabel": "Half-spread $s$ (pence)",
+          "yLabel": "£ per minute",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "20*x*exp(-0.5*x)",
+              "label": "$2s\\lambda(s)$",
+              "labelAt": 6.5
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 2,
+              "y": 14.7152,
+              "label": "2p",
+              "tap": false
+            },
+            {
+              "id": "B",
+              "x": 10,
+              "y": 1.3476,
+              "label": "10p",
+              "labelPos": "n",
+              "tap": false
+            }
+          ],
+          "hide": [
+            "f"
+          ]
+        }
+      },
+      "question": "Which half-spread earns more per minute?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "wide",
+            "text": "10p: it earns five times as much on every trade",
+            "why": "You multiplied the earnings per trade by 5 but kept the number of trades. At 10p each side trades only 0.07 times a minute.",
+            "canvas": {
+              "hide": [],
+              "highlight": [
+                "B"
+              ]
+            }
+          },
+          {
+            "id": "narrow",
+            "text": "2p",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "They earn the same",
+            "why": "You let the extra edge and the lost trades cancel. They do not: £14.72 a minute against £1.35.",
+            "canvas": {
+              "hide": []
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many traders still come at 10p?"
+        },
+        {
+          "rung": "point",
+          "text": "$\\lambda(10) = 10e^{-5} \\approx 0.067$ a minute, against $\\lambda(2) \\approx 3.68$.",
+          "highlight": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Compare $2 \\times 10 \\times 0.067$ with $2 \\times 2 \\times 3.68$."
+        }
+      ],
+      "feedback": {
+        "correct": "2p earns £14.72 a minute; 10p earns £1.35.",
+        "generic": "Not quite right. Work out the profit per minute at each half-spread.",
+        "byKey": {
+          "wide": "You multiplied the earnings per trade by 5 and kept the number of trades. Widening drives traders away: 0.07 a minute at 10p, against 3.68 at 2p."
+        }
+      },
+      "explain": {
+        "text": "At 10p: $2 \\times 10 \\times 0.067 = 1.35$, so £1.35 a minute. At 2p: £14.72. The widest spread looks best per trade and is worst per minute, because almost no one trades.",
+        "canvas": {
+          "hide": [],
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "You traded spread against volume. Each side trades $\\lambda(s)$ times a minute and earns $s$ a share each time: $$\\pi(s) = 2s\\,\\lambda(s) = 2s\\lambda_0 e^{-ks}$$ Here $\\lambda_0 = 10$ trades a minute and $k = 0.5$ per penny.",
+      "question": "What does the factor 2 in $\\pi(s)$ count?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sides",
+            "text": "The two sides: buyers at the ask and sellers at the bid",
+            "correct": true
+          },
+          {
+            "id": "full",
+            "text": "The full spread, $2s$, earned on every trade",
+            "why": "You charged each trade the whole spread. One trade earns $s$ against fair value; it takes two trades to keep $2s$."
+          },
+          {
+            "id": "trips",
+            "text": "Two round trips a minute",
+            "why": "The rate of trades is $\\lambda(s)$, not 2. The 2 is there because there are two sides."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where did the 2 come from when you worked out the profit at 3p?"
+        },
+        {
+          "rung": "step",
+          "text": "You doubled the profit of one side because sellers hit your bid as often as buyers lift your ask."
+        }
+      ],
+      "feedback": {
+        "correct": "Two sides, each trading $\\lambda(s)$ times a minute.",
+        "generic": "Not quite right. Think about the doubling you did at 3p."
+      },
+      "explain": {
+        "text": "Buyers lift your ask and sellers hit your bid, each at rate $\\lambda(s)$. Each trade earns $s$, so the two sides give $2s\\lambda(s)$."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Now find the best half-spread for any $\\lambda_0$ and $k$, by setting the slope of $\\pi(s)$ to zero.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10
+          ],
+          "y": [
+            0,
+            16
+          ],
+          "xStep": 1,
+          "yStep": 2,
+          "grid": true,
+          "xLabel": "Half-spread $s$ (pence)",
+          "yLabel": "£ per minute",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "20*x*exp(-0.5*x)",
+              "label": "$2s\\lambda(s)$",
+              "labelAt": 6.5
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 2,
+              "y": 14.7152,
+              "label": "$s^*$",
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "l1",
+            "text": "$\\pi(s) = 2\\lambda_0\\, s\\, e^{-ks}$: two sides, each earning $s$ on $\\lambda_0 e^{-ks}$ trades a minute"
+          },
+          {
+            "id": "l2",
+            "text": "$\\pi'(s) = 2\\lambda_0 e^{-ks} - 2k\\lambda_0\\, s\\, e^{-ks}$: the product rule on $s \\cdot e^{-ks}$"
+          },
+          {
+            "id": "l3",
+            "text": "$\\pi'(s) = 2\\lambda_0 e^{-ks}(1 - ks)$: take out the common factor"
+          },
+          {
+            "id": "l4",
+            "text": "$e^{-ks} > 0$, so $\\pi'(s) = 0$ only when $1 - ks = 0$, that is $s^* = 1/k$"
+          },
+          {
+            "id": "l5",
+            "text": "$\\pi'(s) > 0$ below $1/k$ and $\\pi'(s) < 0$ above it, so $s^*$ is the peak"
+          },
+          {
+            "id": "l6",
+            "text": "With $k = 0.5$ per penny, $s^* = 1/0.5 = 2$p"
+          }
+        ],
+        "answer": [
+          "l1",
+          "l2",
+          "l3",
+          "l4",
+          "l5",
+          "l6"
+        ],
+        "same": [
+          [
+            "l5",
+            "l6"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the profit formula, then differentiate it."
+        },
+        {
+          "rung": "point",
+          "text": "Differentiating $s\\,e^{-ks}$ needs the product rule.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Formula, derivative, factorise, set to zero, then check it is a peak and put in $k$."
+        }
+      ],
+      "feedback": {
+        "correct": "The slope is zero only at $s = 1/k$, and it changes from up to down there.",
+        "generic": "Not quite right. Write the formula, differentiate, factorise, then solve.",
+        "byKey": {
+          "l2": "The derivative needs the formula above it first.",
+          "l4": "Setting the slope to zero is easiest once it is factorised."
+        }
+      },
+      "explain": {
+        "text": "The factor $1 - ks$ carries the sign of the slope: positive below $1/k$, negative above. So profit rises to $s^* = 1/k$ and falls after it. A market where traders flee faster (bigger $k$) needs a tighter quote.",
+        "canvas": {
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Profit in code",
+      "prose": "Put the model in code, so you can try it on other shares. The rate on each side is $\\lambda_0 e^{-ks}$, and each trade earns $s$ pence a share.",
+      "question": "Complete `expected_profit(s, lam0, k)` so it returns $2s\\lambda_0 e^{-ks}$: the expected profit per minute, in pence, for one-share trades.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import exp\n\ndef expected_profit(s, lam0, k):\n    \"\"\"Expected profit a minute, in pence, for one-share trades.\n    s: half-spread in pence\n    lam0: trades a minute on each side when s = 0\n    k: how fast trading falls as s widens, per penny\n    \"\"\"\n    rate = ...  # trades a minute on each side\n    return ...\n",
+        "solution": "from math import exp\n\ndef expected_profit(s, lam0, k):\n    \"\"\"Expected profit a minute, in pence, for one-share trades.\n    s: half-spread in pence\n    lam0: trades a minute on each side when s = 0\n    k: how fast trading falls as s widens, per penny\n    \"\"\"\n    rate = lam0 * exp(-k * s)  # trades a minute on each side\n    return 2 * s * rate\n",
+        "examples": [
+          {
+            "call": "expected_profit(2, 10, 0.5)",
+            "expect": "14.715177646857693",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "expected_profit(2, 10, 0.5)",
+            "expect": "14.715177646857693",
+            "compare": "isclose"
+          },
+          {
+            "call": "expected_profit(0, 10, 0.5)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "expected_profit(1, 10, 0.5)",
+            "expect": "12.130613194252668",
+            "compare": "isclose"
+          },
+          {
+            "call": "expected_profit(10, 10, 0.5)",
+            "expect": "1.3475893998170934",
+            "compare": "isclose"
+          },
+          {
+            "call": "expected_profit(4, 10, 0.25)",
+            "expect": "29.430355293715387",
+            "compare": "isclose"
+          },
+          {
+            "call": "expected_profit(4, 20, 0.25)",
+            "expect": "58.86071058743077",
+            "compare": "isclose"
+          },
+          {
+            "call": "expected_profit(3, 10, 0)",
+            "expect": "60.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "expected_profit(1.5, 8, 1)",
+            "expect": "5.355123843562316",
+            "compare": "isclose"
+          },
+          {
+            "call": "expected_profit(2, 0, 0.5)",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Each answer is accepted when it is within a relative error of 1e-9 of the exact value."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The rate on each side is $\\lambda_0 e^{-ks}$, and `exp` is already imported."
+        },
+        {
+          "rung": "point",
+          "text": "`rate = lam0 * exp(-k * s)`"
+        },
+        {
+          "rung": "step",
+          "text": "Return `2 * s * rate`: two sides, each earning `s` per trade."
+        }
+      ],
+      "feedback": {
+        "correct": "Two sides, each trading `rate` times a minute at `s` pence a share.",
+        "generic": "Some tests failed. The rate is `lam0 * exp(-k * s)` and the profit is `2 * s * rate`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that both `...` are replaced."
+        }
+      },
+      "explain": {
+        "text": "The rate falls exponentially in `s` while the edge per trade grows linearly. With `k = 0` nothing deters traders, so profit grows without limit: 60p at 3p with 10 trades a minute. Real traders do leave, which is why the peak exists.\n\n```python\nrate = lam0 * exp(-k * s)\nreturn 2 * s * rate\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "An exchange names you a **designated market maker** in a small share. You get lower fees. In return you must show a bid and an ask, each for 500 shares or more, at most 10p apart, for 90% of the day.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              4.9,
+              300
+            ]
+          ],
+          "asks": [
+            [
+              5.02,
+              500
+            ]
+          ],
+          "currency": "£",
+          "dp": 2,
+          "bidLabel": "Bid size",
+          "askLabel": "Ask size"
+        },
+        "state": {
+          "caption": "At 11:00 the share is falling, so you show only your ask at £5.02. The £4.90 bid is someone else's."
+        }
+      },
+      "question": "Does a sell-only quote meet your obligation?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No. With no bid you are only selling, which is a bet the price falls, not market making",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes. Any quote within 10p of fair value counts",
+            "why": "You checked the price of your ask but not the second side. The obligation is a bid and an ask, both shown."
+          },
+          {
+            "id": "yes-other",
+            "text": "Yes. Someone else's bid at £4.90 is in the book",
+            "why": "You leaned on another trader's order. Your obligation is to show your own bid, and that bid is 12p below your ask."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many sides does the obligation ask for?"
+        },
+        {
+          "rung": "point",
+          "text": "Your ask is there. Look for your own bid.",
+          "highlight": [
+            "ask0",
+            "bid0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With only an ask, every trade makes you short. You keep no spread, you just hold a position."
+        }
+      ],
+      "feedback": {
+        "correct": "Market making means both sides. One side alone is a directional bet.",
+        "generic": "Not quite right. Check which sides the obligation requires you to show.",
+        "byKey": {
+          "yes": "You checked the price of your ask but not the second side. The obligation needs your own bid too."
+        }
+      },
+      "explain": {
+        "text": "A one-sided quote earns no spread: every fill moves you further from flat. Exchanges pay market makers to stay two-sided precisely when it is uncomfortable. That is the edge case: one side alone is not market making.",
+        "canvas": {
+          "highlight": [
+            "ask0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A large electronic market maker completes 10,000 round trips a day in liquid shares. Each round trip buys and sells 1,000 shares and keeps a 1p spread.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              10.0,
+              1000
+            ]
+          ],
+          "asks": [
+            [
+              10.01,
+              1000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2,
+          "bidLabel": "Its bid",
+          "askLabel": "Its ask"
+        },
+        "state": {
+          "caption": "One of its quotes: a 1p spread on 1,000 shares"
+        }
+      },
+      "question": "What is its gross profit for the day, before costs, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100000,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Gross profit in pounds",
+        "accept": "£100,000",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 50000,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "no-shares",
+            "value": 100,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "pence",
+            "value": 10000000,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out what one round trip keeps first."
+        },
+        {
+          "rung": "point",
+          "text": "One round trip keeps 1p on each of 1,000 shares: £10.00."
+        },
+        {
+          "rung": "step",
+          "text": "Now multiply by 10,000 round trips."
+        }
+      ],
+      "feedback": {
+        "correct": "£10.00 a round trip, 10,000 times: £100,000.",
+        "generic": "Not quite right. Find the profit of one round trip, then multiply.",
+        "byKey": {
+          "half": "You kept only half the spread per round trip. A round trip is a buy and a sell, so it keeps the whole 1p.",
+          "no-shares": "You kept 1p per round trip. Each round trip is 1,000 shares, so it keeps £10.00.",
+          "pence": "That is the answer in pence. Divide by 100 for pounds."
+        }
+      },
+      "explain": {
+        "text": "$10{,}000 \\times 1{,}000 \\times 1\\text{p} = 10{,}000{,}000\\text{p}$, which is £100,000. That is before exchange fees, technology and staff. Two lessons on we meet a bigger cost: losing to traders who know more."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A market maker bids at $V - s$ and offers at $V + s$; a round trip keeps the whole spread $2s$.",
+      "Each single trade earns only $s$, and wider quotes trade less, so profit per minute is $2s\\lambda(s)$.",
+      "With $\\lambda(s) = \\lambda_0 e^{-ks}$ profit peaks inside, at $s^* = 1/k$; at $s = 0$ it is zero."
+    ],
+    "formula": {
+      "name": "Expected profit per minute",
+      "tex": "\\pi(s) = 2s\\lambda_0 e^{-ks}, \\qquad s^* = \\frac{1}{k}",
+      "note": "Two sides, each earning $s$ on $\\lambda(s)$ trades a minute."
+    },
+    "trap": "The widest spread is not the best: almost no one trades at it. And one trade earns the half-spread, not the whole spread."
+  },
+  "quiz": [
+    {
+      "id": "q-round-trip",
+      "difficulty": 2,
+      "prose": "You quote £7.47 bid and £7.53 ask around a fair value of £7.50, for 500 shares on each side. Both sides trade once.",
+      "question": "How much cash does the round trip make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 30.0,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "£",
+        "label": "Cash in pounds",
+        "accept": "£30.00",
+        "wrong": [
+          {
+            "id": "one-side",
+            "value": 15.0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "per-share",
+            "value": 0.06,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "6p a share on 500 shares.",
+        "generic": "Not quite right. Find what one share keeps on the round trip, then scale.",
+        "byKey": {
+          "one-side": "That is one trade's 3p a share against fair value. The round trip keeps both sides, 6p a share.",
+          "per-share": "6p is the gain on one share. The trades were 500 shares each."
+        }
+      },
+      "explain": {
+        "text": "You buy at £7.47 and sell at £7.53, keeping 6p a share. On 500 shares that is £30.00."
+      }
+    },
+    {
+      "id": "q-one-side",
+      "difficulty": 2,
+      "prose": "Only your ask trades: you sell 200 shares at 2p above fair value. No seller has hit your bid yet.",
+      "question": "Measured against fair value, how much have you earned so far?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.0,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "£",
+        "label": "Earned in pounds",
+        "accept": "£4.00",
+        "wrong": [
+          {
+            "id": "spread",
+            "value": 8.0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2p a share on 200 shares, and you are now short 200.",
+        "generic": "Not quite right. One trade earns the half-spread on its shares.",
+        "byKey": {
+          "spread": "You counted the whole 4p spread. Only one side has traded, so you have earned the half-spread, 2p a share.",
+          "zero": "Against fair value the sale already earned 2p a share. What you lack is the second trade that takes you flat."
+        }
+      },
+      "explain": {
+        "text": "One trade earns $s = 2$p a share against fair value: £4.00 on 200 shares. You are short 200 shares until a seller hits your bid, and that position carries price risk."
+      }
+    },
+    {
+      "id": "q-best-s",
+      "difficulty": 3,
+      "prose": "In a calmer share, traders leave more slowly as you widen: $\\lambda(s) = 10e^{-0.25s}$ a minute, with $s$ in pence.",
+      "question": "Which half-spread gives the most profit per minute?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "4p",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "2p",
+            "why": "You kept the old $k = 0.5$. Here $k = 0.25$, so $1/k = 4$."
+          },
+          {
+            "id": "c",
+            "text": "0.25p",
+            "why": "You used $k$ itself. The peak is at $1/k$."
+          },
+          {
+            "id": "d",
+            "text": "The widest quote allowed",
+            "why": "You treated a slower fall as no fall. Trading still falls exponentially, so there is still a peak."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$s^* = 1/k = 1/0.25 = 4$p.",
+        "generic": "Not quite right. The peak sits at $s^* = 1/k$."
+      },
+      "explain": {
+        "text": "Profit $2s\\lambda_0 e^{-ks}$ peaks where $1 - ks = 0$, so $s^* = 1/0.25 = 4$p. Traders who leave more slowly let you quote wider."
+      }
+    },
+    {
+      "id": "q-profit-1p",
+      "difficulty": 3,
+      "prose": "Back to $\\lambda(s) = 10e^{-0.5s}$ a minute on each side, with 100-share trades.",
+      "question": "What is the expected profit per minute at $s = 1$p, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.13,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Profit per minute in pounds",
+        "accept": "£12.13",
+        "wrong": [
+          {
+            "id": "one-side",
+            "value": 6.07,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "no-fall",
+            "value": 20.0,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2 \\times 1 \\times 6.065 = 12.13$.",
+        "generic": "Not quite right. Find $\\lambda(1)$, then multiply by $2s$ and the £1.00 a penny that 100 shares give.",
+        "byKey": {
+          "one-side": "You counted one side. Both sides trade at $\\lambda(1)$, so double it.",
+          "no-fall": "You used 10 trades a minute, the rate at $s = 0$. At 1p it is $10e^{-0.5} \\approx 6.065$."
+        }
+      },
+      "explain": {
+        "text": "$\\lambda(1) = 10e^{-0.5} \\approx 6.065$. Each 100-share trade earns £1.00 at 1p, so the two sides give £12.13 a minute, below the £14.72 at 2p."
+      }
+    }
+  ]
+}
