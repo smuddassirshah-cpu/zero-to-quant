@@ -894,3 +894,10 @@ Raised later (limits-thm level 3):
 308. `bars`: a continuous overlay curve (`curve: { expr }`) that follows parameters, so unstandardised sums can be compared against $N(n\mu, n\sigma^2)$ as $n$ changes.
 309. `distribution` and `bars`: shade an overlay curve's area from a cut (the continuity-correction strips) separately from the bar wash.
 310. `series`: a scaled or log x axis (`xScale`, `xStep`) so long simulations need no thinning to "tens" or "hundreds".
+
+Raised later (markov level 2):
+
+311. `derive`: `matpow(P, k)` and `vecmat(v, P)` functions so a slider on $k$ can drive $\pi_0 P^k$ on `bars` or `graph` for any chain, not only ones with closed forms.
+312. `graph`: a per-edge `loopAngle` for self-loops (they always point away from the centroid and collide with neighbour edges on a line layout).
+
+Content note (markov): level 2 writes plain $P$ and $\pi$ to match the course.json objective; the notation rule says bold capitals for matrices. Settle one convention for the course when level 1 lands.
