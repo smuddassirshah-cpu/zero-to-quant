@@ -196,7 +196,7 @@
         "kind": "numeric",
         "answer": 0.012941,
         "tol": {
-          "abs": 0.00005
+          "abs": 5e-05
         },
         "placeholder": "fraction or decimal",
         "accept": "Any form equal to $\\tfrac{11}{850}$, or $0.01294 \\pm 0.00005$",
@@ -219,6 +219,60 @@
       },
       "explain": {
         "text": "The multiplication rule gives $\\tfrac{13}{52} \\cdot \\tfrac{12}{51} \\cdot \\tfrac{11}{50} = \\tfrac{11}{850} \\approx 0.01294$. Item 7 shows why multiplying them is allowed."
+      }
+    },
+    {
+      "id": "h-fill-cluster",
+      "difficulty": 4,
+      "skills": [
+        "cond-mult"
+      ],
+      "title": "Fills in a run",
+      "prose": "Fills from counterparty A come in runs. The first fill of the day is from A with chance 0.35. After a fill from A, the next fill is from A with chance 0.55, whatever came before.",
+      "question": "What is the chance the first three fills of the day all come from A? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.105875,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "decimal",
+        "accept": "$0.35 \\times 0.55 \\times 0.55 = 0.105875$, within 0.0005",
+        "wrong": [
+          {
+            "id": "unrelated",
+            "value": 0.042875,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "two-only",
+            "value": 0.1925,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "added",
+            "value": 1.45,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The chain is $0.35 \\times 0.55 \\times 0.55$.",
+        "generic": "Chain three factors: the first fill, then each next fill given the one before.",
+        "byKey": {
+          "unrelated": "You used 0.35 three times, as if fills were unrelated. After a fill from A, the next is from A with chance 0.55.",
+          "two-only": "That covers only two fills. Multiply by 0.55 once more for the third.",
+          "added": "You added the chances. A run of fills is a sequence, so they multiply."
+        }
+      },
+      "explain": {
+        "text": "The multiplication rule chains one factor per fill: $0.35$, then $0.55$ given the first, then $0.55$ given the first two. That gives $0.105875$, about two and a half times the $0.042875$ you would get by treating the fills as unrelated."
       }
     },
     {
@@ -306,6 +360,236 @@
       },
       "explain": {
         "text": "The definition gives the two-event rule. Grouping $A \\cap B$ as one event lets us use it once, then once more on $P(A \\cap B)$."
+      }
+    },
+    {
+      "id": "h-credit-paths",
+      "difficulty": 4,
+      "skills": [
+        "cond-mult"
+      ],
+      "title": "A credit tree",
+      "prose": "Over a year, an A-rated bond is upgraded with chance 0.05 and downgraded with chance 0.10. Otherwise it keeps its rating. It then defaults the next year with chance 0.002 if upgraded, 0.01 if unchanged and 0.08 if downgraded.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Rating",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Upgraded",
+                  "p": "0.05"
+                },
+                {
+                  "id": "s",
+                  "label": "Same",
+                  "p": "0.85"
+                },
+                {
+                  "id": "d",
+                  "label": "Downgraded",
+                  "p": "0.10"
+                }
+              ]
+            },
+            {
+              "label": "Next year",
+              "branches": [
+                {
+                  "id": "x",
+                  "label": "Default",
+                  "p": {
+                    "u": "0.002",
+                    "s": "0.01",
+                    "d": "0.08"
+                  }
+                },
+                {
+                  "id": "k",
+                  "label": "Survives",
+                  "p": {
+                    "u": "0.998",
+                    "s": "0.99",
+                    "d": "0.92"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in the chance of each path that ends in default, then the chance of default by any route.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Path",
+          "Chance"
+        ],
+        "rows": [
+          [
+            "Upgraded, then default",
+            {
+              "edit": true,
+              "answer": 0.0001,
+              "tol": {
+                "abs": 1e-05
+              },
+              "accept": "$0.05 \\times 0.002 = 0.0001$"
+            }
+          ],
+          [
+            "Same, then default",
+            {
+              "edit": true,
+              "answer": 0.0085,
+              "tol": {
+                "abs": 5e-05
+              },
+              "accept": "$0.85 \\times 0.01 = 0.0085$"
+            }
+          ],
+          [
+            "Downgraded, then default",
+            {
+              "edit": true,
+              "answer": 0.008,
+              "tol": {
+                "abs": 5e-05
+              },
+              "accept": "$0.10 \\times 0.08 = 0.008$"
+            }
+          ],
+          [
+            "Default by any route",
+            {
+              "edit": true,
+              "answer": 0.0166,
+              "tol": {
+                "abs": 5e-05
+              },
+              "accept": "$0.0166$"
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Multiply along each default path, then add the three.",
+        "generic": "Each default path is a product of two branches. Default by any route adds the three paths.",
+        "byKey": {
+          "r0c1": "Upgraded, then default is $0.05 \\times 0.002$.",
+          "r1c1": "Same, then default is $0.85 \\times 0.01$.",
+          "r2c1": "Downgraded, then default is $0.10 \\times 0.08$.",
+          "r3c1": "Add the three default paths. They cannot happen together, so their chances add."
+        }
+      },
+      "explain": {
+        "text": "The three default paths are $0.0001$, $0.0085$ and $0.008$, and they add to $0.0166$. The downgrade path is only a tenth of the tree, yet it brings almost half the default risk.",
+        "canvas": {
+          "highlight": [
+            "u-x",
+            "s-x",
+            "d-x"
+          ]
+        }
+      }
+    },
+    {
+      "id": "h-grade-b",
+      "difficulty": 4,
+      "skills": [
+        "cond-mult"
+      ],
+      "title": "The missing default rate",
+      "prose": "A loan book is 60% grade A and 40% grade B. Grade A loans default at 1.5% a year. The whole book defaults at 3.3% a year.",
+      "question": "What is the default rate of grade B loans? Give a decimal.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.06,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "decimal",
+        "accept": "$0.06$, from $0.6 \\times 0.015 + 0.4\\,x = 0.033$",
+        "wrong": [
+          {
+            "id": "difference",
+            "value": 0.018,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "equal-weights",
+            "value": 0.051,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-divide",
+            "value": 0.024,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Solve $0.6 \\times 0.015 + 0.4\\,x = 0.033$.",
+        "generic": "Write the law of total probability with grade B's rate as the unknown, then solve.",
+        "byKey": {
+          "difference": "You subtracted the two rates. The book's rate is a weighted sum, so take away grade A's weighted part.",
+          "equal-weights": "You treated the book as half A and half B. Grade B is 40% of the book.",
+          "no-divide": "That is $0.4\\,x$, grade B's weighted part. Divide by 0.4 to find $x$."
+        }
+      },
+      "explain": {
+        "text": "The law of total probability gives $0.033 = 0.6 \\times 0.015 + 0.4\\,x = 0.009 + 0.4\\,x$. So $0.4\\,x = 0.024$ and $x = 0.06$. Grade B loans default at 6% a year."
+      }
+    },
+    {
+      "id": "h-weighted",
+      "difficulty": 4,
+      "skills": [
+        "cond-mult"
+      ],
+      "title": "What the law of total probability says",
+      "prose": "$A$ is an event with $0 < P(A) < 1$, and $B$ is any event.",
+      "question": "Which statements are always true? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "options": [
+          {
+            "id": "between",
+            "text": "$P(B)$ lies between $P(B \\mid A)$ and $P(B \\mid A^c)$",
+            "correct": true
+          },
+          {
+            "id": "equal",
+            "text": "If $P(B \\mid A) = P(B \\mid A^c)$, then $P(B)$ equals that common value",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "$P(B) = P(B \\mid A) + P(B \\mid A^c)$",
+            "why": "You added the conditional chances without their weights. With 0.9 and 0.8 that passes 1."
+          },
+          {
+            "id": "average",
+            "text": "$P(B) = \\tfrac{1}{2}\\big[P(B \\mid A) + P(B \\mid A^c)\\big]$",
+            "why": "You took a plain average. That holds only when $P(A) = \\tfrac{1}{2}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$P(B)$ is a weighted average of the two conditional chances.",
+        "generic": "Write $P(B) = P(B \\mid A)\\,P(A) + P(B \\mid A^c)\\,(1 - P(A))$ and test each statement."
+      },
+      "explain": {
+        "text": "With $p = P(A)$, $P(B) = p\\,P(B \\mid A) + (1 - p)\\,P(B \\mid A^c)$, a weighted average with weights adding to 1. So it lies between the two, and equals them when they agree. The plain sum and the plain average both ignore the weights."
       }
     },
     {
