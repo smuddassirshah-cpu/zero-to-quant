@@ -1,0 +1,1343 @@
+{
+  "id": "l12-delta-hedging",
+  "course": "trees",
+  "title": "Hedging as the price moves",
+  "minutes": 15,
+  "objectives": [
+    "Simulate delta hedging and measure its error",
+    "Explain where the hedging error comes from"
+  ],
+  "skills": [
+    "tp-bs",
+    "tp-replicate"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Selling and hoping",
+      "prose": "You sold our one-year call ($S = K = 100$, $\\sigma = 20\\%$, $r = 5\\%$) for £10.45 and did nothing else. The share then followed this path in 20 steps and ended at £120.40.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Share",
+              "values": [
+                100,
+                93.08,
+                100.12,
+                102.01,
+                99.56,
+                104.2,
+                99.67,
+                111.06,
+                114.51,
+                114.53,
+                119.16,
+                113.19,
+                116.5,
+                122.46,
+                128.67,
+                132.32,
+                126.49,
+                128.89,
+                121.54,
+                123.29,
+                120.4
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Step (each 0.05 years)",
+          "money": "£"
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "end",
+              "i": 20,
+              "label": "£120.40"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "k",
+              "y": 100,
+              "label": "strike"
+            }
+          ]
+        }
+      },
+      "question": "What is your profit or loss at expiry? With a year's interest the premium is $10.45e^{0.05} = 10.99$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -9.41,
+        "tol": {
+          "abs": 0.02
+        },
+        "unit": "£",
+        "label": "Profit or loss in pounds",
+        "accept": "−£9.41: $10.99 - 20.40$",
+        "wrong": [
+          {
+            "id": "noint",
+            "value": -9.95,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "keep",
+            "value": 10.99,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "payonly",
+            "value": -20.4,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What do you owe the call's buyer at expiry?"
+        },
+        {
+          "rung": "point",
+          "text": "The call pays $120.40 - 100 = 20.40$.",
+          "highlight": [
+            "end"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10.99 - 20.40 = -9.41$."
+        }
+      ],
+      "feedback": {
+        "correct": "You lose £9.41.",
+        "generic": "Not quite right. Add the premium with interest, then subtract what the call pays.",
+        "byKey": {
+          "noint": "You left out the interest. The £10.45 sat in the bank for a year, growing to £10.99.",
+          "keep": "You kept the premium but forgot the payoff. The buyer exercises and you owe £20.40.",
+          "payonly": "You subtracted the payoff but forgot the premium you received."
+        }
+      },
+      "explain": {
+        "text": "You owe the buyer $120.40 - 100 = 20.40$. The premium with interest is £10.99, so you lose £9.41. A seller who wants no view on the share must hedge.",
+        "canvas": {
+          "highlight": [
+            "end"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The slope moves",
+      "prose": "The hedge is the slope of the call's value: delta, $\\Phi(d_1)$. Hold that many shares per call sold, and small moves cancel. Slide the share price and watch the slope.",
+      "canvas": {
+        "kind": "payoff",
+        "params": {
+          "legs": [
+            {
+              "id": "c1",
+              "type": "call",
+              "side": "long",
+              "strike": 100,
+              "premium": 0,
+              "label": "payoff"
+            }
+          ],
+          "range": [
+            60,
+            140
+          ],
+          "pl": false,
+          "y": [
+            0,
+            50
+          ],
+          "value": {
+            "t": 1,
+            "sigma": 0.2,
+            "r": 0.05,
+            "label": "value now"
+          },
+          "tangent": true,
+          "yLabel": "Call value (£)",
+          "xLabel": "Share price $S$ (£)"
+        },
+        "state": {
+          "spot": 100
+        },
+        "controls": [
+          {
+            "bind": "spot",
+            "min": 60,
+            "max": 140,
+            "step": 1,
+            "start": 100,
+            "label": "Share price $S$"
+          }
+        ]
+      },
+      "question": "As the share price rises, what happens to delta?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rise",
+            "text": "It rises towards 1, so the hedge needs more shares",
+            "correct": true
+          },
+          {
+            "id": "fixed",
+            "text": "It stays at 0.64 for the life of the option",
+            "why": "0.64 is delta at £100 today. Slide to £120 and it reads about 0.90."
+          },
+          {
+            "id": "fall",
+            "text": "It falls, because the call has already gained",
+            "why": "Slide to the right: the curve gets steeper, not flatter."
+          },
+          {
+            "id": "jump",
+            "text": "It jumps from 0 to 1 at the strike",
+            "why": "That is the payoff's slope at expiry. With a year left the slope changes smoothly."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Delta climbs as the call goes into the money.",
+        "generic": "Not quite right. Read the tangent's label at £80, £100 and £120."
+      },
+      "explain": {
+        "text": "Delta is 0.22 at £80, 0.64 at £100 and 0.90 at £120. As the share moves, delta moves, so the hedge must be traded again. Trading back to delta at each step is **delta hedging**.",
+        "canvas": {
+          "spot": 120
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The first rehedge",
+      "prose": "At the start you receive £10.45 and buy $\\Delta_0 = 0.6368$ shares at £100, so cash is $-£53.23$. One step later ($\\Delta t = 0.05$) the share is £93.08 and the new delta is $\\Delta_1 = 0.4893$. Cash earns interest at $e^{r\\Delta t} = 1.002503$.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Share",
+              "values": [
+                100,
+                93.08,
+                100.12,
+                102.01,
+                99.56,
+                104.2,
+                99.67,
+                111.06,
+                114.51,
+                114.53,
+                119.16,
+                113.19,
+                116.5,
+                122.46,
+                128.67,
+                132.32,
+                126.49,
+                128.89,
+                121.54,
+                123.29,
+                120.4
+              ]
+            },
+            {
+              "id": "dl",
+              "label": "Shares held",
+              "values": [
+                0.6368,
+                0.4893,
+                0.6325,
+                0.6666,
+                0.6135,
+                0.7056,
+                0.6076,
+                0.8245,
+                0.874,
+                0.8798,
+                0.9315,
+                0.8766,
+                0.9235,
+                0.9725,
+                0.9937,
+                0.9985,
+                0.9973,
+                0.9997,
+                0.9993,
+                1.0,
+                null
+              ],
+              "axis": 2,
+              "colour": 3
+            }
+          ],
+          "x": "index",
+          "xLabel": "Step (each 0.05 years)",
+          "money": "£",
+          "y2": [
+            0,
+            1.2
+          ],
+          "y2Label": "Shares held per call",
+          "yLabel": "Share price"
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "end",
+              "i": 20,
+              "series": "px",
+              "label": "£120.40"
+            }
+          ],
+          "window": {
+            "from": 0,
+            "to": 1,
+            "label": "step 1"
+          }
+        }
+      },
+      "question": "Fill in the first rehedge.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Line",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Cash after one step of interest (£)",
+            {
+              "edit": true,
+              "answer": -53.37,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "Shares sold, $\\Delta_0 - \\Delta_1$",
+            {
+              "edit": true,
+              "answer": 0.1475,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "Cash after the trade (£)",
+            {
+              "edit": true,
+              "answer": -39.64,
+              "tol": {
+                "abs": 0.02
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Interest makes the debt a little bigger: $-53.23 \\times 1.002503$."
+        },
+        {
+          "rung": "point",
+          "text": "Delta fell from 0.6368 to 0.4893, so you sell the difference.",
+          "highlight": [
+            "dl"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Selling 0.1475 shares at £93.08 brings in £13.73; add it to the cash."
+        }
+      ],
+      "feedback": {
+        "correct": "Cash goes from −£53.37 to −£39.64 as you sell shares.",
+        "generic": "Not quite right. Grow the cash by one step of interest, then add what the sale brings in.",
+        "byKey": {
+          "r0c1": "The cash is negative, so interest makes it more negative: $-53.23 \\times 1.002503 = -53.37$.",
+          "r2c1": "The sale adds cash: $-53.37 + 0.1475 \\times 93.08$."
+        }
+      },
+      "explain": {
+        "text": "The debt grows to £53.37, and selling 0.1475 shares at £93.08 brings in £13.73. Cash is now −£39.64 against 0.4893 shares. Repeat this at every step until expiry."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Twenty steps later",
+      "prose": "Rehedging at all 20 steps, the green line shows the shares held. At expiry you hold $\\Delta_{19} = 1.0000$ share and cash of $-£101.19$. The share is £120.40, and you owe the payoff of £20.40.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Share",
+              "values": [
+                100,
+                93.08,
+                100.12,
+                102.01,
+                99.56,
+                104.2,
+                99.67,
+                111.06,
+                114.51,
+                114.53,
+                119.16,
+                113.19,
+                116.5,
+                122.46,
+                128.67,
+                132.32,
+                126.49,
+                128.89,
+                121.54,
+                123.29,
+                120.4
+              ]
+            },
+            {
+              "id": "dl",
+              "label": "Shares held",
+              "values": [
+                0.6368,
+                0.4893,
+                0.6325,
+                0.6666,
+                0.6135,
+                0.7056,
+                0.6076,
+                0.8245,
+                0.874,
+                0.8798,
+                0.9315,
+                0.8766,
+                0.9235,
+                0.9725,
+                0.9937,
+                0.9985,
+                0.9973,
+                0.9997,
+                0.9993,
+                1.0,
+                null
+              ],
+              "axis": 2,
+              "colour": 3
+            }
+          ],
+          "x": "index",
+          "xLabel": "Step (each 0.05 years)",
+          "money": "£",
+          "y2": [
+            0,
+            1.2
+          ],
+          "y2Label": "Shares held per call",
+          "yLabel": "Share price"
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "end",
+              "i": 20,
+              "series": "px",
+              "label": "£120.40"
+            }
+          ]
+        }
+      },
+      "question": "What is the hedged P&L at expiry?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1.19,
+        "tol": {
+          "abs": 0.02
+        },
+        "unit": "£",
+        "label": "Hedged P&L in pounds",
+        "accept": "−£1.19: $-101.19 + 120.40 - 20.40$",
+        "wrong": [
+          {
+            "id": "nopay",
+            "value": 19.21,
+            "tol": {
+              "abs": 0.03
+            }
+          },
+          {
+            "id": "noshare",
+            "value": -121.59,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add up what you hold, then subtract what you owe."
+        },
+        {
+          "rung": "point",
+          "text": "You hold cash and one share worth £120.40.",
+          "highlight": [
+            "end"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-101.19 + 120.40 - 20.40 = -1.19$."
+        }
+      ],
+      "feedback": {
+        "correct": "A loss of only £1.19, against £9.41 unhedged.",
+        "generic": "Not quite right. P&L is cash plus shares at £120.40, minus the payoff.",
+        "byKey": {
+          "nopay": "You forgot to pay the call's buyer £20.40.",
+          "noshare": "You left out the share you hold, worth £120.40."
+        }
+      },
+      "explain": {
+        "text": "Cash plus shares less the payoff is $-101.19 + 120.40 - 20.40 = -1.19$. The hedge turned a £9.41 loss into £1.19. It is not zero, because we traded 20 times, not continuously.",
+        "canvas": {
+          "highlight": [
+            "dl"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Rehedging more often",
+      "prose": "We simulate 3,000 paths and hedge each with $N$ evenly spaced rehedges. The bars show the standard deviation of the final P&L. Unhedged it is about £15.21; hedged once at the start, about £5.87.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "n5",
+              "label": "N = 5"
+            },
+            {
+              "id": "n20",
+              "label": "N = 20"
+            },
+            {
+              "id": "n80",
+              "label": "N = 80"
+            },
+            {
+              "id": "n320",
+              "label": "N = 320"
+            }
+          ],
+          "yLabel": "Spread of P&L (£)",
+          "showValues": true,
+          "money": "£",
+          "yMax": 3.2
+        },
+        "state": {
+          "values": {
+            "n5": 2.82,
+            "n20": 1.53,
+            "n80": 0.76
+          },
+          "caption": "Standard deviation of the hedged P&L over 3,000 paths"
+        }
+      },
+      "question": "Predict the spread with 320 rehedges.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.38,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "£",
+        "label": "Spread in pounds",
+        "accept": "about £0.38 by the pattern; the simulation gives £0.40",
+        "wrong": [
+          {
+            "id": "quarter",
+            "value": 0.19,
+            "tol": {
+              "abs": 0.03
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each step on the axis is four times as many rehedges."
+        },
+        {
+          "rung": "point",
+          "text": "From 20 to 80 the spread halves, from £1.53 to £0.76.",
+          "highlight": [
+            "n80"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Four times as many rehedges halves it again: about £0.38."
+        }
+      ],
+      "feedback": {
+        "correct": "Four times the rehedges halves the spread.",
+        "generic": "Not quite right. Look at what happens to the spread each time $N$ quadruples.",
+        "byKey": {
+          "quarter": "You divided by four. The spread falls with $\\sqrt N$, so four times the rehedges halves it.",
+          "zero": "Discrete hedging always leaves some error. It shrinks, but never vanishes."
+        }
+      },
+      "explain": {
+        "text": "The spread falls like $1/\\sqrt N$: four times the rehedges halves it. The simulation gives £0.40 at 320. Continuous hedging, the model's assumption, is the limit with zero spread.",
+        "canvas": {
+          "values": {
+            "n5": 2.82,
+            "n20": 1.53,
+            "n80": 0.76,
+            "n320": 0.4
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Delta before expiry",
+      "prose": "Halfway through, at step 10, the share is £119.16, well above the strike. A colleague says: it will surely finish in the money, so hold one share per call. Half a year is left.",
+      "canvas": {
+        "kind": "payoff",
+        "params": {
+          "legs": [
+            {
+              "id": "c1",
+              "type": "call",
+              "side": "long",
+              "strike": 100,
+              "premium": 0,
+              "label": "payoff"
+            }
+          ],
+          "range": [
+            60,
+            140
+          ],
+          "pl": false,
+          "y": [
+            0,
+            50
+          ],
+          "value": {
+            "t": 0.5,
+            "sigma": 0.2,
+            "r": 0.05,
+            "label": "value now"
+          },
+          "tangent": true,
+          "yLabel": "Call value (£)",
+          "xLabel": "Share price $S$ (£)"
+        },
+        "state": {
+          "spot": 119.16
+        }
+      },
+      "question": "What delta should the hedge use now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "bs",
+            "text": "0.93",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "You used the payoff's slope. The share can still fall below £100 in half a year, so the slope is below 1."
+          },
+          {
+            "id": "start",
+            "text": "0.64",
+            "why": "That is the starting delta. Delta has moved with the share."
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "Delta is 0 only far below the strike, near expiry."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the tangent's slope at the spot."
+        },
+        {
+          "rung": "point",
+          "text": "Delta is $\\Phi(d_1)$ with $T = 0.5$ left.",
+          "highlight": [
+            "tangent"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$d_1 = \\frac{\\ln(1.1916) + 0.07 \\times 0.5}{0.2\\sqrt{0.5}} = 1.487$, and $\\Phi(1.487) = 0.93$."
+        }
+      ],
+      "feedback": {
+        "correct": "Delta is 0.93, not 1.",
+        "generic": "Not quite right. Use the value curve's slope today, not the payoff's.",
+        "byKey": {
+          "one": "You used the payoff's slope, 0 or 1. Before expiry the hedge is the value curve's slope: 0.93 here.",
+          "start": "You kept the starting hedge. Hedging once and never again leaves a spread of about £5.87."
+        }
+      },
+      "explain": {
+        "text": "With half a year left the call is worth more than its payoff, and its slope is $\\Phi(d_1) = 0.93$. Holding a full share overhedges: a fall would cost you 7p per pound. Only at expiry does delta become exactly 0 or 1.",
+        "canvas": {
+          "highlight": [
+            "tangent"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The hedge in code",
+      "prose": "`bs_call` and `bs_delta`, both taking `(S, K, r, sigma, T)`, are loaded. Finish `hedge_pnl`: sell one call at `bs_call`, then at each step grow cash by $e^{r\\,\\Delta t}$ and trade back to the new delta. Return cash plus shares minus the payoff.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Share",
+              "values": [
+                100,
+                93.08,
+                100.12,
+                102.01,
+                99.56,
+                104.2,
+                99.67,
+                111.06,
+                114.51,
+                114.53,
+                119.16,
+                113.19,
+                116.5,
+                122.46,
+                128.67,
+                132.32,
+                126.49,
+                128.89,
+                121.54,
+                123.29,
+                120.4
+              ]
+            },
+            {
+              "id": "dl",
+              "label": "Shares held",
+              "values": [
+                0.6368,
+                0.4893,
+                0.6325,
+                0.6666,
+                0.6135,
+                0.7056,
+                0.6076,
+                0.8245,
+                0.874,
+                0.8798,
+                0.9315,
+                0.8766,
+                0.9235,
+                0.9725,
+                0.9937,
+                0.9985,
+                0.9973,
+                0.9997,
+                0.9993,
+                1.0,
+                null
+              ],
+              "axis": 2,
+              "colour": 3
+            }
+          ],
+          "x": "index",
+          "xLabel": "Step (each 0.05 years)",
+          "money": "£",
+          "y2": [
+            0,
+            1.2
+          ],
+          "y2Label": "Shares held per call",
+          "yLabel": "Share price"
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "end",
+              "i": 20,
+              "series": "px",
+              "label": "£120.40"
+            }
+          ]
+        }
+      },
+      "question": "Complete `hedge_pnl(path, K, r, sigma, dt)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "from math import erf, exp, log, sqrt\n\ndef _cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_call(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * _cdf(d1) - K * exp(-r * T) * _cdf(d1 - sigma * sqrt(T))\n\ndef bs_delta(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return _cdf(d1)\n",
+        "starter": "from math import exp\n\n# bs_call(S, K, r, sigma, T) and bs_delta(...) are loaded.\n\ndef hedge_pnl(path, K, r, sigma, dt):\n    \"\"\"P&L at expiry of selling one call and delta hedging.\"\"\"\n    n = len(path) - 1\n    T = n * dt\n    delta = bs_delta(path[0], K, r, sigma, T)\n    cash = bs_call(path[0], K, r, sigma, T) - delta * path[0]\n    for i in range(1, n):\n        cash *= exp(r * dt)      # one step of interest\n        new = ...                # delta with T - i * dt left\n        cash -= ...              # pay for the change in shares\n        delta = new\n    cash *= exp(r * dt)\n    return ...                   # cash + shares - payoff\n",
+        "solution": "from math import exp\n\n# bs_call(S, K, r, sigma, T) and bs_delta(...) are loaded.\n\ndef hedge_pnl(path, K, r, sigma, dt):\n    \"\"\"P&L at expiry of selling one call and delta hedging.\"\"\"\n    n = len(path) - 1\n    T = n * dt\n    delta = bs_delta(path[0], K, r, sigma, T)\n    cash = bs_call(path[0], K, r, sigma, T) - delta * path[0]\n    for i in range(1, n):\n        cash *= exp(r * dt)      # one step of interest\n        new = bs_delta(path[i], K, r, sigma, T - i * dt)\n        cash -= (new - delta) * path[i]\n        delta = new\n    cash *= exp(r * dt)\n    return cash + delta * path[n] - max(path[n] - K, 0)\n",
+        "examples": [
+          {
+            "call": "round(hedge_pnl([100.0] * 21, 100, 0, 0.2, 0.05), 2)",
+            "expect": "7.97",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "hedge_pnl(path, 100, 0.05, 0.2, 0.05)",
+            "expect": "-1.1918512076195213",
+            "compare": "isclose",
+            "setup": "path = [100, 93.08, 100.12, 102.01, 99.56, 104.2, 99.67, 111.06, 114.51, 114.53, 119.16, 113.19, 116.5, 122.46, 128.67, 132.32, 126.49, 128.89, 121.54, 123.29, 120.4]"
+          },
+          {
+            "call": "hedge_pnl(path, 100, 0.05, 0.2, 0.05)",
+            "expect": "1.276068863803161",
+            "compare": "isclose",
+            "setup": "path = [100, 100.33, 102.59, 100.65, 102.41, 106.9, 109.04, 117.11, 112.73, 113.24, 109.89, 106.27, 105.56, 106.77, 108.95, 111.62, 123.53, 128.58, 119.91, 121.2, 118.04]"
+          },
+          {
+            "call": "hedge_pnl(path, 110, 0.05, 0.3, 0.05)",
+            "expect": "4.1610274185249665",
+            "compare": "isclose",
+            "setup": "path = [100, 93.08, 100.12, 102.01, 99.56, 104.2, 99.67, 111.06, 114.51, 114.53, 119.16, 113.19, 116.5, 122.46, 128.67, 132.32, 126.49, 128.89, 121.54, 123.29, 120.4]"
+          },
+          {
+            "call": "hedge_pnl([100.0] * 21, 100, 0, 0.2, 0.05)",
+            "expect": "7.965567455405797",
+            "compare": "isclose"
+          },
+          {
+            "call": "abs(hedge_pnl([100.0] * 21, 100, 0, 0.2, 0.05) - bs_call(100, 100, 0, 0.2, 1)) < 1e-9",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "hedge_pnl([100.0] * 21, 100, 0.05, 0.2, 0.05)",
+            "expect": "7.933200750848108",
+            "compare": "isclose"
+          },
+          {
+            "call": "hedge_pnl(path, 100, 0.02, 0.25, 0.2)",
+            "expect": "7.314784408654049",
+            "compare": "isclose",
+            "setup": "path = [100, 104, 98, 101, 107, 103]"
+          },
+          {
+            "call": "abs(hedge_pnl(path, 90, 0.05, 0.01, 0.05)) < 1e-6",
+            "expect": "True",
+            "compare": "equal",
+            "setup": "path = [100.0, 100.250313, 100.501252, 100.75282, 101.005017, 101.257845, 101.511306, 101.765402, 102.020134, 102.275503, 102.531512, 102.788162, 103.045453, 103.303389, 103.561971, 103.8212, 104.081077, 104.341606, 104.602786, 104.86462, 105.12711]"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on fixed paths, including the 20-step path above and a flat path, compared with math.isclose."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The new delta uses the share price at step `i` and the time left, `T - i * dt`."
+        },
+        {
+          "rung": "point",
+          "text": "Buying `new - delta` shares at `path[i]` costs `(new - delta) * path[i]`."
+        },
+        {
+          "rung": "step",
+          "text": "Return `cash + delta * path[n] - max(path[n] - K, 0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your simulator reproduces the hedge on every path.",
+        "generic": "Not quite right. Check the time left in `bs_delta`, and that a fall in delta adds cash."
+      },
+      "explain": {
+        "text": "Two lines carry the idea: the new delta with the time left, and the cash paid for the change in shares. A sale is a negative purchase, so one line covers both. On the path above it returns £-1.19."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A path that never moves",
+      "prose": "Edge case. Take $r = 0$, so the call sells for £7.97. The share sits at exactly £100 for the whole year, and you rehedge at every step.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Share",
+              "values": [
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100,
+                100
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "Step (each 0.05 years)",
+          "money": "£",
+          "y": [
+            80,
+            120
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is your hedged P&L at expiry?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7.97,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "P&L in pounds",
+        "accept": "£7.97, the whole premium",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0
+          },
+          {
+            "id": "neg",
+            "value": -7.97,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Did the shares you held gain or lose anything?"
+        },
+        {
+          "rung": "point",
+          "text": "The share never moved, and with $r = 0$ cash earns nothing."
+        },
+        {
+          "rung": "step",
+          "text": "The call expires at the strike and pays £0. You keep the premium."
+        }
+      ],
+      "feedback": {
+        "correct": "You keep the whole £7.97.",
+        "generic": "Not quite right. Ask what the shares, the cash and the payoff each contribute.",
+        "byKey": {
+          "zero": "A perfect hedge would be zero if the share moved as the model expects. Here it moved less, so the seller gains.",
+          "neg": "You paid the premium instead of receiving it. The seller collects it."
+        }
+      },
+      "explain": {
+        "text": "The shares made nothing, the cash earned nothing and the call paid nothing. So you keep the premium, which is all time value at the money. A share that moves less than $\\sigma$ says is a gift to the hedged seller."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Where the error comes from",
+      "prose": "Take one step of length $\\delta t$ with $r = 0$. You are short one call and long $\\Delta$ shares. We find the step's P&L.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "Step P&L $= \\Delta\\,\\delta S - \\delta c$, shares gained minus the call's rise"
+          },
+          {
+            "id": "b",
+            "text": "$\\delta c \\approx \\Delta\\,\\delta S + \\tfrac12\\Gamma(\\delta S)^2 + \\theta\\,\\delta t$, the second-order Taylor expansion of $c$"
+          },
+          {
+            "id": "c",
+            "text": "Step P&L $\\approx -\\tfrac12\\Gamma(\\delta S)^2 - \\theta\\,\\delta t$, since the $\\Delta\\,\\delta S$ terms cancel"
+          },
+          {
+            "id": "d",
+            "text": "$\\theta = -\\tfrac12\\Gamma\\sigma^2S^2$, from the Black-Scholes pricing equation with $r = 0$"
+          },
+          {
+            "id": "e",
+            "text": "Step P&L $\\approx \\tfrac12\\Gamma S^2\\left(\\sigma^2\\delta t - (\\delta S/S)^2\\right)$: gain on small moves, lose on big ones"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from what the position gains over the step."
+        },
+        {
+          "rung": "point",
+          "text": "Expand the call's change to second order in $\\delta S$ before cancelling."
+        },
+        {
+          "rung": "step",
+          "text": "Expand, cancel, then replace $\\theta$ using the pricing equation."
+        }
+      ],
+      "feedback": {
+        "correct": "The error is a squared move against its expected size.",
+        "generic": "Not quite right. Write the P&L, expand the call, cancel, then use the pricing equation.",
+        "byKey": {
+          "d": "$\\theta$ can only be replaced once it appears, after the expansion and the cancelling.",
+          "e": "That is the conclusion. It needs $\\theta$ in terms of $\\Gamma$ first."
+        }
+      },
+      "explain": {
+        "text": "Each step's error compares the squared move with $\\sigma^2\\delta t$, its expected size. Over many small steps these errors average out, so the spread shrinks. If the share realises 30% against a 20% hedge, the squares win: the short call loses about vega × 0.10 = £3.75."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A market maker's night",
+      "prose": "A market maker is short 1,000 of our calls, delta-hedged. Overnight, theta earns the book £25.45. The share moves £2, with gamma 0.01876 per call. Implied vol rises one point, with vega £0.3752 per call per point.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Source",
+            "Rule",
+            "Per 1,000 short calls"
+          ],
+          "rows": [
+            [
+              "Theta",
+              "time passing",
+              "+£25.45"
+            ],
+            [
+              "Gamma",
+              "$-\\tfrac12\\Gamma(\\delta S)^2$ each",
+              "?"
+            ],
+            [
+              "Vega",
+              "$-\\text{vega} \\times$ points",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the night's P&L?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -387.27,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "£",
+        "label": "Night's P&L in pounds",
+        "accept": "about −£387: $25.45 - 37.52 - 375.20$",
+        "wrong": [
+          {
+            "id": "novega",
+            "value": -12.07,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "gsign",
+            "value": -312.23,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "long",
+            "value": 387.27,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out each line, then add."
+        },
+        {
+          "rung": "point",
+          "text": "Gamma: $\\tfrac12 \\times 0.01876 \\times 2^2 \\times 1000 = 37.52$, a loss for a short book.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Vega: $0.3752 \\times 1000 = 375.20$, also a loss. Total $25.45 - 37.52 - 375.20$."
+        }
+      ],
+      "feedback": {
+        "correct": "About −£387: the vol move dominates.",
+        "generic": "Not quite right. A short option book loses on both the move and the vol rise.",
+        "byKey": {
+          "novega": "You left out the vol rise. A short book loses vega when implied vol goes up.",
+          "gsign": "A short option book loses on big moves: gamma costs it money.",
+          "long": "That is the long book. The market maker is short."
+        }
+      },
+      "explain": {
+        "text": "Theta pays £25.45, the £2 move costs £37.52 and the vol rise costs £375.20: about −£387. A gap is worse: a £10 overnight jump costs $\\tfrac12 \\times 0.01876 \\times 100 \\times 1000 = £938$ before any rehedge. That is why option sellers fear gaps."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Delta hedging holds $\\Delta = \\Phi(d_1)$ shares per call sold and trades back to delta at every step; cash earns $r$.",
+      "The hedged P&L is close to zero, and its spread falls like $1/\\sqrt N$ with the number of rehedges $N$.",
+      "The error comes from gamma on discrete moves: each step pays $\\tfrac12\\Gamma S^2(\\sigma^2\\delta t - (\\delta S/S)^2)$, so realised vol above implied costs the seller about vega times the gap."
+    ],
+    "formula": {
+      "name": "Hedging error per step",
+      "tex": "\\text{P\\&L} \\approx \\tfrac12\\Gamma S^2\\left(\\sigma^2\\,\\delta t - (\\delta S/S)^2\\right)",
+      "note": "Short call, delta-hedged, $r = 0$."
+    },
+    "trap": "Before expiry the hedge is the value curve's slope, not the payoff's 0 or 1, and it must be traded again as the share moves."
+  },
+  "quiz": [
+    {
+      "id": "q-once",
+      "difficulty": 2,
+      "prose": "A trader sells our call and buys 0.6368 shares at the start, then never trades again.",
+      "question": "Across many paths, how does her P&L spread compare with hedging 20 times?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "wider",
+            "text": "Much wider: about £5.87 against £1.53",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "About the same, since the starting delta is right",
+            "why": "The starting delta is right only at the start. As the share moves, the fixed hedge drifts away from delta."
+          },
+          {
+            "id": "narrower",
+            "text": "Narrower, since trading adds errors",
+            "why": "Each rehedge removes error. The spread falls as $N$ grows."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A static hedge leaves most of the risk.",
+        "generic": "Not quite right. Delta changes as the share moves."
+      },
+      "explain": {
+        "text": "The simulation gives a spread of £5.87 for a one-off hedge, £1.53 for 20 rehedges and £15.21 unhedged. Hedging once only covers the first small move."
+      }
+    },
+    {
+      "id": "q-realised",
+      "difficulty": 3,
+      "prose": "You sell our call at 20 vol and delta-hedge daily. The share then realises 30% volatility. Vega is £37.52 per unit of $\\sigma$.",
+      "question": "Roughly what do you expect to lose per call?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.75,
+        "tol": {
+          "abs": 0.3
+        },
+        "unit": "£",
+        "label": "Expected loss in pounds",
+        "accept": "about £3.75: $37.52 \\times 0.10$ (a simulation averages about £3.90)",
+        "wrong": [
+          {
+            "id": "pts",
+            "value": 0.375,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "prem",
+            "value": 10.45,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About vega times the gap: $37.52 \\times 0.10$.",
+        "generic": "Not quite right. Multiply vega by the volatility gap as a decimal.",
+        "byKey": {
+          "pts": "You scaled by 0.01. The gap is 10 points, or 0.10.",
+          "prem": "The hedge still works; you lose the vol gap, not the premium."
+        }
+      },
+      "explain": {
+        "text": "Bigger moves than the hedge assumes cost gamma at every step. In total that is about vega times the gap: $37.52 \\times 0.10 = 3.75$. A 3,000-path simulation averages a loss of about £3.90."
+      }
+    },
+    {
+      "id": "q-zero",
+      "difficulty": 2,
+      "prose": "Suppose a share had zero volatility and grew at exactly $r$.",
+      "question": "How large is the hedging error?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "Zero: every move is the expected one, so the hedge is exact",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "Large, because delta jumps between 0 and 1",
+            "why": "With no randomness delta never needs to jump: the path is known."
+          },
+          {
+            "id": "depends",
+            "text": "It depends on the number of rehedges",
+            "why": "With no surprises each step's squared move equals its expected size, at any step size."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "With no surprises the hedge is exact.",
+        "generic": "Not quite right. The error comes from moves that differ from the expected one."
+      },
+      "explain": {
+        "text": "The error per step is $\\tfrac12\\Gamma S^2(\\sigma^2\\delta t - (\\delta S/S)^2)$ in the zero-rate case. With nothing random, no move surprises the hedge, so the error is zero."
+      }
+    },
+    {
+      "id": "q-gap",
+      "difficulty": 3,
+      "prose": "A delta-hedged book is short options with total gamma of 18.76 (per £1 move, squared). The share gaps £10 at the open, before any rehedge.",
+      "question": "What does the gap cost?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 938,
+        "tol": {
+          "abs": 2
+        },
+        "unit": "£",
+        "label": "Cost in pounds",
+        "accept": "£938: $\\tfrac12 \\times 18.76 \\times 10^2$",
+        "wrong": [
+          {
+            "id": "nohalf",
+            "value": 1876,
+            "tol": {
+              "abs": 2
+            }
+          },
+          {
+            "id": "lin",
+            "value": 93.8,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac12 \\times 18.76 \\times 100 = 938$.",
+        "generic": "Not quite right. Use $\\tfrac12\\Gamma(\\delta S)^2$.",
+        "byKey": {
+          "nohalf": "You left out the half in $\\tfrac12\\Gamma(\\delta S)^2$.",
+          "lin": "You used $\\delta S$ instead of its square."
+        }
+      },
+      "explain": {
+        "text": "The cost is $\\tfrac12\\Gamma(\\delta S)^2 = 0.5 \\times 18.76 \\times 100 = 938$. It grows with the square of the gap, which is why sellers fear jumps they cannot hedge."
+      }
+    }
+  ]
+}
