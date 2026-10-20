@@ -82,7 +82,7 @@
     const lockNow = (v) => { if (mf) mf.readOnly = v; if (txt) txt.readOnly = v; };
     const forms = () => [spec.answer, ...(spec.accept || [])].filter(Boolean);
     const equal = (inputLatex, inputAscii, target) => {
-      if (ce && G().exprEqual(ce, inputLatex, target)) return true;
+      if (ce && (spec.upToConstant ? G().exprEqualUpToConstant(ce, inputLatex, target) : G().exprEqual(ce, inputLatex, target))) return true; // item 200: + C need not be listed
       const n = G().normExpr(inputAscii || inputLatex);
       return !!n && (n === G().normExpr(target));
     };

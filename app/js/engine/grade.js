@@ -149,6 +149,28 @@
     return numeric;
   };
 
+  /* Item 200: equal up to an added constant (antiderivatives). Symbols in the learner's answer that the target lacks
+     (C, c, K) are set to 0, and the difference must be the same number at every sample point. */
+  const exprEqualUpToConstant = (ce, a, b) => {
+    if (!ce || a == null || b == null || a === '' || b === '') return false;
+    let A, B;
+    try { A = ce.parse(unbinom(a)); B = ce.parse(unbinom(b)); } catch { return false; }
+    if (A.isValid === false || B.isValid === false) return false;
+    let va = [], vb = [];
+    try { va = [...(A.unknowns || [])]; vb = [...(B.unknowns || [])]; } catch { /* none */ }
+    const extra = va.filter(v => !vb.includes(v)), vars = vb;
+    const num = (E, sub) => { try { const v = E.subs(sub).N(); const x = v.re ?? v.valueOf(); return typeof x === 'number' ? x : NaN; } catch { return NaN; } };
+    let seed = 7919; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+    const pts = Array.from({ length: 6 }, () => Object.fromEntries([...vars.map(v => { let x; do { x = 0.3 + 2.7 * rnd(); } while (Math.abs(x - 1) < 0.08); return [v, +x.toFixed(6)]; }), ...extra.map(v => [v, 0])]));
+    let d0 = null, checked = 0;
+    for (const p of pts) {
+      const x = num(A, p), y = num(B, p); if (!Number.isFinite(x) || !Number.isFinite(y)) { if (Number.isFinite(x) !== Number.isFinite(y)) return false; continue; }
+      const d = x - y; if (d0 == null) d0 = d; else if (Math.abs(d - d0) > 1e-7 * Math.max(1, Math.abs(x), Math.abs(y))) return false;
+      checked++;
+    }
+    return checked >= 3;
+  };
+
   /* ---------- Authored answers, in the shape each widget's set() accepts ---------- */
   const manipulatePath = (spec) => {
     const S = spec.states || {}, start = spec.start, target = spec.target;
@@ -319,5 +341,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, exprEqual, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, exprEqual, exprEqualUpToConstant, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();

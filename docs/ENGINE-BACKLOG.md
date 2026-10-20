@@ -759,3 +759,9 @@ Raised later (conditional level 3):
 279. `bars`: a grouped mode (two series per category with a legend) for side-by-side distributions.
 280. `derive`: named intermediate values (`let`-style rules evaluated before the others), so a sub-expression need not be inlined into every rule.
 281. `table` widget bound to a `table` canvas: let row taps feed counts into a 2x2 tally (tap-to-classify).
+
+Raised later (conditional level 2):
+
+282. `grid`: a population mode (1,000 small dots, groups shaded by count, tap a whole group) for natural-frequency lessons; cells are 24px minimum now, so about 20 columns at most.
+283. `number-line`: `scale: "log"` and `"log-odds"` with readouts in the natural unit (see 213).
+284. Canvas label font: capital I and lowercase l are indistinguishable ("Ill" reads "III"); use a font with a distinct I, or a serif on capital I in canvas labels.

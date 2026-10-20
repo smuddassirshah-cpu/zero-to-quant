@@ -22,8 +22,12 @@
     const lines = spec.lines || [];
     const byId = Object.fromEntries(lines.map(l => [l.id, l]));
     const answer = (spec.answer || lines.map(l => l.id)).slice();
+    /* item 201: same: [["s2", "s3"]] makes lines interchangeable among their places (independent steps) */
+    const groups = Array.isArray(spec.same) && spec.same.length ? (Array.isArray(spec.same[0]) ? spec.same : [spec.same]) : [];
+    const gk = (id) => { const k = groups.findIndex(g => g.map(String).includes(String(id))); return k >= 0 ? '\u0000g' + k : id; };
+    const sameOrder = (a, b) => a.length === b.length && a.every((id, i) => gk(id) === gk(b[i]));
     let start = Z.widgets.shuffle(answer, ctx.rng || Math.random);
-    if (start.length > 1 && Z.grade.sameList(start, answer)) start = start.slice(1).concat(start[0]); // never start solved
+    if (start.length > 1 && sameOrder(start, answer)) start = start.slice(1).concat(start[0]); // never start solved
     const el = Z.h(`<div class="wd-order">
       <ol class="wd-lines" role="listbox" aria-label="${Z.esc(spec.label || 'Lines to put in order')}" aria-describedby="">${start.map((id, i) => `
         <li class="wd-line wd-tok" role="option" tabindex="${i === 0 ? 0 : -1}" aria-selected="false" data-id="${Z.esc(id)}">
@@ -132,8 +136,8 @@
       dirty: () => !Z.grade.sameList(ids(), start),
       grade() {
         const cur = ids();
-        const ok = Z.grade.sameList(cur, answer);
-        const first = cur.find((id, i) => id !== answer[i]);
+        const ok = sameOrder(cur, answer);
+        const first = cur.find((id, i) => gk(id) !== gk(answer[i]));
         return { ok, key: ok ? null : first || null, detail: { order: cur } };
       },
       lock() { locked = true; drop(false); list.classList.add('is-locked'); },
@@ -141,7 +145,7 @@
       markGraded(res) {
         strip();
         items().forEach((n, i) => {
-          const ok = n.dataset.id === answer[i];
+          const ok = gk(n.dataset.id) === gk(answer[i]);
           n.classList.add(ok ? 'ok' : 'bad');
           n.querySelector('.wd-line-mark').innerHTML = Z.icon(ok ? 'check' : 'cross');
         });
