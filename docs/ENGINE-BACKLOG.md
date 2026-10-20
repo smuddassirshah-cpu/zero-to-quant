@@ -765,3 +765,9 @@ Raised later (conditional level 2):
 282. `grid`: a population mode (1,000 small dots, groups shaded by count, tap a whole group) for natural-frequency lessons; cells are 24px minimum now, so about 20 columns at most.
 283. `number-line`: `scale: "log"` and `"log-odds"` with readouts in the natural unit (see 213).
 284. Canvas label font: capital I and lowercase l are indistinguishable ("Ill" reads "III"); use a font with a distinct I, or a serif on capital I in canvas labels.
+
+Raised later (conditional level 5):
+
+285. `derive`: a documented way to look up values by index from a lesson-defined array (`params.data[n]`); authors currently stash arrays under `pair.left.params.params`.
+286. `bars` simulation: a documented `filter` (skip a trial when a condition fails) so the trial counter and counts exclude discarded trials.
+287. `table` widget: a `%` unit per cell, as the `numeric` widget has.

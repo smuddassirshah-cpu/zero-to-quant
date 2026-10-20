@@ -1,0 +1,1078 @@
+{
+  "id": "l2-first-success",
+  "course": "limits-thm",
+  "title": "Waiting for the first success",
+  "minutes": 13,
+  "objectives": [
+    "Use the geometric distribution for the trial of the first success",
+    "Derive its mean $1/p$ by conditioning and by a series",
+    "State and use the memoryless property"
+  ],
+  "skills": [
+    "dl-discrete"
+  ],
+  "screens": [
+    {
+      "type": "title",
+      "title": "Waiting for the first success",
+      "prose": "You rest a limit order in the book. In any minute it fills with chance 0.2, whatever happened before. We will find how long you should expect to wait."
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Each minute the order either fills or waits. Once it fills, the story stops, so only the waiting branch carries on.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Minute 1",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Fills",
+                  "p": "0.2"
+                },
+                {
+                  "id": "n",
+                  "label": "Waits",
+                  "p": "0.8"
+                }
+              ]
+            },
+            {
+              "label": "Minute 2",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Fills",
+                  "p": {
+                    "n": "0.2"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "Waits",
+                  "p": {
+                    "n": "0.8"
+                  }
+                }
+              ]
+            },
+            {
+              "label": "Minute 3",
+              "branches": [
+                {
+                  "id": "f",
+                  "label": "Fills",
+                  "p": {
+                    "n-n": "0.2"
+                  }
+                },
+                {
+                  "id": "n",
+                  "label": "Waits",
+                  "p": {
+                    "n-n": "0.8"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "f": "0.2",
+            "n-f": "0.16",
+            "n-n-f": "0.128",
+            "n-n-n": "0.512"
+          }
+        },
+        "state": {
+          "values": false
+        }
+      },
+      "question": "What is the chance the order first fills in minute 3?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.128,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.128: $0.8 \\times 0.8 \\times 0.2$",
+        "label": "Chance of a first fill in minute 3",
+        "wrong": [
+          {
+            "id": "one-minute",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "all-fill",
+            "value": 0.008,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "added",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "by-three",
+            "value": 0.488,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which path through the tree ends with a first fill in minute 3?"
+        },
+        {
+          "rung": "point",
+          "text": "Wait, wait, then fill.",
+          "highlight": [
+            "n-n-f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Multiply along the path: $0.8 \\times 0.8 \\times 0.2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Two waits, then a fill: $0.8^2 \\times 0.2 = 0.128$.",
+        "generic": "Not quite right. Follow the path wait, wait, fill and multiply its branches.",
+        "byKey": {
+          "one-minute": "0.2 is the chance of a fill in any one minute. A first fill in minute 3 also needs two waits before it.",
+          "all-fill": "$0.2^3$ asks for a fill in all three minutes. The first two minutes must be waits.",
+          "added": "You added three chances of 0.2. That counts fills in different minutes as if they could all be first.",
+          "by-three": "0.488 is the chance of a fill by minute 3, $1 - 0.8^3$. You want the first fill exactly in minute 3."
+        }
+      },
+      "explain": {
+        "text": "A first fill in minute 3 means the path wait, wait, fill. Its chance is $0.8 \\times 0.8 \\times 0.2 = 0.128$. Every extra minute of waiting adds one more factor of 0.8.",
+        "canvas": {
+          "values": true,
+          "highlight": [
+            "n-n-f"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "The bars show the chance that the first fill comes in minute $k$, for $k = 1, 2, 3, \\ldots$. Slide the fill chance per minute.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "geometric",
+          "params": {
+            "p": 0.2
+          },
+          "x": [
+            0.5,
+            20.5
+          ],
+          "xLabel": "Minute of the first fill"
+        },
+        "state": {},
+        "derive": {
+          "caption": "Fill chance per minute {{fixed(p, 2)}}: first-minute fill {{fixed(p, 2)}}, still waiting after 5 minutes {{fixed(pow(1 - p, 5), 3)}}"
+        },
+        "controls": [
+          {
+            "bind": "p",
+            "min": 0.05,
+            "max": 1,
+            "step": 0.05,
+            "label": "Fill chance $p$",
+            "start": 0.2
+          }
+        ]
+      },
+      "question": "Which minute is the most likely one for the first fill, whatever the fill chance?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "first",
+            "text": "Minute 1",
+            "correct": true
+          },
+          {
+            "id": "mean",
+            "text": "Minute $1/p$, the average wait",
+            "why": "You took the average wait as the most likely one. A few very long waits pull the average out past the tallest bar."
+          },
+          {
+            "id": "later",
+            "text": "A later minute, as the order becomes due",
+            "why": "You expected the waiting to build up pressure. Each bar is the one before times $1 - p$, so the bars only fall."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the tallest bar as you slide."
+        },
+        {
+          "rung": "point",
+          "text": "Each bar is the previous bar times $1 - p$.",
+          "highlight": [
+            "x1",
+            "x2"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Minute 1 is always the tallest bar: later minutes need extra waits first.",
+        "generic": "Not quite right. Slide the fill chance and watch which bar is tallest."
+      },
+      "explain": {
+        "text": "A first fill in minute $k$ needs $k - 1$ waits first. So each bar is the one before times $1 - p$. The bars fall from minute 1 for every $p$. At $p = 1$ there is a single bar: the order always fills at once.",
+        "canvas": {
+          "params": {
+            "p": 1
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Let $X$ be the minute of the first fill. The pattern from the tree is $P(X = k) = (1 - p)^{k - 1}p$. This is the **geometric distribution**, $X \\sim \\text{Geo}(p)$. Here $p = 0.2$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "geometric",
+          "params": {
+            "p": 0.2
+          },
+          "x": [
+            0.5,
+            15.5
+          ],
+          "xLabel": "Minute of the first fill"
+        },
+        "state": {
+          "caption": "$X \\sim \\text{Geo}(0.2)$"
+        }
+      },
+      "question": "What is $P(X > 3)$, the chance the order is still unfilled after 3 minutes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.512,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.512: $0.8^3$",
+        "label": "Chance still unfilled after 3 minutes",
+        "wrong": [
+          {
+            "id": "complement",
+            "value": 0.488,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "off-by-one",
+            "value": 0.4096,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-bar",
+            "value": 0.128,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Still unfilled after 3 minutes means something about each of the first 3 minutes."
+        },
+        {
+          "rung": "point",
+          "text": "You could add every bar from minute 4 on, but there is a shortcut.",
+          "highlight": [
+            "x4",
+            "x5",
+            "x6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first three minutes are all waits: $0.8^3$."
+        }
+      ],
+      "feedback": {
+        "correct": "Three waits in a row: $0.8^3 = 0.512$.",
+        "generic": "Not quite right. $X > 3$ means minutes 1, 2 and 3 were all waits.",
+        "byKey": {
+          "complement": "0.488 is $P(X \\le 3)$, the chance it has filled by then. You want the chance it has not.",
+          "off-by-one": "$0.8^4$ needs four waits, which is $X > 4$. After 3 minutes only 3 waits have happened.",
+          "one-bar": "0.128 is $P(X = 3)$, one bar. $X > 3$ is every bar from 4 on."
+        }
+      },
+      "explain": {
+        "text": "$X > 3$ says nothing about when the fill comes, only that minutes 1 to 3 were waits. So $P(X > 3) = 0.8^3 = 0.512$. In general $P(X > m) = (1 - p)^m$.",
+        "canvas": {
+          "shade": {
+            "from": 4,
+            "to": null
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "You check the order after 2 minutes. It has not filled. Every minute still fills with chance 0.2, independently.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "geometric",
+          "params": {
+            "p": 0.2
+          },
+          "x": [
+            0.5,
+            15.5
+          ],
+          "xLabel": "Minute of the first fill"
+        },
+        "state": {
+          "caption": "Given: no fill in minutes 1 and 2"
+        }
+      },
+      "question": "What is the chance it is still unfilled 3 minutes later, $P(X > 5 \\mid X > 2)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0.512$",
+            "correct": true
+          },
+          {
+            "id": "ignore",
+            "text": "$0.328$",
+            "why": "That is $0.8^5 = P(X > 5)$ from the start. You already know the first two minutes were waits.",
+            "canvas": {
+              "shade": {
+                "from": 6,
+                "to": null
+              }
+            }
+          },
+          {
+            "id": "better",
+            "text": "$0.64$",
+            "why": "That is $0.8^2$, the chance of the two waits you already know happened."
+          },
+          {
+            "id": "worse",
+            "text": "$0.21$",
+            "why": "You multiplied $0.328$ by $0.64$. Conditioning divides by $P(X > 2)$; it does not multiply."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $P(A \\mid B) = P(A \\cap B)/P(B)$. Here $X > 5$ already implies $X > 2$."
+        },
+        {
+          "rung": "point",
+          "text": "$P(X > 5) = 0.8^5$ and $P(X > 2) = 0.8^2$.",
+          "highlight": [
+            "x6",
+            "x7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.8^5 / 0.8^2 = 0.8^3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.8^5 / 0.8^2 = 0.8^3 = 0.512$: the same as from a fresh start.",
+        "generic": "Not quite right. Divide $P(X > 5)$ by $P(X > 2)$.",
+        "byKey": {
+          "ignore": "You ignored what you saw. Two waits are already behind you, so divide by their chance."
+        }
+      },
+      "explain": {
+        "text": "$P(X > 5 \\mid X > 2) = 0.8^5 / 0.8^2 = 0.8^3 = 0.512$. That equals $P(X > 3)$ from the last screen. The order forgets how long it has waited: $P(X > m + n \\mid X > m) = P(X > n)$, the **memoryless** property.",
+        "canvas": {
+          "shade": {
+            "from": 6,
+            "to": null
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "Your order has now waited 9 minutes without a fill. A colleague says it must be due: it is bound to fill soon. Nothing about the market has changed.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "geometric",
+          "params": {
+            "p": 0.2
+          },
+          "x": [
+            0.5,
+            15.5
+          ],
+          "xLabel": "Minute of the first fill"
+        },
+        "state": {
+          "caption": "Nine waits so far"
+        }
+      },
+      "question": "What is the chance it fills in minute 10?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0.2$",
+            "correct": true
+          },
+          {
+            "id": "due",
+            "text": "More than $0.2$, because it is overdue",
+            "why": "That is the gambler's fallacy. Each minute fills with chance 0.2 whatever came before; the waits build up no pressure."
+          },
+          {
+            "id": "stale",
+            "text": "Less than $0.2$, because it looks stuck",
+            "why": "You treated a long wait as evidence the chance has dropped. In this model each minute is independent, so the chance stays 0.2."
+          },
+          {
+            "id": "bar",
+            "text": "$0.027$, the bar for minute 10",
+            "why": "0.027 is $P(X = 10)$ from the start. You already know the order survived 9 minutes.",
+            "canvas": {
+              "shade": {
+                "from": 10,
+                "to": 10
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the order know how long it has waited?"
+        },
+        {
+          "rung": "point",
+          "text": "Divide the bar at 10 by the chance of reaching minute 10 at all.",
+          "highlight": [
+            "x10"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$P(X = 10 \\mid X > 9) = \\tfrac{0.8^9 \\times 0.2}{0.8^9} = 0.2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Memoryless: after any number of waits, the next minute still fills with chance 0.2.",
+        "generic": "Not quite right. Condition on the 9 waits you have seen.",
+        "byKey": {
+          "due": "You expected the waiting to make a fill due. Independent minutes have no memory, so the chance is still 0.2."
+        }
+      },
+      "explain": {
+        "text": "$P(X = 10 \\mid X > 9) = 0.8^9 \\times 0.2 / 0.8^9 = 0.2$. A long wait does not make a fill more likely. If fills really do get likelier, the minutes are not independent and the geometric model is wrong."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Some software counts the failed minutes before the fill instead: $Y = X - 1$. Then $Y$ takes values $0, 1, 2, \\ldots$, and $Y = 0$ means an instant fill. Same order, $p = 0.2$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "geometric",
+          "params": {
+            "p": 0.2
+          },
+          "x": [
+            0.5,
+            15.5
+          ],
+          "xLabel": "Minute of the first fill"
+        },
+        "state": {
+          "caption": "The same bars: $X = k$ is $Y = k - 1$"
+        }
+      },
+      "question": "What is $P(Y = 2)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.128,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.128: two failed minutes, then a fill, $0.8^2 \\times 0.2$",
+        "label": "Chance of exactly 2 failed minutes",
+        "wrong": [
+          {
+            "id": "trials-formula",
+            "value": 0.16,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-fill",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$Y = 2$ means two failed minutes before the fill. Which minute is the fill?"
+        },
+        {
+          "rung": "point",
+          "text": "$Y = 2$ is the same event as $X = 3$.",
+          "highlight": [
+            "x3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So $P(Y = 2) = P(X = 3) = 0.8^2 \\times 0.2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$Y = 2$ is $X = 3$: $0.8^2 \\times 0.2 = 0.128$.",
+        "generic": "Not quite right. Two failures, then the fill: the fill comes in minute 3.",
+        "byKey": {
+          "trials-formula": "You put $k = 2$ into $(1 - p)^{k - 1}p$, the formula for trials. For failures it is $(1 - p)^k p$.",
+          "one-fill": "0.2 is one minute's fill chance. $Y = 2$ also needs two failures first."
+        }
+      },
+      "explain": {
+        "text": "Counting failures shifts everything by one: $P(Y = k) = (1 - p)^k p$ and $E[Y] = E[X] - 1$. Both are called geometric. Always check which one a book or library means.",
+        "canvas": {
+          "shade": {
+            "from": 3,
+            "to": 3
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Now the mean wait, by conditioning on minute 1. If it fills, $X = 1$. If not, one minute is used and, by memorylessness, the wait starts afresh. So $E[X \\mid \\text{wait}] = 1 + E[X]$ and $$E[X] = p \\cdot 1 + (1 - p)(1 + E[X]).$$",
+      "question": "Solve for $E[X]$ in terms of $p$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "\\frac{1}{p}",
+        "accept": [
+          "1/p",
+          "p^(-1)",
+          "p^{-1}"
+        ],
+        "wrong": [
+          {
+            "id": "p",
+            "tex": "p"
+          },
+          {
+            "id": "failures",
+            "tex": "\\frac{1-p}{p}"
+          },
+          {
+            "id": "one-minus",
+            "tex": "\\frac{1}{1-p}"
+          }
+        ],
+        "keyboard": "algebra",
+        "label": "Mean wait",
+        "placeholder": "An expression in p"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Expand the right-hand side."
+        },
+        {
+          "rung": "point",
+          "text": "$E[X] = p + (1 - p) + (1 - p)E[X] = 1 + (1 - p)E[X]$."
+        },
+        {
+          "rung": "step",
+          "text": "Move $(1 - p)E[X]$ to the left: $pE[X] = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "$E[X] = 1/p$: five minutes when $p = 0.2$.",
+        "generic": "Not quite right. Expand, collect the $E[X]$ terms on the left, then divide.",
+        "byKey": {
+          "p": "$p$ falls as waits grow longer, so it cannot be the mean wait. Collect the $E[X]$ terms and divide by $p$.",
+          "failures": "$(1 - p)/p$ is the mean number of failed minutes, $E[X] - 1$. You dropped the minute of the fill.",
+          "one-minus": "You divided by $1 - p$. After collecting terms the coefficient of $E[X]$ is $p$."
+        }
+      },
+      "explain": {
+        "text": "Expanding gives $E[X] = 1 + (1 - p)E[X]$, so $pE[X] = 1$ and $E[X] = 1/p$. This is the law of total expectation, split on the first minute. At $p = 0.2$ the mean wait is 5 minutes."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Check the mean with the series instead. Write $q = 1 - p$. By definition $E[X] = \\sum_{k \\ge 1} k q^{k - 1}p$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "$E[X] = pS$, where $S = 1 + 2q + 3q^2 + 4q^3 + \\cdots$: take out the common factor $p$."
+          },
+          {
+            "id": "shift",
+            "text": "$qS = q + 2q^2 + 3q^3 + \\cdots$: multiply every term by $q$."
+          },
+          {
+            "id": "sub",
+            "text": "$S - qS = 1 + q + q^2 + q^3 + \\cdots$: subtract term by term, leaving each power once."
+          },
+          {
+            "id": "sum",
+            "text": "$(1 - q)S = \\dfrac{1}{1 - q}$, so $S = \\dfrac{1}{p^2}$: the geometric series, with $1 - q = p$."
+          },
+          {
+            "id": "end",
+            "text": "$E[X] = p \\cdot \\dfrac{1}{p^2} = \\dfrac{1}{p}$: substitute back into the first line."
+          }
+        ],
+        "answer": [
+          "def",
+          "shift",
+          "sub",
+          "sum",
+          "end"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Name the sum first, then find a copy of it shifted by one power."
+        },
+        {
+          "rung": "point",
+          "text": "Subtracting $qS$ from $S$ cancels the growing coefficients."
+        },
+        {
+          "rung": "step",
+          "text": "Name $S$, multiply by $q$, subtract, sum the series, substitute."
+        }
+      ],
+      "feedback": {
+        "correct": "The series agrees with the conditioning argument: $E[X] = 1/p$.",
+        "generic": "Not quite right. Define $S$, shift it by one power, subtract, then sum.",
+        "byKey": {
+          "end": "The last line needs $S$, which the geometric series gives. Put it at the end.",
+          "sub": "You can only subtract once you have both $S$ and $qS$ written out."
+        }
+      },
+      "explain": {
+        "text": "Subtracting $qS$ turns coefficients $1, 2, 3, \\ldots$ into $1, 1, 1, \\ldots$, a plain geometric series. That sums to $1/(1 - q) = 1/p$, so $S = 1/p^2$. Two different routes give the same mean, $1/p$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A researcher backtests random strategy variants with no real edge. A test at the 5% level passes by luck with chance 0.05, independently each time. Let $X$ be the number of backtests up to and including the first pass.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "geometric",
+          "params": {
+            "p": 0.05
+          },
+          "x": [
+            0.5,
+            60.5
+          ],
+          "xLabel": "Backtests until the first pass"
+        },
+        "state": {
+          "caption": "$X \\sim \\text{Geo}(0.05)$"
+        }
+      },
+      "question": "On average, how many backtests until a no-edge strategy passes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "number",
+        "accept": "20: $1/0.05$",
+        "label": "Mean number of backtests",
+        "unit": "backtests",
+        "wrong": [
+          {
+            "id": "failures",
+            "value": 19,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "percent",
+            "value": 5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "rate",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which distribution counts trials up to the first success?"
+        },
+        {
+          "rung": "point",
+          "text": "The mean of $\\text{Geo}(p)$ is $1/p$.",
+          "highlight": [
+            "mean"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1/0.05 = 20$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1/0.05 = 20$ backtests.",
+        "generic": "Not quite right. Use the geometric mean, $1/p$.",
+        "byKey": {
+          "failures": "19 counts the failed backtests before the pass. $X$ includes the pass itself.",
+          "percent": "You read 5% as 5. The mean is $1/p = 1/0.05$.",
+          "rate": "0.05 is the chance per test. The mean wait is its reciprocal."
+        }
+      },
+      "explain": {
+        "text": "The mean is $1/0.05 = 20$ backtests. Try 20 variants of nothing and, on average, one passes by luck. A pass is only meaningful once you know how many tries came before it.",
+        "canvas": {
+          "showMean": true
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "The researcher tries only 10 no-edge variants and stops at the first pass.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "geometric",
+          "params": {
+            "p": 0.05
+          },
+          "x": [
+            0.5,
+            60.5
+          ],
+          "xLabel": "Backtests until the first pass"
+        },
+        "state": {
+          "caption": "First 10 backtests shaded",
+          "shade": {
+            "from": 1,
+            "to": 10
+          },
+          "showProb": false
+        }
+      },
+      "question": "What is the chance at least one of the 10 passes by luck?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4013,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.4013: $1 - 0.95^{10}$",
+        "label": "Chance of a lucky pass in 10 tries",
+        "wrong": [
+          {
+            "id": "added",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "none",
+            "value": 0.5987,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "tenth",
+            "value": 0.0315,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the chance that none of the 10 pass first."
+        },
+        {
+          "rung": "point",
+          "text": "No pass in 10 tries is $X > 10$.",
+          "highlight": [
+            "x11",
+            "x12"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$P(X \\le 10) = 1 - 0.95^{10}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 - 0.95^{10} \\approx 0.4013$.",
+        "generic": "Not quite right. Take 1 minus the chance that all 10 fail.",
+        "byKey": {
+          "added": "You added 0.05 ten times. That counts runs with two passes twice; use the complement.",
+          "none": "0.5987 is $0.95^{10}$, the chance none pass. You want at least one.",
+          "tenth": "0.0315 is the chance the first pass is exactly the 10th test. Any of the 10 will do."
+        }
+      },
+      "explain": {
+        "text": "None of 10 pass with chance $0.95^{10} \\approx 0.5987$, so at least one passes with chance 0.4013. Ten tries of nothing give a lucky pass about two times in five. That is why a backtest count belongs in every research report.",
+        "canvas": {
+          "showProb": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The trial of the first success in independent trials with chance $p$ is geometric: $P(X = k) = (1 - p)^{k - 1}p$.",
+      "$P(X > m) = (1 - p)^m$, so $P(X > m + n \\mid X > m) = P(X > n)$: a long wait changes nothing.",
+      "Conditioning on the first trial gives $E[X] = 1 + (1 - p)E[X]$, so $E[X] = 1/p$."
+    ],
+    "formula": {
+      "name": "Geometric distribution",
+      "tex": "P(X = k) = (1 - p)^{k - 1}p, \\quad E[X] = \\dfrac{1}{p}",
+      "note": "Counts trials, $k = 1, 2, \\ldots$ Counting failures instead shifts it by 1: $E[X - 1] = (1 - p)/p$."
+    },
+    "trap": "A long run of failures does not make a success due. Each trial still succeeds with chance $p$."
+  },
+  "quiz": [
+    {
+      "id": "q-first-six",
+      "difficulty": 2,
+      "prose": "You roll a fair die until the first six.",
+      "question": "What is the chance the first six comes on roll 3?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1157,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "$\\tfrac{25}{216} \\approx 0.1157$",
+        "label": "Chance the first six is roll 3",
+        "wrong": [
+          {
+            "id": "one-roll",
+            "value": 0.1667,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "all-six",
+            "value": 0.0046,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(\\tfrac{5}{6})^2 \\times \\tfrac{1}{6} = \\tfrac{25}{216}$.",
+        "generic": "Not quite right. Two non-sixes, then a six.",
+        "byKey": {
+          "one-roll": "$\\tfrac{1}{6}$ is the chance of a six on any one roll. Rolls 1 and 2 must also miss.",
+          "all-six": "$(\\tfrac{1}{6})^3$ asks for three sixes. The first two rolls must not be sixes."
+        }
+      },
+      "explain": {
+        "text": "The first six on roll 3 needs a miss, a miss, then a six. That is $(\\tfrac{5}{6})^2 \\times \\tfrac{1}{6} = \\tfrac{25}{216} \\approx 0.1157$."
+      }
+    },
+    {
+      "id": "q-certain",
+      "difficulty": 2,
+      "prose": "A market order fills in the first second with chance 1. Let $X$ be the second in which it fills.",
+      "question": "Which statement is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$X = 1$ always, so $E[X] = 1$ and $\\text{Var}(X) = 0$",
+            "correct": true
+          },
+          {
+            "id": "undefined",
+            "text": "The geometric formula breaks down at $p = 1$",
+            "why": "Put $p = 1$ into $(1 - p)^{k - 1}p$: you get 1 at $k = 1$ and 0 elsewhere. Nothing breaks."
+          },
+          {
+            "id": "mean-two",
+            "text": "$E[X] = 2$, since it might still wait",
+            "why": "With $p = 1$ there is no waiting at all. $E[X] = 1/p = 1$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At $p = 1$ the wait is certain: exactly one trial.",
+        "generic": "Not quite right. Put $p = 1$ into the pmf and the mean."
+      },
+      "explain": {
+        "text": "With $p = 1$, $P(X = 1) = 1$ and every later bar is 0. So $E[X] = 1/1 = 1$ and there is no spread. This is the edge case where nothing is random."
+      }
+    },
+    {
+      "id": "q-memoryless-die",
+      "difficulty": 3,
+      "prose": "You have rolled a fair die 4 times without a six.",
+      "question": "What is the chance the next 6 rolls also have no six?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$(\\tfrac{5}{6})^6 \\approx 0.335$",
+            "correct": true
+          },
+          {
+            "id": "all-ten",
+            "text": "$(\\tfrac{5}{6})^{10} \\approx 0.162$",
+            "why": "That is the chance of 10 misses from the start. The first 4 have already happened."
+          },
+          {
+            "id": "due",
+            "text": "Less than $(\\tfrac{5}{6})^6$, since a six is due",
+            "why": "That is the gambler's fallacy. The die has no memory of the 4 misses."
+          },
+          {
+            "id": "rest",
+            "text": "$(\\tfrac{5}{6})^2 \\approx 0.694$",
+            "why": "You subtracted 4 from 6. The next 6 rolls are all still to come."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Memoryless: the next 6 rolls behave like a fresh start.",
+        "generic": "Not quite right. Use $P(X > 10 \\mid X > 4) = P(X > 6)$."
+      },
+      "explain": {
+        "text": "$P(X > 10 \\mid X > 4) = (\\tfrac{5}{6})^{10} / (\\tfrac{5}{6})^4 = (\\tfrac{5}{6})^6 \\approx 0.335$. The 4 misses so far do not matter. It is the same as 6 misses from a fresh start."
+      }
+    },
+    {
+      "id": "q-failures",
+      "difficulty": 3,
+      "prose": "A dealer quotes a price that each client accepts with chance 0.25, independently. Let $Y$ be the number of refusals before the first acceptance.",
+      "question": "What is $E[Y]$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "number",
+        "accept": "3: $E[X] - 1 = 4 - 1$",
+        "label": "Mean number of refusals",
+        "wrong": [
+          {
+            "id": "trials",
+            "value": 4,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "quarter",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Trials to the first acceptance average 4, so refusals average 3.",
+        "generic": "Not quite right. Find the mean number of trials, then subtract the acceptance itself.",
+        "byKey": {
+          "trials": "4 counts the quotes up to and including the acceptance. $Y$ counts only the refusals.",
+          "quarter": "0.25 is the acceptance chance. The mean wait is about its reciprocal."
+        }
+      },
+      "explain": {
+        "text": "Trials to the first acceptance have mean $1/0.25 = 4$. $Y$ leaves out the acceptance, so $E[Y] = 4 - 1 = 3$. Equivalently $(1 - p)/p = 0.75/0.25 = 3$."
+      }
+    }
+  ]
+}

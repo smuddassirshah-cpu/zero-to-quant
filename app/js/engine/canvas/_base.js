@@ -82,7 +82,23 @@
   const fmtNum = (v, dp = 2) => Number.isInteger(v) ? String(v) : (+v.toFixed(dp)).toString();
 
   /* Expression evaluation for plane functions: 'x^2 + a*x' with params. Safe subset: numbers, x, params, + - * / ^, functions. */
-  const FN = { sin: Math.sin, cos: Math.cos, tan: Math.tan, exp: Math.exp, ln: Math.log, log: Math.log, log10: Math.log10, sqrt: Math.sqrt, abs: Math.abs, max: Math.max, min: Math.min, floor: Math.floor, ceil: Math.ceil, pow: Math.pow, pi: Math.PI, e: Math.E, atan: Math.atan, asin: Math.asin, acos: Math.acos, sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, sign: Math.sign, round: Math.round };
+  const FN = { sin: Math.sin, cos: Math.cos, tan: Math.tan, exp: Math.exp, ln: Math.log, log: Math.log, log10: Math.log10, sqrt: Math.sqrt, abs: Math.abs, max: Math.max, min: Math.min, floor: Math.floor, ceil: Math.ceil, pow: Math.pow, pi: Math.PI, e: Math.E, atan: Math.atan, asin: Math.asin, acos: Math.acos, sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh, sign: Math.sign, round: Math.round,
+    /* item 210: sum(k, a, b, term) in a curve formula is a partial sum (Taylor polynomials with a slider on n); fact(n) */
+    sum: (a, b, f) => { let s = 0; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s += f(k); return s; },
+    fact: (n) => { n = Math.round(n); if (n < 0) return NaN; let p = 1; for (let k = 2; k <= n && k < 171; k++) p *= k; return n > 170 ? Infinity : p; } };
+  /* sum(k, a, b, term) becomes F.sum(a, b, (k) => term): split the call's arguments at top-level commas */
+  const sumCalls = (src) => {
+    for (let guard = 0; guard < 20; guard++) {
+      const i = src.search(/(^|[^\w.])sum\s*\(/); if (i < 0) break;
+      const open = src.indexOf('(', i); let d = 0, j = open, parts = [], last = open + 1;
+      for (; j < src.length; j++) { const c = src[j]; if (c === '(') d++; else if (c === ')') { if (--d === 0) break; } else if (c === ',' && d === 1) { parts.push(src.slice(last, j)); last = j + 1; } }
+      if (j >= src.length) break; parts.push(src.slice(last, j));
+      if (parts.length !== 4 || !/^\s*[A-Za-z_]\w*\s*$/.test(parts[0])) break;
+      const start = src[i] === 's' ? i : i + 1;
+      src = src.slice(0, start) + `F.sum((${parts[1]}),(${parts[2]}),(${parts[0].trim()})=>(${parts[3]}))` + src.slice(j + 1);
+    }
+    return src;
+  };
   /* JavaScript rejects a unary minus right before **, so -x^2 is rewritten -(x**2) (maths reads it as -(x^2)) */
   const wrapUnaryPow = (src) => {
     const prim = (i) => { // end index of the primary starting at i (after spaces): number, name or name(...), or (...)
@@ -110,7 +126,7 @@
     return src;
   };
   const compile = (expr, paramNames = []) => {
-    let src = String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round)\b(?!\s*[:\w])/g, 'F.$1');
+    let src = sumCalls(String(expr).replace(/\^/g, '**').replace(/\b(sin|cos|tan|exp|ln|log10|log|sqrt|abs|max|min|floor|ceil|pow|pi|atan|asin|acos|sinh|cosh|tanh|sign|round|fact)\b(?!\s*[:\w])/g, 'F.$1'));
     if (!paramNames.includes('e')) src = src.replace(/(^|[^\w.])e(?![\w(])/g, '$1F.e'); // Euler's number, not the e of 1e5
     src = wrapUnaryPow(src);
     if (/[^\w\s+\-*/().,<>=?:!&|%]/.test(src.replace(/F\./g, ''))) throw new Error('Bad expression: ' + expr);
@@ -436,6 +452,12 @@
     /* for captions: fixed(v, 2) keeps trailing zeros ("3.50"), money(v) is "£1,234.50" or "−£3.50" (money(v, "$") for
        dollars); both write a negative with the minus sign U+2212 */
     fixed: (v, d = 2) => (+v < 0 && Math.abs(+v).toFixed(d) !== (0).toFixed(d) ? '−' : '') + Math.abs(+v).toFixed(d), money: (v, sym = '£', d = 2) => (+v < 0 && grouped(v, d) !== grouped(0, d) ? '−' : '') + sym + grouped(v, d) };
+  /* items 197, 202: sum(a, b, "term in k") and integral(a, b, "f(x)") take their formula as a string (curve-formula
+     syntax, ^ is a power); other values follow as name, value pairs: integral(0, u, "a * x^2", "a", a) */
+  const namesOf = (rest) => { const o = {}; for (let i = 0; i + 1 < rest.length; i += 2) o[String(rest[i])] = +rest[i + 1]; return o; };
+  DERIVE_FN.sum = (a, b, src, ...rest) => { const names = namesOf(rest), f = compile(String(src), ['k', ...Object.keys(names)]); let s = 0; for (let k = Math.ceil(a), n = 0; k <= Math.floor(b) + 1e-9 && n < 100000; k++, n++) s += f(0, { ...names, k }); return s; };
+  DERIVE_FN.integral = (a, b, src, ...rest) => { const names = namesOf(rest), f = compile(String(src), Object.keys(names)), g = (x) => f(x, names); const n = 400, h = (b - a) / n; if (!h) return 0; let s = g(a) + g(b); for (let i = 1; i < n; i++) s += (i % 2 ? 4 : 2) * g(a + i * h); return s * h / 3; };
+  DERIVE_FN.fact = FN.fact;
   const deriveCache = {};
   const deriveExpr = (src) => {
     if (deriveCache[src]) return deriveCache[src];
@@ -644,6 +666,8 @@
     register, create, kinds, svg, attrs, label, scale, niceTicks, fmtNum, compile, tween, pulse, clearHighlight, merge, frame, emitter, series, SERIES, INK, NS,
     // added by E3: shared instance and helpers (see header)
     instance, GRADED, ease, animator, lerp, flash, badge, texOf, textW, toLocal, dragger, cellOutline, nextInDirection,
+    /* a control name a canvas does not own: a dotted name is a state path (tangent.x), a plain one state.params */
+    paramPatch: (name, v) => { const n = String(name); return n.includes('.') ? n.split('.').reduceRight((acc, k) => ({ [k]: acc }), +v) : { params: { [n]: +v } }; },
     /* fill {{expression}} in a string with derive's functions and the given names (matrix cells, item 235) */
     template: (text, names = {}) => String(text).replace(/\{\{([^}]+)\}\}/g, (_, e) => { try { const v = deriveExpr(e.trim())(Object.assign({}, DERIVE_FN, names)); return typeof v === 'number' ? (Number.isFinite(v) ? fmtNum(v, 4).replace(/^-/, '−') : '') : String(v); } catch { return ''; } }),
   };

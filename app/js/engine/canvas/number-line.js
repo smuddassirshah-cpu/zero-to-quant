@@ -248,7 +248,7 @@
     api.points = () => Object.fromEntries((I.state().points || []).map(p => [p.id, { x: p.x, y: 0 }]));
     api.place = (id, pos, { instant = false } = {}) => api.set({ points: (I.state().points || []).map(p => (p.id === id ? { ...p, x: typeof pos === 'number' ? pos : pos[0] } : p)) }, { instant });
     /* item 134: a name that is no point is a free parameter in state.params, for a derive block to read */
-    api.setParam = api.param = (name, v) => { if ((I.state().points || []).some(p => p.id === name)) api.place(name, v, { instant: true }); else api.set({ params: { [name]: +v } }, { instant: true }); };
+    api.setParam = api.param = (name, v) => { if ((I.state().points || []).some(p => p.id === name)) api.place(name, v, { instant: true }); else api.set(Z.canvas.paramPatch(name, v), { instant: true }); };
     api.set({}, { instant: true });
     return api;
   }

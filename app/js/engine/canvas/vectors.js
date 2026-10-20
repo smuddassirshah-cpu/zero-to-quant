@@ -183,7 +183,7 @@
           const n = String(name), mm = n.match(/^m([12])([12])$/);
           if (mm) { const cur = (R.state.matrix || [[1, 0], [0, 1]]).map((r) => r.slice()); cur[+mm[1] - 1][+mm[2] - 1] = +v; R.inst.set({ matrix: cur }, { instant: true }); return; }
           if (['angle', 'shear', 'scale'].includes(n)) { R.inst.set({ transform: { ...(R.state.transform || {}), [n]: +v } }, { instant: true }); return; }
-          R.inst.set({ params: { [n]: +v } }, { instant: true });
+          R.inst.set(Z.canvas.paramPatch(n, v), { instant: true });
         },
         getParam: (name) => { const n = String(name), mm = n.match(/^m([12])([12])$/); if (mm) return ((R.state.matrix || [[1, 0], [0, 1]])[+mm[1] - 1] || [])[+mm[2] - 1]; if (['angle', 'shear', 'scale'].includes(n)) return (R.state.transform || {})[n] ?? (n === 'scale' ? 1 : 0); return (R.state.params || {})[n]; },
         points: () => Object.fromEntries((R.state.vectors || []).map((v) => [v.id, { x: v.v[0], y: v.v[1] }])),

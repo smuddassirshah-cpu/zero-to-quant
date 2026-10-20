@@ -142,7 +142,7 @@
     api.subtractBoth = (n) => shiftBoth(n, 'subtract-both');
     api.addBoth = (n) => shiftBoth(n, 'add-both');
     api.signed = () => isSigned();
-    api.setParam = api.param = (name, v) => { api.set({ params: { [name]: +v } }, { instant: true }); }; // x, or a free name for derive (item 134)
+    api.setParam = api.param = (name, v) => { api.set(Z.canvas.paramPatch(name, v), { instant: true }); }; // x, or a free name for derive (item 134)
     api.getParam = (name) => (name === 'x' ? xOf() : (I.state().params || {})[name]);
 
     /* ---- Operations ---- */

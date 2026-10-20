@@ -52,6 +52,19 @@
         const lines = [];
         if (view.showFit ?? params.fit) lines.push({ id: 'fit', l: fit, colour: 'ink', label: params.fitLabel === 'auto' ? eq(fit) : params.fitLabel });
         if (view.line) lines.push({ id: 'line', l: view.line, colour: R.active('drag') ? 'manip' : (view.line.colour || 2), label: view.line.label === 'auto' ? eq(view.line) : view.line.label, dashed: view.line.dashed });
+        /* item 259: curves over the cloud: { id, expr: "f(x)" }, { id, x: "...", y: "...", t: [a, b] } (parametric) or
+           { id, implicit: "F(x, y)" } (a risk ellipse), with colour, dashed and label */
+        const P = { ...(params.params || {}), ...(view.params || {}) }, pn = Object.keys(P);
+        for (const cv of [].concat(view.curves || params.curves || [])) {
+          if (!cv) continue;
+          let d = '';
+          if (cv.implicit != null) { const c = K.fnOf(String(cv.implicit), ['y', ...pn]); d = K.contourLines((x, y) => c(x, { ...P, y }), xr, yr).map((ln) => 'M' + ln.map(([x, y]) => `${sx(x).toFixed(1)},${sy(y).toFixed(1)}`).join('L')).join(''); }
+          else if (cv.x != null && cv.y != null) { const fx = K.fnOf(String(cv.x), ['t', ...pn]), fy = K.fnOf(String(cv.y), ['t', ...pn]), tr = cv.t || [0, 2 * Math.PI]; d = 'M' + Array.from({ length: 241 }, (_, i) => { const t = tr[0] + (tr[1] - tr[0]) * i / 240; return `${sx(fx(0, { ...P, t })).toFixed(1)},${sy(fy(0, { ...P, t })).toFixed(1)}`; }).join('L'); }
+          else if (cv.expr != null) { const f = K.fnOf(String(cv.expr), pn); d = K.brokenPath(Array.from({ length: 241 }, (_, i) => { const x = xr[0] + (xr[1] - xr[0]) * i / 240; return [sx(x), sy(f(x, P))]; }), H, y1, y0); }
+          if (!d) continue;
+          const o = K.obj(cv.id || 'curve', '', cv.colour || 3); o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (cv.dashed ? ' cvb-dash' : '') })); plot.append(o);
+          if (cv.label && Array.isArray(cv.labelAt)) labels.push({ x: sx(cv.labelAt[0]), y: sy(cv.labelAt[1]), text: cv.label, anchor: 'start' });
+        }
         const resid = view.residuals ? (view.residuals === 'fit' || !view.line ? fit : view.line) : null;
         let sse = 0;
         if (resid) {
@@ -121,7 +134,7 @@
       },
       methods: (R) => ({
         /* item 250: controls and derive reach line.m and line.b directly (a missing line starts flat at 0) */
-        setParam: (name, v) => { const n = String(name), m = n.match(/^line\.(m|b)$/); if (m) { const l = R.state.line || { m: 0, b: 0 }; R.inst.set({ line: { ...l, [m[1]]: +v } }, { instant: true }); return; } R.inst.set({ params: { [n]: +v } }, { instant: true }); },
+        setParam: (name, v) => { const n = String(name), m = n.match(/^line\.(m|b)$/); if (m) { const l = R.state.line || { m: 0, b: 0 }; R.inst.set({ line: { ...l, [m[1]]: +v } }, { instant: true }); return; } R.inst.set(Z.canvas.paramPatch(n, v), { instant: true }); },
         getParam: (name) => { const n = String(name), m = n.match(/^line\.(m|b)$/); if (m) return R.state.line ? R.state.line[m[1]] : undefined; return (R.state.params || {})[n]; },
         fit: () => lsq(R.state.points || []),
         points: () => Object.fromEntries((R.state.points || []).map((q) => [q.id, { x: q.x, y: q.y }])),

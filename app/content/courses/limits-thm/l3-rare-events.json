@@ -1,0 +1,1034 @@
+{
+  "id": "l3-rare-events",
+  "course": "limits-thm",
+  "title": "Rare events in a fixed window",
+  "minutes": 13,
+  "objectives": [
+    "Obtain the Poisson distribution as a limit of the binomial",
+    "Use $e^{-\\lambda}\\lambda^k/k!$ for counts in a fixed window",
+    "Recognise when clustering rules the Poisson out"
+  ],
+  "skills": [
+    "dl-discrete"
+  ],
+  "screens": [
+    {
+      "type": "title",
+      "title": "Rare events in a fixed window",
+      "prose": "A desk sees about 2 large orders an hour, and they arrive at random moments. Counting them is a binomial with many tiny trials. We will find what that binomial becomes."
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Model the hour as 10 six-minute slots. Each slot holds a large order with chance 0.2, independently, and never more than one. The count is $\\text{Bin}(10, 0.2)$, with mean $10 \\times 0.2 = 2$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 10,
+            "p": 0.2
+          },
+          "x": [
+            -0.5,
+            8.5
+          ],
+          "xLabel": "Large orders in the hour"
+        },
+        "state": {
+          "caption": "10 slots, each with chance 0.2"
+        }
+      },
+      "question": "What is the chance of no large order in the whole hour?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1074,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.1074: $0.8^{10}$",
+        "label": "Chance of no large order",
+        "wrong": [
+          {
+            "id": "mean-two",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-slot",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "all",
+            "value": 1.024e-07,
+            "tol": {
+              "abs": 1e-07
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "No order in the hour means every slot is empty."
+        },
+        {
+          "rung": "point",
+          "text": "Each slot is empty with chance 0.8.",
+          "highlight": [
+            "x0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Ten empty slots: $0.8^{10}$."
+        }
+      ],
+      "feedback": {
+        "correct": "All ten slots empty: $0.8^{10} \\approx 0.1074$.",
+        "generic": "Not quite right. Every one of the 10 slots must be empty.",
+        "byKey": {
+          "mean-two": "A mean of 2 is an average over many hours. Some hours have none.",
+          "one-slot": "0.8 is the chance one slot is empty. All ten must be empty.",
+          "all": "$0.2^{10}$ is the chance every slot has an order. You want every slot empty."
+        }
+      },
+      "explain": {
+        "text": "All ten slots are empty with chance $0.8^{10} \\approx 0.1074$. But real orders do not keep to six-minute slots. Two could land in one slot, so we should cut the hour finer.",
+        "canvas": {
+          "shade": {
+            "from": 0,
+            "to": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "prose": "Cut the hour into $n$ slots, each with chance $p = 2/n$, so the mean stays at 2. The bars are $\\text{Bin}(n, 2/n)$. The dashed line is a fixed curve we will name shortly. Slide $n$ from 10 to 500.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "binomial",
+          "params": {
+            "n": 10,
+            "p": 0.2
+          },
+          "x": [
+            -0.5,
+            8.5
+          ],
+          "xLabel": "Large orders in the hour"
+        },
+        "state": {
+          "overlay": [
+            {
+              "id": "pois",
+              "family": "poisson",
+              "params": {
+                "lambda": 2
+              },
+              "label": "limit"
+            }
+          ]
+        },
+        "derive": {
+          "params.p": "2 / n",
+          "caption": "$n = {{n}}$ slots, $p = {{fixed(2 / n, 4)}}$: $P(X = 0) = {{fixed(pow(1 - 2 / n, n), 4)}}$"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 10,
+            "max": 500,
+            "step": 10,
+            "label": "Slots $n$",
+            "start": 10
+          }
+        ]
+      },
+      "question": "As $n$ grows, what does $P(X = 0)$ settle near?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "About 0.135",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "You expected more slots to mean more chances of an order. But each slot's chance shrinks, so the mean stays at 2."
+          },
+          {
+            "id": "same",
+            "text": "It stays at 0.1074",
+            "why": "Read the caption as you slide: $P(X = 0)$ climbs from 0.1074 and then levels off."
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "Each slot is almost always empty, but there are very many slots. Together they still average 2 orders."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption's $P(X = 0)$ as you slide to the right."
+        },
+        {
+          "rung": "point",
+          "text": "At $n = 500$ the bars sit on the dashed curve.",
+          "highlight": [
+            "x0",
+            "x1"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$P(X = 0) = (1 - 2/n)^n$ settles at $e^{-2} \\approx 0.1353$.",
+        "generic": "Not quite right. Slide $n$ up to 500 and read $P(X = 0)$ from the caption."
+      },
+      "explain": {
+        "text": "$(1 - 2/n)^n$ rises from 0.1074 at $n = 10$ to 0.1299 at 50 and 0.1348 at 500. Its limit is $e^{-2} \\approx 0.1353$. Every other bar settles onto the dashed curve too.",
+        "canvas": {
+          "params": {
+            "n": 500,
+            "p": 0.004
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "The dashed curve is the **Poisson distribution** with rate $\\lambda = np = 2$: $$P(X = k) = \\frac{e^{-\\lambda}\\lambda^k}{k!}, \\quad k = 0, 1, 2, \\ldots$$ It counts events in a fixed window when they are rare and independent. $\\lambda$ is the mean count per window.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "poisson",
+          "params": {
+            "lambda": 2
+          },
+          "x": [
+            -0.5,
+            8.5
+          ],
+          "xLabel": "Large orders in the hour"
+        },
+        "state": {
+          "caption": "$X \\sim \\text{Pois}(2)$"
+        }
+      },
+      "question": "What is $P(X = 2)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2707,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.2707: $e^{-2} \\times 2^2 / 2!$",
+        "label": "Chance of exactly 2 large orders",
+        "wrong": [
+          {
+            "id": "ten-slots",
+            "value": 0.302,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "no-factorial",
+            "value": 0.5413,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0.1353,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $\\lambda = 2$ and $k = 2$ into the formula."
+        },
+        {
+          "rung": "point",
+          "text": "$e^{-2} \\approx 0.1353$ is the bar at 0.",
+          "highlight": [
+            "x0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.1353 \\times 4 / 2 = 0.2707$."
+        }
+      ],
+      "feedback": {
+        "correct": "$e^{-2} \\times 4 / 2 \\approx 0.2707$.",
+        "generic": "Not quite right. Compute $e^{-2} \\times 2^2 / 2!$.",
+        "byKey": {
+          "ten-slots": "0.302 is $P(X = 2)$ for $\\text{Bin}(10, 0.2)$, the coarse ten-slot model.",
+          "no-factorial": "You left out the $k! = 2$ on the bottom.",
+          "zero": "That is $P(X = 0) = e^{-2}$. Multiply by $\\lambda^2 / 2!$."
+        }
+      },
+      "explain": {
+        "text": "$P(X = 2) = e^{-2} \\times 2^2 / 2! \\approx 0.2707$. The binomial with 500 slots gave 0.2712, already close. Notice $P(X = 1) = P(X = 2)$ when $\\lambda = 2$.",
+        "canvas": {
+          "shade": {
+            "from": 2,
+            "to": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A code base averages 1.5 bugs per 1,000 lines, and bugs appear independently. Model the bugs in a new 1,000-line module as $\\text{Pois}(1.5)$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "poisson",
+          "params": {
+            "lambda": 1.5
+          },
+          "x": [
+            -0.5,
+            8.5
+          ],
+          "xLabel": "Bugs in 1,000 lines"
+        },
+        "state": {
+          "caption": "$X \\sim \\text{Pois}(1.5)$"
+        }
+      },
+      "question": "What is the chance the module has no bugs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2231,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.2231: $e^{-1.5}$",
+        "label": "Chance of no bugs",
+        "wrong": [
+          {
+            "id": "one-bug",
+            "value": 0.3347,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "e-one",
+            "value": 0.3679,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $k = 0$ into the formula."
+        },
+        {
+          "rung": "point",
+          "text": "$\\lambda^0 = 1$ and $0! = 1$.",
+          "highlight": [
+            "x0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$P(X = 0) = e^{-1.5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$e^{-1.5} \\approx 0.2231$.",
+        "generic": "Not quite right. With $k = 0$ the formula leaves only $e^{-\\lambda}$.",
+        "byKey": {
+          "one-bug": "0.3347 is $P(X = 1) = 1.5e^{-1.5}$. You want no bugs, $k = 0$.",
+          "e-one": "$e^{-1}$ drops the rate. The exponent is $-\\lambda = -1.5$.",
+          "zero": "A mean of 1.5 does not force a bug. About one module in five is clean."
+        }
+      },
+      "explain": {
+        "text": "With $k = 0$, $\\lambda^0 / 0! = 1$, so $P(X = 0) = e^{-\\lambda} = e^{-1.5} \\approx 0.2231$. The chance of no event at all is always $e^{-\\lambda}$. It shrinks fast as $\\lambda$ grows.",
+        "canvas": {
+          "shade": {
+            "from": 0,
+            "to": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Back to the orders. $\\text{Bin}(n, 2/n)$ has mean 2 for every $n$. Its variance is $np(1 - p) = 2(1 - 2/n)$: 1.6 at $n = 10$ and 1.992 at $n = 500$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "poisson",
+          "params": {
+            "lambda": 2
+          },
+          "x": [
+            -0.5,
+            8.5
+          ],
+          "xLabel": "Large orders in the hour"
+        },
+        "state": {
+          "caption": "$X \\sim \\text{Pois}(2)$",
+          "showMean": true
+        }
+      },
+      "question": "What is the variance of the Poisson limit, $\\text{Pois}(2)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "number",
+        "accept": "2: the limit of $2(1 - 2/n)$",
+        "label": "Variance of Pois(2)",
+        "wrong": [
+          {
+            "id": "vanish",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ten",
+            "value": 1.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "sd",
+            "value": 1.414,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What happens to $2/n$ as $n$ grows?"
+        },
+        {
+          "rung": "point",
+          "text": "$1 - 2/n$ tends to 1.",
+          "highlight": [
+            "mean"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2(1 - 2/n) \\to 2 \\times 1 = 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "The variance tends to 2, the same as the mean.",
+        "generic": "Not quite right. Let $n$ grow in $2(1 - 2/n)$.",
+        "byKey": {
+          "vanish": "Each slot's chance goes to 0, but there are ever more slots. The variance tends to $2 \\times 1$, not 0.",
+          "ten": "1.6 is the ten-slot variance. Let $n$ grow.",
+          "sd": "1.414 is $\\sqrt{2}$, the standard deviation. The variance itself is 2."
+        }
+      },
+      "explain": {
+        "text": "As $n \\to \\infty$, $2(1 - 2/n) \\to 2$. So a Poisson count has mean and variance both equal to $\\lambda$. Its standard deviation is $\\sqrt{\\lambda} \\approx 1.414$ here.",
+        "canvas": {
+          "showSd": true
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A fund gets margin calls at an average rate of 0.5 a year, independently over time. A colleague says the chance of a margin call this year is therefore 0.5.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "poisson",
+          "params": {
+            "lambda": 0.5
+          },
+          "x": [
+            -0.5,
+            5.5
+          ],
+          "xLabel": "Margin calls in a year"
+        },
+        "state": {
+          "caption": "$X \\sim \\text{Pois}(0.5)$"
+        }
+      },
+      "question": "What is the chance of at least one margin call this year?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$1 - e^{-0.5} \\approx 0.393$",
+            "correct": true
+          },
+          {
+            "id": "rate",
+            "text": "$0.5$",
+            "why": "You read the rate $\\lambda$ as a probability. $\\lambda$ is a mean count; some years have two or more calls.",
+            "canvas": {
+              "shade": {
+                "from": 1,
+                "to": null
+              }
+            }
+          },
+          {
+            "id": "none",
+            "text": "$e^{-0.5} \\approx 0.607$",
+            "why": "That is the chance of no margin call. You want at least one, its complement.",
+            "canvas": {
+              "shade": {
+                "from": 0,
+                "to": 0
+              }
+            }
+          },
+          {
+            "id": "one",
+            "text": "$0.5e^{-0.5} \\approx 0.303$",
+            "why": "That is the chance of exactly one call. Years with two or more also count.",
+            "canvas": {
+              "shade": {
+                "from": 1,
+                "to": 1
+              }
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\lambda = 0.5$ is the mean number of calls, not a chance."
+        },
+        {
+          "rung": "point",
+          "text": "At least one is the complement of none.",
+          "highlight": [
+            "x0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 - P(X = 0) = 1 - e^{-0.5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 - e^{-0.5} \\approx 0.3935$, less than the rate 0.5.",
+        "generic": "Not quite right. Find $P(X = 0)$ first, then take its complement.",
+        "byKey": {
+          "rate": "You used the rate as a chance. A rate of 0.5 includes years with two or three calls, so the chance of any call is lower."
+        }
+      },
+      "explain": {
+        "text": "$P(X \\ge 1) = 1 - e^{-0.5} \\approx 0.3935$. The rate 0.5 counts every call, and some years bring two or more. So the chance of at least one is below $\\lambda$; a rate can even exceed 1.",
+        "canvas": {
+          "shade": {
+            "from": 1,
+            "to": null
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Now the limit in general. Take $\\text{Bin}(n, p)$ with $p = \\lambda/n$, and fix $k$ while $n \\to \\infty$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "start",
+            "text": "$P(X = k) = \\binom{n}{k}\\left(\\dfrac{\\lambda}{n}\\right)^k\\left(1 - \\dfrac{\\lambda}{n}\\right)^{n - k}$: the binomial with $p = \\lambda/n$."
+          },
+          {
+            "id": "split",
+            "text": "$= \\dfrac{n(n - 1)\\cdots(n - k + 1)}{n^k} \\cdot \\dfrac{\\lambda^k}{k!} \\cdot \\left(1 - \\dfrac{\\lambda}{n}\\right)^{n}\\left(1 - \\dfrac{\\lambda}{n}\\right)^{-k}$: write out $\\binom{n}{k}$ and split the power."
+          },
+          {
+            "id": "ratio",
+            "text": "The first fraction tends to 1: it is $k$ factors, each $(n - j)/n \\to 1$."
+          },
+          {
+            "id": "exp",
+            "text": "$\\left(1 - \\tfrac{\\lambda}{n}\\right)^n \\to e^{-\\lambda}$, and $\\left(1 - \\tfrac{\\lambda}{n}\\right)^{-k} \\to 1$ since $k$ is fixed."
+          },
+          {
+            "id": "end",
+            "text": "So $P(X = k) \\to \\dfrac{e^{-\\lambda}\\lambda^k}{k!}$: multiply the limits."
+          }
+        ],
+        "answer": [
+          "start",
+          "split",
+          "ratio",
+          "exp",
+          "end"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the binomial you already know."
+        },
+        {
+          "rung": "point",
+          "text": "Rewrite before taking limits: the split line makes each factor's limit easy."
+        },
+        {
+          "rung": "step",
+          "text": "Binomial, split, first fraction to 1, the powers to $e^{-\\lambda}$ and 1, multiply."
+        }
+      ],
+      "feedback": {
+        "correct": "Each factor has a simple limit, and the product of the limits is the Poisson pmf.",
+        "generic": "Not quite right. Write the binomial first, rearrange it, then take each factor's limit.",
+        "byKey": {
+          "end": "The product of the limits comes last, once each factor's limit is known.",
+          "split": "Rearranging uses the binomial line, so it comes second."
+        }
+      },
+      "explain": {
+        "text": "You saw $(1 - 2/n)^n \\to e^{-2}$ on the slider; the same limit drives every $k$. The counting factor $\\binom{n}{k}/n^k$ becomes $1/k!$. So many independent rare chances add up to a Poisson count."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A block-trading desk sees 3 large orders an hour on average, arriving independently. A risk manager wants the chance of a busy hour with 6 or more. The shading shows $P(X \\le 5)$ for $\\text{Pois}(3)$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "poisson",
+          "params": {
+            "lambda": 3
+          },
+          "x": [
+            -0.5,
+            10.5
+          ],
+          "xLabel": "Large orders in an hour"
+        },
+        "state": {
+          "caption": "$X \\sim \\text{Pois}(3)$",
+          "shade": {
+            "from": 0,
+            "to": 5
+          }
+        }
+      },
+      "question": "What is the chance of 6 or more large orders in an hour?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0839,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.0839: $1 - P(X \\le 5) = 1 - 0.9161$",
+        "label": "Chance of 6 or more",
+        "wrong": [
+          {
+            "id": "complement",
+            "value": 0.9161,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "six-only",
+            "value": 0.0504,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "five",
+            "value": 0.1008,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "6 or more is everything outside the shading."
+        },
+        {
+          "rung": "point",
+          "text": "The shaded bars, 0 to 5, sum to 0.9161.",
+          "highlight": [
+            "shade"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 - 0.9161 = 0.0839$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 - 0.9161 = 0.0839$.",
+        "generic": "Not quite right. Take 1 minus the shaded probability.",
+        "byKey": {
+          "complement": "0.9161 is $P(X \\le 5)$, the shaded part. You want the rest.",
+          "six-only": "0.0504 is $P(X = 6)$ alone. 7, 8 and more also count.",
+          "five": "0.1008 is $P(X = 5)$. The busy hour starts at 6."
+        }
+      },
+      "explain": {
+        "text": "$P(X \\ge 6) = 1 - P(X \\le 5) \\approx 0.0839$. So about one hour in twelve is that busy. Staff the desk for it, or route the extra orders.",
+        "canvas": {
+          "shade": {
+            "from": 6,
+            "to": null
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "You count large price jumps in a stock each day for a year. The counts average 2 a day, but the table shows how they spread. Poisson(2) would give a 6-jump day a chance of about 0.017.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Statistic",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Trading days",
+              "250"
+            ],
+            [
+              "Mean jumps per day",
+              "2.0"
+            ],
+            [
+              "Variance of jumps per day",
+              "6.1"
+            ],
+            [
+              "Days with 6 or more jumps",
+              "21"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Is $\\text{Pois}(2)$ a safe model for days with many jumps?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "No: the variance is three times the mean, so jumps cluster and big days are far more common",
+            "correct": true
+          },
+          {
+            "id": "mean",
+            "text": "Yes: the mean is 2, and that is all a Poisson needs",
+            "why": "You matched the mean only. A Poisson also forces the variance to equal the mean, and here it is 6.1."
+          },
+          {
+            "id": "rare",
+            "text": "Yes: jumps are rare, so the Poisson always applies",
+            "why": "Rare is not enough. The events must also be independent, and clustered jumps are not."
+          },
+          {
+            "id": "low",
+            "text": "No: a Poisson needs the variance below the mean",
+            "why": "You have the condition backwards. A Poisson has variance exactly equal to its mean."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For a Poisson, how do the mean and variance compare?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare 2.0 with 6.1.",
+          "highlight": [
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A variance well above the mean means events arrive in bursts, not independently."
+        }
+      ],
+      "feedback": {
+        "correct": "Variance above the mean is the sign of clustering, called overdispersion.",
+        "generic": "Not quite right. Check the Poisson's rule that variance equals mean."
+      },
+      "explain": {
+        "text": "Poisson(2) predicts 6 or more jumps on about $250 \\times 0.0166 \\approx 4$ days, but there were 21. Jumps arrive in bursts after news, so they are not independent. Variance above the mean, overdispersion, is the warning sign.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Many independent trials, each with a tiny chance, with mean $np = \\lambda$ fixed, give a Poisson count.",
+      "$P(X = k) = e^{-\\lambda}\\lambda^k/k!$, so the chance of no event is $e^{-\\lambda}$.",
+      "A Poisson has mean and variance both $\\lambda$. Variance well above the mean signals clustering."
+    ],
+    "formula": {
+      "name": "Poisson distribution",
+      "tex": "P(X = k) = \\dfrac{e^{-\\lambda}\\lambda^k}{k!}, \\quad E[X] = \\text{Var}(X) = \\lambda",
+      "note": "$\\lambda$ is the mean count per window: a rate, not a probability."
+    },
+    "trap": "A rate of 0.5 a year is not a 0.5 chance of an event: it is $1 - e^{-0.5} \\approx 0.39$."
+  },
+  "quiz": [
+    {
+      "id": "q-quiet-day",
+      "difficulty": 2,
+      "prose": "A system raises alerts at an average rate of 4 a day, independently.",
+      "question": "What is the chance of a day with no alerts?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0183,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.0183: $e^{-4}$",
+        "label": "Chance of no alerts",
+        "wrong": [
+          {
+            "id": "rate",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.0733,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$e^{-4} \\approx 0.0183$.",
+        "generic": "Not quite right. $P(X = 0) = e^{-\\lambda}$.",
+        "byKey": {
+          "rate": "You divided 1 by the rate. The chance of none is $e^{-4}$.",
+          "one": "0.0733 is $P(X = 1) = 4e^{-4}$. You want no alerts."
+        }
+      },
+      "explain": {
+        "text": "With $k = 0$ the Poisson formula leaves $e^{-\\lambda}$. Here $e^{-4} \\approx 0.0183$. A quiet day happens about once in 55 days."
+      }
+    },
+    {
+      "id": "q-var",
+      "difficulty": 2,
+      "prose": "Defaults in a large loan book are modelled as $\\text{Pois}(2.5)$ per year.",
+      "question": "What is the variance of the yearly number of defaults?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$2.5$",
+            "correct": true
+          },
+          {
+            "id": "sd",
+            "text": "$1.58$",
+            "why": "1.58 is $\\sqrt{2.5}$, the standard deviation. The variance equals $\\lambda$ itself."
+          },
+          {
+            "id": "sq",
+            "text": "$6.25$",
+            "why": "You squared $\\lambda$. For a Poisson the variance is $\\lambda$, not $\\lambda^2$."
+          },
+          {
+            "id": "tiny",
+            "text": "Close to 0, since each loan rarely defaults",
+            "why": "Each loan is rare, but the total count still varies. Its variance is $\\lambda = 2.5$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Mean and variance of a Poisson are both $\\lambda$.",
+        "generic": "Not quite right. Recall what the Poisson's variance equals."
+      },
+      "explain": {
+        "text": "$\\text{Var}(X) = \\lambda = 2.5$ for a Poisson. It is the limit of $np(1 - p)$ with $p \\to 0$. The standard deviation is $\\sqrt{2.5} \\approx 1.58$ defaults."
+      }
+    },
+    {
+      "id": "q-approx",
+      "difficulty": 3,
+      "prose": "A strategy sends 1,000 orders a day. Each is rejected by the exchange with chance 0.002, independently.",
+      "question": "Using a Poisson approximation, what is the chance of exactly one rejection in a day?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2707,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.2707: $\\lambda = 2$, $2e^{-2}$",
+        "label": "Chance of exactly one rejection",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0.1353,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "lambda",
+            "value": 2,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "p",
+            "value": 0.002,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\lambda = 1000 \\times 0.002 = 2$, and $2e^{-2} \\approx 0.2707$.",
+        "generic": "Not quite right. Set $\\lambda = np$, then use $k = 1$.",
+        "byKey": {
+          "zero": "0.1353 is the chance of no rejection. Multiply by $\\lambda^1/1! = 2$.",
+          "lambda": "2 is the mean number of rejections, not a chance.",
+          "p": "0.002 is one order's chance. You want the chance of exactly one among 1,000."
+        }
+      },
+      "explain": {
+        "text": "$\\lambda = np = 2$, so $P(X = 1) \\approx 2e^{-2} \\approx 0.2707$. The exact binomial gives 0.2707 too, to four places. Large $n$ and small $p$ make the approximation excellent."
+      }
+    },
+    {
+      "id": "q-window",
+      "difficulty": 3,
+      "prose": "Large orders arrive at 3 an hour on average, independently. Consider a 20-minute window.",
+      "question": "What is the chance of no large order in those 20 minutes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3679,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.3679: $\\lambda = 1$ for a third of an hour, $e^{-1}$",
+        "label": "Chance of no order in 20 minutes",
+        "wrong": [
+          {
+            "id": "hour",
+            "value": 0.0498,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "third",
+            "value": 0.0166,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "linear",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Twenty minutes carries a third of the hourly rate: $e^{-1} \\approx 0.3679$.",
+        "generic": "Not quite right. Scale $\\lambda$ to the window first.",
+        "byKey": {
+          "hour": "$e^{-3}$ is for a whole hour. A 20-minute window has $\\lambda = 1$.",
+          "third": "You divided the hour's answer by 3. Scale the rate, not the probability.",
+          "linear": "You took $1 - 1/3$. The chance of none is $e^{-\\lambda}$ with $\\lambda = 1$."
+        }
+      },
+      "explain": {
+        "text": "The rate scales with the window: $3 \\times \\tfrac{1}{3} = 1$ order per 20 minutes. So $P(X = 0) = e^{-1} \\approx 0.3679$. Always match $\\lambda$ to the window you are counting in."
+      }
+    }
+  ]
+}

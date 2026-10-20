@@ -517,6 +517,26 @@
   const compiled = new Map();
   const fnOf = (expr, names) => { const k = expr + '|' + names.join(','); if (!compiled.has(k)) { try { compiled.set(k, C.compile(expr, names)); } catch (e) { console.warn(e.message); compiled.set(k, () => NaN); } } return compiled.get(k); };
 
+  /* Level curves of F(x, y) = level by marching squares on an nx by ny grid, chained into polylines (plane contours and
+     implicit curves, the scatter overlay) */
+  const contourLines = (F, xr, yr, level = 0, nx = 160, ny = 120) => {
+    const gx = (i) => xr[0] + (xr[1] - xr[0]) * i / nx, gy = (j) => yr[0] + (yr[1] - yr[0]) * j / ny, grid = [];
+    for (let j = 0; j <= ny; j++) { grid.push([]); for (let i = 0; i <= nx; i++) grid[j].push(F(gx(i), gy(j)) - level); }
+    const lz = (x0, y0, f0, x1, y1, f1) => { const t = f0 / (f0 - f1); return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t]; }, segs = [];
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const c4 = [[gx(i), gy(j), grid[j][i]], [gx(i + 1), gy(j), grid[j][i + 1]], [gx(i + 1), gy(j + 1), grid[j + 1][i + 1]], [gx(i), gy(j + 1), grid[j + 1][i]]];
+      if (c4.some((q) => !Number.isFinite(q[2]))) continue;
+      const cr = []; for (let k = 0; k < 4; k++) { const a = c4[k], b = c4[(k + 1) % 4]; if ((a[2] < 0) !== (b[2] < 0)) cr.push(lz(a[0], a[1], a[2], b[0], b[1], b[2])); }
+      if (cr.length === 2) segs.push(cr); else if (cr.length === 4) segs.push([cr[0], cr[1]], [cr[2], cr[3]]);
+    }
+    const key = (p) => p[0].toFixed(7) + ',' + p[1].toFixed(7), ends = new Map();
+    segs.forEach((sg, i) => sg.forEach((p) => { const k = key(p); if (!ends.has(k)) ends.set(k, []); ends.get(k).push(i); }));
+    const used = new Array(segs.length).fill(false), lines = [];
+    const grow = (line, atEnd) => { for (;;) { const tip = atEnd ? line[line.length - 1] : line[0], nb = (ends.get(key(tip)) || []).find((j) => !used[j]); if (nb == null) return; used[nb] = true; const [a, b] = segs[nb], nxt = key(a) === key(tip) ? b : a; if (atEnd) line.push(nxt); else line.unshift(nxt); } };
+    segs.forEach((sg, i) => { if (used[i]) return; used[i] = true; const line = [sg[0], sg[1]]; grow(line, true); grow(line, false); lines.push(line); });
+    return lines;
+  };
+
   /* Path through sampled pixel points, broken at NaN, asymptotes and jumps. pts: [[px, py|NaN]] */
   const brokenPath = (pts, H, top, bottom) => {
     const mid = (top + bottom) / 2, far = (bottom - top);
@@ -539,7 +559,7 @@
     return d;
   };
 
-  Z.cvb = { isObj, deep, clamp, snapTo, round, lerp, fmt, fmtTick, tw, ticksFor, txt, lab, obj, colourCls, washRect, washPath, washCircle, arrow, handle, spread, chartAxes, yMargin, planeAxes, make, eff, placeLabels, boxOf, lineBoxes, logScale, logTicks, lgamma, erf, simpson, gauss, rngFor, fnOf, brokenPath };
+  Z.cvb = { isObj, deep, clamp, snapTo, round, lerp, fmt, fmtTick, tw, ticksFor, txt, lab, obj, colourCls, washRect, washPath, washCircle, arrow, handle, spread, chartAxes, yMargin, planeAxes, make, eff, placeLabels, boxOf, lineBoxes, logScale, logTicks, lgamma, erf, simpson, gauss, rngFor, fnOf, brokenPath, contourLines };
 })();
 
 /* ===== plane ===== */
@@ -571,13 +591,22 @@
   C.register('plane', (host, params, ctx) => {
     const K = Z.cvb;
     let xr = params.x || [-5, 5], yr = params.y || [-5, 5];
-    const size = sizeOf(params);
-    /* equal: true with a height: keep the height and widen the x or y range about its centre so units stay square */
+    let size = sizeOf(params);
+    /* equal: true with a height: keep the height; a range narrower than the frame narrows the frame (item 198: the x range
+       is never widened past its authored bounds), a taller one widens the y range about its centre */
     if (params.equal && params.height) {
       const pw = size.w - 28, ph = size.h - 28, k = pw / ph, sx0 = xr[1] - xr[0], sy0 = yr[1] - yr[0];
-      if (sx0 / sy0 < k) { const c = (xr[0] + xr[1]) / 2, h = sy0 * k / 2; xr = [c - h, c + h]; }
+      if (sx0 / sy0 < k) size = { w: Math.max(220, Math.round(ph * sx0 / sy0) + 28), h: size.h };
       else { const c = (yr[0] + yr[1]) / 2, h = sx0 / k / 2; yr = [c - h, c + h]; }
     }
+    const xr0 = xr.slice(), yr0 = yr.slice();
+    /* item 208: state.view { x, y } sets the ranges (it animates); state.zoom { at: [x, y] | pointId, scale } zooms about a point */
+    const viewRanges = (view) => {
+      if (view.view && (view.view.x || view.view.y)) { xr = view.view.x || xr0; yr = view.view.y || yr0; return; }
+      const z = view.zoom;
+      if (z && +z.scale > 0 && +z.scale !== 1) { const at = Array.isArray(z.at) ? z.at : typeof z.at === 'string' ? (((view.points || []).find((q) => q.id === z.at)) || {}) : {}; const cx = Array.isArray(at) ? at[0] : at.x ?? (xr0[0] + xr0[1]) / 2, cy = Array.isArray(at) ? at[1] : at.y ?? (yr0[0] + yr0[1]) / 2, k = 1 / +z.scale; xr = [cx - (cx - xr0[0]) * k, cx + (xr0[1] - cx) * k]; yr = [cy - (cy - yr0[0]) * k, cy + (yr0[1] - cy) * k]; return; }
+      xr = xr0; yr = yr0;
+    };
     const exprParams = (view) => ({ ...(params.params || {}), ...(view.params || {}) });
 
     const geom = (R) => {
@@ -613,6 +642,14 @@
           const N = 600, ts = Array.from({ length: N + 1 }, (_, i) => tr[0] + (tr[1] - tr[0]) * i / N);
           const tNear = (x, y) => { let best = ts[0], bd = Infinity; ts.forEach((t) => { const d = (X(t) - x) ** 2 + (Y(t) - y) ** 2; if (d < bd) { bd = d; best = t; } }); let h = (tr[1] - tr[0]) / N; for (let k = 0; k < 30; k++) { const a = best - h, b = best + h, da = (X(a) - x) ** 2 + (Y(a) - y) ** 2, db = (X(b) - x) ** 2 + (Y(b) - y) ** 2, d0 = (X(best) - x) ** 2 + (Y(best) - y) ** 2; if (da < d0 && a >= tr[0]) best = a; else if (db < d0 && b <= tr[1]) best = b; else h /= 2; } return best; };
           out[f.id] = { def: f, kind: 'param', sample: () => [ts.map((t) => [X(t), Y(t)])], near: (x, y) => { const t = tNear(x, y); return [X(t), Y(t)]; }, slopeAt: (x, y) => { const t = tNear(x, y), h = 1e-5; const dx = X(t + h) - X(t - h), dy = Y(t + h) - Y(t - h); return dy / dx; }, at: (t) => [X(t), Y(t)] };
+        } else if (f.contour != null) {
+          /* item 232 (and 215): contour: "x^2 + y^2" with levels: [1, 4, 9] draws each level curve as joined polylines */
+          const c = K.fnOf(String(f.contour), ['y', ...names]), F = (x, y) => c(x, { ...P, y });
+          const nx = 160, ny = 120, gx = (i) => xr[0] + (xr[1] - xr[0]) * i / nx, gy = (j) => yr[0] + (yr[1] - yr[0]) * j / ny;
+          const grid = []; for (let j = 0; j <= ny; j++) { grid.push([]); for (let i = 0; i <= nx; i++) grid[j].push(F(gx(i), gy(j))); }
+          const lerpZ = (x0, y0, f0, x1, y1, f1) => { const t = f0 / (f0 - f1); return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t]; };
+          const segsAt = (lv) => { const segs = []; for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const c4 = [[gx(i), gy(j), grid[j][i] - lv], [gx(i + 1), gy(j), grid[j][i + 1] - lv], [gx(i + 1), gy(j + 1), grid[j + 1][i + 1] - lv], [gx(i), gy(j + 1), grid[j + 1][i] - lv]]; if (c4.some((q) => !Number.isFinite(q[2]))) continue; const cr = []; for (let k = 0; k < 4; k++) { const a = c4[k], b = c4[(k + 1) % 4]; if ((a[2] < 0) !== (b[2] < 0)) cr.push(lerpZ(a[0], a[1], a[2], b[0], b[1], b[2])); } if (cr.length === 2) segs.push(cr); else if (cr.length === 4) segs.push([cr[0], cr[1]], [cr[2], cr[3]]); } return segs; };
+          out[f.id] = { def: f, kind: 'contour', levels: [].concat(f.levels || [0]).map((lv) => ({ lv: +lv, segs: segsAt(+lv) })) };
         } else if (f.implicit != null) {
           const c = K.fnOf(String(f.implicit), ['y', ...names]), F = (x, y) => c(x, { ...P, y });
           const grad = (x, y) => { const h = 1e-5 * Math.max(1, xr[1] - xr[0]); return [(F(x + h, y) - F(x - h, y)) / (2 * h), (F(x, y + h) - F(x, y - h)) / (2 * h)]; };
@@ -643,9 +680,12 @@
       segs.forEach((sg, i) => { if (used[i]) return; used[i] = true; const line = [sg[0], sg[1]]; grow(line, true); grow(line, false); lines.push(line); });
       return lines;
     };
+    /* item 203: a domain end may be an expression in the params ("b"), so a line stops where a slider says */
+    const domOf = (fd, view) => { if (!Array.isArray(fd.domain)) return null; const P = exprParams(view); return fd.domain.map((v) => (typeof v === 'string' ? K.fnOf(v, Object.keys(P))(0, P) : +v)); };
     /* item 174: a value at a hole (0/0 and the like) is the limit from both sides */
     const valueAt = (f, x) => { const v = f(x); if (Number.isFinite(v)) return v; const h = Math.max(1e-9, (xr[1] - xr[0]) * 1e-7), a = f(x - h), b = f(x + h); return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) < 1e-4 * Math.max(1, Math.abs(a)) ? (a + b) / 2 : NaN; };
     const traces = new Map(); // item 188: trails of points with trace: true
+    let areaVals = {};
     const enabledFor = (R, id) => R.mode === 'drag' && Array.isArray(R.modeOpts && R.modeOpts.ids) && R.modeOpts.ids.includes(id);
     const pointXY = (view, ref) => {
       if (Array.isArray(ref)) return ref;
@@ -662,8 +702,10 @@
       listKeys: ['points', 'vectors', 'segments', 'polygons', 'angles', 'vlines', 'hlines'],
       init: () => ({ points: [], segments: [], vectors: [], params: { ...(params.params || {}) }, highlight: [], showTarget: false }),
       render(view, R) {
+        viewRanges(view);
         const { m, sx, sy } = geom(R);
         const g = R.F.g, fns = evaluator(view);
+        areaVals = {};
         const px0 = m.l, px1 = size.w - m.r, py0 = size.h - m.b, py1 = m.t;
         /* axes: false draws no axes, ticks or grid (a geometry figure) */
         const fmtYp = params.yFormat === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || '£') + K.fmtTick(Math.abs(v), st) : null;
@@ -672,8 +714,18 @@
         if (params.axes !== false) { const ax = !sy.log && yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
         const clip = R.clipRect(px0, py1 - 2, px1 - px0, py0 - py1 + 4);
         const plot = svg('g', { 'clip-path': clip }); g.append(plot);
+        const tickTop = svg('g', { class: 'cvb-ticktop' }); g.append(tickTop); // item 204: tick labels move here, above the curves
         const over = svg('g'); g.append(over);
         const labels = [];
+        /* item 216: heat: "expr in x and y" draws a colour ramp over the view behind everything (range: [lo, hi]) */
+        for (const fd of functionsOf(view).filter((f) => f.heat != null && !(view.hide || []).includes(f.id))) {
+          const P = exprParams(view), c = K.fnOf(String(fd.heat), ['y', ...Object.keys(P)]), nx = 72, ny = 54, vals = [];
+          for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const x = xr[0] + (xr[1] - xr[0]) * (i + 0.5) / nx, y = yr[0] + (yr[1] - yr[0]) * (j + 0.5) / ny; vals.push([i, j, c(x, { ...P, y })]); }
+          const fin = vals.map((v) => v[2]).filter(Number.isFinite), lo = fd.range ? fd.range[0] : Math.min(...fin), hi = fd.range ? fd.range[1] : Math.max(...fin);
+          const o = K.obj(fd.id, 'cvb-heat', fd.colour || 1), cw = (px1 - px0) / nx, ch = (py0 - py1) / ny;
+          vals.forEach(([i, j, v]) => { if (!Number.isFinite(v)) return; const t = K.clamp((v - lo) / ((hi - lo) || 1), 0, 1); o.append(svg('rect', { x: (px0 + i * cw).toFixed(1), y: (py0 - (j + 1) * ch).toFixed(1), width: (cw + 0.6).toFixed(1), height: (ch + 0.6).toFixed(1), 'fill-opacity': (0.04 + 0.5 * t).toFixed(3) })); });
+          plot.append(o);
+        }
 
         /* Sketch band and target under everything else */
         const sk = view.sketch || {};
@@ -694,6 +746,20 @@
 
         /* Areas and Riemann rectangles */
         for (const a of [].concat(view.area || [])) {
+          /* item 222: a polar region { polar: "r(theta)", from, to, inner: "r0(theta)" } (theta in radians), value 1/2 ∫ (r² − r0²) dθ */
+          if (a && a.polar != null) {
+            const P = exprParams(view), rf = K.fnOf(String(a.polar), ['theta', ...Object.keys(P)]), r0 = a.inner != null ? K.fnOf(String(a.inner), ['theta', ...Object.keys(P)]) : null;
+            const R1 = (t) => rf(0, { ...P, theta: t }), R0 = (t) => (r0 ? r0(0, { ...P, theta: t }) : 0), t0 = +a.from || 0, t1 = a.to != null ? +a.to : 2 * Math.PI, N = 160;
+            const outer = Array.from({ length: N + 1 }, (_, i) => { const t = t0 + (t1 - t0) * i / N, r = R1(t); return [sx(r * Math.cos(t)), sy(r * Math.sin(t))]; });
+            const innerP = Array.from({ length: N + 1 }, (_, i) => { const t = t1 - (t1 - t0) * i / N, r = R0(t); return [sx(r * Math.cos(t)), sy(r * Math.sin(t))]; });
+            const d = 'M' + outer.concat(innerP).filter((q) => Number.isFinite(q[0]) && Number.isFinite(q[1])).map((q) => q[0].toFixed(2) + ',' + q[1].toFixed(2)).join('L') + 'Z';
+            const o = K.obj(a.id || 'area', '', a.colour || 1); o.append(svg('path', { d, class: 'cvb-hlw' }), svg('path', { d, class: 'cvb-wash-f' + (R.mode === 'tap' ? ' cv-body' : '') }));
+            if (R.mode === 'tap') R.tappable(o, a.id || 'area', a.ariaLabel || 'Shaded region');
+            plot.append(o);
+            const val = K.simpson((t) => (R1(t) ** 2 - R0(t) ** 2) / 2, t0, t1, 400); areaVals[a.id || 'area'] = val;
+            if (a.label) { const tm = (t0 + t1) / 2, rm = (R1(tm) + R0(tm)) / 2, text = a.label === 'auto' ? '≈ ' + K.fmt(val, a.dp ?? 3) : String(a.label).replace('{value}', K.fmt(val, a.dp ?? 3)); over.append(K.lab(sx(rm * Math.cos(tm)), sy(rm * Math.sin(tm)), text, { halo: true, cls: 'cvb-strong' })); }
+            continue;
+          }
           const f = fns[a.f]; if (!f) continue;
           const gF = a.g ? fns[a.g] : () => 0;
           const lo = Math.max(Math.min(a.from, a.to), xr[0]), hi = Math.min(Math.max(a.from, a.to), xr[1]);
@@ -704,17 +770,23 @@
           if (!top.length) continue;
           const d = 'M' + top.concat(bot.reverse()).map((p) => p[0].toFixed(2) + ',' + K.clamp(p[1], py1 - 400, py0 + 400).toFixed(2)).join('L') + 'Z';
           const o = K.obj(a.id || 'area', '', a.colour || f.def.slot);
-          o.append(svg('path', { d, class: 'cvb-hlw' }), svg('path', { d, class: 'cvb-wash-f' }));
+          o.append(svg('path', { d, class: 'cvb-hlw' }), svg('path', { d, class: 'cvb-wash-f' + (R.mode === 'tap' ? ' cv-body' : '') }));
+          if (R.mode === 'tap') R.tappable(o, a.id || 'area', a.ariaLabel || 'Shaded region'); // item 195
           plot.append(o);
+          /* item 223: the value integrates the authored bounds, not the part the plot shows; item 202: derive reads it as values.<id> */
+          const lo0 = Math.min(a.from ?? xr[0], a.to ?? xr[1]), hi0 = Math.max(a.from ?? xr[0], a.to ?? xr[1]);
+          const val = K.simpson((x) => f(x) - gF(x), lo0, hi0, 400) * (a.to < a.from ? -1 : 1);
+          areaVals[a.id || 'area'] = val;
           if (a.label) {
-            const val = K.simpson((x) => f(x) - gF(x), lo, hi, 400) * (a.to < a.from ? -1 : 1);
             const text = a.label === 'auto' ? '≈ ' + K.fmt(val, a.dp ?? 3) : String(a.label).replace('{value}', K.fmt(val, a.dp ?? 3));
             const xm = (lo + hi) / 2, ym = (f(xm) + gF(xm)) / 2;
             over.append(K.lab(sx(xm), K.clamp(sy(ym), py1 + 12, py0 - 12), text, { halo: true, cls: 'cvb-strong' }));
           }
         }
-        if (view.riemann && fns[view.riemann.f]) {
-          const r = view.riemann, f = fns[r.f], n = Math.max(1, Math.round(r.n || 4)), lo = r.from ?? xr[0], hi = r.to ?? xr[1], w = (hi - lo) / n;
+        /* item 196: riemann may be a list (left and right sums on one plane); item 195: rectangles are tap targets */
+        for (const r of [].concat(view.riemann || [])) {
+          if (!r || !fns[r.f]) continue;
+          const f = fns[r.f], n = Math.max(1, Math.round(r.n || 4)), lo = r.from ?? xr[0], hi = r.to ?? xr[1], w = (hi - lo) / n;
           const id = r.id || 'riemann', grp = K.obj(id, '', r.colour || f.def.slot); let sum = 0;
           for (let i = 0; i < n; i++) {
             const a = lo + i * w, b = a + w;
@@ -722,20 +794,22 @@
             if (rule === 'trap') {
               const ya = f(a), yb = f(b); sum += (ya + yb) / 2 * w;
               const d = `M${sx(a)},${sy(0)}L${sx(a)},${sy(ya)}L${sx(b)},${sy(yb)}L${sx(b)},${sy(0)}Z`;
-              const o = K.obj(`${id}-${i}`, 'cvb-rect'); o.append(svg('path', { d, class: 'cvb-hlw' }), svg('path', { d, class: 'cvb-rect-f' })); grp.append(o);
+              const o = K.obj(`${id}-${i}`, 'cvb-rect'); o.append(svg('path', { d, class: 'cvb-hlw' }), svg('path', { d, class: 'cvb-rect-f' + (R.mode === 'tap' ? ' cv-body' : '') })); if (R.mode === 'tap') R.tappable(o, `${id}-${i}`, `Rectangle ${i + 1}`); grp.append(o);
               continue;
             }
             const xs = rule === 'right' ? b : rule === 'mid' ? (a + b) / 2 : a;
             const y = f(xs); if (!Number.isFinite(y)) continue; sum += y * w;
             const y0p = sy(0), y1p = sy(y), top = Math.min(y0p, y1p), hgt = Math.abs(y1p - y0p);
             const o = K.obj(`${id}-${i}`, 'cvb-rect');
-            o.append(K.washRect(sx(a) - 2, top - 2, sx(b) - sx(a) + 4, hgt + 4, 2), svg('rect', { x: sx(a), y: top, width: Math.max(0, sx(b) - sx(a)), height: hgt, class: 'cvb-rect-f' }));
+            o.append(K.washRect(sx(a) - 2, top - 2, sx(b) - sx(a) + 4, hgt + 4, 2), svg('rect', { x: sx(a), y: top, width: Math.max(0, sx(b) - sx(a)), height: hgt, class: 'cvb-rect-f' + (R.mode === 'tap' ? ' cv-body' : '') }));
+            if (R.mode === 'tap') R.tappable(o, `${id}-${i}`, `Rectangle ${i + 1}`);
             grp.append(o);
           }
           plot.append(grp);
+          areaVals[id] = sum;
           if (r.showSum) {
-            const t = (r.sumLabel || 'Sum') + ' ≈ ' + K.fmt(sum, r.dp ?? 3), lx = px1 - 4, ly = py1 + 12;
-            over.append(K.txt(lx, ly, t, { anchor: 'end', halo: true, cls: 'cvb-strong' })); fixed.push(K.boxOf({ x: lx, y: ly, text: t, anchor: 'end' }));
+            const k0 = [].concat(view.riemann).indexOf(r), t = (r.sumLabel || 'Sum') + ' ≈ ' + K.fmt(sum, r.dp ?? 3), lx = px1 - 4, ly = py1 + 12 + 22 * Math.max(0, k0);
+            over.append(K.lab(lx, ly, t, { anchor: 'end', halo: true, cls: 'cvb-strong' })); fixed.push(K.boxOf({ x: lx, y: ly, text: t.replace(/\$/g, ''), anchor: 'end' })); // sumLabel may be KaTeX
           }
         }
 
@@ -743,12 +817,12 @@
         const hidden = new Set(view.hide || []);
         for (const [id, f] of Object.entries(fns)) {
           if (hidden.has(id)) continue;
-          const fd = f.def, dom = fd.domain || xr;
+          const fd = f.def, dom = domOf(fd, view) || xr;
           const lo = Math.max(dom[0], xr[0]), hi = Math.min(dom[1], xr[1]); if (!(hi > lo)) continue;
           const a = sx(lo), b = sx(hi), n = Math.max(2, Math.ceil((b - a) * 2));
           const pts = []; for (let i = 0; i <= n; i++) { const px = a + (b - a) * i / n; pts.push([px, sy(f(sx.invert(px)))]); }
           const d = K.brokenPath(pts, size.h, py1, py0);
-          fixed.push(...K.lineBoxes(pts.filter((p) => p[1] >= py1 && p[1] <= py0))); // labels keep clear of every curve
+          if (fd.labelAvoid !== false) fixed.push(...K.lineBoxes(pts.filter((p) => p[1] >= py1 && p[1] <= py0))); // labels keep clear of every curve (item 219: labelAvoid: false for background curves)
           const o = K.obj(id, 'cvb-fn', fd.slot);
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (fd.dashed ? ' cvb-dash' : '') }));
           plot.append(o);
@@ -764,7 +838,10 @@
             } else ly = sy(f(lx));
             /* labelSide "above" (default) or "below" the curve, and labelOffset [dx, dy] in px to nudge it */
             const off = Array.isArray(fd.labelOffset) ? fd.labelOffset : [0, 0];
-            if (lx != null && Number.isFinite(ly)) labels.push({ x: sx(lx) + (+off[0] || 0), y: ly + ((fd.labelSide || fd.labelPos) === 'below' ? 16 : -14) + (+off[1] || 0), text: fd.label, id, anchor: fd.labelAnchor === 'start' ? 'start' : fd.labelAnchor === 'middle' ? 'middle' : 'end', side: (fd.labelSide || fd.labelPos) === 'below' ? 1 : -1 });
+            const lab0 = lx != null && Number.isFinite(ly) ? { x: sx(lx) + (+off[0] || 0), y: ly + ((fd.labelSide || fd.labelPos) === 'below' ? 16 : -14) + (+off[1] || 0), text: fd.label, id, anchor: fd.labelAnchor === 'start' ? 'start' : fd.labelAnchor === 'middle' ? 'middle' : 'end', side: (fd.labelSide || fd.labelPos) === 'below' ? 1 : -1 } : null;
+            /* item 217: a label placed with labelAt stays exactly there (others keep clear of it), so dense contours keep their order */
+            if (lab0 && fd.labelAt != null) { over.append(K.lab(lab0.x, lab0.y, lab0.text, { anchor: lab0.anchor, halo: true, cls: 'cvb-strong' })); fixed.push(K.boxOf({ x: lab0.x, y: lab0.y, text: String(lab0.text).replace(/\$/g, ''), anchor: lab0.anchor })); }
+            else if (lab0) labels.push(lab0);
           }
         }
 
@@ -772,7 +849,19 @@
         const curves = curvesOf(view);
         for (const [id, cv] of Object.entries(curves)) {
           if (hidden.has(id)) continue;
-          const fd = cv.def, runs = cv.sample();
+          const fd = cv.def;
+          if (cv.kind === 'contour') { // one path per level, joined; levelLabels (default true) writes each level on its curve
+            const o = K.obj(id, 'cvb-fn cvb-contour', fd.slot);
+            cv.levels.forEach(({ lv, segs }, k) => {
+              const lines = joinSegs(segs); if (!lines.length) return;
+              const d2 = lines.map((line) => 'M' + line.map(([x, y]) => `${sx(x).toFixed(1)},${sy(y).toFixed(1)}`).join('L')).join('');
+              o.append(svg('path', { d: d2, class: 'cvb-ln' + (fd.dashed ? ' cvb-dash' : ''), 'data-level': lv }));
+              if (fd.levelLabels !== false) { const longest = lines.reduce((a, b) => (b.length > a.length ? b : a)), q = longest[Math.floor(longest.length * (0.3 + 0.4 * (k % 2)))]; over.append(K.txt(sx(q[0]), sy(q[1]), K.fmt(lv, 3), { size: 11, halo: true, cls: 'cvb-muted' })); }
+            });
+            plot.append(o);
+            continue;
+          }
+          const runs = cv.sample();
           let d = '';
           if (cv.kind === 'param') { const pts = runs[0].map(([x, y]) => [sx(x), sy(y)]); d = K.brokenPath(pts, size.h, py1, py0); fixed.push(...K.lineBoxes(pts.filter((p) => p[1] >= py1 && p[1] <= py0))); }
           else d = joinSegs(runs).map((line) => 'M' + line.map(([x, y]) => `${sx(x).toFixed(1)},${sy(y).toFixed(1)}`).join('L')).join(''); // item 257: joined, so dashes run on
@@ -831,11 +920,17 @@
         /* Polygons: [{ id, points: [[x, y] | pointId, ...], colour, label, vertexLabels: ["A", "B", "C"], dashed }]: a filled
            shape (a series wash) with its vertices labelled outside the shape */
         for (const pg of view.polygons || params.polygons || []) {
-          const vs = (pg.points || []).map((q) => pointXY(view, q)).filter((q) => Array.isArray(q) && q.length === 2);
+          /* item 221: a sector or annulus wedge { cx, cy, r1, r2, theta1, theta2 } (radians; degrees: true for degrees), its
+             curved edges sampled in data space so it stays true on unequal axes */
+          const sec = pg.sector, toR = sec && sec.degrees ? Math.PI / 180 : 1;
+          const arcPts = (r, a, b) => Array.from({ length: 49 }, (_, i) => { const t = (a + (b - a) * i / 48) * toR; return [(sec.cx || 0) + r * Math.cos(t), (sec.cy || 0) + r * Math.sin(t)]; });
+          const vs = sec ? [...arcPts(+sec.r2 || 1, +sec.theta1 || 0, +sec.theta2 || 0), ...(+sec.r1 > 0 ? arcPts(+sec.r1, +sec.theta2 || 0, +sec.theta1 || 0) : [[sec.cx || 0, sec.cy || 0]])]
+            : (pg.points || []).map((q) => pointXY(view, q)).filter((q) => Array.isArray(q) && q.length === 2);
           if (vs.length < 2) continue;
           const o = K.obj(pg.id, 'cvb-poly', pg.colour || 1);
           const d = 'M' + vs.map(([x, y]) => `${sx(x).toFixed(2)},${sy(y).toFixed(2)}`).join('L') + 'Z';
-          o.append(K.washPath(d), svg('path', { d, class: 'cvb-poly-f' }), svg('path', { d, class: 'cvb-ln' + (pg.dashed ? ' cvb-dash' : '') }));
+          o.append(K.washPath(d), svg('path', { d, class: 'cvb-poly-f' + (R.mode === 'tap' ? ' cv-body' : '') }), svg('path', { d, class: 'cvb-ln' + (pg.dashed ? ' cvb-dash' : '') }));
+          if (R.mode === 'tap') R.tappable(o, pg.id, pg.ariaLabel || pg.label || 'Shape'); // item 195
           plot.append(o);
           const cxm = vs.reduce((a, q) => a + q[0], 0) / vs.length, cym = vs.reduce((a, q) => a + q[1], 0) / vs.length;
           (pg.vertexLabels || []).forEach((t, k) => {
@@ -918,6 +1013,7 @@
           if (tr.length > 1) { const pts = (p.trace === 'x' ? tr.slice().sort((a, b) => a[0] - b[0]) : tr).map(([a, b]) => [sx(a), sy(b)]); const o = K.obj(p.id + '-trace', 'cvb-trace', p.traceColour || p.colour || 'manip'); o.append(svg('path', { d: K.brokenPath(pts, size.h, py1, py0), class: 'cvb-ln' })); plot.append(o); }
         }
         for (const p0 of view.points || []) {
+          if (p0.hidden && !enabledFor(R, p0.id)) continue; // item 221: a hidden point (a polygon vertex a derive moves) has no dot
           const p = enabledFor(R, p0.id) && !p0.drag ? { ...p0, drag: true } : p0; // item 258: a point the drag-point widget names is draggable without drag: true
           const x = sx(p.x), y = sy(p.y);
           if (!Number.isFinite(x) || !Number.isFinite(y) || x < px0 - 4 || x > px1 + 4 || y < py1 - 4 || y > py0 + 4) continue;
@@ -944,6 +1040,8 @@
           if (marks.some(hitT) || curveBoxes.some(hitT)) axInfo.xTitle.setAttribute('transform', 'translate(0 44)');
         }
 
+        /* item 204: tick labels (they carry a halo) sit above the curves, so a curve just under y = 0 never hides them */
+        g.querySelectorAll('.cvb-tick').forEach((n) => { if (n.closest('.cvb-ticktop') !== tickTop && !n.closest('.cvb-ticktop')) tickTop.append(n); });
         /* Labels last, placed clear of each other and of the axis labels, inside the plot */
         for (const l of labels) l.anchor = l.anchor || 'end';
         K.placeLabels(labels, fixed, { x0: px0, x1: px1, y0: py1, y1: py0 });
@@ -996,6 +1094,10 @@
         /* Evaluate a named function at x with the current params. */
         evaluate: (id, x) => { const f = evaluator(R.state)[id]; return f ? valueAt(f, x) : NaN; },
         clearTrace: () => { traces.clear(); R.redraw(); },
+        /* zoom (item 208) has its own name; a dotted name is a state path (tangent.x), anything else a param */
+        setParam: (name, v) => { const n = String(name); if (n === 'zoom') { R.inst.set({ zoom: { ...(R.state.zoom || {}), scale: +v } }, { instant: true }); return; } R.inst.set(n.includes('.') ? n.split('.').reduceRight((acc, k) => ({ [k]: acc }), +v) : { params: { [n]: +v } }, { instant: true }); },
+        getParam: (name) => { const n = String(name); if (n === 'zoom') return (R.state.zoom || {}).scale ?? 1; if (n.includes('.')) { let o = R.state; for (const k of n.split('.')) o = o == null ? undefined : o[k]; return typeof o === 'number' ? o : undefined; } return (R.state.params || {})[n]; },
+        values: () => ({ ...areaVals }), // area values by id, for derive (values.a1) and captions
         /* Shared drag contract: positions of the movable points, and placing one (reveal, reset, resume). */
         points: () => Object.fromEntries((R.state.points || []).filter((q) => q.drag || enabledFor(R, q.id)).map((q) => [q.id, { x: q.x, y: q.y }])),
         place: (id, pos, opts = {}) => { const [x, y] = Array.isArray(pos) ? pos : [pos, (R.state.points || []).find((q) => q.id === id)?.y ?? 0]; return R.inst.set({ points: { [id]: { x, y } } }, opts); },
@@ -1009,7 +1111,7 @@
       if (pt.snapX) x = K.snapTo(x, pt.snapX);
       if (pt.on) {
         const f = evaluator(R.state)[pt.on], cv = f ? null : curvesOf(R.state)[pt.on];
-        if (f) { const dom = f.def && f.def.domain; if (dom) x = K.clamp(x, dom[0], dom[1]); y = valueAt(f, x); if (!Number.isFinite(y)) return; } // inside f's domain; a hole gives the limit (item 174)
+        if (f) { const dom = f.def && domOf(f.def, R.state); if (dom) x = K.clamp(x, dom[0], dom[1]); y = valueAt(f, x); if (!Number.isFinite(y)) return; } // inside f's domain; a hole gives the limit (item 174)
         else if (cv) [x, y] = cv.near(x, y); // the nearest point of a parametric or implicit curve (item 192)
       }
       if (pt.lockX) x = pt.x; if (pt.lockY) y = pt.y;

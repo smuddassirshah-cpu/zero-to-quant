@@ -143,7 +143,8 @@
         const bars = svg('g'), vals = svg('g');
         cats.forEach((c, i) => {
           const base = bot > 0 ? bot : 0, v = hs[i] || 0, y = sy(Math.max(base, v)), h = Math.abs(sy(Math.min(base, v)) - y);
-          const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : ''), ((view.colours || {})[c.id] ?? (view.colours || {})[c.label]) || c.colour || params.colour || 1); // per-category colour (series slot), patchable through state.colours
+          const faded = [].concat(view.dim || []).map(String).some((k) => k === c.id || k === c.label) || (params.categories || []).some((q) => K.isObj(q) && q.dim && (q.id || 'x' + q.label) === c.id); // item 266
+          const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : '') + (faded ? ' is-faded' : ''), ((view.colours || {})[c.id] ?? (view.colours || {})[c.label]) || c.colour || params.colour || 1); // per-category colour (series slot), patchable through state.colours
           o.append(K.washRect(x(i) - 3, sy(top) - 2, bw + 6, sy(bot) - sy(top) + 4, 4));
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(bot) - sy(top), class: 'cvb-selw' }));
           o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
@@ -184,7 +185,7 @@
         counts: () => Object.fromEntries(cats.map((c, i) => [c.id, tally(Math.round(R.state.ran || 0))[i]])),
         /* Explore controls: bind a category (its label or id, or "values.<label>") to move that bar's height */
         /* a name that is no category is a free parameter in state.params, for a derive block to read */
-        setParam: (name, v) => { if (binned && (name === 'binWidth' || name === 'bins.width')) { R.inst.set({ binWidth: +v }, { instant: true }); return; } const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); else R.inst.set({ params: { [name]: +v } }, { instant: true }); },
+        setParam: (name, v) => { if (binned && (name === 'binWidth' || name === 'bins.width')) { R.inst.set({ binWidth: +v }, { instant: true }); return; } const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); else R.inst.set(Z.canvas.paramPatch(name, v), { instant: true }); },
         getParam: (name) => { if (binned && (name === 'binWidth' || name === 'bins.width')) return R.state.binWidth || params.bins.width; const i = catIndex(String(name).replace(/^values\./, '')); return i >= 0 ? heights(R.state)[i] : ((R.state.params || {})[name]); },
       }),
     };

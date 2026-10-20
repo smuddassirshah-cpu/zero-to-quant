@@ -258,7 +258,7 @@
     };
     { /* item 134: any other name is a free parameter in state.params, for a derive block to read */
       const own = I.api.setParam;
-      I.api.setParam = (name, v) => (['shade', 'split', 'grid', 'colSizes', 'rowSizes'].includes(String(name).split('.')[0]) ? own(name, v) : I.api.set({ params: { [name]: +v } }, { instant: true }));
+      I.api.setParam = (name, v) => (['shade', 'split', 'grid', 'colSizes', 'rowSizes'].includes(String(name).split('.')[0]) ? own(name, v) : I.api.set(Z.canvas.paramPatch(name, v), { instant: true }));
     }
     I.api.getParam = (name) => {
       const [base, part] = String(name).split('.');
