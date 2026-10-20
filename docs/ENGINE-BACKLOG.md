@@ -782,3 +782,9 @@ Raised later (random-vars level 1):
 
 291. `distribution` canvas: a custom discrete support (`values`, `probs`) and a CDF step mode with open and closed endpoints (CDFs are built on `plane` from one constant function per step now).
 292. Bug or doc mismatch: a `slider` widget bound to a `bars` category label moves the thumb but not the bar, while `canvas.controls` honours the same binding; make the widget path match (authors use a free parameter plus `derive`).
+
+Raised later (random-vars level 4):
+
+293. `grid`: a `margins` option (row and column sums computed and drawn outside the cells, revealable by patch, excluded from named sets such as `row1`) for joint tables.
+294. `grid`: an editable mode (type into cells) so "fill the product of the margins" need not move to a `table` widget plus a `pair`.
+295. `balance` canvas: allow taking a fraction of the unknown from both pans (`E/2`), so $E = 1 + E/2$ can be solved in the natural order.

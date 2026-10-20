@@ -487,7 +487,12 @@ const checkCanvas = (file, where, c) => {
   (c.controls || []).forEach((k, i) => {
     if (!k.bind) err(file, `${where}.controls[${i}].bind`, 'required');
     if (k.format != null && !['fraction', 'percent'].includes(k.format)) err(file, `${where}.controls[${i}].format`, 'format is "fraction" or "percent"');
+    if (k.scale != null && k.scale !== 'log') err(file, `${where}.controls[${i}].scale`, 'scale is "log" (or leave it out for a linear slider)');
+    if (k.scale === 'log' && !(+k.min > 0 && +k.max > +k.min)) err(file, `${where}.controls[${i}]`, 'a log slider needs 0 < min < max (stops at powers of ten from min)');
   });
+  if (c.maxHeight != null && !(typeof c.maxHeight === 'number' && c.maxHeight >= 120)) err(file, `${where}.maxHeight`, 'maxHeight is a number of pixels, 120 or more');
+  if (c.kind === 'series' && P.hlines != null && !(Array.isArray(P.hlines) && P.hlines.every(h => isObj(h) && typeof h.y === 'number'))) err(file, `${where}.params.hlines`, 'hlines is a list of { id, y, label, dashed }');
+  if (c.kind === 'tree' && S.branching != null && !(typeof S.branching === 'number' || isObj(S.branching) || Array.isArray(S.branching))) err(file, `${where}.state.branching`, 'branching is a number, a list per level or { "0": n, ... }');
   if (c.derive != null) {
     if (!isObj(c.derive)) err(file, `${where}.derive`, 'derive maps a target ("p2.x", "caption") to an expression');
     else Object.entries(c.derive).forEach(([t, e]) => {

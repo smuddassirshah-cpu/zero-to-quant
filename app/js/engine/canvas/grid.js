@@ -238,6 +238,9 @@
     api.peek = (ms = 1000) => { if (Z.reducedMotion()) return; fr.wrap.classList.add('is-peek'); I.later(() => fr.wrap.classList.remove('is-peek'), ms); };
     api.cell = (id) => cell.get(id);
     api.ids = () => [...cell.keys()];
+    /* item 224: each cell's number (its text as shown, when numeric), for derive: total(selected) is the running sum of
+       the tapped cells, selected.length their count */
+    api.values = () => { const o = {}; ctext.forEach((el, id) => { const v = parseFloat(String(el.textContent).replace('−', '-')); if (Number.isFinite(v)) o[id] = v; }); return o; };
     api.expand = expand;
     api.set({}, { instant: true });
     return api;

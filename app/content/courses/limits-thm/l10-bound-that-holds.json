@@ -1,0 +1,1052 @@
+{
+  "id": "l10-bound-that-holds",
+  "course": "limits-thm",
+  "title": "A bound that always holds",
+  "minutes": 13,
+  "objectives": [
+    "Use Markov’s and Chebyshev’s inequalities",
+    "Derive Markov from an indicator bound and Chebyshev from Markov",
+    "Judge how loose the bounds are against a normal model"
+  ],
+  "skills": [
+    "dl-lln"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Push the big days",
+      "prose": "A desk's daily P&L move, up or down, averages £20k. That is all you know. Put as many days as you can at a move of £100k. The other days sit at £0, the cheapest place.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "zero",
+              "label": "Move of £0"
+            },
+            {
+              "id": "big",
+              "label": "Move of £100k"
+            }
+          ],
+          "yLabel": "Share of days",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 1
+        },
+        "state": {
+          "values": {
+            "zero": 0.95,
+            "big": 0.05
+          },
+          "params": {
+            "q": 0.05
+          }
+        },
+        "derive": {
+          "values.zero": "1 - q",
+          "values.big": "q",
+          "caption": "Average daily move: £{{fixed(100 * q, 1)}}k"
+        }
+      },
+      "question": "Slide to the largest share of £100k days that keeps the average at £20k.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 0.5,
+        "step": 0.01,
+        "start": 0.05,
+        "bind": "q",
+        "label": "Share of £100k days",
+        "answer": 0.2,
+        "tol": 0.001,
+        "wrong": [
+          {
+            "id": "too-many",
+            "from": 0.21,
+            "to": 0.5
+          },
+          {
+            "id": "too-few",
+            "from": 0,
+            "to": 0.19
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption: each 0.01 of days at £100k adds £1k to the average."
+        },
+        {
+          "rung": "point",
+          "text": "The average must reach £20k and go no higher.",
+          "highlight": [
+            "xbig"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A share $q$ at £100k gives an average of $100q$ thousand. Solve $100q = 20$."
+        }
+      ],
+      "feedback": {
+        "correct": "At most a fifth of days can move £100k or more.",
+        "generic": "Not quite right. Stop where the caption reads £20.0k.",
+        "byKey": {
+          "too-many": "The average is now above £20k. Too many big days break what you know.",
+          "too-few": "The average is still below £20k. You can fit more big days in."
+        }
+      },
+      "explain": {
+        "text": "A share $q$ of £100k days gives an average of at least $100q$ thousand. To keep it at 20 we need $q \\le 0.2$. Without knowing the distribution, we still know $P(\\text{move} \\ge 100\\text{k}) \\le 20/100$.",
+        "canvas": {
+          "params": {
+            "q": 0.2
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The step under the line",
+      "prose": "Here is the idea as a picture. For a value $x \\ge 0$, the line is $x$ itself. The step is $a$ when $x \\ge a$ and 0 otherwise. Slide $a$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10
+          ],
+          "y": [
+            0,
+            10
+          ],
+          "xLabel": "$x$",
+          "yLabel": "",
+          "xTicks": "integer",
+          "yTicks": "integer",
+          "functions": [
+            {
+              "id": "line",
+              "expr": "x",
+              "label": "$x$",
+              "domain": [
+                0,
+                10
+              ]
+            },
+            {
+              "id": "step",
+              "expr": "a*floor(min(x/a, 1))",
+              "label": "step",
+              "domain": [
+                0,
+                10
+              ],
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "a": 4
+          }
+        },
+        "state": {
+          "params": {
+            "a": 4
+          }
+        },
+        "derive": {
+          "caption": "The step jumps from 0 to {{a}} at $x = {{a}}$"
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": 1,
+            "max": 9,
+            "step": 0.5,
+            "start": 4,
+            "label": "$a$"
+          }
+        ]
+      },
+      "question": "For $x \\ge 0$, does the step ever rise above the line?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "never",
+            "text": "Never: the step stays on or under the line",
+            "correct": true
+          },
+          {
+            "id": "after",
+            "text": "Yes, just after the jump at $x = a$",
+            "why": "At the jump the step reaches $a$, and the line is already at $a$. After that the line keeps climbing."
+          },
+          {
+            "id": "small-a",
+            "text": "Yes, when $a$ is small",
+            "why": "Slide $a$ down to 1. The step still jumps only to the height the line has already reached."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide $a$ across its range and watch the jump."
+        },
+        {
+          "rung": "step",
+          "text": "Left of $a$ the step is 0, under the line. Right of $a$ the step is $a$, and the line is at least $a$ there."
+        }
+      ],
+      "feedback": {
+        "correct": "The step touches the line at the jump and stays under it everywhere else.",
+        "generic": "Not quite right. Compare the two heights left of $a$, then right of $a$."
+      },
+      "explain": {
+        "text": "Left of $a$ the step is 0, and $x \\ge 0$. Right of $a$ the step is $a$, and $x \\ge a$. So $a \\cdot \\mathbf{1}\\{x \\ge a\\} \\le x$ for every $x \\ge 0$.",
+        "canvas": {
+          "points": [
+            {
+              "id": "touch",
+              "x": 4,
+              "y": 4,
+              "label": "touch"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Markov's inequality",
+      "prose": "Let $X \\ge 0$ with mean $E[X]$, and $a > 0$. Turn the picture into a bound on $P(X \\ge a)$. Here $\\mathbf{1}\\{X \\ge a\\}$ is 1 when $X \\ge a$ and 0 otherwise.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "pic",
+            "text": "$a\\,\\mathbf{1}\\{X \\ge a\\} \\le X$ for every outcome, the step under the line, since $X \\ge 0$"
+          },
+          {
+            "id": "exp",
+            "text": "$E\\big[a\\,\\mathbf{1}\\{X \\ge a\\}\\big] \\le E[X]$, since a smaller variable has a smaller mean"
+          },
+          {
+            "id": "ind",
+            "text": "$a\\,P(X \\ge a) \\le E[X]$, since the mean of an indicator is its probability"
+          },
+          {
+            "id": "div",
+            "text": "$P(X \\ge a) \\le \\dfrac{E[X]}{a}$, dividing by $a > 0$"
+          }
+        ],
+        "answer": [
+          "pic",
+          "exp",
+          "ind",
+          "div"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the picture, which holds outcome by outcome."
+        },
+        {
+          "rung": "step",
+          "text": "Take expectations of both sides, then use $E[\\mathbf{1}\\{A\\}] = P(A)$, then divide."
+        }
+      ],
+      "feedback": {
+        "correct": "Picture, expectation, indicator, divide.",
+        "generic": "Not quite right. Begin with the inequality that holds for every outcome.",
+        "byKey": {
+          "exp": "Expectations come after the inequality they apply to. Start from the picture.",
+          "div": "Dividing by $a$ is the last step, once $P(X \\ge a)$ has appeared."
+        }
+      },
+      "explain": {
+        "text": "This is **Markov's inequality**: $P(X \\ge a) \\le E[X]/a$ for any $X \\ge 0$. The hook used it with $E[X] = 20$ and $a = 100$. The first line is the only place $X \\ge 0$ is needed."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Use it",
+      "prose": "A stock trades 2 million shares on an average day. Daily volume is never negative. Nothing else is known.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "mean",
+              "label": "Average day"
+            },
+            {
+              "id": "a",
+              "label": "Threshold"
+            }
+          ],
+          "yLabel": "Shares (millions)",
+          "showValues": true,
+          "decimals": 0,
+          "yMax": 12
+        },
+        "state": {
+          "values": {
+            "mean": 2,
+            "a": 10
+          }
+        }
+      },
+      "question": "What is Markov's upper bound on the chance of a day with 10 million shares or more?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "$2 / 10 = 0.2$",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "flipped",
+            "value": 5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "squared",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "diff",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Markov: $P(X \\ge a) \\le E[X] / a$."
+        },
+        {
+          "rung": "point",
+          "text": "Here $E[X] = 2$ and $a = 10$, both in millions.",
+          "highlight": [
+            "xmean",
+            "xa"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$P(X \\ge 10) \\le 2/10 = 0.2$.",
+        "generic": "Not quite right. Divide the mean by the threshold.",
+        "byKey": {
+          "flipped": "You divided the threshold by the mean. A probability bound cannot exceed 1.",
+          "squared": "You squared the ratio. That is Chebyshev's shape, which needs the variance.",
+          "diff": "You took $1 - 0.2$. Markov bounds the chance of the big day itself."
+        }
+      },
+      "explain": {
+        "text": "At most a fifth of days can reach 10 million shares, whatever the distribution. Real volume is far less spread, so the true chance is much smaller. The bound is safe, not sharp."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A bound misused",
+      "prose": "A desk's daily P&L averages +£1k. A colleague says Markov gives $P(\\text{P\\&L} \\ge 5\\text{k}) \\le 1/5$. The chart shows one P&L with that mean.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "loss",
+              "label": "−£8k"
+            },
+            {
+              "id": "gain",
+              "label": "+£10k"
+            }
+          ],
+          "yLabel": "Chance",
+          "showValues": true,
+          "decimals": 2,
+          "yMax": 0.7
+        },
+        "state": {
+          "values": {
+            "loss": 0.5,
+            "gain": 0.5
+          },
+          "caption": "Mean daily P&L: $0.5 \\times 10 - 0.5 \\times 8 = 1$ thousand pounds"
+        }
+      },
+      "question": "For this P&L, what is the actual chance of a day at +£5k or more?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "0.5: the +£10k day, which has chance one half",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "bound",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which bar is at £5k or more?"
+        },
+        {
+          "rung": "point",
+          "text": "Only the gain bar qualifies.",
+          "highlight": [
+            "xgain"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "A chance of 0.5 breaks the colleague's bound of 0.2.",
+        "generic": "Not quite right. Read the chance of the +£10k bar.",
+        "byKey": {
+          "bound": "You read the bound as the answer. Markov needs $X \\ge 0$, and a P&L can be negative, so the bound fails here.",
+          "zero": "The +£10k day is at least £5k, so it counts."
+        }
+      },
+      "explain": {
+        "text": "The −£8k days let the +£10k days be common while the mean stays at £1k. Markov's first line, the step under the line, fails for negative values. Apply it only to quantities that cannot go below 0.",
+        "canvas": {
+          "highlight": [
+            "xgain",
+            "xloss"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Chebyshev from Markov",
+      "prose": "Now let $X$ be any variable with mean $\\mu$ and sd $\\sigma$. The squared distance $(X - \\mu)^2$ is never negative, so Markov applies to it.",
+      "question": "Put the lines in order to bound $P(|X - \\mu| \\ge k\\sigma)$ for $k > 0$.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "sq",
+            "text": "$P(|X - \\mu| \\ge k\\sigma) = P\\big((X - \\mu)^2 \\ge k^2\\sigma^2\\big)$, squaring both sides, which are $\\ge 0$"
+          },
+          {
+            "id": "mk",
+            "text": "$\\le \\dfrac{E[(X - \\mu)^2]}{k^2\\sigma^2}$, by Markov with $a = k^2\\sigma^2$"
+          },
+          {
+            "id": "var",
+            "text": "$= \\dfrac{\\sigma^2}{k^2\\sigma^2}$, since $E[(X - \\mu)^2]$ is the variance"
+          },
+          {
+            "id": "end",
+            "text": "$= \\dfrac{1}{k^2}$"
+          }
+        ],
+        "answer": [
+          "sq",
+          "mk",
+          "var",
+          "end"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First rewrite the event so the variable inside is non-negative."
+        },
+        {
+          "rung": "step",
+          "text": "Square, apply Markov, recognise the variance, cancel."
+        }
+      ],
+      "feedback": {
+        "correct": "Square, Markov, variance, cancel.",
+        "generic": "Not quite right. Make the variable non-negative before using Markov.",
+        "byKey": {
+          "mk": "Markov needs a non-negative variable. Square the distance first.",
+          "var": "The variance appears only after Markov puts $E[(X - \\mu)^2]$ on top."
+        }
+      },
+      "explain": {
+        "text": "This is **Chebyshev's inequality**: $P(|X - \\mu| \\ge k\\sigma) \\le 1/k^2$. It needs only a mean and a variance, never the shape. Squaring is what lets it work for P&Ls that go negative."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Bound against truth",
+      "prose": "Fill in Chebyshev's bound $1/k^2$ for each $k$. The last column is the exact chance when $X$ is normal.",
+      "question": "Complete the table. Give 3 decimal places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$k$",
+          "Chebyshev bound",
+          "Exact if normal"
+        ],
+        "rows": [
+          [
+            "1.5",
+            {
+              "edit": true,
+              "answer": 0.444,
+              "tol": {
+                "abs": 0.001
+              },
+              "accept": "$1/1.5^2 \\approx 0.444$"
+            },
+            "0.1336"
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 0.25,
+              "tol": {
+                "abs": 0.001
+              },
+              "accept": "$1/4 = 0.25$"
+            },
+            "0.0455"
+          ],
+          [
+            "3",
+            {
+              "edit": true,
+              "answer": 0.111,
+              "tol": {
+                "abs": 0.001
+              },
+              "accept": "$1/9 \\approx 0.111$"
+            },
+            "0.0027"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Square $k$, then take 1 over it."
+        },
+        {
+          "rung": "step",
+          "text": "$1/2.25$, $1/4$ and $1/9$."
+        }
+      ],
+      "feedback": {
+        "correct": "The bounds are 0.444, 0.25 and 0.111.",
+        "generic": "Not quite right. Each bound is 1 divided by $k$ squared."
+      },
+      "explain": {
+        "text": "At $k = 2$ the bound is 0.25, while a normal variable gives 0.0455, five times smaller. At $k = 3$ the gap is forty-fold. The bound is loose because it must hold for every distribution, the worst included."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "When the bound is exact",
+      "prose": "$X$ is $-2$ or $2$ with chance $\\tfrac{1}{8}$ each, and 0 with chance $\\tfrac{3}{4}$. So $\\mu = 0$ and $\\sigma^2 = 4 \\cdot \\tfrac{1}{8} + 4 \\cdot \\tfrac{1}{8} = 1$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            -2,
+            0,
+            2
+          ],
+          "xLabel": "$x$",
+          "yLabel": "$P(X = x)$",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.9
+        },
+        "state": {
+          "values": {
+            "-2": 0.125,
+            "0": 0.75,
+            "2": 0.125
+          }
+        }
+      },
+      "question": "What is $P(|X| \\ge 2)$, and how does it compare with Chebyshev at $k = 2$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "equal",
+            "text": "0.25, exactly the bound",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "0.125, half the bound",
+            "why": "You counted only $X = 2$. The event $|X| \\ge 2$ includes $X = -2$ as well.",
+            "canvas": {
+              "highlight": [
+                "x-2"
+              ]
+            }
+          },
+          {
+            "id": "below",
+            "text": "0.0455, as for a normal",
+            "why": "That is the normal answer. This $X$ is not normal; read its bars."
+          },
+          {
+            "id": "above",
+            "text": "0.75, more than the bound",
+            "why": "You took the middle bar. Chebyshev can never be broken; recount which values are at least 2 from 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which values of $X$ are at least 2 away from 0?"
+        },
+        {
+          "rung": "point",
+          "text": "The two outer bars.",
+          "highlight": [
+            "x-2",
+            "x2"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{1}{8} + \\tfrac{1}{8} = \\tfrac{1}{4}$, the bound exactly.",
+        "generic": "Not quite right. Add the chances of both outer bars."
+      },
+      "explain": {
+        "text": "The two outer bars give $\\tfrac{1}{4}$, and $1/k^2 = \\tfrac{1}{4}$. So Chebyshev cannot be improved without more information about the shape. All the spread sits exactly at the edge.",
+        "canvas": {
+          "highlight": [
+            "x-2",
+            "x2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A risk limit with no model",
+      "prose": "A risk manager writes: at most $\\tfrac{1}{9}$ of days move more than 3 sd from the mean, whatever the distribution. There are 250 trading days in a year.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Model",
+            "Chance of a 3 sd day",
+            "Days in 250"
+          ],
+          "rows": [
+            [
+              "Chebyshev cap",
+              "$\\le 1/9$",
+              "?"
+            ],
+            [
+              "Normal",
+              "0.0027",
+              "0.7"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "cells": [
+              "r0c2"
+            ]
+          }
+        }
+      },
+      "question": "What is the most days per year, on average, that Chebyshev allows to move 3 sd or more?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 27.8,
+        "tol": {
+          "abs": 0.15
+        },
+        "accept": "$250 / 9 \\approx 27.8$",
+        "placeholder": "days",
+        "label": "Days per year",
+        "wrong": [
+          {
+            "id": "normal",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "k",
+            "value": 83.3,
+            "tol": {
+              "abs": 0.2
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the chance by the number of days."
+        },
+        {
+          "rung": "step",
+          "text": "$250 \\times \\tfrac{1}{9}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$250 / 9 \\approx 27.8$ days.",
+        "generic": "Not quite right. Multiply $\\tfrac{1}{9}$ by 250.",
+        "byKey": {
+          "normal": "That is the normal figure. Chebyshev's cap must cover any shape.",
+          "k": "You used $\\tfrac{1}{3}$, not $\\tfrac{1}{k^2} = \\tfrac{1}{9}$."
+        }
+      },
+      "explain": {
+        "text": "Chebyshev allows up to 27.8 such days a year; a normal model expects 0.7. Real returns sit between, often a few a year. The cap is safe to quote because it needs no model.",
+        "canvas": {
+          "values": {
+            "r0c2": "27.8"
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How many trades?",
+      "prose": "A strategy's return per trade has sd $\\sigma = 2\\%$. We want the average return to be within $\\epsilon = 0.1\\%$ of the true mean with chance at least 0.9. Chebyshev on $\\bar X_n$, whose variance is $\\sigma^2/n$, gives $P(|\\bar X_n - \\mu| \\ge \\epsilon) \\le \\dfrac{\\sigma^2}{n\\epsilon^2}$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            8000
+          ],
+          "y": [
+            0,
+            0.5
+          ],
+          "xLabel": "Trades $n$",
+          "yLabel": "Bound",
+          "functions": [
+            {
+              "id": "b",
+              "expr": "4/(x*0.01)",
+              "label": "$\\sigma^2/(n\\epsilon^2)$",
+              "domain": [
+                800,
+                8000
+              ],
+              "labelAt": 2400
+            }
+          ]
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "h",
+              "y": 0.1,
+              "label": "0.1"
+            }
+          ]
+        }
+      },
+      "question": "What is the smallest $n$ that makes the bound at most 0.1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4,000, from $\\dfrac{2^2}{n \\times 0.1^2} \\le 0.1$",
+        "placeholder": "trades",
+        "label": "Trades",
+        "wrong": [
+          {
+            "id": "no-square",
+            "value": 200,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "eps-only",
+            "value": 400,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sd",
+            "value": 2000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $\\dfrac{\\sigma^2}{n\\epsilon^2} = 0.1$ and solve for $n$."
+        },
+        {
+          "rung": "point",
+          "text": "Work in percent: $\\sigma^2 = 4$ and $\\epsilon^2 = 0.01$.",
+          "highlight": [
+            "b",
+            "h"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$n = \\dfrac{4}{0.1 \\times 0.01}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$n = 4/(0.1 \\times 0.01) = 4{,}000$ trades.",
+        "generic": "Not quite right. Solve $\\dfrac{4}{0.01\\,n} = 0.1$.",
+        "byKey": {
+          "no-square": "You used $\\sigma/\\epsilon = 20$ without squaring. The bound uses variances.",
+          "eps-only": "You squared $\\sigma/\\epsilon$ but left out the 0.1 on the right.",
+          "sd": "You used $\\sigma = 2$ in place of $\\sigma^2 = 4$."
+        }
+      },
+      "explain": {
+        "text": "Chebyshev says 4,000 trades always suffice. If the average is close to normal, about 1,083 trades already do, as the next lesson shows. The guarantee costs nearly four times the data.",
+        "canvas": {
+          "points": [
+            {
+              "id": "n",
+              "x": 4000,
+              "y": 0.1,
+              "label": "4,000"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Markov: for $X \\ge 0$, $P(X \\ge a) \\le E[X]/a$. It comes from the step $a\\,\\mathbf{1}\\{X \\ge a\\}$ lying under $X$.",
+      "Chebyshev: $P(|X - \\mu| \\ge k\\sigma) \\le 1/k^2$, Markov applied to $(X - \\mu)^2$.",
+      "Both need no distribution, so they are loose: 0.25 against 0.0455 for a normal at $k = 2$."
+    ],
+    "formula": {
+      "name": "Chebyshev's inequality",
+      "tex": "P(|X - \\mu| \\ge k\\sigma) \\le \\dfrac{1}{k^2}",
+      "note": "Needs only a finite mean and variance. Markov, its parent, needs $X \\ge 0$."
+    },
+    "trap": "Markov fails for variables that can be negative, and a bound is a ceiling, not the probability."
+  },
+  "quiz": [
+    {
+      "id": "q-order-size",
+      "difficulty": 2,
+      "prose": "Orders on a venue average 200 shares. Sizes are never negative.",
+      "question": "What is Markov's bound on the chance an order is 1,000 shares or more?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "$200 / 1000 = 0.2$",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "flipped",
+            "value": 5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "sq",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$200/1000 = 0.2$.",
+        "generic": "Not quite right. Divide the mean by the threshold.",
+        "byKey": {
+          "flipped": "You divided the threshold by the mean. A probability cannot exceed 1.",
+          "sq": "You squared the ratio. Markov uses the plain ratio."
+        }
+      },
+      "explain": {
+        "text": "Markov: $P(X \\ge 1000) \\le 200/1000 = 0.2$. It holds for any non-negative size distribution."
+      }
+    },
+    {
+      "id": "q-bound-not-prob",
+      "difficulty": 2,
+      "prose": "Daily returns have mean 0 and sd 1%. A colleague says Chebyshev proves that a quarter of days move 2% or more.",
+      "question": "What does Chebyshev actually say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "atmost",
+            "text": "At most a quarter of days move 2% or more",
+            "correct": true
+          },
+          {
+            "id": "exactly",
+            "text": "Exactly a quarter of days move 2% or more",
+            "why": "You read the bound as the chance itself. It is a ceiling, often far above the truth."
+          },
+          {
+            "id": "atleast",
+            "text": "At least a quarter of days move 2% or more",
+            "why": "The inequality runs the other way: the chance is at most $1/k^2$."
+          },
+          {
+            "id": "normal",
+            "text": "About 4.6% of days move 2% or more",
+            "why": "That is the normal answer. Chebyshev knows only the mean and sd."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A bound is a ceiling, not an estimate.",
+        "generic": "Not quite right. Check which way the inequality points."
+      },
+      "explain": {
+        "text": "With $k = 2$, Chebyshev gives $P(|X - \\mu| \\ge 2\\sigma) \\le \\tfrac{1}{4}$. The truth may be much smaller, such as 0.0455 for a normal."
+      }
+    },
+    {
+      "id": "q-k-for",
+      "difficulty": 3,
+      "prose": "You want Chebyshev to guarantee that a move of $k$ sd or more has chance at most 0.04.",
+      "question": "What is the smallest $k$ that does it?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "$1/k^2 = 0.04$ gives $k = 5$",
+        "placeholder": "number",
+        "wrong": [
+          {
+            "id": "inv",
+            "value": 25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sqrt-wrong",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1/k^2 = 0.04$ means $k^2 = 25$.",
+        "generic": "Not quite right. Solve $1/k^2 = 0.04$.",
+        "byKey": {
+          "inv": "That is $k^2$. Take the square root.",
+          "sqrt-wrong": "That is $\\sqrt{0.04}$. You want $1/\\sqrt{0.04}$."
+        }
+      },
+      "explain": {
+        "text": "$k^2 = 1/0.04 = 25$, so $k = 5$. Without a model you must go out 5 sd to be sure of 4%."
+      }
+    },
+    {
+      "id": "q-which-markov",
+      "difficulty": 3,
+      "prose": "Markov's inequality is stated for $X \\ge 0$.",
+      "question": "For which quantity can you apply it directly?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "vol",
+            "text": "Tomorrow's absolute price change, $|S_1 - S_0|$",
+            "correct": true
+          },
+          {
+            "id": "pnl",
+            "text": "Tomorrow's P&L in pounds",
+            "why": "A P&L can be negative, so the step-under-the-line picture fails."
+          },
+          {
+            "id": "ret",
+            "text": "Tomorrow's return",
+            "why": "Returns can be negative. Use Chebyshev, or Markov on $|X|$ or $X^2$."
+          },
+          {
+            "id": "diff",
+            "text": "Spread between two prices, which can flip sign",
+            "why": "A spread that can flip sign can be negative."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An absolute change is never negative.",
+        "generic": "Not quite right. Look for the quantity that cannot go below 0."
+      },
+      "explain": {
+        "text": "Markov's proof starts with $a\\,\\mathbf{1}\\{X \\ge a\\} \\le X$, which needs $X \\ge 0$. An absolute change qualifies; P&L, returns and spreads do not."
+      }
+    }
+  ]
+}

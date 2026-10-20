@@ -30,6 +30,7 @@
         return Number.isFinite(plo) ? [plo / 1.08, hi * 1.08] : [1, 10];
       }
       if (params.baseline != null) { lo = Math.min(lo, params.baseline); hi = Math.max(hi, params.baseline); }
+      for (const h of params.hlines || []) if (h && Number.isFinite(+h.y) && h.axis !== 2) { lo = Math.min(lo, +h.y); hi = Math.max(hi, +h.y); } // item 212
       if (!Number.isFinite(lo)) return [0, 1];
       const pad = (hi - lo || 1) * 0.08; const t = C.niceTicks(lo - pad, hi + pad, 5); const st = t[1] - t[0] || 1;
       return [Math.floor((lo - pad) / st) * st, Math.ceil((hi + pad) / st) * st];
@@ -69,8 +70,8 @@
       kind: 'series', aria: params.aria || 'Time series chart',
       modes: ['slider', 'tap'],
       size: () => ({ w: W, h: H }),
-      listKeys: ['markers'],
-      init: () => ({ markers: [], shade: [], window: null, reveal: 1, highlight: [], drawdown: false }),
+      listKeys: ['markers', 'hlines'],
+      init: () => ({ markers: [], hlines: [], shade: [], window: null, reveal: 1, highlight: [], drawdown: false }),
       prepare(patch) { if (Array.isArray(patch.window)) patch.window = { from: patch.window[0], to: patch.window[1] }; return patch; },
       render(view, R) {
         const g = R.F.g, x0 = ml, x1 = W - mr, y0 = H - mb, y1 = mt;
@@ -102,6 +103,26 @@
           o.append(K.washRect(a, y1, b - a, y0 - y1, 0), svg('rect', { x: a, y: y1, width: Math.max(1, b - a), height: y0 - y1, class: 'cvb-shade' }));
           back.append(o);
           if (s.label) { const lx = K.clamp((a + b) / 2, x0 + K.tw(s.label) / 2 + 2, x1 - K.tw(s.label) / 2 - 2); over.append(K.txt(lx, y1 + 10, s.label, { halo: true, size: 12, cls: 'cvb-strong' })); fixed.push(K.boxOf({ x: lx, y: y1 + 10, text: s.label })); }
+        });
+        /* item 212: horizontal reference lines (params.hlines fixed, state.hlines patchable): { id, y, label, dashed
+           (default true), colour, axis: 2 }, for a limit such as pi^2/6 across a partial-sum chart */
+        [].concat(params.hlines || [], view.hlines || []).forEach((h, i) => {
+          if (!h || !Number.isFinite(+h.y)) return;
+          const syH = h.axis === 2 && sy2 ? sy2 : sy, yy = syH(+h.y); if (yy < y1 - 0.5 || yy > y0 + 0.5) return;
+          const o = K.obj(h.id || 'hline' + i, '', h.colour || 'muted');
+          o.append(svg('line', { x1: x0, x2: x1, y1: yy, y2: yy, class: 'cvb-ln thin' + (h.dashed === false ? '' : ' cvb-dash') }));
+          back.append(o);
+          if (h.label) {
+            /* the label sits above or below the line at the right end, or at the left, wherever no series line passes */
+            const lt = String(h.label), lw = Math.max(24, K.tw(lt.replace(/\$/g, '')) + 8);
+            const pts = []; list.forEach((s2) => { if ((view.hide || []).includes(s2.id)) return; const sv = syOf(s2); valuesOf(s2).forEach((v, i) => { if (Number.isFinite(v)) pts.push([sx(i), sv(v)]); }); });
+            const yAt = (x) => { const ys = []; list.forEach((s2) => { if ((view.hide || []).includes(s2.id)) return; const vals = valuesOf(s2), sv = syOf(s2), u = sx.invert(x); if (u == null) return; const i = Math.floor(u), f = u - i; if (Number.isFinite(vals[i]) && Number.isFinite(vals[i + 1])) ys.push(sv(vals[i] + (vals[i + 1] - vals[i]) * f)); else if (Number.isFinite(vals[Math.round(u)])) ys.push(sv(vals[Math.round(u)])); }); return ys; };
+            const clear = (bx) => { for (let x = bx.x0; x <= bx.x1; x += 4) if (yAt(x).some((y) => y > bx.y0 - 3 && y < bx.y1 + 3)) return false; return !pts.some(([px, py]) => px > bx.x0 && px < bx.x1 && py > bx.y0 - 3 && py < bx.y1 + 3); };
+            const cands = [[x1 - 4, -11, 'end'], [x1 - 4, 11, 'end'], [x0 + 4, -11, 'start'], [x0 + 4, 11, 'start']].filter(([, dy]) => yy + dy > y1 + 8 && yy + dy < y0 - 8);
+            const box = ([x, dy, an]) => K.boxOf({ x, y: yy + dy, w: lw, h: 18, anchor: an });
+            const pick = cands.find((q) => clear(box(q))) || cands[0] || [x1 - 4, yy - y1 > 22 ? -11 : 11, 'end'];
+            over.append(K.lab(pick[0], yy + pick[1], lt, { anchor: pick[2], halo: true, cls: 'cvb-strong', size: 12 })); fixed.push(box(pick));
+          }
         });
         if (view.window && view.window.from != null) {
           const a = sx(idxOf(view.window.from)), b = sx(idxOf(view.window.to ?? n - 1)), o = K.obj('window', '', 'manip');

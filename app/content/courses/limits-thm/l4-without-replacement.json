@@ -1,0 +1,1409 @@
+{
+  "id": "l4-without-replacement",
+  "course": "limits-thm",
+  "title": "Drawing without replacement",
+  "minutes": 14,
+  "objectives": [
+    "Use the hypergeometric distribution for draws without replacement",
+    "Find its mean $nK/N$ and its variance with the finite-population factor",
+    "Judge when the binomial is a good approximation"
+  ],
+  "skills": [
+    "dl-discrete"
+  ],
+  "screens": [
+    {
+      "type": "title",
+      "title": "Drawing without replacement",
+      "prose": "An auditor never checks the same invoice twice. Once an item is drawn it stays out, so each draw changes the next one's chances. We will count successes when the trials are not independent."
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "An urn holds 4 red and 6 blue balls. You draw 3 without putting any back. The branch chances change as the urn empties.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Draw 1",
+              "branches": [
+                {
+                  "id": "r",
+                  "label": "Red",
+                  "p": "4/10"
+                },
+                {
+                  "id": "b",
+                  "label": "Blue",
+                  "p": "6/10"
+                }
+              ]
+            },
+            {
+              "label": "Draw 2",
+              "branches": [
+                {
+                  "id": "r",
+                  "label": "Red",
+                  "p": {
+                    "r": "3/9",
+                    "b": "4/9"
+                  }
+                },
+                {
+                  "id": "b",
+                  "label": "Blue",
+                  "p": {
+                    "r": "6/9",
+                    "b": "5/9"
+                  }
+                }
+              ]
+            },
+            {
+              "label": "Draw 3",
+              "branches": [
+                {
+                  "id": "r",
+                  "label": "Red",
+                  "p": {
+                    "r-r": "2/8",
+                    "r-b": "3/8",
+                    "b-r": "3/8",
+                    "b-b": "4/8"
+                  }
+                },
+                {
+                  "id": "b",
+                  "label": "Blue",
+                  "p": {
+                    "r-r": "6/8",
+                    "r-b": "5/8",
+                    "b-r": "5/8",
+                    "b-b": "4/8"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "r-r-r": "1/30",
+            "r-r-b": "1/10",
+            "r-b-r": "1/10",
+            "r-b-b": "1/6",
+            "b-r-r": "1/10",
+            "b-r-b": "1/6",
+            "b-b-r": "1/6",
+            "b-b-b": "1/6"
+          }
+        },
+        "state": {
+          "values": false
+        }
+      },
+      "question": "Tap the last branch of every path with exactly 2 red balls.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r-r-b",
+          "r-b-r",
+          "b-r-r"
+        ],
+        "only": [
+          "r-r-r",
+          "r-r-b",
+          "r-b-r",
+          "r-b-b",
+          "b-r-r",
+          "b-r-b",
+          "b-b-r",
+          "b-b-b"
+        ],
+        "countWord": "paths",
+        "wrong": [
+          {
+            "id": "one-order",
+            "set": [
+              "r-r-b"
+            ]
+          },
+          {
+            "id": "at-least",
+            "set": [
+              "r-r-r",
+              "r-r-b",
+              "r-b-r",
+              "b-r-r"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the reds along each path."
+        },
+        {
+          "rung": "point",
+          "text": "The blue ball can be drawn first, second or third.",
+          "highlight": [
+            "r-r-b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Red, red, blue; red, blue, red; and blue, red, red."
+        }
+      ],
+      "feedback": {
+        "correct": "Three paths: the one blue ball can come in any of the three draws.",
+        "generic": "Not quite right. Find every path with exactly two reds and one blue.",
+        "byKey": {
+          "one-order": "You tapped only red, red, blue. The blue can also come first or second.",
+          "at-least": "Red, red, red has three reds, not two.",
+          "r-r-r": "Red, red, red has three reds.",
+          "r-b-b": "Red, blue, blue has one red.",
+          "b-r-b": "Blue, red, blue has one red.",
+          "b-b-r": "Blue, blue, red has one red.",
+          "b-b-b": "Blue, blue, blue has no reds."
+        }
+      },
+      "explain": {
+        "text": "The blue ball sits in draw 1, 2 or 3, so three paths have two reds. Their branch chances differ, because each draw changes the urn. Yet the products all come out the same.",
+        "canvas": {
+          "values": true,
+          "highlight": [
+            "r-r-b",
+            "r-b-r",
+            "b-r-r"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "Red, red, blue has chance $\\tfrac{4}{10} \\times \\tfrac{3}{9} \\times \\tfrac{6}{8} = \\tfrac{72}{720}$. Blue, red, red has $\\tfrac{6}{10} \\times \\tfrac{4}{9} \\times \\tfrac{3}{8} = \\tfrac{72}{720}$ too: the same factors in a new order.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Draw 1",
+              "branches": [
+                {
+                  "id": "r",
+                  "label": "Red",
+                  "p": "4/10"
+                },
+                {
+                  "id": "b",
+                  "label": "Blue",
+                  "p": "6/10"
+                }
+              ]
+            },
+            {
+              "label": "Draw 2",
+              "branches": [
+                {
+                  "id": "r",
+                  "label": "Red",
+                  "p": {
+                    "r": "3/9",
+                    "b": "4/9"
+                  }
+                },
+                {
+                  "id": "b",
+                  "label": "Blue",
+                  "p": {
+                    "r": "6/9",
+                    "b": "5/9"
+                  }
+                }
+              ]
+            },
+            {
+              "label": "Draw 3",
+              "branches": [
+                {
+                  "id": "r",
+                  "label": "Red",
+                  "p": {
+                    "r-r": "2/8",
+                    "r-b": "3/8",
+                    "b-r": "3/8",
+                    "b-b": "4/8"
+                  }
+                },
+                {
+                  "id": "b",
+                  "label": "Blue",
+                  "p": {
+                    "r-r": "6/8",
+                    "r-b": "5/8",
+                    "b-r": "5/8",
+                    "b-b": "4/8"
+                  }
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "r-r-r": "1/30",
+            "r-r-b": "1/10",
+            "r-b-r": "1/10",
+            "r-b-b": "1/6",
+            "b-r-r": "1/10",
+            "b-r-b": "1/6",
+            "b-b-r": "1/6",
+            "b-b-b": "1/6"
+          }
+        },
+        "state": {
+          "highlight": [
+            "r-r-b",
+            "r-b-r",
+            "b-r-r"
+          ]
+        }
+      },
+      "question": "What is the chance of exactly 2 red balls in the 3 draws?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.3, or any form equal to $\\tfrac{3}{10}$",
+        "label": "Chance of exactly 2 red",
+        "wrong": [
+          {
+            "id": "one-path",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "replace",
+            "value": 0.288,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "share",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many paths, and what is each one's chance?"
+        },
+        {
+          "rung": "point",
+          "text": "Each highlighted path has chance $\\tfrac{1}{10}$.",
+          "highlight": [
+            "r-r-b",
+            "r-b-r",
+            "b-r-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3 \\times \\tfrac{1}{10}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Three paths of $\\tfrac{1}{10}$ each: 0.3.",
+        "generic": "Not quite right. Add the chances of the three paths with two reds.",
+        "byKey": {
+          "one-path": "That is one path. The blue ball could come in any of three draws.",
+          "replace": "0.288 is $3 \\times 0.4^2 \\times 0.6$, as if each ball went back. Here the urn changes after each draw.",
+          "share": "0.4 is the share of red balls in the urn, not the chance of exactly two reds."
+        }
+      },
+      "explain": {
+        "text": "Three paths, each with chance $\\tfrac{72}{720} = \\tfrac{1}{10}$, give $P(X = 2) = 0.3$. With replacement the binomial would say 0.288. The difference comes from the urn shrinking.",
+        "canvas": {
+          "values": true
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "prose": "Now sample 5 items from a population of $N$, where 20% are marked. The bars are the exact chances without replacement. The dashed marks are the binomial, $\\text{Bin}(5, 0.2)$, as if each item went back. Slide $N$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "k0",
+              "label": "0"
+            },
+            {
+              "id": "k1",
+              "label": "1"
+            },
+            {
+              "id": "k2",
+              "label": "2"
+            },
+            {
+              "id": "k3",
+              "label": "3"
+            },
+            {
+              "id": "k4",
+              "label": "4"
+            },
+            {
+              "id": "k5",
+              "label": "5"
+            }
+          ],
+          "xLabel": "Marked items in a sample of 5",
+          "yLabel": "Probability",
+          "yMax": 0.5,
+          "exact": [
+            {
+              "x": "k0",
+              "y": 0.3277
+            },
+            {
+              "x": "k1",
+              "y": 0.4096
+            },
+            {
+              "x": "k2",
+              "y": 0.2048
+            },
+            {
+              "x": "k3",
+              "y": 0.0512
+            },
+            {
+              "x": "k4",
+              "y": 0.0064
+            },
+            {
+              "x": "k5",
+              "y": 0.0003
+            }
+          ],
+          "exactLabel": "binomial"
+        },
+        "state": {
+          "params": {
+            "N": 20
+          }
+        },
+        "derive": {
+          "values.k0": "1 * 1 * (0.8 * N)*(0.8 * N - 1)*(0.8 * N - 2)*(0.8 * N - 3)*(0.8 * N - 4) / ((N)*(N - 1)*(N - 2)*(N - 3)*(N - 4))",
+          "values.k1": "5 * (0.2 * N) * (0.8 * N)*(0.8 * N - 1)*(0.8 * N - 2)*(0.8 * N - 3) / ((N)*(N - 1)*(N - 2)*(N - 3)*(N - 4))",
+          "values.k2": "10 * (0.2 * N)*(0.2 * N - 1) * (0.8 * N)*(0.8 * N - 1)*(0.8 * N - 2) / ((N)*(N - 1)*(N - 2)*(N - 3)*(N - 4))",
+          "values.k3": "10 * (0.2 * N)*(0.2 * N - 1)*(0.2 * N - 2) * (0.8 * N)*(0.8 * N - 1) / ((N)*(N - 1)*(N - 2)*(N - 3)*(N - 4))",
+          "values.k4": "5 * (0.2 * N)*(0.2 * N - 1)*(0.2 * N - 2)*(0.2 * N - 3) * (0.8 * N) / ((N)*(N - 1)*(N - 2)*(N - 3)*(N - 4))",
+          "values.k5": "1 * (0.2 * N)*(0.2 * N - 1)*(0.2 * N - 2)*(0.2 * N - 3)*(0.2 * N - 4) * 1 / ((N)*(N - 1)*(N - 2)*(N - 3)*(N - 4))",
+          "caption": "Population $N = {{N}}$ with {{round(0.2 * N)}} marked: $P(X = 0) = {{fixed(values.k0, 4)}}$, binomial $0.3277$"
+        },
+        "controls": [
+          {
+            "bind": "N",
+            "min": 10,
+            "max": 1000,
+            "step": 10,
+            "label": "Population $N$",
+            "start": 20
+          }
+        ]
+      },
+      "question": "When is the binomial a good stand-in for drawing without replacement?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "large",
+            "text": "When the population is large compared with the sample",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "When the population is small",
+            "why": "Look at $N = 20$: the bars sit well off the marks. Each draw changes a small population a lot."
+          },
+          {
+            "id": "never",
+            "text": "Never: the two are always far apart",
+            "why": "Slide $N$ to 1,000. The bars and the marks almost meet."
+          },
+          {
+            "id": "always",
+            "text": "Always: replacement makes no difference",
+            "why": "At $N = 20$, $P(X = 0)$ is 0.2817 against the binomial's 0.3277. That gap is real."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the bar for 0 with its mark at $N = 20$ and at $N = 1000$."
+        },
+        {
+          "rung": "point",
+          "text": "Read $P(X = 0)$ in the caption as you slide.",
+          "highlight": [
+            "xk0"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "A large population barely changes after a few draws, so the draws are nearly independent.",
+        "generic": "Not quite right. Slide $N$ from 20 to 1,000 and watch the gap between bars and marks."
+      },
+      "explain": {
+        "text": "Removing one item from 1,000 barely changes the share marked, so draws are nearly independent. From 20 items, each draw moves the share a lot. So the binomial works when the sample is a small part of the population.",
+        "canvas": {
+          "params": {
+            "N": 1000
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Back to the urn of 4 red and 6 blue. Ignore order and count hands: any 3 of the 10 balls, $\\binom{10}{3} = 120$ hands, all equally likely.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 2,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "compact": true,
+          "cells": [
+            [
+              "Red",
+              "Red",
+              "Red",
+              "Red",
+              "Blue"
+            ],
+            [
+              "Blue",
+              "Blue",
+              "Blue",
+              "Blue",
+              "Blue"
+            ]
+          ]
+        },
+        "state": {
+          "shade": {
+            "red": {
+              "ids": [
+                "r1c1",
+                "r1c2",
+                "r1c3",
+                "r1c4"
+              ],
+              "colour": 2
+            }
+          },
+          "caption": "Urn: 4 red, 6 blue"
+        }
+      },
+      "question": "How many of the 120 hands hold exactly 2 red balls?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 36,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "accept": "36: $\\binom{4}{2}\\binom{6}{1} = 6 \\times 6$",
+        "label": "Hands with exactly 2 red",
+        "unit": "hands",
+        "wrong": [
+          {
+            "id": "reds-only",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ordered",
+            "value": 72,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 120,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "added",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build the hand in two parts: the reds and the blue."
+        },
+        {
+          "rung": "point",
+          "text": "Choose 2 of the 4 reds, then 1 of the 6 blues.",
+          "highlight": [
+            "r1c1",
+            "r1c2",
+            "r1c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\binom{4}{2} \\times \\binom{6}{1} = 6 \\times 6$."
+        }
+      ],
+      "feedback": {
+        "correct": "$6 \\times 6 = 36$ hands, and $\\tfrac{36}{120} = 0.3$, as on the tree.",
+        "generic": "Not quite right. Multiply the ways to pick the reds by the ways to pick the blue.",
+        "byKey": {
+          "reds-only": "6 counts the pairs of reds. Each pair goes with any of the 6 blues.",
+          "ordered": "$4 \\times 3 \\times 6 = 72$ counts the two reds in order. A hand has no order, so divide by 2.",
+          "all": "120 is every hand. Only those with exactly 2 reds count.",
+          "added": "You added $6 + 6$. Every pair of reds combines with every blue, so multiply."
+        }
+      },
+      "explain": {
+        "text": "Choosing 2 of 4 reds and 1 of 6 blues gives $6 \\times 6 = 36$ hands. So $P(X = 2) = \\tfrac{36}{120} = 0.3$, matching the tree. This count is the **hypergeometric distribution**: $P(X = k) = \\binom{K}{k}\\binom{N - K}{n - k} \\big/ \\binom{N}{n}$.",
+        "canvas": {
+          "outline": [
+            "r1c1",
+            "r1c2",
+            "r1c5"
+          ],
+          "caption": "One of the 36 hands: 2 reds and 1 blue"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "An auditor has 20 invoices, and 4 contain errors. She checks a random 5, all different. Let $X$ be the number of errors she finds. $X$ is hypergeometric with $N = 20$, $K = 4$, $n = 5$.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "OK",
+              "Error",
+              "OK",
+              "OK",
+              "OK"
+            ],
+            [
+              "OK",
+              "OK",
+              "OK",
+              "OK",
+              "Error"
+            ],
+            [
+              "Error",
+              "OK",
+              "OK",
+              "OK",
+              "OK"
+            ],
+            [
+              "OK",
+              "OK",
+              "OK",
+              "Error",
+              "OK"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "wrong": [
+              "r1c2",
+              "r2c5",
+              "r3c1",
+              "r4c4"
+            ]
+          },
+          "caption": "20 invoices, 4 with errors"
+        }
+      },
+      "question": "What is $E[X]$, the expected number of errors she finds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "number",
+        "accept": "1: $5 \\times \\tfrac{4}{20}$",
+        "label": "Expected errors found",
+        "wrong": [
+          {
+            "id": "all-four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "share",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write $X$ as a sum of indicators, one per invoice checked."
+        },
+        {
+          "rung": "point",
+          "text": "By symmetry, the $i$th invoice checked is any of the 20 with equal chance.",
+          "highlight": [
+            "r1c2",
+            "r2c5",
+            "r3c1",
+            "r4c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each indicator has mean $\\tfrac{4}{20}$. Linearity adds 5 of them."
+        }
+      ],
+      "feedback": {
+        "correct": "$5 \\times \\tfrac{4}{20} = 1$ error on average.",
+        "generic": "Not quite right. Each checked invoice is an error with chance $\\tfrac{4}{20}$; add five of these.",
+        "byKey": {
+          "all-four": "4 is every error in the batch. She checks only 5 of the 20 invoices.",
+          "share": "0.2 is the chance one checked invoice has an error. She checks five.",
+          "ratio": "You divided 5 by 4. The mean is $n \\times \\tfrac{K}{N} = 5 \\times 0.2$."
+        }
+      },
+      "explain": {
+        "text": "Taken alone, each checked invoice is equally likely to be any of the 20. So it has an error with chance 0.2. Linearity needs no independence: $E[X] = 5 \\times 0.2 = 1$. The mean $nK/N$ is the same as the binomial's $np$.",
+        "canvas": {
+          "highlight": [
+            "r1c2",
+            "r2c5",
+            "r3c1",
+            "r4c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "The spread is different. A binomial would give $5 \\times 0.2 \\times 0.8 = 0.8$. Drawing without replacement multiplies this by the **finite-population factor** $\\dfrac{N - n}{N - 1}$.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "OK",
+              "Error",
+              "OK",
+              "OK",
+              "OK"
+            ],
+            [
+              "OK",
+              "OK",
+              "OK",
+              "OK",
+              "Error"
+            ],
+            [
+              "Error",
+              "OK",
+              "OK",
+              "OK",
+              "OK"
+            ],
+            [
+              "OK",
+              "OK",
+              "OK",
+              "Error",
+              "OK"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "wrong": [
+              "r1c2",
+              "r2c5",
+              "r3c1",
+              "r4c4"
+            ]
+          },
+          "caption": "Sample $n = 5$ from $N = 20$"
+        }
+      },
+      "question": "What is $\\text{Var}(X)$ for the audit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6316,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "0.6316: $0.8 \\times \\tfrac{15}{19}$",
+        "label": "Variance of errors found",
+        "wrong": [
+          {
+            "id": "binomial",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "over-n",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "factor",
+            "value": 0.7895,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the factor first, with $N = 20$ and $n = 5$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\tfrac{N - n}{N - 1} = \\tfrac{15}{19}$.",
+          "highlight": [
+            "r1c2",
+            "r2c5",
+            "r3c1",
+            "r4c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.8 \\times \\tfrac{15}{19} \\approx 0.6316$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.8 \\times \\tfrac{15}{19} \\approx 0.6316$.",
+        "generic": "Not quite right. Multiply the binomial variance 0.8 by $\\tfrac{15}{19}$.",
+        "byKey": {
+          "binomial": "0.8 is the binomial variance. Without replacement it shrinks by $\\tfrac{15}{19}$.",
+          "over-n": "You used $\\tfrac{N - n}{N} = \\tfrac{15}{20}$. The bottom is $N - 1 = 19$.",
+          "factor": "0.7895 is the factor $\\tfrac{15}{19}$ itself. Multiply it by 0.8."
+        }
+      },
+      "explain": {
+        "text": "Each error found leaves fewer to find, so the draws are negatively correlated. That pulls the variance down to $0.8 \\times \\tfrac{15}{19} \\approx 0.6316$. When $n$ is tiny next to $N$ the factor is close to 1.",
+        "canvas": {
+          "highlight": [
+            "r1c2",
+            "r2c5",
+            "r3c1",
+            "r4c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "The auditor wants the chance her 5 checks find no errors at all. A colleague says each invoice is clean with chance 0.8, so the answer is $0.8^5$.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 4,
+          "cols": 5,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "OK",
+              "Error",
+              "OK",
+              "OK",
+              "OK"
+            ],
+            [
+              "OK",
+              "OK",
+              "OK",
+              "OK",
+              "Error"
+            ],
+            [
+              "Error",
+              "OK",
+              "OK",
+              "OK",
+              "OK"
+            ],
+            [
+              "OK",
+              "OK",
+              "OK",
+              "Error",
+              "OK"
+            ]
+          ],
+          "compact": true
+        },
+        "state": {
+          "shade": {
+            "wrong": [
+              "r1c2",
+              "r2c5",
+              "r3c1",
+              "r4c4"
+            ]
+          },
+          "caption": "16 clean invoices, 4 with errors"
+        }
+      },
+      "question": "What is the chance she finds no errors?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\binom{16}{5} \\big/ \\binom{20}{5} \\approx 0.2817$",
+            "correct": true
+          },
+          {
+            "id": "binomial",
+            "text": "$0.8^5 \\approx 0.3277$",
+            "why": "That treats the checks as independent, as if each invoice went back. After each clean one, fewer clean invoices remain."
+          },
+          {
+            "id": "one",
+            "text": "$0.8$",
+            "why": "0.8 is the chance one check is clean. All five must be clean."
+          },
+          {
+            "id": "share",
+            "text": "$\\tfrac{16}{20} \\times \\tfrac{5}{20} = 0.2$",
+            "why": "You multiplied two shares. Count the all-clean samples instead: $\\binom{16}{5}$ of $\\binom{20}{5}$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A sample with no errors comes entirely from the 16 clean invoices."
+        },
+        {
+          "rung": "point",
+          "text": "Count the 5-invoice samples drawn only from the clean ones.",
+          "highlight": [
+            "r1c1",
+            "r1c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\binom{16}{5} = 4368$ of $\\binom{20}{5} = 15504$ samples."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{4368}{15504} \\approx 0.2817$, below the binomial's 0.3277.",
+        "generic": "Not quite right. Count the samples made only of clean invoices.",
+        "byKey": {
+          "binomial": "You used the binomial for a small population drawn without replacement. Each clean invoice drawn makes the next one less likely to be clean."
+        }
+      },
+      "explain": {
+        "text": "All-clean samples number $\\binom{16}{5} = 4368$ out of 15,504, so the chance is 0.2817. Step by step it is $\\tfrac{16}{20} \\cdot \\tfrac{15}{19} \\cdot \\tfrac{14}{18} \\cdot \\tfrac{13}{17} \\cdot \\tfrac{12}{16}$. Each factor is below 0.8, so the binomial overstates a clean result.",
+        "canvas": {
+          "dim": [
+            "r1c2",
+            "r2c5",
+            "r3c1",
+            "r4c4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Now the general count. A population of $N$ holds $K$ marked items, and we draw $n$ without replacement. We want $P(X = k)$, the chance of exactly $k$ marked items.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "all",
+            "text": "There are $\\binom{N}{n}$ samples, all equally likely: the draw is random and order is ignored."
+          },
+          {
+            "id": "marked",
+            "text": "Choose the $k$ marked items from the $K$: $\\binom{K}{k}$ ways."
+          },
+          {
+            "id": "rest",
+            "text": "Choose the other $n - k$ from the $N - K$ unmarked: $\\binom{N - K}{n - k}$ ways."
+          },
+          {
+            "id": "mult",
+            "text": "Each marked choice pairs with each unmarked one: $\\binom{K}{k}\\binom{N - K}{n - k}$ samples."
+          },
+          {
+            "id": "end",
+            "text": "Divide by the total: $P(X = k) = \\dfrac{\\binom{K}{k}\\binom{N - K}{n - k}}{\\binom{N}{n}}$."
+          }
+        ],
+        "answer": [
+          "all",
+          "marked",
+          "rest",
+          "mult",
+          "end"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with the whole sample space, as in any equally likely count."
+        },
+        {
+          "rung": "point",
+          "text": "Then build a favourable sample in two parts, marked and unmarked."
+        },
+        {
+          "rung": "step",
+          "text": "Total, marked part, unmarked part, multiply, divide."
+        }
+      ],
+      "feedback": {
+        "correct": "Favourable samples over all samples, with the favourable ones built in two parts.",
+        "generic": "Not quite right. Count all samples first, then build a favourable one part by part.",
+        "byKey": {
+          "end": "Dividing needs both counts, so it comes last.",
+          "mult": "You multiply only after counting both parts."
+        }
+      },
+      "explain": {
+        "text": "This is your urn count: $\\binom{4}{2}\\binom{6}{1} / \\binom{10}{3} = 36/120$. The mean is $nK/N$, as for the binomial with $p = K/N$. The variance carries the extra factor $(N - n)/(N - 1)$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A risk team checks 5 trades from a batch in which 20% were booked wrongly. The table gives the chance of finding no bad trade, exactly and by the binomial.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Batch size $N$",
+            "Exact (without replacement)",
+            "Binomial",
+            "Gap"
+          ],
+          "rows": [
+            [
+              "20",
+              "0.2817",
+              "0.3277",
+              "0.0459"
+            ],
+            [
+              "100",
+              "0.3193",
+              "0.3277",
+              "0.0084"
+            ],
+            [
+              "1000",
+              "0.3269",
+              "0.3277",
+              "0.0008"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "For which batch size is the binomial within 0.001 of the exact answer?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "n1000",
+            "text": "$N = 1000$ only",
+            "correct": true
+          },
+          {
+            "id": "n20",
+            "text": "$N = 20$",
+            "why": "At $N = 20$ the gap is 0.046. Five checks change a batch of 20 a lot."
+          },
+          {
+            "id": "n100",
+            "text": "$N = 100$ and above",
+            "why": "At $N = 100$ the gap is 0.0084, more than eight times the limit."
+          },
+          {
+            "id": "all",
+            "text": "All three",
+            "why": "The gap shrinks as $N$ grows, but only $N = 1000$ is within 0.001."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the gap column."
+        },
+        {
+          "rung": "point",
+          "text": "Only one gap is under 0.001.",
+          "highlight": [
+            "r2c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.0008 at $N = 1000$; 0.0084 and 0.0460 for the others."
+        }
+      ],
+      "feedback": {
+        "correct": "At $N = 1000$ the gap is 0.0008: five checks barely change the batch.",
+        "generic": "Not quite right. Compare each value in the gap column with 0.001."
+      },
+      "explain": {
+        "text": "The binomial ignores that each check removes a trade from the batch. That matters when the sample is a large share of the batch. A common rule: use the binomial when the sample is under about 5% of the population.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "An index has 100 stocks, 20 of them in tech. A screen picks 10 at random. A client asks how unusual 4 or more tech names would be. Write the hypergeometric pmf, then sum the tail.",
+      "question": "Complete `hyper_pmf(k, N, K, n)`, the chance of exactly `k` marked items.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import comb\n\ndef hyper_pmf(k, N, K, n):\n    \"\"\"Chance of exactly k marked items.\"\"\"\n    return ...\n\n# P(4 or more tech stocks):\n# sum(hyper_pmf(k, 100, 20, 10) for k in range(4, 11))\n",
+        "solution": "from math import comb\n\ndef hyper_pmf(k, N, K, n):\n    \"\"\"Chance of exactly k marked items.\"\"\"\n    return comb(K, k) * comb(N - K, n - k) / comb(N, n)\n",
+        "examples": [
+          {
+            "call": "hyper_pmf(2, 10, 4, 3)",
+            "expect": "0.3",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "hyper_pmf(2, 10, 4, 3)",
+            "expect": "0.3",
+            "compare": "isclose"
+          },
+          {
+            "call": "hyper_pmf(0, 20, 4, 5)",
+            "expect": "0.28173374613003094",
+            "compare": "isclose"
+          },
+          {
+            "call": "hyper_pmf(1, 20, 4, 5)",
+            "expect": "0.4695562435500516",
+            "compare": "isclose"
+          },
+          {
+            "call": "hyper_pmf(4, 20, 4, 5)",
+            "expect": "0.0010319917440660474",
+            "compare": "isclose"
+          },
+          {
+            "call": "sum(hyper_pmf(k, 20, 4, 5) for k in range(6))",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "hyper_pmf(4, 20, 4, 20)",
+            "expect": "1.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "sum(hyper_pmf(k, 100, 20, 10) for k in range(4, 11))",
+            "expect": "0.1095718509592766",
+            "compare": "isclose"
+          },
+          {
+            "call": "sum(k * hyper_pmf(k, 100, 20, 10) for k in range(11))",
+            "expect": "2.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, including a full count ($n = N$). Each number is accepted within a relative error of 1e-9."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Favourable samples over all samples."
+        },
+        {
+          "rung": "point",
+          "text": "Favourable: `comb(K, k) * comb(N - K, n - k)`. All: `comb(N, n)`."
+        },
+        {
+          "rung": "step",
+          "text": "`return comb(K, k) * comb(N - K, n - k) / comb(N, n)`."
+        }
+      ],
+      "feedback": {
+        "correct": "The tail from 4 sums to about 0.1096.",
+        "generic": "Some tests failed. Return `comb(K, k) * comb(N - K, n - k) / comb(N, n)`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that the `...` is replaced by an expression."
+        }
+      },
+      "explain": {
+        "text": "$P(X \\ge 4) \\approx 0.1096$, about one screen in nine. The binomial $\\text{Bin}(10, 0.2)$ gives 0.1209, too high, because 10 is a tenth of the index. The mean is $10 \\times \\tfrac{20}{100} = 2$ either way."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Drawing $n$ from $N$ items with $K$ marked, without replacement, gives a hypergeometric count.",
+      "Its mean is $nK/N$, as for the binomial; its variance is smaller by $(N - n)/(N - 1)$.",
+      "When the sample is a small share of the population, the binomial with $p = K/N$ is close."
+    ],
+    "formula": {
+      "name": "Hypergeometric distribution",
+      "tex": "P(X = k) = \\dfrac{\\binom{K}{k}\\binom{N - K}{n - k}}{\\binom{N}{n}}",
+      "note": "$E[X] = n\\tfrac{K}{N}$ and $\\text{Var}(X) = n\\tfrac{K}{N}\\left(1 - \\tfrac{K}{N}\\right)\\tfrac{N - n}{N - 1}$."
+    },
+    "trap": "A small population drawn without replacement is not binomial: 5 checks from 20 invoices give 0.2817, not $0.8^5 = 0.3277$."
+  },
+  "quiz": [
+    {
+      "id": "q-one-ace",
+      "difficulty": 2,
+      "prose": "You are dealt 5 cards from a standard 52-card deck, which holds 4 aces.",
+      "question": "What is the chance of exactly one ace? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2995,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "fraction or decimal",
+        "accept": "$\\binom{4}{1}\\binom{48}{4} / \\binom{52}{5} \\approx 0.2995$",
+        "label": "Chance of exactly one ace",
+        "wrong": [
+          {
+            "id": "binomial",
+            "value": 0.2765,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one-card",
+            "value": 0.0769,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$4 \\times 194{,}580 / 2{,}598{,}960 \\approx 0.2995$.",
+        "generic": "Not quite right. Choose 1 of the 4 aces and 4 of the 48 other cards.",
+        "byKey": {
+          "binomial": "That is $\\text{Bin}(5, \\tfrac{1}{13})$, as if each card went back. Cards are dealt without replacement.",
+          "one-card": "$\\tfrac{4}{52}$ is the chance one card is an ace. The hand has five cards."
+        }
+      },
+      "explain": {
+        "text": "Choose the ace in $\\binom{4}{1} = 4$ ways and the rest in $\\binom{48}{4} = 194{,}580$ ways. Divide by $\\binom{52}{5} = 2{,}598{,}960$ hands. The chance is about 0.2995."
+      }
+    },
+    {
+      "id": "q-full-audit",
+      "difficulty": 2,
+      "prose": "The auditor now checks all 20 invoices, 4 of which have errors.",
+      "question": "Which is true of $X$, the number of errors she finds?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$X = 4$ always, so $\\text{Var}(X) = 0$",
+            "correct": true
+          },
+          {
+            "id": "binom",
+            "text": "$\\text{Var}(X) = 20 \\times 0.2 \\times 0.8 = 3.2$",
+            "why": "That is the binomial variance. Checking every invoice leaves nothing to chance: the factor $\\tfrac{N - n}{N - 1}$ is 0."
+          },
+          {
+            "id": "mean",
+            "text": "$E[X] = 4$, but $X$ still varies",
+            "why": "She sees every invoice, so she finds every error. $X$ cannot be anything but 4."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A full count is certain: $\\tfrac{20 - 20}{19} = 0$.",
+        "generic": "Not quite right. Ask what is left to chance when every invoice is checked."
+      },
+      "explain": {
+        "text": "With $n = N$ the sample is the whole population, so $X = K = 4$ every time. The finite-population factor $\\tfrac{N - n}{N - 1}$ is 0, giving variance 0. This is the edge case where nothing is random."
+      }
+    },
+    {
+      "id": "q-tech-mean",
+      "difficulty": 2,
+      "prose": "A screen picks 10 of the 100 stocks in an index at random. 20 of the 100 are in tech.",
+      "question": "What is the expected number of tech stocks picked?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "number",
+        "accept": "2: $10 \\times \\tfrac{20}{100}$",
+        "label": "Expected tech stocks",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "share",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$nK/N = 10 \\times 0.2 = 2$.",
+        "generic": "Not quite right. Use $E[X] = n \\times \\tfrac{K}{N}$.",
+        "byKey": {
+          "all": "20 is every tech stock in the index. Only 10 stocks are picked.",
+          "share": "0.2 is the chance one pick is tech. There are 10 picks."
+        }
+      },
+      "explain": {
+        "text": "Each pick, on its own, is tech with chance $\\tfrac{20}{100}$. Linearity adds 10 of these: $E[X] = 2$. No replacement is needed for the mean."
+      }
+    },
+    {
+      "id": "q-when-binomial",
+      "difficulty": 3,
+      "prose": "You want to use $\\text{Bin}(n, K/N)$ in place of the exact hypergeometric.",
+      "question": "In which case is that safest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Sampling 20 orders from 50,000 in a day's log",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "Sampling 8 bonds from a portfolio of 12",
+            "why": "8 of 12 is two thirds of the population. Each draw changes what is left a lot."
+          },
+          {
+            "id": "half",
+            "text": "Sampling 50 of 100 clients for a survey",
+            "why": "Half the population is drawn: the factor $\\tfrac{N - n}{N - 1}$ is about 0.5, far from 1."
+          },
+          {
+            "id": "cards",
+            "text": "Dealing 5 cards from one deck of 52",
+            "why": "5 of 52 is nearly 10%, and the binomial is visibly off there. 20 from 50,000 is far smaller."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "20 of 50,000 is a tiny share, so the draws are almost independent.",
+        "generic": "Not quite right. Compare the sample size with the population size in each case."
+      },
+      "explain": {
+        "text": "The binomial works when the sample is a small share of the population. Then $\\tfrac{N - n}{N - 1} \\approx 1$ and each draw barely changes the rest. 20 out of 50,000 is 0.04%."
+      }
+    }
+  ]
+}

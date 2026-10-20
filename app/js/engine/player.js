@@ -154,6 +154,8 @@
     if (spec.canvas) {
       if (mode === 'lesson' && (w || spec.steps)) cbar = add(cbarHTML(tapHint()));
       cvHost = add('<div class="lsn-canvas"></div>');
+      /* item 211: canvas.maxHeight (px) caps the drawing's height (it scales down, centred), so a widget below stays in view */
+      if (Number.isFinite(+spec.canvas.maxHeight) && +spec.canvas.maxHeight > 0) { cvHost.classList.add('has-maxh'); cvHost.style.setProperty('--cv-max-h', Math.max(120, +spec.canvas.maxHeight) + 'px'); }
       try {
         canvas = Z.canvas ? Z.canvas.create(cvHost, spec.canvas, { mode, rng, reducedMotion: Z.reducedMotion() }) : null;
         try { born = canvas && canvas.get ? JSON.parse(JSON.stringify(canvas.get() || {})) : null; } catch { born = null; } // item 115: the state as first drawn
@@ -178,12 +180,18 @@
           const cur = boundValue(canvas, c.bind, spec.canvas);
           return Number.isFinite(cur) ? Math.min(c.max ?? 1, Math.max(c.min ?? 0, cur)) : +(c.min ?? 0);
         };
+        /* item 213: scale "log" moves the slider in powers of ten (min and max positive): stops at each decade (1, 10, 100,
+           1000), or `perDecade: n` stops between them, rounded to 3 significant figures; the readout shows the value */
+        const isLog = (c) => c.scale === 'log' && +c.min > 0 && +c.max > 0;
+        const lg = (c) => ({ min: Math.log10(+c.min), max: Math.log10(+c.max), step: 1 / Math.max(1, Math.round(+c.perDecade || 1)) });
+        const toVal = (c, p) => (isLog(c) ? +Number(10 ** +p).toPrecision(3) : +p), toPos = (c, v) => (isLog(c) ? Math.log10(Math.max(+c.min, v)) : v);
         const vals = spec.canvas.controls.map(opening);
-        const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${c.min ?? 0}" max="${c.max ?? 1}" step="${c.step ?? 0.01}" value="${vals[i]}" data-i="${i}"><output class="tnum">${shown(c, vals[i])}</output></label>`).join('')}</div>`);
+        const rng3 = (c) => (isLog(c) ? lg(c) : { min: c.min ?? 0, max: c.max ?? 1, step: c.step ?? 0.01 });
+        const ctl = add(`<div class="lsn-controls">${spec.canvas.controls.map((c, i) => { const q = rng3(c); return `<label class="lsn-ctl"><span class="t-label">${G().inline(c.label || c.bind)}</span><input type="range" class="slider" min="${q.min}" max="${q.max}" step="${q.step}" value="${toPos(c, vals[i])}" data-i="${i}"><output class="tnum">${shown(c, vals[i])}</output></label>`; }).join('')}</div>`);
         spec.canvas.controls.forEach((c, i) => { if (c.start != null || c.value != null) drive(c, vals[i]); });
         ctl.addEventListener('input', (e) => {
           const r = e.target.closest('input'); if (!r || !canvas) return;
-          const c = spec.canvas.controls[+r.dataset.i], v = +r.value;
+          const c = spec.canvas.controls[+r.dataset.i], v = toVal(c, r.value);
           r.nextElementSibling.textContent = shown(c, v);
           drive(c, v);
         });
