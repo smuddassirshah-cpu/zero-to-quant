@@ -148,7 +148,7 @@
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(bot) - sy(top), class: 'cvb-selw' }));
           o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
           if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(bot) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
-          if (params.showValues && (v || sim)) vals.append(K.txt(x(i) + bw / 2, v < 0 ? sy(v) + 11 : y - 9, fmtV(v), { size: 12, cls: 'cvb-muted' }));
+          if (params.showValues && (v || sim)) vals.append(K.txt(x(i) + bw / 2, v < 0 ? Math.min(sy(v) + 11, H - mb - 8) : Math.min(y - 9, sy(base) - 9), fmtV(v), { size: 12, cls: 'cvb-muted', halo: true })); // item 263: never on the category labels
           R.tappable(o, c.id, c.label);
           bars.append(o);
         });

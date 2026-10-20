@@ -634,9 +634,19 @@
       }
       return out;
     };
+    /* Marching-squares segments chained into polylines by their shared end points */
+    const joinSegs = (segs) => {
+      const key = (p) => p[0].toFixed(7) + ',' + p[1].toFixed(7), ends = new Map();
+      segs.forEach((sg, i) => sg.forEach((p) => { const k = key(p); if (!ends.has(k)) ends.set(k, []); ends.get(k).push(i); }));
+      const used = new Array(segs.length).fill(false), lines = [];
+      const grow = (line, atEnd) => { for (;;) { const tip = atEnd ? line[line.length - 1] : line[0], nb = (ends.get(key(tip)) || []).find((j) => !used[j]); if (nb == null) return; used[nb] = true; const [a, b] = segs[nb], nxt = key(a) === key(tip) ? b : a; if (atEnd) line.push(nxt); else line.unshift(nxt); } };
+      segs.forEach((sg, i) => { if (used[i]) return; used[i] = true; const line = [sg[0], sg[1]]; grow(line, true); grow(line, false); lines.push(line); });
+      return lines;
+    };
     /* item 174: a value at a hole (0/0 and the like) is the limit from both sides */
     const valueAt = (f, x) => { const v = f(x); if (Number.isFinite(v)) return v; const h = Math.max(1e-9, (xr[1] - xr[0]) * 1e-7), a = f(x - h), b = f(x + h); return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) < 1e-4 * Math.max(1, Math.abs(a)) ? (a + b) / 2 : NaN; };
     const traces = new Map(); // item 188: trails of points with trace: true
+    const enabledFor = (R, id) => R.mode === 'drag' && Array.isArray(R.modeOpts && R.modeOpts.ids) && R.modeOpts.ids.includes(id);
     const pointXY = (view, ref) => {
       if (Array.isArray(ref)) return ref;
       const p = (view.points || []).find((q) => q.id === ref); return p ? [p.x, p.y] : [0, 0];
@@ -765,7 +775,7 @@
           const fd = cv.def, runs = cv.sample();
           let d = '';
           if (cv.kind === 'param') { const pts = runs[0].map(([x, y]) => [sx(x), sy(y)]); d = K.brokenPath(pts, size.h, py1, py0); fixed.push(...K.lineBoxes(pts.filter((p) => p[1] >= py1 && p[1] <= py0))); }
-          else d = runs.map(([a, b]) => `M${sx(a[0]).toFixed(1)},${sy(a[1]).toFixed(1)}L${sx(b[0]).toFixed(1)},${sy(b[1]).toFixed(1)}`).join('');
+          else d = joinSegs(runs).map((line) => 'M' + line.map(([x, y]) => `${sx(x).toFixed(1)},${sy(y).toFixed(1)}`).join('L')).join(''); // item 257: joined, so dashes run on
           const o = K.obj(id, 'cvb-fn', fd.slot);
           o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (fd.dashed ? ' cvb-dash' : ''), 'stroke-linecap': 'round' }));
           plot.append(o);
@@ -907,7 +917,8 @@
           traces.set(p.id, tr);
           if (tr.length > 1) { const pts = (p.trace === 'x' ? tr.slice().sort((a, b) => a[0] - b[0]) : tr).map(([a, b]) => [sx(a), sy(b)]); const o = K.obj(p.id + '-trace', 'cvb-trace', p.traceColour || p.colour || 'manip'); o.append(svg('path', { d: K.brokenPath(pts, size.h, py1, py0), class: 'cvb-ln' })); plot.append(o); }
         }
-        for (const p of view.points || []) {
+        for (const p0 of view.points || []) {
+          const p = enabledFor(R, p0.id) && !p0.drag ? { ...p0, drag: true } : p0; // item 258: a point the drag-point widget names is draggable without drag: true
           const x = sx(p.x), y = sy(p.y);
           if (!Number.isFinite(x) || !Number.isFinite(y) || x < px0 - 4 || x > px1 + 4 || y < py1 - 4 || y > py0 + 4) continue;
           marks.push({ x0: x - 8, x1: x + 8, y0: y - 8, y1: y + 8 });
@@ -922,7 +933,7 @@
           over.append(o);
           if (p.label) {
             const pos = p.labelPos || 'ne', dx = pos.includes('e') ? 12 : pos.includes('w') ? -12 : 0, dy = pos.includes('n') ? -13 : pos.includes('s') ? 14 : 0;
-            labels.push({ x: x + dx, y: y + dy, text: String(p.label).replace('{x}', K.fmt(p.x, 2)).replace('{y}', K.fmt(p.y, 2)), anchor: dx > 0 ? 'start' : dx < 0 ? 'end' : 'middle', id: p.id });
+            labels.push({ x: x + dx, y: y + dy, text: String(p.label).split(/(\$[^$]*\$)/).map((part) => (part.startsWith('$') ? part : part.replace('{x}', K.fmt(p.x, 2)).replace('{y}', K.fmt(p.y, 2)))).join(''), /* item 239: {x} and {y} are filled outside maths only, so $\mathbf{x}$ stays bold x */ anchor: dx > 0 ? 'start' : dx < 0 ? 'end' : 'middle', id: p.id });
           }
         }
 
@@ -942,7 +953,7 @@
         start(id, p, R) {
           if (id.startsWith('k') && R.active('sketch')) return { sketch: +id.slice(1) };
           const pt = (R.state.points || []).find((q) => q.id === id);
-          return pt && pt.drag && R.active() ? { id } : null;
+          return pt && (pt.drag || enabledFor(R, id)) && R.active() ? { id } : null;
         },
         move(info, p, R, end) {
           const { sx, sy } = geom(R);
@@ -986,7 +997,7 @@
         evaluate: (id, x) => { const f = evaluator(R.state)[id]; return f ? valueAt(f, x) : NaN; },
         clearTrace: () => { traces.clear(); R.redraw(); },
         /* Shared drag contract: positions of the movable points, and placing one (reveal, reset, resume). */
-        points: () => Object.fromEntries((R.state.points || []).filter((q) => q.drag).map((q) => [q.id, { x: q.x, y: q.y }])),
+        points: () => Object.fromEntries((R.state.points || []).filter((q) => q.drag || enabledFor(R, q.id)).map((q) => [q.id, { x: q.x, y: q.y }])),
         place: (id, pos, opts = {}) => { const [x, y] = Array.isArray(pos) ? pos : [pos, (R.state.points || []).find((q) => q.id === id)?.y ?? 0]; return R.inst.set({ points: { [id]: { x, y } } }, opts); },
       }),
     };

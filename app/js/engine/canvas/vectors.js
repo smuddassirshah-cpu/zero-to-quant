@@ -20,7 +20,7 @@
       kind: 'vectors', aria: params.aria || 'Vectors on a plane',
       modes: ['drag', 'slider', 'tap'],
       size: () => ({ w: W, h: H }),
-      listKeys: ['vectors', 'points'],
+      listKeys: ['vectors', 'points', 'segments', 'angles'],
       init: () => ({ vectors: base.map((v) => ({ ...v })), points: (params.points || []).map((p, i) => ({ ...p, id: p.id || 'p' + i })), show: [], scale: Object.fromEntries(base.map((v) => [v.id, 1])), drag: null, basis: null, highlight: [], selected: [] }),
       render(view, R) {
         /* items 245, 253: every vector gets a colour slot, patched-in ones too; unset ones take the first slots no other
@@ -103,6 +103,33 @@
             labels.push({ x: sx(p[0]) + 8, y: sy(p[1]) + 16, text: view.projLabel || params.projLabel || 'proj', anchor: 'start' });
           }
         }
+        /* item 262: lines: [ids] draws each vector's span as its own band (several eigen-lines at once) */
+        for (const id of [].concat(view.lines || [])) {
+          const u = byId[id]; if (!u || !(u.v[0] || u.v[1])) continue;
+          const d = u.v, L = (xr[1] - xr[0] + yr[1] - yr[0]) * 2, p = `M${sx(-d[0] * L)},${sy(-d[1] * L)}L${sx(d[0] * L)},${sy(d[1] * L)}`, o = K.obj('line-' + id, '', u.slot);
+          o.append(svg('path', { d: p, class: 'cvb-ln', style: 'stroke-width: 14px; opacity: 0.14' }), svg('path', { d: p, class: 'cvb-ln thin cvb-dash' })); plot.append(o);
+        }
+        /* item 262: plain segments without arrowheads: segments: [{ id, from: [x, y] | vectorId, to: [x, y] | vectorId, dashed, colour, label }] */
+        const ptOf = (r) => (typeof r === 'string' ? (byId[r] ? add(tail(byId[r]), head(byId[r])) : (view.points || []).find((q) => q.id === r) ? (() => { const q = (view.points || []).find((qq) => qq.id === r); return [q.x, q.y]; })() : [0, 0]) : r);
+        for (const sg of view.segments || []) {
+          const a = ptOf(sg.from), b = ptOf(sg.to); if (!a || !b) continue;
+          const d = `M${sx(a[0])},${sy(a[1])}L${sx(b[0])},${sy(b[1])}`, o = K.obj(sg.id || 'seg', '', sg.colour || 'ink');
+          o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (sg.dashed ? ' thin cvb-dash' : '') })); plot.append(o);
+          if (sg.label) labels.push({ x: (sx(a[0]) + sx(b[0])) / 2 + 8, y: (sy(a[1]) + sy(b[1])) / 2 - 10, text: sg.label, anchor: 'start' });
+        }
+        /* item 225: angles: [{ id, a, b, label, right, radius }] marks the angle between two arrows at a's tail */
+        for (const an of view.angles || []) {
+          const A = byId[an.a], B = byId[an.b]; if (!A || !B) continue;
+          const at = tail(A), da = head(A), db = head(B);
+          const px = (v) => [v[0] * (sx(1) - sx(0)), -v[1] * (sy(0) - sy(1))];
+          const pa = px(da), pb = px(db), a1 = Math.atan2(pa[1], pa[0]), a2 = Math.atan2(pb[1], pb[0]);
+          let dA = a2 - a1; while (dA > Math.PI) dA -= 2 * Math.PI; while (dA < -Math.PI) dA += 2 * Math.PI;
+          const cx = sx(at[0]), cy = sy(at[1]), rr = an.radius || 24, o = K.obj(an.id || 'angle', 'cvb-angle', an.colour || 'ink');
+          if (an.right) { const u1 = [Math.cos(a1), Math.sin(a1)], u2 = [Math.cos(a2), Math.sin(a2)], q = 12; o.append(svg('path', { d: `M${cx + u1[0] * q},${cy + u1[1] * q}L${cx + (u1[0] + u2[0]) * q},${cy + (u1[1] + u2[1]) * q}L${cx + u2[0] * q},${cy + u2[1] * q}`, class: 'cvb-ra' })); }
+          else o.append(svg('path', { d: `M${cx + rr * Math.cos(a1)},${cy + rr * Math.sin(a1)}A${rr},${rr} 0 0 ${dA > 0 ? 1 : 0} ${cx + rr * Math.cos(a1 + dA)},${cy + rr * Math.sin(a1 + dA)}`, class: 'cvb-ln thin' }));
+          over.append(o);
+          if (an.label) { const mid = a1 + dA / 2, lr = rr + 14; labels.push({ x: cx + lr * Math.cos(mid), y: cy + lr * Math.sin(mid), text: an.label, anchor: 'middle' }); }
+        }
         /* the vectors themselves; scaled ones leave a dashed ghost of the original */
         const dragSet = view.drag ? new Set([].concat(view.drag)) : null;
         for (const v of vs) {
@@ -110,7 +137,7 @@
           const t = tail(v), h = add(t, head(v)), k = (view.scale && view.scale[v.id]) ?? 1;
           if (k !== 1) { const og = add(t, v.v); plot.append(svg('path', { d: `M${sx(t[0])},${sy(t[1])}L${sx(og[0])},${sy(og[1])}`, class: 'cvb-ln thin cvb-dash ' + K.colourCls(v.slot) })); }
           const o = K.obj(v.id, '', v.slot);
-          o.append(K.washPath(`M${sx(t[0])},${sy(t[1])}L${sx(h[0])},${sy(h[1])}`), K.arrow(sx(t[0]), sy(t[1]), sx(h[0]), sy(h[1]), { cls: 'cvb-ln bold' }));
+          o.append(K.washPath(`M${sx(t[0])},${sy(t[1])}L${sx(h[0])},${sy(h[1])}`), v.head === false ? svg('path', { d: `M${sx(t[0])},${sy(t[1])}L${sx(h[0])},${sy(h[1])}`, class: 'cvb-ln bold' + (v.dashed ? ' cvb-dash' : '') }) : K.arrow(sx(t[0]), sy(t[1]), sx(h[0]), sy(h[1]), { cls: 'cvb-ln bold' + (v.dashed ? ' cvb-dash' : '') })); // head: false is a plain segment (item 262)
           /* tap mode (item 107): the whole arrow is the target, through a wide transparent stroke */
           if (R.mode === 'tap') { o.append(svg('path', { d: `M${sx(t[0])},${sy(t[1])}L${sx(h[0])},${sy(h[1])}`, class: 'cvb-tapbox cv-body', style: 'stroke: transparent; stroke-width: 22px; fill: none' })); R.tappable(o, v.id, `Vector ${String(v.label || v.id).replace(/\$|\\[a-zA-Z]+|[{}]/g, '')}`); }
           plot.append(o);
@@ -151,12 +178,23 @@
         key(id, dx, dy, R) { const v = (R.state.vectors || []).find((q) => q.id === id); if (!v) return; const st = params.snap || 0.5; const k = (R.state.scale && R.state.scale[id]) ?? 1; setHead(R, id, v.v[0] * k + dx * st, v.v[1] * k + dy * st, true); },
       },
       methods: (R) => ({
+        /* item 249: controls bind m11, m12, m21, m22 (state.matrix) or angle, shear, scale (state.transform) */
+        setParam: (name, v) => {
+          const n = String(name), mm = n.match(/^m([12])([12])$/);
+          if (mm) { const cur = (R.state.matrix || [[1, 0], [0, 1]]).map((r) => r.slice()); cur[+mm[1] - 1][+mm[2] - 1] = +v; R.inst.set({ matrix: cur }, { instant: true }); return; }
+          if (['angle', 'shear', 'scale'].includes(n)) { R.inst.set({ transform: { ...(R.state.transform || {}), [n]: +v } }, { instant: true }); return; }
+          R.inst.set({ params: { [n]: +v } }, { instant: true });
+        },
+        getParam: (name) => { const n = String(name), mm = n.match(/^m([12])([12])$/); if (mm) return ((R.state.matrix || [[1, 0], [0, 1]])[+mm[1] - 1] || [])[+mm[2] - 1]; if (['angle', 'shear', 'scale'].includes(n)) return (R.state.transform || {})[n] ?? (n === 'scale' ? 1 : 0); return (R.state.params || {})[n]; },
         points: () => Object.fromEntries((R.state.vectors || []).map((v) => [v.id, { x: v.v[0], y: v.v[1] }])),
         place: (id, pos, opts = {}) => R.inst.set({ vectors: { [id]: { v: [pos[0], pos[1]] } } }, opts),
       }),
     };
     const setHead = (R, id, x, y, end) => {
       x = K.clamp(x, xr[0], xr[1]); y = K.clamp(y, yr[0], yr[1]);
+      /* items 227, 262: lockTo: "u" (a vector id) or [dx, dy] holds the dragged head to that line through the origin */
+      const me = (R.state.vectors || []).find((q) => q.id === id), lk = me && me.lockTo;
+      if (lk) { const dir = Array.isArray(lk) ? lk : ((R.state.vectors || []).find((q) => q.id === lk) || {}).v; if (dir && (dir[0] || dir[1])) { const t = (x * dir[0] + y * dir[1]) / (dir[0] * dir[0] + dir[1] * dir[1]); x = t * dir[0]; y = t * dir[1]; } }
       if (params.snap) { x = K.snapTo(x, params.snap); y = K.snapTo(y, params.snap); }
       const k = (R.state.scale && R.state.scale[id]) ?? 1;
       const v = [K.round(x / k, 6), K.round(y / k, 6)];

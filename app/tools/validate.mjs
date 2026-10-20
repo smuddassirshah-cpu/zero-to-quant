@@ -29,11 +29,11 @@ const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(f
 
 /* ---------- Vocabulary ---------- */
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform']);
+const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'sliders', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform']);
 const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console']);
 const SCREEN_TYPES = new Set(['title', 'explore', 'problem', 'ladder', 'demonstrate', 'trap', 'generalise', 'derive', 'transfer']);
 const GRADED = new Set(['problem', 'ladder', 'trap', 'transfer', 'derive']);
-const CANVAS_BOUND = new Set(['tap-regions', 'drag-point', 'sketch', 'balance', 'slider']);
+const CANVAS_BOUND = new Set(['tap-regions', 'drag-point', 'sketch', 'balance', 'slider', 'sliders']);
 const RUNGS = ['nudge', 'point', 'step'];
 const TRACKS = ['maths', 'prob', 'code', 'fin', 'ml', 'speed'];
 const AMERICAN = [
@@ -249,12 +249,28 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       if (w.answer != null && typeof w.min === 'number' && typeof w.max === 'number' && (w.answer < w.min || w.answer > w.max)) err(file, `${where}.answer`, 'answer outside min..max');
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       break;
+    case 'sliders': {
+      const ids = (Array.isArray(w.sliders) ? w.sliders : []).map((x, i) => String((x && (x.id || x.bind)) || 's' + i));
+      if (ids.length < 2) err(file, `${where}.sliders`, 'at least two sliders');
+      (Array.isArray(w.sliders) ? w.sliders : []).forEach((x, i) => { if (!isObj(x) || typeof x.min !== 'number' || typeof x.max !== 'number') err(file, `${where}.sliders[${i}]`, 'each slider needs min and max'); });
+      if (!isObj(w.answer) && typeof w.check !== 'string') err(file, `${where}`, 'sliders need answer: { id: value } or check with value');
+      if (typeof w.check === 'string' && !isObj(w.show)) err(file, `${where}.show`, 'a check needs show: { id: value } for Show solution and the playthrough');
+      if (isObj(w.answer)) Object.keys(w.answer).forEach(k => { if (!ids.includes(k)) err(file, `${where}.answer.${k}`, `no slider "${k}"`); });
+      ids.forEach(k => keys.add(k)); keys.add('off'); (w.wrong || []).forEach(x => x && x.id && keys.add(x.id));
+      break;
+    }
     case 'drag-point':
       if (!Array.isArray(w.points) || !w.points.length) err(file, `${where}.points`, 'at least one point');
       (w.points || []).forEach((p, i) => {
         if (!p.id) err(file, `${where}.points[${i}].id`, 'required');
         const oneD = canvas && (canvas.kind === 'number-line' || canvas.kind === 'circle');
         if (oneD && typeof p.target === 'number') { /* a bare number: x on a number line, the angle on a circle */ }
+        else if (isObj(p.target) && (p.target.line != null || p.target.expr != null)) { /* item 254: a line or an expression target */
+          const pt2 = (q) => Array.isArray(q) && q.length === 2 && q.every(n => typeof n === 'number');
+          if (p.target.line != null && !(Array.isArray(p.target.line) && p.target.line.length === 2 && p.target.line.every(pt2))) err(file, `${where}.points[${i}].target.line`, 'line is [[x1, y1], [x2, y2]]');
+          if (p.target.expr != null) { if (typeof p.target.expr !== 'string') err(file, `${where}.points[${i}].target.expr`, 'expr is a formula in x and y'); if (!pt2(p.target.show)) err(file, `${where}.points[${i}].target.show`, 'an expression target needs show: [x, y], a point that satisfies it (Show solution and the playthrough put the point there)'); }
+          if (p.target.show != null && !pt2(p.target.show)) err(file, `${where}.points[${i}].target.show`, 'show is [x, y]');
+        }
         else if (isObj(p.target)) { /* { on: f, x } on a plane: the point of function f at x */
           const fns = new Set(((canvas && canvas.params || {}).functions || []).filter(isObj).map(f => f.id));
           if (!canvas || canvas.kind !== 'plane') err(file, `${where}.points[${i}].target`, '{ "on", "x" } targets need a plane canvas');

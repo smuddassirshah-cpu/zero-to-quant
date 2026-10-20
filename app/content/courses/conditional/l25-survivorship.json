@@ -1,0 +1,1361 @@
+{
+  "id": "l25-survivorship",
+  "course": "conditional",
+  "title": "Survivorship bias",
+  "minutes": 13,
+  "objectives": [
+    "Condition on survival and see how it inflates the average fund return",
+    "Rebuild the full average from survivors and failures",
+    "Spot survivorship in backtests and track records"
+  ],
+  "skills": [
+    "cond-traps",
+    "cond-mult"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "A database lists the equity funds that launched ten years ago and are still open today. Their average return has been 7% a year.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Fund",
+            "Return (% a year)"
+          ],
+          "rows": [
+            [
+              "Fund 1",
+              "8"
+            ],
+            [
+              "Fund 2",
+              "6"
+            ],
+            [
+              "Fund 4",
+              "9"
+            ],
+            [
+              "Fund 5",
+              "5"
+            ],
+            [
+              "Fund 7",
+              "7"
+            ],
+            [
+              "Fund 8",
+              "4"
+            ],
+            [
+              "Fund 10",
+              "10"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Average of the seven: 7% a year"
+        }
+      },
+      "question": "Is 7% a year a fair estimate of the average return of all funds that launched ten years ago?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "high",
+            "text": "Probably too high",
+            "correct": true
+          },
+          {
+            "id": "fair",
+            "text": "Fair: it averages every fund in the database",
+            "why": "The database holds only funds still open. Funds that did badly may have closed and dropped out."
+          },
+          {
+            "id": "low",
+            "text": "Probably too low",
+            "why": "Funds that close are more often the losers. Leaving them out pushes the average up, not down."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which funds launched ten years ago but are not in the database?"
+        },
+        {
+          "rung": "point",
+          "text": "A fund that closed is no longer listed.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Funds tend to close after poor returns, so the missing funds are mostly losers."
+        }
+      ],
+      "feedback": {
+        "correct": "The database only shows the funds that survived.",
+        "generic": "Not quite right. Think about the funds that launched but are no longer listed."
+      },
+      "explain": {
+        "text": "Only funds still open are listed. Funds usually close after poor returns, so the missing funds drag the true average down. The next screen shows all ten that launched."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Here are all ten funds that launched ten years ago, with their returns up to today or to the day they closed.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Fund",
+            "Return (% a year)",
+            "Today"
+          ],
+          "rows": [
+            [
+              "Fund 1",
+              "8",
+              "Open"
+            ],
+            [
+              "Fund 2",
+              "6",
+              "Open"
+            ],
+            [
+              "Fund 3",
+              "-12",
+              "Closed"
+            ],
+            [
+              "Fund 4",
+              "9",
+              "Open"
+            ],
+            [
+              "Fund 5",
+              "5",
+              "Open"
+            ],
+            [
+              "Fund 6",
+              "-8",
+              "Closed"
+            ],
+            [
+              "Fund 7",
+              "7",
+              "Open"
+            ],
+            [
+              "Fund 8",
+              "4",
+              "Open"
+            ],
+            [
+              "Fund 9",
+              "-5",
+              "Closed"
+            ],
+            [
+              "Fund 10",
+              "10",
+              "Open"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ],
+          "tap": "rows"
+        },
+        "state": {}
+      },
+      "question": "Tap every fund with a negative return.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r2",
+          "r5",
+          "r8"
+        ],
+        "countWord": "funds",
+        "wrong": [
+          {
+            "id": "low",
+            "set": [
+              "r2",
+              "r5",
+              "r7",
+              "r8"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A negative return has a minus sign."
+        },
+        {
+          "rung": "point",
+          "text": "Three funds lost money.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Funds 3, 6 and 9 have negative returns."
+        }
+      ],
+      "feedback": {
+        "correct": "The three losers are exactly the three funds that closed.",
+        "generic": "Not quite right. Tap only the rows with a minus sign in the return column.",
+        "byKey": {
+          "low": "Fund 8 returned 4% a year: low, but positive. Tap only the negative returns.",
+          "r7": "Fund 8 returned 4% a year, which is positive."
+        }
+      },
+      "explain": {
+        "text": "You tapped Funds 3, 6 and 9, and every one of them has closed. Closure was not random: it picked out the losers. So a database of open funds shows the winners only.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          },
+          "shade": [
+            "r2",
+            "r5",
+            "r8"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Today’s database keeps only the open funds, so we condition on survival.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Fund",
+            "Return (% a year)",
+            "Today"
+          ],
+          "rows": [
+            [
+              "Fund 1",
+              "8",
+              "Open"
+            ],
+            [
+              "Fund 2",
+              "6",
+              "Open"
+            ],
+            [
+              "Fund 3",
+              "-12",
+              "Closed"
+            ],
+            [
+              "Fund 4",
+              "9",
+              "Open"
+            ],
+            [
+              "Fund 5",
+              "5",
+              "Open"
+            ],
+            [
+              "Fund 6",
+              "-8",
+              "Closed"
+            ],
+            [
+              "Fund 7",
+              "7",
+              "Open"
+            ],
+            [
+              "Fund 8",
+              "4",
+              "Open"
+            ],
+            [
+              "Fund 9",
+              "-5",
+              "Closed"
+            ],
+            [
+              "Fund 10",
+              "10",
+              "Open"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {
+          "dim": [
+            "r2",
+            "r5",
+            "r8"
+          ]
+        }
+      },
+      "question": "What is the average return of the open funds, in % a year? This is $E[R \\mid \\text{survived}]$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.07,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "for example 3.5",
+        "accept": "7 exactly: $\\tfrac{49}{7}$",
+        "unit": "%",
+        "label": "Average return of open funds",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 0.024,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "over-ten",
+            "value": 0.049,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the returns of the seven open funds."
+        },
+        {
+          "rung": "point",
+          "text": "The open funds are the rows still at full strength.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "8 + 6 + 9 + 5 + 7 + 4 + 10 = 49. Divide by 7."
+        }
+      ],
+      "feedback": {
+        "correct": "49 over 7 funds is 7% a year.",
+        "generic": "Not quite right. Add the seven open funds’ returns and divide by 7.",
+        "byKey": {
+          "all": "That is the average of all ten funds. Here we want only the seven still open.",
+          "over-ten": "You divided the survivors’ total, 49, by 10. Only seven funds are open, so divide by 7."
+        }
+      },
+      "explain": {
+        "text": "The seven open funds add up to 49, so $E[R \\mid \\text{survived}] = 7$% a year. That is what the database shows. Now we put the closed funds back.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now put the three closed funds back in. They lost 12%, 8% and 5% a year before closing.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Fund",
+            "Return (% a year)",
+            "Today"
+          ],
+          "rows": [
+            [
+              "Fund 1",
+              "8",
+              "Open"
+            ],
+            [
+              "Fund 2",
+              "6",
+              "Open"
+            ],
+            [
+              "Fund 3",
+              "-12",
+              "Closed"
+            ],
+            [
+              "Fund 4",
+              "9",
+              "Open"
+            ],
+            [
+              "Fund 5",
+              "5",
+              "Open"
+            ],
+            [
+              "Fund 6",
+              "-8",
+              "Closed"
+            ],
+            [
+              "Fund 7",
+              "7",
+              "Open"
+            ],
+            [
+              "Fund 8",
+              "4",
+              "Open"
+            ],
+            [
+              "Fund 9",
+              "-5",
+              "Closed"
+            ],
+            [
+              "Fund 10",
+              "10",
+              "Open"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {
+          "shade": [
+            "r2",
+            "r5",
+            "r8"
+          ]
+        }
+      },
+      "question": "What is the average return of all ten funds, in % a year? This is $E[R]$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.024,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "for example 3.5",
+        "accept": "2.4 exactly: $\\tfrac{49 - 25}{10}$",
+        "unit": "%",
+        "label": "Average return of all ten funds",
+        "wrong": [
+          {
+            "id": "surv",
+            "value": 0.07,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "dropped",
+            "value": 0.049,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "sign",
+            "value": 0.074,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add all ten returns, including the negative ones."
+        },
+        {
+          "rung": "point",
+          "text": "The closed funds add up to −25.",
+          "highlight": [
+            "r2",
+            "r5",
+            "r8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "49 + (−25) = 24. Divide by 10."
+        }
+      ],
+      "feedback": {
+        "correct": "All ten funds averaged 2.4% a year.",
+        "generic": "Not quite right. Add the ten returns, negatives included, then divide by 10.",
+        "byKey": {
+          "surv": "That is the survivors’ average again. Put the three closed funds back in.",
+          "dropped": "You divided by 10 but left out the closed funds’ losses. Add −12, −8 and −5 to the total.",
+          "sign": "You added the losses as gains. The closed funds returned −12, −8 and −5."
+        }
+      },
+      "explain": {
+        "text": "All ten add up to $49 - 25 = 24$, so $E[R] = 2.4$% a year. The survivors’ 7% overstates it by 4.6 points. Measuring only what survived is **survivorship bias**.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Split the ten funds by what happened to them: 7 survived and 3 closed.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Fund",
+            "Return (% a year)",
+            "Today"
+          ],
+          "rows": [
+            [
+              "Fund 1",
+              "8",
+              "Open"
+            ],
+            [
+              "Fund 2",
+              "6",
+              "Open"
+            ],
+            [
+              "Fund 3",
+              "-12",
+              "Closed"
+            ],
+            [
+              "Fund 4",
+              "9",
+              "Open"
+            ],
+            [
+              "Fund 5",
+              "5",
+              "Open"
+            ],
+            [
+              "Fund 6",
+              "-8",
+              "Closed"
+            ],
+            [
+              "Fund 7",
+              "7",
+              "Open"
+            ],
+            [
+              "Fund 8",
+              "4",
+              "Open"
+            ],
+            [
+              "Fund 9",
+              "-5",
+              "Closed"
+            ],
+            [
+              "Fund 10",
+              "10",
+              "Open"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {
+          "shade": [
+            "r2",
+            "r5",
+            "r8"
+          ]
+        }
+      },
+      "question": "What is the average return of the closed funds, $E[R \\mid \\text{closed}]$, in % a year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0833,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "for example −2.5",
+        "accept": "$-\\tfrac{25}{3} \\approx -8.33$",
+        "unit": "%",
+        "label": "Average return of closed funds",
+        "wrong": [
+          {
+            "id": "pos",
+            "value": 0.0833,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "ten",
+            "value": -0.025,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the three closed funds’ returns."
+        },
+        {
+          "rung": "point",
+          "text": "−12, −8 and −5.",
+          "highlight": [
+            "r2",
+            "r5",
+            "r8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "−25 over 3 funds."
+        }
+      ],
+      "feedback": {
+        "correct": "The closed funds averaged about −8.33% a year.",
+        "generic": "Not quite right. Average the three closed funds only.",
+        "byKey": {
+          "pos": "The closed funds lost money. Keep the minus sign.",
+          "ten": "You divided −25 by all ten funds. Divide by the three that closed."
+        }
+      },
+      "explain": {
+        "text": "$E[R \\mid \\text{closed}] = -\\tfrac{25}{3} \\approx -8.33$. Weighting the two groups by their shares rebuilds the whole: $0.7 \\times 7 + 0.3 \\times (-8.33) = 2.4$. That is total probability, applied to averages."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "prose": "Edge case. Suppose instead three of the ten funds closed because their managers retired. Which three was pure chance, unrelated to returns.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Fund",
+            "Return (% a year)"
+          ],
+          "rows": [
+            [
+              "Fund 1",
+              "8"
+            ],
+            [
+              "Fund 2",
+              "6"
+            ],
+            [
+              "Fund 3",
+              "-12"
+            ],
+            [
+              "Fund 4",
+              "9"
+            ],
+            [
+              "Fund 5",
+              "5"
+            ],
+            [
+              "Fund 6",
+              "-8"
+            ],
+            [
+              "Fund 7",
+              "7"
+            ],
+            [
+              "Fund 8",
+              "4"
+            ],
+            [
+              "Fund 9",
+              "-5"
+            ],
+            [
+              "Fund 10",
+              "10"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "On average, how does the survivors’ average compare with the 2.4% of all ten?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "About the same: no bias on average",
+            "correct": true
+          },
+          {
+            "id": "above",
+            "text": "Above 2.4%, as before",
+            "why": "That needs closures to pick out the losers. Random closures remove good and bad funds alike."
+          },
+          {
+            "id": "below",
+            "text": "Below 2.4%",
+            "why": "Random closures are as likely to remove a winner as a loser. Nothing pushes the average down."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does a random closure prefer good funds or bad ones?"
+        },
+        {
+          "rung": "point",
+          "text": "Each fund is equally likely to close.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "If closure is independent of returns, $E[R \\mid \\text{survived}] = E[R]$."
+        }
+      ],
+      "feedback": {
+        "correct": "Random closures leave the survivors’ average unbiased.",
+        "generic": "Not quite right. Ask whether the closures favour any kind of fund."
+      },
+      "explain": {
+        "text": "If closure is independent of returns, survival tells you nothing about $R$, so $E[R \\mid \\text{survived}] = E[R] = 2.4$% on average. Any one sample can still miss by luck. The bias comes from closure that depends on returns, not from closure itself."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A fund family’s brochure says: “Every one of our funds has beaten the 3% cash rate over ten years.” It lists only the seven open funds.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Fund",
+            "Return (% a year)",
+            "Today"
+          ],
+          "rows": [
+            [
+              "Fund 1",
+              "8",
+              "Open"
+            ],
+            [
+              "Fund 2",
+              "6",
+              "Open"
+            ],
+            [
+              "Fund 3",
+              "-12",
+              "Closed"
+            ],
+            [
+              "Fund 4",
+              "9",
+              "Open"
+            ],
+            [
+              "Fund 5",
+              "5",
+              "Open"
+            ],
+            [
+              "Fund 6",
+              "-8",
+              "Closed"
+            ],
+            [
+              "Fund 7",
+              "7",
+              "Open"
+            ],
+            [
+              "Fund 8",
+              "4",
+              "Open"
+            ],
+            [
+              "Fund 9",
+              "-5",
+              "Closed"
+            ],
+            [
+              "Fund 10",
+              "10",
+              "Open"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What share of the ten funds that launched beat 3% a year? Give a percentage.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.7,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "for example 45",
+        "accept": "70%: 7 of the 10 funds",
+        "unit": "%",
+        "label": "Share of funds that beat cash",
+        "wrong": [
+          {
+            "id": "survivors",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "three",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the funds above 3% among all ten."
+        },
+        {
+          "rung": "point",
+          "text": "None of the closed funds beat cash.",
+          "highlight": [
+            "r2",
+            "r5",
+            "r8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "All 7 open funds beat 3%; none of the 3 closed funds did. 7 of 10."
+        }
+      ],
+      "feedback": {
+        "correct": "7 of the 10 funds beat cash, not all of them.",
+        "generic": "Not quite right. Use all ten funds as the bottom of the fraction.",
+        "byKey": {
+          "survivors": "You used the surviving funds as the sample: 7 of 7. The brochure dropped the three closed funds, none of which beat cash.",
+          "three": "That is the share that did not beat cash. The question asks for the share that did."
+        }
+      },
+      "explain": {
+        "text": "All seven open funds beat 3%, so $P(\\text{beat cash} \\mid \\text{survived}) = 1$. But across all ten launches it is $\\tfrac{7}{10}$. The brochure is true and misleading: it conditions on survival without saying so.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              5,
+              8
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Why do survivors overstate? Let $S$ be survival and $R$ a fund’s return. Show how far $E[R \\mid S]$ sits from $E[R]$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "total",
+            "text": "$E[R] = P(S)\\,E[R \\mid S] + P(S^c)\\,E[R \\mid S^c]$: split all funds into survivors and closed funds"
+          },
+          {
+            "id": "sub",
+            "text": "$E[R] - E[R \\mid S] = P(S^c)\\big(E[R \\mid S^c] - E[R \\mid S]\\big)$: subtract $E[R \\mid S]$, using $P(S) = 1 - P(S^c)$"
+          },
+          {
+            "id": "nums",
+            "text": "$= 0.3 \\times (-8.33 - 7) \\approx -4.6$ points for our ten funds"
+          },
+          {
+            "id": "read",
+            "text": "So survivors overstate whenever closed funds did worse, and not at all when $E[R \\mid S^c] = E[R \\mid S]$"
+          }
+        ],
+        "answer": [
+          "total",
+          "sub",
+          "nums",
+          "read"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start by splitting the whole into survivors and closed funds."
+        },
+        {
+          "rung": "point",
+          "text": "The gap line comes from subtracting $E[R \\mid S]$ from the split."
+        },
+        {
+          "rung": "step",
+          "text": "Split, subtract, put in the numbers, then read off when the gap is zero."
+        }
+      ],
+      "feedback": {
+        "correct": "The bias is the closure rate times how much worse the closed funds did.",
+        "generic": "Not quite right. Start from the split of all funds into two groups.",
+        "byKey": {
+          "sub": "The subtraction works on the split, so the split comes first.",
+          "nums": "The numbers go into the gap formula, so that line comes after it."
+        }
+      },
+      "explain": {
+        "text": "The gap is $P(S^c)$ times the difference between closed and surviving funds. Here that is $0.3 \\times (-15.33) = -4.6$ points. If closure is unrelated to returns the difference is zero, and so is the bias."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "You backtest buying the index from ten years ago. Of its 100 stocks then, 80 are still in it (they returned 9% a year) and 20 were dropped after falling (−6% a year). Today’s members include 20 newcomers that rose into the index (20% a year).",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Group",
+            "Stocks",
+            "Return (% a year)"
+          ],
+          "rows": [
+            [
+              "Stayed in the index",
+              "80",
+              "9"
+            ],
+            [
+              "Dropped from the index",
+              "20",
+              "−6"
+            ],
+            [
+              "Joined later",
+              "20",
+              "20"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "An honest backtest buys the stocks in the index ten years ago. What average return does it give, in % a year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.06,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "for example 3.5",
+        "accept": "$0.8 \\times 9 + 0.2 \\times (-6) = 6$",
+        "unit": "%",
+        "label": "Average return of the original members",
+        "wrong": [
+          {
+            "id": "today",
+            "value": 0.112,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "stayers",
+            "value": 0.09,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "all",
+            "value": 0.0767,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which stocks could you have bought ten years ago?"
+        },
+        {
+          "rung": "point",
+          "text": "Ten years ago you held the 80 stayers and the 20 that were dropped.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.8 \\times 9 + 0.2 \\times (-6)$."
+        }
+      ],
+      "feedback": {
+        "correct": "The original members returned 6% a year.",
+        "generic": "Not quite right. Use the 100 stocks that were in the index ten years ago.",
+        "byKey": {
+          "today": "That is today’s members: the 80 stayers plus the 20 newcomers. Ten years ago you could not know which stocks would join. That is look-ahead through survivorship.",
+          "stayers": "You dropped the 20 stocks that fell out of the index. You would have held them too.",
+          "all": "You averaged all 120 stocks. The newcomers were not in the index ten years ago."
+        }
+      },
+      "explain": {
+        "text": "The original 100 returned $0.8 \\times 9 + 0.2 \\times (-6) = 6$% a year. A backtest on today’s members gives $0.8 \\times 9 + 0.2 \\times 20 = 11.2$%, nearly double. Using today’s constituents is look-ahead: it uses survival information you could not have had.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A quant team reports that its 5 live strategies returned 8% a year on average. In the same period it tried 15 others that lost 3% a year on average and were quietly abandoned.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Strategies",
+            "Number",
+            "Return (% a year)"
+          ],
+          "rows": [
+            [
+              "Kept and reported",
+              "5",
+              "8"
+            ],
+            [
+              "Abandoned, not reported",
+              "15",
+              "−3"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What was the average return of all 20 strategies the team tried, in % a year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0025,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "for example −1.5",
+        "accept": "$\\tfrac{5 \\times 8 + 15 \\times (-3)}{20} = -0.25$",
+        "unit": "%",
+        "label": "Average return of all strategies tried",
+        "wrong": [
+          {
+            "id": "reported",
+            "value": 0.08,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "plain",
+            "value": 0.025,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "sign",
+            "value": 0.0625,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight each group by how many strategies it holds."
+        },
+        {
+          "rung": "point",
+          "text": "15 of the 20 strategies were abandoned.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac{5 \\times 8 + 15 \\times (-3)}{20} = \\tfrac{40 - 45}{20}$."
+        }
+      ],
+      "feedback": {
+        "correct": "The team’s ideas lost a quarter of a percent a year on average.",
+        "generic": "Not quite right. Add up the returns of all 20 strategies, then divide by 20.",
+        "byKey": {
+          "reported": "That is the reported average, conditioned on being kept. The abandoned 15 are part of the record too.",
+          "plain": "You averaged 8 and −3 equally. Three times as many strategies were abandoned.",
+          "sign": "You added the abandoned strategies’ losses as gains. They returned −3% a year."
+        }
+      },
+      "explain": {
+        "text": "All 20 strategies averaged $\\tfrac{40 - 45}{20} = -0.25$% a year. The reported 8% conditions on survival. Ask for the count of everything tried before you trust a track record.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Averaging only what survived gives $E[R \\mid \\text{survived}]$, not $E[R]$.",
+      "When failure depends on the outcome, survivors overstate. The bias is the failure rate times how much worse the failures did.",
+      "If failure is unrelated to the outcome, the survivors are a fair sample."
+    ],
+    "formula": {
+      "name": "Survivorship gap",
+      "tex": "E[R] - E[R \\mid S] = P(S^c)\\big(E[R \\mid S^c] - E[R \\mid S]\\big)",
+      "note": "Zero when closure does not depend on returns."
+    },
+    "trap": "Using the surviving universe as the sample, as a fund database or today’s index does."
+  },
+  "quiz": [
+    {
+      "id": "q-bombers",
+      "difficulty": 2,
+      "prose": "In the Second World War, analysts mapped bullet holes on bombers that returned. Most holes were on the wings and fuselage; few were on the engines.",
+      "question": "Where should extra armour go?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "engines",
+            "text": "On the engines",
+            "correct": true
+          },
+          {
+            "id": "wings",
+            "text": "On the wings and fuselage, where the holes are",
+            "why": "You studied only planes that came back. Planes hit in the engines mostly did not return, so their holes are missing."
+          },
+          {
+            "id": "even",
+            "text": "Spread evenly over the plane",
+            "why": "The pattern is informative once you ask which planes are missing from it."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The missing planes were hit where the survivors were not.",
+        "generic": "Not quite right. Ask which planes are missing from the sample."
+      },
+      "explain": {
+        "text": "The sample is conditioned on returning home. Few engine hits among survivors means engine hits rarely let a plane survive. So armour goes where the survivors show no holes."
+      }
+    },
+    {
+      "id": "q-hf",
+      "difficulty": 3,
+      "prose": "A hedge fund index includes the 60 funds alive today, which averaged 9% a year. Another 40 funds started at the same time and died, averaging −3% a year.",
+      "question": "What was the average return of all 100 funds, in % a year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.042,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "for example 3.5",
+        "accept": "$0.6 \\times 9 + 0.4 \\times (-3) = 4.2$",
+        "unit": "%",
+        "label": "Average of all 100 funds",
+        "wrong": [
+          {
+            "id": "alive",
+            "value": 0.09,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "plain",
+            "value": 0.03,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "All 100 funds averaged 4.2% a year.",
+        "generic": "Not quite right. Weight the two groups by their shares of the 100.",
+        "byKey": {
+          "alive": "That is the survivors’ average. Put the 40 dead funds back.",
+          "plain": "You averaged 9 and −3 equally. The groups hold 60 and 40 funds."
+        }
+      },
+      "explain": {
+        "text": "$0.6 \\times 9 + 0.4 \\times (-3) = 5.4 - 1.2 = 4.2$% a year. The index of live funds overstates by 4.8 points."
+      }
+    },
+    {
+      "id": "q-random",
+      "difficulty": 3,
+      "prose": "A data vendor drops 30% of funds from its records at random, because of a storage fault. The dropped funds’ returns played no part.",
+      "question": "Is the average return of the funds left biased?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: on average it matches the average of all funds",
+            "correct": true
+          },
+          {
+            "id": "up",
+            "text": "Yes, upwards, as with any missing funds",
+            "why": "Missing funds bias the average only when what goes missing depends on returns. A random fault does not."
+          },
+          {
+            "id": "down",
+            "text": "Yes, downwards",
+            "why": "A random fault drops good and bad funds alike."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Random loss leaves the average unbiased, though noisier.",
+        "generic": "Not quite right. Ask whether the loss depends on returns."
+      },
+      "explain": {
+        "text": "The loss is independent of returns, so $E[R \\mid \\text{kept}] = E[R]$. The sample is smaller and noisier, but it is not biased."
+      }
+    },
+    {
+      "id": "q-founders",
+      "difficulty": 3,
+      "prose": "A book studies 50 billionaire founders and finds that most left university early. It concludes that leaving university helps you succeed.",
+      "question": "What is the main flaw?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It looks only at successes; people who left and failed are not in the sample",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "50 is too small a sample",
+            "why": "A bigger sample of billionaires has the same flaw. The failures are still missing."
+          },
+          {
+            "id": "none",
+            "text": "There is no flaw: most of them did leave",
+            "why": "That is true of the survivors. It says nothing about the chance of success for people who leave."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The sample is conditioned on success.",
+        "generic": "Not quite right. Ask who is missing from the sample."
+      },
+      "explain": {
+        "text": "The book measures $P(\\text{left early} \\mid \\text{success})$. The claim needs $P(\\text{success} \\mid \\text{left early})$, which requires the many who left and did not succeed."
+      }
+    }
+  ]
+}

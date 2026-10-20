@@ -557,9 +557,12 @@
       get: () => ({ ...(A && A.get ? A.get() : {}), left: side.left && side.left.get(), right: side.right && side.right.get(), caption }),
       set(patch = {}, o = {}) {
         patch = patch || {};
-        const rest = {};
-        Object.entries(patch).forEach(([k, v]) => { if (SIDES.includes(k)) { if (v && side[k]) side[k].set(v, o); } else if (k === 'caption') { caption = v || ''; cap.hidden = !caption; cap.innerHTML = caption ? capHtml(caption) : ''; } else rest[k] = v; });
+        const rest = {}, sidePatches = [];
+        Object.entries(patch).forEach(([k, v]) => { if (SIDES.includes(k)) { if (v && side[k]) sidePatches.push([k, v]); } else if (k === 'caption') { caption = v || ''; cap.hidden = !caption; cap.innerHTML = caption ? capHtml(caption) : ''; } else rest[k] = v; });
+        /* item 261: unprefixed keys (the active side's, as get() flattens them) first, then the side patches, so an
+           explain patch under "right" is not overwritten by the flattened copy of the old state */
         if (Object.keys(rest).length && A) { if ('highlight' in rest) { each(rest.highlight, (c, ids) => c.set({ highlight: ids }, o)); delete rest.highlight; } if (Object.keys(rest).length) A.set(rest, o); }
+        sidePatches.forEach(([k, v]) => side[k].set(v, o));
         return api;
       },
       highlight(ids, on = true) { if (ids == null || (Array.isArray(ids) && !ids.length)) SIDES.forEach(k => side[k] && side[k].highlight(ids, on)); else each(ids, (c, l) => c.highlight(l, on)); return api; },

@@ -109,10 +109,22 @@
      test is numeric: agreement at 6 seeded points with every free symbol drawn from 0.3 to 3 (away from 0 and 1), with
      any number of variables; a point where both sides are undefined is skipped, one side undefined fails. Only when
      neither side evaluates to a number anywhere (an equation, a set) does the symbolic check decide. */
+  /* item 267: \binom{n}{k} (and \dbinom, \tbinom, {n \choose k}) becomes n!/(k!(n-k)!), which Compute Engine parses */
+  const braced = (t, i) => { if (t[i] !== '{') return null; let d = 0; for (let j = i; j < t.length; j++) { if (t[j] === '{') d++; else if (t[j] === '}' && --d === 0) return [t.slice(i + 1, j), j + 1]; } return null; };
+  const unbinom = (t) => {
+    t = String(t).replace(/\{([^{}]*)\\choose([^{}]*)\}/g, '\\binom{$1}{$2}');
+    for (let guard = 0; guard < 20; guard++) {
+      const m = t.match(/\\[dt]?binom\s*/); if (!m) break;
+      const i = m.index + m[0].length, A = braced(t, i); if (!A) break; const B = braced(t, A[1]); if (!B) break;
+      t = t.slice(0, m.index) + `\\frac{(${A[0]})!}{(${B[0]})!((${A[0]})-(${B[0]}))!}` + t.slice(B[1]);
+    }
+    return t;
+  };
   const exprEqual = (ce, a, b) => {
     if (!ce || a == null || b == null || a === '' || b === '') return false;
     let A, B;
-    try { A = ce.parse(String(a)); B = ce.parse(String(b)); } catch { return false; }
+    const counting = /!|\\[dt]?binom|\\choose/.test(String(a) + String(b)); // factorials only evaluate at whole numbers
+    try { A = ce.parse(unbinom(a)); B = ce.parse(unbinom(b)); } catch { return false; }
     if (A.isValid === false || B.isValid === false) return false;
     let sym = false;
     try { sym = !!A.simplify().isEqual(B.simplify()); } catch { sym = false; }
@@ -122,15 +134,18 @@
     const close = (x, y) => Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(x), Math.abs(y));
     let seed = 20240531; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
     const draw = () => { let v; do { v = 0.3 + 2.7 * rnd(); } while (Math.abs(v - 1) < 0.08); return +v.toFixed(6); };
-    const pts = vars.length ? Array.from({ length: 6 }, () => Object.fromEntries(vars.map(v => [v, draw()]))) : [null];
+    const drawInt = () => 1 + Math.floor(rnd() * 12);
+    const pts = !vars.length ? [null] : counting ? Array.from({ length: 24 }, () => Object.fromEntries(vars.map(v => [v, drawInt()]))) : Array.from({ length: 6 }, () => Object.fromEntries(vars.map(v => [v, draw()])));
     let checked = 0, numeric = true;
     for (const p of pts) {
       const x = num(A, p), y = num(B, p), fx = Number.isFinite(x), fy = Number.isFinite(y);
       if (!fx && !fy) continue;
+      if (counting && (!fx || !fy)) continue; // outside a factorial's domain (a negative factorial): not a counting point
       if (fx !== fy || !close(x, y)) { numeric = false; break; }
       checked++;
     }
     if (!checked && numeric) return sym; // nothing numeric to compare: the symbolic answer stands
+    if (counting && checked < 4 && numeric) return sym; // too few whole-number points where both sides are defined
     return numeric;
   };
 
@@ -221,7 +236,8 @@
       case 'manipulate': return manipulatePath(spec);
       case 'tap-regions': return spec.count != null && !(spec.answer || []).length ? (spec.among || []).slice(0, spec.count) : (spec.answer || []).slice();
       case 'slider': return spec.answer;
-      case 'drag-point': return Object.fromEntries((spec.points || []).map(p => [p.id, p.target]));
+      case 'sliders': return Object.assign({}, spec.answer || spec.show || {});
+      case 'drag-point': return Object.fromEntries((spec.points || []).map(p => [p.id, p.target && typeof p.target === 'object' && !Array.isArray(p.target) && (p.target.line || p.target.expr) ? (p.target.show || (p.target.line ? p.target.line[0] : [0, 0])) : p.target]));
       case 'code': return spec.solution ?? null;
       case 'balance': return balanceMoves(spec);
       case 'sketch': return sketchPoints(spec);

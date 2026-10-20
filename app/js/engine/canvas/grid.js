@@ -155,7 +155,9 @@
     const draw = (st, prev, { instant, patch }) => {
       /* shade: { setName: [ids] } or [ids]; slots in order, a second set shows as an inner ring */
       /* a set is [ids] (slot by order) or { ids, colour: 1..6 } (item 96) */
-      const sets = (Array.isArray(st.shade) ? [st.shade] : Object.values(st.shade || {})).map((v, k) => (Array.isArray(v) || typeof v === 'string' ? { ids: v, slot: k + 1 } : { ids: (v && (v.ids || v.cells)) || [], slot: Math.min(6, Math.max(1, Math.round(+(v && v.colour) || k + 1))) }));
+      /* item 265: default slots start at green (3), then 2, 4, 5, 6, 1, so a pre-shaded set never wears the blue of a tap selection */
+      const ORDER = [3, 2, 4, 5, 6, 1], dflt = (k) => ORDER[k % 6];
+      const sets = (Array.isArray(st.shade) ? [st.shade] : Object.values(st.shade || {})).map((v, k) => (Array.isArray(v) || typeof v === 'string' ? { ids: v, slot: dflt(k) } : { ids: (v && (v.ids || v.cells)) || [], slot: Math.min(6, Math.max(1, Math.round(+(v && v.colour) || dflt(k)))) }));
       const first = new Map(), second = new Map();
       sets.forEach(({ ids, slot }) => expand(ids).forEach(id => { if (!first.has(id)) first.set(id, slot); else if (!second.has(id)) second.set(id, slot); }));
       cell.forEach((n, id) => {

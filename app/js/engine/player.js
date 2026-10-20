@@ -126,7 +126,7 @@
     const mode = o.mode || 'lesson';
     const w = spec.widget || (spec.kind === 'longform' ? { ...spec, kind: 'longform' } : null);
     const type = spec.type || (mode === 'lesson' ? 'problem' : 'item');
-    const bound = w && (BOUND.has(w.kind) || (w.kind === 'slider' && w.bind) || (w.kind === 'place' && w.mode === 'boxes'));
+    const bound = w && (BOUND.has(w.kind) || (w.kind === 'slider' && w.bind) || (w.kind === 'sliders' && (w.sliders || []).some(x => x && x.bind)) || (w.kind === 'place' && w.mode === 'boxes'));
     const el = Z.h(`<section class="lsn-step lsn-t-${Z.esc(type)}"></section>`);
     const add = (html) => { const n = typeof html === 'string' ? Z.h(html) : html; el.append(n); return n; };
     const rng = o.rng || rngFrom(hash((o.key || '') + JSON.stringify(spec.widget || {}).length));

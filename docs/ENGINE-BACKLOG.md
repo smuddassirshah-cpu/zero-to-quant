@@ -753,3 +753,9 @@ Raised later (conditional level 1):
 276. `tree`: automatic label spacing on 8-leaf and 3-branch trees (same as 268).
 277. `grid`: `dim` on blank cells is invisible; hatch or grey the cell background.
 278. `playthrough.mjs --shots`: capture after `enter` animations settle (wait for the animation promise, not a fixed 300 ms).
+
+Raised later (conditional level 3):
+
+279. `bars`: a grouped mode (two series per category with a legend) for side-by-side distributions.
+280. `derive`: named intermediate values (`let`-style rules evaluated before the others), so a sub-expression need not be inlined into every rule.
+281. `table` widget bound to a `table` canvas: let row taps feed counts into a 2x2 tally (tap-to-classify).

@@ -6,7 +6,8 @@
    point ({ x: [a, b], y: [c, d] } or { angle: [a, b] }), else the first point that is off target.
    markGraded rings each point green or amber; reveal animates the points to their targets in hint indigo.
    Plane extras: `tol: [dx, dy]` is a per-axis tolerance, `tolX` checks x alone, and a target `{ "on": "f", "x": 12.3 }`
-   is the point of function f at that x (graded on x alone, for dragging along a steep curve). */
+   is the point of function f at that x (graded on x alone, for dragging along a steep curve). Item 254: { "line": [[x1, y1],
+   [x2, y2]] } and { "expr": "2*x + y", "value": 0 } accept a whole line or level set; `show` is the reveal position. */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -24,9 +25,17 @@
     const ids = pts.map(p => p.id);
     cv.enable('drag', { ids });
     const oneD = (p) => typeof p.target === 'number';
-    const onF = (p) => p.target && typeof p.target === 'object' && !Array.isArray(p.target);
+    const obj = (p) => p.target && typeof p.target === 'object' && !Array.isArray(p.target);
+    const onF = (p) => obj(p) && p.target.on != null;
+    /* item 254: a line target { line: [[x1, y1], [x2, y2]] } accepts any point within tol of the line; an expression target
+       { expr: "2*x + y", value: 0 } any point where the expression is within tol of value. `show: [x, y]` is where
+       Show solution puts the point (a line defaults to its first point). */
+    const lineT = (p) => obj(p) && Array.isArray(p.target.line);
+    const exprT = (p) => obj(p) && typeof p.target.expr === 'string';
+    const exprFn = (p) => { if (!p._f) { try { const c = Z.canvas.compile(p.target.expr, ['y']); p._f = (x, y) => c(x, { y }); } catch { p._f = () => NaN; } } return p._f; };
     /* the [x, y] a target means: { on, x } reads y from the canvas's function */
-    const tgtOf = (p) => (onF(p) ? [+p.target.x, cv.evaluate ? cv.evaluate(p.target.on, +p.target.x) : 0] : p.target);
+    const tgtOf = (p) => (onF(p) ? [+p.target.x, cv.evaluate ? cv.evaluate(p.target.on, +p.target.x) : 0] : lineT(p) || exprT(p) ? (p.target.show || (lineT(p) ? p.target.line[0] : [0, 0])) : p.target);
+    const lineDist = (p, v) => { const [[a, b], [c, d]] = p.target.line, dx = c - a, dy = d - b, L = Math.hypot(dx, dy) || 1; return Math.abs((v[0] - a) * dy - (v[1] - b) * dx) / L; };
     const raw = (id) => {
       if (cv.points) return (cv.points() || {})[id] || null;
       const q = ((cv.get() || {}).points || []).find(p => p.id === id); return q ? { x: q.x, y: q.y } : null;
@@ -41,10 +50,11 @@
     let moved = false;
     cv.on('change', (e) => { if (e && ids.includes(e.id)) { if (e.phase === 'end') moved = true; ctx.change && ctx.change({ id: e.id, phase: e.phase }); } });
 
-    const dist = (p, v) => (v == null ? Infinity : oneD(p) ? Math.abs(v - p.target) : Math.hypot(v[0] - tgtOf(p)[0], v[1] - tgtOf(p)[1]));
+    const dist = (p, v) => (v == null ? Infinity : oneD(p) ? Math.abs(v - p.target) : lineT(p) ? lineDist(p, v) : exprT(p) ? Math.abs(exprFn(p)(v[0], v[1]) - (+p.target.value || 0)) : Math.hypot(v[0] - tgtOf(p)[0], v[1] - tgtOf(p)[1]));
     const near = (p, v) => {
       if (v == null) return false;
       if (oneD(p)) return Math.abs(v - p.target) <= (p.tol ?? 0.25) + 1e-9;
+      if (lineT(p) || exprT(p)) { const d0 = dist(p, v); return Number.isFinite(d0) && d0 <= (typeof p.tol === 'number' ? p.tol : 0.25) + 1e-9; }
       const t = tgtOf(p), dx = Math.abs(v[0] - t[0]), dy = Math.abs(v[1] - t[1]);
       if (Array.isArray(p.tol)) return dx <= p.tol[0] + 1e-9 && dy <= p.tol[1] + 1e-9;
       if (p.tolX != null) return dx <= p.tolX + 1e-9;
