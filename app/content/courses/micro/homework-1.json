@@ -1,0 +1,502 @@
+{
+  "id": "homework-1",
+  "course": "micro",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-bp",
+      "difficulty": 3,
+      "skills": [
+        "ms-book"
+      ],
+      "prose": "A FTSE 250 share has best bid £12.46 and best ask £12.50.",
+      "question": "What is the spread in basis points of the mid? Give one decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 32.1,
+        "tol": {
+          "abs": 0.1
+        },
+        "unit": "bp",
+        "label": "Spread in basis points",
+        "accept": "32.1 bp: $0.04/12.48 \\times 10{,}000 = 32.05$.",
+        "wrong": [
+          {
+            "id": "pence",
+            "value": 4,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "bid",
+            "value": 32.2,
+            "tol": {
+              "abs": 0.03
+            }
+          },
+          {
+            "id": "percent",
+            "value": 0.32,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "4p on a £12.48 mid is about 32.1 bp.",
+        "generic": "Not quite right. Find the mid, divide the spread by it, then multiply by 10,000.",
+        "byKey": {
+          "pence": "4 is the spread in pence, not basis points.",
+          "bid": "You divided by the bid. Divide by the mid, £12.48.",
+          "percent": "That is a percentage. Multiply by 100 for basis points."
+        }
+      },
+      "explain": {
+        "text": "The mid is $(12.46 + 12.50)/2 = 12.48$. The spread in basis points is $0.04/12.48 \\times 10{,}000 = 32.05$."
+      }
+    },
+    {
+      "id": "h-sell-walk",
+      "difficulty": 4,
+      "skills": [
+        "ms-book",
+        "ms-costs"
+      ],
+      "prose": "Bids: 800 shares at £250.40, 1,000 at £250.35 and 1,200 at £250.30. The best ask is £250.46. You send a market sell for 2,500 shares.",
+      "question": "How much less do you receive than 2,500 shares at the mid, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 195,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Shortfall against the mid in pounds",
+        "accept": "£195: 2,500 × £250.43 − £625,880.",
+        "wrong": [
+          {
+            "id": "best-bid",
+            "value": 120,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "half",
+            "value": 75,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "all-levels",
+            "value": 255,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "You receive £625,880 against £626,075 at the mid.",
+        "generic": "Not quite right. Walk down the bids for 2,500 shares, then compare with the mid.",
+        "byKey": {
+          "best-bid": "£120 is against the best bid. The mid is 3p higher, which adds £75.",
+          "half": "£75 is the half-spread alone: 3p on 2,500 shares. The walk down the book adds £120.",
+          "all-levels": "You sold all 1,200 at £250.30. Only 700 are needed there: 2,500 − 800 − 1,000."
+        }
+      },
+      "explain": {
+        "text": "Fills: 800 at £250.40, 1,000 at £250.35, 700 at £250.30, for £625,880 (average £250.352). The mid is £250.43, worth £626,075. The shortfall is £195: £75 of half-spread and £120 of walking."
+      }
+    },
+    {
+      "id": "h-code",
+      "difficulty": 4,
+      "skills": [
+        "ms-costs",
+        "ms-book"
+      ],
+      "title": "Cost against the mid",
+      "prose": "Write one function that prices a market order of either side against the mid. A buy walks up the asks; a sell walks down the bids. Return a positive number when the order does worse than the mid.",
+      "question": "Complete `cost_vs_mid(bids, asks, side, size)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def cost_vs_mid(bids, asks, side, size):\n    \"\"\"Cost in pounds of a market order, measured against the mid.\n\n    bids, asks: lists of (price, shares), best price first.\n    side: 'buy' or 'sell'. A positive answer means worse than the mid.\n    Raise ValueError if the book cannot fill the order.\n    \"\"\"\n    mid = ...\n    levels = asks if side == 'buy' else bids\n    left = size\n    paid = 0.0\n    for price, shares in levels:\n        ...\n    ...\n",
+        "solution": "def cost_vs_mid(bids, asks, side, size):\n    mid = (bids[0][0] + asks[0][0]) / 2\n    levels = asks if side == 'buy' else bids\n    left = size\n    paid = 0.0\n    for price, shares in levels:\n        take = min(left, shares)\n        paid += take * price\n        left -= take\n        if left == 0:\n            break\n    if left > 0:\n        raise ValueError('not enough shares in the book')\n    if side == 'buy':\n        return paid - size * mid\n    return size * mid - paid\n",
+        "examples": [
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'buy', 1500)",
+            "expect": "58.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'sell', 800)",
+            "expect": "16.0",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'buy', 1500)",
+            "expect": "58.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'sell', 1500)",
+            "expect": "37.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'buy', 300)",
+            "expect": "6.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'sell', 800)",
+            "expect": "16.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'sell', 3000)",
+            "expect": "94.0",
+            "compare": "isclose"
+          },
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'buy', 1801)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "bids = [(100.10, 800), (100.09, 1000), (100.08, 1200)]; asks = [(100.14, 500), (100.16, 600), (100.18, 700)]",
+            "call": "cost_vs_mid(bids, asks, 'sell', 3001)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "cost_vs_mid([(250.40, 800), (250.35, 1000), (250.30, 1200)], [(250.46, 1000)], 'sell', 2500)",
+            "expect": "195.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "cost_vs_mid([(19.98, 5000)], [(20.02, 10000), (20.03, 15000), (20.05, 20000), (20.08, 25000)], 'buy', 60000)",
+            "expect": "2850.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: buys and sells, an order inside the top level, a book emptied exactly, and two orders too big for the book. Each cost is accepted when math.isclose(actual, expected, rel_tol=1e-9)."
+      },
+      "feedback": {
+        "correct": "Your function prices both sides against the mid.",
+        "generic": "Some tests failed. Compare the first failing test with a walk by hand.",
+        "byKey": {
+          "error": "Your code stopped with an error. Replace every `...`, and return a number.",
+          "test-2": "A sell of 1,500 receives £150,143 against £150,180 at the mid: a cost of £37. Check the sign for sells.",
+          "test-6": "1,801 shares is more than the asks hold. Raise ValueError when shares are left after the loop."
+        }
+      },
+      "explain": {
+        "text": "The mid is the average of the two best prices. For a buy the cost is what you paid minus `size * mid`; for a sell it is `size * mid` minus what you received, so both are positive when you do worse than the mid."
+      }
+    },
+    {
+      "id": "h-limit-through",
+      "difficulty": 4,
+      "skills": [
+        "ms-orders",
+        "ms-book"
+      ],
+      "prose": "Best bid £100.10. Asks: 500 at £100.14, then 600 at £100.16. You send a buy limit for 1,000 shares at £100.15.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              100.1,
+              800
+            ],
+            [
+              100.09,
+              1000
+            ]
+          ],
+          "asks": [
+            [
+              100.14,
+              500
+            ],
+            [
+              100.16,
+              600
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {}
+      },
+      "question": "Once your order has done all it can, what is the new spread, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "pence",
+        "label": "New spread in pence",
+        "accept": "1p: your 500 resting at £100.15 against the ask of £100.16.",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 4
+          },
+          {
+            "id": "walked",
+            "value": 6
+          },
+          {
+            "id": "no-rest",
+            "value": 2
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Your remaining 500 shares become the best bid at £100.15.",
+        "generic": "Not quite right. Fill what the limit allows, then rebuild the top of the book.",
+        "byKey": {
+          "old": "The book has changed: the 500 at £100.14 are gone, and your order now rests at £100.15.",
+          "walked": "Your limit stops at £100.15, so it does not buy at £100.16.",
+          "no-rest": "You dropped the unfilled 500 shares. They rest at £100.15 and become the best bid."
+        }
+      },
+      "explain": {
+        "text": "500 shares fill at £100.14. The next ask, £100.16, is above your limit, so the other 500 rest at £100.15 as the new best bid. The best ask is now £100.16, so the spread is 1p."
+      }
+    },
+    {
+      "id": "h-queue",
+      "difficulty": 3,
+      "skills": [
+        "ms-orders"
+      ],
+      "prose": "You join the bid at £50.00 behind 12,000 shares. Over the next hour, 4,000 of those shares are cancelled. Trades at £50.00 average 1,600 shares.",
+      "question": "About how many trades at £50.00 come before your first fill?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.25
+        },
+        "unit": "trades",
+        "label": "Trades before your first fill",
+        "accept": "5: $(12{,}000 - 4{,}000)/1{,}600$.",
+        "wrong": [
+          {
+            "id": "no-cancel",
+            "value": 7.5,
+            "tol": {
+              "abs": 0.25
+            }
+          },
+          {
+            "id": "added",
+            "value": 10,
+            "tol": {
+              "abs": 0.25
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "8,000 shares ahead, at 1,600 a trade.",
+        "generic": "Not quite right. Take off the cancels, then divide by the trade size.",
+        "byKey": {
+          "no-cancel": "You left the cancelled shares in the queue. Cancels ahead of you move you up.",
+          "added": "You added the cancels. Cancelled shares leave the queue."
+        }
+      },
+      "explain": {
+        "text": "After the cancels, $12{,}000 - 4{,}000 = 8{,}000$ shares are ahead. At 1,600 a trade that is $8{,}000/1{,}600 = 5$ trades."
+      }
+    },
+    {
+      "id": "h-reset",
+      "difficulty": 3,
+      "skills": [
+        "ms-orders"
+      ],
+      "prose": "Your bid of 500 shares is fifth in line at £100.10, under price-time priority.",
+      "question": "Which of these send your order to the back of a line? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "raise",
+            "text": "Raising it to 800 shares",
+            "correct": true
+          },
+          {
+            "id": "price",
+            "text": "Moving it to £100.09",
+            "correct": true
+          },
+          {
+            "id": "cut",
+            "text": "Cutting it to 300 shares",
+            "why": "Cutting the size harms nobody behind you, so most exchanges keep your place."
+          },
+          {
+            "id": "cancel",
+            "text": "Another trader ahead of you cancelling",
+            "why": "A cancel ahead of you moves you forward, not back."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Raising the size or changing the price makes a new order.",
+        "generic": "Not quite right. Ask which changes would push in front of anyone who arrived later."
+      },
+      "explain": {
+        "text": "A size increase or a new price is treated as a fresh order, so it starts at the back of its line. Cutting the size keeps your place, and cancels ahead of you move you up."
+      }
+    },
+    {
+      "id": "h-expr",
+      "difficulty": 4,
+      "skills": [
+        "ms-costs",
+        "ms-orders"
+      ],
+      "prose": "A limit order fills with chance $p$ and then costs $-h$ against the mid. A miss costs $h + c$.",
+      "question": "Write $E[\\text{limit}]$ with the bracket expanded and like terms collected.",
+      "widget": {
+        "kind": "expression",
+        "answer": "h + c - 2ph - pc",
+        "accept": [
+          "h+c-2ph-pc",
+          "h + c - 2*p*h - p*c",
+          "c+h-2hp-cp",
+          "h+c-p(2h+c)"
+        ],
+        "wrong": [
+          {
+            "id": "no-miss-h",
+            "tex": "c - ph - pc"
+          },
+          {
+            "id": "sign",
+            "tex": "h + c"
+          }
+        ],
+        "keyboard": "algebra"
+      },
+      "feedback": {
+        "correct": "$E[\\text{limit}] = h + c - 2p\\,h - p\\,c = h + c - p(2h + c)$.",
+        "generic": "Not quite right. Write $-p\\,h + (1 - p)(h + c)$, then expand the bracket.",
+        "byKey": {
+          "no-miss-h": "You dropped the $h$ from the miss cost. The bracket is $(1 - p)(h + c)$.",
+          "sign": "You left out the $p$ terms. Expand $(1 - p)(h + c)$ and add $-p\\,h$."
+        }
+      },
+      "explain": {
+        "text": "$-p\\,h + (1 - p)(h + c) = -p\\,h + h + c - p\\,h - p\\,c = h + c - 2p\\,h - p\\,c$. Each extra point of fill chance cuts the cost by $2h + c$."
+      }
+    },
+    {
+      "id": "h-derive-adverse",
+      "difficulty": 5,
+      "skills": [
+        "ms-orders",
+        "ms-costs"
+      ],
+      "prose": "Add adverse selection to the model. A filled bid tends to fill just before the price falls, so measured a minute later a fill costs $-h + a$, not $-h$. A miss still costs $h + c$, and a market order costs $h$.",
+      "question": "Put the lines in order to find when the limit is cheaper.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "$p(a - h) + (1 - p)(h + c) < h$, the limit must cost less than the market order"
+          },
+          {
+            "id": "s2",
+            "text": "$p\\,a - p\\,h + h + c - p\\,h - p\\,c < h$, expand the brackets"
+          },
+          {
+            "id": "s3",
+            "text": "$c < p\\,(2h + c - a)$, take $h$ from both sides and move the $p$ terms right"
+          },
+          {
+            "id": "s4",
+            "text": "$p > \\dfrac{c}{2h + c - a}$, divide by $2h + c - a$, positive when $a < 2h + c$"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ]
+      },
+      "feedback": {
+        "correct": "$p > c/(2h + c - a)$: adverse selection raises the bar.",
+        "generic": "Not quite right. Start from the comparison, expand, collect the $p$ terms, then divide."
+      },
+      "explain": {
+        "text": "With $h = 2$, $c = 1$ and $a = 2$ the threshold rises from $1/5$ to $1/(4 + 1 - 2) = 1/3$. If $a \\geq 2h + c$, no fill chance makes the limit worth it."
+      }
+    },
+    {
+      "id": "h-long-execution",
+      "difficulty": 5,
+      "skills": [
+        "ms-costs",
+        "ms-orders",
+        "ms-book"
+      ],
+      "title": "Executing a large order",
+      "kind": "longform",
+      "prompt": "A fund must buy 60,000 shares of a mid-cap today. Best bid £19.98, mid £20.00. The asks hold 10,000 shares at £20.02, 15,000 at £20.03, 20,000 at £20.05 and 25,000 at £20.08.\n\n(a) Find the average price and the cost against the mid of one market order for all 60,000 now.\n\n(b) Find the cost if the fund sends six market orders of 10,000 through the day and the book refills to the same prices each time. State what this assumes.\n\n(c) Instead it posts six limit bids of 10,000 at £19.98. Each fills with chance 0.6; a miss means buying 10,000 at £20.03. Find the expected cost against the mid, and the best and worst cases.\n\n(d) Recommend a plan, and name two reasons the numbers in (b) and (c) may be too optimistic.",
+      "model": "**(a) One market order.** It walks the book for 60,000 shares.\n\n- 10,000 at £20.02 = £200,200 (the level is emptied).\n- 15,000 at £20.03 = £300,450.\n- 20,000 at £20.05 = £401,000.\n- 15,000 of the 25,000 at £20.08 = £301,200.\n\nTotal £1,202,850, so the average is $1{,}202{,}850 / 60{,}000 = \\text{£}20.0475$. At the mid 60,000 shares cost £1,200,000, so the cost is **£2,850**, or 23.75 bp.\n\n**(b) Six slices.** Each 10,000-share order fits in the top level, so it pays £20.02, 2p over the mid. The cost is $60{,}000 \\times 0.02 = \\text{£}1{,}200$, or 10 bp. This assumes the book refills at the same prices between slices, so the fund's own buying never moves the price.\n\n**(c) Limit bids.** Per share, a fill costs $-2$p and a miss costs $+3$p, so\n$$E = 0.6 \\times (-2) + 0.4 \\times 3 = 0 \\text{p}.$$\nThe expected cost is **£0**. If all six fill the fund earns $60{,}000 \\times 0.02 = \\text{£}1{,}200$; if none fill it pays $60{,}000 \\times 0.03 = \\text{£}1{,}800$. The expected value hides a wide range.\n\n**(d) Recommendation.** Never send one 60,000-share market order: it pays more than twice the sliced cost. Post passive bids early in the day, and switch any unfilled shares to market orders or the closing auction before the deadline, since a miss at the end of the day is very costly. In the model $p = 0.6$ is well above the break-even $c/(2h + c) = 1/5$, so passive orders are worth trying while there is time.\n\n**Why it may be too optimistic.** First, adverse selection: bids tend to fill just before the price falls, so fills are worse than they look. Second, market impact: 60,000 shares of buying pushes the price up, so the book does not refill at the same prices, and other traders may spot the pattern and trade ahead.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Walks the book correctly for (a): fills of 10,000, 15,000, 20,000 and 15,000, an average of £20.0475 and a cost of £2,850 against the mid."
+        },
+        {
+          "points": 1,
+          "text": "Finds £1,200 for the six slices and states the assumption that the book refills at the same prices."
+        },
+        {
+          "points": 2,
+          "text": "Computes the limit plan's expected cost as $0.6 \\times (-2) + 0.4 \\times 3 = 0$p a share, or £0."
+        },
+        {
+          "points": 1,
+          "text": "Gives the range for (c): a gain of £1,200 if all fill, a cost of £1,800 if none do."
+        },
+        {
+          "points": 2,
+          "text": "Names two reasons the plans are optimistic, such as adverse selection, market impact, the book not refilling, or information leakage."
+        },
+        {
+          "points": 2,
+          "text": "Recommends a plan that avoids one big market order and handles the deadline, justified by urgency or the break-even $p > c/(2h + c)$."
+        }
+      ]
+    }
+  ]
+}

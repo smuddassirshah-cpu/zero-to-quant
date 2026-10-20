@@ -4,15 +4,20 @@
    Compiler (the first message is init). Loads YoWASP Clang (clang and lld 21 compiled to WebAssembly, with the
    wasi-libc and libc++ sysroot) from `base` (the jsDelivr copy of the npm package @yowasp/clang, or any folder that
    serves its gen/ files), compiles the small exception runtime below once, and then compiles one translation unit per
-   message to a WASI command module. Leading standard includes are compiled once into a precompiled header per set of
-   headers (kept for the session), so a warm compile of a small program takes about a second.
-     in:  { type: 'init', base, local }                   base: the CDN folder; local: a vendor/ copy, used only when
-                                                          the CDN cannot be reached and it exists (both end in '/')
-          { type: 'warm', head }                          build the precompiled header for these #include lines
+   message to a WASI command module. A unit whose leading #include lines have a precompiled header (pch-add) compiles
+   in about a second instead of three.
+     in:  { type: 'init', base, local, role }             base: the CDN folder; local: a vendor/ copy, used only when
+                                                          the CDN cannot be reached and it exists (both end in '/');
+                                                          role 'builder' skips the runtime (see below)
           { type: 'compile', id, src, srcPch, head }      src: the whole unit; srcPch: the same with the head's
-                                                          include lines blanked (used with the precompiled header)
-     out: { type: 'progress', text } | { type: 'ready', version, ms } | { type: 'fail', message }
-          { type: 'compiled', id, ok, wasm, diag, ms, pch }   wasm is an ArrayBuffer (transferred) when ok
+                                                          include lines blanked (used when head has a precompiled header)
+          { type: 'pch-add', head, data }                 a precompiled header for head (from a builder)
+     out: { type: 'progress', text } | { type: 'ready', version, ms, patched } | { type: 'fail', message }
+          { type: 'compiled', id, ok, wasm, diag, ms, pch }   wasm is an ArrayBuffer when ok
+
+   Builder (init with role 'builder'). A second, short-lived compiler that builds precompiled headers (10 to 30 s each
+   in Chrome) while the main compiler stays free for Checks; the page closes it when it has nothing left to build.
+     in:  { type: 'pch', head }   out: { type: 'pch', head, data }   data: an ArrayBuffer, or null when head does not compile
 
    Runner (any worker that receives exec; it never loads the compiler). Runs a compiled module once per case with a
    small WASI preview 1 shim (args, stdin, stdout, stderr, clocks, random; files are not available).
@@ -98,37 +103,69 @@ extern "C" void __cxa_throw(void* obj, std::type_info* t, void (*)(void*)) {
 }
 `;
 
-let clang = null, version = '', rtObj = null;
+let clang = null, version = '', rtObj = null, patched = false;
 let queue = Promise.resolve();
-const pchs = new Map(); // head text -> Uint8Array (most recent last), at most 4
+const pchs = new Map(); // head text -> Uint8Array, most recent last, at most 4
 const serial = (fn) => { const p = queue.then(fn, fn); queue = p.catch(() => {}); return p; };
 const dec = new TextDecoder();
 const collector = () => { const parts = []; return { write: (b) => { if (b && b.length) parts.push(dec.decode(b, { stream: true })); }, text: () => parts.join('') + dec.decode() }; };
 
-const cc = async (args, files) => {
+/* The package's virtual file system copies the whole file on every write, so writing a 13 MB precompiled header
+   takes seconds of copying. For the pinned version the write is replaced, at load, by one that grows a buffer
+   by doubling; import.meta.url becomes the package URL because the patched copy is imported from a blob: URL. If the
+   text is not exactly as expected (another version) the package is imported unchanged and only runs slower. */
+const SLOW_WRITE = `  write(contents) {
+    const offset = Number(this.offset);
+    const newData = new Uint8Array(Math.max(this.file.data.length, offset + contents.length));
+    newData.set(this.file.data);
+    newData.subarray(offset).set(contents);
+    this.file.data = newData;
+    this.offset += BigInt(contents.length);
+  }`;
+const FAST_WRITE = `  write(contents) {
+    const f = this.file, offset = Number(this.offset), len = Math.max(f.data.length, offset + contents.length);
+    if (!(f.__zqBuf && f.data.buffer === f.__zqBuf && f.data.byteOffset === 0 && len <= f.__zqBuf.byteLength)) {
+      const nb = new Uint8Array(Math.max(len, 2 * f.data.length, 65536)); nb.set(f.data); f.__zqBuf = nb.buffer; f.data = nb.subarray(0, f.data.length);
+    }
+    if (len > f.data.length) f.data = new Uint8Array(f.__zqBuf, 0, len);
+    f.data.set(contents, offset);
+    this.offset += BigInt(contents.length);
+  }`;
+const importClang = async (base) => {
+  const url = base + 'bundle.js';
+  try {
+    const text = await (await fetch(url)).text();
+    if (text.split(SLOW_WRITE).length === 2) {
+      const src = text.replace(SLOW_WRITE, FAST_WRITE).replaceAll('import.meta.url', JSON.stringify(url));
+      const blob = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+      const mod = await import(blob);
+      patched = true;
+      return mod;
+    }
+  } catch (e) { /* fall back to the package as published */ }
+  return import(url);
+};
+
+const cc = async (args, files, extra = {}) => {
   const err = collector();
   try {
-    const out = await clang.runClang(['clang++', ...args], files, { stdout: err.write, stderr: err.write });
+    const out = await clang.runClang(['clang++', ...args], files, { stdout: err.write, stderr: err.write, ...extra });
     return { ok: true, files: out, diag: err.text() };
   } catch (e) {
     if (e && typeof e.code === 'number') return { ok: false, files: e.files || {}, diag: err.text() };
     return { ok: false, files: {}, diag: err.text() + String((e && e.message) || e) };
   }
 };
+const own = (u8) => (u8.byteOffset === 0 && u8.buffer.byteLength === u8.byteLength ? u8.buffer : u8.slice().buffer);
 
 const buildPch = async (head) => {
-  if (!head) return null;
-  if (pchs.has(head)) { const p = pchs.get(head); pchs.delete(head); pchs.set(head, p); return p; }
   const r = await cc([...FLAGS, '-x', 'c++-header', 'zq_pch.h', '-o', 'zq_pch.h.pch'], { 'zq_pch.h': head });
-  const p = r.ok && r.files['zq_pch.h.pch'] instanceof Uint8Array ? r.files['zq_pch.h.pch'] : false; // false: this head does not compile on its own
-  pchs.set(head, p);
-  while (pchs.size > 4) pchs.delete(pchs.keys().next().value);
-  return p;
+  return r.ok && r.files['zq_pch.h.pch'] instanceof Uint8Array ? r.files['zq_pch.h.pch'] : null;
 };
 
 const compile = async (m) => {
   const t0 = performance.now();
-  const pch = m.head && pchs.get(m.head);
+  const pch = m.head ? pchs.get(m.head) : null;
   const files = { 'main.cpp': pch ? m.srcPch : m.src, 'zq_rt.o': rtObj };
   const args = [...FLAGS];
   if (pch) { files['zq_pch.h'] = m.head; files['zq_pch.h.pch'] = pch; args.push('-include-pch', 'zq_pch.h.pch'); }
@@ -136,11 +173,9 @@ const compile = async (m) => {
   const wasm = r.ok ? r.files['main.wasm'] : null;
   const ms = Math.round(performance.now() - t0);
   if (wasm instanceof Uint8Array) {
-    const buf = wasm.buffer.byteLength === wasm.byteLength ? wasm.buffer : wasm.slice().buffer;
+    const buf = own(wasm);
     self.postMessage({ type: 'compiled', id: m.id, ok: true, wasm: buf, diag: r.diag, ms, pch: !!pch }, [buf]);
   } else self.postMessage({ type: 'compiled', id: m.id, ok: false, diag: r.diag || 'The compiler stopped without a message.', ms, pch: !!pch });
-  /* A new set of headers compiles without a precompiled header this time; the header is built afterwards, for next time */
-  if (m.head && !pchs.has(m.head)) serial(() => buildPch(m.head));
 };
 
 /* ---------- Runner: a minimal WASI preview 1 ---------- */
@@ -229,23 +264,37 @@ self.onmessage = async (e) => {
       const reachable = async (u) => { try { const r = await fetch(u + 'bundle.js', { method: 'HEAD' }); return r.ok; } catch { return false; } };
       const base = (await reachable(m.base)) ? m.base : m.local && (await reachable(m.local)) ? m.local : null;
       if (!base) throw new Error('the compiler CDN (' + m.base + ') is unreachable and there is no local copy in vendor/yowasp-clang/.');
-      clang = await import(base + 'bundle.js');
+      clang = await importClang(base);
       version = clang.version || '';
       let last = -1;
       const fetchProgress = ({ totalLength, doneLength }) => { const pc = totalLength ? Math.floor(doneLength / totalLength * 100) : 0; if (pc !== last) { last = pc; self.postMessage({ type: 'progress', text: `Downloading the C++ compiler, ${pc}%` }); } };
-      const err = collector();
-      try {
-        const r = await clang.runClang(['clang++', ...FLAGS, '-c', 'zq_rt.cpp', '-o', 'zq_rt.o'], { 'zq_rt.cpp': RUNTIME }, { stdout: err.write, stderr: err.write, fetchProgress });
-        rtObj = r['zq_rt.o'];
-      } catch (x) { throw new Error('The C++ runtime did not compile: ' + (err.text() || (x && x.message) || x)); }
-      if (!(rtObj instanceof Uint8Array)) throw new Error('The C++ runtime did not compile.');
-      self.postMessage({ type: 'ready', version, ms: Math.round(performance.now() - t0) });
+      if (m.role === 'builder') {
+        const r = await cc(['-c', 'zq_warm.cpp', '-o', 'zq_warm.o'], { 'zq_warm.cpp': 'int zq_warm;\n' }, { fetchProgress });
+        if (!r.ok) throw new Error(r.diag || 'The compiler did not start.');
+      } else {
+        const r = await cc([...FLAGS, '-c', 'zq_rt.cpp', '-o', 'zq_rt.o'], { 'zq_rt.cpp': RUNTIME }, { fetchProgress });
+        rtObj = r.ok ? r.files['zq_rt.o'] : null;
+        if (!(rtObj instanceof Uint8Array)) throw new Error('The C++ runtime did not compile: ' + (r.diag || 'no message'));
+      }
+      self.postMessage({ type: 'ready', version, patched, ms: Math.round(performance.now() - t0) });
     } catch (err) {
       self.postMessage({ type: 'fail', message: String((err && err.message) || err) });
     }
     return;
   }
-  if (m.type === 'warm') { if (clang && rtObj) serial(() => buildPch(String(m.head || ''))); return; }
+  if (m.type === 'pch') {
+    serial(async () => {
+      const head = String(m.head || '');
+      const data = clang ? await buildPch(head).catch(() => null) : null;
+      const buf = data ? own(data) : null;
+      self.postMessage({ type: 'pch', head, data: buf }, buf ? [buf] : []);
+    });
+    return;
+  }
+  if (m.type === 'pch-add') {
+    if (m.data) { pchs.delete(m.head); pchs.set(m.head, new Uint8Array(m.data)); while (pchs.size > 4) pchs.delete(pchs.keys().next().value); }
+    return;
+  }
   if (m.type === 'compile') {
     if (!clang || !rtObj) { self.postMessage({ type: 'compiled', id: m.id, ok: false, diag: 'The C++ compiler is not ready.', ms: 0 }); return; }
     serial(() => compile(m).catch((x) => self.postMessage({ type: 'compiled', id: m.id, ok: false, diag: 'The compiler crashed: ' + ((x && x.message) || x), ms: 0 })));

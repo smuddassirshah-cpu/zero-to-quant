@@ -1,0 +1,1612 @@
+{
+  "id": "l6-impact",
+  "course": "micro",
+  "title": "Slippage and market impact",
+  "minutes": 15,
+  "objectives": [
+    "Estimate slippage from order size and book depth.",
+    "Estimate impact with the square-root model and measure implementation shortfall."
+  ],
+  "skills": [
+    "ms-costs",
+    "ms-book"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "This book has more shares waiting at each level further from the mid, £10.00. You must buy 2,500 shares now with a market order.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              9.99,
+              1000
+            ],
+            [
+              9.98,
+              1500
+            ],
+            [
+              9.97,
+              2000
+            ],
+            [
+              9.96,
+              2500
+            ],
+            [
+              9.95,
+              3000
+            ]
+          ],
+          "asks": [
+            [
+              10.01,
+              1000
+            ],
+            [
+              10.02,
+              1500
+            ],
+            [
+              10.03,
+              2000
+            ],
+            [
+              10.04,
+              2500
+            ],
+            [
+              10.05,
+              3000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {}
+      },
+      "question": "What average price per share do you pay, in £? Give three decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.016,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "£",
+        "label": "Average price in pounds",
+        "accept": "£10.016: $(1{,}000 \\times 10.01 + 1{,}500 \\times 10.02) / 2{,}500$.",
+        "wrong": [
+          {
+            "id": "top",
+            "value": 10.01,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "simple",
+            "value": 10.015,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "last",
+            "value": 10.02,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only 1,000 shares wait at £10.01. Where do the other 1,500 come from?"
+        },
+        {
+          "rung": "point",
+          "text": "The order takes all of the first level, then part of the second.",
+          "highlight": [
+            "ask0",
+            "ask1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1{,}000 \\times 10.01 + 1{,}500 \\times 10.02 = 25{,}040$, over 2,500 shares."
+        }
+      ],
+      "feedback": {
+        "correct": "£10.016: your order ate two levels of the book.",
+        "generic": "Not quite right. Fill 1,000 at £10.01 and the rest at £10.02, then divide the total by 2,500.",
+        "byKey": {
+          "top": "You priced every share at the best ask. Only 1,000 are offered there; the other 1,500 cost £10.02.",
+          "simple": "You averaged the two prices equally. More shares filled at £10.02, so weight by size.",
+          "last": "You priced every share at the last level. The first 1,000 filled a penny cheaper."
+        }
+      },
+      "explain": {
+        "text": "The order took all 1,000 at £10.01 and 1,500 of the 1,500 at £10.02. The total is £25,040, so the average is £10.016, 1.6p over the mid.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 2500
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "The curve shows the average cost over the mid, in bp, for any buy in this book. Drag the dot along it from small orders to large ones.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10.5
+          ],
+          "y": [
+            0,
+            40
+          ],
+          "grid": true,
+          "xLabel": "Order size (thousand shares)",
+          "yLabel": "Cost over the mid (bp)",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "10*(min(x,1) + 2*max(0,min(x,2.5)-1) + 3*max(0,min(x,4.5)-2.5) + 4*max(0,min(x,7)-4.5) + 5*max(0,min(x,10)-7))/x",
+              "label": "walking this book",
+              "domain": [
+                0.2,
+                10
+              ],
+              "labelAt": 8.5,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 1,
+              "y": 10,
+              "drag": true,
+              "on": "f",
+              "label": ""
+            }
+          ]
+        },
+        "derive": {
+          "caption": "Buy {{round(P.x * 1000, -2)}} shares: {{fixed(P.y, 1)}} bp over the mid"
+        }
+      },
+      "question": "Ten times the order, from 1,000 to 10,000 shares. What happens to the cost per share?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "It rises about 3.5 times, from 10 bp to 35 bp",
+            "correct": true
+          },
+          {
+            "id": "ten",
+            "text": "It rises 10 times, to 100 bp",
+            "why": "You scaled the cost with the size. Each new level is only a penny dearer, so the average climbs slower than the order grows."
+          },
+          {
+            "id": "same",
+            "text": "It stays at 10 bp",
+            "why": "You kept every share at the best ask. Beyond 1,000 shares the order has to pay the dearer levels."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the curve at 1 and at 10 thousand shares."
+        },
+        {
+          "rung": "point",
+          "text": "At 1,000 shares the cost is 10 bp. Where is the curve at 10,000?",
+          "highlight": [
+            "f"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "10 bp becomes 35 bp: costlier, but far from ten times.",
+        "generic": "Not quite right. Read the curve at 1 and at 10 thousand shares."
+      },
+      "explain": {
+        "text": "A small order pays only the half-spread, 10 bp. Larger orders reach dearer levels, so the average rises, to 35 bp at 10,000 shares. It grows more slowly than the order does.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 10,
+              "y": 35
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "The extra you pay over the mid at arrival is **slippage**. Part of it is the half-spread. The rest is **market impact**: your own order pushing the price you pay.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              9.99,
+              1000
+            ],
+            [
+              9.98,
+              1500
+            ],
+            [
+              9.97,
+              2000
+            ],
+            [
+              9.96,
+              2500
+            ],
+            [
+              9.95,
+              3000
+            ]
+          ],
+          "asks": [
+            [
+              10.01,
+              1000
+            ],
+            [
+              10.02,
+              1500
+            ],
+            [
+              10.03,
+              2000
+            ],
+            [
+              10.04,
+              2500
+            ],
+            [
+              10.05,
+              3000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "caption": "Mid £10.00"
+        }
+      },
+      "question": "What is the slippage on a market buy of 4,500 shares, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Slippage in pounds",
+        "accept": "£100: $1{,}000 \\times 1\\text{p} + 1{,}500 \\times 2\\text{p} + 2{,}000 \\times 3\\text{p} = 10{,}000\\text{p}$.",
+        "wrong": [
+          {
+            "id": "top",
+            "value": 45,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "last",
+            "value": 135,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "pence",
+            "value": 10000,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Measure each share's price from the mid, £10.00."
+        },
+        {
+          "rung": "point",
+          "text": "The order fills 1,000 at 1p over, 1,500 at 2p over and 2,000 at 3p over.",
+          "highlight": [
+            "ask0",
+            "ask1",
+            "ask2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1{,}000 + 3{,}000 + 6{,}000 = 10{,}000$ pence."
+        }
+      ],
+      "feedback": {
+        "correct": "£100, or 22 bp of the £45,000 at the mid.",
+        "generic": "Not quite right. Add up pence over the mid level by level, then turn pence into pounds.",
+        "byKey": {
+          "top": "You charged every share 1p, the best ask's gap. Only 1,000 shares are offered there.",
+          "last": "You charged every share 3p, the last level's gap. The first 2,500 filled cheaper.",
+          "pence": "That is the slippage in pence. Divide by 100 for pounds."
+        }
+      },
+      "explain": {
+        "text": "The walk paid 1p, 2p and 3p over the mid on the three levels: £100 in all. On £45,000 at the mid that is 22 bp, of which 10 bp is the half-spread and 12 bp impact.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 4500
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now a small order: a market buy of 200 shares. There are 1,000 shares waiting at the best ask.",
+      "canvas": {
+        "kind": "orderbook",
+        "params": {
+          "bids": [
+            [
+              9.99,
+              1000
+            ],
+            [
+              9.98,
+              1500
+            ],
+            [
+              9.97,
+              2000
+            ],
+            [
+              9.96,
+              2500
+            ],
+            [
+              9.95,
+              3000
+            ]
+          ],
+          "asks": [
+            [
+              10.01,
+              1000
+            ],
+            [
+              10.02,
+              1500
+            ],
+            [
+              10.03,
+              2000
+            ],
+            [
+              10.04,
+              2500
+            ],
+            [
+              10.05,
+              3000
+            ]
+          ],
+          "currency": "£",
+          "dp": 2
+        },
+        "state": {
+          "highlight": [
+            "ask0"
+          ]
+        }
+      },
+      "question": "What is its slippage, in bp of the mid?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "bp",
+        "label": "Slippage in basis points",
+        "accept": "10 bp: 1p over a £10.00 mid, the half-spread and nothing more.",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "full",
+            "value": 20,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "pence",
+            "value": 1,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the order get past the first level?"
+        },
+        {
+          "rung": "point",
+          "text": "All 200 shares fill at £10.01.",
+          "highlight": [
+            "ask0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1p over a £10.00 mid, in basis points."
+        }
+      ],
+      "feedback": {
+        "correct": "10 bp: the half-spread, with no impact at all.",
+        "generic": "Not quite right. All 200 shares fill at the best ask. Measure that from the mid.",
+        "byKey": {
+          "none": "You treated a small order as free. It still crosses half the spread.",
+          "full": "You charged the whole spread. A single buy pays half of it against the mid.",
+          "pence": "That is 1p, the slippage per share in pence. In basis points of £10.00 it is 10."
+        }
+      },
+      "explain": {
+        "text": "The order is far smaller than the 1,000 shares at the touch, so it never reaches a second level. Its slippage is the half-spread alone: no market impact.",
+        "canvas": {
+          "order": {
+            "side": "buy",
+            "size": 200
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Real books refill as you trade, so traders use a rule fitted to many trades, the **square-root model**: $$\\text{impact} \\approx c\\,\\sigma\\sqrt{Q/V}$$ Here $\\sigma$ is daily volatility, $Q$ your order, $V$ the day's volume and $c$ a constant near 1.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10.5
+          ],
+          "y": [
+            0,
+            100
+          ],
+          "grid": true,
+          "xLabel": "Order as % of daily volume",
+          "yLabel": "Impact (bp)",
+          "functions": [
+            {
+              "id": "sq",
+              "expr": "10*sig*sqrt(x)",
+              "label": "square-root model",
+              "domain": [
+                0,
+                10
+              ],
+              "labelAt": 8.5,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "sig": 2
+          }
+        },
+        "state": {}
+      },
+      "question": "With $\\sigma = 2\\%$ a day, $Q/V = 1\\%$ and $c = 1$, what impact does it predict, in bp?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "bp",
+        "label": "Impact in basis points",
+        "accept": "20 bp: $1 \\times 0.02 \\times \\sqrt{0.01} = 0.002$.",
+        "wrong": [
+          {
+            "id": "no-root",
+            "value": 2,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "root-of-one",
+            "value": 200,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "percent",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write both percentages as decimals first."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sqrt{0.01} = 0.1$.",
+          "highlight": [
+            "sq"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.02 \\times 0.1 = 0.002$, and 0.0001 is one basis point."
+        }
+      ],
+      "feedback": {
+        "correct": "20 bp: the curve at 1% of volume.",
+        "generic": "Not quite right. Compute $0.02 \\times \\sqrt{0.01}$, then turn the decimal into basis points.",
+        "byKey": {
+          "no-root": "You multiplied by $Q/V$ itself. The model takes its square root: $\\sqrt{0.01} = 0.1$.",
+          "root-of-one": "You used $\\sqrt{1} = 1$ for 1%. Write 1% as 0.01 first, so the root is 0.1.",
+          "percent": "That is the impact in percent. Multiply by 100 for basis points."
+        }
+      },
+      "explain": {
+        "text": "$0.02 \\times \\sqrt{0.01} = 0.02 \\times 0.1 = 0.002$, which is 20 bp. A more volatile share, or a bigger slice of the day's volume, costs more.",
+        "canvas": {
+          "points": [
+            {
+              "id": "A",
+              "x": 1,
+              "y": 20,
+              "label": "1%: 20 bp"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "A colleague reasons: 1% of daily volume cost 20 bp, so 4% will cost four times as much, 80 bp. The dashed line is that reasoning.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10.5
+          ],
+          "y": [
+            0,
+            100
+          ],
+          "grid": true,
+          "xLabel": "Order as % of daily volume",
+          "yLabel": "Impact (bp)",
+          "functions": [
+            {
+              "id": "sq",
+              "expr": "10*sig*sqrt(x)",
+              "label": "square-root model",
+              "domain": [
+                0,
+                10
+              ],
+              "labelAt": 8.5,
+              "labelSide": "below"
+            },
+            {
+              "id": "lin",
+              "expr": "20*x",
+              "label": "straight line",
+              "domain": [
+                0,
+                5
+              ],
+              "dashed": true,
+              "colour": 4,
+              "labelAt": 4.2,
+              "labelSide": "above",
+              "labelAnchor": "end"
+            }
+          ],
+          "params": {
+            "sig": 2
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 1,
+              "y": 20,
+              "label": "1%: 20 bp"
+            }
+          ]
+        }
+      },
+      "question": "What does the square-root model predict for 4% of daily volume?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "40 bp",
+            "correct": true
+          },
+          {
+            "id": "linear",
+            "text": "80 bp",
+            "why": "You scaled impact in line with size, as the dashed line does. Four times the size is twice the impact, since $\\sqrt{4} = 2$.",
+            "canvas": {
+              "highlight": [
+                "lin"
+              ]
+            }
+          },
+          {
+            "id": "same",
+            "text": "20 bp",
+            "why": "You kept the impact fixed. The bigger order still reaches further, just not four times as far."
+          },
+          {
+            "id": "square",
+            "text": "320 bp",
+            "why": "You squared the ratio. The model takes the square root, which grows slowly."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How does $\\sqrt{Q/V}$ change when $Q$ is four times bigger?"
+        },
+        {
+          "rung": "point",
+          "text": "$\\sqrt{4} = 2$.",
+          "highlight": [
+            "sq"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$20 \\times 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "40 bp: four times the size, twice the impact per share.",
+        "generic": "Not quite right. Multiply 20 bp by the square root of 4.",
+        "byKey": {
+          "linear": "Impact is not a straight line in size. Four times the order is twice the impact, 40 bp.",
+          "same": "Size does matter: the model's impact grows with $\\sqrt{Q}$."
+        }
+      },
+      "explain": {
+        "text": "Four times the order multiplies $\\sqrt{Q/V}$ by 2, so impact per share goes from 20 bp to 40 bp. The straight line overstates large orders badly. The total cost in £ still rises faster than the order: four times the shares at twice the cost each is eight times the £.",
+        "canvas": {
+          "points": {
+            "B": {
+              "id": "B",
+              "x": 4,
+              "y": 40,
+              "label": "4%: 40 bp"
+            }
+          },
+          "highlight": [
+            "sq"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "A fund buys a large block from minute 5 to minute 15. The mid rises 6p while it buys. After it stops, some of the rise fades. The part that fades is **temporary impact**; the part that stays is **permanent impact**.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "mid",
+              "label": "Mid",
+              "values": [
+                10.0,
+                10.0,
+                10.0,
+                10.0,
+                10.0,
+                10.0,
+                10.006,
+                10.012,
+                10.018,
+                10.024,
+                10.03,
+                10.036,
+                10.042,
+                10.048,
+                10.054,
+                10.06,
+                10.052,
+                10.046,
+                10.041,
+                10.037,
+                10.034,
+                10.032,
+                10.031,
+                10.03,
+                10.03,
+                10.03,
+                10.03,
+                10.03,
+                10.03,
+                10.03,
+                10.03
+              ]
+            }
+          ],
+          "money": "£",
+          "decimals": 2,
+          "xLabel": "Time (minutes)",
+          "y": [
+            9.98,
+            10.08
+          ]
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "m0",
+              "i": 5,
+              "label": "buying starts"
+            },
+            {
+              "id": "m1",
+              "i": 15,
+              "label": "stops: {value}"
+            },
+            {
+              "id": "m2",
+              "i": 30,
+              "label": "{value}",
+              "below": true
+            }
+          ],
+          "shade": [
+            {
+              "id": "buy",
+              "from": 5,
+              "to": 15,
+              "label": "buying",
+              "tone": "neutral"
+            }
+          ]
+        }
+      },
+      "question": "How much of the 6p rise is permanent, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "pence",
+        "label": "Permanent impact in pence",
+        "accept": "3p: the mid settles at £10.03, 3p above where it started.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 6,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the mid settle once the buying has stopped?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare the last value with the start, £10.00.",
+          "highlight": [
+            "m2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10.03 - 10.00$."
+        }
+      ],
+      "feedback": {
+        "correct": "3p stays and 3p fades.",
+        "generic": "Not quite right. Compare where the mid settles with where it started.",
+        "byKey": {
+          "all": "That is the whole rise at the moment buying stopped. Half of it faded afterwards.",
+          "none": "Not all of it faded: the mid settles at £10.03, not £10.00."
+        }
+      },
+      "explain": {
+        "text": "The mid peaked at £10.06 and settled at £10.03. The 3p that faded was temporary: the price of demanding shares quickly. The 3p that stayed is permanent: the market read the buying as information.",
+        "canvas": {
+          "highlight": [
+            "m1",
+            "m2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "Split the order into $n$ slices, an hour apart. Our simple model: impact costs $50/n$ bp, since smaller slices push less. Each slice also adds an hour of exposure to the market, which we price at 2 bp.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            12.5
+          ],
+          "y": [
+            0,
+            60
+          ],
+          "grid": true,
+          "xLabel": "Number of slices $n$",
+          "yLabel": "Cost (bp)",
+          "params": {
+            "n": 1
+          },
+          "functions": [
+            {
+              "id": "imp",
+              "expr": "50/x",
+              "label": "impact $50/n$",
+              "domain": [
+                1,
+                12
+              ],
+              "colour": 2,
+              "labelAt": 11,
+              "labelSide": "above"
+            },
+            {
+              "id": "risk",
+              "expr": "2*x",
+              "label": "timing risk $2n$",
+              "domain": [
+                1,
+                12
+              ],
+              "colour": 3,
+              "labelAt": 11,
+              "labelSide": "below"
+            },
+            {
+              "id": "tot",
+              "expr": "50/x + 2*x",
+              "label": "total",
+              "domain": [
+                1,
+                12
+              ],
+              "labelAt": 11.5,
+              "labelSide": "above"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "Q",
+              "x": 1,
+              "y": 52,
+              "label": ""
+            }
+          ]
+        },
+        "derive": {
+          "Q.x": "n",
+          "Q.y": "50/n + 2*n",
+          "caption": "{{n}} slices: impact {{fixed(50/n, 1)}} + risk {{fixed(2*n, 1)}} = {{fixed(50/n + 2*n, 1)}} bp"
+        }
+      },
+      "question": "Set the number of slices that makes the total cost smallest.",
+      "widget": {
+        "kind": "slider",
+        "min": 1,
+        "max": 12,
+        "step": 1,
+        "start": 1,
+        "bind": "n",
+        "label": "Slices $n$",
+        "answer": 5,
+        "tol": 0.5,
+        "wrong": [
+          {
+            "id": "one",
+            "from": 1,
+            "to": 2
+          },
+          {
+            "id": "many",
+            "from": 8,
+            "to": 12
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch both parts as you move the slider. One falls and one rises."
+        },
+        {
+          "rung": "point",
+          "text": "The total is lowest where the two costs are about equal.",
+          "highlight": [
+            "tot"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$50/n = 2n$ when $n^2 = 25$."
+        }
+      ],
+      "feedback": {
+        "correct": "Five slices: 10 bp of impact and 10 bp of risk, 20 bp in all.",
+        "generic": "Not quite right. Find where the total curve bottoms out.",
+        "byKey": {
+          "one": "Trading in one or two blocks keeps risk low but pays heavy impact: 52 bp for one block.",
+          "many": "Many slices cut impact but leave the order exposed for hours. The risk line now dominates."
+        }
+      },
+      "explain": {
+        "text": "Impact falls with more slices while timing risk rises, so the total has a minimum. At $n = 5$ both parts are 10 bp, for 20 bp in all. A real schedule comes from fitted impact and volatility, but the trade-off is the same.",
+        "canvas": {
+          "params": {
+            "n": 5
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "A slippage figure only covers shares that filled. **Implementation shortfall** compares you with a paper portfolio that bought all $N$ shares at the decision price $p_d$. You filled $q_i$ shares at $p_i$, and the price closed at $p_c$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "paper",
+            "text": "The paper portfolio buys all $N$ shares at $p_d$, with no cost"
+          },
+          {
+            "id": "real",
+            "text": "The real one buys $q_i$ at $p_i$; the other $N - \\sum q_i$ shares are never bought"
+          },
+          {
+            "id": "exec",
+            "text": "Execution cost: $\\sum q_i\\,(p_i - p_d)$, what the fills paid over the decision price"
+          },
+          {
+            "id": "opp",
+            "text": "Opportunity cost: $(N - \\sum q_i)(p_c - p_d)$, the gain we missed on shares never bought"
+          },
+          {
+            "id": "is",
+            "text": "Shortfall = execution cost + opportunity cost, the paper P&L minus the real P&L"
+          }
+        ],
+        "answer": [
+          "paper",
+          "real",
+          "exec",
+          "opp",
+          "is"
+        ],
+        "same": [
+          [
+            "exec",
+            "opp"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the benchmark you compare against."
+        },
+        {
+          "rung": "point",
+          "text": "The two costs come from the filled shares and the unfilled ones."
+        },
+        {
+          "rung": "step",
+          "text": "Paper, then real, then the two costs, then their sum."
+        }
+      ],
+      "feedback": {
+        "correct": "Filled shares and missed shares both count.",
+        "generic": "Not quite right. Set up the two portfolios, then cost the filled and the unfilled shares, then add.",
+        "byKey": {
+          "is": "The shortfall adds the two costs, so it comes after both.",
+          "paper": "The paper portfolio is the benchmark, so it comes first."
+        }
+      },
+      "explain": {
+        "text": "The paper portfolio is what the decision would have earned for free. The fills cost $\\sum q_i(p_i - p_d)$, and the missing shares cost what the price moved on them. Ignore the second term and an order that barely fills looks cheap."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A portfolio manager decides to buy 10,000 shares when the mid is £10.00. The execution report shows two fills; the rest of the order never traded. The share closes at £10.12.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Shares",
+            "Price"
+          ],
+          "rows": [
+            [
+              "Fill 1",
+              "4,000",
+              "£10.02"
+            ],
+            [
+              "Fill 2",
+              "3,000",
+              "£10.05"
+            ],
+            [
+              "Unfilled",
+              "3,000",
+              ""
+            ],
+            [
+              "Close",
+              "",
+              "£10.12"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the implementation shortfall, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 590,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "£",
+        "label": "Implementation shortfall in pounds",
+        "accept": "£590: £230 of execution cost plus $3{,}000 \\times 12\\text{p} = £360$ of opportunity cost.",
+        "wrong": [
+          {
+            "id": "filled-only",
+            "value": 230,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "missed-only",
+            "value": 360,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "all-close",
+            "value": 1200,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Cost the filled shares and the unfilled shares separately."
+        },
+        {
+          "rung": "point",
+          "text": "Fills: 4,000 at 2p over and 3,000 at 5p over. Unfilled: 3,000 missed a 12p rise.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$80 + 150 + 360$."
+        }
+      ],
+      "feedback": {
+        "correct": "£590, 59 bp of the £100,000 decision.",
+        "generic": "Not quite right. Add the fills' cost over £10.00 to the 3,000 missed shares times the 12p rise.",
+        "byKey": {
+          "filled-only": "You measured only the shares that filled. The 3,000 you never bought rose 12p, and that cost counts.",
+          "missed-only": "That is only the missed shares. The fills also paid over the decision price.",
+          "all-close": "You charged all 10,000 shares the rise to the close. The filled shares paid their fill prices."
+        }
+      },
+      "explain": {
+        "text": "The fills cost $4{,}000 \\times 2\\text{p} + 3{,}000 \\times 5\\text{p} = £230$ over the decision price. The 3,000 missing shares cost $3{,}000 \\times 12\\text{p} = £360$. Measured on fills alone the trade looked like 33 bp; the full shortfall is 59 bp.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "You must buy £5m of a share that trades £50m a day, with daily volatility $\\sigma = 2\\%$. Use the square-root model with $c = 1$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            10.5
+          ],
+          "y": [
+            0,
+            100
+          ],
+          "grid": true,
+          "xLabel": "Order as % of daily volume",
+          "yLabel": "Impact (bp)",
+          "functions": [
+            {
+              "id": "sq",
+              "expr": "10*sig*sqrt(x)",
+              "label": "square-root model",
+              "domain": [
+                0,
+                10
+              ],
+              "labelAt": 8.5,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "sig": 2
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 1,
+              "y": 20,
+              "label": "1%: 20 bp"
+            }
+          ]
+        }
+      },
+      "question": "What impact cost does the model predict, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 31623,
+        "tol": {
+          "rel": 0.005
+        },
+        "unit": "£",
+        "label": "Impact cost in pounds",
+        "accept": "About £31,600: $0.02 \\times \\sqrt{0.1} = 63.2$ bp of £5m.",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 100000,
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "id": "no-root",
+            "value": 10000,
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "id": "bp",
+            "value": 63.2,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What fraction of the day's volume is the order?"
+        },
+        {
+          "rung": "point",
+          "text": "$Q/V = 5/50 = 0.1$, and $\\sqrt{0.1} = 0.316$.",
+          "highlight": [
+            "sq"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.02 \\times 0.316 = 0.00632$, times £5m."
+        }
+      ],
+      "feedback": {
+        "correct": "About 63 bp, or £31,600 on £5m.",
+        "generic": "Not quite right. Compute $0.02 \\times \\sqrt{0.1}$, then multiply by £5,000,000.",
+        "byKey": {
+          "linear": "You scaled 20 bp in line with size, to 200 bp. Ten times the share of volume is $\\sqrt{10} \\approx 3.16$ times the impact.",
+          "no-root": "You used $Q/V$ without the square root. $\\sqrt{0.1} = 0.316$, not 0.1.",
+          "bp": "That is the impact in basis points. Apply it to the £5m to get pounds."
+        }
+      },
+      "explain": {
+        "text": "The order is 10% of daily volume, so impact is $0.02 \\times \\sqrt{0.1} = 0.00632$, about 63 bp. On £5m that is about £31,600, far more than the spread. This is why large funds split orders over days.",
+        "canvas": {
+          "points": {
+            "C": {
+              "id": "C",
+              "x": 10,
+              "y": 63.2,
+              "label": "10%: 63 bp"
+            }
+          },
+          "highlight": [
+            "sq"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "An execution desk wants both numbers in its pre-trade and post-trade reports. Write them as functions. Prices are in £; `sigma` is a decimal (0.02 for 2%).",
+      "question": "Complete `impact_bps` and `shortfall`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\ndef impact_bps(sigma, q, v, c):\n    \"\"\"Square-root impact in basis points: c * sigma * sqrt(q / v).\"\"\"\n    ...\n\ndef shortfall(decision, fills, unfilled, close):\n    \"\"\"Implementation shortfall of a buy, in pounds.\n\n    fills is a list of (price, shares) pairs; unfilled is\n    the number of shares never bought.\n    \"\"\"\n    ...\n",
+        "solution": "import math\n\ndef impact_bps(sigma, q, v, c):\n    \"\"\"Square-root impact in basis points: c * sigma * sqrt(q / v).\"\"\"\n    return c * sigma * math.sqrt(q / v) * 10000\n\ndef shortfall(decision, fills, unfilled, close):\n    \"\"\"Implementation shortfall of a buy, in pounds.\n\n    fills is a list of (price, shares) pairs; unfilled is\n    the number of shares never bought.\n    \"\"\"\n    execution = sum(q * (p - decision) for p, q in fills)\n    opportunity = unfilled * (close - decision)\n    return execution + opportunity\n",
+        "examples": [
+          {
+            "call": "impact_bps(0.02, 1, 100, 1)",
+            "expect": "20.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "shortfall(10.00, [(10.02, 4000), (10.05, 3000)], 3000, 10.12)",
+            "expect": "590.0",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "impact_bps(0.02, 1, 100, 1)",
+            "expect": "20.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "impact_bps(0.02, 5e6, 50e6, 1)",
+            "expect": "63.245553203367585",
+            "compare": "isclose"
+          },
+          {
+            "call": "impact_bps(0.015, 2e6, 8e6, 0.8)",
+            "expect": "60.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "impact_bps(0.03, 4e5, 1e8, 1.2)",
+            "expect": "22.76839915321233",
+            "compare": "isclose"
+          },
+          {
+            "call": "impact_bps(0.01, 1e6, 1e6, 1)",
+            "expect": "100.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "impact_bps(0.02, 0, 1e6, 1)",
+            "expect": "0.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "shortfall(10.00, [(10.02, 4000), (10.05, 3000)], 3000, 10.12)",
+            "expect": "590.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "shortfall(10.00, [(10.02, 4000), (10.05, 3000)], 0, 10.12)",
+            "expect": "230.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "shortfall(50.0, [], 1000, 49.0)",
+            "expect": "-1000.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "shortfall(20.0, [(19.99, 500)], 0, 21.0)",
+            "expect": "-5.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "shortfall(100.0, [(100.1, 100), (100.2, 100)], 300, 100.5)",
+            "expect": "180.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "shortfall(5.0, [(5.01, 1000), (5.03, 2000)], 7000, 4.95)",
+            "expect": "-280.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 12 hidden tests. Each answer is accepted when it is within a relative error of 1e-9 of the exact value."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both functions are one or two lines. Turn the decimal impact into basis points at the end."
+        },
+        {
+          "rung": "point",
+          "text": "The shortfall has two parts: the fills against `decision`, and `unfilled` shares against the move to `close`."
+        },
+        {
+          "rung": "step",
+          "text": "`sum(q * (p - decision) for p, q in fills) + unfilled * (close - decision)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both reports now count every share, filled or not.",
+        "generic": "Some tests failed. Check the factor of 10,000 in `impact_bps` and the unfilled term in `shortfall`.",
+        "byKey": {
+          "error": "Your code stopped with an error. Check that each `...` is replaced and `math` is imported."
+        }
+      },
+      "explain": {
+        "text": "`impact_bps` is the square-root model times 10,000. `shortfall` adds the fills' cost over the decision price to the move on the shares never bought, so it can be negative when the price falls and the unfilled part was luckily missed.\n\n```python\nexecution = sum(q * (p - decision) for p, q in fills)\nopportunity = unfilled * (close - decision)\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Slippage is what you pay over the arrival mid: the half-spread plus the impact of your own order walking the book.",
+      "Impact grows like the square root of size, $c\\,\\sigma\\sqrt{Q/V}$: four times the order is twice the cost per share. Part of it fades and part stays.",
+      "Splitting an order trades impact for timing risk, and implementation shortfall counts the shares that never filled."
+    ],
+    "formula": {
+      "name": "Square-root impact",
+      "tex": "\\text{impact} \\approx c\\,\\sigma\\sqrt{\\dfrac{Q}{V}}",
+      "note": "$\\sigma$ daily volatility, $Q$ the order, $V$ daily volume, $c$ near 1."
+    },
+    "trap": "Impact is not linear in size, and slippage on the fills alone ignores the shares you never bought."
+  },
+  "quiz": [
+    {
+      "id": "q-walk",
+      "difficulty": 2,
+      "prose": "A book offers 500 shares at £20.00, 500 at £20.02 and 1,000 at £20.05. The mid is £19.99.",
+      "question": "What is the average price of a market buy of 1,500 shares? Give three decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20.03,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "£",
+        "label": "Average price in pounds",
+        "accept": "£20.030: $(500 \\times 20.00 + 500 \\times 20.02 + 500 \\times 20.05) / 1{,}500$.",
+        "wrong": [
+          {
+            "id": "top",
+            "value": 20.0,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "all-third",
+            "value": 20.0333,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£20.030: equal 500-share pieces of three levels.",
+        "generic": "Not quite right. Fill 500 at each of the three levels, then average.",
+        "byKey": {
+          "top": "Only 500 shares are offered at £20.00. The rest come from dearer levels.",
+          "all-third": "You weighted the third level by its 1,000 shares. The order needs only 500 of them."
+        }
+      },
+      "explain": {
+        "text": "The order takes 500 at £20.00, 500 at £20.02 and 500 of the 1,000 at £20.05. The total is £30,035 for 1,500 shares, £20.030 each."
+      }
+    },
+    {
+      "id": "q-root",
+      "difficulty": 2,
+      "prose": "The square-root model predicts 30 bp of impact for an order of 2% of daily volume.",
+      "question": "What does it predict for 8% of daily volume, all else equal?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "60 bp",
+            "correct": true
+          },
+          {
+            "id": "linear",
+            "text": "120 bp",
+            "why": "You scaled impact in line with size. Four times the size is twice the impact."
+          },
+          {
+            "id": "same",
+            "text": "30 bp",
+            "why": "You left impact unchanged. A bigger order pushes the price further."
+          },
+          {
+            "id": "root-two",
+            "text": "42 bp",
+            "why": "You multiplied by $\\sqrt{2}$, as if the order had doubled. It quadrupled, so multiply by $\\sqrt{4} = 2$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$30 \\times \\sqrt{4} = 60$ bp.",
+        "generic": "Not quite right. The size quadrupled; multiply 30 bp by $\\sqrt{4}$."
+      },
+      "explain": {
+        "text": "8% is four times 2%, so $\\sqrt{Q/V}$ doubles and impact goes from 30 bp to 60 bp."
+      }
+    },
+    {
+      "id": "q-unfilled",
+      "difficulty": 3,
+      "prose": "A buy order for 20,000 shares was decided at £5.00. Only 5,000 filled, at £5.01. The rest never traded, and the share closed at £5.20.",
+      "question": "Which measure gives the honest cost of this decision?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Implementation shortfall: £50 on the fills plus £3,000 on the 15,000 missed shares",
+            "correct": true
+          },
+          {
+            "id": "slip",
+            "text": "Slippage on the fills: 1p a share, a cheap trade",
+            "why": "You measured only the shares that filled. Most of the order was missed while the price rose 20p."
+          },
+          {
+            "id": "spread",
+            "text": "The half-spread, since a market order was never used",
+            "why": "You treated a passive order as free. Not filling cost more than any spread here."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£3,050 in all, 30.5 bp of £100,000.",
+        "generic": "Not quite right. Count the shares that never filled as well."
+      },
+      "explain": {
+        "text": "The fills cost $5{,}000 \\times 1\\text{p} = £50$. The 15,000 missed shares rose 20p, a £3,000 opportunity cost. The order looked cheap and was expensive."
+      }
+    },
+    {
+      "id": "q-small",
+      "difficulty": 2,
+      "prose": "A book shows 3,000 shares at the best ask, 2p above the mid of £40.00. You send a market buy for 300 shares.",
+      "question": "What is its slippage against the mid, in bp?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "bp",
+        "label": "Slippage in basis points",
+        "accept": "5 bp: 2p over £40.00.",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "full",
+            "value": 10,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "5 bp: the half-spread and no impact.",
+        "generic": "Not quite right. All 300 shares fill at the best ask; measure that from the mid.",
+        "byKey": {
+          "none": "A small order still crosses half the spread.",
+          "full": "You charged the full spread. The best ask is half a spread above the mid."
+        }
+      },
+      "explain": {
+        "text": "300 shares fit inside the 3,000 at the touch, so all fill at £40.02. That is 2p over the mid, 5 bp, with no impact."
+      }
+    }
+  ]
+}

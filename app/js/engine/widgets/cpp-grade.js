@@ -28,24 +28,52 @@
 
   /* ---------- One shared compiler and runner ---------- */
   /* Timings for the record (read by tools): load, and the last compile and run */
-  const stats = { loadMs: null, workerMs: null, version: '', last: null };
+  const stats = { loadMs: null, workerMs: null, version: '', patched: false, last: null };
   const Cpp = (() => {
     const url = () => new URL('js/screens/cpp-worker.js', location.href).href;
+    const init = (role) => ({ type: 'init', base: CLANG, local: new URL(LOCAL, location.href).href, role });
     let cw = null, rw = null, status = 'idle', reason = '', progress = '', gen = 0, seq = 0, loadTimer = 0;
-    const subs = new Set(), pend = new Map(), warmed = new Set(), wantWarm = new Set(), cache = new Map();
+    const subs = new Set(), pend = new Map(), wanted = new Set(), cache = new Map();
     const notify = () => subs.forEach(f => f(status));
     const set = (s) => { status = s; notify(); };
+    /* Precompiled headers come from a second, short-lived compiler (the builder), so a Check never waits behind one;
+       it starts once the main compiler is ready and closes when it has nothing left to build */
+    let bw = null, bReady = false, bBusy = null, bTimer = 0;
+    const bQueue = [], asked = new Set();
+    const killB = () => { clearTimeout(bTimer); if (bw) { bw.onmessage = null; bw.onerror = null; bw.terminate(); } bw = null; bReady = false; bBusy = null; };
+    const pump = () => {
+      if (status !== 'ready' && status !== 'running') return;
+      if (!bQueue.length && !bBusy) { killB(); return; }
+      if (!bw) {
+        try { bw = new Worker(url(), { type: 'module' }); } catch { bQueue.length = 0; return; }
+        bw.onmessage = (e) => {
+          const m = e.data || {};
+          if (m.type === 'ready') { bReady = true; pump(); }
+          else if (m.type === 'fail') { killB(); bQueue.length = 0; }
+          else if (m.type === 'pch') { clearTimeout(bTimer); if (m.data && cw) cw.postMessage({ type: 'pch-add', head: m.head, data: m.data }, [m.data]); bBusy = null; pump(); }
+        };
+        bw.onerror = (e) => { if (e && e.preventDefault) e.preventDefault(); killB(); bQueue.length = 0; };
+        bw.postMessage(init('builder'));
+        return;
+      }
+      if (!bReady || bBusy) return;
+      bBusy = bQueue.shift();
+      bTimer = setTimeout(() => { killB(); pump(); }, 180000);
+      bw.postMessage({ type: 'pch', head: bBusy });
+    };
+    const want = (head) => { if (!head || asked.has(head)) return; asked.add(head); bQueue.push(head); pump(); };
     const killC = (why) => {
       clearTimeout(loadTimer);
       if (cw) { cw.onmessage = null; cw.onerror = null; cw.terminate(); cw = null; }
       pend.forEach(p => { clearTimeout(p.timer); p.resolve({ ok: false, diag: why || 'The compiler stopped.', crashed: true }); });
       pend.clear();
+      killB(); bQueue.length = 0; asked.clear();
     };
     const unavailable = (msg) => { killC(msg); reason = msg; progress = ''; set('unavailable'); };
     const start = (restart = false) => {
       killC('The compiler was restarted.');
       const my = ++gen, t0 = performance.now();
-      warmed.clear(); progress = '';
+      progress = '';
       set(restart ? 'restarting' : 'loading');
       if (typeof WebAssembly !== 'object' || typeof Worker !== 'function') { unavailable('This browser cannot run WebAssembly in a background worker.'); return; }
       try { cw = new Worker(url(), { type: 'module' }); } catch (err) { unavailable(String((err && err.message) || err)); return; }
@@ -53,7 +81,7 @@
         if (my !== gen) return;
         const m = e.data || {};
         if (m.type === 'progress') { progress = String(m.text || ''); notify(); return; }
-        if (m.type === 'ready') { clearTimeout(loadTimer); progress = ''; stats.loadMs = Math.round(performance.now() - t0); stats.workerMs = m.ms; stats.version = m.version; set('ready'); wantWarm.forEach(h => warm(h)); return; }
+        if (m.type === 'ready') { clearTimeout(loadTimer); progress = ''; stats.loadMs = Math.round(performance.now() - t0); stats.workerMs = m.ms; stats.version = m.version; stats.patched = !!m.patched; set('ready'); wanted.forEach(want); return; }
         if (m.type === 'fail') { unavailable(m.message); return; }
         if (m.type === 'compiled') { const p = pend.get(m.id); if (!p) return; pend.delete(m.id); clearTimeout(p.timer); p.resolve(m); }
       };
@@ -63,16 +91,11 @@
         const msg = (e && e.message) || 'The C++ compiler worker could not start.';
         if (status === 'ready') start(true); else unavailable(msg);
       };
-      cw.postMessage({ type: 'init', base: CLANG, local: new URL(LOCAL, location.href).href });
+      cw.postMessage(init());
       loadTimer = setTimeout(() => { if (my === gen) unavailable('The C++ compiler took more than five minutes to load.'); }, LOAD_MS);
     };
-    /* The precompiled header for a widget's starter headers is built while the learner reads the question */
-    const warm = (head) => {
-      if (!head) return;
-      wantWarm.add(head);
-      if (status !== 'ready' || !cw || warmed.has(head)) return;
-      warmed.add(head); cw.postMessage({ type: 'warm', head });
-    };
+    /* The starter's headers are precompiled while the learner reads the question */
+    const warm = (head) => { if (!head) return; wanted.add(head); if (status === 'ready') want(head); };
     const compile = (u) => new Promise((resolve) => {
       const hit = cache.get(u.src);
       if (hit) { resolve(hit); return; }
@@ -80,8 +103,8 @@
       const id = ++seq;
       const timer = setTimeout(() => { pend.delete(id); resolve({ ok: false, diag: 'The compiler took more than ' + COMPILE_MS / 1000 + ' seconds, so it was stopped and restarted. Try again.' }); start(true); }, COMPILE_MS);
       pend.set(id, { resolve: (m) => { if (m.ok || (m.diag && !m.crashed)) { cache.set(u.src, m); while (cache.size > 8) cache.delete(cache.keys().next().value); } resolve(m); }, timer });
-      warmed.add(u.head);
       cw.postMessage({ type: 'compile', id, src: u.src, srcPch: u.srcPch, head: u.head });
+      want(u.head);
     });
     /* Runs the module once per case; resolves to { results: [..], timeout: index or null, crash } */
     const run = (wasm, cases, limit) => new Promise((resolve) => {
