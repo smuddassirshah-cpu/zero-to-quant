@@ -1,0 +1,1245 @@
+{
+  "id": "l1-arrays-in-memory",
+  "course": "ds",
+  "title": "Arrays in memory",
+  "minutes": 14,
+  "objectives": [
+    "Explain why indexing is fast and inserting in the middle is slow."
+  ],
+  "skills": [
+    "ds-arrays"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where is item 4?",
+      "prose": "An array keeps its items side by side in one block of memory. Each price here is a float of 8 bytes. The block starts at address 1000, so `prices[0]` sits at 1000 and `prices[1]` at 1008.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.20",
+            "102.50",
+            "100.40",
+            "103.10",
+            "104.00",
+            "102.80"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "a0",
+              "at": 0,
+              "label": "1000"
+            },
+            {
+              "id": "a1",
+              "at": 1,
+              "label": "1008"
+            },
+            {
+              "id": "q",
+              "at": 4,
+              "label": "?"
+            }
+          ],
+          "caption": "`prices`: six floats of 8 bytes, from address 1000"
+        }
+      },
+      "question": "At which address does `prices[4]` start?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1032,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Address of prices[4]",
+        "placeholder": "address",
+        "accept": "1032 exactly: $1000 + 4 \\times 8$",
+        "wrong": [
+          {
+            "id": "from-one",
+            "value": 1040
+          },
+          {
+            "id": "no-size",
+            "value": 1004
+          },
+          {
+            "id": "index-three",
+            "value": 1024
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many items come before `prices[4]`?"
+        },
+        {
+          "rung": "point",
+          "text": "Four items sit before it, each 8 bytes wide.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Skip 4 items of 8 bytes each: $1000 + 4 \\times 8$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1000 + 4 \\times 8 = 1032$. One multiply and one add, whatever the index.",
+        "generic": "Not quite right. Count the items before `prices[4]` and multiply by their width.",
+        "byKey": {
+          "from-one": "You counted five steps from the start. Index 4 has four items before it, so skip $4 \\times 8$ bytes.",
+          "no-size": "You added 4 to the address. Each item is 8 bytes wide, so index 4 is $4 \\times 8 = 32$ bytes along.",
+          "index-three": "1024 is where `prices[3]` starts. Index 4 is one more item along, 8 bytes further."
+        }
+      },
+      "explain": {
+        "text": "Every item has the same width, so item $i$ starts at $1000 + i \\times 8$. The computer never visits items 0 to 3 to get there. It jumps straight to the address.",
+        "canvas": {
+          "highlight": [
+            "c4"
+          ],
+          "pointers": [
+            {
+              "id": "q",
+              "at": 4,
+              "label": "1032"
+            }
+          ],
+          "caption": "`prices[4]` starts at $1000 + 4 \\times 8 = 1032$"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Making room",
+      "prose": "The array has one spare slot at the end, drawn empty. We want 99.90 at index 2, between 102.50 and 100.40. The values must stay side by side and in order.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.20",
+            "102.50",
+            "100.40",
+            "103.10",
+            "104.00",
+            null
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "ins",
+              "at": 2,
+              "label": "99.90 goes here"
+            }
+          ],
+          "caption": "Five prices and one spare slot"
+        }
+      },
+      "question": "Tap every value that has to move one slot to the right.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2",
+          "c3",
+          "c4"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "missed-two",
+            "set": [
+              "c3",
+              "c4"
+            ]
+          },
+          {
+            "id": "moved-all",
+            "set": [
+              "c0",
+              "c1",
+              "c2",
+              "c3",
+              "c4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which values sit at index 2 or later?"
+        },
+        {
+          "rung": "point",
+          "text": "The new value needs index 2. Something is in that slot now.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Indices 2, 3 and 4 each move one slot right. Start from the back so nothing is overwritten."
+        }
+      ],
+      "feedback": {
+        "correct": "Three values move, each one slot right. Then 99.90 goes into index 2.",
+        "generic": "Not quite right. Values before index 2 can stay; every value from index 2 on is in the way.",
+        "byKey": {
+          "missed-two": "You left `100.40` at index 2, but 99.90 needs that slot. It moves right as well.",
+          "moved-all": "You moved the whole array. `101.20` and `102.50` sit before index 2, so they stay put.",
+          "c0": "`101.20` sits before index 2, so it stays where it is.",
+          "c1": "`102.50` sits before index 2, so it stays where it is.",
+          "c5": "The empty slot holds no value. It is where `104.00` moves to.",
+          "c2": "`100.40` sits in index 2, the slot 99.90 needs. It moves too."
+        }
+      },
+      "explain": {
+        "text": "We shift from the back: `104.00` into the spare slot, then `103.10`, then `100.40`. That frees index 2 for 99.90. The two values before index 2 never move.",
+        "canvas": {
+          "cells": [
+            "101.20",
+            "102.50",
+            "99.90",
+            "100.40",
+            "103.10",
+            "104.00"
+          ],
+          "pointers": [
+            {
+              "id": "ins",
+              "at": 2,
+              "label": "new"
+            }
+          ],
+          "highlight": {
+            "range": [
+              3,
+              5
+            ]
+          },
+          "caption": "After the insert: three values shifted right"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Where you insert matters",
+      "prose": "Same five prices and one spare slot. The cost of an insert is the number of values that shift to make room.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.20",
+            "102.50",
+            "100.40",
+            "103.10",
+            "104.00",
+            null
+          ]
+        },
+        "state": {
+          "caption": "Five prices, indices 0 to 4, and a spare slot at index 5"
+        }
+      },
+      "question": "Fill in how many values move for each insert position.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Insert at index",
+          "Values that move"
+        ],
+        "rows": [
+          [
+            "0",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "2",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5, the end",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the values from the insert index to the last value."
+        },
+        {
+          "rung": "point",
+          "text": "Inserting at index 5 lands in the spare slot itself.",
+          "highlight": [
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Index 0: all 5 move. Index 2: 3 move. Index 4: 1 moves. Index 5: none."
+        }
+      ],
+      "feedback": {
+        "correct": "Inserting at index $i$ moves $n - i$ values. At the end that is $5 - 5 = 0$.",
+        "generic": "Not quite right. For each row, count the values from that index up to index 4."
+      },
+      "explain": {
+        "text": "An insert at index $i$ shifts the $n - i$ values from index $i$ on. At the front that is all of them; at the end it is none. That is why `append` is cheap and `insert(0, v)` is not.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              0,
+              4
+            ]
+          },
+          "caption": "Insert at 0: all five shift. Insert at 5: none do."
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A million prices",
+      "prose": "Now the array holds a million prices. Compare reading `prices[999_999]` with `prices.insert(0, p)`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.20",
+            "102.50",
+            "100.40",
+            "…",
+            "98.70",
+            "99.10"
+          ],
+          "showIndex": false
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "first",
+              "at": 0,
+              "label": "index 0"
+            },
+            {
+              "id": "last",
+              "at": 5,
+              "label": "index 999,999"
+            }
+          ],
+          "caption": "A million prices, most of them not drawn"
+        }
+      },
+      "question": "How many values does each one touch?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Reading: 1. Inserting at the front: 1,000,000.",
+            "correct": true
+          },
+          {
+            "id": "scan",
+            "text": "Reading: 1,000,000. Inserting: 1,000,000.",
+            "why": "You walked along to index 999,999. Its address is base $+\\, 999{,}999 \\times 8$, so only that one value is read."
+          },
+          {
+            "id": "like-append",
+            "text": "Reading: 1. Inserting: 1.",
+            "why": "You treated the insert like an append. Every one of the million values shifts right to free index 0."
+          },
+          {
+            "id": "average",
+            "text": "Reading: 500,000. Inserting: 500,000.",
+            "why": "You averaged over positions. Index 999,999 is reached in one step, and a front insert always shifts all of them."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Reading uses the address formula. Does the formula get slower for a big index?"
+        },
+        {
+          "rung": "point",
+          "text": "A front insert must free index 0.",
+          "highlight": [
+            "first"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One read. All 1,000,000 values shift for the insert."
+        }
+      ],
+      "feedback": {
+        "correct": "One read, a million shifts.",
+        "generic": "Not quite right. Use the address formula for the read, and count the shifts for the insert.",
+        "byKey": {
+          "scan": "You walked to the item. The address is computed directly, so only one value is read.",
+          "like-append": "An insert at index 0 is the opposite of an append: everything after it moves, and that is all of it."
+        }
+      },
+      "explain": {
+        "text": "Reading by index costs the same for any $i$ and any $n$: **constant time**, $O(1)$. A front insert shifts all $n$ values: **linear time**, $O(n)$. Doubling the array doubles the insert, and leaves the read alone.",
+        "canvas": {
+          "highlight": [
+            "c5"
+          ],
+          "caption": "Read: $O(1)$. Insert at the front: $O(n)$."
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "When the spare slots run out",
+      "prose": "A full array cannot grow where it is. Python moves it to a bigger block and copies every value across. Suppose each new block is twice the size of the old one.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.2",
+            "102.5",
+            "100.4",
+            "103.1",
+            "104.0",
+            "102.8",
+            "103.5",
+            "105.2"
+          ]
+        },
+        "state": {
+          "caption": "Capacity 8, all used: the next append copies 8 values"
+        }
+      },
+      "question": "Starting from capacity 1, how many copies do 16 appends make in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "copies",
+        "label": "Total copies",
+        "accept": "15 exactly: $1 + 2 + 4 + 8$",
+        "wrong": [
+          {
+            "id": "every-time",
+            "value": 120
+          },
+          {
+            "id": "one-each",
+            "value": 16
+          },
+          {
+            "id": "with-sixteen",
+            "value": 31
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Copies happen only when the block is full. At which sizes does that happen?"
+        },
+        {
+          "rung": "point",
+          "text": "The block is full at 1, 2, 4 and 8 values.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2",
+            "c3",
+            "c4",
+            "c5",
+            "c6",
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each time it fills, every value is copied: $1 + 2 + 4 + 8$."
+        }
+      ],
+      "feedback": {
+        "correct": "15 copies for 16 appends: fewer than one per append on average.",
+        "generic": "Not quite right. List the moments the block is full, and add the values copied at each.",
+        "byKey": {
+          "every-time": "You copied the whole array on every append. Copies happen only when the block is full: at sizes 1, 2, 4 and 8.",
+          "one-each": "You counted one copy per append. The copies come in bursts when the block fills, and they add to 15.",
+          "with-sixteen": "After the 16th append the block of 16 is full, but nothing is copied until a 17th arrives."
+        }
+      },
+      "explain": {
+        "text": "The copies are $1 + 2 + 4 + 8 = 15$, always fewer than the appends. So an append costs $O(1)$ **amortised**: cheap on average, with a rare slow one, as in Algorithmic Thinking. Python grows lists by about an eighth rather than double, and the total stays linear.",
+        "canvas": {
+          "caption": "Copies at sizes 1, 2, 4, 8: 15 in all"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Newest first",
+      "prose": "This builds a list of ticks with the newest first. It looks like one step per tick.\n\n```python\ndef newest_first(ticks):\n    out = []\n    for t in ticks:\n        out.insert(0, t)\n    return out\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "t4",
+            "t3",
+            "t2",
+            "t1"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "new",
+              "at": 0,
+              "label": "insert(0, t4)"
+            }
+          ],
+          "caption": "After four ticks: each insert shifted all the earlier ones"
+        }
+      },
+      "question": "For 1,000 ticks, how many values are shifted in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 499500,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "shifts",
+        "label": "Total shifts",
+        "accept": "499,500 exactly: $0 + 1 + \\dots + 999 = \\tfrac{999 \\times 1000}{2}$",
+        "wrong": [
+          {
+            "id": "one-each",
+            "value": 1000
+          },
+          {
+            "id": "n-squared",
+            "value": 1000000
+          },
+          {
+            "id": "one-to-n",
+            "value": 500500
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many values are already in `out` when tick number $k$ arrives?"
+        },
+        {
+          "rung": "point",
+          "text": "The first tick shifts nothing. The second shifts one.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add $0 + 1 + \\dots + 999 = \\tfrac{999 \\times 1000}{2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "499,500 shifts, about $n^2/2$: quadratic. Doubling the ticks quadruples the work.",
+        "generic": "Not quite right. Each insert at 0 shifts everything already in `out`. Add those up.",
+        "byKey": {
+          "one-each": "You counted `insert(0, t)` as one step. It shifts every value already in `out`: 0, then 1, then 2, up to 999.",
+          "n-squared": "That is $n^2$. The list starts empty and grows, so the shifts are $0 + 1 + \\dots + 999$, about half of that.",
+          "one-to-n": "Close. The first insert shifts nothing, since `out` is empty, so the sum runs from 0 to 999."
+        }
+      },
+      "explain": {
+        "text": "Each insert at 0 shifts the whole list so far, so the total is $0 + 1 + \\dots + (n - 1) = \\tfrac{n(n-1)}{2}$. Append each tick instead and call `out.reverse()` once at the end: $O(n)$ in all.",
+        "canvas": {
+          "cells": [
+            "t1",
+            "t2",
+            "t3",
+            "t4"
+          ],
+          "pointers": [
+            {
+              "id": "new",
+              "at": 3,
+              "label": "append(t4)"
+            }
+          ],
+          "caption": "Fix: append each tick, then reverse once"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What a list really holds",
+      "prose": "A Python list stores pointers, 8 bytes each, side by side. Each float it points to is a separate 24-byte object elsewhere in memory. A NumPy array stores the 8-byte values themselves, side by side.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "height": 220,
+          "nodes": [
+            {
+              "id": "s0",
+              "label": "[0]",
+              "x": 0.3,
+              "y": 0.2,
+              "shape": "rect"
+            },
+            {
+              "id": "s1",
+              "label": "[1]",
+              "x": 0.5,
+              "y": 0.2,
+              "shape": "rect"
+            },
+            {
+              "id": "s2",
+              "label": "[2]",
+              "x": 0.7,
+              "y": 0.2,
+              "shape": "rect"
+            },
+            {
+              "id": "f0",
+              "label": "101.2",
+              "x": 0.8,
+              "y": 0.8
+            },
+            {
+              "id": "f1",
+              "label": "102.5",
+              "x": 0.15,
+              "y": 0.8
+            },
+            {
+              "id": "f2",
+              "label": "100.4",
+              "x": 0.48,
+              "y": 0.8
+            }
+          ],
+          "edges": [
+            {
+              "from": "s0",
+              "to": "f0"
+            },
+            {
+              "from": "s1",
+              "to": "f1"
+            },
+            {
+              "from": "s2",
+              "to": "f2"
+            }
+          ]
+        },
+        "state": {
+          "caption": "A list of three floats: a row of pointers to objects stored elsewhere"
+        }
+      },
+      "question": "About how many megabytes does a list of a million floats use, pointers and float objects together?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 32,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "MB",
+        "label": "Memory in MB",
+        "accept": "32 MB: $(8 + 24) \\times 1{,}000{,}000$ bytes. The list's own header of a few bytes is too small to matter.",
+        "wrong": [
+          {
+            "id": "pointers-only",
+            "value": 8
+          },
+          {
+            "id": "objects-only",
+            "value": 24
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count two things for each float: its pointer and its object."
+        },
+        {
+          "rung": "point",
+          "text": "A pointer is 8 bytes. A float object is 24 bytes.",
+          "highlight": [
+            "s0",
+            "f0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(8 + 24) \\times 1{,}000{,}000 = 32{,}000{,}000$ bytes, about 32 MB."
+        }
+      ],
+      "feedback": {
+        "correct": "About 32 MB, against 8 MB for a NumPy array of the same values.",
+        "generic": "Not quite right. Add the pointer and the object for each float, then multiply by a million.",
+        "byKey": {
+          "pointers-only": "8 MB is the pointers alone, which is all a NumPy array needs. Each pointer also leads to a 24-byte float object.",
+          "objects-only": "You counted the float objects but not the list's own pointers, 8 bytes each."
+        }
+      },
+      "explain": {
+        "text": "The pointers sit side by side, so `xs[i]` is still $O(1)$, plus one hop to reach the float. NumPy keeps the values themselves in one block. It uses a quarter of the memory, and its loops run in C.",
+        "canvas": {
+          "highlight": [
+            "s0",
+            "s1",
+            "s2"
+          ],
+          "caption": "Pointers side by side: 8 bytes each. Objects: 24 bytes each."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Strings cannot change",
+      "prose": "A Python string is an array of characters that cannot change. So `s += piece` builds a new string and copies the old one into it.\n\n```python\nreport = \"\"\nfor line in lines:\n    report += line\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "V",
+            "O",
+            "D",
+            ",",
+            "B",
+            "P",
+            ","
+          ]
+        },
+        "state": {
+          "caption": "`report` after two lines: rebuilt from scratch each time"
+        }
+      },
+      "question": "There are 1,000 lines of 10 characters each. About how many characters are copied in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5005000,
+        "tol": {
+          "rel": 0.01
+        },
+        "unit": "characters",
+        "label": "Characters copied",
+        "accept": "About 5 million: $10 + 20 + \\dots + 10{,}000 = 5{,}005{,}000$",
+        "wrong": [
+          {
+            "id": "join-count",
+            "value": 10000,
+            "tol": {
+              "rel": 0.01
+            }
+          },
+          {
+            "id": "n-squared",
+            "value": 10000000,
+            "tol": {
+              "rel": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After line $k$ the report has $10k$ characters. How many were copied to make it?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 1 copies 10, line 2 copies 20, line 3 copies 30.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10 \\times (1 + 2 + \\dots + 1000) = 10 \\times 500{,}500$."
+        }
+      ],
+      "feedback": {
+        "correct": "About five million copies to build ten thousand characters: $O(n^2)$.",
+        "generic": "Not quite right. Each `+=` copies the whole report so far. Add those lengths.",
+        "byKey": {
+          "join-count": "You counted each character once. That is what `\"\".join(lines)` does, but `+=` recopies the whole report on every line.",
+          "n-squared": "That counts the full 10,000 characters on every line. The report grows from 10 to 10,000, so it averages about half."
+        }
+      },
+      "explain": {
+        "text": "Line $k$ copies the $10k$ characters built so far, so the total is $10 \\times \\tfrac{1000 \\times 1001}{2} = 5{,}005{,}000$. `\"\".join(lines)` sizes the result once and copies each character once. CPython sometimes grows a string in place, but nothing promises it.",
+        "canvas": {
+          "caption": "`+=`: 5,005,000 copies. `join`: 10,000."
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "What each operation costs",
+      "prose": "We costed each operation by counting what moves. For a list of $n$ items:\n\n```text\nxs[i]            O(1)    base + i * size\nxs.append(v)     O(1)    amortised\nxs.pop()         O(1)    nothing shifts\nxs.insert(i, v)  O(n-i)  shifts the rest\nxs.pop(0)        O(n)    shifts every item\nv in xs          O(n)    checks each item\n```",
+      "question": "Which of these is $O(n)$ on a list of $n$ items?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pop0",
+            "text": "`xs.pop(0)`",
+            "correct": true
+          },
+          {
+            "id": "neg",
+            "text": "`xs[-1]`",
+            "why": "A negative index is still one address: base $+\\, (n - 1) \\times$ size."
+          },
+          {
+            "id": "append",
+            "text": "`xs.append(v)`",
+            "why": "Appends are $O(1)$ amortised. Only a full block forces a copy, and that is rare."
+          },
+          {
+            "id": "len",
+            "text": "`len(xs)`",
+            "why": "A list stores its own length, so `len` reads one number."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Popping the front shifts all the others left by one.",
+        "generic": "Not quite right. Which one has to move every other item?"
+      },
+      "explain": {
+        "text": "`xs.pop(0)` removes index 0, then shifts the other $n - 1$ items left to close the gap. `xs[-1]` and `len(xs)` read one value, and `append` is cheap on average."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Fix the string builder",
+      "prose": "This builds one CSV line of prices with `+=`. Over a long day of ticks it slows down quadratically.\n\n```python\ndef to_csv_line(prices):\n    line = \"\"\n    for p in prices:\n        line += f\"{p:.2f},\"\n    return line[:-1]\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.2",
+            "102.5",
+            "100.4"
+          ]
+        },
+        "state": {
+          "caption": "`to_csv_line([101.2, 102.5, 100.4])` gives `'101.20,102.50,100.40'`"
+        }
+      },
+      "question": "Rewrite `to_csv_line(prices)` with `\",\".join`, so that each character is copied once.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def to_csv_line(prices):\n    line = \"\"\n    for p in prices:\n        line += f\"{p:.2f},\"\n    return line[:-1]\n",
+        "solution": "def to_csv_line(prices):\n    return \",\".join(f\"{p:.2f}\" for p in prices)\n",
+        "tests": [
+          {
+            "call": "to_csv_line([101.2, 102.5, 100.4])",
+            "expect": "'101.20,102.50,100.40'",
+            "compare": "equal"
+          },
+          {
+            "call": "to_csv_line([])",
+            "expect": "''",
+            "compare": "equal"
+          },
+          {
+            "call": "to_csv_line([99.999])",
+            "expect": "'100.00'",
+            "compare": "equal"
+          },
+          {
+            "call": "to_csv_line([-0.5, 3])",
+            "expect": "'-0.50,3.00'",
+            "compare": "equal"
+          },
+          {
+            "call": "to_csv_line([1.0] * 100000).count(',')",
+            "expect": "99999",
+            "compare": "equal"
+          },
+          {
+            "call": "'.join(' in __learner_source__",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each answer must equal the expected string exactly. Test 6 checks that your code calls `join`.",
+        "examples": [
+          {
+            "call": "to_csv_line([101.2, 102.5, 100.4])",
+            "expect": "'101.20,102.50,100.40'",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "# hidden: test 6 reads __learner_source__\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Make the pieces first, then join them once."
+        },
+        {
+          "rung": "point",
+          "text": "`\",\".join(pieces)` puts a comma between pieces, never after the last one.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return \",\".join(f\"{p:.2f}\" for p in prices)`"
+        }
+      ],
+      "feedback": {
+        "correct": "One pass to format and one join to copy: $O(n)$, with no trailing comma to strip.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-6": "Test 6 looks for `.join(` in your code. The `+=` loop gives the right text, but in quadratic time.",
+          "test-2": "Test 2 passes an empty list and expects `''`. `\",\".join([])` is already `''`, with nothing to slice off.",
+          "test-3": "Test 3 expects `'100.00'` for 99.999. Format each price with `f\"{p:.2f}\"` before joining."
+        }
+      },
+      "explain": {
+        "text": "`join` adds up the lengths, makes one string of that size, and copies each piece in once. The separator goes only between pieces, so `line[:-1]` is no longer needed. An empty list joins to `''`.",
+        "canvas": {
+          "caption": "`\",\".join(...)`: each character copied once"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A window of closes",
+      "prose": "A strategy keeps the last 20 closes of a price history in a list. Each new close goes on the end, and the oldest is dropped.\n\n```python\nwindow.append(close)\nif len(window) > 20:\n    window.pop(0)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "101.2",
+            "102.5",
+            "100.4",
+            "103.1",
+            "104.0",
+            "102.8",
+            "103.5",
+            "105.2"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "old",
+              "at": 0,
+              "label": "oldest"
+            },
+            {
+              "id": "new",
+              "at": 7,
+              "label": "newest"
+            }
+          ],
+          "caption": "Part of the window: dropping the front shifts the rest"
+        }
+      },
+      "question": "Which change makes dropping the oldest close $O(1)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "deque",
+            "text": "`window = deque(maxlen=20)`, then only `window.append(close)`",
+            "correct": true
+          },
+          {
+            "id": "flip",
+            "text": "`window.insert(0, close)` with `window.pop()`",
+            "why": "That moves the cost to the insert. Inserting at the front shifts every close instead."
+          },
+          {
+            "id": "slice",
+            "text": "`window = window[1:] + [close]`",
+            "why": "Slicing copies 19 closes into a new list, then adds one: still about 20 copies per tick."
+          },
+          {
+            "id": "remove",
+            "text": "`window.remove(window[0])`",
+            "why": "`remove` searches for the value, then shifts the rest left: two linear steps instead of one."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which structure is built to remove from the front?"
+        },
+        {
+          "rung": "point",
+          "text": "In a list, removing index 0 shifts everything after it.",
+          "highlight": [
+            "old"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`collections.deque(maxlen=20)` drops from the front in $O(1)$."
+        }
+      ],
+      "feedback": {
+        "correct": "A `deque` drops its oldest item without shifting anything.",
+        "generic": "Not quite right. Look for the option where nothing has to shift.",
+        "byKey": {
+          "flip": "You reversed the window's order, but the shift moved to `insert(0, close)`. The front of a list is costly either way.",
+          "slice": "You avoided `pop(0)` by slicing, but the slice copies the whole window each tick."
+        }
+      },
+      "explain": {
+        "text": "A `deque` is a double-ended queue: it adds and drops at either end in $O(1)$, with no shifting. With `maxlen=20` it drops the oldest close by itself. We build one in level 3.",
+        "canvas": {
+          "highlight": [
+            "c0"
+          ],
+          "caption": "A deque drops the front without moving the others"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An array keeps equal-sized items side by side, so item $i$ is at base $+\\, i \\times$ size: indexing is $O(1)$.",
+      "Inserting at index $i$ shifts the $n - i$ items after it: $O(n)$ at the front, nothing at the end. Appends are $O(1)$ amortised.",
+      "Strings are arrays that cannot change, so `+=` in a loop recopies everything. Build the pieces, then `\"\".join` them once."
+    ],
+    "formula": {
+      "name": "Address of item $i$",
+      "tex": "\\text{address}(i) = \\text{base} + i \\times \\text{size}",
+      "note": "The same cost for every $i$: one multiply and one add."
+    },
+    "trap": "`out.insert(0, x)` in a loop looks like one step per item. It shifts the whole list each time, so the loop is $O(n^2)$."
+  },
+  "quiz": [
+    {
+      "id": "q-shift",
+      "difficulty": 2,
+      "prose": "`xs` is a list of 10 prices.",
+      "question": "How many values shift for `xs.insert(3, v)`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "values",
+        "label": "Values shifted",
+        "accept": "7 exactly: indices 3 to 9",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3
+          },
+          {
+            "id": "upto",
+            "value": 6
+          },
+          {
+            "id": "all",
+            "value": 10
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Indices 3 to 9 shift: $10 - 3 = 7$ values.",
+        "generic": "Not quite right. Count the values from index 3 to the end.",
+        "byKey": {
+          "three": "3 is the number of values before the insert. Those stay; the ones from index 3 on shift.",
+          "upto": "You started at index 4. The value at index 3 shifts too.",
+          "all": "Values at indices 0, 1 and 2 sit before the insert, so they stay."
+        }
+      },
+      "explain": {
+        "text": "An insert at index $i$ shifts the $n - i$ values from index $i$ on. Here that is $10 - 3 = 7$."
+      }
+    },
+    {
+      "id": "q-empty",
+      "difficulty": 2,
+      "prose": "```python\nxs = []\nprint(xs[0])\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "index",
+            "text": "`IndexError: list index out of range`",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "It prints `None`",
+            "why": "You expected a missing item to be `None`. An empty list has no index 0 at all, so Python raises."
+          },
+          {
+            "id": "zero",
+            "text": "It prints `0`",
+            "why": "Python never invents a value. With no items, `xs[0]` has no address to read."
+          },
+          {
+            "id": "empty",
+            "text": "It prints `[]`",
+            "why": "That prints the list. `xs[0]` asks for its first item, and there is none."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "An empty list has no index 0.",
+        "generic": "Not quite right. How many items does `xs` hold?"
+      },
+      "explain": {
+        "text": "Index 0 exists only when the list holds at least one item. An empty list has none, so `xs[0]` raises `IndexError`. `xs.append(5)` would work, since it writes at the end."
+      }
+    },
+    {
+      "id": "q-str",
+      "difficulty": 2,
+      "prose": "```python\ns = \"VOD\"\ns[0] = \"B\"\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "type",
+            "text": "`TypeError: 'str' object does not support item assignment`",
+            "correct": true
+          },
+          {
+            "id": "bod",
+            "text": "`s` becomes `\"BOD\"`",
+            "why": "You treated the string like a list. Strings cannot change; build a new one with `\"B\" + s[1:]`."
+          },
+          {
+            "id": "silent",
+            "text": "Nothing: `s` stays `\"VOD\"`",
+            "why": "Python does not ignore it silently. Changing a character of a string raises an error."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Strings cannot be changed in place.",
+        "generic": "Not quite right. Can a string's characters be replaced?"
+      },
+      "explain": {
+        "text": "A string is an array of characters that cannot change, so item assignment raises `TypeError`. `\"B\" + s[1:]` makes a new string, `\"BOD\"`."
+      }
+    },
+    {
+      "id": "q-address",
+      "difficulty": 3,
+      "prose": "An array of 4-byte integers starts at address 2000.",
+      "question": "At which address does `a[10]` start?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2040,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Address",
+        "accept": "2040 exactly: $2000 + 10 \\times 4$",
+        "wrong": [
+          {
+            "id": "no-size",
+            "value": 2010
+          },
+          {
+            "id": "from-one",
+            "value": 2044
+          },
+          {
+            "id": "eight",
+            "value": 2080
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2000 + 10 \\times 4 = 2040$.",
+        "generic": "Not quite right. Skip 10 items of 4 bytes each.",
+        "byKey": {
+          "no-size": "You added the index alone. Each item is 4 bytes wide.",
+          "from-one": "You skipped 11 items. Index 10 has 10 items before it.",
+          "eight": "These integers are 4 bytes each, not 8."
+        }
+      },
+      "explain": {
+        "text": "Item $i$ starts at base $+\\, i \\times$ size, so $2000 + 10 \\times 4 = 2040$."
+      }
+    }
+  ]
+}

@@ -120,7 +120,8 @@
       kind: 'bars', aria: params.aria || 'Bar chart',
       modes: ['tap', 'slider'],
       size: () => ({ w: W, h: H }),
-      init: () => ({ values: {}, ran: sim ? 0 : undefined, highlight: [], params: {} }),
+      listKeys: ['hlines', 'curves'],
+      init: () => ({ values: {}, ran: sim ? 0 : undefined, highlight: [], params: {}, hlines: [], curves: [] }),
       prepare(patch) {
         if (patch.params && patch.params.trials != null) patch.ran = Math.round(patch.params.trials);
         if (patch.reset) { patch.ran = 0; delete patch.reset; }
@@ -128,7 +129,8 @@
       },
       animate(prev, next, a, R) {
         if ((prev.binWidth || 0) !== (next.binWidth || 0)) { a.show(next); return; } // a re-cut jumps
-        const hs0 = heights(R.shown), hs1 = heights(next), y0 = R.shown._yMax ?? yTop(R.shown, hs0), y1 = yTop(next, hs1);
+        if (sim && JSON.stringify(prev.params || {}) !== JSON.stringify(next.params || {})) { a.show(next); return; } // new params re-run the stream: jump
+        const hs0 = allHeights(R.shown), hs1 = allHeights(next), y0 = R.shown._yMax ?? yTop(R.shown, hs0), y1 = yTop(next, hs1);
         if (a.instant) { a.show(next); return; }
         if (sim && next.ran !== prev.ran) {
           const from = Math.round(R.shown.ran || 0), to = Math.round(next.ran || 0);
@@ -141,39 +143,102 @@
       },
       render(view, R) {
         if (!chips.length && sim && !R.static) buildControls(R);
-        const g = R.F.g, hs = heights(view), top = view._yMax ?? yTop(view, hs), bot = yBot(hs);
+        const g = R.F.g, hsAll = allHeights(view), hsG = groups ? groups.map((_, k) => heights(view, k)) : [heights(view, 0)];
+        const top = view._yMax ?? yTop(view, hsAll), bot = yBot(hsAll);
         const yLabel = params.yLabel ?? (proportion ? 'Proportion' : 'Count');
-        const ml = K.yMargin(bot, top, H - 70, fmtY), mt = 26, mb = params.xLabel ? 46 : 30, mr = 12;
-        const sy = C.scale([bot, top], [H - mb, mt]);
+        const legendH = groups ? 18 : 0;
+        const ml = K.yMargin(bot, top, H - 70, fmtY, logY), mt = 26 + legendH, mb = params.xLabel ? 46 : 30, mr = 12;
+        const sy = logY ? K.logScale([bot, top], [H - mb, mt]) : C.scale([bot, top], [H - mb, mt]);
         const pw = W - ml - mr, n = cats.length;
-        const band = pw / Math.max(1, n), gap = binned ? 0 : Math.min(14, band * 0.22);
-        const x = (i) => ml + i * band + gap / 2, bw = Math.max(1, band - gap);
-        const xAxisTicks = binned ? null : { ticks: [], step: 1 };
-        K.chartAxes(g, { range: [ml, W - mr], domain: [0, 1] }, sy, { yLabel, xLabel: params.xLabel, fmtY, noX: true, xTicks: xAxisTicks, baseline: bot > 0 ? bot : 0 });
+        /* item 298: xAxis "value" sets each category at its value on a numeric axis (params.x), and state.transform
+           { a, b } moves it to a*x + b, so aX + b slides along the axis */
+        const valueAxis = !binned && (params.xAxis === 'value' || Array.isArray(params.x));
+        const tf = view.transform || {}, ta = Number.isFinite(+tf.a) ? +tf.a : 1, tb = Number.isFinite(+tf.b) ? +tf.b : 0;
+        const vals0 = valueAxis ? cats.map((_, k) => valOf(k)) : [];
+        const xr = valueAxis ? (Array.isArray(params.x) ? params.x : (() => { const lo = Math.min(...vals0), hi = Math.max(...vals0), pad = (hi - lo || 1) * 0.15; return [lo - pad, hi + pad]; })()) : null;
+        const sxv = valueAxis ? C.scale(xr, [ml, W - mr]) : null;
+        const minGap = valueAxis ? Math.max(1e-9, Math.min(...vals0.slice().sort((u, w) => u - w).slice(1).map((v, k, arr) => v - (k ? arr[k - 1] : Math.min(...vals0))).filter((d) => d > 1e-9), 1)) : 1;
+        const band = valueAxis ? Math.abs(sxv(xr[0] + minGap * ta) - sxv(xr[0])) : pw / Math.max(1, n), gap = binned ? 0 : Math.min(14, band * 0.22);
+        const x = (i) => (valueAxis ? sxv(ta * vals0[i] + tb) - band / 2 + gap / 2 : ml + i * band + gap / 2), bw = Math.max(1, band - gap);
+        const sub = bw / G;
+        if (valueAxis) K.chartAxes(g, sxv, sy, { yLabel, xLabel: params.xLabel, fmtY, baseline: bot > 0 ? bot : 0 });
+        else K.chartAxes(g, { range: [ml, W - mr], domain: [0, 1] }, sy, { yLabel, xLabel: params.xLabel, fmtY, noX: true, xTicks: binned ? null : { ticks: [], step: 1 }, baseline: logY ? null : bot > 0 ? bot : 0 });
         /* category labels or bin edges */
         const every = Math.max(1, Math.ceil(Math.max(...cats.map((c) => K.tw(c.label, 12))) / (band - 4)));
         if (binned) {
           const edges = cats.map((c) => c.lo).concat(cats.length ? [cats[cats.length - 1].hi] : []);
           const ev = Math.max(1, Math.ceil(Math.max(...edges.map((e) => K.tw(K.fmt(e, 4), 12) + 8)) / band));
           edges.forEach((e, i) => { if (i % ev) return; const px = ml + i * band; g.append(svg('line', { x1: px, x2: px, y1: H - mb, y2: H - mb + 4, class: 'cvb-axis thin' }), K.txt(px, H - mb + 15, K.fmt(e, 4), { cls: 'cvb-tick', size: 12 })); });
-        } else {
+        } else if (!valueAxis) {
           cats.forEach((c, i) => { if (i % every) return; g.append(K.lab(x(i) + bw / 2, H - mb + 15, c.label, { cls: 'cvb-tick', size: 12, h: 22 })); });
         }
+        if (groups) { // legend, top right
+          let lx = W - mr; [...groups].reverse().forEach((q) => { const w = K.tw(q.label, 12) + 22; lx -= w; const o = K.obj('legend-' + q.id, '', q.colour); o.append(svg('rect', { x: lx, y: 8, width: 11, height: 11, rx: 2, class: 'cvb-bar' }), K.txt(lx + 15, 14, q.label, { anchor: 'start', size: 12 })); g.append(o); });
+        }
         const sel = new Set(view.selected || []);
+        /* item 322: cut: { at, side: "above" | "below", colour } recolours every bar beyond a cut on the category value
+           (a slider binds "cut.at") */
+        const cut = view.cut && Number.isFinite(+view.cut.at) ? view.cut : null;
+        const beyond = (i) => cut && (cut.side === 'below' ? valOf(i) <= +cut.at + 1e-9 : valOf(i) >= +cut.at - 1e-9);
         const bars = svg('g'), vals = svg('g');
+        const base = logY ? bot : bot > 0 ? bot : 0;
         cats.forEach((c, i) => {
-          const base = bot > 0 ? bot : 0, v = hs[i] || 0, y = sy(Math.max(base, v)), h = Math.abs(sy(Math.min(base, v)) - y);
           const faded = [].concat(view.dim || []).map(String).some((k) => k === c.id || k === c.label) || (params.categories || []).some((q) => K.isObj(q) && q.dim && (q.id || 'x' + q.label) === c.id); // item 266
-          const o = K.obj(c.id, 'cvb-bar-o' + (sel.has(c.id) ? ' is-on' : '') + (faded ? ' is-faded' : ''), ((view.colours || {})[c.id] ?? (view.colours || {})[c.label]) || c.colour || params.colour || 1); // per-category colour (series slot), patchable through state.colours
-          o.append(K.washRect(x(i) - 3, sy(top) - 2, bw + 6, sy(bot) - sy(top) + 4, 4));
-          if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(bot) - sy(top), class: 'cvb-selw' }));
-          o.append(svg('rect', { x: x(i) + (binned ? 0.5 : 0), y, width: Math.max(0, bw - (binned ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
-          if (R.mode === 'tap') o.append(svg('rect', { x: x(i), y: sy(top), width: bw, height: sy(bot) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
-          if (params.showValues && (v || sim)) vals.append(K.txt(x(i) + bw / 2, v < 0 ? Math.min(sy(v) + 11, H - mb - 8) : Math.min(y - 9, sy(base) - 9), fmtV(v), { size: 12, cls: 'cvb-muted', halo: true })); // item 263: never on the category labels
-          R.tappable(o, c.id, c.label);
-          bars.append(o);
+          const colour0 = ((view.colours || {})[c.id] ?? (view.colours || {})[c.label]) || (beyond(i) ? cut.colour || 3 : null);
+          hsG.forEach((hs, k) => {
+            const v = hs[i] || 0; if (logY && !(v > 0)) return;
+            const y = sy(Math.max(base, v)), h = Math.abs(sy(Math.min(base, v)) - y), id = groups ? `${c.id}-${groups[k].id}` : c.id, xb = x(i) + k * sub;
+            const o = K.obj(id, 'cvb-bar-o' + (sel.has(id) ? ' is-on' : '') + (faded ? ' is-faded' : ''), (groups ? (colour0 && !beyond(i) ? colour0 : beyond(i) ? colour0 : groups[k].colour) : colour0 || c.colour || params.colour || 1)); // per-category colour (series slot), patchable through state.colours
+            o.append(K.washRect(xb - 3, sy(top) - 2, sub + 6, sy(bot) - sy(top) + 4, 4));
+            if (R.mode === 'tap') o.append(svg('rect', { x: xb, y: sy(top), width: sub, height: sy(bot) - sy(top), class: 'cvb-selw' }));
+            o.append(svg('rect', { x: xb + (binned ? 0.5 : 0), y, width: Math.max(0, sub - (binned ? 1 : groups ? 1 : 0)), height: h, rx: binned ? 0 : 2, class: 'cvb-bar cv-body' }));
+            if (R.mode === 'tap') o.append(svg('rect', { x: xb, y: sy(top), width: sub, height: sy(bot) - sy(top), class: 'cvb-tapbox', fill: 'transparent' }));
+            if (params.showValues && (v || sim)) vals.append(K.txt(xb + sub / 2, v < 0 ? Math.min(sy(v) + 11, H - mb - 8) : Math.min(y - 9, sy(base) - 9), fmtV(v), { size: groups ? 11 : 12, cls: 'cvb-muted', halo: true })); // item 263: never on the category labels
+            R.tappable(o, id, groups ? `${c.label}, ${groups[k].label}` : c.label);
+            bars.append(o);
+          });
         });
         g.append(bars, vals);
+        /* the x pixel of a value on the category axis: bins and value axes are linear; numeric categories interpolate */
+        const pxOf = (() => {
+          if (valueAxis) return (v) => sxv(ta * v + tb);
+          if (binned) return (v) => ml + (v - params.bins.min) / (binW || params.bins.width) * band;
+          const num = cats.map((_, k) => [valOf(k), x(k) + bw / 2]).filter(([v]) => Number.isFinite(v));
+          if (num.length < 2) return null;
+          const [v0, p0] = num[0], [v1, p1] = num[num.length - 1];
+          return (v) => p0 + (v - v0) / ((v1 - v0) || 1) * (p1 - p0);
+        })();
+        /* items 308, 309, 316: curves over the bars, { id, expr: "f(x)", colour, dashed, label, shade: { from, to } };
+           the expression reads params, state.params and w (the bin width), so it follows sliders; shade fills under it */
+        const P = { ...(params.params || {}), ...(view.params || {}), w: binned ? (binW || params.bins.width) : minGap };
+        const cplot = svg('g', { 'clip-path': R.clipRect(ml, sy(top) - 2, pw, sy(bot) - sy(top) + 4, 'curves') }), clabs = [];
+        for (const cv of [].concat(params.curves || [], view.curves || [])) {
+          if (!cv || !pxOf || cv.expr == null) continue;
+          const f = K.fnOf(String(cv.expr), Object.keys(P)), inv = (px) => { let lo = -1e6, hi = 1e6; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; if (pxOf(m) < px) lo = m; else hi = m; } return (lo + hi) / 2; };
+          const vA = inv(ml), vB = inv(W - mr), N = 240, pts = [];
+          for (let k = 0; k <= N; k++) { const v = vA + (vB - vA) * k / N, y = f(v, P); if (Number.isFinite(y) && (!logY || y > 0)) pts.push([pxOf(v), sy(y), v]); }
+          if (pts.length < 2) continue;
+          const o = K.obj(cv.id || 'curve', 'cvb-curve', cv.colour || 'ink');
+          if (cv.shade && (cv.shade.from != null || cv.shade.to != null)) {
+            const a = cv.shade.from ?? -Infinity, b = cv.shade.to ?? Infinity, inside = pts.filter((q) => q[2] >= a && q[2] <= b);
+            if (inside.length > 1) { const dd = `M${inside[0][0].toFixed(1)},${sy(base).toFixed(1)}` + inside.map((q) => `L${q[0].toFixed(1)},${q[1].toFixed(1)}`).join('') + `L${inside[inside.length - 1][0].toFixed(1)},${sy(base).toFixed(1)}Z`; const so = K.obj((cv.id || 'curve') + '-shade', 'cvb-under', cv.shade.colour || cv.colour || 3); so.append(svg('path', { d: dd, class: 'cvb-hlw' }), svg('path', { d: dd, class: 'cvb-wash-f cvb-hatch' })); cplot.append(so); }
+          }
+          const d = 'M' + pts.map((q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join('L');
+          o.append(K.washPath(d), svg('path', { d, class: 'cvb-ln' + (cv.dashed === false ? '' : ' cvb-dash') }));
+          cplot.append(o);
+          if (cv.label) { const q = pts[Math.floor(pts.length * 0.75)]; clabs.push(K.lab(q[0] + 6, q[1] - 12, cv.label, { anchor: 'start', halo: true, cls: 'cvb-strong' })); }
+        }
+        g.append(cplot); clabs.forEach((l) => g.append(l));
+        /* item 332: horizontal reference lines, hlines: [{ id, y, label, dashed, colour }] in params or state */
+        [].concat(params.hlines || [], view.hlines || []).forEach((hl, k) => {
+          if (!hl || !Number.isFinite(+hl.y)) return; const yy = sy(+hl.y); if (yy < sy(top) - 0.5 || yy > sy(bot) + 0.5) return;
+          const o = K.obj(hl.id || 'hline' + k, '', hl.colour || 'muted');
+          o.append(svg('line', { x1: ml, x2: W - mr, y1: yy, y2: yy, class: 'cvb-ln thin' + (hl.dashed === false ? '' : ' cvb-dash') }));
+          if (hl.label) o.append(K.lab(W - mr - 4, yy - 10, String(hl.label), { anchor: 'end', halo: true, cls: 'cvb-strong', size: 12 }));
+          g.append(o);
+        });
+        /* item 322: the cut line itself, with its label */
+        if (cut && pxOf && cut.line !== false) { const px = pxOf(+cut.at) + (binned ? 0 : (cut.side === 'below' ? 1 : -1) * band / 2); const o = K.obj('cut', '', 'ink'); o.append(svg('line', { x1: px, x2: px, y1: sy(bot), y2: sy(top), class: 'cvb-ln thin cvb-dash' })); if (cut.label) o.append(K.lab(px + 4, sy(top) + 8, String(cut.label).replace('{at}', K.fmt(+cut.at, 3)), { anchor: 'start', halo: true, cls: 'cvb-strong' })); g.append(o); }
         /* exact value lines over each bar: dashed ink */
         if (exact.length && view.showExact !== false) {
           const eg = K.obj('exact', 'cvb-exact-g', 'ink');
@@ -192,7 +257,7 @@
         }
         if (countEl) {
           const n = Math.round(view.ran || 0);
-          countEl.textContent = simErr ? 'Simulation unavailable' : n.toLocaleString('en-GB') + (n === 1 ? ' trial' : ' trials');
+          countEl.textContent = simErr ? 'Simulation unavailable' : n.toLocaleString('en-GB') + (n === 1 ? ' trial' : ' trials') + (sim.filter != null && discarded && n ? ` (${discarded.toLocaleString('en-GB')} discarded)` : '');
           chips.forEach((b) => { b.disabled = R.locked || R.static; });
         }
       },
@@ -201,8 +266,9 @@
         run: (n) => R.inst.set({ ran: Math.round(R.state.ran || 0) + n }),
         reset: () => R.inst.set({ ran: 0 }, { instant: true }),
         /* Current heights by category id: proportions or counts as drawn. */
-        values: () => Object.fromEntries(cats.map((c, i) => [c.id, heights(R.state)[i]])),
-        counts: () => Object.fromEntries(cats.map((c, i) => [c.id, tally(Math.round(R.state.ran || 0))[i]])),
+        values: () => (groups ? Object.fromEntries(groups.flatMap((q, k) => { const hs = heights(R.state, k); return cats.map((c, i) => [`${c.id}-${q.id}`, hs[i]]); })) : Object.fromEntries(cats.map((c, i) => [c.id, heights(R.state)[i]]))),
+        counts: () => Object.fromEntries(cats.map((c, i) => [c.id, tally(Math.round(R.state.ran || 0), R.state)[i]])),
+        discarded: () => discarded,
         /* Explore controls: bind a category (its label or id, or "values.<label>") to move that bar's height */
         /* a name that is no category is a free parameter in state.params, for a derive block to read */
         setParam: (name, v) => { if (binned && (name === 'binWidth' || name === 'bins.width')) { R.inst.set({ binWidth: +v }, { instant: true }); return; } const i = catIndex(String(name).replace(/^values\./, '')); if (i >= 0) R.inst.set({ values: { [cats[i].label]: +v } }, { instant: true }); else R.inst.set(Z.canvas.paramPatch(name, v), { instant: true }); },
