@@ -954,3 +954,10 @@ Raised later (options level 1):
 339. `payoff`: a leg option to draw without its floor (`floor: false`) for the "forgot the right not to exercise" picture.
 
 Content note (pytest): level 1 (l4, review-1, homework-1) still uses the pytest stand-in; convert to the shared `postlude` pattern that levels 2 and 3 now use.
+
+Raised later (testing level 3):
+
+340. `plane`: a point with `on: "f"` should stay on its curve when a control or an explanation moves its x (now only while dragged).
+341. `plane` and `derive` expressions: `qnorm`, `pnorm` (with 331's `erf` and `Phi`).
+342. `bars` sim: `maxn(k, expr)` or a `repeat` helper, and a catch-all category (`"4+"`) so capped outcomes need no `min` trick.
+343. AUTHORING.md: document the lesson `code` widget's `solution` field (used by the playthrough).

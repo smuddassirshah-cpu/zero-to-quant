@@ -1,0 +1,1202 @@
+{
+  "id": "l10-cost-of-carry",
+  "course": "markets",
+  "title": "The no-arbitrage forward price",
+  "minutes": 14,
+  "objectives": [
+    "Derive the forward price from the cost of carry."
+  ],
+  "skills": [
+    "fi-forwards"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "You will need one share in a year. It costs £100.00 today, and you can borrow at 5% a year. **Plan A:** borrow £100.00 today, buy the share now, and hold it for the year.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Plan A",
+            "Today (£)",
+            "In 1 year (£)"
+          ],
+          "rows": [
+            [
+              "Borrow at 5%",
+              "100.00",
+              "?"
+            ],
+            [
+              "Buy the share",
+              "-100.00",
+              "hold the share"
+            ],
+            [
+              "Net cash",
+              "0.00",
+              "?"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Plan A costs nothing today and ends with the share"
+        }
+      },
+      "question": "How much do you repay on the loan in a year?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 105,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "a number of pounds",
+        "label": "Loan repayment in a year",
+        "accept": "£105.00",
+        "wrong": [
+          {
+            "id": "no-interest",
+            "value": 100,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "interest",
+            "value": 5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "forward",
+            "value": 95,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The lender wants the £100.00 back, and something for the year."
+        },
+        {
+          "rung": "point",
+          "text": "A year at 5% adds $0.05 \\times 100$.",
+          "highlight": [
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100 \\times 1.05 = 105$."
+        }
+      ],
+      "feedback": {
+        "correct": "$100 \\times 1.05 = 105$: you repay £105.00.",
+        "generic": "Not quite right. Repay the £100.00 plus a year's interest at 5%.",
+        "byKey": {
+          "no-interest": "You repaid only what you borrowed. The lender charges 5% for the year.",
+          "interest": "That is the interest alone. The £100.00 itself is repaid too.",
+          "forward": "You took the interest off. Borrowing costs you interest; it does not earn it."
+        }
+      },
+      "explain": {
+        "text": "You repay $100 \\times 1.05 = \\text{£}105.00$. So Plan A gets you the share in a year for £105.00, fixed today. Nothing in it depends on where the share price goes.",
+        "canvas": {
+          "values": {
+            "r0c2": "-105.00",
+            "r2c2": "-105.00"
+          },
+          "highlight": {
+            "cells": [
+              "r0c2",
+              "r2c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Plan A fixes today what the share costs you later: the loan repayment. Slide the rate $r$ and the time $T$, and watch that cost.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            5
+          ],
+          "y": [
+            90,
+            170
+          ],
+          "xLabel": "Years until you need the share, $T$",
+          "yLabel": "Repayment (£)",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "100*(1+r)^x",
+              "label": "$100(1 + r)^T$",
+              "labelAt": 4
+            }
+          ],
+          "params": {
+            "r": 0.05
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 1,
+              "y": 105
+            }
+          ]
+        },
+        "derive": {
+          "P.y": "100 * pow(1 + r, P.x)",
+          "caption": "Repay {{money(100 * pow(1 + r, P.x))}} after {{P.x}} years at {{fixed(r * 100, 1)}}%"
+        },
+        "controls": [
+          {
+            "bind": "r",
+            "min": 0,
+            "max": 0.1,
+            "step": 0.005,
+            "label": "Rate $r$",
+            "start": 0.05,
+            "format": "percent"
+          },
+          {
+            "bind": "points.P.x",
+            "min": 0,
+            "max": 5,
+            "step": 0.25,
+            "label": "Time $T$ (years)",
+            "start": 1
+          }
+        ]
+      },
+      "question": "Set the rate to 0%. What does Plan A cost you then?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "flat",
+            "text": "£100.00 for every $T$: free borrowing makes holding the share cost nothing",
+            "correct": true
+          },
+          {
+            "id": "time",
+            "text": "More than £100.00, and more the longer you wait",
+            "why": "You charged for time itself. With $r = 0$ the loan repays exactly what you borrowed."
+          },
+          {
+            "id": "less",
+            "text": "Less than £100.00, because money later is worth less",
+            "why": "You discounted the price. Plan A repays a loan, and at 0% the loan repays the same £100.00."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At $r = 0$ the line is flat at £100.00.",
+        "generic": "Not quite right. Slide the rate to 0% and read the caption at a few times."
+      },
+      "explain": {
+        "text": "At 0% the loan repays exactly £100.00 however long you hold the share. Raise the rate and the curve bends upwards, faster for longer times. The cost of holding the share is the interest: its **cost of carry**.",
+        "canvas": {
+          "params": {
+            "r": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "**Plan B:** go long a one-year forward on the share at price $F$. It costs nothing today, and in a year you pay $F$ for the share. Plan A also costs nothing today, and ends with the share and a £105.00 debt.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 95,
+          "max": 112,
+          "step": 1,
+          "labels": 5
+        },
+        "state": {
+          "points": [
+            {
+              "id": "s0",
+              "x": 100,
+              "label": "today £100.00",
+              "labelPos": "below"
+            },
+            {
+              "id": "a",
+              "x": 105,
+              "label": "Plan A £105.00",
+              "colour": 2
+            }
+          ],
+          "arrows": [
+            {
+              "id": "j1",
+              "from": 100,
+              "to": 105,
+              "label": "+£5.00 interest"
+            }
+          ]
+        }
+      },
+      "question": "For neither plan to beat the other, what must $F$ be?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 105,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "a number of pounds",
+        "label": "Forward price",
+        "accept": "£105.00",
+        "wrong": [
+          {
+            "id": "spot",
+            "value": 100,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "interest",
+            "value": 5,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "discounted",
+            "value": 95.24,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both plans cost nothing today and end with one share in a year."
+        },
+        {
+          "rung": "point",
+          "text": "Plan A pays £105.00 in a year for the share; Plan B pays $F$.",
+          "highlight": [
+            "a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "If the payments differ, everyone picks the cheaper plan. They match when $F = 105$."
+        }
+      ],
+      "feedback": {
+        "correct": "$F = 105$: both plans pay £105.00 in a year for the share.",
+        "generic": "Not quite right. Compare what each plan pays in a year.",
+        "byKey": {
+          "spot": "You priced the forward at today's share price. Plan A shows that holding the share for a year costs £5.00 of interest.",
+          "interest": "That is the interest alone. The forward pays for the whole share.",
+          "discounted": "You discounted £100.00 instead of growing it. $F$ is paid in a year, so it carries the interest."
+        }
+      },
+      "explain": {
+        "text": "Two plans that end in the same place, and cost the same today, must pay the same later. So $F = 105$, the **no-arbitrage forward price**. Any other $F$ lets someone run one plan and the reverse of the other for free money.",
+        "canvas": {
+          "highlight": [
+            "a"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "A dealer quotes the one-year forward at £108.00, above the £105.00 that Plan A costs. Borrow £100.00, buy the share, and sell it forward to the dealer. Fill in the cash flows.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 95,
+          "max": 112,
+          "step": 1,
+          "labels": 5
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a",
+              "x": 105,
+              "label": "fair £105.00",
+              "colour": 2
+            },
+            {
+              "id": "q",
+              "x": 108,
+              "label": "quote £108.00",
+              "colour": 5
+            }
+          ],
+          "caption": "The quote is above Plan A's cost"
+        }
+      },
+      "question": "Fill in the missing cash flows, with money paid out as negative.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Step",
+          "Today (£)",
+          "In 1 year (£)"
+        ],
+        "rows": [
+          [
+            "Borrow £100.00 at 5%",
+            "100.00",
+            {
+              "edit": true,
+              "answer": -105,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Buy the share",
+            "-100.00",
+            "deliver the share"
+          ],
+          [
+            "Sell the forward at £108.00",
+            "0.00",
+            {
+              "edit": true,
+              "answer": 108,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "Net",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.005
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In a year you repay the loan and deliver the share to the dealer."
+        },
+        {
+          "rung": "point",
+          "text": "The loan repays $100 \\times 1.05$; the dealer pays £108.00 for the share.",
+          "highlight": [
+            "q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Today: $100 - 100 + 0 = 0$. In a year: $-105 + 108 = 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "Nothing today, £3.00 for certain in a year.",
+        "generic": "Not quite right. Add each column, with money paid out as negative.",
+        "byKey": {
+          "r0c2": "You repaid only what you borrowed, or forgot the sign. You pay out $100 \\times 1.05 = 105$.",
+          "r2c2": "Selling forward at £108.00 brings in £108.00 when you deliver the share.",
+          "r3c1": "Today you borrow £100.00 and spend it all on the share: the net is £0.00.",
+          "r3c2": "Add the year's column: $-105 + 108$."
+        }
+      },
+      "explain": {
+        "text": "You put in nothing today and collect £3.00 in a year, whatever the share does. That is an **arbitrage**: borrowing to buy and selling forward is **cash and carry**. Dealers who quote £108.00 get hit until the quote falls to £105.00.",
+        "canvas": {
+          "intervals": [
+            {
+              "id": "gap",
+              "from": 105,
+              "to": 108,
+              "label": "£3.00 free",
+              "colour": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Another dealer quotes the forward at £102.00, below Plan A's £105.00. You can sell a borrowed share today and buy it back later; lesson 12 covers the details.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 95,
+          "max": 112,
+          "step": 1,
+          "labels": 5
+        },
+        "state": {
+          "points": [
+            {
+              "id": "a",
+              "x": 105,
+              "label": "fair £105.00",
+              "colour": 2
+            },
+            {
+              "id": "q",
+              "x": 102,
+              "label": "quote £102.00",
+              "colour": 5
+            }
+          ],
+          "caption": "The quote is below Plan A's cost"
+        }
+      },
+      "question": "Which trade locks in a profit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "reverse",
+            "text": "Buy the forward, sell a borrowed share for £100.00, and lend the £100.00 at 5%",
+            "correct": true
+          },
+          {
+            "id": "carry",
+            "text": "Sell the forward, and buy the share with borrowed cash",
+            "why": "That is the trade for a forward that is too dear. Here you would deliver for £102.00 a share that cost you £105.00."
+          },
+          {
+            "id": "bet",
+            "text": "Buy the forward and wait",
+            "why": "That is a bet on the share, not an arbitrage. If it ends below £102.00, you lose."
+          },
+          {
+            "id": "share",
+            "text": "Buy the share today and hold it",
+            "why": "That is Plan A, which costs £105.00. It does not use the cheap quote at all."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The forward is cheap, so you want to be the buyer."
+        },
+        {
+          "rung": "point",
+          "text": "Buying forward gives you a share in a year. Whom could you hand it to?",
+          "highlight": [
+            "q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Sell a borrowed share now and lend the £100.00: it grows to £105.00. Pay £102.00 for the forward's share and return it."
+        }
+      ],
+      "feedback": {
+        "correct": "The lending grows to £105.00; the share costs £102.00; you keep £3.00.",
+        "generic": "Not quite right. Buy what is cheap, the forward, and sell what is dear, the share.",
+        "byKey": {
+          "carry": "You ran the trade for a forward that is too dear. Here the forward is the cheap side, so you buy it.",
+          "bet": "Buying the forward alone is exposed to the share price. An arbitrage needs the offsetting share sale."
+        }
+      },
+      "explain": {
+        "text": "The borrowed share sells for £100.00, which grows to £105.00 in the bank. The forward delivers a share for £102.00, which you return to its lender. You keep £3.00 whatever the share does: **reverse cash and carry**.",
+        "canvas": {
+          "intervals": [
+            {
+              "id": "gap",
+              "from": 102,
+              "to": 105,
+              "label": "£3.00 free",
+              "colour": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "Analysts expect the share, now £100.00, to be worth £112.00 in a year. The rate is still 5%. A colleague prices the one-year forward at £112.00, saying the forward should match the expected price.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 95,
+          "max": 120,
+          "step": 1,
+          "labels": 5
+        },
+        "state": {
+          "points": [
+            {
+              "id": "s0",
+              "x": 100,
+              "label": "today £100.00",
+              "labelPos": "below"
+            },
+            {
+              "id": "e",
+              "x": 112,
+              "label": "forecast £112.00",
+              "colour": 5
+            }
+          ]
+        }
+      },
+      "question": "What is the no-arbitrage one-year forward price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "fair",
+            "text": "£105.00",
+            "correct": true
+          },
+          {
+            "id": "forecast",
+            "text": "£112.00",
+            "why": "You priced the forward at the forecast. Plan A delivers the share for £105.00 whatever anyone forecasts, so that pins the price."
+          },
+          {
+            "id": "spot",
+            "text": "£100.00",
+            "why": "You forgot the financing. Holding the share for a year costs £5.00 of interest."
+          },
+          {
+            "id": "both",
+            "text": "£117.60",
+            "why": "You grew the forecast by the rate, $112 \\times 1.05$. The forecast plays no part."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would you do if the forward were £112.00?"
+        },
+        {
+          "rung": "point",
+          "text": "Plan A gets the share in a year for £105.00, with no forecast needed.",
+          "highlight": [
+            "e"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At £112.00 you would borrow, buy and sell forward for £7.00 of free money. So $F = 105$."
+        }
+      ],
+      "feedback": {
+        "correct": "£105.00, from the cost of carry alone.",
+        "generic": "Not quite right. Ask what replicating the forward costs.",
+        "byKey": {
+          "forecast": "You priced the forward at the forecast. At £112.00 you could borrow, buy and sell forward for a sure £7.00."
+        }
+      },
+      "explain": {
+        "text": "At £112.00 you would borrow £100.00, buy the share and sell it forward, locking in £7.00. Everyone would, until the price fell to £105.00. A forecast changes what you think the share will be worth, not what replication costs.",
+        "canvas": {
+          "points": {
+            "f": {
+              "x": 105,
+              "label": "F = £105.00",
+              "colour": 2
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "Now in general, with no dividends. Strategy 1: buy the share today for $S_0$. Strategy 2: go long the forward at $F$, and lend $\\dfrac{F}{(1 + r)^T}$ today, which grows to $F$ by $T$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "o1",
+            "text": "At $T$ both strategies hold one share: in strategy 2 the loan repays $F$, which pays for the forward's share"
+          },
+          {
+            "id": "o2",
+            "text": "Equal payoffs at $T$ need equal costs today, or buying one strategy and selling the other is free money"
+          },
+          {
+            "id": "o3",
+            "text": "$S_0 = \\dfrac{F}{(1 + r)^T}$, the cost today of each strategy"
+          },
+          {
+            "id": "o4",
+            "text": "$F = S_0 (1 + r)^T$, multiplying both sides by $(1 + r)^T$"
+          }
+        ],
+        "answer": [
+          "o1",
+          "o2",
+          "o3",
+          "o4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from what each strategy holds on the delivery date."
+        },
+        {
+          "rung": "point",
+          "text": "The no-arbitrage step turns equal payoffs into equal costs."
+        },
+        {
+          "rung": "step",
+          "text": "Payoffs match, so costs match: $S_0 = F/(1 + r)^T$. Then solve for $F$."
+        }
+      ],
+      "feedback": {
+        "correct": "Same payoff, same cost, then solve for $F$.",
+        "generic": "Not quite right. Compare the payoffs first, then the costs, then rearrange.",
+        "byKey": {
+          "o3": "The equation of costs needs the no-arbitrage reason first: equal payoffs at $T$.",
+          "o4": "Solving for $F$ comes last, once the costs are set equal."
+        }
+      },
+      "explain": {
+        "text": "With $S_0 = 100$, $r = 0.05$ and $T = 1$ this gives $F = 105$, your Plan A. With continuous compounding the same argument gives $F = S_0 e^{rT}$, here £105.13. No forecast appears anywhere."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Now the share pays a £2.00 dividend in six months. Whoever holds the share gets it; the forward's buyer does not. In Plan A the dividend arrives while you hold the share. The rate is 5% a year.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 100,
+          "max": 106,
+          "step": 0.5,
+          "labels": 2
+        },
+        "state": {
+          "points": [
+            {
+              "id": "nd",
+              "x": 105,
+              "label": "no dividend £105.00",
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "What is the no-arbitrage one-year forward price now? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 102.95,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "£",
+        "placeholder": "a number of pounds",
+        "label": "Forward price with the dividend",
+        "accept": "£102.95: $(100 - 2/1.05^{0.5}) \\times 1.05$",
+        "wrong": [
+          {
+            "id": "ignored",
+            "value": 105,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "not-grown",
+            "value": 103,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "not-disc",
+            "value": 102.9,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "added",
+            "value": 107,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The dividend makes holding the share cheaper. What is it worth today?"
+        },
+        {
+          "rung": "point",
+          "text": "Today the dividend is worth $\\dfrac{2}{1.05^{0.5}} = 1.95$.",
+          "highlight": [
+            "nd"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Take that off the share and grow the rest: $(100 - 1.95) \\times 1.05 = 102.95$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(100 - 1.952) \\times 1.05 = 102.95$.",
+        "generic": "Not quite right. Take the dividend's present value off the share price, then grow for a year.",
+        "byKey": {
+          "ignored": "You left out the dividend. Holding the share earns £2.00 that the forward's buyer never sees.",
+          "not-grown": "You took £2.00 off £105.00. The dividend arrives at six months and earns interest until the year's end: £2.05.",
+          "not-disc": "You took the full £2.00 off today's price. It arrives in six months, so today it is worth only £1.95.",
+          "added": "You added the dividend. It is income to the holder, so it lowers the cost of carry."
+        }
+      },
+      "explain": {
+        "text": "The dividend is worth $\\tfrac{2}{1.05^{0.5}} = \\text{£}1.95$ today, so $F = (100 - 1.95) \\times 1.05 = \\text{£}102.95$. Check another way: $105 - 2 \\times 1.05^{0.5} = 102.95$, the dividend reinvested to the year's end. In general $F = \\left(S_0 - PV(\\text{income})\\right)(1 + r)^T$.",
+        "canvas": {
+          "points": {
+            "d": {
+              "x": 102.95,
+              "label": "with dividend £102.95",
+              "colour": 3,
+              "labelPos": "below"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "One pound buys 1.2500 US dollars today. A year's deposit earns 4% in pounds and 5% in dollars. A bank sets the one-year forward rate so that the two routes below end with the same value.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Route for £1.00",
+            "Today",
+            "In 1 year"
+          ],
+          "rows": [
+            [
+              "Keep pounds at 4%",
+              "£1.00",
+              "£1.04"
+            ],
+            [
+              "Change to dollars at 5%",
+              "1.2500 dollars",
+              "1.3125 dollars"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the one-year forward rate, in dollars per pound? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.262,
+        "tol": {
+          "abs": 0.0006
+        },
+        "placeholder": "for example 1.2345",
+        "label": "Forward rate, dollars per pound",
+        "accept": "1.2620, from $1.3125 / 1.04$ (1.2625 by the shortcut $1.25 \\times (1 + 0.05 - 0.04)$)",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 1.2381,
+            "tol": {
+              "abs": 0.0006
+            }
+          },
+          {
+            "id": "spot",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "dollars",
+            "value": 1.3125,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In a year, £1.04 must swap at the forward rate for the 1.3125 dollars."
+        },
+        {
+          "rung": "point",
+          "text": "The forward rate is dollars per pound: dollars in a year over pounds in a year.",
+          "highlight": [
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$F = \\dfrac{1.3125}{1.04} = 1.2620$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.3125 / 1.04 = 1.2620$ dollars per pound.",
+        "generic": "Not quite right. Divide the dollars in a year by the pounds in a year.",
+        "byKey": {
+          "inverted": "You swapped the two rates, $1.25 \\times 1.04 / 1.05$. The dollar deposit earns more, so a pound buys more dollars forward.",
+          "spot": "That is today's rate. The two deposits grow at different rates, so the forward differs.",
+          "dollars": "That is the dollars in a year from £1.00. Divide by the £1.04 the pound route gives."
+        }
+      },
+      "explain": {
+        "text": "£1.00 grows to £1.04, or to 1.3125 dollars. They must swap at the forward rate, so $F = \\tfrac{1.3125}{1.04} = 1.2620$ dollars per pound. This is **covered interest parity**: the higher-rate currency, the dollar, is cheaper forward.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "An equity index stands at 8,000 points. Borrowing costs 4% a year, and the index's shares pay dividends of 5% a year. Carrying the index for a year costs the interest but earns the dividends.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 7800,
+          "max": 8400,
+          "step": 50,
+          "labels": 2
+        },
+        "state": {
+          "points": [
+            {
+              "id": "s0",
+              "x": 8000,
+              "label": "today 8,000",
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "Roughly where is the one-year forward on the index?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7920,
+        "tol": {
+          "abs": 5
+        },
+        "placeholder": "index points",
+        "label": "One-year forward, index points",
+        "accept": "7,920, from $8000 \\times (1 + 0.04 - 0.05)$; 7,924 by $8000 \\times 1.04/1.05$",
+        "wrong": [
+          {
+            "id": "ignored",
+            "value": 8320,
+            "tol": {
+              "abs": 5
+            }
+          },
+          {
+            "id": "spot",
+            "value": 8000,
+            "tol": {
+              "abs": 2
+            }
+          },
+          {
+            "id": "added",
+            "value": 8720,
+            "tol": {
+              "abs": 5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the net cost of carrying the index positive or negative?"
+        },
+        {
+          "rung": "point",
+          "text": "It costs 4% and earns 5%: a net carry of −1%.",
+          "highlight": [
+            "s0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$8000 \\times (1 + 0.04 - 0.05) = 7{,}920$."
+        }
+      ],
+      "feedback": {
+        "correct": "About 7,920: below today's level.",
+        "generic": "Not quite right. Net the interest against the dividend yield, then apply it for a year.",
+        "byKey": {
+          "ignored": "You charged the interest but left out the dividends. The holder earns 5% back.",
+          "spot": "That would need the interest and the dividends to cancel. Here the dividends are larger.",
+          "added": "You added the dividends to the interest. Dividends are income to the holder, so they lower the forward."
+        }
+      },
+      "explain": {
+        "text": "Carrying the index costs 4% and earns 5%, a net carry of −1%. So $F \\approx S_0(1 + r - y)^T = 8000 \\times 0.99 = 7{,}920$, below today's level. When income beats the interest, the forward sits below spot.",
+        "canvas": {
+          "points": {
+            "f": {
+              "x": 7920,
+              "label": "forward 7,920",
+              "colour": 3,
+              "labelPos": "below"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Borrowing to buy the share now delivers it later for $S_0(1 + r)^T$. Any other forward price is free money.",
+      "Too high: borrow, buy and sell forward. Too low: sell a borrowed share, lend the cash and buy forward.",
+      "Income from holding (dividends) lowers the forward; costs of holding (storage) raise it. Forecasts play no part."
+    ],
+    "formula": {
+      "name": "Forward price by cost of carry",
+      "tex": "F = \\left(S_0 - PV(\\text{income})\\right)(1 + r)^T",
+      "note": "With no income, $F = S_0(1 + r)^T$, or $S_0 e^{rT}$ with continuous compounding."
+    },
+    "trap": "The forward price is not the expected future price. It is what replicating the forward costs: the share plus its financing."
+  },
+  "quiz": [
+    {
+      "id": "q-two-years",
+      "difficulty": 2,
+      "prose": "A share costs £50.00. The rate is 4% a year, compounded yearly, and the share pays no dividends.",
+      "question": "What is the no-arbitrage two-year forward price?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 54.08,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "a number of pounds",
+        "label": "Two-year forward price",
+        "accept": "£54.08",
+        "wrong": [
+          {
+            "id": "simple",
+            "value": 54,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "one-year",
+            "value": 52,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "spot",
+            "value": 50,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$50 \\times 1.04^2 = 54.08$.",
+        "generic": "Not quite right. Grow £50.00 at 4% for two years.",
+        "byKey": {
+          "simple": "You used simple interest, $50 \\times 1.08$. The loan compounds, so the second year earns interest on the first.",
+          "one-year": "That is the one-year forward. The delivery is two years away.",
+          "spot": "You forgot the financing. Holding the share for two years costs interest."
+        }
+      },
+      "explain": {
+        "text": "Borrowing £50.00 for two years at 4% repays $50 \\times 1.04^2 = \\text{£}54.08$. That is the cost of Plan A, so it is the forward price."
+      }
+    },
+    {
+      "id": "q-which-trade",
+      "difficulty": 2,
+      "prose": "A forward on a share is quoted above $S_0(1 + r)^T$. The share pays no dividends.",
+      "question": "Which trade locks in a profit?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "carry",
+            "text": "Borrow, buy the share, and sell the forward",
+            "correct": true
+          },
+          {
+            "id": "reverse",
+            "text": "Sell a borrowed share, lend the cash, and buy the forward",
+            "why": "That is the trade for a forward that is too cheap. Here you want to sell the dear forward."
+          },
+          {
+            "id": "short",
+            "text": "Sell the forward and wait",
+            "why": "That is a bet that the share falls. Without the share in hand, a rise loses money."
+          },
+          {
+            "id": "nothing",
+            "text": "None: the forward reflects what the market expects",
+            "why": "You priced the forward by expectations. It is pinned by the cost of carry, so a gap is free money."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Cash and carry: you deliver a share that cost $S_0(1 + r)^T$ for the higher quote.",
+        "generic": "Not quite right. Sell what is dear, the forward, and buy what is cheap, the share."
+      },
+      "explain": {
+        "text": "Borrowing to buy the share costs $S_0(1 + r)^T$ at delivery. Selling it forward above that locks in the difference. The share's later price never matters."
+      }
+    },
+    {
+      "id": "q-storage",
+      "difficulty": 3,
+      "prose": "Gold costs £2,000.00 an ounce today. The rate is 5% a year, and storing an ounce for a year costs £10.00, paid at the end of the year. Gold pays no income.",
+      "question": "What is the no-arbitrage one-year forward price of an ounce?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2110,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "placeholder": "a number of pounds",
+        "label": "Forward price of gold",
+        "accept": "£2,110.00",
+        "wrong": [
+          {
+            "id": "no-storage",
+            "value": 2100,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "minus",
+            "value": 2090,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "spot",
+            "value": 2000,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2000 \\times 1.05 + 10 = 2{,}110$.",
+        "generic": "Not quite right. Add the interest and the storage cost of holding gold for a year.",
+        "byKey": {
+          "no-storage": "You left out the storage. Holding gold costs £10.00 more, so the forward is higher.",
+          "minus": "You treated storage as income. It is a cost of holding, so it raises the forward.",
+          "spot": "You forgot the financing and the storage. Holding gold for a year costs both."
+        }
+      },
+      "explain": {
+        "text": "Plan A borrows £2,000.00, repaying £2,100.00, and pays £10.00 to store the gold. Delivering gold in a year therefore costs £2,110.00. Storage is negative income: it raises the forward."
+      }
+    },
+    {
+      "id": "q-zero-rate",
+      "difficulty": 2,
+      "prose": "A share trades at £80.00. The interest rate is 0%, and the share pays no dividends.",
+      "question": "What is the no-arbitrage three-year forward price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "same",
+            "text": "£80.00",
+            "correct": true
+          },
+          {
+            "id": "grown",
+            "text": "More than £80.00",
+            "why": "You charged for time. At 0% borrowing £80.00 for three years repays exactly £80.00."
+          },
+          {
+            "id": "less",
+            "text": "Less than £80.00",
+            "why": "You discounted the price. A lower forward would need income from holding the share, and there is none."
+          },
+          {
+            "id": "unknown",
+            "text": "It depends on where the share is expected to go",
+            "why": "You priced the forward by a forecast. It is pinned by the cost of carry, which here is zero."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "With nothing to pay and nothing earned, $F = S_0$.",
+        "generic": "Not quite right. Work out what Plan A costs at a 0% rate."
+      },
+      "explain": {
+        "text": "$F = 80 \\times (1 + 0)^3 = 80$. Carrying the share costs nothing, so the forward equals today's price."
+      }
+    }
+  ]
+}

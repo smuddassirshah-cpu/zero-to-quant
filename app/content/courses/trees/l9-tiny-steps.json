@@ -1,0 +1,1477 @@
+{
+  "id": "l9-tiny-steps",
+  "course": "trees",
+  "title": "Many tiny steps",
+  "minutes": 13,
+  "objectives": [
+    "Watch tree prices converge as the number of steps grows",
+    "Explain the odd-even sawtooth and why the leaves become lognormal"
+  ],
+  "skills": [
+    "tp-multistep",
+    "tp-bs"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One step, calibrated",
+      "prose": "A share is at £100. A one-year call is struck at £100, with $r = 5\\%$ and $\\sigma = 20\\%$. One CRR step gives $u = e^{0.2} = 1.2214$ and $d = 1/u = 0.8187$. With growth $e^{r\\Delta t}$ per step, $q = \\frac{e^{0.05} - d}{u - d} = 0.5775$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "One year",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "£122.14",
+                  "p": "0.5775"
+                },
+                {
+                  "id": "d",
+                  "label": "£81.87",
+                  "p": "0.4225"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "pays £22.14",
+            "d": "pays £0"
+          }
+        },
+        "state": {}
+      },
+      "question": "What does the one-step tree say the call is worth?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.16,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "label": "Call value in pounds",
+        "accept": "£12.16 ± 0.01: $e^{-0.05} \\times 0.5775 \\times 22.14$",
+        "wrong": [
+          {
+            "id": "no-disc",
+            "value": 12.79,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "old-q",
+            "value": 13.16,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "level1",
+            "value": 11.9,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "half",
+            "value": 10.53,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only the up leaf pays. Weight it by $q$."
+        },
+        {
+          "rung": "point",
+          "text": "The payoff arrives in a year, so it must be discounted.",
+          "highlight": [
+            "u"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$e^{-0.05}(0.5775 \\times 22.14 + 0.4225 \\times 0) = 0.9512 \\times 12.786$."
+        }
+      ],
+      "feedback": {
+        "correct": "$e^{-0.05} \\times 0.5775 \\times 22.14 = 12.16$.",
+        "generic": "Not quite right. Weight each payoff by its risk-neutral chance, add, then discount by $e^{-0.05}$.",
+        "byKey": {
+          "no-disc": "You found $0.5775 \\times 22.14 = 12.79$ but did not discount it. The payoff is a year away, so multiply by $e^{-0.05}$.",
+          "old-q": "You used level 1's $q = 0.625$. With these factors $q$ is 0.5775.",
+          "level1": "£11.90 is level 1's tree with $u = 1.2$ and $d = 0.8$. Here the factors come from $\\sigma$.",
+          "half": "You weighted the leaves equally. Pricing uses the risk-neutral $q = 0.5775$, not a coin flip."
+        }
+      },
+      "explain": {
+        "text": "One step is the level 1 sum with CRR factors: $e^{-0.05}(0.5775 \\times 22.14) = 12.16$. This is the tree with $n = 1$. Next we cut the year into more and more steps.",
+        "canvas": {
+          "highlight": [
+            "u"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "More and more steps",
+      "prose": "Now cut the year into $n$ steps of $\\Delta t = 1/n$, with $u = e^{\\sigma\\sqrt{\\Delta t}}$ each. The dot is the $n$-step tree's price for the same call, and it leaves a trail as you slide.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            66
+          ],
+          "y": [
+            9.2,
+            12.6
+          ],
+          "xLabel": "Steps $n$",
+          "yLabel": "Tree price (£)",
+          "xStep": 8,
+          "grid": true,
+          "params": {
+            "n": 1
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "lim",
+              "y": 10.4506,
+              "label": "£10.45"
+            }
+          ],
+          "points": [
+            {
+              "id": "P",
+              "x": 1,
+              "y": 12.1623,
+              "trace": "x",
+              "tap": false
+            }
+          ],
+          "caption": "1 step: £12.16"
+        },
+        "derive": {
+          "P.x": "n",
+          "P.y": "exp(-0.05)*sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(100*U^(2*k-N)-100,0)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)))",
+          "caption": "{{n}} steps: £{{fixed(P.y, 2)}}"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 1,
+            "max": 64,
+            "step": 1,
+            "start": 1,
+            "label": "Steps $n$"
+          }
+        ]
+      },
+      "question": "Slide $n$ from 1 up to 64. What do the tree prices do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zigzag",
+            "text": "They zigzag, odd $n$ above and even $n$ below, and the swings shrink towards about £10.45.",
+            "correct": true
+          },
+          {
+            "id": "fall",
+            "text": "They fall steadily towards zero.",
+            "why": "You watched the drop from 1 step to 2. After that the prices climb back and settle near £10.45."
+          },
+          {
+            "id": "rise",
+            "text": "They rise steadily with $n$.",
+            "why": "You followed the even steps, which do rise. The odd steps sit above them and fall, so the path zigzags."
+          },
+          {
+            "id": "same",
+            "text": "They keep swinging by the same amount.",
+            "why": "Compare the jump from 1 to 2 steps with the jump from 63 to 64. The swings shrink."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The prices zigzag and close in on one value.",
+        "generic": "Not quite right. Slide slowly and compare odd and even $n$ near the end."
+      },
+      "explain": {
+        "text": "Odd trees price above £10.45 and even trees below, and the gap closes as $n$ grows. At 64 steps the tree gives £10.42; at 65 it gives £10.48. Both sides meet at the dashed line.",
+        "canvas": {
+          "params": {
+            "n": 64
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How fast it closes in",
+      "prose": "The prices **converge**: they get as close as we like to one number, £10.45, as $n$ grows. Here are even trees with $n$ a power of 2. The error is the tree price minus £10.45.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Steps $n$",
+            "Tree price (£)",
+            "Error (£)"
+          ],
+          "rows": [
+            [
+              "4",
+              "9.97",
+              "-0.48"
+            ],
+            [
+              "8",
+              "10.21",
+              "-0.24"
+            ],
+            [
+              "16",
+              "10.33",
+              "-0.12"
+            ],
+            [
+              "32",
+              "10.39",
+              "-0.06"
+            ],
+            [
+              "64",
+              "?",
+              "?"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              4
+            ]
+          }
+        }
+      },
+      "question": "Predict the error at 64 steps.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.03,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "label": "Error at 64 steps in pounds",
+        "accept": "−£0.03 ± 0.005 (the 64-step tree gives £10.42)",
+        "wrong": [
+          {
+            "id": "same",
+            "value": -0.06,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "sign",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "quarter",
+            "value": -0.015,
+            "tol": {
+              "abs": 0.004
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.004
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each error with the one above it."
+        },
+        {
+          "rung": "point",
+          "text": "From 4 to 8 steps the error goes from −0.48 to −0.24.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each doubling halves the error: half of −0.06 is −0.03."
+        }
+      ],
+      "feedback": {
+        "correct": "The error halves each time $n$ doubles.",
+        "generic": "Not quite right. Look at how each error relates to the one before.",
+        "byKey": {
+          "same": "You kept the 32-step error. The error has halved at every doubling so far.",
+          "sign": "Even trees sit below £10.45, so the error stays negative.",
+          "quarter": "You halved twice. One doubling of $n$, from 32 to 64, halves it once.",
+          "zero": "The tree reaches £10.45 only in the limit. At 64 steps it is still about 3p short."
+        }
+      },
+      "explain": {
+        "text": "Each doubling of $n$ halves the error, so the error shrinks like $1/n$. The 64-step tree gives £10.42, an error of −£0.03. One more correct decimal place needs about ten times the steps.",
+        "canvas": {
+          "values": {
+            "r4c1": "10.42",
+            "r4c2": "-0.03"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Why the sawtooth",
+      "prose": "Look at the leaves next to the strike. With $n = 2$ the middle leaf is exactly £100. With $n = 3$ the middle leaves are £112.24 and £89.09.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Leaf",
+            "$n = 2$",
+            "$n = 3$"
+          ],
+          "rows": [
+            [
+              "Top",
+              "£132.69, pays £32.69",
+              "£141.40, pays £41.40"
+            ],
+            [
+              "Second",
+              "£100.00, pays £0",
+              "£112.24, pays £12.24"
+            ],
+            [
+              "Third",
+              "£75.36, pays £0",
+              "£89.09, pays £0"
+            ],
+            [
+              "Fourth",
+              "",
+              "£70.72, pays £0"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Why do even trees price this call low and odd trees high?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "kink",
+            "text": "An even tree puts a leaf on the strike, which pays nothing. An odd tree's nearest leaf sits above it and pays.",
+            "correct": true
+          },
+          {
+            "id": "more",
+            "text": "Odd trees have more leaves, so they add up more payoffs.",
+            "why": "You counted leaves. A 64-step tree has more leaves than a 3-step one and prices lower, so position matters, not number."
+          },
+          {
+            "id": "rounding",
+            "text": "Rounding errors grow with the number of steps.",
+            "why": "The arithmetic is exact to many places. The swing comes from where leaves fall around £100."
+          },
+          {
+            "id": "q",
+            "text": "Odd trees use a higher $q$.",
+            "why": "You looked for a change in $q$. It moves smoothly with $n$, whether $n$ is odd or even."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the call's payoff bend?"
+        },
+        {
+          "rung": "point",
+          "text": "The payoff has a kink at £100. Which tree has a leaf exactly there?",
+          "highlight": [
+            "r1c1",
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "An even tree's middle leaf is £100 and pays £0. An odd tree's second leaf, £112.24, pays £12.24."
+        }
+      ],
+      "feedback": {
+        "correct": "The kink at the strike is sampled differently by odd and even trees.",
+        "generic": "Not quite right. Compare the leaves closest to £100 in the two trees.",
+        "byKey": {
+          "more": "You counted leaves. A 64-step tree has more leaves than a 3-step one and prices lower, so position matters, not number."
+        }
+      },
+      "explain": {
+        "text": "The payoff bends at £100. An even tree spends a leaf on the kink, where it pays £0, so it underprices. An odd tree's nearest leaf sits above the kink and pays, so it overprices.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r1c1",
+              "r1c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Where the leaves land",
+      "prose": "Each leaf of an $n$-step tree is a possible price in a year, with its risk-neutral probability. Each bar holds the probability of leaves near that price. Slide $n$ up to 128.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s50",
+              "label": "50"
+            },
+            {
+              "id": "s60",
+              "label": "60"
+            },
+            {
+              "id": "s70",
+              "label": "70"
+            },
+            {
+              "id": "s80",
+              "label": "80"
+            },
+            {
+              "id": "s90",
+              "label": "90"
+            },
+            {
+              "id": "s100",
+              "label": "100"
+            },
+            {
+              "id": "s110",
+              "label": "110"
+            },
+            {
+              "id": "s120",
+              "label": "120"
+            },
+            {
+              "id": "s130",
+              "label": "130"
+            },
+            {
+              "id": "s140",
+              "label": "140"
+            },
+            {
+              "id": "s150",
+              "label": "150"
+            },
+            {
+              "id": "s160",
+              "label": "160"
+            },
+            {
+              "id": "s170",
+              "label": "170"
+            },
+            {
+              "id": "s180",
+              "label": "180"
+            },
+            {
+              "id": "s190",
+              "label": "190"
+            }
+          ],
+          "xLabel": "Share price in a year (£)",
+          "yLabel": "Risk-neutral probability",
+          "exact": [
+            {
+              "x": "s50",
+              "y": 0.0011
+            },
+            {
+              "x": "s60",
+              "y": 0.0109
+            },
+            {
+              "x": "s70",
+              "y": 0.0469
+            },
+            {
+              "x": "s80",
+              "y": 0.1116
+            },
+            {
+              "x": "s90",
+              "y": 0.1725
+            },
+            {
+              "x": "s100",
+              "y": 0.1933
+            },
+            {
+              "x": "s110",
+              "y": 0.1701
+            },
+            {
+              "x": "s120",
+              "y": 0.1245
+            },
+            {
+              "x": "s130",
+              "y": 0.0792
+            },
+            {
+              "x": "s140",
+              "y": 0.0451
+            },
+            {
+              "x": "s150",
+              "y": 0.0236
+            },
+            {
+              "x": "s160",
+              "y": 0.0116
+            },
+            {
+              "x": "s170",
+              "y": 0.0054
+            },
+            {
+              "x": "s180",
+              "y": 0.0024
+            },
+            {
+              "x": "s190",
+              "y": 0.001
+            }
+          ],
+          "exactLabel": "lognormal",
+          "yMax": 0.6,
+          "proportion": false
+        },
+        "state": {
+          "params": {
+            "n": 4
+          }
+        },
+        "derive": {
+          "values.s50": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 50)",
+          "values.s60": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 60)",
+          "values.s70": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 70)",
+          "values.s80": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 80)",
+          "values.s90": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 90)",
+          "values.s100": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 100)",
+          "values.s110": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 110)",
+          "values.s120": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 120)",
+          "values.s130": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 130)",
+          "values.s140": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 140)",
+          "values.s150": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 150)",
+          "values.s160": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 160)",
+          "values.s170": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 170)",
+          "values.s180": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 180)",
+          "values.s190": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 190)",
+          "caption": "{{n}} steps: {{n + 1}} leaves"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 1,
+            "max": 128,
+            "step": 1,
+            "start": 4,
+            "label": "Steps $n$"
+          }
+        ]
+      },
+      "question": "What shape do the bars settle into by $n = 128$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "skew",
+            "text": "A peak near £100, with a short tail down to about £50 and a long tail up to about £190.",
+            "correct": true
+          },
+          {
+            "id": "normal",
+            "text": "Symmetric about £100, like a normal curve.",
+            "why": "Compare the tails: the bars are nearly empty by £50 but still visible at £180. Prices multiply, so the upside stretches further."
+          },
+          {
+            "id": "flat",
+            "text": "Flat: every price about equally likely.",
+            "why": "The middle bars are far taller than the ends. Most paths mix ups and downs and finish near the start."
+          },
+          {
+            "id": "two",
+            "text": "Two humps, one for up and one for down.",
+            "why": "That is the one-step tree. With many steps the middle paths dominate."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide to 128 and look at both ends of the chart."
+        },
+        {
+          "rung": "point",
+          "text": "The left tail stops near £50. How far does the right tail reach?"
+        },
+        {
+          "rung": "step",
+          "text": "The bars rise to a peak near £100 and fall away more slowly to the right."
+        }
+      ],
+      "feedback": {
+        "correct": "The leaves pile up near £100 and spread further upwards.",
+        "generic": "Not quite right. Slide to 128 and compare the two tails."
+      },
+      "explain": {
+        "text": "The leaves pile up near £100 and spread further up than down. Each step multiplies the price, so equal steps in $\\ln S$ are wider in pounds going up. The dashed marks are the lognormal limit.",
+        "canvas": {
+          "params": {
+            "n": 128
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The spread of log returns",
+      "prose": "On the tree, $\\ln(S_T/S_0)$ is a sum of $n$ steps, each $+\\sigma\\sqrt{\\Delta t}$ or $-\\sigma\\sqrt{\\Delta t}$. With $\\Delta t = 1/n$, each step has variance very close to $\\sigma^2\\Delta t$. The steps are independent.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "s50",
+              "label": "50"
+            },
+            {
+              "id": "s60",
+              "label": "60"
+            },
+            {
+              "id": "s70",
+              "label": "70"
+            },
+            {
+              "id": "s80",
+              "label": "80"
+            },
+            {
+              "id": "s90",
+              "label": "90"
+            },
+            {
+              "id": "s100",
+              "label": "100"
+            },
+            {
+              "id": "s110",
+              "label": "110"
+            },
+            {
+              "id": "s120",
+              "label": "120"
+            },
+            {
+              "id": "s130",
+              "label": "130"
+            },
+            {
+              "id": "s140",
+              "label": "140"
+            },
+            {
+              "id": "s150",
+              "label": "150"
+            },
+            {
+              "id": "s160",
+              "label": "160"
+            },
+            {
+              "id": "s170",
+              "label": "170"
+            },
+            {
+              "id": "s180",
+              "label": "180"
+            },
+            {
+              "id": "s190",
+              "label": "190"
+            }
+          ],
+          "xLabel": "Share price in a year (£)",
+          "yLabel": "Risk-neutral probability",
+          "exact": [
+            {
+              "x": "s50",
+              "y": 0.0011
+            },
+            {
+              "x": "s60",
+              "y": 0.0109
+            },
+            {
+              "x": "s70",
+              "y": 0.0469
+            },
+            {
+              "x": "s80",
+              "y": 0.1116
+            },
+            {
+              "x": "s90",
+              "y": 0.1725
+            },
+            {
+              "x": "s100",
+              "y": 0.1933
+            },
+            {
+              "x": "s110",
+              "y": 0.1701
+            },
+            {
+              "x": "s120",
+              "y": 0.1245
+            },
+            {
+              "x": "s130",
+              "y": 0.0792
+            },
+            {
+              "x": "s140",
+              "y": 0.0451
+            },
+            {
+              "x": "s150",
+              "y": 0.0236
+            },
+            {
+              "x": "s160",
+              "y": 0.0116
+            },
+            {
+              "x": "s170",
+              "y": 0.0054
+            },
+            {
+              "x": "s180",
+              "y": 0.0024
+            },
+            {
+              "x": "s190",
+              "y": 0.001
+            }
+          ],
+          "exactLabel": "lognormal",
+          "yMax": 0.6,
+          "proportion": false
+        },
+        "state": {
+          "params": {
+            "n": 128
+          }
+        },
+        "derive": {
+          "values.s50": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 50)",
+          "values.s60": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 60)",
+          "values.s70": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 70)",
+          "values.s80": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 80)",
+          "values.s90": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 90)",
+          "values.s100": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 100)",
+          "values.s110": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 110)",
+          "values.s120": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 120)",
+          "values.s130": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 130)",
+          "values.s140": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 140)",
+          "values.s150": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 150)",
+          "values.s160": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 160)",
+          "values.s170": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 170)",
+          "values.s180": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 180)",
+          "values.s190": "sum(0, n, \"fact(N)/(fact(k)*fact(N-k))*Q^k*(1-Q)^(N-k)*max(0,1-abs(100*U^(2*k-N)-C)/10)\", \"N\", n, \"Q\", (exp(0.05/n)-exp(-0.2/sqrt(n)))/(exp(0.2/sqrt(n))-exp(-0.2/sqrt(n))), \"U\", exp(0.2/sqrt(n)), \"C\", 190)",
+          "caption": "{{n}} steps: {{n + 1}} leaves"
+        }
+      },
+      "question": "For large $n$, what standard deviation does $\\ln(S_T/S_0)$ have? Here $\\sigma = 0.2$ and $T = 1$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2,
+        "tol": {
+          "abs": 0.003
+        },
+        "label": "Standard deviation of the log return",
+        "accept": "0.2: $\\sqrt{n \\times \\sigma^2 \\Delta t} = \\sigma\\sqrt T$",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "step",
+            "value": 0.0177,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "addsd",
+            "value": 2.26,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For independent steps, variances add."
+        },
+        {
+          "rung": "point",
+          "text": "$n$ steps of variance $\\sigma^2/n$ each."
+        },
+        {
+          "rung": "step",
+          "text": "The total variance is $n \\times 0.04/n = 0.04$. Take its square root."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sqrt{0.04} = 0.2$, whatever $n$ is.",
+        "generic": "Not quite right. Add the variances of the $n$ steps, then take a square root.",
+        "byKey": {
+          "var": "0.04 is the variance. The standard deviation is its square root.",
+          "step": "That is one step's size at $n = 128$. The sum has $n$ of them.",
+          "addsd": "You added standard deviations. For independent steps you add variances, then take the root."
+        }
+      },
+      "explain": {
+        "text": "Variances of independent steps add: $n \\times \\sigma^2\\Delta t = \\sigma^2 T = 0.04$, so the sd is 0.2. By the central limit theorem the sum is close to normal (limits-thm, Why sums look normal). A normal $\\ln S_T$ is a lognormal $S_T$."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "One more step",
+      "prose": "A colleague prices the call at 16, 32 and 64 steps: £10.33, £10.39 and £10.42. Each is higher than the last. She adds one step and expects a price just above £10.42.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            70
+          ],
+          "y": [
+            10.2,
+            10.6
+          ],
+          "xLabel": "Steps $n$",
+          "yLabel": "Tree price (£)",
+          "xStep": 8,
+          "yStep": 0.1
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "lim",
+              "y": 10.4506,
+              "label": "£10.45"
+            }
+          ],
+          "points": [
+            {
+              "id": "n16",
+              "x": 16,
+              "y": 10.3267,
+              "tap": false
+            },
+            {
+              "id": "n32",
+              "x": 32,
+              "y": 10.3883,
+              "tap": false
+            },
+            {
+              "id": "n64",
+              "x": 64,
+              "y": 10.4194,
+              "tap": false
+            }
+          ]
+        }
+      },
+      "question": "What does the 65-step tree give?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "odd",
+            "text": "£10.48",
+            "correct": true
+          },
+          {
+            "id": "trend",
+            "text": "£10.43",
+            "why": "You extended the rising trend of 16, 32 and 64. That trend holds for even trees; 65 is odd."
+          },
+          {
+            "id": "nochange",
+            "text": "£10.42",
+            "why": "You treated one extra step as no change. Going from even to odd moves the price across the limit."
+          },
+          {
+            "id": "limit",
+            "text": "£10.45",
+            "why": "The tree reaches £10.45 only in the limit. At 65 steps it is still a few pence away."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is 65 odd or even?"
+        },
+        {
+          "rung": "point",
+          "text": "Odd trees sat above the dashed line in the slider."
+        },
+        {
+          "rung": "step",
+          "text": "An odd tree near 64 steps is about as far above £10.45 as the even one is below."
+        }
+      ],
+      "feedback": {
+        "correct": "65 steps lands above the limit.",
+        "generic": "Not quite right. Remember which side of £10.45 odd trees fall on.",
+        "byKey": {
+          "trend": "You assumed more steps always move the price up. That holds only along even $n$; 65 is odd and lands above £10.45.",
+          "nochange": "You treated one extra step as no change. Going from even to odd moves the price across the limit."
+        }
+      },
+      "explain": {
+        "text": "Adding one step to an even tree makes it odd, and odd trees sit above the limit. So 64 steps gives £10.42 and 65 gives £10.48. More steps shrink the error, but not from one side.",
+        "canvas": {
+          "points": {
+            "n65": {
+              "id": "n65",
+              "x": 65,
+              "y": 10.4776,
+              "tap": false,
+              "label": "65 steps"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why the leaves are lognormal",
+      "prose": "Let $J$ be the number of up moves on an $n$-step tree. Each step is up with risk-neutral chance $q$, independently. We show why $S_T$ is close to lognormal.",
+      "question": "Put the lines of the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "$S_T = S_0 u^J d^{\\,n-J}$, since each up multiplies by $u$ and each down by $d$"
+          },
+          {
+            "id": "s2",
+            "text": "$\\ln(S_T/S_0) = J\\ln u + (n - J)\\ln d$, taking logs turns the product into a sum"
+          },
+          {
+            "id": "s3",
+            "text": "$= (2J - n)\\sigma\\sqrt{\\Delta t}$, because $\\ln u = \\sigma\\sqrt{\\Delta t}$ and $\\ln d = -\\sigma\\sqrt{\\Delta t}$"
+          },
+          {
+            "id": "s4",
+            "text": "$J$ is a sum of $n$ independent up-or-down counts, so it is close to normal for large $n$ (central limit theorem)"
+          },
+          {
+            "id": "s5",
+            "text": "$\\ln(S_T/S_0)$ is a linear function of $J$, so it is close to normal: $S_T$ is close to lognormal"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the price at a leaf."
+        },
+        {
+          "rung": "point",
+          "text": "Logs come before the central limit theorem: the theorem is about sums."
+        },
+        {
+          "rung": "step",
+          "text": "Price, then logs, then the CRR factors, then the normal limit for $J$, then the conclusion."
+        }
+      ],
+      "feedback": {
+        "correct": "Logs turn the moves into a sum, and sums become normal.",
+        "generic": "Not quite right. Write the leaf price first, take logs, then use the central limit theorem.",
+        "byKey": {
+          "s4": "The central limit theorem needs a sum. Take logs first, so the moves add.",
+          "s5": "That is the conclusion. It needs $J$ to be close to normal first."
+        }
+      },
+      "explain": {
+        "text": "Logs turn the product of moves into a sum of moves. The central limit theorem makes that sum normal. That is the lognormal shape your bars settled into."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Counting the work",
+      "prose": "A tree price touches every node once. An $n$-step tree has $k + 1$ nodes at step $k$, from the root at step 0 to $n + 1$ leaves. Write `count_nodes(n)`, the total number of nodes.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "compact": true,
+          "levels": [
+            {
+              "label": "Step 1",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "up"
+                },
+                {
+                  "id": "d",
+                  "label": "down"
+                }
+              ]
+            },
+            {
+              "label": "Step 2",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "up"
+                },
+                {
+                  "id": "d",
+                  "label": "down"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "show": "none",
+          "caption": "Two steps: the middle paths meet, so step 2 has 3 nodes, not 4. Total 6."
+        }
+      },
+      "question": "Complete `count_nodes(n)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def count_nodes(n):\n    \"\"\"Total nodes in an n-step recombining tree.\"\"\"\n    ...\n",
+        "solution": "def count_nodes(n):\n    \"\"\"Total nodes in an n-step recombining tree.\"\"\"\n    return (n + 1) * (n + 2) // 2\n",
+        "examples": [
+          {
+            "call": "count_nodes(2)",
+            "expect": "6",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_nodes(0)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_nodes(1)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_nodes(2)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "count_nodes(3)",
+            "expect": "10",
+            "compare": "equal"
+          },
+          {
+            "call": "count_nodes(10)",
+            "expect": "66",
+            "compare": "equal"
+          },
+          {
+            "call": "count_nodes(100)",
+            "expect": "5151",
+            "compare": "equal"
+          },
+          {
+            "call": "count_nodes(500)",
+            "expect": "125751",
+            "compare": "equal"
+          },
+          {
+            "call": "count_nodes(1000)",
+            "expect": "501501",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, from 0 steps to 1,000, compared exactly."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the nodes step by step: $1 + 2 + \\dots + (n + 1)$."
+        },
+        {
+          "rung": "point",
+          "text": "A loop over `k` in `range(n + 1)` adding `k + 1` works."
+        },
+        {
+          "rung": "step",
+          "text": "The sum is $\\frac{(n + 1)(n + 2)}{2}$: return `(n + 1) * (n + 2) // 2`."
+        }
+      ],
+      "feedback": {
+        "correct": "The count grows like $n^2/2$.",
+        "generic": "Not quite right. Step $k$ has $k + 1$ nodes; add them for $k = 0$ to $n$."
+      },
+      "explain": {
+        "text": "The total is $\\frac{(n + 1)(n + 2)}{2}$, close to $n^2/2$. Doubling the steps halves the error but quadruples the work. A 500-step tree has 125,751 nodes."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Steps on a desk",
+      "prose": "Desks price with a few hundred steps. Your pricer takes 2 ms for one 100-step tree. Each night the risk system revalues 5,000 options, and risk wants errors four times smaller than at 100 steps.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "Now",
+            "Wanted"
+          ],
+          "rows": [
+            [
+              "Steps",
+              "100",
+              "?"
+            ],
+            [
+              "Error",
+              "about $1/n$",
+              "4 times smaller"
+            ],
+            [
+              "Time per option",
+              "2 ms",
+              "?"
+            ],
+            [
+              "Options",
+              "5,000",
+              "5,000"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many seconds does the nightly run take with the finer tree?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 160.0,
+        "tol": {
+          "abs": 1
+        },
+        "unit": "seconds",
+        "label": "Run time in seconds",
+        "accept": "160 s: 400 steps, $16 \\times 2$ ms each, times 5,000",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 40,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "now",
+            "value": 10,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "sqrt",
+            "value": 640,
+            "tol": {
+              "abs": 2
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Error goes like $1/n$, work like $n^2$."
+        },
+        {
+          "rung": "point",
+          "text": "Four times smaller error needs four times the steps: 400."
+        },
+        {
+          "rung": "step",
+          "text": "Four times the steps is $4^2 = 16$ times the work: 32 ms per option, times 5,000."
+        }
+      ],
+      "feedback": {
+        "correct": "400 steps cost 16 times as much: 160 seconds a night.",
+        "generic": "Not quite right. Find the steps needed first, then scale the time by the square.",
+        "byKey": {
+          "linear": "You scaled time with the steps. Nodes grow like $n^2$, so 4 times the steps is 16 times the work.",
+          "now": "That is the run at 100 steps. The finer tree needs 400.",
+          "sqrt": "You used 16 times the steps. Error goes like $1/n$, so 4 times the steps is enough."
+        }
+      },
+      "explain": {
+        "text": "Four times smaller error needs 400 steps, and the work grows 16-fold to 32 ms per option. Over 5,000 options that is 160 seconds. This trade-off is why desks stop at a few hundred steps, or use a formula when one exists."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Tree prices converge to one value as the steps shrink: £10.45 for our call, the Black-Scholes price.",
+      "Odd and even trees fall on opposite sides of the limit, and the error shrinks like $1/n$, not from one side.",
+      "Log returns on the tree are sums of many small independent steps, so the leaves become lognormal."
+    ],
+    "formula": {
+      "name": "CRR tree with many steps",
+      "tex": "u = e^{\\sigma\\sqrt{\\Delta t}},\\quad \\Delta t = \\frac{T}{n},\\quad \\text{nodes} = \\frac{(n+1)(n+2)}{2}",
+      "note": "Error about $1/n$; work about $n^2/2$."
+    },
+    "trap": "One more step can move the price the other way: 64 steps gives £10.42, 65 gives £10.48."
+  },
+  "quiz": [
+    {
+      "id": "q-odd",
+      "difficulty": 2,
+      "prose": "Our call is priced on trees of 100 and 101 steps.",
+      "question": "Which tree prices above £10.45?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "101",
+            "text": "The 101-step tree",
+            "correct": true
+          },
+          {
+            "id": "100",
+            "text": "The 100-step tree",
+            "why": "You picked the bigger round number. Even trees put a leaf on the strike and price below the limit."
+          },
+          {
+            "id": "both",
+            "text": "Both, since 100 steps is close to the limit",
+            "why": "Close to the limit is still on one side. Odd and even trees fall on opposite sides."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: trees always underprice",
+            "why": "Odd trees overprice this call. The 1-step tree gave £12.16."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Odd trees sit above the limit here: 10.47 against 10.43.",
+        "generic": "Not quite right. Recall which side of £10.45 odd and even trees fall on."
+      },
+      "explain": {
+        "text": "The 100-step tree gives £10.43 and the 101-step tree £10.47. The odd tree's leaf just above the strike pays, which overprices the call."
+      }
+    },
+    {
+      "id": "q-real",
+      "difficulty": 3,
+      "prose": "An analyst expects the share to grow 12% a year. She argues that a 512-step tree should approach the expected payoff under 12% growth, discounted at 5%: £15.53.",
+      "question": "What does the 512-step tree give?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "bs",
+            "text": "£10.45",
+            "correct": true
+          },
+          {
+            "id": "analyst",
+            "text": "£15.53",
+            "why": "You priced with the real-world growth. The tree uses $q$, which comes from $r$, $u$ and $d$; the 12% never enters."
+          },
+          {
+            "id": "undisc",
+            "text": "£16.32",
+            "why": "That is the 12% expected payoff without discounting. The tree uses neither."
+          },
+          {
+            "id": "one",
+            "text": "£12.16",
+            "why": "That is the 1-step tree. 512 steps is close to the limit."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The tree never sees the expected growth.",
+        "generic": "Not quite right. Ask which inputs the tree uses."
+      },
+      "explain": {
+        "text": "The tree's $q$ depends on $r$, $\\sigma$ and $\\Delta t$ only. So any number of steps converges to £10.45, whatever growth anyone expects. That is replication at work: the hedge, not the forecast, sets the price."
+      }
+    },
+    {
+      "id": "q-steps",
+      "difficulty": 3,
+      "prose": "For even $n$, our call's error is about $-1.92/n$ pounds: −£0.06 at 32 steps.",
+      "question": "About how many steps bring the error to −£0.01?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "200",
+            "text": "About 200",
+            "correct": true
+          },
+          {
+            "id": "64",
+            "text": "About 64",
+            "why": "64 steps halves the error once, to −£0.03."
+          },
+          {
+            "id": "3000",
+            "text": "About 3,000",
+            "why": "You squared the factor of 6, as if the error went like $1/\\sqrt n$. It goes like $1/n$."
+          },
+          {
+            "id": "40",
+            "text": "About 40",
+            "why": "More steps are needed, not fewer: −£0.01 is smaller than −£0.06."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1.92/0.01 = 192$, so about 200 steps.",
+        "generic": "Not quite right. Solve $1.92/n = 0.01$."
+      },
+      "explain": {
+        "text": "The error is six times smaller than at 32 steps, so we need six times the steps: $1.92/0.01 = 192$. The work grows 36-fold."
+      }
+    },
+    {
+      "id": "q-sd",
+      "difficulty": 2,
+      "prose": "A share has $\\sigma = 30\\%$. We build a 4-year tree with many steps.",
+      "question": "What is the standard deviation of $\\ln(S_T/S_0)$ across the leaves?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.005
+        },
+        "label": "Standard deviation",
+        "accept": "0.6: $0.3\\sqrt 4$",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 0.36,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "lin",
+            "value": 1.2,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sigma\\sqrt T = 0.3 \\times 2 = 0.6$.",
+        "generic": "Not quite right. The variance is $\\sigma^2 T$.",
+        "byKey": {
+          "var": "0.36 is the variance $\\sigma^2 T$. Take its square root.",
+          "lin": "You multiplied by $T$. Spread grows with $\\sqrt T$."
+        }
+      },
+      "explain": {
+        "text": "The variance is $0.09 \\times 4 = 0.36$, so the sd is 0.6. Spread grows with the square root of time."
+      }
+    }
+  ]
+}
