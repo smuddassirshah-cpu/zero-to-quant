@@ -457,6 +457,8 @@
       const vals = Object.assign({}, st.values || {}); try { if (typeof one.values === 'function') Object.assign(vals, one.values() || {}); } catch { /* no heights */ }
       S.values = vals;
       Object.values(st).forEach(v => { if (Array.isArray(v)) v.forEach(it => { if (it && typeof it === 'object' && it.id != null && /^[A-Za-z_$][\w$]*$/.test(it.id)) S[it.id] = it; }); });
+      /* items 197, 250: plain objects in state read by name too (riemann.n, line.m, transform.angle) */
+      Object.entries(st).forEach(([k, v]) => { if (isPlain(v) && !(k in S) && /^[A-Za-z_$][\w$]*$/.test(k) && !['params', 'values', 'highlight', 'mark', 'move'].includes(k)) S[k] = v; });
       return S;
     };
     /* A pair reads across both sides: ids of either side directly, or left.p1 and right.p1 when they share an id */

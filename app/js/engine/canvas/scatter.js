@@ -120,6 +120,9 @@
         },
       },
       methods: (R) => ({
+        /* item 250: controls and derive reach line.m and line.b directly (a missing line starts flat at 0) */
+        setParam: (name, v) => { const n = String(name), m = n.match(/^line\.(m|b)$/); if (m) { const l = R.state.line || { m: 0, b: 0 }; R.inst.set({ line: { ...l, [m[1]]: +v } }, { instant: true }); return; } R.inst.set({ params: { [n]: +v } }, { instant: true }); },
+        getParam: (name) => { const n = String(name), m = n.match(/^line\.(m|b)$/); if (m) return R.state.line ? R.state.line[m[1]] : undefined; return (R.state.params || {})[n]; },
         fit: () => lsq(R.state.points || []),
         points: () => Object.fromEntries((R.state.points || []).map((q) => [q.id, { x: q.x, y: q.y }])),
         place: (id, pos, opts = {}) => (id === 'line' && K.isObj(pos) ? R.inst.set({ line: pos }, opts) : R.inst.set({ points: { [id]: { x: pos[0], y: pos[1] } } }, opts)),

@@ -25,8 +25,18 @@
       const old = eq.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, easing: 'cubic-bezier(0.3, 0, 0.8, 0.15)', fill: 'forwards' });
       old.onfinish = () => { eq.innerHTML = html; old.cancel(); eq.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.05, 0.7, 0.1, 1)' }); };
     };
+    /* item 237: a state's `canvas` patch moves the screen's canvas with each step (the patches along the path, on top of
+       the canvas as it opened, so Undo puts it back) */
+    const cv = ctx.canvas, cvStart = cv && cv.get ? (() => { try { return JSON.parse(JSON.stringify(cv.get() || {})); } catch { return null; } })() : null;
+    const syncCanvas = (animate) => {
+      if (!cv || !cvStart || !path.some(id => (S[id] || {}).canvas)) return;
+      const merged = path.reduce((acc, id) => ((S[id] || {}).canvas ? Z.canvas.merge(acc, S[id].canvas) : acc), cvStart);
+      try { cv.set(merged, { instant: !animate }); } catch (e) { console.error(e); }
+    };
+    let synced = false;
     const draw = (animate) => {
       drawEq(animate);
+      if (synced || path.length > 1 || (S[spec.start] || {}).canvas) { syncCanvas(animate); synced = true; }
       const st = S[cur()] || {};
       const list = st.ops || [];
       ops.innerHTML = list.length ? list.map((o, i) => `<button type="button" class="wd-chip wd-op" data-i="${i}">${Z.grade.inline(o.label)}</button>`).join('')

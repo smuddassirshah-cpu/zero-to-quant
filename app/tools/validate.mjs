@@ -335,6 +335,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       const a = w.answer || [];
       if (!Array.isArray(a) || a.length !== lines.size || new Set(a).size !== a.length || a.some(x => !lines.has(x))) err(file, `${where}.answer`, 'answer must be a permutation of the line ids');
       (w.lines || []).forEach((l, i) => text(l.text, `${where}.lines[${i}].text`));
+      if (w.same != null) { const gs = Array.isArray(w.same) && w.same.length && Array.isArray(w.same[0]) ? w.same : [w.same]; gs.forEach((g, i) => { if (!Array.isArray(g) || g.length < 2 || g.some(x => !lines.has(x))) err(file, `${where}.same[${i}]`, 'each same group lists two or more line ids'); }); }
       break;
     }
     case 'table': {
