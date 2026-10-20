@@ -1,0 +1,1318 @@
+{
+  "id": "l12-matching-statsmodels",
+  "course": "regression",
+  "title": "Matching statsmodels by hand",
+  "minutes": 15,
+  "objectives": [
+    "Fit a regression in NumPy and match the statsmodels output number for number."
+  ],
+  "skills": [
+    "rg-inference",
+    "rg-multiple"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "What did it divide by?",
+      "prose": "A stock's monthly excess return (%) is regressed on the market and a value factor, over 15 months. The residuals' squares add to $\\mathrm{SSE} = 51.467$. statsmodels reports the residual variance, `scale`, as 4.2889.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "statsmodels summary (trimmed)",
+          "lines": [
+            "                OLS Regression Results",
+            "==============================================",
+            "Dep. Variable:      y   R-squared:      0.737",
+            "No. Observations:  15   Adj. R-squared: 0.693",
+            "Df Residuals:      12   F-statistic:    16.78",
+            "Df Model:           2   Prob (F):    0.000334",
+            "==============================================",
+            "          coef  std err      t   P>|t|",
+            "----------------------------------------------",
+            "const   0.1648    0.606  0.272   0.790",
+            "mkt     1.0192    0.183  5.570   0.000",
+            "value   0.7941    0.384  2.069   0.061",
+            "=============================================="
+          ]
+        },
+        "state": {}
+      },
+      "question": "What number did statsmodels divide SSE by?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "",
+        "label": "Divisor",
+        "accept": "12: $51.467 / 4.2889 = 12.0$.",
+        "wrong": [
+          {
+            "id": "n",
+            "value": 15,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "n1",
+            "value": 14,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide SSE by the reported scale."
+        },
+        {
+          "rung": "point",
+          "text": "The summary has a line with the same number.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$51.467 / 4.2889 = 12$, the Df Residuals line."
+        }
+      ],
+      "feedback": {
+        "correct": "12: the 15 months minus the 3 coefficients fitted.",
+        "generic": "Not quite right. Divide 51.467 by 4.2889.",
+        "byKey": {
+          "n": "15 is the number of months. Dividing by 15 would give 3.431, not 4.2889.",
+          "n1": "14 is $n - 1$. Dividing by 14 would give 3.676."
+        }
+      },
+      "explain": {
+        "text": "$51.467/4.2889 = 12 = n - k - 1$: 15 months, less 2 slopes and an intercept. Each fitted coefficient uses up one residual's freedom. Dividing by 15 would understate the noise.",
+        "canvas": {
+          "highlight": [
+            "l5",
+            "l4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 1,
+      "title": "Degrees of freedom",
+      "prose": "statsmodels prints two degrees of freedom. **Df Model** is $k$, the number of predictors. **Df Residuals** is $n - k - 1$. Total variation, $\\mathrm{SST}$, has $n - 1$, and the two parts add up to it.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "statsmodels summary (trimmed)",
+          "lines": [
+            "                OLS Regression Results",
+            "==============================================",
+            "Dep. Variable:      y   R-squared:      0.737",
+            "No. Observations:  15   Adj. R-squared: 0.693",
+            "Df Residuals:      12   F-statistic:    16.78",
+            "Df Model:           2   Prob (F):    0.000334",
+            "==============================================",
+            "          coef  std err      t   P>|t|",
+            "----------------------------------------------",
+            "const   0.1648    0.606  0.272   0.790",
+            "mkt     1.0192    0.183  5.570   0.000",
+            "value   0.7941    0.384  2.069   0.061",
+            "=============================================="
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in the degrees of freedom for each regression.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Regression",
+          "$n$",
+          "$k$",
+          "Df Model",
+          "Df Residuals"
+        ],
+        "rows": [
+          [
+            "Ours",
+            "15",
+            "2",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 12,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Three factors, 5 years",
+            "60",
+            "3",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 56,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Beta, one year daily",
+            "250",
+            "1",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 248,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Df Model is the number of predictors, not counting the constant."
+        },
+        {
+          "rung": "point",
+          "text": "Df Residuals is $n$ minus every fitted coefficient, the constant included.",
+          "highlight": [
+            "l4",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For 60 months and 3 factors: $3$ and $60 - 3 - 1 = 56$."
+        }
+      ],
+      "feedback": {
+        "correct": "Df Model is $k$; Df Residuals is $n - k - 1$; they add to $n - 1$.",
+        "generic": "Not quite right. Count the constant as a fitted coefficient for Df Residuals, but not for Df Model."
+      },
+      "explain": {
+        "text": "Ours: 2 and 12. Five years of three factors: 3 and 56. A one-year beta: 1 and 248. In each row the two add to $n - 1$, the degrees of freedom of SST."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Coefficients and $s^2$ in NumPy",
+      "prose": "Start the hand-made summary. Build $\\mathbf{X}$, solve the normal equations, then divide SSE by the right degrees of freedom. `cols` is a list of predictor columns, so $k$ is `len(cols)`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "statsmodels summary (trimmed)",
+          "lines": [
+            "                OLS Regression Results",
+            "==============================================",
+            "Dep. Variable:      y   R-squared:      0.737",
+            "No. Observations:  15   Adj. R-squared: 0.693",
+            "Df Residuals:      12   F-statistic:    16.78",
+            "Df Model:           2   Prob (F):    0.000334",
+            "==============================================",
+            "          coef  std err      t   P>|t|",
+            "----------------------------------------------",
+            "const   0.1648    0.606  0.272   0.790",
+            "mkt     1.0192    0.183  5.570   0.000",
+            "value   0.7941    0.384  2.069   0.061",
+            "=============================================="
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `beta_and_s2` so it returns the coefficients followed by $s^2$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef beta_and_s2(cols, y):\n    y = np.array(y, dtype=float)\n    n, k = len(y), len(cols)\n    X = np.column_stack([np.ones(n)] + list(cols))\n    beta = np.linalg.solve(X.T @ X, X.T @ y)\n    resid = y - X @ beta\n    s2 = ...\n    return list(beta) + [s2]\n",
+        "solution": "import numpy as np\n\ndef beta_and_s2(cols, y):\n    y = np.array(y, dtype=float)\n    n, k = len(y), len(cols)\n    X = np.column_stack([np.ones(n)] + list(cols))\n    beta = np.linalg.solve(X.T @ X, X.T @ y)\n    resid = y - X @ beta\n    s2 = (resid @ resid) / (n - k - 1)\n    return list(beta) + [s2]\n",
+        "examples": [
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in beta_and_s2([mkt, value], y)]",
+            "expect": "[0.1648, 1.0192, 0.7941, 4.2889]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in beta_and_s2([mkt, value], y)]",
+            "expect": "[0.1648, 1.0192, 0.7941, 4.2889]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in beta_and_s2([[1, 2, 3, 4, 5, 6, 7, 8], [2, 1, 4, 3, 6, 5, 8, 9]], [3.1, 2.9, 6.2, 5.8, 9.1, 8.7, 12.4, 13.9])]",
+            "expect": "[0.6578, 0.5657, 0.9598, 0.0171]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in beta_and_s2([[0.5, -1.2, 2.3, 0.8, -0.4, 1.9, -2.1, 0.0, 1.1, -0.7]], [0.9, -1.5, 3.1, 1.4, -0.2, 2.2, -2.9, 0.4, 1.0, -0.6])]",
+            "expect": "[0.1016, 1.2655, 0.0931]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 3 hidden tests. Each list is rounded to 4 places and compared with values computed once with statsmodels (`params` and `scale`) and fixed in the tests. The first run loads NumPy, which takes several seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "SSE is `resid @ resid`."
+        },
+        {
+          "rung": "point",
+          "text": "The divisor is $n - k - 1$, the Df Residuals line.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`s2 = (resid @ resid) / (n - k - 1)`."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat{\\boldsymbol\\beta} = (0.1648, 1.0192, 0.7941)$ and $s^2 = 4.2889$, as statsmodels says.",
+        "generic": "Some tests failed. For our data the answer is `[0.1648, 1.0192, 0.7941, 4.2889]`.",
+        "byKey": {
+          "test-1": "For our data the answer is `[0.1648, 1.0192, 0.7941, 4.2889]`. If your last number is 3.4312 or 3.6762, you divided by $n$ or $n - 1$.",
+          "error": "Your code stopped with an error. Replace the `...` with an expression for $s^2$."
+        }
+      },
+      "explain": {
+        "text": "Running it gives `[0.1648, 1.0192, 0.7941, 4.2889]`, matching `params` and `scale`. Dividing by $n = 15$ gives 3.4312 instead, and every standard error after it would be 11% too small."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Standard errors from $s^2(\\mathbf{X}^T\\mathbf{X})^{-1}$",
+      "prose": "The covariance matrix of the coefficients is $s^2(\\mathbf{X}^T\\mathbf{X})^{-1}$. Each standard error is the square root of a diagonal entry. Here $s^2 = 4.2889$, and the inverse is below.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "V",
+              "rows": [
+                [
+                  "0.08561",
+                  "−0.00997",
+                  "−0.01635"
+                ],
+                [
+                  "−0.00997",
+                  "0.00781",
+                  "0.00141"
+                ],
+                [
+                  "−0.01635",
+                  "0.00141",
+                  "0.03435"
+                ]
+              ],
+              "label": "$(\\mathbf{X}^T\\mathbf{X})^{-1}$",
+              "rowLabels": [
+                "const",
+                "mkt",
+                "value"
+              ],
+              "colLabels": [
+                "const",
+                "mkt",
+                "value"
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the standard error of the value coefficient?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3838,
+        "tol": {
+          "abs": 0.0006
+        },
+        "unit": "",
+        "label": "Standard error of the value coefficient",
+        "accept": "0.3838: $\\sqrt{4.2889 \\times 0.03435}$.",
+        "wrong": [
+          {
+            "id": "no-sqrt",
+            "value": 0.1473,
+            "tol": {
+              "abs": 0.0006
+            }
+          },
+          {
+            "id": "n-div",
+            "value": 0.3433,
+            "tol": {
+              "abs": 0.0006
+            }
+          },
+          {
+            "id": "no-s2",
+            "value": 0.1853,
+            "tol": {
+              "abs": 0.0006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the diagonal entry in the value row."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply 0.03435 by $s^2 = 4.2889$.",
+          "highlight": [
+            "V-2-2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{4.2889 \\times 0.03435} = \\sqrt{0.14733} = 0.3838$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.3838, the `std err` statsmodels prints as 0.384.",
+        "generic": "Not quite right. Take the square root of $s^2$ times the value diagonal entry.",
+        "byKey": {
+          "no-sqrt": "That is the variance, 0.1473. The standard error is its square root.",
+          "n-div": "You used $s^2 = \\mathrm{SSE}/15 = 3.431$. Use 4.2889, from dividing by 12.",
+          "no-s2": "You took the square root of 0.03435 alone. Multiply by $s^2$ first."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt{4.2889 \\times 0.034351} = 0.3838$. The same step on the other diagonal entries gives 0.6059 and 0.1830. The off-diagonal entries, times $s^2$, are the covariances statsmodels returns from `cov_params()`.",
+        "canvas": {
+          "highlight": {
+            "V": {
+              "cells": [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Which tail?",
+      "prose": "The value coefficient has $t = 0.7941/0.3838 = 2.069$. The curve is the $t$ distribution with 12 degrees of freedom; the dashed curve is the normal. The shaded area is one tail of the $t$.",
+      "canvas": {
+        "kind": "distribution",
+        "params": {
+          "family": "t",
+          "params": {
+            "nu": 12
+          },
+          "x": [
+            -4,
+            4
+          ],
+          "variable": "T"
+        },
+        "state": {
+          "shade": {
+            "from": 2.069,
+            "to": null
+          },
+          "overlay": [
+            {
+              "id": "norm",
+              "family": "normal",
+              "params": {
+                "mu": 0,
+                "sigma": 1
+              },
+              "label": "normal"
+            }
+          ],
+          "caption": "Normal tail beyond 2.069: 0.0193"
+        }
+      },
+      "question": "What two-sided $p$-value should the summary print for value?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0608,
+        "tol": {
+          "abs": 0.0015
+        },
+        "unit": "",
+        "label": "Two-sided p-value",
+        "accept": "0.0608 ± 0.0015: twice the $t$ tail, $2 \\times 0.0304$.",
+        "wrong": [
+          {
+            "id": "normal",
+            "value": 0.0386,
+            "tol": {
+              "abs": 0.0015
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.0304,
+            "tol": {
+              "abs": 0.0015
+            }
+          },
+          {
+            "id": "one-normal",
+            "value": 0.0193,
+            "tol": {
+              "abs": 0.0012
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the shaded tail, then remember the test is two-sided."
+        },
+        {
+          "rung": "point",
+          "text": "Use the $t$ curve, not the dashed normal: $n$ is only 15.",
+          "highlight": [
+            "shade"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\times 0.0304 = 0.0608$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.0608: not significant at 5%, though the normal says otherwise.",
+        "generic": "Not quite right. Double the shaded $t$ tail.",
+        "byKey": {
+          "normal": "You used the normal distribution: 0.0386, which clears 5%. With 12 degrees of freedom the $t$ tails are fatter, and $p = 0.0608$.",
+          "one": "That is one tail. The test asks about a coefficient of either sign, so double it.",
+          "one-normal": "That is one tail of the normal. Use the $t$ curve and double it."
+        }
+      },
+      "explain": {
+        "text": "`2 * scipy.stats.t.sf(2.069, 12)` gives 0.0608, statsmodels' 0.061. The normal gives 0.0386, which would wrongly clear 5%. With $n - k - 1 = 12$ the $t$ has noticeably fatter tails.",
+        "canvas": {
+          "highlight": [
+            "shade",
+            "norm"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The $F$-statistic",
+      "prose": "The $F$ test asks whether all the slopes are zero at once. It compares explained and unexplained variation, each per degree of freedom: $$F = \\frac{\\mathrm{SSR}/k}{\\mathrm{SSE}/(n - k - 1)}.$$ Careful: statsmodels calls SSE `ssr` (sum of squared residuals) and SSR `ess` (explained).",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Sum of squares",
+            "value",
+            "df"
+          ],
+          "rows": [
+            [
+              "Explained, SSR (`ess`)",
+              "143.962",
+              "2"
+            ],
+            [
+              "Residual, SSE (`ssr`)",
+              "51.467",
+              "12"
+            ],
+            [
+              "Total, SST",
+              "195.429",
+              "14"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Compute $F$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16.78,
+        "tol": {
+          "abs": 0.03
+        },
+        "unit": "",
+        "label": "F statistic",
+        "accept": "16.78 ± 0.03: $(143.962/2)/(51.467/12)$.",
+        "wrong": [
+          {
+            "id": "no-k",
+            "value": 33.57,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "swap",
+            "value": 0.0596,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "raw",
+            "value": 2.797,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide each sum of squares by its own df first."
+        },
+        {
+          "rung": "point",
+          "text": "$143.962/2 = 71.981$ and $51.467/12 = 4.289$.",
+          "highlight": [
+            "r0c1",
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$F = 71.981/4.289$."
+        }
+      ],
+      "feedback": {
+        "correct": "$F = 16.78$, as printed; `scipy.stats.f.sf(16.78, 2, 12)` gives its $p$, 0.000334.",
+        "generic": "Not quite right. Divide SSR by 2 and SSE by 12, then divide the first by the second.",
+        "byKey": {
+          "no-k": "You divided SSE by 12 but left SSR whole. Divide it by $k = 2$.",
+          "swap": "You put SSE on top. The explained part goes on top.",
+          "raw": "You divided the sums without their degrees of freedom."
+        }
+      },
+      "explain": {
+        "text": "$F = 71.981/4.289 = 16.78$ on 2 and 12 degrees of freedom, so $p = 0.000334$. Dividing top and bottom by SST gives $F = \\frac{R^2/k}{(1 - R^2)/(n - k - 1)}$, so $R^2 = 0.737$ yields the same number.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One predictor",
+      "prose": "Drop value and regress the return on the market alone. The slope's $t$ is now 4.836.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "coef",
+            "std err",
+            "t",
+            "P>|t|"
+          ],
+          "rows": [
+            [
+              "const",
+              "0.5428",
+              "0.647",
+              "0.839",
+              "0.416"
+            ],
+            [
+              "mkt",
+              "0.9866",
+              "0.204",
+              "4.836",
+              "0.000325"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Market only: $n = 15$, $k = 1$"
+        }
+      },
+      "question": "What $F$-statistic will the summary print?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 23.38,
+        "tol": {
+          "abs": 0.03
+        },
+        "unit": "",
+        "label": "F statistic",
+        "accept": "23.38: $t^2 = 4.836^2$.",
+        "wrong": [
+          {
+            "id": "t",
+            "value": 4.836,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "old",
+            "value": 16.78,
+            "tol": {
+              "abs": 0.03
+            }
+          },
+          {
+            "id": "twice",
+            "value": 9.67,
+            "tol": {
+              "abs": 0.03
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With one slope, the joint test and the $t$ test ask the same question."
+        },
+        {
+          "rung": "point",
+          "text": "The $F$ with 1 and $n - 2$ degrees of freedom is the square of a $t$ with $n - 2$."
+        },
+        {
+          "rung": "step",
+          "text": "$F = 4.836^2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$F = t^2 = 23.38$, and its $p$ equals the slope's $p$, 0.000325.",
+        "generic": "Not quite right. With one predictor, $F = t^2$.",
+        "byKey": {
+          "t": "That is $t$ itself. The $F$-statistic is its square.",
+          "old": "That is the two-predictor $F$. Dropping value changes it.",
+          "twice": "You doubled $t$. Square it."
+        }
+      },
+      "explain": {
+        "text": "With $k = 1$, $F = t^2 = 23.38$, and both tests give $p = 0.000325$. A two-sided $t$ test and the $F$ test are the same test here. With two or more predictors they differ."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Why $F = t^2$",
+      "prose": "Prove it for one predictor, with $S_{xx} = \\sum(x_i - \\bar x)^2$. Put the steps in order.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "ssr",
+            "text": "$\\hat y_i - \\bar y = \\hat\\beta_1(x_i - \\bar x)$, since the line passes through $(\\bar x, \\bar y)$; so $\\mathrm{SSR} = \\hat\\beta_1^2 S_{xx}$"
+          },
+          {
+            "id": "se",
+            "text": "$\\mathrm{SE}(\\hat\\beta_1)^2 = s^2/S_{xx}$, the slope entry of $s^2(\\mathbf{X}^T\\mathbf{X})^{-1}$"
+          },
+          {
+            "id": "t2",
+            "text": "$t^2 = \\hat\\beta_1^2/\\mathrm{SE}(\\hat\\beta_1)^2 = \\hat\\beta_1^2 S_{xx}/s^2$, squaring the $t$-statistic"
+          },
+          {
+            "id": "f",
+            "text": "$= \\dfrac{\\mathrm{SSR}/1}{\\mathrm{SSE}/(n - 2)} = F$, using line 1 on top and $s^2 = \\mathrm{SSE}/(n - 2)$ below"
+          }
+        ],
+        "answer": [
+          "ssr",
+          "se",
+          "t2",
+          "f"
+        ],
+        "same": [
+          [
+            "ssr",
+            "se"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first two lines are ingredients; either can come first."
+        },
+        {
+          "rung": "point",
+          "text": "Square $t$ only once you have both ingredients."
+        },
+        {
+          "rung": "step",
+          "text": "SSR and SE first, then $t^2$, then recognise $F$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t^2$ and $F$ are the same ratio written two ways.",
+        "generic": "Not quite right. Gather SSR and the standard error before squaring $t$.",
+        "byKey": {
+          "f": "Recognising $F$ is the last step: it needs $t^2$ written out first.",
+          "t2": "Squaring $t$ needs the standard error formula on the page."
+        }
+      },
+      "explain": {
+        "text": "With one predictor, $t^2 = \\hat\\beta_1^2 S_{xx}/s^2$ and $F = \\mathrm{SSR}/s^2$ are the same number. The $p$-values agree because an $F(1, \\nu)$ variable is the square of a $t_\\nu$ variable."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The whole recipe",
+      "prose": "Every number in the summary comes from $\\hat{\\boldsymbol\\beta}$, the residuals and two degrees of freedom: $$\\begin{aligned} s^2 &= \\tfrac{\\mathrm{SSE}}{n - k - 1}, & \\mathrm{SE}_j &= \\sqrt{s^2[(\\mathbf{X}^T\\mathbf{X})^{-1}]_{jj}}, \\\\ t_j &= \\hat\\beta_j/\\mathrm{SE}_j, & p_j &= 2P(T_{n-k-1} > |t_j|), \\\\ R^2 &= 1 - \\tfrac{\\mathrm{SSE}}{\\mathrm{SST}}, & F &= \\tfrac{\\mathrm{SSR}/k}{\\mathrm{SSE}/(n - k - 1)}. \\end{aligned}$$",
+      "question": "With $n = 60$ months and $k = 3$ factors, which distribution gives one coefficient's $p$-value?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "t56",
+            "text": "$t$ with 56 degrees of freedom",
+            "correct": true
+          },
+          {
+            "id": "t59",
+            "text": "$t$ with 59 degrees of freedom",
+            "why": "You used $n - 1$. Each of the 4 fitted coefficients costs one: $60 - 3 - 1 = 56$."
+          },
+          {
+            "id": "norm",
+            "text": "The standard normal",
+            "why": "That is close at $n = 60$ but not what statsmodels uses. It uses $t_{56}$."
+          },
+          {
+            "id": "f",
+            "text": "$F$ with 3 and 56 degrees of freedom",
+            "why": "That is the joint test of all three slopes. One coefficient uses $t$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A single coefficient uses a $t$ test."
+        },
+        {
+          "rung": "point",
+          "text": "Its degrees of freedom are Df Residuals."
+        },
+        {
+          "rung": "step",
+          "text": "$60 - 3 - 1 = 56$."
+        }
+      ],
+      "feedback": {
+        "correct": "$t_{56}$: residual degrees of freedom, $n - k - 1$.",
+        "generic": "Not quite right. Use the residual degrees of freedom."
+      },
+      "explain": {
+        "text": "One coefficient: $t_{56}$. All slopes at once: $F_{3, 56}$. Adjusted $R^2$ uses both $n - k - 1 = 56$ and $n - 1 = 59$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Match it number for number",
+      "prose": "Now the rest of the summary. Use `scipy.stats.t.sf` for the coefficient $p$-values and `scipy.stats.f.sf` for the $F$ test's. Return a dictionary with statsmodels' own attribute names.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "statsmodels summary (trimmed)",
+          "lines": [
+            "                OLS Regression Results",
+            "==============================================",
+            "Dep. Variable:      y   R-squared:      0.737",
+            "No. Observations:  15   Adj. R-squared: 0.693",
+            "Df Residuals:      12   F-statistic:    16.78",
+            "Df Model:           2   Prob (F):    0.000334",
+            "==============================================",
+            "          coef  std err      t   P>|t|",
+            "----------------------------------------------",
+            "const   0.1648    0.606  0.272   0.790",
+            "mkt     1.0192    0.183  5.570   0.000",
+            "value   0.7941    0.384  2.069   0.061",
+            "=============================================="
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `ols_summary` so every entry matches statsmodels.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom scipy import stats\n\ndef ols_summary(cols, y):\n    y = np.array(y, dtype=float)\n    n, k = len(y), len(cols)\n    X = np.column_stack([np.ones(n)] + list(cols))\n    XtX_inv = np.linalg.inv(X.T @ X)\n    beta = XtX_inv @ X.T @ y\n    resid = y - X @ beta\n    sse = resid @ resid\n    sst = ((y - y.mean()) ** 2).sum()\n    df = n - k - 1\n    s2 = sse / df\n    bse = ...\n    t = ...\n    p = ...\n    r2 = ...\n    r2_adj = ...\n    F = ...\n    F_p = ...\n    return {\"params\": beta, \"scale\": s2, \"bse\": bse,\n            \"tvalues\": t, \"pvalues\": p, \"rsquared\": r2,\n            \"rsquared_adj\": r2_adj, \"fvalue\": F,\n            \"f_pvalue\": F_p}\n",
+        "solution": "import numpy as np\nfrom scipy import stats\n\ndef ols_summary(cols, y):\n    y = np.array(y, dtype=float)\n    n, k = len(y), len(cols)\n    X = np.column_stack([np.ones(n)] + list(cols))\n    XtX_inv = np.linalg.inv(X.T @ X)\n    beta = XtX_inv @ X.T @ y\n    resid = y - X @ beta\n    sse = resid @ resid\n    sst = ((y - y.mean()) ** 2).sum()\n    df = n - k - 1\n    s2 = sse / df\n    bse = np.sqrt(s2 * np.diag(XtX_inv))\n    t = beta / bse\n    p = 2 * stats.t.sf(np.abs(t), df)\n    r2 = 1 - sse / sst\n    r2_adj = 1 - (1 - r2) * (n - 1) / df\n    F = ((sst - sse) / k) / (sse / df)\n    F_p = stats.f.sf(F, k, df)\n    return {\"params\": beta, \"scale\": s2, \"bse\": bse,\n            \"tvalues\": t, \"pvalues\": p, \"rsquared\": r2,\n            \"rsquared_adj\": r2_adj, \"fvalue\": F,\n            \"f_pvalue\": F_p}\n",
+        "examples": [
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in ols_summary([mkt, value], y)['bse']]",
+            "expect": "[0.6059, 0.183, 0.3838]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "round(float(ols_summary([mkt, value], y)['fvalue']), 4)",
+            "expect": "16.7829",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in ols_summary([mkt, value], y)['params']]",
+            "expect": "[0.1648, 1.0192, 0.7941]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "round(float(ols_summary([mkt, value], y)['scale']), 4)",
+            "expect": "4.2889",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in ols_summary([mkt, value], y)['bse']]",
+            "expect": "[0.6059, 0.183, 0.3838]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in ols_summary([mkt, value], y)['tvalues']]",
+            "expect": "[0.272, 5.5697, 2.0689]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "[round(float(v), 4) for v in ols_summary([mkt, value], y)['pvalues']]",
+            "expect": "[0.7903, 0.0001, 0.0608]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "round(float(ols_summary([mkt, value], y)['rsquared']), 4)",
+            "expect": "0.7366",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "round(float(ols_summary([mkt, value], y)['rsquared_adj']), 4)",
+            "expect": "0.6928",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "round(float(ols_summary([mkt, value], y)['fvalue']), 4)",
+            "expect": "16.7829",
+            "compare": "isclose"
+          },
+          {
+            "setup": "mkt = [2.6, 1.5, 8.5, -2.5, -4.3, 3.6, 3.4, -1.1, 0.3, -0.5, 2.1, -0.8, 2.6, 2.6, 0.0]; value = [-0.8, 2.2, 0.9, 3.4, -0.8, 0.3, -0.9, 0.6, 1.2, -0.3, 1.4, 1.5, 1.0, -1.4, -1.9]; y = [2.6, 2.7, 9.2, 0.5, -4.2, 4.9, 0.2, -2.7, 0.0, -3.9, 7.1, 1.8, 4.1, 2.0, 1.6]",
+            "call": "round(float(ols_summary([mkt, value], y)['f_pvalue']), 4)",
+            "expect": "0.0003",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in ols_summary([[1, 2, 3, 4, 5, 6, 7, 8], [2, 1, 4, 3, 6, 5, 8, 9]], [3.1, 2.9, 6.2, 5.8, 9.1, 8.7, 12.4, 13.9])['pvalues']]",
+            "expect": "[0.0013, 0.0002, 0.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(ols_summary([[1, 2, 3, 4, 5, 6, 7, 8], [2, 1, 4, 3, 6, 5, 8, 9]], [3.1, 2.9, 6.2, 5.8, 9.1, 8.7, 12.4, 13.9])['fvalue']), 4)",
+            "expect": "3317.1423",
+            "compare": "isclose"
+          },
+          {
+            "call": "[round(float(v), 4) for v in ols_summary([[0.5, -1.2, 2.3, 0.8, -0.4, 1.9, -2.1, 0.0, 1.1, -0.7]], [0.9, -1.5, 3.1, 1.4, -0.2, 2.2, -2.9, 0.4, 1.0, -0.6])['bse']]",
+            "expect": "[0.0978, 0.0739]",
+            "compare": "isclose"
+          },
+          {
+            "call": "round(float(ols_summary([[0.5, -1.2, 2.3, 0.8, -0.4, 1.9, -2.1, 0.0, 1.1, -0.7]], [0.9, -1.5, 3.1, 1.4, -0.2, 2.2, -2.9, 0.4, 1.0, -0.6])['f_pvalue']), 4)",
+            "expect": "0.0",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 13 hidden tests, one per quantity, each rounded to 4 places. The expected values were computed once with statsmodels and are fixed in the tests. The first run loads NumPy and SciPy, which takes several seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`np.diag(XtX_inv)` picks out the diagonal; multiply by `s2` and take the square root."
+        },
+        {
+          "rung": "point",
+          "text": "The $p$-value is `2 * stats.t.sf(np.abs(t), df)`; SSR is `sst - sse`.",
+          "highlight": [
+            "l9",
+            "l10",
+            "l11"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`r2_adj = 1 - (1 - r2) * (n - 1) / df`, `F = ((sst - sse) / k) / (sse / df)`, `F_p = stats.f.sf(F, k, df)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every number matches: $\\bar R^2 = 0.6928$, $F = 16.7829$, $p_F = 0.0003$.",
+        "generic": "Some tests failed. The test list shows which quantity is off; `bse` for our data is `[0.6059, 0.183, 0.3838]`.",
+        "byKey": {
+          "test-1": "The coefficients are off. They are already computed in the starter; check you did not change `beta`.",
+          "test-5": "The $p$-values are off. Use the $t$ distribution with `df` degrees of freedom, and double the upper tail of $|t|$.",
+          "test-9": "The $F$ $p$-value is off. Use `stats.f.sf(F, k, df)`, with $k$ first.",
+          "error": "Your code stopped with an error. Fill in every `...` line."
+        }
+      },
+      "explain": {
+        "text": "Your function reproduces `params`, `scale`, `bse`, `tvalues`, `pvalues`, `rsquared`, `rsquared_adj`, `fvalue` and `f_pvalue` to 4 places. Nothing in the summary needs more than $\\hat{\\boldsymbol\\beta}$, the residuals and two degrees of freedom.\n\n```python\np = 2 * stats.t.sf(np.abs(t), df)\nF_p = stats.f.sf(F, k, df)\n```"
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Checking a vendor's report",
+      "prose": "A data vendor sells factor exposures. For one fund it reports a three-factor regression on 15 months. Your desk tool, built from `ols_summary`, can check each number.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "coef",
+            "std err",
+            "t",
+            "P>|t|"
+          ],
+          "rows": [
+            [
+              "momentum",
+              "0.62",
+              "0.20",
+              "3.10",
+              "0.0019"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Vendor's line for momentum: $n = 15$, $k = 3$"
+        }
+      },
+      "question": "Which number is inconsistent with the others?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "p",
+            "text": "The $p$-value: it is the normal's; $t_{11}$ gives 0.0101",
+            "correct": true
+          },
+          {
+            "id": "t",
+            "text": "The $t$: it should be $0.62/0.20^2$",
+            "why": "You divided by the variance. $t = 0.62/0.20 = 3.10$, as reported."
+          },
+          {
+            "id": "se",
+            "text": "The std err: it should use $n = 15$",
+            "why": "Nothing here shows the SE's divisor, and dividing by $n$ would be the error, not the fix."
+          },
+          {
+            "id": "none",
+            "text": "Nothing: every number agrees",
+            "why": "Check the $p$-value against $t$ with $15 - 3 - 1 = 11$ degrees of freedom: 0.0101."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check $t$ first: $0.62/0.20$."
+        },
+        {
+          "rung": "point",
+          "text": "Then the $p$-value needs $t$ and the residual degrees of freedom.",
+          "highlight": [
+            "r0c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2P(T_{11} > 3.10) = 0.0101$, while $2P(Z > 3.10) = 0.0019$."
+        }
+      ],
+      "feedback": {
+        "correct": "The vendor used the normal. With 11 degrees of freedom $p = 0.0101$, five times larger.",
+        "generic": "Not quite right. Recompute $t$, then its $p$-value with $n - k - 1 = 11$.",
+        "byKey": {
+          "none": "You checked $t$ but not $p$. The normal gives 0.0019; $t_{11}$ gives 0.0101.",
+          "t": "You divided by the variance. The $t$ statistic divides by the standard error."
+        }
+      },
+      "explain": {
+        "text": "$t = 3.10$ is right. Its two-sided $p$ with 11 degrees of freedom is 0.0101; the vendor's 0.0019 is the normal tail. A desk tool that recomputes every column catches this in one line.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c4"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$s^2 = \\mathrm{SSE}/(n - k - 1)$: every fitted coefficient, the intercept included, costs one degree of freedom.",
+      "Standard errors are square roots of the diagonal of $s^2(\\mathbf{X}^T\\mathbf{X})^{-1}$; $t = \\hat\\beta/\\mathrm{SE}$ and its $p$ comes from $t_{n-k-1}$, not the normal.",
+      "$F = \\frac{\\mathrm{SSR}/k}{\\mathrm{SSE}/(n - k - 1)}$ tests all slopes at once; with one predictor $F = t^2$."
+    ],
+    "formula": {
+      "name": "The summary by hand",
+      "tex": "\\mathrm{SE}_j = \\sqrt{\\tfrac{\\mathrm{SSE}}{n - k - 1}[(\\mathbf{X}^T\\mathbf{X})^{-1}]_{jj}}, \\qquad p_j = 2P(T_{n-k-1} > |t_j|)",
+      "note": "statsmodels names: `ssr` is SSE, `ess` is SSR, `scale` is $s^2$."
+    },
+    "trap": "Dividing SSE by $n$ or $n - 1$, or taking $p$-values from the normal at small $n$, makes results look more significant than they are."
+  },
+  "quiz": [
+    {
+      "id": "q-s2",
+      "difficulty": 2,
+      "prose": "A regression on 3 predictors uses 24 observations and has $\\mathrm{SSE} = 10.0$.",
+      "question": "What is $s^2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "label": "Residual variance",
+        "accept": "0.5: $10.0/(24 - 3 - 1)$.",
+        "wrong": [
+          {
+            "id": "n",
+            "value": 0.4167,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "n1",
+            "value": 0.4348,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "nk",
+            "value": 0.4762,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10/20 = 0.5$.",
+        "generic": "Not quite right. Divide by $n - k - 1$.",
+        "byKey": {
+          "n": "You divided by $n = 24$.",
+          "n1": "You divided by $n - 1 = 23$.",
+          "nk": "You divided by $n - k = 21$; the intercept costs one too."
+        }
+      },
+      "explain": {
+        "text": "$n - k - 1 = 24 - 3 - 1 = 20$, so $s^2 = 10/20 = 0.5$. Every standard error scales with $s$."
+      }
+    },
+    {
+      "id": "q-f-r2",
+      "difficulty": 3,
+      "prose": "A regression with $k = 3$ predictors and $n = 44$ observations has $R^2 = 0.25$.",
+      "question": "What is the $F$-statistic?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.444,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "",
+        "label": "F statistic",
+        "accept": "4.444: $(0.25/3)/(0.75/40)$.",
+        "wrong": [
+          {
+            "id": "no-df",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "n1",
+            "value": 4.556,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(0.25/3)/(0.75/40) = 4.444$.",
+        "generic": "Not quite right. Use $F = \\frac{R^2/k}{(1 - R^2)/(n - k - 1)}$.",
+        "byKey": {
+          "no-df": "You divided $R^2$ by $1 - R^2$ without the degrees of freedom.",
+          "n1": "You used $n - 1 = 43$ underneath. Use $n - k - 1 = 40$."
+        }
+      },
+      "explain": {
+        "text": "Divide SSR and SSE by SST: $F = \\frac{0.25/3}{0.75/40} = \\frac{0.0833}{0.01875} = 4.444$. With 3 and 40 degrees of freedom that is significant at 1%."
+      }
+    },
+    {
+      "id": "q-ft",
+      "difficulty": 2,
+      "prose": "A simple regression of a stock on the market reports a slope $t$-statistic of $-3.0$.",
+      "question": "What $F$-statistic does the summary report?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "label": "F statistic",
+        "accept": "9: $(-3.0)^2$.",
+        "wrong": [
+          {
+            "id": "neg",
+            "value": -9,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "t",
+            "value": -3,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$F = t^2 = 9$.",
+        "generic": "Not quite right. With one predictor, $F = t^2$.",
+        "byKey": {
+          "neg": "A square is never negative: $F = 9$.",
+          "t": "That is $t$. Square it."
+        }
+      },
+      "explain": {
+        "text": "With one predictor $F = t^2 = 9$. The sign of the slope is lost, which is why $F$ tests are always two-sided."
+      }
+    },
+    {
+      "id": "q-tails",
+      "difficulty": 2,
+      "prose": "Two analysts compute the $p$-value for $t = 2.2$ from a regression with $n = 10$, $k = 2$. One uses the normal, the other $t_7$.",
+      "question": "Which $p$-value is larger?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "t",
+            "text": "The $t_7$ one: its tails are fatter",
+            "correct": true
+          },
+          {
+            "id": "normal",
+            "text": "The normal one: it has more spread",
+            "why": "The normal has thinner tails than any $t$, so its $p$-values are smaller."
+          },
+          {
+            "id": "same",
+            "text": "They are equal: $t$ is the same in both",
+            "why": "The same statistic gives different tail areas under different curves."
+          },
+          {
+            "id": "depends",
+            "text": "It depends on the sign of the coefficient",
+            "why": "Both are two-sided, so the sign does not matter."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$t_7$ has fatter tails, so its $p$ is larger.",
+        "generic": "Not quite right. Compare the tails of the two curves."
+      },
+      "explain": {
+        "text": "$2P(T_7 > 2.2) = 0.0637$ against $2P(Z > 2.2) = 0.0278$. Small samples need the $t$; the normal overstates significance."
+      }
+    }
+  ]
+}
