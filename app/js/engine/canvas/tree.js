@@ -140,7 +140,10 @@
     /* ---- Painting one frame of positions ---- */
     const anchorOut = (n, p) => (n === root ? (rootLabel ? (tb ? { x: p.x, y: p.y + PH / 2 } : { x: p.x + rootW / 2, y: p.y }) : { x: p.x, y: p.y }) : tb ? { x: p.x, y: p.y + PH / 2 } : { x: p.x + el.get(n.path).w / 2, y: p.y });
     const anchorIn = (n, p) => (tb ? { x: p.x, y: p.y - PH / 2 } : { x: p.x - el.get(n.path).w / 2, y: p.y });
+    const subIdx = (n) => { const gp = n.parent.parent; return gp ? gp.children.indexOf(n.parent) : 0; };
+    let crowd = 0;
     const paint = (vis, showP, unknown, showVals) => {
+      { const nL = all.filter(n => vis.get(n.path).o > 0.5 && !n.children.some(c => vis.get(c.path).o > 0.5)).length; crowd = nL >= 9 ? 3 : nL >= 7 ? 2 : 0; }
       const r = vis.get(''); attrs(rootDot, { transform: `translate(${r.x} ${r.y})` });
       for (const n of all) {
         const e = el.get(n.path), v = vis.get(n.path), pv = vis.get(n.parent.path);
@@ -153,9 +156,14 @@
           let nx = -dy / len, ny = dx / len; // one normal; choose the side the branch deviates to
           const dev = tb ? dx : dy, want = dev < -1 ? -1 : dev > 1 ? 1 : (tb ? 1 : -1); // outer side; straight branches: above (lr) or right (tb)
           if (Math.sign(tb ? nx : ny) !== want) { nx = -nx; ny = -ny; }
-          const off = Math.abs(nx) * e.pb.w / 2 + Math.abs(ny) * e.pb.h / 2 + 5;
-          const mx = a.x + dx * 0.5 + nx * off, my = a.y + dy * 0.5 + ny * off;
-          attrs(e.pg, { transform: `translate(${mx} ${my})` });
+          /* item 268: on a crowded tree (7 or more leaves) labels from the second level on alternate along
+             their branch by subtree (neighbouring subtrees' labels no longer meet at the same x), and shrink
+             a little when the leaves are closer still */
+          const sc = crowd > 1 && n.depth >= 2 ? (crowd > 2 ? 0.82 : 0.9) : 1;
+          const t = crowd > 1 && n.depth >= 2 ? (subIdx(n) % 2 ? 0.64 : 0.36) : 0.5;
+          const off = (Math.abs(nx) * e.pb.w / 2 + Math.abs(ny) * e.pb.h / 2) * sc + 5;
+          const mx = a.x + dx * t + nx * off, my = a.y + dy * t + ny * off;
+          attrs(e.pg, { transform: `translate(${mx} ${my})` + (sc !== 1 ? ` scale(${sc})` : '') });
           const q = unknown.has(n.path);
           e.pText.style.display = q ? 'none' : ''; e.pq.style.display = q ? '' : 'none';
           e.pg.style.opacity = showP ? 1 : 0;

@@ -777,3 +777,8 @@ Raised later (conditional level 4):
 288. `tree`: first-level probability labels crowd near the root when branches have different numbers of children; offset each first-level label along its branch.
 289. `boxes`: a `size` option for cards (or a door item) so three large items can fill the canvas.
 290. `tap-regions`: let `answer` use grid set names (`cross2`), as `only` already does.
+
+Raised later (random-vars level 1):
+
+291. `distribution` canvas: a custom discrete support (`values`, `probs`) and a CDF step mode with open and closed endpoints (CDFs are built on `plane` from one constant function per step now).
+292. Bug or doc mismatch: a `slider` widget bound to a `bars` category label moves the thumb but not the bar, while `canvas.controls` honours the same binding; make the widget path match (authors use a free parameter plus `derive`).
