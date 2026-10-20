@@ -1,0 +1,496 @@
+{
+  "id": "homework-3",
+  "course": "testing",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-sidak",
+      "difficulty": 3,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "A screen runs 100 independent tests with a family-wise target of 0.05.",
+      "question": "What is the Šidák threshold $1 - 0.95^{1/100}$? Give 6 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.000513,
+        "tol": {
+          "abs": 5e-07
+        },
+        "label": "Šidák threshold for 100 tests",
+        "accept": "0.000513, give or take 0.0000005.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "bonf",
+            "value": 0.0005,
+            "tol": {
+              "abs": 2e-07
+            }
+          },
+          {
+            "id": "pow",
+            "value": 0.00592,
+            "tol": {
+              "abs": 2e-06
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 0.95^{0.01} = 0.000513$.",
+        "generic": "Not quite right. Raise 0.95 to the power 0.01, then subtract from 1.",
+        "byKey": {
+          "bonf": "That is Bonferroni, $0.05 / 100$. Šidák is slightly larger.",
+          "pow": "That is $0.95^{100}$. Use the power $1/100$, then subtract from 1."
+        }
+      },
+      "explain": {
+        "text": "$0.95^{0.01} = e^{0.01 \\ln 0.95} = 0.999487$, so the threshold is 0.000513. Bonferroni's 0.0005 is 2.6% smaller. For independent tests the gain from Šidák is that small."
+      }
+    },
+    {
+      "id": "h-markov",
+      "difficulty": 4,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "A second proof that Bonferroni works. Let $V$ count the false rejections among $N$ true nulls, each tested at $\\alpha / N$.",
+      "question": "Put the lines of the proof in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "ind",
+            "text": "Write $V = I_1 + \\dots + I_N$, where $I_i = 1$ if true null $i$ is rejected and 0 if not"
+          },
+          {
+            "id": "each",
+            "text": "$E[I_i] = P(I_i = 1) = \\alpha / N$, since each test runs at $\\alpha / N$"
+          },
+          {
+            "id": "lin",
+            "text": "$E[V] = N \\cdot \\alpha / N = \\alpha$, by linearity of expectation"
+          },
+          {
+            "id": "markov",
+            "text": "$P(V \\ge 1) \\le E[V]$, since $V \\ge 1$ on that event and $V \\ge 0$ always"
+          },
+          {
+            "id": "end",
+            "text": "So $\\text{FWER} = P(V \\ge 1) \\le \\alpha$, with no independence assumed"
+          }
+        ],
+        "answer": [
+          "ind",
+          "each",
+          "lin",
+          "markov",
+          "end"
+        ]
+      },
+      "feedback": {
+        "correct": "Indicators, linearity, then Markov's inequality.",
+        "generic": "Not quite right. Define the count first, find its mean, then bound the chance it is at least 1.",
+        "byKey": {
+          "lin": "Linearity needs each $E[I_i]$ first.",
+          "markov": "The bound uses $E[V]$, so find $E[V]$ first."
+        }
+      },
+      "explain": {
+        "text": "Counting with indicators makes $E[V] = \\alpha$ by linearity, which needs no independence. Markov's inequality then gives $P(V \\ge 1) \\le E[V] = \\alpha$. This is the union bound in another form."
+      }
+    },
+    {
+      "id": "h-bh-ten",
+      "difficulty": 4,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "Ten signals give sorted $p$-values 0.0008, 0.009, 0.0165, 0.019, 0.022, 0.08, 0.2, 0.35, 0.6 and 0.9. Use BH with $\\alpha = 0.05$.",
+      "question": "How many signals does BH reject?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Number BH rejects",
+        "accept": "5 exactly: rank 5 has $0.022 \\le 0.025$, and no later rank passes.",
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "stop",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "bonf",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "six",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Five: rank 5 is the largest rank under its bar.",
+        "generic": "Not quite right. The bar for rank $k$ is $0.005k$. Find the largest rank under its bar.",
+        "byKey": {
+          "stop": "You stopped at rank 3, the first above its bar (0.0165 against 0.015). Ranks 4 and 5 pass their bars, so BH rejects up to 5.",
+          "bonf": "That is Bonferroni, $p \\le 0.005$.",
+          "four": "Rank 5 passes too: $0.022 \\le 0.025$.",
+          "six": "Rank 6 has $p = 0.08$, above 0.03."
+        }
+      },
+      "explain": {
+        "text": "The bars are $0.005k$: 0.005, 0.010, 0.015, 0.020, 0.025, 0.030, and so on. Rank 3 misses (0.0165 against 0.015), but ranks 4 and 5 pass, and later ranks fail. BH rejects ranks 1 to 5, rank 3 included."
+      }
+    },
+    {
+      "id": "h-years",
+      "difficulty": 4,
+      "skills": [
+        "ht-multiple",
+        "ht-pvalue"
+      ],
+      "prose": "A strategy is the best of 100 tried. The one-sided Bonferroni bar on $t$ is $z_{1 - 0.05/100} = 3.29$. Suppose its Sharpe ratio holds at 1.0.",
+      "question": "How many years of record does it need to clear the bar? Give 1 decimal place.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.8,
+        "tol": {
+          "abs": 0.1
+        },
+        "label": "Years of record",
+        "accept": "10.8: $(3.29 / 1.0)^2 = 10.83$, give or take 0.1.",
+        "placeholder": "decimal",
+        "unit": "years",
+        "wrong": [
+          {
+            "id": "nosq",
+            "value": 3.29,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "one",
+            "value": 2.7,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 10.8 years.",
+        "generic": "Not quite right. Solve $1.0\\sqrt T = 3.29$ for $T$.",
+        "byKey": {
+          "nosq": "That is $\\sqrt T$. Square it.",
+          "one": "That uses the one-test bar, 1.645. It was the best of 100."
+        }
+      },
+      "explain": {
+        "text": "$t = 1.0\\sqrt T$ must reach 3.29, so $T = 3.29^2 = 10.8$ years. A single pre-set strategy would need only $1.645^2 = 2.7$ years. Every extra strategy tried lengthens the record that proof needs."
+      }
+    },
+    {
+      "id": "h-forks",
+      "difficulty": 3,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "An analyst makes five yes-or-no choices after looking at the data, then reports the one analysis that worked.",
+      "question": "If the 32 possible analyses were independent tests at 5%, what would the chance of at least one false pass be? Give 3 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.806,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Chance of at least one false pass",
+        "accept": "0.806, from $1 - 0.95^{32}$, give or take 0.001.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 0.226,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "alpha",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "count",
+            "value": 1.6,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2^5 = 32$ paths, and $1 - 0.95^{32} = 0.806$.",
+        "generic": "Not quite right. Count the paths, $2^5$, then use $1 - 0.95^N$.",
+        "byKey": {
+          "five": "You used $N = 5$, the number of choices. Five two-way choices give $2^5 = 32$ paths.",
+          "alpha": "That is one test's chance.",
+          "count": "That is the expected number of passes, $32 \\times 0.05$."
+        }
+      },
+      "explain": {
+        "text": "Five two-way choices give $2^5 = 32$ analyses. As independent tests they would give $1 - 0.95^{32} = 0.806$. Real paths overlap, so the true figure is lower, but it is nowhere near 5%."
+      }
+    },
+    {
+      "id": "h-code",
+      "difficulty": 5,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "BH can be reported as **adjusted $p$-values**: reject hypothesis $i$ at level $q$ exactly when its adjusted value is at most $q$. For the $k$-th smallest $p$-value, the adjusted value is $\\min_{j \\ge k} \\, n\\,p_{(j)} / j$, capped at 1. For the 8 signals of the lesson, the first three come out at 0.032, 0.043 and 0.043.",
+      "question": "Write `bh_adjusted(pvals)` returning the adjusted values in the original order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def bh_adjusted(pvals):\n    \"\"\"BH-adjusted p-values, in the original order.\n\n    For the k-th smallest p-value, the adjusted value is\n    the smallest n * p_(j) / j over ranks j >= k, capped at 1.\n    \"\"\"\n    ...\n",
+        "solution": "def bh_adjusted(pvals):\n    \"\"\"BH-adjusted p-values, in the original order.\n\n    For the k-th smallest p-value, the adjusted value is\n    the smallest n * p_(j) / j over ranks j >= k, capped at 1.\n    \"\"\"\n    n = len(pvals)\n    order = sorted(range(n), key=lambda i: pvals[i])\n    out = [0.0] * n\n    running = 1.0\n    for r in range(n, 0, -1):          # from the largest rank down\n        i = order[r - 1]\n        running = min(running, n * pvals[i] / r)\n        out[i] = min(1.0, running)\n    return out\n",
+        "examples": [
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.004, 0.012, 0.016, 0.041])]",
+            "expect": "[0.016, 0.021333, 0.021333, 0.041]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.004, 0.012, 0.016, 0.041, 0.1, 0.22, 0.48, 0.73])]",
+            "expect": "[0.032, 0.042667, 0.042667, 0.082, 0.16, 0.293333, 0.548571, 0.73]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.48, 0.016, 0.73, 0.004, 0.22, 0.041, 0.012, 0.1])]",
+            "expect": "[0.548571, 0.042667, 0.73, 0.032, 0.293333, 0.082, 0.042667, 0.16]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.003, 0.014, 0.017, 0.3])]",
+            "expect": "[0.012, 0.022667, 0.022667, 0.3]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.04])]",
+            "expect": "[0.04]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.5, 0.5, 0.5])]",
+            "expect": "[0.5, 0.5, 0.5]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.01, 0.02, 0.03, 0.04, 0.05])]",
+            "expect": "[0.05, 0.05, 0.05, 0.05, 0.05]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.9, 0.95, 0.99, 0.2])]",
+            "expect": "[0.99, 0.99, 0.99, 0.8]",
+            "compare": "equal"
+          },
+          {
+            "call": "[round(v, 6) for v in bh_adjusted([0.0001, 0.2, 0.0003, 0.6, 0.0002])]",
+            "expect": "[0.0005, 0.25, 0.0005, 0.6, 0.0005]",
+            "compare": "equal"
+          },
+          {
+            "call": "bh_adjusted([0.3, 0.1]) is not None and len(bh_adjusted([0.3, 0.1]))",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "sum(1 for v in bh_adjusted([0.004, 0.012, 0.016, 0.041, 0.10, 0.22, 0.48, 0.73]) if v <= 0.05)",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests. Eight compare your list, rounded to 6 decimal places, with the reference, including shuffled input, ties and values capped at 1. Pure Python is enough; numpy and scipy are available but load slowly the first time."
+      },
+      "feedback": {
+        "correct": "Adjusted values agree with BH at every level $q$.",
+        "generic": "Not quite right. Work from the largest rank down, keeping a running minimum of $n\\,p_{(j)}/j$."
+      },
+      "explain": {
+        "text": "Walking from the largest rank down keeps the running minimum over $j \\ge k$ in one pass. The cap at 1 keeps them valid probabilities. Three of the lesson's eight have adjusted values at or below 0.05, matching the three BH rejected."
+      }
+    },
+    {
+      "id": "h-fdr-count",
+      "difficulty": 3,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "A screen of 1,000 signals uses BH with $q = 0.10$ and rejects 40 of them.",
+      "question": "On average, at most how many of the 40 are false discoveries?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0.0001
+        },
+        "label": "Expected false discoveries among the 40",
+        "accept": "4: $0.10 \\times 40$.",
+        "placeholder": "number",
+        "wrong": [
+          {
+            "id": "total",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "fwer",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At most $0.10 \\times 40 = 4$ on average.",
+        "generic": "Not quite right. The FDR is a share of the rejections.",
+        "byKey": {
+          "total": "That is 10% of all 1,000 signals. The FDR is a share of the 40 rejected.",
+          "fwer": "That is the level itself, a share. Turn it into a count of the 40."
+        }
+      },
+      "explain": {
+        "text": "BH at $q = 0.10$ bounds the expected share of false discoveries among its rejections by 10%. With 40 rejections that is at most 4 on average. Which 4, we cannot tell."
+      }
+    },
+    {
+      "id": "h-rule",
+      "difficulty": 4,
+      "skills": [
+        "ht-multiple"
+      ],
+      "prose": "A quant runs 1,000 noise strategies over 10 years. Use the rule of thumb $\\sqrt{2 \\ln N} / \\sqrt T$.",
+      "question": "Roughly what Sharpe ratio will the best show? Give 2 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.18,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Best noise Sharpe",
+        "accept": "1.18: $\\sqrt{2 \\ln 1000} / \\sqrt{10} = 3.717 / 3.162$, give or take 0.01.",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "nosqrt",
+            "value": 3.72,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "T",
+            "value": 0.37,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 1.18.",
+        "generic": "Not quite right. Compute $\\sqrt{2 \\ln 1000}$, then divide by $\\sqrt{10}$.",
+        "byKey": {
+          "nosqrt": "That is the $t$ value. Divide by $\\sqrt{10}$.",
+          "T": "You divided by $T = 10$. Divide by $\\sqrt{10} = 3.162$."
+        }
+      },
+      "explain": {
+        "text": "$2 \\ln 1000 = 13.82$, whose square root is 3.717. Dividing by $\\sqrt{10}$ gives 1.18. The exact mean best is a little lower, 1.03, but a 10-year Sharpe above 1 from 1,000 tries is still what noise gives."
+      }
+    },
+    {
+      "id": "h-vendor",
+      "difficulty": 5,
+      "skills": [
+        "ht-multiple",
+        "ht-pvalue"
+      ],
+      "prose": "A signal vendor pitches you: our flagship has a Sharpe ratio of 1.6 over 3 years, so $t = 2.77$ and $p = 0.003$. In due diligence you learn the firm backtested 200 variants over the same 3 years and launched the best.",
+      "question": "Write a short assessment for your investment committee.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Assess the claim. Check the vendor's $t$ and $p$; explain what the 200 variants change; compute what noise alone would give and the Bonferroni bar; say how long a record or what other evidence would convince you; list what you would ask the vendor for; give a verdict.",
+        "model": "**Step 1: the record on its own.** Over $T = 3$ years the standard error of the Sharpe ratio is $1/\\sqrt 3 = 0.577$. So $t = 1.6\\sqrt 3 = 2.77$, and the one-sided $p$-value is $1 - \\Phi(2.77) = 0.0028$. The vendor's numbers are right for **one** strategy chosen in advance.\n\n**Step 2: the count.** The flagship is the best of 200 variants. That is a family of 200 tests, so the one-test $p$-value does not apply.\n\n**Step 3: what noise gives.** The rule of thumb puts the best of 200 noise strategies at about $\\sqrt{2 \\ln 200} / \\sqrt 3 = 3.255 / 1.732 = 1.88$. The exact mean of the best is lower, $2.746 / \\sqrt 3 = 1.59$. Either way, 1.6 is what the best of 200 strategies with no skill typically shows.\n\n**Step 4: the corrected bar.** Bonferroni at 5% one-sided needs $t \\ge z_{1 - 0.05/200} = z_{0.99975} = 3.48$, a Sharpe of $3.48 / \\sqrt 3 = 2.01$. Equivalently, the adjusted $p$-value is $200 \\times 0.0028 = 0.56$. The record fails by a wide margin.\n\n**Step 5: how long a record would do.** If the true Sharpe really were 1.6, clearing $t = 3.48$ needs $T = (3.48 / 1.6)^2 = 4.7$ years. Better is fresh evidence: a live or out-of-sample record of the flagship since it was chosen, judged as one pre-set test.\n\n**Step 6: what to ask for.** The results of all 200 variants, not just the best. Whether the rule and parameters were fixed before the data were seen. The out-of-sample or live record since selection. Checks for look-ahead and survivorship, and returns after costs.\n\n**Verdict.** A 1.6 Sharpe over 3 years, chosen from 200, is not evidence of skill. It is about what luck delivers to the best of 200.",
+        "rubric": [
+          {
+            "points": 1,
+            "text": "Computes the standard error $1/\\sqrt 3 = 0.58$ and confirms $t = 2.77$ and one-sided $p \\approx 0.003$ for a single test"
+          },
+          {
+            "points": 1,
+            "text": "States that choosing the best of 200 makes this a family of 200 tests, so the single-test $p$ does not apply"
+          },
+          {
+            "points": 2,
+            "text": "Estimates what the best of 200 noise strategies would show: about 1.9 by $\\sqrt{2\\ln N}/\\sqrt T$, or about 1.6 by the exact mean"
+          },
+          {
+            "points": 2,
+            "text": "Computes the Bonferroni bar $z_{0.99975} = 3.48$, a Sharpe of 2.01 (or the adjusted $p = 0.56$), and says the record fails it"
+          },
+          {
+            "points": 1,
+            "text": "Computes the record length needed at a Sharpe of 1.6, about 4.7 years, or asks for an out-of-sample record judged as one test"
+          },
+          {
+            "points": 2,
+            "text": "Lists sensible requests: all 200 results, whether parameters were fixed in advance, the live record since selection, look-ahead and survivorship checks, costs"
+          },
+          {
+            "points": 1,
+            "text": "Gives a clear verdict: not evidence of skill, about what luck gives the best of 200"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your assessment with the model answer and tick the rubric.",
+        "generic": "Compare your assessment with the model answer and tick the rubric."
+      },
+      "explain": {
+        "text": "The vendor's $t$ and $p$ are right for one test, but the flagship is the best of 200. Noise alone gives the best of 200 a Sharpe near 1.6 to 1.9 over 3 years, and Bonferroni asks for 2.01. The record is not evidence of skill."
+      }
+    }
+  ]
+}

@@ -939,3 +939,9 @@ Raised later (testing level 2):
 330. `distribution`: shade a second region under an overlay curve (α and β at once), extending 320.
 331. `plane` expressions: `erf(x)` and `Phi(x)` so power-against-n curves can be drawn as functions.
 332. `bars`: a horizontal reference line (`hlines`, as 212 asks for `series`).
+
+Raised later (exams 1.3 and 1.4):
+
+333. `graph` on phones: the canvas draws in a fixed 540px frame so labels shrink to 7 to 8px at 390px width; scale the layout to the viewport and keep the 12px minimum from 165.
+334. Code editor on phones: lines scroll sideways at 390px; soft-wrap long lines or shrink the gutter.
+335. `playthrough.mjs --why`: cover exam and set items' explanation sheets, not only lessons (see 205).

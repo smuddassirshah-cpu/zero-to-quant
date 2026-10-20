@@ -1,0 +1,1406 @@
+{
+  "id": "l4-reading-residuals",
+  "course": "regression",
+  "title": "Reading the residuals",
+  "minutes": 14,
+  "objectives": [
+    "Plot residuals and spot a bad fit.",
+    "Tell a missing curve, a funnel, runs in time and a high-leverage point apart."
+  ],
+  "skills": [
+    "rg-diagnostics",
+    "rg-fit"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A good fit?",
+      "prose": "Eight orders: size in £ millions against slippage in basis points, with the least squares line. $R^2 = 0.97$, so the line explains almost all the variation. Now read the residuals from the smallest order to the largest.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              0.5,
+              2.3
+            ],
+            [
+              1,
+              3.0
+            ],
+            [
+              2,
+              4.1
+            ],
+            [
+              3,
+              5.3
+            ],
+            [
+              4,
+              6.0
+            ],
+            [
+              6,
+              7.3
+            ],
+            [
+              8,
+              8.5
+            ],
+            [
+              10,
+              9.5
+            ]
+          ],
+          "xLabel": "Order size (£m)",
+          "yLabel": "Slippage (bp)",
+          "xRange": [
+            0,
+            11
+          ],
+          "yRange": [
+            0,
+            11
+          ],
+          "fit": true,
+          "height": 280
+        },
+        "state": {
+          "residuals": "fit",
+          "caption": "Least squares line, $R^2 = 0.97$"
+        }
+      },
+      "question": "Which pattern do the residuals' signs make?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "arch",
+            "text": "Negative at both ends, positive in the middle",
+            "correct": true
+          },
+          {
+            "id": "random",
+            "text": "No pattern: the signs alternate at random",
+            "why": "You expected noise. In order they run two below, five above, one below. Noise would mix far more."
+          },
+          {
+            "id": "u",
+            "text": "Positive at both ends, negative in the middle",
+            "why": "You have the arch upside down. The smallest and largest orders sit below the line.",
+            "canvas": {
+              "highlight": [
+                "p0",
+                "p1",
+                "p7"
+              ]
+            }
+          },
+          {
+            "id": "trend",
+            "text": "Negative for small orders, positive for large ones",
+            "why": "The largest order sits below the line. A least squares line never leaves a straight trend in its residuals.",
+            "canvas": {
+              "highlight": [
+                "p7"
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Go left to right and note whether each point is above or below the line."
+        },
+        {
+          "rung": "point",
+          "text": "The smallest two orders and the largest one all sit below the line.",
+          "highlight": [
+            "p0",
+            "p1",
+            "p7"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Below, above, below: the points bend away from the line.",
+        "generic": "Not quite right. Note above or below for each point, in order of size.",
+        "byKey": {
+          "random": "You expected noise. In order they run two below, five above, one below. Noise would mix far more.",
+          "u": "You have the arch upside down. The smallest and largest orders sit below the line."
+        }
+      },
+      "explain": {
+        "text": "The two smallest orders and the largest sit below the line, and the middle ones above. The points bend: slippage rises steeply at first, then flattens. A straight line cannot follow a bend, even with $R^2 = 0.97$.",
+        "canvas": {
+          "highlight": [
+            "p0",
+            "p1",
+            "p7"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The residual plot",
+      "prose": "Plot each residual against $x$ and the bend stands out. This is a **residual plot**: the fitted line becomes the dashed zero line. A good fit leaves a shapeless band around 0.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              0.5,
+              -0.61
+            ],
+            [
+              1,
+              -0.28
+            ],
+            [
+              2,
+              0.07
+            ],
+            [
+              3,
+              0.53
+            ],
+            [
+              4,
+              0.48
+            ],
+            [
+              6,
+              0.29
+            ],
+            [
+              8,
+              0.0
+            ],
+            [
+              10,
+              -0.49
+            ]
+          ],
+          "xLabel": "Order size (£m)",
+          "yLabel": "Residual (bp)",
+          "yRange": [
+            -1,
+            1
+          ],
+          "height": 260,
+          "xRange": [
+            0,
+            11
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 0,
+            "b": 0,
+            "dashed": true
+          }
+        }
+      },
+      "question": "What does the arch tell you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "curve",
+            "text": "The model is missing a curve: slippage grows more slowly than size, perhaps like $\\sqrt{x}$",
+            "correct": true
+          },
+          {
+            "id": "steeper",
+            "text": "The slope is wrong: a steeper line would remove the arch",
+            "why": "Tilting the line only adds a straight trend to the residuals. Least squares already chose the best tilt; the arch is what no tilt removes."
+          },
+          {
+            "id": "variance",
+            "text": "The spread of the residuals changes with size",
+            "why": "The residuals are about the same size throughout. It is their sign that follows a pattern; changing spread looks like a funnel."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: $R^2 = 0.97$, so the fit is good",
+            "why": "You judged by $R^2$ alone. A high $R^2$ can hide a systematic miss that the residual plot shows at once."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If the line had the right shape, would the misses follow a pattern?"
+        },
+        {
+          "rung": "point",
+          "text": "The middle orders are all above the line.",
+          "highlight": [
+            "p2",
+            "p3",
+            "p4",
+            "p5"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "A pattern in the residuals is a part of $y$ the line could have predicted but did not.",
+        "generic": "Not quite right. Ask what kind of model would leave misses that rise and then fall.",
+        "byKey": {
+          "steeper": "Tilting the line only adds a straight trend to the residuals. Least squares already chose the best tilt.",
+          "fine": "You judged by $R^2$ alone. A high $R^2$ can hide a systematic miss that the residual plot shows at once."
+        }
+      },
+      "explain": {
+        "text": "The residuals rise and fall with size, so part of the slippage is predictable but missed by the line. A term such as $\\sqrt{x}$ would let the fit bend. Impact growing like the square root of order size is a well-known pattern in execution data."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A funnel",
+      "prose": "A desk models each stock's daily traded value, in £ millions, from its size. Here are the residuals plotted against the fitted values, a common choice when there are several predictors.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              3.05,
+              -0.15
+            ],
+            [
+              4.05,
+              -0.35
+            ],
+            [
+              5.05,
+              -0.15
+            ],
+            [
+              6.05,
+              0.15
+            ],
+            [
+              7.05,
+              0.65
+            ],
+            [
+              8.05,
+              0.05
+            ],
+            [
+              9.05,
+              -0.55
+            ],
+            [
+              10.05,
+              -0.85
+            ],
+            [
+              11.05,
+              0.75
+            ],
+            [
+              12.05,
+              1.95
+            ],
+            [
+              13.05,
+              0.35
+            ],
+            [
+              14.05,
+              -1.85
+            ]
+          ],
+          "xLabel": "Fitted value (£m)",
+          "yLabel": "Residual (£m)",
+          "yRange": [
+            -2.5,
+            2.5
+          ],
+          "height": 260,
+          "xRange": [
+            2,
+            15
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 0,
+            "b": 0,
+            "dashed": true
+          }
+        }
+      },
+      "question": "What pattern do these residuals show?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "funnel",
+            "text": "Their spread grows with the fitted value: a funnel",
+            "correct": true
+          },
+          {
+            "id": "curve",
+            "text": "An arch: the model is missing a curve",
+            "why": "The residuals do not rise and fall together. They fan out while the centre of the band stays at 0."
+          },
+          {
+            "id": "trend",
+            "text": "A downward trend",
+            "why": "A least squares fit leaves no straight trend against the fitted values. Look at the spread, not the centre."
+          },
+          {
+            "id": "fine",
+            "text": "No pattern: a shapeless band",
+            "why": "Compare the left of the plot with the right: the band is several times wider for large fitted values.",
+            "canvas": {
+              "highlight": [
+                "p9",
+                "p11"
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare how far the points stray from 0 on the left and on the right."
+        },
+        {
+          "rung": "point",
+          "text": "The two largest misses are both at the right.",
+          "highlight": [
+            "p9",
+            "p11"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "The band widens to the right: the spread of the residuals is not constant.",
+        "generic": "Not quite right. Look at the width of the band, not its centre.",
+        "byKey": {
+          "curve": "The residuals do not rise and fall together. They fan out while the centre stays at 0.",
+          "fine": "Compare the left of the plot with the right: the band is several times wider for large fitted values."
+        }
+      },
+      "explain": {
+        "text": "The residuals fan out, from about $\\pm 0.3$ on the left to about $\\pm 2$ on the right. Changing spread is called **heteroscedasticity**. The line can still be fair, but the usual standard errors are wrong; level 3 fixes them.",
+        "canvas": {
+          "highlight": [
+            "p9",
+            "p11"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Runs in time",
+      "prose": "For a pairs trade, one stock is regressed on another and the residuals are plotted in date order. Here are 20 trading days.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1,
+              0.3
+            ],
+            [
+              2,
+              0.5
+            ],
+            [
+              3,
+              0.6
+            ],
+            [
+              4,
+              0.4
+            ],
+            [
+              5,
+              0.2
+            ],
+            [
+              6,
+              -0.1
+            ],
+            [
+              7,
+              -0.4
+            ],
+            [
+              8,
+              -0.6
+            ],
+            [
+              9,
+              -0.7
+            ],
+            [
+              10,
+              -0.5
+            ],
+            [
+              11,
+              -0.3
+            ],
+            [
+              12,
+              0.1
+            ],
+            [
+              13,
+              0.3
+            ],
+            [
+              14,
+              0.5
+            ],
+            [
+              15,
+              0.4
+            ],
+            [
+              16,
+              0.2
+            ],
+            [
+              17,
+              -0.1
+            ],
+            [
+              18,
+              -0.3
+            ],
+            [
+              19,
+              -0.4
+            ],
+            [
+              20,
+              -0.1
+            ]
+          ],
+          "xLabel": "Trading day",
+          "yLabel": "Residual (%)",
+          "yRange": [
+            -1,
+            1
+          ],
+          "height": 260,
+          "xRange": [
+            0,
+            21
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 0,
+            "b": 0,
+            "dashed": true
+          }
+        }
+      },
+      "question": "What do the long runs above and below 0 mean?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "auto",
+            "text": "Each day's residual is like the day before's: the residuals are autocorrelated",
+            "correct": true
+          },
+          {
+            "id": "funnel",
+            "text": "The variance is changing over time",
+            "why": "The swings are about the same size throughout. What stands out is that the signs come in runs."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: the residuals average 0, as they should",
+            "why": "Averaging 0 is guaranteed whenever there is an intercept, so it tells you nothing. Independent residuals would change sign far more often."
+          },
+          {
+            "id": "curve",
+            "text": "The model is missing a curve in $x$",
+            "why": "This plot is against time, not $x$. Runs in time mean neighbouring days share their misses."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count how often the residual changes sign."
+        },
+        {
+          "rung": "point",
+          "text": "Days 1 to 5 are all above 0, days 6 to 11 all below.",
+          "highlight": [
+            "p0",
+            "p4",
+            "p5",
+            "p10"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Neighbouring days share their misses: autocorrelation.",
+        "generic": "Not quite right. Think about what long runs of one sign say about neighbouring days.",
+        "byKey": {
+          "fine": "Averaging 0 is guaranteed whenever there is an intercept. Independent residuals would change sign far more often.",
+          "funnel": "The swings are about the same size throughout. The signs come in runs."
+        }
+      },
+      "explain": {
+        "text": "The residuals stay positive for 5 days, negative for 6, positive for 5, then negative again. Independent residuals would switch sign about every other day. This is **autocorrelation**: the usual standard errors come out too small, and level 3 treats it.",
+        "canvas": {
+          "highlight": [
+            "p0",
+            "p1",
+            "p2",
+            "p3",
+            "p4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "One far point",
+      "prose": "Six orders follow a clear line: impact rises about 0.5 bp per £1m. A seventh is a block trade, negotiated off-exchange, with impact of only 1.5 bp. The slider sets the block's size.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 1,
+              "y": 1.6
+            },
+            {
+              "id": "p1",
+              "x": 2,
+              "y": 1.9
+            },
+            {
+              "id": "p2",
+              "x": 3,
+              "y": 2.6
+            },
+            {
+              "id": "p3",
+              "x": 4,
+              "y": 2.9
+            },
+            {
+              "id": "p4",
+              "x": 5,
+              "y": 3.6
+            },
+            {
+              "id": "p5",
+              "x": 6,
+              "y": 3.9
+            },
+            {
+              "id": "p6",
+              "x": 3.5,
+              "y": 1.5,
+              "label": "block"
+            }
+          ],
+          "xLabel": "Order size (£m)",
+          "yLabel": "Impact (bp)",
+          "xRange": [
+            0,
+            13
+          ],
+          "yRange": [
+            0,
+            5
+          ],
+          "fit": true,
+          "fitLabel": "auto",
+          "height": 260
+        },
+        "state": {
+          "residuals": "fit"
+        },
+        "controls": [
+          {
+            "bind": "points.p6.x",
+            "min": 1,
+            "max": 12,
+            "step": 0.5,
+            "start": 3.5,
+            "label": "Block size (£m)"
+          }
+        ]
+      },
+      "question": "Move the block from £3.5m out to £12m, keeping its impact. What happens to the fitted slope?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "drags",
+            "text": "It falls from about 0.48 to about 0: far from the other orders, one point drags the whole line",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "It barely changes: one point in seven cannot move least squares far",
+            "why": "Try it: at £12m the slope is about 0. A point far from $\\bar x$ pulls hard on the tilt.",
+            "canvas": {
+              "points": {
+                "p6": {
+                  "x": 12
+                }
+              }
+            }
+          },
+          {
+            "id": "rises",
+            "text": "It rises, because the block is now a larger order",
+            "why": "The block's impact stays at 1.5 bp, far below the line's prediction for £12m. The line tilts down to reach it.",
+            "canvas": {
+              "points": {
+                "p6": {
+                  "x": 12
+                }
+              }
+            }
+          },
+          {
+            "id": "middle",
+            "text": "It changes most with the block at £3.5m, in the middle",
+            "why": "At £3.5m, the six orders' average size, the block lowers the line but leaves the slope at 0.48."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the equation as you slide."
+        },
+        {
+          "rung": "point",
+          "text": "The block sits far below where the line would be at £12m.",
+          "highlight": [
+            "p6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At £3.5m the slope reads 0.483; at £12m it reads about $-0.008$."
+        }
+      ],
+      "feedback": {
+        "correct": "One far point turned a clear slope of 0.48 into about 0.",
+        "generic": "Not quite right. Slide the block all the way out and read the slope in the equation.",
+        "byKey": {
+          "same": "Try it: at £12m the slope is about 0. A point far from $\\bar x$ pulls hard on the tilt.",
+          "rises": "The block's impact stays at 1.5 bp, far below the line's prediction for £12m. The line tilts down to reach it."
+        }
+      },
+      "explain": {
+        "text": "At £3.5m the block only lowers the line; at £12m the slope falls to about $-0.01$. A point far from $\\bar x$ has high **leverage**, because the slope weights each point by its distance from $\\bar x$. Do not delete it because it is inconvenient: ask whether it belongs in the model, here a different kind of trade.",
+        "canvas": {
+          "points": {
+            "p6": {
+              "x": 12
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Same R squared",
+      "prose": "Two analysts fit lines to two datasets, each a trading cost against a size. Both report $R^2 = 0.90$. The residuals are drawn on each plot.",
+      "canvas": {
+        "kind": "pair",
+        "tap": "sides",
+        "leftLabel": "Fit A",
+        "rightLabel": "Fit B",
+        "left": {
+          "kind": "scatter",
+          "params": {
+            "points": [
+              [
+                1,
+                2.7
+              ],
+              [
+                2,
+                2.2
+              ],
+              [
+                3,
+                4.6
+              ],
+              [
+                4,
+                4.2
+              ],
+              [
+                5,
+                6.9
+              ],
+              [
+                6,
+                5.8
+              ],
+              [
+                7,
+                8.1
+              ],
+              [
+                8,
+                9.5
+              ]
+            ],
+            "xLabel": "Size",
+            "yLabel": "Cost",
+            "xRange": [
+              0,
+              9
+            ],
+            "yRange": [
+              0,
+              11
+            ],
+            "fit": true,
+            "height": 240
+          },
+          "state": {
+            "residuals": "fit",
+            "caption": "Fit A: $R^2 = 0.90$"
+          }
+        },
+        "right": {
+          "kind": "scatter",
+          "params": {
+            "points": [
+              [
+                1,
+                2.0
+              ],
+              [
+                2,
+                3.8
+              ],
+              [
+                3,
+                5.3
+              ],
+              [
+                4,
+                6.5
+              ],
+              [
+                5,
+                7.4
+              ],
+              [
+                6,
+                8.0
+              ],
+              [
+                7,
+                8.3
+              ],
+              [
+                8,
+                8.3
+              ]
+            ],
+            "xLabel": "Size",
+            "yLabel": "Cost",
+            "xRange": [
+              0,
+              9
+            ],
+            "yRange": [
+              0,
+              11
+            ],
+            "fit": true,
+            "height": 240
+          },
+          "state": {
+            "residuals": "fit",
+            "caption": "Fit B: $R^2 = 0.90$"
+          }
+        }
+      },
+      "question": "Tap the fit you would trust to predict a new point.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "left"
+        ],
+        "max": 1
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$R^2$ is the same, so it cannot decide. What else is on the plots?"
+        },
+        {
+          "rung": "point",
+          "text": "Follow the signs of Fit B's residuals from left to right.",
+          "highlight": [
+            "right:p0",
+            "right:p7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Fit B runs below, above, below: an arch. Fit A's signs mix at random."
+        }
+      ],
+      "feedback": {
+        "correct": "Fit A: its residuals are shapeless; Fit B's form an arch.",
+        "generic": "Not quite right. Read each plot's residual signs in order of size.",
+        "byKey": {
+          "right": "You trusted Fit B's $R^2$. Its residuals run negative, positive, then negative: an arch. It will miss systematically, worst of all beyond the data."
+        }
+      },
+      "explain": {
+        "text": "Fit A's residuals change sign at random; Fit B's form an arch, so its line is the wrong shape. Equal $R^2$ values hide that completely. Judge a fit by its residual plot, never by $R^2$ alone.",
+        "canvas": {
+          "right": {
+            "highlight": [
+              "p0",
+              "p7"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "What residuals always do",
+      "prose": "Two facts hold for every least squares line with an intercept, however bad the fit. They come from the two conditions we met in lesson 2, with $e_i = y_i - a - bx_i$.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "r1",
+            "text": "$\\partial S/\\partial a = -2\\sum e_i = 0$, so $\\sum e_i = 0$"
+          },
+          {
+            "id": "r2",
+            "text": "$\\partial S/\\partial b = -2\\sum x_i e_i = 0$, so $\\sum x_i e_i = 0$"
+          },
+          {
+            "id": "r3",
+            "text": "$\\sum (x_i - \\bar x)e_i = \\sum x_i e_i - \\bar x\\sum e_i = 0$, expanding and using both"
+          },
+          {
+            "id": "r4",
+            "text": "$\\mathrm{Cov}(x, e) = 0$, dividing by $n - 1$, as $e$ has mean 0"
+          }
+        ],
+        "answer": [
+          "r1",
+          "r2",
+          "r3",
+          "r4"
+        ],
+        "same": [
+          [
+            "r1",
+            "r2"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The two conditions come first, in either order."
+        },
+        {
+          "rung": "point",
+          "text": "Expanding $\\sum (x_i - \\bar x)e_i$ needs both sums."
+        },
+        {
+          "rung": "step",
+          "text": "Conditions, expand, then divide by $n - 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "Mean 0 and no correlation with $x$, for every fit with an intercept.",
+        "generic": "Not quite right. State both conditions, then expand the centred sum.",
+        "byKey": {
+          "r3": "Expanding uses both $\\sum e_i = 0$ and $\\sum x_i e_i = 0$, so it comes after them.",
+          "r4": "The covariance is the last step."
+        }
+      },
+      "explain": {
+        "text": "So residuals always average 0 and never trend with $x$: a residual plot cannot show a straight-line trend. Only curves, funnels and runs are left to see, and those are what we look for. Without an intercept the first fact fails, and the residuals need not average 0."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Beta in a crisis month",
+      "prose": "A stock's beta is fitted on 22 days of a month that turned into a crisis: $\\hat\\beta = 1.10$ with $R^2 = 0.93$. Here are its residuals against the market's return.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              0.2,
+              0.21
+            ],
+            [
+              0.9,
+              -0.17
+            ],
+            [
+              -1.1,
+              0.23
+            ],
+            [
+              1.0,
+              0.08
+            ],
+            [
+              -0.0,
+              -0.08
+            ],
+            [
+              -0.5,
+              -0.15
+            ],
+            [
+              -0.5,
+              0.25
+            ],
+            [
+              -0.6,
+              0.15
+            ],
+            [
+              -0.1,
+              0.08
+            ],
+            [
+              0.5,
+              0.1
+            ],
+            [
+              0.4,
+              -0.1
+            ],
+            [
+              0.4,
+              0.05
+            ],
+            [
+              2.7,
+              -0.81
+            ],
+            [
+              5.8,
+              1.34
+            ],
+            [
+              3.4,
+              1.16
+            ],
+            [
+              -3.8,
+              -0.69
+            ],
+            [
+              4.6,
+              1.5
+            ],
+            [
+              3.8,
+              -1.66
+            ],
+            [
+              -2.0,
+              -0.38
+            ],
+            [
+              3.0,
+              -1.72
+            ],
+            [
+              3.9,
+              -0.56
+            ],
+            [
+              -5.0,
+              1.16
+            ]
+          ],
+          "xLabel": "Market return (%)",
+          "yLabel": "Residual (%)",
+          "yRange": [
+            -2.5,
+            2.5
+          ],
+          "height": 260,
+          "xRange": [
+            -6,
+            6
+          ]
+        },
+        "state": {
+          "line": {
+            "m": 0,
+            "b": 0,
+            "dashed": true
+          }
+        }
+      },
+      "question": "What should you distrust?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "se",
+            "text": "The usual standard error of beta: it assumes the same spread every day, and the big days are far noisier",
+            "correct": true
+          },
+          {
+            "id": "beta",
+            "text": "The value of beta itself: a funnel biases the slope",
+            "why": "A funnel leaves the slope estimate fair. What goes wrong is its stated precision; level 3 corrects it."
+          },
+          {
+            "id": "r2",
+            "text": "Nothing: $R^2 = 0.93$ is excellent",
+            "why": "You judged by $R^2$ alone. The crisis days dominate both the fit and its errors."
+          },
+          {
+            "id": "curve",
+            "text": "The shape of the line: the funnel means a missing curve",
+            "why": "The residuals are centred on 0 at every size of move; only their spread grows. A missing curve would bend the centre."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the residuals on calm days, near 0, with those on big days."
+        },
+        {
+          "rung": "point",
+          "text": "The biggest residuals are all on days the market moved 3% or more.",
+          "highlight": [
+            "p13",
+            "p17",
+            "p19"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "A funnel: the slope is fair, its usual precision is not.",
+        "generic": "Not quite right. Ask what changes across the plot: the centre or the spread.",
+        "byKey": {
+          "beta": "A funnel leaves the slope estimate fair. What goes wrong is its stated precision.",
+          "r2": "You judged by $R^2$ alone. The crisis days dominate both the fit and its errors."
+        }
+      },
+      "explain": {
+        "text": "Residuals are about $\\pm 0.2$% on calm days and up to $\\pm 1.7$% on crisis days: a funnel. The slope is still a fair estimate, but its usual standard error assumes one spread for all days. Level 3 replaces it with a robust one.",
+        "canvas": {
+          "highlight": [
+            "p13",
+            "p16",
+            "p17",
+            "p19"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Residual checks in code",
+      "prose": "Now check the two facts in code, on the slippage orders from the start of the lesson. In numpy, `np.mean(e)` is the mean and `np.corrcoef(x, e)[0, 1]` the correlation.",
+      "question": "Complete `residuals(x, y)` so it returns the array of least squares residuals.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef residuals(x, y):\n    x = np.array(x, dtype=float)\n    y = np.array(y, dtype=float)\n    b = ...  # slope: centred cross-products over centred squares\n    a = ...  # intercept: the line passes through the means\n    return y - (a + b * x)\n",
+        "solution": "import numpy as np\n\ndef residuals(x, y):\n    x = np.array(x, dtype=float)\n    y = np.array(y, dtype=float)\n    b = np.sum((x - x.mean()) * (y - y.mean())) / np.sum((x - x.mean())**2)\n    a = y.mean() - b * x.mean()\n    return y - (a + b * x)\n",
+        "examples": [
+          {
+            "call": "np.round(residuals([0, 1, 2], [1, 3, 2]), 6).tolist()",
+            "expect": "[-0.5, 1.0, -0.5]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(residuals([0, 1, 2], [1, 3, 2]), 6).tolist()",
+            "expect": "[-0.5, 1.0, -0.5]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "xs = [0.5, 1, 2, 3, 4, 6, 8, 10]; ys = [2.3, 3.0, 4.1, 5.3, 6.0, 7.3, 8.5, 9.5]",
+            "call": "np.round(residuals(xs, ys), 4).tolist()",
+            "expect": "[-0.6106, -0.283, 0.0723, 0.5275, 0.4827, 0.2932, 0.0037, -0.4858]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "xs = [0.5, 1, 2, 3, 4, 6, 8, 10]; ys = [2.3, 3.0, 4.1, 5.3, 6.0, 7.3, 8.5, 9.5]",
+            "call": "abs(float(np.mean(residuals(xs, ys)))) < 1e-9",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [0.5, 1, 2, 3, 4, 6, 8, 10]; ys = [2.3, 3.0, 4.1, 5.3, 6.0, 7.3, 8.5, 9.5]",
+            "call": "abs(float(np.corrcoef(xs, residuals(xs, ys))[0, 1])) < 1e-9",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [0.5, 1, 2, 3, 4, 6, 8, 10]; ys = [2.3, 3.0, 4.1, 5.3, 6.0, 7.3, 8.5, 9.5]",
+            "call": "int(np.sum(residuals(xs, ys) > 0))",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "np.round(residuals([-1, 0, 1, 2, 3], [-2, 0, 2, 1, 4]), 6).tolist()",
+            "expect": "[-0.4, 0.3, 1.0, -1.3, 0.4]",
+            "compare": "isclose"
+          },
+          {
+            "call": "np.round(residuals([-1.8, -1.1, -0.6, -0.2, 0.3, 0.7, 1.2, 1.9], [-1.96, -1.72, -1.02, 1.36, -0.04, 0.64, 1.74, 2.28]), 6).tolist()",
+            "expect": "[0.1, -0.5, -0.4, 1.5, -0.5, -0.3, 0.2, -0.1]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: residuals rounded to 4 or 6 places, their mean and their correlation with $x$ within $10^{-9}$ of 0, and a count of positive residuals. The first run loads numpy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The slope is $S_{xy}/S_{xx}$ from lesson 2."
+        },
+        {
+          "rung": "point",
+          "text": "`np.sum((x - x.mean()) * (y - y.mean()))` is $S_{xy}$."
+        },
+        {
+          "rung": "step",
+          "text": "`b = np.sum((x - x.mean()) * (y - y.mean())) / np.sum((x - x.mean())**2)` and `a = y.mean() - b * x.mean()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Mean 0 and correlation 0, yet five of the eight residuals are positive, all in the middle: the arch.",
+        "generic": "Some tests failed. For the points $(0, 1)$, $(1, 3)$, $(2, 2)$ the residuals are $-0.5$, 1 and $-0.5$.",
+        "byKey": {
+          "test-1": "For $(0, 1)$, $(1, 3)$, $(2, 2)$ the line is $1.5 + 0.5x$, so the residuals are $-0.5$, 1 and $-0.5$.",
+          "error": "Your code stopped with an error. Replace both `...` with expressions for $b$ and $a$."
+        }
+      },
+      "explain": {
+        "text": "Both checks pass for any least squares fit with an intercept, so they can never reveal a bad fit. The arch shows only in the pattern: two negative, five positive, one negative. Useful residual checks look for shape, not for a mean of 0.\n\n```python\nb = np.sum((x - x.mean()) * (y - y.mean())) / np.sum((x - x.mean())**2)\na = y.mean() - b * x.mean()\n```"
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Plot residuals against $x$, the fitted values or time. A good fit leaves a shapeless band around 0.",
+      "An arch means a missing curve; a funnel means changing variance (heteroscedasticity); runs in time mean autocorrelation; one far point can drag the whole line.",
+      "With an intercept, residuals always sum to 0 and are uncorrelated with $x$, so those checks never reveal a bad fit."
+    ],
+    "formula": {
+      "name": "What residuals always do",
+      "tex": "\\sum_i e_i = 0, \\qquad \\sum_i x_i e_i = 0",
+      "note": "Both follow from setting $\\partial S/\\partial a$ and $\\partial S/\\partial b$ to 0."
+    },
+    "trap": "Equal $R^2$ values can hide a wrong shape: judge a fit by its residual plot. Never delete a point just because it moves the answer."
+  },
+  "quiz": [
+    {
+      "id": "q-name",
+      "difficulty": 2,
+      "prose": "In a residual plot against the fitted values, the residuals spread wider and wider as the fitted value grows. Their centre stays at 0.",
+      "question": "What is the name for this?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "het",
+            "text": "Heteroscedasticity: the variance of the residuals changes",
+            "correct": true
+          },
+          {
+            "id": "auto",
+            "text": "Autocorrelation",
+            "why": "Autocorrelation is about neighbouring residuals in time sharing a sign, not a widening spread."
+          },
+          {
+            "id": "curve",
+            "text": "A missing nonlinear term",
+            "why": "A missing curve moves the centre of the residuals up and down. Here only the spread changes."
+          },
+          {
+            "id": "lev",
+            "text": "High leverage",
+            "why": "Leverage is about one point far from $\\bar x$, not the spread of all the residuals."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A funnel means heteroscedasticity.",
+        "generic": "Not quite right. Ask what is changing across the plot."
+      },
+      "explain": {
+        "text": "Spread that changes with the fitted value is heteroscedasticity. The slope can still be fair, but its usual standard error is not. Level 3 shows the fix."
+      }
+    },
+    {
+      "id": "q-fifth",
+      "difficulty": 2,
+      "prose": "A least squares line with an intercept is fitted to five points. Four of the residuals are 0.4, $-0.3$, 0.1 and 0.5.",
+      "question": "What is the fifth residual?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.7,
+        "tol": {
+          "abs": 0.001
+        },
+        "wrong": [
+          {
+            "id": "flip",
+            "value": 0.7,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "label": "Fifth residual",
+        "accept": "$-0.7$: the five must sum to 0."
+      },
+      "feedback": {
+        "correct": "The residuals sum to 0, so the fifth is $-0.7$.",
+        "generic": "Not quite right. With an intercept the residuals always sum to 0.",
+        "byKey": {
+          "flip": "You took the sum of the four, 0.7. The fifth must cancel it.",
+          "zero": "The residuals sum to 0 as a group; any one of them can be non-zero."
+        }
+      },
+      "explain": {
+        "text": "The four add to $0.4 - 0.3 + 0.1 + 0.5 = 0.7$. With an intercept $\\sum e_i = 0$, so the fifth is $-0.7$."
+      }
+    },
+    {
+      "id": "q-delete",
+      "difficulty": 3,
+      "prose": "A beta regression over a year includes one crash day. With it, beta is 1.2; without it, 0.9. A colleague deletes the crash day to clean the data.",
+      "question": "What should they do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "keep",
+            "text": "Keep it unless it is a data error, and report the fit with and without it: crash days are when beta matters most",
+            "correct": true
+          },
+          {
+            "id": "delete",
+            "text": "Delete it: one day out of 250 is just noise",
+            "why": "You deleted a point because it was inconvenient. A crash is a real day, and the hedge must work on such days."
+          },
+          {
+            "id": "r2",
+            "text": "Keep whichever version has the higher $R^2$",
+            "why": "$R^2$ cannot judge which data belong in the model, and deleting the day changes the total it is a share of."
+          },
+          {
+            "id": "avg",
+            "text": "Replace the crash day's return with the average return",
+            "why": "That invents data. It hides exactly the day a risk model most needs to see."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Check it, keep it if real, and show its influence.",
+        "generic": "Not quite right. Ask whether the crash day is an error or a real day."
+      },
+      "explain": {
+        "text": "An influential point should be checked, not deleted because it moves the answer. If it is real, show the fit with and without it. A beta that holds only on calm days is the wrong beta for a hedge."
+      }
+    },
+    {
+      "id": "q-leverage",
+      "difficulty": 3,
+      "prose": "Five orders have sizes £1m, £2m, £3m, £4m and £10m. One order's recorded slippage turns out to be 1 bp too high.",
+      "question": "Which order, if it were the wrong one, would move the fitted slope most?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ten",
+            "text": "The £10m order",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "The £3m order, in the middle",
+            "why": "The mean size is £4m, so the £3m order is near it. Points near $\\bar x$ move the line up or down, hardly tilting it."
+          },
+          {
+            "id": "one",
+            "text": "The £1m order, the smallest",
+            "why": "The £1m order is £3m from the mean of £4m; the £10m order is £6m away."
+          },
+          {
+            "id": "same",
+            "text": "All the same: each is one point in five",
+            "why": "Least squares weights each point's pull on the slope by its distance from $\\bar x$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£10m is furthest from the mean size of £4m.",
+        "generic": "Not quite right. Find the mean size, then the order furthest from it."
+      },
+      "explain": {
+        "text": "The mean size is £4m. An error in $y_k$ changes the slope by $(x_k - \\bar x)/S_{xx}$ times the error, so the £10m order, £6m from the mean, has the most leverage."
+      }
+    }
+  ]
+}

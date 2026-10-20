@@ -161,7 +161,8 @@
             "left",
             "right",
             "right"
-          ]
+          ],
+          "compact": true
         },
         "state": {
           "caption": "The `prices` table, closes in £"
@@ -222,7 +223,7 @@
         "pt-basics"
       ],
       "title": "A test that fails on correct code",
-      "prose": "`daily_returns` is correct, but this test fails:\n\n```text\n>       assert daily_returns([50.00, 55.00]) == [0.1]\nE       assert [0.10000000000000009] == [0.1]\n```",
+      "prose": "`daily_returns` is correct, but this test fails:\n\n```text\n    r = daily_returns([50.00, 55.00])\n>   assert r == [0.1]\nE   assert [0.10000000000000009] == [0.1]\n```",
       "question": "What is the best fix?",
       "widget": {
         "kind": "choice",
@@ -230,7 +231,7 @@
         "options": [
           {
             "id": "a",
-            "text": "`assert daily_returns([50.00, 55.00]) == pytest.approx([0.1])`",
+            "text": "`assert r == pytest.approx([0.1])`",
             "correct": true
           },
           {
@@ -240,7 +241,7 @@
           },
           {
             "id": "c",
-            "text": "`assert abs(daily_returns([50.00, 55.00])[0] - 0.1) < 1`",
+            "text": "`assert abs(r[0] - 0.1) < 1`",
             "why": "You picked a tolerance of 1. A return of 0.9 would pass, so the test checks almost nothing."
           },
           {
@@ -342,7 +343,7 @@
       "question": "Which `WHERE` clause finds them?",
       "widget": {
         "kind": "choice",
-        "layout": "grid",
+        "layout": "stack",
         "options": [
           {
             "id": "a",
@@ -824,7 +825,7 @@
         "pt-cases"
       ],
       "title": "Filling in the rows",
-      "prose": "`max_drawdown` returns the largest fall from a running peak as a negative fraction, or 0.0.\n\n```python\n@pytest.mark.parametrize(\"prices, expected\", [\n    ([100.00, 125.00, 100.00], A),\n    ([80.00, 60.00, 90.00, 72.00], B),\n    ([50.00], C),\n    ([200.00, 150.00, 180.00, 120.00], D),\n])\ndef test_max_drawdown(prices, expected):\n    got = max_drawdown(prices)\n    assert got == pytest.approx(expected)\n```",
+      "prose": "`max_drawdown` returns the largest fall from a running peak as a negative fraction, or 0.0.\n\n```python\n@pytest.mark.parametrize(\n    \"prices, expected\", [\n    ([100, 125, 100], A),\n    ([80, 60, 90, 72], B),\n    ([50], C),\n    ([200, 150, 180, 120], D),\n])\ndef test_max_drawdown(prices, expected):\n    got = max_drawdown(prices)\n    assert got == pytest.approx(expected)\n```",
       "question": "Work out each expected value by hand, and how many tests pytest reports.",
       "widget": {
         "kind": "table",
@@ -956,7 +957,7 @@
         "sql-aggregate"
       ],
       "title": "Dividing by every row",
-      "prose": "`prices` holds BARC's closes for five days: £2.15, `NULL`, £2.12, £2.18 and `NULL`.\n\n```sql\nSELECT SUM(close) / COUNT(*) FROM prices\nWHERE ticker = 'BARC';\n```",
+      "prose": "`prices` holds BARC's closes for five days: £2.15, `NULL`, £2.12, £2.18 and `NULL`.\n\n```sql\nSELECT SUM(close) / COUNT(*)\nFROM prices\nWHERE ticker = 'BARC';\n```",
       "question": "What does it return, in pounds?",
       "widget": {
         "kind": "numeric",
@@ -1126,7 +1127,7 @@
         "sql-python"
       ],
       "title": "What Python gets back",
-      "prose": "`trades` holds three BARC trades.\n\n```python\nrows = db.execute(\n    \"SELECT COUNT(*) FROM trades WHERE ticker = ?\",\n    (\"BARC\",)).fetchall()\nprint(rows)\n```",
+      "prose": "`trades` holds three BARC trades.\n\n```python\nsql = (\"SELECT COUNT(*) FROM trades \"\n       \"WHERE ticker = ?\")\nrows = db.execute(sql, (\"BARC\",)).fetchall()\nprint(rows)\n```",
       "question": "What does it print?",
       "widget": {
         "kind": "choice",
@@ -1169,7 +1170,7 @@
         "pt-design"
       ],
       "title": "A test that depends on the market",
-      "prose": "```python\ndef test_vol():\n    closes = download_closes(\"SPY\", days=30)\n    assert annualised_vol(closes) < 0.5\n```\n\nIt passes most days. It fails when the data site is slow, and in a wild month.",
+      "prose": "```python\ndef test_vol():\n    closes = download(\"SPY\", days=30)\n    vol = annualised_vol(closes)\n    assert vol < 0.5\n```\n\nIt passes most days. It fails when the data site is slow, and in a wild month.",
       "question": "What is the best fix?",
       "widget": {
         "kind": "choice",
@@ -1276,7 +1277,7 @@
         },
         "state": {}
       },
-      "question": "How many commits does `git log --oneline` list at the end?",
+      "question": "How many commits does the log list at the end?",
       "widget": {
         "kind": "numeric",
         "answer": 4,
