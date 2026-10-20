@@ -311,3 +311,5 @@ Phase 4, review: validator clean, playthrough green, orchestrator spot-reads les
 4. Every course has a `course.json`; unwritten lessons show as such and never throw.
 5. The reference lesson plays identically to the prototype's bespoke version.
 6. Export then import round-trips the state.
+7. Content second-reader pass: once a topic's courses are complete, a fresh agent reads every lesson of the topic as a learner (not its author), recomputes every stated number, checks each derivation line and each distractor's `why`, and reports errors for the orchestrator to fix. The playthrough proves the app grades its own answers consistently; this pass is what checks that the answers are right.
+8. Programming courses that cannot run in the browser (C++; a real shell for git and terminal) teach by reading, tracing and predicting output, with Python-checked or choice answers, and say so on their first screen. A C++ compiler in WebAssembly is engine work for later if wanted.
