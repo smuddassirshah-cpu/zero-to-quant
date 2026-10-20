@@ -36,8 +36,16 @@
   const svg = (tag, attrs = {}, children = []) => {
     const el = document.createElementNS(NS, tag);
     for (const [k, v] of Object.entries(attrs)) if (v != null && v !== false) el.setAttribute(k, v === true ? '' : v);
-    for (const c of [].concat(children)) if (c != null) el.append(typeof c === 'string' ? document.createTextNode(c) : c);
+    for (const c of [].concat(children)) if (c != null) { if (typeof c === 'string' && (tag === 'text' || tag === 'tspan') && AMBIG.test(c)) appendLegible(el, c); else el.append(typeof c === 'string' ? document.createTextNode(c) : c); }
     return el;
+  };
+  /* item 284: the canvas face draws capital I and lowercase l alike, so a capital I beside l, I or 1 ("Ill", "II",
+     "I1") is set in the serif face, whose I has serifs */
+  const AMBIG = /I(?=[lI1|])|(?<=[lI1|])I|^I$/;
+  const appendLegible = (el, t) => {
+    let last = 0; const re = /I(?=[lI1|])|(?<=[lI1|])I|^I$/g; let m;
+    while ((m = re.exec(t))) { if (m.index > last) el.append(document.createTextNode(t.slice(last, m.index))); const sp = document.createElementNS(NS, 'tspan'); sp.setAttribute('class', 'cv-serif-i'); sp.textContent = 'I'; el.append(sp); last = m.index + 1; }
+    if (last < t.length) el.append(document.createTextNode(t.slice(last)));
   };
   const attrs = (el, a) => { for (const [k, v] of Object.entries(a)) if (v == null || v === false) el.removeAttribute(k); else el.setAttribute(k, v === true ? '' : v); return el; };
 
