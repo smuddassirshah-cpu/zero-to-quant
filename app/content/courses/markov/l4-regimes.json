@@ -1,0 +1,1771 @@
+{
+  "id": "l4-regimes",
+  "course": "markov",
+  "title": "Bull and bear regimes",
+  "minutes": 15,
+  "objectives": [
+    "Model market regimes as a two-state chain and read its persistence.",
+    "Compute expected regime durations, and estimate the matrix by counting transitions"
+  ],
+  "skills": [
+    "mc-chains",
+    "mc-longrun"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "How long does a bull market last?",
+      "prose": "A two-state model of the market: each period the regime is bull or bear. A bull period is followed by another with chance 0.9; a bear period by another with chance 0.8. Today is bull.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "markov": true,
+          "height": 220,
+          "nodes": [
+            {
+              "id": "bull",
+              "label": "Bull",
+              "x": 0.2,
+              "y": 0.5
+            },
+            {
+              "id": "bear",
+              "label": "Bear",
+              "x": 0.8,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "bull",
+              "to": "bull",
+              "w": 0.9
+            },
+            {
+              "from": "bull",
+              "to": "bear",
+              "w": 0.1
+            },
+            {
+              "from": "bear",
+              "to": "bull",
+              "w": 0.2
+            },
+            {
+              "from": "bear",
+              "to": "bear",
+              "w": 0.8
+            }
+          ]
+        },
+        "state": {
+          "current": "bull"
+        }
+      },
+      "question": "What is the chance the bull regime is unbroken for the next 3 periods?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$0.9^3 = 0.729$",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "$0.9$",
+            "why": "That is one period. The regime must survive three periods in a row."
+          },
+          {
+            "id": "sub",
+            "text": "$1 - 3(0.1) = 0.7$",
+            "why": "You took away 0.1 three times. After the first period only the survivors face the next 0.1, so the chances multiply."
+          },
+          {
+            "id": "p3",
+            "text": "$(\\mathbf{P}^3)_{\\text{bull, bull}} = 0.781$",
+            "why": "That counts paths that switch to bear and come back. Unbroken means bull every period."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Unbroken means bull, bull, bull: one path through the graph."
+        },
+        {
+          "rung": "point",
+          "text": "The path uses the bull loop three times.",
+          "highlight": [
+            "e-bull-bull"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Multiply the loop three times: $0.9 \\times 0.9 \\times 0.9$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.9 \\times 0.9 \\times 0.9 = 0.729$.",
+        "generic": "Not quite right. Follow the bull loop once per period and multiply."
+      },
+      "explain": {
+        "text": "The run survives each period with chance 0.9, whatever happened before, so three periods give $0.9^3 = 0.729$. The chance that a run lasts at least $n$ periods shrinks by 0.9 per period. That pattern is a geometric distribution.",
+        "canvas": {
+          "highlight": [
+            "e-bull-bull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The length of a run",
+      "prose": "A regime that stays put with chance $p$ each period has run length $L$ with $P(L = n) = p^{n-1}(1 - p)$. Slide $p$ and watch the bars and the mean.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "n1",
+              "label": "1"
+            },
+            {
+              "id": "n2",
+              "label": "2"
+            },
+            {
+              "id": "n3",
+              "label": "3"
+            },
+            {
+              "id": "n4",
+              "label": "4"
+            },
+            {
+              "id": "n5",
+              "label": "5"
+            },
+            {
+              "id": "n6",
+              "label": "6"
+            },
+            {
+              "id": "n7",
+              "label": "7"
+            },
+            {
+              "id": "n8",
+              "label": "8"
+            },
+            {
+              "id": "n9",
+              "label": "9"
+            },
+            {
+              "id": "n10",
+              "label": "10"
+            },
+            {
+              "id": "n11",
+              "label": "11"
+            },
+            {
+              "id": "n12",
+              "label": "12"
+            },
+            {
+              "id": "n13",
+              "label": "13"
+            },
+            {
+              "id": "n14",
+              "label": "14"
+            },
+            {
+              "id": "n15",
+              "label": "15"
+            }
+          ],
+          "xLabel": "Run length $n$, periods",
+          "yLabel": "$P(L = n)$",
+          "yMax": 0.5
+        },
+        "state": {
+          "values": {
+            "n1": 0.1,
+            "n2": 0.09,
+            "n3": 0.081,
+            "n4": 0.0729,
+            "n5": 0.06561,
+            "n6": 0.059049,
+            "n7": 0.053144,
+            "n8": 0.04783,
+            "n9": 0.043047,
+            "n10": 0.038742,
+            "n11": 0.034868,
+            "n12": 0.031381,
+            "n13": 0.028243,
+            "n14": 0.025419,
+            "n15": 0.022877
+          },
+          "params": {
+            "p": 0.9
+          }
+        },
+        "derive": {
+          "values.n1": "(1 - p) * pow(p, 0)",
+          "values.n2": "(1 - p) * pow(p, 1)",
+          "values.n3": "(1 - p) * pow(p, 2)",
+          "values.n4": "(1 - p) * pow(p, 3)",
+          "values.n5": "(1 - p) * pow(p, 4)",
+          "values.n6": "(1 - p) * pow(p, 5)",
+          "values.n7": "(1 - p) * pow(p, 6)",
+          "values.n8": "(1 - p) * pow(p, 7)",
+          "values.n9": "(1 - p) * pow(p, 8)",
+          "values.n10": "(1 - p) * pow(p, 9)",
+          "values.n11": "(1 - p) * pow(p, 10)",
+          "values.n12": "(1 - p) * pow(p, 11)",
+          "values.n13": "(1 - p) * pow(p, 12)",
+          "values.n14": "(1 - p) * pow(p, 13)",
+          "values.n15": "(1 - p) * pow(p, 14)",
+          "caption": "Stay chance {{fixed(p, 2)}}: mean run {{fixed(1 / (1 - p), 1)}} periods"
+        },
+        "controls": [
+          {
+            "bind": "p",
+            "min": 0.5,
+            "max": 0.95,
+            "step": 0.05,
+            "label": "Stay chance $p$",
+            "start": 0.9
+          }
+        ]
+      },
+      "question": "Which run length is the most likely, whatever $p$ is?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "1 period: the first bar is always the tallest",
+            "correct": true
+          },
+          {
+            "id": "mean",
+            "text": "The mean, $1/(1 - p)$",
+            "why": "Set $p = 0.9$: the mean is 10, yet the bar at 10 is lower than the bar at 1. Long runs pull the mean up.",
+            "canvas": {
+              "params": {
+                "p": 0.9
+              }
+            }
+          },
+          {
+            "id": "half",
+            "text": "About half the mean",
+            "why": "Each bar is $p$ times the one before, so the bars only fall as $n$ grows.",
+            "canvas": {
+              "params": {
+                "p": 0.8
+              }
+            }
+          },
+          {
+            "id": "depends",
+            "text": "It depends on $p$",
+            "why": "Slide $p$ from 0.5 to 0.95. The first bar stays the tallest every time.",
+            "canvas": {
+              "params": {
+                "p": 0.95
+              }
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Every bar is $p$ times the one before.",
+        "generic": "Not quite right. Compare the first bar with the others for two or three values of $p$."
+      },
+      "explain": {
+        "text": "Each bar is the one before times $p$, so the bars fall from $n = 1$ for every $p$. At $p = 0.9$ the most likely run is 1 period, yet the mean is 10. A few very long runs carry the mean.",
+        "canvas": {
+          "params": {
+            "p": 0.9
+          },
+          "highlight": [
+            "xn1",
+            "xn10"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "The mean run length",
+      "prose": "The caption claimed the mean run is $1/(1 - p)$. Derive it from the geometric distribution.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "n1",
+              "label": "1"
+            },
+            {
+              "id": "n2",
+              "label": "2"
+            },
+            {
+              "id": "n3",
+              "label": "3"
+            },
+            {
+              "id": "n4",
+              "label": "4"
+            },
+            {
+              "id": "n5",
+              "label": "5"
+            },
+            {
+              "id": "n6",
+              "label": "6"
+            },
+            {
+              "id": "n7",
+              "label": "7"
+            },
+            {
+              "id": "n8",
+              "label": "8"
+            },
+            {
+              "id": "n9",
+              "label": "9"
+            },
+            {
+              "id": "n10",
+              "label": "10"
+            },
+            {
+              "id": "n11",
+              "label": "11"
+            },
+            {
+              "id": "n12",
+              "label": "12"
+            },
+            {
+              "id": "n13",
+              "label": "13"
+            },
+            {
+              "id": "n14",
+              "label": "14"
+            },
+            {
+              "id": "n15",
+              "label": "15"
+            }
+          ],
+          "xLabel": "Run length $n$, periods",
+          "yLabel": "$P(L = n)$",
+          "yMax": 0.5
+        },
+        "state": {
+          "values": {
+            "n1": 0.1,
+            "n2": 0.09,
+            "n3": 0.081,
+            "n4": 0.0729,
+            "n5": 0.06561,
+            "n6": 0.059049,
+            "n7": 0.053144,
+            "n8": 0.04783,
+            "n9": 0.043047,
+            "n10": 0.038742,
+            "n11": 0.034868,
+            "n12": 0.031381,
+            "n13": 0.028243,
+            "n14": 0.025419,
+            "n15": 0.022877
+          },
+          "caption": "Bull runs, $p = 0.9$"
+        }
+      },
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "pmf",
+            "text": "$P(L = n) = p^{n-1}(1 - p)$: stay $n - 1$ times, then switch"
+          },
+          {
+            "id": "def",
+            "text": "$E[L] = \\sum_{n \\ge 1} n\\,p^{n-1}(1 - p)$, the definition of expectation"
+          },
+          {
+            "id": "series",
+            "text": "$= (1 - p) \\cdot \\dfrac{1}{(1 - p)^2}$, differentiating $\\sum_{n \\ge 0} p^n = \\dfrac{1}{1 - p}$ term by term"
+          },
+          {
+            "id": "result",
+            "text": "$= \\dfrac{1}{1 - p}$, so a bull run lasts $\\dfrac{1}{0.1} = 10$ periods on average"
+          }
+        ],
+        "answer": [
+          "pmf",
+          "def",
+          "series",
+          "result"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the chance of a run of exactly $n$ periods."
+        },
+        {
+          "rung": "point",
+          "text": "The sum $\\sum n p^{n-1}$ is the derivative of the geometric series $\\sum p^n$.",
+          "highlight": [
+            "xn1",
+            "xn2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Distribution, definition of $E[L]$, the differentiated series, then simplify."
+        }
+      ],
+      "feedback": {
+        "correct": "$E[L] = \\dfrac{1}{1 - p}$.",
+        "generic": "Not quite right. Write the distribution first, then the expectation, then sum the series.",
+        "byKey": {
+          "series": "The series replaces a sum that the expectation line writes down. Write $E[L]$ first.",
+          "def": "The expectation needs $P(L = n)$ first.",
+          "result": "The simplified result comes last."
+        }
+      },
+      "explain": {
+        "text": "Differentiating $\\sum p^n = 1/(1 - p)$ gives $\\sum n p^{n-1} = 1/(1 - p)^2$, and one factor of $1 - p$ cancels. So the **expected duration** of a regime is $1/(1 - p_{ii})$. For bull, $1/0.1 = 10$ periods."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The bear's turn",
+      "prose": "Bear stays bear with chance 0.8 each period. The bars are its run lengths.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "n1",
+              "label": "1"
+            },
+            {
+              "id": "n2",
+              "label": "2"
+            },
+            {
+              "id": "n3",
+              "label": "3"
+            },
+            {
+              "id": "n4",
+              "label": "4"
+            },
+            {
+              "id": "n5",
+              "label": "5"
+            },
+            {
+              "id": "n6",
+              "label": "6"
+            },
+            {
+              "id": "n7",
+              "label": "7"
+            },
+            {
+              "id": "n8",
+              "label": "8"
+            },
+            {
+              "id": "n9",
+              "label": "9"
+            },
+            {
+              "id": "n10",
+              "label": "10"
+            },
+            {
+              "id": "n11",
+              "label": "11"
+            },
+            {
+              "id": "n12",
+              "label": "12"
+            },
+            {
+              "id": "n13",
+              "label": "13"
+            },
+            {
+              "id": "n14",
+              "label": "14"
+            },
+            {
+              "id": "n15",
+              "label": "15"
+            }
+          ],
+          "xLabel": "Run length $n$, periods",
+          "yLabel": "$P(L = n)$",
+          "yMax": 0.5
+        },
+        "state": {
+          "values": {
+            "n1": 0.2,
+            "n2": 0.16,
+            "n3": 0.128,
+            "n4": 0.1024,
+            "n5": 0.08192,
+            "n6": 0.065536,
+            "n7": 0.052429,
+            "n8": 0.041943,
+            "n9": 0.033554,
+            "n10": 0.026844,
+            "n11": 0.021475,
+            "n12": 0.01718,
+            "n13": 0.013744,
+            "n14": 0.010995,
+            "n15": 0.008796
+          },
+          "caption": "Bear runs, $p = 0.8$"
+        }
+      },
+      "question": "How many periods does a bear regime last on average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "periods",
+        "accept": "5: $1/(1 - 0.8) = 1/0.2$.",
+        "label": "Mean bear run",
+        "wrong": [
+          {
+            "id": "recip-stay",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "bull",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "leave",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "odds",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $1/(1 - p)$ with the bear's own stay chance."
+        },
+        {
+          "rung": "point",
+          "text": "Here $1 - p = 0.2$, the chance of switching each period.",
+          "highlight": [
+            "xn1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1/0.2 = 5$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1/0.2 = 5$ periods.",
+        "generic": "Not quite right. Divide 1 by the chance of leaving bear each period.",
+        "byKey": {
+          "recip-stay": "You used $1/0.8$, the stay chance. The mean is 1 over the chance of leaving, 0.2.",
+          "bull": "That is the bull regime. Bear leaves with chance 0.2, twice as often.",
+          "leave": "That is the chance of leaving each period. The mean run is its reciprocal.",
+          "odds": "You used $0.8/0.2$, which counts the extra periods after the first. Add the first one back."
+        }
+      },
+      "explain": {
+        "text": "Bear leaves with chance 0.2 each period, so its runs last $1/0.2 = 5$ periods on average. Bull leaves half as often and lasts twice as long, 10 periods. The rarer the exit, the longer the run.",
+        "canvas": {
+          "highlight": [
+            "xn5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The share of time in bull",
+      "prose": "The market alternates: a bull run, then a bear run, then bull again. On average a bull run lasts 10 periods and a bear run 5.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "bull",
+              "label": "Bull run"
+            },
+            {
+              "id": "bear",
+              "label": "Bear run"
+            }
+          ],
+          "yLabel": "Mean length, periods",
+          "yMax": 12,
+          "showValues": true,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "bull": 10,
+            "bear": 5
+          }
+        }
+      },
+      "question": "Over a long stretch, what share of periods are bull?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6667,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "",
+        "accept": "Any form equal to $\\tfrac{2}{3}$: $\\tfrac{10}{10 + 5}$.",
+        "label": "Share of bull periods",
+        "placeholder": "fraction or decimal",
+        "wrong": [
+          {
+            "id": "stay",
+            "value": 0.9,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "bear",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One bull run and one bear run make a cycle. How long is a cycle on average?"
+        },
+        {
+          "rung": "point",
+          "text": "A cycle lasts $10 + 5 = 15$ periods on average.",
+          "highlight": [
+            "xbull",
+            "xbear"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bull takes 10 of every 15 periods."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{10}{15} = \\tfrac{2}{3}$.",
+        "generic": "Not quite right. Divide the mean bull run by the mean cycle.",
+        "byKey": {
+          "stay": "That is $p_{\\text{bull, bull}}$, the chance of staying for one more period. The share of time also depends on how fast bear returns.",
+          "half": "The regimes alternate, but bull runs last twice as long.",
+          "bear": "That is the bear share. Bull takes 10 of every 15 periods."
+        }
+      },
+      "explain": {
+        "text": "Each cycle averages $10 + 5 = 15$ periods, and 10 of them are bull: a long-run share of $\\tfrac{2}{3}$. That is the steady state you found in the eigen course for this matrix, $(\\tfrac{2}{3}, \\tfrac{1}{3})$. Two routes, one answer.",
+        "canvas": {
+          "highlight": [
+            "xbull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Is the bull overdue to end?",
+      "prose": "The index below has been in the bull regime for 14 periods, well past the 10-period average. A strategist says the bull market is now overdue to end.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "px",
+              "label": "Index",
+              "values": [
+                100.0,
+                98.84,
+                98.15,
+                96.61,
+                95.83,
+                94.58,
+                93.35,
+                94.81,
+                95.63,
+                96.38,
+                97.43,
+                98.65,
+                97.45,
+                96.51,
+                94.98,
+                95.6,
+                96.2,
+                96.46,
+                96.65,
+                96.79,
+                97.47,
+                98.18,
+                98.84,
+                99.66,
+                99.92,
+                100.69,
+                101.59,
+                102.71,
+                103.18
+              ]
+            }
+          ],
+          "money": "£",
+          "xLabel": "Period",
+          "height": 230
+        },
+        "state": {
+          "shade": [
+            {
+              "id": "run",
+              "from": 14,
+              "to": 28,
+              "label": "bull: 14 periods",
+              "tone": "pos"
+            }
+          ]
+        }
+      },
+      "question": "In this model, what is the chance the bull regime ends next period?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "0.1, the same as on its first day",
+            "correct": true
+          },
+          {
+            "id": "higher",
+            "text": "More than 0.1, because the run is past its average",
+            "why": "You let the run's age raise the exit chance. The chain sees only today's state, bull, and bull's exit arrow is 0.1."
+          },
+          {
+            "id": "cum",
+            "text": "$1 - 0.9^{14} \\approx 0.77$",
+            "why": "That is the chance a fresh run would have ended within 14 periods. This run has already survived them."
+          },
+          {
+            "id": "lower",
+            "text": "Less than 0.1, because a long run shows strength",
+            "why": "That is momentum in the run itself. In this model the exit chance is 0.1 every period."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the chain need to know to give next period's chances?"
+        },
+        {
+          "rung": "point",
+          "text": "Only the current state, bull, matters. Look at the arrow out of bull.",
+          "highlight": [
+            "run"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bull's exit arrow is 0.1, whatever the run's length."
+        }
+      ],
+      "feedback": {
+        "correct": "A geometric run has no memory of its age.",
+        "generic": "Not quite right. In a Markov chain the next step depends only on the current state.",
+        "byKey": {
+          "higher": "You treated the run as overdue, the gambler's fallacy for regimes. The exit chance is 0.1 every period in this model.",
+          "cum": "You worked out the chance of ending within 14 periods from the start. The run has survived those; only the next period is left to decide."
+        }
+      },
+      "explain": {
+        "text": "The model's next step depends only on today's state, bull, so the exit chance is 0.1 whatever the run's age. The expected time still to run is again 10 periods. That is **memorylessness**, the regime version of the gambler's fallacy from the conditional course.",
+        "canvas": {
+          "shade": [
+            {
+              "id": "run",
+              "from": 14,
+              "to": 28,
+              "label": "still 0.1 a period",
+              "tone": "pos"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "How fast the chain forgets",
+      "prose": "Knowing today's regime helps forecast, but less each period. The bars show $P(\\text{bull at } k \\mid \\text{bull now}) - P(\\text{bull at } k \\mid \\text{bear now})$. It equals $0.7^k$, where $0.7 = 0.9 + 0.8 - 1$ is the second eigenvalue of $\\mathbf{P}$, its **persistence**.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "k0",
+              "label": "0"
+            },
+            {
+              "id": "k1",
+              "label": "1"
+            },
+            {
+              "id": "k2",
+              "label": "2"
+            },
+            {
+              "id": "k3",
+              "label": "3"
+            },
+            {
+              "id": "k4",
+              "label": "4"
+            },
+            {
+              "id": "k5",
+              "label": "5"
+            },
+            {
+              "id": "k6",
+              "label": "6"
+            },
+            {
+              "id": "k7",
+              "label": "7"
+            },
+            {
+              "id": "k8",
+              "label": "8"
+            },
+            {
+              "id": "k9",
+              "label": "9"
+            },
+            {
+              "id": "k10",
+              "label": "10"
+            },
+            {
+              "id": "k11",
+              "label": "11"
+            },
+            {
+              "id": "k12",
+              "label": "12"
+            }
+          ],
+          "xLabel": "Periods ahead $k$",
+          "yLabel": "Gap",
+          "yMax": 1
+        },
+        "state": {
+          "values": {
+            "k0": 1.0,
+            "k1": 0.7,
+            "k2": 0.49,
+            "k3": 0.343,
+            "k4": 0.2401,
+            "k5": 0.16807,
+            "k6": 0.117649,
+            "k7": 0.082354,
+            "k8": 0.057648,
+            "k9": 0.040354,
+            "k10": 0.028248,
+            "k11": 0.019773,
+            "k12": 0.013841
+          }
+        }
+      },
+      "question": "What is the smallest $k$ at which the gap falls below 0.05?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "periods",
+        "accept": "9: $0.7^8 \\approx 0.058$ and $0.7^9 \\approx 0.040$.",
+        "label": "Smallest k",
+        "wrong": [
+          {
+            "id": "eight",
+            "value": 8
+          },
+          {
+            "id": "mean",
+            "value": 10
+          },
+          {
+            "id": "five",
+            "value": 5
+          },
+          {
+            "id": "two",
+            "value": 2
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find where $0.7^k$ first drops under 0.05."
+        },
+        {
+          "rung": "point",
+          "text": "$0.7^8 \\approx 0.058$, still above 0.05.",
+          "highlight": [
+            "xk8",
+            "xk9"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.7^9 \\approx 0.040$, the first below 0.05."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.7^9 \\approx 0.040 < 0.05$.",
+        "generic": "Not quite right. Compute $0.7^k$ for $k$ near 8 and 9.",
+        "byKey": {
+          "eight": "At $k = 8$ the gap is $0.7^8 \\approx 0.058$, still above 0.05.",
+          "mean": "10 is the mean bull run. The forgetting rate is the eigenvalue, 0.7, not a run length.",
+          "five": "At $k = 5$ the gap is $0.7^5 \\approx 0.168$, more than three times 0.05.",
+          "two": "At $k = 2$ the gap is 0.49. It needs many more periods to fall to 0.05."
+        }
+      },
+      "explain": {
+        "text": "The gap shrinks by the factor 0.7 each period, from 1 at $k = 0$ to $0.058$ at $k = 8$ and $0.040$ at $k = 9$. So after about 9 periods today's regime says little. Persistence near 1 means a long memory; near 0, almost none.",
+        "canvas": {
+          "highlight": [
+            "xk8",
+            "xk9"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "No memory, and total memory",
+      "prose": "Four candidate regime matrices, rows bull then bear. For a two-state chain the persistence is $p_{\\text{bull, bull}} + p_{\\text{bear, bear}} - 1$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "A",
+              "rows": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ],
+              "label": "A"
+            },
+            {
+              "id": "B",
+              "rows": [
+                [
+                  0.5,
+                  0.5
+                ],
+                [
+                  0.5,
+                  0.5
+                ]
+              ],
+              "label": "B"
+            },
+            {
+              "id": "C",
+              "rows": [
+                [
+                  0.9,
+                  0.1
+                ],
+                [
+                  0.2,
+                  0.8
+                ]
+              ],
+              "label": "C"
+            },
+            {
+              "id": "D",
+              "rows": [
+                [
+                  0.1,
+                  0.9
+                ],
+                [
+                  0.9,
+                  0.1
+                ]
+              ],
+              "label": "D"
+            }
+          ],
+          "ops": [
+            " ",
+            " ",
+            " "
+          ]
+        },
+        "state": {}
+      },
+      "question": "For which matrix is today's regime no help at all in forecasting tomorrow?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "B",
+            "text": "B: every entry 0.5",
+            "correct": true
+          },
+          {
+            "id": "A",
+            "text": "A: the identity",
+            "why": "Under A the chain never switches, so today decides tomorrow exactly. Its persistence is $1 + 1 - 1 = 1$."
+          },
+          {
+            "id": "C",
+            "text": "C: our bull and bear chain",
+            "why": "C's persistence is 0.7: today shifts tomorrow's chances by 0.7."
+          },
+          {
+            "id": "D",
+            "text": "D: switches with chance 0.9",
+            "why": "D almost always flips, so today tells you tomorrow is probably the other regime. Its persistence is $-0.8$."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Today is no help when both rows are the same."
+        },
+        {
+          "rung": "point",
+          "text": "Compare the bull row with the bear row in each matrix.",
+          "highlight": [
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In B both rows are $(0.5, 0.5)$, so tomorrow's chances ignore today. Its persistence is $0.5 + 0.5 - 1 = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "Equal rows mean independent draws: persistence 0.",
+        "generic": "Not quite right. Look for the matrix whose two rows are identical."
+      },
+      "explain": {
+        "text": "In B both rows are $(0.5, 0.5)$, so each period is a fresh coin flip: persistence 0 and runs of mean 2. At the other extreme, A is $\\mathbf{I}$: persistence 1, the regime never switches, and the mean run $1/(1 - 1)$ is infinite. Real regime chains sit between.",
+        "canvas": {
+          "highlight": [
+            "B",
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Fitting the matrix",
+      "prose": "A model labels 20 periods of history as U (bull) or D (bear). We estimate each row of $\\mathbf{P}$ by counting the moves out of each state, then dividing by the moves from that state.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              "U",
+              "U",
+              "U",
+              "U",
+              "U",
+              "U",
+              "D",
+              "D",
+              "D",
+              "U"
+            ],
+            "indexFrom": 1,
+            "showIndex": true,
+            "height": 100
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              "U",
+              "U",
+              "U",
+              "U",
+              "U",
+              "U",
+              "U",
+              "D",
+              "U",
+              "U"
+            ],
+            "indexFrom": 11,
+            "showIndex": true,
+            "height": 100
+          },
+          "state": {}
+        },
+        "state": {
+          "caption": "Periods 1 to 10, then 11 to 20"
+        }
+      },
+      "question": "Fill in the counts and the estimates.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "From",
+          "to U",
+          "to D",
+          "$\\hat p$ of staying"
+        ],
+        "rows": [
+          [
+            "U",
+            {
+              "edit": true,
+              "answer": 13,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0.8667,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ],
+          [
+            "D",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.002
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "20 periods give 19 moves. The last period has no move after it."
+        },
+        {
+          "rung": "point",
+          "text": "Count each adjacent pair: UU, UD, DU, DD. The first six U periods give five UU moves and one UD.",
+          "highlight": [
+            "left:c6",
+            "left:c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "UU 13, UD 2, DU 2, DD 2. From U there are 15 moves, so $\\hat p = 13/15$; from D there are 4, so $2/4$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat p_{UU} = 13/15 \\approx 0.867$ and $\\hat p_{DD} = 2/4 = 0.5$.",
+        "generic": "Not quite right. Count the 19 adjacent pairs, then divide each row's count by that row's total.",
+        "byKey": {
+          "r0c3": "Check the U row's estimate. Divide 13 by the 15 moves out of U, not by the 16 U periods: the last U has no move after it.",
+          "r0c1": "Recount the UU pairs. Runs of 6, 8 and 2 give $5 + 7 + 1 = 13$.",
+          "r1c3": "Divide DD by the moves out of D: $2/4$.",
+          "r1c1": "Each of the two D runs ends with one DU move."
+        }
+      },
+      "explain": {
+        "text": "The U runs of 6, 8 and 2 give $5 + 7 + 1 = 13$ UU moves, and the first two runs each end in a UD move. The D runs of 3 and 1 give 2 DD moves and 2 DU moves. So $\\hat p_{UU} = 13/15 \\approx 0.87$ and $\\hat p_{DD} = 0.5$: only 4 moves out of D, a noisy estimate.",
+        "canvas": {
+          "left": {
+            "highlight": {
+              "range": [
+                7,
+                9
+              ]
+            }
+          },
+          "right": {
+            "highlight": {
+              "range": [
+                18,
+                18
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Sizing by regime",
+      "prose": "A fund targets 10% annual volatility on a £10m book. It holds £10m × 10% / (regime volatility): £12.5m in bull (8% volatility) and £4m in bear (25%). Regimes follow our chain. Today is bear.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Regime",
+            "Volatility",
+            "Position",
+            "Next: to bull",
+            "Next: to bear"
+          ],
+          "rows": [
+            [
+              "Bull",
+              "8%",
+              "£12.5m",
+              "0.9",
+              "0.1"
+            ],
+            [
+              "Bear",
+              "25%",
+              "£4m",
+              "0.2",
+              "0.8"
+            ]
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      },
+      "question": "What is the expected position next period, in £m?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.7,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£m",
+        "accept": "£5.7m: $0.2(12.5) + 0.8(4)$.",
+        "label": "Expected position next period, £m",
+        "wrong": [
+          {
+            "id": "bull-row",
+            "value": 11.65,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "long-run",
+            "value": 9.6667,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "today",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "avg",
+            "value": 8.25,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight each regime's position by its chance next period, from the bear row."
+        },
+        {
+          "rung": "point",
+          "text": "From bear: bull 0.2, bear 0.8.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.2 \\times 12.5 + 0.8 \\times 4$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2.5 + 3.2 = 5.7$, so £5.7m.",
+        "generic": "Not quite right. Use the bear row's chances to weight next period's positions.",
+        "byKey": {
+          "bull-row": "You used the bull row. Today is bear, so the chances come from the bear row.",
+          "long-run": "That uses the long-run shares $\\tfrac{2}{3}$ and $\\tfrac{1}{3}$. One period ahead the chain still remembers today.",
+          "today": "That assumes bear for sure. It turns bull with chance 0.2.",
+          "avg": "You averaged the two positions equally. Bear is four times as likely as bull next period."
+        }
+      },
+      "explain": {
+        "text": "From bear the chain moves to bull with chance 0.2 and stays with 0.8, so the expected position is $0.2(12.5) + 0.8(4) = 5.7$. It is £5.7m next period, rising towards the long-run £9.67m as the chain forgets. The gap closes by the factor 0.7 a period.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ],
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How long is this drawdown?",
+      "prose": "A strategy's weekly P&L is modelled as a chain with a drawdown state. Fitted on five years, the drawdown state persists with chance 0.85 a week. The strategy has been in drawdown for 4 weeks.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "pnl",
+              "label": "P&L",
+              "values": [
+                0.0,
+                20.2,
+                53.4,
+                78.0,
+                102.7,
+                124.6,
+                144.9,
+                167.0,
+                185.0,
+                198.8,
+                211.6,
+                222.9,
+                242.9,
+                221.9,
+                207.5,
+                186.2,
+                163.5,
+                143.2,
+                118.8,
+                126.0,
+                151.1,
+                167.0,
+                187.0,
+                204.0,
+                240.5,
+                223.2,
+                201.4,
+                170.1,
+                151.3
+              ]
+            }
+          ],
+          "money": "£",
+          "xLabel": "Week",
+          "yLabel": "Cumulative P&L, £k",
+          "height": 230
+        },
+        "state": {
+          "shade": [
+            {
+              "id": "now",
+              "from": 24,
+              "to": 28,
+              "label": "drawdown: 4 weeks",
+              "tone": "neg"
+            }
+          ]
+        }
+      },
+      "question": "How many more weeks is the drawdown expected to last?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6.67,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "weeks",
+        "accept": "Any value from 6.66 to 6.68: $1/(1 - 0.85) = 6.67$, whatever has passed.",
+        "label": "Expected weeks still to come",
+        "wrong": [
+          {
+            "id": "subtract",
+            "value": 2.67,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "total",
+            "value": 10.67,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "leave",
+            "value": 0.15,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "recip-stay",
+            "value": 1.18,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the chain remember the 4 weeks already spent?"
+        },
+        {
+          "rung": "point",
+          "text": "From any week in drawdown, the time still to come is a fresh geometric run.",
+          "highlight": [
+            "now"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1/(1 - 0.85) = 1/0.15$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1/0.15 \\approx 6.67$ weeks, as on day one.",
+        "generic": "Not quite right. The state is drawdown, and the chain has no memory of how long.",
+        "byKey": {
+          "subtract": "You took the 4 weeks off the mean. The chain has no memory, so the full mean is still to come.",
+          "total": "You added the 4 weeks to the mean. That is the expected total length, not the time still to come.",
+          "leave": "That is the chance of leaving each week. The mean wait is its reciprocal.",
+          "recip-stay": "You used $1/0.85$. The mean run is 1 over the chance of leaving."
+        }
+      },
+      "explain": {
+        "text": "Each week the drawdown ends with chance 0.15, regardless of its age, so the expected time still to come is $1/0.15 \\approx 6.67$ weeks. Memorylessness cuts both ways: no relief is due because it has lasted. A real P&L may have memory the chain lacks, which is worth testing.",
+        "canvas": {
+          "highlight": [
+            "now"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A regime that stays with chance $p$ has a geometric run length: the most likely run is 1 period, but the mean is $1/(1 - p)$. Bull lasts 10 periods, bear 5.",
+      "The long-run share, $\\tfrac{10}{15} = \\tfrac{2}{3}$ in bull, is the steady state. The persistence, $\\lambda_2 = p_{11} + p_{22} - 1 = 0.7$, sets how fast the chain forgets today.",
+      "Estimate $\\mathbf{P}$ by counting moves out of each state and dividing by that state's moves, not its periods."
+    ],
+    "formula": {
+      "name": "Expected regime duration",
+      "tex": "E[L_i] = \\dfrac{1}{1 - p_{ii}}, \\qquad \\lambda_2 = p_{11} + p_{22} - 1",
+      "note": "$\\lambda_2 = 0$ is independent draws; $\\lambda_2 = 1$ ($\\mathbf{P} = \\mathbf{I}$) never switches."
+    },
+    "trap": "A long run is not overdue to end: the exit chance is $1 - p_{ii}$ every period. And $p_{ii}$ is not the share of time in state $i$."
+  },
+  "quiz": [
+    {
+      "id": "q-duration",
+      "difficulty": 2,
+      "prose": "A low-volatility regime stays put with chance 0.95 each day.",
+      "question": "How many days does it last on average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "days",
+        "accept": "20: $1/0.05$.",
+        "label": "Mean run",
+        "wrong": [
+          {
+            "id": "recip",
+            "value": 1.0526,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "odds",
+            "value": 19,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1/(1 - 0.95) = 20$ days.",
+        "generic": "Not quite right. Divide 1 by the daily chance of leaving.",
+        "byKey": {
+          "recip": "You used $1/0.95$. Divide by the chance of leaving, 0.05.",
+          "odds": "You used $0.95/0.05$, which leaves out the first day."
+        }
+      },
+      "explain": {
+        "text": "The regime ends each day with chance 0.05, so runs last $1/0.05 = 20$ days on average."
+      }
+    },
+    {
+      "id": "q-persistence",
+      "difficulty": 2,
+      "prose": "A regime chain has $\\mathbf{P} = \\begin{pmatrix} 0.8 & 0.2 \\\\ 0.4 & 0.6 \\end{pmatrix}$.",
+      "question": "What is its persistence, the second eigenvalue?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "",
+        "accept": "0.4: $0.8 + 0.6 - 1$.",
+        "label": "Persistence",
+        "wrong": [
+          {
+            "id": "trace",
+            "value": 1.4,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "det-ish",
+            "value": 0.48,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "diff",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.8 + 0.6 - 1 = 0.4$.",
+        "generic": "Not quite right. Add the two stay chances and subtract 1.",
+        "byKey": {
+          "trace": "That is the trace, $\\lambda_1 + \\lambda_2$. Subtract $\\lambda_1 = 1$.",
+          "det-ish": "You multiplied the stay chances. The persistence is their sum minus 1.",
+          "diff": "You subtracted the stay chances. Add them, then subtract 1."
+        }
+      },
+      "explain": {
+        "text": "The eigenvalues add to the trace, $1.4$, and one of them is 1. So $\\lambda_2 = 0.4$: a forecast gap shrinks by 0.4 each period, faster than our 0.7."
+      }
+    },
+    {
+      "id": "q-share",
+      "difficulty": 3,
+      "prose": "Bull stays bull with chance 0.95; bear stays bear with chance 0.85.",
+      "question": "What share of periods are bull in the long run?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "",
+        "accept": "0.75: runs of 20 and $6\\tfrac{2}{3}$, so $20/26\\tfrac{2}{3}$.",
+        "label": "Share of bull periods",
+        "placeholder": "fraction or decimal",
+        "wrong": [
+          {
+            "id": "stay",
+            "value": 0.95,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "bear",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\dfrac{20}{20 + 6.67} = 0.75$.",
+        "generic": "Not quite right. Find each mean run, then the bull share of a cycle.",
+        "byKey": {
+          "stay": "That is the stay chance. The share also depends on how long bear runs last.",
+          "half": "Bull runs last three times as long as bear runs.",
+          "bear": "That is the bear share."
+        }
+      },
+      "explain": {
+        "text": "Bull runs average $1/0.05 = 20$ periods and bear runs $1/0.15 \\approx 6.67$. Bull takes $20/26.67 = 0.75$ of each cycle. Equivalently, $0.15/(0.05 + 0.15) = 0.75$."
+      }
+    },
+    {
+      "id": "q-pii",
+      "difficulty": 2,
+      "prose": "An analyst reads $p_{\\text{bull, bull}} = 0.9$ in our regime matrix.",
+      "question": "Which statement is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Given bull now, bull next period has chance 0.9",
+            "correct": true
+          },
+          {
+            "id": "share",
+            "text": "The market is bull 90% of the time",
+            "why": "The long-run share is $\\tfrac{2}{3}$. It also depends on how fast bear returns."
+          },
+          {
+            "id": "last",
+            "text": "Bull runs last 0.9 periods on average",
+            "why": "The mean run is $1/(1 - 0.9) = 10$ periods."
+          },
+          {
+            "id": "decay",
+            "text": "The chance of staying bull falls the longer it lasts",
+            "why": "It is 0.9 every period: the chain has no memory of the run's age."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It is a one-step conditional chance, nothing more.",
+        "generic": "Not quite right. An entry of $\\mathbf{P}$ is a conditional chance for one step."
+      },
+      "explain": {
+        "text": "$p_{\\text{bull, bull}} = P(\\text{bull next} \\mid \\text{bull now})$. The share of time in bull, $\\tfrac{2}{3}$, and the mean run, 10, are both built from it, but neither equals it."
+      }
+    }
+  ]
+}

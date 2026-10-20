@@ -749,7 +749,7 @@
           /* item 222: a polar region { polar: "r(theta)", from, to, inner: "r0(theta)" } (theta in radians), value 1/2 ∫ (r² − r0²) dθ */
           if (a && a.polar != null) {
             const P = exprParams(view), rf = K.fnOf(String(a.polar), ['theta', ...Object.keys(P)]), r0 = a.inner != null ? K.fnOf(String(a.inner), ['theta', ...Object.keys(P)]) : null;
-            const R1 = (t) => rf(0, { ...P, theta: t }), R0 = (t) => (r0 ? r0(0, { ...P, theta: t }) : 0), t0 = +a.from || 0, t1 = a.to != null ? +a.to : 2 * Math.PI, N = 160;
+            const R1 = (t) => rf(0, { ...P, theta: t }), R0 = (t) => (r0 ? r0(0, { ...P, theta: t }) : 0), num = (v, d) => (v == null ? d : typeof v === 'string' ? K.fnOf(v, Object.keys(P))(0, P) : +v), t0 = num(a.from, 0) || 0, t1 = num(a.to, 2 * Math.PI), N = 160; // limits may be expressions ("pi", "b")
             const outer = Array.from({ length: N + 1 }, (_, i) => { const t = t0 + (t1 - t0) * i / N, r = R1(t); return [sx(r * Math.cos(t)), sy(r * Math.sin(t))]; });
             const innerP = Array.from({ length: N + 1 }, (_, i) => { const t = t1 - (t1 - t0) * i / N, r = R0(t); return [sx(r * Math.cos(t)), sy(r * Math.sin(t))]; });
             const d = 'M' + outer.concat(innerP).filter((q) => Number.isFinite(q[0]) && Number.isFinite(q[1])).map((q) => q[0].toFixed(2) + ',' + q[1].toFixed(2)).join('L') + 'Z';

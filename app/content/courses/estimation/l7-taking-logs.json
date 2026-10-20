@@ -1,0 +1,1309 @@
+{
+  "id": "l7-taking-logs",
+  "course": "estimation",
+  "title": "Why we take logs",
+  "minutes": 14,
+  "objectives": [
+    "Use the log-likelihood to turn a product into a sum.",
+    "Explain why the maximiser is unchanged and why logs avoid underflow."
+  ],
+  "skills": [
+    "es-mle"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Same peak, different curve",
+      "prose": "The top curve is the likelihood for 7 heads in 10 flips. The bottom curve is its natural log, $\\ell(p) = \\ln L(p)$. One slider moves a point along both.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              0,
+              1
+            ],
+            "y": [
+              0,
+              2.6
+            ],
+            "grid": true,
+            "xLabel": "$p$",
+            "yLabel": "$1000 \\times L(p)$",
+            "height": 190,
+            "functions": [
+              {
+                "id": "f",
+                "expr": "1000*x^7*(1-x)^3",
+                "label": "$L(p)$",
+                "labelAt": 0.88
+              }
+            ]
+          },
+          "state": {
+            "points": [
+              {
+                "id": "P",
+                "x": 0.3,
+                "y": 0.2401,
+                "label": "",
+                "tap": false
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              0,
+              1
+            ],
+            "y": [
+              -24,
+              -4
+            ],
+            "grid": true,
+            "xLabel": "$p$",
+            "yLabel": "$\\ell(p) = \\ln L(p)$",
+            "height": 190,
+            "functions": [
+              {
+                "id": "g",
+                "expr": "7*ln(x)+3*ln(1-x)",
+                "label": "$\\ell(p)$",
+                "labelAt": 0.2,
+                "labelSide": "below",
+                "domain": [
+                  0.05,
+                  0.97
+                ]
+              }
+            ]
+          },
+          "state": {
+            "points": [
+              {
+                "id": "Q",
+                "x": 0.3,
+                "y": -9.5,
+                "label": "",
+                "tap": false
+              }
+            ]
+          }
+        },
+        "derive": {
+          "left:P.x": "p",
+          "left:P.y": "1000*pow(p, 7)*pow(1-p, 3)",
+          "right:Q.x": "p",
+          "right:Q.y": "7*ln(p)+3*ln(1-p)",
+          "caption": "$p$ = {{fixed(p, 2)}}: $L$ = {{fixed(pow(p, 7)*pow(1-p, 3), 5)}}, $\\ell$ = {{fixed(7*ln(p)+3*ln(1-p), 3)}}"
+        }
+      },
+      "question": "Slide $p$ to the top of the bottom curve, $\\ell(p)$.",
+      "widget": {
+        "kind": "slider",
+        "min": 0.05,
+        "max": 0.95,
+        "step": 0.01,
+        "start": 0.3,
+        "bind": "p",
+        "label": "$p$",
+        "decimals": 2,
+        "answer": 0.7,
+        "tol": 0.02,
+        "wrong": [
+          {
+            "id": "half",
+            "from": 0.45,
+            "to": 0.55
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the value of $\\ell$ in the caption."
+        },
+        {
+          "rung": "point",
+          "text": "Both curves are drawn over the same $p$ axis. Where is the top curve highest?",
+          "highlight": [
+            "right:g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Slide to 0.70: $\\ell$ reaches $-6.109$, its largest value."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\ell(p)$ peaks at $p = 0.7$, exactly where $L(p)$ does.",
+        "generic": "Not quite right. Slide until $\\ell$ in the caption stops rising.",
+        "byKey": {
+          "half": "You stopped near a fair coin. $\\ell$ is still rising there."
+        }
+      },
+      "explain": {
+        "text": "Both curves peak at $p = 0.7$. The log is increasing: a bigger $L$ always means a bigger $\\ln L$. So whatever maximises one maximises the other.",
+        "canvas": {
+          "left": {
+            "vlines": [
+              {
+                "id": "v1",
+                "x": 0.7
+              }
+            ]
+          },
+          "right": {
+            "vlines": [
+              {
+                "id": "v2",
+                "x": 0.7,
+                "label": "$p = 0.7$"
+              }
+            ]
+          },
+          "caption": "Both peak at $p = 0.7$"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Now collect more data, always with 70% heads. The control sets the number of flips $n$. Watch both curves as $n$ grows, and read the peak values in the caption.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              0,
+              1
+            ],
+            "y": [
+              0,
+              0.0025
+            ],
+            "grid": true,
+            "xLabel": "$p$",
+            "yLabel": "$L(p)$",
+            "height": 190,
+            "functions": [
+              {
+                "id": "f",
+                "expr": "x^(0.7*n)*(1-x)^(0.3*n)",
+                "label": "$L(p)$",
+                "labelAt": 0.88
+              }
+            ],
+            "params": {
+              "n": 10
+            }
+          },
+          "state": {}
+        },
+        "right": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              0,
+              1
+            ],
+            "y": [
+              -220,
+              -2
+            ],
+            "grid": true,
+            "xLabel": "$p$",
+            "yLabel": "$\\ell(p)$",
+            "height": 190,
+            "functions": [
+              {
+                "id": "g",
+                "expr": "m*(0.7*ln(x)+0.3*ln(1-x))",
+                "label": "$\\ell(p)$",
+                "labelAt": 0.2,
+                "labelSide": "below",
+                "domain": [
+                  0.05,
+                  0.97
+                ]
+              }
+            ],
+            "params": {
+              "m": 10
+            }
+          },
+          "state": {}
+        },
+        "derive": {
+          "right:params.m": "n",
+          "caption": "$n$ = {{n}}: highest $L$ = {{(pow(0.7, 0.7*n)*pow(0.3, 0.3*n)).toExponential(2)}}, highest $\\ell$ = {{fixed(n*(0.7*ln(0.7)+0.3*ln(0.3)), 1)}}"
+        },
+        "controls": [
+          {
+            "bind": "left:n",
+            "min": 10,
+            "max": 100,
+            "step": 10,
+            "start": 10,
+            "label": "Flips $n$"
+          }
+        ]
+      },
+      "question": "What happens as $n$ grows to 100?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$L$ shrinks towards 0 everywhere, but $\\ell$ keeps a clear peak at 0.7",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Both curves flatten out and the peak is lost",
+            "why": "Look at the bottom curve at $n = 100$: it has a sharp peak at 0.7, at $-61.1$."
+          },
+          {
+            "id": "moves",
+            "text": "The peak moves towards $\\tfrac{1}{2}$",
+            "why": "Every $n$ has 70% heads, so the peak stays at 0.7. Read where $\\ell$ is highest."
+          },
+          {
+            "id": "grows",
+            "text": "$L$ grows, because there is more data",
+            "why": "Each extra flip multiplies $L$ by a number below 1. At $n = 100$ the highest $L$ is about $3 \\times 10^{-27}$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$L$ vanishes into the axis; $\\ell$ stays readable.",
+        "generic": "Not quite right. Set $n$ to 100 and read both peak values in the caption."
+      },
+      "explain": {
+        "text": "Each flip multiplies $L$ by a factor below 1, so 100 flips give a peak of $3 \\times 10^{-27}$. The log turns those factors into terms added together, so $\\ell$ peaks at a readable $-61.1$. With thousands of data points, $L$ itself is too small for a computer to store.",
+        "canvas": {
+          "left": {
+            "params": {
+              "n": 100
+            }
+          },
+          "right": {
+            "params": {
+              "m": 100
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The log-likelihood",
+      "prose": "The bottom curve is the **log-likelihood**, $\\ell(\\theta) = \\ln L(\\theta)$. Back to H, H, T, where $L(p) = p \\cdot p \\cdot (1 - p)$. Since $\\ln(ab) = \\ln a + \\ln b$, the product of factors becomes a sum of logs.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            -6,
+            0
+          ],
+          "grid": true,
+          "xLabel": "$p$",
+          "yLabel": "$\\ell(p)$",
+          "functions": [
+            {
+              "id": "g",
+              "expr": "2*ln(x)+ln(1-x)",
+              "label": "$\\ell(p) = 2\\ln p + \\ln(1-p)$",
+              "labelAt": 0.45,
+              "labelSide": "below",
+              "domain": [
+                0.03,
+                0.98
+              ]
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.6667,
+              "label": "$p = 2/3$"
+            }
+          ]
+        }
+      },
+      "question": "What is $\\ell(\\tfrac{2}{3})$? Give three decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1.9095,
+        "tol": {
+          "abs": 0.002
+        },
+        "unit": "",
+        "label": "Log-likelihood",
+        "accept": "any value from $-1.912$ to $-1.908$. Exactly $2\\ln\\tfrac{2}{3} + \\ln\\tfrac{1}{3} = \\ln\\tfrac{4}{27}$.",
+        "placeholder": "for example -2.5",
+        "wrong": [
+          {
+            "id": "multiply",
+            "value": -0.1806,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "nolog",
+            "value": 0.1481,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "log10",
+            "value": -0.8293,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write $\\ell(p) = \\ln p + \\ln p + \\ln(1 - p)$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\ln\\tfrac{2}{3} = -0.4055$ and $\\ln\\tfrac{1}{3} = -1.0986$.",
+          "highlight": [
+            "v1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add them: $2 \\times (-0.4055) + (-1.0986)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\ell(\\tfrac{2}{3}) = -1.910$, which is $\\ln\\tfrac{4}{27}$.",
+        "generic": "Not quite right. Take the log of each factor and add.",
+        "byKey": {
+          "multiply": "You multiplied the three logs. The log of a product is the sum of the logs.",
+          "nolog": "That is $L(\\tfrac{2}{3})$ itself. Take its natural log.",
+          "log10": "You used base-10 logs. Here $\\ln$ is the natural log."
+        }
+      },
+      "explain": {
+        "text": "You added $-0.4055 - 0.4055 - 1.0986 = -1.910$. That equals $\\ln\\tfrac{4}{27}$, the log of the likelihood. A log-likelihood is negative whenever $L < 1$, and that is normal.",
+        "canvas": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.6667,
+              "y": -1.9095,
+              "label": "$-1.910$",
+              "labelPos": "n",
+              "tap": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Now redo the coin MLE in logs. For 7 heads in 10, $\\ell(p) = 7\\ln p + 3\\ln(1 - p)$. No product rule is needed: each term differentiates on its own.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            -24,
+            -4
+          ],
+          "grid": true,
+          "xLabel": "$p$",
+          "yLabel": "$\\ell(p) = \\ln L(p)$",
+          "height": 300,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "7*ln(x)+3*ln(1-x)",
+              "label": "$\\ell(p)$",
+              "labelAt": 0.2,
+              "labelSide": "below",
+              "domain": [
+                0.05,
+                0.97
+              ]
+            }
+          ]
+        },
+        "state": {
+          "tangent": {
+            "f": "g",
+            "x": 0.7,
+            "lengthPx": 120
+          }
+        }
+      },
+      "question": "Enter $\\ell'(p)$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "\\frac{7}{p}-\\frac{3}{1-p}",
+        "accept": [
+          "7/p-3/(1-p)",
+          "7/p - 3/(1-p)",
+          "(7-10p)/(p(1-p))",
+          "7/p+3/(p-1)"
+        ],
+        "wrong": [
+          {
+            "id": "chain",
+            "tex": "\\frac{7}{p}+\\frac{3}{1-p}"
+          },
+          {
+            "id": "same",
+            "tex": "\\frac{7}{p}-\\frac{3}{p}"
+          }
+        ],
+        "keyboard": "calculus",
+        "label": "ell prime of p"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The derivative of $\\ln u$ is $u'/u$."
+        },
+        {
+          "rung": "point",
+          "text": "For $\\ln(1 - p)$, the inside has derivative $-1$.",
+          "highlight": [
+            "tangent"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\ell'(p) = \\dfrac{7}{p} - \\dfrac{3}{1 - p}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\ell'(p) = \\dfrac{7}{p} - \\dfrac{3}{1 - p}$.",
+        "generic": "Not quite right. Differentiate each log separately, minding the inside of $\\ln(1 - p)$.",
+        "byKey": {
+          "chain": "You dropped the minus sign from the inside of $\\ln(1 - p)$. Its derivative is $-\\dfrac{1}{1 - p}$.",
+          "same": "You differentiated $\\ln(1 - p)$ as if it were $\\ln p$. Its inside is $1 - p$."
+        }
+      },
+      "explain": {
+        "text": "Setting $\\dfrac{7}{p} = \\dfrac{3}{1 - p}$ gives $7 - 7p = 3p$, so $\\hat p = 0.7$. The same algebra with $k$ and $n$ gives $\\hat p = k/n$ in two lines. Logs turned the product rule into a sum of simple terms.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.7,
+              "label": "$\\hat p = 0.7$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Edge case: a single observation. One daily return, $r = 0.8\\%$, from a normal with $\\sigma = 1\\%$ and unknown mean $\\mu$. Its log-likelihood has one term: $\\ell(\\mu) = -\\tfrac{1}{2}\\ln(2\\pi) - \\tfrac{1}{2}(0.8 - \\mu)^2$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2,
+            3
+          ],
+          "y": [
+            -5,
+            0
+          ],
+          "grid": true,
+          "xLabel": "$\\mu$ (%)",
+          "yLabel": "$\\ell(\\mu)$",
+          "functions": [
+            {
+              "id": "g",
+              "expr": "-0.5*ln(2*pi)-0.5*(0.8-x)^2",
+              "label": "$\\ell(\\mu)$",
+              "labelAt": -1.2,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $\\hat\\mu$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.008,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "%",
+        "label": "MLE of the mean",
+        "accept": "0.8% exactly: the single return itself.",
+        "placeholder": "in %",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.004,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which $\\mu$ makes $(0.8 - \\mu)^2$ smallest?"
+        },
+        {
+          "rung": "point",
+          "text": "The parabola's top is where the curve is highest.",
+          "highlight": [
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\ell'(\\mu) = 0.8 - \\mu$, which is zero at $\\mu = 0.8$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\hat\\mu = 0.8\\%$, the one return.",
+        "generic": "Not quite right. Find the top of the parabola.",
+        "byKey": {
+          "zero": "You assumed the mean is 0. The data is one return of 0.8%, and the likelihood peaks there.",
+          "half": "You halved the return. The $\\tfrac{1}{2}$ in $\\ell$ scales the curve; it does not move its peak."
+        }
+      },
+      "explain": {
+        "text": "With one observation the sum has one term, and $\\hat\\mu = \\bar x = r = 0.8\\%$. The log changes nothing here, since there is no product to undo. But one day is a poor guide to a stock's mean return.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.8,
+              "label": "$\\hat\\mu = 0.8$"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "prose": "Ben wants $\\ell(0.6)$ for H, H, T. He takes the log of each factor, as in the table, and then multiplies the three logs together.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Flip",
+            "Factor at $p = 0.6$",
+            "Its log"
+          ],
+          "rows": [
+            [
+              "H",
+              "0.6",
+              "-0.5108"
+            ],
+            [
+              "H",
+              "0.6",
+              "-0.5108"
+            ],
+            [
+              "T",
+              "0.4",
+              "-0.9163"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "$L(0.6) = 0.6 \\times 0.6 \\times 0.4 = 0.144$"
+        }
+      },
+      "question": "What is $\\ell(0.6)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$-1.938$",
+            "correct": true
+          },
+          {
+            "id": "multiply",
+            "text": "$-0.239$",
+            "why": "You multiplied the logs, as Ben did. The log of a product is the sum of the logs: $\\ln(abc) = \\ln a + \\ln b + \\ln c$."
+          },
+          {
+            "id": "nolog",
+            "text": "$0.144$",
+            "why": "That is $L(0.6)$. The log-likelihood is its natural log, $\\ln 0.144$."
+          },
+          {
+            "id": "one",
+            "text": "$-0.916$",
+            "why": "You used only the tail's factor. Every flip contributes a term."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check against the caption: what is $\\ln 0.144$?"
+        },
+        {
+          "rung": "point",
+          "text": "Products become sums under a log.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-0.5108 - 0.5108 - 0.9163 = -1.938$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\ell(0.6) = \\ln 0.144 = -1.938$.",
+        "generic": "Not quite right. Add the logs, then check against $\\ln 0.144$.",
+        "byKey": {
+          "multiply": "You multiplied the logs, as Ben did. The log of a product is the sum of the logs: $\\ln(abc) = \\ln a + \\ln b + \\ln c$."
+        }
+      },
+      "explain": {
+        "text": "The log turns the product into a sum: $-0.5108 - 0.5108 - 0.9163 = -1.938$. Check: $\\ln 0.144 = -1.938$. Ben's product of logs, $-0.239$, is not the log of anything here.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Logs in code",
+      "prose": "Run the starter first. It prints the likelihood of 1,000 and of 2,000 fair flips, then a log. Then complete `log_lik` so it returns $\\ell(p) = k\\ln p + (n - k)\\ln(1 - p)$ without ever forming the product.",
+      "question": "Complete `log_lik(heads, tails, p)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\n\n# Likelihood of 1,000, then 2,000, fair flips at p = 0.5\nprint(0.5 ** 1000)\nprint(0.5 ** 2000)\nprint(2000 * math.log(0.5))\n\ndef log_lik(heads, tails, p):\n    \"\"\"Log-likelihood of the flips at p, for 0 < p < 1.\"\"\"\n    return ...\n",
+        "solution": "import math\n\n# Likelihood of 1,000, then 2,000, fair flips at p = 0.5\nprint(0.5 ** 1000)\nprint(0.5 ** 2000)\nprint(2000 * math.log(0.5))\n\ndef log_lik(heads, tails, p):\n    \"\"\"Log-likelihood of the flips at p, for 0 < p < 1.\"\"\"\n    return heads * math.log(p) + tails * math.log(1 - p)\n",
+        "examples": [
+          {
+            "call": "log_lik(7, 3, 0.7)",
+            "expect": "-6.108643020548935",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "log_lik(7, 3, 0.7)",
+            "expect": "-6.108643020548935",
+            "compare": "isclose"
+          },
+          {
+            "call": "log_lik(2, 1, 2/3)",
+            "expect": "-1.9095425048844383",
+            "compare": "isclose"
+          },
+          {
+            "call": "log_lik(1000, 1000, 0.5)",
+            "expect": "-1386.2943611198905",
+            "compare": "isclose"
+          },
+          {
+            "call": "log_lik(3000, 2000, 0.6)",
+            "expect": "-3365.058335046282",
+            "compare": "isclose"
+          },
+          {
+            "call": "log_lik(0, 10, 0.1)",
+            "expect": "-1.053605156578263",
+            "compare": "isclose"
+          },
+          {
+            "call": "log_lik(5, 0, 0.5)",
+            "expect": "-3.4657359027997265",
+            "compare": "isclose"
+          },
+          {
+            "call": "log_lik(1, 1, 0.25)",
+            "expect": "-1.6739764335716716",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, each accepted within a relative error of 1e-9. One has 5,000 flips. Plain Python with `math` is enough; numpy is available but loads slowly."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each head adds $\\ln p$ and each tail adds $\\ln(1 - p)$."
+        },
+        {
+          "rung": "point",
+          "text": "Do not compute `p ** heads` first: for 3,000 heads it underflows to 0."
+        },
+        {
+          "rung": "step",
+          "text": "Return `heads * math.log(p) + tails * math.log(1 - p)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your function adds logs and never underflows.",
+        "generic": "Some tests failed. Add `heads` copies of $\\ln p$ and `tails` copies of $\\ln(1 - p)$.",
+        "byKey": {
+          "error": "Your code stopped with an error. A domain error means you took the log of a product that underflowed to 0."
+        }
+      },
+      "explain": {
+        "text": "The starter printed `9.332636185032189e-302`, then `0.0`, then `-1386.2943611198905`. A float cannot go below about $5 \\times 10^{-324}$, so $0.5^{2000}$ became 0. Its log, $2000 \\ln 0.5 = -1386.3$, is an ordinary number.\n\n```python\nreturn heads * math.log(p) + tails * math.log(1 - p)\n```"
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "prose": "Now the normal model. Observations $x_1, \\dots, x_n$ are independent draws from $N(\\mu, \\sigma^2)$, each with density $\\frac{1}{\\sqrt{2\\pi\\sigma^2}}\\, e^{-(x - \\mu)^2/(2\\sigma^2)}$. Build its log-likelihood.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "$\\ell(\\mu, \\sigma) = \\ln \\prod_{i=1}^n f(x_i)$, the log of the likelihood"
+          },
+          {
+            "id": "b",
+            "text": "$= \\sum_{i=1}^n \\ln f(x_i)$, since the log of a product is the sum of the logs"
+          },
+          {
+            "id": "c",
+            "text": "$\\ln f(x_i) = -\\tfrac{1}{2}\\ln(2\\pi\\sigma^2) - \\dfrac{(x_i - \\mu)^2}{2\\sigma^2}$, since $\\ln$ undoes $e$ and $\\ln \\frac{1}{\\sqrt a} = -\\frac{1}{2}\\ln a$"
+          },
+          {
+            "id": "d",
+            "text": "$\\ell(\\mu, \\sigma) = -\\dfrac{n}{2}\\ln(2\\pi\\sigma^2) - \\dfrac{1}{2\\sigma^2}\\sum_{i=1}^n (x_i - \\mu)^2$, adding the $n$ terms"
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the definition, $\\ell = \\ln L$."
+        },
+        {
+          "rung": "point",
+          "text": "Turn the product into a sum before working on one term."
+        },
+        {
+          "rung": "step",
+          "text": "Order: definition, sum of logs, one term, then add up $n$ terms."
+        }
+      ],
+      "feedback": {
+        "correct": "That is the normal log-likelihood.",
+        "generic": "Not quite right. Turn the product into a sum first, then simplify one term.",
+        "byKey": {
+          "c": "Simplify a single term only after the product has become a sum of $\\ln f(x_i)$.",
+          "d": "The total comes last, once one term is known."
+        }
+      },
+      "explain": {
+        "text": "The product became a sum, and each term split into a constant and a square. Adding $n$ copies of the constant gives $-\\frac{n}{2}\\ln(2\\pi\\sigma^2)$. The data enters only through $\\sum (x_i - \\mu)^2$."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Taking logs is safe because $\\ln$ is increasing, so $\\ell$ and $L$ peak at the same $\\theta$. It turns products into sums:\n\n$$\\ell(\\theta) = \\sum_{i=1}^n \\ln f(x_i \\mid \\theta)$$\n\nFor the normal, $\\ell = -\\frac{n}{2}\\ln(2\\pi\\sigma^2) - \\frac{1}{2\\sigma^2}\\sum (x_i - \\mu)^2$.",
+      "question": "With $\\sigma$ fixed, maximising $\\ell$ over $\\mu$ is the same as what?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Minimising $\\sum (x_i - \\mu)^2$: least squares",
+            "correct": true
+          },
+          {
+            "id": "max",
+            "text": "Maximising $\\sum (x_i - \\mu)^2$",
+            "why": "You dropped the minus sign in front of the sum. A bigger sum makes $\\ell$ smaller."
+          },
+          {
+            "id": "abs",
+            "text": "Minimising $\\sum |x_i - \\mu|$",
+            "why": "That would come from a density with $|x - \\mu|$ in the exponent. The normal has a square, so it gives least squares."
+          },
+          {
+            "id": "const",
+            "text": "Minimising $\\ln(2\\pi\\sigma^2)$",
+            "why": "That term does not involve $\\mu$, so it cannot move the maximiser over $\\mu$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Normal errors make maximum likelihood into least squares.",
+        "generic": "Not quite right. Find the only term of $\\ell$ that depends on $\\mu$."
+      },
+      "explain": {
+        "text": "Only $-\\frac{1}{2\\sigma^2}\\sum (x_i - \\mu)^2$ involves $\\mu$, with a minus sign. So the best $\\mu$ makes the sum of squares smallest, which gives $\\bar x$. Regression in `least-squares` is the same idea: least squares is the MLE under normal errors."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Scoring two volatility models",
+      "prose": "Six hourly returns from one trading day are in the table, in %. Model A says each is $N(0, 0.4^2)$; model B says $N(0, 0.8^2)$. With $\\mu = 0$, $\\ell(\\sigma) = -3\\ln(2\\pi\\sigma^2) - \\dfrac{\\sum r_i^2}{2\\sigma^2}$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Hour",
+            "Return $r$ (%)",
+            "$r^2$"
+          ],
+          "rows": [
+            [
+              "1",
+              "0.3",
+              "0.09"
+            ],
+            [
+              "2",
+              "-0.5",
+              "0.25"
+            ],
+            [
+              "3",
+              "0.1",
+              "0.01"
+            ],
+            [
+              "4",
+              "0.8",
+              "0.64"
+            ],
+            [
+              "5",
+              "-0.2",
+              "0.04"
+            ],
+            [
+              "6",
+              "-0.4",
+              "0.16"
+            ],
+            [
+              "Sum",
+              "",
+              "1.19"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $\\ell_A - \\ell_B$? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.3698,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "",
+        "label": "Difference in log-likelihood",
+        "accept": "any value from 1.36 to 1.38. Exactly $6\\ln 2 - 0.595(6.25 - 1.5625) \\approx 1.370$.",
+        "placeholder": "for example 0.5",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -1.3698,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "ratio",
+            "value": 3.9346,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The constant $-3\\ln(2\\pi)$ is the same for both models, so it cancels."
+        },
+        {
+          "rung": "point",
+          "text": "$-3\\ln\\sigma_A^2 + 3\\ln\\sigma_B^2 = 3\\ln 4 = 4.159$.",
+          "highlight": [
+            "r6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The squares give $-\\tfrac{1.19}{2}\\left(\\tfrac{1}{0.16} - \\tfrac{1}{0.64}\\right) = -2.789$. Add the two parts."
+        }
+      ],
+      "feedback": {
+        "correct": "Model A scores 1.37 higher.",
+        "generic": "Not quite right. Compute $\\ell$ for each $\\sigma$, or subtract term by term.",
+        "byKey": {
+          "sign": "You subtracted the other way round. Model A is the calmer one, and it scores higher.",
+          "ratio": "That is the likelihood ratio, $e^{1.37}$. The question asks for the difference of the logs."
+        }
+      },
+      "explain": {
+        "text": "$\\ell_A = -3.735$ and $\\ell_B = -5.104$, so A scores 1.370 higher. That is a likelihood ratio of $e^{1.370} \\approx 3.9$. A difference of log-likelihoods is a model-comparison score that adds up across days.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Scoring a forecast",
+      "prose": "Two forecasters give a chance that a stock closes up each day. A always says 0.6; B always says 0.9. Over four days the stock goes up, up, down, up. A forecast's **log score** is the log of the chance it gave to what happened, summed over days.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Day",
+            "Outcome",
+            "A's chance of it",
+            "B's chance of it"
+          ],
+          "rows": [
+            [
+              "1",
+              "up",
+              "0.6",
+              "0.9"
+            ],
+            [
+              "2",
+              "up",
+              "0.6",
+              "0.9"
+            ],
+            [
+              "3",
+              "down",
+              "0.4",
+              "0.1"
+            ],
+            [
+              "4",
+              "up",
+              "0.6",
+              "0.9"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is B's total log score? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -2.6187,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "",
+        "label": "B's log score",
+        "accept": "any value from $-2.625$ to $-2.613$. Exactly $3\\ln 0.9 + \\ln 0.1$.",
+        "placeholder": "for example -1.5",
+        "wrong": [
+          {
+            "id": "a",
+            "value": -2.4488,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "up-only",
+            "value": -0.3161,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "forecast",
+            "value": -0.4214,
+            "tol": {
+              "abs": 0.006
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "On the down day, B gave the outcome a chance of 0.1, not 0.9."
+        },
+        {
+          "rung": "point",
+          "text": "B's score is $\\ln 0.9 + \\ln 0.9 + \\ln 0.1 + \\ln 0.9$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3 \\times (-0.1054) + (-2.3026) = -2.619$."
+        }
+      ],
+      "feedback": {
+        "correct": "B scores $-2.62$, below A's $-2.45$.",
+        "generic": "Not quite right. Use the chance B gave to what actually happened each day.",
+        "byKey": {
+          "a": "That is A's score. B's chances are 0.9 on up days and 0.1 on the down day.",
+          "up-only": "You left out the down day. B gave it a chance of only 0.1, which costs $-2.30$.",
+          "forecast": "You used 0.9 on the down day too. Score the chance given to what happened: 0.1."
+        }
+      },
+      "explain": {
+        "text": "B scores $-2.619$ and A scores $3\\ln 0.6 + \\ln 0.4 = -2.449$, so A wins. B's one confident miss cost more than its three confident hits earned. A log score is the log-likelihood of the outcomes under the forecaster's model.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The log-likelihood $\\ell = \\ln L$ turns a product of $n$ factors into a sum of $n$ terms.",
+      "Because $\\ln$ is increasing, $\\ell$ and $L$ peak at the same parameter value.",
+      "Logs keep the numbers representable, and for normal data maximising over $\\mu$ is least squares."
+    ],
+    "formula": {
+      "name": "Normal log-likelihood",
+      "tex": "\\ell(\\mu, \\sigma) = -\\tfrac{n}{2}\\ln(2\\pi\\sigma^2) - \\tfrac{1}{2\\sigma^2}\\sum_{i=1}^n (x_i - \\mu)^2",
+      "note": "Only the sum of squares depends on $\\mu$."
+    },
+    "trap": "$\\ln(abc) = \\ln a + \\ln b + \\ln c$. Multiplying the logs gives a number that means nothing."
+  },
+  "quiz": [
+    {
+      "id": "q-sum-logs",
+      "difficulty": 2,
+      "prose": "Three independent observations have densities 0.2, 0.5 and 0.1 under a model.",
+      "question": "What is the log-likelihood? Give two decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": -4.6052,
+        "tol": {
+          "abs": 0.006
+        },
+        "unit": "",
+        "label": "Log-likelihood",
+        "accept": "any value from $-4.61$ to $-4.60$. Exactly $\\ln 0.01$.",
+        "placeholder": "for example -3.2",
+        "wrong": [
+          {
+            "id": "multiply",
+            "value": -2.5687,
+            "tol": {
+              "abs": 0.006
+            }
+          },
+          {
+            "id": "nolog",
+            "value": 0.01,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\ln 0.2 + \\ln 0.5 + \\ln 0.1 = -4.61$.",
+        "generic": "Not quite right. Add the natural logs of the three densities.",
+        "byKey": {
+          "multiply": "You multiplied the three logs. Add them instead.",
+          "nolog": "That is the likelihood. Take its natural log."
+        }
+      },
+      "explain": {
+        "text": "$-1.609 - 0.693 - 2.303 = -4.605$, which equals $\\ln(0.2 \\times 0.5 \\times 0.1) = \\ln 0.01$."
+      }
+    },
+    {
+      "id": "q-same-peak",
+      "difficulty": 2,
+      "prose": "We maximise $\\ell(\\theta) = \\ln L(\\theta)$ instead of $L(\\theta)$.",
+      "question": "Why do both give the same $\\hat\\theta$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\ln$ is increasing, so a larger $L$ always gives a larger $\\ln L$",
+            "correct": true
+          },
+          {
+            "id": "equal",
+            "text": "$\\ln L$ and $L$ are equal at the peak",
+            "why": "At the peak of 7 heads in 10, $L = 0.0022$ and $\\ell = -6.11$. They differ; only their peak positions agree."
+          },
+          {
+            "id": "approx",
+            "text": "It is an approximation that improves with more data",
+            "why": "It is exact for any data. No approximation is involved."
+          },
+          {
+            "id": "deriv",
+            "text": "$\\ln$ has derivative $1/L$, which is always 1 at the peak",
+            "why": "The derivative of $\\ln L$ is $L'/L$. It is zero exactly where $L'$ is zero, because $L > 0$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An increasing function keeps the order of values.",
+        "generic": "Not quite right. Ask what $\\ln$ does to the order of two numbers."
+      },
+      "explain": {
+        "text": "If $L(\\theta_1) > L(\\theta_2)$ then $\\ln L(\\theta_1) > \\ln L(\\theta_2)$. So the $\\theta$ with the largest $L$ also has the largest $\\ell$."
+      }
+    },
+    {
+      "id": "q-score-deriv",
+      "difficulty": 3,
+      "prose": "A coin lands heads 4 times in 10, so $\\ell(p) = 4\\ln p + 6\\ln(1 - p)$.",
+      "question": "Which is $\\ell'(p)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "right",
+            "text": "$\\dfrac{4}{p} - \\dfrac{6}{1 - p}$",
+            "correct": true
+          },
+          {
+            "id": "plus",
+            "text": "$\\dfrac{4}{p} + \\dfrac{6}{1 - p}$",
+            "why": "You dropped the minus sign from the inside of $\\ln(1 - p)$."
+          },
+          {
+            "id": "logs",
+            "text": "$4\\ln p - 6\\ln(1 - p)$",
+            "why": "That changes a sign but does not differentiate. The derivative of $\\ln p$ is $\\dfrac{1}{p}$."
+          },
+          {
+            "id": "same",
+            "text": "$\\dfrac{4}{p} - \\dfrac{6}{p}$",
+            "why": "You treated $\\ln(1 - p)$ as $\\ln p$. Its inside is $1 - p$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Setting it to zero gives $\\hat p = 0.4$.",
+        "generic": "Not quite right. Differentiate each log on its own, with the chain rule."
+      },
+      "explain": {
+        "text": "$\\dfrac{4}{p} = \\dfrac{6}{1 - p}$ gives $4 - 4p = 6p$, so $\\hat p = 0.4 = 4/10$."
+      }
+    },
+    {
+      "id": "q-least-squares",
+      "difficulty": 3,
+      "prose": "Data 1, 2 and 6 come from a normal with known $\\sigma$. Compare $\\mu = 2$, the median, with $\\mu = 3$, the mean.",
+      "question": "Which has the higher log-likelihood?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mean",
+            "text": "$\\mu = 3$: its sum of squares is 14, against 17",
+            "correct": true
+          },
+          {
+            "id": "median",
+            "text": "$\\mu = 2$: it sits on one of the observations",
+            "why": "Sitting on a data point does not help. For $\\mu = 2$ the squares are 1, 0 and 16, which sum to 17."
+          },
+          {
+            "id": "tie",
+            "text": "They tie, because $\\sigma$ is the same",
+            "why": "$\\sigma$ is the same, but the sums of squares differ: 14 for $\\mu = 3$ and 17 for $\\mu = 2$."
+          },
+          {
+            "id": "need",
+            "text": "It cannot be decided without knowing $\\sigma$",
+            "why": "Any fixed $\\sigma$ multiplies both sums by the same $\\frac{1}{2\\sigma^2}$. The smaller sum wins either way."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The smaller sum of squares wins.",
+        "generic": "Not quite right. Compute $\\sum (x_i - \\mu)^2$ for each."
+      },
+      "explain": {
+        "text": "For $\\mu = 3$: $4 + 1 + 9 = 14$. For $\\mu = 2$: $1 + 0 + 16 = 17$. A smaller sum gives a higher $\\ell$, and the mean always minimises it."
+      }
+    }
+  ]
+}

@@ -1,0 +1,2393 @@
+{
+  "id": "l11-bootstrap",
+  "course": "estimation",
+  "title": "Resampling your own data",
+  "minutes": 14,
+  "objectives": [
+    "Build a bootstrap confidence interval in code."
+  ],
+  "skills": [
+    "es-intervals"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "prose": "A new strategy has 20 daily returns. Their mean is $\\bar x = 0.15\\%$. You want to know how much that mean would vary over other 20-day samples. But you cannot rerun those 20 days.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "rows": [
+            [
+              "Days 1 to 5",
+              "-0.1",
+              "1.3",
+              "1.5",
+              "-0.7",
+              "-0.8"
+            ],
+            [
+              "Days 6 to 10",
+              "0.8",
+              "-0.4",
+              "-2.7",
+              "-0.8",
+              "-0.2"
+            ],
+            [
+              "Days 11 to 15",
+              "1.4",
+              "0.5",
+              "1.1",
+              "-0.1",
+              "0.3"
+            ],
+            [
+              "Days 16 to 20",
+              "1.0",
+              "0.8",
+              "-0.3",
+              "0.5",
+              "-0.1"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "20 daily returns, %: mean 0.15, sample sd 1.0"
+        }
+      },
+      "question": "Without assuming any shape for returns, what can stand in for the population?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The 20 returns themselves, drawn from again at random",
+            "correct": true
+          },
+          {
+            "id": "normal",
+            "text": "A normal curve with mean 0.15 and sd 1.0",
+            "why": "That assumes returns are normal. The $-2.7\\%$ day hints at a fatter tail, and the question rules out assuming a shape."
+          },
+          {
+            "id": "more",
+            "text": "Nothing: you need a longer backtest",
+            "why": "More data would help, but you have only these 20 days. The sample itself can play the population."
+          },
+          {
+            "id": "zero",
+            "text": "A strategy with zero mean",
+            "why": "That tests a hypothesis about the mean. It says nothing about how much this sample's mean varies."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which distribution do you actually have in front of you?"
+        },
+        {
+          "rung": "point",
+          "text": "These 20 numbers are your best picture of the population.",
+          "highlight": [
+            "r1c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Treat the sample as the population, and draw new samples from it."
+        }
+      ],
+      "feedback": {
+        "correct": "The sample is our best picture of the population.",
+        "generic": "Not quite right. Ask what you have that looks like the population, with no assumptions added."
+      },
+      "explain": {
+        "text": "The 20 returns are the best picture of the population we have. Drawing new 20-day samples from them mimics drawing new samples from the market. That is the idea behind the bootstrap.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r1c3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "prose": "Each trial draws 20 returns at random from the 20, **with replacement**, and records their mean. Run 10, then 100, then 1,000 trials and watch where the means pile up.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "bins": {
+            "min": -0.6,
+            "max": 0.9,
+            "width": 0.1
+          },
+          "xLabel": "Mean of a resample of 20 returns, %",
+          "yLabel": "Resamples",
+          "sim": {
+            "trials": [
+              10,
+              100,
+              1000
+            ],
+            "outcome": "(pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]) + pick([-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2, 1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1])) / 20",
+            "seed": 2307
+          }
+        },
+        "state": {
+          "ran": 0,
+          "caption": "Sample mean $\\bar x = 0.15\\%$"
+        }
+      },
+      "question": "Where is the pile of resampled means centred?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Near the sample mean, 0.15%",
+            "correct": true
+          },
+          {
+            "id": "truth",
+            "text": "At the true mean $\\mu$ of the strategy",
+            "why": "The resamples only ever see these 20 days, so they cannot find $\\mu$. They centre on $\\bar x$."
+          },
+          {
+            "id": "zero",
+            "text": "Near 0",
+            "why": "Nothing pulls the resampled means towards zero. Each is an average of the same 20 returns, so they centre on 0.15%."
+          },
+          {
+            "id": "spread",
+            "text": "Spread evenly from $-2.7\\%$ to $1.5\\%$",
+            "why": "Those are the extremes of single days. An average of 20 draws rarely strays that far."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run 1,000 trials and find the tallest bars."
+        },
+        {
+          "rung": "point",
+          "text": "The tallest bars sit around 0.1 to 0.2.",
+          "highlight": [
+            "b7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The pile centres on the sample mean, 0.15%."
+        }
+      ],
+      "feedback": {
+        "correct": "The resampled means centre on $\\bar x$, not on $\\mu$.",
+        "generic": "Not quite right. Run 1,000 trials and look at where the tallest bars are."
+      },
+      "explain": {
+        "text": "The pile centres on $\\bar x = 0.15\\%$; in the long run its mean is exactly 0.15 and its sd 0.217. The bootstrap cannot find the truth. What it copies is the *spread*: how far a 20-day mean wanders.",
+        "canvas": {
+          "ran": 1000
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "prose": "One trial is a **bootstrap resample**: $n$ draws from the $n$ data points, with replacement. Some points appear twice, some not at all. Here is a smaller case: five returns and one resample of them.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "rows": [
+            [
+              "Original, %",
+              "1.2",
+              "-0.4",
+              "0.3",
+              "-1.1",
+              "0.5"
+            ],
+            [
+              "Resample, %",
+              "0.3",
+              "1.2",
+              "0.3",
+              "-1.1",
+              "0.3"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the mean of this resample, in %?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.2: $(0.3 + 1.2 + 0.3 - 1.1 + 0.3)/5 = 1.0/5$",
+        "label": "Resample mean, in percent",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "original",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "distinct",
+            "value": 0.1333,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the five numbers in the resample row."
+        },
+        {
+          "rung": "point",
+          "text": "0.3 appears three times. Count each copy.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.3 + 1.2 + 0.3 - 1.1 + 0.3 = 1.0$; divide by 5."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.0/5 = 0.2$.",
+        "generic": "Not quite right. Average all five draws in the resample row, repeats included.",
+        "byKey": {
+          "original": "That is the mean of the original five. Average the resample row instead.",
+          "distinct": "You counted 0.3 once. Each draw counts, so 0.3 counts three times."
+        }
+      },
+      "explain": {
+        "text": "The resample holds 0.3 three times, 1.2 once and $-1.1$ once, so its mean is $1.0/5 = 0.2$. The days $-0.4$ and 0.5 were not drawn. Repeats and gaps are what make resample means vary.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Back to the 20 returns. We made 1,000 resamples and sorted their means. A 95% interval drops the lowest 2.5% and the highest 2.5%: 25 values from each end.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Rank",
+            "Resample mean, %"
+          ],
+          "rows": [
+            [
+              "24",
+              "−0.295"
+            ],
+            [
+              "25",
+              "−0.295"
+            ],
+            [
+              "26",
+              "−0.290"
+            ],
+            [
+              "27",
+              "−0.275"
+            ],
+            [
+              "…",
+              "…"
+            ],
+            [
+              "974",
+              "0.555"
+            ],
+            [
+              "975",
+              "0.555"
+            ],
+            [
+              "976",
+              "0.560"
+            ],
+            [
+              "977",
+              "0.570"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the lower end of the 95% bootstrap interval, in %?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.29,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "$-0.29$, the 26th of the 1,000 sorted means",
+        "label": "Lower end, in percent",
+        "placeholder": "decimal",
+        "wrong": [
+          {
+            "id": "rank25",
+            "value": -0.295,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "rank27",
+            "value": -0.275,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "rank24",
+            "value": -0.295,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After dropping 25 values, which rank comes first?"
+        },
+        {
+          "rung": "point",
+          "text": "Ranks 1 to 25 are dropped.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first value kept is rank 26: $-0.290$."
+        }
+      ],
+      "feedback": {
+        "correct": "Rank 26 is the first value kept: $-0.29$.",
+        "generic": "Not quite right. Drop ranks 1 to 25, then read the next one.",
+        "byKey": {
+          "rank25": "Rank 25 is the last value dropped. The interval starts at rank 26.",
+          "rank27": "You dropped one value too many. After 25, the next is rank 26."
+        }
+      },
+      "explain": {
+        "text": "Dropping ranks 1 to 25 leaves rank 26, $-0.29$, at the bottom. At the top, ranks 976 to 1,000 go, leaving rank 975, 0.555. So the 95% bootstrap interval is $-0.29\\%$ to $0.555\\%$, close to the formula's $0.15 \\pm 0.44$.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "Now build it in code. `bootstrap_ci(data, B, seed)` makes `B` resamples, averages each, sorts the means and drops 2.5% from each end. One line is missing.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "rows": [
+            [
+              "Days 1 to 5",
+              "-0.1",
+              "1.3",
+              "1.5",
+              "-0.7",
+              "-0.8"
+            ],
+            [
+              "Days 6 to 10",
+              "0.8",
+              "-0.4",
+              "-2.7",
+              "-0.8",
+              "-0.2"
+            ],
+            [
+              "Days 11 to 15",
+              "1.4",
+              "0.5",
+              "1.1",
+              "-0.1",
+              "0.3"
+            ],
+            [
+              "Days 16 to 20",
+              "1.0",
+              "0.8",
+              "-0.3",
+              "0.5",
+              "-0.1"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "20 daily returns, %: mean 0.15, sample sd 1.0"
+        }
+      },
+      "question": "Replace `...` so each resample is `n` draws from `data`, with replacement.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import random\n\nreturns = [-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2,\n           1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]\n\ndef bootstrap_ci(data, B, seed):\n    random.seed(seed)\n    n = len(data)\n    means = []\n    for _ in range(B):\n        resample = ...   # n draws from data, with replacement\n        means.append(sum(resample) / n)\n    means.sort()\n    k = int(0.025 * B)     # values dropped from each end\n    return means[k], means[B - 1 - k]\n",
+        "solution": "import random\n\nreturns = [-0.1, 1.3, 1.5, -0.7, -0.8, 0.8, -0.4, -2.7, -0.8, -0.2,\n           1.4, 0.5, 1.1, -0.1, 0.3, 1.0, 0.8, -0.3, 0.5, -0.1]\n\ndef bootstrap_ci(data, B, seed):\n    random.seed(seed)\n    n = len(data)\n    means = []\n    for _ in range(B):\n        resample = random.choices(data, k=n)\n        means.append(sum(resample) / n)\n    means.sort()\n    k = int(0.025 * B)     # values dropped from each end\n    return means[k], means[B - 1 - k]\n",
+        "examples": [
+          {
+            "call": "[round(v, 3) for v in bootstrap_ci(returns, 1000, 1)]",
+            "expect": "[-0.29, 0.555]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "list(bootstrap_ci([0.4] * 10, 100, 1))",
+            "expect": "[0.4, 0.4]",
+            "compare": "isclose"
+          },
+          {
+            "call": "(lambda ci: ci[1] - ci[0] > 0.5)(bootstrap_ci(returns, 500, 3))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(bootstrap_ci(returns, 4000, 1)[0] + 0.30) < 0.05",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(bootstrap_ci(returns, 4000, 1)[1] - 0.55) < 0.05",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "bootstrap_ci(returns, 300, 7) == bootstrap_ci(returns, 300, 7)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "list(bootstrap_ci([0, 0, 0, 0, 10], 2000, 5))",
+            "expect": "[0.0, 6.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "(lambda ci: abs(ci[0] + 0.39) < 0.06 and abs(ci[1] - 0.92) < 0.06)(bootstrap_ci([2.0, -1.0, 0.5, 0.1, -0.4, 1.2, 0.3, -0.8], 3000, 9))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests: constant data, a nonzero width, both ends within 0.05 of the long-run values, the same result for the same seed, and two other datasets. The example's exact numbers come from `random.choices`; another correct way of drawing gives slightly different numbers and still passes. numpy is available but loads slowly; pure Python is enough here."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A resample has as many draws as the data, and a day can be drawn twice."
+        },
+        {
+          "rung": "point",
+          "text": "`random.choices(population, k=...)` draws with replacement."
+        },
+        {
+          "rung": "step",
+          "text": "Write `resample = random.choices(data, k=n)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each resample is $n$ draws with replacement.",
+        "generic": "Some tests failed. Check that each resample has `n` draws and that a day can come up more than once."
+      },
+      "explain": {
+        "text": "`random.choices(data, k=n)` draws `n` values with replacement. With `B = 1000` and seed 1 the interval is $-0.29\\%$ to $0.555\\%$; with `B = 4000` it is $-0.305\\%$ to $0.55\\%$. `random.sample` would draw without replacement and give every resample the same mean.\n\n```python\nresample = random.choices(data, k=n)\n```"
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "The same function, run with two seeds at two values of $B$. Each row is one run on the 20 returns.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Resamples $B$",
+            "Seed",
+            "95% interval, %"
+          ],
+          "rows": [
+            [
+              "200",
+              "1",
+              "−0.235 to 0.49"
+            ],
+            [
+              "200",
+              "2",
+              "−0.23 to 0.55"
+            ],
+            [
+              "10,000",
+              "1",
+              "−0.30 to 0.56"
+            ],
+            [
+              "10,000",
+              "2",
+              "−0.305 to 0.555"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does a larger $B$ change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Runs agree more closely; the interval's width barely changes",
+            "correct": true
+          },
+          {
+            "id": "narrower",
+            "text": "The interval gets narrower, so the estimate is more precise",
+            "why": "You treated $B$ like more data. Only $n$, the 20 days, sets the width; $B$ only steadies the computer's estimate of it."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: the seed decides the interval",
+            "why": "At $B = 200$ the seeds disagree by 0.06 at the top. At 10,000 they agree to 0.005. $B$ matters."
+          },
+          {
+            "id": "exact",
+            "text": "With $B = 10{,}000$ the interval is exact",
+            "why": "Even at 10,000 the two seeds differ slightly. The noise shrinks like $1/\\sqrt B$ but never vanishes."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two seeds within each value of $B$."
+        },
+        {
+          "rung": "point",
+          "text": "The top ends at $B = 200$ are 0.49 and 0.55.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bigger $B$ makes runs agree. The width stays near 0.85 either way."
+        }
+      ],
+      "feedback": {
+        "correct": "$B$ controls Monte Carlo noise, not precision.",
+        "generic": "Not quite right. Compare the rows at the same $B$, then the widths across $B$."
+      },
+      "explain": {
+        "text": "With 200 resamples the two seeds disagree by up to 0.06; with 10,000, by 0.005. The width stays near 0.85 throughout, because it reflects the 20 days. The interval carries its own Monte Carlo noise, which a larger $B$ shrinks.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "prose": "A colleague resamples the five returns without replacement, using `random.sample(data, 5)`. Here are three of their resamples.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "rows": [
+            [
+              "Original, %",
+              "1.2",
+              "-0.4",
+              "0.3",
+              "-1.1",
+              "0.5"
+            ],
+            [
+              "Resample A",
+              "0.3",
+              "-1.1",
+              "1.2",
+              "0.5",
+              "-0.4"
+            ],
+            [
+              "Resample B",
+              "-0.4",
+              "0.5",
+              "-1.1",
+              "0.3",
+              "1.2"
+            ],
+            [
+              "Resample C",
+              "1.2",
+              "0.3",
+              "-0.4",
+              "-1.1",
+              "0.5"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What will their 1,000 resampled means look like?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Every one equals 0.1, so the interval has zero width",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "The same spread as with replacement",
+            "why": "You treated any reshuffle as a resample. Without replacement each one is the same five days in a new order."
+          },
+          {
+            "id": "narrower",
+            "text": "A little narrower than with replacement",
+            "why": "Not a little: no day can repeat or go missing, so the mean cannot move at all."
+          },
+          {
+            "id": "wider",
+            "text": "Wider, because the order changes",
+            "why": "The mean ignores order. Shuffling the same five numbers leaves their sum unchanged."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which days does each resample contain?"
+        },
+        {
+          "rung": "point",
+          "text": "Each row holds all five original days.",
+          "highlight": [
+            "r1",
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Same five numbers, same sum, same mean: 0.1 every time."
+        }
+      ],
+      "feedback": {
+        "correct": "Without replacement, every resample is the sample itself, reordered.",
+        "generic": "Not quite right. Look at which days each resample contains.",
+        "byKey": {
+          "same": "You resampled without replacement. That only reorders the days, so every mean equals the original 0.1."
+        }
+      },
+      "explain": {
+        "text": "Each resample holds all five days, so each mean is $0.5/5 = 0.1$. The interval collapses to a point and claims false certainty. Replacement is what lets a resample differ from the sample.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "Here is what you did. For $b = 1, \\dots, B$, draw $x^*_b$, $n$ values with replacement, and compute the statistic $\\hat\\theta^*_b$. Sort, set $k = 0.025B$, and keep $$\\left[\\hat\\theta^*_{(k+1)},\\ \\hat\\theta^*_{(B-k)}\\right].$$ It works because the sample stands in for the population.",
+      "question": "What does the bootstrap assume about the data?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "The observations are independent draws from one distribution",
+            "correct": true
+          },
+          {
+            "id": "normal",
+            "text": "The observations are normal",
+            "why": "You read a shape into it. The bootstrap uses the data's own shape, whatever it is."
+          },
+          {
+            "id": "mean",
+            "text": "The sample mean equals the true mean",
+            "why": "It assumes no such thing. Its intervals centre on $\\bar x$ precisely because it cannot see $\\mu$."
+          },
+          {
+            "id": "large-b",
+            "text": "$B$ is larger than $n$",
+            "why": "$B$ only controls Monte Carlo noise. The assumption is about how the data arose."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Drawing days at random treats them as what?"
+        },
+        {
+          "rung": "point",
+          "text": "Any day could have come in any position."
+        },
+        {
+          "rung": "step",
+          "text": "It assumes independent draws from one distribution: days are exchangeable."
+        }
+      ],
+      "feedback": {
+        "correct": "Exchangeable, independent draws.",
+        "generic": "Not quite right. Think about what drawing days at random, in any order, treats them as."
+      },
+      "explain": {
+        "text": "Drawing days at random treats them as independent copies of one distribution. No shape is assumed, which is the bootstrap's strength. Dependence between days breaks it, as we see next."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "prose": "You have $n$ returns and want a 95% bootstrap interval for a statistic.",
+      "question": "Put the steps of the bootstrap in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "b1",
+            "text": "Draw $n$ values from the data with replacement, because the sample stands in for the population"
+          },
+          {
+            "id": "b2",
+            "text": "Compute the statistic on that resample, as you would on real data"
+          },
+          {
+            "id": "b3",
+            "text": "Repeat $B$ times, so the resampled statistics trace out its sampling distribution"
+          },
+          {
+            "id": "b4",
+            "text": "Sort the $B$ values, so their quantiles can be read off by rank"
+          },
+          {
+            "id": "b5",
+            "text": "Keep the values between the 2.5% and 97.5% quantiles, dropping $0.025B$ from each end"
+          }
+        ],
+        "answer": [
+          "b1",
+          "b2",
+          "b3",
+          "b4",
+          "b5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What has to exist before a statistic can be computed?"
+        },
+        {
+          "rung": "point",
+          "text": "Resample, compute, repeat; only then sort."
+        },
+        {
+          "rung": "step",
+          "text": "Draw, compute, repeat $B$ times, sort, cut 2.5% from each end."
+        }
+      ],
+      "feedback": {
+        "correct": "Draw, compute, repeat, sort, cut.",
+        "generic": "Not quite right. You need many resampled statistics before sorting makes sense."
+      },
+      "explain": {
+        "text": "Each pass draws a resample and computes the statistic. Repeating builds a picture of how the statistic varies. Sorting and cutting 2.5% from each end reads off the interval."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "prose": "The bootstrap copies the sample's spread, so it fails when the sample is a poor picture of the population.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Case",
+            "Data"
+          ],
+          "rows": [
+            [
+              "A",
+              "a mean of 4 returns"
+            ],
+            [
+              "B",
+              "a mean of 250 autocorrelated daily returns"
+            ],
+            [
+              "C",
+              "the largest of 250 daily returns"
+            ],
+            [
+              "D",
+              "a mean of 250 independent daily returns"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Select all that apply: in which cases does the bootstrap mislead?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "tiny",
+            "text": "A: 4 returns",
+            "correct": true
+          },
+          {
+            "id": "dep",
+            "text": "B: autocorrelated returns",
+            "correct": true
+          },
+          {
+            "id": "max",
+            "text": "C: the largest return",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "D: a mean of 250 independent returns",
+            "why": "That is the textbook case: many independent days and a smooth statistic. The bootstrap works well there."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each case, ask whether resampling single days reproduces how the statistic varies."
+        },
+        {
+          "rung": "point",
+          "text": "Case C: can a resample's maximum ever beat the sample's?",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A: too few to picture the population. B: shuffling breaks the runs. C: the resampled max can never exceed the observed one."
+        }
+      ],
+      "feedback": {
+        "correct": "Tiny samples, dependence and the maximum all mislead.",
+        "generic": "Not quite right. Check each case: enough data, independent days, and a statistic that a resample can reproduce."
+      },
+      "explain": {
+        "text": "Four returns give only 35 distinct resamples, too narrow a picture. Resampling single days destroys autocorrelation, so the spread comes out wrong. A resampled maximum can never exceed the sample's, and with 250 days about 63% of resamples contain it exactly.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "A strategy has 250 daily returns and an annualised Sharpe ratio of 0.98. The Sharpe ratio, a mean over an sd, has no simple exact SE. The histogram shows 1,000 bootstrap Sharpe ratios; the 95% interval is $-1.10$ to $2.90$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "bins": {
+            "min": -2.5,
+            "max": 4.5,
+            "width": 0.5
+          },
+          "data": [
+            -2.038,
+            -1.935,
+            -1.701,
+            -1.669,
+            -1.663,
+            -1.659,
+            -1.657,
+            -1.544,
+            -1.474,
+            -1.431,
+            -1.399,
+            -1.379,
+            -1.355,
+            -1.292,
+            -1.27,
+            -1.27,
+            -1.228,
+            -1.21,
+            -1.192,
+            -1.184,
+            -1.183,
+            -1.134,
+            -1.123,
+            -1.11,
+            -1.104,
+            -1.1,
+            -1.072,
+            -1.061,
+            -1.042,
+            -1.041,
+            -1.036,
+            -1.028,
+            -1.027,
+            -1.016,
+            -0.996,
+            -0.992,
+            -0.991,
+            -0.963,
+            -0.942,
+            -0.931,
+            -0.924,
+            -0.893,
+            -0.89,
+            -0.863,
+            -0.836,
+            -0.819,
+            -0.814,
+            -0.799,
+            -0.794,
+            -0.769,
+            -0.761,
+            -0.747,
+            -0.733,
+            -0.718,
+            -0.711,
+            -0.707,
+            -0.703,
+            -0.691,
+            -0.687,
+            -0.682,
+            -0.669,
+            -0.656,
+            -0.642,
+            -0.64,
+            -0.626,
+            -0.615,
+            -0.61,
+            -0.607,
+            -0.603,
+            -0.601,
+            -0.592,
+            -0.583,
+            -0.579,
+            -0.579,
+            -0.575,
+            -0.545,
+            -0.541,
+            -0.538,
+            -0.527,
+            -0.525,
+            -0.525,
+            -0.522,
+            -0.497,
+            -0.493,
+            -0.486,
+            -0.481,
+            -0.478,
+            -0.465,
+            -0.463,
+            -0.457,
+            -0.449,
+            -0.435,
+            -0.428,
+            -0.417,
+            -0.411,
+            -0.394,
+            -0.393,
+            -0.391,
+            -0.39,
+            -0.388,
+            -0.386,
+            -0.382,
+            -0.379,
+            -0.378,
+            -0.366,
+            -0.353,
+            -0.346,
+            -0.342,
+            -0.341,
+            -0.341,
+            -0.339,
+            -0.338,
+            -0.336,
+            -0.332,
+            -0.331,
+            -0.325,
+            -0.313,
+            -0.308,
+            -0.301,
+            -0.298,
+            -0.287,
+            -0.265,
+            -0.263,
+            -0.258,
+            -0.25,
+            -0.246,
+            -0.241,
+            -0.24,
+            -0.238,
+            -0.237,
+            -0.231,
+            -0.222,
+            -0.219,
+            -0.214,
+            -0.208,
+            -0.204,
+            -0.202,
+            -0.195,
+            -0.18,
+            -0.178,
+            -0.175,
+            -0.165,
+            -0.156,
+            -0.151,
+            -0.15,
+            -0.147,
+            -0.137,
+            -0.136,
+            -0.131,
+            -0.129,
+            -0.121,
+            -0.12,
+            -0.115,
+            -0.115,
+            -0.106,
+            -0.105,
+            -0.105,
+            -0.102,
+            -0.099,
+            -0.098,
+            -0.077,
+            -0.075,
+            -0.07,
+            -0.067,
+            -0.065,
+            -0.056,
+            -0.055,
+            -0.051,
+            -0.044,
+            -0.031,
+            -0.024,
+            -0.019,
+            -0.019,
+            -0.013,
+            -0.006,
+            -0.002,
+            -0.002,
+            0.009,
+            0.01,
+            0.014,
+            0.022,
+            0.034,
+            0.041,
+            0.049,
+            0.05,
+            0.056,
+            0.06,
+            0.061,
+            0.063,
+            0.066,
+            0.071,
+            0.073,
+            0.096,
+            0.097,
+            0.106,
+            0.109,
+            0.112,
+            0.112,
+            0.116,
+            0.116,
+            0.119,
+            0.121,
+            0.131,
+            0.142,
+            0.146,
+            0.154,
+            0.154,
+            0.154,
+            0.167,
+            0.172,
+            0.173,
+            0.187,
+            0.188,
+            0.188,
+            0.194,
+            0.195,
+            0.197,
+            0.21,
+            0.215,
+            0.215,
+            0.22,
+            0.224,
+            0.23,
+            0.231,
+            0.235,
+            0.235,
+            0.237,
+            0.241,
+            0.247,
+            0.256,
+            0.26,
+            0.261,
+            0.264,
+            0.264,
+            0.265,
+            0.265,
+            0.265,
+            0.265,
+            0.271,
+            0.272,
+            0.273,
+            0.275,
+            0.275,
+            0.279,
+            0.281,
+            0.285,
+            0.287,
+            0.29,
+            0.297,
+            0.297,
+            0.3,
+            0.302,
+            0.305,
+            0.308,
+            0.311,
+            0.311,
+            0.312,
+            0.317,
+            0.318,
+            0.327,
+            0.33,
+            0.331,
+            0.345,
+            0.349,
+            0.356,
+            0.358,
+            0.36,
+            0.363,
+            0.367,
+            0.368,
+            0.373,
+            0.376,
+            0.38,
+            0.38,
+            0.38,
+            0.382,
+            0.382,
+            0.382,
+            0.384,
+            0.384,
+            0.385,
+            0.385,
+            0.391,
+            0.391,
+            0.392,
+            0.392,
+            0.393,
+            0.394,
+            0.397,
+            0.402,
+            0.406,
+            0.411,
+            0.417,
+            0.422,
+            0.426,
+            0.431,
+            0.432,
+            0.434,
+            0.436,
+            0.439,
+            0.44,
+            0.441,
+            0.441,
+            0.444,
+            0.447,
+            0.45,
+            0.454,
+            0.456,
+            0.459,
+            0.463,
+            0.466,
+            0.487,
+            0.487,
+            0.488,
+            0.493,
+            0.494,
+            0.499,
+            0.5,
+            0.508,
+            0.51,
+            0.511,
+            0.517,
+            0.52,
+            0.522,
+            0.523,
+            0.523,
+            0.541,
+            0.541,
+            0.545,
+            0.546,
+            0.556,
+            0.558,
+            0.562,
+            0.564,
+            0.567,
+            0.569,
+            0.571,
+            0.573,
+            0.576,
+            0.586,
+            0.592,
+            0.594,
+            0.594,
+            0.594,
+            0.595,
+            0.596,
+            0.607,
+            0.608,
+            0.613,
+            0.622,
+            0.624,
+            0.625,
+            0.626,
+            0.628,
+            0.629,
+            0.63,
+            0.633,
+            0.64,
+            0.641,
+            0.642,
+            0.643,
+            0.644,
+            0.645,
+            0.646,
+            0.647,
+            0.647,
+            0.648,
+            0.65,
+            0.65,
+            0.651,
+            0.654,
+            0.656,
+            0.658,
+            0.659,
+            0.66,
+            0.661,
+            0.661,
+            0.668,
+            0.669,
+            0.673,
+            0.688,
+            0.695,
+            0.697,
+            0.701,
+            0.704,
+            0.708,
+            0.709,
+            0.709,
+            0.71,
+            0.711,
+            0.714,
+            0.719,
+            0.722,
+            0.723,
+            0.724,
+            0.724,
+            0.726,
+            0.727,
+            0.733,
+            0.738,
+            0.756,
+            0.758,
+            0.762,
+            0.763,
+            0.765,
+            0.772,
+            0.787,
+            0.795,
+            0.796,
+            0.797,
+            0.802,
+            0.803,
+            0.805,
+            0.809,
+            0.809,
+            0.81,
+            0.813,
+            0.816,
+            0.817,
+            0.817,
+            0.819,
+            0.823,
+            0.824,
+            0.828,
+            0.829,
+            0.829,
+            0.832,
+            0.834,
+            0.834,
+            0.839,
+            0.842,
+            0.844,
+            0.846,
+            0.853,
+            0.861,
+            0.865,
+            0.867,
+            0.872,
+            0.874,
+            0.877,
+            0.881,
+            0.884,
+            0.885,
+            0.887,
+            0.889,
+            0.889,
+            0.892,
+            0.895,
+            0.896,
+            0.896,
+            0.899,
+            0.901,
+            0.903,
+            0.908,
+            0.91,
+            0.91,
+            0.911,
+            0.911,
+            0.912,
+            0.914,
+            0.916,
+            0.921,
+            0.922,
+            0.922,
+            0.924,
+            0.925,
+            0.925,
+            0.937,
+            0.94,
+            0.941,
+            0.946,
+            0.946,
+            0.948,
+            0.951,
+            0.956,
+            0.959,
+            0.959,
+            0.964,
+            0.966,
+            0.967,
+            0.972,
+            0.973,
+            0.974,
+            0.974,
+            0.977,
+            0.978,
+            0.982,
+            0.993,
+            0.995,
+            0.996,
+            0.996,
+            0.998,
+            1.002,
+            1.005,
+            1.006,
+            1.008,
+            1.01,
+            1.011,
+            1.018,
+            1.019,
+            1.021,
+            1.021,
+            1.021,
+            1.022,
+            1.022,
+            1.033,
+            1.033,
+            1.034,
+            1.038,
+            1.043,
+            1.043,
+            1.044,
+            1.05,
+            1.05,
+            1.053,
+            1.053,
+            1.058,
+            1.062,
+            1.07,
+            1.079,
+            1.083,
+            1.083,
+            1.084,
+            1.086,
+            1.087,
+            1.091,
+            1.095,
+            1.095,
+            1.096,
+            1.097,
+            1.099,
+            1.102,
+            1.105,
+            1.11,
+            1.111,
+            1.114,
+            1.114,
+            1.116,
+            1.118,
+            1.119,
+            1.119,
+            1.122,
+            1.127,
+            1.128,
+            1.129,
+            1.132,
+            1.132,
+            1.136,
+            1.136,
+            1.141,
+            1.142,
+            1.142,
+            1.145,
+            1.149,
+            1.15,
+            1.158,
+            1.159,
+            1.164,
+            1.173,
+            1.174,
+            1.178,
+            1.179,
+            1.183,
+            1.185,
+            1.185,
+            1.187,
+            1.189,
+            1.19,
+            1.203,
+            1.207,
+            1.207,
+            1.209,
+            1.209,
+            1.213,
+            1.213,
+            1.214,
+            1.215,
+            1.217,
+            1.221,
+            1.221,
+            1.226,
+            1.226,
+            1.227,
+            1.232,
+            1.233,
+            1.237,
+            1.242,
+            1.246,
+            1.247,
+            1.249,
+            1.25,
+            1.256,
+            1.261,
+            1.261,
+            1.262,
+            1.262,
+            1.262,
+            1.262,
+            1.263,
+            1.263,
+            1.264,
+            1.271,
+            1.279,
+            1.279,
+            1.279,
+            1.282,
+            1.284,
+            1.288,
+            1.289,
+            1.293,
+            1.295,
+            1.295,
+            1.297,
+            1.3,
+            1.304,
+            1.312,
+            1.315,
+            1.315,
+            1.317,
+            1.319,
+            1.321,
+            1.321,
+            1.324,
+            1.328,
+            1.328,
+            1.333,
+            1.334,
+            1.339,
+            1.339,
+            1.344,
+            1.348,
+            1.349,
+            1.351,
+            1.356,
+            1.359,
+            1.361,
+            1.361,
+            1.362,
+            1.366,
+            1.367,
+            1.369,
+            1.369,
+            1.376,
+            1.381,
+            1.382,
+            1.39,
+            1.391,
+            1.397,
+            1.401,
+            1.401,
+            1.405,
+            1.408,
+            1.411,
+            1.412,
+            1.413,
+            1.416,
+            1.417,
+            1.42,
+            1.424,
+            1.443,
+            1.443,
+            1.445,
+            1.445,
+            1.454,
+            1.462,
+            1.469,
+            1.472,
+            1.472,
+            1.474,
+            1.477,
+            1.477,
+            1.479,
+            1.48,
+            1.485,
+            1.488,
+            1.495,
+            1.498,
+            1.501,
+            1.504,
+            1.506,
+            1.51,
+            1.512,
+            1.516,
+            1.516,
+            1.527,
+            1.529,
+            1.531,
+            1.535,
+            1.539,
+            1.542,
+            1.543,
+            1.545,
+            1.551,
+            1.552,
+            1.554,
+            1.557,
+            1.557,
+            1.559,
+            1.564,
+            1.568,
+            1.569,
+            1.574,
+            1.579,
+            1.582,
+            1.582,
+            1.589,
+            1.593,
+            1.595,
+            1.597,
+            1.598,
+            1.615,
+            1.625,
+            1.627,
+            1.631,
+            1.633,
+            1.634,
+            1.636,
+            1.644,
+            1.646,
+            1.653,
+            1.655,
+            1.657,
+            1.659,
+            1.659,
+            1.661,
+            1.662,
+            1.665,
+            1.669,
+            1.67,
+            1.688,
+            1.69,
+            1.691,
+            1.692,
+            1.698,
+            1.7,
+            1.701,
+            1.704,
+            1.708,
+            1.713,
+            1.713,
+            1.718,
+            1.721,
+            1.722,
+            1.722,
+            1.727,
+            1.732,
+            1.733,
+            1.735,
+            1.738,
+            1.744,
+            1.746,
+            1.75,
+            1.751,
+            1.754,
+            1.756,
+            1.757,
+            1.773,
+            1.774,
+            1.784,
+            1.789,
+            1.79,
+            1.791,
+            1.794,
+            1.796,
+            1.799,
+            1.8,
+            1.802,
+            1.806,
+            1.809,
+            1.83,
+            1.831,
+            1.832,
+            1.838,
+            1.844,
+            1.847,
+            1.85,
+            1.853,
+            1.861,
+            1.861,
+            1.862,
+            1.863,
+            1.866,
+            1.876,
+            1.879,
+            1.879,
+            1.88,
+            1.882,
+            1.884,
+            1.888,
+            1.891,
+            1.893,
+            1.893,
+            1.894,
+            1.897,
+            1.898,
+            1.903,
+            1.904,
+            1.907,
+            1.911,
+            1.914,
+            1.917,
+            1.926,
+            1.93,
+            1.93,
+            1.932,
+            1.933,
+            1.934,
+            1.956,
+            1.959,
+            1.959,
+            1.963,
+            1.972,
+            1.972,
+            1.976,
+            1.977,
+            1.979,
+            1.987,
+            1.989,
+            1.989,
+            1.99,
+            1.99,
+            1.991,
+            2.0,
+            2.007,
+            2.008,
+            2.01,
+            2.022,
+            2.024,
+            2.025,
+            2.027,
+            2.029,
+            2.029,
+            2.032,
+            2.04,
+            2.048,
+            2.049,
+            2.05,
+            2.06,
+            2.061,
+            2.061,
+            2.061,
+            2.063,
+            2.067,
+            2.069,
+            2.072,
+            2.076,
+            2.078,
+            2.079,
+            2.081,
+            2.084,
+            2.087,
+            2.088,
+            2.096,
+            2.098,
+            2.1,
+            2.101,
+            2.102,
+            2.103,
+            2.108,
+            2.109,
+            2.111,
+            2.111,
+            2.112,
+            2.115,
+            2.115,
+            2.116,
+            2.122,
+            2.13,
+            2.137,
+            2.139,
+            2.14,
+            2.143,
+            2.151,
+            2.166,
+            2.174,
+            2.182,
+            2.182,
+            2.183,
+            2.183,
+            2.186,
+            2.191,
+            2.192,
+            2.194,
+            2.198,
+            2.202,
+            2.202,
+            2.202,
+            2.207,
+            2.208,
+            2.22,
+            2.229,
+            2.229,
+            2.229,
+            2.23,
+            2.235,
+            2.237,
+            2.24,
+            2.246,
+            2.252,
+            2.263,
+            2.265,
+            2.266,
+            2.274,
+            2.28,
+            2.282,
+            2.282,
+            2.299,
+            2.303,
+            2.316,
+            2.331,
+            2.34,
+            2.346,
+            2.355,
+            2.358,
+            2.37,
+            2.371,
+            2.395,
+            2.41,
+            2.42,
+            2.425,
+            2.46,
+            2.461,
+            2.468,
+            2.473,
+            2.474,
+            2.486,
+            2.486,
+            2.487,
+            2.491,
+            2.51,
+            2.52,
+            2.537,
+            2.539,
+            2.553,
+            2.569,
+            2.575,
+            2.589,
+            2.59,
+            2.594,
+            2.607,
+            2.617,
+            2.627,
+            2.64,
+            2.644,
+            2.645,
+            2.66,
+            2.682,
+            2.686,
+            2.687,
+            2.688,
+            2.695,
+            2.7,
+            2.706,
+            2.719,
+            2.725,
+            2.732,
+            2.733,
+            2.733,
+            2.736,
+            2.767,
+            2.769,
+            2.77,
+            2.781,
+            2.785,
+            2.79,
+            2.791,
+            2.797,
+            2.804,
+            2.825,
+            2.826,
+            2.833,
+            2.842,
+            2.887,
+            2.889,
+            2.896,
+            2.922,
+            2.942,
+            2.969,
+            2.977,
+            2.981,
+            2.982,
+            2.989,
+            2.996,
+            2.998,
+            3.048,
+            3.057,
+            3.078,
+            3.094,
+            3.193,
+            3.279,
+            3.323,
+            3.331,
+            3.335,
+            3.351,
+            3.412,
+            3.672,
+            3.772,
+            3.853,
+            4.076,
+            4.259
+          ],
+          "xLabel": "Bootstrap annualised Sharpe ratio",
+          "yLabel": "Resamples"
+        },
+        "state": {
+          "caption": "95% interval: $-1.10$ to $2.90$"
+        }
+      },
+      "question": "Select all that apply: which true Sharpe ratios can one year of data not rule out?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "correct": true
+          },
+          {
+            "id": "high",
+            "text": "3.5",
+            "why": "3.5 lies above the top of the interval, 2.90. Few resamples reach it."
+          },
+          {
+            "id": "neg",
+            "text": "$-1.5$",
+            "why": "$-1.5$ lies below the bottom of the interval, $-1.10$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which values lie inside the interval?"
+        },
+        {
+          "rung": "point",
+          "text": "The tallest bars sit near the sample's 0.98.",
+          "highlight": [
+            "b6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Anything from $-1.10$ to $2.90$ is consistent with the data."
+        }
+      ],
+      "feedback": {
+        "correct": "0, 1 and 2 are all inside the interval.",
+        "generic": "Not quite right. Keep every value between $-1.10$ and $2.90$."
+      },
+      "explain": {
+        "text": "The interval runs from $-1.10$ to $2.90$, so a useless strategy and an excellent one both fit this year. A Sharpe ratio of 1 needs many years of data to confirm. The bootstrap gave this without any SE formula."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "prose": "These 60 daily returns are autocorrelated: a good day tends to follow a good day. The correlation between consecutive days is about 0.6.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "r",
+              "label": "Daily return, %",
+              "values": [
+                0.08,
+                1.05,
+                -0.12,
+                0.72,
+                0.23,
+                -0.07,
+                1.48,
+                1.01,
+                0.57,
+                0.93,
+                1.46,
+                0.85,
+                0.98,
+                -0.19,
+                -0.41,
+                -0.6,
+                -1.42,
+                -2.06,
+                -2.54,
+                -1.71,
+                -1.17,
+                -0.96,
+                -0.52,
+                -1.38,
+                -0.89,
+                -0.34,
+                0.39,
+                -0.44,
+                -0.58,
+                -1.96,
+                -1.58,
+                -2.71,
+                -2.76,
+                -0.77,
+                -2.23,
+                -0.7,
+                -0.16,
+                -0.34,
+                0.16,
+                0.52,
+                1.15,
+                0.5,
+                -0.17,
+                -0.59,
+                -1.14,
+                -0.72,
+                -1.06,
+                0.22,
+                -1.36,
+                -1.69,
+                -1.78,
+                -2.74,
+                -0.12,
+                -2.0,
+                -1.43,
+                -1.28,
+                0.56,
+                -1.25,
+                0.11,
+                -0.52
+              ]
+            }
+          ],
+          "baseline": 0,
+          "yLabel": "Return, %",
+          "xLabel": "Day"
+        },
+        "state": {
+          "shade": [
+            {
+              "id": "blk1",
+              "from": 10,
+              "to": 19,
+              "label": "block",
+              "tone": "neutral"
+            },
+            {
+              "id": "blk2",
+              "from": 30,
+              "to": 39,
+              "label": "block",
+              "tone": "neutral"
+            }
+          ]
+        }
+      },
+      "question": "How should you bootstrap the mean of returns like these?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Resample blocks of consecutive days, then join the blocks",
+            "correct": true
+          },
+          {
+            "id": "days",
+            "text": "Resample single days with replacement, as before",
+            "why": "You treated the days as exchangeable. Single draws break the runs, so the interval comes out too narrow."
+          },
+          {
+            "id": "shuffle",
+            "text": "Shuffle the 60 days without replacement",
+            "why": "Shuffling keeps every day once and gives the same mean every time. It also breaks the runs."
+          },
+          {
+            "id": "bigger-b",
+            "text": "Resample single days, but with a much larger $B$",
+            "why": "A larger $B$ reduces Monte Carlo noise. It cannot repair a resampling scheme that ignores dependence."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does drawing single days at random throw away?"
+        },
+        {
+          "rung": "point",
+          "text": "Each shaded block keeps a run of days together.",
+          "highlight": [
+            "blk1",
+            "blk2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Draw whole blocks, say 10 days long, so each resample keeps the short-range dependence."
+        }
+      ],
+      "feedback": {
+        "correct": "A block bootstrap keeps runs of days together.",
+        "generic": "Not quite right. The resample must keep the way neighbouring days move together."
+      },
+      "explain": {
+        "text": "A **block bootstrap** draws runs of, say, 10 consecutive days with replacement and joins them. Each block keeps the dependence inside it. Single-day resampling would understate the spread of the mean, since runs make averages wander further.",
+        "canvas": {
+          "highlight": [
+            "blk1",
+            "blk2"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The bootstrap treats the sample as the population: resample $n$ values with replacement, many times.",
+      "Compute the statistic on each resample and keep the middle 95% of the sorted values.",
+      "It fails for tiny samples, dependent data and extremes; a larger $B$ only reduces Monte Carlo noise."
+    ],
+    "formula": {
+      "name": "Percentile bootstrap interval",
+      "tex": "\\left[\\hat\\theta^*_{(k+1)},\\ \\hat\\theta^*_{(B-k)}\\right],\\quad k = 0.025B",
+      "note": "Each $\\hat\\theta^*_b$ comes from $n$ draws with replacement."
+    },
+    "trap": "Resampling without replacement gives every resample the same mean; resampling single days ignores autocorrelation."
+  },
+  "quiz": [
+    {
+      "id": "q-ranks",
+      "difficulty": 2,
+      "prose": "You make $B = 2{,}000$ bootstrap resamples and sort the 2,000 resampled means.",
+      "question": "For a 95% interval, how many values do you drop from each end?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 50,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "50: $0.025 \\times 2000$",
+        "unit": "values",
+        "label": "Values dropped from each end",
+        "wrong": [
+          {
+            "id": "twenty-five",
+            "value": 25,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "hundred",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.025 \\times 2000 = 50$ from each end.",
+        "generic": "Not quite right. Drop 2.5% of the 2,000 values at each end.",
+        "byKey": {
+          "twenty-five": "25 is right for $B = 1{,}000$. With 2,000 resamples, 2.5% is 50.",
+          "hundred": "100 is 5% of 2,000. Split the 5% between the two ends."
+        }
+      },
+      "explain": {
+        "text": "2.5% of 2,000 is 50. Drop ranks 1 to 50 and 1,951 to 2,000; the interval runs from rank 51 to rank 1,950."
+      }
+    },
+    {
+      "id": "q-centre",
+      "difficulty": 2,
+      "prose": "A backtest of 60 days has mean daily return 0.12%. You bootstrap the mean 5,000 times.",
+      "question": "Where do the bootstrap means centre?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Near 0.12%, the sample mean",
+            "correct": true
+          },
+          {
+            "id": "truth",
+            "text": "Near the strategy's true mean",
+            "why": "The resamples only see these 60 days. They cannot find the true mean."
+          },
+          {
+            "id": "zero",
+            "text": "Near 0",
+            "why": "Nothing pulls them to zero. Each is an average of the same 60 returns."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The bootstrap centres on the sample statistic.",
+        "generic": "Not quite right. What do the resamples have to work with?"
+      },
+      "explain": {
+        "text": "Each resample averages days drawn from the same 60, so the means centre on 0.12%. The bootstrap estimates spread, not the truth."
+      }
+    },
+    {
+      "id": "q-max",
+      "difficulty": 3,
+      "prose": "A risk analyst bootstraps the largest daily loss in a year of 250 returns.",
+      "question": "Why does this bootstrap mislead?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "No resample can show a loss worse than the worst observed day",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$B$ is never large enough for extremes",
+            "why": "More resamples cannot help. The resampled maximum is capped at the sample's, however many you draw."
+          },
+          {
+            "id": "normal",
+            "text": "Losses are not normal",
+            "why": "The bootstrap does not assume normality. The problem is the cap at the observed extreme."
+          },
+          {
+            "id": "fine",
+            "text": "It does not mislead: the bootstrap works for any statistic",
+            "why": "It works for smooth statistics such as the mean. The maximum depends on one extreme point."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The resampled maximum is capped at the observed one.",
+        "generic": "Not quite right. Ask what the biggest value in a resample can be."
+      },
+      "explain": {
+        "text": "Every resample draws from the same 250 days, so its worst loss is at most the observed worst. About 63% of resamples contain that day, so the bootstrap distribution piles up there. It understates how bad the tail can be."
+      }
+    },
+    {
+      "id": "q-b-or-n",
+      "difficulty": 3,
+      "prose": "A bootstrap interval for a mean from $n = 40$ days, with $B = 1{,}000$, is 0.6 points wide. You want it narrower.",
+      "question": "Which change narrows the interval itself, not just its noise?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Collect 160 days of data",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Use $B = 4{,}000$ resamples",
+            "why": "That steadies the estimate of the width, but the width itself stays near 0.6."
+          },
+          {
+            "id": "seed",
+            "text": "Try a different seed",
+            "why": "A seed changes the noise, not the width, and choosing a seed for a narrow result is cheating."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Only more data narrows the interval.",
+        "generic": "Not quite right. Which of these changes what the interval is computed from?"
+      },
+      "explain": {
+        "text": "The width reflects $n$, like $s/\\sqrt n$, so 160 days roughly halves it to 0.3. A larger $B$ only reduces Monte Carlo noise in the endpoints."
+      }
+    }
+  ]
+}

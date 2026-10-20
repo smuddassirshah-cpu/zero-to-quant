@@ -60,7 +60,7 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - `segments: [{ id, from: [x, y] | pointId, to, dashed, arrow, label, labelOffset: [dx, dy], colour }]`. The label sits at the midpoint, nudged by `labelOffset` (default 8 right, 10 up; a negative dx anchors it at its end).
 - `polygons: [{ id, points: [[x, y] | pointId, ...], colour, label, vertexLabels: ["A", "B", "C"], dashed }]`: a filled shape (a light series wash) with its vertices labelled just outside it.
 - `angles: [{ id, at, from, to, label, right, radius }]`: an arc between the rays at → from and at → to (the smaller angle), or a square mark with `right: true`; the label sits on the bisector; `radius` in px (default 22).
-- `tangent: { f, x: number | pointId, label: "slope" | "text {slope}", length, lengthPx, side, dashed }`. It can also be an array of these. `length` is in x units, `lengthPx` in pixels along the line. At a corner (the one-sided slopes differ, as on `abs(x)` at 0) no tangent is drawn unless `side: "left"` or `"right"` picks one. `labelOffset: [dx, dy]` moves the slope label clear of the point's own label.
+- `tangent: { f, x: number | pointId, label: "slope" | "text {slope}", length, lengthPx, side, dashed }`. It can also be an array of these. `length` spans that many x units (since pass 5; before, it was measured along the line), `lengthPx` is pixels along the line. At a corner (the one-sided slopes differ, as on `abs(x)` at 0) no tangent is drawn unless `side: "left"` or `"right"` picks one. `labelOffset: [dx, dy]` moves the slope label clear of the point's own label.
 - `area: { id, f, g, from, to, label: "auto" | "text {value}", colour }`. `g` is an optional lower curve. It can also be an array.
 - `riemann: { id, f, from, to, n, rule: "left"|"right"|"mid"|"trap", showSum, sumLabel }`.
 - `vectors: [{ id, v: [dx, dy], from: [x, y] | pointId, label, colour }]`.
@@ -87,6 +87,23 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
   "state": { "points": [{ "id": "p1", "x": 2, "y": 1, "drag": true, "on": "f", "label": "P" }], "tangent": { "f": "f", "x": "p1", "label": "slope" }, "riemann": { "f": "f", "from": 0, "to": 4, "n": 4, "rule": "left", "showSum": true } },
   "controls": [{ "bind": "a", "min": 0.1, "max": 1, "step": 0.05, "label": "$a$" }] }
 ```
+
+**Integration pass 5 additions**
+- Contour family: a function entry `{ id, contour: "x^2 + y^2", levels: [1, 4, 9], colour, dashed }` draws each level curve as joined polylines (closed curves have no gap at vertical tangents; dashes run on), each labelled with its level (`levelLabels: false` hides them). `implicit` entries are joined the same way, so `dashed: true` works on them.
+- Heat map: `{ id, heat: "x*y", range: [lo, hi], colour }` fills the view behind everything with the function's colour, its opacity rising with the value (range defaults to the values seen).
+- `labelAvoid: false` on a function: other labels no longer keep clear of it (background contours). `labelAt: x` holds a function's label at that x (others keep clear of it), so dense contours keep their order; on a parametric curve `labelAt` is a t, or `[x, y]`.
+- Views: `state.view: { x: [a, b], y: [c, d] }` sets the ranges and animates; `state.zoom: { at: [x, y] | pointId, scale }` zooms about a point. A control binds `zoom` (the scale).
+- `domain: ["0", "b"]`: a domain end may be a param name or expression, so a line stops where a slider says.
+- Areas: `{ id, polar: "1 + cos(theta)", inner: "0.5", from: 0, to: "pi" }` shades a polar region (limits may be expressions); its value is ½∫(r² − r₀²) dθ. `label: "auto"` on an ordinary area integrates over the authored bounds, not the visible part. Area values reach derive as `values.<id>`.
+- `riemann` may be a list (left and right sums on one plane); each sum label stacks in the top right and is typeset (`sumLabel: "$L_4$"`).
+- Tap mode: areas (by id), polygons (by id) and Riemann rectangles (`riemann-0`, `riemann-1`, ...; `<id>-<i>` for a named sum) are tap targets as well as points.
+- Polygons: `sector: { cx, cy, r1, r2, theta1, theta2, degrees }` is a sector or annulus wedge with curved edges; vertices may be points with `hidden: true` (no dot) moved by derive; `vertexLabels` follow them; `glyph: true` draws an F in the shape's own frame (first vertex, edges to the second and last vertex), so a reflection shows a mirrored F.
+- Point labels substitute `{x}` and `{y}` only outside `$...$`, so `$\mathbf{x}$` stays a bold x.
+- Tick labels sit above the curves with a halo, so a curve just below y = 0 never hides them.
+- `equal: true` narrows the frame instead of widening x past the authored range.
+- A tangent's `length` spans that many x units (`lengthPx`: pixels along the line); on parametric and implicit curves `length` is measured along the line.
+- Curve formulas may call `sum(k, 0, n, term)` (a partial sum: Taylor polynomials with a slider on `n`) and `fact(k)`.
+- `values()` returns area values by id; `setParam` / `getParam` handle `zoom`, dotted state paths (`tangent.x`) and params.
 
 ## bars
 
@@ -126,6 +143,8 @@ Bar chart or histogram. It can draw dashed exact-value lines and fill itself fro
     "sim": { "trials": [10, 100, 1000], "outcome": "d6()+d6()", "seed": 7 } },
   "state": { "ran": 0, "caption": "Run some rolls and watch the 7 bar." } }
 ```
+
+**Integration pass 5 additions:** value labels on negative or near-zero bars sit clear of the baseline and category labels (with a halo). `state.dim: [ids or labels]` (or `dim: true` on a category) fades bars, for "keep the largest singular values".
 
 ## distribution
 
@@ -185,6 +204,8 @@ Points, a least squares line, a given or learner-placed line, and residuals.
   "state": { "line": { "m": 0.5, "b": 2 }, "residuals": "line", "showSSE": true } }
 ```
 
+**Integration pass 5 additions:** `curves: [{ id, expr: "f(x)" } | { id, x: "...", y: "...", t: [a, b] } | { id, implicit: "F(x, y)" }]` (params or state, with `colour`, `dashed`, `label`, `labelAt: [x, y]`) draws curves over the cloud, such as a risk ellipse. Controls and derive reach `line.m` and `line.b` directly (a missing line starts flat at 0).
+
 ## series
 
 One or more time series, with optional candles.
@@ -221,6 +242,8 @@ One or more time series, with optional candles.
   "params": { "series": [{ "id": "px", "label": "Strategy", "values": [100, 104, 101, 97, 99, 106] }], "format": "money", "currency": "£" },
   "state": { "drawdown": true, "markers": [{ "id": "peak", "i": 1, "label": "peak" }] } }
 ```
+
+**Integration pass 5 additions:** horizontal reference lines, `hlines: [{ id, y, label, dashed, colour, axis: 2 }]` in params (fixed, and inside the auto y range) or state (patchable by id). Dashed unless `dashed: false`; the label sits at the right end above or below the line, or at the left, wherever no series passes.
 
 ## walk
 
@@ -282,6 +305,13 @@ Random walks or price paths from the seeded RNG.
   "state": { "hidden": ["C"], "product": { "a": "A", "b": "B", "c": "C", "i": 0, "j": 1 } } }
 ```
 
+**Integration pass 5 additions**
+- `highlight` object form draws (`{ "A": { "rows": [1] } }`), and a matrix may take several groups with their own colours: `{ "A": [{ "rows": [0], "cols": [0], "colour": 2 }, { "cells": [[1, 1], [1, 2]], "colour": 3 }] }` (a cofactor's crossed-out row and column in one wash, the minor in another). A later patch replaces the groups whole. `hidden` applies before `highlight`, so a patch that shows a matrix and highlights it works in the Why? copy.
+- `rowLabels: ["$R_1$", ...]`, `colLabels: ["$x$", ...]` per matrix; `scale: "\\tfrac{1}{\\sqrt{2}}"` (a factor before the brackets); `bar: k` (an augmented bar before column k).
+- Operators in `ops` may be KaTeX (`"$\\cdot$"`, `"\\otimes"`). Cell widths are measured from the rendered KaTeX, so `\cos\theta` and `\tfrac{5}{6}` fit. Negative numbers print with the minus sign. `{{expr}}` in a cell fills live from params and `state.params` (controls write them).
+- The pivot ring grows with a wide entry; `rowOp` defaults to the matrix that has the rows it names.
+- `fit: true` narrows the frame to the matrices (the default for a matrix inside a pair), so each side of a pair keeps its size; a pair with a matrix side stacks when side by side would draw either below 80% (`minScale` on any pair sets the threshold).
+
 ## vectors
 
 **params**
@@ -310,6 +340,15 @@ Random walks or price paths from the seeded RNG.
   "params": { "x": [-1, 6], "y": [-1, 5], "vectors": [{ "id": "u", "v": [3, 1], "label": "$\\mathbf{u}$" }, { "id": "v", "v": [1, 3], "label": "$\\mathbf{v}$" }] },
   "state": { "show": ["sum"], "drag": ["u", "v"] } }
 ```
+
+**Integration pass 5 additions**
+- Chains: a vector drawn `from` another starts at that vector's tip, its own tail included, so head-to-tail chains of any length need no derive.
+- `angles: [{ id, a, b, label, right: true, radius }]`: an arc (or a right-angle square) between two arrows at `a`'s tail.
+- `lines: [ids]`: each vector's span as its own band (several eigen-lines at once). `segments: [{ id, from: [x, y] | vectorId, to: [x, y] | vectorId, dashed, colour, label }]`: plain lines without heads. `head: false` on a vector drops its arrowhead.
+- `lockTo: "u"` (a vector id) or `[dx, dy]` on a vector holds its dragged head to that line through the origin, for projection drags.
+- `state.matrix: [[a, b], [c, d]]` or `state.transform: { angle (degrees), shear, scale }` gives the basis (its columns): the grid, `b1`, `b2` and the image of the unit square (`unitsq`) follow. Controls bind `m11`, `m12`, `m21`, `m22`, `angle`, `shear`, `scale`.
+- Default colours: a vector without `colour` takes the next slot no other vector uses, so two never share by accident. A vector added by a keyed patch gets its colour too.
+- A `sumLabel` that would sit on a vector label moves below; a scaled plain-text label reads "0.6 × Equity fund".
 
 ## graph
 
@@ -461,6 +500,10 @@ Payoff or profit and loss at expiry against the price of the underlying.
 - `grade()`: `ok` when |value − answer| ≤ `tol`. `key` is the first `wrong[]` range (inclusive) that holds the value, else null.
 - Without `answer` it is an explore control and `grade()` is always ok. The player renders `canvas.controls` entries as plain range inputs with the same binding rules (a canvas `setParam` wins when the kind has one), the same `format`, and `start`: given, the control opens there and applies it to the canvas; left out, it opens at the bound value's current value (`state.params`, `params.params` or the dotted state path), else at `min`.
 - `reveal()` animates the thumb and the bound canvas to the answer over 600 ms, in hint indigo.
+
+## Widget: sliders
+
+Two or more sliders graded together (`sliders: [{ id, bind, min, max, step, start, label }]`, then `answer: { a, b }` with `tol`, or `check: "a * b"`, `value`, `tol` and `show`). Each drives its `bind` as a plain slider does; the full spec is in AUTHORING.md section 3. Explore controls (`canvas.controls`) also take `scale: "log"` (powers of ten from `min`, `perDecade` stops between, the readout in units).
 
 ## Widget: sketch
 

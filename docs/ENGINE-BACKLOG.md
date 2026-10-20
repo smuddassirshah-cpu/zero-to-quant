@@ -254,6 +254,83 @@ Fourth pass (items 115 to 132 and 162 to 194):
 231. Done: AUTHORING.md section 3 notes that NumPy's `solve` and `inv` return nan for a singular matrix in Pyodide, so `raises` cases check `det` and raise in the learner's code.
 232. Done in part: parametric and implicit plane curves are documented in README-B (pass 4, 192); a `levels` contour family is not built yet.
 
+Fifth pass (items 195 to 206, 208 to 229, 232 to 271, and the pytest level 2 and 3 conversion):
+195. Done: plane tap mode takes areas and polygons by id and Riemann rectangles (`riemann-0`, or `<id>-<i>`) as well as points.
+196. Done: plane `riemann` may be a list; each sum label stacks in the top right and is typeset (`sumLabel` through KaTeX).
+197. Done: derive reads plain objects in state by name (`riemann.n`, `line.m`), and `sum(a, b, "term in k", name, value, ...)` adds a term over whole k.
+198. Done: `equal: true` narrows the frame instead of widening x past the authored range.
+199. Done: `playthrough.mjs --shots <dir> --mobile` also saves a 390 px wide screenshot of every screen (`name-390.png`).
+200. Done: expression `upToConstant: true` accepts an answer that differs by a constant (extra symbols set to 0, the difference checked constant at 6 points), so `+C` need not be in `accept`.
+201. Done: order `same: [["s2", "s3"]]` groups interchangeable lines; the validator checks the ids.
+202. Done: derive `integral(a, b, "f(x)", name, value, ...)` (Simpson, 400 strips), and plane area values reach derive and captions as `values.<area id>`.
+203. Done: a plane function's `domain` ends may be param names or expressions (`["0", "b"]`).
+204. Done: plane tick labels sit in a group above the curves, with a halo.
+205. Done: `--why` (with `--shots`) also saves each lesson task's Explanation sheet after the right answer (`-why`), and after a wrong one where the tool can make one, a choice distractor or a numeric answer well off (`-wrong`, `-wrong-why`); the test hook gained `answerWrong()`, `tryAgain()`, `why()` and `closeWhy()`.
+206. Done: tangent `length` now spans that many x units, as documented, so a steep tangent is no longer a stub (`lengthPx` unchanged; no course used `length`).
+208. Done: plane `state.view: { x, y }` (animates) and `state.zoom: { at, scale }`; a control binds `zoom`.
+209. Done: the validator warns on `^` in a derive formula or `{{...}}` caption (it is XOR there) and says to write `pow(a, b)` or quote a curve formula inside `sum()` or `integral()`.
+210. Done: curve formulas take `sum(k, 0, n, term)` and `fact(k)`, so a Taylor polynomial with a slider on n needs no per-term switches.
+211. Done: `canvas.maxHeight` (pixels, 120 or more) caps the drawing's height (it scales down, centred), so a table widget below stays in view; validator checks it. A side-by-side layout is not added: the lesson column is too narrow for one.
+212. Done: series `hlines: [{ id, y, label, dashed, colour, axis }]` in params (inside the auto range) or state; the label goes wherever no series line passes.
+213. Done: explore controls take `scale: "log"` (stops at powers of ten from `min`, `perDecade` for more), the readout in units; validator checks `0 < min < max`.
+214. Done: the pass gate's gallery check includes a category bars chart (`bars (below zero)`), checked in both themes this pass.
+215. Covered by 232.
+216. Done: plane heat map `{ heat: "expr", range, colour }` behind everything (cells coloured from the series slot).
+217. Done: plane function `labelAt: x` holds a label at that x; others keep clear of it.
+218. Done (already possible): `canvas.controls` render on every screen type and grading never reads them; AUTHORING.md now says so (each screen opens at its own `start`).
+219. Done: plane function `labelAvoid: false`.
+220. Done: a derive write to one array component (`"g.v.0"`) keeps the array an array (in a keyed list item too).
+221. Done: plane points `hidden: true` (no dot) as derive-driven polygon vertices, and polygon `sector: { cx, cy, r1, r2, theta1, theta2, degrees }` with curved edges.
+222. Done: plane polar areas `{ polar: "r(theta)", inner, from, to }` (limits may be expressions), value ½∫(r² − r₀²) dθ.
+223. Done: area `label: "auto"` integrates over the authored bounds, not the visible part.
+224. Done: derive and captions read `selected` (the tap selection) and `total(ids)` (sum of the canvas's values; a grid gives each cell's number), for a running total of tapped cells.
+225. Done: vectors `angles: [{ id, a, b, label, right, radius }]`.
+226. Done: `sliders` widget (two or more sliders graded together, `answer` and `tol` or `check`, `value`, `tol` and `show`; `wrong[].check`), with validator rules and playthrough support.
+227. Done: vectors `lockTo: "u"` or `[dx, dy]` holds a dragged head to a line through the origin.
+228. Done: a scaled plain-text vector label reads "0.6 × Equity fund".
+229. Done: an inline formula of about 34 rendered characters or more may scroll sideways within its line (order lines, Why? text, model answers); short maths is unchanged.
+232. Done: plane `{ contour, levels, levelLabels }` draws a contour family as joined polylines, each level labelled; implicit and parametric curves were documented in pass 4.
+233. Done: AUTHORING.md documents array targets (`"g.v": "[a, b]"`) and component writes (220).
+234. Done: table widget fixed cells and matrix cells print negatives with the minus sign.
+235. Done: `{{expr}}` in a matrix cell fills live from params and `state.params`.
+236. Done: the matrix `highlight` object form draws (it becomes a list of groups, never keyed-merged into the initial value).
+237. Done: manipulate states may carry a `canvas` patch, applied along the path (Undo puts it back).
+238. Done: matrix `bar: k` (augmented bar), a pivot ring that grows with wide entries, and `rowOp` defaulting to the matrix that has the rows.
+239. Done: plane point labels substitute `{x}` and `{y}` only outside `$...$`.
+240. Done: vectors chains resolve the full tail, to any depth.
+241. Deferred: a 3D projected view is a new canvas (camera, depth order, rotation by drag) rather than an option on `vectors`; worth designing with the linear algebra level that needs it.
+242. Done: matrix highlight groups with their own `colour` (a list per matrix).
+243. Done: a keyed patch that adds a new polygon id (or point, segment, vector) draws on the live canvas.
+244. Done: polygon vertex labels follow derived points (they always did; now documented), and `glyph: true` draws an F in the shape's frame to show orientation flips.
+245. Done: a vector added by a state patch takes its `colour` (or the next free slot).
+246. Done with 229: wide `$$...$$` and long inline maths scroll in their own box, and the Explanation sheet's grid column can no longer grow past the screen (`minmax(0, 1fr)`).
+247. Done: matrix cell widths come from the rendered KaTeX (measured offscreen, cached).
+248. Done: matrix `rowLabels` and `colLabels`.
+249. Done: vectors `state.matrix` or `state.transform { angle, shear, scale }` draw the transformed grid, basis and unit square; controls bind `m11`..`m22`, `angle`, `shear`, `scale`.
+250. Done: scatter `setParam` / `getParam` and derive reach `line.m` and `line.b`.
+251. Done: a matrix inside a pair is drawn at its own width (`fit: true`), and a pair with a matrix side stacks when side by side would draw either below 80% (`minScale` on any pair).
+252. Done with 247.
+253. Done: a vector without `colour` takes a slot no other vector uses.
+254. Done: drag-point `{ line: [[x1, y1], [x2, y2]] }` and `{ expr, value, show }` targets.
+255. Done: a `sumLabel` that would sit on a vector label moves below.
+256. Done: `hidden` applies before `highlight`, so a Why? patch that shows a matrix and highlights it draws (checked).
+257. Done: implicit curves are joined into polylines before stroking, so `dashed: true` dashes.
+258. Done: a plane point the drag-point widget names is draggable and graded without `drag: true`.
+259. Done: scatter `curves` (an `expr`, parametric, or `implicit` for a risk ellipse).
+260. Done: matrix `scale` (a factor before the brackets).
+261. Done: in a pair's Why? copy a side patch (`{ "right": {...} }`) is applied after the flattened active state, so it wins.
+262. Done: vectors `lines: [ids]` (several spans as bands), `segments` (no heads), `head: false`, and the drag constraint (227).
+263. Done: bars value labels on negative or near-zero bars sit clear of the baseline, with a halo.
+264. Done: matrix operators accept KaTeX.
+265. Done: grid default shade colours run 3, 2, 4, 5, 6, 1, so slot 1 blue (the selection colour) comes last; documented.
+266. Done: bars `state.dim` (ids or labels) and per-category `dim: true`.
+267. Done: `\binom`, `\dbinom`, `\tbinom`, `{n \choose k}` and `n!` are rewritten before grading, and counting answers are compared at whole-number points 1 to 12, so `\frac{n!}{(n-k)!}` and `\binom{n}{2}` grade correctly.
+268. Done: on trees with 7 or more leaves shown, labels from the second level on alternate along their branches by subtree rank, an inner branch of a fan of three puts its label near the far end, and labels shrink from 9 leaves (covers 276).
+269. Done: tree `state.branching` (a number, a list per level, or `{ "1": 2 }`) shows the first k branches of each node at that level; controls bind `branching` or `branching.1`.
+270. Deferred: a drag-between-stars widget is a new interaction (insertion points between cells, a bar token bank); `place` in `order` mode with star and bar tokens (`byText: true`) already grades a stars-and-bars sequence, so a dedicated mode waits for a lesson that needs the array picture itself.
+271. Done: the validator treats ★ ☆ ● ○ ■ □ ▲ △ ▼ ◀ ▶ ◆ and the card suits as text unless written with U+FE0F (covers 274).
+Content conversion: pytest l5 to l8, review-2 and homework-2 (12 code screens) now import real pytest; one shared postlude defines `run_tests()`, `outcome(fn=planted)`, `count(test=, fixture=)` and `is_fixture()` over real pytest, and every hidden check keeps its meaning (each check gives the same result as the stand-in did, on the starter and on the solution). Level 3 (l9 to l12, review-3, homework-3) never used the stand-in classes: its checks call the learner's test functions directly, so only the "pytest cannot load on this page" comment became `import pytest` (l9, l11, l12, homework-3); prose that recommends `math.isclose` is still true and stays. Level 1 (l4, review-1, homework-1) still carries the stand-in and was outside this brief.
+
 
 Raised later (equations level 2):
 
