@@ -162,7 +162,7 @@
             pts.forEach(([x, y], i) => {
               if (x > range[1] + 1e-9) return;
               o.append(svg('line', { x1: sx(prevX), x2: sx(x), y1: sy(prevY), y2: sy(prevY), class: 'cvb-ln' }));
-              if (x >= range[0]) o.append(svg('circle', { cx: sx(x), cy: sy(prevY), r: 4, class: 'cvb-open' }), svg('circle', { cx: sx(x), cy: sy(y), r: 4, class: 'cvb-dot' }));
+              if (x >= range[0]) o.append(svg('circle', { cx: sx(x), cy: sy(prevY), r: 4, class: 'cvb-dot open' }), svg('circle', { cx: sx(x), cy: sy(y), r: 4, class: 'cvb-dot' }));
               prevX = x; prevY = y;
               if (i === pts.length - 1) o.append(svg('line', { x1: sx(x), x2: sx(range[1]), y1: sy(y), y2: sy(y), class: 'cvb-ln' }));
             });

@@ -987,3 +987,9 @@ Raised later (markets level 1):
 
 356. `table` widget: per-cell `byValue` feedback (name a specific wrong value) alongside 287's `%` unit.
 357. Controls: a `stops` list for a slider (1, 2, 4, 12, 52, 365) in addition to 213's log scale.
+
+Raised later (regression level 1, trees level 1):
+
+358. `scatter`: marked points that join neither the fit nor the SSE (an $(\bar x, \bar y)$ marker), a second readout (sum of absolute residuals), whole-number x ticks, and a label slot for a second straight line.
+359. `tree`: patchable `state.labels` and `state.leaves` (node and leaf values from state and from `derive`), so a slider can relabel nodes live and a learner can fill the tree in place (with 275 and 324).
+360. `table` widget: per-cell `wrong` values with their own feedback keys (the `numeric` widget's `wrong[]`), extending 356.
