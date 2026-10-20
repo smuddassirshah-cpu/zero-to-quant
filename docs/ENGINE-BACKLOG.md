@@ -771,3 +771,9 @@ Raised later (conditional level 5):
 285. `derive`: a documented way to look up values by index from a lesson-defined array (`params.data[n]`); authors currently stash arrays under `pair.left.params.params`.
 286. `bars` simulation: a documented `filter` (skip a trial when a condition fails) so the trial counter and counts exclude discarded trials.
 287. `table` widget: a `%` unit per cell, as the `numeric` widget has.
+
+Raised later (conditional level 4):
+
+288. `tree`: first-level probability labels crowd near the root when branches have different numbers of children; offset each first-level label along its branch.
+289. `boxes`: a `size` option for cards (or a door item) so three large items can fill the canvas.
+290. `tap-regions`: let `answer` use grid set names (`cross2`), as `only` already does.
