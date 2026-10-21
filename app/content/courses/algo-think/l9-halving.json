@@ -1,0 +1,1675 @@
+{
+  "id": "l9-halving",
+  "course": "algo-think",
+  "title": "Halving the search",
+  "minutes": 14,
+  "objectives": [
+    "Implement binary search and handle its edge cases.",
+    "Find the leftmost index at or above a target, and use `bisect_left` and `bisect_right`."
+  ],
+  "skills": [
+    "at-search"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One look",
+      "prose": "Sixteen closing prices, in pounds, sorted from low to high. You want to know whether £64 is among them. You may look at one cell first.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            8,
+            12,
+            17,
+            21,
+            26,
+            30,
+            35,
+            41,
+            47,
+            52,
+            58,
+            64,
+            70,
+            77,
+            85
+          ]
+        },
+        "state": {
+          "caption": "Sorted closes (£)"
+        }
+      },
+      "question": "Tap the cell whose value rules out the most cells, whatever it turns out to be.",
+      "widget": {
+        "kind": "tap-regions",
+        "count": 1,
+        "among": [
+          "c7",
+          "c8"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If the cell you look at is below 64, which cells can you forget?"
+        },
+        {
+          "rung": "point",
+          "text": "Looking here leaves only one side in play, and each side is about half.",
+          "highlight": [
+            "c7",
+            "c8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Look in the middle, at index 7 or 8. Either way, about half the cells are ruled out."
+        }
+      ],
+      "feedback": {
+        "correct": "The middle cell splits the list into two halves of about eight.",
+        "generic": "Not quite right. Pick the cell that leaves the fewest cells in play.",
+        "byKey": {
+          "c0": "You looked at the first cell. If it is not 64, it rules out only itself.",
+          "c15": "You looked at the last cell. If it is not 64, it rules out only itself.",
+          "c12": "You looked at 64's own cell, from knowing the answer. With values unseen, a miss there leaves 12 cells in play."
+        }
+      },
+      "explain": {
+        "text": "Index 7 holds £35. Because the list is sorted, 64 cannot be at index 7 or anywhere left of it. One look rules out eight cells.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "mid",
+              "at": 7,
+              "label": "mid"
+            }
+          ],
+          "active": [
+            8,
+            15
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Halve and halve again",
+      "prose": "Keep two markers: `lo` and `hi` bound the cells still in play. Look at the middle one, `mid = (lo + hi) // 2`, then keep the half where 64 can be.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            8,
+            12,
+            17,
+            21,
+            26,
+            30,
+            35,
+            41,
+            47,
+            52,
+            58,
+            64,
+            70,
+            77,
+            85
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 0,
+              "label": "lo"
+            },
+            {
+              "id": "mid",
+              "at": 7,
+              "label": "mid"
+            },
+            {
+              "id": "hi",
+              "at": 15,
+              "label": "hi"
+            }
+          ],
+          "active": [
+            0,
+            15
+          ]
+        }
+      },
+      "question": "Step the search until you find 64.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s3",
+        "states": {
+          "s0": {
+            "tex": "\\text{lo} = 0,\\ \\text{hi} = 15,\\ \\text{mid} = 7:\\ 35 < 64",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 0,
+                  "label": "lo"
+                },
+                {
+                  "id": "mid",
+                  "at": 7,
+                  "label": "mid"
+                },
+                {
+                  "id": "hi",
+                  "at": 15,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                0,
+                15
+              ]
+            },
+            "ops": [
+              {
+                "label": "64 is right of mid: `lo = mid + 1`",
+                "to": "s1"
+              },
+              {
+                "label": "64 is left of mid: `hi = mid - 1`",
+                "to": "w0",
+                "why": "You kept the left half, but 35 is below 64. In a sorted list, 64 can only sit to the right of 35."
+              }
+            ]
+          },
+          "w0": {
+            "tex": "\\text{every value left of index 7 is below } 35"
+          },
+          "s1": {
+            "tex": "\\text{lo} = 8,\\ \\text{hi} = 15,\\ \\text{mid} = 11:\\ 58 < 64",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 8,
+                  "label": "lo"
+                },
+                {
+                  "id": "mid",
+                  "at": 11,
+                  "label": "mid"
+                },
+                {
+                  "id": "hi",
+                  "at": 15,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                8,
+                15
+              ]
+            },
+            "ops": [
+              {
+                "label": "64 is left of mid: `hi = mid - 1`",
+                "to": "w1",
+                "why": "You kept the left part, but 58 is below 64. Everything left of 58 is smaller still."
+              },
+              {
+                "label": "64 is right of mid: `lo = mid + 1`",
+                "to": "s2"
+              }
+            ]
+          },
+          "w1": {
+            "tex": "\\text{every value left of index 11 is below } 58"
+          },
+          "s2": {
+            "tex": "\\text{lo} = 12,\\ \\text{hi} = 15,\\ \\text{mid} = 13:\\ 70 > 64",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 12,
+                  "label": "lo"
+                },
+                {
+                  "id": "mid",
+                  "at": 13,
+                  "label": "mid"
+                },
+                {
+                  "id": "hi",
+                  "at": 15,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                12,
+                15
+              ]
+            },
+            "ops": [
+              {
+                "label": "64 is right of mid: `lo = mid + 1`",
+                "to": "w2",
+                "why": "You went right, but 70 is above 64. Everything right of 70 is larger still."
+              },
+              {
+                "label": "64 is left of mid: `hi = mid - 1`",
+                "to": "s3"
+              }
+            ]
+          },
+          "w2": {
+            "tex": "\\text{every value right of index 13 is above } 70"
+          },
+          "s3": {
+            "tex": "\\text{lo} = 12,\\ \\text{hi} = 12,\\ \\text{mid} = 12:\\ 64 = 64\\ \\text{found}",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 12,
+                  "label": "lo"
+                },
+                {
+                  "id": "mid",
+                  "at": 12,
+                  "label": "mid"
+                },
+                {
+                  "id": "hi",
+                  "at": 12,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                12,
+                12
+              ],
+              "done": [
+                12
+              ]
+            }
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the middle value with 64. Which side can 64 be on?"
+        },
+        {
+          "rung": "point",
+          "text": "This is the cell you are looking at now.",
+          "highlight": [
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "35 and 58 are below 64, so go right twice. 70 is above 64, so go left. Then mid lands on 64."
+        }
+      ],
+      "feedback": {
+        "correct": "Four looks found 64 at index 12.",
+        "generic": "Not quite right. Keep the half where 64 can still be.",
+        "byKey": {
+          "w0": "You kept the left half, but 35 is below 64. In a sorted list, 64 sits right of 35.",
+          "w1": "You kept the left part, but 58 is below 64. Go right of it.",
+          "w2": "You went right, but 70 is above 64. Go left of it."
+        }
+      },
+      "explain": {
+        "text": "Each look halved the cells in play: 16, then 8, then 4, then 1. Four looks found 64 among 16 prices. A scan from the left would have needed 13.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 12,
+              "label": "lo"
+            },
+            {
+              "id": "mid",
+              "at": 12,
+              "label": "mid"
+            },
+            {
+              "id": "hi",
+              "at": 12,
+              "label": "hi"
+            }
+          ],
+          "active": [
+            12,
+            12
+          ],
+          "done": [
+            12
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A million prices",
+      "prose": "This is **binary search**. Each look halves what is left, so the looks grow like $\\log_2 n$: we write $O(\\log n)$. The table counts the most looks it can take.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "sorted items $n$",
+            "most looks"
+          ],
+          "rows": [
+            [
+              "1",
+              "1"
+            ],
+            [
+              "16",
+              "5"
+            ],
+            [
+              "1,000",
+              "10"
+            ],
+            [
+              "1,000,000",
+              "?"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Worst case: the value is absent or found last"
+        }
+      },
+      "question": "How many looks can binary search need on 1,000,000 sorted prices?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "scan",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 500000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "log",
+            "value": 19,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many times can you halve 1,000,000 before one item is left?"
+        },
+        {
+          "rung": "point",
+          "text": "Sixteen items need 5 looks, and $2^4 = 16$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2^{19} = 524{,}288$ and $2^{20} = 1{,}048{,}576$. So 19 halvings get below 2 items, and one more look checks it: 20."
+        }
+      ],
+      "feedback": {
+        "correct": "Twenty looks, against a million for a scan.",
+        "generic": "Not quite right. Count halvings, not items.",
+        "byKey": {
+          "scan": "You counted a scan of every price. Binary search throws away half at each look.",
+          "half": "You counted half the list, the average for a scan. Binary search halves again and again.",
+          "log": "You took $\\log_2 10^6 \\approx 19.9$ and rounded down. The last item left still needs one look of its own."
+        }
+      },
+      "explain": {
+        "text": "The worst case needs $\\lfloor \\log_2 n \\rfloor + 1$ looks. For a million that is $19 + 1 = 20$. Doubling the list adds just one look.",
+        "canvas": {
+          "values": {
+            "r3c1": "20"
+          },
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Write the search",
+      "prose": "Turn the steps into code. Return the index of `target`, or `-1` if it is not there. Test 11 counts your looks in a list of a million: at most 25.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            8,
+            12,
+            17,
+            21,
+            26,
+            30,
+            35,
+            41,
+            47,
+            52,
+            58,
+            64,
+            70,
+            77,
+            85
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 0,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 15,
+              "label": "hi"
+            }
+          ],
+          "caption": "`lo` and `hi` start at the two ends"
+        }
+      },
+      "question": "Write `binary_search(xs, target)` for a sorted list `xs`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def binary_search(xs, target):\n    ...\n",
+        "solution": "def binary_search(xs, target):\n    lo, hi = 0, len(xs) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if xs[mid] == target:\n            return mid\n        if xs[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n",
+        "examples": [
+          {
+            "call": "binary_search([3, 8, 12, 17, 21, 26, 30, 35, 41, 47, 52, 58, 64, 70, 77, 85], 64)",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([], 5)",
+            "expect": "-1",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "binary_search([3, 8, 12, 17, 21, 26, 30, 35, 41, 47, 52, 58, 64, 70, 77, 85], 64)",
+            "expect": "12",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([3, 8, 12, 17, 21, 26, 30, 35, 41, 47, 52, 58, 64, 70, 77, 85], 3)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([3, 8, 12, 17, 21, 26, 30, 35, 41, 47, 52, 58, 64, 70, 77, 85], 85)",
+            "expect": "15",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([], 5)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([7], 7)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([7], 3)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([3, 8, 12, 17, 21, 26, 30, 35, 41, 47, 52, 58, 64, 70, 77, 85], 1)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([3, 8, 12, 17, 21, 26, 30, 35, 41, 47, 52, 58, 64, 70, 77, 85], 90)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "binary_search([3, 8, 12, 17, 21, 26, 30, 35, 41, 47, 52, 58, 64, 70, 77, 85], 50)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = [1, 5, 5, 5, 9]; r = binary_search(xs, 5)",
+            "call": "r >= 0 and xs[r] == 5",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "big = Looks(range(0, 2000000, 2)); r = binary_search(big, 1999998)",
+            "call": "(r, big.looks <= 25)",
+            "expect": "(999999, True)",
+            "compare": "equal"
+          },
+          {
+            "setup": "big = Looks(range(0, 2000000, 2)); r = binary_search(big, 777777)",
+            "call": "(r, big.looks <= 25)",
+            "expect": "(-1, True)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests: the ends, an empty list, one element, targets below, above and between the values, duplicates, and two searches of a million values that count your looks.",
+        "prelude": "class Looks:\n    def __init__(self, data):\n        self.data = list(data)\n        self.looks = 0\n    def __len__(self):\n        return len(self.data)\n    def __getitem__(self, i):\n        self.looks += 1\n        return self.data[i]\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with `lo, hi = 0, len(xs) - 1` and loop while there is a cell left between them."
+        },
+        {
+          "rung": "point",
+          "text": "On the first pass `mid` is index 7.",
+          "highlight": [
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`while lo <= hi:` set `mid = (lo + hi) // 2`. Return `mid` on a match; else move `lo = mid + 1` or `hi = mid - 1`. After the loop, return `-1`."
+        }
+      ],
+      "feedback": {
+        "correct": "Every case passes, in at most 21 looks for a million values.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 searches an empty list. With `hi = len(xs) - 1 = -1` the loop should not run at all.",
+          "test-5": "Test 5 is a single element. If you wrote `while lo < hi`, the loop never looks at it.",
+          "test-11": "Test 11 counts looks. More than 25 means you scanned the list instead of halving it."
+        }
+      },
+      "explain": {
+        "text": "`while lo <= hi` runs while at least one cell is in play, so a single element is checked. `lo = mid + 1` and `hi = mid - 1` always shrink the range. When they cross, the target is absent.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 0,
+              "label": "lo"
+            },
+            {
+              "id": "mid",
+              "at": 7,
+              "label": "mid"
+            },
+            {
+              "id": "hi",
+              "at": 15,
+              "label": "hi"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The first one",
+      "prose": "Now find the **first** index where `xs[i] >= 4`. Here `hi` starts at `len(xs)`, one past the end. The answer is always in the range from `lo` to `hi`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            4,
+            4,
+            4,
+            4,
+            7,
+            9
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 0,
+              "label": "lo"
+            },
+            {
+              "id": "mid",
+              "at": 4,
+              "label": "mid"
+            },
+            {
+              "id": "hi",
+              "at": 8,
+              "label": "hi"
+            }
+          ],
+          "active": [
+            0,
+            7
+          ]
+        }
+      },
+      "question": "Step the search to the first 4.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s4",
+        "states": {
+          "s0": {
+            "tex": "\\text{lo} = 0,\\ \\text{hi} = 8,\\ \\text{mid} = 4:\\ \\texttt{xs[4]} = 4",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 0,
+                  "label": "lo"
+                },
+                {
+                  "id": "mid",
+                  "at": 4,
+                  "label": "mid"
+                },
+                {
+                  "id": "hi",
+                  "at": 8,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                0,
+                7
+              ]
+            },
+            "ops": [
+              {
+                "label": "Stop: a 4 is at index 4",
+                "to": "stop",
+                "why": "You stopped at the first 4 you met. There may be 4s further left, and you want the first one."
+              },
+              {
+                "label": "`hi = mid`: the first 4 is at mid or left of it",
+                "to": "s1"
+              },
+              {
+                "label": "`lo = mid + 1`: look right of mid",
+                "to": "wr",
+                "why": "You went right, but `xs[4]` is not below 4. The first 4 is at index 4 or to its left."
+              }
+            ]
+          },
+          "stop": {
+            "tex": "\\text{index 4 holds a 4, but not the first one}"
+          },
+          "wr": {
+            "tex": "\\text{the first 4 is never right of a 4}"
+          },
+          "s1": {
+            "tex": "\\text{lo} = 0,\\ \\text{hi} = 4,\\ \\text{mid} = 2:\\ \\texttt{xs[2]} = 4",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 0,
+                  "label": "lo"
+                },
+                {
+                  "id": "mid",
+                  "at": 2,
+                  "label": "mid"
+                },
+                {
+                  "id": "hi",
+                  "at": 4,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                0,
+                3
+              ]
+            },
+            "ops": [
+              {
+                "label": "`lo = mid + 1`",
+                "to": "wr",
+                "why": "You went right, but `xs[2]` is not below 4. The first 4 is at index 2 or to its left."
+              },
+              {
+                "label": "`hi = mid`",
+                "to": "s2"
+              }
+            ]
+          },
+          "s2": {
+            "tex": "\\text{lo} = 0,\\ \\text{hi} = 2,\\ \\text{mid} = 1:\\ \\texttt{xs[1]} = 4",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 0,
+                  "label": "lo"
+                },
+                {
+                  "id": "mid",
+                  "at": 1,
+                  "label": "mid"
+                },
+                {
+                  "id": "hi",
+                  "at": 2,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                0,
+                1
+              ]
+            },
+            "ops": [
+              {
+                "label": "`hi = mid`",
+                "to": "s3"
+              },
+              {
+                "label": "`lo = mid + 1`",
+                "to": "wr",
+                "why": "You went right, but `xs[1]` is not below 4. The first 4 is at index 1 or to its left."
+              }
+            ]
+          },
+          "s3": {
+            "tex": "\\text{lo} = 0,\\ \\text{hi} = 1,\\ \\text{mid} = 0:\\ \\texttt{xs[0]} = 2",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 0,
+                  "label": "lo"
+                },
+                {
+                  "id": "mid",
+                  "at": 0,
+                  "label": "mid"
+                },
+                {
+                  "id": "hi",
+                  "at": 1,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                0,
+                0
+              ]
+            },
+            "ops": [
+              {
+                "label": "`hi = mid`",
+                "to": "wl",
+                "why": "You kept index 0, but `xs[0] = 2` is below 4. It cannot be the first 4."
+              },
+              {
+                "label": "`lo = mid + 1`",
+                "to": "s4"
+              }
+            ]
+          },
+          "wl": {
+            "tex": "2 < 4\\text{, so index 0 is not the answer}"
+          },
+          "s4": {
+            "tex": "\\text{lo} = \\text{hi} = 1:\\ \\text{the first 4 is at index 1}",
+            "canvas": {
+              "pointers": [
+                {
+                  "id": "lo",
+                  "at": 1,
+                  "label": "lo"
+                },
+                {
+                  "id": "hi",
+                  "at": 1,
+                  "label": "hi"
+                }
+              ],
+              "active": [
+                1,
+                1
+              ],
+              "done": [
+                1
+              ]
+            }
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When `xs[mid]` is a 4, could it be the first 4?"
+        },
+        {
+          "rung": "point",
+          "text": "A 4 at mid might be the first one, so mid must stay in play.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "On a 4, set `hi = mid`, keeping mid. On a value below 4, set `lo = mid + 1`. Stop when `lo == hi`."
+        }
+      ],
+      "feedback": {
+        "correct": "`lo` and `hi` met at index 1, the first 4.",
+        "generic": "Not quite right. Keep mid in play whenever it holds a 4.",
+        "byKey": {
+          "stop": "You stopped at the first 4 you met. There are 4s further left, and you want the first.",
+          "wr": "You went right of a 4. The first 4 is never right of another 4.",
+          "wl": "You kept index 0, but it holds 2, which is below 4."
+        }
+      },
+      "explain": {
+        "text": "A 4 at mid might be the first, so `hi = mid` keeps it. A value below 4 cannot be, so `lo = mid + 1` drops it. When `lo` meets `hi`, that index is the answer.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 1,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 1,
+              "label": "hi"
+            }
+          ],
+          "active": [
+            1,
+            1
+          ],
+          "done": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Leftmost at least",
+      "prose": "Return the leftmost index `i` with `xs[i] >= target`. If every value is smaller, return `len(xs)`, the place where `target` would be inserted.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            4,
+            4,
+            4,
+            4,
+            7,
+            9
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 0,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 8,
+              "label": "hi"
+            }
+          ],
+          "caption": "`hi = len(xs) = 8` sits one past the end"
+        }
+      },
+      "question": "Write `first_at_least(xs, target)` for a sorted list `xs`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def first_at_least(xs, target):\n    ...\n",
+        "solution": "def first_at_least(xs, target):\n    lo, hi = 0, len(xs)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if xs[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid\n    return lo\n",
+        "examples": [
+          {
+            "call": "first_at_least([1, 2, 2, 2, 3], 2)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([10, 20, 30], 35)",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "first_at_least([1, 2, 2, 2, 3], 2)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([10, 20, 30], 25)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([10, 20, 30], 5)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([10, 20, 30], 35)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([], 4)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([5, 5, 5, 5], 5)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([5, 5, 5, 5], 6)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([5], 5)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "first_at_least([2, 4, 4, 4, 4, 4, 7, 9], 4)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "setup": "big = Looks(range(0, 2000000, 2)); r = first_at_least(big, 777777)",
+            "call": "(r, big.looks <= 25)",
+            "expect": "(388889, True)",
+            "compare": "equal"
+          },
+          {
+            "setup": "import bisect, random; rng = random.Random(7); data = sorted(rng.randrange(50) for _ in range(200))",
+            "call": "all(first_at_least(data, t) == bisect.bisect_left(data, t) for t in range(-2, 53))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: duplicates, a target between two values, below and above every value, an empty list, all values equal, a million values with your looks counted, and 55 targets checked against `bisect.bisect_left`.",
+        "prelude": "class Looks:\n    def __init__(self, data):\n        self.data = list(data)\n        self.looks = 0\n    def __len__(self):\n        return len(self.data)\n    def __getitem__(self, i):\n        self.looks += 1\n        return self.data[i]\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Copy the stepping you just did: `lo, hi = 0, len(xs)` and loop `while lo < hi`."
+        },
+        {
+          "rung": "point",
+          "text": "When every value is below `target`, the answer is this end position, `len(xs)`.",
+          "highlight": [
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "If `xs[mid] < target`, set `lo = mid + 1`; else set `hi = mid`. Return `lo` after the loop."
+        }
+      ],
+      "feedback": {
+        "correct": "Every case passes, and it agrees with `bisect_left` on all 55 targets.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 has three 2s and expects index 1. Returning on the first 2 you meet gives the middle one.",
+          "test-4": "Test 4 expects 3, one past the end. Start with `hi = len(xs)`, not `len(xs) - 1`.",
+          "test-7": "Test 7 has all values equal and a larger target. The answer is `len(xs)`, 4."
+        }
+      },
+      "explain": {
+        "text": "This is exactly `bisect.bisect_left(xs, target)` from the standard library. `bisect_right` is the same with `<=` in place of `<`: it returns the index after the last equal value. Both take $O(\\log n)$ looks.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 1,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 1,
+              "label": "hi"
+            }
+          ],
+          "done": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "It never returns",
+      "prose": "A colleague writes this version. On `[10, 20, 30, 40]` with target 35 it never returns.\n\n```python\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if xs[mid] < target:\n        lo = mid\n    else:\n        hi = mid\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            10,
+            20,
+            30,
+            40
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 2,
+              "label": "lo"
+            },
+            {
+              "id": "mid",
+              "at": 2,
+              "label": "mid"
+            },
+            {
+              "id": "hi",
+              "at": 3,
+              "label": "hi"
+            }
+          ],
+          "active": [
+            2,
+            2
+          ],
+          "caption": "After two passes: `lo = 2`, `hi = 3`"
+        }
+      },
+      "question": "Why does the loop never end?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stuck",
+            "text": "With `hi = lo + 1`, `mid` equals `lo`, and `lo = mid` leaves `lo` where it was",
+            "correct": true
+          },
+          {
+            "id": "cond",
+            "text": "`while lo < hi` should be `while lo <= hi`",
+            "why": "You changed the loop condition. With `<=` the loop would also keep running once `lo == hi`, so it gets worse, not better."
+          },
+          {
+            "id": "overflow",
+            "text": "`(lo + hi) // 2` overflows",
+            "why": "You blamed overflow. Python integers never overflow; that bug lives in C and Java, where `lo + hi` can pass the largest `int`."
+          },
+          {
+            "id": "absent",
+            "text": "35 is not in the list, so the search goes on for ever",
+            "why": "You blamed the missing value. A correct search returns 3 here, the place 35 would go."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out `mid` when `lo = 2` and `hi = 3`."
+        },
+        {
+          "rung": "point",
+          "text": "Both `lo` and `mid` point at this cell.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`mid = (2 + 3) // 2 = 2`. 30 is below 35, so `lo = mid = 2`. Nothing changed, so the next pass is the same."
+        }
+      ],
+      "feedback": {
+        "correct": "`lo = mid` makes no progress once two cells are left.",
+        "generic": "Not quite right. Trace one more pass from `lo = 2`, `hi = 3`.",
+        "byKey": {
+          "cond": "You changed the condition. The problem is the update: `lo = mid` can leave `lo` where it was.",
+          "overflow": "You blamed overflow. Python integers grow as needed. The loop is stuck because `lo` stops moving.",
+          "absent": "You blamed the missing value. An absent target is fine; the loop is stuck because `lo` never moves."
+        }
+      },
+      "explain": {
+        "text": "Floor division rounds `mid` down, so with two cells left `mid == lo`. Then `lo = mid` changes nothing and the loop spins. Write `lo = mid + 1`: `xs[mid]` is too small, so it can never be the answer.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 3,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 3,
+              "label": "hi"
+            }
+          ],
+          "active": [
+            3,
+            3
+          ],
+          "caption": "With `lo = mid + 1`: `lo = hi = 3`"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "The invariant: everything left of `lo` is below `target`, and everything from `hi` on is at least `target`.\n\n```python\nlo, hi = 0, len(xs)\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if xs[mid] < target:\n        lo = mid + 1\n    else:\n        hi = mid\nreturn lo\n```\n\nEach pass halves the range, so at most $\\lceil \\log_2 (n + 1) \\rceil$ passes.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            4,
+            4,
+            4,
+            4,
+            7,
+            9
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 1,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 1,
+              "label": "hi"
+            }
+          ],
+          "highlight": {
+            "range": [
+              0,
+              0
+            ],
+            "label": "below target"
+          }
+        }
+      },
+      "question": "This loop uses `lo = mid + 1` and `hi = mid`. Which condition must it use?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "lt",
+            "text": "`while lo < hi`",
+            "correct": true
+          },
+          {
+            "id": "le",
+            "text": "`while lo <= hi`",
+            "why": "With `<=`, the loop runs once more when `lo == hi`. Then `mid == hi` and `hi = mid` changes nothing, so it never ends."
+          },
+          {
+            "id": "lt1",
+            "text": "`while lo < hi - 1`",
+            "why": "This stops with two cells still in play. You would need an extra check after the loop."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "`hi = mid` goes with `while lo < hi`; `hi = mid - 1` goes with `while lo <= hi`.",
+        "generic": "Not quite right. Ask what happens on the pass where `lo == hi`."
+      },
+      "explain": {
+        "text": "Both pairings work: `lo <= hi` with `hi = mid - 1`, or `lo < hi` with `hi = mid`. Mixing them loops for ever or skips a cell. In C or Java write `mid = lo + (hi - lo) / 2`, because `lo + hi` can overflow there."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Days below a level",
+      "prose": "To count the days a stock closed below a level, sort a copy of the closes once. Then each question is one bisection.\n\n```python\nfrom bisect import bisect_left, bisect_right\ns = sorted(closes)\nbisect_left(s, 100)   # 3\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            96,
+            98,
+            99,
+            100,
+            100,
+            100,
+            101,
+            103
+          ]
+        },
+        "state": {
+          "caption": "`s`: eight closes, sorted (£)"
+        }
+      },
+      "question": "What does `bisect_right(s, 100)` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "index",
+        "wrong": [
+          {
+            "id": "left",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "last",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "count",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`bisect_right` returns the index just after the last value equal to 100."
+        },
+        {
+          "rung": "point",
+          "text": "These are the three closes of exactly £100.",
+          "highlight": [
+            "c3",
+            "c4",
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The 100s sit at indices 3, 4 and 5. The index after the last one is 6."
+        }
+      ],
+      "feedback": {
+        "correct": "Six days closed at or below £100.",
+        "generic": "Not quite right. Find the index just after the last 100.",
+        "byKey": {
+          "left": "You gave `bisect_left`, the index of the first 100. `bisect_right` goes past the equal values.",
+          "last": "You gave the index of the last 100. `bisect_right` returns the index after it.",
+          "count": "You counted the days above £100. `bisect_right` counts from the left."
+        }
+      },
+      "explain": {
+        "text": "`bisect_left(s, 100) = 3` counts closes strictly below £100. `bisect_right(s, 100) = 6` counts closes at or below it. After one $O(n \\log n)$ sort, each level costs $O(\\log n)$.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              0,
+              5
+            ],
+            "label": "at or below £100"
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The next trading day",
+      "prose": "A backtest wants the first trading day on or after a given date. Trading days are ISO date strings, sorted, and ISO strings sort in date order.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "03-02",
+            "03-03",
+            "03-04",
+            "03-05",
+            "03-06",
+            "03-09",
+            "03-10"
+          ]
+        },
+        "state": {
+          "caption": "Trading days in March 2026 (month-day); 7 and 8 March are a weekend"
+        }
+      },
+      "question": "Write `next_trading_day(days, day)`: the first entry of `days` on or after `day`, or `None` if there is none.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from bisect import bisect_left\n\n\ndef next_trading_day(days, day):\n    ...\n",
+        "solution": "from bisect import bisect_left\n\n\ndef next_trading_day(days, day):\n    i = bisect_left(days, day)\n    if i == len(days):\n        return None\n    return days[i]\n",
+        "examples": [
+          {
+            "call": "next_trading_day([\"2026-03-06\", \"2026-03-09\"], \"2026-03-07\")",
+            "expect": "\"2026-03-09\"",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "DAYS = [\"2026-03-02\", \"2026-03-03\", \"2026-03-04\", \"2026-03-05\", \"2026-03-06\", \"2026-03-09\", \"2026-03-10\"]",
+            "call": "next_trading_day(DAYS, \"2026-03-07\")",
+            "expect": "\"2026-03-09\"",
+            "compare": "equal"
+          },
+          {
+            "setup": "DAYS = [\"2026-03-02\", \"2026-03-03\", \"2026-03-04\", \"2026-03-05\", \"2026-03-06\", \"2026-03-09\", \"2026-03-10\"]",
+            "call": "next_trading_day(DAYS, \"2026-03-04\")",
+            "expect": "\"2026-03-04\"",
+            "compare": "equal"
+          },
+          {
+            "setup": "DAYS = [\"2026-03-02\", \"2026-03-03\", \"2026-03-04\", \"2026-03-05\", \"2026-03-06\", \"2026-03-09\", \"2026-03-10\"]",
+            "call": "next_trading_day(DAYS, \"2026-02-27\")",
+            "expect": "\"2026-03-02\"",
+            "compare": "equal"
+          },
+          {
+            "setup": "DAYS = [\"2026-03-02\", \"2026-03-03\", \"2026-03-04\", \"2026-03-05\", \"2026-03-06\", \"2026-03-09\", \"2026-03-10\"]",
+            "call": "next_trading_day(DAYS, \"2026-03-11\")",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "setup": "DAYS = [\"2026-03-02\", \"2026-03-03\", \"2026-03-04\", \"2026-03-05\", \"2026-03-06\", \"2026-03-09\", \"2026-03-10\"]",
+            "call": "next_trading_day(DAYS, \"2026-03-10\")",
+            "expect": "\"2026-03-10\"",
+            "compare": "equal"
+          },
+          {
+            "call": "next_trading_day([], \"2026-03-04\")",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: a weekend, a trading day itself, a date before the first day, a date after the last, the last day, and an empty calendar."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which function returns the first index with `days[i] >= day`?"
+        },
+        {
+          "rung": "point",
+          "text": "Saturday 7 March is not a trading day; this is the next one.",
+          "highlight": [
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`i = bisect_left(days, day)`. If `i == len(days)`, return `None`; else return `days[i]`."
+        }
+      ],
+      "feedback": {
+        "correct": "One bisection per lookup, and the end of the calendar returns `None`.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 asks for a trading day itself. `bisect_right` skips past an equal date; use `bisect_left`.",
+          "test-4": "Test 4 asks for a date after the last trading day. `bisect_left` returns `len(days)` there, so return `None`.",
+          "test-6": "Test 6 passes an empty list. `bisect_left` returns 0, which equals `len(days)`, so return `None`."
+        }
+      },
+      "explain": {
+        "text": "`bisect_left` finds the first day not before `day`, which is the definition we want. Past the last day it returns `len(days)`, which must not be used as an index. Over ten years of days that is 12 looks per lookup.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "i",
+              "at": 5,
+              "label": "i"
+            }
+          ],
+          "done": [
+            5
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "On a sorted list, one look at the middle rules out half of what is left.",
+      "Keep an invariant: the answer always lies between `lo` and `hi`, and every pass must shrink that range.",
+      "`bisect_left` gives the first index at or above a value, `bisect_right` the index after the last equal one."
+    ],
+    "formula": {
+      "name": "Looks in the worst case",
+      "tex": "\\lfloor \\log_2 n \\rfloor + 1 \\quad\\text{so}\\quad O(\\log n)",
+      "note": "A million sorted values need at most 20 looks."
+    },
+    "trap": "`lo = mid` without `+ 1` stops the range shrinking once two cells are left, and the loop never ends."
+  },
+  "quiz": [
+    {
+      "id": "q-unsorted",
+      "difficulty": 2,
+      "prose": "```python\nbinary_search([8, 3, 12, 5, 20], 5)\n```\nThis is the `binary_search` you wrote, given a list that is not sorted.",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "neg",
+            "text": "`-1`",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "`3`",
+            "why": "You found 5 by reading the whole list. The search looks only at 12, then 8, and both send it left."
+          },
+          {
+            "id": "err",
+            "text": "It raises an error",
+            "why": "Nothing in the code checks that the list is sorted. It halves anyway and returns an answer."
+          },
+          {
+            "id": "zero",
+            "text": "`0`",
+            "why": "Index 0 holds 8. The search looks there but 8 is not 5."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It misses 5, because the list is not sorted.",
+        "generic": "Not quite right. Trace `lo`, `mid` and `hi` by hand."
+      },
+      "explain": {
+        "text": "First `mid = 2` holds 12, above 5, so `hi = 1`. Then `mid = 0` holds 8, above 5, so `hi = -1` and the loop ends. Binary search is only correct on sorted data."
+      }
+    },
+    {
+      "id": "q-looks",
+      "difficulty": 2,
+      "prose": "A sorted list holds 5,000 option strikes.",
+      "question": "At most how many looks does binary search need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "floor",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 2500,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Thirteen looks.",
+        "generic": "Not quite right. Find the power of two just below 5,000.",
+        "byKey": {
+          "floor": "You took $\\lfloor \\log_2 5000 \\rfloor = 12$. The last item left needs one more look.",
+          "half": "You counted half the list, as a scan would. Each look halves what is left."
+        }
+      },
+      "explain": {
+        "text": "$2^{12} = 4096 \\le 5000 < 8192 = 2^{13}$, so $\\lfloor \\log_2 5000 \\rfloor = 12$. The worst case is $12 + 1 = 13$ looks."
+      }
+    },
+    {
+      "id": "q-bisect",
+      "difficulty": 3,
+      "prose": "```python\nfrom bisect import bisect_left, bisect_right\ns = [1, 3, 3, 3, 8]\nprint(bisect_left(s, 3), bisect_right(s, 3))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`1 4`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`1 3`",
+            "why": "You gave the index of the last 3 for `bisect_right`. It returns the index after it."
+          },
+          {
+            "id": "c",
+            "text": "`0 4`",
+            "why": "You gave 0 for `bisect_left`, but `s[0] = 1` is below 3. The first 3 is at index 1."
+          },
+          {
+            "id": "d",
+            "text": "`2 2`",
+            "why": "You gave the middle 3 twice. The two functions return the two ends of the run of 3s."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The run of 3s starts at 1 and ends just before 4.",
+        "generic": "Not quite right. Find where the run of 3s starts and ends."
+      },
+      "explain": {
+        "text": "`bisect_left` gives the first index holding 3, which is 1. `bisect_right` gives the index after the last 3, which is 4. Their difference, 3, counts the 3s."
+      }
+    },
+    {
+      "id": "q-equal",
+      "difficulty": 3,
+      "prose": "`first_at_least` returns the leftmost index `i` with `xs[i] >= target`, or `len(xs)`.\n\n```python\nfirst_at_least([5, 5, 5, 5], 5)\n```",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`0`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`3`",
+            "why": "You gave the last 5. The leftmost index with a value of at least 5 is the first one."
+          },
+          {
+            "id": "c",
+            "text": "`2`",
+            "why": "You gave the first `mid` looked at. The search keeps going left while it sees 5s."
+          },
+          {
+            "id": "d",
+            "text": "`4`",
+            "why": "You gave `len(xs)`, the answer when every value is too small. Here `xs[0]` already qualifies."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Every value is at least 5, so the first index wins.",
+        "generic": "Not quite right. Which is the leftmost index holding at least 5?"
+      },
+      "explain": {
+        "text": "Every pass sees a 5, so `hi = mid` moves left each time: `hi` goes 2, 1, 0. The loop stops at `lo = hi = 0`."
+      }
+    }
+  ]
+}

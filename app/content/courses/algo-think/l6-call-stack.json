@@ -1,0 +1,1206 @@
+{
+  "id": "l6-call-stack",
+  "course": "algo-think",
+  "title": "Watching the call stack",
+  "minutes": 14,
+  "objectives": [
+    "Trace a recursive call on the call stack."
+  ],
+  "skills": [
+    "at-recursion"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which call finishes first",
+      "prose": "`fact(3)` calls `fact(2)`, which calls `fact(1)`, which calls `fact(0)`. Python keeps a box for each call still running, piled up in the order they started.\n\n```python\ndef fact(n):\n    if n == 0:\n        return 1\n    return n * fact(n - 1)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "fact, n = 3",
+            "fact, n = 2",
+            "fact, n = 1",
+            "fact, n = 0"
+          ],
+          "mode": "stack",
+          "capacity": 4,
+          "showIndex": false,
+          "topLabel": "top"
+        },
+        "state": {
+          "caption": "Four calls are running. `fact(3)` started first."
+        }
+      },
+      "question": "Tap the call that returns first.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c3"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which call can answer without waiting for another?"
+        },
+        {
+          "rung": "point",
+          "text": "This call needs `fact(2)`'s answer before it can multiply.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`fact(0)` meets the base case and returns 1 at once. It is the last box on the pile."
+        }
+      ],
+      "feedback": {
+        "correct": "The last call to start is the first to finish.",
+        "generic": "Not quite right. Find the call that does not need another call's answer.",
+        "byKey": {
+          "c0": "You picked the first call. `fact(3)` started first, but it cannot finish until `fact(2)` hands back its answer.",
+          "c1": "`fact(2)` is still waiting for `fact(1)`.",
+          "c2": "`fact(1)` is still waiting for `fact(0)`."
+        }
+      },
+      "explain": {
+        "text": "`fact(0)` started last, and it is the only call that can answer at once. Its return lets `fact(1)` finish, then `fact(2)`, then `fact(3)`. The last call in is the first one out.",
+        "canvas": {
+          "highlight": [
+            "c3"
+          ],
+          "caption": "Last in, first out"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Push and pop",
+      "prose": "Now run `fact(3)` yourself. Each step either starts a call, which adds a box on top, or finishes one, which removes it.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "fact, n = 3"
+          ],
+          "mode": "stack",
+          "capacity": 4,
+          "showIndex": false,
+          "topLabel": "top"
+        },
+        "state": {
+          "caption": "1 frame"
+        }
+      },
+      "question": "Step through `fact(3)` until the pile is empty.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s7",
+        "states": {
+          "s0": {
+            "tex": "\\texttt{fact(3)}\\ \\text{has started}",
+            "canvas": {
+              "cells": [
+                "fact, n = 3"
+              ],
+              "highlight": [
+                "c0"
+              ],
+              "caption": "1 frame"
+            },
+            "ops": [
+              {
+                "label": "`fact(3)` returns",
+                "to": "x0",
+                "why": "`fact(3)` needs `fact(2)` for `3 * fact(2)`, so it cannot return yet."
+              },
+              {
+                "label": "`fact(3)` calls `fact(2)`",
+                "to": "s1"
+              }
+            ]
+          },
+          "s1": {
+            "tex": "\\texttt{fact(2)}\\ \\text{has started}",
+            "canvas": {
+              "cells": [
+                "fact, n = 3",
+                "fact, n = 2"
+              ],
+              "highlight": [
+                "c1"
+              ],
+              "caption": "2 frames"
+            },
+            "ops": [
+              {
+                "label": "`fact(2)` calls `fact(1)`",
+                "to": "s2"
+              },
+              {
+                "label": "`fact(3)` returns",
+                "to": "x1",
+                "why": "`fact(3)` is still waiting for `fact(2)`, which has only just started."
+              }
+            ]
+          },
+          "s2": {
+            "tex": "\\texttt{fact(1)}\\ \\text{has started}",
+            "canvas": {
+              "cells": [
+                "fact, n = 3",
+                "fact, n = 2",
+                "fact, n = 1"
+              ],
+              "highlight": [
+                "c2"
+              ],
+              "caption": "3 frames"
+            },
+            "ops": [
+              {
+                "label": "`fact(1)` returns 1",
+                "to": "x2",
+                "why": "`fact(1)` computes `1 * fact(0)`, so it must call `fact(0)` first."
+              },
+              {
+                "label": "`fact(1)` calls `fact(0)`",
+                "to": "s3"
+              }
+            ]
+          },
+          "s3": {
+            "tex": "\\texttt{fact(0)}\\ \\text{has started}",
+            "canvas": {
+              "cells": [
+                "fact, n = 3",
+                "fact, n = 2",
+                "fact, n = 1",
+                "fact, n = 0"
+              ],
+              "highlight": [
+                "c3"
+              ],
+              "caption": "4 frames: the tallest the stack gets"
+            },
+            "ops": [
+              {
+                "label": "`fact(0)` returns 1",
+                "to": "s4"
+              },
+              {
+                "label": "`fact(0)` calls `fact(-1)`",
+                "to": "x3",
+                "why": "`n == 0` is true, so `fact(0)` returns 1 without calling."
+              }
+            ]
+          },
+          "s4": {
+            "tex": "\\texttt{fact(0)}\\ \\text{returned}\\ 1",
+            "canvas": {
+              "cells": [
+                "fact, n = 3",
+                "fact, n = 2",
+                "fact, n = 1"
+              ],
+              "highlight": [
+                "c2"
+              ],
+              "caption": "`fact(1)` gets the 1"
+            },
+            "ops": [
+              {
+                "label": "`fact(3)` returns",
+                "to": "x4",
+                "why": "`fact(3)` is at the bottom. Only the frame on top can carry on."
+              },
+              {
+                "label": "`fact(1)` returns $1 \\times 1 = 1$",
+                "to": "s5"
+              }
+            ]
+          },
+          "s5": {
+            "tex": "\\texttt{fact(1)}\\ \\text{returned}\\ 1",
+            "canvas": {
+              "cells": [
+                "fact, n = 3",
+                "fact, n = 2"
+              ],
+              "highlight": [
+                "c1"
+              ],
+              "caption": "`fact(2)` gets the 1"
+            },
+            "ops": [
+              {
+                "label": "`fact(2)` returns $2 \\times 1 = 2$",
+                "to": "s6"
+              },
+              {
+                "label": "`fact(2)` calls `fact(1)` again",
+                "to": "x5",
+                "why": "`fact(1)` has already returned. `fact(2)` carries on from where it paused."
+              }
+            ]
+          },
+          "s6": {
+            "tex": "\\texttt{fact(2)}\\ \\text{returned}\\ 2",
+            "canvas": {
+              "cells": [
+                "fact, n = 3"
+              ],
+              "highlight": [
+                "c0"
+              ],
+              "caption": "`fact(3)` gets the 2"
+            },
+            "ops": [
+              {
+                "label": "`fact(3)` returns $3 \\times 1 = 3$",
+                "to": "x6",
+                "why": "`fact(3)` multiplies by what `fact(2)` returned, which is 2."
+              },
+              {
+                "label": "`fact(3)` returns $3 \\times 2 = 6$",
+                "to": "s7"
+              }
+            ]
+          },
+          "s7": {
+            "tex": "\\texttt{fact(3)}\\ \\text{returned}\\ 6",
+            "canvas": {
+              "cells": [],
+              "highlight": [],
+              "caption": "The stack is empty"
+            }
+          },
+          "x0": {
+            "tex": "\\texttt{fact(3)}\\ \\text{cannot return yet}"
+          },
+          "x1": {
+            "tex": "\\texttt{fact(3)}\\ \\text{cannot return yet}"
+          },
+          "x2": {
+            "tex": "\\texttt{fact(1)}\\ \\text{cannot return yet}"
+          },
+          "x3": {
+            "tex": "\\texttt{fact(0)}\\ \\text{does not call}"
+          },
+          "x4": {
+            "tex": "\\texttt{fact(3)}\\ \\text{is not on top}"
+          },
+          "x5": {
+            "tex": "\\texttt{fact(1)}\\ \\text{already answered}"
+          },
+          "x6": {
+            "tex": "\\texttt{fact(2)}\\ \\text{returned 2, not 1}"
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A call that needs another call's answer must make that call first."
+        },
+        {
+          "rung": "point",
+          "text": "Only the box on top can do anything.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Call down to `fact(0)`. Then return from the top: 1, then $1 \\times 1$, then $2 \\times 1$, then $3 \\times 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Four boxes went on, then came off in the opposite order.",
+        "generic": "Not quite right. Only the box on top can call or return.",
+        "byKey": {
+          "x4": "You tried to finish the bottom call first. It is still waiting for the calls above it."
+        }
+      },
+      "explain": {
+        "text": "Calls added boxes on top: 3, 2, 1, 0. Returns took them off the top: 0, 1, 2, 3. Each return handed its value to the box that was then on top."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Frames on the call stack",
+      "prose": "Each box is a **frame**: one call's own variables, such as its `n`, and the line to resume at. The pile is the **call stack**. Starting a call **pushes** a frame; returning **pops** it.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "fact, n = 3",
+            "fact, n = 2",
+            "fact, n = 1",
+            "fact, n = 0"
+          ],
+          "mode": "stack",
+          "capacity": 4,
+          "showIndex": false,
+          "topLabel": "top"
+        },
+        "state": {
+          "caption": "`fact(3)` at its tallest: 4 frames"
+        }
+      },
+      "question": "How many frames are on the stack at its tallest during `fact(5)`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "frames",
+        "accept": "6: one frame for each of n = 5, 4, 3, 2, 1, 0",
+        "wrong": [
+          {
+            "id": "no-base",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "value",
+            "value": 120,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`fact(3)` reached 4 frames. Which values of `n` were they?"
+        },
+        {
+          "rung": "point",
+          "text": "The base case `fact(0)` gets a frame of its own too.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`fact(5)` pushes frames for $n = 5, 4, 3, 2, 1, 0$ before anything returns."
+        }
+      ],
+      "feedback": {
+        "correct": "$n + 1$ frames for `fact(n)`, counting the base case.",
+        "generic": "Not quite right. List the values of `n` that are waiting at the moment `fact(0)` runs.",
+        "byKey": {
+          "no-base": "You left out the base case. `fact(0)` is a call too, with its own frame.",
+          "one": "Frames are not freed until their call returns, and none returns before `fact(0)`.",
+          "value": "120 is what `fact(5)` returns. Count the frames instead."
+        }
+      },
+      "explain": {
+        "text": "Nothing returns until `fact(0)` runs, so frames for $n = 5, 4, 3, 2, 1, 0$ are all waiting. That is 6 frames, or $n + 1$ for `fact(n)`. So the stack's memory grows with the depth of the recursion."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The recursion limit",
+      "prose": "Python caps the stack. `sys.getrecursionlimit()` returns 1000, and a call deeper than that raises `RecursionError`. So `sum_to(5000)` fails.\n\n```python\ndef sum_to(n):\n    if n == 0:\n        return 0\n    return n + sum_to(n - 1)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "sum_to, n = 5000",
+            "sum_to, n = 4999",
+            "⋮",
+            "sum_to, n = 4002"
+          ],
+          "mode": "stack",
+          "capacity": 4,
+          "showIndex": false,
+          "topLabel": "top"
+        },
+        "state": {
+          "caption": "About 1,000 frames: Python's limit"
+        }
+      },
+      "question": "Which fix makes `sum_to(5000)` work safely?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "loop",
+            "text": "Rewrite `sum_to` as a loop",
+            "correct": true
+          },
+          {
+            "id": "limit",
+            "text": "Call `sys.setrecursionlimit(10**9)` first",
+            "why": "A huge limit lets the real stack overflow, and Python itself can crash with no traceback. Deep work needs a loop."
+          },
+          {
+            "id": "base",
+            "text": "Add a second base case, `if n == 1: return 1`",
+            "why": "That saves one frame out of about 5,000. The depth hardly changes."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What decides how many frames there are?"
+        },
+        {
+          "rung": "point",
+          "text": "One frame per value of `n` still waiting."
+        },
+        {
+          "rung": "step",
+          "text": "Any recursion here needs about 5,000 frames. A loop needs one frame, whatever `n` is."
+        }
+      ],
+      "feedback": {
+        "correct": "A loop runs in one frame, so its depth does not grow with `n`.",
+        "generic": "Not quite right. Count the frames each fix would need.",
+        "byKey": {
+          "limit": "You raised the limit. It is there to protect the real stack, which can still run out."
+        }
+      },
+      "explain": {
+        "text": "Every value of `n` waiting for the next call holds a frame, so the recursion needs about 5,000. A loop keeps one running total in one frame. The depth no longer depends on `n`.",
+        "canvas": {
+          "highlight": [
+            "c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A call in the last position",
+      "prose": "Here nothing is left to do after the recursive call: it is a **tail call**. The running total travels down in `acc`.\n\n```python\ndef sum_to(n, acc=0):\n    if n == 0:\n        return acc\n    return sum_to(n - 1, acc + n)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "n = 5000, acc = 0",
+            "n = 4999, acc = 5000",
+            "n = 4998, acc = 9999",
+            "⋮"
+          ],
+          "mode": "stack",
+          "capacity": 4,
+          "showIndex": false,
+          "topLabel": "top"
+        },
+        "state": {
+          "caption": "Frames of `sum_to(5000)`"
+        }
+      },
+      "question": "Does `sum_to(5000)` still raise `RecursionError`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: Python keeps every frame, about 5,000 of them",
+            "correct": true
+          },
+          {
+            "id": "reuse",
+            "text": "No: a tail call reuses the frame",
+            "why": "Some languages reuse the frame for a tail call. Python does not, so the frames still pile up."
+          },
+          {
+            "id": "acc",
+            "text": "No: `acc` already holds the answer",
+            "why": "The accumulator removes the work after the call, not the frame itself."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does Python free a frame before its call returns?"
+        },
+        {
+          "rung": "point",
+          "text": "Each of these frames is still waiting for the one above to return.",
+          "highlight": [
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Python never optimises tail calls. Each call still pushes a frame, so about 5,000 pile up."
+        }
+      ],
+      "feedback": {
+        "correct": "Python does not optimise tail calls, so the depth is unchanged.",
+        "generic": "Not quite right. Count the frames: one per call, until a call returns.",
+        "byKey": {
+          "reuse": "You expected tail-call reuse, which Python does not do. Every call keeps its own frame."
+        }
+      },
+      "explain": {
+        "text": "The accumulator means no work is left after the call. But Python still pushes one frame per call and frees it only on return. So the tail-call version fails at the same depth; the accumulator helps only when you turn it into a loop."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Whose total is it",
+      "prose": "The author hoped every call would add to the same `total`.\n\n```python\ndef sum_list(xs):\n    total = 0\n    if not xs:\n        return total\n    total = total + xs[0]\n    sum_list(xs[1:])\n    return total\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "[4, 1, 3]: total ?",
+            "[1, 3]: total ?",
+            "[3]: total ?",
+            "[]: total ?"
+          ],
+          "mode": "stack",
+          "capacity": 4,
+          "showIndex": false,
+          "topLabel": "top"
+        },
+        "state": {
+          "caption": "Each frame of `sum_list([4, 1, 3])`"
+        }
+      },
+      "question": "What does `sum_list([4, 1, 3])` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "four",
+            "text": "4",
+            "correct": true
+          },
+          {
+            "id": "eight",
+            "text": "8",
+            "why": "You expected one shared `total`. Each frame makes its own, starting at 0."
+          },
+          {
+            "id": "three",
+            "text": "3",
+            "why": "3 is the `total` in the frame for `[3]`. That frame is gone; the top call returns its own."
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "The empty list's frame returns 0, but its caller ignores the value."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When a new call starts, which `total` does `total = 0` set?"
+        },
+        {
+          "rung": "point",
+          "text": "The bottom frame is the top call, `sum_list([4, 1, 3])`. What is its own `total`?",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each frame has its own `total`: 4, 1, 3 and 0. The top call returns its own, which is 4."
+        }
+      ],
+      "feedback": {
+        "correct": "Each frame has its own `total`, and the top call returns its own.",
+        "generic": "Not quite right. Follow only the bottom frame's `total`.",
+        "byKey": {
+          "eight": "You expected the frames to share `total`. Each call makes a fresh one and the results are never added."
+        }
+      },
+      "explain": {
+        "text": "Every call runs `total = 0` in its own frame, so there are four separate totals. The top call adds only its own 4, ignores what `sum_list(xs[1:])` returns, and returns 4. Pass values down as arguments, or combine return values: `return xs[0] + sum_list(xs[1:])`.",
+        "canvas": {
+          "cells": [
+            "[4, 1, 3]: total 4",
+            "[1, 3]: total 1",
+            "[3]: total 3",
+            "[]: total 0"
+          ],
+          "highlight": [
+            "c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A loop, and a depth counter",
+      "prose": "Rewrite `sum_to` as a loop, so `sum_to(100000)` works. Then count frames for `fib` below. Make the same calls, pass the depth `d + 1` down as an argument, and return the deepest `d` reached.\n\n```python\ndef fib(n):\n    if n < 2:\n        return n\n    return fib(n - 1) + fib(n - 2)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "fib, n = 5",
+            "fib, n = 4",
+            "fib, n = 3",
+            "fib, n = 2",
+            "fib, n = 1"
+          ],
+          "mode": "stack",
+          "capacity": 5,
+          "showIndex": false,
+          "topLabel": "top"
+        },
+        "state": {
+          "caption": "`fib(5)` at its deepest: 5 frames, out of 15 calls"
+        }
+      },
+      "question": "Write `sum_to(n)` with a loop, and `depth(n, d=1)`: the most frames on the stack at once during `fib(n)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def sum_to(n):\n    ...\n\n\ndef depth(n, d=1):\n    ...\n",
+        "solution": "def sum_to(n):\n    total = 0\n    for k in range(1, n + 1):\n        total += k\n    return total\n\n\ndef depth(n, d=1):\n    if n < 2:\n        return d\n    return max(depth(n - 1, d + 1), depth(n - 2, d + 1))\n",
+        "tests": [
+          {
+            "call": "sum_to(0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "sum_to(10)",
+            "expect": "55",
+            "compare": "equal"
+          },
+          {
+            "call": "sum_to(100000)",
+            "expect": "5000050000",
+            "compare": "equal"
+          },
+          {
+            "call": "sum_to(1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "depth(0)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "depth(1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "depth(2)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "depth(5)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "depth(15)",
+            "expect": "15",
+            "compare": "equal"
+          },
+          {
+            "call": "depth(3, 10)",
+            "expect": "12",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "call": "sum_to(10)",
+            "expect": "55",
+            "compare": "equal"
+          },
+          {
+            "call": "depth(5)",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests. Test 3 is `sum_to(100000)`, far deeper than the limit of 1,000. Test 10 starts the count at `d = 10`."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A `for` loop over `range(1, n + 1)` can keep the running total."
+        },
+        {
+          "rung": "point",
+          "text": "At a base case of `fib`, the depth is simply the `d` you were given.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In `depth`: `if n < 2: return d`, else `return max(depth(n - 1, d + 1), depth(n - 2, d + 1))`."
+        }
+      ],
+      "feedback": {
+        "correct": "The loop needs one frame; the depth counter follows the deepest path.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 expects 5000050000. A recursive `sum_to` runs out of stack: use a `for` loop.",
+          "test-9": "Test 9 expects 15 for `depth(15)`, not the number of calls. Take the `max` of the two branches, not the sum.",
+          "test-10": "Test 10 expects 12 for `depth(3, 10)`. Start from the `d` you are given, not from 1."
+        }
+      },
+      "explain": {
+        "text": "`sum_to` now holds one total in one frame, so any `n` works. `depth` carries the frame count down as an argument, because a local variable would be fresh in every frame. The stack holds one path of `fib`'s calls at a time, so the depth is $n$ even though the calls number far more."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Last in, first out",
+      "prose": "Frames go on and come off the top: **last in, first out**. Python allows about 1,000, and never reuses a frame for a tail call. For deeper work, keep your own stack in a loop:\n\n```python\nstack = [start]\nwhile stack:\n    item = stack.pop()\n    handle(item)\n    stack.extend(children(item))\n```",
+      "question": "A recursive walk would go 50,000 levels deep. What should you do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "loop",
+            "text": "Use a loop with an explicit stack or an accumulator",
+            "correct": true
+          },
+          {
+            "id": "limit",
+            "text": "Call `sys.setrecursionlimit(100000)`",
+            "why": "The limit protects the real stack. Set that high, Python can crash outright with no traceback."
+          },
+          {
+            "id": "tail",
+            "text": "Turn the recursive call into a tail call",
+            "why": "Python keeps a frame even for a tail call, so the depth is unchanged."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A list used as a stack can grow as deep as memory allows.",
+        "generic": "Not quite right. Which option stops the call stack growing?"
+      },
+      "explain": {
+        "text": "A Python list can hold 50,000 items with ease, while the call stack cannot hold 50,000 frames. The loop pops the last item pushed, so it visits in the same last-in, first-out order as the recursion."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Any recursion as pushes and pops",
+      "prose": "We can write any recursion as a list of pushes and pops. Each line below says why it happens.",
+      "question": "Put the stack events of `fact(2)` in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "e1",
+            "text": "Push `fact(2)`: the first call starts"
+          },
+          {
+            "id": "e2",
+            "text": "Push `fact(1)`: `fact(2)` needs `fact(1)`"
+          },
+          {
+            "id": "e3",
+            "text": "Push `fact(0)`: `fact(1)` needs `fact(0)`"
+          },
+          {
+            "id": "e4",
+            "text": "Pop `fact(0)`, returning 1: the base case answers"
+          },
+          {
+            "id": "e5",
+            "text": "Pop `fact(1)`, returning $1 \\times 1 = 1$: it has its answer"
+          },
+          {
+            "id": "e6",
+            "text": "Pop `fact(2)`, returning $2 \\times 1 = 2$: the stack is empty"
+          }
+        ],
+        "answer": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5",
+          "e6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "All the pushes come before the first pop. Why?"
+        },
+        {
+          "rung": "point",
+          "text": "Nothing can return until the base case runs."
+        },
+        {
+          "rung": "step",
+          "text": "Push 2, 1, 0. Then pop in the reverse order: 0, 1, 2."
+        }
+      ],
+      "feedback": {
+        "correct": "Pushes down to the base case, then pops in reverse.",
+        "generic": "Not quite right. Nothing can pop before the base case has been pushed.",
+        "byKey": {
+          "e6": "`fact(2)` was pushed first, so it is popped last.",
+          "e4": "`fact(0)` must be pushed before it can be popped."
+        }
+      },
+      "explain": {
+        "text": "Every frame waits for the one above it, so the pushes run all the way to the base case. Then the pops come off in reverse, each one handing its value down. This is what a loop with an explicit stack copies."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How deep is the fund",
+      "prose": "A fund holds sub-funds, and sub-funds hold positions. Each node is a dict with a `name` and a list of `children`. A position has no children.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "label": "Portfolio",
+          "rootLabel": "Fund",
+          "nodes": [
+            {
+              "id": "eq",
+              "label": "Equity",
+              "children": [
+                {
+                  "id": "uk",
+                  "label": "UK",
+                  "children": [
+                    {
+                      "id": "vod",
+                      "label": "VOD"
+                    },
+                    {
+                      "id": "azn",
+                      "label": "AZN"
+                    }
+                  ]
+                },
+                {
+                  "id": "us",
+                  "label": "US",
+                  "children": [
+                    {
+                      "id": "aapl",
+                      "label": "AAPL"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "bd",
+              "label": "Bonds",
+              "children": [
+                {
+                  "id": "gilt",
+                  "label": "Gilt 2030"
+                }
+              ]
+            },
+            {
+              "id": "cash",
+              "label": "Cash"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Fund, sub-funds and positions"
+        }
+      },
+      "question": "Write `levels(node)`: the number of levels from `node` down to its deepest position, counting both ends.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def levels(node):\n    ...\n",
+        "solution": "def levels(node):\n    deepest = 0\n    for child in node[\"children\"]:\n        deepest = max(deepest, levels(child))\n    return 1 + deepest\n",
+        "tests": [
+          {
+            "call": "levels(fund)",
+            "expect": "4",
+            "compare": "equal",
+            "setup": "fund = {\"name\": \"Fund\", \"children\": [{\"name\": \"Equity\", \"children\": [{\"name\": \"UK\", \"children\": [{\"name\": \"VOD\", \"children\": []}, {\"name\": \"AZN\", \"children\": []}]}, {\"name\": \"US\", \"children\": [{\"name\": \"AAPL\", \"children\": []}]}]}, {\"name\": \"Bonds\", \"children\": [{\"name\": \"Gilt 2030\", \"children\": []}]}, {\"name\": \"Cash\", \"children\": []}]}"
+          },
+          {
+            "call": "levels({\"name\": \"VOD\", \"children\": []})",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "levels({\"name\": \"F\", \"children\": [{\"name\": \"A\", \"children\": []}, {\"name\": \"B\", \"children\": [{\"name\": \"C\", \"children\": []}]}]})",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "levels({\"name\": \"F\", \"children\": [{\"name\": f\"P{i}\", \"children\": []} for i in range(100)]})",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "levels(deep)",
+            "expect": "500",
+            "compare": "equal",
+            "setup": "from functools import reduce; deep = reduce(lambda acc, i: {\"name\": f\"F{i}\", \"children\": [acc]}, range(499), {\"name\": \"P\", \"children\": []})"
+          },
+          {
+            "call": "levels(fund[\"children\"][1])",
+            "expect": "2",
+            "compare": "equal",
+            "setup": "fund = {\"name\": \"Fund\", \"children\": [{\"name\": \"Equity\", \"children\": [{\"name\": \"UK\", \"children\": [{\"name\": \"VOD\", \"children\": []}, {\"name\": \"AZN\", \"children\": []}]}, {\"name\": \"US\", \"children\": [{\"name\": \"AAPL\", \"children\": []}]}]}, {\"name\": \"Bonds\", \"children\": [{\"name\": \"Gilt 2030\", \"children\": []}]}, {\"name\": \"Cash\", \"children\": []}]}"
+          }
+        ],
+        "examples": [
+          {
+            "call": "levels(fund)",
+            "expect": "4",
+            "compare": "equal",
+            "setup": "fund = {\"name\": \"Fund\", \"children\": [{\"name\": \"Equity\", \"children\": [{\"name\": \"UK\", \"children\": [{\"name\": \"VOD\", \"children\": []}, {\"name\": \"AZN\", \"children\": []}]}, {\"name\": \"US\", \"children\": [{\"name\": \"AAPL\", \"children\": []}]}]}, {\"name\": \"Bonds\", \"children\": [{\"name\": \"Gilt 2030\", \"children\": []}]}, {\"name\": \"Cash\", \"children\": []}]}"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, including a single position and a chain 500 levels deep."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A position is one level. A sub-fund is one level more than its deepest child."
+        },
+        {
+          "rung": "point",
+          "text": "This branch is the deepest: Fund, Equity, UK, then a position.",
+          "highlight": [
+            "eq-uk-vod"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`deepest = 0`, then for each child `deepest = max(deepest, levels(child))`. Return `1 + deepest`."
+        }
+      ],
+      "feedback": {
+        "correct": "One level for the node, plus the deepest child below it.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 4: Fund, Equity, UK, VOD. Take the `max` over the children, not the sum or the count.",
+          "test-2": "Test 2 expects 1 for a lone position. With no children, return 1."
+        }
+      },
+      "explain": {
+        "text": "A position is the base case, one level. The walk's stack is as deep as the levels, here 4 frames. A 10,000-day backtest written as `run(day)` calling `run(day + 1)` would need 10,000 frames, so it must be a loop.",
+        "canvas": {
+          "highlight": [
+            "eq-uk-vod"
+          ],
+          "caption": "4 levels: Fund, Equity, UK, VOD"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Each call gets a frame with its own variables. Frames are pushed as calls start and popped as they return: last in, first out.",
+      "A recursion's depth is the most frames waiting at once. Python allows about 1,000 (`sys.getrecursionlimit()`) and does not optimise tail calls.",
+      "For deep work, use a loop: an accumulator, or a list used as an explicit stack."
+    ],
+    "formula": {
+      "name": "Stack depth of a linear recursion",
+      "tex": "\\text{frames}(\\texttt{fact}(n)) = n + 1",
+      "note": "Depth grows with the input, so a recursion of depth 10,000 needs a loop."
+    },
+    "trap": "Expecting frames to share a variable, or the first call to finish first. Each frame has its own locals, and the last call returns first."
+  },
+  "quiz": [
+    {
+      "id": "q-backtest",
+      "difficulty": 2,
+      "prose": "A backtest handles one day, then calls itself for the next.\n\n```python\ndef run(day, cash):\n    if day == len(prices):\n        return cash\n    return run(day + 1, cash + pnl(day))\n```",
+      "question": "With 10,000 days of prices, what happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "crash",
+            "text": "`RecursionError`, after about 1,000 days",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "It runs, because the call is in the last position",
+            "why": "Python does not reuse frames for tail calls, so 10,000 frames pile up."
+          },
+          {
+            "id": "slow",
+            "text": "It runs, just slowly",
+            "why": "Speed is not the problem. The stack runs out at about 1,000 frames."
+          },
+          {
+            "id": "memory",
+            "text": "`MemoryError` at day 10,000",
+            "why": "The limit of about 1,000 frames is hit long before memory runs out."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "One frame per day hits the limit near day 1,000.",
+        "generic": "Not quite right. How many frames does one call per day need?"
+      },
+      "explain": {
+        "text": "Each day's call waits for the next, so day $k$ needs about $k$ frames. Python stops near 1,000. A `for day in range(len(prices))` loop does the same work in one frame."
+      }
+    },
+    {
+      "id": "q-lifo",
+      "difficulty": 2,
+      "prose": "`report()` calls `risk()`, and `risk()` calls `var_95()`.",
+      "question": "Which of the three returns first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "var",
+            "text": "`var_95()`",
+            "correct": true
+          },
+          {
+            "id": "report",
+            "text": "`report()`",
+            "why": "`report()` started first, so it finishes last: it waits for `risk()`."
+          },
+          {
+            "id": "risk",
+            "text": "`risk()`",
+            "why": "`risk()` is waiting for `var_95()`."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The last call to start returns first.",
+        "generic": "Not quite right. Which call is waiting for nobody?"
+      },
+      "explain": {
+        "text": "The stack holds `report`, `risk`, then `var_95` on top. Only the top frame can return, so `var_95()` finishes first."
+      }
+    },
+    {
+      "id": "q-frames",
+      "difficulty": 3,
+      "prose": "```python\ndef sum_list(xs):\n    if not xs:\n        return 0\n    return xs[0] + sum_list(xs[1:])\n```",
+      "question": "On a list of 6 prices, how many frames of `sum_list` are on the stack at its tallest?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "frames",
+        "accept": "7: six lists with items, then the empty list",
+        "wrong": [
+          {
+            "id": "six",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One frame per item, plus one for the empty list.",
+        "generic": "Not quite right. Count the calls waiting when `sum_list([])` runs.",
+        "byKey": {
+          "six": "You left out the base case's frame. `sum_list([])` is a call too."
+        }
+      },
+      "explain": {
+        "text": "The calls receive lists of length 6, 5, 4, 3, 2, 1 and 0, all waiting together. That is 7 frames: $n + 1$ for a list of $n$ items."
+      }
+    },
+    {
+      "id": "q-scope",
+      "difficulty": 3,
+      "prose": "```python\ndef inner(m):\n    print(n)\n\ndef outer(n):\n    inner(n - 1)\n    return n\n\nouter(3)\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "err",
+            "text": "`NameError: name 'n' is not defined`",
+            "correct": true
+          },
+          {
+            "id": "three",
+            "text": "It prints 3",
+            "why": "You expected `inner` to see `outer`'s `n`. Each frame sees only its own names and the module's."
+          },
+          {
+            "id": "two",
+            "text": "It prints 2",
+            "why": "2 is `inner`'s own `m`. The code prints `n`, which `inner`'s frame does not have."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`n` lives in `outer`'s frame, which `inner` cannot see.",
+        "generic": "Not quite right. Which names does `inner`'s frame hold?"
+      },
+      "explain": {
+        "text": "`inner`'s frame holds only `m`. Python then looks among the module's names and finds no `n`, so it raises `NameError`. Pass the value as an argument, as `inner` already does with `m`."
+      }
+    }
+  ]
+}

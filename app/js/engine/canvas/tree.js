@@ -41,7 +41,7 @@
     const hasHead = levelLabels.some(Boolean);
     const leafCount = (n) => (n.children.length ? n.children.reduce((s, c) => s + leafCount(c), 0) : 1);
     const Lf = Math.max(1, leafCount(root));
-    const anyValue = all.some(n => n.value != null && n.value !== '');
+    const anyValue = all.some(n => n.value != null && n.value !== '') || Object.keys(P.leaves || {}).length > 0; // leaves: { path: "" } keeps room for values a patch fills
 
     /* ---- Fixed geometry ---- */
     const PH = compact ? 22 : 26, PF = compact ? 12 : 13;
@@ -94,6 +94,7 @@
         pill: svg('g', { class: 'cv-pill' }), pg: svg('g', { class: 'cv-p' }), pb,
       };
       e.pill.append(svg('rect', { class: 'cv-cur', x: -e.w / 2 - 4, y: -PH / 2 - 4, width: e.w + 8, height: PH + 8, rx: 11 }), svg('rect', { class: 'cv-body', x: -e.w / 2, y: -PH / 2, width: e.w, height: PH, rx: 8 }), C.label(0, 0.5, n.label, { tex: 'auto', w: e.w, h: PH, cls: 'cv-ntext', size: PF }));
+      e.pShown = n.p != null ? String(n.p) : null;
       if (n.p != null) {
         e.pText = pt.tex ? C.label(0, 0, n.p, { tex: 'auto', w: pb.w + 8, h: pb.h + 4 }) : C.label(0, 0.5, pt.src, { cls: 'cv-halo' });
         e.pq = C.label(0, 0.5, '?', { cls: 'cv-halo cv-q' });
@@ -101,8 +102,10 @@
       }
       e.g.append(e.hit, e.wash, e.line, e.pg, e.pill);
       branchG.append(e.g);
-      if (n.value != null && n.value !== '') {
-        e.val = svg('g', { class: 'cv-obj cv-val', 'data-id': 'val-' + n.path }, [C.label(0, 0, n.value, { tex: 'auto', anchor: tb ? 'middle' : 'start', w: valW, h: 34, cls: 'cv-vtext' })]);
+      if ((n.value != null && n.value !== '') || !n.children.length) {
+        /* item 324: every leaf has a value slot, so state.leaves can fill or change it (reveal prices in an explanation) */
+        e.val = svg('g', { class: 'cv-obj cv-val', 'data-id': 'val-' + n.path }, n.value != null && n.value !== '' ? [C.label(0, 0, n.value, { tex: 'auto', anchor: tb ? 'middle' : 'start', w: valW || 60, h: 34, cls: 'cv-vtext' })] : []);
+        e.valShown = n.value == null ? '' : String(n.value);
         valG.append(e.val);
       }
       el.set(n.path, e);
@@ -168,7 +171,7 @@
              when the leaves are closer still (items 268, 276) */
           const sc = crowd > 1 && n.depth >= 2 ? (crowd > 2 ? 0.82 : 0.9) : 1;
           const sib = n.parent.children, inner = sib.length > 2 && n !== sib[0] && n !== sib[sib.length - 1];
-          const t = crowd > 1 && n.depth >= 2 ? (inner ? 0.72 : subIdx(n) % 2 ? 0.64 : 0.36) : 0.5; // an inner branch's label goes where its fan is widest
+          const t = crowd > 1 && n.depth >= 2 ? (inner ? 0.72 : subIdx(n) % 2 ? 0.64 : 0.36) : n.depth === 1 && root.children.length >= 3 ? (inner ? 0.68 : 0.58) : 0.5; // an inner branch's label goes where its fan is widest; item 288: first-level labels move off the root
           const off = (Math.abs(nx) * e.pb.w / 2 + Math.abs(ny) * e.pb.h / 2) * sc + 5;
           const mx = a.x + dx * t + nx * off, my = a.y + dy * t + ny * off;
           attrs(e.pg, { transform: `translate(${mx} ${my})` + (sc !== 1 ? ` scale(${sc})` : '') });
@@ -184,6 +187,12 @@
       }
     };
 
+    const setP = (n, e, v) => {
+      const pt = pTex(v); e.pb = pBox(v);
+      const nt = pt.tex ? C.label(0, 0, v, { tex: 'auto', w: e.pb.w + 8, h: e.pb.h + 4 }) : C.label(0, 0.5, pt.src, { cls: 'cv-halo' });
+      if (e.pText) e.pText.replaceWith(nt); else { e.pq = C.label(0, 0.5, '?', { cls: 'cv-halo cv-q' }); e.pg.append(nt, e.pq); }
+      e.pText = nt; e.pShown = String(v ?? '');
+    };
     const prefixes = (path) => { const parts = String(path).split('-'), out = []; for (let i = 1; i <= parts.length; i++) out.push(parts.slice(0, i).join('-')); return out.filter(p => nodes.has(p)); };
     let cur = layout([]);
     const anim = C.animator();
@@ -193,6 +202,14 @@
       const slot = new Map(); sets.forEach((list, k) => (list || []).forEach(p => prefixes(p).forEach(q => { if (!slot.has(q)) slot.set(q, k + 1); })));
       for (const n of all) { const e = el.get(n.path); for (let k = 1; k <= 6; k++) e.g.classList.toggle('cv-sh' + k, slot.get(n.path) === k); e.g.classList.toggle('is-shaded', slot.has(n.path)); if (e.val) e.val.classList.toggle('is-shaded', slot.has(n.path)); }
       const showP = st.show !== 'none', unknown = new Set(st.unknown || []), showVals = st.values !== false;
+      /* item 275: state.p { path: "1/3" } replaces a branch's probability (a bound table cell writes it as the learner
+         types; "" shows "?"); item 324: state.leaves { path: value } replaces a leaf's value */
+      for (const n of all) {
+        const e = el.get(n.path);
+        if (st.p && n.path in st.p) { const v = st.p[n.path]; if (v == null || v === '') { if (!e.pText) setP(n, e, '?'); unknown.add(n.path); } else if (String(v) !== e.pShown) setP(n, e, v); }
+        else if (e.pShown != null && e.pShown !== String(n.p ?? '')) setP(n, e, n.p);
+        if (e.val) { const v = st.leaves && n.path in st.leaves ? st.leaves[n.path] : n.value; const t = v == null ? '' : String(v); if (t !== e.valShown) { e.val.replaceChildren(...(t ? [C.label(0, 0, t, { tex: 'auto', anchor: tb ? 'middle' : 'start', w: valW || 60, h: 34, cls: 'cv-vtext' })] : [])); e.valShown = t; } }
+      }
       /* current (item 97): a manipulable-blue ring round one node's pill ("root" or "" for the root) */
       const curP = st.current == null ? null : String(st.current) === 'root' ? '' : String(st.current);
       rootDot.classList.toggle('is-current', curP === '');

@@ -1,0 +1,1259 @@
+{
+  "id": "l3-memory",
+  "course": "algo-think",
+  "title": "Memory as well as time",
+  "minutes": 14,
+  "objectives": [
+    "Analyse the extra memory an algorithm needs."
+  ],
+  "skills": [
+    "at-complexity"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "What each program keeps",
+      "prose": "Two programs find the highest of a stream of prices.\n\n```python\n# A\nbest = prices[0]\nfor p in prices[1:]:\n    best = max(best, p)\n\n# B\nseen = []\nfor p in prices:\n    seen.append(p)\ntop = max(seen)\n```\n\nStep through the prices. Bold cells are the values B has stored.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            102,
+            98,
+            105,
+            101,
+            99,
+            108,
+            104,
+            100
+          ]
+        },
+        "state": {
+          "params": {
+            "k": 0
+          },
+          "pointers": [
+            {
+              "id": "p",
+              "at": 0,
+              "label": "p"
+            }
+          ],
+          "done": [
+            0
+          ]
+        },
+        "derive": {
+          "p.at": "k",
+          "done": "[0,1,2,3,4,5,6,7].slice(0, k + 1)",
+          "caption": "After {{k + 1}} prices: A holds 1 extra value (best); B holds {{k + 1}} (seen)."
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 7,
+            "step": 1,
+            "label": "Price",
+            "start": 0
+          }
+        ]
+      },
+      "question": "On a feed of 1,000,000 prices, how many extra values does each program hold at the end?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "A holds 1; B holds 1,000,000",
+            "correct": true
+          },
+          {
+            "id": "both-one",
+            "text": "Both hold 1",
+            "why": "B appends every price to `seen` before it takes the max, so the list keeps them all."
+          },
+          {
+            "id": "both-n",
+            "text": "Both hold 1,000,000",
+            "why": "A overwrites `best` each time. Old values are dropped, so it only ever holds one."
+          },
+          {
+            "id": "a-zero",
+            "text": "A holds 0; B holds 1,000,000",
+            "why": "`best` is a value A stores beyond its input. It is one number, so the count is 1."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption as the slider moves. Which count grows?"
+        },
+        {
+          "rung": "point",
+          "text": "Every bold cell is a value B has copied into `seen`.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A replaces `best`, so it holds 1 value. B appends each price, so it holds $n$."
+        }
+      ],
+      "feedback": {
+        "correct": "A holds one number; B holds the whole feed.",
+        "generic": "Not quite right. Follow what each program keeps after every price.",
+        "byKey": {
+          "both-one": "You looked at the answer each program returns. B's list still holds every price it saw."
+        }
+      },
+      "explain": {
+        "text": "A keeps one number however long the feed is. B's list grows by one value per price. The memory an algorithm allocates beyond its input is its **extra space**: $O(1)$ for A, $O(n)$ for B.",
+        "canvas": {
+          "params": {
+            "k": 7
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 1,
+      "title": "A dict of counts",
+      "prose": "A day's trades, one ticker per trade. We count trades per ticker.\n\n```python\ncounts = {}\nfor t in trades:\n    counts[t] = counts.get(t, 0) + 1\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "VOD",
+            "BARC",
+            "VOD",
+            "AZN",
+            "VOD",
+            "BARC",
+            "LLOY",
+            "AZN"
+          ]
+        },
+        "state": {
+          "caption": "`trades`: 8 trades"
+        }
+      },
+      "question": "How many entries does `counts` hold at the end?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "entries",
+        "label": "Number of entries",
+        "accept": "4: one per distinct ticker (VOD, BARC, AZN, LLOY).",
+        "wrong": [
+          {
+            "id": "per-trade",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "vod",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A dict holds one entry per key. What are the keys?"
+        },
+        {
+          "rung": "point",
+          "text": "VOD appears three times but is one key.",
+          "highlight": [
+            "c0",
+            "c2",
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The distinct tickers are VOD, BARC, AZN and LLOY."
+        }
+      ],
+      "feedback": {
+        "correct": "Four keys: one per distinct ticker.",
+        "generic": "Not quite right. Count the distinct tickers.",
+        "byKey": {
+          "per-trade": "You counted one entry per trade. A repeated ticker updates its existing entry instead of adding one.",
+          "vod": "That is VOD's count, the value of one entry. Count the keys."
+        }
+      },
+      "explain": {
+        "text": "The dict grows with the number of distinct keys, not the number of trades. In the worst case every trade is a new ticker, so the extra space is $O(n)$. With few distinct keys it stays small.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c1",
+            "c3",
+            "c6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Reverse in place",
+      "prose": "We reverse the list without making a new one, by swapping the two ends and moving inwards.\n\n```python\nlo, hi = 0, len(prices) - 1\nwhile lo < hi:\n    prices[lo], prices[hi] = prices[hi], prices[lo]\n    lo, hi = lo + 1, hi - 1\n```\n\nStep through the swaps.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            102,
+            98,
+            105,
+            101,
+            99,
+            108,
+            104,
+            100
+          ]
+        },
+        "state": {
+          "params": {
+            "s": 0
+          },
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 0,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 7,
+              "label": "hi"
+            }
+          ]
+        },
+        "derive": {
+          "cells": "[[102,98,105,101,99,108,104,100],[100,98,105,101,99,108,104,102],[100,104,105,101,99,108,98,102],[100,104,108,101,99,105,98,102],[100,104,108,99,101,105,98,102]][s]",
+          "lo.at": "min(s, 4)",
+          "hi.at": "max(7 - s, 3)",
+          "caption": "{{s}} swaps so far. Extra memory: lo, hi and one value in flight."
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0,
+            "max": 4,
+            "step": 1,
+            "label": "Swaps",
+            "start": 0
+          }
+        ]
+      },
+      "question": "How many swaps does this loop make to reverse 1,001 prices?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 500,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "swaps",
+        "label": "Number of swaps",
+        "accept": "500: the middle price, at index 500, stays put.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 1001,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half-up",
+            "value": 501,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "n-1",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each swap fixes two prices, one at each end."
+        },
+        {
+          "rung": "point",
+          "text": "With 8 prices it took 4 swaps. What happens to the middle of an odd list?",
+          "highlight": [
+            "lo",
+            "hi"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pairs from the ends: $\\lfloor 1{,}001 / 2 \\rfloor = 500$. Price 500 is the middle and is never swapped."
+        }
+      ],
+      "feedback": {
+        "correct": "500 swaps; the middle price stays put.",
+        "generic": "Not quite right. Each swap places two prices.",
+        "byKey": {
+          "all": "You counted one swap per price. Each swap places two prices at once.",
+          "half-up": "You rounded up. When `lo` and `hi` meet at the middle, `lo < hi` fails and nothing is swapped.",
+          "n-1": "That is one swap per neighbouring pair. This loop swaps the two ends and moves inwards."
+        }
+      },
+      "explain": {
+        "text": "You swapped pairs from the ends: $\\lfloor n/2 \\rfloor$ swaps. The list is changed **in place**: the only extra memory is `lo`, `hi` and one value in flight, which is $O(1)$. `prices[::-1]` would build a new list of $n$ values instead.",
+        "canvas": {
+          "params": {
+            "s": 4
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A running mean",
+      "prose": "Ticks arrive one at a time from a feed, as an iterator: you can loop over it once, but `len` and indexing do not work. Keep only what you need.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            100.0,
+            102.0,
+            101.0,
+            "…"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "x",
+              "at": 0,
+              "label": "x"
+            }
+          ],
+          "caption": "Ticks seen one at a time"
+        }
+      },
+      "question": "Write `stream_mean(ticks)`: return the mean of the ticks in $O(1)$ extra space, or `None` if there are none.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def stream_mean(ticks):\n    ...\n",
+        "solution": "def stream_mean(ticks):\n    total = 0.0\n    count = 0\n    for x in ticks:\n        total += x\n        count += 1\n    if count == 0:\n        return None\n    return total / count\n",
+        "tests": [
+          {
+            "call": "round(stream_mean(iter([100.0, 102.0, 101.0])), 6)",
+            "expect": "101.0",
+            "compare": "equal"
+          },
+          {
+            "call": "round(stream_mean(x for x in [1, 2, 3, 4]), 6)",
+            "expect": "2.5",
+            "compare": "equal"
+          },
+          {
+            "call": "stream_mean(iter([]))",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "round(stream_mean(iter([42.5])), 6)",
+            "expect": "42.5",
+            "compare": "equal"
+          },
+          {
+            "call": "round(stream_mean([3, 4]), 6)",
+            "expect": "3.5",
+            "compare": "equal"
+          },
+          {
+            "call": "round(stream_mean(float(i) for i in range(100_000)), 6)",
+            "expect": "49999.5",
+            "compare": "equal"
+          },
+          {
+            "call": "peak_bytes(lambda: stream_mean(float(i) for i in range(100_000))) < 50_000",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Most pass an iterator or a generator. Test 7 streams 100,000 ticks and passes if your function's peak memory stays under 50,000 bytes, so storing the ticks fails it.",
+        "examples": [
+          {
+            "call": "round(stream_mean(iter([100.0, 102.0, 101.0])), 6)",
+            "expect": "101.0",
+            "compare": "equal"
+          },
+          {
+            "call": "stream_mean(iter([]))",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "import tracemalloc as _tm\ndef peak_bytes(f):\n    _tm.start()\n    try:\n        f()\n        return _tm.get_traced_memory()[1]\n    finally:\n        _tm.stop()\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What two numbers do you need to know a mean?"
+        },
+        {
+          "rung": "point",
+          "text": "A list of every tick is exactly what to avoid.",
+          "highlight": [
+            "x"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep `total` and `count`, add to both in the loop, and return `total / count`, or `None` when `count` is 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Two numbers, however long the feed.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 passes an iterator. `len(ticks)` and `ticks[0]` fail on it: count the ticks as you loop.",
+          "test-3": "Test 3 expects `None` for an empty feed. Dividing by a count of 0 raises `ZeroDivisionError`.",
+          "test-7": "Test 7 measured too much memory. Calling `list(ticks)` or `sum(list(...))` stores every tick; keep a running total instead."
+        }
+      },
+      "explain": {
+        "text": "Your function keeps `total` and `count` and nothing else, so its extra space is $O(1)$. Test 7 checked that: storing 100,000 floats would take megabytes. An empty feed has no mean, so `None` is the honest answer.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "x",
+              "at": 3,
+              "label": "x"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What a list of floats weighs",
+      "prose": "`sys.getsizeof` reports the bytes of one object. On a 64-bit laptop, a list stores an 8-byte pointer per item, plus some spare room. Each float is its own object.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "64-bit Python on a laptop",
+          "lines": [
+            "$ python3",
+            ">>> import sys",
+            ">>> xs = [float(i) for i in range(1_000_000)]",
+            ">>> sys.getsizeof(xs)",
+            "8448728",
+            ">>> sys.getsizeof(xs[0])",
+            "24"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l5": "ok",
+            "l7": "ok"
+          }
+        }
+      },
+      "question": "About how many MB do the list and its floats take together? (1 MB is $10^6$ bytes.)",
+      "widget": {
+        "kind": "numeric",
+        "answer": 32.4,
+        "tol": {
+          "abs": 1.5
+        },
+        "unit": "MB",
+        "label": "Megabytes",
+        "accept": "About 32 MB: 8.4 MB of pointers plus $10^6 \\times 24$ bytes of floats.",
+        "wrong": [
+          {
+            "id": "pointers",
+            "value": 8.4,
+            "tol": {
+              "abs": 0.6
+            }
+          },
+          {
+            "id": "floats",
+            "value": 24,
+            "tol": {
+              "abs": 0.6
+            }
+          },
+          {
+            "id": "one-float",
+            "value": 0.024,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`getsizeof(xs)` counts the list itself. Does it count the floats?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 7 is the size of one float.",
+          "highlight": [
+            "l7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "List: 8,448,728 bytes, about 8.4 MB. Floats: $10^6 \\times 24 = 24$ MB. Together about 32 MB."
+        }
+      ],
+      "feedback": {
+        "correct": "About 32 MB, three quarters of it float objects.",
+        "generic": "Not quite right. Add the list's own size to the size of a million floats.",
+        "byKey": {
+          "pointers": "You stopped at `getsizeof(xs)`. It counts the pointers only; the million float objects are separate.",
+          "floats": "You counted the floats but not the list of pointers that holds them.",
+          "one-float": "You used one float's size in MB. There are a million of them."
+        }
+      },
+      "explain": {
+        "text": "The list holds 8-byte pointers (8.4 MB with spare room), and each float is a separate 24-byte object (24 MB). So a Python list costs about 32 bytes per float. The Python in this page is a 32-bit build, so here `getsizeof` reports roughly half.",
+        "canvas": {
+          "shade": {
+            "sizes": [
+              "l4",
+              "l5",
+              "l6",
+              "l7"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Spend memory to save time",
+      "prose": "A dashboard asks for the total volume between two days, thousands of times. Summing a slice each time costs $O(n)$ per question. Store every running total once instead: `pre[k]` is the sum of the first `k` values.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            1,
+            4,
+            1,
+            5
+          ]
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              1,
+              3
+            ],
+            "label": "days 1 to 3: 6"
+          },
+          "caption": "Volumes in thousands. `pre` is `[0, 3, 4, 8, 9, 14]`."
+        }
+      },
+      "question": "Write `prefix_sums(prices)` and `range_total(pre, i, j)`, the sum of `prices[i:j]`, using only two entries of `pre`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def prefix_sums(prices):\n    ...\n\n\ndef range_total(pre, i, j):\n    ...\n",
+        "solution": "def prefix_sums(prices):\n    pre = [0]\n    for p in prices:\n        pre.append(pre[-1] + p)\n    return pre\n\n\ndef range_total(pre, i, j):\n    return pre[j] - pre[i]\n",
+        "tests": [
+          {
+            "call": "prefix_sums([3, 1, 4, 1, 5])",
+            "expect": "[0, 3, 4, 8, 9, 14]",
+            "compare": "equal"
+          },
+          {
+            "call": "prefix_sums([])",
+            "expect": "[0]",
+            "compare": "equal"
+          },
+          {
+            "call": "prefix_sums([7])",
+            "expect": "[0, 7]",
+            "compare": "equal"
+          },
+          {
+            "call": "range_total(prefix_sums([3, 1, 4, 1, 5]), 1, 4)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "range_total(prefix_sums([3, 1, 4, 1, 5]), 0, 5)",
+            "expect": "14",
+            "compare": "equal"
+          },
+          {
+            "call": "range_total(prefix_sums([3, 1, 4, 1, 5]), 2, 2)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "len(prefix_sums(list(range(1000))))",
+            "expect": "1001",
+            "compare": "equal"
+          },
+          {
+            "call": "range_total(prefix_sums(list(range(1000))), 10, 20)",
+            "expect": "145",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. `prefix_sums` returns a list one longer than its input, starting at 0.",
+        "examples": [
+          {
+            "call": "prefix_sums([3, 1, 4, 1, 5])",
+            "expect": "[0, 3, 4, 8, 9, 14]",
+            "compare": "equal"
+          },
+          {
+            "call": "range_total(prefix_sums([3, 1, 4, 1, 5]), 1, 4)",
+            "expect": "6",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start the list at 0, then each entry is the previous entry plus one value."
+        },
+        {
+          "rung": "point",
+          "text": "Days 1 to 3 total $8 - 3$: `pre[4] - pre[1]`.",
+          "highlight": [
+            "c1",
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pre = [0]`, then `pre.append(pre[-1] + p)` in the loop. `range_total` returns `pre[j] - pre[i]`."
+        }
+      ],
+      "feedback": {
+        "correct": "$O(n)$ memory once, then $O(1)$ per question.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 expects `[0]` for no prices. Start the list with 0 before the loop.",
+          "test-4": "Test 4 expects 6 for `prices[1:4]`. That is `pre[4] - pre[1]`; check you did not use `pre[3]`.",
+          "test-1": "Test 1 expects 6 entries for 5 prices: a leading 0, then one running total per price."
+        }
+      },
+      "explain": {
+        "text": "`prefix_sums` stores $n + 1$ numbers: $O(n)$ extra space. In return, each range total is one subtraction, $O(1)$, instead of a fresh sum. Trading memory for time is a choice you make on purpose.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              1,
+              3
+            ],
+            "label": "pre[4] − pre[1] = 6"
+          },
+          "caption": "`pre[4] - pre[1]` is $9 - 3 = 6$"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Only the last one matters",
+      "prose": "This function compounds a list of $n$ daily returns into a final portfolio value. It returns one number.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "portfolio.py",
+          "numbers": true,
+          "lines": [
+            "def final_value(returns, start=100.0):",
+            "    values = [start]",
+            "    for r in returns:",
+            "        values.append(values[-1] * (1 + r))",
+            "    return values[-1]"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How much extra memory does `final_value` use for $n$ returns?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "n",
+            "text": "$O(n)$: `values` keeps every intermediate value",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "$O(1)$: it returns a single number",
+            "why": "You judged the memory by the return value. The list `values` grows by one entry per return before only the last is used."
+          },
+          {
+            "id": "n2",
+            "text": "$O(n^2)$: each append copies the list",
+            "why": "Each `append` adds one value; the list is not copied each time. The total is $n + 1$ values."
+          },
+          {
+            "id": "log",
+            "text": "$O(\\log n)$",
+            "why": "Nothing halves here: one value is stored per return."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is in `values` after the loop?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 4 runs once per return, and each run adds a value.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`values` ends with $n + 1$ numbers, though only the last is returned. Keep a single `value` instead."
+        }
+      ],
+      "feedback": {
+        "correct": "$n + 1$ values stored, one used.",
+        "generic": "Not quite right. Look at what the loop stores, not what the function returns.",
+        "byKey": {
+          "one": "You judged the memory by the return value. The list `values` holds every intermediate value until the function ends."
+        }
+      },
+      "explain": {
+        "text": "`values` holds $n + 1$ numbers, though only the last is ever read. Keep one running number instead: `value = start`, then `value *= 1 + r` in the loop. Same answer, $O(1)$ extra space.",
+        "canvas": {
+          "lines": [
+            "def final_value(returns, start=100.0):",
+            "    value = start",
+            "    for r in returns:",
+            "        value *= 1 + r",
+            "    return value"
+          ],
+          "tone": {
+            "l2": "ok",
+            "l4": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Calls take memory too",
+      "prose": "This sum calls itself on the rest of the list. It builds no list, yet it fails on 5,000 prices. Each call waits for the next to return, and every waiting call keeps its own `xs`, `i` and place in the code.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "A sum that calls itself",
+          "numbers": true,
+          "lines": [
+            "def total(xs, i=0):",
+            "    if i == len(xs):",
+            "        return 0",
+            "    return xs[i] + total(xs, i + 1)",
+            "",
+            ">>> total([5, 3, 8, 1, 4])",
+            "21",
+            ">>> total(list(range(5_000)))",
+            "RecursionError: maximum recursion depth exceeded"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l9": "err"
+          }
+        }
+      },
+      "question": "For `total([5, 3, 8, 1, 4])`, how many calls of `total` are open at the deepest point?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "calls",
+        "label": "Open calls",
+        "accept": "6: calls with `i` from 0 to 5; the last returns 0.",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "List the calls: `i = 0`, then `i = 1`, and so on."
+        },
+        {
+          "rung": "point",
+          "text": "The call with `i == len(xs)` is the one that stops.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Calls with `i` = 0, 1, 2, 3, 4 each wait, and the call with `i = 5` returns 0: 6 open at once."
+        }
+      ],
+      "feedback": {
+        "correct": "Six calls are open at once: $n + 1$.",
+        "generic": "Not quite right. Count the calls from `i = 0` up to the one that returns 0.",
+        "byKey": {
+          "five": "You left out the last call, `i = 5`. It is open too, while it checks `i == len(xs)` and returns 0.",
+          "one": "Each call stays open until the one it made returns, so they pile up."
+        }
+      },
+      "explain": {
+        "text": "A list of $n$ prices opens $n + 1$ calls at once, so the extra space is $O(n)$ even with no list built. Python allows about 1,000 open calls, which is why 5,000 prices raise `RecursionError`. Level 2 looks at this call stack closely.",
+        "canvas": {
+          "tone": {
+            "l9": "err",
+            "l4": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "**Extra space** is the memory an algorithm allocates beyond its input.\n\n- $O(1)$: a running maximum, mean or total; swapping in place.\n- $O(n)$: a copy of the list, a list of intermediates, a dict with up to $n$ keys, recursion $n$ calls deep.\n\nOn the chart, A is a running maximum and B copies the list.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "A 1k",
+              "colour": 1
+            },
+            {
+              "id": "b1",
+              "label": "B 1k",
+              "colour": 2
+            },
+            {
+              "id": "a2",
+              "label": "A 2k",
+              "colour": 1
+            },
+            {
+              "id": "b2",
+              "label": "B 2k",
+              "colour": 2
+            },
+            {
+              "id": "a4",
+              "label": "A 4k",
+              "colour": 1
+            },
+            {
+              "id": "b4",
+              "label": "B 4k",
+              "colour": 2
+            }
+          ],
+          "xLabel": "Program and list size $n$",
+          "yLabel": "Extra values held",
+          "showValues": true,
+          "height": 220
+        },
+        "state": {
+          "values": {
+            "a1": 1,
+            "b1": 1000,
+            "a2": 1,
+            "b2": 2000,
+            "a4": 1,
+            "b4": 4000
+          }
+        }
+      },
+      "question": "Which line needs $O(n)$ extra space?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "slice",
+            "text": "`rev = prices[::-1]`",
+            "correct": true
+          },
+          {
+            "id": "reverse",
+            "text": "`prices.reverse()`",
+            "why": "`reverse` swaps in place, as your loop did. No new list is made."
+          },
+          {
+            "id": "last",
+            "text": "`last = prices[-1]`",
+            "why": "That stores one value: $O(1)$."
+          },
+          {
+            "id": "len",
+            "text": "`n = len(prices)`",
+            "why": "A list knows its length, so this stores one number: $O(1)$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A slice builds a new list of $n$ values.",
+        "generic": "Not quite right. Which line creates a new list?"
+      },
+      "explain": {
+        "text": "`prices[::-1]` copies every value into a new list: $O(n)$ extra space. `prices.reverse()` swaps in place in $O(1)$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Ten years of minute bars",
+      "prose": "A research dataset holds 10 years of minute bars: 252 days of 390 minutes, with 5 fields per bar (open, high, low, close, volume). That is 4,914,000 values per stock. Python lists cost about 32 bytes per float; a `numpy` float64 array costs 8.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "l50",
+              "label": "lists 50",
+              "colour": 2
+            },
+            {
+              "id": "n50",
+              "label": "numpy 50",
+              "colour": 1
+            },
+            {
+              "id": "l100",
+              "label": "lists 100",
+              "colour": 2
+            },
+            {
+              "id": "n100",
+              "label": "numpy 100",
+              "colour": 1
+            },
+            {
+              "id": "l200",
+              "label": "lists 200",
+              "colour": 2
+            },
+            {
+              "id": "n200",
+              "label": "numpy 200",
+              "colour": 1
+            }
+          ],
+          "xLabel": "Storage and number of stocks",
+          "yLabel": "GB",
+          "showValues": true,
+          "decimals": 1,
+          "yMax": 32,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "l50": 7.86,
+            "n50": 1.97,
+            "l100": 15.72,
+            "n100": 3.93,
+            "l200": 31.45,
+            "n200": 0
+          },
+          "caption": "Memory in GB ($10^9$ bytes) against the number of stocks"
+        }
+      },
+      "question": "For 200 stocks, how many GB does the dataset take as `numpy` arrays?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7.86,
+        "tol": {
+          "abs": 0.08
+        },
+        "unit": "GB",
+        "label": "Gigabytes",
+        "accept": "About 7.9 GB: $200 \\times 4{,}914{,}000 \\times 8$ bytes.",
+        "wrong": [
+          {
+            "id": "lists",
+            "value": 31.45,
+            "tol": {
+              "abs": 0.3
+            }
+          },
+          {
+            "id": "values",
+            "value": 0.98,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "per-stock",
+            "value": 0.039,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the values first, then multiply by the bytes per value."
+        },
+        {
+          "rung": "point",
+          "text": "The lists bar for 200 stocks is 4 times the numpy one: 32 bytes against 8.",
+          "highlight": [
+            "l200"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$200 \\times 4{,}914{,}000 = 982{,}800{,}000$ values. Times 8 bytes is about $7.86 \\times 10^9$ bytes."
+        }
+      ],
+      "feedback": {
+        "correct": "About 7.9 GB: it fits in a 16 GB laptop, and the lists do not.",
+        "generic": "Not quite right. Values times 8 bytes, in units of $10^9$ bytes.",
+        "byKey": {
+          "lists": "That is the Python-lists figure, at 32 bytes per value. A float64 array stores each value in 8 bytes.",
+          "values": "You counted the values, about 0.98 billion, but each takes 8 bytes.",
+          "per-stock": "That is one stock's arrays. Multiply by the 200 stocks."
+        }
+      },
+      "explain": {
+        "text": "$982{,}800{,}000 \\times 8$ bytes is about 7.9 GB, against 31.4 GB as lists. On a 16 GB laptop only the arrays fit. For a running statistic over the whole set, stream it through in $O(1)$ space and keep none of it.",
+        "canvas": {
+          "values": {
+            "l50": 7.86,
+            "n50": 1.97,
+            "l100": 15.72,
+            "n100": 3.93,
+            "l200": 31.45,
+            "n200": 7.86
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Extra space is the memory an algorithm allocates beyond its input, measured with big O like time.",
+      "Running statistics and in-place swaps need $O(1)$; copies, lists of intermediates, dicts of up to $n$ keys and recursion $n$ deep need $O(n)$.",
+      "A Python list of floats costs about 32 bytes a value on a 64-bit machine; a float64 array costs 8."
+    ],
+    "formula": {
+      "name": "Running mean",
+      "tex": "\\bar{x} = \\dfrac{\\text{total}}{\\text{count}}",
+      "note": "Two numbers kept, however long the stream: $O(1)$ extra space."
+    },
+    "trap": "Returning one number says nothing about memory: a list of every intermediate value is still $O(n)$."
+  },
+  "quiz": [
+    {
+      "id": "q-generator",
+      "difficulty": 3,
+      "prose": "```python\npnl = [120, -40, 330, -15]\ngains = (p for p in pnl if p > 0)\nprint(sum(gains))\nprint(max(gains))\n```\nThe first line prints 450. The second raises `ValueError: max() iterable argument is empty`.",
+      "question": "Why does the second line fail?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "used",
+            "text": "`gains` is a generator: it stores no values, and `sum` used it up",
+            "correct": true
+          },
+          {
+            "id": "list",
+            "text": "`max` needs a list, not a generator",
+            "why": "`max` accepts any iterable. It got one with nothing left in it."
+          },
+          {
+            "id": "changed",
+            "text": "`sum` emptied `pnl`",
+            "why": "`pnl` is untouched. The generator only reads from it, once."
+          },
+          {
+            "id": "none",
+            "text": "There are no positive values",
+            "why": "`sum(gains)` printed 450, so there were positive values the first time."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A generator makes each value once and keeps none.",
+        "generic": "Not quite right. What does `gains` hold after `sum` has run?"
+      },
+      "explain": {
+        "text": "A generator is $O(1)$ extra space because it stores nothing: it produces values on demand, once. After `sum` it is exhausted. Build a list if you need two passes, or compute both in one loop."
+      }
+    },
+    {
+      "id": "q-weekday",
+      "difficulty": 2,
+      "prose": "```python\ncounts = {}\nfor t in trades:\n    counts[t.weekday] = counts.get(t.weekday, 0) + 1\n```\nTrades happen Monday to Friday only.",
+      "question": "What is the extra space for $n$ trades?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "$O(1)$: at most 5 keys",
+            "correct": true
+          },
+          {
+            "id": "n",
+            "text": "$O(n)$: one entry per trade",
+            "why": "A repeated key updates its entry. There are only 5 possible keys, whatever $n$ is."
+          },
+          {
+            "id": "n-dict",
+            "text": "$O(n)$: a dict is always $O(n)$",
+            "why": "A dict grows with its distinct keys. Here they are capped at 5."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Five keys at most, whatever $n$ is.",
+        "generic": "Not quite right. How many distinct keys can there be?"
+      },
+      "explain": {
+        "text": "The dict holds one entry per distinct weekday: at most 5. A bound that does not grow with $n$ is $O(1)$ extra space."
+      }
+    },
+    {
+      "id": "q-variance",
+      "difficulty": 3,
+      "prose": "You want the mean and the variance of a stream of returns, using one pass and no list.",
+      "question": "What is the least you need to keep as you go?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "three",
+            "text": "Three numbers: the count, the sum and the sum of squares",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "Every return, because variance needs the mean first",
+            "why": "The mean can come at the end: $\\mathrm{Var} = \\tfrac{\\sum x^2}{n} - \\bar{x}^2$ needs only running totals."
+          },
+          {
+            "id": "two",
+            "text": "Two numbers: the count and the sum",
+            "why": "Those give the mean only. Variance also needs the sum of squares."
+          },
+          {
+            "id": "one",
+            "text": "One number: the running mean",
+            "why": "A running mean alone cannot recover the spread."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three running totals: $O(1)$ space.",
+        "generic": "Not quite right. What does $\\mathrm{Var} = \\tfrac{\\sum x^2}{n} - \\bar{x}^2$ need?"
+      },
+      "explain": {
+        "text": "With $n$, $\\sum x$ and $\\sum x^2$ you get $\\bar{x} = \\tfrac{\\sum x}{n}$ and $\\mathrm{Var} = \\tfrac{\\sum x^2}{n} - \\bar{x}^2$. Three numbers is $O(1)$ extra space. (Libraries use Welford's update, which is steadier in floating point.)"
+      }
+    },
+    {
+      "id": "q-ticks",
+      "difficulty": 2,
+      "prose": "On a 64-bit laptop a Python list of floats costs about 32 bytes per value. You load 10,000,000 ticks into a list.",
+      "question": "About how much memory is that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "320",
+            "text": "About 320 MB",
+            "correct": true
+          },
+          {
+            "id": "80",
+            "text": "About 80 MB",
+            "why": "That is 8 bytes per value, the pointer only. Each float is also a 24-byte object."
+          },
+          {
+            "id": "32",
+            "text": "About 32 MB",
+            "why": "That is a million ticks. Here there are ten million."
+          },
+          {
+            "id": "3200",
+            "text": "About 3.2 GB",
+            "why": "$10^7 \\times 32 = 3.2 \\times 10^8$ bytes, which is 320 MB."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10^7 \\times 32$ bytes.",
+        "generic": "Not quite right. Multiply the count by 32 bytes."
+      },
+      "explain": {
+        "text": "$10^7 \\times 32 = 3.2 \\times 10^8$ bytes, about 320 MB. A float64 array would take 80 MB, and a running statistic needs a few bytes."
+      }
+    }
+  ]
+}

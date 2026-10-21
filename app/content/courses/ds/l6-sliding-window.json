@@ -1,0 +1,1324 @@
+{
+  "id": "l6-sliding-window",
+  "course": "ds",
+  "title": "A sliding window",
+  "minutes": 14,
+  "objectives": [
+    "Find the best subarray with a window that grows and shrinks."
+  ],
+  "skills": [
+    "ds-pointers",
+    "ds-hashing"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Slide, do not restart",
+      "prose": "Eight days of trading volume, in thousands of shares. The highlighted **window** covers three days, 0 to 2, and its sum is 13. Now slide it one day to the right.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            4,
+            2,
+            7,
+            1,
+            8,
+            3,
+            6,
+            5
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 0,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 2,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              0,
+              2
+            ]
+          },
+          "caption": "Days 0 to 2: $4 + 2 + 7 = 13$"
+        }
+      },
+      "question": "What is the sum for days 1 to 3? Start from 13 rather than adding three numbers.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "10: $13 - 4 + 1$.",
+        "label": "Sum for days 1 to 3",
+        "wrong": [
+          {
+            "id": "kept",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "dropped",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which day leaves the window, and which day joins it?"
+        },
+        {
+          "rung": "point",
+          "text": "Day 0 leaves and day 3 joins.",
+          "highlight": [
+            "c0",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$13 - 4 + 1 = 10$."
+        }
+      ],
+      "feedback": {
+        "correct": "$13 - 4 + 1 = 10$: one subtraction, one addition.",
+        "generic": "Not quite right. Take off the day that leaves, then add the day that joins.",
+        "byKey": {
+          "kept": "You added the new 1 but kept the old 4. Day 0 is no longer in the window.",
+          "dropped": "You took off the 4 but did not add day 3's 1.",
+          "two": "That is only $2 + 1$. The window still holds three days: 2, 7 and 1."
+        }
+      },
+      "explain": {
+        "text": "Day 0 leaves and day 3 joins, so $13 - 4 + 1 = 10$. That is two operations, however wide the window. A fresh sum would cost $w$ additions every time.",
+        "canvas": {
+          "pointers": {
+            "left": {
+              "at": 1
+            },
+            "right": {
+              "at": 3
+            }
+          },
+          "highlight": {
+            "range": [
+              1,
+              3
+            ]
+          },
+          "caption": "Days 1 to 3: $13 - 4 + 1 = 10$"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Find the best window",
+      "prose": "Drag the slider to move the window along. Each step, one day drops out on the left and one joins on the right. Watch the running sum.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            4,
+            2,
+            7,
+            1,
+            8,
+            3,
+            6,
+            5
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 0,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 2,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              0,
+              2
+            ]
+          },
+          "caption": "",
+          "params": {
+            "s": 0
+          }
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0,
+            "max": 5,
+            "step": 1,
+            "start": 0,
+            "label": "Window start"
+          }
+        ],
+        "derive": {
+          "left.at": "s",
+          "right.at": "s + 2",
+          "highlight.range": "[s, s + 2]",
+          "caption": "Days {{s}} to {{s + 2}}: sum {{[4, 2, 7, 1, 8, 3, 6, 5][s] + [4, 2, 7, 1, 8, 3, 6, 5][s + 1] + [4, 2, 7, 1, 8, 3, 6, 5][s + 2]}}"
+        }
+      },
+      "question": "Tap the first day of the window with the largest sum.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c4"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide through all six windows and note each sum."
+        },
+        {
+          "rung": "point",
+          "text": "The two biggest sums start on days 2 and 4.",
+          "highlight": [
+            "c2",
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The sums are 13, 10, 16, 12, 17 and 14. The best starts on day 4."
+        }
+      ],
+      "feedback": {
+        "correct": "Days 4 to 6, $8 + 3 + 6 = 17$, is the best window.",
+        "generic": "Not quite right. Slide to each start and compare the sums.",
+        "byKey": {
+          "c2": "Days 2 to 4 give 16. Slide two more: days 4 to 6 give 17.",
+          "c0": "Days 0 to 2 give 13. Later windows do better.",
+          "c1": "Days 1 to 3 give 10, the worst window.",
+          "c3": "Days 3 to 5 give 12.",
+          "c5": "Days 5 to 7 give 14.",
+          "c6": "A window starting on day 6 would need days 6, 7 and 8. There are only 8 days, 0 to 7.",
+          "c7": "A window starting on day 7 runs off the end of the list."
+        }
+      },
+      "explain": {
+        "text": "The six sums are 13, 10, 16, 12, 17 and 14, each one from the last by one drop and one add. This is a **sliding window**. Six windows cost about 2 operations each, not 3 additions each.",
+        "canvas": {
+          "params": {
+            "s": 4
+          },
+          "caption": "Days 4 to 6: sum 17"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What restarting costs",
+      "prose": "A first attempt recomputes every window from scratch:\n\n```python\nbest = max(sum(xs[s:s + w])\n           for s in range(len(xs) - w + 1))\n```\n\nThe sliding version adds the first window once, then does one drop and one add per step.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            4,
+            2,
+            7,
+            1,
+            8,
+            3,
+            6,
+            5
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 4,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 6,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              4,
+              6
+            ]
+          },
+          "caption": "Days 4 to 6: sum 17"
+        }
+      },
+      "question": "For 1,000 days and $w = 20$, about how many numbers does the scratch version add up?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nw",
+            "text": "About 20,000: 981 windows of 20",
+            "correct": true
+          },
+          {
+            "id": "slide",
+            "text": "About 2,000",
+            "why": "That is the sliding version: 20 for the first window, then two per step."
+          },
+          {
+            "id": "sq",
+            "text": "About 1,000,000",
+            "why": "That would be every pair of days. Each window adds only its own 20 numbers."
+          },
+          {
+            "id": "n",
+            "text": "About 1,000",
+            "why": "That counts each day once. The scratch version adds each day up to 20 times, once per window holding it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many windows are there, and how many numbers does each one add?"
+        },
+        {
+          "rung": "point",
+          "text": "There are $1000 - 20 + 1 = 981$ windows.",
+          "highlight": [
+            "c4",
+            "c5",
+            "c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each window adds 20 numbers: $981 \\times 20 \\approx 20{,}000$."
+        }
+      ],
+      "feedback": {
+        "correct": "$O(nw)$ for the scratch version, against $O(n)$ for sliding.",
+        "generic": "Not quite right. Multiply the number of windows by the work per window."
+      },
+      "explain": {
+        "text": "$981 \\times 20 = 19{,}620$ additions: $O(nw)$. Sliding needs $20 + 2 \\times 980 = 1{,}980$: $O(n)$. With $w = 250$ the gap grows to about a hundred times."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A window that shrinks",
+      "prose": "Now the width is free. We want the **shortest** run of days whose sum is at least 7. Every number is positive. The window grows on the right until it reaches 7.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            3,
+            1,
+            2,
+            4,
+            3
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 0,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 3,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              0,
+              3
+            ]
+          },
+          "caption": "Days 0 to 3: sum 8, length 4"
+        }
+      },
+      "question": "The window `[2, 3, 1, 2]` sums to 8. What should happen next?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "shrink",
+            "text": "Record length 4, then shrink from the left",
+            "correct": true
+          },
+          {
+            "id": "grow",
+            "text": "Grow on the right to take in the 4",
+            "why": "The window already reaches 7. Growing only makes it longer, and we want shorter."
+          },
+          {
+            "id": "restart",
+            "text": "Start a fresh window at day 1",
+            "why": "Restarting throws away the running sum and adds the same days again, which is $O(n^2)$. Shrinking just subtracts 2."
+          },
+          {
+            "id": "right",
+            "text": "Shrink from the right",
+            "why": "The right end is where new days arrive. Shrinking there undoes the step that just reached 7."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is a longer window ever better here?"
+        },
+        {
+          "rung": "point",
+          "text": "Taking days off the left keeps the newest day in.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Record 4, subtract the 2 on the left, and check whether the sum still reaches 7."
+        }
+      ],
+      "feedback": {
+        "correct": "Record 4, then subtract day 0's 2: the sum falls to 6.",
+        "generic": "Not quite right. The sum already reaches 7, so look for a shorter window.",
+        "byKey": {
+          "restart": "You restarted from day 1. That re-adds 3, 1 and 2, which the running sum already holds.",
+          "grow": "You grew a window that already reaches 7. That can only lengthen it."
+        }
+      },
+      "explain": {
+        "text": "Subtract the 2: the sum is 6, below 7, so the window grows again. Every day enters once on the right and leaves once on the left. So the whole scan is $O(n)$.",
+        "canvas": {
+          "pointers": {
+            "left": {
+              "at": 1
+            }
+          },
+          "highlight": {
+            "range": [
+              1,
+              3
+            ]
+          },
+          "caption": "Days 1 to 3: sum 6, grow again"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Keep going: grow while the sum is below 7, and shrink while it is 7 or more, recording each length that reaches 7.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            3,
+            1,
+            2,
+            4,
+            3
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 1,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 3,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              1,
+              3
+            ]
+          },
+          "caption": "Days 1 to 3: sum 6"
+        }
+      },
+      "question": "What is the shortest length that reaches 7?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "days",
+        "accept": "2: days 4 and 5, $4 + 3 = 7$.",
+        "label": "Shortest length",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Grow to day 4: the sum is 10. Now shrink."
+        },
+        {
+          "rung": "point",
+          "text": "The last two days are 4 and 3.",
+          "highlight": [
+            "c4",
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$4 + 3 = 7$ reaches 7 with just 2 days. No single day reaches 7."
+        }
+      ],
+      "feedback": {
+        "correct": "Two days, $4 + 3 = 7$.",
+        "generic": "Not quite right. Keep shrinking while the sum is still 7 or more.",
+        "byKey": {
+          "three": "You stopped at `[1, 2, 4]` or `[2, 4, 3]`. Keep shrinking: `[4, 3]` still reaches 7.",
+          "four": "That is the first window to reach 7. Shrinking and growing finds shorter ones.",
+          "one": "No single day reaches 7: the biggest is 4."
+        }
+      },
+      "explain": {
+        "text": "The lengths that reach 7 are 4, 4, 3, 3 and finally 2, for `[4, 3]`. Shrinking is safe because every number is positive. Dropping one can only lower the sum.",
+        "canvas": {
+          "pointers": {
+            "left": {
+              "at": 4
+            },
+            "right": {
+              "at": 5
+            }
+          },
+          "highlight": {
+            "range": [
+              4,
+              5
+            ]
+          },
+          "caption": "Days 4 to 5: $4 + 3 = 7$, length 2"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Repeated letters",
+      "prose": "Next: the longest run of letters with no repeats. A dict `last` records where each letter was last seen. The window holds `abc`, and the next letter is a second `b`, last seen at index 1.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "a",
+            "b",
+            "c",
+            "b",
+            "d",
+            "a",
+            "e"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 0,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 3,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              0,
+              3
+            ]
+          },
+          "caption": "`last = {'a': 0, 'b': 1, 'c': 2}`, and `s[3]` is `'b'`"
+        }
+      },
+      "question": "Tap the cell where `left` must jump to.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After the jump, the window must hold only one `b`."
+        },
+        {
+          "rung": "point",
+          "text": "The old `b` is at `last['b']`, which is 1.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Jump one past the old `b`: `left = last['b'] + 1 = 2`."
+        }
+      ],
+      "feedback": {
+        "correct": "`left = last['b'] + 1 = 2`, so the window becomes `cb`.",
+        "generic": "Not quite right. Move `left` just past the earlier copy of the letter.",
+        "byKey": {
+          "c1": "You moved `left` onto the old `b`. The window would still hold two `b`s.",
+          "c3": "You jumped onto the new `b` and lost the `c`, which is not repeated. `cb` is a legal window.",
+          "c0": "Staying at 0 keeps both `b`s in the window."
+        }
+      },
+      "explain": {
+        "text": "`last['b']` is 1, so `left` becomes 2 and the window is `cb`. It then grows to `cbdae`, length 5, the answer. Each jump is one dict lookup, so the scan is $O(n)$.",
+        "canvas": {
+          "pointers": {
+            "left": {
+              "at": 2
+            },
+            "right": {
+              "at": 6
+            }
+          },
+          "highlight": {
+            "range": [
+              2,
+              6
+            ]
+          },
+          "caption": "`cbdae`: length 5"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A jump backwards",
+      "prose": "This version passes `'abcbdae'`. Run it on `'abba'` by hand.\n\n```python\ndef longest_unique(s):\n    last, left, best = {}, 0, 0\n    for right, ch in enumerate(s):\n        if ch in last:\n            left = last[ch] + 1\n        last[ch] = right\n        best = max(best, right - left + 1)\n    return best\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "a",
+            "b",
+            "b",
+            "a"
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 2,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 2,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              2,
+              2
+            ]
+          },
+          "caption": "After the second `b`: `left = 2`"
+        }
+      },
+      "question": "What does `longest_unique('abba')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "three",
+            "text": "3",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "2 is the right answer, but not what this code returns. At the last `a`, `last['a']` is 0, so `left` jumps back from 2 to 1.",
+            "canvas": {
+              "pointers": {
+                "left": {
+                  "at": 1
+                },
+                "right": {
+                  "at": 3
+                }
+              },
+              "highlight": {
+                "range": [
+                  1,
+                  3
+                ]
+              }
+            }
+          },
+          {
+            "id": "four",
+            "text": "4",
+            "why": "The repeats do move `left`: the second `b` sends it to 2."
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "`ab` already has length 2, so `best` is at least 2."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Track `left` at each letter: a, b, b, a."
+        },
+        {
+          "rung": "point",
+          "text": "At the last `a`, the code reads `last['a']`, set at index 0.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The second `b` sets `left = 2`. The last `a` sets `left = 0 + 1 = 1`: the window `bba` has length 3."
+        }
+      ],
+      "feedback": {
+        "correct": "The window jumped back to `bba`, which holds two `b`s.",
+        "generic": "Not quite right. Follow `left` at the last `a`.",
+        "byKey": {
+          "two": "You trusted the code to give the right answer. At the last `a` it sets `left = last['a'] + 1 = 1`, moving `left` backwards over the second `b`."
+        }
+      },
+      "explain": {
+        "text": "The old `a` at index 0 is already outside the window, yet the code jumps to it. `left` must never move backwards: write `left = max(left, last[ch] + 1)`. Then `'abba'` gives 2.",
+        "canvas": {
+          "pointers": {
+            "left": {
+              "at": 1
+            },
+            "right": {
+              "at": 3
+            }
+          },
+          "highlight": {
+            "range": [
+              1,
+              3
+            ]
+          },
+          "caption": "`left` moved back to 1: `bba`"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "The pattern: grow on the right, shrink on the left, and keep the window's state up to date. Each index enters once and leaves once, so the scan is $O(n)$.\n\n```python\ntotal = sum(xs[:w])\nbest = total\nfor right in range(w, len(xs)):\n    total += xs[right] - xs[right - w]\n    best = max(best, total)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            4,
+            2,
+            7,
+            1,
+            8,
+            3,
+            6,
+            5
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 4,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 6,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              4,
+              6
+            ]
+          },
+          "caption": "`right = 6`: `xs[6]` joins and `xs[3]` leaves"
+        }
+      },
+      "question": "When `right` joins the window, which index leaves?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rw",
+            "text": "`right - w`",
+            "correct": true
+          },
+          {
+            "id": "rw1",
+            "text": "`right - w + 1`",
+            "why": "That index stays: the new window runs from `right - w + 1` to `right`."
+          },
+          {
+            "id": "r1",
+            "text": "`right - 1`",
+            "why": "`right - 1` is the newest day before this one. It stays in the window."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The window `right - w + 1` to `right` has just lost `right - w`.",
+        "generic": "Not quite right. List the new window's indices first."
+      },
+      "explain": {
+        "text": "With $w = 3$ and `right = 6`, the new window is days 4 to 6. Day 3, `6 - 3`, is the one that left. A variable window instead moves `left` in a `while` loop."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write both",
+      "prose": "`max_window_sum(xs, w)` returns the largest sum of `w` consecutive numbers, or `None` when `w` is larger than the list (take `w` to be at least 1). `longest_unique(s)` returns the length of the longest run of characters with no repeats.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            4,
+            2,
+            7,
+            1,
+            8,
+            3,
+            6,
+            5
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "left",
+              "at": 4,
+              "label": "left"
+            },
+            {
+              "id": "right",
+              "at": 6,
+              "label": "right"
+            }
+          ],
+          "highlight": {
+            "range": [
+              4,
+              6
+            ]
+          },
+          "caption": "`max_window_sum(xs, 3)` is 17"
+        }
+      },
+      "question": "Write `max_window_sum` and `longest_unique` with a sliding window.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def max_window_sum(xs, w):\n    ...\n\n\ndef longest_unique(s):\n    ...\n",
+        "solution": "def max_window_sum(xs, w):\n    if w > len(xs):\n        return None\n    total = sum(xs[:w])\n    best = total\n    for right in range(w, len(xs)):\n        total += xs[right] - xs[right - w]\n        best = max(best, total)\n    return best\n\n\ndef longest_unique(s):\n    last = {}\n    left = best = 0\n    for right, ch in enumerate(s):\n        if ch in last:\n            left = max(left, last[ch] + 1)\n        last[ch] = right\n        best = max(best, right - left + 1)\n    return best\n",
+        "tests": [
+          {
+            "call": "max_window_sum([4, 2, 7, 1, 8, 3, 6, 5], 3)",
+            "expect": "17",
+            "compare": "equal"
+          },
+          {
+            "call": "max_window_sum([4, 2, 7, 1, 8, 3, 6, 5], 1)",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
+            "call": "max_window_sum([4, 2, 7, 1, 8, 3, 6, 5], 8)",
+            "expect": "36",
+            "compare": "equal"
+          },
+          {
+            "call": "max_window_sum([4, 2, 7], 5)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "max_window_sum([-3, -1, -4, -2], 2)",
+            "expect": "-4",
+            "compare": "equal"
+          },
+          {
+            "call": "max_window_sum(list(range(200000)), 20000)",
+            "expect": "3799990000",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_unique('abcbdae')",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_unique('abba')",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_unique('aaaa')",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_unique('')",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_unique('pwwkew')",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_unique('tmmzuxt')",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_unique('abcdefghij' * 20000)",
+            "expect": "10",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "call": "max_window_sum([4, 2, 7, 1, 8, 3, 6, 5], 3)",
+            "expect": "17",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_unique('abcbdae')",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 13 hidden tests: 6 for `max_window_sum` and 7 for `longest_unique`. Two have 200,000 items, so recomputing each window is too slow."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For the sum, keep a running total. For the letters, keep a dict of where each was last seen."
+        },
+        {
+          "rung": "point",
+          "text": "The running total changes by `xs[right] - xs[right - w]` each step.",
+          "highlight": [
+            "c3",
+            "c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In `longest_unique`, set `left = max(left, last[ch] + 1)` when `ch` was seen, then `last[ch] = right` and update `best`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both scans touch each item a fixed number of times: $O(n)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 has `w = 5` for three numbers. Return `None` before building the first window.",
+          "test-5": "Test 5 has only negative numbers, so the best sum is $-4$. Starting `best` at 0 reports a window that does not exist.",
+          "test-6": "Test 6 has 200,000 numbers and `w = 20000`. Summing each window afresh is about 3.6 billion additions; slide instead.",
+          "test-8": "Test 8 is `'abba'`. Your `left` jumped backwards: use `max(left, last[ch] + 1)`."
+        }
+      },
+      "explain": {
+        "text": "Starting `best` from the first window, not 0, keeps negative lists right. The `max` in `longest_unique` keeps `left` from jumping back to a copy outside the window."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The busiest week",
+      "prose": "Ten days of volume for one stock. A desk wants the busiest run of five trading days. In pandas, `vol.rolling(5).sum().max()` answers this; under the hood it runs the loop you just wrote.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "vol",
+              "label": "Volume",
+              "values": [
+                420,
+                380,
+                510,
+                610,
+                450,
+                390,
+                700,
+                650,
+                300,
+                480
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "yLabel": "Volume (thousands)",
+          "xLabel": "Day"
+        },
+        "state": {
+          "params": {
+            "s": 0
+          },
+          "window": {
+            "from": 0,
+            "to": 4,
+            "label": "5 days"
+          }
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0,
+            "max": 5,
+            "step": 1,
+            "start": 0,
+            "label": "Window start"
+          }
+        ],
+        "derive": {
+          "window.from": "s",
+          "window.to": "s + 4",
+          "caption": "Days {{s + 1}} to {{s + 5}}: {{[420, 380, 510, 610, 450, 390, 700, 650, 300, 480][s + 0]+[420, 380, 510, 610, 450, 390, 700, 650, 300, 480][s + 1]+[420, 380, 510, 610, 450, 390, 700, 650, 300, 480][s + 2]+[420, 380, 510, 610, 450, 390, 700, 650, 300, 480][s + 3]+[420, 380, 510, 610, 450, 390, 700, 650, 300, 480][s + 4]}} thousand shares"
+        }
+      },
+      "question": "What is the largest 5-day total volume, in thousands of shares?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2800,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "thousand",
+        "accept": "2800: days 4 to 8, $610 + 450 + 390 + 700 + 650$.",
+        "label": "Largest 5-day total",
+        "wrong": [
+          {
+            "id": "first",
+            "value": 2370,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "top5",
+            "value": 2950,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide the window and read each total, or slide the sum by hand."
+        },
+        {
+          "rung": "point",
+          "text": "Day 4's 610 is the window's first day when the total peaks."
+        },
+        {
+          "rung": "step",
+          "text": "The six totals are 2370, 2340, 2660, 2800, 2490 and 2520."
+        }
+      ],
+      "feedback": {
+        "correct": "Days 4 to 8 traded 2.8 million shares.",
+        "generic": "Not quite right. Compare all six 5-day totals.",
+        "byKey": {
+          "first": "That is the first window, days 1 to 5. Slide on: days 4 to 8 trade more.",
+          "top5": "You added the five biggest days, but they are not consecutive. A window holds five days in a row."
+        }
+      },
+      "explain": {
+        "text": "The totals are 2370, 2340, 2660, 2800, 2490 and 2520, each from the last by one drop and one add. The same loop over daily log returns finds the best 20-day return. The longest run of up days is a window too.",
+        "canvas": {
+          "params": {
+            "s": 3
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A window over consecutive items keeps its state up to date: one item joins on the right, one leaves on the left.",
+      "A fixed width slides with one add and one drop per step; a free width grows while it falls short and shrinks while it qualifies.",
+      "Each index enters once and leaves once, so the scan is $O(n)$, not $O(nw)$."
+    ],
+    "formula": {
+      "name": "Sliding a fixed window",
+      "tex": "S_{r} = S_{r-1} + x_r - x_{r-w}",
+      "note": "Shrinking a window on a sum is safe only when every number is positive."
+    },
+    "trap": "`left` must never move backwards: use `left = max(left, last[ch] + 1)`."
+  },
+  "quiz": [
+    {
+      "id": "q-up-run",
+      "difficulty": 2,
+      "prose": "Closing prices over eight days: `[100, 101, 103, 102, 104, 105, 107, 106]`. An up day closes above the day before.",
+      "question": "What is the longest run of consecutive up days?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "days",
+        "accept": "3: 104, 105 and 107, each above the day before.",
+        "label": "Longest run",
+        "wrong": [
+          {
+            "id": "total",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "first",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three up days in a row: 104, 105, 107.",
+        "generic": "Not quite right. Reset the run to 0 on each down day.",
+        "byKey": {
+          "total": "You counted all five up days. The run resets at the falls to 102 and 106.",
+          "first": "That is the first run, 101 and 103. A longer one follows.",
+          "four": "You started the run at 102, but 102 is a down day."
+        }
+      },
+      "explain": {
+        "text": "The moves are up, up, down, up, up, up, down. The window grows on each up day and restarts after each down day. The longest run is 3."
+      }
+    },
+    {
+      "id": "q-negatives",
+      "difficulty": 3,
+      "prose": "The shrinking window for the shortest sum of at least $k$ assumes positive numbers. Run it anyway on `[5, -4, 6]` with $k = 6$: grow while the sum is below 6, shrink while it is 6 or more.",
+      "question": "What length does the window report?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "three",
+            "text": "3",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "1 is the true answer, `[6]`. But after dropping the 5 the sum is 2, so the window stops shrinking before it reaches `[6]`."
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "`[-4, 6]` sums to 2, below 6, so it is never recorded."
+          },
+          {
+            "id": "none",
+            "text": "It finds nothing",
+            "why": "The whole list sums to 7, which reaches 6, so length 3 is recorded."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "It reports 3 and misses `[6]`.",
+        "generic": "Not quite right. Follow the sum: 5, then 1, then 7."
+      },
+      "explain": {
+        "text": "The sum grows to 7 at length 3, then dropping the 5 leaves 2, so shrinking stops. With a negative number, dropping a day can raise the sum, so shrinking is no longer safe. Prefix sums handle negatives instead."
+      }
+    },
+    {
+      "id": "q-w-one",
+      "difficulty": 2,
+      "prose": "```python\nprint(max_window_sum([12, -3, 40, 7], 1))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "max",
+            "text": "`40`",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "`56`",
+            "why": "That is the whole list. A window of width 1 holds one number."
+          },
+          {
+            "id": "first",
+            "text": "`12`",
+            "why": "That is only the first window. The loop compares every one."
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "`None` is for `w` larger than the list. 1 fits."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A window of one is a single number, so the answer is the maximum.",
+        "generic": "Not quite right. What does a window of width 1 hold?"
+      },
+      "explain": {
+        "text": "With $w = 1$ each window is one number, and the best is `max(xs)`: 40. Each step adds `xs[right]` and drops `xs[right - 1]`, the number before it."
+      }
+    },
+    {
+      "id": "q-off-by-one",
+      "difficulty": 3,
+      "prose": "A colleague writes the update as\n\n```python\ntotal += xs[right] - xs[right - w + 1]\n```",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "drops",
+            "text": "It drops a day still in the window, and the day that left stays counted",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: it is the same update",
+            "why": "`right - w + 1` is the first day of the new window. It must stay; `right - w` is the one leaving."
+          },
+          {
+            "id": "index",
+            "text": "It raises an `IndexError` on the first step",
+            "why": "`right - w + 1` is at least 1, a valid index. The sums are just wrong."
+          },
+          {
+            "id": "slow",
+            "text": "It gives the right sums, but more slowly",
+            "why": "It is just as fast, and every sum after the first is wrong."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It removes the new window's first day instead of the old window's.",
+        "generic": "Not quite right. Which index has just left the window?"
+      },
+      "explain": {
+        "text": "When `right` joins, the window runs from `right - w + 1` to `right`. The index that left is `right - w`. Subtracting `xs[right - w + 1]` drops a day that should stay."
+      }
+    }
+  ]
+}

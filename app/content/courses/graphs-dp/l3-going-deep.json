@@ -1,0 +1,1807 @@
+{
+  "id": "l3-going-deep",
+  "course": "graphs-dp",
+  "title": "Going deep first",
+  "minutes": 15,
+  "objectives": [
+    "Implement depth-first search recursively and with a stack.",
+    "Record pre-order and post-order, and count connected components"
+  ],
+  "skills": [
+    "gd-traversal"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Down one corridor",
+      "prose": "Explore from A like a maze. At each node, go to the first neighbour, alphabetically, that you have not visited. When none is left, step back to the node you came from and try again there.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "current": "A",
+          "caption": "The graph from the last lesson"
+        }
+      },
+      "question": "Put the nodes in the order you first reach them.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "A",
+            "text": "A"
+          },
+          {
+            "id": "B",
+            "text": "B"
+          },
+          {
+            "id": "C",
+            "text": "C"
+          },
+          {
+            "id": "D",
+            "text": "D"
+          },
+          {
+            "id": "E",
+            "text": "E"
+          },
+          {
+            "id": "F",
+            "text": "F"
+          },
+          {
+            "id": "G",
+            "text": "G"
+          },
+          {
+            "id": "H",
+            "text": "H"
+          }
+        ],
+        "answer": [
+          "A",
+          "B",
+          "E",
+          "G",
+          "C",
+          "D",
+          "F",
+          "H"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "From A go to B, then keep going from B before you think about D."
+        },
+        {
+          "rung": "point",
+          "text": "From E, the first unvisited neighbour is G, not H."
+        },
+        {
+          "rung": "step",
+          "text": "A, B, E, G, C, D, F. At F you are stuck, so step back to D, C, G and E. E still has H."
+        }
+      ],
+      "feedback": {
+        "correct": "A, B, E, G, C, D, F, H.",
+        "generic": "Not quite right. Keep going from the newest node, and step back only when it has no unvisited neighbour.",
+        "byKey": {
+          "D": "You went to D straight after B. That finishes A's neighbours first, which is the BFS order. Here you keep going from B.",
+          "H": "You went to H before G. From E, G comes first alphabetically; H waits until you step back.",
+          "C": "C comes after G: you reach it from G, going deeper."
+        }
+      },
+      "explain": {
+        "text": "You kept going from the newest node and backed up only at a dead end. This is **depth-first search**, or DFS. BFS gave A, B, D, E, C, F, G, H on the same graph.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "G",
+            "C",
+            "D",
+            "F",
+            "H"
+          ],
+          "caption": "DFS order from A"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where you back up",
+      "prose": "Walk the same dive again. Somewhere you reach a node whose neighbours are all visited.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "G",
+            "C",
+            "D"
+          ],
+          "current": "D",
+          "caption": "Visited so far: A, B, E, G, C, D"
+        }
+      },
+      "question": "Tap the first node where you get stuck and must step back.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "F"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the walk go from D?"
+        },
+        {
+          "rung": "point",
+          "text": "D's neighbours are A, C and F.",
+          "highlight": [
+            "F"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From D the only unvisited neighbour is F. F's only neighbour, D, is visited, so F is a dead end."
+        }
+      ],
+      "feedback": {
+        "correct": "At F nothing new is left, so the search steps back.",
+        "generic": "Not quite right. Continue the walk from D and find the first node with no unvisited neighbour.",
+        "byKey": {
+          "H": "H is a dead end too, but the walk reaches it last, after backing up from F to E.",
+          "D": "D still has F unvisited, so the walk goes on to F first."
+        }
+      },
+      "explain": {
+        "text": "From F the search steps back to D, C, G and E, each with nothing new. E still has H, so the dive continues there. That stepping back is **backtracking**, and a recursive call returning does it for free.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "G",
+            "C",
+            "D",
+            "F",
+            "H"
+          ],
+          "highlight": [
+            "F",
+            "H"
+          ],
+          "caption": "Dead ends: F, then H"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Recursive DFS",
+      "prose": "Each call visits one node, then calls itself on each unvisited neighbour. When a call returns, you are back at the node before: the backtracking you just did.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "G",
+            "C",
+            "D",
+            "F",
+            "H"
+          ]
+        },
+        "maxHeight": 200
+      },
+      "question": "Complete `visit(u)` so that `dfs(adj, start)` returns the DFS order, neighbours in sorted order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def dfs(adj, start):\n    seen = set()\n    order = []\n\n    def visit(u):\n        ...\n\n    visit(start)\n    return order\n",
+        "solution": "def dfs(adj, start):\n    seen = set()\n    order = []\n\n    def visit(u):\n        seen.add(u)\n        order.append(u)\n        for v in sorted(adj[u]):\n            if v not in seen:\n                visit(v)\n\n    visit(start)\n    return order\n",
+        "examples": [
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "dfs(adj, \"A\")",
+            "expect": "['A', 'B', 'E', 'G', 'C', 'D', 'F', 'H']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "dfs(adj, \"A\")",
+            "expect": "['A', 'B', 'E', 'G', 'C', 'D', 'F', 'H']",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "dfs(adj, \"G\")",
+            "expect": "['G', 'C', 'D', 'A', 'B', 'E', 'H', 'F']",
+            "compare": "equal"
+          },
+          {
+            "call": "dfs({\"A\": []}, \"A\")",
+            "expect": "['A']",
+            "compare": "equal"
+          },
+          {
+            "call": "dfs({\"A\": [\"B\", \"C\"], \"B\": [\"A\", \"C\"], \"C\": [\"A\", \"B\"]}, \"A\")",
+            "expect": "['A', 'B', 'C']",
+            "compare": "equal"
+          },
+          {
+            "call": "dfs({\"X\": [\"Y\"], \"Y\": [\"X\"], \"Z\": []}, \"X\")",
+            "expect": "['X', 'Y']",
+            "compare": "equal"
+          },
+          {
+            "call": "dfs({1: [2, 3], 2: [4], 3: [4], 4: [1]}, 1)",
+            "expect": "[1, 2, 4, 3]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, including a single node, a triangle (a cycle), a disconnected graph and a directed graph. Neighbours are taken in sorted order, so each answer is a single list."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`visit(u)` marks `u`, records it, then visits each neighbour not yet seen."
+        },
+        {
+          "rung": "point",
+          "text": "The walk from E chose G before H.",
+          "highlight": [
+            "G",
+            "H"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In `visit`: `seen.add(u)`, `order.append(u)`, then `for v in sorted(adj[u]): if v not in seen: visit(v)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Mark, record, then recurse into each unvisited neighbour.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-4": "Test 4 is a triangle. If it never finished, a node was visited twice: check `seen` before each call.",
+          "test-3": "Test 3 is a single node with no edges. The answer is `[\"A\"]`."
+        }
+      },
+      "explain": {
+        "text": "The `seen` set stops the search walking round a cycle. Each node is visited once and each edge read once from each end, so DFS is $O(V + E)$, like BFS. Only the order differs.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "G",
+            "C",
+            "D",
+            "F",
+            "H"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "No memory of where you have been",
+      "prose": "This version has no `seen` set.\n\n```python\ndef dfs(adj, u, order):\n    order.append(u)\n    for v in sorted(adj[u]):\n        dfs(adj, v, order)\n\ndfs(tri, \"A\", [])\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.2,
+              "y": 0.75
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.5,
+              "y": 0.15
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.8,
+              "y": 0.75
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "B",
+              "to": "C"
+            },
+            {
+              "from": "A",
+              "to": "C"
+            }
+          ],
+          "height": 200
+        },
+        "state": {
+          "caption": "A triangle: a cycle of three"
+        }
+      },
+      "question": "What happens on the triangle?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rec",
+            "text": "`RecursionError: maximum recursion depth exceeded`",
+            "correct": true
+          },
+          {
+            "id": "ok",
+            "text": "It returns and `order` is `['A', 'B', 'C']`",
+            "why": "You expected it to stop once every node was seen. Nothing records that, so A calls B, B calls A, A calls B again."
+          },
+          {
+            "id": "hang",
+            "text": "It hangs forever",
+            "why": "Each call waits on the next, so frames pile up on the call stack. Python stops at about 1,000 frames and raises an error."
+          },
+          {
+            "id": "dup",
+            "text": "It returns `['A', 'B', 'A', 'C']`",
+            "why": "No call ever returns: the first neighbour of B is A, which starts the loop again."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `dfs(tri, \"B\", order)` call first?"
+        },
+        {
+          "rung": "point",
+          "text": "B's first neighbour is A.",
+          "highlight": [
+            "A",
+            "B"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A calls B, B calls A, A calls B: the calls never end, and each one adds a frame to the stack."
+        }
+      ],
+      "feedback": {
+        "correct": "The calls go round the cycle until Python's frame limit stops them.",
+        "generic": "Not quite right. Follow the calls: A's first neighbour is B, and B's is A.",
+        "byKey": {
+          "ok": "You expected the search to stop when every node was visited. With no `seen` set it never knows, so A and B call each other.",
+          "hang": "You expected an endless hang. Recursion piles up frames, and Python raises `RecursionError` at about 1,000."
+        }
+      },
+      "explain": {
+        "text": "Without `seen`, every cycle is walked round forever. A loop-based search would hang, but recursion fails fast with `RecursionError`. On a tree there is no cycle, so the bug can hide until real data arrives.",
+        "canvas": {
+          "highlight": [
+            "A",
+            "B",
+            "e-A-B"
+          ],
+          "caption": "A → B → A → B → ..."
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A stack instead of recursion",
+      "prose": "Recursion keeps its own stack of calls. You can keep the stack yourself. This first try pushes the neighbours in sorted order.\n\n```python\nstack, seen, order = [\"A\"], set(), []\nwhile stack:\n    u = stack.pop()\n    if u in seen:\n        continue\n    seen.add(u)\n    order.append(u)\n    for v in sorted(adj[u]):\n        if v not in seen:\n            stack.append(v)\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {},
+        "maxHeight": 190
+      },
+      "question": "What is `order` at the end?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "naive",
+            "text": "`['A', 'D', 'F', 'C', 'G', 'E', 'H', 'B']`",
+            "correct": true
+          },
+          {
+            "id": "rec",
+            "text": "`['A', 'B', 'E', 'G', 'C', 'D', 'F', 'H']`",
+            "why": "That is the recursive order. Here B and D are pushed in that order, and `pop` takes the last one pushed: D."
+          },
+          {
+            "id": "bfs",
+            "text": "`['A', 'B', 'D', 'E', 'C', 'F', 'G', 'H']`",
+            "why": "That is the BFS order. A stack takes the newest node, so the search still dives deep."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After A, the stack holds B then D. Which does `pop` take?"
+        },
+        {
+          "rung": "point",
+          "text": "`pop` takes the last item pushed."
+        },
+        {
+          "rung": "step",
+          "text": "D comes off first, then D's last neighbour F, then C, and so on. B is pushed first and popped last."
+        }
+      ],
+      "feedback": {
+        "correct": "Still depth first, but the largest neighbour first.",
+        "generic": "Not quite right. `pop` takes the most recently pushed node."
+      },
+      "explain": {
+        "text": "This is a valid depth-first order, mirrored: it explores the largest neighbour first. Pushing the neighbours in reverse sorted order makes the smallest come off first. Then the stack version matches the recursive one exactly.",
+        "canvas": {
+          "visited": [
+            "A",
+            "D",
+            "F",
+            "C",
+            "G",
+            "E",
+            "H",
+            "B"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Match the recursive order",
+      "prose": "Write the stack version so that it returns exactly what the recursive `dfs` returns. Mark a node seen when you pop it, and skip it if it was seen already.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "G",
+            "C",
+            "D",
+            "F",
+            "H"
+          ],
+          "caption": "Target: A, B, E, G, C, D, F, H"
+        },
+        "maxHeight": 190
+      },
+      "question": "Write `dfs_stack(adj, start)` with a list as the stack and no recursion.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def dfs_stack(adj, start):\n    ...\n",
+        "solution": "def dfs_stack(adj, start):\n    seen = set()\n    stack = [start]\n    order = []\n    while stack:\n        u = stack.pop()\n        if u in seen:\n            continue\n        seen.add(u)\n        order.append(u)\n        for v in sorted(adj[u], reverse=True):\n            if v not in seen:\n                stack.append(v)\n    return order\n",
+        "examples": [
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "dfs_stack(adj, \"A\")",
+            "expect": "['A', 'B', 'E', 'G', 'C', 'D', 'F', 'H']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "dfs_stack(adj, \"A\")",
+            "expect": "['A', 'B', 'E', 'G', 'C', 'D', 'F', 'H']",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "dfs_stack(adj, \"E\")",
+            "expect": "['E', 'B', 'A', 'D', 'C', 'G', 'F', 'H']",
+            "compare": "equal"
+          },
+          {
+            "call": "dfs_stack({\"A\": [\"B\", \"C\"], \"B\": [\"A\", \"D\"], \"C\": [\"A\", \"D\"], \"D\": [\"B\", \"C\"]}, \"A\")",
+            "expect": "['A', 'B', 'D', 'C']",
+            "compare": "equal"
+          },
+          {
+            "call": "dfs_stack({\"A\": []}, \"A\")",
+            "expect": "['A']",
+            "compare": "equal"
+          },
+          {
+            "call": "dfs_stack({1: [2, 3], 2: [4], 3: [4], 4: [1]}, 1)",
+            "expect": "[1, 2, 4, 3]",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {i: [i - 1, i + 1] for i in range(1, 4999)}; adj[0] = [1]; adj[4999] = [4998]",
+            "call": "dfs_stack(adj, 0) == list(range(5000))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Each must equal the recursive `dfs` order exactly. Test 6 is a path of 5,000 nodes, deeper than Python's recursion limit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Push the neighbours so that the smallest is on top."
+        },
+        {
+          "rung": "point",
+          "text": "A node can be on the stack twice, as G is here.",
+          "highlight": [
+            "G"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pop `u`; if seen, `continue`. Else mark it, record it, and push `sorted(adj[u], reverse=True)` that are not seen."
+        }
+      ],
+      "feedback": {
+        "correct": "Reverse-sorted pushes plus a skip on pop give the recursive order.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "If you got A, D, F, ... the largest neighbour comes off first. Push `sorted(adj[u], reverse=True)`.",
+          "test-3": "Test 3 is a square. If D appeared twice, skip a popped node that is already in `seen`.",
+          "test-6": "Test 6 is a path of 5,000 nodes. A recursive helper hits the frame limit; keep it all in the loop."
+        }
+      },
+      "explain": {
+        "text": "A node may sit on the stack twice, pushed by two neighbours; the skip on pop handles that. With marking on pop, the order matches the recursive one. The stack is an ordinary list, so 5,000 levels deep is no problem.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "G",
+            "C",
+            "D",
+            "F",
+            "H"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "When each call finishes",
+      "prose": "Now record each node when its call **finishes**, after all its neighbours are done. F finishes first: it has nothing left to explore.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "C"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "G",
+            "C",
+            "D",
+            "F",
+            "H"
+          ],
+          "caption": "First reached: A, B, E, G, C, D, F, H"
+        },
+        "maxHeight": 200
+      },
+      "question": "Put the nodes in the order their calls finish.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "A",
+            "text": "A"
+          },
+          {
+            "id": "B",
+            "text": "B"
+          },
+          {
+            "id": "C",
+            "text": "C"
+          },
+          {
+            "id": "D",
+            "text": "D"
+          },
+          {
+            "id": "E",
+            "text": "E"
+          },
+          {
+            "id": "F",
+            "text": "F"
+          },
+          {
+            "id": "G",
+            "text": "G"
+          },
+          {
+            "id": "H",
+            "text": "H"
+          }
+        ],
+        "answer": [
+          "F",
+          "D",
+          "C",
+          "G",
+          "H",
+          "E",
+          "B",
+          "A"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A call finishes only after every call it made has finished."
+        },
+        {
+          "rung": "point",
+          "text": "D finishes right after F, its last open branch."
+        },
+        {
+          "rung": "step",
+          "text": "F, D, C, G finish as the search backs up. Then H, then E, B and finally A."
+        }
+      ],
+      "feedback": {
+        "correct": "F, D, C, G, H, E, B, A.",
+        "generic": "Not quite right. A node finishes only after all the nodes it led to.",
+        "byKey": {
+          "A": "A's call is the first to start and the last to finish.",
+          "H": "H finishes before E, because E's call made H's call."
+        }
+      },
+      "explain": {
+        "text": "First-reached order is **pre-order**; finishing order is **post-order**. In post-order every node comes after all the nodes it led to. Lesson 5 uses exactly this to order tasks.",
+        "canvas": {
+          "visited": [
+            "F",
+            "D",
+            "C",
+            "G",
+            "H",
+            "E",
+            "B",
+            "A"
+          ],
+          "caption": "Post-order: F, D, C, G, H, E, B, A"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Too deep for recursion",
+      "prose": "Python allows about 1,000 frames on its call stack, as you saw in Algorithmic Thinking. Your recursive `dfs` runs on a chain of 5,000 trades, each linked to the next.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "t0",
+            "t1",
+            "t2",
+            "t3",
+            "…",
+            "t4999"
+          ],
+          "mode": "linked"
+        },
+        "state": {
+          "caption": "A chain: each call waits for the next"
+        }
+      },
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rec",
+            "text": "`RecursionError` partway along the chain",
+            "correct": true
+          },
+          {
+            "id": "ok",
+            "text": "It works: the chain has no cycle",
+            "why": "No cycle is needed. Each call waits for the next, so 5,000 frames are open at once, far over the limit."
+          },
+          {
+            "id": "limit",
+            "text": "It works after `sys.setrecursionlimit(10**6)`, which is always safe",
+            "why": "Raising the limit lets Python's own C stack overflow instead, which can crash the interpreter. An explicit stack has no such limit."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many calls are open at once when the search reaches the far end?"
+        },
+        {
+          "rung": "point",
+          "text": "Each call returns only after the next one does."
+        },
+        {
+          "rung": "step",
+          "text": "About 5,000 frames would be open at once. The limit is about 1,000, so Python stops with `RecursionError`."
+        }
+      ],
+      "feedback": {
+        "correct": "The depth of the search, not its size, breaks recursion.",
+        "generic": "Not quite right. Count the calls that are open at the same moment."
+      },
+      "explain": {
+        "text": "Recursion depth equals the length of the longest path the search follows. A chain or a long grid path easily passes 1,000. Use the stack version for big graphs.",
+        "canvas": {
+          "highlight": [
+            "c5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Counting the pieces",
+      "prose": "A graph may fall into several pieces, its **connected components**. Start a search from every node not yet seen; each new start is a new component.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.07,
+              "y": 0.45
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.3,
+              "y": 0.8
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.6,
+              "y": 0.6
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.45,
+              "y": 0.97
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.9,
+              "y": 0.45
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.88,
+              "y": 0.05
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "D"
+            },
+            {
+              "from": "B",
+              "to": "E"
+            },
+            {
+              "from": "D",
+              "to": "F"
+            },
+            {
+              "from": "C",
+              "to": "G"
+            },
+            {
+              "from": "E",
+              "to": "H"
+            }
+          ],
+          "height": 280
+        },
+        "state": {
+          "caption": "Two components: {A, B, D, E, F, H} and {C, G}"
+        },
+        "maxHeight": 200
+      },
+      "question": "Write `count_components(adj)` for an undirected graph.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def count_components(adj):\n    ...\n",
+        "solution": "def count_components(adj):\n    seen = set()\n    count = 0\n    for s in adj:\n        if s in seen:\n            continue\n        count += 1\n        seen.add(s)\n        stack = [s]\n        while stack:\n            u = stack.pop()\n            for v in adj[u]:\n                if v not in seen:\n                    seen.add(v)\n                    stack.append(v)\n    return count\n",
+        "examples": [
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "count_components(adj)",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "adj = {\"A\": [\"B\", \"D\"], \"B\": [\"A\", \"E\"], \"C\": [\"D\", \"G\"], \"D\": [\"A\", \"C\", \"F\"], \"E\": [\"B\", \"G\", \"H\"], \"F\": [\"D\"], \"G\": [\"C\", \"E\"], \"H\": [\"E\"]}",
+            "call": "count_components(adj)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_components({\"X\": [\"Y\"], \"Y\": [\"X\"], \"Z\": []})",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "count_components({})",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_components({\"A\": [], \"B\": [], \"C\": []})",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_components({\"A\": [\"B\"], \"B\": [\"A\", \"C\"], \"C\": [\"B\"], \"D\": [\"E\"], \"E\": [\"D\"], \"F\": [\"F\"]})",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_components({i: [] for i in range(1000)})",
+            "expect": "1000",
+            "compare": "equal"
+          },
+          {
+            "setup": "adj = {i: [i - 1, i + 1] for i in range(1, 2999)}; adj[0] = [1]; adj[2999] = [2998]",
+            "call": "count_components(adj)",
+            "expect": "1",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests on undirected graphs, including an empty graph, nodes with no edges, a self-loop and a 3,000-node path."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop over every node. Skip it if a previous search already reached it."
+        },
+        {
+          "rung": "point",
+          "text": "A node with no edges is a component by itself."
+        },
+        {
+          "rung": "step",
+          "text": "For each `s` not in `seen`: add 1, then run a stack DFS from `s` that marks everything it reaches."
+        }
+      ],
+      "feedback": {
+        "correct": "Each fresh start finds one whole component.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 has Z with no edges. It is a component on its own, so the answer is 2.",
+          "test-3": "Test 3 is the empty graph: no nodes, no components.",
+          "test-7": "Test 7 is a path of 3,000 nodes. A recursive search runs out of frames; use a stack."
+        }
+      },
+      "explain": {
+        "text": "All the searches together touch each node and edge once, so counting is $O(V + E)$. The outer loop is what catches the pieces a single search misses. BFS would work just as well inside it.",
+        "canvas": {
+          "highlight": [
+            "C",
+            "G"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Rules that reference each other",
+      "prose": "A trading system's rules read other rules: `hedge` reads `delta`, and so on. A loop of rules can never be evaluated. In a directed graph, meeting a visited node is not enough: it must be on the **current** path.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "hedge",
+              "label": "hedge",
+              "x": 0.12,
+              "y": 0.5
+            },
+            {
+              "id": "delta",
+              "label": "delta",
+              "x": 0.42,
+              "y": 0.15
+            },
+            {
+              "id": "vega",
+              "label": "vega",
+              "x": 0.42,
+              "y": 0.85
+            },
+            {
+              "id": "spot",
+              "label": "spot",
+              "x": 0.75,
+              "y": 0.5
+            },
+            {
+              "id": "limit",
+              "label": "limit",
+              "x": 0.92,
+              "y": 0.12
+            }
+          ],
+          "edges": [
+            {
+              "from": "hedge",
+              "to": "delta",
+              "directed": true
+            },
+            {
+              "from": "hedge",
+              "to": "vega",
+              "directed": true
+            },
+            {
+              "from": "delta",
+              "to": "spot",
+              "directed": true
+            },
+            {
+              "from": "vega",
+              "to": "spot",
+              "directed": true
+            },
+            {
+              "from": "spot",
+              "to": "limit",
+              "directed": true
+            }
+          ],
+          "height": 240
+        },
+        "state": {
+          "caption": "An arrow means \"reads\": two arrows reach spot, with no loop"
+        }
+      },
+      "question": "Write `has_cycle(rules)`: `True` if some rule depends on itself through a chain of reads.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def has_cycle(rules):\n    ...\n",
+        "solution": "def has_cycle(rules):\n    state = {r: \"new\" for r in rules}\n\n    def visit(u):\n        state[u] = \"active\"\n        for v in rules[u]:\n            if state[v] == \"active\":\n                return True\n            if state[v] == \"new\" and visit(v):\n                return True\n        state[u] = \"done\"\n        return False\n\n    return any(state[r] == \"new\" and visit(r) for r in rules)\n",
+        "examples": [
+          {
+            "call": "has_cycle({\"hedge\": [\"delta\"], \"delta\": [\"vol\"], \"vol\": [\"hedge\"]})",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "has_cycle({\"hedge\": [\"delta\"], \"delta\": [\"vol\"], \"vol\": [\"hedge\"]})",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle({\"hedge\": [\"delta\", \"vega\"], \"delta\": [\"spot\"], \"vega\": [\"spot\"], \"spot\": []})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle({\"limit\": [\"limit\"]})",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle({})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle({\"a\": [\"b\"], \"b\": [], \"c\": [\"d\"], \"d\": [\"e\"], \"e\": [\"c\"]})",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle({\"a\": [\"b\", \"c\"], \"b\": [\"d\"], \"c\": [\"d\"], \"d\": [\"e\"], \"e\": []})",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "has_cycle({\"x\": [], \"y\": [\"x\"], \"z\": [\"x\", \"y\"]})",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Every rule is a key, and each list names the rules it reads. Return `True` or `False`."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Give each rule three states: new, active (on the current path), done."
+        },
+        {
+          "rung": "point",
+          "text": "spot is reached twice, by delta and vega, yet there is no loop.",
+          "highlight": [
+            "spot"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In `visit(u)`: mark it active. A neighbour that is active means a cycle. Visit new neighbours. Mark `u` done before returning."
+        }
+      ],
+      "feedback": {
+        "correct": "Only an edge back to an active rule is a cycle.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is the drawing: spot is reached twice, with no loop. A plain `seen` set calls that a cycle; track the current path instead.",
+          "test-3": "Test 3 has `limit` reading itself: a cycle of one rule.",
+          "test-5": "Test 5's loop c → d → e → c is not reachable from a. Start a search from every rule."
+        }
+      },
+      "explain": {
+        "text": "In the drawing, vega reaches spot after delta has finished with it, so spot is done, not active. A cycle shows up only as an edge back into the current path. The same three states detect a cycle among tasks in lesson 5.",
+        "canvas": {
+          "highlight": [
+            "spot",
+            "e-delta-spot",
+            "e-vega-spot"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Depth-first search keeps going from the newest node and backs up at dead ends. Recursion does the backing up; an explicit stack does the same in a loop.",
+      "Both versions need a `seen` set. To match the recursive order, push neighbours in reverse sorted order and skip nodes already seen when popped.",
+      "Pre-order records a node when first reached, post-order when its call finishes. Recursion depth can pass Python's limit of about 1,000 frames on long paths."
+    ],
+    "formula": {
+      "name": "DFS cost",
+      "tex": "O(V + E)",
+      "note": "The same as BFS: each node once, each edge once from each end."
+    },
+    "trap": "Without a `seen` set, DFS walks round every cycle until Python raises `RecursionError`."
+  },
+  "quiz": [
+    {
+      "id": "q-holdings",
+      "difficulty": 2,
+      "prose": "A holdings graph links each firm to the firms it owns shares in, treated as undirected. You need every firm connected to Firm X through any chain.",
+      "question": "Which search gives you that set?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "either",
+            "text": "Either BFS or DFS from X",
+            "correct": true
+          },
+          {
+            "id": "bfs",
+            "text": "Only BFS, because it goes level by level",
+            "why": "BFS gives the levels, but any search that marks seen nodes reaches the same component."
+          },
+          {
+            "id": "dfs",
+            "text": "Only DFS, because it follows chains",
+            "why": "DFS follows chains, but BFS reaches exactly the same firms, in a different order."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Both reach X's whole connected component.",
+        "generic": "Not quite right. Ask which firms each search can reach."
+      },
+      "explain": {
+        "text": "BFS and DFS differ in order, not in what they reach. Both visit X's connected component and nothing else."
+      }
+    },
+    {
+      "id": "q-cc",
+      "difficulty": 2,
+      "prose": "```python\nadj = {1: [2], 2: [1], 3: [], 4: [5], 5: [4], 6: []}\n```",
+      "question": "How many connected components does this graph have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Components",
+        "accept": "4: {1, 2}, {3}, {4, 5} and {6}.",
+        "wrong": [
+          {
+            "id": "edges",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nodes",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "{1, 2}, {3}, {4, 5} and {6}.",
+        "generic": "Not quite right. Group the nodes joined by paths, and count every group.",
+        "byKey": {
+          "edges": "You counted only groups with edges. A node with no edges is a component by itself.",
+          "nodes": "You counted every node. 1 and 2 are joined, and so are 4 and 5."
+        }
+      },
+      "explain": {
+        "text": "Searches start from 1, 3, 4 and 6; 2 and 5 are already seen when their turn comes. Four starts, four components."
+      }
+    },
+    {
+      "id": "q-tree",
+      "difficulty": 3,
+      "prose": "DFS runs on an undirected tree of 10 nodes. Ignore the edge back to the node a call came from.",
+      "question": "How many times does it meet an already-visited node?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Times",
+        "accept": "0: a tree has no cycles, so no edge leads back to a visited node except the parent edge.",
+        "wrong": [
+          {
+            "id": "edges",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A tree has no cycle, so nothing leads back.",
+        "generic": "Not quite right. Ask what an edge back to a visited node would mean.",
+        "byKey": {
+          "edges": "9 is the number of edges. Each leads to a new node; only the parent edge looks back, and you ignore it."
+        }
+      },
+      "explain": {
+        "text": "An edge to a visited node other than the parent would close a cycle. A tree has none, so the answer is 0. That is also how DFS tests whether an undirected graph is a tree."
+      }
+    },
+    {
+      "id": "q-post",
+      "difficulty": 3,
+      "prose": "A tree: R has children S and T, and S has one child, U. DFS starts at R and takes children in that order.",
+      "question": "What is the post-order?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "post",
+            "text": "U, S, T, R",
+            "correct": true
+          },
+          {
+            "id": "pre",
+            "text": "R, S, U, T",
+            "why": "That is the pre-order: nodes as they are first reached. Post-order records each when its call finishes."
+          },
+          {
+            "id": "rev",
+            "text": "R, T, S, U",
+            "why": "That reverses the pre-order. A node finishes after its children, so R comes last."
+          },
+          {
+            "id": "bfs",
+            "text": "R, S, T, U",
+            "why": "That is level by level, the BFS order."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "U finishes first, R last.",
+        "generic": "Not quite right. Record each node only when all its children are done."
+      },
+      "explain": {
+        "text": "U has no children, so it finishes first; then S. T finishes next, and R last. Every node comes after its descendants."
+      }
+    }
+  ]
+}

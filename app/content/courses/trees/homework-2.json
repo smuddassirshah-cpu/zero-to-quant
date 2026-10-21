@@ -108,14 +108,14 @@
         "tp-riskneutral"
       ],
       "title": "Why a call is never exercised early",
-      "prose": "Take a node with share price $S$ on a tree with $d < 1 + r < u$ and $r > 0$. A call is struck at $K$. Its next values satisfy $C_u \\ge \\max(uS - K, 0)$ and $C_d \\ge \\max(dS - K, 0)$. Show that holding beats exercising.",
+      "prose": "Take a node with share price $S$ on a tree with $d < 1 + r < u$ and $r > 0$. A call is struck at $K$. Its next values satisfy $c_u \\ge \\max(uS - K, 0)$ and $c_d \\ge \\max(dS - K, 0)$. Show that holding beats exercising.",
       "question": "Put the lines of the argument in order.",
       "widget": {
         "kind": "order",
         "lines": [
           {
             "id": "a",
-            "text": "Hold value $= \\dfrac{qC_u + (1-q)C_d}{1 + r}$, by backward induction"
+            "text": "Hold value $= \\dfrac{qc_u + (1-q)c_d}{1 + r}$, by backward induction"
           },
           {
             "id": "b",
@@ -212,12 +212,12 @@
       ],
       "title": "Map the exercise region",
       "prose": "Take the four-step tree with $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$ and $T = 1$. Its American put is exercised at $(2, 0)$, $(3, 0)$ and $(3, 1)$, written (step, ups). Write code that finds such nodes for any inputs.",
-      "question": "Replace `...` so `exercise_nodes` returns every node before expiry where exercise strictly beats holding.",
+      "question": "Replace `...` so `exercise_nodes` returns every node before expiry where exercise beats holding by more than $10^{-9}$.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import math\n\n\ndef exercise_nodes(S, K, r, sigma, T, n):\n    \"\"\"Nodes (i, j) before expiry, i < n, where exercising\n    an American put beats holding by more than\n    1e-9. j = ups.\n    CRR tree, r continuous. Return a sorted list.\"\"\"\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    q = (math.exp(r * dt) - d) / (u - d)\n    disc = math.exp(-r * dt)\n    v = [max(K - S * u**j * d**(n - j), 0)\n         for j in range(n + 1)]\n    found = []\n    ...\n    return sorted(found)\n",
-        "solution": "import math\n\n\ndef exercise_nodes(S, K, r, sigma, T, n):\n    \"\"\"Nodes (i, j) before expiry, i < n, where exercising\n    an American put beats holding by more than\n    1e-9. j = ups.\n    CRR tree, r continuous. Return a sorted list.\"\"\"\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    q = (math.exp(r * dt) - d) / (u - d)\n    disc = math.exp(-r * dt)\n    v = [max(K - S * u**j * d**(n - j), 0)\n         for j in range(n + 1)]\n    found = []\n    for i in range(n - 1, -1, -1):\n        new = []\n        for j in range(i + 1):\n            hold = disc * (q * v[j + 1] + (1 - q) * v[j])\n            ex = max(K - S * u**j * d**(i - j), 0)\n            if ex > hold + 1e-9:\n                found.append((i, j))\n            new.append(max(hold, ex))\n        v = new\n    return sorted(found)\n",
+        "starter": "import math\n\n\ndef exercise_nodes(S, K, r, sigma, T, n):\n    \"\"\"Nodes (i, j) before expiry (i < n, j = ups) where\n    exercising an American put beats holding by more\n    than 1e-9.\n    CRR tree, r continuous. Return a sorted list.\"\"\"\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    q = (math.exp(r * dt) - d) / (u - d)\n    disc = math.exp(-r * dt)\n    v = [max(K - S * u**j * d**(n - j), 0)\n         for j in range(n + 1)]\n    found = []\n    ...\n    return sorted(found)\n",
+        "solution": "import math\n\n\ndef exercise_nodes(S, K, r, sigma, T, n):\n    \"\"\"Nodes (i, j) before expiry (i < n, j = ups) where\n    exercising an American put beats holding by more\n    than 1e-9.\n    CRR tree, r continuous. Return a sorted list.\"\"\"\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    q = (math.exp(r * dt) - d) / (u - d)\n    disc = math.exp(-r * dt)\n    v = [max(K - S * u**j * d**(n - j), 0)\n         for j in range(n + 1)]\n    found = []\n    for i in range(n - 1, -1, -1):\n        new = []\n        for j in range(i + 1):\n            hold = disc * (q * v[j + 1] + (1 - q) * v[j])\n            ex = max(K - S * u**j * d**(i - j), 0)\n            if ex > hold + 1e-9:\n                found.append((i, j))\n            new.append(max(hold, ex))\n        v = new\n    return sorted(found)\n",
         "examples": [
           {
             "call": "[list(t) for t in exercise_nodes(100, 100, 0.05, 0.2, 1, 4)]",
