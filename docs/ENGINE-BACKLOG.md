@@ -1045,3 +1045,7 @@ Raised later (options level 3, trees level 3):
 382. `bars`: the number of categories is fixed in params; let `derive` or a slider change the category list so one bar per tree leaf can follow n.
 
 Content note (trees): level 2 grows cash by (1 + r) per step and level 3 by e^{rΔt}; level 3 states this. The second reader for topic 1.7 should check that level 2 never implies its convention is the only one and that the level 3 limit £10.45 is consistent with the exam.
+
+Content gaps (second reader, topic 1.3), to fill in a later gap pass once every course is written:
+
+383. Calculus coverage against the MIT 18.01 and 18.02 exit lines: no improper integrals with an unbounded integrand (integrals l7 promises them), no partial fractions, trigonometric substitution or trig powers, inverse trig functions, related rates, volumes of revolution, arc length, hyperbolic functions; the mean value theorem is used but never taught; multivar has no triple integrals or Jacobian, and Lagrange only in two variables with one constraint. Candidate: an extra level in `integrals` (techniques) and one extra lesson each in `limits` (MVT, related rates) and `multivar` (Jacobian, Lagrange in three variables).
