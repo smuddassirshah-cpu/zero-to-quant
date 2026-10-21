@@ -1161,3 +1161,5 @@ Raised later (cpp level 1):
 402. C++ `code` widget: a per-widget `flags` option (for example `["-Wall"]`) so a screen can show a warning under the editor; the worker compiles without `-Wall` now.
 403. C++ `code` widget: several named source files compiled and linked together, so a learner can cause and fix a multiple-definition or undefined-reference linker error (now shown only as console screenshots).
 404. Playthrough: the previous screen's "Correct." toast is still visible in the next screen's screenshot (cosmetic; with 400).
+
+Content note (pass 6, item 297): seven homework items have both prose and a longform `prompt`, so the prompt is hidden: sql h3, py-found h4, pytest h2 and h3, plotting h1 and h2, testing h3. Merge each prompt into its prose in the next fix pass for those courses.
