@@ -1036,3 +1036,12 @@ Raised later (micro level 3):
 376. `orderbook`: `bids` and `asks` as patch, `derive` and control targets, and an optional fair-value row (`fair`, `halfSpread`, `skew`) that sliders bind to, so the learner's own quotes move in the book (extends 352 and 370).
 377. `table` canvas ignores `canvas.maxHeight`; a fill-in ladder with a canvas table and a widget table needs a scroll on a laptop.
 378. `code` `isclose`: a per-test `tol` (relative or absolute) so a simulation can be accepted within a stated tolerance rather than needing a fixed draw order.
+
+Raised later (options level 3, trees level 3):
+
+379. `payoff`: several `value` curves on one chart (a list for `value`, each with a label), so vega and theta can show two curves; and a plain cash leg, so "short share plus cash" need not be a stock leg with its entry at the strike.
+380. Formula language (`plane` curves, `derive`, captions): built-in `erf`, `normcdf` (Φ) and `normpdf`, so Black-Scholes curves and live option values do not need hand-written polynomial approximations (options 3 used tanh, trees 3 a long polynomial).
+381. `longform` prompts do not render Markdown tables; either render them or say so in AUTHORING.md section 4.
+382. `bars`: the number of categories is fixed in params; let `derive` or a slider change the category list so one bar per tree leaf can follow n.
+
+Content note (trees): level 2 grows cash by (1 + r) per step and level 3 by e^{rΔt}; level 3 states this. The second reader for topic 1.7 should check that level 2 never implies its convention is the only one and that the level 3 limit £10.45 is consistent with the exam.
