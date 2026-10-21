@@ -1,0 +1,385 @@
+{
+ "id": "review-4",
+ "course": "cpp",
+ "level": 4,
+ "items": [
+  {
+   "id": "r4-capacity",
+   "difficulty": 2,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "```cpp\nstd::vector<double> px;\nfor (int i = 0; i < 5; ++i) {\n    px.push_back(100.0 + i);\n}\n```\nThis library doubles a full block, starting from 1.",
+   "question": "What is `px.capacity()` now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "8",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "six",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1, 2, 4, then 8 at the fifth push.",
+    "generic": "Not quite right. Follow the capacity as each element arrives.",
+    "byKey": {
+     "five": "That is the size. The block doubled from 4 to 8 when the fifth price arrived.",
+     "six": "The block does not grow by one or two; it doubles from 4 to 8."
+    }
+   },
+   "explain": {
+    "text": "Capacity goes 1, 2, 4, 4, 8 as the five prices arrive, so three slots wait empty. `reserve(5)` first would make it exactly 5."
+   }
+  },
+  {
+   "id": "r4-erase",
+   "difficulty": 3,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "You must drop every negative P&L entry from `std::vector<double> pnl`.",
+   "question": "Which loop is correct?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ret",
+      "text": "`for (auto it = pnl.begin(); it != pnl.end(); ) { if (*it < 0) it = pnl.erase(it); else ++it; }`",
+      "correct": true
+     },
+     {
+      "id": "pp",
+      "text": "`for (auto it = pnl.begin(); it != pnl.end(); ++it) { if (*it < 0) pnl.erase(it); }`",
+      "why": "After `erase`, `it` is invalid, and `++it` skips the element that slid into its place."
+     },
+     {
+      "id": "idx",
+      "text": "`for (std::size_t i = 0; i < pnl.size(); ++i) { if (pnl[i] < 0) pnl.erase(pnl.begin() + i); }`",
+      "why": "After erasing at `i`, the next element moves to `i`, and `++i` skips it: two negatives in a row leave one behind."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Take the iterator `erase` returns, and step only when you keep the element.",
+    "generic": "Not quite right. Follow the loop over two negatives in a row."
+   },
+   "explain": {
+    "text": "`erase` shifts later elements left and returns an iterator to the next one. Stepping only when you did not erase visits every element once. `pnl.erase(std::remove_if(...), pnl.end())` does the same with algorithms."
+   }
+  },
+  {
+   "id": "r4-count",
+   "difficulty": 2,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "```cpp\nstd::map<std::string, int> m;\nm[\"VOD\"];\nint c = m.count(\"BARC\");\n```",
+   "question": "What is `m.size()`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "1",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`[]` inserted VOD; `count` inserted nothing.",
+    "generic": "Not quite right. Which of the two lines can insert a key?",
+    "byKey": {
+     "zero": "`m[\"VOD\"]` inserts VOD with 0 even though nothing is assigned.",
+     "two": "`count` only looks. BARC is not inserted."
+    }
+   },
+   "explain": {
+    "text": "`operator[]` always leaves the key in the map, here VOD with 0. `count` and `find` never insert."
+   }
+  },
+  {
+   "id": "r4-which-map",
+   "difficulty": 2,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "A tool counts trades per symbol over a day, then prints one line per symbol in alphabetical order.",
+   "question": "Which container fits?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "map",
+      "text": "`std::map<std::string, int>`",
+      "correct": true
+     },
+     {
+      "id": "um",
+      "text": "`std::unordered_map<std::string, int>`",
+      "why": "It counts fine, but its loop order follows the hash. You would have to sort the keys before printing."
+     },
+     {
+      "id": "vec",
+      "text": "`std::vector<int>`",
+      "why": "A vector is indexed by number; symbols are text."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Sorted output: `std::map`.",
+    "generic": "Not quite right. Which container keeps its keys sorted?"
+   },
+   "explain": {
+    "text": "A `std::map` keeps keys sorted, so one loop prints them in order. A few thousand symbols cost about a dozen comparisons each."
+   }
+  },
+  {
+   "id": "r4-acc-int",
+   "difficulty": 3,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "```cpp\nstd::vector<double> fees{2.5, 2.5, 2.5, 2.5};\nauto total = std::accumulate(fees.begin(), fees.end(), 0);\n```",
+   "question": "What is `total`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "8",
+    "wrong": [
+     {
+      "id": "ten",
+      "value": 10,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "8: the total is an `int` and drops each half.",
+    "generic": "Not quite right. Keep the running total as an `int` after every addition.",
+    "byKey": {
+     "ten": "You summed exactly. The start value `0` makes the total an `int`: 2, 4, 6, 8."
+    }
+   },
+   "explain": {
+    "text": "Each step computes `int + double`, then stores it back in an `int`: 2.5 becomes 2, then 4.5 becomes 4, and so on. Start at `0.0` to get 10."
+   }
+  },
+  {
+   "id": "r4-comparator",
+   "difficulty": 3,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "Asks queue by price, lowest first, then by time, earliest first. `Order` has `price` and `time`.",
+   "question": "Which comparator sorts them?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`[](const Order& a, const Order& b) { return a.price != b.price ? a.price < b.price : a.time < b.time; }`",
+      "correct": true
+     },
+     {
+      "id": "le",
+      "text": "`[](const Order& a, const Order& b) { return a.price <= b.price; }`",
+      "why": "`<=` is not strict, and it ignores time. Equal prices answer true both ways, which breaks `sort`."
+     },
+     {
+      "id": "desc",
+      "text": "`[](const Order& a, const Order& b) { return a.price != b.price ? a.price > b.price : a.time < b.time; }`",
+      "why": "`>` puts the highest price first. That is the order for bids, not asks."
+     },
+     {
+      "id": "time",
+      "text": "`[](const Order& a, const Order& b) { return a.time < b.time; }`",
+      "why": "That sorts by time alone, ignoring price."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Price first, time on a tie, both strict.",
+    "generic": "Not quite right. Which rule puts the lowest price first and breaks ties by time?"
+   },
+   "explain": {
+    "text": "For asks the best price is the lowest, so price uses `<`; a tie falls back to the earlier time. Both comparisons are strict, as `sort` requires."
+   }
+  },
+  {
+   "id": "r4-linker",
+   "difficulty": 3,
+   "skills": [
+    "cp-build"
+   ],
+   "prose": "`cmake --build build` compiles every file, then stops:\n\n```text\nundefined reference to `vwap(std::vector<double> const&, std::vector<double> const&)'\n```\n`vwap` lives in the `pricing` library, used by the target `tests`.",
+   "question": "Which line fixes it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "link",
+      "text": "`target_link_libraries(tests PRIVATE pricing)`",
+      "correct": true
+     },
+     {
+      "id": "inc",
+      "text": "`target_include_directories(tests PRIVATE include)`",
+      "why": "Every file compiled, so the headers were found. The linker is missing the code."
+     },
+     {
+      "id": "std",
+      "text": "`set(CMAKE_CXX_STANDARD 17)`",
+      "why": "A missing standard shows up as compile errors, not as an undefined reference."
+     },
+     {
+      "id": "again",
+      "text": "Run `cmake --build build` again",
+      "why": "Nothing has changed, so the same link fails the same way."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "An undefined reference means a missing link.",
+    "generic": "Not quite right. Which step failed: compiling or linking?"
+   },
+   "explain": {
+    "text": "Compiling needs declarations; linking needs the code. `target_link_libraries` joins `pricing` to `tests`, and passes on its public include folder too."
+   }
+  },
+  {
+   "id": "r4-aaa",
+   "difficulty": 2,
+   "skills": [
+    "cp-build"
+   ],
+   "prose": "Put the lines of a test in arrange, act, assert order.",
+   "question": "Order the lines.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a1",
+      "text": "`std::vector<double> px{100.0, 110.0, 99.0};`"
+     },
+     {
+      "id": "a2",
+      "text": "`std::vector<double> r = simple_returns(px);`"
+     },
+     {
+      "id": "a3",
+      "text": "`CHECK(r.size() == 2);`"
+     },
+     {
+      "id": "a4",
+      "text": "`CHECK_CLOSE(r[1], -0.1, 1e-12);`"
+     }
+    ],
+    "answer": [
+     "a1",
+     "a2",
+     "a3",
+     "a4"
+    ],
+    "same": [
+     [
+      "a3",
+      "a4"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Arrange, act, assert.",
+    "generic": "Not quite right. Inputs first, then the one call, then the checks."
+   },
+   "explain": {
+    "text": "The test sets up the closes, calls the code once and then checks the result. The two checks can go in either order; both describe the one behaviour."
+   }
+  },
+  {
+   "id": "r4-tol",
+   "difficulty": 3,
+   "skills": [
+    "cp-build"
+   ],
+   "prose": "A test reads `CHECK(vwap({10.1, 10.2}, {1, 1}) == 10.15);` and fails on correct code.",
+   "question": "What is the fix?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "close",
+      "text": "`CHECK_CLOSE(vwap({10.1, 10.2}, {1, 1}), 10.15, 1e-9);`",
+      "correct": true
+     },
+     {
+      "id": "round",
+      "text": "Round `vwap`'s result to two places inside `vwap`",
+      "why": "That changes the code to suit a bad test, and loses precision for every caller."
+     },
+     {
+      "id": "delete",
+      "text": "Delete the test, since the code is right",
+      "why": "The behaviour still needs a test. Compare with a tolerance instead."
+     },
+     {
+      "id": "float",
+      "text": "Use `float` instead of `double`",
+      "why": "A `float` rounds more, not less. The fix is in the comparison."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Compare doubles within a tolerance.",
+    "generic": "Not quite right. Why might the exact `==` fail on correct code?"
+   },
+   "explain": {
+    "text": "In doubles, (10.1 + 10.2) / 2 comes out as 10.149999999999999, not the `double` nearest 10.15. A tolerance of `1e-9` absorbs that and still catches real errors."
+   }
+  }
+ ]
+}

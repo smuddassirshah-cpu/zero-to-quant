@@ -1,0 +1,1120 @@
+{
+ "id": "l9-owning-memory",
+ "course": "cpp",
+ "title": "Owning memory safely",
+ "minutes": 15,
+ "objectives": [
+  "Use `std::unique_ptr` and RAII so memory frees itself.",
+  "Choose between a single owner, shared ownership and plain members."
+ ],
+ "skills": [
+  "cp-memory"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Cleanup at the brace",
+   "prose": "A **constructor** runs when an object is created; a **destructor**, `~Position`, runs when it ends. Python frees an object some time after the last name lets go. C++ is exact.\n\n```cpp\nstruct Position {\n    std::string sym;\n    Position(std::string s) : sym(s) { std::cout << \"open \" << sym << \"\\n\"; }\n    ~Position() { std::cout << \"close \" << sym << \"\\n\"; }\n};\nvoid trade() {\n    Position p(\"VOD\");\n    std::cout << \"trading\\n\";\n}\nint main() {\n    trade();\n    std::cout << \"done\\n\";\n}\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "main",
+      "trade: p (VOD)"
+     ],
+     "mode": "stack",
+     "capacity": 3,
+     "showIndex": false,
+     "topLabel": "top"
+    },
+    "state": {
+     "caption": "While `trade` runs, `p` lives in its frame"
+    }
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`open VOD`, `trading`, `close VOD`, `done`",
+      "correct": true
+     },
+     {
+      "id": "never",
+      "text": "`open VOD`, `trading`, `done`",
+      "why": "You expected cleanup to happen later or not at all, as with a garbage collector. C++ runs the destructor at `trade`'s closing brace."
+     },
+     {
+      "id": "end",
+      "text": "`open VOD`, `trading`, `done`, `close VOD`",
+      "why": "`p` is a local of `trade`, not of `main`. It ends when `trade` returns, before `done`."
+     },
+     {
+      "id": "early",
+      "text": "`open VOD`, `close VOD`, `trading`, `done`",
+      "why": "`p` lives until the end of its scope, so `trading` prints while it is still open."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When does `p`'s frame disappear?"
+    },
+    {
+     "rung": "point",
+     "text": "`p` is a local of `trade`.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`trade` prints `trading`, then reaches `}`: `p`'s destructor prints `close VOD`. Only then does `main` print `done`."
+    }
+   ],
+   "feedback": {
+    "correct": "The destructor runs at the closing brace, every time.",
+    "generic": "Not quite right. Find the exact line where `p` stops existing.",
+    "byKey": {
+     "never": "You expected cleanup later, as with a garbage collector. C++ runs the destructor at `trade`'s `}`."
+    }
+   },
+   "explain": {
+    "text": "`p` lives in `trade`'s frame. At `trade`'s `}` its destructor runs and prints `close VOD`, then `main` prints `done`. That timing is guaranteed, and it is what the rest of this lesson builds on.",
+    "canvas": {
+     "cells": [
+      "main"
+     ],
+     "caption": "`p`'s destructor ran at `trade`'s `}`"
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Every exit must free",
+   "prose": "This volume-weighted average price allocates scratch space with `new[]`. A function can leave by any `return`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "double vwap(const std::vector<double>& px, const std::vector<double>& qty) {",
+      "    double* notional = new double[px.size()];",
+      "    if (px.empty()) return 0;",
+      "    double sum_n = 0, sum_q = 0;",
+      "    for (std::size_t i = 0; i < px.size(); ++i) {",
+      "        notional[i] = px[i] * qty[i];",
+      "        sum_n += notional[i]; sum_q += qty[i];",
+      "    }",
+      "    if (sum_q == 0) return 0;",
+      "    delete[] notional;",
+      "    return sum_n / sum_q;",
+      "}"
+     ],
+     "title": "vwap.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Tap every line that returns without freeing `notional`.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l3",
+     "l9"
+    ],
+    "only": [
+     "l1",
+     "l2",
+     "l3",
+     "l4",
+     "l5",
+     "l6",
+     "l7",
+     "l8",
+     "l9",
+     "l10",
+     "l11",
+     "l12"
+    ],
+    "countWord": "lines",
+    "wrong": [
+     {
+      "id": "all",
+      "set": [
+       "l3",
+       "l9",
+       "l11"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find every `return`. Which ones run before line 10?"
+    },
+    {
+     "rung": "point",
+     "text": "Line 10 is the only `delete[]`.",
+     "highlight": [
+      "l10"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Lines 3 and 9 return before line 10 runs. Line 11 comes after the `delete[]`."
+    }
+   ],
+   "feedback": {
+    "correct": "Two early exits skip the `delete[]`.",
+    "generic": "Not quite right. Check each `return` against line 10.",
+    "byKey": {
+     "all": "Line 11 runs after the `delete[]` on line 10, so it does not leak.",
+     "l11": "Line 11 runs after `delete[] notional;`, so it is safe.",
+     "l2": "Line 2 allocates. The leaks are the returns that skip line 10."
+    }
+   },
+   "explain": {
+    "text": "Lines 3 and 9 leave before line 10, so their `new[]` block is never freed. Every new exit, or a `throw`, is another chance to forget. The fix is to make freeing automatic.",
+    "canvas": {
+     "tone": {
+      "l3": "err",
+      "l9": "err"
+     },
+     "shade": {
+      "leak": [
+       "l3",
+       "l9"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Let a destructor free it",
+   "prose": "Give the memory an owner whose destructor frees it. That pattern is **RAII**: a constructor acquires the resource and the destructor releases it. `std::vector` works this way.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "double vwap(const std::vector<double>& px, const std::vector<double>& qty) {",
+      "    std::vector<double> notional(px.size());",
+      "    if (px.empty()) return 0;",
+      "    double sum_n = 0, sum_q = 0;",
+      "    for (std::size_t i = 0; i < px.size(); ++i) {",
+      "        notional[i] = px[i] * qty[i];",
+      "        sum_n += notional[i]; sum_q += qty[i];",
+      "    }",
+      "    if (sum_q == 0) return 0;",
+      "    return sum_n / sum_q;",
+      "}"
+     ],
+     "title": "vwap.cpp, with a vector",
+     "numbers": true
+    },
+    "state": {
+     "highlight": [
+      "l2"
+     ]
+    }
+   },
+   "question": "Now which `return` lines free the scratch space?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "all",
+      "text": "All three: `notional`'s destructor runs at every exit",
+      "correct": true
+     },
+     {
+      "id": "last",
+      "text": "Only line 10, the normal exit",
+      "why": "The vector is a local. Whatever path leaves the function, its destructor runs and frees the buffer."
+     },
+     {
+      "id": "none",
+      "text": "None, until you call `notional.clear()`",
+      "why": "`clear` empties a vector you keep using. Its destructor frees the buffer when it goes out of scope."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "When does a local's destructor run?"
+    },
+    {
+     "rung": "point",
+     "text": "Every `return` ends the function's frame.",
+     "highlight": [
+      "l3",
+      "l9",
+      "l10"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each `return` ends `vwap`'s frame, and the vector's destructor frees its heap buffer every time."
+    }
+   ],
+   "feedback": {
+    "correct": "Every exit runs the destructor.",
+    "generic": "Not quite right. When does a local vector's destructor run?",
+    "byKey": {
+     "last": "The destructor runs on every path out of the function, not just the last one."
+    }
+   },
+   "explain": {
+    "text": "`notional` owns its heap buffer, and its destructor runs at every exit, early returns and `throw`s included. The `delete[]` line is gone, so it cannot be forgotten. That is RAII: lifetime of the owner equals lifetime of the resource.",
+    "canvas": {
+     "tone": {
+      "l3": "ok",
+      "l9": "ok",
+      "l10": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Hand the Book an owner",
+   "prose": "`std::unique_ptr<T>` owns one heap object and deletes it in its destructor. `std::make_unique<T>()` creates the object and its owner together. You use it like a pointer: `book->add(x)`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "struct Book {",
+      "    static inline int live = 0;   // Books that exist",
+      "    Book();                       // ++live",
+      "    ~Book();                      // --live",
+      "    void add(double x);",
+      "    double total() const;",
+      "};"
+     ],
+     "title": "book.h (hidden above your code)",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Convert `net_exposure` to `std::make_unique` so that no path leaks the `Book`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <vector>\n// book.h, included for you. Book::live counts Books that exist.\nstruct Book {\n    static inline int live = 0;\n    double sum = 0;\n    Book() { ++live; }\n    ~Book() { --live; }\n    void add(double x) { sum += x; }\n    double total() const { return sum; }\n};\n",
+    "starter": "#include <memory>\n#include <vector>\n\ndouble net_exposure(const std::vector<double>& qty, const std::vector<double>& px, double limit) {\n    Book* book = new Book;\n    for (std::size_t i = 0; i < qty.size(); ++i)\n        book->add(qty[i] * px[i]);\n    if (book->total() > limit) return limit;\n    double t = book->total();\n    delete book;\n    return t;\n}\n",
+    "solution": "#include <memory>\n#include <vector>\n\ndouble net_exposure(const std::vector<double>& qty, const std::vector<double>& px, double limit) {\n    auto book = std::make_unique<Book>();\n    for (std::size_t i = 0; i < qty.size(); ++i)\n        book->add(qty[i] * px[i]);\n    if (book->total() > limit) return limit;\n    return book->total();\n}\n",
+    "examples": [
+     {
+      "call": "net_exposure({100.0, 200.0}, {10.0, 20.0}, 10000.0)",
+      "expect": 5000,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "net_exposure({100.0, 200.0}, {10.0, 20.0}, 10000.0)",
+      "expect": 5000,
+      "compare": "isclose"
+     },
+     {
+      "call": "net_exposure({100.0, 200.0}, {10.0, 20.0}, 1000.0)",
+      "expect": 1000,
+      "compare": "isclose"
+     },
+     {
+      "setup": "net_exposure({100.0, 200.0}, {10.0, 20.0}, 1000.0);",
+      "call": "Book::live",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "setup": "net_exposure({1.0}, {2.0}, 100.0);",
+      "call": "Book::live",
+      "expect": 0,
+      "compare": "equal"
+     },
+     {
+      "call": "net_exposure({}, {}, 0.0)",
+      "expect": 0,
+      "compare": "isclose"
+     },
+     {
+      "call": "net_exposure({-300.0, 100.0}, {4.0, 5.0}, 50.0)",
+      "expect": -700,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Two count the `Book` objects still alive after a call, through `Book::live`: it must be 0, on the capped path too."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Replace the raw pointer with an owner, then delete the `delete`."
+    },
+    {
+     "rung": "point",
+     "text": "`auto book = std::make_unique<Book>();` and keep using `book->`."
+    },
+    {
+     "rung": "step",
+     "text": "With `make_unique`, both `return` lines free the `Book`. Remove `delete book;`, or the object would be freed twice."
+    }
+   ],
+   "feedback": {
+    "correct": "No `delete` left, and no leak on any path.",
+    "generic": "Not yet. The results under the editor say which test failed.",
+    "byKey": {
+     "test-3": "A `Book` is still alive after the capped call: the early `return limit;` skipped the `delete`. Let a `unique_ptr` own it."
+    }
+   },
+   "explain": {
+    "text": "`book` now owns the `Book`, and its destructor deletes it on both returns. The capped path, which leaked before, now frees too. A raw `new` with no owner is the bug; `make_unique` removes the chance to forget."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One owner only",
+   "prose": "A `unique_ptr` is the *only* owner, so copying one is a compile error. `std::move(a)` hands ownership over instead, and leaves `a` empty.\n\n```cpp\nvoid book_order(std::unique_ptr<Order> o);\n\nauto a = std::make_unique<Order>(Order{100});\nbook_order(a);\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "main.cpp:6:16: error: call to implicitly-deleted copy constructor",
+      "  of 'std::unique_ptr<Order>'",
+      "    6 |     book_order(a);",
+      "      |                ^",
+      "note: copy constructor is implicitly deleted because",
+      "  'unique_ptr<Order>' has a user-declared move constructor"
+     ],
+     "title": "clang"
+    },
+    "state": {}
+   },
+   "question": "Which call compiles and leaves exactly one owner?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "move",
+      "text": "`book_order(std::move(a));`",
+      "correct": true
+     },
+     {
+      "id": "get",
+      "text": "`book_order(a.get());`",
+      "why": "`get()` returns a raw `Order*`, and the parameter wants a `unique_ptr`, so it does not compile. Two owners of one object would also free it twice."
+     },
+     {
+      "id": "copy",
+      "text": "`std::unique_ptr<Order> b = a; book_order(b);`",
+      "why": "That is the same copy, and the same error."
+     },
+     {
+      "id": "deref",
+      "text": "`book_order(*a);`",
+      "why": "`*a` is the `Order` itself, not an owner of it, so the types do not match."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Copying is banned. What else can happen to ownership?"
+    },
+    {
+     "rung": "point",
+     "text": "The error says copying is deleted; moving is not.",
+     "highlight": [
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`std::move(a)` moves ownership into the parameter. Afterwards `a` is null."
+    }
+   ],
+   "feedback": {
+    "correct": "Ownership moves; it is never copied.",
+    "generic": "Not quite right. Find the call that transfers ownership.",
+    "byKey": {
+     "get": "`get()` gives a raw pointer, not an owner. Two owners would delete the order twice."
+    }
+   },
+   "explain": {
+    "text": "`std::move(a)` transfers the order to `o`, and `a` becomes null: test it with `if (a)`. When `book_order` ends, `o` deletes the order. The compile error is the point: two owners would mean two deletes."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A factory that returns an owner",
+   "prose": "Returning a `unique_ptr` hands ownership to the caller: no copy, no leak. An empty `unique_ptr` (`nullptr`) says nothing was made. `std::make_unique<Position>(sym, qty)` passes its arguments to the constructor.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "struct Position {",
+      "    std::string sym;",
+      "    int qty;",
+      "    Position(std::string s, int q);",
+      "};"
+     ],
+     "title": "position.h (hidden above your code)",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Write `open_position(sym, qty)`: a new `Position` owned by a `unique_ptr`, or `nullptr` when `qty` is 0.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <memory>\n#include <string>\n// position.h, included for you\nstruct Position {\n    std::string sym;\n    int qty;\n    Position(std::string s, int q) : sym(s), qty(q) {}\n};\n",
+    "starter": "#include <memory>\n#include <string>\n\nstd::unique_ptr<Position> open_position(std::string sym, int qty) {\n    // a quantity of 0 opens nothing\n    return nullptr;\n}\n",
+    "solution": "#include <memory>\n#include <string>\n\nstd::unique_ptr<Position> open_position(std::string sym, int qty) {\n    if (qty == 0) return nullptr;\n    return std::make_unique<Position>(sym, qty);\n}\n",
+    "examples": [
+     {
+      "call": "open_position(\"VOD\", 300)->qty",
+      "expect": 300,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "open_position(\"VOD\", 300)->qty",
+      "expect": 300,
+      "compare": "equal"
+     },
+     {
+      "call": "open_position(\"VOD\", 300)->sym",
+      "expect": "VOD",
+      "compare": "equal"
+     },
+     {
+      "call": "open_position(\"BARC\", -500)->qty",
+      "expect": -500,
+      "compare": "equal"
+     },
+     {
+      "call": "open_position(\"VOD\", 0) == nullptr",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "setup": "auto p = open_position(\"AZN\", 50);\nauto q = std::move(p);",
+      "call": "q->sym",
+      "expect": "AZN",
+      "compare": "equal"
+     },
+     {
+      "setup": "auto p = open_position(\"AZN\", 50);\nauto q = std::move(p);",
+      "call": "p == nullptr",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests that call your function and read the position through `->`, including a short position and a quantity of 0."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two cases: `qty == 0`, and everything else."
+    },
+    {
+     "rung": "point",
+     "text": "`return std::make_unique<Position>(sym, qty);` creates the position and its owner."
+    },
+    {
+     "rung": "step",
+     "text": "`if (qty == 0) return nullptr;` then `return std::make_unique<Position>(sym, qty);`."
+    }
+   ],
+   "feedback": {
+    "correct": "The caller now owns the position.",
+    "generic": "Not yet. The results under the editor say which test failed.",
+    "byKey": {
+     "test-4": "A quantity of 0 should return an empty pointer: `return nullptr;`."
+    }
+   },
+   "explain": {
+    "text": "`make_unique` builds the `Position` on the heap and returns its sole owner, which moves out to the caller. A short position is a negative quantity, still a real position. The last test shows the edge case: after `std::move(p)`, `p` is null."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Shared ownership",
+   "prose": "`std::shared_ptr` lets several owners share one object. It keeps a **count** of owners and deletes the object when the count reaches 0. Every copy changes the count with an atomic instruction, which is why desks keep it out of hot paths.\n\n```cpp\nauto a = std::make_shared<Order>();\n{\n    auto b = a;\n    auto c = b;\n    // here\n}\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 200,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.15,
+       "y": 0.5,
+       "shape": "pill"
+      },
+      {
+       "id": "o",
+       "label": "Order, count 1",
+       "x": 0.65,
+       "y": 0.5,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "o",
+       "directed": true
+      }
+     ]
+    },
+    "state": {
+     "caption": "Before the braces: one owner"
+    }
+   },
+   "question": "What does `a.use_count()` return at `// here`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "",
+    "label": "Owner count",
+    "accept": "3: `a`, `b` and `c` all own the order.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1
+     },
+     {
+      "id": "two",
+      "value": 2
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each copy of a `shared_ptr` is one more owner."
+    },
+    {
+     "rung": "point",
+     "text": "`b` copies `a`; `c` copies `b`.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`a`, `b` and `c` share one order, so the count is 3. At the `}`, `b` and `c` die and it drops back to 1."
+    }
+   ],
+   "feedback": {
+    "correct": "Three owners, one order.",
+    "generic": "Not quite right. Count every `shared_ptr` that points at the order.",
+    "byKey": {
+     "one": "That is the count before the braces. `b` and `c` are copies, and each adds an owner.",
+     "two": "`c` copies `b`, which is also an owner of the same order. Count all three."
+    }
+   },
+   "explain": {
+    "text": "`a`, `b` and `c` own the same order, so `use_count()` is 3. At the `}` the count falls to 1, and the order is deleted only when `a` goes too. A run printed 1, 3, 1.",
+    "canvas": {
+     "nodes": {
+      "b": {
+       "id": "b",
+       "label": "b",
+       "x": 0.15,
+       "y": 0.15,
+       "shape": "pill"
+      },
+      "c": {
+       "id": "c",
+       "label": "c",
+       "x": 0.15,
+       "y": 0.85,
+       "shape": "pill"
+      }
+     },
+     "edges": {
+      "e-b-o": {
+       "from": "b",
+       "to": "o"
+      },
+      "e-c-o": {
+       "from": "c",
+       "to": "o"
+      }
+     },
+     "labels": {
+      "o": "Order, count 3"
+     },
+     "caption": "At `// here`: three owners"
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Smart pointers can still leak",
+   "prose": "Two nodes that own each other, as in a book linked to its strategy and back.\n\n```cpp\nstruct Node {\n    std::shared_ptr<Node> other;\n    ~Node() { std::cout << \"freed\\n\"; }\n};\nint main() {\n    {\n        auto a = std::make_shared<Node>();\n        auto b = std::make_shared<Node>();\n        a->other = b;\n        b->other = a;\n    }\n    std::cout << \"end of main\\n\";\n}\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 240,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "a",
+       "label": "a",
+       "x": 0.12,
+       "y": 0.2,
+       "shape": "pill"
+      },
+      {
+       "id": "b",
+       "label": "b",
+       "x": 0.12,
+       "y": 0.8,
+       "shape": "pill"
+      },
+      {
+       "id": "A",
+       "label": "Node A",
+       "x": 0.6,
+       "y": 0.2,
+       "shape": "rect"
+      },
+      {
+       "id": "B",
+       "label": "Node B",
+       "x": 0.6,
+       "y": 0.8,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "a",
+       "to": "A",
+       "directed": true
+      },
+      {
+       "from": "b",
+       "to": "B",
+       "directed": true
+      },
+      {
+       "from": "A",
+       "to": "B",
+       "directed": true,
+       "label": "other"
+      },
+      {
+       "from": "B",
+       "to": "A",
+       "directed": true,
+       "label": "other"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Inside the braces: each node has two owners"
+    }
+   },
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leak",
+      "text": "`end of main` only",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "`freed`, `freed`, `end of main`",
+      "why": "You expected smart pointers to free everything. When `a` and `b` die, each node still owns the other, so neither count reaches 0.",
+      "canvas": {
+       "highlight": [
+        "A",
+        "B"
+       ]
+      }
+     },
+     {
+      "id": "one",
+      "text": "`freed`, `end of main`",
+      "why": "Neither node can go first: each keeps the other's count at 1."
+     },
+     {
+      "id": "crash",
+      "text": "It crashes at the closing brace",
+      "why": "Nothing is deleted at all, so nothing crashes. The nodes simply stay."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At the inner `}`, `a` and `b` die. What is each node's count then?"
+    },
+    {
+     "rung": "point",
+     "text": "Each node is still owned by the other's `other` member.",
+     "highlight": [
+      "A",
+      "B"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Both counts drop from 2 to 1, never to 0. No destructor runs: the nodes leak."
+    }
+   ],
+   "feedback": {
+    "correct": "A cycle keeps every count above 0.",
+    "generic": "Not quite right. Count each node's owners after `a` and `b` die.",
+    "byKey": {
+     "both": "You expected smart pointers to free everything. Each node still owns the other, so neither count reaches 0."
+    }
+   },
+   "explain": {
+    "text": "When `a` and `b` die, each count drops to 1: the nodes own each other. No destructor runs, and LeakSanitizer on a desk build reports \"64 byte(s) leaked in 2 allocation(s)\". Break cycles with one clear owner, or a non-owning `std::weak_ptr` for the back link.",
+    "canvas": {
+     "nodes": {
+      "a": null,
+      "b": null
+     },
+     "caption": "After the braces: no names left, both counts stuck at 1"
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The rule of zero",
+   "prose": "Build classes from members that own themselves, and write no cleanup at all. This is the **rule of zero**.\n\n```cpp\nstruct Desk {\n    std::vector<Order> orders;       // owns its elements\n    std::unique_ptr<Pricer> pricer;  // owns one Pricer\n    std::string name;                // owns its text\n    // no destructor, no delete: each member frees itself\n};\n```",
+   "question": "What should `Desk`'s destructor do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nothing",
+      "text": "Nothing: write no destructor at all",
+      "correct": true
+     },
+     {
+      "id": "delete",
+      "text": "`delete pricer.get();`",
+      "why": "The `unique_ptr` deletes the `Pricer` itself. A second `delete` would free it twice, which is undefined."
+     },
+     {
+      "id": "clear",
+      "text": "Call `orders.clear()`",
+      "why": "The vector's own destructor frees its elements. Clearing it first adds nothing."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Members clean up after themselves.",
+    "generic": "Not quite right. Which member does not already free its own memory?"
+   },
+   "explain": {
+    "text": "Every member is RAII, so destroying a `Desk` destroys them, and they free their memory. No hand-written destructor, so none to get wrong. Raw `new` belongs inside `make_unique`, not in your classes."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "A unique_ptr through a call",
+   "prose": "`Position` prints `open` in its constructor and `close` in its destructor.\n\n```cpp\nvoid hold(std::unique_ptr<Position> p) {\n    std::cout << \"hold \" << p->qty << \"\\n\";\n}\nint main() {\n    auto p = std::make_unique<Position>(\"VOD\", 100);\n    std::cout << \"opened\\n\";\n    hold(std::move(p));\n    std::cout << (p == nullptr) << \" after hold\\n\";\n}\n```",
+   "question": "Put the output lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "`open VOD`: `make_unique` runs the constructor"
+     },
+     {
+      "id": "o2",
+      "text": "`opened`: `main` owns the position"
+     },
+     {
+      "id": "o3",
+      "text": "`hold 100`: `std::move` passed ownership into `hold`'s parameter"
+     },
+     {
+      "id": "o4",
+      "text": "`close VOD`: `hold`'s parameter dies at its `}`, so the destructor runs"
+     },
+     {
+      "id": "o5",
+      "text": "`1 after hold`: `main`'s `p` was moved from, so it is null"
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Who owns the position after `std::move(p)`?"
+    },
+    {
+     "rung": "point",
+     "text": "The owner that dies first runs the destructor."
+    },
+    {
+     "rung": "step",
+     "text": "Created, owned by `main`, moved into `hold`, destroyed at `hold`'s `}`, and `main`'s `p` is left null."
+    }
+   ],
+   "feedback": {
+    "correct": "Ownership moved, so the cleanup moved with it.",
+    "generic": "Not quite right. Track which variable owns the position at each line."
+   },
+   "explain": {
+    "text": "After `std::move(p)`, `hold`'s parameter is the only owner, so the position closes at `hold`'s `}`, before `main` carries on. `main`'s `p` is null and prints 1. A test run printed exactly these five lines."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Who owns an order",
+   "prose": "An order book holds live orders. Each order belongs to exactly one book. Strategies keep raw `Order*` pointers to their live orders, so an order must stay at one address while the book grows.",
+   "question": "Which member should the book use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "unique",
+      "text": "`std::vector<std::unique_ptr<Order>> orders;`",
+      "correct": true
+     },
+     {
+      "id": "value",
+      "text": "`std::vector<Order> orders;`",
+      "why": "When the vector grows, it moves its elements to a new buffer, and every strategy's `Order*` dangles."
+     },
+     {
+      "id": "shared",
+      "text": "`std::vector<std::shared_ptr<Order>> orders;`",
+      "why": "Shared ownership blurs who cancels an order, and every copy updates the count in the hot path."
+     },
+     {
+      "id": "raw",
+      "text": "`std::vector<Order*> orders;` filled with `new`",
+      "why": "Nothing owns these orders: every cancel path must remember `delete`, and one miss leaks."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two needs: one owner per order, and a fixed address."
+    },
+    {
+     "rung": "point",
+     "text": "A `unique_ptr` keeps its object at one heap address, wherever the pointer itself moves."
+    },
+    {
+     "rung": "step",
+     "text": "`std::vector<std::unique_ptr<Order>>`: the book is the single owner, and each order stays put when the vector grows."
+    }
+   ],
+   "feedback": {
+    "correct": "One owner, fixed addresses, automatic cleanup.",
+    "generic": "Not quite right. Check ownership and what happens when the vector grows.",
+    "byKey": {
+     "value": "A growing vector moves its elements, so raw pointers to them dangle."
+    }
+   },
+   "explain": {
+    "text": "Each order lives at a fixed heap address owned by one `unique_ptr`, so growing the vector moves only the pointers. Erasing the `unique_ptr` cancels and frees the order. Where nothing points into the data, prefer a plain vector: the `cpp-pricing` binomial pricer keeps its lattice as one `std::vector<double>` member, sized once."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "RAII: an object acquires a resource in its constructor and releases it in its destructor, which runs at every exit from the scope, early returns included.",
+   "`std::unique_ptr<T>` is the single owner of one heap object. Create it with `std::make_unique`; it cannot be copied, only moved with `std::move`, which leaves the source null.",
+   "`std::shared_ptr` counts owners and frees at zero, but cycles never reach zero and the counting costs time. The rule of zero: build from members that own themselves."
+  ],
+  "formula": {
+   "name": "Ownership",
+   "tex": "\\texttt{new T} \\quad\\Rightarrow\\quad \\texttt{std::make\\_unique<T>()}, \\qquad \\texttt{T* = new T[n]} \\quad\\Rightarrow\\quad \\texttt{std::vector<T>(n)}",
+   "note": "Raw pointers may observe; owners should be RAII types."
+  },
+  "trap": "Smart pointers do not make leaks impossible: two `shared_ptr`s that own each other are never freed."
+ },
+ "quiz": [
+  {
+   "id": "q-moved",
+   "difficulty": 2,
+   "prose": "```cpp\nauto a = std::make_unique<double>(101.5);\nauto b = std::move(a);\nstd::cout << (a == nullptr) << \" \" << *b << \"\\n\";\n```",
+   "question": "What does it print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "one",
+      "text": "`1 101.5`",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "`0 101.5`",
+      "why": "`std::move(a)` hands the double over to `b` and leaves `a` empty, so `a == nullptr` is true, printed as 1."
+     },
+     {
+      "id": "compile",
+      "text": "It does not compile",
+      "why": "Moving a `unique_ptr` is allowed; only copying is not."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A moved-from `unique_ptr` is null.",
+    "generic": "Not quite right. What is left in `a` after the move?"
+   },
+   "explain": {
+    "text": "The move transfers ownership, so `b` owns 101.5 and `a` is null. Reading `*a` now would be a null dereference: check `if (a)` before using a pointer that may have been moved from."
+   }
+  },
+  {
+   "id": "q-array",
+   "difficulty": 2,
+   "question": "`auto px = std::make_unique<double[]>(3);` How is the memory freed?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "auto",
+      "text": "Automatically with `delete[]` when `px` goes out of scope",
+      "correct": true
+     },
+     {
+      "id": "manual",
+      "text": "You must call `delete[] px.get();`",
+      "why": "The `unique_ptr<double[]>` does that itself; a manual `delete[]` would free it twice."
+     },
+     {
+      "id": "delete",
+      "text": "Automatically, but with plain `delete`, so it is a bug",
+      "why": "The `[]` in the type makes the `unique_ptr` use `delete[]`. It indexes too: `px[2]`."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The array form uses `delete[]` for you.",
+    "generic": "Not quite right. What does the `[]` in the type change?"
+   },
+   "explain": {
+    "text": "`std::unique_ptr<double[]>` owns an array, supports `px[i]` and frees with `delete[]`. A run set `px[2] = 101.5` and read back `0 101.5`: `make_unique` zeroes the elements. For prices, a `std::vector<double>` is still the usual choice."
+   }
+  },
+  {
+   "id": "q-raw",
+   "difficulty": 3,
+   "prose": "```cpp\ndouble quote_once(double spot) {\n    Pricer* p = new Pricer;\n    return p->price(spot);\n}\n```",
+   "question": "What is wrong with this function?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leak",
+      "text": "The `Pricer` is never deleted: a raw `new` with no owner leaks",
+      "correct": true
+     },
+     {
+      "id": "dangle",
+      "text": "`p` dangles after the return",
+      "why": "`p` is never used after the return. The problem is the heap object it pointed at, which nobody frees."
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the memory is freed when `p` goes out of scope",
+      "why": "A raw pointer going out of scope frees nothing. Only an owner such as `unique_ptr` deletes."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Raw pointers do not own.",
+    "generic": "Not quite right. What happens to the `Pricer` when `p` disappears?"
+   },
+   "explain": {
+    "text": "`p` dies at the `}`, but a raw pointer's death does nothing to its target. Every call leaks one `Pricer`. `auto p = std::make_unique<Pricer>();` fixes it with no other change."
+   }
+  },
+  {
+   "id": "q-pushback",
+   "difficulty": 3,
+   "prose": "```cpp\nstd::vector<std::unique_ptr<Order>> book;\nauto o = std::make_unique<Order>();\nbook.push_back(o);\n```",
+   "question": "Why does `book.push_back(o);` fail to compile?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "copy",
+      "text": "It would copy the `unique_ptr`; write `book.push_back(std::move(o));`",
+      "correct": true
+     },
+     {
+      "id": "type",
+      "text": "A vector cannot hold `unique_ptr`s",
+      "why": "Vectors of `unique_ptr` are common. They only refuse copies."
+     },
+     {
+      "id": "null",
+      "text": "`o` might be null",
+      "why": "The compiler does not track nulls. The error is \"call to implicitly-deleted copy constructor\"."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Move it in.",
+    "generic": "Not quite right. What does `push_back(o)` do with `o`?"
+   },
+   "explain": {
+    "text": "`push_back(o)` copies its argument, and a `unique_ptr` has no copy. `std::move(o)` moves the order into the vector, which becomes the owner, and leaves `o` null."
+   }
+  }
+ ]
+}

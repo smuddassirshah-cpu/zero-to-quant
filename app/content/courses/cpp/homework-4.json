@@ -1,0 +1,422 @@
+{
+ "id": "homework-4",
+ "course": "cpp",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h4-vwap-book",
+   "difficulty": 5,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "A day's trades arrive one per line: symbol, price in pounds, shares (always positive). For each symbol, in alphabetical order, print one line: the symbol, its number of trades, its VWAP, its lowest and its highest price. Print the three prices to four decimals with `std::fixed << std::setprecision(4)`. Group with a `std::map`, and sort each symbol's trades by price with a lambda.",
+   "question": "Write the program.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <iomanip>\n#include <iostream>\n#include <map>\n#include <string>\n#include <vector>\n\nstruct Trade {\n    double price;\n    int qty;\n};\n\nint main() {\n    std::string sym;\n    double price;\n    int qty;\n    while (std::cin >> sym >> price >> qty) {\n        // keep each trade under its symbol\n    }\n    // for each symbol in key order: sort its trades by price with a lambda,\n    // then print: symbol, trade count, VWAP, lowest price, highest price\n    return 0;\n}\n",
+    "solution": "#include <algorithm>\n#include <iomanip>\n#include <iostream>\n#include <map>\n#include <string>\n#include <vector>\n\nstruct Trade {\n    double price;\n    int qty;\n};\n\nint main() {\n    std::map<std::string, std::vector<Trade>> book;\n    std::string sym;\n    double price;\n    int qty;\n    while (std::cin >> sym >> price >> qty) {\n        book[sym].push_back({price, qty});\n    }\n    std::cout << std::fixed << std::setprecision(4);\n    for (auto& [s, trades] : book) {\n        std::sort(trades.begin(), trades.end(), [](const Trade& a, const Trade& b) { return a.price < b.price; });\n        double value = 0;\n        double shares = 0;\n        for (const Trade& t : trades) {\n            value += t.price * t.qty;\n            shares += t.qty;\n        }\n        std::cout << s << ' ' << trades.size() << ' ' << value / shares << ' '\n                  << trades.front().price << ' ' << trades.back().price << '\\n';\n    }\n    return 0;\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "VOD 72.10 500\nBARC 210.5 200\nVOD 72.50 300\nVOD 72.30 200\nBARC 211.0 100\n",
+      "expect": "BARC 2 210.6667 210.5000 211.0000\nVOD 3 72.2600 72.1000 72.5000\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "VOD 72.10 500\nBARC 210.5 200\nVOD 72.50 300\nVOD 72.30 200\nBARC 211.0 100\n",
+      "expect": "BARC 2 210.6667 210.5000 211.0000\nVOD 3 72.2600 72.1000 72.5000\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "",
+      "expect": ""
+     },
+     {
+      "compare": "stdout",
+      "stdin": "AZN 118.42 10\n",
+      "expect": "AZN 1 118.4200 118.4200 118.4200\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "SHEL 27.15 400\nBP 4.75 1000\nSHEL 27.05 600\nBP 4.80 3000\nAZN 118.5 20\nBP 4.70 1000\n",
+      "expect": "AZN 1 118.5000 118.5000 118.5000\nBP 3 4.7700 4.7000 4.8000\nSHEL 2 27.0900 27.0500 27.1500\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "HSBA 6.42 100 HSBA 6.40 100 HSBA 6.44 200\n",
+      "expect": "HSBA 3 6.4250 6.4000 6.4400\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 5 times with different trades on std::cin and compares what it prints, line by line."
+   },
+   "feedback": {
+    "correct": "Grouped by a map, sorted by a lambda, printed in key order.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Expected BARC before VOD, each with count, VWAP, low and high. Check the key order, the VWAP weighting by shares, and four decimals.",
+     "test-2": "No trades, no output.",
+     "test-4": "BP's VWAP is (4.75 × 1000 + 4.80 × 3000 + 4.70 × 1000) / 5000 = 4.77. If you got 4.75, you averaged the prices without weights."
+    }
+   },
+   "explain": {
+    "text": "`book[sym].push_back(...)` creates each symbol's vector on first sight, and the map keeps the symbols sorted. After sorting by price, `front()` is the low and `back()` the high. VWAP divides traded value by shares, so a big trade counts for more."
+   }
+  },
+  {
+   "id": "h4-test-drawdown",
+   "difficulty": 4,
+   "skills": [
+    "cp-build"
+   ],
+   "prose": "Write the three tests for a supplied `max_drawdown(px)`, using `TEST`, `CHECK` and `CHECK_CLOSE`. Work each expected value out by hand. One useful series is 100, 120, 90, 130, 104: it has two falls, and only one is the worst. Keep exactly these three tests.",
+   "question": "Fill in the three tests.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <cstdio>\n#include <iostream>\n#include <vector>\n\n// zq_test.h: the app's stand-in for Catch2 or GoogleTest\nnamespace zqt {\nstruct Case { const char* name; void (*fn)(); };\ninline std::vector<Case>& all() { static std::vector<Case> v; return v; }\ninline int& fails() { static int n = 0; return n; }\ninline int& variant() { static int v = 0; return v; }\nstruct Add { Add(const char* n, void (*f)()) { all().push_back({n, f}); } };\ninline void fail(const char* what, int line) { ++fails(); std::fprintf(stderr, \"line %d: %s failed\\n\", line, what); }\n}\n#define TEST(name) static void name(); static zqt::Add name##_zq_add(#name, name); static void name()\n#define CHECK(expr) do { if (!(expr)) zqt::fail(\"CHECK(\" #expr \")\", __LINE__); } while (0)\n#define CHECK_CLOSE(a, b, tol) do { if (!(std::fabs((a) - (b)) <= (tol))) zqt::fail(\"CHECK_CLOSE(\" #a \", \" #b \", \" #tol \")\", __LINE__); } while (0)\n\n// supplied: maximum drawdown as a positive fraction of the running peak\ndouble max_drawdown(const std::vector<double>& px) {\n    int v = zqt::variant();\n    if (px.empty() && v != 3) return 0;\n    double peak = px.at(0), worst = 0;\n    for (double p : px) {\n        if (v != 1) peak = std::max(peak, p);\n        double fall = v == 2 ? peak - p : (peak - p) / peak;\n        worst = v == 4 ? fall : std::max(worst, fall);\n    }\n    return worst;\n}\n",
+    "postlude": "#define PLANTED 1\n\nint main() {\n    int v = 0;\n    if (std::cin >> v) zqt::variant() = v;\n    int passed = 0, failed = 0;\n    for (const auto& t : zqt::all()) {\n        int before = zqt::fails();\n        t.fn();\n        if (zqt::fails() == before) { ++passed; }\n        else { ++failed; if (PLANTED == 0 || v == 0) std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    if (PLANTED == 0 || v == 0) std::printf(\"%d passed, %d failed\\n\", passed, failed);\n    else std::printf(failed ? \"planted bug %d: caught\\n\" : \"planted bug %d: missed\\n\", v);\n    return 0;\n}\n",
+    "starter": "// Tests for max_drawdown(px), which is supplied.\n// It returns the worst fall from a running peak as a fraction: 0.25 for 25%.\n\nTEST(worst_fall_from_running_peak) {\n}\n\nTEST(rising_prices_have_no_drawdown) {\n}\n\nTEST(empty_and_single_price_are_zero) {\n}\n",
+    "solution": "// Tests for max_drawdown(px), which is supplied.\n// It returns the worst fall from a running peak as a fraction: 0.25 for 25%.\n\nTEST(worst_fall_from_running_peak) {\n    std::vector<double> px{100.0, 120.0, 90.0, 130.0, 104.0};\n    double dd = max_drawdown(px);\n    CHECK_CLOSE(dd, 0.25, 1e-12);   // 120 down to 90\n}\n\nTEST(rising_prices_have_no_drawdown) {\n    std::vector<double> px{100.0, 101.0, 103.5};\n    CHECK_CLOSE(max_drawdown(px), 0.0, 1e-12);\n}\n\nTEST(empty_and_single_price_are_zero) {\n    CHECK_CLOSE(max_drawdown({}), 0.0, 1e-12);\n    CHECK_CLOSE(max_drawdown({100.0}), 0.0, 1e-12);\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "3 passed, 0 failed\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "3 passed, 0 failed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n",
+      "expect": "planted bug 1: caught\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n",
+      "expect": "planted bug 2: caught\n"
+     },
+     {
+      "compare": "raises",
+      "stdin": "3\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "4\n",
+      "expect": "planted bug 4: caught\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Test 1 runs your tests against the real max_drawdown and expects 3 passed, 0 failed. Tests 2, 3 and 5 swap in a broken version (input 1, 2 and 4) and expect a check to fail. Test 4 (input 3) uses a version that crashes on an empty vector, so your tests must call it with one and the run must stop."
+   },
+   "feedback": {
+    "correct": "Your tests pass on the real function and catch all four planted bugs.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "On the real function every test must pass. Work the value by hand: from 120 down to 90 is 30 / 120 = 0.25.",
+     "test-2": "This version measures falls from the first price only. A series that sets a new peak before falling exposes it.",
+     "test-3": "This version returns the fall in pounds, not as a fraction. Pin the fraction 0.25.",
+     "test-4": "This version crashes on an empty vector. Your empty-input test must call `max_drawdown` with `{}`.",
+     "test-5": "This version reports only the last fall, 0.2 from 130 to 104. Pin the worst one, 0.25."
+    }
+   },
+   "explain": {
+    "text": "Each test pins one behaviour with a hand-worked value. The 100, 120, 90, 130, 104 series separates the worst fall, 0.25, from the last one, 0.2, and needs a running peak. Edge inputs catch the crash; on a desk build you would also test that bad input throws, with `REQUIRE_THROWS_AS`."
+   }
+  },
+  {
+   "id": "h4-build-order",
+   "difficulty": 3,
+   "skills": [
+    "cp-build"
+   ],
+   "prose": "You clone a colleague's pricing project, which has a `tests` target registered with `add_test`. You want to see the tests run, fix the one that fails, and see them pass.",
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "cfg",
+      "text": "`cmake -S . -B build -DCMAKE_BUILD_TYPE=Release`"
+     },
+     {
+      "id": "bld",
+      "text": "`cmake --build build`"
+     },
+     {
+      "id": "ct",
+      "text": "`ctest --test-dir build`, and read which test failed"
+     },
+     {
+      "id": "fix",
+      "text": "Fix the code in `src/`, never the files in `build/`"
+     },
+     {
+      "id": "bld2",
+      "text": "`cmake --build build` again"
+     },
+     {
+      "id": "ct2",
+      "text": "`ctest --test-dir build`: every test passes"
+     }
+    ],
+    "answer": [
+     "cfg",
+     "bld",
+     "ct",
+     "fix",
+     "bld2",
+     "ct2"
+    ]
+   },
+   "feedback": {
+    "correct": "Configure once; build and test after every change.",
+    "generic": "Not quite right. What does each step need from the one before?"
+   },
+   "explain": {
+    "text": "Configuring writes `build/`; building compiles the code and the tests; `ctest` runs them. After the fix only the build and the tests need repeating, and the build recompiles just what changed."
+   }
+  },
+  {
+   "id": "h4-reserve-grow",
+   "difficulty": 3,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "```cpp\nstd::vector<double> ticks;\nticks.reserve(100);\nfor (int i = 0; i < 150; ++i) {\n    ticks.push_back(100.0 + i * 0.01);\n}\n```\nThis library doubles a full block.",
+   "question": "What is `ticks.capacity()` after the loop?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 200,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "200",
+    "wrong": [
+     {
+      "id": "one50",
+      "value": 150,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one00",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "256",
+      "value": 256,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "100 until the 101st tick, then doubled to 200.",
+    "generic": "Not quite right. What happens at the 101st `push_back`?",
+    "byKey": {
+     "one50": "That is the size. Capacity jumped from 100 to 200 at the 101st tick.",
+     "one00": "`reserve(100)` is room for 100. The 101st tick did not fit, so the block doubled.",
+     "256": "Doubling starts from the current capacity, 100, not from a power of two."
+    }
+   },
+   "explain": {
+    "text": "`reserve(100)` gave exactly 100 slots. The 101st push found the block full and moved to a block of 200. Reserving a day's worth up front avoids that move during trading."
+   }
+  },
+  {
+   "id": "h4-capture",
+   "difficulty": 4,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "```cpp\nstd::vector<double> rets{0.01, -0.03, 0.025, -0.005, 0.04};\ndouble limit = 0.02;\nauto big = [limit](double r) { return std::abs(r) > limit; };\nlimit = 0.05;\nauto n = std::count_if(rets.begin(), rets.end(), big);\n```",
+   "question": "What is `n`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "3",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "3: the lambda copied `limit` when it was made.",
+    "generic": "Not quite right. Which value of `limit` does the lambda hold?",
+    "byKey": {
+     "zero": "You used 0.05. `[limit]` copied 0.02 when the lambda was created; the later change does not reach the copy.",
+     "two": "You kept the sign: −0.03 has size 0.03, above 0.02."
+    }
+   },
+   "explain": {
+    "text": "A capture by value is a snapshot taken when the lambda is made, so `big` still uses 0.02. With `[&limit]` it would read 0.05 and count none."
+   }
+  },
+  {
+   "id": "h4-two-libs",
+   "difficulty": 4,
+   "skills": [
+    "cp-build"
+   ],
+   "prose": "The project adds a `risk` library whose code calls `pricing`, and a program `report` that calls `risk`. The build of `report` fails with an undefined reference to a `pricing` function.\n\n```cmake\nadd_library(pricing src/pricer.cpp)\nadd_library(risk src/risk.cpp)\ntarget_link_libraries(risk PRIVATE pricing)\nadd_executable(report src/report.cpp)\n```",
+   "question": "Which line is missing?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rep",
+      "text": "`target_link_libraries(report PRIVATE risk)`",
+      "correct": true
+     },
+     {
+      "id": "pub",
+      "text": "`target_link_libraries(risk PUBLIC pricing)` instead of `PRIVATE`",
+      "why": "Both work once `report` links `risk`. Without that line `report` links neither library."
+     },
+     {
+      "id": "rp",
+      "text": "`target_link_libraries(pricing PRIVATE risk)`",
+      "why": "That says `pricing` uses `risk`, the wrong way round."
+     },
+     {
+      "id": "inc",
+      "text": "`target_include_directories(report PRIVATE include)`",
+      "why": "`report.cpp` compiled, so headers were found. The link is what is missing."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`report` must link what it uses.",
+    "generic": "Not quite right. Which target is never linked to anything?"
+   },
+   "explain": {
+    "text": "`report` links nothing, so neither `risk` nor `pricing` reaches it. Linking `risk` brings `pricing` along, because CMake follows the chain of static libraries."
+   }
+  },
+  {
+   "id": "h4-find-or-index",
+   "difficulty": 3,
+   "skills": [
+    "cp-stl"
+   ],
+   "prose": "```cpp\ndouble last_price(const std::map<std::string, double>& px, const std::string& sym) {\n    return px[sym];\n}\n```",
+   "question": "Why does this not compile, and what is the fix?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "const",
+      "text": "`px` is `const` and `[]` may insert; use `auto it = px.find(sym)` and check it against `px.end()`",
+      "correct": true
+     },
+     {
+      "id": "str",
+      "text": "`[]` cannot take a `std::string` key",
+      "why": "It can: the key type is `std::string`. The problem is the `const`."
+     },
+     {
+      "id": "ret",
+      "text": "A map cannot return a `double`",
+      "why": "The value type is `double`, so a lookup gives one. The problem is `[]` on a `const` map."
+     },
+     {
+      "id": "copy",
+      "text": "Pass `px` by value instead, so `[]` works",
+      "why": "That compiles, but copies the whole map on every call and inserts missing symbols into the copy. Use `find` or `at`."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`[]` is not allowed on a `const` map.",
+    "generic": "Not quite right. What can `[]` do that a `const` map forbids?"
+   },
+   "explain": {
+    "text": "`operator[]` inserts a missing key, so a `const` map does not offer it. `find` returns `end()` for a missing symbol, and `at` throws; choose by what a missing price should mean."
+   }
+  },
+  {
+   "id": "h4-library-plan",
+   "difficulty": 4,
+   "skills": [
+    "cp-build",
+    "cp-stl"
+   ],
+   "prose": "Your desk wants the binomial and Black-Scholes pricers from the Python course as a C++ library. A risk report and a backtester will link it, and it must be tested against the Python values.",
+   "question": "Lay out the project and justify each choice.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Describe the project: its folders and files, the CMake targets and how they link, what the headers expose, how you build for timing, and which tests you write and why. About 300 words, with a short `CMakeLists.txt`.",
+    "model": "**Layout.**\n\n```text\npricing/\n  CMakeLists.txt\n  include/pricing/binomial.h\n  include/pricing/black_scholes.h\n  src/binomial.cpp\n  src/black_scholes.cpp\n  apps/risk_report.cpp\n  apps/backtest.cpp\n  tests/test_pricing.cpp\n  .gitignore            # build/\n```\n\nHeaders declare the public functions, such as `double binomial_call(double S, double K, double r, double sigma, double T, int steps)`, inside `namespace pricing`. Sources hold the definitions, so the tools never see the internals and an edit to `binomial.cpp` recompiles one file.\n\n**CMake.**\n\n```cmake\ncmake_minimum_required(VERSION 3.16)\nproject(pricing LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\nadd_library(pricing src/binomial.cpp src/black_scholes.cpp)\ntarget_include_directories(pricing PUBLIC include)\n\nadd_executable(risk_report apps/risk_report.cpp)\ntarget_link_libraries(risk_report PRIVATE pricing)\nadd_executable(backtest apps/backtest.cpp)\ntarget_link_libraries(backtest PRIVATE pricing)\n\nfind_package(Catch2 3 REQUIRED)\nadd_executable(tests tests/test_pricing.cpp)\ntarget_link_libraries(tests PRIVATE pricing Catch2::Catch2WithMain)\nenable_testing()\nadd_test(NAME pricing_tests COMMAND tests)\n```\n\nOne library, built once and linked by both tools, means one fix reaches every user. `PUBLIC` on the include folder passes it to every target that links `pricing`.\n\n**Builds.** Configure `build-release` with `-DCMAKE_BUILD_TYPE=Release` for timing and `build-debug` with `Debug` for the debugger. Only Release times are compared with Python. `build*/` is in `.gitignore` because it is regenerated.\n\n**Tests** (one behaviour each, hand-worked or reference values, tolerances):\n\n- A regression pin: `binomial_call(100, 100, 0.05, 0.2, 1, 100)` equals the Python value 10.430612 within `1e-6`.\n- Black-Scholes at the money, 10.4506 within `1e-4`.\n- Convergence: 2,000 steps within 0.002 of Black-Scholes.\n- Boundaries: at expiry the call pays `max(S - K, 0)`, tested at S = 90 and S = 110.\n- A no-arbitrage property: put-call parity, $C - P = S - K e^{-rT}$, within `1e-9`.\n- Bad input, such as `steps = 0` or negative volatility, throws `std::invalid_argument`, checked with `REQUIRE_THROWS_AS`.\n\n`ctest --test-dir build-release` runs them after every change, and before any speed-up is merged.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Separates headers in `include/` from sources in `src/`, with tools and tests in their own folders"
+     },
+     {
+      "points": 2,
+      "text": "One library target linked by both tools and the tests with `target_link_libraries`; include folder `PUBLIC`"
+     },
+     {
+      "points": 1,
+      "text": "Registers the tests with `add_test` (or `catch_discover_tests`) and runs them with `ctest`"
+     },
+     {
+      "points": 1,
+      "text": "Times only Release builds and keeps generated `build/` folders out of git"
+     },
+     {
+      "points": 2,
+      "text": "Pins at least one Python reference price with a stated tolerance, and adds a theory check (Black-Scholes value, convergence or put-call parity)"
+     },
+     {
+      "points": 1,
+      "text": "Tests a boundary case, such as the payoff at expiry"
+     },
+     {
+      "points": 1,
+      "text": "Tests that invalid input throws, with `REQUIRE_THROWS_AS` on the desk build"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your plan with the model and tick the rubric.",
+    "generic": "Compare your plan with the model and tick the rubric."
+   },
+   "explain": {
+    "text": "A good plan builds the library once, links it into every tool, and protects it with tests that pin known prices. That is the project `cpp-pricing` builds next."
+   }
+  }
+ ]
+}

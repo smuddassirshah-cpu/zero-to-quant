@@ -1,0 +1,1282 @@
+{
+  "id": "l4-normal-cdf",
+  "course": "cpp-pricing",
+  "title": "The normal CDF",
+  "minutes": 15,
+  "objectives": [
+    "Implement the normal cumulative distribution function with `erfc`."
+  ],
+  "skills": [
+    "cx-numeric",
+    "cx-testing"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Half the area",
+      "prose": "The curve is the standard normal density $\\varphi(x) = \\tfrac{1}{\\sqrt{2\\pi}}e^{-x^2/2}$. The whole area under it is 1. The **normal CDF** $\\Phi(x)$ is the area to the left of $x$: the chance a standard normal draw is at most $x$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4,
+            4
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "xLabel": "$x$",
+          "yLabel": "",
+          "functions": [
+            {
+              "id": "phi",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$\\varphi(x)$"
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "phi",
+            "from": -4,
+            "to": 0
+          },
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0,
+              "label": "x = 0"
+            }
+          ]
+        }
+      },
+      "question": "What is $\\Phi(0)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a decimal",
+        "accept": "0.5",
+        "wrong": [
+          {
+            "id": "height",
+            "value": 0.3989,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The curve is symmetric about 0."
+        },
+        {
+          "rung": "point",
+          "text": "The shaded part is the left half of the whole area.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Half of a total area of 1 is 0.5."
+        }
+      ],
+      "feedback": {
+        "correct": "Half the area lies left of 0.",
+        "generic": "Not quite right. The shaded area is one of two equal halves.",
+        "byKey": {
+          "height": "0.3989 is the curve's height at 0, $\\varphi(0)$. $\\Phi(0)$ is an area, not a height.",
+          "zero": "That is the chance of exactly 0. $\\Phi(0)$ counts every value at or below 0.",
+          "one": "That is the whole area. Only the left half is shaded."
+        }
+      },
+      "explain": {
+        "text": "By symmetry the area left of 0 is half of 1: $\\Phi(0) = 0.5$. The height $\\varphi(0) = 0.3989$ is a density, not a probability. $\\Phi$ turns heights into chances by adding up area."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Slide x",
+      "prose": "Now the plane shows $\\varphi$ and its running area $\\Phi$. Slide $x$: the shaded area under $\\varphi$ is the height of the $\\Phi$ curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4,
+            4
+          ],
+          "y": [
+            0,
+            1.05
+          ],
+          "xLabel": "$x$",
+          "yLabel": "",
+          "functions": [
+            {
+              "id": "phi",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$\\varphi(x)$"
+            },
+            {
+              "id": "Phi",
+              "expr": "Phi(x)",
+              "label": "$\\Phi(x)$",
+              "labelAt": 2.6
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "phi",
+            "from": -4,
+            "to": 0
+          },
+          "points": [
+            {
+              "id": "P",
+              "x": 0,
+              "y": 0.5,
+              "label": "$\\Phi(x)$"
+            }
+          ],
+          "params": {
+            "x0": 0
+          }
+        },
+        "derive": {
+          "A.to": "x0",
+          "P.x": "x0",
+          "P.y": "integral(-8, x0, \"exp(-x^2/2)/sqrt(2*pi)\")",
+          "caption": "$x$ = {{fixed(x0, 2)}}: shaded area $\\Phi(x)$ = {{fixed(integral(-8, x0, \"exp(-x^2/2)/sqrt(2*pi)\"), 4)}}"
+        },
+        "controls": [
+          {
+            "bind": "x0",
+            "min": -3,
+            "max": 3,
+            "step": 0.01,
+            "start": 0,
+            "label": "$x$"
+          }
+        ]
+      },
+      "question": "Slide until $\\Phi(x)$ reads 0.975. What is $x$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.96,
+        "tol": {
+          "abs": 0.02
+        },
+        "placeholder": "a decimal",
+        "accept": "1.96 (1.95996)",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2.0,
+            "tol": {
+              "abs": 0.015
+            }
+          },
+          {
+            "id": "onesix",
+            "value": 1.645,
+            "tol": {
+              "abs": 0.02
+            }
+          },
+          {
+            "id": "neg",
+            "value": -1.96,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start near 2 and read the caption as you move by 0.01."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\Phi(1.96) = 0.975$.",
+        "generic": "Not quite right. Read the caption as you slide near 2.",
+        "byKey": {
+          "two": "At 2.00 the caption reads 0.9772, a little too high. Step back to 1.96.",
+          "onesix": "1.645 gives 0.95, the 95% point. You want 0.975.",
+          "neg": "At −1.96 the area is 0.025, the other tail. Go right of 0."
+        }
+      },
+      "explain": {
+        "text": "$\\Phi(1.96) = 0.9750021$: 97.5% of the area lies left of 1.96, so 2.5% lies right of it. With the 2.5% left of −1.96 that makes the familiar 95% interval. You just ran $\\Phi$ backwards: that is the **quantile**, $\\Phi^{-1}(0.975) = 1.96$.",
+        "canvas": {
+          "params": {
+            "x0": 1.96
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The density in code",
+      "prose": "Write `norm_pdf(x)`, the height $\\varphi(x)$. `<cmath>` has no standard $\\pi$ in C++17, so use `std::acos(-1.0)`.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4,
+            4
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "xLabel": "$x$",
+          "yLabel": "",
+          "functions": [
+            {
+              "id": "phi",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$\\varphi(x)$"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "T",
+              "x": 0,
+              "y": 0.3989,
+              "label": "0.3989"
+            },
+            {
+              "id": "U",
+              "x": 1,
+              "y": 0.242,
+              "label": "0.2420"
+            }
+          ]
+        }
+      },
+      "question": "Write `norm_pdf(x)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble norm_pdf(double x) {\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\ndouble norm_pdf(double x) {\n    const double pi = std::acos(-1.0);\n    return std::exp(-0.5 * x * x) / std::sqrt(2 * pi);\n}\n",
+        "examples": [
+          {
+            "call": "norm_pdf(0.0)",
+            "expect": 0.3989422804014327,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "norm_pdf(0.0)",
+            "expect": 0.3989422804014327,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_pdf(1.0)",
+            "expect": 0.24197072451914337,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_pdf(-1.0)",
+            "expect": 0.24197072451914337,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_pdf(1.96)",
+            "expect": 0.058440944333451476,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_pdf(-10.0) * 1e23",
+            "expect": 7.694598626706419,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_pdf(40.0)",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "norm_pdf(INFINITY)",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests that call norm_pdf; each answer is accepted within a relative 1e-9, a tiny tail value is scaled up first, and the last two must be exactly 0."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The exponent is $-x^2/2$; the constant in front is $1/\\sqrt{2\\pi}$."
+        },
+        {
+          "rung": "point",
+          "text": "At 0 the answer is $1/\\sqrt{2\\pi} = 0.3989$.",
+          "highlight": [
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return std::exp(-0.5 * x * x) / std::sqrt(2 * std::acos(-1.0));`"
+        }
+      ],
+      "feedback": {
+        "correct": "$\\varphi(0) = 0.3989$, and the tails underflow cleanly to 0.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "Expected 0.3989. If you got 0.5642, you used $\\sqrt{\\pi}$, not $\\sqrt{2\\pi}$; if 1, the constant is missing.",
+          "test-2": "Expected 0.2420. If you got 0.1468, the exponent lost its half: it is $-x^2/2$."
+        }
+      },
+      "explain": {
+        "text": "`std::exp(-0.5 * x * x)` falls fast: at 40 it is $e^{-800}$, below the smallest double, so it returns exactly 0 rather than an error. `x * x` is clearer and quicker than `std::pow(x, 2)`."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The far tail",
+      "prose": "Python's `norm_cdf` in the trees course used $\\Phi(x) = \\tfrac12\\big(1 + \\operatorname{erf}(x/\\sqrt2)\\big)$. `<cmath>` also has `std::erfc(z)`, which is $1 - \\operatorname{erf}(z)$ computed directly, so $\\Phi(x) = \\tfrac12\\operatorname{erfc}(-x/\\sqrt2)$. The table prints both.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$x$",
+            "erf form",
+            "erfc form"
+          ],
+          "rows": [
+            [
+              "−1",
+              "0.158655253931457",
+              "0.158655253931457"
+            ],
+            [
+              "−5",
+              "2.86651571868e-7",
+              "2.86651571879e-7"
+            ],
+            [
+              "−8",
+              "6.11e-16",
+              "6.22e-16"
+            ],
+            [
+              "−10",
+              "?",
+              "7.62e-24"
+            ]
+          ],
+          "align": [
+            "center",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does the erf form print at $x = -10$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "`0`",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "`7.62e-24`",
+            "why": "You assumed the two forms agree everywhere. Rows 2 and 3 already drift apart."
+          },
+          {
+            "id": "nan",
+            "text": "`nan`",
+            "why": "`std::erf(-7.07)` is a perfectly good number, very close to −1. Nothing is undefined."
+          },
+          {
+            "id": "neg",
+            "text": "`-7.62e-24`",
+            "why": "The erf form cannot go negative here: the sum rounds to exactly 0."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\operatorname{erf}(-7.07)$ is $-1 + 1.5 \\times 10^{-23}$."
+        },
+        {
+          "rung": "point",
+          "text": "Can a double hold $-1 + 1.5 \\times 10^{-23}$? The gap near 1 is $1.1 \\times 10^{-16}$.",
+          "highlight": [
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It rounds to −1, and $1 + (-1) = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "Exactly 0: the tail rounded away.",
+        "generic": "Not quite right. Work out $1 + \\operatorname{erf}(-7.07)$ in doubles.",
+        "byKey": {
+          "same": "The two forms are equal on paper, not in doubles. The erf form adds a tiny number to −1 and loses it."
+        }
+      },
+      "explain": {
+        "text": "$\\operatorname{erf}(-10/\\sqrt2)$ is within $10^{-23}$ of −1, so it rounds to −1 and $1 + (-1) = 0$: the cancellation from lesson 1. `std::erfc` computes the small tail directly, with no subtraction, so it keeps all its digits. Deep out-of-the-money options and tail risks live out here.",
+        "canvas": {
+          "values": {
+            "r3c1": "0"
+          },
+          "highlight": [
+            "r3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A stable norm_cdf",
+      "prose": "Write `norm_cdf(x)` with the erfc form:\n\n$$\\Phi(x) = \\tfrac12\\operatorname{erfc}(-x/\\sqrt2).$$\n\nThe tests demand 12 correct significant digits, in the tails too.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$x$",
+            "erf form",
+            "erfc form"
+          ],
+          "rows": [
+            [
+              "−1",
+              "0.158655253931457",
+              "0.158655253931457"
+            ],
+            [
+              "−5",
+              "2.86651571868e-7",
+              "2.86651571879e-7"
+            ],
+            [
+              "−8",
+              "6.11e-16",
+              "6.22e-16"
+            ],
+            [
+              "−10",
+              "0",
+              "7.62e-24"
+            ]
+          ],
+          "align": [
+            "center",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `norm_cdf(x)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\ndouble norm_cdf(double x) {\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\ndouble norm_cdf(double x) {\n    return 0.5 * std::erfc(-x / std::sqrt(2.0));\n}\n",
+        "examples": [
+          {
+            "call": "norm_cdf(1.96) / 0.97500210485177952 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "norm_cdf(0.0) / 0.5 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(1.0) / 0.8413447460685429 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(-1.0) / 0.15865525393145707 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(1.96) / 0.9750021048517795 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(-1.96) / 0.024997895148220435 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(3.0) / 0.9986501019683699 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(-5.0) / 2.866515718791946e-07 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(-10.0) / 7.619853024160593e-24 - 1",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(INFINITY)",
+            "expect": 1,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_cdf(-INFINITY)",
+            "expect": 0,
+            "compare": "isclose"
+          },
+          {
+            "call": "std::isnan(norm_cdf(NAN))",
+            "expect": true
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 11 hidden tests. Eight report norm_cdf(x) / exact - 1, which must be within 1e-12 of 0 (12 significant digits); then come infinity, minus infinity and NaN."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One line: `0.5 * std::erfc(...)`."
+        },
+        {
+          "rung": "point",
+          "text": "The argument is $-x/\\sqrt2$: mind the minus sign and the $\\sqrt2$.",
+          "highlight": [
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`return 0.5 * std::erfc(-x / std::sqrt(2.0));`"
+        }
+      ],
+      "feedback": {
+        "correct": "Twelve digits everywhere, from 0 to $\\Phi(-10)$.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "$\\Phi(0)$ came back wrong. If it is 0, check for `1 / 2`, which is integer division. Write `0.5`.",
+          "test-2": "$\\Phi(1)$ is off. Check the sign and the $\\sqrt2$: the argument is `-x / std::sqrt(2.0)`.",
+          "test-7": "$\\Phi(-5)$ is off in the 11th digit: that is the erf form losing digits to cancellation. Use `std::erfc(-x / std::sqrt(2.0))`."
+        }
+      },
+      "explain": {
+        "text": "One `std::erfc` call is accurate at every $x$, because nothing is subtracted. It also handles the edges for free: $\\Phi(\\infty) = 1$, $\\Phi(-\\infty) = 0$, and NaN in gives NaN out. These values match Python's `0.5 * math.erfc(-x / math.sqrt(2))` and `scipy.stats.norm.cdf` digit for digit."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "0.997216",
+      "prose": "A colleague's `norm_cdf(1.96)` prints `0.997216`, where you expect 0.975002. Each option is a real bug.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "// colleague's version",
+            "double norm_cdf(double x) {",
+            "    return 0.5 * std::erfc(-x);",
+            "}"
+          ],
+          "title": "norm.cpp"
+        },
+        "state": {}
+      },
+      "question": "Which bug gives 0.997216?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "root2",
+            "text": "The $\\sqrt2$ is missing",
+            "correct": true
+          },
+          {
+            "id": "erf",
+            "text": "Using erf instead of erfc",
+            "why": "At 1.96 the two forms agree to 15 digits. They part only far out in the tails."
+          },
+          {
+            "id": "half",
+            "text": "Writing `1 / 2` for the half",
+            "why": "`1 / 2` is integer division, 0, so every answer would print 0."
+          },
+          {
+            "id": "sign",
+            "text": "Dropping the minus sign",
+            "why": "`0.5 * std::erfc(1.96 / std::sqrt(2.0))` is $1 - \\Phi(1.96) = 0.025$, the other tail."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "0.997216 is $\\Phi$ at some other point. Which?"
+        },
+        {
+          "rung": "point",
+          "text": "$\\Phi(1.96\\sqrt2) = \\Phi(2.77) = 0.9972$.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Without the $\\sqrt2$, the code computes $\\Phi(\\sqrt2\\,x)$."
+        }
+      ],
+      "feedback": {
+        "correct": "Without $\\sqrt2$ the code computes $\\Phi(2.77)$.",
+        "generic": "Not quite right. Work out which point has $\\Phi = 0.9972$.",
+        "byKey": {
+          "erf": "erf and erfc agree near the middle. The gap is between 1.96 and 2.77, a scaling, not cancellation."
+        }
+      },
+      "explain": {
+        "text": "erf is defined with $e^{-t^2}$, the normal with $e^{-t^2/2}$, and the $\\sqrt2$ converts between them. Without it the code returns $\\Phi(\\sqrt2 \\times 1.96) = \\Phi(2.77) = 0.9972$. A test at 1.96 against 0.9750021 catches it at once.",
+        "canvas": {
+          "tone": {
+            "l3": "err"
+          },
+          "lines": [
+            "// colleague's version",
+            "double norm_cdf(double x) {",
+            "    return 0.5 * std::erfc(-x);  // needs -x / std::sqrt(2.0)",
+            "}"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two equal tails",
+      "prose": "The density is symmetric about 0, so the area left of $-1$ equals the area right of $1$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4,
+            4
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "xLabel": "$x$",
+          "yLabel": "",
+          "functions": [
+            {
+              "id": "phi",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$\\varphi(x)$"
+            }
+          ]
+        },
+        "state": {
+          "area": [
+            {
+              "id": "L",
+              "f": "phi",
+              "from": -4,
+              "to": -1
+            },
+            {
+              "id": "R",
+              "f": "phi",
+              "from": 1,
+              "to": 4,
+              "colour": 2
+            }
+          ],
+          "vlines": [
+            {
+              "id": "m",
+              "x": -1,
+              "label": "−1"
+            },
+            {
+              "id": "p",
+              "x": 1,
+              "label": "1"
+            }
+          ]
+        }
+      },
+      "question": "Given $\\Phi(1) = 0.8413$, what is $\\Phi(-1)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1587,
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "a decimal",
+        "accept": "0.1587, which is $1 - 0.8413$",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 0.8413,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "neg",
+            "value": -0.8413,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "middle",
+            "value": 0.3413,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The right tail is $1 - \\Phi(1)$."
+        },
+        {
+          "rung": "point",
+          "text": "The two shaded tails are mirror images.",
+          "highlight": [
+            "L",
+            "R"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\Phi(-1) = 1 - \\Phi(1) = 1 - 0.8413$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\Phi(-x) = 1 - \\Phi(x)$.",
+        "generic": "Not quite right. The left tail equals the right tail, $1 - \\Phi(1)$.",
+        "byKey": {
+          "same": "That is the area left of $+1$. Left of $-1$ is only the small tail.",
+          "neg": "A probability cannot be negative. Use $1 - \\Phi(1)$.",
+          "middle": "0.3413 is the area from 0 to 1. The tail beyond 1 is $0.5 - 0.3413$."
+        }
+      },
+      "explain": {
+        "text": "Mirror symmetry gives $\\Phi(-x) = 1 - \\Phi(x)$, so $\\Phi(-1) = 0.1587$. In code, compute the small tail directly as `norm_cdf(-x)`: `1 - norm_cdf(x)` cancels for large $x$, as the erf form did."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Running Φ backwards",
+      "prose": "The quantile $\\Phi^{-1}(p)$ is the $x$ with $\\Phi(x) = p$. $\\Phi$ only rises, so **bisection** finds it: keep an interval whose ends straddle $p$ and halve it until it is shorter than $10^{-10}$. Return $-\\infty$ for $p = 0$, $\\infty$ for $p = 1$, and NaN outside $[0, 1]$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$p$",
+            "$\\Phi^{-1}(p)$"
+          ],
+          "rows": [
+            [
+              "0.5",
+              "0"
+            ],
+            [
+              "0.975",
+              "1.959964"
+            ],
+            [
+              "0.01",
+              "−2.326348"
+            ],
+            [
+              "0.999",
+              "3.090232"
+            ]
+          ],
+          "align": [
+            "center",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `norm_quantile(p)`. `norm_cdf` is defined for you; do not define it again.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n\n// norm_cdf(x) is defined for you.\ndouble norm_quantile(double p) {\n    double lo = -10, hi = 10;\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n\n// norm_cdf(x) is defined for you.\ndouble norm_quantile(double p) {\n    if (std::isnan(p) || p < 0 || p > 1) return NAN;\n    if (p == 0) return -INFINITY;\n    if (p == 1) return INFINITY;\n    double lo = -10, hi = 10;\n    while (hi - lo > 1e-10) {\n        double mid = 0.5 * (lo + hi);\n        if (norm_cdf(mid) < p) lo = mid;\n        else hi = mid;\n    }\n    return 0.5 * (lo + hi);\n}\n",
+        "examples": [
+          {
+            "call": "norm_quantile(0.975)",
+            "expect": 1.959963984540054,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "std::abs(norm_quantile(0.5)) < 1e-9",
+            "expect": true
+          },
+          {
+            "call": "norm_quantile(0.975)",
+            "expect": 1.959963984540054,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_quantile(0.01)",
+            "expect": -2.3263478740408408,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_quantile(0.999)",
+            "expect": 3.090232306167813,
+            "compare": "isclose"
+          },
+          {
+            "call": "norm_quantile(0.025)",
+            "expect": -1.959963984540054,
+            "compare": "isclose"
+          },
+          {
+            "call": "std::isinf(norm_quantile(0.0)) && norm_quantile(0.0) < 0",
+            "expect": true
+          },
+          {
+            "call": "std::isinf(norm_quantile(1.0)) && norm_quantile(1.0) > 0",
+            "expect": true
+          },
+          {
+            "call": "std::isnan(norm_quantile(1.5))",
+            "expect": true
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests: quantiles within a relative 1e-9 of scipy.stats.norm.ppf (0.5 within 1e-9 of 0), then p = 0, p = 1 and p = 1.5.",
+        "prelude": "#include <cmath>\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare `norm_cdf(mid)` with `p`: if it is too small, the answer is to the right of `mid`."
+        },
+        {
+          "rung": "point",
+          "text": "Loop `while (hi - lo > 1e-10)`; about 38 halvings shrink 20 to $10^{-10}$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Handle the edges first, then `if (norm_cdf(mid) < p) lo = mid; else hi = mid;` and return the midpoint."
+        }
+      ],
+      "feedback": {
+        "correct": "Thirty-eight halvings give ten correct decimals.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-2": "Expected 1.959964. If you got −1.96, the two branches are swapped: when `norm_cdf(mid) < p`, move `lo` up.",
+          "test-6": "For $p = 0$ return `-INFINITY`: no finite $x$ has $\\Phi(x) = 0$, and bisection would stop at −10.",
+          "test-8": "$p = 1.5$ is not a probability. Return `NAN` before bisecting."
+        }
+      },
+      "explain": {
+        "text": "Each pass halves the interval, so 38 passes take 20 down to $7 \\times 10^{-11}$. Bisection is slow but cannot fail on a rising function. Libraries use Acklam's rational approximation plus one Newton step instead: the same answer in a few multiplications."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Where the erfc form comes from",
+      "prose": "$\\operatorname{erfc}(z) = \\tfrac{2}{\\sqrt\\pi}\\int_z^\\infty e^{-u^2}\\,du$. Put the derivation of $\\Phi(x) = \\tfrac12\\operatorname{erfc}(-x/\\sqrt2)$ in order.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "def",
+            "text": "$\\Phi(x) = \\int_{-\\infty}^{x} \\tfrac{1}{\\sqrt{2\\pi}} e^{-t^2/2}\\,dt$, the definition"
+          },
+          {
+            "id": "flip",
+            "text": "$= \\int_{-x}^{\\infty} \\tfrac{1}{\\sqrt{2\\pi}} e^{-s^2/2}\\,ds$, with $s = -t$ (the density is even)"
+          },
+          {
+            "id": "scale",
+            "text": "$= \\int_{-x/\\sqrt2}^{\\infty} \\tfrac{1}{\\sqrt{\\pi}} e^{-u^2}\\,du$, with $s = \\sqrt2\\,u$, so $ds = \\sqrt2\\,du$"
+          },
+          {
+            "id": "name",
+            "text": "$= \\tfrac12 \\cdot \\tfrac{2}{\\sqrt\\pi}\\int_{-x/\\sqrt2}^{\\infty} e^{-u^2}\\,du = \\tfrac12\\operatorname{erfc}(-x/\\sqrt2)$, the definition of erfc"
+          }
+        ],
+        "answer": [
+          "def",
+          "flip",
+          "scale",
+          "name"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the definition of $\\Phi$."
+        },
+        {
+          "rung": "point",
+          "text": "erfc integrates from a point to $+\\infty$, so first turn the integral to run to $+\\infty$."
+        },
+        {
+          "rung": "step",
+          "text": "Flip with $s = -t$, rescale with $s = \\sqrt2 u$, then match the erfc definition."
+        }
+      ],
+      "feedback": {
+        "correct": "Flip, rescale, then name it.",
+        "generic": "Not quite right. Turn the integral round before rescaling it.",
+        "byKey": {
+          "scale": "The rescaling needs an integral that already runs to $+\\infty$. Flip first.",
+          "name": "Naming erfc comes last, once the integrand is $e^{-u^2}$."
+        }
+      },
+      "explain": {
+        "text": "Flipping makes the integral run to $+\\infty$, as erfc's does. Rescaling by $\\sqrt2$ turns $e^{-s^2/2}$ into $e^{-u^2}$; that is the $\\sqrt2$ the trap screen's colleague lost. The factor $\\tfrac{1}{\\sqrt\\pi}$ is half of erfc's $\\tfrac{2}{\\sqrt\\pi}$, hence the $\\tfrac12$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A 99% VaR",
+      "prose": "A desk holds £10m of shares with daily volatility 1.2%. With normal daily returns, the 99% one-day value at risk is the loss exceeded on only 1% of days: $$\\text{VaR} = -\\Phi^{-1}(0.01) \\times \\sigma \\times V.$$ Your `norm_quantile(0.01)` returns −2.3263.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4,
+            4
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "xLabel": "Daily return in sd units",
+          "yLabel": "",
+          "functions": [
+            {
+              "id": "phi",
+              "expr": "exp(-x^2/2)/sqrt(2*pi)",
+              "label": "$\\varphi(x)$"
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "T",
+            "f": "phi",
+            "from": -4,
+            "to": -2.3263
+          },
+          "vlines": [
+            {
+              "id": "q",
+              "x": -2.3263,
+              "label": "1%"
+            }
+          ]
+        }
+      },
+      "question": "What is the 99% one-day VaR, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 279162,
+        "tol": {
+          "abs": 60
+        },
+        "placeholder": "pounds",
+        "unit": "£",
+        "accept": "£279,162 (2.3263 × 0.012 × £10,000,000)",
+        "wrong": [
+          {
+            "id": "ninetyfive",
+            "value": 197382,
+            "tol": {
+              "abs": 200
+            }
+          },
+          {
+            "id": "nofactor",
+            "value": 120000,
+            "tol": {
+              "abs": 200
+            }
+          },
+          {
+            "id": "pct",
+            "value": 23263,
+            "tol": {
+              "abs": 200
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the three numbers; the minus sign makes the loss positive."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sigma V = 0.012 \\times £10{,}000{,}000 = £120{,}000$, one sd of daily P&L.",
+          "highlight": [
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2.3263 \\times £120{,}000 = £279{,}162$."
+        }
+      ],
+      "feedback": {
+        "correct": "About £279,000 is lost or worse on 1 day in 100.",
+        "generic": "Not quite right. One sd of P&L is £120,000; scale it by 2.3263.",
+        "byKey": {
+          "ninetyfive": "That uses 1.645, the 95% quantile. A 99% VaR needs $\\Phi^{-1}(0.01) = -2.3263$.",
+          "nofactor": "£120,000 is one sd of daily P&L. The 99% point is 2.3263 sds out.",
+          "pct": "You used 0.0012 or £1m. The volatility is 1.2%, which is 0.012, on £10m."
+        }
+      },
+      "explain": {
+        "text": "One sd of daily P&L is $0.012 \\times £10\\text{m} = £120{,}000$, and the 1% point is 2.3263 sds below the mean: £279,162. Level 2 feeds $d_1$ and $d_2$ through the same `norm_cdf` to price options. Real returns have fatter tails, so a desk checks this against history."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$\\Phi(x)$ is the area under the normal density left of $x$; $\\Phi(0) = 0.5$, $\\Phi(1.96) = 0.975$ and $\\Phi(-x) = 1 - \\Phi(x)$.",
+      "`0.5 * std::erfc(-x / std::sqrt(2.0))` keeps every digit in both tails, where the erf form cancels to 0.",
+      "The quantile $\\Phi^{-1}(p)$ runs $\\Phi$ backwards; bisection finds it because $\\Phi$ only rises."
+    ],
+    "formula": {
+      "name": "Normal CDF",
+      "tex": "\\Phi(x) = \\tfrac12\\operatorname{erfc}\\!\\left(-\\dfrac{x}{\\sqrt2}\\right)",
+      "note": "`0.5 * std::erfc(-x / std::sqrt(2.0))`"
+    },
+    "trap": "`0.5 * (1 + std::erf(x / std::sqrt(2.0)))` returns 0 for $\\Phi(-10)$, where the truth is $7.6 \\times 10^{-24}$."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "$\\Phi(1.96) = 0.9750021$.",
+      "question": "What is $\\Phi(-1.96)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0249979,
+        "tol": {
+          "abs": 0.0001
+        },
+        "placeholder": "a decimal",
+        "accept": "0.025 (0.0249979)",
+        "wrong": [
+          {
+            "id": "same",
+            "value": 0.975,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "neg",
+            "value": -0.975,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 0.9750021 = 0.0249979$.",
+        "generic": "Not quite right. Use $\\Phi(-x) = 1 - \\Phi(x)$.",
+        "byKey": {
+          "same": "That is $\\Phi(+1.96)$. Left of $-1.96$ is the small tail.",
+          "neg": "A probability is never negative. Use $1 - \\Phi(1.96)$."
+        }
+      },
+      "explain": {
+        "text": "By symmetry $\\Phi(-1.96) = 1 - \\Phi(1.96) = 0.025$: the two 2.5% tails of the 95% interval."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "`norm_cdf` is the erfc version from this lesson.",
+      "question": "What do `norm_cdf(-INFINITY)` and `norm_cdf(NAN)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "ok",
+            "text": "0 and NaN",
+            "correct": true
+          },
+          {
+            "id": "nan",
+            "text": "NaN and NaN",
+            "why": "`std::erfc(+∞)` is exactly 0, a well-defined limit. Only a NaN input gives NaN."
+          },
+          {
+            "id": "err",
+            "text": "They stop the program",
+            "why": "`<cmath>` functions return values for every input; none throws."
+          },
+          {
+            "id": "half",
+            "text": "0 and 0.5",
+            "why": "NaN carries through `std::erfc`: NaN in, NaN out."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Limits are handled; NaN passes through.",
+        "generic": "Not quite right. Think about $\\operatorname{erfc}(+\\infty)$, then NaN."
+      },
+      "explain": {
+        "text": "$-(-\\infty)/\\sqrt2 = +\\infty$ and $\\operatorname{erfc}(+\\infty) = 0$, so $\\Phi(-\\infty) = 0$. A NaN input gives NaN, which a test catches with `std::isnan`."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "A trader sets a stop 2% below today's price. Daily returns are normal with mean 0 and sd 1.2%.",
+      "question": "What is the chance the stop is hit by today's close?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0478,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a decimal",
+        "accept": "0.0478: $\\Phi(-0.02/0.012) = \\Phi(-1.667)$",
+        "wrong": [
+          {
+            "id": "upper",
+            "value": 0.9522,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "nosd",
+            "value": 0.492,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\Phi(-1.667) = 0.0478$, about 1 day in 21.",
+        "generic": "Not quite right. Standardise: $-0.02/0.012 = -1.667$.",
+        "byKey": {
+          "upper": "That is the chance of closing above the stop. Take the left tail, $\\Phi(-1.667)$.",
+          "nosd": "You used $\\Phi(-0.02)$. Divide by the sd first."
+        }
+      },
+      "explain": {
+        "text": "$z = -0.02/0.012 = -1.667$ and $\\Phi(-1.667) = 0.0478$. This counts closing prices only; a stop that can trigger during the day is hit more often."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 3,
+      "prose": "For $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$: $d_1 = 0.35$, $d_2 = 0.15$, $\\Phi(d_1) = 0.636831$, $\\Phi(d_2) = 0.559618$ and $e^{-0.05} = 0.951229$.",
+      "question": "What is $c = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2)$, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.4506,
+        "tol": {
+          "abs": 0.002
+        },
+        "placeholder": "pounds",
+        "unit": "£",
+        "accept": "£10.4506",
+        "wrong": [
+          {
+            "id": "nodisc",
+            "value": 7.7213,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£10.4506, the Black-Scholes price from the trees course.",
+        "generic": "Not quite right. $63.6831 - 95.1229 \\times 0.559618$.",
+        "byKey": {
+          "nodisc": "You left out the discount factor. The strike term is $Ke^{-rT}\\Phi(d_2)$."
+        }
+      },
+      "explain": {
+        "text": "$63.6831 - 53.2325 = £10.4506$. Level 2 writes this as `bs_call` on top of your `bs_d1` and `norm_cdf`, and tests it against this number."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1331 @@
+{
+  "id": "l3-random-done-right",
+  "course": "cpp-pricing",
+  "title": "Random numbers done right",
+  "minutes": 15,
+  "objectives": [
+    "Generate normal draws with `<random>` and a fixed seed."
+  ],
+  "skills": [
+    "cx-numeric",
+    "cx-testing"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Run it twice",
+      "prose": "This program, built with `<random>`, printed three normal draws on its first run.\n\n```cpp\nstd::mt19937 gen(42);\nstd::normal_distribution<double> z(0.0, 1.0);\nstd::cout << z(gen) << ' ' << z(gen) << ' '\n          << z(gen) << '\\n';\n```",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ ./draws",
+            "0.515433 -0.550234 1.36845",
+            "$ ./draws"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "You run it a second time. What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "`0.515433 -0.550234 1.36845` again",
+            "correct": true
+          },
+          {
+            "id": "new",
+            "text": "Three new draws",
+            "why": "You expected fresh randomness. The engine starts from the state set by 42 every run, so it repeats exactly."
+          },
+          {
+            "id": "order",
+            "text": "The same three numbers in a new order",
+            "why": "The stream is fixed by the seed, including its order."
+          },
+          {
+            "id": "clock",
+            "text": "New draws, because the engine reads the clock",
+            "why": "`std::mt19937` reads nothing outside the program. Only its seed sets its state."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the `42` do?"
+        },
+        {
+          "rung": "point",
+          "text": "Both runs build the engine from the same number.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Same seed, same starting state, same stream of draws."
+        }
+      ],
+      "feedback": {
+        "correct": "Same seed, same draws, every run.",
+        "generic": "Not quite right. Think about what the 42 fixes.",
+        "byKey": {
+          "new": "The engine is a fixed rule started from the seed. Seed 42 gives the same stream every run."
+        }
+      },
+      "explain": {
+        "text": "`std::mt19937` is the Mersenne Twister, a **pseudo-random** engine: a fixed rule applied to a starting state. The **seed**, 42, sets that state, so every run repeats the stream. `std::normal_distribution` turns the engine's raw integers into normal draws.",
+        "canvas": {
+          "lines": [
+            "$ ./draws",
+            "0.515433 -0.550234 1.36845",
+            "$ ./draws",
+            "0.515433 -0.550234 1.36845"
+          ],
+          "tone": {
+            "l4": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Ten thousand draws",
+      "prose": "These bars are real draws from this app's compiler: `std::mt19937 gen(42)` with `std::normal_distribution<double> z(0.0, 1.0)`. The dashes mark the standard normal. Slide the number of draws.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "bins": {
+            "min": -4,
+            "max": 4,
+            "width": 0.5
+          },
+          "xLabel": "Draw",
+          "yLabel": "Share of draws",
+          "yMax": 0.32,
+          "exact": [
+            {
+              "x": -3.75,
+              "y": 0.0002
+            },
+            {
+              "x": -3.25,
+              "y": 0.0011
+            },
+            {
+              "x": -2.75,
+              "y": 0.0049
+            },
+            {
+              "x": -2.25,
+              "y": 0.0165
+            },
+            {
+              "x": -1.75,
+              "y": 0.0441
+            },
+            {
+              "x": -1.25,
+              "y": 0.0918
+            },
+            {
+              "x": -0.75,
+              "y": 0.1499
+            },
+            {
+              "x": -0.25,
+              "y": 0.1915
+            },
+            {
+              "x": 0.25,
+              "y": 0.1915
+            },
+            {
+              "x": 0.75,
+              "y": 0.1499
+            },
+            {
+              "x": 1.25,
+              "y": 0.0918
+            },
+            {
+              "x": 1.75,
+              "y": 0.0441
+            },
+            {
+              "x": 2.25,
+              "y": 0.0165
+            },
+            {
+              "x": 2.75,
+              "y": 0.0049
+            },
+            {
+              "x": 3.25,
+              "y": 0.0011
+            },
+            {
+              "x": 3.75,
+              "y": 0.0002
+            }
+          ],
+          "exactLabel": "normal",
+          "height": 260
+        },
+        "state": {
+          "values": {
+            "b0": 0.0,
+            "b1": 0.0,
+            "b2": 0.0,
+            "b3": 0.1,
+            "b4": 0.0,
+            "b5": 0.0,
+            "b6": 0.3,
+            "b7": 0.2,
+            "b8": 0.2,
+            "b9": 0.1,
+            "b10": 0.1,
+            "b11": 0.0,
+            "b12": 0.0,
+            "b13": 0.0,
+            "b14": 0.0,
+            "b15": 0.0
+          },
+          "params": {
+            "n": 10
+          }
+        },
+        "derive": {
+          "values.b0": "[0.0, 0.0, 0.0, 0.0001][round(log10(n)) - 1]",
+          "values.b1": "[0.0, 0.0, 0.001, 0.0015][round(log10(n)) - 1]",
+          "values.b2": "[0.0, 0.0, 0.004, 0.0053][round(log10(n)) - 1]",
+          "values.b3": "[0.1, 0.03, 0.02, 0.0135][round(log10(n)) - 1]",
+          "values.b4": "[0.0, 0.03, 0.052, 0.0477][round(log10(n)) - 1]",
+          "values.b5": "[0.0, 0.08, 0.084, 0.0901][round(log10(n)) - 1]",
+          "values.b6": "[0.3, 0.15, 0.146, 0.1488][round(log10(n)) - 1]",
+          "values.b7": "[0.2, 0.21, 0.185, 0.1887][round(log10(n)) - 1]",
+          "values.b8": "[0.2, 0.18, 0.187, 0.1906][round(log10(n)) - 1]",
+          "values.b9": "[0.1, 0.18, 0.139, 0.1508][round(log10(n)) - 1]",
+          "values.b10": "[0.1, 0.1, 0.094, 0.0948][round(log10(n)) - 1]",
+          "values.b11": "[0.0, 0.03, 0.057, 0.044][round(log10(n)) - 1]",
+          "values.b12": "[0.0, 0.0, 0.02, 0.0178][round(log10(n)) - 1]",
+          "values.b13": "[0.0, 0.01, 0.009, 0.0053][round(log10(n)) - 1]",
+          "values.b14": "[0.0, 0.0, 0.002, 0.0009][round(log10(n)) - 1]",
+          "values.b15": "[0.0, 0.0, 0.0, 0.0][round(log10(n)) - 1]",
+          "caption": "{{n}} draws: mean {{['−0.2274', '−0.0017', '0.0342', '0.0073'][round(log10(n)) - 1]}}, sd {{['0.9608', '0.9272', '1.0502', '1.0045'][round(log10(n)) - 1]}}"
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "min": 10,
+            "max": 10000,
+            "scale": "log",
+            "start": 10,
+            "label": "Draws $n$"
+          }
+        ]
+      },
+      "question": "What happens to the bars as $n$ grows to 10,000?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "settle",
+            "text": "They settle onto the dashed normal",
+            "correct": true
+          },
+          {
+            "id": "ragged",
+            "text": "They stay as ragged as at 10 draws",
+            "why": "You watched one end of the slider. At 10,000 each bar sits within a few draws of its dash."
+          },
+          {
+            "id": "spike",
+            "text": "They pile into a spike at 0",
+            "why": "These are single draws, not averages, so their spread stays at sd 1. Read the sd in the caption."
+          },
+          {
+            "id": "drift",
+            "text": "They drift to one side",
+            "why": "The caption's mean heads towards 0, not away from it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the bars with the dashes at 10 draws and at 10,000."
+        }
+      ],
+      "feedback": {
+        "correct": "At 10,000 draws the histogram hugs the normal.",
+        "generic": "Not quite right. Slide to 10,000 and compare the bars with the dashes."
+      },
+      "explain": {
+        "text": "With 10 draws the bars are lumpy; with 10,000 each bar is within a few draws of the normal. The caption's mean, 0.0073, and sd, 1.0045, sit near 0 and 1. Every run of this seed on this compiler draws exactly these bars.",
+        "canvas": {
+          "params": {
+            "n": 10000
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Same seed, other libraries",
+      "prose": "The same seed, 42, gives these first three normal draws in four places. libc++ comes with clang, as in this app; libstdc++ comes with g++ on Linux.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Library, seed 42",
+            "Draw 1",
+            "Draw 2",
+            "Draw 3"
+          ],
+          "rows": [
+            [
+              "C++, libc++ (this app)",
+              "0.5154",
+              "−0.5502",
+              "1.3685"
+            ],
+            [
+              "C++, libstdc++ (g++)",
+              "−0.5502",
+              "0.5154",
+              "0.4739"
+            ],
+            [
+              "NumPy `default_rng(42)`",
+              "0.3047",
+              "−1.0400",
+              "0.7505"
+            ],
+            [
+              "NumPy legacy `seed(42)`",
+              "0.4967",
+              "−0.1383",
+              "0.6477"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "A colleague builds your C++ with g++ and gets different draws. What follows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "Nothing is broken: the standard fixes the engine, not how `normal_distribution` uses it",
+            "correct": true
+          },
+          {
+            "id": "ignored",
+            "text": "g++ ignores the seed",
+            "why": "Run the g++ build twice: it repeats its own draws exactly. The seed works; the recipe that turns integers into normals differs."
+          },
+          {
+            "id": "engine",
+            "text": "`std::mt19937` differs between compilers",
+            "why": "The standard fixes it to the bit: the 10,000th output of a default-seeded `mt19937` must be 4123659995. Both libraries pass."
+          },
+          {
+            "id": "bug",
+            "text": "One of the two compilers has a bug",
+            "why": "Both follow the standard. It leaves the normal recipe to each library."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare rows 1 and 2 closely."
+        },
+        {
+          "rung": "point",
+          "text": "The two C++ rows share numbers, in another order.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both libraries get the same raw integers from `mt19937`, then turn them into normals differently."
+        }
+      ],
+      "feedback": {
+        "correct": "Repeatable within one library, not across libraries.",
+        "generic": "Not quite right. Look at which numbers rows 1 and 2 share.",
+        "byKey": {
+          "engine": "The engine is the part the standard does fix. The distributions are left to each library."
+        }
+      },
+      "explain": {
+        "text": "Both libraries draw the same pair from the engine but hand them out in the other order, and NumPy uses other methods again. So a seed makes a run repeatable on one compiler and library, not across them. Every expected value in this course comes from this app's libc++.",
+        "canvas": {
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A fresh engine each time",
+      "prose": "A colleague wants five draws and writes this loop.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "for (int i = 0; i < 5; ++i) {",
+            "    std::mt19937 gen(42);",
+            "    std::normal_distribution<double> z(0.0, 1.0);",
+            "    std::cout << z(gen) << ' ';",
+            "}"
+          ],
+          "title": "main.cpp"
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "`0.515433` five times",
+            "correct": true
+          },
+          {
+            "id": "five",
+            "text": "`0.515433 -0.550234 1.36845 0.473861 -0.124147`",
+            "why": "That is what one engine, made once, would print. Here each pass builds a new engine from seed 42, so each starts again.",
+            "canvas": {
+              "highlight": [
+                "l2"
+              ]
+            }
+          },
+          {
+            "id": "random",
+            "text": "Five different numbers, new each run",
+            "why": "Nothing here reads the clock or the system. The seed is 42 on every pass."
+          },
+          {
+            "id": "error",
+            "text": "It does not compile: `gen` is declared five times",
+            "why": "Each pass of the loop body is a new scope, so declaring `gen` again is legal."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where is the engine created?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 2 runs on every pass of the loop.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each pass makes a new engine in the seed-42 state, so each first draw is the same."
+        }
+      ],
+      "feedback": {
+        "correct": "Five copies of the first draw.",
+        "generic": "Not quite right. Follow the engine's state through two passes of the loop.",
+        "byKey": {
+          "five": "That output needs one engine that keeps its state. This loop rebuilds the engine every pass, so it repeats the first draw."
+        }
+      },
+      "explain": {
+        "text": "Each pass builds an engine in the same state, so each first draw is 0.515433 and the sd of the five is 0. Make one engine per simulation, before the loop, and pass it by reference to code that draws. Seeding per draw is the most common bug in Monte Carlo code.",
+        "canvas": {
+          "tone": {
+            "l2": "err",
+            "l3": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A vector of draws",
+      "prose": "Make the engine and the distribution once, then draw `n` times and return the draws in order. The distribution keeps a spare draw between calls, so it must outlive the loop too.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Call",
+            "Result"
+          ],
+          "rows": [
+            [
+              "`normals(42, 3)`",
+              "0.5154, −0.5502, 1.3685"
+            ],
+            [
+              "mean of `normals(42, 10000)`",
+              "0.0073"
+            ],
+            [
+              "sd of `normals(42, 10000)`",
+              "1.0045"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `normals(seed, n)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <random>\n#include <vector>\n\nstd::vector<double> normals(unsigned seed, int n) {\n    std::vector<double> out;\n    return out;\n}\n",
+        "solution": "#include <random>\n#include <vector>\n\nstd::vector<double> normals(unsigned seed, int n) {\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    std::vector<double> out;\n    out.reserve(n);\n    for (int i = 0; i < n; ++i) out.push_back(z(gen));\n    return out;\n}\n",
+        "examples": [
+          {
+            "call": "normals(42, 3)",
+            "expect": [
+              0.5154330696912013,
+              -0.5502344944204935,
+              1.368450122216075
+            ],
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "normals(42, 3)",
+            "expect": [
+              0.5154330696912013,
+              -0.5502344944204935,
+              1.368450122216075
+            ],
+            "compare": "isclose"
+          },
+          {
+            "call": "normals(42, 10000).size()",
+            "expect": 10000
+          },
+          {
+            "call": "mean4(normals(42, 10000))",
+            "expect": 0.0073,
+            "compare": "isclose"
+          },
+          {
+            "call": "sd4(normals(42, 10000))",
+            "expect": 1.0045,
+            "compare": "isclose"
+          },
+          {
+            "call": "normals(7, 5) == normals(7, 5)",
+            "expect": true
+          },
+          {
+            "call": "normals(1, 5) != normals(2, 5)",
+            "expect": true
+          },
+          {
+            "call": "normals(42, 0).size()",
+            "expect": 0
+          },
+          {
+            "call": "normals(7, 3)",
+            "expect": [
+              -1.08466915551994,
+              -0.7201444092534747,
+              0.3994628521633324
+            ],
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests. mean4 and sd4, defined for you, round the sample mean and sd to 4 places.",
+        "postlude": "#include <cmath>\ndouble mean4(const std::vector<double>& v) { double s = 0; for (double x : v) s += x; return std::round(s / v.size() * 1e4) / 1e4; }\ndouble sd4(const std::vector<double>& v) { double s = 0; for (double x : v) s += x; double m = s / v.size(), q = 0; for (double x : v) q += (x - m) * (x - m); return std::round(std::sqrt(q / (v.size() - 1)) * 1e4) / 1e4; }\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Three lines before a loop: the engine, the distribution, the vector."
+        },
+        {
+          "rung": "point",
+          "text": "Test 4 checks the sd. If every draw is the same, the sd is 0.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`std::mt19937 gen(seed); std::normal_distribution<double> z(0.0, 1.0);` then push `z(gen)` `n` times."
+        }
+      ],
+      "feedback": {
+        "correct": "One engine, one distribution, `n` draws.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "Your first three draws differ from libc++'s. If they are all equal, you seed inside the loop. If not, make the distribution once, outside the loop: it keeps a spare draw.",
+          "test-6": "Seeds 1 and 2 gave the same draws, so the seed is not reaching the engine. Write `std::mt19937 gen(seed);`."
+        }
+      },
+      "explain": {
+        "text": "`std::normal_distribution` in libc++ makes draws in pairs and keeps the second for the next call. A fresh distribution each pass would throw the spare away, so the stream changes. Make both objects once and the draws match the table to the last digit."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Why not rand()",
+      "prose": "C's `rand()` returns whole numbers from 0 to `RAND_MAX`. On Windows `RAND_MAX` is 32,767, so there are 32,768 values. Old code maps them to 0 to 99 with `rand() % 100`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "`rand() % 100`",
+            "Values of `rand()` that give it",
+            "How many"
+          ],
+          "rows": [
+            [
+              "0",
+              "0, 100, 200, ..., 32,700",
+              "?"
+            ],
+            [
+              "67",
+              "67, 167, ..., 32,767",
+              "328"
+            ],
+            [
+              "68",
+              "68, 168, ..., 32,668",
+              "327"
+            ],
+            [
+              "99",
+              "99, 199, ..., 32,699",
+              "327"
+            ]
+          ],
+          "align": [
+            "center",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many of the 32,768 values give `rand() % 100 == 0`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 328,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "328: the values 0, 100, ..., 32,700",
+        "wrong": [
+          {
+            "id": "even",
+            "value": 327.68,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "low",
+            "value": 327,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "hundred",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count 0, 100, 200, ... up to the last multiple of 100 below 32,768."
+        },
+        {
+          "rung": "point",
+          "text": "The last one is 32,700.",
+          "highlight": [
+            "r0c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$32{,}700 / 100 + 1 = 328$."
+        }
+      ],
+      "feedback": {
+        "correct": "328, so 0 is a little likelier than 99.",
+        "generic": "Not quite right. Count the multiples of 100 from 0 to 32,700.",
+        "byKey": {
+          "even": "That is the fair share, $32{,}768 / 100$. Counts are whole numbers, so some remainders get 328 and some 327.",
+          "low": "That is the count for 68 to 99. Remainders 0 to 67 get one more, because 32,768 ends at 32,767.",
+          "hundred": "There are 32,768 values in all, so each remainder gets about 328."
+        }
+      },
+      "explain": {
+        "text": "Remainders 0 to 67 get 328 values and 68 to 99 get 327, so low numbers are 0.3% likelier. `rand()` also shares one hidden global state, and its quality is left to the library. `std::uniform_int_distribution<int> d(0, 99)` with a `std::mt19937` has no bias.",
+        "canvas": {
+          "values": {
+            "r0c2": "328"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "How close is close",
+      "prose": "From the limits course, the mean of $n$ draws with sample sd $s$ has standard error $s/\\sqrt{n}$. Our seed-42 draws gave these results.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$n$",
+            "Sample mean",
+            "Sample sd",
+            "Standard error"
+          ],
+          "rows": [
+            [
+              "100",
+              "−0.0017",
+              "0.9272",
+              "0.0927"
+            ],
+            [
+              "1,000",
+              "0.0342",
+              "1.0502",
+              "0.0332"
+            ],
+            [
+              "10,000",
+              "0.0073",
+              "1.0045",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many standard errors is the mean of the 10,000 draws from 0?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.727,
+        "tol": {
+          "abs": 0.02
+        },
+        "placeholder": "a number",
+        "accept": "0.73: $0.0073 / (1.0045/\\sqrt{10{,}000}) = 0.0073 / 0.0100$",
+        "wrong": [
+          {
+            "id": "raw",
+            "value": 0.0073,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "n",
+            "value": 72.7,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "sd",
+            "value": 0.0073,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First find the standard error: $1.0045 / \\sqrt{10{,}000}$."
+        },
+        {
+          "rung": "point",
+          "text": "The standard error is about 0.0100.",
+          "highlight": [
+            "r2c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.0073 / 0.0100 \\approx 0.73$."
+        }
+      ],
+      "feedback": {
+        "correct": "Under one standard error: consistent with mean 0.",
+        "generic": "Not quite right. Divide the mean by $s/\\sqrt{n}$.",
+        "byKey": {
+          "raw": "That is the mean itself. Divide it by the standard error, $1.0045/100$.",
+          "n": "You divided by $s/n$. The standard error uses $\\sqrt{n} = 100$, so it is 0.0100."
+        }
+      },
+      "explain": {
+        "text": "The standard error is $1.0045/100 = 0.0100$, and 0.0073 is 0.73 of it. Mean 0 is well within two standard errors, as a correct generator should be. A mean of 0.05 from 10,000 draws would be five standard errors out: look for a bug.",
+        "canvas": {
+          "values": {
+            "r2c3": "0.0100"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A terminal price",
+      "prose": "Risk-neutral share prices follow $$S_T = S_0\\exp\\big((r - \\tfrac12\\sigma^2)T + \\sigma\\sqrt{T}\\,Z\\big).$$ Average 10,000 draws of $S_T$, one $Z$ each from seed `seed`. The exact mean is $S_0e^{rT}$: £105.13 for $S_0 = 100$, $r = 5\\%$, $T = 1$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$S_0$",
+            "$r$",
+            "$\\sigma$",
+            "$T$",
+            "seed",
+            "mean, 2 places"
+          ],
+          "rows": [
+            [
+              "100",
+              "0.05",
+              "0.2",
+              "1",
+              "42",
+              "105.30"
+            ],
+            [
+              "100",
+              "0.05",
+              "0.2",
+              "1",
+              "7",
+              "105.33"
+            ],
+            [
+              "100",
+              "0.05",
+              "0",
+              "1",
+              "42",
+              "105.13"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write `simulated_terminal_price(s0, r, sigma, t, seed)`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cmath>\n#include <random>\n\ndouble simulated_terminal_price(double s0, double r, double sigma, double t, unsigned seed) {\n    const int n = 10000;\n    return 0;\n}\n",
+        "solution": "#include <cmath>\n#include <random>\n\ndouble simulated_terminal_price(double s0, double r, double sigma, double t, unsigned seed) {\n    const int n = 10000;\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double drift = (r - 0.5 * sigma * sigma) * t;\n    double vol = sigma * std::sqrt(t);\n    double sum = 0;\n    for (int i = 0; i < n; ++i) sum += s0 * std::exp(drift + vol * z(gen));\n    return sum / n;\n}\n",
+        "examples": [
+          {
+            "call": "std::round(simulated_terminal_price(100, 0.05, 0.2, 1, 42) * 100) / 100",
+            "expect": 105.3,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "std::round(simulated_terminal_price(100, 0.05, 0.2, 1, 42) * 100) / 100",
+            "expect": 105.3,
+            "compare": "isclose"
+          },
+          {
+            "call": "std::round(simulated_terminal_price(100, 0.05, 0.2, 1, 7) * 100) / 100",
+            "expect": 105.33,
+            "compare": "isclose"
+          },
+          {
+            "call": "std::round(simulated_terminal_price(100, 0.05, 0.3, 0.5, 1) * 100) / 100",
+            "expect": 102.81,
+            "compare": "isclose"
+          },
+          {
+            "call": "std::round(simulated_terminal_price(50, 0.03, 0.25, 2, 2024) * 100) / 100",
+            "expect": 52.93,
+            "compare": "isclose"
+          },
+          {
+            "call": "std::round(simulated_terminal_price(100, 0.0, 0.2, 1, 42) * 100) / 100",
+            "expect": 100.16,
+            "compare": "isclose"
+          },
+          {
+            "call": "std::round(simulated_terminal_price(100, 0.05, 0.0, 1, 42) * 100) / 100",
+            "expect": 105.13,
+            "compare": "isclose"
+          },
+          {
+            "call": "std::abs(simulated_terminal_price(100, 0.05, 0.2, 1, 42) - 100 * std::exp(0.05)) < 0.64",
+            "expect": true
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Six round your mean to 2 places and accept it within a relative 1e-9; the last checks it is within 3 standard errors (£0.64) of the exact £105.13."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Engine and distribution first, then a loop of 10,000 that adds up $S_T$."
+        },
+        {
+          "rung": "point",
+          "text": "Work out the drift $(r - \\tfrac12\\sigma^2)T$ and the volatility $\\sigma\\sqrt{T}$ once, before the loop.",
+          "highlight": [
+            "r0c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`sum += s0 * std::exp(drift + vol * z(gen));` then `return sum / n;`."
+        }
+      ],
+      "feedback": {
+        "correct": "£105.30, within one standard error of £105.13.",
+        "generic": "Not quite right. Read the first failing test under the editor.",
+        "byKey": {
+          "test-1": "Expected 105.30. If you got about 107.3, the $-\\tfrac12\\sigma^2$ is missing from the drift. If you got 105.13, you returned the exact mean, not a simulation.",
+          "test-6": "With $\\sigma = 0$ every path ends at $S_0e^{rT}$, so the mean is 105.13. Check that $\\sigma$ multiplies the draw."
+        }
+      },
+      "explain": {
+        "text": "The $-\\tfrac12\\sigma^2$ term makes the mean of $e^{\\sigma\\sqrt{T}Z}$ cancel to 1, so the average heads for $S_0e^{rT}$. With $\\sigma = 0$ every path is the forward, an edge case worth a test. The sd of $S_T$ is about £21, so 10,000 paths give a standard error near £0.21."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A seed on the command line",
+      "prose": "Write a program that reads a seed and a count `n` (at least 1) from `std::cin`, draws `n` standard normals, and prints their mean to 4 decimal places. Input `42 10000` prints `0.0073`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ echo 42 10000 | ./mean",
+            "0.0073",
+            "$ echo 42 1 | ./mean",
+            "0.5154"
+          ],
+          "title": "Terminal"
+        },
+        "state": {}
+      },
+      "question": "Write the program.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <iomanip>\n#include <iostream>\n#include <random>\n\nint main() {\n    unsigned seed;\n    int n;\n    std::cin >> seed >> n;\n    // print the mean of n standard normal draws, 4 places\n}\n",
+        "solution": "#include <iomanip>\n#include <iostream>\n#include <random>\n\nint main() {\n    unsigned seed;\n    int n;\n    std::cin >> seed >> n;\n    std::mt19937 gen(seed);\n    std::normal_distribution<double> z(0.0, 1.0);\n    double sum = 0;\n    for (int i = 0; i < n; ++i) sum += z(gen);\n    std::cout << std::fixed << std::setprecision(4) << sum / n << '\\n';\n}\n",
+        "examples": [
+          {
+            "compare": "stdout",
+            "stdin": "42 10000\n",
+            "expect": "0.0073\n"
+          }
+        ],
+        "tests": [
+          {
+            "compare": "stdout",
+            "stdin": "42 10000\n",
+            "expect": "0.0073\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "42 1\n",
+            "expect": "0.5154\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "42 3\n",
+            "expect": "0.4445\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "7 1000\n",
+            "expect": "-0.0097\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "2024 10000\n",
+            "expect": "-0.0063\n"
+          },
+          {
+            "compare": "stdout",
+            "stdin": "1 5\n",
+            "expect": "-0.6749\n"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 6 times with a seed and a count on std::cin and compares what it prints."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Engine from `seed`, distribution, a loop that adds `n` draws."
+        },
+        {
+          "rung": "point",
+          "text": "`std::fixed << std::setprecision(4)` prints exactly 4 places.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`std::cout << std::fixed << std::setprecision(4) << sum / n << '\\n';`"
+        }
+      ],
+      "feedback": {
+        "correct": "Same seed and count, same mean, on this compiler.",
+        "generic": "Not quite right. Compare your output with the expected line under the editor.",
+        "byKey": {
+          "test-1": "Expected 0.0073. If you printed 0.00730496, add `std::fixed << std::setprecision(4)`. If the digits differ, check the engine uses `seed`."
+        }
+      },
+      "explain": {
+        "text": "Reading the seed as input makes every run reproducible by design: anyone with the same input and library gets the same output. `std::fixed` fixes the places after the point; without it `setprecision(4)` counts significant figures."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "One engine per simulation",
+      "prose": "The pattern behind every screen:\n\n```cpp\nstd::mt19937 gen(seed);  // once\nstd::normal_distribution<double> z(0.0, 1.0);\nfor (int i = 0; i < n; ++i) use(z(gen));\nvoid path(std::mt19937& gen);  // share it\n```\n\nFor a production seed, `std::random_device{}()` asks the system for one; log it so the run can be repeated.",
+      "question": "Two functions must draw from one stream. Which signature should they take?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ref",
+            "text": "`void simulate(std::mt19937& gen)`",
+            "correct": true
+          },
+          {
+            "id": "value",
+            "text": "`void simulate(std::mt19937 gen)`",
+            "why": "You passed the engine by value. Each call gets a copy in the same state, so both replay the same draws."
+          },
+          {
+            "id": "seed",
+            "text": "`void simulate(unsigned seed)`, building its own engine",
+            "why": "Two calls with one seed give identical draws: paths meant to be independent become copies."
+          },
+          {
+            "id": "rand",
+            "text": "`void simulate()`, calling `rand()`",
+            "why": "`rand()` shares a hidden global state and has no standard quality. Keep the engine explicit."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A copy of an engine carries its state with it."
+        }
+      ],
+      "feedback": {
+        "correct": "By reference: both calls advance one engine.",
+        "generic": "Not quite right. Which signature lets two calls share one engine's state?"
+      },
+      "explain": {
+        "text": "A reference lets every call advance the same engine, so draws never repeat. By value, each call works on a copy and the original never moves on."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A price a colleague can repeat",
+      "prose": "Your Monte Carlo prices the one-year £100 call at £10.4741, with standard error £0.0467; Black-Scholes says £10.4506. A colleague must reproduce your £10.4741 to the penny.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "MC call: S=100 K=100 r=0.05 sigma=0.2 T=1",
+            "paths=100000 seed=42",
+            "build: clang 21, libc++",
+            "price=10.4741 se=0.0467"
+          ],
+          "title": "Report"
+        },
+        "state": {}
+      },
+      "question": "Which must the report give? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "seed",
+            "text": "The seed",
+            "correct": true
+          },
+          {
+            "id": "paths",
+            "text": "The number of paths",
+            "correct": true
+          },
+          {
+            "id": "lib",
+            "text": "The compiler and standard library",
+            "correct": true
+          },
+          {
+            "id": "time",
+            "text": "The time the run started",
+            "why": "Nothing in a seeded run reads the clock, so the time changes nothing."
+          },
+          {
+            "id": "cpu",
+            "text": "The CPU model",
+            "why": "The same program and library give the same doubles on any modern CPU. The library matters; the chip does not."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What decides which numbers `z(gen)` returns?"
+        },
+        {
+          "rung": "point",
+          "text": "Rows 2 and 3 of the report.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Seed and path count fix the stream on one library; the library fixes how it becomes normals."
+        }
+      ],
+      "feedback": {
+        "correct": "Seed, paths and library pin the number down.",
+        "generic": "Not quite right. Ask which inputs change the draws.",
+        "byKey": {
+          "time": "A seeded run never reads the clock.",
+          "cpu": "The library decides the draws, not the chip."
+        }
+      },
+      "explain": {
+        "text": "The seed and the path count fix the stream, and the library fixes how it becomes normals: libstdc++ would give a different £10.47-ish number. £10.4741 is half a standard error from £10.4506, as it should be. Level 2 adds antithetic draws, pairing each $Z$ with $-Z$ to shrink the standard error for free."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`std::mt19937 gen(seed)` with `std::normal_distribution` gives a stream that repeats exactly for the same seed, compiler and library.",
+      "The standard fixes the engine's integers but not the distributions, so libc++, libstdc++ and NumPy give different draws from one seed.",
+      "Make one engine and one distribution per simulation, before the loop, and pass the engine by reference."
+    ],
+    "formula": {
+      "name": "Standard error of a simulated mean",
+      "tex": "\\text{SE} = \\dfrac{s}{\\sqrt{n}}",
+      "note": "10,000 draws with sd 1 give 0.01."
+    },
+    "trap": "Building `std::mt19937 gen(42)` inside the loop restarts the stream, so every draw is the same number."
+  },
+  "quiz": [
+    {
+      "id": "q1",
+      "difficulty": 2,
+      "prose": "To price a spread option you need two share paths that move independently. A colleague builds each path with its own `std::mt19937 gen(42);`.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "The two paths are identical, not independent",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: each path has its own engine",
+            "why": "Two engines with the same seed produce the same stream, so the paths move in lockstep."
+          },
+          {
+            "id": "crash",
+            "text": "The second engine fails to start",
+            "why": "Seeding two engines with 42 is legal; they just agree."
+          },
+          {
+            "id": "halfway",
+            "text": "The paths share half their draws",
+            "why": "They share all of them, in the same order."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Same seed, same stream, same path.",
+        "generic": "Not quite right. What does a seed fix?"
+      },
+      "explain": {
+        "text": "Each engine starts in the seed-42 state, so the two paths are copies: correlation 1, not 0. Use one engine for both, or two different seeds."
+      }
+    },
+    {
+      "id": "q2",
+      "difficulty": 2,
+      "prose": "A function returns the sample sd of `normals(seed, n)`, dividing the sum of squared deviations by `n - 1`. It is called with `n = 1`.",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "nan",
+            "text": "NaN",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0",
+            "why": "The squared deviations sum to 0, but the divisor $n - 1$ is 0 too: $0/0$ is NaN, not 0."
+          },
+          {
+            "id": "draw",
+            "text": "The draw itself",
+            "why": "One draw has a mean but no spread to measure."
+          },
+          {
+            "id": "crash",
+            "text": "The program stops with a division-by-zero error",
+            "why": "Dividing doubles by zero does not stop a program; $0.0/0.0$ is NaN."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0/0$ is NaN: one draw has no sample sd.",
+        "generic": "Not quite right. Work out the numerator and the denominator for one draw."
+      },
+      "explain": {
+        "text": "With one draw, the deviation from the mean is 0 and so is $n - 1$, and $0.0/0.0$ is NaN. A sample sd needs at least two draws, so check `n >= 2` first."
+      }
+    },
+    {
+      "id": "q3",
+      "difficulty": 3,
+      "prose": "A simulation's draws have sample sd 0.2.",
+      "question": "How many draws make the standard error of their mean 0.001?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "40,000: $0.2/\\sqrt{n} = 0.001$ gives $\\sqrt{n} = 200$",
+        "wrong": [
+          {
+            "id": "noroot",
+            "value": 200,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\sqrt{n} = 200$, so $n = 40{,}000$.",
+        "generic": "Not quite right. Solve $0.2/\\sqrt{n} = 0.001$ for $n$.",
+        "byKey": {
+          "noroot": "That is $\\sqrt{n}$. Square it to get $n$."
+        }
+      },
+      "explain": {
+        "text": "$0.2/\\sqrt{n} = 0.001$ gives $\\sqrt{n} = 200$, so $n = 40{,}000$. Halving the standard error takes four times the draws."
+      }
+    },
+    {
+      "id": "q4",
+      "difficulty": 2,
+      "prose": "```cpp\nstd::mt19937 a(42), b(42);\nb();  // one draw from b\n```",
+      "question": "Is `a() == b()` true next?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: `b` is one step ahead of `a`",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: they share a seed",
+            "why": "They started equal, but `b` has moved on one step, so `a` now returns `b`'s old value."
+          },
+          {
+            "id": "rand",
+            "text": "It varies run to run",
+            "why": "Both engines are fully determined by the seed and the calls."
+          },
+          {
+            "id": "err",
+            "text": "It does not compile",
+            "why": "Calling an engine with `()` returns its next number. It compiles."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Same seed, but different positions in the stream.",
+        "generic": "Not quite right. Track how many numbers each engine has given."
+      },
+      "explain": {
+        "text": "`a()` returns the first number of the stream and `b()` the second. Raw `mt19937` output is fixed by the standard, so this holds on every compiler."
+      }
+    }
+  ]
+}

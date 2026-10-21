@@ -1,0 +1,1584 @@
+{
+  "id": "l7-shrinking",
+  "course": "stat-learning",
+  "title": "Shrinking coefficients",
+  "minutes": 15,
+  "objectives": [
+    "Fit ridge regression and choose its penalty.",
+    "Read ridge as trading a little bias for a lot less variance."
+  ],
+  "skills": [
+    "sl-regularise",
+    "sl-tradeoff"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A leash on the slope",
+      "prose": "Twenty shares, mom against next-month return, both centred so the line passes through the origin. The slope is now $\\dfrac{\\sum xy}{\\sum x^2 + \\lambda}$, with $\\sum xy = 23.0276$ and $\\sum x^2 = 29.2772$. Slide $\\lambda$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.6,
+            2.6
+          ],
+          "y": [
+            -3.5,
+            3.5
+          ],
+          "grid": true,
+          "xLabel": "mom (centred)",
+          "yLabel": "Return (%, centred)",
+          "functions": [
+            {
+              "id": "fit",
+              "expr": "sxy/(sxx + lam)*x",
+              "label": "ridge line",
+              "colour": 1,
+              "labelAt": 2.2
+            },
+            {
+              "id": "ols",
+              "expr": "0.786537*x",
+              "dashed": true,
+              "colour": 4,
+              "label": "OLS",
+              "labelAt": -2.2
+            }
+          ],
+          "params": {
+            "sxy": 23.0276,
+            "sxx": 29.2772,
+            "lam": 0
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 0.17,
+              "y": 0.81,
+              "tap": false
+            },
+            {
+              "id": "p1",
+              "x": 1.32,
+              "y": 1.23,
+              "tap": false
+            },
+            {
+              "id": "p2",
+              "x": -1.98,
+              "y": -2.65,
+              "tap": false
+            },
+            {
+              "id": "p3",
+              "x": 1.5,
+              "y": 1.12,
+              "tap": false
+            },
+            {
+              "id": "p4",
+              "x": -0.24,
+              "y": -0.45,
+              "tap": false
+            },
+            {
+              "id": "p5",
+              "x": -0.99,
+              "y": 0.2,
+              "tap": false
+            },
+            {
+              "id": "p6",
+              "x": -0.99,
+              "y": -0.73,
+              "tap": false
+            },
+            {
+              "id": "p7",
+              "x": -1.27,
+              "y": 0.8,
+              "tap": false
+            },
+            {
+              "id": "p8",
+              "x": -0.41,
+              "y": -1.34,
+              "tap": false
+            },
+            {
+              "id": "p9",
+              "x": 0.64,
+              "y": 1.0,
+              "tap": false
+            },
+            {
+              "id": "p10",
+              "x": 0.4,
+              "y": 0.83,
+              "tap": false
+            },
+            {
+              "id": "p11",
+              "x": 0.45,
+              "y": -0.76,
+              "tap": false
+            },
+            {
+              "id": "p12",
+              "x": -1.88,
+              "y": -3.01,
+              "tap": false
+            },
+            {
+              "id": "p13",
+              "x": -1.76,
+              "y": -0.27,
+              "tap": false
+            },
+            {
+              "id": "p14",
+              "x": 1.36,
+              "y": 1.63,
+              "tap": false
+            },
+            {
+              "id": "p15",
+              "x": 0.78,
+              "y": 0.35,
+              "tap": false
+            },
+            {
+              "id": "p16",
+              "x": 1.99,
+              "y": 1.99,
+              "tap": false
+            },
+            {
+              "id": "p17",
+              "x": 1.02,
+              "y": -0.07,
+              "tap": false
+            },
+            {
+              "id": "p18",
+              "x": -1.21,
+              "y": -0.77,
+              "tap": false
+            },
+            {
+              "id": "p19",
+              "x": 1.1,
+              "y": 0.09,
+              "tap": false
+            }
+          ]
+        },
+        "maxHeight": 300,
+        "derive": {
+          "caption": "$\\lambda = {{fixed(lam, 1)}}$: slope {{fixed(sxy/(sxx + lam), 3)}}, against {{fixed(sxy/sxx, 3)}} for OLS"
+        },
+        "controls": [
+          {
+            "bind": "lam",
+            "min": 0,
+            "max": 120,
+            "step": 0.5,
+            "start": 0,
+            "label": "Penalty $\\lambda$",
+            "decimals": 1
+          }
+        ]
+      },
+      "question": "At what $\\lambda$ is the slope half its value at $\\lambda = 0$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 29.2772,
+        "tol": {
+          "abs": 1
+        },
+        "label": "Penalty that halves the slope",
+        "accept": "29.2772 ± 1: halving needs $\\sum x^2 + \\lambda = 2\\sum x^2$, so $\\lambda = \\sum x^2$.",
+        "wrong": [
+          {
+            "id": "half-sxx",
+            "value": 14.64,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "sxy",
+            "value": 23.0276,
+            "tol": {
+              "abs": 0.6
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At $\\lambda = 0$ the slope is 0.787. Find where the caption reads half of that."
+        },
+        {
+          "rung": "point",
+          "text": "The dashed line is the OLS fit; watch the solid line swing towards flat.",
+          "highlight": [
+            "fit",
+            "ols"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Half of 0.787 is 0.393. That needs the denominator doubled: $\\lambda = \\sum x^2 = 29.2772$."
+        }
+      ],
+      "feedback": {
+        "correct": "At $\\lambda = 29.2772$ the denominator doubles and the slope halves.",
+        "generic": "Not quite right. Slide until the caption's slope is half the OLS slope.",
+        "byKey": {
+          "half-sxx": "That shrinks the slope by a third, not a half. The denominator must double.",
+          "sxy": "You used $\\sum xy$. The penalty adds to $\\sum x^2 = 29.2772$."
+        }
+      },
+      "explain": {
+        "text": "The penalty sits beside $\\sum x^2$ in the denominator, so it pulls the slope towards 0 smoothly. At $\\lambda = \\sum x^2$ the line has half the OLS slope. No finite $\\lambda$ makes it exactly flat.",
+        "canvas": {
+          "params": {
+            "lam": 29.2772
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Ridge regression",
+      "prose": "The slope you slid is **ridge regression**. It minimises the squared misses plus a charge on the slope's size: $$\\sum_i (y_i - \\beta x_i)^2 + \\lambda \\beta^2.$$ The **penalty** $\\lambda \\ge 0$ sets the price of a large $\\beta$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2.6,
+            2.6
+          ],
+          "y": [
+            -3.5,
+            3.5
+          ],
+          "grid": true,
+          "xLabel": "mom (centred)",
+          "yLabel": "Return (%, centred)",
+          "functions": [
+            {
+              "id": "fit",
+              "expr": "sxy/(sxx + lam)*x",
+              "label": "ridge line",
+              "colour": 1,
+              "labelAt": 2.2
+            },
+            {
+              "id": "ols",
+              "expr": "0.786537*x",
+              "dashed": true,
+              "colour": 4,
+              "label": "OLS",
+              "labelAt": -2.2
+            }
+          ],
+          "params": {
+            "sxy": 23.0276,
+            "sxx": 29.2772,
+            "lam": 10
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p0",
+              "x": 0.17,
+              "y": 0.81,
+              "tap": false
+            },
+            {
+              "id": "p1",
+              "x": 1.32,
+              "y": 1.23,
+              "tap": false
+            },
+            {
+              "id": "p2",
+              "x": -1.98,
+              "y": -2.65,
+              "tap": false
+            },
+            {
+              "id": "p3",
+              "x": 1.5,
+              "y": 1.12,
+              "tap": false
+            },
+            {
+              "id": "p4",
+              "x": -0.24,
+              "y": -0.45,
+              "tap": false
+            },
+            {
+              "id": "p5",
+              "x": -0.99,
+              "y": 0.2,
+              "tap": false
+            },
+            {
+              "id": "p6",
+              "x": -0.99,
+              "y": -0.73,
+              "tap": false
+            },
+            {
+              "id": "p7",
+              "x": -1.27,
+              "y": 0.8,
+              "tap": false
+            },
+            {
+              "id": "p8",
+              "x": -0.41,
+              "y": -1.34,
+              "tap": false
+            },
+            {
+              "id": "p9",
+              "x": 0.64,
+              "y": 1.0,
+              "tap": false
+            },
+            {
+              "id": "p10",
+              "x": 0.4,
+              "y": 0.83,
+              "tap": false
+            },
+            {
+              "id": "p11",
+              "x": 0.45,
+              "y": -0.76,
+              "tap": false
+            },
+            {
+              "id": "p12",
+              "x": -1.88,
+              "y": -3.01,
+              "tap": false
+            },
+            {
+              "id": "p13",
+              "x": -1.76,
+              "y": -0.27,
+              "tap": false
+            },
+            {
+              "id": "p14",
+              "x": 1.36,
+              "y": 1.63,
+              "tap": false
+            },
+            {
+              "id": "p15",
+              "x": 0.78,
+              "y": 0.35,
+              "tap": false
+            },
+            {
+              "id": "p16",
+              "x": 1.99,
+              "y": 1.99,
+              "tap": false
+            },
+            {
+              "id": "p17",
+              "x": 1.02,
+              "y": -0.07,
+              "tap": false
+            },
+            {
+              "id": "p18",
+              "x": -1.21,
+              "y": -0.77,
+              "tap": false
+            },
+            {
+              "id": "p19",
+              "x": 1.1,
+              "y": 0.09,
+              "tap": false
+            }
+          ]
+        },
+        "maxHeight": 300,
+        "derive": {
+          "caption": "$\\lambda = {{fixed(lam, 1)}}$: slope {{fixed(sxy/(sxx + lam), 3)}}, against {{fixed(sxy/sxx, 3)}} for OLS"
+        }
+      },
+      "question": "With $\\sum xy = 23.0276$ and $\\sum x^2 = 29.2772$, what is the ridge slope at $\\lambda = 10$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5863,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "Ridge slope at lambda 10",
+        "accept": "0.586 ± 0.002: $23.0276/(29.2772 + 10)$.",
+        "wrong": [
+          {
+            "id": "ols",
+            "value": 0.7865,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "minus",
+            "value": 1.1946,
+            "tol": {
+              "abs": 0.003
+            }
+          },
+          {
+            "id": "top",
+            "value": 1.1281,
+            "tol": {
+              "abs": 0.003
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add $\\lambda$ to $\\sum x^2$, not to $\\sum xy$."
+        },
+        {
+          "rung": "point",
+          "text": "The caption shows the slope at $\\lambda = 10$.",
+          "highlight": [
+            "fit"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$23.0276 / 39.2772$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.586: the penalty trims the OLS slope of 0.787.",
+        "generic": "Not quite right. Compute $23.0276/(29.2772 + 10)$.",
+        "byKey": {
+          "ols": "That is the OLS slope, $\\lambda = 0$. Add the 10 to the denominator.",
+          "minus": "You subtracted the penalty. It adds to $\\sum x^2$, which shrinks the slope.",
+          "top": "You added the penalty on top. It belongs underneath, beside $\\sum x^2$."
+        }
+      },
+      "explain": {
+        "text": "$23.0276/39.2772 = 0.586$. A large slope now costs twice: in squared misses if it is wrong, in $\\lambda\\beta^2$ always. Ridge settles where the two costs balance."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Where the formula comes from",
+      "prose": "Derive the one-feature ridge slope from the objective. Put the lines in order.",
+      "question": "Put the lines of the derivation in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "obj",
+            "text": "$L(\\beta) = \\sum_i (y_i - \\beta x_i)^2 + \\lambda\\beta^2$, the ridge objective"
+          },
+          {
+            "id": "diff",
+            "text": "$L'(\\beta) = -2\\sum_i x_i(y_i - \\beta x_i) + 2\\lambda\\beta$, differentiating term by term"
+          },
+          {
+            "id": "zero",
+            "text": "$\\sum_i x_iy_i = \\beta\\left(\\sum_i x_i^2 + \\lambda\\right)$, setting $L'(\\beta) = 0$ and dividing by 2"
+          },
+          {
+            "id": "sol",
+            "text": "$\\hat\\beta_\\lambda = \\dfrac{\\sum x_iy_i}{\\sum x_i^2 + \\lambda}$, dividing by $\\sum x_i^2 + \\lambda > 0$"
+          }
+        ],
+        "answer": [
+          "obj",
+          "diff",
+          "zero",
+          "sol"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the quantity ridge minimises."
+        },
+        {
+          "rung": "point",
+          "text": "A minimum of a smooth function has derivative 0."
+        },
+        {
+          "rung": "step",
+          "text": "Objective, derivative, set to zero and collect $\\beta$, then divide."
+        }
+      ],
+      "feedback": {
+        "correct": "And because $L''(\\beta) = 2(\\sum x_i^2 + \\lambda) > 0$, it is a minimum.",
+        "generic": "Not quite right. Write the objective, differentiate, set to zero, solve.",
+        "byKey": {
+          "sol": "The solution needs the equation from setting the derivative to zero first.",
+          "zero": "You need the derivative before you can set it to zero."
+        }
+      },
+      "explain": {
+        "text": "The only change from OLS is the $+\\lambda$ beside $\\sum x_i^2$. It keeps the denominator positive even when $\\sum x_i^2 = 0$, which is why ridge always has an answer."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Six coefficients shrinking",
+      "prose": "Now six features on 200 share-months, all z-scores, built uncorrelated so every path is a formula: each OLS coefficient times $\\tfrac{200}{200 + \\lambda}$. Only mom, value and vol truly matter. Slide $\\lambda$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            2000
+          ],
+          "y": [
+            -0.35,
+            0.65
+          ],
+          "grid": true,
+          "xLabel": "Penalty $\\lambda$",
+          "yLabel": "Coefficient",
+          "functions": [
+            {
+              "id": "mom",
+              "expr": "0.6*200/(200 + x)",
+              "label": "mom",
+              "colour": 1,
+              "labelAt": 40,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "value",
+              "expr": "0.4*200/(200 + x)",
+              "label": "value",
+              "colour": 2,
+              "labelAt": 40,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "vol",
+              "expr": "-0.3*200/(200 + x)",
+              "label": "vol",
+              "colour": 3,
+              "labelAt": 40,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "size",
+              "expr": "0.12*200/(200 + x)",
+              "label": "size",
+              "colour": 4,
+              "labelAt": 40,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "turnover",
+              "expr": "-0.08*200/(200 + x)",
+              "label": "turnover",
+              "colour": 5,
+              "labelAt": 40,
+              "labelAnchor": "start"
+            },
+            {
+              "id": "beta",
+              "expr": "0.05*200/(200 + x)",
+              "label": "beta",
+              "colour": 6,
+              "labelAt": 40,
+              "labelAnchor": "start"
+            }
+          ],
+          "params": {
+            "lam": 0
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0,
+              "label": ""
+            }
+          ]
+        },
+        "maxHeight": 300,
+        "derive": {
+          "v.x": "lam",
+          "caption": "$\\lambda = {{lam}}$: every coefficient is {{fixed(100*200/(200 + lam), 1)}}% of its OLS value"
+        },
+        "controls": [
+          {
+            "bind": "lam",
+            "min": 0,
+            "max": 2000,
+            "step": 50,
+            "start": 0,
+            "label": "Penalty $\\lambda$"
+          }
+        ]
+      },
+      "question": "At $\\lambda = 600$, what is mom's coefficient? Its OLS value is 0.6.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.15,
+        "tol": {
+          "abs": 0.002
+        },
+        "label": "mom coefficient at lambda 600",
+        "accept": "0.15: $0.6 \\times 200/800$.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "lin",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "third",
+            "value": 0.45,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $\\lambda = 600$ and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "Follow the mom curve to the vertical line.",
+          "highlight": [
+            "mom",
+            "v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.6 \\times \\tfrac{200}{200 + 600} = 0.6 \\times 0.25$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.15: a quarter of the OLS value, and still not zero.",
+        "generic": "Not quite right. Multiply 0.6 by $200/(200 + 600)$.",
+        "byKey": {
+          "zero": "You expected the coefficient to be gone. Ridge shrinks every coefficient but sets none to zero.",
+          "lin": "You shrank it in proportion to $\\lambda$. The factor is $200/(200 + \\lambda)$, a curve, not a straight line.",
+          "third": "You took off a quarter. Ridge keeps a quarter: $200/800$."
+        }
+      },
+      "explain": {
+        "text": "Every curve shrinks by the same factor here, so the order of sizes never changes. The three noise coefficients shrink with the rest but never reach 0. Ridge trades a little bias in the real coefficients for much less noise in all of them.",
+        "canvas": {
+          "params": {
+            "lam": 600
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Choosing $\\lambda$",
+      "prose": "Because we built this market, we know the exact expected test MSE at every $\\lambda$: the noise, 4, plus the squared gaps between the ridge and true coefficients. Drag the point along the curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            400
+          ],
+          "y": [
+            4.0,
+            4.18
+          ],
+          "grid": true,
+          "xLabel": "Penalty $\\lambda$",
+          "yLabel": "Expected test MSE (%²)",
+          "functions": [
+            {
+              "id": "u",
+              "expr": "4 + (0.6*200/(200 + x) - 0.5)^2 + (0.4*200/(200 + x) - 0.35)^2 + (-0.3*200/(200 + x) - -0.25)^2 + (0.12*200/(200 + x) - 0)^2 + (-0.08*200/(200 + x) - 0)^2 + (0.05*200/(200 + x) - 0)^2",
+              "label": "test MSE",
+              "colour": 1,
+              "labelAt": 340
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "L",
+              "x": 300,
+              "y": 4.1243,
+              "on": "u",
+              "drag": true,
+              "label": "$\\lambda$"
+            }
+          ]
+        },
+        "maxHeight": 300,
+        "derive": {
+          "caption": "$\\lambda = {{fixed(L.x, 0)}}$: expected test MSE {{fixed(L.y, 4)}}"
+        }
+      },
+      "question": "Drag the point to the $\\lambda$ with the lowest expected test MSE.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "L",
+            "target": {
+              "on": "u",
+              "x": 45.9
+            },
+            "tolX": 10
+          }
+        ],
+        "wrong": [
+          {
+            "id": "ols",
+            "region": {
+              "x": [
+                -1,
+                12
+              ],
+              "y": [
+                3.9,
+                4.3
+              ]
+            }
+          },
+          {
+            "id": "big",
+            "region": {
+              "x": [
+                150,
+                401
+              ],
+              "y": [
+                3.9,
+                4.3
+              ]
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at $\\lambda = 0$, the OLS fit. Does a little penalty help or hurt?"
+        },
+        {
+          "rung": "point",
+          "text": "The curve dips just right of 0 before climbing.",
+          "highlight": [
+            "u"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bottom is near $\\lambda = 46$, where the caption reads 4.0162."
+        }
+      ],
+      "feedback": {
+        "correct": "The bottom is at $\\lambda \\approx 46$: expected test MSE 4.0162, against 4.0383 for OLS.",
+        "generic": "Not quite right. Find the lowest point of the curve.",
+        "byKey": {
+          "ols": "You stayed at OLS. A little shrinkage cuts the noise in the coefficients by more than the bias it adds.",
+          "big": "Too much penalty: the real coefficients are shrunk so far that bias dominates."
+        }
+      },
+      "explain": {
+        "text": "From $\\lambda = 0$ to 46 the variance saved beats the bias added; beyond it bias wins. This is the U-shape from level 1, with $\\lambda$ as the dial. In real data we do not know this curve, so we estimate it on held-out rows.",
+        "canvas": {
+          "points": {
+            "L": {
+              "x": 45.9,
+              "y": 4.0162
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Ridge in NumPy",
+      "prose": "With many features ridge solves $(\\mathbf{X}^T\\mathbf{X} + \\lambda\\mathbf{I})\\hat{\\boldsymbol\\beta} = \\mathbf{X}^T\\mathbf{y}$. The intercept is not penalised: centre $\\mathbf{X}$ and $\\mathbf{y}$ first, solve for the slopes, and the intercept is $\\bar y - \\bar{\\mathbf{x}}^T\\hat{\\boldsymbol\\beta}$. `Ridge(alpha=lam)` does exactly this.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "M",
+              "rows": [
+                [
+                  "$\\sum x_1^2 + \\lambda$",
+                  "$\\sum x_1x_2$"
+                ],
+                [
+                  "$\\sum x_1x_2$",
+                  "$\\sum x_2^2 + \\lambda$"
+                ]
+              ],
+              "label": "$\\mathbf{X}_c^T\\mathbf{X}_c + \\lambda\\mathbf{I}$"
+            },
+            {
+              "id": "B",
+              "rows": [
+                [
+                  "$\\beta_1$"
+                ],
+                [
+                  "$\\beta_2$"
+                ]
+              ],
+              "label": "$\\hat{\\boldsymbol\\beta}$"
+            },
+            {
+              "id": "R",
+              "rows": [
+                [
+                  "$\\sum x_1y$"
+                ],
+                [
+                  "$\\sum x_2y$"
+                ]
+              ],
+              "label": "$\\mathbf{X}_c^T\\mathbf{y}_c$"
+            }
+          ],
+          "ops": [
+            "×",
+            "="
+          ]
+        },
+        "state": {
+          "caption": "Two features, centred: $\\lambda$ is added to the diagonal only."
+        }
+      },
+      "question": "Complete `ridge_coef(X, y, lam)` so it returns the slopes, rounded to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_panel(seed, n=400, p=10):\n    \"\"\"n share-months in month order, p features (z-scores), next-month return in %.\n    Only the first three features matter: 0.6, 0.4 and -0.3 per unit.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    beta = np.zeros(p)\n    beta[:3] = [0.6, 0.4, -0.3]\n    y = 0.5 + X @ beta + 3.0 * rng.standard_normal(n)\n    return X, y\nfrom sklearn.linear_model import Ridge\n",
+        "starter": "import numpy as np\n\ndef ridge_coef(X, y, lam):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    Xc = ...   # subtract each column's mean\n    yc = ...   # subtract the mean of y\n    p = X.shape[1]\n    beta = ...   # solve (Xc'Xc + lam I) beta = Xc'yc\n    return np.round(beta, 6)\n",
+        "solution": "import numpy as np\n\ndef ridge_coef(X, y, lam):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    Xc = X - X.mean(axis=0)\n    yc = y - y.mean()\n    p = X.shape[1]\n    beta = np.linalg.solve(Xc.T @ Xc + lam * np.eye(p), Xc.T @ yc)\n    return np.round(beta, 6)\n",
+        "examples": [
+          {
+            "call": "ridge_coef([[0], [1], [2], [3]], [1, 3, 5, 7], 5).tolist()",
+            "expect": "[1.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "ridge_coef([[0], [1], [2], [3]], [1, 3, 5, 7], 5).tolist()",
+            "expect": "[1.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "ridge_coef([[0], [1], [2], [3]], [1, 3, 5, 7], 0).tolist()",
+            "expect": "[2.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(2, n=400, p=10)",
+            "call": "ridge_coef(X[:300], y[:300], 50.0).tolist()",
+            "expect": "[0.265817, 0.313773, -0.282812, 0.019697, -0.005401, -0.04529, 0.081853, -0.092855, -0.052188, 0.000935]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(3, n=100, p=20)",
+            "call": "ridge_coef(X[:70], y[:70], 10.0).tolist()",
+            "expect": "[0.614287, 0.20328, -0.882822, 0.249948, -0.135355, 0.602869, -0.129725, -0.292453, -0.038843, 0.248767, -0.405862, -0.043847, 0.439122, -0.004454, 0.326289, -0.181915, -0.406352, -0.481526, 0.457371, 0.026129]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(5, n=200, p=5)",
+            "call": "ridge_coef(X[:150], y[:150], 0.0).tolist()",
+            "expect": "[0.312135, 0.896967, -0.195671, -0.15721, 0.014857]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(2); m = Ridge(alpha=50.0).fit(X[:300], y[:300])",
+            "call": "bool(np.allclose(ridge_coef(X[:300], y[:300], 50.0), m.coef_, atol=1e-6))",
+            "expect": "True"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Five compare your rounded slopes with math.isclose; the last checks them against `Ridge(alpha=50).fit(...).coef_` to within 0.000001. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`X.mean(axis=0)` gives each column's mean."
+        },
+        {
+          "rung": "point",
+          "text": "Add `lam * np.eye(p)` to `Xc.T @ Xc`: the penalty sits on the diagonal.",
+          "highlight": [
+            "M"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`beta = np.linalg.solve(Xc.T @ Xc + lam * np.eye(p), Xc.T @ yc)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your slopes match `Ridge(alpha=lam).coef_`.",
+        "generic": "Some tests failed. Centre both `X` and `y`, then add `lam` to the diagonal of `Xc.T @ Xc`."
+      },
+      "explain": {
+        "text": "For the tiny example $\\sum x_c^2 = 5$ and $\\sum x_cy_c = 10$, so $\\lambda = 5$ halves the OLS slope of 2. Centring keeps the intercept out of the penalty: shrinking it would pull every forecast towards 0% for no reason."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Picking $\\lambda$ on a validation block",
+      "prose": "In real data we estimate the U on held-out rows. Split by time: rows 1 to 200 train, 201 to 300 **validate**, 301 to 400 stay locked for the final test. Try each $\\lambda$ on the validation block.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Rows",
+            "Role"
+          ],
+          "rows": [
+            [
+              "1 to 200",
+              "fit each `Ridge(alpha)`"
+            ],
+            [
+              "201 to 300",
+              "score each one, pick the best"
+            ],
+            [
+              "301 to 400",
+              "score the chosen model once"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `best_alpha`: fit `Ridge(alpha=a)` on the training rows for each `a`, and return the one with the lowest validation MSE.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_panel(seed, n=400, p=10):\n    \"\"\"n share-months in month order, p features (z-scores), next-month return in %.\n    Only the first three features matter: 0.6, 0.4 and -0.3 per unit.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, p))\n    beta = np.zeros(p)\n    beta[:3] = [0.6, 0.4, -0.3]\n    y = 0.5 + X @ beta + 3.0 * rng.standard_normal(n)\n    return X, y\n",
+        "starter": "from sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef best_alpha(X_train, y_train, X_val, y_val, alphas):\n    scores = []\n    for a in alphas:\n        model = ...\n        scores.append(mean_squared_error(y_val, model.predict(X_val)))\n    return ...   # the alpha with the smallest score\n",
+        "solution": "from sklearn.linear_model import Ridge\nfrom sklearn.metrics import mean_squared_error\n\ndef best_alpha(X_train, y_train, X_val, y_val, alphas):\n    scores = []\n    for a in alphas:\n        model = Ridge(alpha=a).fit(X_train, y_train)\n        scores.append(mean_squared_error(y_val, model.predict(X_val)))\n    return alphas[scores.index(min(scores))]\n",
+        "examples": [
+          {
+            "setup": "X, y = make_panel(6)",
+            "call": "best_alpha(X[:200], y[:200], X[200:300], y[200:300], [0.1, 1, 10, 100, 1000, 10000])",
+            "expect": "100",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_panel(6)",
+            "call": "best_alpha(X[:200], y[:200], X[200:300], y[200:300], [0.1, 1, 10, 100, 1000, 10000])",
+            "expect": "100",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(3)",
+            "call": "best_alpha(X[:200], y[:200], X[200:300], y[200:300], [0.1, 1, 10, 100, 1000, 10000])",
+            "expect": "10",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(4)",
+            "call": "best_alpha(X[:200], y[:200], X[200:300], y[200:300], [0.1, 1, 10, 100, 1000, 10000])",
+            "expect": "1000",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(1)",
+            "call": "best_alpha(X[:200], y[:200], X[200:300], y[200:300], [0.1, 1, 10, 100, 1000, 10000])",
+            "expect": "0.1",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_panel(6)",
+            "call": "best_alpha(X[:200], y[:200], X[200:300], y[200:300], [1000, 100])",
+            "expect": "100",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on `make_panel` panels, already defined, with the alphas 0.1 to 10,000; the returned alpha is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fit on the training rows only, for each alpha in turn."
+        },
+        {
+          "rung": "point",
+          "text": "Row 2 of the table: the validation rows only score.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`model = Ridge(alpha=a).fit(X_train, y_train)`, then return `alphas[scores.index(min(scores))]`."
+        }
+      ],
+      "feedback": {
+        "correct": "The validation block chose $\\lambda$; the test block is still untouched.",
+        "generic": "Some tests failed. Fit on training rows, score on validation rows, return the alpha with the lowest score."
+      },
+      "explain": {
+        "text": "On panel 6 the validation MSEs bottom out at $\\lambda = 100$. On panel 1 the best is the smallest alpha, and on panel 4 a large one: the right penalty depends on the data. The locked test rows will now give an honest score."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Tuned on the test",
+      "prose": "A colleague has two blocks: rows 1 to 200 to fit, rows 201 to 300 to test. They try six penalties on the test block and report the best one's score as the model's test MSE.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$\\lambda$",
+            "0.1",
+            "1",
+            "10",
+            "100",
+            "1000",
+            "10000"
+          ],
+          "rows": [
+            [
+              "Test MSE",
+              "9.55",
+              "9.54",
+              "9.47",
+              "9.19",
+              "9.42",
+              "9.64"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "They report 9.19. What is wrong with that number?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "opt",
+            "text": "It is optimistic: the test rows chose $\\lambda$, so they are no longer unseen",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: the model never trained on the test rows",
+            "why": "You checked only the coefficients. Choosing $\\lambda$ is fitting too, and it used the test rows."
+          },
+          {
+            "id": "low",
+            "text": "It is pessimistic: a larger $\\lambda$ would do better still",
+            "why": "The table already shows larger penalties doing worse on these rows."
+          },
+          {
+            "id": "avg",
+            "text": "They should report the average of the six scores",
+            "why": "Averaging mixes in penalties nobody would use. The fix is a third block, not a different summary."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which rows decided $\\lambda = 100$?"
+        },
+        {
+          "rung": "point",
+          "text": "The minimum of six noisy scores is lower than a typical one.",
+          "highlight": [
+            "r0c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Choose $\\lambda$ on a validation block, then score once on rows nobody has touched."
+        }
+      ],
+      "feedback": {
+        "correct": "A score that chose something cannot also grade it.",
+        "generic": "Not quite right. Ask which rows picked $\\lambda$.",
+        "byKey": {
+          "fine": "You counted only the coefficients as fitting. $\\lambda$ was fitted too, on the very rows used to report the score."
+        }
+      },
+      "explain": {
+        "text": "We repeated this on 1,000 simulated panels. The reported minimum averaged 9.15; the chosen model on a fresh block averaged 9.38. Validate to choose, test once to report; the `validation` course does this with cross-validation.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The two ends, and too many features",
+      "prose": "Back to the first lesson's 40 candidate features with only 30 training rows. OLS fitted the 30 rows exactly and tested at 23.98, against 12.15 for the training mean.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> X_train.shape",
+            "(30, 40)",
+            ">>> model = Ridge(alpha=30).fit(X_train, y_train)",
+            ">>> mean_squared_error(y_test, model.predict(X_test))",
+            "?"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which statement about ridge is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "For any $\\lambda > 0$ it has one answer, even with more features than rows; $\\lambda = 0$ is OLS and $\\lambda \\to \\infty$ forecasts the training mean",
+            "correct": true
+          },
+          {
+            "id": "fails",
+            "text": "It fails with more features than rows, like OLS",
+            "why": "You carried over the OLS problem. $\\mathbf{X}^T\\mathbf{X} + \\lambda\\mathbf{I}$ is invertible for every $\\lambda > 0$."
+          },
+          {
+            "id": "zero",
+            "text": "As $\\lambda \\to \\infty$ every forecast goes to 0%",
+            "why": "You shrank the intercept too. Only the slopes go to 0; the intercept stays at $\\bar y$, so forecasts go to the training mean."
+          },
+          {
+            "id": "drop",
+            "text": "It sets the 37 useless coefficients to 0",
+            "why": "Ridge never sets a coefficient exactly to 0. That is the next lesson's tool."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What happens to $\\mathbf{X}^T\\mathbf{X}$ when $\\lambda$ is added to its diagonal?"
+        },
+        {
+          "rung": "point",
+          "text": "The intercept is never penalised.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\lambda = 0$ gives OLS; huge $\\lambda$ leaves only the intercept, $\\bar y$; any $\\lambda > 0$ gives a unique fit."
+        }
+      ],
+      "feedback": {
+        "correct": "Here `Ridge(alpha=30)` tests at 11.56: below the baseline's 12.15, where OLS was at 23.98.",
+        "generic": "Not quite right. Think about the two ends of $\\lambda$ and the extra $\\lambda$ on the diagonal."
+      },
+      "explain": {
+        "text": "Adding $\\lambda$ to the diagonal makes the system solvable for any shape of $\\mathbf{X}$. With 30 rows and 40 features, ridge at $\\lambda = 30$ tests at 11.56, about half the OLS error. At the far end it forecasts $\\bar y$, the baseline itself.",
+        "canvas": {
+          "lines": [
+            ">>> X_train.shape",
+            "(30, 40)",
+            ">>> model = Ridge(alpha=30).fit(X_train, y_train)",
+            ">>> mean_squared_error(y_test, model.predict(X_test))",
+            "11.559"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The ridge estimator",
+      "prose": "With $\\mathbf{X}$ and $\\mathbf{y}$ centred, ridge minimises $\\lVert\\mathbf{y} - \\mathbf{X}\\boldsymbol\\beta\\rVert^2 + \\lambda\\lVert\\boldsymbol\\beta\\rVert^2$, and $$\\hat{\\boldsymbol\\beta}_\\lambda = (\\mathbf{X}^T\\mathbf{X} + \\lambda\\mathbf{I})^{-1}\\mathbf{X}^T\\mathbf{y}.$$ Every coefficient shrinks towards 0 and none reaches it. $\\lambda$ is chosen on held-out rows.",
+      "question": "Why is $\\mathbf{X}^T\\mathbf{X} + \\lambda\\mathbf{I}$ always invertible when $\\lambda > 0$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "eig",
+            "text": "The eigenvalues of $\\mathbf{X}^T\\mathbf{X}$ are at least 0, so adding $\\lambda$ makes them all at least $\\lambda > 0$",
+            "correct": true
+          },
+          {
+            "id": "square",
+            "text": "Because it is square",
+            "why": "Square matrices can be singular: $\\mathbf{X}^T\\mathbf{X}$ itself is square and singular with 40 features and 30 rows."
+          },
+          {
+            "id": "diag",
+            "text": "Because its diagonal is non-zero",
+            "why": "A non-zero diagonal is not enough; $\\begin{bmatrix}1 & 1 \\\\ 1 & 1\\end{bmatrix}$ is singular."
+          },
+          {
+            "id": "rows",
+            "text": "Because ridge drops rows until there are more rows than features",
+            "why": "Ridge keeps every row. The fix is on the diagonal."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Think of $\\mathbf{X}^T\\mathbf{X}$'s eigenvalues, from the eigen course."
+        },
+        {
+          "rung": "point",
+          "text": "$\\mathbf{v}^T\\mathbf{X}^T\\mathbf{X}\\mathbf{v} = \\lVert\\mathbf{X}\\mathbf{v}\\rVert^2 \\ge 0$."
+        },
+        {
+          "rung": "step",
+          "text": "Adding $\\lambda\\mathbf{I}$ adds $\\lambda$ to every eigenvalue, so none is 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Every eigenvalue moves up by $\\lambda$, so none is 0.",
+        "generic": "Not quite right. Look at the eigenvalues before and after adding $\\lambda\\mathbf{I}$."
+      },
+      "explain": {
+        "text": "$\\mathbf{X}^T\\mathbf{X}$ has eigenvalues $d_j \\ge 0$; with $\\lambda\\mathbf{I}$ they become $d_j + \\lambda > 0$. Small eigenvalues are where OLS coefficients explode, and that is exactly where ridge helps most."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A 50-factor model",
+      "prose": "A fund's monthly return is regressed on 50 overlapping factors, with 60 months to fit. OLS gives a largest coefficient of 2.16; the truth is at most 0.4. `make_factors(seed)` builds such data. Measure how ridge reins it in.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "OLS",
+            "Ridge, $\\lambda = 30$"
+          ],
+          "rows": [
+            [
+              "Largest coefficient",
+              "2.16",
+              "0.24"
+            ],
+            [
+              "$\\lVert\\hat{\\boldsymbol\\beta}\\rVert$",
+              "5.46",
+              "0.61"
+            ],
+            [
+              "MSE, next 60 months",
+              "13.43",
+              "1.60"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `ridge_path(X, y, lams)` so it returns $\\lVert\\hat{\\boldsymbol\\beta}_\\lambda\\rVert$ for each $\\lambda$, each rounded to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_factors(seed, months=120, k=50):\n    \"\"\"Monthly returns (%) of k overlapping factors and of a fund that holds a little of five of them.\"\"\"\n    rng = np.random.default_rng(seed)\n    common = rng.standard_normal((months, 1))\n    F = 0.8 * common + 0.6 * rng.standard_normal((months, k))\n    w = np.zeros(k)\n    w[:5] = [0.4, 0.3, 0.2, -0.2, 0.1]\n    y = F @ w + 1.0 * rng.standard_normal(months)\n    return F, y\n",
+        "starter": "import numpy as np\nfrom sklearn.linear_model import Ridge\n\ndef ridge_path(X, y, lams):\n    out = []\n    for lam in lams:\n        coef = ...   # Ridge(alpha=lam) slopes, fitted on X and y\n        out.append(round(float(np.linalg.norm(coef)), 6))\n    return out\n",
+        "solution": "import numpy as np\nfrom sklearn.linear_model import Ridge\n\ndef ridge_path(X, y, lams):\n    out = []\n    for lam in lams:\n        coef = Ridge(alpha=lam).fit(X, y).coef_\n        out.append(round(float(np.linalg.norm(coef)), 6))\n    return out\n",
+        "examples": [
+          {
+            "setup": "F, y = make_factors(2)",
+            "call": "ridge_path(F[:60], y[:60], [10, 30])",
+            "expect": "[1.056364, 0.614884]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "F, y = make_factors(2)",
+            "call": "ridge_path(F[:60], y[:60], [1, 10, 30, 100])",
+            "expect": "[2.336641, 1.056364, 0.614884, 0.277565]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "F, y = make_factors(1)",
+            "call": "ridge_path(F[:60], y[:60], [3, 300])",
+            "expect": "[1.253413, 0.126274]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "F, y = make_factors(3)",
+            "call": "ridge_path(F, y, [0.5, 5, 50])",
+            "expect": "[1.68781, 1.395602, 0.605548]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "F, y = make_factors(2)",
+            "call": "(lambda r: r[0] > r[1] > r[2])(ridge_path(F[:60], y[:60], [1, 10, 100]))",
+            "expect": "True"
+          }
+        ],
+        "how": "Check runs 4 hidden tests on `make_factors(seed)`, already defined: three compare the norms with math.isclose and one checks they fall as the penalty rises. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Fit a fresh `Ridge(alpha=lam)` for each penalty."
+        },
+        {
+          "rung": "point",
+          "text": "The slopes are in `.coef_`; the intercept is not part of the norm.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`coef = Ridge(alpha=lam).fit(X, y).coef_`."
+        }
+      ],
+      "feedback": {
+        "correct": "The norm falls steadily as $\\lambda$ rises: the coefficients are reined in together.",
+        "generic": "Some tests failed. For each penalty, fit `Ridge(alpha=lam)` on `X, y` and take the norm of `.coef_`."
+      },
+      "explain": {
+        "text": "OLS spreads the fund's exposure across near-duplicate factors with huge offsetting bets, and pays for it out of sample: 13.43 against 1.60. Ridge behaves like a Bayesian prior that every exposure is probably small, the idea from the `estimation` course's Bayes lesson. The prior's strength is $\\lambda$."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Ridge adds $\\lambda\\lVert\\boldsymbol\\beta\\rVert^2$ to the squared errors, shrinking every coefficient towards 0 but never to it.",
+      "A little bias buys a lot less variance: test error against $\\lambda$ is a U, and its bottom is found on a validation block.",
+      "$\\lambda = 0$ is OLS, $\\lambda \\to \\infty$ is the training mean, and any $\\lambda > 0$ gives one answer even with more features than rows."
+    ],
+    "formula": {
+      "name": "Ridge regression",
+      "tex": "\\hat{\\boldsymbol\\beta}_\\lambda = (\\mathbf{X}^T\\mathbf{X} + \\lambda\\mathbf{I})^{-1}\\mathbf{X}^T\\mathbf{y}, \\qquad \\text{one feature: } \\dfrac{\\sum xy}{\\sum x^2 + \\lambda}",
+      "note": "Centre first; the intercept is not penalised. `Ridge(alpha=lam)`."
+    },
+    "trap": "A $\\lambda$ chosen on the test rows makes their score optimistic: choose on a validation block, then test once."
+  },
+  "quiz": [
+    {
+      "id": "q-lambda-zero",
+      "difficulty": 2,
+      "prose": "`Ridge(alpha=0)` and `LinearRegression()` are fitted on the same rows.",
+      "question": "How do their coefficients compare?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "They are the same: with no penalty ridge is OLS",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "Ridge's are all 0",
+            "why": "You mixed up the two ends. $\\lambda \\to \\infty$ sends slopes to 0; $\\lambda = 0$ leaves them at OLS."
+          },
+          {
+            "id": "smaller",
+            "text": "Ridge's are a little smaller",
+            "why": "With $\\lambda = 0$ there is nothing to shrink them."
+          },
+          {
+            "id": "err",
+            "text": "Ridge raises an error at $\\lambda = 0$",
+            "why": "It fits; the penalty term is simply 0."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\lambda = 0$ removes the penalty.",
+        "generic": "Not quite right. Put $\\lambda = 0$ into $(\\mathbf{X}^T\\mathbf{X} + \\lambda\\mathbf{I})^{-1}\\mathbf{X}^T\\mathbf{y}$."
+      },
+      "explain": {
+        "text": "With $\\lambda = 0$ the formula is the normal equations, so the coefficients match OLS."
+      }
+    },
+    {
+      "id": "q-scale",
+      "difficulty": 3,
+      "prose": "Last year a desk found $\\lambda = 50$ best on returns in per cent. This year it measures returns in basis points, 100 times larger, with the same features.",
+      "question": "Should it reuse $\\lambda = 50$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the right $\\lambda$ depends on the scale of the data, so choose it again on held-out rows",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: $\\lambda$ is a property of the model, not the data",
+            "why": "You treated $\\lambda$ as universal. It is weighed against squared errors and squared coefficients, which both depend on units."
+          },
+          {
+            "id": "times100",
+            "text": "Use $\\lambda = 5{,}000$, 100 times larger",
+            "why": "You scaled it with the target. In this setup the features did not change, so the same $\\lambda$ shrinks by the same factor; but nobody should rely on such arithmetic. Re-tune it."
+          },
+          {
+            "id": "never",
+            "text": "No: ridge cannot be used on basis points",
+            "why": "Units do not matter to ridge's validity, only to the value of $\\lambda$."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A penalty is only meaningful relative to the data it is applied to.",
+        "generic": "Not quite right. Ask what $\\lambda$ is compared with in the objective."
+      },
+      "explain": {
+        "text": "A $\\lambda$ tuned on one dataset is not a number to carry across datasets with different scales, sizes or features. Treat it as something to estimate each time, on held-out rows."
+      }
+    },
+    {
+      "id": "q-intercept",
+      "difficulty": 2,
+      "prose": "`Ridge` in scikit-learn centres the data and leaves the intercept out of the penalty.",
+      "question": "What would go wrong if the intercept were penalised?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pull",
+            "text": "Forecasts would be pulled towards 0%, so shifting every return by a constant would change the fit",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "Nothing: the intercept is just another coefficient",
+            "why": "You treated the average level like a feature effect. Shrinking it drags every forecast towards 0%."
+          },
+          {
+            "id": "singular",
+            "text": "The matrix would become singular",
+            "why": "Penalising more never makes the system singular; it makes the forecasts depend on where 0 is."
+          },
+          {
+            "id": "slopes",
+            "text": "The slopes would go to 0 faster",
+            "why": "With centred data the slopes do not depend on the intercept's penalty."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The average return is not a feature effect; there is no reason to shrink it.",
+        "generic": "Not quite right. Ask what the intercept stands for."
+      },
+      "explain": {
+        "text": "The intercept is the average forecast. Penalising it ties the model to an arbitrary zero point, so returns in excess of cash and raw returns would give different slopes."
+      }
+    },
+    {
+      "id": "q-shrink-num",
+      "difficulty": 3,
+      "prose": "Uncorrelated z-scored features on $n = 300$ rows, so ridge multiplies each OLS coefficient by $n/(n + \\lambda)$. An OLS coefficient is 0.45.",
+      "question": "What is it at $\\lambda = 150$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3,
+        "tol": {
+          "abs": 0.001
+        },
+        "label": "Ridge coefficient",
+        "accept": "0.30: $0.45 \\times 300/450$.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.225,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "minus",
+            "value": 0.15,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.45 \\times \\tfrac{2}{3} = 0.30$.",
+        "generic": "Not quite right. Multiply 0.45 by $300/(300 + 150)$.",
+        "byKey": {
+          "half": "You used $\\lambda/n = 0.5$ as the factor. The factor is $n/(n + \\lambda) = 2/3$.",
+          "minus": "You took a third off twice. The factor is $2/3$, once."
+        }
+      },
+      "explain": {
+        "text": "$300/450 = 2/3$, so $0.45 \\times 2/3 = 0.30$. Half the OLS value would need $\\lambda = n = 300$."
+      }
+    }
+  ]
+}

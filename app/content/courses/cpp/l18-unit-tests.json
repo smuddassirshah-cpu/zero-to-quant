@@ -1,0 +1,942 @@
+{
+ "id": "l18-unit-tests",
+ "course": "cpp",
+ "title": "Testing C++ code",
+ "minutes": 15,
+ "objectives": [
+  "Write unit tests for C++ code with a test framework."
+ ],
+ "skills": [
+  "cp-build"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "pytest, in C++",
+   "prose": "C++ tests run on a desk machine with a framework such as **Catch2** or **GoogleTest**, built by CMake; this app shows their sessions. Here is a test you know from the `pytest` course, and the same test in Catch2.",
+   "canvas": {
+    "kind": "pair",
+    "active": "right",
+    "stack": true,
+    "left": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "def test_atm_call():",
+       "    price = bs_call(100, 100, 0.05, 0.2, 1.0)",
+       "    assert price == pytest.approx(10.4506, abs=1e-4)"
+      ],
+      "title": "test_bs.py",
+      "numbers": true
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "console",
+     "params": {
+      "lines": [
+       "#include <catch2/catch_test_macros.hpp>",
+       "#include <catch2/catch_approx.hpp>",
+       "#include \"pricing/bs.h\"",
+       "using Catch::Approx;",
+       "",
+       "TEST_CASE(\"ATM call matches a known price\") {",
+       "    double price = bs_call(100, 100, 0.05, 0.2, 1.0);",
+       "    REQUIRE(price == Approx(10.4506).margin(1e-4));",
+       "}"
+      ],
+      "title": "tests/test_bs.cpp",
+      "numbers": true
+     },
+     "state": {}
+    }
+   },
+   "question": "Tap the Catch2 line that does the job of the `assert` line.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l8"
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The `assert` line compares the price with a value, allowing a tolerance."
+    },
+    {
+     "rung": "point",
+     "text": "`pytest.approx` has a Catch2 twin with a similar name."
+    },
+    {
+     "rung": "step",
+     "text": "Line 8: `REQUIRE(price == Approx(10.4506).margin(1e-4));`"
+    }
+   ],
+   "feedback": {
+    "correct": "`REQUIRE` with `Approx` is `assert` with `pytest.approx`.",
+    "generic": "Not quite right. Find the line that compares the price with 10.4506.",
+    "byKey": {
+     "l7": "Line 7 computes the price; it checks nothing. That is the line before the `assert`.",
+     "l6": "Line 6 names the test, like `def test_atm_call():`.",
+     "l1": "The includes bring in Catch2's macros; they check nothing."
+    }
+   },
+   "explain": {
+    "text": "`TEST_CASE(\"...\")` is the test function, named by a sentence. `REQUIRE` is `assert`, and `Approx(10.4506).margin(1e-4)` is `pytest.approx(10.4506, abs=1e-4)`. The shape is the same: arrange the inputs, act, assert.",
+    "canvas": {
+     "highlight": [
+      "right:l8",
+      "left:l3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A test run on the desk, after someone changed `bs_call`. Catch2 prints each failing test case: its name, the line, the check, and the check again with the values filled in.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./build/tests",
+      "----------------------------------------",
+      "call at expiry pays intrinsic",
+      "----------------------------------------",
+      "tests/test_bs.cpp:14",
+      "",
+      "tests/test_bs.cpp:16: FAILED:",
+      "  REQUIRE( bs_call(90, 100, 0.05, 0.2, 0.0) == Approx(0.0) )",
+      "with expansion:",
+      "  -10.0 == Approx( 0.0 )",
+      "",
+      "========================================",
+      "test cases: 2 | 1 passed | 1 failed",
+      "assertions: 3 | 2 passed | 1 failed"
+     ],
+     "title": "Terminal"
+    },
+    "state": {}
+   },
+   "question": "Tap the line that shows the value `bs_call` returned.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l10"
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Catch2 repeats the failing check with each expression replaced by its value."
+    }
+   ],
+   "feedback": {
+    "correct": "−10.0 came back where 0 was expected.",
+    "generic": "Not quite right. Look under `with expansion:`.",
+    "byKey": {
+     "l8": "Line 8 is the check as written. The line under `with expansion:` fills in the values.",
+     "l7": "Line 7 says where it failed, not what came back.",
+     "l13": "Line 13 counts test cases; it shows no values."
+    }
+   },
+   "explain": {
+    "text": "`with expansion:` shows `bs_call` returned −10.0: at expiry the call paid $S - K$ without the floor at 0. The name on line 3 says which behaviour broke, which is why test names are sentences. pytest prints the same thing as `assert -10.0 == 0.0 ± 1e-06`.",
+    "canvas": {
+     "highlight": [
+      "l3",
+      "l10"
+     ],
+     "tone": {
+      "l7": "err",
+      "l10": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Sections",
+   "prose": "Catch2 has no fixtures. Instead a `TEST_CASE` can hold `SECTION`s, and Catch2 runs the test case from the top once for each `SECTION`, entering only that one. So each section gets fresh data from the shared lines above it.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "TEST_CASE(\"returns of a short series\") {",
+      "    std::vector<double> px{100.0, 110.0, 99.0};   // arrange",
+      "    auto r = simple_returns(px);                   // act",
+      "",
+      "    SECTION(\"one return fewer than prices\") {",
+      "        REQUIRE(r.size() == 2);",
+      "    }",
+      "    SECTION(\"first return is ten percent\") {",
+      "        REQUIRE(r[0] == Approx(0.1));",
+      "    }",
+      "}"
+     ],
+     "title": "tests/test_returns.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "How many times does line 3 call `simple_returns`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "2",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many sections are there?"
+    },
+    {
+     "rung": "point",
+     "text": "Each run of the test case passes through lines 2 and 3 before entering its section.",
+     "highlight": [
+      "l5",
+      "l8"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Twice: one run per section.",
+    "generic": "Not quite right. Count the runs of the test case, one per `SECTION`.",
+    "byKey": {
+     "one": "You read the sections as parts of one run. Catch2 runs the test case once for each section, so lines 2 and 3 run twice.",
+     "three": "There is no extra run without a section. Two sections, two runs."
+    }
+   },
+   "explain": {
+    "text": "Each run enters one section, so lines 2 and 3 run before each: fresh `px` and `r` every time, like a pytest fixture. A failure in one section does not stop the other.",
+    "canvas": {
+     "highlight": [
+      "l2",
+      "l3"
+     ],
+     "shade": {
+      "s": [
+       "l5",
+       "l8"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Tests with a tolerance",
+   "prose": "This app cannot run Catch2, so it gives you a stand-in with the same shape. `TEST(name) { ... }` is `TEST_CASE`. `CHECK(expr)` works like Catch2's `CHECK`, and `CHECK_CLOSE(a, b, tol)` passes when $|a - b| \\le$ `tol`. A hidden `main` runs every test and prints `N passed, M failed`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./tests",
+      "2 passed, 0 failed"
+     ],
+     "title": "What your tests should print"
+    },
+    "state": {}
+   },
+   "question": "Fill in the two tests for `bs_call`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <cstdio>\n#include <iostream>\n#include <vector>\n\n// zq_test.h: the app's stand-in for Catch2 or GoogleTest\nnamespace zqt {\nstruct Case { const char* name; void (*fn)(); };\ninline std::vector<Case>& all() { static std::vector<Case> v; return v; }\ninline int& fails() { static int n = 0; return n; }\ninline int& variant() { static int v = 0; return v; }\nstruct Add { Add(const char* n, void (*f)()) { all().push_back({n, f}); } };\ninline void fail(const char* what, int line) { ++fails(); std::fprintf(stderr, \"line %d: %s failed\\n\", line, what); }\n}\n#define TEST(name) static void name(); static zqt::Add name##_zq_add(#name, name); static void name()\n#define CHECK(expr) do { if (!(expr)) zqt::fail(\"CHECK(\" #expr \")\", __LINE__); } while (0)\n#define CHECK_CLOSE(a, b, tol) do { if (!(std::fabs((a) - (b)) <= (tol))) zqt::fail(\"CHECK_CLOSE(\" #a \", \" #b \", \" #tol \")\", __LINE__); } while (0)\n\n// supplied: Black-Scholes call price\ninline double norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\ndouble bs_call(double S, double K, double r, double sigma, double T) {\n    int v = zqt::variant();\n    if (T <= 0) return v == 2 ? S - K : std::max(S - K, 0.0);\n    double half = v == 1 ? sigma * sigma : 0.5 * sigma * sigma;\n    double d1 = (std::log(S / K) + (r + half) * T) / (sigma * std::sqrt(T));\n    double d2 = d1 - sigma * std::sqrt(T);\n    double df = v == 3 ? 1.0 : std::exp(-r * T);\n    return S * norm_cdf(d1) - K * df * norm_cdf(d2);\n}\n",
+    "postlude": "#define PLANTED 1\n\nint main() {\n    int v = 0;\n    if (std::cin >> v) zqt::variant() = v;\n    int passed = 0, failed = 0;\n    for (const auto& t : zqt::all()) {\n        int before = zqt::fails();\n        t.fn();\n        if (zqt::fails() == before) { ++passed; }\n        else { ++failed; if (PLANTED == 0 || v == 0) std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    if (PLANTED == 0 || v == 0) std::printf(\"%d passed, %d failed\\n\", passed, failed);\n    else std::printf(failed ? \"planted bug %d: caught\\n\" : \"planted bug %d: missed\\n\", v);\n    return 0;\n}\n",
+    "starter": "// Tests for bs_call(S, K, r, sigma, T), which is supplied.\n// CHECK(expr) and CHECK_CLOSE(a, b, tol) as in the prose.\n\nTEST(at_the_money_matches_known_value) {\n    // S = K = 100, r = 0.05, sigma = 0.2, T = 1 gives 10.4506\n}\n\nTEST(expiry_pays_intrinsic) {\n    // T = 0 pays max(S - 100, 0): check S = 90 and S = 110\n}\n",
+    "solution": "// Tests for bs_call(S, K, r, sigma, T), which is supplied.\n// CHECK(expr) and CHECK_CLOSE(a, b, tol) as in the prose.\n\nTEST(at_the_money_matches_known_value) {\n    double price = bs_call(100, 100, 0.05, 0.2, 1.0);\n    CHECK_CLOSE(price, 10.4506, 1e-4);\n}\n\nTEST(expiry_pays_intrinsic) {\n    CHECK_CLOSE(bs_call(90, 100, 0.05, 0.2, 0.0), 0.0, 1e-12);\n    CHECK_CLOSE(bs_call(110, 100, 0.05, 0.2, 0.0), 10.0, 1e-12);\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "2 passed, 0 failed\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "2 passed, 0 failed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n",
+      "expect": "planted bug 1: caught\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n",
+      "expect": "planted bug 2: caught\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "3\n",
+      "expect": "planted bug 3: caught\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Test 1 runs your tests against the real bs_call and expects 2 passed, 0 failed. Tests 2 to 4 swap in a broken bs_call (input 1 to 3) and expect at least one of your checks to fail."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Arrange the inputs, act by calling `bs_call`, assert with `CHECK_CLOSE`."
+    },
+    {
+     "rung": "point",
+     "text": "10.4506 is rounded to 4 places, so a tolerance of `1e-4` fits it."
+    },
+    {
+     "rung": "step",
+     "text": "`CHECK_CLOSE(bs_call(100, 100, 0.05, 0.2, 1.0), 10.4506, 1e-4);` and, at expiry, `CHECK_CLOSE(bs_call(90, 100, 0.05, 0.2, 0.0), 0.0, 1e-12);` plus the same for 110 and 10.0."
+    }
+   ],
+   "feedback": {
+    "correct": "Both tests pass on the real pricer and fail on every planted bug.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Your tests should pass on the real `bs_call`. If one failed, check its tolerance: 10.4506 is rounded, so `==` or a tolerance below `1e-4` fails.",
+     "test-2": "A broken `bs_call` slipped through. If your tests are still empty, they pass: a test with no check always passes. Pin the 10.4506 value.",
+     "test-3": "This bug pays $S - K$ at expiry without the floor at 0. Check an out-of-the-money expiry, S = 90, which must pay 0.",
+     "test-4": "This bug forgets to discount the strike. The at-the-money value catches it."
+    }
+   },
+   "explain": {
+    "text": "The known value catches formula slips, and the expiry checks catch the missing floor. The tolerance matches the precision of the number you pinned: 4 places, so `1e-4`. In Catch2 these are `REQUIRE(... == Approx(10.4506).margin(1e-4))`."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A test that documents a bug",
+   "prose": "A colleague reports that `simple_returns` looks low on up days. Before anyone touches the code, write a test that documents the bug: it pins the right answer and fails today. The existing flat-price test passes, which is why nobody noticed.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./tests",
+      "FAIL rise_from_100_to_110_is_ten_percent",
+      "1 passed, 1 failed"
+     ],
+     "title": "What it should print today"
+    },
+    "state": {
+     "tone": {
+      "l2": "err"
+     }
+    }
+   },
+   "question": "Write `rise_from_100_to_110_is_ten_percent`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <cstdio>\n#include <iostream>\n#include <vector>\n\n// zq_test.h: the app's stand-in for Catch2 or GoogleTest\nnamespace zqt {\nstruct Case { const char* name; void (*fn)(); };\ninline std::vector<Case>& all() { static std::vector<Case> v; return v; }\ninline int& fails() { static int n = 0; return n; }\ninline int& variant() { static int v = 0; return v; }\nstruct Add { Add(const char* n, void (*f)()) { all().push_back({n, f}); } };\ninline void fail(const char* what, int line) { ++fails(); std::fprintf(stderr, \"line %d: %s failed\\n\", line, what); }\n}\n#define TEST(name) static void name(); static zqt::Add name##_zq_add(#name, name); static void name()\n#define CHECK(expr) do { if (!(expr)) zqt::fail(\"CHECK(\" #expr \")\", __LINE__); } while (0)\n#define CHECK_CLOSE(a, b, tol) do { if (!(std::fabs((a) - (b)) <= (tol))) zqt::fail(\"CHECK_CLOSE(\" #a \", \" #b \", \" #tol \")\", __LINE__); } while (0)\n\n// supplied: simple returns, as shipped\nstd::vector<double> simple_returns(const std::vector<double>& px) {\n    std::vector<double> out;\n    for (std::size_t i = 1; i < px.size(); ++i) {\n        if (zqt::variant() == 1) out.push_back(px[i] / px[i - 1] - 1);\n        else if (zqt::variant() == 2) out.push_back(px[i - 1] / px[i] - 1);\n        else out.push_back((px[i] - px[i - 1]) / px[i]);\n    }\n    return out;\n}\n",
+    "postlude": "#define PLANTED 0\n\nint main() {\n    int v = 0;\n    if (std::cin >> v) zqt::variant() = v;\n    int passed = 0, failed = 0;\n    for (const auto& t : zqt::all()) {\n        int before = zqt::fails();\n        t.fn();\n        if (zqt::fails() == before) { ++passed; }\n        else { ++failed; if (PLANTED == 0 || v == 0) std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    if (PLANTED == 0 || v == 0) std::printf(\"%d passed, %d failed\\n\", passed, failed);\n    else std::printf(failed ? \"planted bug %d: caught\\n\" : \"planted bug %d: missed\\n\", v);\n    return 0;\n}\n",
+    "starter": "// Tests for simple_returns(px), which is supplied.\n\nTEST(flat_prices_give_zero_returns) {\n    std::vector<double> px{100.0, 100.0, 100.0};\n    std::vector<double> r = simple_returns(px);\n    CHECK(r.size() == 2);\n    CHECK_CLOSE(r[0], 0.0, 1e-12);\n}\n\nTEST(rise_from_100_to_110_is_ten_percent) {\n    // arrange, act, assert: pin the value you work out by hand\n}\n",
+    "solution": "// Tests for simple_returns(px), which is supplied.\n\nTEST(flat_prices_give_zero_returns) {\n    std::vector<double> px{100.0, 100.0, 100.0};\n    std::vector<double> r = simple_returns(px);\n    CHECK(r.size() == 2);\n    CHECK_CLOSE(r[0], 0.0, 1e-12);\n}\n\nTEST(rise_from_100_to_110_is_ten_percent) {\n    std::vector<double> px{100.0, 110.0};\n    std::vector<double> r = simple_returns(px);\n    CHECK_CLOSE(r[0], 0.1, 1e-12);\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "FAIL rise_from_100_to_110_is_ten_percent\n1 passed, 1 failed\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "FAIL rise_from_100_to_110_is_ten_percent\n1 passed, 1 failed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n",
+      "expect": "2 passed, 0 failed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n",
+      "expect": "FAIL rise_from_100_to_110_is_ten_percent\n1 passed, 1 failed\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Test 1 runs your tests against simple_returns as shipped: your new test should fail. Test 2 swaps in a correct simple_returns (input 1), where both should pass. Test 3 uses another wrong version (input 2)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out by hand: from 100 to 110 is a rise of what fraction?"
+    },
+    {
+     "rung": "point",
+     "text": "$110 / 100 - 1 = 0.1$. Pin that, with a tolerance."
+    },
+    {
+     "rung": "step",
+     "text": "`std::vector<double> px{100.0, 110.0};` then `CHECK_CLOSE(simple_returns(px)[0], 0.1, 1e-12);`"
+    }
+   ],
+   "feedback": {
+    "correct": "A red test that says exactly what is wrong.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Your new test should fail against the shipped code. If it passed, it pins the wrong value or checks nothing.",
+     "test-2": "Against a correct `simple_returns` both tests must pass. If yours failed, your hand value is wrong: 110 / 100 − 1 = 0.1."
+    }
+   },
+   "explain": {
+    "text": "The shipped code returns 10 / 110 = 0.0909: it divides by the later price. Your test fails now and will pass once the code is right, so it documents the bug and guards the fix. Flat prices could never catch it: 0 divided by anything is 0."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Fix the code, not the test",
+   "prose": "Now the team's four tests are in `tests/test_returns.cpp`, shown here in short. The app compiles them with your `returns.cpp`. Fix `simple_returns` until they all pass. Check runs them at three price scales.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "TEST(rise_from_100_to_110_is_ten_percent)",
+      "    CHECK_CLOSE(simple_returns({100, 110})[0], 0.1, 1e-12)",
+      "TEST(fall_from_100_to_90_is_minus_ten_percent)",
+      "    CHECK_CLOSE(simple_returns({100, 90})[0], -0.1, 1e-12)",
+      "TEST(n_prices_give_n_minus_one_returns)",
+      "    CHECK(simple_returns({100, 101, 102, 103}).size() == 3)",
+      "TEST(empty_and_single_give_no_returns)",
+      "    CHECK(simple_returns({}).empty())",
+      "    CHECK(simple_returns({100}).empty())"
+     ],
+     "title": "tests/test_returns.cpp"
+    },
+    "state": {}
+   },
+   "question": "Fix `simple_returns` so the supplied tests pass.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <cstdio>\n#include <iostream>\n#include <vector>\n\n// zq_test.h: the app's stand-in for Catch2 or GoogleTest\nnamespace zqt {\nstruct Case { const char* name; void (*fn)(); };\ninline std::vector<Case>& all() { static std::vector<Case> v; return v; }\ninline int& fails() { static int n = 0; return n; }\ninline int& variant() { static int v = 0; return v; }\nstruct Add { Add(const char* n, void (*f)()) { all().push_back({n, f}); } };\ninline void fail(const char* what, int line) { ++fails(); std::fprintf(stderr, \"line %d: %s failed\\n\", line, what); }\n}\n#define TEST(name) static void name(); static zqt::Add name##_zq_add(#name, name); static void name()\n#define CHECK(expr) do { if (!(expr)) zqt::fail(\"CHECK(\" #expr \")\", __LINE__); } while (0)\n#define CHECK_CLOSE(a, b, tol) do { if (!(std::fabs((a) - (b)) <= (tol))) zqt::fail(\"CHECK_CLOSE(\" #a \", \" #b \", \" #tol \")\", __LINE__); } while (0)\n\nstd::vector<double> simple_returns(const std::vector<double>& px);\n\n// tests/test_returns.cpp (supplied); k is 1, 2 or 3: Check runs them at three price scales\nTEST(rise_from_100_to_110_is_ten_percent) {\n    double k = 1 + zqt::variant();\n    CHECK_CLOSE(simple_returns({100 * k, 110 * k})[0], 0.1, 1e-12);\n}\nTEST(fall_from_100_to_90_is_minus_ten_percent) {\n    double k = 1 + zqt::variant();\n    CHECK_CLOSE(simple_returns({100 * k, 90 * k})[0], -0.1, 1e-12);\n}\nTEST(n_prices_give_n_minus_one_returns) {\n    double k = 1 + zqt::variant();\n    CHECK(simple_returns({100 * k, 101 * k, 102 * k, 103 * k}).size() == 3);\n}\nTEST(empty_and_single_give_no_returns) {\n    CHECK(simple_returns({}).empty());\n    CHECK(simple_returns({100.0}).empty());\n}\n",
+    "postlude": "#define PLANTED 0\n\nint main() {\n    int v = 0;\n    if (std::cin >> v) zqt::variant() = v;\n    int passed = 0, failed = 0;\n    for (const auto& t : zqt::all()) {\n        int before = zqt::fails();\n        t.fn();\n        if (zqt::fails() == before) { ++passed; }\n        else { ++failed; if (PLANTED == 0 || v == 0) std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    if (PLANTED == 0 || v == 0) std::printf(\"%d passed, %d failed\\n\", passed, failed);\n    else std::printf(failed ? \"planted bug %d: caught\\n\" : \"planted bug %d: missed\\n\", v);\n    return 0;\n}\n",
+    "starter": "#include <vector>\n// src/returns.cpp\n\nstd::vector<double> simple_returns(const std::vector<double>& px) {\n    std::vector<double> out(px.size() - 1);\n    for (std::size_t i = 1; i < px.size(); ++i) {\n        out[i - 1] = (px[i] - px[i - 1]) / px[i];\n    }\n    return out;\n}\n",
+    "solution": "#include <vector>\n// src/returns.cpp\n\nstd::vector<double> simple_returns(const std::vector<double>& px) {\n    std::vector<double> out;\n    if (px.size() < 2) {\n        return out;\n    }\n    out.reserve(px.size() - 1);\n    for (std::size_t i = 1; i < px.size(); ++i) {\n        out.push_back(px[i] / px[i - 1] - 1);\n    }\n    return out;\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "4 passed, 0 failed\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "4 passed, 0 failed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n",
+      "expect": "4 passed, 0 failed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n",
+      "expect": "4 passed, 0 failed\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check compiles the supplied tests with your returns.cpp and runs them three times, with prices scaled by 1, 2 and 3; each run must print 4 passed, 0 failed."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two things are wrong: the divisor, and what happens with no prices."
+    },
+    {
+     "rung": "point",
+     "text": "`px.size() - 1` with an empty vector wraps to a huge size, and the vector's constructor throws.",
+     "highlight": [
+      "l7",
+      "l8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return early when `px.size() < 2`, and divide by the earlier price: `px[i] / px[i - 1] - 1`."
+    }
+   ],
+   "feedback": {
+    "correct": "4 passed, 0 failed, at every scale.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "If the run stopped with `std::length_error`, `out(px.size() - 1)` wrapped on an empty vector: return early first. If the rise or fall tests fail, divide by `px[i - 1]`.",
+     "error": "The program stopped before printing. An empty `px` makes `px.size() - 1` huge; return early when `px.size() < 2`."
+    }
+   },
+   "explain": {
+    "text": "Two fixes: guard the short inputs, and divide by the earlier price. The tests never changed: they define the behaviour, and the code was brought to them. Changing a test until it passes would hide the bug again."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Testing for a throw",
+   "prose": "A desk's `CMakeLists.txt` registers the test program with `add_test`, and `ctest` runs every registered test. One test should check that `returns_from` rejects a negative price by throwing `std::invalid_argument`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ctest --test-dir build",
+      "Test project /home/you/pricing/build",
+      "    Start 1: pricer_tests",
+      "1/2 Test #1: pricer_tests .....   Passed    0.02 sec",
+      "    Start 2: returns_tests",
+      "2/2 Test #2: returns_tests ....   Passed    0.01 sec",
+      "",
+      "100% tests passed, 0 tests failed out of 2"
+     ],
+     "title": "Terminal"
+    },
+    "state": {
+     "tone": {
+      "l8": "ok"
+     }
+    }
+   },
+   "question": "How do you write that test?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "throws",
+      "text": "On a desk build, `REQUIRE_THROWS_AS(returns_from({100.0, -5.0}), std::invalid_argument);`",
+      "correct": true
+     },
+     {
+      "id": "check",
+      "text": "`CHECK(returns_from({100.0, -5.0}) == std::invalid_argument)`",
+      "why": "A throw is not a value to compare. The call never returns, so there is nothing for `==` to see."
+     },
+     {
+      "id": "app",
+      "text": "With this app's `CHECK`, since the throw ends the test",
+      "why": "A throw ends the whole program here, because this app cannot catch exceptions. The runner never gets to count it."
+     },
+     {
+      "id": "none",
+      "text": "You cannot test for exceptions in C++",
+      "why": "You can, with a framework that catches them: Catch2's `REQUIRE_THROWS_AS`, or GoogleTest's `EXPECT_THROW`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Something must catch the exception and turn it into a pass."
+    },
+    {
+     "rung": "point",
+     "text": "Catch2 has a macro family named after throwing."
+    },
+    {
+     "rung": "step",
+     "text": "`REQUIRE_THROWS_AS(expr, type)` passes when `expr` throws that type."
+    }
+   ],
+   "feedback": {
+    "correct": "The framework catches the throw and checks its type.",
+    "generic": "Not quite right. Which tool can catch an exception and report on it?",
+    "byKey": {
+     "app": "Here a throw ends the program before the runner can count anything. That is why this app's tests cannot check throws."
+    }
+   },
+   "explain": {
+    "text": "`REQUIRE_THROWS_AS` runs the call inside a `try`, passes if `std::invalid_argument` comes out, and fails otherwise. It is pytest's `with pytest.raises(...)`. This app has no `try`/`catch`, so such tests belong on a desk build, run by `ctest`."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "== in a test",
+   "prose": "A new test for the fixed `simple_returns`, written with the stand-in:\n\n```cpp\nTEST(rise_is_ten_percent) {\n    std::vector<double> r = simple_returns({100.0, 110.0});\n    CHECK(r[0] == 0.1);\n}\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./tests",
+      "?"
+     ],
+     "title": "Terminal"
+    },
+    "state": {}
+   },
+   "question": "What does the runner print?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fail",
+      "text": "`FAIL rise_is_ten_percent`, then `0 passed, 1 failed`",
+      "correct": true
+     },
+     {
+      "id": "pass",
+      "text": "`1 passed, 0 failed`",
+      "why": "You did the sum on paper. As doubles, 110.0 / 100.0 − 1 is 0.10000000000000009, which is not the `double` nearest 0.1.",
+      "canvas": {
+       "lines": [
+        "$ ./tests",
+        "FAIL rise_is_ten_percent",
+        "0 passed, 1 failed"
+       ],
+       "tone": {
+        "l2": "err"
+       }
+      }
+     },
+     {
+      "id": "noc",
+      "text": "A compile error: `==` cannot compare doubles",
+      "why": "`==` compiles for doubles. It compares them exactly, which is the problem."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is 110.0 / 100.0 exactly 1.1 as a `double`?"
+    },
+    {
+     "rung": "point",
+     "text": "1.1 cannot be stored exactly; the nearest `double` is a hair above it."
+    },
+    {
+     "rung": "step",
+     "text": "So the result is 0.10000000000000009, and `== 0.1` is false."
+    }
+   ],
+   "feedback": {
+    "correct": "Exact equality fails by one rounding step.",
+    "generic": "Not quite right. Compute 110.0 / 100.0 − 1 as a `double`.",
+    "byKey": {
+     "pass": "You did the sum on paper. As doubles the result is 0.10000000000000009, so `== 0.1` is false."
+    }
+   },
+   "explain": {
+    "text": "The code is right and the test is wrong: doubles carry rounding, so tests compare within a tolerance. Write `CHECK_CLOSE(r[0], 0.1, 1e-12)`, or `Approx(0.1)` in Catch2. Pick the tolerance from how precise the expected value is.",
+    "canvas": {
+     "lines": [
+      "$ ./tests",
+      "FAIL rise_is_ten_percent",
+      "0 passed, 1 failed"
+     ],
+     "tone": {
+      "l2": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "The rules you used, in one place.\n\n```cpp\nTEST_CASE(\"vwap of two fills\") {   // one behaviour, named\n    std::vector<double> px{100, 102};  // arrange\n    std::vector<double> q{100, 300};\n    double v = vwap(px, q);            // act\n    REQUIRE(v == Approx(101.5));       // assert, with tolerance\n}\n```\nPin values worked out by hand, not values copied from the code's output.",
+   "question": "`TEST_CASE(\"vwap of one fill\") { double v = vwap({101.5}, {200}); }` What does Catch2 report?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pass",
+      "text": "It passes, whatever `vwap` returns",
+      "correct": true
+     },
+     {
+      "id": "fail",
+      "text": "It fails: there is nothing to check",
+      "why": "A test fails only when a check fails or the code throws. No check means nothing can fail."
+     },
+     {
+      "id": "warn",
+      "text": "It refuses to compile",
+      "why": "It compiles. Catch2 can warn about such tests only if you ask it to."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What makes a test fail?"
+    }
+   ],
+   "feedback": {
+    "correct": "No assertion, no failure.",
+    "generic": "Not quite right. When does a test fail?"
+   },
+   "explain": {
+    "text": "A test with no `REQUIRE` passes even if `vwap` returns nonsense, so it guards nothing. Every test needs at least one check of a hand-worked value. The planted bugs earlier showed this: empty tests missed every one."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Pinning the Python price",
+   "prose": "In `cpp-pricing` you port your Python binomial pricer to C++. The Python version is trusted, so pin its output: a **regression test**. Any later change that moves the price fails at once. Add a convergence test against Black-Scholes too.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ python3 pricer.py --steps 100",
+      "10.430612",
+      "$ python3 pricer.py --steps 2000",
+      "10.449584",
+      "$ python3 bs.py",
+      "10.450584"
+     ],
+     "title": "Terminal: the Python reference"
+    },
+    "state": {}
+   },
+   "question": "Write the two tests.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <cstdio>\n#include <iostream>\n#include <vector>\n\n// zq_test.h: the app's stand-in for Catch2 or GoogleTest\nnamespace zqt {\nstruct Case { const char* name; void (*fn)(); };\ninline std::vector<Case>& all() { static std::vector<Case> v; return v; }\ninline int& fails() { static int n = 0; return n; }\ninline int& variant() { static int v = 0; return v; }\nstruct Add { Add(const char* n, void (*f)()) { all().push_back({n, f}); } };\ninline void fail(const char* what, int line) { ++fails(); std::fprintf(stderr, \"line %d: %s failed\\n\", line, what); }\n}\n#define TEST(name) static void name(); static zqt::Add name##_zq_add(#name, name); static void name()\n#define CHECK(expr) do { if (!(expr)) zqt::fail(\"CHECK(\" #expr \")\", __LINE__); } while (0)\n#define CHECK_CLOSE(a, b, tol) do { if (!(std::fabs((a) - (b)) <= (tol))) zqt::fail(\"CHECK_CLOSE(\" #a \", \" #b \", \" #tol \")\", __LINE__); } while (0)\n\n// supplied: Cox-Ross-Rubinstein binomial call, ported from your Python pricer\ndouble binomial_call(double S, double K, double r, double sigma, double T, int steps) {\n    int v = zqt::variant();\n    int n = v == 2 ? steps - 1 : steps;\n    double dt = T / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double disc = v == 1 ? 1.0 : std::exp(-r * dt);\n    double p = (std::exp(r * dt) - d) / (u - d);\n    std::vector<double> val(n + 1);\n    for (int j = 0; j <= n; ++j) val[j] = std::max(S * std::pow(u, n - j) * std::pow(d, j) - K, 0.0);\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) val[j] = disc * (p * val[j] + (1 - p) * val[j + 1]);\n    return val[0];\n}\n",
+    "postlude": "#define PLANTED 1\n\nint main() {\n    int v = 0;\n    if (std::cin >> v) zqt::variant() = v;\n    int passed = 0, failed = 0;\n    for (const auto& t : zqt::all()) {\n        int before = zqt::fails();\n        t.fn();\n        if (zqt::fails() == before) { ++passed; }\n        else { ++failed; if (PLANTED == 0 || v == 0) std::printf(\"FAIL %s\\n\", t.name); }\n    }\n    if (PLANTED == 0 || v == 0) std::printf(\"%d passed, %d failed\\n\", passed, failed);\n    else std::printf(failed ? \"planted bug %d: caught\\n\" : \"planted bug %d: missed\\n\", v);\n    return 0;\n}\n",
+    "starter": "// Tests for binomial_call(S, K, r, sigma, T, steps), which is supplied.\n\nTEST(matches_python_pricer_at_100_steps) {\n    // the Python pricer gave 10.430612 for S = K = 100, r = 0.05, sigma = 0.2, T = 1\n}\n\nTEST(converges_to_black_scholes) {\n    // with 2000 steps it should be within 0.002 of Black-Scholes, 10.450584\n}\n",
+    "solution": "// Tests for binomial_call(S, K, r, sigma, T, steps), which is supplied.\n\nTEST(matches_python_pricer_at_100_steps) {\n    double price = binomial_call(100, 100, 0.05, 0.2, 1.0, 100);\n    CHECK_CLOSE(price, 10.430612, 1e-6);\n}\n\nTEST(converges_to_black_scholes) {\n    double price = binomial_call(100, 100, 0.05, 0.2, 1.0, 2000);\n    CHECK_CLOSE(price, 10.450584, 0.002);\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "2 passed, 0 failed\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "2 passed, 0 failed\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n",
+      "expect": "planted bug 1: caught\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "2\n",
+      "expect": "planted bug 2: caught\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Test 1 runs your tests against the C++ pricer and expects 2 passed, 0 failed. Tests 2 and 3 swap in a broken pricer (input 1 and 2) and expect at least one check to fail."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Python printed six decimals, so the tolerance can be `1e-6`."
+    },
+    {
+     "rung": "point",
+     "text": "Planted bug 2 uses 99 steps instead of 100; only the pinned value at 100 steps notices."
+    },
+    {
+     "rung": "step",
+     "text": "`CHECK_CLOSE(binomial_call(100, 100, 0.05, 0.2, 1.0, 100), 10.430612, 1e-6);` and `CHECK_CLOSE(binomial_call(100, 100, 0.05, 0.2, 1.0, 2000), 10.450584, 0.002);`"
+    }
+   ],
+   "feedback": {
+    "correct": "Pinned to Python, and checked against the theory.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Both tests should pass on the real pricer. The 100-step value is 10.430612 to six places, so a tolerance of `1e-6` holds; a smaller one may not.",
+     "test-2": "A pricer that forgets to discount slipped through. Do your tests check anything yet?",
+     "test-3": "A pricer one step short gives 10.4683 instead of 10.4306. The convergence test cannot see that; the 100-step pin can."
+    }
+   },
+   "explain": {
+    "text": "The pin catches tiny regressions, such as an off-by-one in the steps, that theory alone misses. The convergence test checks the model, which the pin cannot. Together they let you speed the pricer up in `cpp-pricing` without fear."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A test arranges inputs, acts once and asserts on a value worked out by hand; one behaviour per test, named as a sentence.",
+   "Doubles need a tolerance: `Approx` or `margin` in Catch2, `CHECK_CLOSE` here, chosen from the precision of the expected value.",
+   "A test with no assertion always passes; a failing test that pins the right answer documents a bug until the code is fixed."
+  ],
+  "formula": {
+   "name": "A tolerance check",
+   "tex": "|\\text{actual} - \\text{expected}| \\le \\text{tol}",
+   "note": "Catch2: `REQUIRE(x == Approx(e).margin(tol))`."
+  },
+  "trap": "`CHECK(r[0] == 0.1)` fails on correct code: 110.0 / 100.0 − 1 is 0.10000000000000009."
+ },
+ "quiz": [
+  {
+   "id": "q-impl",
+   "difficulty": 2,
+   "prose": "Two tests for `vwap`:\n\n```cpp\n// A\nREQUIRE(vwap({100, 102}, {100, 300}) == Approx(101.5));\n// B\nREQUIRE(vwap({100, 102}, {100, 300}) ==\n        Approx(std::inner_product(...) / std::accumulate(...)));\n```",
+   "question": "Which is the better test?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "A: it checks a value worked out by hand",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "B: it uses the same algorithms as the code",
+      "why": "B repeats the implementation, so a wrong formula is wrong on both sides and passes."
+     },
+     {
+      "id": "same",
+      "text": "They are equally good",
+      "why": "Only A can fail when the formula is wrong."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Test behaviour, not implementation.",
+    "generic": "Not quite right. Which test could fail if the formula were wrong?"
+   },
+   "explain": {
+    "text": "(100 × 100 + 102 × 300) / 400 = 101.5, worked by hand. B recomputes with the code's own method, so it checks nothing. B also breaks when you change how `vwap` works, even if the answer stays right."
+   }
+  },
+  {
+   "id": "q-tol",
+   "difficulty": 2,
+   "prose": "A reference value 10.4506 was copied from a paper, rounded to four places.",
+   "question": "Which tolerance fits a test against it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "e4",
+      "text": "`1e-4`",
+      "correct": true
+     },
+     {
+      "id": "e12",
+      "text": "`1e-12`",
+      "why": "The reference itself is only good to 0.0001. A correct pricer would fail."
+     },
+     {
+      "id": "one",
+      "text": "`1.0`",
+      "why": "That passes prices from 9.45 to 11.45, so real bugs slip through."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Match the tolerance to the reference's precision.",
+    "generic": "Not quite right. How precise is 10.4506?"
+   },
+   "explain": {
+    "text": "Rounded to four places, the true value lies within 0.00005 of 10.4506, so `1e-4` is right. Tighter fails correct code; looser lets bugs through."
+   }
+  },
+  {
+   "id": "q-many",
+   "difficulty": 3,
+   "prose": "One test checks a pricer's call price, put price, delta and gamma with four `REQUIRE`s.",
+   "question": "The call price is wrong. What do you learn from the run?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "first",
+      "text": "Only that the call price failed: `REQUIRE` stops the test, so the other three never ran",
+      "correct": true
+     },
+     {
+      "id": "all",
+      "text": "Which of the four are wrong",
+      "why": "`REQUIRE` aborts the test case at the first failure. The later checks did not run."
+     },
+     {
+      "id": "none",
+      "text": "Nothing: the whole file stops",
+      "why": "Only that test case stops; the others still run."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`REQUIRE` stops its test case at the first failure.",
+    "generic": "Not quite right. What does a failed `REQUIRE` do to the rest of the test?"
+   },
+   "explain": {
+    "text": "`REQUIRE` ends the test case on failure, so the later checks are hidden. One behaviour per test, or Catch2's `CHECK`, which carries on, reports every failure."
+   }
+  },
+  {
+   "id": "q-reg",
+   "difficulty": 3,
+   "prose": "A regression test pins the C++ binomial price at 10.430612. You speed up the pricer and the test fails with 10.430598.",
+   "question": "What is the right next step?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "find",
+      "text": "Find why the price moved before changing anything",
+      "correct": true
+     },
+     {
+      "id": "update",
+      "text": "Update the pinned value to 10.430598",
+      "why": "That hides the change. The pin exists to make you explain it."
+     },
+     {
+      "id": "widen",
+      "text": "Widen the tolerance to 1e-4 so it passes",
+      "why": "That too hides a change of 0.000014 you have not explained."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A failing pin is a question to answer.",
+    "generic": "Not quite right. What is the pinned value for?"
+   },
+   "explain": {
+    "text": "The speed-up changed the answer by 0.000014. Perhaps it reordered additions, which can be fine, or it broke something. Decide with the Python reference, then update the pin with a note if the new value is right."
+   }
+  }
+ ]
+}

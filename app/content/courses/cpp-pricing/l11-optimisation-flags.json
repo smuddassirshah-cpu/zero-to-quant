@@ -1,0 +1,1282 @@
+{
+  "id": "l11-optimisation-flags",
+  "course": "cpp-pricing",
+  "title": "Debug and optimised builds",
+  "minutes": 15,
+  "objectives": [
+    "Compare debug and optimised builds, and know which one to time."
+  ],
+  "skills": [
+    "cx-perf",
+    "cx-pricers"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Same source, two builds",
+      "prose": "A desk builds the tree benchmark from l9 twice from the same file, changing one flag. Illustrative numbers from a Linux server (Intel Xeon, 2.1 GHz, g++ 13.3), $n = 1{,}000$, median of five runs.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ g++ -std=c++17 -O0 tree_bench.cpp -o tree_O0",
+            "$ ./tree_O0",
+            "n = 1000: 4.50 ms per tree",
+            "$ g++ -std=c++17 -O2 tree_bench.cpp -o tree_O2",
+            "$ ./tree_O2",
+            "n = 1000: 0.45 ms per tree"
+          ],
+          "title": "Desk terminal"
+        },
+        "state": {}
+      },
+      "question": "How many times faster is the `-O2` build?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0.5
+        },
+        "unit": "times",
+        "accept": "10: 4.50 / 0.45.",
+        "wrong": [
+          {
+            "id": "diff",
+            "value": 4.05,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "inv",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the slow time by the fast time."
+        },
+        {
+          "rung": "point",
+          "text": "Lines 3 and 6 hold the two times.",
+          "highlight": [
+            "l3",
+            "l6"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Ten times faster, from one flag.",
+        "generic": "Not quite right. Divide 4.50 by 0.45.",
+        "byKey": {
+          "diff": "4.05 ms is the difference. The question asks for the ratio.",
+          "inv": "0.1 is the ratio upside down: slow over fast is 10."
+        }
+      },
+      "explain": {
+        "text": "`-O0` asks for no optimisation: the compiler translates line by line and stores every value back to memory. `-O2` lets it rewrite the code while keeping what it computes. Same source, same prices, a tenth of the time.",
+        "canvas": {
+          "highlight": [
+            "l1",
+            "l4"
+          ],
+          "caption": "Only the `-O` flag changed."
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Which build to time",
+      "prose": "The same tree at all four optimisation levels, on the desk machine (illustrative, log scale). The desk's library ships built with `-O2`.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "o0",
+              "label": "-O0"
+            },
+            {
+              "id": "o1",
+              "label": "-O1"
+            },
+            {
+              "id": "o2",
+              "label": "-O2"
+            },
+            {
+              "id": "o3",
+              "label": "-O3"
+            }
+          ],
+          "yLabel": "ms per tree",
+          "yScale": "log",
+          "showValues": true,
+          "decimals": 2
+        },
+        "state": {
+          "values": {
+            "o0": 4.5,
+            "o1": 0.5,
+            "o2": 0.45,
+            "o3": 0.2
+          }
+        }
+      },
+      "question": "Tap the bar a benchmark of the shipped library should report.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "o2"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A benchmark answers: how fast is what the desk actually runs?"
+        },
+        {
+          "rung": "point",
+          "text": "The library ships with one of these flags.",
+          "highlight": [
+            "o2"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Time what you ship.",
+        "generic": "Not quite right. Which flag does the shipped library use?",
+        "byKey": {
+          "o3": "`-O3` is the fastest bar here, but the desk does not ship it. And `-O3` is not always faster than `-O2`: its bigger code can run slower on another loop.",
+          "o0": "That is a **debug build**: right for stepping through code, ten times too slow to report.",
+          "o1": "`-O1` is close here, but it is not what ships."
+        }
+      },
+      "explain": {
+        "text": "A **debug build** (`-O0`) is for finding bugs; a **release build** (`-O2` or `-O3`) is what runs. Report the release build's time, and say which flags it used. This app compiles every exercise at one fixed level, `-O1`, so desk comparisons come from runs like these.",
+        "canvas": {
+          "highlight": [
+            "o2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "One flag for each need",
+      "prose": "A release build line on a desk might read:\n\n```text\ng++ -std=c++17 -O2 -g -DNDEBUG -Wall -Wextra -Werror pricer.cpp\n```\n\nEach flag answers one need. `-march=native` is one more: it uses every instruction this processor has, so the program may not run on an older one.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ g++ -std=c++17 -O2 -g -DNDEBUG -Wall -Wextra -Werror pricer.cpp -o pricer"
+          ],
+          "title": "Build line"
+        },
+        "state": {}
+      },
+      "question": "Drag each flag to the need it answers.",
+      "widget": {
+        "kind": "place",
+        "mode": "assign",
+        "tokens": [
+          {
+            "id": "o2",
+            "text": "`-O2`"
+          },
+          {
+            "id": "g",
+            "text": "`-g`"
+          },
+          {
+            "id": "nd",
+            "text": "`-DNDEBUG`"
+          },
+          {
+            "id": "w",
+            "text": "`-Wall -Wextra -Werror`"
+          },
+          {
+            "id": "march",
+            "text": "`-march=native`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "fast",
+            "label": "Fast machine code",
+            "accepts": [
+              "o2"
+            ]
+          },
+          {
+            "id": "dbg",
+            "label": "Names and line numbers for a debugger",
+            "accepts": [
+              "g"
+            ]
+          },
+          {
+            "id": "asserts",
+            "label": "Switch every `assert` off",
+            "accepts": [
+              "nd"
+            ]
+          },
+          {
+            "id": "warn",
+            "label": "Stop the build on any warning",
+            "accepts": [
+              "w"
+            ]
+          },
+          {
+            "id": "cpu",
+            "label": "Use this exact processor's instructions",
+            "accepts": [
+              "march"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`-D` defines a macro. Which macro does `<cassert>` look for?"
+        },
+        {
+          "rung": "point",
+          "text": "`-g` adds debug information; it does not change speed."
+        },
+        {
+          "rung": "step",
+          "text": "`-O2` speed, `-g` debugger, `-DNDEBUG` asserts off, `-Werror` warnings stop the build, `-march=native` this processor."
+        }
+      ],
+      "feedback": {
+        "correct": "Each flag does one job, and they combine.",
+        "generic": "Not quite right. Read what each flag's letters stand for."
+      },
+      "explain": {
+        "text": "`-g` and `-O2` combine: a fast build you can still debug. `-DNDEBUG` defines the macro `NDEBUG`, which makes every `assert` vanish. `-Werror` turns warnings into errors, so a suspicious line cannot slip through."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What no flag can do",
+      "prose": "Level 2's American put checks early exercise at every node, calling `std::pow` twice per node: 1,000,000 calls at $n = 1{,}000$. On the desk, `-O2` priced it in 15.5 ms. Moving up one node multiplies the share price by $u/d = u^2$, so one `pow` per step is enough. The same `-O2` build then took 1.6 ms.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ ./amer_bench 1000        (g++ -O2)",
+            "pow at every node:   15.5 ms",
+            "one pow per step:     1.6 ms"
+          ],
+          "title": "Desk terminal"
+        },
+        "state": {}
+      },
+      "question": "Finish `american_put` without `pow` inside the inner loop. The tests check prices only.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\ndouble american_put(double s, double k, double r, double sigma, double t, int n) {\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    double node = s * std::pow(d, n);   // price at (n, 0): all downs\n    for (int j = 0; j <= n; ++j) {\n        v[j] = std::max(k - node, 0.0);\n        node *= 1;                      // TODO: move to node (n, j + 1)\n    }\n    for (int i = n - 1; i >= 0; --i) {\n        node = 0;                       // TODO: price at (i, 0)\n        for (int j = 0; j <= i; ++j) {\n            double hold = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            v[j] = std::max(hold, k - node);\n            node *= 1;                  // TODO: move to node (i, j + 1)\n        }\n    }\n    return v[0];\n}\n",
+        "solution": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\ndouble american_put(double s, double k, double r, double sigma, double t, int n) {\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    double node = s * std::pow(d, n);   // price at (n, 0): all downs\n    for (int j = 0; j <= n; ++j) {\n        v[j] = std::max(k - node, 0.0);\n        node *= u * u;                  // one more up, one fewer down\n    }\n    for (int i = n - 1; i >= 0; --i) {\n        node = s * std::pow(d, i);      // one pow per step, not per node\n        for (int j = 0; j <= i; ++j) {\n            double hold = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            v[j] = std::max(hold, k - node);\n            node *= u * u;\n        }\n    }\n    return v[0];\n}\n",
+        "examples": [
+          {
+            "call": "american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              4
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 5.88280035132943,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              4
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 5.88280035132943,
+            "compare": "isclose"
+          },
+          {
+            "call": "american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              100
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 6.082354409142385,
+            "compare": "isclose"
+          },
+          {
+            "call": "american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              512
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 6.088850829289741,
+            "compare": "isclose"
+          },
+          {
+            "call": "american_put",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              1000
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 6.089595282978188,
+            "compare": "isclose"
+          },
+          {
+            "call": "american_put",
+            "args": [
+              100.0,
+              90.0,
+              0.05,
+              0.2,
+              1.0,
+              200
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 2.4765604545108886,
+            "compare": "isclose"
+          },
+          {
+            "call": "american_put",
+            "args": [
+              100.0,
+              150.0,
+              0.05,
+              0.2,
+              1.0,
+              50
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 50.0,
+            "compare": "isclose"
+          },
+          {
+            "call": "american_put",
+            "args": [
+              100.0,
+              110.0,
+              0.05,
+              0.2,
+              1.0,
+              1
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 11.304236451473336,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Seven hidden tests: $n$ from 1 to 1,000, strikes £90 to £150 (deep in the money, where exercising at once is worth £50). Prices within a relative 1e-9 of the reference."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Node $(i, j)$ has price $S u^j d^{i-j}$. What changes from $j$ to $j + 1$?"
+        },
+        {
+          "rung": "point",
+          "text": "One more up and one fewer down: multiply by $u / d = u^2$."
+        },
+        {
+          "rung": "step",
+          "text": "Inside both loops: `node *= u * u;`. Before each step's inner loop: `node = s * std::pow(d, i);`."
+        }
+      ],
+      "feedback": {
+        "correct": "Same prices, about ten times faster on the desk: an algorithm change no flag makes.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-1": "At $n = 4$ the price should be 5.8828. Check each step starts from `s * std::pow(d, i)` and moves up by `u * u`.",
+          "test-6": "Deep in the money the put is worth exercising now: £150 − £100 = £50. Check the early-exercise value uses the node's price."
+        }
+      },
+      "explain": {
+        "text": "The optimiser must keep what `std::pow` returns exactly, so it cannot swap a million `pow` calls for repeated multiplication: the rounding would differ. You can, because you know the product is close enough. Rewriting the algorithm gave 10 times here; changing `-O2` to `-O3` gave nothing."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "An assert that stays on",
+      "prose": "`assert(cond)` from `<cassert>` stops the program with a message when `cond` is false. A build with `NDEBUG` defined deletes every assert. This app's build does not define `NDEBUG`, so here asserts stay on. With $n = 0$ the tree divides by zero and quietly returns a wrong number.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ ./pricer    (n = 0)",
+            "Assertion failed: n > 0 (main.cpp: checked_call: 5)"
+          ],
+          "title": "What it should do"
+        },
+        "state": {}
+      },
+      "question": "Add asserts so `checked_call` stops when `n`, `sigma` or `t` is not positive.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cassert>\n\n// Hidden: CallPayoff and level 2's binomial_price.\ndouble checked_call(double s, double k, double r, double sigma, double t, int n) {\n    // assert that n, sigma and t are all positive\n    return binomial_price(CallPayoff(k), s, r, sigma, t, n, false);\n}\n",
+        "solution": "#include <cassert>\n\n// Hidden: CallPayoff and level 2's binomial_price.\ndouble checked_call(double s, double k, double r, double sigma, double t, int n) {\n    assert(n > 0);\n    assert(sigma > 0);\n    assert(t > 0);\n    return binomial_price(CallPayoff(k), s, r, sigma, t, n, false);\n}\n",
+        "prelude": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double operator()(double s) const = 0;\n};\n\nstruct CallPayoff : Payoff {\n    double k;\n    explicit CallPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(s - k, 0.0); }\n};\n\nstruct PutPayoff : Payoff {\n    double k;\n    explicit PutPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(k - s, 0.0); }\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble binomial_price(const Payoff& payoff, double s, double r, double sigma,\n                      double t, int n, bool american) {\n    ++zq_trees;\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            if (american)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n        }\n    return v[0];\n}\n",
+        "examples": [
+          {
+            "call": "checked_call",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              0
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "compare": "raises"
+          }
+        ],
+        "tests": [
+          {
+            "call": "checked_call",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              128
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 10.434976156747096,
+            "compare": "isclose"
+          },
+          {
+            "call": "checked_call",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              0
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "compare": "raises"
+          },
+          {
+            "call": "checked_call",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              -5
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "compare": "raises"
+          },
+          {
+            "call": "checked_call",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.0,
+              1.0,
+              64
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "compare": "raises"
+          },
+          {
+            "call": "checked_call",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              0.0,
+              64
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "compare": "raises"
+          },
+          {
+            "call": "checked_call",
+            "args": [
+              100.0,
+              100.0,
+              0.05,
+              0.2,
+              1.0,
+              1
+            ],
+            "types": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "int"
+            ],
+            "expect": 12.162284964623941,
+            "compare": "isclose"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Six hidden tests: two good inputs give the level 2 prices, and $n = 0$, $n = -5$, $\\sigma = 0$ and $T = 0$ must each stop the program."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One `assert` per input, before the pricer runs."
+        },
+        {
+          "rung": "point",
+          "text": "`assert(n > 0);`"
+        },
+        {
+          "rung": "step",
+          "text": "`assert(n > 0); assert(sigma > 0); assert(t > 0);` then the return line."
+        }
+      ],
+      "feedback": {
+        "correct": "Bad inputs now stop loudly instead of pricing quietly wrong.",
+        "generic": "Not quite right. Read the first failing test.",
+        "byKey": {
+          "test-2": "With $n = 0$ the program ran to the end. Add `assert(n > 0);` before the return.",
+          "test-4": "$\\sigma = 0$ was not stopped. Assert on `sigma` too.",
+          "test-5": "$T = 0$ was not stopped. Assert on `t` too."
+        }
+      },
+      "explain": {
+        "text": "An assert states something that must be true for the code to be right. Here it catches a caller's mistake during testing. A release build with `-DNDEBUG` removes these checks, so inputs from outside the program need a check that stays, such as returning an error."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "The curve that never loaded",
+      "prose": "A colleague loads the rate curve inside an assert, to check it worked:\n\n```cpp\nint main() {\n    assert(load_curve());\n    std::printf(\"curve points: %zu\\n\", curve.size());\n}\n```\n\nTheir tests pass. Then the release build runs on the desk.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ g++ -O2 main.cpp -o main && ./main",
+            "curve points: 4",
+            "$ g++ -O2 -DNDEBUG main.cpp -o main && ./main",
+            "curve points: 0"
+          ],
+          "title": "Desk terminal"
+        },
+        "state": {}
+      },
+      "question": "Why does the release build print 0?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "nd",
+            "text": "`-DNDEBUG` deletes the whole assert, including the call to `load_curve()`",
+            "correct": true
+          },
+          {
+            "id": "o2",
+            "text": "`-O2` reordered the code, so the print ran before the load",
+            "why": "Both builds use `-O2`, and the first prints 4. The optimiser never reorders away what a program prints. The only difference is `-DNDEBUG`."
+          },
+          {
+            "id": "fail",
+            "text": "The assert failed, and release builds hide failed asserts",
+            "why": "Under `NDEBUG` the assert is not checked and fails nothing: its whole expression is gone, so `load_curve()` never runs."
+          },
+          {
+            "id": "dce",
+            "text": "The optimiser deleted `load_curve()` because its result was unused",
+            "why": "`load_curve()` fills `curve`, a side effect the optimiser must keep. It was deleted by the preprocessor, before the optimiser saw it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only one flag differs between the two builds."
+        },
+        {
+          "rung": "point",
+          "text": "Compare lines 1 and 3.",
+          "highlight": [
+            "l1",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With `NDEBUG`, `assert(x)` expands to nothing at all, `x` included."
+        }
+      ],
+      "feedback": {
+        "correct": "Never put work inside an assert.",
+        "generic": "Not quite right. Compare the two build lines.",
+        "byKey": {
+          "o2": "You blamed `-O2`, but both builds use it. The difference is `-DNDEBUG`, which removes the assert and the call inside it."
+        }
+      },
+      "explain": {
+        "text": "With `NDEBUG` defined, `assert(expr)` becomes nothing, so any work inside it vanishes. Write `bool ok = load_curve();` then `assert(ok);`.\n\n```cpp\nbool ok = load_curve();   // always runs\nassert(ok);               // only the check can vanish\n```",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "l4"
+            ]
+          },
+          "caption": "The release build never loaded the curve."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Fast, but not maths",
+      "prose": "`-ffast-math` lets the compiler treat doubles like real numbers: it may reorder sums and assume no NaN or infinity exists. A quoting tool rejects a missing volatility, read as NaN, with `std::isnan(vol)`. The desk adds `-ffast-math` to speed it up.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ g++ -O2 quote.cpp -o quote && ./quote nan",
+            "bad vol: quote rejected",
+            "$ g++ -O2 -ffast-math quote.cpp -o quote && ./quote nan",
+            "quoting with vol nan"
+          ],
+          "title": "Desk terminal"
+        },
+        "state": {}
+      },
+      "question": "Should the pricing library be built with `-ffast-math`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "no",
+            "text": "No: it can delete NaN checks and change results in the last digits, so tests and tolerances stop meaning what they say",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: it only makes arithmetic faster and never changes an answer",
+            "why": "Line 4 shows it changed behaviour: the NaN check vanished. Reordered sums also change the last digits, which breaks reproducible prices."
+          },
+          {
+            "id": "tests",
+            "text": "Yes, as long as the tests pass in the debug build",
+            "why": "The debug build has no `-ffast-math`, so its tests never see what the flag does."
+          },
+          {
+            "id": "bug",
+            "text": "No, because it makes the code slower",
+            "why": "It usually makes code faster. The problem is that it changes the program's meaning."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read line 4: was the bad input rejected?"
+        },
+        {
+          "rung": "point",
+          "text": "The NaN check stopped working.",
+          "highlight": [
+            "l4"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "Pricing code keeps exact IEEE rules: no `-ffast-math`.",
+        "generic": "Not quite right. Read what the second build printed."
+      },
+      "explain": {
+        "text": "Told that NaN cannot exist, the compiler decided `std::isnan(vol)` is always false and deleted the check. It may also add numbers in a different order, so a 10,000,000-term sum moved in its 12th digit on the desk. The tolerance reasoning of level 1 assumes IEEE rules; `-ffast-math` drops them.",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "l4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A check the optimiser deleted",
+      "prose": "A risk system guards a position counter against overflow. In C++ signed overflow is **undefined behaviour**: the compiler may assume it never happens.\n\n```cpp\nbool will_overflow(int x) { return x + 1 < x; }\n// called with x = INT_MAX\n```",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ clang++ -O0 overflow.cpp -o ov && ./ov",
+            "overflow detected: 1",
+            "$ clang++ -O2 overflow.cpp -o ov && ./ov",
+            "overflow detected: 0"
+          ],
+          "title": "Desk terminal"
+        },
+        "state": {}
+      },
+      "question": "What happened in the `-O2` build?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "ub",
+            "text": "Assuming `x + 1` cannot overflow, the compiler proved `x + 1 < x` false and replaced the check with `false`",
+            "correct": true
+          },
+          {
+            "id": "bug",
+            "text": "The compiler has a bug: `-O2` must give the same answer as `-O0`",
+            "why": "That holds only for programs without undefined behaviour. Overflowing an `int` breaks the rules, so no answer is wrong."
+          },
+          {
+            "id": "wrap",
+            "text": "At `-O2` the addition wraps differently",
+            "why": "No addition happens at all: the comparison was decided at compile time."
+          },
+          {
+            "id": "o0",
+            "text": "The `-O0` build is the wrong one: `INT_MAX + 1` is a large positive number",
+            "why": "Neither build is right, because there is no right answer. Check before adding: `x == INT_MAX`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If overflow never happens, can `x + 1` ever be less than `x`?"
+        },
+        {
+          "rung": "point",
+          "text": "The compiler may use 'overflow never happens' to simplify the comparison."
+        }
+      ],
+      "feedback": {
+        "correct": "Undefined behaviour lets the optimiser delete the very check meant to catch it.",
+        "generic": "Not quite right. Ask what the compiler may assume about `x + 1`."
+      },
+      "explain": {
+        "text": "For an `int` that never overflows, `x + 1 < x` is always false, so `-O2` returns `false` without adding. Test before the operation, `x == INT_MAX`, or use a wider type. Code that \"works at `-O0`\" may only be getting lucky."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Which build is this app?",
+      "prose": "A program can ask how it was built. Compilers define `__OPTIMIZE__` at `-O1` and above, and `-DNDEBUG` defines `NDEBUG`. The starter already reports the first. This app compiles every exercise with `-std=c++17 -O1`, a level you cannot change, and leaves `NDEBUG` undefined.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ ./main",
+            "optimised: yes",
+            "asserts: on",
+            "price: 10.4467"
+          ],
+          "title": "What it should print here"
+        },
+        "state": {}
+      },
+      "question": "Add the `NDEBUG` check, using `#ifdef NDEBUG`, `#else` and `#endif`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cstdio>\n\n// Hidden: CallPayoff and level 2's binomial_price.\nint main() {\n#ifdef __OPTIMIZE__\n    std::printf(\"optimised: yes\\n\");\n#else\n    std::printf(\"optimised: no\\n\");\n#endif\n    // print \"asserts: on\" or \"asserts: off\", using NDEBUG\n    CallPayoff call(100);\n    std::printf(\"price: %.4f\\n\", binomial_price(call, 100, 0.05, 0.2, 1, 512, false));\n}\n",
+        "solution": "#include <cstdio>\n\n// Hidden: CallPayoff and level 2's binomial_price.\nint main() {\n#ifdef __OPTIMIZE__\n    std::printf(\"optimised: yes\\n\");\n#else\n    std::printf(\"optimised: no\\n\");\n#endif\n#ifdef NDEBUG\n    std::printf(\"asserts: off\\n\");\n#else\n    std::printf(\"asserts: on\\n\");\n#endif\n    CallPayoff call(100);\n    std::printf(\"price: %.4f\\n\", binomial_price(call, 100, 0.05, 0.2, 1, 512, false));\n}\n",
+        "prelude": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double operator()(double s) const = 0;\n};\n\nstruct CallPayoff : Payoff {\n    double k;\n    explicit CallPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(s - k, 0.0); }\n};\n\nstruct PutPayoff : Payoff {\n    double k;\n    explicit PutPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(k - s, 0.0); }\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble binomial_price(const Payoff& payoff, double s, double r, double sigma,\n                      double t, int n, bool american) {\n    ++zq_trees;\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            if (american)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n        }\n    return v[0];\n}\n",
+        "examples": [
+          {
+            "compare": "stdout",
+            "expect": "optimised: yes\nasserts: on\nprice: 10.4467\n"
+          }
+        ],
+        "tests": [
+          {
+            "compare": "stdout",
+            "expect": "optimised: yes\nasserts: on\nprice: 10.4467\n"
+          },
+          {
+            "compare": "stdout",
+            "expect": "optimised: yes\nasserts: on\nprice: 10.4467\n",
+            "exact": true
+          },
+          {
+            "compare": "stdout",
+            "stdin": "ignored\n",
+            "expect": "optimised: yes\nasserts: on\nprice: 10.4467\n"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program three times and compares what it prints, once character for character. The price line prints the same in any build; only the first two lines tell builds apart."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Copy the shape of the `__OPTIMIZE__` block."
+        },
+        {
+          "rung": "point",
+          "text": "`#ifdef NDEBUG` is true when asserts are off."
+        },
+        {
+          "rung": "step",
+          "text": "`#ifdef NDEBUG` print \"asserts: off\", `#else` print \"asserts: on\", `#endif`."
+        }
+      ],
+      "feedback": {
+        "correct": "Optimised, asserts on: the price is the same as on the desk's builds.",
+        "generic": "Not quite right. Compare your output with the expected lines under the editor."
+      },
+      "explain": {
+        "text": "The preprocessor picks one branch before compiling, so the program reports its own build. Here it is optimised (`-O1`) with asserts kept. The price, 10.4467, is identical at every level: flags change speed, never a correct program's answer."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Test one build, time another",
+      "prose": "What you have used, as a rule of thumb (CMake's build types, from the C++ course's CMake lesson):\n\n```text\nDebug           -g                 asserts on    tests, debugger\nRelease         -O3 -DNDEBUG       asserts off   benchmarks, desk\nRelWithDebInfo  -O2 -g -DNDEBUG    asserts off   desk, with readable crashes\nthis app        -O1                asserts on    fixed\n```",
+      "question": "Your tests pass in the Debug build. What should also happen before a release?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "both",
+            "text": "Run the same tests on the Release build too",
+            "correct": true
+          },
+          {
+            "id": "enough",
+            "text": "Nothing: passing in Debug proves Release is correct",
+            "why": "The overflow check and the assert with a side effect both behaved differently in the optimised or `NDEBUG` build."
+          },
+          {
+            "id": "o0",
+            "text": "Ship the Debug build, since that is the one tested",
+            "why": "It is about ten times slower than release, and still the build the desk does not want."
+          },
+          {
+            "id": "fast",
+            "text": "Add `-ffast-math` to Release so it matches Debug's speed",
+            "why": "That changes results and deletes NaN checks; it makes the two builds differ more."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which bugs in this lesson appeared only in the optimised or `NDEBUG` build?"
+        }
+      ],
+      "feedback": {
+        "correct": "Test both builds; time the release build.",
+        "generic": "Not quite right. Recall the curve that never loaded."
+      },
+      "explain": {
+        "text": "Undefined behaviour and asserts with side effects show up only in some builds. A CI matrix builds Debug and Release and runs the tests on both; benchmarks run on Release only."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The desk's production build",
+      "prose": "The desk's pricing service runs all day. When it crashes overnight, the support team needs a stack trace with function names and line numbers, and the service must run at full speed.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "$ cmake -S . -B build -DCMAKE_BUILD_TYPE=???",
+            "$ cmake --build build",
+            "$ ctest --test-dir build"
+          ],
+          "title": "Build script"
+        },
+        "state": {}
+      },
+      "question": "Which CMake build type should replace `???`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "rwdi",
+            "text": "`RelWithDebInfo`: `-O2 -g -DNDEBUG`",
+            "correct": true
+          },
+          {
+            "id": "debug",
+            "text": "`Debug`: `-g`, so crashes are easy to read",
+            "why": "Readable, but unoptimised: about ten times slower for the tree. `-g` can be added to an optimised build instead."
+          },
+          {
+            "id": "release",
+            "text": "`Release`: `-O3 -DNDEBUG`",
+            "why": "Fast, but with no `-g` a crash report shows addresses instead of function names and lines."
+          },
+          {
+            "id": "minsize",
+            "text": "`MinSizeRel`: smallest binary",
+            "why": "It optimises for size, not speed, and has no debug information either."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You need two things at once: speed and readable crash reports."
+        },
+        {
+          "rung": "point",
+          "text": "`-g` and `-O2` combine freely."
+        }
+      ],
+      "feedback": {
+        "correct": "Optimised code plus debug information: `RelWithDebInfo`.",
+        "generic": "Not quite right. Which type has both `-O2` and `-g`?"
+      },
+      "explain": {
+        "text": "`RelWithDebInfo` builds at `-O2` with `-g`, so it runs at release speed and a crash names the function and line. A typical CI runs the tests on Debug and on `RelWithDebInfo`, and benchmarks only the second.",
+        "canvas": {
+          "lines": [
+            "$ cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo",
+            "$ cmake --build build",
+            "$ ctest --test-dir build"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`-O0` is a debug build, about ten times slower on the tree; time and ship a release build (`-O2` or `-O3`), and say which.",
+      "`-DNDEBUG` deletes every `assert`, its expression included; `-ffast-math` drops IEEE rules, so pricing code avoids it.",
+      "Undefined behaviour lets the optimiser delete checks, so run the tests on Debug and Release. This app compiles at a fixed `-O1` with asserts on."
+    ],
+    "formula": {
+      "name": "Build types",
+      "tex": "\\text{Debug} = \\texttt{-g}, \\quad \\text{Release} = \\texttt{-O3 -DNDEBUG}, \\quad \\text{RelWithDebInfo} = \\texttt{-O2 -g -DNDEBUG}",
+      "note": "CMake's defaults with g++ and clang++."
+    },
+    "trap": "An `assert` with a side effect, such as `assert(load_curve())`, loses the side effect in a `-DNDEBUG` build."
+  },
+  "quiz": [
+    {
+      "id": "q-uninit",
+      "difficulty": 3,
+      "prose": "```cpp\ndouble total;            // never set\nfor (double p : pnl) total += p;\n```\nThis prints the right P&L in a `-O0` build and nonsense at `-O2`.",
+      "question": "What is the real bug?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "init",
+            "text": "`total` is never initialised: reading it is undefined, and `-O0` was lucky to find 0 there",
+            "correct": true
+          },
+          {
+            "id": "o2",
+            "text": "`-O2` has a bug in its loop optimisation",
+            "why": "The compiler is entitled to any value for an uninitialised `double`. Write `double total = 0;`."
+          },
+          {
+            "id": "range",
+            "text": "The range-for loop skips the first element at `-O2`",
+            "why": "Range-for visits every element at every level. The start value of `total` is the problem."
+          },
+          {
+            "id": "fm",
+            "text": "`-O2` turns on `-ffast-math`",
+            "why": "`-O2` never implies `-ffast-math`; only `-Ofast` does."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Initialise it: `double total = 0;`.",
+        "generic": "Not quite right. What is `total` before the loop?"
+      },
+      "explain": {
+        "text": "An uninitialised local holds whatever was in that memory. At `-O0` that happened to be 0; at `-O2` it is a register with old data. `-Wall` warns about this, and `-Werror` would have stopped the build."
+      }
+    },
+    {
+      "id": "q-o3",
+      "difficulty": 2,
+      "prose": "A colleague says: \"`-O3` always beats `-O2`, so always ship `-O3`.\"",
+      "question": "What is the honest reply?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "measure",
+            "text": "Often, not always: `-O3` makes bigger code that can run slower, so measure both on your own loops",
+            "correct": true
+          },
+          {
+            "id": "always",
+            "text": "Right: higher numbers always mean faster code",
+            "why": "`-O3` unrolls and inlines more. Bigger code can miss the instruction cache and run slower."
+          },
+          {
+            "id": "unsafe",
+            "text": "Wrong: `-O3` changes results like `-ffast-math`",
+            "why": "`-O3` keeps IEEE rules; correct programs give the same answers. Only speed and size change."
+          },
+          {
+            "id": "never",
+            "text": "Wrong: `-O3` is always slower than `-O2`",
+            "why": "On the desk's tree it was twice as fast. It depends on the loop."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Measure, do not assume.",
+        "generic": "Not quite right. Was `-O3` faster on the tree, and is that a law?"
+      },
+      "explain": {
+        "text": "On the desk's tree `-O3` took 0.2 ms against 0.45 ms, but on other code its extra unrolling and inlining can lose. Choose by measuring the real workload."
+      }
+    },
+    {
+      "id": "q-app-build",
+      "difficulty": 2,
+      "prose": "You call `assert(n > 0)` with `n = 0` in this app's code widget.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "shuffle": true,
+        "options": [
+          {
+            "id": "stops",
+            "text": "The program stops with an assertion message: the app's build keeps asserts",
+            "correct": true
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: the app builds with `-DNDEBUG`",
+            "why": "The app compiles with `-std=c++17 -O1` and no `NDEBUG`, so asserts stay on."
+          },
+          {
+            "id": "catch",
+            "text": "It throws an exception the code can catch",
+            "why": "A failed assert calls `abort`; it is not an exception. And this app cannot catch exceptions anyway."
+          },
+          {
+            "id": "warn",
+            "text": "The compiler refuses to build the code",
+            "why": "The assert is checked when the program runs, not when it compiles."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Asserts are on in this app.",
+        "generic": "Not quite right. Recall what your build-report program printed."
+      },
+      "explain": {
+        "text": "Your program printed \"asserts: on\": the app does not define `NDEBUG`. A failed assert prints the condition, file and line, then stops the program."
+      }
+    },
+    {
+      "id": "q-speedup",
+      "difficulty": 3,
+      "prose": "A batch of 100,000 American puts at $n = 1{,}000$ took 15.5 ms each with `pow` at every node, and 1.6 ms each with one `pow` per step (both `-O2`).",
+      "question": "How many seconds does the batch save per night?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1390,
+        "tol": {
+          "abs": 10
+        },
+        "unit": "s",
+        "accept": "1,390 s: 100,000 × (15.5 − 1.6) ms.",
+        "wrong": [
+          {
+            "id": "ms",
+            "value": 13.9,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "one",
+            "value": 1550,
+            "tol": {
+              "abs": 10
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 23 minutes a night from one algorithm change.",
+        "generic": "Not quite right. Multiply the saving per put by 100,000.",
+        "byKey": {
+          "ms": "13.9 ms is the saving per put. Multiply by 100,000.",
+          "one": "1,550 s is the whole old batch, not the saving."
+        }
+      },
+      "explain": {
+        "text": "$100{,}000 \\times (15.5 - 1.6)$ ms $= 1{,}390{,}000$ ms $= 1{,}390$ s, about 23 minutes. Swapping `-O2` for `-O3` saved almost nothing on this loop."
+      }
+    }
+  ]
+}

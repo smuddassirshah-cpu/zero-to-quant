@@ -1,0 +1,1176 @@
+{
+ "id": "l7-black-scholes-cpp",
+ "course": "cpp-pricing",
+ "title": "Black-Scholes in C++",
+ "minutes": 15,
+ "objectives": [
+  "Implement Black-Scholes and check it against known values.",
+  "Test a pricer with parity, limits and finite differences, and solve for implied volatility."
+ ],
+ "skills": [
+  "cx-pricers",
+  "cx-numeric",
+  "cx-testing"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "From formula to code",
+   "prose": "The tree converges to one number, and Black-Scholes gives it in a few operations: $$c = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),\\qquad d_1 = \\frac{\\ln(S/K) + (r + \\sigma^2/2)T}{\\sigma\\sqrt T}.$$ The curve is our call's value against the spot.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      -3,
+      50
+     ],
+     "xLabel": "Spot $S$ (£)",
+     "yLabel": "Call value (£)",
+     "height": 260,
+     "functions": [
+      {
+       "id": "c",
+       "expr": "x*Phi((ln(x/100) + 0.07)/0.2) - 95.1229424500714*Phi((ln(x/100) + 0.07)/0.2 - 0.2)",
+       "label": "value now",
+       "colour": 1,
+       "domain": [
+        60,
+        140
+       ],
+       "labelAt": 75
+      },
+      {
+       "id": "pay",
+       "expr": "max(x - 100, 0)",
+       "label": "payoff",
+       "dashed": true,
+       "colour": 2,
+       "labelAt": 130
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 100,
+       "y": 10.4506,
+       "label": "£10.45"
+      }
+     ]
+    }
+   },
+   "question": "Which C++ expression is $d_1$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`(std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t))`",
+      "correct": true
+     },
+     {
+      "id": "sqrt",
+      "text": "`(std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * t)`",
+      "why": "You dropped the square root: the denominator is $\\sigma\\sqrt T$. At T = 1 the two agree, which hides the slip."
+     },
+     {
+      "id": "log10",
+      "text": "`(std::log10(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t))`",
+      "why": "`std::log10` is base 10. The formula's $\\ln$ is `std::log` in C++, as in Python's `math.log`."
+     },
+     {
+      "id": "xor",
+      "text": "`(std::log(s / k) + (r + sigma ^ 2 / 2) * t) / (sigma * std::sqrt(t))`",
+      "why": "`^` is not a power in C++: it is bitwise XOR, and clang refuses it on a `double`. Write `sigma * sigma`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check three things: the log, the square, the root."
+    },
+    {
+     "rung": "point",
+     "text": "In C++, `std::log` is the natural log and `^` is not a power."
+    },
+    {
+     "rung": "step",
+     "text": "The denominator is $\\sigma\\sqrt T$: `sigma * std::sqrt(t)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Natural log, `sigma * sigma`, and `std::sqrt(t)`.",
+    "generic": "Not quite right. Translate each symbol of $d_1$ one at a time.",
+    "byKey": {
+     "xor": "`^` is not a power in C++: it is bitwise XOR, and clang refuses it on a `double`. Write `sigma * sigma`."
+    }
+   },
+   "explain": {
+    "text": "$\\ln$ is `std::log`, $\\sigma^2$ is `sigma * sigma`, and $\\sigma\\sqrt T$ is `sigma * std::sqrt(t)`. Level 1 wrote this as `bs_d1`. Each wrong version compiles or fails in its own way, and one passes every test at T = 1."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Price against volatility",
+   "prose": "Now hold $S = K = 100$, $r = 5\\%$ and $T = 1$, and vary $\\sigma$. The curve is the call's Black-Scholes price for each volatility. Drag the point along it.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      0.6
+     ],
+     "y": [
+      0,
+      28
+     ],
+     "xLabel": "Volatility $\\sigma$",
+     "yLabel": "Call price (£)",
+     "height": 280,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "100*Phi((0.05 + x^2/2)/x) - 95.1229424500714*Phi((0.05 + x^2/2)/x - x)",
+       "domain": [
+        0.004,
+        0.6
+       ],
+       "label": "Black-Scholes",
+       "colour": 1,
+       "labelAt": 0.5
+      }
+     ],
+     "hlines": [
+      {
+       "id": "fwd",
+       "y": 4.877,
+       "label": "£4.88"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 0.2,
+       "y": 10.4506,
+       "drag": true,
+       "on": "f"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "σ = {{fixed(p.x * 100, 1)}}%: call £{{fixed(p.y, 2)}}"
+    }
+   },
+   "question": "Drag σ down towards 0. What price does the curve approach, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.88,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "£",
+    "label": "Price in pounds",
+    "accept": "£4.88: $e^{-0.05}(100e^{0.05} - 100)$",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "nodisc",
+      "value": 5.13,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption as σ gets small."
+    },
+    {
+     "rung": "point",
+     "text": "With no volatility the share grows surely at the risk-free rate."
+    },
+    {
+     "rung": "step",
+     "text": "It reaches $100e^{0.05} = 105.13$; the call pays £5.13, worth $5.13e^{-0.05}$ today."
+    }
+   ],
+   "feedback": {
+    "correct": "The discounted forward payoff.",
+    "generic": "Not quite right. Read the caption near the left end.",
+    "byKey": {
+     "zero": "You expected a worthless option without randomness. The share still grows to £105.13 for sure, above the strike.",
+     "nodisc": "£5.13 is paid in a year. Discount it: $5.13e^{-0.05} = 4.88$."
+    }
+   },
+   "explain": {
+    "text": "With σ → 0 the share grows surely to $100e^{0.05} = 105.13$. The call then pays £5.13 for sure, worth $e^{-0.05} \\times 5.13 = 4.88$ today. That limit is a test any pricer must pass.",
+    "canvas": {
+     "points": {
+      "p": {
+       "x": 0.01
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The call",
+   "prose": "Level 1's `norm_cdf` is loaded: $\\Phi$, through `std::erfc`. Write `bs_call`, with rates and volatility as decimals and `t` in years. $d_2 = d_1 - \\sigma\\sqrt T$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "bs_call(100.0, 100.0, 0.05, 0.2, 1.0)    // 10.4506",
+      "bs_call(110.0, 100.0, 0.05, 0.2, 1.0)    // 17.6630",
+      "bs_call(100.0, 100.0, 0.0, 0.2, 0.5)     // 5.6372, options l12",
+      "bs_call(200.0, 100.0, 0.05, 0.2, 1.0)    // 104.8777, deep in the money"
+     ],
+     "title": "What it should do"
+    },
+    "state": {}
+   },
+   "question": "Write `bs_call`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <cmath>\n\n// double norm_cdf(double x) is loaded (level 1).\n\ndouble bs_call(double s, double k, double r, double sigma, double t) {\n    double d1 = 0.0;  // your code\n    double d2 = 0.0;\n    return 0.0;\n}\n",
+    "solution": "#include <cmath>\n\ndouble bs_call(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n",
+    "prelude": "#include <cmath>\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\n",
+    "examples": [
+     {
+      "call": "bs_call(100.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 10.450583572185565,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "bs_call(100.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 10.450583572185565,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_call(110.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 17.662953740590453,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_call(90.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 5.091222078817552,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_call(100.0, 95.0, 0.04, 0.25, 0.5)",
+      "expect": 10.785424195810094,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_call(100.0, 100.0, 0.0, 0.2, 0.5)",
+      "expect": 5.6371977797016655,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_call(100.0, 100.0, 0.05, 0.24, 1.0)",
+      "expect": 11.957777698024728,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_call(200.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 104.87772423432371,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Each price is compared with Python's `bs_call` from trees l10, within a relative 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write `d1` exactly as on the last screen."
+    },
+    {
+     "rung": "point",
+     "text": "`d2` reuses `d1`: subtract `sigma * std::sqrt(t)`."
+    },
+    {
+     "rung": "step",
+     "text": "`return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);`"
+    }
+   ],
+   "feedback": {
+    "correct": "£10.4506, the number the tree converges to.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-4": "Test 4 has T = 0.5. If only it fails, check for `std::sqrt(t)` in both `d1` and `d2`.",
+     "test-5": "Test 5 has r = 0. If it fails, check that `r` multiplies `t` inside `d1`."
+    }
+   },
+   "explain": {
+    "text": "Seven prices match Python's to about 15 digits, because both call the same `erfc` on the same doubles. Deep in the money the call is worth $S - Ke^{-rT} = 200 - 95.12$, just as a forward is."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The put, tested by parity",
+   "prose": "The put is $p = Ke^{-rT}\\Phi(-d_2) - S\\Phi(-d_1)$. Three hidden tests check **put-call parity**, $c - p = S - Ke^{-rT}$, against your `bs_call`. Parity holds for any inputs, so it tests the two functions against each other.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "bs_put(100.0, 100.0, 0.05, 0.2, 1.0)   // 5.5735",
+      "bs_put(50.0, 48.0, 0.04, 0.3, 0.25)    // 1.8418, trees l10",
+      "c - p == s - k * exp(-r * t)          // within 1e-9"
+     ],
+     "title": "What it should do"
+    },
+    "state": {}
+   },
+   "question": "Write `bs_put`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <cmath>\n\n// Loaded: norm_cdf and your bs_call.\n\ndouble bs_put(double s, double k, double r, double sigma, double t) {\n    return 0.0;  // your code\n}\n",
+    "solution": "#include <cmath>\n\ndouble bs_put(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return k * std::exp(-r * t) * norm_cdf(-d2) - s * norm_cdf(-d1);\n}\n",
+    "prelude": "#include <cmath>\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\ndouble bs_call(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n",
+    "examples": [
+     {
+      "call": "bs_put(100.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 5.573526022256971,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "bs_put(100.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 5.573526022256971,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_put(50.0, 48.0, 0.04, 0.3, 0.25)",
+      "expect": 1.8417852232528205,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_put(80.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 16.982362022883592,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_put(100.0, 110.0, 0.03, 0.35, 2.0)",
+      "expect": 21.74478871656997,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::abs(bs_call(90.0, 100.0, 0.05, 0.2, 1.0) - bs_put(90.0, 100.0, 0.05, 0.2, 1.0) - (90.0 - 100.0 * std::exp(-0.05 * 1))) < 1e-9",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::abs(bs_call(120.0, 100.0, 0.02, 0.4, 3.0) - bs_put(120.0, 100.0, 0.02, 0.4, 3.0) - (120.0 - 100.0 * std::exp(-0.02 * 3))) < 1e-9",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::abs(bs_call(100.0, 95.0, 0.04, 0.25, 0.5) - bs_put(100.0, 95.0, 0.04, 0.25, 0.5) - (100.0 - 95.0 * std::exp(-0.04 * 0.5))) < 1e-9",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. Four prices are compared with Python's within a relative 1e-9; three tests check parity within 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute `d1` and `d2` as in the call."
+    },
+    {
+     "rung": "point",
+     "text": "Both $\\Phi$ terms take negated arguments."
+    },
+    {
+     "rung": "step",
+     "text": "`return k * std::exp(-r * t) * norm_cdf(-d2) - s * norm_cdf(-d1);`"
+    }
+   ],
+   "feedback": {
+    "correct": "The put agrees with Python and with parity.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-5": "Parity failed. Check the signs: the put uses $\\Phi(-d_2)$ and $\\Phi(-d_1)$. With `norm_cdf(d2)` our put comes out at £16.92, not £5.57.",
+     "test-1": "Test 1 expects £5.5735. If you got £16.92, you wrote `norm_cdf(d2)` where the formula has $\\Phi(-d_2)$."
+    }
+   },
+   "explain": {
+    "text": "Parity follows from $\\Phi(-z) = 1 - \\Phi(z)$, whatever $d_1$ and $d_2$ are. So a parity test catches a sign slip in either function, and it needs no known price at all."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The Greeks",
+   "prose": "Delta is $\\Phi(d_1)$; vega is $S\\varphi(d_1)\\sqrt T$; gamma is $\\varphi(d_1)/(S\\sigma\\sqrt T)$, with $\\varphi(x) = e^{-x^2/2}/\\sqrt{2\\pi}$. Our inputs give delta 0.6368. Options l12 read 0.53 off a curve with $r = 0$ and $T = 0.5$; the tests check both.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      70,
+      130
+     ],
+     "y": [
+      -2,
+      36
+     ],
+     "xLabel": "Spot $S$ (£)",
+     "yLabel": "Call value (£)",
+     "height": 250,
+     "functions": [
+      {
+       "id": "c",
+       "expr": "x*Phi((ln(x/100) + 0.07)/0.2) - 95.1229424500714*Phi((ln(x/100) + 0.07)/0.2 - 0.2)",
+       "colour": 1,
+       "label": "call, T = 1"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 100,
+       "y": 10.4506
+      }
+     ],
+     "tangent": {
+      "f": "c",
+      "x": 100,
+      "label": "delta {slope}",
+      "lengthPx": 120
+     }
+    }
+   },
+   "question": "Write `bs_delta_call`, `bs_vega` and `bs_gamma`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <cmath>\n\n// Loaded: norm_cdf and bs_call.\n\ndouble bs_delta_call(double s, double k, double r, double sigma, double t) {\n    return 0.0;  // N(d1)\n}\n\ndouble bs_vega(double s, double k, double r, double sigma, double t) {\n    return 0.0;  // S phi(d1) sqrt(T)\n}\n\ndouble bs_gamma(double s, double k, double r, double sigma, double t) {\n    return 0.0;  // phi(d1) / (S sigma sqrt(T))\n}\n",
+    "solution": "#include <cmath>\n\ndouble d1_of(double s, double k, double r, double sigma, double t) {\n    return (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n}\n\ndouble norm_pdf(double x) { return std::exp(-x * x / 2) / std::sqrt(2 * M_PI); }\n\ndouble bs_delta_call(double s, double k, double r, double sigma, double t) {\n    return norm_cdf(d1_of(s, k, r, sigma, t));\n}\n\ndouble bs_vega(double s, double k, double r, double sigma, double t) {\n    return s * norm_pdf(d1_of(s, k, r, sigma, t)) * std::sqrt(t);\n}\n\ndouble bs_gamma(double s, double k, double r, double sigma, double t) {\n    return norm_pdf(d1_of(s, k, r, sigma, t)) / (s * sigma * std::sqrt(t));\n}\n",
+    "prelude": "#include <cmath>\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\ndouble bs_call(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n",
+    "examples": [
+     {
+      "call": "bs_delta_call(100.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 0.6368306511756191,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "bs_delta_call(100.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 0.6368306511756191,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_delta_call(100.0, 100.0, 0.0, 0.2, 0.5)",
+      "expect": 0.5281859888985083,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_delta_call(200.0, 100.0, 0.05, 0.2, 1.0) > 0.9999",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "bs_vega(100.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 37.52403469169379,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_vega(100.0, 100.0, 0.0, 0.2, 0.5)",
+      "expect": 28.13904356065048,
+      "compare": "isclose"
+     },
+     {
+      "call": "bs_gamma(100.0, 100.0, 0.05, 0.2, 1.0)",
+      "expect": 0.018762017345846895,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::abs(bs_delta_call(100.0, 100.0, 0.05, 0.2, 1.0) - (bs_call(100.01, 100.0, 0.05, 0.2, 1.0) - bs_call(99.99, 100.0, 0.05, 0.2, 1.0)) / 0.02) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::abs(bs_vega(100.0, 100.0, 0.05, 0.2, 1.0) - (bs_call(100.0, 100.0, 0.05, 0.2001, 1.0) - bs_call(100.0, 100.0, 0.05, 0.1999, 1.0)) / 0.0002) < 1e-4",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests. Values are compared within a relative 1e-9. Two tests compare your delta and vega with slopes of `bs_call` between nearby prices."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A helper for $d_1$ and one for $\\varphi$ keep each Greek to one line."
+    },
+    {
+     "rung": "point",
+     "text": "`M_PI` from `<cmath>` is $\\pi$."
+    },
+    {
+     "rung": "step",
+     "text": "`double norm_pdf(double x) { return std::exp(-x * x / 2) / std::sqrt(2 * M_PI); }`"
+    }
+   ],
+   "feedback": {
+    "correct": "Three slopes, each checked against prices.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-2": "Test 2 uses options l12's inputs: r = 0, T = 0.5. The answer is 0.5282, the 0.53 read off the curve there.",
+     "test-4": "Test 4 expects vega 37.524. Check $\\sqrt T$ multiplies, and that $\\varphi$ divides by $\\sqrt{2\\pi}$."
+    }
+   },
+   "explain": {
+    "text": "Delta 0.6368 and vega 37.52 are trees l11 and l12's numbers. The finite-difference tests compare each Greek with the slope of prices you already trust. Testing functions against each other finds bugs that one known value hides."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Twelve tests, all one year",
+   "prose": "A colleague's `bs_call` passes all 12 of his tests. Every test prices a one-year option, and one checks parity. His `d1` line reads:\n\n```cpp\ndouble d1 = (std::log(s / k) + (r + sigma * sigma / 2) * t)\n            / (sigma * t);\n```\n\nHis `d2` subtracts `sigma * t`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./test_bs",
+      "bs_call(100, 100, 0.05, 0.2, 1)   10.4506   ok",
+      "bs_call(110, 100, 0.05, 0.2, 1)   17.6630   ok",
+      "...",
+      "parity at T = 1                   ok",
+      "12 passed"
+     ],
+     "title": "Terminal"
+    },
+    "state": {
+     "tone": {
+      "l6": "ok"
+     }
+    }
+   },
+   "question": "Which new test would catch the bug?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "A known price with T = 0.25",
+      "correct": true
+     },
+     {
+      "id": "parity",
+      "text": "Put-call parity at T = 0.25",
+      "why": "Parity holds whatever $d_1$ is: the $\\Phi$ terms cancel in $c - p$. It cannot see a wrong $d_1$."
+     },
+     {
+      "id": "strike",
+      "text": "Another strike, at T = 1",
+      "why": "At T = 1, $\\sqrt T = T$, so every one-year test agrees with the right formula."
+     },
+     {
+      "id": "tol",
+      "text": "The same tests with a tighter tolerance",
+      "why": "At T = 1 both formulas give the same double exactly. No tolerance separates them."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For which T is $\\sqrt T$ equal to $T$?"
+    },
+    {
+     "rung": "point",
+     "text": "Parity is $c - p = S - Ke^{-rT}$: does $d_1$ appear in it?"
+    },
+    {
+     "rung": "step",
+     "text": "Only a known price at T ≠ 1 sees the difference: at T = 0.25 he gets £2.66 against £4.61."
+    }
+   ],
+   "feedback": {
+    "correct": "Vary the input the bug depends on.",
+    "generic": "Not quite right. Ask which tests would come out differently with the bug.",
+    "byKey": {
+     "parity": "Parity holds whatever $d_1$ is: the $\\Phi$ terms cancel in $c - p$. It cannot see a wrong $d_1$.",
+     "strike": "At T = 1, $\\sqrt T = T$, so every one-year test agrees with the right formula."
+    }
+   },
+   "explain": {
+    "text": "At T = 1 the bug is invisible, since $\\sqrt 1 = 1$. At T = 0.25 his call gives £2.66; the right price is £4.61. Tests should vary every input, especially to values where a slip shows: T away from 1, r away from 0."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "At expiry",
+   "prose": "Edge case: an option with no time left. With t = 0 the formula divides by $\\sigma\\sqrt 0 = 0$. In C++, dividing a `double` by zero does not stop the program.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "bs_call(110.0, 100.0, 0.05, 0.2, 0.0)   // 10",
+      "bs_call(90.0, 100.0, 0.05, 0.2, 0.0)    // 0",
+      "bs_call(100.0, 100.0, 0.05, 0.2, 0.0)   // ?"
+     ],
+     "title": "Your bs_call with t = 0"
+    },
+    "state": {
+     "highlight": [
+      "l3"
+     ]
+    }
+   },
+   "question": "What does the third line give?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`nan`",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "`0`, the payoff at the strike",
+      "why": "You expected the payoff. Here $d_1 = 0/0$, which is NaN, and NaN spreads through every later operation."
+     },
+     {
+      "id": "crash",
+      "text": "The program stops: division by zero",
+      "why": "Integer division by zero stops a program. `double` division gives inf or NaN and carries on."
+     },
+     {
+      "id": "inf",
+      "text": "`inf`",
+      "why": "$\\ln(100/100) = 0$, so $d_1 = 0/0$, which is NaN, not infinity."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $\\ln(S/K)$ and $(r + \\sigma^2/2)T$ when S = K and T = 0."
+    },
+    {
+     "rung": "point",
+     "text": "Both are 0, and so is the denominator."
+    },
+    {
+     "rung": "step",
+     "text": "$0/0$ is NaN in floating point, and NaN in, NaN out."
+    }
+   ],
+   "feedback": {
+    "correct": "NaN, quietly.",
+    "generic": "Not quite right. Compute $d_1$ with S = K and t = 0.",
+    "byKey": {
+     "zero": "You expected the payoff. Here $d_1 = 0/0$, which is NaN, and NaN spreads through every later operation."
+    }
+   },
+   "explain": {
+    "text": "For S = 110, $d_1 = \\ln(1.1)/0 = +\\infty$ and $\\Phi(\\infty) = 1$, so the payoff comes out by luck. At the strike, $0/0$ is NaN. Guard it: `if (t == 0) return std::max(s - k, 0.0);`, as the tree did.",
+    "canvas": {
+     "lines": [
+      "bs_call(110.0, 100.0, 0.05, 0.2, 0.0)   // 10",
+      "bs_call(90.0, 100.0, 0.05, 0.2, 0.0)    // 0",
+      "bs_call(100.0, 100.0, 0.05, 0.2, 0.0)   // nan"
+     ],
+     "tone": {
+      "l3": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Implied volatility",
+   "prose": "Trees l11 solved for σ by bisection: £12.00 implies 24.11%. Port it. Keep the half of $[0.0001, 5]$ that holds the answer until the bracket is narrower than 1e-8. Below the floor $\\max(S - Ke^{-rT}, 0)$, or at or above $S$, no σ fits: throw.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      0.6
+     ],
+     "y": [
+      0,
+      28
+     ],
+     "xLabel": "Volatility $\\sigma$",
+     "yLabel": "Call price (£)",
+     "height": 250,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "100*Phi((0.05 + x^2/2)/x) - 95.1229424500714*Phi((0.05 + x^2/2)/x - x)",
+       "domain": [
+        0.004,
+        0.6
+       ],
+       "colour": 1,
+       "label": "bs_call",
+       "labelAt": 0.5
+      }
+     ],
+     "hlines": [
+      {
+       "id": "mkt",
+       "y": 12,
+       "label": "market £12.00"
+      },
+      {
+       "id": "floor",
+       "y": 4.877,
+       "label": "floor £4.88"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "iv",
+       "x": 0.2411,
+       "y": 12,
+       "label": "σ = 0.2411"
+      }
+     ]
+    }
+   },
+   "question": "Write `implied_vol(price, s, k, r, t)`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\n\n// Loaded: norm_cdf and bs_call.\n\ndouble implied_vol(double price, double s, double k, double r, double t) {\n    // refuse price <= max(s - k e^{-rt}, 0) or price >= s\n    double lo = 0.0001, hi = 5.0;\n    // halve [lo, hi] until hi - lo < 1e-8\n    return 0.5 * (lo + hi);\n}\n",
+    "solution": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\n\ndouble implied_vol(double price, double s, double k, double r, double t) {\n    double floor = std::max(s - k * std::exp(-r * t), 0.0);\n    if (price <= floor || price >= s)\n        throw std::invalid_argument(\"no volatility fits this price\");\n    double lo = 0.0001, hi = 5.0;\n    while (hi - lo >= 1e-8) {\n        double mid = 0.5 * (lo + hi);\n        if (bs_call(s, k, r, mid, t) > price) hi = mid;\n        else lo = mid;\n    }\n    return 0.5 * (lo + hi);\n}\n",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\ndouble norm_cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }\ndouble bs_call(double s, double k, double r, double sigma, double t) {\n    double d1 = (std::log(s / k) + (r + sigma * sigma / 2) * t) / (sigma * std::sqrt(t));\n    double d2 = d1 - sigma * std::sqrt(t);\n    return s * norm_cdf(d1) - k * std::exp(-r * t) * norm_cdf(d2);\n}\n",
+    "examples": [
+     {
+      "call": "std::abs(implied_vol(12.0, 100.0, 100.0, 0.05, 1.0) - 0.2411168937) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "std::abs(implied_vol(12.0, 100.0, 100.0, 0.05, 1.0) - 0.2411168937) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::abs(implied_vol(10.450583572185565, 100.0, 100.0, 0.05, 1.0) - 0.2) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::abs(implied_vol(11.96, 100.0, 100.0, 0.05, 1.0) - 0.2400587928) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::abs(implied_vol(bs_call(100.0, 95.0, 0.04, 0.3, 0.5), 100.0, 95.0, 0.04, 0.5) - 0.3) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::abs(implied_vol(bs_call(100.0, 110.0, 0.03, 0.35, 2.0), 100.0, 110.0, 0.03, 2.0) - 0.35) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "std::abs(implied_vol(5.6371977797016655, 100.0, 100.0, 0.0, 0.5) - 0.2) < 1e-6",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "implied_vol(4.5, 100.0, 100.0, 0.05, 1.0)",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     },
+     {
+      "call": "implied_vol(100.0, 100.0, 100.0, 0.05, 1.0)",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 8 hidden tests. Six answers must be within 1e-6 of the volatility Python's solver finds. Two prices are impossible and must throw `std::invalid_argument`, which ends the program here: this browser build cannot catch exceptions."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The call price rises with σ. If the price at `mid` is too high, the answer is below `mid`."
+    },
+    {
+     "rung": "point",
+     "text": "Check the floor first: `std::max(s - k * std::exp(-r * t), 0.0)`."
+    },
+    {
+     "rung": "step",
+     "text": "`if (bs_call(s, k, r, mid, t) > price) hi = mid; else lo = mid;` inside `while (hi - lo >= 1e-8)`."
+    }
+   ],
+   "feedback": {
+    "correct": "24.11%, to eight places.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-1": "Test 1 should give 0.2411. If you got about 5 or 0.0001, the halves are swapped: a price above the target means σ is too high.",
+     "test-7": "Test 7 asks for £4.50, below the floor of £4.88. No σ gives it: throw `std::invalid_argument`."
+    }
+   },
+   "explain": {
+    "text": "Each halving keeps the half where `bs_call - price` changes sign, so about 29 halvings reach 1e-8 from a bracket of 5. Below the floor or at S, no σ fits, and a pricer that returns a number there is lying."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Testing a closed form",
+   "prose": "You tested the pricer four ways. Each catches bugs the others miss:\n\n- known prices: £10.4506 and £5.5735, from Python\n- parity: $c - p = S - Ke^{-rT}$\n- limits: T → 0 gives the payoff; σ → 0 gives $e^{-rT}\\max(Se^{rT} - K, 0)$\n- slopes: each Greek against a finite difference of prices",
+   "question": "Which test catches a put written with `norm_cdf(d2)` instead of `norm_cdf(-d2)`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Put-call parity at any one set of inputs",
+      "correct": true
+     },
+     {
+      "id": "delta",
+      "text": "Delta against a finite difference of `bs_call`",
+      "why": "That test runs only `bs_call` and `bs_delta_call`. The put never runs."
+     },
+     {
+      "id": "callknown",
+      "text": "The known call price, £10.4506",
+      "why": "The call is untouched by the slip, so it still passes."
+     },
+     {
+      "id": "iv",
+      "text": "Implied vol recovering 0.2 from £10.4506",
+      "why": "`implied_vol` inverts `bs_call`, not `bs_put`. The put never runs."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which tests run `bs_put` at all?"
+    },
+    {
+     "rung": "point",
+     "text": "Parity compares the put with the call."
+    }
+   ],
+   "feedback": {
+    "correct": "Parity ties the put to the call.",
+    "generic": "Not quite right. Find the test that runs the put."
+   },
+   "explain": {
+    "text": "The slip makes the put £16.92, and parity is then off by over £11. A known put price would catch it too. The call-only tests never run the put at all."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A Greeks report",
+   "prose": "A desk is short 1,000 of our one-year calls and 500 of our one-year puts, all struck at £100 ($S = 100$, $r = 5\\%$, $\\sigma = 20\\%$). Your `bs_delta_call` gives 0.6368. By parity, a put's delta is the call's minus 1.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "position",
+      "quantity",
+      "delta each"
+     ],
+     "rows": [
+      [
+       "short calls",
+       "−1,000",
+       "0.6368"
+      ],
+      [
+       "short puts",
+       "−500",
+       "−0.3632"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many shares must the desk buy to be delta neutral?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 455,
+    "tol": {
+     "abs": 1
+    },
+    "label": "Shares to buy",
+    "accept": "455: $1000 \\times 0.6368 + 500 \\times (-0.3632) = 455.2$",
+    "wrong": [
+     {
+      "id": "calls",
+      "value": 637,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "sign",
+      "value": 818,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add up the book's delta: quantity times delta, for each line."
+    },
+    {
+     "rung": "point",
+     "text": "Short calls give −636.8. Short puts give $-500 \\times (-0.3632) = +181.6$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The book's delta is −455.2, so buy 455 shares."
+    }
+   ],
+   "feedback": {
+    "correct": "455 shares make the book flat to small moves.",
+    "generic": "Not quite right. Sum quantity times delta over both lines, then buy the opposite.",
+    "byKey": {
+     "calls": "637 hedges the calls alone (trees l10). The short puts already carry +181.6 of delta.",
+     "sign": "You added the puts' delta with the wrong sign. A short put gains when the share rises: its delta is positive."
+    }
+   },
+   "explain": {
+    "text": "The book's delta is $-1000 \\times 0.6368 + 500 \\times 0.3632 = -455.2$, so buy 455 shares. Its vega is $-1500 \\times 0.3752 = -£562.86$ per vol point. The closed form is the reference every tree and simulation on the desk is checked against.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`bs_call` and `bs_put` are a few lines on top of `norm_cdf`. Our inputs give £10.4506 and £5.5735, matching Python to about 15 digits.",
+   "Test a closed form four ways: known prices, put-call parity, limits (T → 0, σ → 0) and Greeks against finite differences of prices. Vary every input, especially T away from 1.",
+   "Delta is $\\Phi(d_1) = 0.6368$ and vega $S\\varphi(d_1)\\sqrt T = 37.52$ for our call. Implied volatility by bisection gives 0.2411 for £12.00 and throws below the floor."
+  ],
+  "formula": {
+   "name": "Black-Scholes call",
+   "tex": "c = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2),\\quad d_{1,2} = \\dfrac{\\ln(S/K) + (r \\pm \\sigma^2/2)T}{\\sigma\\sqrt T}",
+   "note": "In C++: `std::log`, `sigma * sigma`, `sigma * std::sqrt(t)`."
+  },
+  "trap": "`sigma * t` instead of `sigma * std::sqrt(t)` passes every test at T = 1, and parity cannot see it. Test at T = 0.25."
+ },
+ "quiz": [
+  {
+   "id": "q-percent",
+   "difficulty": 2,
+   "prose": "```cpp\nstd::cout << bs_call(100.0, 100.0, 5, 20, 1.0) << '\\n';\n```",
+   "question": "The rate and volatility were typed in per cent. What prints?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`100`: the call is priced as the whole share",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "`10.4506`",
+      "why": "C++ does not know 5 means 5%. It uses r = 5 and σ = 20, which is 500% and 2,000%."
+     },
+     {
+      "id": "error",
+      "text": "A compile error",
+      "why": "`5` and `20` convert to `double` without complaint. The mistake is in the units."
+     },
+     {
+      "id": "nan",
+      "text": "`nan`",
+      "why": "Nothing here divides by zero: $\\sigma\\sqrt T = 20$. The price is huge, not undefined."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Units are the caller's job.",
+    "generic": "Not quite right. Work out $d_1$ with r = 5 and σ = 20."
+   },
+   "explain": {
+    "text": "$d_1 = (0 + 205)/20 = 10.25$ and $d_2 = -9.75$, so $c = 100 - 100e^{-5}\\Phi(-9.75) \\approx 100$. Pass 0.05 and 0.2: decimals in code, per cent in prose."
+   }
+  },
+  {
+   "id": "q-vega-step",
+   "difficulty": 3,
+   "prose": "Our call is £10.4506 at σ = 20%, with vega 37.52 per unit of σ.",
+   "question": "Estimate its price at σ = 21%, in pounds.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.83,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "£",
+    "label": "Price in pounds",
+    "accept": "£10.83: $10.4506 + 37.52 \\times 0.01$ (exactly 10.8263)",
+    "wrong": [
+     {
+      "id": "percent",
+      "value": 47.97,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One vol point moves it about £0.38.",
+    "generic": "Not quite right. Multiply vega by the change in σ as a decimal.",
+    "byKey": {
+     "percent": "You multiplied by 1, not 0.01. Vega is per unit of σ, and one point is 0.01."
+    }
+   },
+   "explain": {
+    "text": "$10.4506 + 37.52 \\times 0.01 = 10.826$. The exact `bs_call` at 0.21 is £10.8263, so the slope is an excellent guide for small moves."
+   }
+  },
+  {
+   "id": "q-deep-delta",
+   "difficulty": 2,
+   "prose": "`bs_delta_call(200.0, 100.0, 0.05, 0.2, 1.0)` is our call with the share at £200.",
+   "question": "What does it return, to 4 places?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "0.9999",
+      "correct": true
+     },
+     {
+      "id": "half",
+      "text": "0.5000",
+      "why": "Delta is 0.5 near the strike. Deep in the money the call moves almost one for one with the share."
+     },
+     {
+      "id": "two",
+      "text": "2.0000",
+      "why": "Delta is a probability-like number between 0 and 1 for a call: $\\Phi(d_1)$."
+     },
+     {
+      "id": "one",
+      "text": "exactly 1",
+      "why": "$d_1 = 3.82$, and $\\Phi(3.82) = 0.99993$: close to 1, never equal."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Deep in the money, the call behaves like the share.",
+    "generic": "Not quite right. Compute $d_1 = (\\ln 2 + 0.07)/0.2$."
+   },
+   "explain": {
+    "text": "$d_1 = (0.6931 + 0.07)/0.2 = 3.82$ and $\\Phi(3.82) = 0.99993$. The hedge is almost one share per call."
+   }
+  },
+  {
+   "id": "q-iv-floor",
+   "difficulty": 3,
+   "prose": "A screen shows our one-year call ($S = K = 100$, $r = 5\\%$) at £4.50. Your `implied_vol` is called on it.",
+   "question": "What should happen?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "It throws: £4.50 is below the floor of £4.88",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "It returns a small σ, near 0.0001",
+      "why": "No σ gives £4.50: even σ → 0 gives £4.88. Returning the end of the bracket would report a fiction."
+     },
+     {
+      "id": "neg",
+      "text": "It returns a negative σ",
+      "why": "Volatility cannot be negative, and the bracket starts at 0.0001."
+     },
+     {
+      "id": "loop",
+      "text": "Bisection never stops",
+      "why": "Bisection halves the bracket every time, so it stops after about 29 steps whatever the price."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Some prices have no implied volatility.",
+    "generic": "Not quite right. Compare £4.50 with $100 - 100e^{-0.05}$."
+   },
+   "explain": {
+    "text": "The call is worth at least $S - Ke^{-rT} = 4.88$ at any σ. A quote of £4.50 is an arbitrage or a typo, and the solver should say so."
+   }
+  }
+ ]
+}
