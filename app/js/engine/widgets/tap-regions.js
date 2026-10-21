@@ -20,18 +20,21 @@
     host.append(el);
     const msg = el.querySelector('.wd-tap-msg');
     const count = Number.isInteger(spec.count) && spec.count > 0 ? spec.count : null;
-    const among = Array.isArray(spec.among) ? spec.among.map(String) : null;
+    const among0 = Array.isArray(spec.among) ? spec.among.map(String) : null;
     const word = spec.countWord || (cv && cv.kind === 'grid' ? 'shaded' : 'selected');
     if (!cv || typeof cv.enable !== 'function') {
       msg.hidden = false; msg.textContent = 'This task needs its diagram, which could not be drawn.';
       return { el, value: () => [], grade: () => ({ ok: false, key: null, detail: null }) };
     }
     /* item 132: only may use the canvas's set names (a grid's col7, row5, cross5), expanded to ids */
+    const among = among0 && typeof cv.expand === 'function' ? [...new Set(cv.expand(among0).map(String))] : among0;
     const only = Array.isArray(spec.only) ? (typeof cv.expand === 'function' ? cv.expand(spec.only) : spec.only).map(String) : null;
     cv.enable('tap', { max: spec.max || null, only });
     /* The answer set: authored, or in count mode the first k of `among` (else of the tappable ids) */
     const tappable = () => Array.from(cv.el.querySelectorAll('[data-tap]')).map(n => n.dataset.id).filter(id => !only || only.includes(id));
-    const answer = (spec.answer && spec.answer.length) || !count ? (spec.answer || []).map(String) : (among || tappable()).slice(0, count);
+    /* item 290: answer, among and wrong sets may use set names too (a grid's cross2, row5, all) */
+    const ex = (l) => [...new Set((typeof cv.expand === 'function' ? cv.expand(l) : l).map(String))];
+    const answer = (spec.answer && spec.answer.length) || !count ? ex(spec.answer || []) : (among || tappable()).slice(0, count);
     const inAmong = (id) => !among || among.includes(id);
     const sel = () => ((cv.get() || {}).selected || []).map(String);
     const showCount = (n, text) => {
@@ -65,7 +68,7 @@
       grade() {
         const s = sel(), d = split(s);
         if (count ? s.length === count && !d.wrong.length : sameSet(s, answer)) return { ok: true, key: null, detail: d };
-        const w = (spec.wrong || []).find(x => sameSet((x.set || []).map(String), s));
+        const w = (spec.wrong || []).find(x => sameSet(ex(x.set || []), s));
         if (count) return { ok: false, key: w ? w.id : d.wrong[0] ?? (s.length < count ? 'too-few' : 'too-many'), detail: d };
         return { ok: false, key: w ? w.id : d.wrong[0] ?? d.missing[0] ?? null, detail: d };
       },

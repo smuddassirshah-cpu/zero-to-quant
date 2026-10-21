@@ -1,0 +1,1576 @@
+{
+  "id": "l7-prefix-sums",
+  "course": "ds",
+  "title": "Prefix sums",
+  "minutes": 14,
+  "objectives": [
+    "Answer range-sum queries in constant time after one pass."
+  ],
+  "skills": [
+    "ds-pointers",
+    "ds-hashing"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One range, then thousands",
+      "prose": "Six days of P&L for a desk, in thousands of pounds. Risk asks for the total over days 1 to 3, which in Python is `xs[1:4]`.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "d0",
+              "label": "0"
+            },
+            {
+              "id": "d1",
+              "label": "1"
+            },
+            {
+              "id": "d2",
+              "label": "2"
+            },
+            {
+              "id": "d3",
+              "label": "3"
+            },
+            {
+              "id": "d4",
+              "label": "4"
+            },
+            {
+              "id": "d5",
+              "label": "5"
+            }
+          ],
+          "xLabel": "Day",
+          "yLabel": "P&L (£k)",
+          "showValues": true,
+          "yMin": -6,
+          "yMax": 10
+        },
+        "state": {
+          "values": {
+            "d0": 3,
+            "d1": -1,
+            "d2": 4,
+            "d3": 2,
+            "d4": -5,
+            "d5": 6
+          },
+          "highlight": [
+            "d1",
+            "d2",
+            "d3"
+          ],
+          "caption": "`xs = [3, -1, 4, 2, -5, 6]`"
+        }
+      },
+      "question": "What is the total P&L over days 1 to 3, in £k?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "£k",
+        "accept": "5: $-1 + 4 + 2$.",
+        "label": "Total over days 1 to 3",
+        "wrong": [
+          {
+            "id": "from0",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "to4",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "whole",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`xs[1:4]` holds days 1, 2 and 3, not day 4."
+        },
+        {
+          "rung": "point",
+          "text": "The three bars are −1, 4 and 2.",
+          "highlight": [
+            "d1",
+            "d2",
+            "d3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-1 + 4 + 2 = 5$."
+        }
+      ],
+      "feedback": {
+        "correct": "$-1 + 4 + 2 = 5$.",
+        "generic": "Not quite right. Add days 1, 2 and 3 only.",
+        "byKey": {
+          "from0": "You started at day 0. `xs[1:4]` starts at day 1.",
+          "to4": "You included day 4's −5. A slice stops before its end index.",
+          "whole": "That is all six days."
+        }
+      },
+      "explain": {
+        "text": "Three numbers, two additions. But a risk report may ask for thousands of ranges over years of days. Adding each range afresh costs up to $n$ steps every time.",
+        "canvas": {
+          "highlight": [
+            "d1",
+            "d2",
+            "d3"
+          ],
+          "caption": "$-1 + 4 + 2 = 5$"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A running total",
+      "prose": "Build a running total `pre` with one extra entry at the front: `pre[0] = 0`, and `pre[i + 1] = pre[i] + xs[i]`. So `pre[i]` is the sum of the first `i` days, `sum(xs[:i])`.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "active": "left",
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "d0",
+                "label": "0"
+              },
+              {
+                "id": "d1",
+                "label": "1"
+              },
+              {
+                "id": "d2",
+                "label": "2"
+              },
+              {
+                "id": "d3",
+                "label": "3"
+              },
+              {
+                "id": "d4",
+                "label": "4"
+              },
+              {
+                "id": "d5",
+                "label": "5"
+              }
+            ],
+            "xLabel": "Day",
+            "yLabel": "P&L (£k)",
+            "showValues": true,
+            "yMin": -6,
+            "yMax": 10
+          },
+          "state": {
+            "values": {
+              "d0": 3,
+              "d1": -1,
+              "d2": 4,
+              "d3": 2,
+              "d4": -5,
+              "d5": 6
+            }
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "p0",
+                "label": "pre[0]"
+              },
+              {
+                "id": "p1",
+                "label": "pre[1]"
+              },
+              {
+                "id": "p2",
+                "label": "pre[2]"
+              },
+              {
+                "id": "p3",
+                "label": "pre[3]"
+              },
+              {
+                "id": "p4",
+                "label": "pre[4]"
+              },
+              {
+                "id": "p5",
+                "label": "pre[5]"
+              },
+              {
+                "id": "p6",
+                "label": "pre[6]"
+              }
+            ],
+            "xLabel": "Running total",
+            "yLabel": "£k",
+            "showValues": true,
+            "yMin": -6,
+            "yMax": 10
+          },
+          "state": {
+            "values": {
+              "p0": 0,
+              "p1": 0,
+              "p2": 0,
+              "p3": 0,
+              "p4": 0,
+              "p5": 0,
+              "p6": 0
+            },
+            "dim": [
+              "p1",
+              "p2",
+              "p3",
+              "p4",
+              "p5",
+              "p6"
+            ]
+          }
+        },
+        "state": {
+          "caption": "Top: `xs`. Bottom: `pre`, to fill"
+        }
+      },
+      "question": "Fill in `pre`.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$i$",
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "rows": [
+          [
+            "`pre[i]`",
+            "0",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 9,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each entry is the one before plus that day's P&L."
+        },
+        {
+          "rung": "point",
+          "text": "`pre[1] = 0 + 3 = 3`, and `pre[2] = 3 + (-1) = 2`.",
+          "highlight": [
+            "right:p1",
+            "right:p2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep adding: 3, 2, 6, 8, 3, 9."
+        }
+      ],
+      "feedback": {
+        "correct": "`pre = [0, 3, 2, 6, 8, 3, 9]`, built in one pass.",
+        "generic": "Not quite right. Each entry adds one more day to the entry before it."
+      },
+      "explain": {
+        "text": "One pass, one addition per day. `pre` has $n + 1 = 7$ entries because `pre[0]` is the empty sum. These are **prefix sums**.",
+        "canvas": {
+          "right": {
+            "values": {
+              "p0": 0,
+              "p1": 3,
+              "p2": 2,
+              "p3": 6,
+              "p4": 8,
+              "p5": 3,
+              "p6": 9
+            },
+            "dim": []
+          },
+          "caption": "`pre = [0, 3, 2, 6, 8, 3, 9]`"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Two lookups",
+      "prose": "`pre[4]` is days 0 to 3. `pre[1]` is day 0 alone. Their difference leaves days 1 to 3.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "active": "right",
+        "left": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "d0",
+                "label": "0"
+              },
+              {
+                "id": "d1",
+                "label": "1"
+              },
+              {
+                "id": "d2",
+                "label": "2"
+              },
+              {
+                "id": "d3",
+                "label": "3"
+              },
+              {
+                "id": "d4",
+                "label": "4"
+              },
+              {
+                "id": "d5",
+                "label": "5"
+              }
+            ],
+            "xLabel": "Day",
+            "yLabel": "P&L (£k)",
+            "showValues": true,
+            "yMin": -6,
+            "yMax": 10
+          },
+          "state": {
+            "values": {
+              "d0": 3,
+              "d1": -1,
+              "d2": 4,
+              "d3": 2,
+              "d4": -5,
+              "d5": 6
+            },
+            "highlight": [
+              "d1",
+              "d2",
+              "d3"
+            ]
+          }
+        },
+        "right": {
+          "kind": "bars",
+          "params": {
+            "categories": [
+              {
+                "id": "p0",
+                "label": "pre[0]"
+              },
+              {
+                "id": "p1",
+                "label": "pre[1]"
+              },
+              {
+                "id": "p2",
+                "label": "pre[2]"
+              },
+              {
+                "id": "p3",
+                "label": "pre[3]"
+              },
+              {
+                "id": "p4",
+                "label": "pre[4]"
+              },
+              {
+                "id": "p5",
+                "label": "pre[5]"
+              },
+              {
+                "id": "p6",
+                "label": "pre[6]"
+              }
+            ],
+            "xLabel": "Running total",
+            "yLabel": "£k",
+            "showValues": true,
+            "yMin": -6,
+            "yMax": 10
+          },
+          "state": {
+            "values": {
+              "p0": 0,
+              "p1": 3,
+              "p2": 2,
+              "p3": 6,
+              "p4": 8,
+              "p5": 3,
+              "p6": 9
+            }
+          }
+        },
+        "state": {
+          "caption": "Days 1 to 3 summed to 5"
+        }
+      },
+      "question": "Tap the two `pre` bars whose difference is the sum of `xs[1:4]`.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "p1",
+          "p4"
+        ],
+        "max": 2,
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "shift-left",
+            "set": [
+              "p0",
+              "p3"
+            ]
+          },
+          {
+            "id": "short",
+            "set": [
+              "p1",
+              "p3"
+            ]
+          },
+          {
+            "id": "late",
+            "set": [
+              "p2",
+              "p4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which `pre` entry includes day 3? Which one holds exactly the days before day 1?"
+        },
+        {
+          "rung": "point",
+          "text": "`pre[4]` holds days 0 to 3.",
+          "highlight": [
+            "right:p4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pre[4] - pre[1] = 8 - 3 = 5`."
+        }
+      ],
+      "feedback": {
+        "correct": "`pre[4] - pre[1] = 8 - 3 = 5`, the same 5 you added by hand.",
+        "generic": "Not quite right. `sum(xs[i:j])` is `pre[j] - pre[i]`.",
+        "byKey": {
+          "shift-left": "You took `pre[3] - pre[0]`, days 0 to 2. Each index is one too small.",
+          "short": "`pre[3] - pre[1]` stops before day 3. `pre[4]` is the first entry that includes day 3.",
+          "late": "`pre[4] - pre[2]` leaves out day 1. Subtract `pre[1]`, which holds day 0 only."
+        }
+      },
+      "explain": {
+        "text": "`pre[4]` is days 0 to 3 and `pre[1]` is day 0, so the difference is days 1 to 3. The rule is `sum(xs[i:j]) == pre[j] - pre[i]`: the same `i` and `j` as the slice. Each range now costs two lookups, $O(1)$.",
+        "canvas": {
+          "right": {
+            "selected": [
+              "p1",
+              "p4"
+            ]
+          },
+          "caption": "$8 - 3 = 5$"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "prose": "Same `pre`. Now risk wants `xs[2:6]`, days 2 to 5.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "p0",
+              "label": "pre[0]"
+            },
+            {
+              "id": "p1",
+              "label": "pre[1]"
+            },
+            {
+              "id": "p2",
+              "label": "pre[2]"
+            },
+            {
+              "id": "p3",
+              "label": "pre[3]"
+            },
+            {
+              "id": "p4",
+              "label": "pre[4]"
+            },
+            {
+              "id": "p5",
+              "label": "pre[5]"
+            },
+            {
+              "id": "p6",
+              "label": "pre[6]"
+            }
+          ],
+          "xLabel": "Running total",
+          "yLabel": "£k",
+          "showValues": true,
+          "yMin": -6,
+          "yMax": 10
+        },
+        "state": {
+          "values": {
+            "p0": 0,
+            "p1": 3,
+            "p2": 2,
+            "p3": 6,
+            "p4": 8,
+            "p5": 3,
+            "p6": 9
+          },
+          "caption": "`pre = [0, 3, 2, 6, 8, 3, 9]`"
+        }
+      },
+      "question": "Using two entries of `pre`, what is the sum of `xs[2:6]`, in £k?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "£k",
+        "accept": "7: `pre[6] - pre[2] = 9 - 2`.",
+        "label": "Sum of xs[2:6]",
+        "wrong": [
+          {
+            "id": "from1",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "to5",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "pre5",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the slice's own numbers: `pre[6] - pre[2]`."
+        },
+        {
+          "rung": "point",
+          "text": "`pre[6]` is 9 and `pre[2]` is 2.",
+          "highlight": [
+            "p2",
+            "p6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$9 - 2 = 7$."
+        }
+      ],
+      "feedback": {
+        "correct": "$9 - 2 = 7$, and $4 + 2 - 5 + 6 = 7$ by hand.",
+        "generic": "Not quite right. `sum(xs[i:j])` is `pre[j] - pre[i]` with the slice's own `i` and `j`.",
+        "byKey": {
+          "from1": "You subtracted `pre[1]`, which leaves day 1 in. Subtract `pre[2]`.",
+          "to5": "You used `pre[5]`, which stops before day 5.",
+          "pre5": "`pre[5] - pre[1]` is days 1 to 4. Use the slice's own ends, 2 and 6."
+        }
+      },
+      "explain": {
+        "text": "`pre[6] - pre[2] = 9 - 2 = 7`. Two edge cases fall out for free: `pre[3] - pre[3] = 0` is the empty range, and `pre[6] - pre[0] = 9` is the whole list.",
+        "canvas": {
+          "highlight": [
+            "p2",
+            "p6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "The other convention",
+      "prose": "A colleague keeps only $n$ entries, `inc[i] = sum(xs[:i + 1])`, and asks for days `i` to `j` inclusive.\n\n```python\ninc = [3, 2, 6, 8, 3, 9]\n\ndef range_sum(i, j):\n    return inc[j] - inc[i - 1]\n\nprint(range_sum(0, 2))\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "`i`",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "rows": [
+            [
+              "`inc[i]`",
+              "3",
+              "2",
+              "6",
+              "8",
+              "3",
+              "9"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Days 0 to 2 should sum to $3 - 1 + 4 = 6$"
+        }
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "wrap",
+            "text": "`-3`",
+            "correct": true
+          },
+          {
+            "id": "six",
+            "text": "`6`",
+            "why": "You expected days 0 to 2, which sum to 6. But with `i = 0`, `inc[i - 1]` is `inc[-1]`, the last entry, 9.",
+            "canvas": {
+              "highlight": [
+                "r0c6"
+              ]
+            }
+          },
+          {
+            "id": "err",
+            "text": "An `IndexError`",
+            "why": "Python reads index −1 as the last entry, so nothing fails. The answer is just wrong."
+          },
+          {
+            "id": "three",
+            "text": "`3`",
+            "why": "That is `inc[2] - inc[0]`, which drops day 0. The code subtracts `inc[-1]`."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is `i - 1` when `i = 0`?"
+        },
+        {
+          "rung": "point",
+          "text": "`inc[-1]` is a legal index in Python.",
+          "highlight": [
+            "r0c6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`inc[2] - inc[-1] = 6 - 9 = -3`."
+        }
+      ],
+      "feedback": {
+        "correct": "`inc[-1]` is the last entry, 9, so it prints $6 - 9 = -3$.",
+        "generic": "Not quite right. Work out `inc[i - 1]` for `i = 0`.",
+        "byKey": {
+          "six": "You expected the right answer. With `i = 0` the code reads `inc[-1]`, which wraps round to 9.",
+          "err": "You expected index −1 to fail. Python counts it from the end, so the bug is silent."
+        }
+      },
+      "explain": {
+        "text": "With `i = 0`, `inc[i - 1]` is `inc[-1] = 9`, so the function prints $6 - 9 = -3$ without any error. The convention with $n + 1$ entries and `pre[0] = 0` has no special case: `pre[3] - pre[0] = 6`.",
+        "canvas": {
+          "highlight": [
+            "r0c0",
+            "r0c2",
+            "r0c6"
+          ],
+          "caption": "`inc[2] - inc[-1] = 6 - 9 = -3`"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Counting with a dict",
+      "prose": "How many runs of days sum to exactly `k = 3`? A run `xs[i:6]` ends at the last day. It sums to 3 when `pre[6] - pre[i] = 3`, so when `pre[i] = 5 - 3 = 2`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "`i`",
+            "`pre[i]`"
+          ],
+          "rows": [
+            [
+              "0",
+              "0"
+            ],
+            [
+              "1",
+              "2"
+            ],
+            [
+              "2",
+              "1"
+            ],
+            [
+              "3",
+              "2"
+            ],
+            [
+              "4",
+              "5"
+            ],
+            [
+              "5",
+              "3"
+            ],
+            [
+              "6",
+              "5"
+            ]
+          ],
+          "tap": "rows",
+          "align": [
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              6
+            ]
+          },
+          "caption": "`xs = [2, -1, 1, 3, -2, 2]`, `k = 3`"
+        }
+      },
+      "question": "Tap every earlier prefix that pairs with `pre[6]` to make a sum of 3.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1",
+          "r3"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "equals-k",
+            "set": [
+              "r5"
+            ]
+          },
+          {
+            "id": "equals-self",
+            "set": [
+              "r4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "You want earlier rows where `pre[i]` is `pre[6] - k`."
+        },
+        {
+          "rung": "point",
+          "text": "`pre[6] - k = 5 - 3 = 2`.",
+          "highlight": [
+            "r1",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Rows 1 and 3 both hold 2."
+        }
+      ],
+      "feedback": {
+        "correct": "`pre[1]` and `pre[3]` are 2: the runs `xs[1:6]` and `xs[3:6]`.",
+        "generic": "Not quite right. Look for earlier prefixes equal to `pre[6] - k`, which is 2.",
+        "byKey": {
+          "equals-k": "You looked for a prefix equal to `k`. You need `pre[6] - k`, which is 2.",
+          "equals-self": "`pre[4]` equals `pre[6]`, so the run between sums to 0, not 3.",
+          "r6": "A run needs at least one day. `pre[6]` with itself is the empty run.",
+          "r5": "`pre[5]` is 3, which is `k` itself. You need `pre[6] - k = 2`."
+        }
+      },
+      "explain": {
+        "text": "Both prefixes equal to 2 give a run: $-1 + 1 + 3 - 2 + 2 = 3$ and $3 - 2 + 2 = 3$. A dict of prefix counts seen so far answers this in one lookup per day. Over all six days the count is 5.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              3,
+              6
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "All zeros",
+      "prose": "The dict starts as `{0: 1}`, for the empty prefix `pre[0]`. Each day we add `seen[pre - k]` to the count, then record `pre`. Edge case: `xs = [0, 0, 0]` and `k = 0`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "`i`",
+            "`pre[i]`"
+          ],
+          "rows": [
+            [
+              "0",
+              "0"
+            ],
+            [
+              "1",
+              "0"
+            ],
+            [
+              "2",
+              "0"
+            ],
+            [
+              "3",
+              "0"
+            ]
+          ],
+          "align": [
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Every prefix is 0"
+        }
+      },
+      "question": "How many subarrays sum to 0?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "6: three single days, two pairs and the whole list.",
+        "label": "Subarrays summing to 0",
+        "wrong": [
+          {
+            "id": "singles",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "whole",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each new prefix matches every earlier prefix equal to it."
+        },
+        {
+          "rung": "point",
+          "text": "The adds are 1, then 2, then 3.",
+          "highlight": [
+            "r3c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 2 + 3 = 6$: three single zeros, two pairs and the whole list."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 + 2 + 3 = 6$.",
+        "generic": "Not quite right. Count runs of every length, not only single days.",
+        "byKey": {
+          "singles": "You counted single days only. `[0, 0]` twice and `[0, 0, 0]` also sum to 0.",
+          "whole": "The whole list is one of them. Shorter runs count too.",
+          "four": "You forgot one of the runs of two days: `xs[0:2]` and `xs[1:3]`."
+        }
+      },
+      "explain": {
+        "text": "Day 0 matches `pre[0]` (count 1), day 1 matches two zeros (3) and day 2 matches three (6). Without the starting `{0: 1}`, runs that begin at day 0 are missed and you get 3.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "prose": "One pass builds `pre`; each range is then two lookups.\n\n```python\npre = [0]\nfor x in xs:\n    pre.append(pre[-1] + x)\n# sum(xs[i:j]) == pre[j] - pre[i]\n```\n\nIn a grid, `P[r][c]` sums the rectangle above and left of `(r, c)`. Any rectangle is then four lookups.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "p0",
+              "label": "pre[0]"
+            },
+            {
+              "id": "p1",
+              "label": "pre[1]"
+            },
+            {
+              "id": "p2",
+              "label": "pre[2]"
+            },
+            {
+              "id": "p3",
+              "label": "pre[3]"
+            },
+            {
+              "id": "p4",
+              "label": "pre[4]"
+            },
+            {
+              "id": "p5",
+              "label": "pre[5]"
+            },
+            {
+              "id": "p6",
+              "label": "pre[6]"
+            }
+          ],
+          "xLabel": "Running total",
+          "yLabel": "£k",
+          "showValues": true,
+          "yMin": -6,
+          "yMax": 10
+        },
+        "state": {
+          "values": {
+            "p0": 0,
+            "p1": 3,
+            "p2": 2,
+            "p3": 6,
+            "p4": 8,
+            "p5": 3,
+            "p6": 9
+          },
+          "caption": "`pre[j] - pre[i]`: $O(n)$ once, then $O(1)$ per query"
+        }
+      },
+      "question": "The rectangle sum is `P[r2][c2] - P[r1][c2] - P[r2][c1] + P[r1][c1]`. Why add `P[r1][c1]` back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "twice",
+            "text": "The top-left block was subtracted twice",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "To undo `pre[0] = 0`",
+            "why": "The zero row and column make the formula work at the edges. The added term is about overlap."
+          },
+          {
+            "id": "corner",
+            "text": "To include the rectangle's corner cell",
+            "why": "`P[r1][c1]` is the block above and left of the rectangle, outside it."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Both strips removed the top-left block, so it comes back once.",
+        "generic": "Not quite right. Which cells do the two subtracted terms share?"
+      },
+      "explain": {
+        "text": "`P[r1][c2]` and `P[r2][c1]` both contain the block `P[r1][c1]`. Subtracting both removes it twice, so we add it once. This is the same inclusion-exclusion as counting a union."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write all three",
+      "prose": "`prefix(xs)` returns `pre` with `n + 1` entries. `range_sum(pre, i, j)` returns `sum(xs[i:j])` in $O(1)$. `count_subarrays_with_sum(xs, k)` counts the runs of one or more consecutive items summing to `k`, in one pass with a dict.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "p0",
+              "label": "pre[0]"
+            },
+            {
+              "id": "p1",
+              "label": "pre[1]"
+            },
+            {
+              "id": "p2",
+              "label": "pre[2]"
+            },
+            {
+              "id": "p3",
+              "label": "pre[3]"
+            },
+            {
+              "id": "p4",
+              "label": "pre[4]"
+            },
+            {
+              "id": "p5",
+              "label": "pre[5]"
+            },
+            {
+              "id": "p6",
+              "label": "pre[6]"
+            }
+          ],
+          "xLabel": "Running total",
+          "yLabel": "£k",
+          "showValues": true,
+          "yMin": -6,
+          "yMax": 10
+        },
+        "state": {
+          "values": {
+            "p0": 0,
+            "p1": 3,
+            "p2": 2,
+            "p3": 6,
+            "p4": 8,
+            "p5": 3,
+            "p6": 9
+          },
+          "caption": "`pre = [0, 3, 2, 6, 8, 3, 9]`"
+        }
+      },
+      "question": "Write `prefix`, `range_sum` and `count_subarrays_with_sum`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def prefix(xs):\n    ...\n\n\ndef range_sum(pre, i, j):\n    ...\n\n\ndef count_subarrays_with_sum(xs, k):\n    ...\n",
+        "solution": "def prefix(xs):\n    pre = [0]\n    for x in xs:\n        pre.append(pre[-1] + x)\n    return pre\n\n\ndef range_sum(pre, i, j):\n    return pre[j] - pre[i]\n\n\ndef count_subarrays_with_sum(xs, k):\n    seen = {0: 1}\n    total = count = 0\n    for x in xs:\n        total += x\n        count += seen.get(total - k, 0)\n        seen[total] = seen.get(total, 0) + 1\n    return count\n",
+        "tests": [
+          {
+            "call": "prefix([3, -1, 4, 2, -5, 6])",
+            "expect": "[0, 3, 2, 6, 8, 3, 9]",
+            "compare": "equal"
+          },
+          {
+            "call": "prefix([])",
+            "expect": "[0]",
+            "compare": "equal"
+          },
+          {
+            "call": "range_sum(prefix([3, -1, 4, 2, -5, 6]), 1, 4)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "range_sum(prefix([3, -1, 4, 2, -5, 6]), 3, 3)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "range_sum(prefix([3, -1, 4, 2, -5, 6]), 0, 6)",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([2, -1, 1, 3, -2, 2], 3)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([0, 0, 0], 0)",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([1, -1, 1, -1], 0)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([1, 2, 3], 3)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([0, 1, 0], 1)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([], 0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([5], 5)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([1, -1] * 10000, 0)",
+            "expect": "100000000",
+            "compare": "equal"
+          }
+        ],
+        "examples": [
+          {
+            "call": "prefix([3, -1, 4, 2, -5, 6])",
+            "expect": "[0, 3, 2, 6, 8, 3, 9]",
+            "compare": "equal"
+          },
+          {
+            "call": "count_subarrays_with_sum([2, -1, 1, 3, -2, 2], 3)",
+            "expect": "5",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 13 hidden tests with negatives and zeros. The last has 20,000 numbers, so checking every subarray is too slow."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start `pre` as `[0]` and the dict as `{0: 1}`."
+        },
+        {
+          "rung": "point",
+          "text": "`range_sum` is one line: `pre[j] - pre[i]`.",
+          "highlight": [
+            "p0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For each `x`: add it to a running total, add `seen.get(total - k, 0)` to the count, then increase `seen[total]` by 1."
+        }
+      ],
+      "feedback": {
+        "correct": "One pass each, with negatives and zeros handled.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 is an empty list. `prefix([])` is `[0]`: the empty sum.",
+          "test-7": "Test 7 is `[0, 0, 0]` with `k = 0`: 6 runs. Start the dict as `{0: 1}`, and look up before you record the new total.",
+          "test-13": "Test 13 has 20,000 numbers. Checking every subarray is about 200 million sums; use the dict."
+        }
+      },
+      "explain": {
+        "text": "Looking up `total - k` before recording `total` keeps a day from pairing with itself, which would count an empty run when `k = 0`. The answer in test 13 is $10{,}000^2$: each prefix value appears 10,000 times."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "P&L over any dates",
+      "prose": "A strategy's cumulative P&L over ten days is a prefix sum of its daily P&L. The chart marks the totals after day 3 and day 7. Cumulative volume works the same way, and so does the VWAP numerator, `sum(price * volume)`.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "cum",
+              "label": "Cumulative P&L",
+              "values": [
+                120,
+                40,
+                240,
+                290,
+                140,
+                230,
+                190,
+                370,
+                310,
+                420
+              ]
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "money": "£",
+          "decimals": 0,
+          "xLabel": "Day"
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "m3",
+              "i": 2,
+              "label": "{value}"
+            },
+            {
+              "id": "m7",
+              "i": 6,
+              "label": "{value}"
+            }
+          ]
+        }
+      },
+      "question": "From the cumulative curve alone, what was the P&L over days 4 to 7, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -50,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "£",
+        "accept": "−£50: £190 − £240.",
+        "label": "P&L over days 4 to 7",
+        "wrong": [
+          {
+            "id": "drop4",
+            "value": -100,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "raw",
+            "value": 190,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "pos",
+            "value": 50,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Days 4 to 7 is the total after day 7 minus the total after day 3."
+        },
+        {
+          "rung": "point",
+          "text": "After day 7 the total is £190; after day 3 it is £240.",
+          "highlight": [
+            "m3",
+            "m7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$190 - 240 = -50$."
+        }
+      ],
+      "feedback": {
+        "correct": "£190 − £240 = −£50: days 4 to 7 lost money.",
+        "generic": "Not quite right. Subtract the total after day 3 from the total after day 7.",
+        "byKey": {
+          "drop4": "You subtracted the total after day 4, £290, which leaves day 4 out.",
+          "raw": "£190 is everything from day 1 to day 7. Subtract the first three days.",
+          "pos": "You subtracted the wrong way round. The later total comes first: $190 - 240$."
+        }
+      },
+      "explain": {
+        "text": "Days 4 to 7 earned $50 - 150 + 90 - 40 = -50$, and two lookups give the same. The largest fall of this curve from an earlier peak is its drawdown: £290 to £140 here. The next lesson finds it in one pass.",
+        "canvas": {
+          "shade": [
+            {
+              "id": "rng",
+              "from": 2,
+              "to": 6,
+              "label": "−£50",
+              "tone": "neg"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "`pre[i]` is the sum of the first `i` items, with `pre[0] = 0`, so `pre` has $n + 1$ entries and is built in one pass.",
+      "Any range is two lookups: `sum(xs[i:j]) == pre[j] - pre[i]`, using the slice's own indices.",
+      "Counting runs that sum to $k$ is a dict of prefix counts: each day adds `seen[pre - k]`, starting from `{0: 1}`."
+    ],
+    "formula": {
+      "name": "Range sum",
+      "tex": "\\sum_{t=i}^{j-1} x_t = P_j - P_i",
+      "note": "With $P_0 = 0$ there is no special case at the start of the list."
+    },
+    "trap": "`pre[j] - pre[i - 1]` with $n$ entries reads `pre[-1]` when `i = 0`: Python wraps to the last entry, with no error."
+  },
+  "quiz": [
+    {
+      "id": "q-empty",
+      "difficulty": 2,
+      "prose": "`pre = [0, 3, 2, 6, 8, 3, 9]`.\n\n```python\nprint(range_sum(pre, 4, 4))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "zero",
+            "text": "`0`",
+            "correct": true
+          },
+          {
+            "id": "day4",
+            "text": "`-5`",
+            "why": "That is `xs[4]`, one day. `xs[4:4]` is an empty slice."
+          },
+          {
+            "id": "pre4",
+            "text": "`8`",
+            "why": "That is `pre[4]` alone. The function subtracts `pre[4]` from itself."
+          },
+          {
+            "id": "err",
+            "text": "An `IndexError`",
+            "why": "Both lookups are inside the list."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "An empty range sums to 0.",
+        "generic": "Not quite right. What is `pre[4] - pre[4]`?"
+      },
+      "explain": {
+        "text": "`pre[4] - pre[4] = 0`, the sum of the empty slice `xs[4:4]`. The $n + 1$ convention handles it with no special case."
+      }
+    },
+    {
+      "id": "q-rebuild",
+      "difficulty": 2,
+      "prose": "A report answers $q$ range queries on a list of $n$ daily P&Ls. One version rebuilds `prefix(xs)` inside every query.",
+      "question": "What does that cost in total?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "qn",
+            "text": "$O(qn)$",
+            "correct": true
+          },
+          {
+            "id": "nq",
+            "text": "$O(n + q)$",
+            "why": "That is building once and then two lookups per query. Rebuilding pays $O(n)$ every time."
+          },
+          {
+            "id": "q",
+            "text": "$O(q)$",
+            "why": "Each query still builds a list of $n + 1$ entries."
+          },
+          {
+            "id": "n2",
+            "text": "$O(n^2)$",
+            "why": "The cost depends on the number of queries, $q$, not on $n$ twice."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$O(n)$ per query, $q$ times.",
+        "generic": "Not quite right. How much work does one rebuild take?"
+      },
+      "explain": {
+        "text": "Each rebuild is a pass over $n$ days, so $q$ queries cost $O(qn)$, no better than adding each range. Build once, $O(n)$, then answer each query in $O(1)$: $O(n + q)$."
+      }
+    },
+    {
+      "id": "q-count",
+      "difficulty": 3,
+      "prose": "`xs = [1, 2, 1, 2]` and `k = 3`. Its prefix sums are `[0, 1, 3, 4, 6]`.",
+      "question": "How many runs of consecutive items sum to 3?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "accept": "3: `[1, 2]`, `[2, 1]` and `[1, 2]`.",
+        "label": "Number of runs",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three runs: positions 0–1, 1–2 and 2–3.",
+        "generic": "Not quite right. Count pairs of prefixes that differ by 3.",
+        "byKey": {
+          "two": "You counted `[1, 2]` once. It appears twice, at positions 0–1 and 2–3, and `[2, 1]` makes three.",
+          "one": "Look for every pair of prefixes 3 apart: (0, 3), (1, 4) and (3, 6)."
+        }
+      },
+      "explain": {
+        "text": "The prefix pairs 3 apart are (0, 3), (1, 4) and (3, 6). Each pair is one run, so the count is 3."
+      }
+    },
+    {
+      "id": "q-grid",
+      "difficulty": 3,
+      "prose": "A 2D prefix table `P` stores rectangle sums from the top-left corner of a grid of daily P&L by desk.",
+      "question": "How many lookups in `P` give the sum of any rectangle?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "four",
+            "text": "4",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "Two lookups work in one dimension. A rectangle has two strips to remove and one overlap to add back."
+          },
+          {
+            "id": "three",
+            "text": "3",
+            "why": "After removing the two strips, the corner block above and left is gone twice. A fourth lookup adds it back."
+          },
+          {
+            "id": "cells",
+            "text": "One per row of the rectangle",
+            "why": "That uses 1D prefix sums row by row. The 2D table needs a fixed number."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four lookups, whatever the rectangle's size.",
+        "generic": "Not quite right. Count the terms in the rectangle formula."
+      },
+      "explain": {
+        "text": "Take the big block, subtract the strip above and the strip to the left, then add back their overlap. That is four lookups, $O(1)$ per rectangle after an $O(rc)$ build."
+      }
+    }
+  ]
+}

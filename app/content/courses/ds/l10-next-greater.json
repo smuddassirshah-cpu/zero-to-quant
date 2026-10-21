@@ -1,0 +1,1399 @@
+{
+  "id": "l10-next-greater",
+  "course": "ds",
+  "title": "The next greater element",
+  "minutes": 14,
+  "objectives": [
+    "Use a monotonic stack to find the next greater element.",
+    "Explain why each index is pushed once and popped at most once, so the scan is $O(n)$",
+    "Adapt the scan to days until a higher value, and choose `<` or `<=` for ties"
+  ],
+  "skills": [
+    "ds-stacks"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The next higher close",
+      "prose": "Seven daily closes, in pounds. For each day we want the first later day that closed higher. Start with day 3, which closed at 3.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            4,
+            2,
+            6,
+            3,
+            1,
+            5,
+            7
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "today",
+              "at": 3,
+              "label": "day 3"
+            }
+          ],
+          "caption": "Closes in £, days 0 to 6"
+        }
+      },
+      "question": "Tap the first value to the right of day 3 that is greater than 3.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c5"
+        ],
+        "max": 1,
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look only to the right of day 3, one cell at a time."
+        },
+        {
+          "rung": "point",
+          "text": "This value comes next, but it is smaller than 3.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 4 closed at 1, which is lower. Day 5 closed at 5, the first value above 3."
+        }
+      ],
+      "feedback": {
+        "correct": "5, on day 5, is the next value above 3.",
+        "generic": "Not quite right. Move right from day 3 and stop at the first value greater than 3.",
+        "byKey": {
+          "c4": "1 comes next, but it is smaller than 3. Keep moving right.",
+          "c6": "7 is greater than 3, but 5 comes earlier.",
+          "c2": "6 is greater, but it is to the left of day 3. Only later days count.",
+          "c3": "That is day 3 itself. Look at the days after it."
+        }
+      },
+      "explain": {
+        "text": "From day 3 you passed 1 and stopped at 5. That walk to the right is the obvious method: from each day, scan forward. Some days have to scan a long way.",
+        "canvas": {
+          "highlight": [
+            "c4",
+            "c5"
+          ],
+          "pointers": [
+            {
+              "id": "today",
+              "at": 3,
+              "label": "day 3"
+            },
+            {
+              "id": "ans",
+              "at": 5,
+              "label": "next higher",
+              "below": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The cost of scanning ahead",
+      "prose": "The obvious code scans ahead from every day:\n\n```python\nfor i in range(n):\n    for j in range(i + 1, n):\n        if xs[j] > xs[i]:\n            ans[i] = xs[j]\n            break\n```\n\nIn a falling market no later close is ever higher, so no scan stops early.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            9,
+            8,
+            7,
+            6,
+            5,
+            4
+          ]
+        },
+        "state": {
+          "caption": "A strictly falling list: every answer is −1"
+        }
+      },
+      "question": "How many comparisons `xs[j] > xs[i]` does it make on these 6 values?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Comparisons",
+        "accept": "15 exactly: $5 + 4 + 3 + 2 + 1 + 0$",
+        "wrong": [
+          {
+            "id": "square",
+            "value": 36
+          },
+          {
+            "id": "linear",
+            "value": 6
+          },
+          {
+            "id": "both-ways",
+            "value": 30
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many values does the scan from day 0 look at?"
+        },
+        {
+          "rung": "point",
+          "text": "From the first value there are 5 later values to compare with.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Day 0 compares with 5 values, day 1 with 4, and so on down to day 5 with none. Add them up."
+        }
+      ],
+      "feedback": {
+        "correct": "$5 + 4 + 3 + 2 + 1 + 0 = 15$ comparisons.",
+        "generic": "Not quite right. Count the later values each day compares against, then add.",
+        "byKey": {
+          "square": "You counted every pair $(i, j)$, all 36. The inner loop starts at $i + 1$, so it only looks forward.",
+          "linear": "That is one comparison per day. In a falling list each scan runs to the end.",
+          "both-ways": "You counted each pair twice. The scan only looks forward, so each pair is compared once."
+        }
+      },
+      "explain": {
+        "text": "The scans cost $5 + 4 + \\dots + 0 = \\tfrac{6 \\times 5}{2} = 15$. For $n$ values that is $\\tfrac{n(n-1)}{2}$, which is $O(n^2)$. A year of minute bars, about 100,000 closes, would need about 5 billion comparisons.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              1,
+              5
+            ],
+            "label": "5 comparisons from day 0"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Who is still waiting",
+      "prose": "Turn it round: instead of scanning ahead, let each day **wait** for its answer. We read left to right. Days 0 and 1, closing at 4 and 2, are waiting on a stack. Now day 2 closes at 6.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              4,
+              2,
+              6,
+              3,
+              1,
+              5,
+              7
+            ]
+          },
+          "state": {
+            "pointers": [
+              {
+                "id": "i",
+                "at": 2,
+                "label": "i"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              4,
+              2
+            ],
+            "mode": "stack",
+            "capacity": 4,
+            "topLabel": "top"
+          },
+          "state": {}
+        },
+        "state": {
+          "caption": "Right: the stack of days still waiting"
+        }
+      },
+      "question": "Tap every earlier day that 6 answers.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c0",
+          "c1"
+        ],
+        "only": [
+          "c0",
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5",
+          "c6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which waiting values are smaller than 6?"
+        },
+        {
+          "rung": "point",
+          "text": "Both waiting values are below 6.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "6 is greater than 2 and greater than 4, and both are waiting, so 6 is the answer for days 0 and 1."
+        }
+      ],
+      "feedback": {
+        "correct": "6 answers both waiting days, 2 first and then 4.",
+        "generic": "Not quite right. Only days still waiting, to the left of day 2, can be answered.",
+        "byKey": {
+          "c0": "4 is waiting too, and 6 is greater than 4. Day 0 gets its answer now.",
+          "c1": "2 is on top of the stack, and 6 is greater than 2. Day 1 gets its answer now.",
+          "c2": "That is day 2 itself. It starts waiting for its own answer.",
+          "c3": "Day 3 has not been read yet. 6 can only answer earlier days.",
+          "c4": "Day 4 has not been read yet. 6 can only answer earlier days.",
+          "c5": "Day 5 has not been read yet. 6 can only answer earlier days.",
+          "c6": "Day 6 has not been read yet. 6 can only answer earlier days."
+        }
+      },
+      "explain": {
+        "text": "6 pops 2, then 4, and records 6 as the answer for both. Then day 2 starts waiting. The waiting values always fall from bottom to top, so this is called a **monotonic stack**.",
+        "canvas": {
+          "left": {
+            "done": [
+              0,
+              1
+            ]
+          },
+          "right": {
+            "cells": [
+              6
+            ]
+          },
+          "caption": "Days 0 and 1 answered by 6; day 2 now waits"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Run the stack",
+      "prose": "Carry on from day 3. The rule you used: while the new value is greater than the top, pop the top and record the new value as its answer. Then push the new value.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              4,
+              2,
+              6,
+              3,
+              1,
+              5,
+              7
+            ]
+          },
+          "state": {
+            "pointers": [
+              {
+                "id": "i",
+                "at": 3,
+                "label": "i"
+              }
+            ],
+            "done": [
+              0,
+              1
+            ]
+          }
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              6
+            ],
+            "mode": "stack",
+            "capacity": 4,
+            "topLabel": "top"
+          },
+          "state": {}
+        },
+        "state": {
+          "caption": "Answered days in bold; the stack on the right"
+        }
+      },
+      "question": "Step the stack through days 3 to 6.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s5",
+        "states": {
+          "s0": {
+            "tex": "\\text{Day 3 closes at } 3",
+            "ops": [
+              {
+                "label": "Push 3",
+                "to": "s1"
+              },
+              {
+                "label": "Pop 6, then push 3",
+                "to": "x0",
+                "why": "3 is smaller than 6, so it does not answer 6. Day 2 keeps waiting."
+              }
+            ]
+          },
+          "x0": {
+            "tex": "\\text{Stuck: 3 is not greater than 6}"
+          },
+          "s1": {
+            "tex": "\\text{Day 4 closes at } 1",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 4,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0,
+                  1
+                ]
+              },
+              "right": {
+                "cells": [
+                  6,
+                  3
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Pop 3, then push 1",
+                "to": "x1",
+                "why": "1 is smaller than 3, so it answers nobody. Push it and let it wait."
+              },
+              {
+                "label": "Push 1",
+                "to": "s2"
+              }
+            ]
+          },
+          "x1": {
+            "tex": "\\text{Stuck: 1 is not greater than 3}"
+          },
+          "s2": {
+            "tex": "\\text{Day 5 closes at } 5",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 5,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0,
+                  1
+                ]
+              },
+              "right": {
+                "cells": [
+                  6,
+                  3,
+                  1
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Push 5",
+                "to": "x2",
+                "why": "5 is greater than 1 and 3. Pushing it on top would leave them waiting under a bigger value, with their answers lost."
+              },
+              {
+                "label": "Pop 1 and 3, both answered by 5, then push 5",
+                "to": "s3"
+              },
+              {
+                "label": "Pop 1, 3 and 6, then push 5",
+                "to": "x2b",
+                "why": "5 is not greater than 6. Stop popping at the first top that is at least as big as 5."
+              }
+            ]
+          },
+          "x2": {
+            "tex": "\\text{Stuck: smaller values buried under 5}"
+          },
+          "x2b": {
+            "tex": "\\text{Stuck: 5 does not answer 6}"
+          },
+          "s3": {
+            "tex": "\\text{Day 6 closes at } 7",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 6,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0,
+                  1,
+                  3,
+                  4
+                ]
+              },
+              "right": {
+                "cells": [
+                  6,
+                  5
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Pop 5, then push 7",
+                "to": "x3",
+                "why": "7 is greater than 6 as well. Keep popping while the top is smaller than 7."
+              },
+              {
+                "label": "Pop 5 and 6, both answered by 7, then push 7",
+                "to": "s4"
+              }
+            ]
+          },
+          "x3": {
+            "tex": "\\text{Stuck: 6 is still waiting under 7}"
+          },
+          "s4": {
+            "tex": "\\text{No days left}",
+            "canvas": {
+              "left": {
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 6,
+                    "label": "i"
+                  }
+                ],
+                "done": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ]
+              },
+              "right": {
+                "cells": [
+                  7
+                ]
+              }
+            },
+            "ops": [
+              {
+                "label": "Give day 6 the answer −1",
+                "to": "s5"
+              }
+            ]
+          },
+          "s5": {
+            "tex": "6,\\ 6,\\ 7,\\ 5,\\ 5,\\ 7,\\ -1",
+            "canvas": {
+              "left": {
+                "done": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ]
+              },
+              "right": {
+                "cells": []
+              },
+              "caption": "Answers: 6, 6, 7, 5, 5, 7, −1"
+            }
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the new value with the top of the stack. Is it greater?"
+        },
+        {
+          "rung": "point",
+          "text": "The top is the most recent day still waiting.",
+          "highlight": [
+            "right:c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Days 3 and 4 just push. Day 5 pops 1 and 3. Day 6 pops 5 and 6. Day 6 is left waiting, so it gets −1."
+        }
+      ],
+      "feedback": {
+        "correct": "Answers: 6, 6, 7, 5, 5, 7 and −1.",
+        "generic": "Not quite right. Pop only while the top is smaller than the new value, then push."
+      },
+      "explain": {
+        "text": "Each day went onto the stack once and came off at most once. Day 5 answered two days at a single stroke, and day 6 answered two more. Day 6 was still waiting at the end, so its answer is −1.",
+        "canvas": {
+          "left": {
+            "done": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "pointers": []
+          },
+          "right": {
+            "cells": [
+              7
+            ]
+          },
+          "caption": "Answers: 6, 6, 7, 5, 5, 7, −1"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Falling and rising",
+      "prose": "Two extreme price paths: one falls every day, one rises every day.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              8,
+              6,
+              5,
+              1
+            ]
+          },
+          "state": {
+            "caption": "Falling"
+          }
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              1,
+              5,
+              6,
+              8
+            ]
+          },
+          "state": {
+            "caption": "Rising"
+          }
+        },
+        "state": {}
+      },
+      "question": "What does the next greater scan return for each?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Falling: `[-1, -1, -1, -1]`; rising: `[5, 6, 8, -1]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Falling: `[6, 5, 1, -1]`; rising: `[5, 6, 8, -1]`",
+            "why": "You took the next value, not the next greater one. In a falling list nothing to the right is higher."
+          },
+          {
+            "id": "c",
+            "text": "Falling: `[-1, -1, -1, -1]`; rising: `[8, 8, 8, -1]`",
+            "why": "You took the largest value to the right. We want the first greater one, which here is the very next value."
+          },
+          {
+            "id": "d",
+            "text": "Falling: `[-1, -1, -1, -1]`; rising: `[-1, -1, -1, -1]`",
+            "why": "In a rising list each value is popped by its neighbour straight away, so each gets an answer."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In the falling list, is any later value higher than an earlier one?"
+        },
+        {
+          "rung": "point",
+          "text": "In the rising list, the very next value is already higher.",
+          "highlight": [
+            "right:c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Falling: nothing is ever popped, so all four end with −1. Rising: each value is popped by the next one, and only the last is left."
+        }
+      ],
+      "feedback": {
+        "correct": "Falling gives all −1; rising answers each value with its neighbour.",
+        "generic": "Not quite right. Run the stack on each path, one value at a time.",
+        "byKey": {
+          "b": "You recorded the next value. A falling path never has a higher close later, so every answer is −1.",
+          "c": "You recorded the maximum to the right. The first greater value in a rising path is the next one."
+        }
+      },
+      "explain": {
+        "text": "On the falling path the stack grows to all 4 values and nothing is popped. On the rising path each value is pushed and popped at once, so the stack never holds more than one waiting day. Either way the work is about $2n$ steps.",
+        "canvas": {
+          "left": {
+            "highlight": [
+              "c0",
+              "c1",
+              "c2",
+              "c3"
+            ]
+          },
+          "caption": "Falling: the stack fills. Rising: it never holds more than one."
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Ties",
+      "prose": "Our convention: the next **strictly** greater value, so an equal value keeps waiting. A teammate writes the pop condition with `<=`.\n\n```python\nwhile stack and xs[stack[-1]] <= x:\n    ans[stack.pop()] = x\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            5,
+            5,
+            6
+          ]
+        },
+        "state": {
+          "caption": "Two equal closes, then a higher one"
+        }
+      },
+      "question": "What does their `next_greater([5, 5, 6])` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[5, 6, -1]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[6, 6, -1]`",
+            "why": "That is what strict `<` returns. With `<=`, the second 5 pops the first, so 5 is recorded as greater than 5.",
+            "canvas": {
+              "highlight": [
+                "c0",
+                "c1"
+              ]
+            }
+          },
+          {
+            "id": "c",
+            "text": "`[-1, 6, -1]`",
+            "why": "You let the second 5 pass the first. With `<=` it pops the first 5 and records itself as the answer."
+          },
+          {
+            "id": "d",
+            "text": "`[5, 6, 6]`",
+            "why": "6 is the last value, so nothing comes after it. It stays on the stack and gets −1."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When the second 5 arrives, is `5 <= 5` true?"
+        },
+        {
+          "rung": "point",
+          "text": "The first 5 is on top when this 5 arrives.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`<=` pops the first 5 and records 5 as its answer. Then 6 pops the second 5. 6 is left with −1."
+        }
+      ],
+      "feedback": {
+        "correct": "With `<=` an equal value counts as greater, which breaks the convention.",
+        "generic": "Not quite right. Run the `<=` condition on the second 5.",
+        "byKey": {
+          "b": "You ran the strict version. The teammate's `<=` treats the second 5 as an answer for the first.",
+          "c": "You expected the tie to wait. Under `<=`, `5 <= 5` is true, so the first 5 is popped."
+        }
+      },
+      "explain": {
+        "text": "`5 <= 5` is true, so the first 5 is popped with 5 as its answer, which is not greater. Use `<` and ties wait for 6. Some problems want the next value at least as high; state the convention, then pick `<` or `<=` to match.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c1"
+          ],
+          "caption": "With `<`: [6, 6, −1]. With `<=`: [5, 6, −1]."
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "What you did, as code. The stack holds **indices**, so each answer can be written in place.\n\n```python\nans = [-1] * len(xs)\nstack = []  # indices still waiting\nfor i, x in enumerate(xs):\n    while stack and xs[stack[-1]] < x:\n        ans[stack.pop()] = x\n    stack.append(i)\n```\n\nThere is a loop inside a loop, yet the work is not $O(n^2)$.",
+      "question": "Each index is pushed once and popped at most once. For $n = 1{,}000$, at most how many pushes and pops are there in total?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2000,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Pushes plus pops",
+        "accept": "2,000: at most $n$ pushes plus $n$ pops",
+        "wrong": [
+          {
+            "id": "square",
+            "value": 1000000
+          },
+          {
+            "id": "half",
+            "value": 1000
+          },
+          {
+            "id": "pairs",
+            "value": 499500
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At most $2n = 2{,}000$ stack operations, so the scan is $O(n)$.",
+        "generic": "Not quite right. Count pushes and pops separately.",
+        "byKey": {
+          "square": "You multiplied the two loops. The inner `while` can only pop what was pushed, and each index is pushed once.",
+          "half": "That counts the pushes only. Each index can also be popped once.",
+          "pairs": "That is the nested scan's count. The `while` never pops the same index twice."
+        }
+      },
+      "explain": {
+        "text": "Each of the 1,000 indices is pushed exactly once and popped at most once, so the `while` loop runs at most 1,000 times in total. That is at most 2,000 operations: $O(n)$ time and $O(n)$ space for the stack."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Write it",
+      "prose": "Now write the scan without looking. Ties wait: an equal value is not greater.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "`xs`",
+            "`next_greater(xs)`"
+          ],
+          "rows": [
+            [
+              "`[4, 2, 6, 3, 1, 5, 7]`",
+              "`[6, 6, 7, 5, 5, 7, -1]`"
+            ],
+            [
+              "`[5, 5, 6]`",
+              "`[6, 6, -1]`"
+            ],
+            [
+              "`[9, 7, 4, 2]`",
+              "`[-1, -1, -1, -1]`"
+            ]
+          ],
+          "align": [
+            "left",
+            "left"
+          ]
+        },
+        "state": {
+          "caption": "Expected results"
+        }
+      },
+      "question": "Write `next_greater(xs)`: for each position, the first later value strictly greater, or −1 if there is none.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def next_greater(xs):\n    ans = [-1] * len(xs)\n    stack = []  # indices still waiting\n    ...\n    return ans\n",
+        "solution": "def next_greater(xs):\n    ans = [-1] * len(xs)\n    stack = []  # indices still waiting\n    for i, x in enumerate(xs):\n        while stack and xs[stack[-1]] < x:\n            ans[stack.pop()] = x\n        stack.append(i)\n    return ans\n",
+        "examples": [
+          {
+            "call": "next_greater([4, 2, 6, 3, 1, 5, 7])",
+            "expect": "[6, 6, 7, 5, 5, 7, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([5, 5, 6])",
+            "expect": "[6, 6, -1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "next_greater([4, 2, 6, 3, 1, 5, 7])",
+            "expect": "[6, 6, 7, 5, 5, 7, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([5])",
+            "expect": "[-1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([9, 7, 4, 2])",
+            "expect": "[-1, -1, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([1, 2, 3, 4])",
+            "expect": "[2, 3, 4, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([5, 5, 6])",
+            "expect": "[6, 6, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([2, 1, 2, 4, 3])",
+            "expect": "[4, 2, 4, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([3, 3, 3])",
+            "expect": "[-1, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater([1, 3, 2, 4])",
+            "expect": "[3, 4, 4, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "next_greater(list(range(200000, 0, -1))) == [-1] * 200000",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: empty, single, falling, rising, ties. Test 10 is a falling list of 200,000 values, which a nested loop cannot finish in time."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the stack hold, and when does an index leave it?"
+        },
+        {
+          "rung": "point",
+          "text": "Ties wait: both 5s are answered by 6.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`for i, x in enumerate(xs):` then `while stack and xs[stack[-1]] < x: ans[stack.pop()] = x`, then `stack.append(i)`."
+        }
+      ],
+      "feedback": {
+        "correct": "One pass, each index pushed and popped at most once.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-6": "Test 6 is `[5, 5, 6]`. You popped on a tie: use `<`, not `<=`, so equal values wait.",
+          "test-10": "Test 10 timed out or failed on 200,000 falling values. A nested scan is $O(n^2)$; use the stack so each index moves at most twice."
+        }
+      },
+      "explain": {
+        "text": "`ans` starts as all −1, so days still waiting at the end need no extra work. The stack holds indices, which lets `ans[stack.pop()] = x` write in place. 200,000 values take about 400,000 stack operations.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A famous use",
+      "prose": "The **largest rectangle in a histogram** is a classic interview problem. A rectangle at the full height of a bar stretches sideways until the nearest **shorter** bar on each side. So each bar needs its next smaller bar, not its next greater one.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "xLabel": "index",
+          "showValues": true,
+          "yMax": 7
+        },
+        "state": {
+          "values": {
+            "0": 2,
+            "1": 1,
+            "2": 5,
+            "3": 6,
+            "4": 2,
+            "5": 3
+          },
+          "caption": "Heights 2, 1, 5, 6, 2, 3"
+        }
+      },
+      "question": "Which change to our scan finds the next smaller value to the right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Pop while `xs[stack[-1]] > x`, so the stack rises from bottom to top",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Keep popping while `xs[stack[-1]] < x`",
+            "why": "That pops when a bigger value arrives, which finds the next greater value."
+          },
+          {
+            "id": "c",
+            "text": "Sort the heights first",
+            "why": "Sorting throws away positions. \"Next\" is about order in the list."
+          },
+          {
+            "id": "d",
+            "text": "Use a queue and take the oldest waiting bar first",
+            "why": "The most recent waiting bar is the nearest one, so it must be answered first: last in, first out."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which arriving value should end a bar's wait now?"
+        },
+        {
+          "rung": "point",
+          "text": "When the 2 at index 4 arrives, the 6 and the 5 before it have found a shorter bar.",
+          "highlight": [
+            "x4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Flip the comparison: pop while the top is taller than the new bar. The waiting bars then rise from bottom to top."
+        }
+      ],
+      "feedback": {
+        "correct": "Flip the comparison and the same scan finds next smaller values.",
+        "generic": "Not quite right. What should make a waiting bar stop waiting?",
+        "byKey": {
+          "b": "You kept the next greater test. A bar's rectangle ends at a shorter bar, so pop on `>`."
+        }
+      },
+      "explain": {
+        "text": "With `>`, the 2 at index 4 pops the 6 and the 5. The 5 spans indices 2 and 3, so its rectangle is $5 \\times 2 = 10$, the largest here. Running the scan from both sides gives each bar's width in $O(n)$.",
+        "canvas": {
+          "highlight": [
+            "x2",
+            "x3"
+          ],
+          "caption": "Largest rectangle: height 5, width 2, area 10"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A breakout detector",
+      "prose": "A desk wants, for each day, how many days until the price next closes above today's close. A long wait means a ceiling held. A short one means momentum. Days with no higher close later get 0.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "day",
+            "close (£)",
+            "days until higher"
+          ],
+          "rows": [
+            [
+              "0",
+              "101.20",
+              "2"
+            ],
+            [
+              "1",
+              "100.50",
+              "1"
+            ],
+            [
+              "2",
+              "102.00",
+              "3"
+            ],
+            [
+              "3",
+              "101.00",
+              "2"
+            ],
+            [
+              "4",
+              "100.80",
+              "1"
+            ],
+            [
+              "5",
+              "103.50",
+              "0"
+            ],
+            [
+              "6",
+              "103.10",
+              "0"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {
+          "caption": "Day 0 waits until day 2, so its answer is 2"
+        }
+      },
+      "question": "Write `days_until_higher(prices)`: the number of days until a strictly higher close, or 0 if none comes.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def days_until_higher(prices):\n    ans = [0] * len(prices)\n    stack = []  # indices of days still waiting\n    ...\n    return ans\n",
+        "solution": "def days_until_higher(prices):\n    ans = [0] * len(prices)\n    stack = []  # indices of days still waiting\n    for i, p in enumerate(prices):\n        while stack and prices[stack[-1]] < p:\n            j = stack.pop()\n            ans[j] = i - j\n        stack.append(i)\n    return ans\n",
+        "examples": [
+          {
+            "call": "days_until_higher([101.2, 100.5, 102.0, 101.0, 100.8, 103.5, 103.1])",
+            "expect": "[2, 1, 3, 2, 1, 0, 0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "days_until_higher([101.2, 100.5, 102.0, 101.0, 100.8, 103.5, 103.1])",
+            "expect": "[2, 1, 3, 2, 1, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "days_until_higher([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "days_until_higher([100.0])",
+            "expect": "[0]",
+            "compare": "equal"
+          },
+          {
+            "call": "days_until_higher([105, 104, 103])",
+            "expect": "[0, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "days_until_higher([100, 101, 102])",
+            "expect": "[1, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "days_until_higher([100, 100, 101])",
+            "expect": "[2, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "days_until_higher([73, 74, 75, 71, 69, 72, 76, 73])",
+            "expect": "[1, 1, 4, 2, 1, 1, 0, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "days_until_higher([50, 40, 30, 60])",
+            "expect": "[3, 2, 1, 0]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests, including an empty list, a falling path, a rising path and a tie."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What do you record when an index is popped: the price, or something else?"
+        },
+        {
+          "rung": "point",
+          "text": "Day 1 waits for day 2: one day. Day 0 waits for day 2 as well.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Same loop as `next_greater`, but when you pop `j` at day `i`, record `i - j`."
+        }
+      ],
+      "feedback": {
+        "correct": "Same stack, but each answer records a distance in days.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-6": "Test 6 has two equal closes then a higher one. Equal is not higher: pop on `<` only.",
+          "test-1": "Test 1 is the table's prices. Record `i - j`, the gap in days, not the price."
+        }
+      },
+      "explain": {
+        "text": "The stack holds days still waiting for a higher close. When day `i` pops day `j`, the wait was `i - j` days. This is the daily temperatures problem with prices, and it runs in $O(n)$ on years of data.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              0,
+              2
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Instead of scanning ahead from every value, let values wait on a stack until something greater arrives.",
+      "The waiting values fall from bottom to top: a monotonic stack. Each index is pushed once and popped at most once, so the scan is $O(n)$.",
+      "Change what you record on a pop (the value, the distance) or flip the comparison (next smaller) and the same scan solves new problems."
+    ],
+    "formula": {
+      "name": "Monotonic stack step",
+      "tex": "\\text{while } x_{\\text{top}} < x_i:\\ \\text{answer}[\\text{top}] = x_i,\\ \\text{pop};\\quad \\text{then push } i",
+      "note": "Pushes plus pops are at most $2n$. Use `<` when ties should wait, `<=` when an equal value counts."
+    },
+    "trap": "`<=` pops on a tie, so an equal value is recorded as greater. A nested scan gives the right answers but is $O(n^2)$."
+  },
+  "quiz": [
+    {
+      "id": "q-small",
+      "difficulty": 2,
+      "prose": "Run the next greater scan on `[2, 1, 3]`.",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[3, 3, -1]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[1, 3, -1]`",
+            "why": "You took the next value. 1 is smaller than 2, so 2 keeps waiting until 3."
+          },
+          {
+            "id": "c",
+            "text": "`[-1, 3, -1]`",
+            "why": "2 does get an answer: 3 comes later and is greater."
+          },
+          {
+            "id": "d",
+            "text": "`[3, 3, 3]`",
+            "why": "Nothing comes after the last value, so it gets −1."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "2 and 1 both wait for 3.",
+        "generic": "Not quite right. For each value, look right for the first greater one."
+      },
+      "explain": {
+        "text": "2 waits, then 1 waits on top of it. 3 pops 1, then 2, and answers both. 3 itself is left with −1."
+      }
+    },
+    {
+      "id": "q-stack-left",
+      "difficulty": 2,
+      "prose": "Run the scan on the closes `[6, 4, 5, 2]`.",
+      "question": "Which values are on the stack at the end, bottom to top?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "6, 5, 2",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "6, 4, 5, 2",
+            "why": "5 is greater than 4, so 5 popped 4 when it arrived."
+          },
+          {
+            "id": "c",
+            "text": "5, 2",
+            "why": "5 is not greater than 6, so 6 was never popped."
+          },
+          {
+            "id": "d",
+            "text": "2",
+            "why": "Only values smaller than an arrival are popped. 6 and 5 are still waiting."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "4 was popped by 5; the rest still wait.",
+        "generic": "Not quite right. Pop only while the arriving value is greater than the top."
+      },
+      "explain": {
+        "text": "6 and 4 are pushed. 5 pops 4, stops at 6, and is pushed. 2 is pushed. The stack falls from bottom to top: 6, 5, 2."
+      }
+    },
+    {
+      "id": "q-why-linear",
+      "difficulty": 3,
+      "prose": "The scan has a `while` loop inside a `for` loop over $n$ values.",
+      "question": "Why is it $O(n)$ and not $O(n^2)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Each index is pushed once and popped at most once, so the `while` runs at most $n$ times in total",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The `while` loop always runs at most once per value",
+            "why": "One arrival can pop many values, as day 5 popped two. The bound is on the total, not per step."
+          },
+          {
+            "id": "c",
+            "text": "The stack never holds more than a few values",
+            "why": "On a falling path the stack holds all $n$ values."
+          },
+          {
+            "id": "d",
+            "text": "Python lists are fast",
+            "why": "Speed per operation does not change the growth rate. The count of operations does."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The total work is bounded by pushes plus pops: at most $2n$.",
+        "generic": "Not quite right. Count how often an index can be popped over the whole run."
+      },
+      "explain": {
+        "text": "A single step may pop many values, but each index is popped at most once over the whole scan. So all the `while` iterations together are at most $n$. Add $n$ pushes and the total is at most $2n$."
+      }
+    },
+    {
+      "id": "q-days",
+      "difficulty": 3,
+      "prose": "Four daily closes: £100, £98, £99, £101.",
+      "question": "For day 0 (£100), how many days until a strictly higher close?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Days",
+        "accept": "3: day 3 closes at £101",
+        "wrong": [
+          {
+            "id": "between",
+            "value": 2
+          },
+          {
+            "id": "next",
+            "value": 1
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Day 3 is the first close above £100, three days later.",
+        "generic": "Not quite right. Find the first later close above £100.",
+        "byKey": {
+          "between": "You counted the days in between. The answer is the gap in index: 3 − 0.",
+          "next": "Day 1 closed lower, at £98. It is not higher than £100."
+        }
+      },
+      "explain": {
+        "text": "£98 and £99 are both below £100. Day 3 closes at £101, so the wait is $3 - 0 = 3$ days."
+      }
+    }
+  ]
+}

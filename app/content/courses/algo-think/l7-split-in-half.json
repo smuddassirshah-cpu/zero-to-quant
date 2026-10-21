@@ -1,0 +1,1295 @@
+{
+  "id": "l7-split-in-half",
+  "course": "algo-think",
+  "title": "Splitting the problem in half",
+  "minutes": 14,
+  "objectives": [
+    "Solve a problem by dividing it, solving the halves and combining."
+  ],
+  "skills": [
+    "at-recursion"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two halves, one answer",
+      "prose": "Four daily returns, in basis points: 7, 2, 9 and 4. A function finds the largest by splitting the list in half, finding the largest of each half the same way, and keeping the larger.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "[7, 2, 9, 4]",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "[7, 2]",
+              "p": "7",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "[7]",
+                  "p": "7"
+                },
+                {
+                  "id": "r",
+                  "label": "[2]",
+                  "p": "2"
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "[9, 4]",
+              "p": "9",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "[9]",
+                  "p": "9"
+                },
+                {
+                  "id": "r",
+                  "label": "[4]",
+                  "p": "4"
+                }
+              ]
+            }
+          ],
+          "orient": "tb"
+        },
+        "state": {
+          "unknown": [
+            "l",
+            "r"
+          ],
+          "caption": "One item is its own largest. The numbers on the lines are what each call returns."
+        }
+      },
+      "question": "Fill in what each call returns.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "call",
+          "returns"
+        ],
+        "rows": [
+          [
+            "`[7, 2]`",
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`[9, 4]`",
+            {
+              "edit": true,
+              "answer": 9,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`[7, 2, 9, 4]`",
+            {
+              "edit": true,
+              "answer": 9,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A one-item list returns its item. What does `[7, 2]` keep from 7 and 2?"
+        },
+        {
+          "rung": "point",
+          "text": "This call compares the answers of `[7]` and `[2]`.",
+          "highlight": [
+            "l"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`[7, 2]` keeps 7, `[9, 4]` keeps 9, and the whole list keeps the larger of 7 and 9."
+        }
+      ],
+      "feedback": {
+        "correct": "Each call keeps the larger of its two halves' answers.",
+        "generic": "Not quite right. Work up from the single items, keeping the larger of each pair.",
+        "byKey": {
+          "r2c1": "The whole list compares 7 and 9, the answers of its two halves."
+        }
+      },
+      "explain": {
+        "text": "The single items answer at once. Each pair keeps its larger item, 7 and 9. The top call keeps the larger of those, 9, without ever comparing 2 with 4 directly.",
+        "canvas": {
+          "unknown": [],
+          "highlight": [
+            "r"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where to split",
+      "prose": "This is **divide and conquer**: split the problem, solve each half the same way, combine the answers. With indices, `max_rec(xs, lo, hi)` looks at `xs[lo]` to `xs[hi]`.\n\n```python\ndef max_rec(xs, lo, hi):\n    if lo == hi:\n        return xs[lo]\n    mid = (lo + hi) // 2\n    left = max_rec(xs, lo, mid)\n    right = max_rec(xs, mid + 1, hi)\n    return max(left, right)\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "0–7",
+          "orient": "tb",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "?"
+            },
+            {
+              "id": "r",
+              "label": "?"
+            }
+          ]
+        },
+        "state": {
+          "caption": "`max_rec(xs, 0, 7)` on 8 numbers"
+        }
+      },
+      "question": "Which two calls does `max_rec(xs, 0, 7)` make?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`max_rec(xs, 0, 3)` and `max_rec(xs, 4, 7)`",
+            "correct": true
+          },
+          {
+            "id": "overlap",
+            "text": "`max_rec(xs, 0, 3)` and `max_rec(xs, 3, 7)`",
+            "why": "You started the right half at `mid`, so index 3 is in both halves. Look at `mid + 1`."
+          },
+          {
+            "id": "short",
+            "text": "`max_rec(xs, 0, 2)` and `max_rec(xs, 3, 7)`",
+            "why": "You ended the left half at `mid - 1`. The code passes `mid` itself to the left half."
+          },
+          {
+            "id": "half",
+            "text": "`max_rec(xs, 0, 4)` and `max_rec(xs, 4, 7)`",
+            "why": "You rounded `(0 + 7) / 2` up. `//` rounds down, so `mid` is 3."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out `mid = (0 + 7) // 2` first."
+        },
+        {
+          "rung": "point",
+          "text": "The left call takes `lo` to `mid`; the right call starts one after `mid`.",
+          "highlight": [
+            "l",
+            "r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`mid` is 3, so the halves are 0 to 3 and 4 to 7."
+        }
+      ],
+      "feedback": {
+        "correct": "`mid` is 3, so the halves are 0 to 3 and 4 to 7, with no overlap.",
+        "generic": "Not quite right. Compute `mid`, then read the two calls in the code.",
+        "byKey": {
+          "overlap": "You put index 3 in both halves. The right half starts at `mid + 1`."
+        }
+      },
+      "explain": {
+        "text": "`(0 + 7) // 2` is 3, so the left half is indices 0 to 3 and the right half 4 to 7. Every index is in exactly one half, and both halves are smaller than the whole."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "How many calls",
+      "prose": "Here is every call `max_rec` makes on 8 numbers. A call on one index, where `lo == hi`, is the base case.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "0–7",
+          "orient": "tb",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "l",
+              "label": "0–3",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "0–1",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "0"
+                    },
+                    {
+                      "id": "r",
+                      "label": "1"
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "2–3",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "2"
+                    },
+                    {
+                      "id": "r",
+                      "label": "3"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "4–7",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "4–5",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "4"
+                    },
+                    {
+                      "id": "r",
+                      "label": "5"
+                    }
+                  ]
+                },
+                {
+                  "id": "r",
+                  "label": "6–7",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "6"
+                    },
+                    {
+                      "id": "r",
+                      "label": "7"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "Every call of `max_rec(xs, 0, 7)`"
+        }
+      },
+      "question": "How many calls does `max_rec(xs, 0, 7)` make in all, counting itself?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "calls",
+        "accept": "15: 1 + 2 + 4 + 8",
+        "wrong": [
+          {
+            "id": "leaves",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "inner",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "levels",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sixteen",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the calls level by level."
+        },
+        {
+          "rung": "point",
+          "text": "The bottom level has one call per number.",
+          "highlight": [
+            "l-l-l",
+            "l-l-r",
+            "l-r-l",
+            "l-r-r",
+            "r-l-l",
+            "r-l-r",
+            "r-r-l",
+            "r-r-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Levels hold 1, 2, 4 and 8 calls: $1 + 2 + 4 + 8 = 15$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 + 2 + 4 + 8 = 15$, which is $2 \\times 8 - 1$.",
+        "generic": "Not quite right. Add up the calls on every level, including the top.",
+        "byKey": {
+          "leaves": "You counted only the base cases. The calls above them count too.",
+          "inner": "You counted only the calls that split. The 8 single-index calls count too.",
+          "levels": "That is the number of levels. Count the calls on each level and add.",
+          "sixteen": "The top level has one call, not two: $1 + 2 + 4 + 8$."
+        }
+      },
+      "explain": {
+        "text": "The levels hold 1, 2, 4 and 8 calls, so 15 in all. In general $n$ numbers give $n$ base cases and $n - 1$ splits: $2n - 1$ calls. A single number, $n = 1$, is one call that answers at once.",
+        "canvas": {
+          "highlight": [
+            "l-l-l",
+            "l-l-r",
+            "l-r-l",
+            "l-r-r",
+            "r-l-l",
+            "r-l-r",
+            "r-r-l",
+            "r-r-r"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Pairs out of order",
+      "prose": "An **inversion** is a pair where the earlier number is bigger. `[3, 1, 4, 2]` splits into `[3, 1]` and `[4, 2]`, each with one inversion. The numbers on the lines are each half's count.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "[3, 1, 4, 2]",
+          "nodes": [
+            {
+              "id": "l",
+              "label": "[3, 1]",
+              "p": "1",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "[3]",
+                  "p": "0"
+                },
+                {
+                  "id": "r",
+                  "label": "[1]",
+                  "p": "0"
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "[4, 2]",
+              "p": "1",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "[4]",
+                  "p": "0"
+                },
+                {
+                  "id": "r",
+                  "label": "[2]",
+                  "p": "0"
+                }
+              ]
+            }
+          ],
+          "orient": "tb"
+        },
+        "state": {
+          "caption": "Inversions inside each half"
+        }
+      },
+      "question": "How many inversions does `[3, 1, 4, 2]` have in all?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "pairs",
+        "accept": "3: (3, 1), (4, 2) and (3, 2)",
+        "wrong": [
+          {
+            "id": "no-cross",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all-pairs",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "cross-only",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The halves found (3, 1) and (4, 2). Which pairs span both halves?"
+        },
+        {
+          "rung": "point",
+          "text": "Compare each number on the left with each on the right.",
+          "highlight": [
+            "l",
+            "r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Across the halves only (3, 2) is out of order. Add it to the 2 inside the halves."
+        }
+      ],
+      "feedback": {
+        "correct": "1 + 1 inside the halves, plus 1 pair across them.",
+        "generic": "Not quite right. Count inside each half, then across the split.",
+        "byKey": {
+          "no-cross": "You added the two halves and stopped. The combine step must count pairs across the split: (3, 2).",
+          "all-pairs": "That is every pair. Count only those where the earlier number is bigger.",
+          "cross-only": "That is the cross pair alone. Add the inversions inside each half."
+        }
+      },
+      "explain": {
+        "text": "The halves give $1 + 1$. The combine step checks pairs across the split: 3 against 4 and 2, then 1 against 4 and 2. Only (3, 2) is out of order, so the total is 3."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Keeping only one half",
+      "prose": "Binary search on sorted prices also splits in half. It looks at the middle price, then searches **one** half only. Each call halves the range.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "8 prices",
+          "nodes": [
+            {
+              "id": "a",
+              "label": "4 prices",
+              "children": [
+                {
+                  "id": "b",
+                  "label": "2 prices",
+                  "children": [
+                    {
+                      "id": "c",
+                      "label": "1 price"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "8 prices need 4 calls"
+        }
+      },
+      "question": "Starting from 1,024 sorted prices, how many calls until the range holds one price?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "calls",
+        "accept": "11: 1,024, 512, ..., 2, 1",
+        "wrong": [
+          {
+            "id": "log",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 512,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 1024,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "8 prices took 4 calls: 8, 4, 2, 1. Halve 1,024 the same way."
+        },
+        {
+          "rung": "point",
+          "text": "How many halvings take 1,024 down to 1?",
+          "highlight": [
+            "a-b-c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1024 = 2^{10}$, so 10 halvings. With the first call that makes 11 calls."
+        }
+      ],
+      "feedback": {
+        "correct": "$2^{10} = 1024$: ten halvings, eleven calls.",
+        "generic": "Not quite right. List the range sizes from 1,024 down to 1.",
+        "byKey": {
+          "log": "Ten is the number of halvings. Count the calls: one per range size, 1,024 down to 1.",
+          "half": "One call per price in a half is far too many. Each call halves the range again."
+        }
+      },
+      "explain": {
+        "text": "The sizes run 1,024, 512, 256, and so on down to 1: eleven sizes, one call each. That is $\\log_2 1024 + 1$. We build binary search properly in a later lesson."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Max by halves, power by squaring",
+      "prose": "Fast power halves $n$: $x^n = (x^{n/2})^2$ for even $n$, and $x \\cdot (x^{(n-1)/2})^2$ for odd $n$. Return the value and the number of multiplications. An even step costs 1 (`h * h`), an odd step 2 (`h * h * x`). Base cases: $n = 0$ gives `(1, 0)`, $n = 1$ gives `(x, 0)`.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "x¹⁰",
+          "nodes": [
+            {
+              "id": "a",
+              "label": "x⁵",
+              "p": "1 + 2",
+              "children": [
+                {
+                  "id": "b",
+                  "label": "x²",
+                  "p": "1",
+                  "children": [
+                    {
+                      "id": "c",
+                      "label": "x¹",
+                      "p": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "$x^{10}$ halves to $x^5$, $x^2$, then $x$: $1 + 2 + 1 = 4$ multiplications"
+        }
+      },
+      "question": "Write `max_rec(xs, lo, hi)` by halves, as before, and `power_fast(x, n)` returning `(value, multiplications)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def max_rec(xs, lo, hi):\n    ...\n\n\ndef power_fast(x, n):\n    ...\n",
+        "solution": "def max_rec(xs, lo, hi):\n    if lo == hi:\n        return xs[lo]\n    mid = (lo + hi) // 2\n    return max(max_rec(xs, lo, mid), max_rec(xs, mid + 1, hi))\n\n\ndef power_fast(x, n):\n    if n == 0:\n        return 1, 0\n    if n == 1:\n        return x, 0\n    h, m = power_fast(x, n // 2)\n    if n % 2 == 0:\n        return h * h, m + 1\n    return h * h * x, m + 2\n",
+        "tests": [
+          {
+            "call": "max_rec([7, 2, 9, 4], 0, 3)",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "max_rec([5], 0, 0)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "max_rec([-3, -8, -1], 0, 2)",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "max_rec([7, 2, 9, 4], 0, 1)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "max_rec(xs, 0, 4999)",
+            "expect": "100",
+            "compare": "equal",
+            "setup": "xs = [(i * 37) % 101 for i in range(5000)]"
+          },
+          {
+            "call": "power_fast(2, 10)",
+            "expect": "(1024, 4)",
+            "compare": "equal"
+          },
+          {
+            "call": "power_fast(5, 0)",
+            "expect": "(1, 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "power_fast(7, 1)",
+            "expect": "(7, 0)",
+            "compare": "equal"
+          },
+          {
+            "call": "power_fast(3, 5)",
+            "expect": "(243, 3)",
+            "compare": "equal"
+          },
+          {
+            "call": "power_fast(1, 10**9)",
+            "expect": "(1, 41)",
+            "compare": "equal"
+          },
+          {
+            "call": "power_fast(3, 1000) == (3 ** 1000, 14)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "power_fast(1.05, 252)[0]",
+            "expect": "218626.7836322",
+            "compare": "isclose"
+          }
+        ],
+        "examples": [
+          {
+            "call": "max_rec([7, 2, 9, 4], 0, 3)",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "power_fast(2, 10)",
+            "expect": "(1024, 4)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests. Test 5 has 5,000 numbers; test 10 has $n = 10^9$, which one-at-a-time multiplying could never reach. Decimal answers pass when `math.isclose` agrees."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`power_fast` calls itself once, on `n // 2`, then squares the result."
+        },
+        {
+          "rung": "point",
+          "text": "For odd $n$, `n // 2` drops a factor of $x$. Multiply it back in.",
+          "highlight": [
+            "a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`h, m = power_fast(x, n // 2)`. Even: `return h * h, m + 1`. Odd: `return h * h * x, m + 2`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both halve the problem, so their depth grows like $\\log_2 n$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-5": "Test 5 expects 100 on 5,000 numbers. A one-at-a-time recursion runs out of stack: split at `mid`.",
+          "test-9": "Test 9 expects `(243, 3)`. If you got 81, the odd case is missing its extra `* x`.",
+          "test-10": "Test 10 expects `(1, 41)` for $n = 10^9$. Call `power_fast` once per level, on `n // 2`, and reuse the result.",
+          "error": "Your code stopped with an error. A `RecursionError` means a half did not shrink: check `mid + 1`."
+        }
+      },
+      "explain": {
+        "text": "Halving means $n = 10^9$ needs only 30 levels and 41 multiplications, not a billion. The odd case adds one `* x`, because `n // 2` rounded down. Calling `power_fast` twice on `n // 2` instead of reusing `h` would undo the saving."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A half that never shrinks",
+      "prose": "One character changed: the right half now starts at `mid`.\n\n```python\ndef max_rec(xs, lo, hi):\n    if lo == hi:\n        return xs[lo]\n    mid = (lo + hi) // 2\n    left = max_rec(xs, lo, mid)\n    right = max_rec(xs, mid, hi)\n    return max(left, right)\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "0–1",
+          "orient": "tb",
+          "compact": true,
+          "nodes": [
+            {
+              "id": "l",
+              "label": "0"
+            },
+            {
+              "id": "r",
+              "label": "0–1",
+              "children": [
+                {
+                  "id": "l",
+                  "label": "0"
+                },
+                {
+                  "id": "r",
+                  "label": "0–1",
+                  "children": [
+                    {
+                      "id": "l",
+                      "label": "0"
+                    },
+                    {
+                      "id": "r",
+                      "label": "⋯"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "The calls of `max_rec([5, 8], 0, 1)`"
+        }
+      },
+      "question": "What does `max_rec([5, 8], 0, 1)` do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rec",
+            "text": "Raises `RecursionError`",
+            "correct": true
+          },
+          {
+            "id": "eight",
+            "text": "Returns 8",
+            "why": "You expected both halves to shrink. With `mid` 0, the right half is 0 to 1: the same call again."
+          },
+          {
+            "id": "five",
+            "text": "Returns 5",
+            "why": "The left half does return 5, but the right call never finishes."
+          },
+          {
+            "id": "index",
+            "text": "Raises `IndexError`",
+            "why": "No index goes out of range. The same range repeats until the stack runs out."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out `mid` for `lo = 0`, `hi = 1`."
+        },
+        {
+          "rung": "point",
+          "text": "This call has the same range as its parent.",
+          "highlight": [
+            "r",
+            "r-r"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`mid` is 0, so the right call is `max_rec(xs, 0, 1)` again, for ever."
+        }
+      ],
+      "feedback": {
+        "correct": "A half the same size as the whole never reaches the base case.",
+        "generic": "Not quite right. Write out the two calls when `mid` is 0.",
+        "byKey": {
+          "eight": "You assumed the halves shrink. On two items the right half is the whole range again.",
+          "index": "You expected a bad index. The ranges stay inside the list; they just never get smaller."
+        }
+      },
+      "explain": {
+        "text": "With `lo = 0` and `hi = 1`, `mid` is 0. The right call gets 0 to 1, exactly the range it was given, so it repeats until `RecursionError`. Split as `lo..mid` and `mid + 1..hi`, and both halves are always smaller.",
+        "canvas": {
+          "highlight": [
+            "r",
+            "r-r"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Divide and conquer",
+      "prose": "Every function here had three steps: **split** at `mid`, **solve** each half by the same function, **combine**.\n\n$$x^n = \\begin{cases} (x^{n/2})^2 & n \\text{ even} \\\\ x \\cdot (x^{(n-1)/2})^2 & n \\text{ odd} \\end{cases}$$\n\nThe halves must not overlap, and both must be smaller.",
+      "question": "How many calls does `max_rec` make on 16 numbers?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "31",
+            "text": "31",
+            "correct": true
+          },
+          {
+            "id": "16",
+            "text": "16",
+            "why": "That counts only the base cases. The 15 calls that split count too."
+          },
+          {
+            "id": "15",
+            "text": "15",
+            "why": "That counts only the calls that split. Add the 16 base cases."
+          },
+          {
+            "id": "5",
+            "text": "5",
+            "why": "That is the number of levels: 1, 2, 4, 8, 16 calls."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2n - 1 = 31$: 16 base cases and 15 splits.",
+        "generic": "Not quite right. Add the calls level by level: 1, 2, 4, 8, 16."
+      },
+      "explain": {
+        "text": "The levels hold $1 + 2 + 4 + 8 + 16 = 31$ calls. That is $2 \\times 16 - 1$, the same pattern as 15 calls for 8 numbers."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The odd case",
+      "prose": "We compute `power_fast(2, 5)` by hand. Each line says why it follows.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "d1",
+            "text": "`power_fast(2, 5)` needs `power_fast(2, 2)`: $5 \\,//\\, 2 = 2$"
+          },
+          {
+            "id": "d2",
+            "text": "`power_fast(2, 2)` needs `power_fast(2, 1)`, which returns 2: the base case"
+          },
+          {
+            "id": "d3",
+            "text": "`power_fast(2, 2)` returns $2 \\times 2 = 4$: 2 is even, so square the half"
+          },
+          {
+            "id": "d4",
+            "text": "`power_fast(2, 5)` returns $4 \\times 4 \\times 2 = 32$: 5 is odd, so square, then one more 2"
+          }
+        ],
+        "answer": [
+          "d1",
+          "d2",
+          "d3",
+          "d4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which call does the work first, the top one or the bottom one?"
+        },
+        {
+          "rung": "point",
+          "text": "The calls go down to the base case, then the answers come back up."
+        },
+        {
+          "rung": "step",
+          "text": "Down: 5 needs 2, 2 needs 1. Up: 1 gives 2, then $2^2 = 4$, then $4^2 \\times 2 = 32$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2^5 = (2^2)^2 \\times 2 = 32$, with 3 multiplications.",
+        "generic": "Not quite right. Calls go down first; answers come back up.",
+        "byKey": {
+          "d4": "The top call finishes last, so its line comes last.",
+          "d3": "`power_fast(2, 2)` can square only after the base case has returned 2."
+        }
+      },
+      "explain": {
+        "text": "Halving 5 gives 2 and drops a remainder of 1. Squaring $2^2$ gives only $2^4 = 16$, so the odd case multiplies by one more 2. Without that step the function returns 16, not 32."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A year of daily growth",
+      "prose": "A strategy earns 0.02% a day. Over a year of 252 trading days, £1 grows to $1.0002^{252} \\approx 1.0517$. You compute it with `power_fast`.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "252",
+          "nodes": [
+            {
+              "id": "a",
+              "label": "126",
+              "p": "1",
+              "children": [
+                {
+                  "id": "b",
+                  "label": "63",
+                  "p": "1",
+                  "children": [
+                    {
+                      "id": "c",
+                      "label": "31",
+                      "p": "2",
+                      "children": [
+                        {
+                          "id": "d",
+                          "label": "15",
+                          "p": "2",
+                          "children": [
+                            {
+                              "id": "e",
+                              "label": "7",
+                              "p": "2",
+                              "children": [
+                                {
+                                  "id": "f",
+                                  "label": "3",
+                                  "p": "2",
+                                  "children": [
+                                    {
+                                      "id": "g",
+                                      "label": "1",
+                                      "p": "2"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "caption": "The exponents `power_fast` visits. Lines show each call's cost.",
+          "unknown": [
+            "a",
+            "a-b",
+            "a-b-c",
+            "a-b-c-d",
+            "a-b-c-d-e",
+            "a-b-c-d-e-f",
+            "a-b-c-d-e-f-g"
+          ]
+        }
+      },
+      "question": "How many multiplications does `power_fast(1.0002, 252)` make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "multiplications",
+        "accept": "12: 7 squarings and 5 extra factors",
+        "wrong": [
+          {
+            "id": "calls",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "naive",
+            "value": 251,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 252,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nobase1",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each even step costs 1 multiplication; each odd step costs 2. The base case $n = 1$ costs 0."
+        },
+        {
+          "rung": "point",
+          "text": "Two of the steps are even. The rest above the base case are odd.",
+          "highlight": [
+            "a",
+            "a-b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "252 and 126 are even: 2. Then 63, 31, 15, 7 and 3 are odd: 10. Total 12."
+        }
+      ],
+      "feedback": {
+        "correct": "12 multiplications, against 251 one at a time.",
+        "generic": "Not quite right. Add 1 for each even exponent and 2 for each odd one above 1.",
+        "byKey": {
+          "calls": "8 is the number of calls. Odd steps cost 2 multiplications each.",
+          "naive": "251 is the one-at-a-time count. Halving the exponent needs far fewer.",
+          "nobase1": "You charged the call on 1 as an odd step. $n = 1$ is a base case: it returns $x$ for free."
+        }
+      },
+      "explain": {
+        "text": "Two even steps cost 1 each and five odd steps cost 2 each: $2 + 10 = 12$. That is 7 squarings plus 5 extra factors of 1.0002, against 251 multiplications one day at a time. For a 10-year horizon of 2,520 days the halving needs only 16.",
+        "canvas": {
+          "unknown": []
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Divide and conquer: split the input at `mid`, solve each half with the same function, combine the two answers.",
+      "Split as `lo..mid` and `mid + 1..hi`, so the halves never overlap and both shrink. A half the same size as the whole recurses for ever.",
+      "Halving keeps the depth near $\\log_2 n$: fast power reaches $x^{10^9}$ in 41 multiplications."
+    ],
+    "formula": {
+      "name": "Fast power",
+      "tex": "x^n = \\begin{cases} (x^{n/2})^2 & n \\text{ even} \\\\ x \\cdot (x^{(n-1)/2})^2 & n \\text{ odd} \\end{cases}",
+      "note": "Compute the half once and reuse it; the odd case needs one extra factor of $x$."
+    },
+    "trap": "Starting the right half at `mid` instead of `mid + 1`: on two items the half is the whole range, so the recursion never ends."
+  },
+  "quiz": [
+    {
+      "id": "q-compares",
+      "difficulty": 2,
+      "prose": "`max_rec` from this lesson runs on 8 daily returns.",
+      "question": "How many times does `max(left, right)` run?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 7,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "times",
+        "accept": "7: one per call that splits",
+        "wrong": [
+          {
+            "id": "calls",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "n",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One comparison per split: $n - 1 = 7$.",
+        "generic": "Not quite right. Which calls compare, and which return at once?",
+        "byKey": {
+          "calls": "15 is every call. The 8 base cases return at once without comparing.",
+          "n": "8 is the number of base cases. They do not compare anything."
+        }
+      },
+      "explain": {
+        "text": "Only the calls that split run `max`: 1 + 2 + 4 = 7 of them. That is the same $n - 1$ comparisons a simple loop makes."
+      }
+    },
+    {
+      "id": "q-single",
+      "difficulty": 2,
+      "prose": "`xs = [101.2, 99.8, 100.4]`",
+      "question": "What does `max_rec(xs, 1, 1)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mid",
+            "text": "99.8",
+            "correct": true
+          },
+          {
+            "id": "max",
+            "text": "101.2",
+            "why": "You took the largest of the whole list. The range 1 to 1 holds only `xs[1]`."
+          },
+          {
+            "id": "first",
+            "text": "The largest of `xs[0]` and `xs[1]`",
+            "why": "`lo == hi`, so it is the base case: it returns `xs[1]` without splitting."
+          },
+          {
+            "id": "err",
+            "text": "`RecursionError`",
+            "why": "`lo == hi` is the base case, so no call is made."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "One index is the base case: it returns `xs[1]`.",
+        "generic": "Not quite right. Check the base case `lo == hi`."
+      },
+      "explain": {
+        "text": "With `lo` and `hi` both 1 the range holds one item, so the base case returns `xs[1]`, which is 99.8."
+      }
+    },
+    {
+      "id": "q-merge",
+      "difficulty": 3,
+      "prose": "Two trade logs, each sorted by time, are merged recursively.\n\n```python\ndef merge(a, b):\n    if not a:\n        return b\n    if not b:\n        return a\n    if a[0] <= b[0]:\n        return [a[0]] + merge(a[1:], b)\n    return [b[0]] + merge(a, b[1:])\n```",
+      "question": "Merging a log of 3 trades with a log of 4, what is the most comparisons `a[0] <= b[0]` can make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "comparisons",
+        "accept": "6: one per trade placed before a log runs out",
+        "wrong": [
+          {
+            "id": "seven",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "twelve",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "At most $3 + 4 - 1 = 6$.",
+        "generic": "Not quite right. Each comparison places one trade. When does the comparing stop?",
+        "byKey": {
+          "seven": "The last trade is placed by a base case, when the other log is empty. No comparison is needed.",
+          "twelve": "Each trade is compared only with the front of the other log, not with every trade in it."
+        }
+      },
+      "explain": {
+        "text": "Each comparison places one trade and shortens one log. Once a log is empty, the base case returns the rest unchanged. So at most $3 + 4 - 1 = 6$ comparisons."
+      }
+    },
+    {
+      "id": "q-machines",
+      "difficulty": 3,
+      "prose": "A P&L file has 1,000,000 rows. Four machines each sum 250,000 rows at the same time, then send you their subtotals.",
+      "question": "How many additions does your combine step make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "additions",
+        "accept": "3: four subtotals need three additions",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 999999,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Four subtotals take three additions.",
+        "generic": "Not quite right. How many additions turn 4 numbers into 1?",
+        "byKey": {
+          "four": "Adding 4 numbers takes 3 additions: start from the first and add the other three.",
+          "all": "That is the whole job on one machine. The machines did most of it."
+        }
+      },
+      "explain": {
+        "text": "Each machine does 249,999 additions on its quarter, at the same time as the others. Combining the 4 subtotals takes 3 more. The wall-clock time is about a quarter of one machine's."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1574 @@
+{
+  "id": "l10-search-the-answer",
+  "course": "algo-think",
+  "title": "Binary search on the answer",
+  "minutes": 14,
+  "objectives": [
+    "Use binary search to find the smallest value that works.",
+    "Recognise a monotone predicate, and check the boundary when nothing works."
+  ],
+  "skills": [
+    "at-search"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A big order",
+      "prose": "Buying pushes the price up. Our impact model says an order of $q$ thousand shares moves the price by $0.15\\sqrt{q}$ per cent. Bigger orders always move it more.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            64
+          ],
+          "y": [
+            0,
+            1.4
+          ],
+          "xLabel": "Order size (thousand shares)",
+          "yLabel": "Price impact (%)",
+          "xStep": 8,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "0.15*sqrt(x)",
+              "label": "impact",
+              "domain": [
+                0,
+                64
+              ],
+              "labelAt": 12
+            }
+          ],
+          "hlines": [
+            {
+              "id": "one",
+              "y": 1,
+              "label": "1%"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 16,
+              "y": 0.6,
+              "on": "f",
+              "drag": true
+            }
+          ]
+        },
+        "derive": {
+          "caption": "{{round(P.x, 1)}} thousand shares: impact {{fixed(0.15 * sqrt(P.x), 3)}}%"
+        }
+      },
+      "question": "Drag the point to the smallest order that moves the price by 1%.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "P",
+            "target": {
+              "on": "f",
+              "x": 44.44
+            },
+            "tolX": 1.5
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch where the curve crosses the dashed 1% line."
+        },
+        {
+          "rung": "point",
+          "text": "The dashed line marks an impact of 1%.",
+          "highlight": [
+            "one"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.15\\sqrt{q} = 1$ gives $\\sqrt{q} = 6.67$, so $q \\approx 44.4$ thousand shares."
+        }
+      ],
+      "feedback": {
+        "correct": "About 44.4 thousand shares, where the curve meets 1%.",
+        "generic": "Not quite right. Find where the curve first reaches the dashed line.",
+        "byKey": {
+          "P": "Your point is off the crossing. Move it until the caption reads about 1.000%."
+        }
+      },
+      "explain": {
+        "text": "The curve rises everywhere, so it crosses 1% once. Every size left of the crossing is too small, and every size right of it is big enough.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 44.44,
+              "y": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Without the picture",
+      "prose": "A program cannot see the curve. It can only try one whole size at a time and ask: is the impact at least 1%? The answer is between `lo = 0` and `hi = 64` thousand.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            64
+          ],
+          "y": [
+            0,
+            1.4
+          ],
+          "xLabel": "Order size (thousand shares)",
+          "yLabel": "Price impact (%)",
+          "xStep": 8,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "0.15*sqrt(x)",
+              "label": "impact",
+              "domain": [
+                0,
+                64
+              ],
+              "labelAt": 12
+            }
+          ],
+          "hlines": [
+            {
+              "id": "one",
+              "y": 1,
+              "label": "1%"
+            }
+          ]
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "vlo",
+              "x": 0,
+              "label": "lo"
+            },
+            {
+              "id": "vhi",
+              "x": 64,
+              "label": "hi"
+            },
+            {
+              "id": "vmid",
+              "x": 32,
+              "label": "mid"
+            }
+          ],
+          "points": [
+            {
+              "id": "M",
+              "x": 32,
+              "y": 0.8485
+            }
+          ]
+        }
+      },
+      "question": "Halve the range of sizes until `lo` meets `hi`.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s6",
+        "states": {
+          "s0": {
+            "tex": "\\text{lo} = 0,\\ \\text{hi} = 64:\\ \\text{impact}(32) = 0.849\\% < 1\\%",
+            "canvas": {
+              "vlines": [
+                {
+                  "id": "vlo",
+                  "x": 0,
+                  "label": "lo"
+                },
+                {
+                  "id": "vhi",
+                  "x": 64,
+                  "label": "hi"
+                },
+                {
+                  "id": "vmid",
+                  "x": 32,
+                  "label": "mid"
+                }
+              ],
+              "points": [
+                {
+                  "id": "M",
+                  "x": 32,
+                  "y": 0.8485
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Too small: `lo = mid + 1`",
+                "to": "s1"
+              },
+              {
+                "label": "Big enough: `hi = mid`",
+                "to": "wdown",
+                "why": "You kept 32 thousand, but it moves the price by only 0.85%. The answer is larger than 32."
+              }
+            ]
+          },
+          "s1": {
+            "tex": "\\text{lo} = 33,\\ \\text{hi} = 64:\\ \\text{impact}(48) = 1.039\\% \\ge 1\\%",
+            "canvas": {
+              "vlines": [
+                {
+                  "id": "vlo",
+                  "x": 33,
+                  "label": "lo"
+                },
+                {
+                  "id": "vhi",
+                  "x": 64,
+                  "label": "hi"
+                },
+                {
+                  "id": "vmid",
+                  "x": 48,
+                  "label": "mid"
+                }
+              ],
+              "points": [
+                {
+                  "id": "M",
+                  "x": 48,
+                  "y": 1.0392
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Too small: `lo = mid + 1`",
+                "to": "wup",
+                "why": "You moved up, but 48 thousand already moves the price by 1.04%. The answer is 48 or smaller."
+              },
+              {
+                "label": "Big enough: `hi = mid`",
+                "to": "s2"
+              }
+            ]
+          },
+          "s2": {
+            "tex": "\\text{lo} = 33,\\ \\text{hi} = 48:\\ \\text{impact}(40) = 0.949\\% < 1\\%",
+            "canvas": {
+              "vlines": [
+                {
+                  "id": "vlo",
+                  "x": 33,
+                  "label": "lo"
+                },
+                {
+                  "id": "vhi",
+                  "x": 48,
+                  "label": "hi"
+                },
+                {
+                  "id": "vmid",
+                  "x": 40,
+                  "label": "mid"
+                }
+              ],
+              "points": [
+                {
+                  "id": "M",
+                  "x": 40,
+                  "y": 0.9487
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Too small: `lo = mid + 1`",
+                "to": "s3"
+              },
+              {
+                "label": "Big enough: `hi = mid`",
+                "to": "wdown",
+                "why": "You kept 40 thousand, but it moves the price by only 0.95%. The answer is larger than 40."
+              }
+            ]
+          },
+          "s3": {
+            "tex": "\\text{lo} = 41,\\ \\text{hi} = 48:\\ \\text{impact}(44) = 0.995\\% < 1\\%",
+            "canvas": {
+              "vlines": [
+                {
+                  "id": "vlo",
+                  "x": 41,
+                  "label": "lo"
+                },
+                {
+                  "id": "vhi",
+                  "x": 48,
+                  "label": "hi"
+                },
+                {
+                  "id": "vmid",
+                  "x": 44,
+                  "label": "mid"
+                }
+              ],
+              "points": [
+                {
+                  "id": "M",
+                  "x": 44,
+                  "y": 0.995
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Big enough: `hi = mid`",
+                "to": "wdown",
+                "why": "You kept 44 thousand, but it moves the price by only 0.99%. The answer is larger than 44."
+              },
+              {
+                "label": "Too small: `lo = mid + 1`",
+                "to": "s4"
+              }
+            ]
+          },
+          "s4": {
+            "tex": "\\text{lo} = 45,\\ \\text{hi} = 48:\\ \\text{impact}(46) = 1.017\\% \\ge 1\\%",
+            "canvas": {
+              "vlines": [
+                {
+                  "id": "vlo",
+                  "x": 45,
+                  "label": "lo"
+                },
+                {
+                  "id": "vhi",
+                  "x": 48,
+                  "label": "hi"
+                },
+                {
+                  "id": "vmid",
+                  "x": 46,
+                  "label": "mid"
+                }
+              ],
+              "points": [
+                {
+                  "id": "M",
+                  "x": 46,
+                  "y": 1.0173
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Big enough: `hi = mid`",
+                "to": "s5"
+              },
+              {
+                "label": "Too small: `lo = mid + 1`",
+                "to": "wup",
+                "why": "You moved up, but 46 thousand already moves the price by 1.02%. The answer is 46 or smaller."
+              }
+            ]
+          },
+          "s5": {
+            "tex": "\\text{lo} = 45,\\ \\text{hi} = 46:\\ \\text{impact}(45) = 1.006\\% \\ge 1\\%",
+            "canvas": {
+              "vlines": [
+                {
+                  "id": "vlo",
+                  "x": 45,
+                  "label": "lo"
+                },
+                {
+                  "id": "vhi",
+                  "x": 46,
+                  "label": "hi"
+                },
+                {
+                  "id": "vmid",
+                  "x": 45,
+                  "label": "mid"
+                }
+              ],
+              "points": [
+                {
+                  "id": "M",
+                  "x": 45,
+                  "y": 1.0062
+                }
+              ]
+            },
+            "ops": [
+              {
+                "label": "Too small: `lo = mid + 1`",
+                "to": "wup",
+                "why": "You moved up, but 45 thousand already moves the price by 1.01%. The answer is 45 or smaller."
+              },
+              {
+                "label": "Big enough: `hi = mid`",
+                "to": "s6"
+              }
+            ]
+          },
+          "s6": {
+            "tex": "\\text{lo} = \\text{hi} = 45:\\ \\text{the smallest order is 45 thousand shares}",
+            "canvas": {
+              "vlines": [
+                {
+                  "id": "vlo",
+                  "x": 45,
+                  "label": "45"
+                }
+              ],
+              "points": [
+                {
+                  "id": "M",
+                  "x": 45,
+                  "y": 1.0062
+                }
+              ]
+            }
+          },
+          "wup": {
+            "tex": "\\text{a size that is big enough was dropped}"
+          },
+          "wdown": {
+            "tex": "\\text{a size that is too small was kept}"
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each impact with 1%. Is that size big enough?"
+        },
+        {
+          "rung": "point",
+          "text": "The dashed line marks 1%. A size whose point sits on or above it is big enough.",
+          "highlight": [
+            "one"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Big enough means the answer is that size or smaller: `hi = mid`. Too small means larger: `lo = mid + 1`."
+        }
+      ],
+      "feedback": {
+        "correct": "Six tries found 45 thousand shares among 65 sizes.",
+        "generic": "Not quite right. Keep a size only if it is big enough.",
+        "byKey": {
+          "wup": "You moved up past a size that was already big enough. The smallest is at or below it.",
+          "wdown": "You kept a size that was too small. The answer must be larger."
+        }
+      },
+      "explain": {
+        "text": "We bisected over order sizes, not over a list. Each try halved the sizes left: 65, 32, 16, 8, 4, 2, 1. 45 thousand is the first whole size with impact at least 1%.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "vlo",
+              "x": 45,
+              "label": "45"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "False, then True",
+      "prose": "For each size the question `impact(q) >= 1` is False, then True from some point on, and never back. A yes or no test like this is a **predicate**, and this one is **monotone**. Binary search finds the first True.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "F",
+            "F",
+            "F",
+            "F",
+            "F",
+            "T",
+            "T",
+            "T",
+            "T"
+          ],
+          "indexFrom": 40
+        },
+        "state": {
+          "caption": "`impact(q) >= 1` for $q$ = 40 to 48 thousand",
+          "done": [
+            45
+          ]
+        }
+      },
+      "question": "Which question can binary search on the answer solve?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "save",
+            "text": "The fewest days of saving £35 a day to grow £120 into £1,000",
+            "correct": true
+          },
+          {
+            "id": "peak",
+            "text": "The day a price path reached its highest close",
+            "why": "You asked for a peak. \"Is day $d$ the peak?\" is True on one day only, not False then True for ever."
+          },
+          {
+            "id": "below",
+            "text": "The first day a close was below £95",
+            "why": "You tested each day's close on its own. A path can dip below £95 and climb back, so the test can switch back to False."
+          },
+          {
+            "id": "any",
+            "text": "Any yes or no question about whole numbers",
+            "why": "Only a monotone question works. If True can turn back to False, halving can throw away the first True."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For which question does a yes stay a yes as the number grows?"
+        },
+        {
+          "rung": "point",
+          "text": "From this size on the answer is always True.",
+          "highlight": [
+            "c45"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Savings only grow, so once £1,000 is reached it stays reached. The other questions can switch back."
+        }
+      ],
+      "feedback": {
+        "correct": "Savings only grow, so the test is False, then True for good.",
+        "generic": "Not quite right. Look for a test that never switches back from True to False."
+      },
+      "explain": {
+        "text": "After $d$ days we hold $120 + 35d$ pounds, which only grows. So \"at least £1,000 by day $d$\" is False, then True. Binary search on the answer needs exactly that shape.",
+        "canvas": {
+          "highlight": [
+            "c45",
+            "c46",
+            "c47",
+            "c48"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The general tool",
+      "prose": "Write the search once, for any monotone `pred`. If no whole number from `lo` to `hi` makes it True, return `None`. Never call `pred` outside that range.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "F",
+            "F",
+            "F",
+            "F",
+            "F",
+            "T",
+            "T",
+            "T",
+            "T"
+          ],
+          "indexFrom": 40
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 40,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 48,
+              "label": "hi"
+            }
+          ],
+          "caption": "Find the first T"
+        }
+      },
+      "question": "Write `smallest_true(lo, hi, pred)`: the smallest whole `x` from `lo` to `hi` with `pred(x)` True, or `None`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def smallest_true(lo, hi, pred):\n    ...\n",
+        "solution": "def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid):\n            b = mid\n        else:\n            a = mid + 1\n    return a if a <= hi else None\n",
+        "examples": [
+          {
+            "call": "smallest_true(0, 100, lambda x: x * x >= 50)",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
+            "call": "smallest_true(0, 100, lambda x: x > 100)",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "smallest_true(0, 100, lambda x: x * x >= 50)",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
+            "call": "smallest_true(3, 9, lambda x: True)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "smallest_true(3, 9, lambda x: x >= 9)",
+            "expect": "9",
+            "compare": "equal"
+          },
+          {
+            "call": "smallest_true(0, 100, lambda x: x > 100)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "smallest_true(5, 5, lambda x: x >= 5)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "smallest_true(5, 5, lambda x: x > 5)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "smallest_true(-50, 50, lambda x: x >= -7)",
+            "expect": "-7",
+            "compare": "equal"
+          },
+          {
+            "setup": "calls = []; r = smallest_true(0, 10**12, lambda x: calls.append(x) or x >= 123456789)",
+            "call": "(r, len(calls) <= 45)",
+            "expect": "(123456789, True)",
+            "compare": "equal"
+          },
+          {
+            "setup": "calls = []; r = smallest_true(0, 10, lambda x: calls.append(x) or x > 20)",
+            "call": "(r, all(0 <= c <= 10 for c in calls))",
+            "expect": "(None, True)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: the answer at `lo`, at `hi`, nowhere, a one-number range, negative numbers, a range of $10^{12}$ with at most 45 calls of `pred`, and a check that `pred` is never called outside the range."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Search a range that has one extra place, `hi + 1`, meaning \"none\"."
+        },
+        {
+          "rung": "point",
+          "text": "When `pred` is True here, the answer is here or to the left.",
+          "highlight": [
+            "c45"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`a, b = lo, hi + 1`. While `a < b`: `mid = (a + b) // 2`; if `pred(mid)`, `b = mid`, else `a = mid + 1`. Return `a` if `a <= hi`, else `None`."
+        }
+      ],
+      "feedback": {
+        "correct": "It finds the first True in about 40 calls for $10^{12}$ numbers, and says `None` when there is none.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 has its answer at `hi`. If you stop with the range one short, `hi` is never tried.",
+          "test-4": "Test 4 has no True at all. You returned a number without checking that it works.",
+          "test-9": "Test 9 caught a call of `pred` outside the range. Return `None` without trying `hi + 1`."
+        }
+      },
+      "explain": {
+        "text": "The extra place `hi + 1` stands for \"none\" and is never tested. If the search ends there, nothing in range works. This is the boundary check that a bare `return lo` forgets.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 45,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 45,
+              "label": "hi"
+            }
+          ],
+          "done": [
+            45
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Integer square root",
+      "prose": "The integer square root of $n$ is the largest $x$ with $x^2 \\le n$. Largest-true is one less than smallest-false. `smallest_true` from before is in the starter.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "F",
+            "F",
+            "F",
+            "F",
+            "F",
+            "F",
+            "F",
+            "F",
+            "T"
+          ]
+        },
+        "state": {
+          "caption": "`x * x > 50` for $x$ = 0 to 8"
+        }
+      },
+      "question": "Write `isqrt(n)` for a whole number `n >= 0`, using `smallest_true`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid):\n            b = mid\n        else:\n            a = mid + 1\n    return a if a <= hi else None\n\n\ndef isqrt(n):\n    ...\n",
+        "solution": "def smallest_true(lo, hi, pred):\n    a, b = lo, hi + 1\n    while a < b:\n        mid = (a + b) // 2\n        if pred(mid):\n            b = mid\n        else:\n            a = mid + 1\n    return a if a <= hi else None\n\n\ndef isqrt(n):\n    return smallest_true(0, n + 1, lambda x: x * x > n) - 1\n",
+        "examples": [
+          {
+            "call": "isqrt(50)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(16)",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "isqrt(50)",
+            "expect": "7",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(1)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(2)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(16)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(17)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(15)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(10**18)",
+            "expect": "10**9",
+            "compare": "equal"
+          },
+          {
+            "call": "isqrt(10**18 - 1)",
+            "expect": "999999999",
+            "compare": "equal"
+          },
+          {
+            "setup": "import math",
+            "call": "all(isqrt(n) == math.isqrt(n) for n in range(2000))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: 0 and 1, perfect squares and their neighbours, $10^{18}$, and every $n$ below 2,000 against `math.isqrt`."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the smallest `x` with `x * x > n`. The answer is one less."
+        },
+        {
+          "rung": "point",
+          "text": "8 is the first `x` with `x * x > 50`, so the root is 7.",
+          "highlight": [
+            "c8"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`smallest_true(0, n + 1, lambda x: x * x > n) - 1`. The range ends at `n + 1` so that a False-then-True switch always exists."
+        }
+      ],
+      "feedback": {
+        "correct": "It matches `math.isqrt` everywhere, in about 60 steps for $10^{18}$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "error": "Your code stopped with an error. For `n = 0` a range ending at `n` holds no `x` with `x * x > 0`, so `smallest_true` returns `None`. End the range at `n + 1`.",
+          "test-2": "Test 2 is `isqrt(0)`. A range from 0 to 0 holds no `x` with `x * x > 0`. End it at `n + 1`."
+        }
+      },
+      "explain": {
+        "text": "Every $x$ with $x^2 \\le n$ is False and every larger one True, so the predicate is monotone. $(n + 1)^2 > n$ always, so the range from 0 to $n + 1$ holds a True. One less than the first True is the root.",
+        "canvas": {
+          "done": [
+            7
+          ],
+          "highlight": [
+            "c8"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A bond's yield",
+      "prose": "A 4% five-year bond pays £4 a year and £100 at the end. Its price falls as its yield rises. Bisect the yield until the price is within a penny of the target.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.12
+          ],
+          "y": [
+            65,
+            125
+          ],
+          "xLabel": "Yield $y$",
+          "yLabel": "Price (£)",
+          "xStep": 0.02,
+          "functions": [
+            {
+              "id": "p",
+              "expr": "4/(1+x) + 4/(1+x)^2 + 4/(1+x)^3 + 4/(1+x)^4 + 104/(1+x)^5",
+              "label": "bond price",
+              "labelAt": 0.02
+            }
+          ],
+          "hlines": [
+            {
+              "id": "tgt",
+              "y": 95,
+              "label": "£95.00"
+            }
+          ]
+        },
+        "state": {
+          "caption": "At 5% the price is £95.67; at 6% it is £91.58"
+        }
+      },
+      "question": "Write `yield_for_price(price, coupon, years, face)`: a yield in $[0, 1]$ whose price is within £0.01 of `price`, or `None`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def bond_price(y, coupon, years, face):\n    pv = sum(coupon / (1 + y) ** t for t in range(1, years + 1))\n    return pv + face / (1 + y) ** years\n\n\ndef yield_for_price(price, coupon, years, face):\n    ...\n",
+        "solution": "def bond_price(y, coupon, years, face):\n    pv = sum(coupon / (1 + y) ** t for t in range(1, years + 1))\n    return pv + face / (1 + y) ** years\n\n\ndef yield_for_price(price, coupon, years, face):\n    lo, hi = 0.0, 1.0\n    if price > bond_price(lo, coupon, years, face):\n        return None\n    if price < bond_price(hi, coupon, years, face):\n        return None\n    while True:\n        mid = (lo + hi) / 2\n        p = bond_price(mid, coupon, years, face)\n        if abs(p - price) <= 0.01:\n            return mid\n        if p > price:\n            lo = mid\n        else:\n            hi = mid\n",
+        "examples": [
+          {
+            "call": "round(yield_for_price(95.00, 4, 5, 100), 3)",
+            "expect": "0.052",
+            "compare": "equal"
+          },
+          {
+            "call": "yield_for_price(130.00, 4, 5, 100)",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "round(yield_for_price(95.00, 4, 5, 100), 3)",
+            "expect": "0.052",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(bond_price(yield_for_price(95.0, 4, 5, 100), 4, 5, 100) - 95.0) <= 0.01",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "round(yield_for_price(100.00, 5, 5, 100), 3)",
+            "expect": "0.05",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(bond_price(yield_for_price(92.5, 3, 7, 100), 3, 7, 100) - 92.5) <= 0.01",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "round(yield_for_price(92.50, 3, 7, 100), 3)",
+            "expect": "0.043",
+            "compare": "equal"
+          },
+          {
+            "call": "round(yield_for_price(850.00, 0, 10, 1000), 3)",
+            "expect": "0.016",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(bond_price(yield_for_price(88.0, 2.5, 10, 100), 2.5, 10, 100) - 88.0) <= 0.01",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "yield_for_price(130.00, 4, 5, 100)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "yield_for_price(5.00, 4, 5, 100)",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests: a discount bond, a bond at par, a zero-coupon bond, prices within a penny, and two prices no yield in $[0, 1]$ can give."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "If the price at `mid` is above the target, is the yield too low or too high?"
+        },
+        {
+          "rung": "point",
+          "text": "£95.00 sits below the price at 5%, so the yield is above 5%.",
+          "highlight": [
+            "tgt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Start `lo, hi = 0.0, 1.0`. Price above target means the yield is too low: `lo = mid`; else `hi = mid`. Stop when within £0.01. First return `None` if `price` is above `bond_price(0, ...)` or below `bond_price(1, ...)`."
+        }
+      ],
+      "feedback": {
+        "correct": "£95.00 means a yield of about 5.16%, found in 15 halvings.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects about 0.052. If you got 0.0 or 1.0, your updates go the wrong way: a price too high means the yield is too low.",
+          "test-8": "Test 8 asks for £130.00, above the £120.00 a zero yield gives. No yield works, so return `None` before bisecting."
+        }
+      },
+      "explain": {
+        "text": "Over reals there is no last step, so we stop at a tolerance: a penny of price. Each halving narrows the yield bracket by half. Checking both ends first catches prices no yield can give.",
+        "canvas": {
+          "vlines": [
+            {
+              "id": "y",
+              "x": 0.0516,
+              "label": "5.16%"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A wrong first day",
+      "prose": "We want the first day a close was above £100. A colleague runs\n\n```python\nsmallest_true(0, 7, lambda d: closes[d] > 100)\n```\n\nIt returns 5. But day 2 closed at £102.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            97,
+            99,
+            102,
+            98,
+            96,
+            101,
+            103,
+            105
+          ]
+        },
+        "state": {
+          "caption": "`closes` for days 0 to 7 (£)"
+        }
+      },
+      "question": "Why does it return 5?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mono",
+            "text": "The test is True on day 2, then False on days 3 and 4: it is not monotone",
+            "correct": true
+          },
+          {
+            "id": "off",
+            "text": "`smallest_true` has an off-by-one error",
+            "why": "You blamed the search. Day 4 is False and day 5 True, a real switch. It is just not the first one."
+          },
+          {
+            "id": "sort",
+            "text": "The closes must be sorted first",
+            "why": "You would sort away the days. The test must be monotone in the day, not the prices put in order."
+          },
+          {
+            "id": "float",
+            "text": "Bisection needs a range of real numbers",
+            "why": "Days are whole numbers, and `smallest_true` works on whole numbers."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write out `closes[d] > 100` for every day."
+        },
+        {
+          "rung": "point",
+          "text": "Day 2 is True, but these two days are False again.",
+          "highlight": [
+            "c3",
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The values are F F T F F T T T. The first look, day 4, is False, so the search throws away days 0 to 4."
+        }
+      ],
+      "feedback": {
+        "correct": "The test switches back to False, so halving can skip the first True.",
+        "generic": "Not quite right. Check whether the test ever goes from True back to False.",
+        "byKey": {
+          "off": "You blamed an off-by-one. The search did its job: it found a False-to-True switch. The test has two of them.",
+          "sort": "You wanted to sort the closes. That loses which day each came from.",
+          "float": "You blamed whole numbers. Bisection on whole numbers is fine when the test is monotone."
+        }
+      },
+      "explain": {
+        "text": "The first look is day 4, a False, so days 0 to 4 are dropped, day 2 with them. Use a monotone test such as `max(closes[:d + 1]) > 100`, \"above £100 by day $d$\". Or scan, which is $O(n)$ but always right.",
+        "canvas": {
+          "highlight": [
+            "c2"
+          ],
+          "pointers": [
+            {
+              "id": "mid",
+              "at": 4,
+              "label": "first look"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Search the answer",
+      "prose": "When the question is the smallest $x$ for which a monotone `pred(x)` holds:\n\n```python\na, b = lo, hi + 1          # b means none\nwhile a < b:\n    mid = (a + b) // 2\n    if pred(mid):\n        b = mid            # answer <= mid\n    else:\n        a = mid + 1        # answer > mid\nreturn a if a <= hi else None\n```\n\nIt calls `pred` about $\\log_2(hi - lo + 2)$ times.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "F",
+            "F",
+            "F",
+            "F",
+            "F",
+            "T",
+            "T",
+            "T",
+            "T"
+          ],
+          "indexFrom": 40
+        },
+        "state": {
+          "done": [
+            45
+          ]
+        }
+      },
+      "question": "About how many calls of `pred` does a range of $10^9$ whole numbers need?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "30",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "1,000,000,000",
+            "why": "You counted a scan of every number. Each call halves the range."
+          },
+          {
+            "id": "c",
+            "text": "9",
+            "why": "You counted decimal digits. Each call halves the range; it does not divide it by 10."
+          },
+          {
+            "id": "d",
+            "text": "500,000,000",
+            "why": "You counted half the range, a scan's average. Bisection halves again and again."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2^{30} \\approx 1.07 \\times 10^9$, so about 30 calls.",
+        "generic": "Not quite right. How many halvings take $10^9$ down to 1?"
+      },
+      "explain": {
+        "text": "$2^{30} = 1{,}073{,}741{,}824$, just above $10^9$. So 30 halvings shrink the range to one number. The cost depends on the range's size only through its logarithm."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Implied volatility",
+      "prose": "A call's Black-Scholes price rises with volatility $\\sigma$. The market quotes £12.00 (trees). We bisect $\\sigma$ on $[0.20, 0.30]$: $c(0.20) = 10.45$ and $c(0.30) = 14.23$. At the midpoint, $c(0.25) = 12.34$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            28
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xStep": 0.1,
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(0.5*(1+sign((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r+x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))-K*exp(-r*T)*(0.5*(1+sign((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))*(1-(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*exp(-(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))*(((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T))))/2-1.26551223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.00002368+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.37409196+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.09678418+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.18628806+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.27886807+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-1.13520398+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(1.48851587+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(-0.82215223+(1/(1+0.5*abs((((ln(S/K)+(r-x*x/2)*T)/(x*sqrt(T)))))/sqrt(2)))*(0.17087277)))))))))))))",
+              "domain": [
+                0.005,
+                0.6
+              ],
+              "label": "Black-Scholes price",
+              "labelAt": 0.45
+            }
+          ],
+          "params": {
+            "S": 100,
+            "K": 100,
+            "r": 0.05,
+            "T": 1
+          }
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "mkt",
+              "y": 12,
+              "label": "market £12.00"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "a",
+              "x": 0.2,
+              "label": "0.20"
+            },
+            {
+              "id": "m",
+              "x": 0.25,
+              "label": "0.25"
+            },
+            {
+              "id": "b",
+              "x": 0.3,
+              "label": "0.30"
+            }
+          ]
+        }
+      },
+      "question": "Which bracket comes next?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$[0.20, 0.25]$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$[0.25, 0.30]$",
+            "why": "You kept the upper half. £12.34 is already above £12.00, and the price rises with $\\sigma$, so $\\sigma$ must be lower."
+          },
+          {
+            "id": "c",
+            "text": "$[0.225, 0.275]$",
+            "why": "You recentred the bracket on the midpoint. Bisection keeps the half where the price crosses £12.00."
+          },
+          {
+            "id": "d",
+            "text": "Stop: 0.25 is close enough",
+            "why": "You stopped with the price 34p away. The tolerance asks for a penny."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is £12.34 above or below the market price?"
+        },
+        {
+          "rung": "point",
+          "text": "The market price line crosses the curve left of the midpoint.",
+          "highlight": [
+            "mkt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$c(0.25) = 12.34 > 12.00$ and the price rises with $\\sigma$, so the answer is below 0.25: keep $[0.20, 0.25]$."
+        }
+      ],
+      "feedback": {
+        "correct": "The answer lies between 0.20 and 0.25.",
+        "generic": "Not quite right. Keep the half where the price passes £12.00."
+      },
+      "explain": {
+        "text": "Price is monotone in $\\sigma$, so this is a search on the answer. Twenty halvings of $[0.20, 0.30]$ give $\\sigma \\approx 0.2411$. Newton's method is faster, but bisection cannot diverge.",
+        "canvas": {
+          "vlines": {
+            "b": {
+              "x": 0.25,
+              "label": ""
+            },
+            "m": {
+              "x": 0.2411,
+              "label": "0.2411"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How many orders a minute",
+      "prose": "Latency rises with load. We want the largest order rate whose latency stays within 10 ms. That is one less than the smallest rate that fails, so we bisect the rate with load tests.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "orders a minute",
+            "latency (ms)",
+            "within 10 ms"
+          ],
+          "rows": [
+            [
+              "1,000",
+              "4",
+              "yes"
+            ],
+            [
+              "4,000",
+              "15",
+              "no"
+            ],
+            [
+              "2,500",
+              "8",
+              "yes"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Load tests so far, in the order run"
+        }
+      },
+      "question": "Which rate do you test next?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3250,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "orders a minute",
+        "wrong": [
+          {
+            "id": "wrongside",
+            "value": 1750,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "round",
+            "value": 3000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After the third test, which two rates bracket the answer?"
+        },
+        {
+          "rung": "point",
+          "text": "2,500 passed, so the answer is at least 2,500.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bracket is 2,500 (passes) to 4,000 (fails). Test the midpoint: $(2500 + 4000)/2 = 3250$."
+        }
+      ],
+      "feedback": {
+        "correct": "3,250, halfway between the last pass and the first failure.",
+        "generic": "Not quite right. Bisect between the highest pass and the lowest failure.",
+        "byKey": {
+          "wrongside": "You bisected below 2,500. That rate passed, so the answer is above it.",
+          "round": "You picked a round number. Bisection tests the exact midpoint of the bracket."
+        }
+      },
+      "explain": {
+        "text": "The bracket is now 2,500 to 4,000. Each test halves it, so 11 tests pin the limit to within one order a minute. Testing every rate from 1,000 up would take hundreds.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2,
+              1
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "When a yes or no test is False and then True for good, binary search finds the first True without a list.",
+      "Search the range from `lo` to `hi + 1`, where `hi + 1` means none, and never call the test there.",
+      "Over real numbers, stop at a tolerance: a penny of price, or a bracket of width $10^{-6}$."
+    ],
+    "formula": {
+      "name": "Calls of the predicate",
+      "tex": "\\lceil \\log_2 (\\text{range size}) \\rceil",
+      "note": "A range of $10^9$ whole numbers needs about 30 calls."
+    },
+    "trap": "If the test can turn back from True to False, halving can skip the first True and return a later one."
+  },
+  "quiz": [
+    {
+      "id": "q-savings",
+      "difficulty": 2,
+      "prose": "You hold £120 and save £35 a day.\n\n```python\nsmallest_true(1, 100, lambda d: 120 + 35 * d >= 1000)\n```",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "26",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "25",
+            "why": "You rounded $880 / 35 = 25.1$ down. After 25 days you hold £995, just short."
+          },
+          {
+            "id": "c",
+            "text": "29",
+            "why": "You divided £1,000 by £35 and forgot the £120 you start with."
+          },
+          {
+            "id": "d",
+            "text": "`None`",
+            "why": "Day 26 reaches £1,030, inside the range, so there is an answer."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Day 26 is the first with at least £1,000.",
+        "generic": "Not quite right. Check days 25 and 26."
+      },
+      "explain": {
+        "text": "Day 25 gives $120 + 875 = 995$, below £1,000. Day 26 gives $120 + 910 = 1030$. So the first True is day 26."
+      }
+    },
+    {
+      "id": "q-none",
+      "difficulty": 2,
+      "prose": "`pred` is False for every whole number from 0 to 50.",
+      "question": "What should `smallest_true(0, 50, pred)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`None`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`50`",
+            "why": "You returned where the search ended without checking `pred` there. 50 does not make it True."
+          },
+          {
+            "id": "c",
+            "text": "`51`",
+            "why": "51 is the \"none\" marker inside the search. Returning it hands the caller a number that was never tested."
+          },
+          {
+            "id": "d",
+            "text": "`0`",
+            "why": "0 makes `pred` False, like every other number in range."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No number works, so say so.",
+        "generic": "Not quite right. Does any number in range make `pred` True?"
+      },
+      "explain": {
+        "text": "The search ends at the marker `hi + 1`, which means none. Returning a number there would claim an answer that fails the test."
+      }
+    },
+    {
+      "id": "q-steps",
+      "difficulty": 3,
+      "prose": "We bisect a yield on $[0, 1]$ until the bracket is narrower than $10^{-6}$.",
+      "question": "How many halvings does that take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "whole number",
+        "wrong": [
+          {
+            "id": "digits",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "million",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Twenty halvings.",
+        "generic": "Not quite right. Find the power of two just above a million.",
+        "byKey": {
+          "digits": "You counted decimal places. Each halving divides by 2, not by 10.",
+          "million": "You counted a scan in steps of $10^{-6}$. Bisection halves the bracket."
+        }
+      },
+      "explain": {
+        "text": "After $k$ halvings the width is $2^{-k}$. We need $2^{-k} < 10^{-6}$, so $2^k > 10^6$. $2^{19} = 524{,}288$ is too small and $2^{20} = 1{,}048{,}576$ works: 20."
+      }
+    },
+    {
+      "id": "q-isqrt",
+      "difficulty": 3,
+      "prose": "```python\ndef isqrt(n):\n    return smallest_true(0, n + 1, lambda x: x * x > n) - 1\n```",
+      "question": "Why does the range end at `n + 1` rather than `n`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "For $n = 0$ or $1$, no $x$ from 0 to $n$ has $x^2 > n$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "To make the range length a power of two",
+            "why": "Bisection works on any length. The end is about having a True inside the range."
+          },
+          {
+            "id": "c",
+            "text": "Because the square root is rounded up",
+            "why": "It is rounded down: the largest $x$ with $x^2 \\le n$."
+          },
+          {
+            "id": "d",
+            "text": "To avoid calling `pred` too often",
+            "why": "One more number costs at most one more call. The reason is the edge cases."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Without `n + 1`, `isqrt(0)` and `isqrt(1)` find no True.",
+        "generic": "Not quite right. Try $n = 1$ by hand."
+      },
+      "explain": {
+        "text": "For $n = 1$ the range 0 to 1 has $0^2 = 0$ and $1^2 = 1$, neither above 1. `smallest_true` returns `None`, and `None - 1` fails. Since $(n + 1)^2 > n$, ending at $n + 1$ always leaves a True."
+      }
+    }
+  ]
+}

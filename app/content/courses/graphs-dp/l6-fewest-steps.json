@@ -1,0 +1,1792 @@
+{
+  "id": "l6-fewest-steps",
+  "course": "graphs-dp",
+  "title": "Fewest steps",
+  "minutes": 13,
+  "objectives": [
+    "Find shortest paths in an unweighted graph with breadth-first search.",
+    "Record each node's parent and walk back to rebuild the route",
+    "Handle a start equal to the target and an unreachable target"
+  ],
+  "skills": [
+    "gd-paths",
+    "gd-traversal"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "As few hops as possible",
+      "prose": "Each line is a direct link between two nodes. A route from A to H hops along the lines. Some routes are longer than they need to be.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.84,
+              "y": 0.3
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.3,
+              "y": 0.72
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.58,
+              "y": 0.48
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.6,
+              "y": 0.9
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.94,
+              "y": 0.78
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "E"
+            },
+            {
+              "from": "B",
+              "to": "C"
+            },
+            {
+              "from": "C",
+              "to": "D"
+            },
+            {
+              "from": "D",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "F"
+            },
+            {
+              "from": "F",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "G",
+              "to": "D"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Start at A, finish at H"
+        }
+      },
+      "question": "Tap every node on a route from A to H with the fewest hops, A and H included.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "A",
+          "E",
+          "F",
+          "H"
+        ],
+        "countWord": "on the route",
+        "wrong": [
+          {
+            "id": "top",
+            "set": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "H"
+            ]
+          },
+          {
+            "id": "middle",
+            "set": [
+              "A",
+              "E",
+              "G",
+              "D",
+              "H"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the hops of the route along the top. Is there a shorter one?"
+        },
+        {
+          "rung": "point",
+          "text": "A route along the bottom reaches H sooner.",
+          "highlight": [
+            "E",
+            "F"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A to E, E to F, F to H: three hops. Every other route needs four or more."
+        }
+      ],
+      "feedback": {
+        "correct": "Three hops: A, E, F, H.",
+        "generic": "Not quite right. Count the hops of each route and keep the shortest.",
+        "byKey": {
+          "top": "That route works, but it takes four hops: A, B, C, D, H. The bottom route takes three.",
+          "middle": "That is four hops: A, E, G, D, H. From E, going to F reaches H one hop sooner."
+        }
+      },
+      "explain": {
+        "text": "A to E to F to H is three hops, and no route does it in two. You checked the short routes before the long ones. The search we build next does exactly that, in order.",
+        "canvas": {
+          "highlight": [
+            "A",
+            "E",
+            "F",
+            "H",
+            "e-A-E",
+            "e-E-F",
+            "e-F-H"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Rings round the start",
+      "prose": "Breadth-first search from A visits nodes in rings. First A itself, then its neighbours B and E, then everything one hop further out. The badges show the visiting order so far.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.84,
+              "y": 0.3
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.3,
+              "y": 0.72
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.58,
+              "y": 0.48
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.6,
+              "y": 0.9
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.94,
+              "y": 0.78
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "E"
+            },
+            {
+              "from": "B",
+              "to": "C"
+            },
+            {
+              "from": "C",
+              "to": "D"
+            },
+            {
+              "from": "D",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "F"
+            },
+            {
+              "from": "F",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "G",
+              "to": "D"
+            }
+          ]
+        },
+        "state": {
+          "visited": [
+            "A",
+            "B",
+            "E"
+          ],
+          "labels": {
+            "A": "A·0",
+            "B": "B·1",
+            "E": "E·1"
+          },
+          "caption": "Each label shows the node and its number of hops from A"
+        }
+      },
+      "question": "Tap every node exactly two hops from A.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "C",
+          "F",
+          "G"
+        ],
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "with-d",
+            "set": [
+              "C",
+              "F",
+              "G",
+              "D"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which nodes are one hop from B or from E, and not already labelled?"
+        },
+        {
+          "rung": "point",
+          "text": "These two nodes are one hop from A.",
+          "highlight": [
+            "B",
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "B leads to C. E leads to F and G. Those three are two hops away."
+        }
+      ],
+      "feedback": {
+        "correct": "C, F and G form the second ring.",
+        "generic": "Not quite right. Look one hop beyond B and E, at nodes with no label yet.",
+        "byKey": {
+          "with-d": "D is two hops from C, which makes it three hops from A. It sits in the next ring."
+        }
+      },
+      "explain": {
+        "text": "The rings are 0, 1, 2 and 3 hops from A. A node's ring number is its fewest hops, because we finish each ring before starting the next. D and H form the third ring.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "C",
+            "F",
+            "G",
+            "D",
+            "H"
+          ],
+          "labels": {
+            "A": "A·0",
+            "B": "B·1",
+            "E": "E·1",
+            "C": "C·2",
+            "F": "F·2",
+            "G": "G·2",
+            "D": "D·3",
+            "H": "H·3"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Distance and parent",
+      "prose": "Breadth-first search (**BFS**) takes nodes from a queue. For each new neighbour it records `dist` and `parent`, the node that found it. Neighbours go in sorted order. The queue order was A, B, E, C, F, G, D, H.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.84,
+              "y": 0.3
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.3,
+              "y": 0.72
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.58,
+              "y": 0.48
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.6,
+              "y": 0.9
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.94,
+              "y": 0.78
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "E"
+            },
+            {
+              "from": "B",
+              "to": "C"
+            },
+            {
+              "from": "C",
+              "to": "D"
+            },
+            {
+              "from": "D",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "F"
+            },
+            {
+              "from": "F",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "G",
+              "to": "D"
+            }
+          ]
+        },
+        "state": {
+          "visited": [
+            "A",
+            "B",
+            "E",
+            "C",
+            "F",
+            "G",
+            "D",
+            "H"
+          ],
+          "labels": {
+            "A": "A·0",
+            "B": "B·1",
+            "E": "E·1",
+            "C": "C·2",
+            "F": "F·2",
+            "G": "G·2",
+            "D": "D·3",
+            "H": "H·3"
+          }
+        },
+        "maxHeight": 200
+      },
+      "question": "Fill in the missing distances and parents.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "node",
+          "dist",
+          "parent"
+        ],
+        "rows": [
+          [
+            "A",
+            "0",
+            "None"
+          ],
+          [
+            "B",
+            "1",
+            "A"
+          ],
+          [
+            "E",
+            "1",
+            "A"
+          ],
+          [
+            "C",
+            "2",
+            "B"
+          ],
+          [
+            "F",
+            "2",
+            {
+              "edit": true,
+              "answer": "E",
+              "accept": [
+                "'E'"
+              ]
+            }
+          ],
+          [
+            "G",
+            "2",
+            "E"
+          ],
+          [
+            "D",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": "C",
+              "accept": [
+                "'C'"
+              ]
+            }
+          ],
+          [
+            "H",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": "F",
+              "accept": [
+                "'F'"
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A node's parent is the node being processed when it was first seen."
+        },
+        {
+          "rung": "point",
+          "text": "C leaves the queue before G, so C sees D first.",
+          "highlight": [
+            "C",
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "F was found by E. D was found by C, at distance 3. H was found by F, at distance 3."
+        }
+      ],
+      "feedback": {
+        "correct": "Each node's parent is one ring closer to A.",
+        "generic": "Not quite right. A node's distance is its parent's distance plus 1."
+      },
+      "explain": {
+        "text": "D could be reached from C or from G, both two hops out. C left the queue first, so C became D's parent. Every parent sits exactly one ring nearer the start.",
+        "canvas": {
+          "highlight": [
+            "e-C-D",
+            "e-F-H",
+            "e-E-F"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Walking back",
+      "prose": "To turn the `parent` table into a route, start at the target and follow parents until `None`.\n\n```python\npath = []\nnode = t\nwhile node is not None:\n    path.append(node)\n    node = parent[node]\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.84,
+              "y": 0.3
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.3,
+              "y": 0.72
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.58,
+              "y": 0.48
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.6,
+              "y": 0.9
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.94,
+              "y": 0.78
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "E"
+            },
+            {
+              "from": "B",
+              "to": "C"
+            },
+            {
+              "from": "C",
+              "to": "D"
+            },
+            {
+              "from": "D",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "F"
+            },
+            {
+              "from": "F",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "G",
+              "to": "D"
+            }
+          ]
+        },
+        "state": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·1",
+            "E": "E·1",
+            "C": "C·2",
+            "F": "F·2",
+            "G": "G·2",
+            "D": "D·3",
+            "H": "H·3"
+          },
+          "highlight": [
+            "H"
+          ]
+        }
+      },
+      "question": "With `t = 'H'`, what is `path` when the loop ends?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "back",
+            "text": "`['H', 'F', 'E', 'A']`",
+            "correct": true
+          },
+          {
+            "id": "forward",
+            "text": "`['A', 'E', 'F', 'H']`",
+            "why": "You read the route in the order you want it. The loop starts at `t` and appends each parent after it, so the list runs backwards."
+          },
+          {
+            "id": "nonone",
+            "text": "`['H', 'F', 'E', 'A', None]`",
+            "why": "The loop checks `node is not None` before appending, so `None` is never added."
+          },
+          {
+            "id": "short",
+            "text": "`['H', 'F', 'E']`",
+            "why": "A is appended too: its parent is `None`, so the loop stops only after adding A."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the first value appended?"
+        },
+        {
+          "rung": "point",
+          "text": "The walk starts here, at the target.",
+          "highlight": [
+            "H"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "H, then its parent F, then E, then A, whose parent is `None`."
+        }
+      ],
+      "feedback": {
+        "correct": "The walk runs from the target back to the start.",
+        "generic": "Not quite right. Trace `node` one step at a time from H.",
+        "byKey": {
+          "forward": "You expected the route from A. The walk starts at H, so the list comes out reversed."
+        }
+      },
+      "explain": {
+        "text": "Parents point back towards the start, so the walk lists the route backwards. One `path[::-1]` puts it right: `['A', 'E', 'F', 'H']`. The route has 4 nodes and `dist['H']` is 3 hops.",
+        "canvas": {
+          "highlight": [
+            "H",
+            "F",
+            "E",
+            "A",
+            "e-F-H",
+            "e-E-F",
+            "e-A-E"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write it",
+      "prose": "Write the whole search. The graph on the canvas is\n\n```python\nadj = {\"A\": [\"B\", \"E\"], \"B\": [\"A\", \"C\"], \"C\": [\"B\", \"D\"], \"D\": [\"C\", \"G\", \"H\"],\n     \"E\": [\"A\", \"F\", \"G\"], \"F\": [\"E\", \"H\"], \"G\": [\"D\", \"E\"], \"H\": [\"D\", \"F\"]}\n```\n\nIf `s == t`, the route is just `[s]`.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.84,
+              "y": 0.3
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.3,
+              "y": 0.72
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.58,
+              "y": 0.48
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.6,
+              "y": 0.9
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.94,
+              "y": 0.78
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "E"
+            },
+            {
+              "from": "B",
+              "to": "C"
+            },
+            {
+              "from": "C",
+              "to": "D"
+            },
+            {
+              "from": "D",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "F"
+            },
+            {
+              "from": "F",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "G",
+              "to": "D"
+            }
+          ]
+        },
+        "state": {
+          "labels": {
+            "A": "A·0",
+            "B": "B·1",
+            "E": "E·1",
+            "C": "C·2",
+            "F": "F·2",
+            "G": "G·2",
+            "D": "D·3",
+            "H": "H·3"
+          }
+        }
+      },
+      "question": "Write `shortest_path(adj, s, t)`: the list of nodes on a fewest-hops route from `s` to `t`, or `None` if `t` is unreachable.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\n\ndef shortest_path(adj, s, t):\n    ...\n",
+        "solution": "from collections import deque\n\n\ndef shortest_path(adj, s, t):\n    parent = {s: None}\n    queue = deque([s])\n    while queue:\n        u = queue.popleft()\n        if u == t:\n            break\n        for v in sorted(adj[u]):\n            if v not in parent:\n                parent[v] = u\n                queue.append(v)\n    if t not in parent:\n        return None\n    path = []\n    node = t\n    while node is not None:\n        path.append(node)\n        node = parent[node]\n    return path[::-1]\n",
+        "tests": [
+          {
+            "call": "shortest_path({\"A\": [\"B\", \"E\"], \"B\": [\"A\", \"C\"], \"C\": [\"B\", \"D\"], \"D\": [\"C\", \"G\", \"H\"], \"E\": [\"A\", \"F\", \"G\"], \"F\": [\"E\", \"H\"], \"G\": [\"D\", \"E\"], \"H\": [\"D\", \"F\"]}, 'A', 'H')",
+            "expect": "['A', 'E', 'F', 'H']",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_path({\"A\": [\"B\", \"E\"], \"B\": [\"A\", \"C\"], \"C\": [\"B\", \"D\"], \"D\": [\"C\", \"G\", \"H\"], \"E\": [\"A\", \"F\", \"G\"], \"F\": [\"E\", \"H\"], \"G\": [\"D\", \"E\"], \"H\": [\"D\", \"F\"]}, 'A', 'D')",
+            "expect": "['A', 'B', 'C', 'D']",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_path({\"A\": [\"B\", \"E\"], \"B\": [\"A\", \"C\"], \"C\": [\"B\", \"D\"], \"D\": [\"C\", \"G\", \"H\"], \"E\": [\"A\", \"F\", \"G\"], \"F\": [\"E\", \"H\"], \"G\": [\"D\", \"E\"], \"H\": [\"D\", \"F\"]}, 'H', 'B')",
+            "expect": "['H', 'D', 'C', 'B']",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_path({\"A\": [\"B\", \"E\"], \"B\": [\"A\", \"C\"], \"C\": [\"B\", \"D\"], \"D\": [\"C\", \"G\", \"H\"], \"E\": [\"A\", \"F\", \"G\"], \"F\": [\"E\", \"H\"], \"G\": [\"D\", \"E\"], \"H\": [\"D\", \"F\"]}, 'C', 'C')",
+            "expect": "['C']",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_path({'A': ['B'], 'B': ['A'], 'Z': []}, 'A', 'Z')",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_path({'A': ['B'], 'B': ['C'], 'C': [], 'D': ['A']}, 'A', 'D')",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_path({'A': ['B'], 'B': ['C'], 'C': [], 'D': ['A']}, 'D', 'C')",
+            "expect": "['D', 'A', 'B', 'C']",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_path({'A': ['C', 'B'], 'B': ['A', 'D'], 'C': ['A', 'D'], 'D': ['C', 'B']}, 'A', 'D')",
+            "expect": "['A', 'B', 'D']",
+            "compare": "equal"
+          },
+          {
+            "setup": "ring = {i: [(i - 1) % 12, (i + 1) % 12] for i in range(12)}",
+            "call": "shortest_path(ring, 0, 8)",
+            "expect": "[0, 11, 10, 9, 8]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Visit each node's neighbours in sorted order, so ties break the same way every time. Return `None` when `t` cannot be reached.",
+        "examples": [
+          {
+            "call": "shortest_path({\"A\": [\"B\", \"E\"], \"B\": [\"A\", \"C\"], \"C\": [\"B\", \"D\"], \"D\": [\"C\", \"G\", \"H\"], \"E\": [\"A\", \"F\", \"G\"], \"F\": [\"E\", \"H\"], \"G\": [\"D\", \"E\"], \"H\": [\"D\", \"F\"]}, 'A', 'H')",
+            "expect": "['A', 'E', 'F', 'H']",
+            "compare": "equal"
+          },
+          {
+            "call": "shortest_path({\"A\": [\"B\", \"E\"], \"B\": [\"A\", \"C\"], \"C\": [\"B\", \"D\"], \"D\": [\"C\", \"G\", \"H\"], \"E\": [\"A\", \"F\", \"G\"], \"F\": [\"E\", \"H\"], \"G\": [\"D\", \"E\"], \"H\": [\"D\", \"F\"]}, 'C', 'C')",
+            "expect": "['C']",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep a `parent` dict: it records who found each node and doubles as the visited set."
+        },
+        {
+          "rung": "point",
+          "text": "From A, the route to H comes out as A, E, F, H.",
+          "highlight": [
+            "A",
+            "E",
+            "F",
+            "H"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Start with `parent = {s: None}` and a deque holding `s`. Pop from the left; for each unseen `v` in `sorted(adj[u])` set `parent[v] = u` and append it. Walk back from `t` and reverse."
+        }
+      ],
+      "feedback": {
+        "correct": "Your search returns the fewest-hops route, `[s]` for a trip to itself, and `None` when there is no route.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects `['A', 'E', 'F', 'H']`. A longer route means a stack or recursion went deep first; `['H', 'F', 'E', 'A']` means the walk back was not reversed.",
+          "test-4": "Test 4 asks for C to C. The route is the single node, `['C']`.",
+          "test-5": "Test 5 has no route to Z, so the answer is `None`. Check `t in parent` before walking back."
+        }
+      },
+      "explain": {
+        "text": "The `parent` dict does two jobs: it marks nodes as seen and it remembers the route. Marking a node when it joins the queue stops it joining twice. Each node and edge is handled once, so the search costs $O(V + E)$.",
+        "canvas": {
+          "highlight": [
+            "A",
+            "E",
+            "F",
+            "H",
+            "e-A-E",
+            "e-E-F",
+            "e-F-H"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Deep first",
+      "prose": "A colleague reuses depth-first search to find the fewest hops. It also visits neighbours in sorted order.\n\n```python\ndef find_path(adj, s, t, seen=None):\n    if seen is None:\n        seen = set()\n    seen.add(s)\n    if s == t:\n        return [s]\n    for v in sorted(adj[s]):\n        if v not in seen:\n            p = find_path(adj, v, t, seen)\n            if p:\n                return [s] + p\n    return None\n```",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 300,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.06,
+              "y": 0.5
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.3,
+              "y": 0.12
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.58,
+              "y": 0.12
+            },
+            {
+              "id": "D",
+              "label": "D",
+              "x": 0.84,
+              "y": 0.3
+            },
+            {
+              "id": "E",
+              "label": "E",
+              "x": 0.3,
+              "y": 0.72
+            },
+            {
+              "id": "G",
+              "label": "G",
+              "x": 0.58,
+              "y": 0.48
+            },
+            {
+              "id": "F",
+              "label": "F",
+              "x": 0.6,
+              "y": 0.9
+            },
+            {
+              "id": "H",
+              "label": "H",
+              "x": 0.94,
+              "y": 0.78
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B"
+            },
+            {
+              "from": "A",
+              "to": "E"
+            },
+            {
+              "from": "B",
+              "to": "C"
+            },
+            {
+              "from": "C",
+              "to": "D"
+            },
+            {
+              "from": "D",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "F"
+            },
+            {
+              "from": "F",
+              "to": "H"
+            },
+            {
+              "from": "E",
+              "to": "G"
+            },
+            {
+              "from": "G",
+              "to": "D"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does `find_path(adj, 'A', 'H')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "deep",
+            "text": "`['A', 'B', 'C', 'D', 'G', 'E', 'F', 'H']`",
+            "correct": true
+          },
+          {
+            "id": "short",
+            "text": "`['A', 'E', 'F', 'H']`",
+            "why": "You expected depth-first search to find the shortest route. It returns the first route it completes, and it dives down B first.",
+            "canvas": {
+              "highlight": [
+                "A",
+                "B",
+                "C",
+                "D",
+                "G",
+                "E",
+                "F",
+                "H"
+              ]
+            }
+          },
+          {
+            "id": "dh",
+            "text": "`['A', 'B', 'C', 'D', 'H']`",
+            "why": "At D the sorted neighbours are C, G, H. G comes before H, so the search dives into G first."
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "H is reachable, and the search tries every branch before giving up. It does find a route."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the first unseen neighbour at every step, all the way down."
+        },
+        {
+          "rung": "point",
+          "text": "From D, sorted order tries G before H.",
+          "highlight": [
+            "D",
+            "G"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A, B, C, D, then G, then E (A is seen), then F, then H: seven hops."
+        }
+      ],
+      "feedback": {
+        "correct": "Depth-first search found a seven-hop route when three hops would do.",
+        "generic": "Not quite right. Follow the first unseen neighbour each time.",
+        "byKey": {
+          "short": "You expected depth-first search to find the fewest hops. It commits to B's branch and returns the first route that reaches H.",
+          "dh": "You stepped from D straight to H. Sorted order puts G first, so the search goes D, G, E, F, H."
+        }
+      },
+      "explain": {
+        "text": "Depth-first search finds a route, not the shortest one. It stops at the first route it finishes, whatever its length. Only the ring-by-ring order of a queue guarantees fewest hops.",
+        "canvas": {
+          "visited": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "G",
+            "E",
+            "F",
+            "H"
+          ],
+          "highlight": [
+            "e-A-B",
+            "e-B-C",
+            "e-C-D",
+            "e-G-D",
+            "e-E-G",
+            "e-E-F",
+            "e-F-H"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "Every fewest-hops search you wrote has the same shape:\n\n```python\nparent = {s: None}\nqueue = deque([s])\nwhile queue:\n    u = queue.popleft()\n    for v in sorted(adj[u]):\n        if v not in parent:\n            parent[v] = u\n            queue.append(v)\n```\n\nThen walk back from `t` and reverse.",
+      "question": "Why is the first route that reaches a node also a shortest one?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rings",
+            "text": "The queue hands out every node $k$ hops away before any node $k + 1$ hops away.",
+            "correct": true
+          },
+          {
+            "id": "sorted",
+            "text": "The neighbours are visited in sorted order.",
+            "why": "Sorting only decides which of several equal routes wins. A stack with sorted neighbours still dives deep."
+          },
+          {
+            "id": "parent",
+            "text": "Each node remembers its parent.",
+            "why": "Parents rebuild the route, but they do not make it short. Depth-first search can keep parents too."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "First-in, first-out keeps the rings in order.",
+        "generic": "Not quite right. Ask what the queue does to the order of visits."
+      },
+      "explain": {
+        "text": "Nodes join the queue ring by ring and leave in the same order. So when a node is first seen, no shorter route to it can still be waiting. That is why the edge count of the first route found is the distance."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Settlement hops",
+      "prose": "A payment to a fund must pass along settlement links. Each hop adds a day of delay and an operational risk check. Ops want the route with the fewest intermediaries.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "you",
+              "label": "You",
+              "x": 0.08,
+              "y": 0.5,
+              "shape": "pill"
+            },
+            {
+              "id": "bank1",
+              "label": "Bank 1",
+              "x": 0.33,
+              "y": 0.15,
+              "shape": "pill"
+            },
+            {
+              "id": "bank2",
+              "label": "Bank 2",
+              "x": 0.33,
+              "y": 0.85,
+              "shape": "pill"
+            },
+            {
+              "id": "ccp",
+              "label": "CCP",
+              "x": 0.58,
+              "y": 0.5,
+              "shape": "pill"
+            },
+            {
+              "id": "cust",
+              "label": "Custodian",
+              "x": 0.62,
+              "y": 0.15,
+              "shape": "pill"
+            },
+            {
+              "id": "fund",
+              "label": "Fund",
+              "x": 0.92,
+              "y": 0.5,
+              "shape": "pill"
+            },
+            {
+              "id": "broker",
+              "label": "Broker",
+              "x": 0.65,
+              "y": 0.88,
+              "shape": "pill"
+            }
+          ],
+          "edges": [
+            {
+              "from": "you",
+              "to": "bank1"
+            },
+            {
+              "from": "you",
+              "to": "bank2"
+            },
+            {
+              "from": "bank1",
+              "to": "cust"
+            },
+            {
+              "from": "cust",
+              "to": "fund"
+            },
+            {
+              "from": "bank2",
+              "to": "ccp"
+            },
+            {
+              "from": "ccp",
+              "to": "fund"
+            },
+            {
+              "from": "bank2",
+              "to": "broker"
+            },
+            {
+              "from": "broker",
+              "to": "fund"
+            },
+            {
+              "from": "bank1",
+              "to": "ccp"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many intermediaries, not counting you and the fund, does the best route use?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "hops",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nodes",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run BFS from You: which nodes are one hop away, then two?"
+        },
+        {
+          "rung": "point",
+          "text": "Both banks are one hop from you.",
+          "highlight": [
+            "bank1",
+            "bank2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "You, Bank 1, Custodian, Fund is three hops. The two nodes in the middle are the intermediaries."
+        }
+      ],
+      "feedback": {
+        "correct": "Two intermediaries, three hops: several routes tie at this length.",
+        "generic": "Not quite right. Find the fewest hops, then subtract 1 to count the nodes in between.",
+        "byKey": {
+          "hops": "Three is the number of hops. A three-hop route has two intermediaries between you and the fund.",
+          "nodes": "You counted every node on the route. Leave out you and the fund."
+        }
+      },
+      "explain": {
+        "text": "The fund is three hops away on several routes, for example You, Bank 1, Custodian, Fund. Hops minus 1 gives the intermediaries: 2. BFS would also report which route wins the tie, from the sorted order.",
+        "canvas": {
+          "highlight": [
+            "you",
+            "bank1",
+            "cust",
+            "fund",
+            "e-you-bank1",
+            "e-bank1-cust",
+            "e-cust-fund"
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Illiquid to illiquid",
+      "prose": "A client wants to move naira into Thai baht. Only some pairs trade, both ways, and every conversion pays a spread. So we want the fewest conversions. `PAIRS` holds the twelve tradable pairs, as `('GBP', 'USD')` tuples.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": false,
+          "height": 260,
+          "nodes": [
+            {
+              "id": "NGN",
+              "label": "NGN",
+              "x": 0.07,
+              "y": 0.75
+            },
+            {
+              "id": "ZAR",
+              "label": "ZAR",
+              "x": 0.22,
+              "y": 0.45
+            },
+            {
+              "id": "USD",
+              "label": "USD",
+              "x": 0.45,
+              "y": 0.5
+            },
+            {
+              "id": "GBP",
+              "label": "GBP",
+              "x": 0.3,
+              "y": 0.1
+            },
+            {
+              "id": "EUR",
+              "label": "EUR",
+              "x": 0.6,
+              "y": 0.12
+            },
+            {
+              "id": "SGD",
+              "label": "SGD",
+              "x": 0.66,
+              "y": 0.72
+            },
+            {
+              "id": "JPY",
+              "label": "JPY",
+              "x": 0.7,
+              "y": 0.4
+            },
+            {
+              "id": "THB",
+              "label": "THB",
+              "x": 0.92,
+              "y": 0.65
+            },
+            {
+              "id": "PLN",
+              "label": "PLN",
+              "x": 0.86,
+              "y": 0.12
+            }
+          ],
+          "edges": [
+            {
+              "from": "NGN",
+              "to": "ZAR"
+            },
+            {
+              "from": "ZAR",
+              "to": "USD"
+            },
+            {
+              "from": "GBP",
+              "to": "USD"
+            },
+            {
+              "from": "EUR",
+              "to": "USD"
+            },
+            {
+              "from": "GBP",
+              "to": "EUR"
+            },
+            {
+              "from": "USD",
+              "to": "JPY"
+            },
+            {
+              "from": "USD",
+              "to": "SGD"
+            },
+            {
+              "from": "SGD",
+              "to": "THB"
+            },
+            {
+              "from": "JPY",
+              "to": "THB"
+            },
+            {
+              "from": "EUR",
+              "to": "PLN"
+            }
+          ]
+        },
+        "state": {
+          "caption": "Part of `PAIRS`: the pairs near the route"
+        }
+      },
+      "question": "Write `fewest_conversions(pairs, src, dst)`: the fewest conversions from `src` to `dst`, 0 if they are the same, and −1 if it cannot be done.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\n\ndef fewest_conversions(pairs, src, dst):\n    ...\n",
+        "solution": "from collections import deque\n\n\ndef fewest_conversions(pairs, src, dst):\n    adj = {}\n    for a, b in pairs:\n        adj.setdefault(a, []).append(b)\n        adj.setdefault(b, []).append(a)\n    dist = {src: 0}\n    queue = deque([src])\n    while queue:\n        u = queue.popleft()\n        if u == dst:\n            return dist[u]\n        for v in adj.get(u, []):\n            if v not in dist:\n                dist[v] = dist[u] + 1\n                queue.append(v)\n    return -1\n",
+        "tests": [
+          {
+            "call": "fewest_conversions(PAIRS, 'NGN', 'THB')",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_conversions(PAIRS, 'GBP', 'HUF')",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_conversions(PAIRS, 'HUF', 'GBP')",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_conversions(PAIRS, 'GBP', 'USD')",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_conversions(PAIRS, 'CHF', 'CHF')",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_conversions(PAIRS + [('KRW', 'TWD')], 'GBP', 'KRW')",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_conversions(PAIRS, 'MXN', 'GBP')",
+            "expect": "-1",
+            "compare": "equal"
+          },
+          {
+            "call": "fewest_conversions(PAIRS + [('NGN', 'GBP')], 'NGN', 'THB')",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on `PAIRS`, the twelve pairs listed. A pair trades both ways. A currency missing from every pair is unreachable, not an error.",
+        "examples": [
+          {
+            "call": "fewest_conversions(PAIRS, 'NGN', 'THB')",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "prelude": "PAIRS = [('GBP', 'USD'), ('EUR', 'USD'), ('GBP', 'EUR'), ('USD', 'JPY'), ('USD', 'SGD'), ('SGD', 'THB'), ('EUR', 'PLN'), ('PLN', 'HUF'), ('USD', 'ZAR'), ('ZAR', 'NGN'), ('JPY', 'THB'), ('EUR', 'CHF')]\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build an adjacency list from the pairs, both ways round, then run BFS from `src`."
+        },
+        {
+          "rung": "point",
+          "text": "NGN reaches THB through ZAR and USD, then SGD or JPY.",
+          "highlight": [
+            "NGN",
+            "ZAR",
+            "USD"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Store `dist = {src: 0}`. When you pop `dst`, return `dist[dst]`. If the queue empties first, return −1."
+        }
+      ],
+      "feedback": {
+        "correct": "Four conversions take naira to baht, and unconnected currencies come back as −1.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects 4: NGN, ZAR, USD, SGD, THB. A 5 means you counted currencies, not conversions.",
+          "test-3": "Test 3 goes from HUF back to GBP. Each pair trades both ways, so add both directions to the adjacency list.",
+          "test-7": "Test 7 starts from MXN, which is in no pair. Use `adj.get(u, [])` or check membership, and return −1."
+        }
+      },
+      "explain": {
+        "text": "Naira to baht takes four conversions, through rand, dollars and Singapore dollars. Each conversion pays a spread, so a route with fewer hops usually costs less. When spreads differ a lot, the edges need weights, which is the next lesson.",
+        "canvas": {
+          "highlight": [
+            "NGN",
+            "ZAR",
+            "USD",
+            "SGD",
+            "THB",
+            "e-NGN-ZAR",
+            "e-ZAR-USD",
+            "e-USD-SGD",
+            "e-SGD-THB"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Breadth-first search visits nodes ring by ring, so the first time it reaches a node is along a fewest-hops route.",
+      "Record `parent[v] = u` when `v` is first seen. Walk back from the target and reverse to get the route.",
+      "A start equal to the target gives `[s]`; a target never reached gives `None`. The cost is $O(V + E)$."
+    ],
+    "formula": {
+      "name": "Distance by rings",
+      "tex": "\\text{dist}(v) = \\text{dist}(\\text{parent}(v)) + 1",
+      "note": "Each node is one ring further out than the node that found it."
+    },
+    "trap": "Depth-first search returns the first route it finishes, which can be far longer than the shortest."
+  },
+  "quiz": [
+    {
+      "id": "q-cost",
+      "difficulty": 2,
+      "prose": "BFS runs on a graph with $V$ nodes and $E$ edges, stored as an adjacency list.",
+      "question": "How does its running time grow?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$O(V + E)$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$O(V^2)$",
+            "why": "That is the cost with an adjacency matrix, where each node scans a whole row. A list holds only the real neighbours."
+          },
+          {
+            "id": "c",
+            "text": "$O(V \\cdot E)$",
+            "why": "Each node leaves the queue once, and each edge is looked at once from each end. Nothing is repeated $V$ times."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Each node is queued once and each edge is checked once from each end.",
+        "generic": "Not quite right. Count how often each node and each edge is touched."
+      },
+      "explain": {
+        "text": "The `parent` check lets each node join the queue once. Popping it reads its neighbour list once. Summed over all nodes, that is $V$ pops plus $2E$ neighbour checks."
+      }
+    },
+    {
+      "id": "q-same",
+      "difficulty": 2,
+      "prose": "```python\nprint(shortest_path({'A': ['B'], 'B': ['A']}, 'B', 'B'))\n```\n\n`shortest_path` is the function you wrote.",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['B']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[]`",
+            "why": "A route from B to itself still contains B. The walk back from `t` appends B, whose parent is `None`."
+          },
+          {
+            "id": "c",
+            "text": "`['B', 'A', 'B']`",
+            "why": "The search stops as soon as it pops B, the target. It never leaves B."
+          },
+          {
+            "id": "d",
+            "text": "`None`",
+            "why": "`None` means unreachable. B is reachable from itself in zero hops."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A route of zero hops has one node.",
+        "generic": "Not quite right. Walk back from `t` to `s` when they are the same node."
+      },
+      "explain": {
+        "text": "`parent` starts as `{'B': None}`, so the walk back appends B and stops. The route `['B']` has one node and zero hops."
+      }
+    },
+    {
+      "id": "q-weights",
+      "difficulty": 3,
+      "prose": "On a currency graph, GBP to JPY direct costs 4.0 basis points. GBP to USD to JPY costs 1.2 + 1.5 basis points.",
+      "question": "Which route does `shortest_path` return, and is it the cheapest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The direct route, which is not the cheapest",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The route through USD, the cheapest",
+            "why": "BFS ignores costs and counts hops. The direct route has one hop, so it wins."
+          },
+          {
+            "id": "c",
+            "text": "The direct route, which is also the cheapest",
+            "why": "Direct costs 4.0 bp; through USD costs 2.7 bp. Fewest hops is not least cost."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "BFS counts hops, so it picks the one-hop route at 4.0 bp.",
+        "generic": "Not quite right. Ask what BFS measures."
+      },
+      "explain": {
+        "text": "BFS minimises the number of edges, not their total cost. The direct route costs 4.0 bp, more than the 2.7 bp through USD. Costs on edges need Dijkstra's algorithm, next lesson."
+      }
+    },
+    {
+      "id": "q-maze",
+      "difficulty": 3,
+      "prose": "A maze is a grid: `.` is open and `#` is a wall. You move up, down, left or right.\n\n```text\n. . . #\n# # . #\n. . . .\n. # # .\n```",
+      "question": "How many moves from the top-left corner to the bottom-right corner?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "wrong": [
+          {
+            "id": "cells",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Six moves: right, right, down, down, right, down.",
+        "generic": "Not quite right. Run BFS from the corner, one ring of cells at a time.",
+        "byKey": {
+          "cells": "You counted the cells on the route, including the start. Count the moves between them."
+        }
+      },
+      "explain": {
+        "text": "Each open cell is a node joined to its open neighbours. BFS reaches the corner in ring 6: right twice, down twice, right, down. A grid maze is a graph with at most four edges per node."
+      }
+    }
+  ]
+}

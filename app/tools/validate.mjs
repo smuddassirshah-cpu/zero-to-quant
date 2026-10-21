@@ -182,12 +182,18 @@ const regionIds = (canvas) => {
     return ids;
   }
   if (canvas.kind === 'bars' && Array.isArray(p.categories)) { // object categories keep their own id, plain ones are x{label}
-    const ids = new Set(['exact']);
-    p.categories.forEach(c => { const id = isObj(c) ? (c.id || 'x' + c.label) : 'x' + c; ids.add(String(id)); ids.add('exact-' + id); });
+    const ids = new Set(['exact', 'pivot', 'mean', 'cut']);
+    const gs = Array.isArray(p.groups) ? p.groups.map((q, i) => String(isObj(q) && q.id != null ? q.id : 'g' + i)) : [];
+    p.categories.forEach(c => { const id = isObj(c) ? (c.id || 'x' + c.label) : 'x' + c; ids.add(String(id)); ids.add('exact-' + id); gs.forEach(g => { ids.add(`${id}-${g}`); ids.add('legend-' + g); }); });
+    [].concat(p.curves || [], (canvas.state || {}).curves || [], p.hlines || [], (canvas.state || {}).hlines || []).forEach(q => { if (isObj(q) && q.id) { ids.add(String(q.id)); ids.add(q.id + '-shade'); } });
     return ids;
+  }
+  if (canvas.kind === 'grid' && p.population) { // item 282: population groups are the regions
+    return new Set([].concat((canvas.state || {}).groups || [], (canvas.enter || {}).groups || []).map((q, i) => String(isObj(q) && q.id != null ? q.id : 'g' + i)));
   }
   if (canvas.kind === 'grid' && p.rows && p.cols) {
     const ids = new Set();
+    if (p.margins) { range(0, p.rows).forEach(i => ids.add('rsum' + i)); range(0, p.cols).forEach(j => ids.add('csum' + j)); ids.add('total'); }
     range(0, p.rows).forEach(i => range(0, p.cols).forEach(j => ids.add(`r${i}c${j}`)));
     const routes = (canvas.state || {}).paths; // routes drawn over the grid (item 93) answer to their ids
     (Array.isArray(routes) ? routes.map((q, k) => (isObj(q) && q.id != null ? q.id : 'path' + (k + 1))) : isObj(routes) ? Object.keys(routes) : []).forEach(id => ids.add(String(id)));
@@ -381,8 +387,10 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         ['too-few', 'too-many'].forEach(k => keys.add(k));
       } else if (!Array.isArray(w.answer) || !w.answer.length) err(file, `${where}.answer`, 'list the region ids that make up the answer (or give count, with optional among)');
       const known = regionIds(canvas);
-      if (known) (w.answer || []).forEach(id => { if (!known.has(id)) err(file, `${where}.answer`, `region "${id}" is not on the ${canvas.kind} canvas`); });
-      if (known && Array.isArray(w.among)) w.among.forEach(id => { if (!known.has(id)) err(file, `${where}.among`, `region "${id}" is not on the ${canvas.kind} canvas`); });
+      /* item 290: a grid's set names (row5, col3, cross2, cross5-3, all) stand for their cells in answer and among */
+      const setName = (id) => isObj(canvas) && canvas.kind === 'grid' && (id === 'all' || /^(row|col|cross)\d+(-\d+)?$/.test(String(id)));
+      if (known) (w.answer || []).forEach(id => { if (!known.has(id) && !setName(id)) err(file, `${where}.answer`, `region "${id}" is not on the ${canvas.kind} canvas`); });
+      if (known && Array.isArray(w.among)) w.among.forEach(id => { if (!known.has(id) && !setName(id)) err(file, `${where}.among`, `region "${id}" is not on the ${canvas.kind} canvas`); });
       else if (!canvas) err(file, where, 'tap-regions needs a canvas');
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       (known || new Set()).forEach(k => keys.add(k));
@@ -417,7 +425,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
     }
     case 'balance': {
       req(file, where, w, ['left', 'right', 'target']);
-      const MOVES = ['remove-both', 'remove-unknown-both', 'halve-both', 'divide-both', 'subtract-both', 'add-both', 'remove-item'];
+      const MOVES = ['remove-both', 'remove-unknown-both', 'remove-unknown-part', 'halve-both', 'divide-both', 'subtract-both', 'add-both', 'remove-item'];
       (w.moves || []).forEach(m => { if (!MOVES.includes(m)) err(file, `${where}.moves`, `unknown move "${m}" (${MOVES.join(', ')})`); });
       /* The target must be reachable with the listed moves: the engine's own solver (js/engine/grade.js) decides */
       if (Array.isArray(w.left) && Array.isArray(w.right) && isObj(w.target) && ENGINE && ENGINE.balanceMoves) {

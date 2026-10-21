@@ -1,0 +1,1631 @@
+{
+  "id": "l10-every-subset",
+  "course": "graphs-dp",
+  "title": "Generating every subset",
+  "minutes": 14,
+  "objectives": [
+    "Generate subsets and permutations by backtracking.",
+    "Use the choose, recurse, un-choose pattern and store a copy at each leaf",
+    "Count the leaves: $2^n$ subsets and $n!$ orderings"
+  ],
+  "skills": [
+    "gd-backtrack"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Three stocks, any mix",
+      "prose": "You may hold any of three stocks A, B and C, or none of them. The tree makes one choice per stock: take it or skip it.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Stock A",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take A"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock B",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take B"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock C",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take C"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "A B C",
+            "y-y-n": "A B",
+            "y-n-y": "A C",
+            "y-n-n": "A",
+            "n-y-y": "B C",
+            "n-y-n": "B",
+            "n-n-y": "C",
+            "n-n-n": "none"
+          }
+        },
+        "state": {
+          "values": false
+        }
+      },
+      "question": "How many different holdings are there, counting holding nothing?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "holdings",
+        "label": "Number of holdings",
+        "accept": "8: two choices for each of three stocks, $2 \\times 2 \\times 2$.",
+        "wrong": [
+          {
+            "id": "no-empty",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "orders",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one-each",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each path from the root to a leaf is one holding."
+        },
+        {
+          "rung": "point",
+          "text": "A path makes one choice for A, one for B and one for C.",
+          "highlight": [
+            "y",
+            "n"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two choices for A, and for each of those two for B, and two for C: $2 \\times 2 \\times 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Eight holdings, one per leaf.",
+        "generic": "Not quite right. Count the leaves on the right of the tree.",
+        "byKey": {
+          "no-empty": "You left out the path that skips all three. Holding nothing is a holding too, so count it.",
+          "orders": "You counted orders of three stocks, $3!$. Here we only ask which stocks are held, not in what order.",
+          "one-each": "You counted one holding per stock. Holdings can contain two or three stocks as well."
+        }
+      },
+      "explain": {
+        "text": "Every leaf is a different set of choices, and there are $2 \\times 2 \\times 2 = 8$ of them. The bottom leaf skips everything: the empty holding.",
+        "canvas": {
+          "values": true,
+          "highlight": [
+            "n-n-n"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where B appears",
+      "prose": "Now the leaves show the holdings. Tap leaves to see which paths go through a *take B* branch.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Stock A",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take A"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock B",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take B"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock C",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take C"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "A B C",
+            "y-y-n": "A B",
+            "y-n-y": "A C",
+            "y-n-n": "A",
+            "n-y-y": "B C",
+            "n-y-n": "B",
+            "n-n-y": "C",
+            "n-n-n": "none"
+          }
+        },
+        "state": {}
+      },
+      "question": "Tap every leaf whose holding contains B.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "y-y-y",
+          "y-y-n",
+          "n-y-y",
+          "n-y-n"
+        ],
+        "countWord": "leaves",
+        "wrong": [
+          {
+            "id": "only-b",
+            "set": [
+              "n-y-n"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A holding contains B when its path takes the *take B* branch."
+        },
+        {
+          "rung": "point",
+          "text": "Under *take A*, this branch takes B.",
+          "highlight": [
+            "y-y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Under each A choice, the *take B* branch leads to two leaves: four in all."
+        }
+      ],
+      "feedback": {
+        "correct": "Four of the eight holdings contain B.",
+        "generic": "Not quite right. Follow each path and check its middle choice.",
+        "byKey": {
+          "only-b": "You tapped the holding that is B alone. B also sits inside A B, B C and A B C.",
+          "y-n-y": "A C skips B: its path takes the *skip* branch at the middle level.",
+          "n-n-n": "The empty holding skips every stock, B included."
+        }
+      },
+      "explain": {
+        "text": "B is taken on half the branches at its level, so half the holdings contain it. The same holds for A and C. Each stock splits the holdings in two.",
+        "canvas": {
+          "shade": [
+            "y-y-y",
+            "y-y-n",
+            "n-y-y",
+            "n-y-n"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The order of the walk",
+      "prose": "This function walks the tree. It goes down *take* first, records a holding at each leaf, then steps back and tries *skip*.\n\n```python\ndef walk(i):\n    if i == len(stocks):\n        out.append(path[:])\n        return\n    path.append(stocks[i])   # take\n    walk(i + 1)\n    path.pop()               # undo the take\n    walk(i + 1)              # skip\n```",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Stock A",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take A"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock B",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take B"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock C",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take C"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "A B C",
+            "y-y-n": "A B",
+            "y-n-y": "A C",
+            "y-n-n": "A",
+            "n-y-y": "B C",
+            "n-y-n": "B",
+            "n-n-y": "C",
+            "n-n-n": "none"
+          }
+        },
+        "state": {
+          "current": "y-y-y"
+        }
+      },
+      "question": "The first holding recorded is A B C. Tap the holding recorded fifth.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "n-y-y"
+        ],
+        "max": 1,
+        "countWord": "leaves"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After A B C come A B, then A C, then A."
+        },
+        {
+          "rung": "point",
+          "text": "These four are recorded first: the whole *take A* side.",
+          "highlight": [
+            "y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With the *take A* side finished, the walk undoes A and goes down *skip A*, taking B and C first."
+        }
+      ],
+      "feedback": {
+        "correct": "B C is fifth: the first leaf on the *skip A* side.",
+        "generic": "Not quite right. Recite the walk: take before skip, deepest choice first.",
+        "byKey": {
+          "y-n-n": "A is recorded fourth, the last leaf on the *take A* side.",
+          "n-y-n": "B is sixth. On the *skip A* side the walk still takes C before skipping it, so B C comes first.",
+          "n-n-n": "The empty holding is last: it needs every *skip*, and skip is always tried second."
+        }
+      },
+      "explain": {
+        "text": "The walk goes as deep as it can, records, steps back one level and tries the other branch. This depth-first walk over choices, undoing each choice on the way back, is called **backtracking**. The leaves come out top to bottom.",
+        "canvas": {
+          "current": "n-y-y",
+          "highlight": [
+            "n-y-y"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Ten stocks",
+      "prose": "The same walk runs on a universe of 10 stocks. Each stock adds one level to the tree, with a *take* and a *skip* branch under every node.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Stock A",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take A"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock B",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take B"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock C",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take C"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "A B C",
+            "y-y-n": "A B",
+            "y-n-y": "A C",
+            "y-n-n": "A",
+            "n-y-y": "B C",
+            "n-y-n": "B",
+            "n-n-y": "C",
+            "n-n-n": "none"
+          }
+        },
+        "state": {
+          "caption": "3 stocks: 3 levels, 8 leaves"
+        }
+      },
+      "question": "How many holdings does the walk record for 10 stocks?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1024,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "holdings",
+        "label": "Holdings recorded",
+        "accept": "1,024: $2^{10}$.",
+        "wrong": [
+          {
+            "id": "square",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "double",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "factorial",
+            "value": 3628800,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How does the number of leaves change when one more level is added?"
+        },
+        {
+          "rung": "point",
+          "text": "Every leaf of the 3-stock tree, such as this one, splits into two at a fourth level.",
+          "highlight": [
+            "y-y-y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each stock doubles the leaves: $2^{10}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2^{10} = 1{,}024$ holdings.",
+        "generic": "Not quite right. Each new stock doubles the number of leaves.",
+        "byKey": {
+          "square": "You used $10^2$. Each stock multiplies the count by 2; it does not add a fixed amount per pair.",
+          "double": "You added 2 per stock. The choices multiply: $2 \\times 2 \\times \\dots \\times 2$, ten times.",
+          "factorial": "That is $10!$, the number of orderings. A holding is a set: only take or skip per stock."
+        }
+      },
+      "explain": {
+        "text": "One more level doubles the leaves, so $n$ stocks give $2^n$ holdings. For 10 stocks that is 1,024. The walk visits $2^{n+1} - 1$ nodes in all, about twice the leaves.",
+        "canvas": {
+          "caption": "$n$ levels of take or skip: $2^n$ leaves"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "When order matters",
+      "prose": "Three trades X, Y and Z must be sent one after another. Now the walk chooses the **next unused** trade at each level: three choices, then two, then one.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "x",
+              "label": "X",
+              "children": [
+                {
+                  "id": "y",
+                  "label": "Y",
+                  "children": [
+                    {
+                      "id": "z",
+                      "label": "Z"
+                    }
+                  ]
+                },
+                {
+                  "id": "z",
+                  "label": "Z",
+                  "children": [
+                    {
+                      "id": "y",
+                      "label": "Y"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "y",
+              "label": "Y",
+              "children": [
+                {
+                  "id": "x",
+                  "label": "X",
+                  "children": [
+                    {
+                      "id": "z",
+                      "label": "Z"
+                    }
+                  ]
+                },
+                {
+                  "id": "z",
+                  "label": "Z",
+                  "children": [
+                    {
+                      "id": "x",
+                      "label": "X"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "z",
+              "label": "Z",
+              "children": [
+                {
+                  "id": "x",
+                  "label": "X",
+                  "children": [
+                    {
+                      "id": "y",
+                      "label": "Y"
+                    }
+                  ]
+                },
+                {
+                  "id": "y",
+                  "label": "Y",
+                  "children": [
+                    {
+                      "id": "x",
+                      "label": "X"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "x-y-z": "X Y Z",
+            "x-z-y": "X Z Y",
+            "y-x-z": "Y X Z",
+            "y-z-x": "Y Z X",
+            "z-x-y": "Z X Y",
+            "z-y-x": "Z Y X"
+          },
+          "levelLabels": [
+            "First",
+            "Second",
+            "Third"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every ordering that sends X last.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "y-z-x",
+          "z-y-x"
+        ],
+        "countWord": "orderings",
+        "wrong": [
+          {
+            "id": "x-first",
+            "set": [
+              "x-y-z",
+              "x-z-y"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read each leaf from left to right: first trade, second, third."
+        },
+        {
+          "rung": "point",
+          "text": "These orderings start with Y.",
+          "highlight": [
+            "y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Under Y the only way to send X last is Y, Z, X. Under Z it is Z, Y, X."
+        }
+      ],
+      "feedback": {
+        "correct": "Two orderings send X last: Y Z X and Z Y X.",
+        "generic": "Not quite right. Look for leaves whose last letter is X.",
+        "byKey": {
+          "x-first": "You picked the orderings that send X first. The question asks for X last.",
+          "y-x-z": "Y X Z sends X second. Z goes last there."
+        }
+      },
+      "explain": {
+        "text": "The first level has 3 branches, the next 2, the last 1: $3 \\times 2 \\times 1 = 6$ leaves. For $n$ trades that is $n!$ orderings. The walk is the same backtracking, with a `used` flag to skip trades already chosen.",
+        "canvas": {
+          "shade": [
+            "y-z-x",
+            "z-y-x"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Saving the path",
+      "prose": "A common slip: this version stores `path` itself rather than a copy of it.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "subsets.py",
+          "numbers": true,
+          "lines": [
+            "def subsets(xs):",
+            "    out, path = [], []",
+            "    def walk(i):",
+            "        if i == len(xs):",
+            "            out.append(path)",
+            "            return",
+            "        path.append(xs[i])",
+            "        walk(i + 1)",
+            "        path.pop()",
+            "        walk(i + 1)",
+            "    walk(0)",
+            "    return out",
+            "",
+            "print(subsets([1, 2, 3]))"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "empty",
+            "text": "`[[], [], [], [], [], [], [], []]`",
+            "correct": true
+          },
+          {
+            "id": "right",
+            "text": "`[[1, 2, 3], [1, 2], [1, 3], [1], [2, 3], [2], [3], []]`",
+            "why": "You expected `out.append(path)` to save the holding as it was then. It saves the list object itself, which keeps changing."
+          },
+          {
+            "id": "full",
+            "text": "Eight copies of `[1, 2, 3]`",
+            "why": "You read the list at the first leaf. All eight entries are one list, so they show its final state, after the last pop."
+          },
+          {
+            "id": "error",
+            "text": "A `RecursionError`",
+            "why": "The recursion stops at `i == len(xs)`, three levels down. The bug is in what is stored, not in how deep the walk goes."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many different list objects does `out` hold at the end?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 5 appends the one `path` list, every time.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Every `append` is matched by a `pop`, so `path` ends empty. All eight entries are that one list."
+        }
+      ],
+      "feedback": {
+        "correct": "Eight references to one list, which ends empty.",
+        "generic": "Not quite right. Ask what `path` holds when the walk is over.",
+        "byKey": {
+          "right": "You expected each append to store a snapshot. Python stores a reference to the same list, so every entry shows its final, empty state.",
+          "full": "All eight entries are the same list, but it does not stay `[1, 2, 3]`. Each `pop` empties it a little more."
+        }
+      },
+      "explain": {
+        "text": "`out.append(path)` stores a reference to the one `path` list, eight times. Each take is undone by a pop, so the list ends empty and every entry shows `[]`. Store a copy, `path[:]` or `list(path)`, at the leaf.",
+        "canvas": {
+          "shade": {
+            "bug": [
+              "l5"
+            ]
+          },
+          "tone": {
+            "l5": "err"
+          },
+          "caption": "Fix line 5: `out.append(path[:])`"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Choose, recurse, un-choose",
+      "prose": "Both walks had the same shape:\n\n```python\ndef backtrack(state):\n    if complete(state):\n        record(copy(state))\n        return\n    for choice in choices(state):\n        make(choice)        # choose\n        backtrack(state)    # recurse\n        undo(choice)        # un-choose\n```\n\nSubsets give 2 choices per level: $2^n$ leaves. Orderings give $n, n-1, \\dots, 1$ choices: $n!$ leaves.",
+      "question": "How many orderings does the walk record for 5 trades?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "fact",
+            "text": "120",
+            "correct": true
+          },
+          {
+            "id": "pow",
+            "text": "32",
+            "why": "You used take or skip, $2^5$. Orderings pick the next trade from those left: $5 \\times 4 \\times 3 \\times 2 \\times 1$."
+          },
+          {
+            "id": "sq",
+            "text": "25",
+            "why": "You used $5^2$. The choices shrink by one at each level and multiply."
+          },
+          {
+            "id": "sum",
+            "text": "15",
+            "why": "You added $5 + 4 + 3 + 2 + 1$. The choices at each level multiply, since each branch has its own subtree."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$5! = 120$ orderings.",
+        "generic": "Not quite right. Multiply the number of choices at each level."
+      },
+      "explain": {
+        "text": "Level one has 5 choices, level two 4, and so on down to 1. The leaves number $5 \\times 4 \\times 3 \\times 2 \\times 1 = 120$."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Write the walk",
+      "prose": "Put the body of `walk(i)` for subsets in order. The function takes stock `i` before it skips it.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Stock A",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take A"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock B",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take B"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock C",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take C"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "A B C",
+            "y-y-n": "A B",
+            "y-n-y": "A C",
+            "y-n-n": "A",
+            "n-y-y": "B C",
+            "n-y-n": "B",
+            "n-n-y": "C",
+            "n-n-n": "none"
+          }
+        },
+        "state": {
+          "caption": "Take before skip, deepest first"
+        }
+      },
+      "question": "Put the lines of `walk(i)` in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "If `i == len(xs)`: append `path[:]` to `out` and return"
+          },
+          {
+            "id": "s2",
+            "text": "`path.append(xs[i])`: take stock `i`"
+          },
+          {
+            "id": "s3",
+            "text": "`walk(i + 1)`: explore every holding with it"
+          },
+          {
+            "id": "s4",
+            "text": "`path.pop()`: undo the take"
+          },
+          {
+            "id": "s5",
+            "text": "`walk(i + 1)` again: explore every holding without it"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The base case must come first, or the walk runs past the last stock."
+        },
+        {
+          "rung": "point",
+          "text": "The take and its undo sit either side of the first recursive call: the *take A* subtree.",
+          "highlight": [
+            "y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Base case; take; recurse; undo; recurse again for the skip."
+        }
+      ],
+      "feedback": {
+        "correct": "Base case, choose, recurse, un-choose, then the skip branch.",
+        "generic": "Not quite right. Each take must be undone before the skip branch starts.",
+        "byKey": {
+          "s4": "The pop must come straight after the first recursive call. Before it, the take is never explored; later, the skip branch still holds the stock."
+        }
+      },
+      "explain": {
+        "text": "The pop sits between the two recursive calls. It returns `path` to how it was, so the skip branch starts from the same state as the take branch did."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A ticker listed twice",
+      "prose": "A feed sends the universe as `['VOD', 'BP', 'VOD']`, with VOD listed twice by mistake. We run `subsets` on it unchanged.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Position 1",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take VOD"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Position 2",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take BP"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Position 3",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take VOD"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "VOD BP VOD",
+            "y-y-n": "VOD BP",
+            "y-n-y": "VOD VOD",
+            "y-n-n": "VOD",
+            "n-y-y": "BP VOD",
+            "n-y-n": "BP",
+            "n-n-y": "VOD",
+            "n-n-n": "none"
+          }
+        },
+        "state": {}
+      },
+      "question": "How many lists come back, and how many of them are genuinely different holdings?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "8 lists, but only 4 different holdings",
+            "correct": true
+          },
+          {
+            "id": "dedup",
+            "text": "4 lists: the duplicate is ignored",
+            "why": "You expected the walk to notice the repeat. It treats each position as its own choice, so it still makes $2^3$ leaves."
+          },
+          {
+            "id": "all8",
+            "text": "8 lists, all different holdings",
+            "why": "VOD on its own appears twice, once from each position. VOD BP and BP VOD hold the same stocks too."
+          },
+          {
+            "id": "six",
+            "text": "8 lists, 6 different holdings",
+            "why": "You treated VOD VOD and VOD BP VOD as new holdings. Holding a stock twice is still just holding it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each list says which stocks are held. Does order or repetition change a holding?"
+        },
+        {
+          "rung": "point",
+          "text": "These two leaves are the same holding: VOD alone.",
+          "highlight": [
+            "y-n-n",
+            "n-n-y"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The holdings are none, VOD, BP, and VOD with BP. Every leaf is one of those four."
+        }
+      ],
+      "feedback": {
+        "correct": "Eight lists, four holdings: duplicates in the input make duplicate subsets.",
+        "generic": "Not quite right. Group the leaves by which stocks they hold."
+      },
+      "explain": {
+        "text": "The walk branches on positions, not on distinct tickers, so duplicates in the input give duplicate holdings. Our rule: the input holds distinct items. Clean it first with `sorted(set(xs))`.",
+        "canvas": {
+          "shade": {
+            "vod": [
+              "y-n-n",
+              "n-n-y",
+              "y-n-y"
+            ],
+            "both": [
+              "y-y-y",
+              "y-y-n",
+              "n-y-y"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Every subset, every ordering",
+      "prose": "Write both walks. The items of `xs` are distinct. `subsets` takes before it skips, so `subsets([1, 2])` is `[[1, 2], [1], [2], []]`. `permutations` tries unused items in input order, so the first ordering is `xs` itself.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "levels": [
+            {
+              "label": "Stock A",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take A"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock B",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take B"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            },
+            {
+              "label": "Stock C",
+              "branches": [
+                {
+                  "id": "y",
+                  "label": "take C"
+                },
+                {
+                  "id": "n",
+                  "label": "skip"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "y-y-y": "A B C",
+            "y-y-n": "A B",
+            "y-n-y": "A C",
+            "y-n-n": "A",
+            "n-y-y": "B C",
+            "n-y-n": "B",
+            "n-n-y": "C",
+            "n-n-n": "none"
+          }
+        },
+        "state": {
+          "caption": "`subsets(['A', 'B', 'C'])` lists the leaves top to bottom"
+        }
+      },
+      "question": "Write `subsets(xs)` and `permutations(xs)`, each returning a list of lists.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def subsets(xs):\n    out, path = [], []\n\n    def walk(i):\n        ...\n\n    walk(0)\n    return out\n\n\ndef permutations(xs):\n    out, path = [], []\n    used = [False] * len(xs)\n\n    def walk():\n        ...\n\n    walk()\n    return out\n",
+        "solution": "def subsets(xs):\n    out, path = [], []\n\n    def walk(i):\n        if i == len(xs):\n            out.append(path[:])      # a copy: path keeps changing\n            return\n        path.append(xs[i])           # choose: take xs[i]\n        walk(i + 1)\n        path.pop()                   # un-choose\n        walk(i + 1)                  # skip xs[i]\n\n    walk(0)\n    return out\n\n\ndef permutations(xs):\n    out, path = [], []\n    used = [False] * len(xs)\n\n    def walk():\n        if len(path) == len(xs):\n            out.append(path[:])\n            return\n        for i, x in enumerate(xs):\n            if not used[i]:\n                used[i] = True\n                path.append(x)\n                walk()\n                path.pop()\n                used[i] = False\n\n    walk()\n    return out\n",
+        "examples": [
+          {
+            "call": "subsets([1, 2])",
+            "expect": "[[1, 2], [1], [2], []]",
+            "compare": "equal"
+          },
+          {
+            "call": "permutations([1, 2])",
+            "expect": "[[1, 2], [2, 1]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "subsets([1, 2, 3])",
+            "expect": "[[1, 2, 3], [1, 2], [1, 3], [1], [2, 3], [2], [3], []]",
+            "compare": "equal"
+          },
+          {
+            "call": "subsets([])",
+            "expect": "[[]]",
+            "compare": "equal"
+          },
+          {
+            "call": "subsets(['a'])",
+            "expect": "[['a'], []]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(subsets(list(range(10))))",
+            "expect": "1024",
+            "compare": "equal"
+          },
+          {
+            "call": "len({id(s) for s in subsets([1, 2, 3])})",
+            "expect": "8",
+            "compare": "equal"
+          },
+          {
+            "call": "permutations([1, 2, 3])",
+            "expect": "[[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]",
+            "compare": "equal"
+          },
+          {
+            "call": "permutations([])",
+            "expect": "[[]]",
+            "compare": "equal"
+          },
+          {
+            "call": "permutations(['a'])",
+            "expect": "[['a']]",
+            "compare": "equal"
+          },
+          {
+            "call": "permutations([3, 1, 2])",
+            "expect": "[[3, 1, 2], [3, 2, 1], [1, 3, 2], [1, 2, 3], [2, 3, 1], [2, 1, 3]]",
+            "compare": "equal"
+          },
+          {
+            "call": "len(permutations(list(range(6))))",
+            "expect": "720",
+            "compare": "equal"
+          },
+          {
+            "call": "xs",
+            "expect": "[1, 2, 3]",
+            "compare": "equal",
+            "setup": "xs = [1, 2, 3]; _ = subsets(xs); _ = permutations(xs)"
+          }
+        ],
+        "how": "Check runs 11 hidden tests, including the empty list, one item, a count of 1,024 subsets and 720 orderings, a test that every stored subset is its own list, and a test that `xs` is left unchanged."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the choose, recurse, un-choose shape in both. What is the base case for each?"
+        },
+        {
+          "rung": "point",
+          "text": "At a leaf, store a copy: `path[:]`.",
+          "highlight": [
+            "n-n-n"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Subsets: base case `i == len(xs)`; append, recurse, pop, recurse. Orderings: base case `len(path) == len(xs)`; loop over unused items, mark, append, recurse, pop, unmark."
+        }
+      ],
+      "feedback": {
+        "correct": "Both walks record every leaf exactly once, as its own list.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 checks the order: take before skip. If you got `[]` first, swap the two branches.",
+          "test-2": "Test 2 expects `[[]]`: the empty input has one subset, the empty one. Your base case must still record it.",
+          "test-5": "Test 5 found fewer than 8 distinct lists. You stored `path` itself; store `path[:]`.",
+          "test-7": "Test 7 expects `[[]]`: there is exactly one ordering of nothing."
+        }
+      },
+      "explain": {
+        "text": "The empty input reaches the base case at once and records one empty list, so `subsets([])` and `permutations([])` are both `[[]]`. The copy at the leaf keeps each answer separate. The pop restores `path` before the next branch."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Small portfolios",
+      "prose": "A desk wants to test every portfolio of **at most 3** of these six stocks, equally weighted. The all-cash portfolio counts as one. The walk stops taking once `path` holds 3 stocks.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Ticker",
+            "Price (£)"
+          ],
+          "rows": [
+            [
+              "HSBA",
+              "6.42"
+            ],
+            [
+              "BP",
+              "4.61"
+            ],
+            [
+              "VOD",
+              "0.72"
+            ],
+            [
+              "AZN",
+              "104.30"
+            ],
+            [
+              "ULVR",
+              "43.50"
+            ],
+            [
+              "GSK",
+              "15.20"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Six stocks in the universe"
+        }
+      },
+      "question": "How many portfolios does it test?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 42,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "portfolios",
+        "label": "Number of portfolios",
+        "accept": "42: $1 + 6 + 15 + 20$.",
+        "wrong": [
+          {
+            "id": "no-cash",
+            "value": 41,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "exactly-3",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 64,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ordered",
+            "value": 120,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the portfolios of each size, 0 to 3, then add."
+        },
+        {
+          "rung": "point",
+          "text": "Pairs from these six tickers: $\\binom{6}{2} = 15$.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\binom{6}{0} + \\binom{6}{1} + \\binom{6}{2} + \\binom{6}{3} = 1 + 6 + 15 + 20$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 + 6 + 15 + 20 = 42$ portfolios.",
+        "generic": "Not quite right. Add the counts for sizes 0, 1, 2 and 3.",
+        "byKey": {
+          "no-cash": "You left out the all-cash portfolio. The prose counts it.",
+          "exactly-3": "You counted portfolios of exactly 3. Smaller ones are allowed too.",
+          "all": "You counted all $2^6$ subsets. Portfolios of 4, 5 or 6 stocks are cut off.",
+          "ordered": "You counted $6 \\times 5 \\times 4$ ordered picks. A portfolio is a set: AZN then BP is the same as BP then AZN."
+        }
+      },
+      "explain": {
+        "text": "Sizes 0 to 3 give $1 + 6 + 15 + 20 = 42$ portfolios, against $2^6 = 64$ without the cap. The cap cuts whole subtrees: once 3 stocks are held, only *skip* remains.",
+        "canvas": {
+          "caption": "Sizes 0 to 3: 1, 6, 15 and 20 portfolios"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Thirty stocks",
+      "prose": "A colleague proposes to backtest **every** subset of a 30-stock universe. One backtest takes 1 millisecond.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Stocks $n$",
+            "Subsets $2^n$"
+          ],
+          "rows": [
+            [
+              "10",
+              "1,024"
+            ],
+            [
+              "20",
+              "1,048,576"
+            ],
+            [
+              "30",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "About how many days would the run take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.4,
+        "tol": {
+          "abs": 0.2
+        },
+        "unit": "days",
+        "label": "Days",
+        "accept": "About 12.4 days: $2^{30}$ ms is about 1.07 million seconds.",
+        "wrong": [
+          {
+            "id": "hours",
+            "value": 298,
+            "tol": {
+              "abs": 2
+            }
+          },
+          {
+            "id": "seconds",
+            "value": 1073742,
+            "tol": {
+              "abs": 100
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First find $2^{30}$. Ten more stocks multiply the count by $2^{10} = 1{,}024$."
+        },
+        {
+          "rung": "point",
+          "text": "$2^{30} = 1{,}073{,}741{,}824$ milliseconds.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Divide by 1,000 for seconds, then by 86,400 seconds per day."
+        }
+      ],
+      "feedback": {
+        "correct": "About 12.4 days of computing.",
+        "generic": "Not quite right. Convert $2^{30}$ milliseconds to days.",
+        "byKey": {
+          "hours": "That is the run in hours. Divide by 24 for days.",
+          "seconds": "That is the run in seconds. A day has 86,400 of them."
+        }
+      },
+      "explain": {
+        "text": "$2^{30}$ ms is about 1,073,742 s, or 12.4 days. Each extra stock doubles it: 40 stocks would take about 35 years. Full enumeration only works for small $n$; the next lessons cut the tree down.",
+        "canvas": {
+          "values": {
+            "r2c1": "1,073,741,824"
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Backtracking is a depth-first walk over choices: make a choice, explore everything after it, undo it, try the next.",
+      "Take or skip each item gives $2^n$ subsets; choosing the next unused item gives $n!$ orderings. Both grow too fast for large $n$.",
+      "At a leaf, store a copy of the path. The empty input still has one subset and one ordering, both empty."
+    ],
+    "formula": {
+      "name": "Choose, recurse, un-choose",
+      "tex": "\\text{leaves} = 2^n \\text{ (subsets)}, \\qquad n! \\text{ (orderings)}",
+      "note": "`path.append(x)`, recurse, `path.pop()`; record `path[:]` at a leaf."
+    },
+    "trap": "Appending `path` itself stores one list many times; it ends empty. Append `path[:]`."
+  },
+  "quiz": [
+    {
+      "id": "q-no-pop",
+      "difficulty": 3,
+      "prose": "The `path.pop()` line is deleted from the subsets walk, and the leaf still stores `path[:]`.\n\n```python\ndef walk(i):\n    if i == len(xs):\n        out.append(path[:])\n        return\n    path.append(xs[i])\n    walk(i + 1)\n    walk(i + 1)\n```",
+      "question": "What does `subsets(['a', 'b'])` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "acc",
+            "text": "`[['a', 'b'], ['a', 'b'], ['a', 'b', 'b'], ['a', 'b', 'b']]`",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "`[['a', 'b'], ['a'], ['b'], []]`",
+            "why": "You assumed the take is undone. Without the pop, every take stays in `path` for the rest of the walk."
+          },
+          {
+            "id": "one",
+            "text": "`[['a', 'b']]`",
+            "why": "The walk still visits all four leaves; only what `path` holds there goes wrong."
+          },
+          {
+            "id": "err",
+            "text": "An `IndexError`",
+            "why": "`xs[i]` is only read while `i < len(xs)`, so nothing goes out of range."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Takes are never undone, so paths pile up.",
+        "generic": "Not quite right. Trace `path` through all four leaves."
+      },
+      "explain": {
+        "text": "Without the pop, the skip branch starts from a path that still holds the take. The leaves see `['a', 'b']` twice, then `['a', 'b', 'b']` twice, as `'b'` is appended again."
+      }
+    },
+    {
+      "id": "q-empty",
+      "difficulty": 2,
+      "prose": "`subsets` is called on an empty list.",
+      "question": "How many lists does `subsets([])` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "",
+        "label": "Number of lists",
+        "accept": "1: the empty subset, `[[]]`.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One: `[[]]`.",
+        "generic": "Not quite right. Use $2^n$ with $n = 0$.",
+        "byKey": {
+          "zero": "You expected no subsets. The empty set is a subset of every set, the empty one included: $2^0 = 1$."
+        }
+      },
+      "explain": {
+        "text": "With no items, `walk(0)` is already at the base case and records one empty list. That matches $2^0 = 1$."
+      }
+    },
+    {
+      "id": "q-legs",
+      "difficulty": 2,
+      "prose": "A pairs trade is unwound in 4 legs, and the trader wants to compare every order of sending them.",
+      "question": "How many orders are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "orders",
+        "label": "Number of orders",
+        "accept": "24: $4!$.",
+        "wrong": [
+          {
+            "id": "pow",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sum",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$4! = 24$ orders.",
+        "generic": "Not quite right. Multiply the choices for the first, second, third and last leg.",
+        "byKey": {
+          "pow": "You used take or skip, $2^4$. Every leg is sent; only the order changes.",
+          "sum": "You added $4 + 3 + 2 + 1$. Each first choice has its own set of follow-ups, so the counts multiply."
+        }
+      },
+      "explain": {
+        "text": "Four choices for the first leg, three for the second, two, then one: $4 \\times 3 \\times 2 \\times 1 = 24$."
+      }
+    },
+    {
+      "id": "q-nodes",
+      "difficulty": 3,
+      "prose": "Every call of `walk(i)` in the subsets walk is one node of the tree, the leaves included.",
+      "question": "How many times is `walk` called for `subsets([1, 2, 3])`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "calls",
+        "label": "Number of calls",
+        "accept": "15: $1 + 2 + 4 + 8 = 2^4 - 1$.",
+        "wrong": [
+          {
+            "id": "leaves",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "inner",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "levels",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "15 calls: $1 + 2 + 4 + 8$.",
+        "generic": "Not quite right. Count the calls on each level of the tree.",
+        "byKey": {
+          "leaves": "You counted the leaves only. The calls above them, at depths 0, 1 and 2, count too.",
+          "inner": "You counted the calls that branch. The 8 calls at the leaves are calls as well."
+        }
+      },
+      "explain": {
+        "text": "Depth 0 has 1 call, depth 1 has 2, depth 2 has 4 and depth 3 has 8 leaves. In all $2^4 - 1 = 15$: the work is about twice the number of subsets."
+      }
+    }
+  ]
+}

@@ -212,6 +212,9 @@
         const dec = (u) => { const o = { ...u, [lab]: r6((u[lab] || 0) - 1) }; if (Math.abs(o[lab]) < 1e-9) delete o[lab]; return o; };
         const l = { u: dec(L.u), w: L.w }, r = { u: dec(R.u), w: R.w }; out.push([{ op: 'remove-both', n: lab }, l, r, S(l, r)]);
       });
+      if (allowed.has('remove-unknown-part')) new Set([...Object.keys(L.u), ...Object.keys(R.u)]).forEach(lab => { // item 295: take the coefficient one pan has
+        new Set([L.u[lab], R.u[lab]].filter(v => v && Math.abs(v) > 1e-9)).forEach(k => { const dec = (u) => { const o = { ...u, [lab]: r6((u[lab] || 0) - k) }; if (Math.abs(o[lab]) < 1e-9) delete o[lab]; return o; }; out.push([{ op: 'remove-unknown-part', n: lab, k }, { u: dec(L.u), w: L.w }, { u: dec(R.u), w: R.w }, true]); });
+      });
       ['subtract-both', 'add-both'].forEach(op => { if (!allowed.has(op)) return; new Set([L.w, R.w]).forEach(v => { if (Math.abs(v) < 1e-9) return; const n = op === 'subtract-both' ? v : -v, d = op === 'subtract-both' ? -n : n; out.push([{ op, n }, { u: L.u, w: r6(L.w + d) }, { u: R.u, w: r6(R.w + d) }, true]); }); });
       const div = (k, op) => {
         if (!Number.isFinite(k) || k === 0 || k === 1) return;

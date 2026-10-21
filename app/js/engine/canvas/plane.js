@@ -222,7 +222,7 @@
     if (o.yTicks === 'integer' && !sy.log) yt = intTicks(yt, sy.domain[0], sy.domain[1], py0 - py1);
     if (o.yStep > 0 && !sy.log) yt = stepTicks(sy.domain[0], sy.domain[1], +o.yStep);
     const ax = !sy.log && sy.domain[0] <= 0 && sy.domain[1] >= 0 ? sy(0) : py0; // x axis pixel y
-    const ay = sx.domain[0] <= 0 && sx.domain[1] >= 0 ? sx(0) : px0; // y axis pixel x
+    const ay = !o.yAxisLeft && sx.domain[0] <= 0 && sx.domain[1] >= 0 ? sx(0) : px0; // y axis pixel x (item 318: yAxis "left" keeps it at the left edge)
     const gg = svg('g', { class: 'cvb-axes' });
     if (o.grid !== false) {
       const gx = typeof o.grid === 'number' ? C.niceTicks(sx.domain[0], sx.domain[1], Math.round((sx.domain[1] - sx.domain[0]) / o.grid)) : xt.ticks;
@@ -233,7 +233,7 @@
     gg.append(arrow(px0, ax, px1 + 6, ax, { cls: 'cvb-axis', head: 8 }));
     gg.append(arrow(ay, py0, ay, py1 - 6, { cls: 'cvb-axis', head: 8 }));
     const below = ax + 14 > py0 + 18 ? ax - 12 : ax + 14;
-    const origin = !sy.log && sx.domain[0] <= 0 && sx.domain[1] >= 0 && sy.domain[0] <= 0 && sy.domain[1] >= 0, yAt0 = origin, xAt0 = origin;
+    const origin = !o.yAxisLeft && !sy.log && sx.domain[0] <= 0 && sx.domain[1] >= 0 && sy.domain[0] <= 0 && sy.domain[1] >= 0, yAt0 = origin, xAt0 = origin;
     const boxes = [];
     for (const v of xt.ticks) {
       const x = sx(v); if ((yAt0 && Math.abs(x - ay) < 2) || x > px1 - 14) continue;
@@ -251,7 +251,9 @@
     }
     if (origin && sx.domain[0] < 0 && sy.domain[0] < 0) gg.append(txt(ay - 7, ax + 12, '0', { anchor: 'end', cls: 'cvb-tick', size: 12, halo: true }));
     const xl = o.xLabel ?? '$x$', yl = o.yLabel ?? '$y$';
-    const xTitle = lab(px1 + 2, ax - 14, xl, { anchor: 'end', cls: 'cvb-axlab', halo: true });
+    /* item 318: a long x label on an axis at the bottom goes below the tick labels, centred, clear of the curves */
+    const xBelow = o.xLabelBelow && Math.abs(ax - py0) < 1;
+    const xTitle = xBelow ? lab((px0 + px1) / 2, py0 + 32, xl, { anchor: 'middle', cls: 'cvb-axlab', halo: true, w: px1 - px0 }) : lab(px1 + 2, ax - 14, xl, { anchor: 'end', cls: 'cvb-axlab', halo: true });
     gg.append(xTitle);
     gg.append(lab(ay + 10, py1 - 2, yl, { anchor: 'start', cls: 'cvb-axlab', halo: true }));
     boxes.push(boxOf({ x: px1 + 2, y: ax - 14, text: xl, anchor: 'end', h: 20 }), boxOf({ x: ay + 10, y: py1 - 2, text: yl, anchor: 'start', h: 20 }));
@@ -600,6 +602,7 @@
       else { const c = (yr[0] + yr[1]) / 2, h = sx0 / k / 2; yr = [c - h, c + h]; }
     }
     const xr0 = xr.slice(), yr0 = yr.slice();
+    const xBelowOf = (pp) => pp.xLabelPos === 'below' || (pp.xLabelPos == null && pp.xLabel != null && K.tw(String(pp.xLabel).replace(/[$\\{}]/g, '')) > 150);
     /* item 208: state.view { x, y } sets the ranges (it animates); state.zoom { at: [x, y] | pointId, scale } zooms about a point */
     const viewRanges = (view) => {
       if (view.view && (view.view.x || view.view.y)) { xr = view.view.x || xr0; yr = view.view.y || yr0; return; }
@@ -610,8 +613,8 @@
     const exprParams = (view) => ({ ...(params.params || {}), ...(view.params || {}) });
 
     const geom = (R) => {
-      const xLabelRoom = yr[0] > 0 || yr[1] < 0 ? 22 : 0, yLabelRoom = xr[0] >= 0 || xr[1] <= 0 ? 34 : 0;
-      const m = { l: 14 + yLabelRoom, r: 18, t: 18, b: 14 + xLabelRoom };
+      const xLabelRoom = yr[0] >= 0 || yr[1] < 0 ? 22 : 0, yLabelRoom = xr[0] >= 0 || xr[1] <= 0 || params.yAxis === 'left' ? 34 : 0;
+      const m = { l: 14 + yLabelRoom, r: 18, t: 18, b: 14 + xLabelRoom + (xBelowOf(params) && xLabelRoom ? 20 : 0) };
       /* yScale: "log" (positive y range): log-price charts; ticks at 1, 2, 5 times powers of ten, labelled as prices with yFormat */
       return { m, sx: C.scale(xr, [m.l, size.w - m.r]), sy: params.yScale === 'log' ? K.logScale([Math.max(1e-9, yr[0]), yr[1]], [size.h - m.b, m.t]) : C.scale(yr, [size.h - m.b, m.t]) };
     };
@@ -627,7 +630,8 @@
     const evaluator = (view) => {
       const P = exprParams(view), names = Object.keys(P);
       const fns = {};
-      for (const f of functionsOf(view)) { if (f.expr == null) continue; const c = K.fnOf(f.expr, names); fns[f.id] = (x) => c(x, P); fns[f.id].def = f; }
+      /* item 306: zeroOutside: true makes a function 0 beyond its domain (a density), drawn flat along the axis there */
+      for (const f of functionsOf(view)) { if (f.expr == null) continue; const c = K.fnOf(f.expr, names), dz = f.zeroOutside ? domOf(f, view) : null; fns[f.id] = dz ? (x) => (x < dz[0] || x > dz[1] ? 0 : c(x, P)) : (x) => c(x, P); fns[f.id].def = f; }
       return fns;
     };
     /* item 192: curves that are not y = f(x). Parametric { x: "cos(t)", y: "sin(t)", t: [0, 6.2832] } and implicit
@@ -709,7 +713,7 @@
         const px0 = m.l, px1 = size.w - m.r, py0 = size.h - m.b, py1 = m.t;
         /* axes: false draws no axes, ticks or grid (a geometry figure) */
         const fmtYp = params.yFormat === 'money' || params.money ? (v, st) => (v < 0 ? '−' : '') + (params.money || '£') + K.fmtTick(Math.abs(v), st) : null;
-        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp, xTicks: params.xTicks, yTicks: params.yTicks, xStep: params.xStep, yStep: params.yStep });
+        const axInfo = params.axes === false ? { boxes: [] } : K.planeAxes(g, sx, sy, { grid: params.grid ?? true, xLabel: params.xLabel, yLabel: params.yLabel, fmtY: fmtYp, xTicks: params.xTicks, yTicks: params.yTicks, xStep: params.xStep, yStep: params.yStep, yAxisLeft: params.yAxis === 'left', xLabelBelow: xBelowOf(params) });
         const fixed = axInfo.boxes.slice();
         if (params.axes !== false) { const ax = !sy.log && yr[0] <= 0 && yr[1] >= 0 ? sy(0) : py0, ay = xr[0] <= 0 && xr[1] >= 0 ? sx(0) : px0; fixed.push({ x0: px0, x1: px1, y0: ax - 2, y1: ax + 2 }, { x0: ay - 2, x1: ay + 2, y0: py1, y1: py0 }); }
         const clip = R.clipRect(px0, py1 - 2, px1 - px0, py0 - py1 + 4);
@@ -817,7 +821,7 @@
         const hidden = new Set(view.hide || []);
         for (const [id, f] of Object.entries(fns)) {
           if (hidden.has(id)) continue;
-          const fd = f.def, dom = domOf(fd, view) || xr;
+          const fd = f.def, dom = (fd.zeroOutside ? null : domOf(fd, view)) || xr;
           const lo = Math.max(dom[0], xr[0]), hi = Math.min(dom[1], xr[1]); if (!(hi > lo)) continue;
           const a = sx(lo), b = sx(hi), n = Math.max(2, Math.ceil((b - a) * 2));
           const pts = []; for (let i = 0; i <= n; i++) { const px = a + (b - a) * i / n; pts.push([px, sy(f(sx.invert(px)))]); }
@@ -918,6 +922,15 @@
           }
         }
 
+        /* item 317: a data rug, rug: { x: [..], on: "f", sticks: true, colour } (or a plain list): short ticks on the x
+           axis, or sticks up to f(x) with a dot, for likelihood-as-a-product pictures */
+        const rug = view.rug ?? params.rug;
+        if (rug) {
+          const xs = (Array.isArray(rug) ? rug : rug.x || []).map(Number).filter((x) => Number.isFinite(x) && x >= xr[0] && x <= xr[1]);
+          const fr = !Array.isArray(rug) && rug.on ? evaluator(view)[rug.on] : null, y0p = sy(K.clamp(0, yr[0], yr[1])), o = K.obj((rug && rug.id) || 'rug', 'cvb-rug', (rug && rug.colour) || 'ink');
+          xs.forEach((x) => { const yv = fr ? valueAt(fr, x) : NaN, tall = fr && rug.sticks !== false && Number.isFinite(yv); o.append(svg('line', { x1: sx(x), x2: sx(x), y1: y0p, y2: tall ? sy(yv) : y0p - 9, class: 'cvb-ln' + (tall ? '' : ' thin') })); if (tall) o.append(svg('circle', { cx: sx(x), cy: sy(yv), r: 3, class: 'cvb-dot' })); });
+          plot.append(o);
+        }
         /* Polygons: [{ id, points: [[x, y] | pointId, ...], colour, label, vertexLabels: ["A", "B", "C"], dashed }]: a filled
            shape (a series wash) with its vertices labelled outside the shape */
         for (const pg of view.polygons || params.polygons || []) {

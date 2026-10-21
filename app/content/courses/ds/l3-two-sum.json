@@ -1,0 +1,1156 @@
+{
+  "id": "l3-two-sum",
+  "course": "ds",
+  "title": "Two numbers that add to a target",
+  "minutes": 14,
+  "objectives": [
+    "Solve two-sum in one pass with a hash map."
+  ],
+  "skills": [
+    "ds-hashing",
+    "ds-arrays"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two that make the total",
+      "prose": "You have £17 to spend on exactly two items from this list of prices. Exactly one pair costs £17 in total.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            8,
+            5,
+            12,
+            6
+          ]
+        },
+        "state": {
+          "caption": "Prices in £, target £17"
+        }
+      },
+      "question": "Tap the two prices that add to 17.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c2",
+          "c3"
+        ],
+        "max": 2,
+        "countWord": "tapped",
+        "wrong": [
+          {
+            "id": "eleven",
+            "set": [
+              "c0",
+              "c1"
+            ]
+          },
+          {
+            "id": "five-six",
+            "set": [
+              "c2",
+              "c4"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Pick a price and ask what the other one must be."
+        },
+        {
+          "rung": "point",
+          "text": "For 5, the partner must be $17 - 5 = 12$.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "5 and 12, at indices 2 and 3."
+        }
+      ],
+      "feedback": {
+        "correct": "$5 + 12 = 17$: indices 2 and 3.",
+        "generic": "Not quite right. For each price, work out the partner it needs, $17 - x$, and look for it.",
+        "byKey": {
+          "eleven": "3 and 8 make 11, not 17. Try each price's partner, $17 - x$.",
+          "five-six": "5 and 6 make 11. The partner of 5 is $17 - 5 = 12$."
+        }
+      },
+      "explain": {
+        "text": "For each price $x$ you can ask for its partner, $17 - x$. Only 5 finds its partner, 12, in the list. We call that partner the **complement** of $x$.",
+        "canvas": {
+          "highlight": [
+            "c2",
+            "c3"
+          ],
+          "caption": "$5 + 12 = 17$"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 1,
+      "title": "Checking every pair",
+      "prose": "A program with no plan checks every pair of prices once:\n\n```python\nfor i in range(n):\n    for j in range(i + 1, n):\n        if nums[i] + nums[j] == target:\n            return (i, j)\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            8,
+            5,
+            12,
+            6
+          ]
+        },
+        "state": {
+          "caption": "Five prices"
+        }
+      },
+      "question": "If no pair matched, how many pairs would it check for these 5 prices?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "pairs",
+        "label": "Pairs checked",
+        "accept": "10 exactly: $4 + 3 + 2 + 1 = \\tfrac{5 \\times 4}{2}$",
+        "wrong": [
+          {
+            "id": "square",
+            "value": 25
+          },
+          {
+            "id": "ordered",
+            "value": 20
+          },
+          {
+            "id": "n",
+            "value": 5
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many partners does index 0 try? And index 1?"
+        },
+        {
+          "rung": "point",
+          "text": "Index 0 tries 4 partners, index 1 tries 3.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$4 + 3 + 2 + 1 = 10$."
+        }
+      ],
+      "feedback": {
+        "correct": "10 pairs, $\\tfrac{n(n-1)}{2}$. That is $O(n^2)$: a thousand prices means 499,500 pairs.",
+        "generic": "Not quite right. Each price is paired only with the ones after it.",
+        "byKey": {
+          "square": "$5 \\times 5$ pairs each price with itself and counts every pair twice. `j` starts at `i + 1`.",
+          "ordered": "You counted (0, 1) and (1, 0) separately. `j` starts after `i`, so each pair is checked once.",
+          "n": "That is one pass. Each price is checked against every later price."
+        }
+      },
+      "explain": {
+        "text": "Index 0 tries 4 partners, index 1 tries 3, and so on: $\\tfrac{n(n-1)}{2}$ pairs. This **brute force** is $O(n^2)$. We can do better by remembering what we have seen.",
+        "canvas": {
+          "caption": "Brute force: $\\tfrac{5 \\times 4}{2} = 10$ pairs"
+        }
+      }
+    },
+    {
+      "type": "demonstrate",
+      "title": "One pass with a dict",
+      "prose": "Walk the prices once. For each price, ask the dict `seen` whether its complement has already gone by. If not, remember the price and its index.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              3,
+              8,
+              5,
+              12,
+              6
+            ]
+          },
+          "state": {
+            "pointers": [
+              {
+                "id": "i",
+                "at": 0,
+                "label": "i"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "seen: value",
+              "index"
+            ],
+            "rows": [
+              [
+                "",
+                ""
+              ],
+              [
+                "",
+                ""
+              ],
+              [
+                "",
+                ""
+              ],
+              [
+                "",
+                ""
+              ]
+            ]
+          },
+          "state": {}
+        },
+        "state": {
+          "caption": "Target 17. `seen` starts empty."
+        }
+      },
+      "steps": [
+        {
+          "caption": "$i = 0$: need $17 - 3 = 14$. Not in `seen`, so store 3 at index 0.",
+          "canvas": {
+            "left": {
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 0,
+                  "label": "i"
+                }
+              ],
+              "highlight": [
+                "c0"
+              ]
+            },
+            "right": {
+              "values": {
+                "r0c0": "3",
+                "r0c1": "0",
+                "r1c0": "",
+                "r1c1": "",
+                "r2c0": "",
+                "r2c1": "",
+                "r3c0": "",
+                "r3c1": ""
+              }
+            },
+            "caption": "Target 17"
+          }
+        },
+        {
+          "caption": "$i = 1$: need $17 - 8 = 9$. Not in `seen`, so store 8 at index 1.",
+          "canvas": {
+            "left": {
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 1,
+                  "label": "i"
+                }
+              ],
+              "highlight": [
+                "c1"
+              ]
+            },
+            "right": {
+              "values": {
+                "r0c0": "3",
+                "r0c1": "0",
+                "r1c0": "8",
+                "r1c1": "1",
+                "r2c0": "",
+                "r2c1": "",
+                "r3c0": "",
+                "r3c1": ""
+              }
+            },
+            "caption": "Target 17"
+          }
+        },
+        {
+          "caption": "$i = 2$: need $17 - 5 = 12$. Not in `seen` yet, so store 5 at index 2.",
+          "canvas": {
+            "left": {
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 2,
+                  "label": "i"
+                }
+              ],
+              "highlight": [
+                "c2"
+              ]
+            },
+            "right": {
+              "values": {
+                "r0c0": "3",
+                "r0c1": "0",
+                "r1c0": "8",
+                "r1c1": "1",
+                "r2c0": "5",
+                "r2c1": "2",
+                "r3c0": "",
+                "r3c1": ""
+              }
+            },
+            "caption": "Target 17"
+          }
+        },
+        {
+          "caption": "$i = 3$: need $17 - 12 = 5$. It is in `seen`, at index 2. Return `(2, 3)`.",
+          "canvas": {
+            "left": {
+              "pointers": [
+                {
+                  "id": "i",
+                  "at": 3,
+                  "label": "i"
+                }
+              ],
+              "highlight": [
+                "c3"
+              ]
+            },
+            "right": {
+              "values": {
+                "r0c0": "3",
+                "r0c1": "0",
+                "r1c0": "8",
+                "r1c1": "1",
+                "r2c0": "5",
+                "r2c1": "2",
+                "r3c0": "",
+                "r3c1": ""
+              }
+            },
+            "caption": "Target 17"
+          }
+        }
+      ]
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Your turn to scan",
+      "prose": "New prices, target 13. This time two pairs work: $6 + 7$ and $9 + 4$. The one-pass method stops at the first index whose complement it has already seen.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            6,
+            1,
+            9,
+            4,
+            7
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "i",
+              "at": 0,
+              "label": "i"
+            }
+          ],
+          "caption": "Target 13"
+        }
+      },
+      "question": "Which indices does the one-pass method return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(2, 3)`",
+            "correct": true
+          },
+          {
+            "id": "first-pair",
+            "text": "`(0, 4)`",
+            "why": "6 and 7 do make 13, but 7 sits at index 4. At index 3 the scan already finds 9 waiting for 4."
+          },
+          {
+            "id": "reversed",
+            "text": "`(3, 2)`",
+            "why": "The earlier index comes from `seen` and goes first: `(seen[need], i)`."
+          },
+          {
+            "id": "values",
+            "text": "`(9, 4)`",
+            "why": "Those are the prices. The method returns their indices, 2 and 3."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Step $i$ along from 0. At each index, is $13 - x$ already in `seen`?"
+        },
+        {
+          "rung": "point",
+          "text": "At index 3 the price is 4, and it needs 9.",
+          "highlight": [
+            "c2",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "9 was stored at index 2, so the scan returns `(2, 3)` before reaching 7."
+        }
+      ],
+      "feedback": {
+        "correct": "At index 3 the price 4 finds 9 already stored, so the scan stops there.",
+        "generic": "Not quite right. Run the scan one index at a time and stop at the first match.",
+        "byKey": {
+          "first-pair": "You found a valid pair, but not the first one the scan completes. It stops at index 3, before 7.",
+          "values": "You returned the prices. Two-sum asks for positions, so return the indices."
+        }
+      },
+      "explain": {
+        "text": "Indices 0, 1 and 2 store 6, 1 and 9. At index 3 the price 4 needs 9, which is stored at index 2. The scan returns `(2, 3)` and never looks at 7.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "i",
+              "at": 3,
+              "label": "i"
+            }
+          ],
+          "highlight": [
+            "c2",
+            "c3"
+          ],
+          "caption": "Returned at $i = 3$: `(2, 3)`"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What the dict holds",
+      "prose": "Same prices, target 13. Stop the scan just as it reaches index 3, before it does anything there.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            6,
+            1,
+            9,
+            4,
+            7
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "i",
+              "at": 3,
+              "label": "i"
+            }
+          ],
+          "caption": "Target 13, scan at index 3"
+        }
+      },
+      "question": "What does `seen` hold at that moment?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`{6: 0, 1: 1, 9: 2}`",
+            "correct": true
+          },
+          {
+            "id": "too-early",
+            "text": "`{6: 0, 1: 1, 9: 2, 4: 3}`",
+            "why": "You stored 4 before its check. At index 3 the check runs first, and it already succeeds."
+          },
+          {
+            "id": "flipped",
+            "text": "`{0: 6, 1: 1, 2: 9}`",
+            "why": "You stored index to value. We look up by value, so the value is the key and the index is what we read back."
+          },
+          {
+            "id": "all",
+            "text": "`{6: 0, 1: 1, 9: 2, 4: 3, 7: 4}`",
+            "why": "The scan has not reached 4 or 7 yet. `seen` holds only what has gone by."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which prices has the scan passed before index 3?"
+        },
+        {
+          "rung": "point",
+          "text": "Indices 0, 1 and 2 have been stored.",
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keys are prices, values are indices: `{6: 0, 1: 1, 9: 2}`."
+        }
+      ],
+      "feedback": {
+        "correct": "Prices as keys, indices as values, and only what has gone by.",
+        "generic": "Not quite right. `seen` maps each price already passed to its index.",
+        "byKey": {
+          "flipped": "We ask “have I seen 9?”, so 9 must be a key. The index is the value we read back."
+        }
+      },
+      "explain": {
+        "text": "The question at each step is “have I seen the complement?”, so prices are the keys. The answer we want back is a position, so indices are the values. Index 3 has not been stored yet.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c1",
+            "c2"
+          ],
+          "caption": "`seen = {6: 0, 1: 1, 9: 2}`"
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Store, then check",
+      "prose": "This version stores each price before checking for its complement.\n\n```python\ndef two_sum(nums, target):\n    seen = {}\n    for i, x in enumerate(nums):\n        seen[x] = i\n        if target - x in seen:\n            return (seen[target - x], i)\n    return None\n```",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            3,
+            4,
+            1
+          ]
+        },
+        "state": {
+          "caption": "`two_sum([3, 4, 1], 6)`: no two prices make 6"
+        }
+      },
+      "question": "What does this version return for `two_sum([3, 4, 1], 6)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "self",
+            "text": "`(0, 0)`",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "That is the right answer, but not what this code returns. It stores 3, then finds $6 - 3 = 3$: itself."
+          },
+          {
+            "id": "pair",
+            "text": "`(0, 1)`",
+            "why": "$3 + 4 = 7$, not 6. The code returns earlier, at index 0."
+          },
+          {
+            "id": "error",
+            "text": "A `KeyError`",
+            "why": "`target - x in seen` is a membership test, and it never raises. Here it is `True` at once."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Run index 0 by hand: what is in `seen` when the check runs?"
+        },
+        {
+          "rung": "point",
+          "text": "After `seen[3] = 0`, the check asks whether $6 - 3 = 3$ is in `seen`.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It is, so the code returns `(seen[3], 0) = (0, 0)`: the same price twice."
+        }
+      ],
+      "feedback": {
+        "correct": "It paired 3 with itself. Storing first lets an element be its own complement.",
+        "generic": "Not quite right. Trace index 0 line by line.",
+        "byKey": {
+          "none": "You expected the correct answer. Storing 3 first means the check finds 3 as its own complement.",
+          "pair": "No pair here adds to 6. The bug fires at index 0, before index 1 is read."
+        }
+      },
+      "explain": {
+        "text": "Storing first means `seen` already holds $x$ when we look for $6 - x$. For $x = 3$ that is itself, so we get `(0, 0)`. Check first, then store: an element can then only pair with an earlier one.",
+        "canvas": {
+          "highlight": [
+            "c0"
+          ],
+          "caption": "3 paired with itself: `(0, 0)`"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The one-pass pattern",
+      "prose": "Check first, then store:\n\n```python\nseen = {}                      # value -> index\nfor i, x in enumerate(nums):\n    need = target - x\n    if need in seen:\n        return (seen[need], i)\n    seen[x] = i\nreturn None\n```\n\nOne pass of $O(1)$ dict steps: $O(n)$ time, $O(n)$ extra memory.",
+      "question": "What does it return for `two_sum([3, 3], 6)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(0, 1)`",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "The first 3 is stored at index 0. When the second 3 arrives, its complement 3 is in `seen`."
+          },
+          {
+            "id": "self",
+            "text": "`(0, 0)`",
+            "why": "That is the store-first bug. Here the check runs before index 0 is stored."
+          },
+          {
+            "id": "one-one",
+            "text": "`(1, 1)`",
+            "why": "`seen[3]` still holds index 0, because index 1 is never stored: the function returns first."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The second 3 finds the first.",
+        "generic": "Not quite right. Trace both indices: check, then store."
+      },
+      "explain": {
+        "text": "At index 0, 3 is not in `seen`, so we store `{3: 0}`. At index 1 the other 3 needs 3, finds index 0, and returns `(0, 1)`. Equal values work because each one is checked before it is stored."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "If the prices were sorted",
+      "prose": "With sorted prices there is a second method that needs no dict. Put pointer `lo` at the start and `hi` at the end, and compare their sum with the target, 16.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            4,
+            5,
+            8,
+            11,
+            13
+          ]
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 0,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 5,
+              "label": "hi"
+            }
+          ],
+          "caption": "Sorted prices, target 16: $2 + 13 = 15$"
+        }
+      },
+      "question": "The sum is 15, below 16. Which pointer should move?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "lo",
+            "text": "Move `lo` right, to a bigger price",
+            "correct": true
+          },
+          {
+            "id": "hi",
+            "text": "Move `hi` left, to a smaller price",
+            "why": "That makes the sum smaller, and it is already too small."
+          },
+          {
+            "id": "both",
+            "text": "Move both pointers inwards",
+            "why": "Moving `hi` left lowers the sum. Move only the pointer that raises it."
+          },
+          {
+            "id": "restart",
+            "text": "Start again with the next pair from the left",
+            "why": "Starting again throws away what we learned. One pointer step is enough."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Do we need a bigger sum or a smaller one?"
+        },
+        {
+          "rung": "point",
+          "text": "Moving `lo` right picks a bigger price.",
+          "highlight": [
+            "lo"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "15 is too small, so move `lo` right: $4 + 13 = 17$, then `hi` left: $4 + 11 = 15$, and so on."
+        }
+      ],
+      "feedback": {
+        "correct": "Too small: raise the smaller end.",
+        "generic": "Not quite right. Which move makes the sum bigger?",
+        "byKey": {
+          "hi": "You moved the pointer that lowers the sum. The sum must rise from 15 to 16."
+        }
+      },
+      "explain": {
+        "text": "A sum below the target means `lo` is too small for any partner left, so it moves right. Each step moves one pointer, so the scan is $O(n)$ with no extra memory. Here it ends at $5 + 11 = 16$, indices 2 and 4: level 2 builds on this.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "lo",
+              "at": 2,
+              "label": "lo"
+            },
+            {
+              "id": "hi",
+              "at": 4,
+              "label": "hi"
+            }
+          ],
+          "highlight": [
+            "c2",
+            "c4"
+          ],
+          "caption": "$5 + 11 = 16$"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write two-sum",
+      "prose": "Now the classic interview problem, written cleanly. Each test has at most one pair that works.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            7,
+            11,
+            15
+          ]
+        },
+        "state": {
+          "caption": "`two_sum([2, 7, 11, 15], 9)` returns `(0, 1)`"
+        }
+      },
+      "question": "Write `two_sum(nums, target)`: return the tuple `(i, j)`, with `i < j`, of two indices whose values add to `target`, or `None` if there is none.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def two_sum(nums, target):\n    ...\n",
+        "solution": "def two_sum(nums, target):\n    seen = {}\n    for i, x in enumerate(nums):\n        need = target - x\n        if need in seen:\n            return (seen[need], i)\n        seen[x] = i\n    return None\n",
+        "tests": [
+          {
+            "call": "two_sum([2, 7, 11, 15], 9)",
+            "expect": "(0, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum([3, 2, 4], 6)",
+            "expect": "(1, 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum([3, 3], 6)",
+            "expect": "(0, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum([1, 2, 3], 10)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum([], 5)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum([5], 10)",
+            "expect": "None",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum([-3, 4, 3, 90], 0)",
+            "expect": "(0, 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum([-1, -2, -3, -4, -5], -8)",
+            "expect": "(2, 4)",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum(list(range(100000)), 199997)",
+            "expect": "(99998, 99999)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests and compares exactly: return a tuple, not a list. Tests 5 and 6 have fewer than two numbers. Test 9 has 100,000 numbers, so checking every pair runs out of time.",
+        "examples": [
+          {
+            "call": "two_sum([2, 7, 11, 15], 9)",
+            "expect": "(0, 1)",
+            "compare": "equal"
+          },
+          {
+            "call": "two_sum([1, 2, 3], 10)",
+            "expect": "None",
+            "compare": "equal"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep a dict from each value seen so far to its index."
+        },
+        {
+          "rung": "point",
+          "text": "Check `target - x` before storing `x`.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`if need in seen: return (seen[need], i)`, then `seen[x] = i`. After the loop, `return None`."
+        }
+      ],
+      "feedback": {
+        "correct": "One pass, check before store, indices out.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 expects the tuple `(0, 1)`. A list `[0, 1]` does not equal a tuple, and the values `(2, 7)` are not indices.",
+          "test-3": "Test 3 expects `(0, 1)` for `[3, 3]`. If you stored before checking, the first 3 paired with itself.",
+          "test-4": "Test 4 has no pair and expects `None`. Return `None` after the loop ends.",
+          "test-6": "Test 6 is `[5]` with target 10. Storing before checking pairs 5 with itself; check first.",
+          "error": "If the run stopped at the time limit, you are checking every pair. Use a dict so each check is $O(1)$."
+        }
+      },
+      "explain": {
+        "text": "Each index costs one subtraction, one dict lookup and one insert, so the whole scan is $O(n)$. Checking before storing stops an element pairing with itself. An empty or one-element list never finds a pair, so the loop ends and returns `None`.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c1"
+          ],
+          "caption": "$2 + 7 = 9$: `(0, 1)`"
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two legs on a budget",
+      "prose": "A desk has £2,500 to spend on exactly two hedging legs. The quoted costs, in order:",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1,250",
+            "830",
+            "2,100",
+            "1,670",
+            "420"
+          ]
+        },
+        "state": {
+          "caption": "Leg costs in £, budget £2,500"
+        }
+      },
+      "question": "Which indices does the correct one-pass `two_sum(costs, 2500)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(1, 3)`",
+            "correct": true
+          },
+          {
+            "id": "self",
+            "text": "`(0, 0)`",
+            "why": "Spending £1,250 twice is the store-first bug. There is only one £1,250 leg."
+          },
+          {
+            "id": "reversed",
+            "text": "`(3, 1)`",
+            "why": "The earlier index, from `seen`, comes first."
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "£830 + £1,670 = £2,500, so a pair exists."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each leg, what must its partner cost?"
+        },
+        {
+          "rung": "point",
+          "text": "The £1,250 leg needs another £1,250, which is not in the list.",
+          "highlight": [
+            "c1",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "£830 needs £1,670. When the scan reaches £1,670 at index 3, £830 is in `seen` at index 1."
+        }
+      ],
+      "feedback": {
+        "correct": "£830 and £1,670: legs 1 and 3.",
+        "generic": "Not quite right. Work out each leg's complement, $2500 - x$.",
+        "byKey": {
+          "self": "You paired the £1,250 leg with itself. Checking before storing prevents that."
+        }
+      },
+      "explain": {
+        "text": "£1,250 needs £1,250 and £830 needs £1,670, neither seen yet. At index 3, £1,670 needs £830, stored at index 1. The same scan with target 0 finds two trades whose quantities net to zero.",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c3"
+          ],
+          "caption": "£830 + £1,670 = £2,500"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Checking every pair is $\\tfrac{n(n-1)}{2}$ checks: $O(n^2)$.",
+      "One pass with a dict from value to index asks, for each $x$, whether $\\text{target} - x$ has gone by: $O(n)$ time and $O(n)$ memory.",
+      "Check before you store, so an element never pairs with itself, and return indices, not values. On sorted data, two pointers do it with no dict."
+    ],
+    "formula": {
+      "name": "The complement",
+      "tex": "\\text{need} = \\text{target} - x",
+      "note": "Look `need` up in `seen` first; then store `seen[x] = i`."
+    },
+    "trap": "Storing `x` before checking lets `x` be its own complement: `two_sum([3, 4, 1], 6)` returns `(0, 0)`."
+  },
+  "quiz": [
+    {
+      "id": "q-pairs",
+      "difficulty": 2,
+      "prose": "Brute-force two-sum checks every pair once.",
+      "question": "How many pairs does it check for 1,000 prices with no match?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 499500,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "pairs",
+        "label": "Pairs",
+        "accept": "499,500: $\\tfrac{1000 \\times 999}{2}$",
+        "wrong": [
+          {
+            "id": "square",
+            "value": 1000000
+          },
+          {
+            "id": "ordered",
+            "value": 999000
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac{1000 \\times 999}{2} = 499{,}500$.",
+        "generic": "Not quite right. Each pair is checked once, and never a price with itself.",
+        "byKey": {
+          "square": "You counted $n^2$: every pair twice, plus each price with itself.",
+          "ordered": "You counted each pair in both orders. Halve it."
+        }
+      },
+      "explain": {
+        "text": "Index 0 tries 999 partners, index 1 tries 998, down to 1: $\\tfrac{n(n-1)}{2} = 499{,}500$."
+      }
+    },
+    {
+      "id": "q-short",
+      "difficulty": 2,
+      "prose": "```python\ntwo_sum([5], 10)\n```\nThis is the one-pass version that checks before it stores.",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "`None`",
+            "correct": true
+          },
+          {
+            "id": "self",
+            "text": "`(0, 0)`",
+            "why": "Only a store-first version pairs 5 with itself. Here `seen` is empty when 5 is checked."
+          },
+          {
+            "id": "error",
+            "text": "An `IndexError`",
+            "why": "The loop just runs once over the one element. Nothing reads past the end."
+          },
+          {
+            "id": "five",
+            "text": "`(5, 5)`",
+            "why": "Two-sum returns indices, and here there is no second element at all."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Fewer than two numbers can never make a pair.",
+        "generic": "Not quite right. What is in `seen` when 5 is checked?"
+      },
+      "explain": {
+        "text": "At index 0, `seen` is empty, so 5 is stored and the loop ends. The function returns `None`."
+      }
+    },
+    {
+      "id": "q-net",
+      "difficulty": 3,
+      "prose": "Trade quantities for one stock, in order: `[300, -100, 200, -300]`. A pair that nets to zero sums to 0.",
+      "question": "What does `two_sum(qty, 0)` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`(0, 3)`",
+            "correct": true
+          },
+          {
+            "id": "values",
+            "text": "`(300, -300)`",
+            "why": "Those are the quantities. The function returns their indices."
+          },
+          {
+            "id": "mid",
+            "text": "`(1, 2)`",
+            "why": "$-100 + 200 = 100$, not 0."
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "300 and −300 net to zero, so a pair exists."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "300 at index 0 and −300 at index 3.",
+        "generic": "Not quite right. Each quantity's complement for target 0 is its negative."
+      },
+      "explain": {
+        "text": "For target 0 the complement of $q$ is $-q$. At index 3, −300 needs 300, stored at index 0, so the scan returns `(0, 3)`."
+      }
+    },
+    {
+      "id": "q-indices",
+      "difficulty": 3,
+      "prose": "A candidate writes `return (need, x)` instead of `return (seen[need], i)`.",
+      "question": "What does their code return for `two_sum([2, 7, 11, 15], 9)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "values",
+            "text": "`(2, 7)`",
+            "correct": true
+          },
+          {
+            "id": "indices",
+            "text": "`(0, 1)`",
+            "why": "That is the right answer, but `need` and `x` are values, not positions."
+          },
+          {
+            "id": "swap",
+            "text": "`(7, 2)`",
+            "why": "`need` is $9 - 7 = 2$ and comes first."
+          },
+          {
+            "id": "none",
+            "text": "`None`",
+            "why": "The pair is still found at index 1. Only what is returned is wrong."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It returns the values 2 and 7, not their indices.",
+        "generic": "Not quite right. At index 1, what are `need` and `x`?"
+      },
+      "explain": {
+        "text": "At index 1, `x = 7` and `need = 2`, so the code returns `(2, 7)`. The positions are `seen[need] = 0` and `i = 1`."
+      }
+    }
+  ]
+}

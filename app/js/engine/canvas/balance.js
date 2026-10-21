@@ -198,6 +198,15 @@
       return commit(div(l), div(r), { op: d === 2 ? 'halve-both' : 'divide-both', n: d });
     };
     api.halveBoth = () => api.divideBoth(2);
+    /* item 295: take k of an unknown (k may be a fraction: E/2) from both pans; the pans become signed totals */
+    api.removeUnknownBoth = (lab, k) => {
+      if (I.locked()) return { ok: false, reason: 'locked' };
+      k = +k; if (!Number.isFinite(k) || k === 0) return { ok: false, reason: 'bad-number' };
+      const [l, r] = cur(), name = labelsOf(l, r).includes(lab) ? lab : xLabel;
+      const ref = [...l, ...r].find(i => i.kind === 'unknown' && i.label === name) || {};
+      const neg = { kind: 'unknown', label: name, coef: -k, ...(ref.value != null ? { value: ref.value } : {}) };
+      return commit(collapse([...l, neg], 'l'), collapse([...r, neg], 'r'), { op: 'remove-unknown-part', n: name, k });
+    };
     api.removeItem = (id) => {
       if (I.locked()) return { ok: false, reason: 'locked' };
       const [l, r] = cur();

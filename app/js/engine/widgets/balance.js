@@ -1,5 +1,6 @@
 /* balance widget (docs/AUTHORING.md 3, design-research 5.3 no. 12): operation chips under the balance canvas.
-   spec.moves lists the chips: "remove-both" (with a number field), "remove-unknown-both", "halve-both",
+   spec.moves lists the chips: "remove-both" (with a number field), "remove-unknown-both", "remove-unknown-part"
+   (take k of the unknown from both pans, k a number or fraction such as 1/2: E = 1 + E/2, item 295), "halve-both",
    "divide-both" (with a number field), "subtract-both" and "add-both" (each with a number field, for signed pans such
    as x - 3 = 8 or 7 - 3x = 22: the pans keep their totals and may go negative), and "remove-item" (no chip: tapping a
    block removes it from its pan alone). The value is the list of moves; the pans live in the canvas.
@@ -32,6 +33,7 @@
     const chip = {
       'remove-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="remove-both">Take away</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Amount to take away from both pans" placeholder="n" data-for="remove-both"></label><span class="t-label">from both</span></div>`,
       'remove-unknown-both': labels.map(lab => `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="remove-unknown-both" data-label="${Z.esc(lab)}">Take away ${Z.tex(lab)} from both</button></div>`).join(''),
+      'remove-unknown-part': labels.map(lab => `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="remove-unknown-part" data-label="${Z.esc(lab)}">Take away</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="How many ${Z.esc(lab)} to take from both pans" placeholder="1/2" data-for="remove-unknown-part"></label><span class="t-label">${Z.tex(lab)} from both</span></div>`).join(''),
       'halve-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="halve-both">Halve both</button></div>`,
       'divide-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="divide-both">Divide both by</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Divide both pans by" placeholder="k" data-for="divide-both"></label></div>`,
       'subtract-both': `<div class="wd-bal-op"><button type="button" class="btn secondary wd-bal-btn" data-op="subtract-both">Subtract</button><label class="field wd-bal-n"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Amount to subtract from both pans" placeholder="n" data-for="subtract-both"></label><span class="t-label">from both</span></div>`,
@@ -77,6 +79,7 @@
       let r;
       if (op === 'remove-both') { const { v } = numFor(op); r = Number.isFinite(v) ? cv.removeBoth(v) : { ok: false, reason: 'bad-number' }; if (!r.ok) say((REASON[r.reason] || (() => ''))(v, x)); }
       else if (op === 'remove-unknown-both') { const lab = label || x; r = cv.removeBoth(lab); if (!r.ok) say(REASON[r.reason]?.(0, lab) || ''); }
+      else if (op === 'remove-unknown-part') { const { v } = numFor(op); r = Number.isFinite(v) && cv.removeUnknownBoth ? cv.removeUnknownBoth(label || x, v) : { ok: false, reason: 'bad-number' }; if (!r.ok) say(REASON[r.reason]?.(v, label || x) || ''); }
       else if (op === 'halve-both') { r = cv.halveBoth(); if (!r.ok) say(REASON[r.reason]?.() || ''); }
       else if (op === 'divide-both') { const { v } = numFor(op); r = Number.isFinite(v) ? cv.divideBoth(v) : { ok: false, reason: 'bad-number' }; if (!r.ok) say(REASON[r.reason]?.() || ''); }
       else if (op === 'subtract-both' || op === 'add-both') { const { v } = numFor(op); r = Number.isFinite(v) && cv.subtractBoth ? (op === 'add-both' ? cv.addBoth(v) : cv.subtractBoth(v)) : { ok: false, reason: 'bad-number' }; if (!r.ok) say(REASON[r.reason]?.() || ''); }
@@ -94,6 +97,7 @@
       cv.reset();
       for (const m of list || []) {
         if (m.op === 'remove-both') cv.removeBoth(m.n);
+        else if (m.op === 'remove-unknown-part') cv.removeUnknownBoth(m.n, m.k);
         else if (m.op === 'halve-both') cv.halveBoth();
         else if (m.op === 'divide-both') cv.divideBoth(m.n);
         else if (m.op === 'subtract-both') cv.subtractBoth(m.n);

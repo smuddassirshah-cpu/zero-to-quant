@@ -12,7 +12,8 @@
 
   C.register('graph', (host, params, ctx) => {
     const K = Z.cvb;
-    const W = 540, H = params.height || 300, ring = params.layout === 'ring';
+    let fitWatch = null;
+    let W = 540; const H = params.height || 300, ring = params.layout === 'ring';
     const normNodes = (list) => (list || []).filter(Boolean).map((n, i) => ({ ...n, id: String(n.id ?? 'n' + i) }));
     const normEdges = (list) => (list || []).filter((e) => e && e.from != null && e.to != null).map((e) => ({ ...e, from: String(e.from), to: String(e.to), id: e.id || `e-${e.from}-${e.to}` }));
     const isDir = (e) => e.directed ?? params.directed ?? !!params.markov;
@@ -56,7 +57,7 @@
       lines.forEach((l, k) => g.append(K.txt(x, y0 + k * lh, l, { size })));
       return g;
     };
-    const ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY));
+    let ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY));
     const pos = (n, view) => {
       if (ring && n.a != null) { const t = 2 * Math.PI * (n.a + ((view && view.rotate) || 0) / Math.max(1, view && view.seats ? view.seats : 1)) - Math.PI / 2; return [W / 2 + ringR * Math.cos(t), H / 2 + ringR * Math.sin(t)]; }
       return [padX + (n.x ?? 0.5) * (W - 2 * padX), padY + (n.y ?? 0.5) * (H - 2 * padY)];
@@ -112,6 +113,12 @@
       },
       alias: (id, R) => { const m = id.match(/^e-(.+?)-(.+)$/); if (!m) return [id]; const e = ((R && R.state.edges) || []).find((q) => q.id === id || (!isDir(q) && q.from === m[2] && q.to === m[1])); return e ? [e.id] : [id]; },
       render(view, R) {
+        /* item 333: on a narrow column the frame narrows to the column (down to 300 wide) instead of shrinking the
+           drawing, so node labels keep their 12px minimum on a phone; the layout re-spaces to fit */
+        if (!fitWatch && !R.static && typeof ResizeObserver === 'function' && params.fitWidth !== false) {
+          fitWatch = new ResizeObserver(() => { const w = Math.round(R.F.wrap.clientWidth || 0); if (!w) return; const nw = Math.max(300, Math.min(540, w)); if (nw !== W) { W = nw; ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY)); R.F.resize(W, H); R.redraw(); } });
+          fitWatch.observe(R.F.wrap);
+        }
         const g = R.F.g, eg = svg('g'), ng = svg('g'), lg = svg('g'); g.append(eg, ng, lg);
         /* lanes (item 149): labelled horizontal bands behind the graph, such as "local" and "origin" for commits */
         if (Array.isArray(params.lanes) && params.lanes.length) {
@@ -136,7 +143,9 @@
           const o = fade(K.obj(e.id, 'cvb-edge-o', e.colour || null), Math.min(e.o ?? 1, a.o ?? 1, b.o ?? 1));
           let d, lx, ly, hx, hy, tx, ty;
           if (e.from === e.to) {
-            const dcx = ax - centre[0], dcy = ay - centre[1], ang = Math.hypot(dcx, dcy) < 1 ? -Math.PI / 2 : Math.atan2(dcy, dcx), ux = Math.cos(ang), uy = Math.sin(ang);
+            /* item 312: loopAngle (degrees, 0 is right, 90 is up) points a self-loop that way; by default it points away
+               from the centre of the graph */
+            const dcx = ax - centre[0], dcy = ay - centre[1], ang = e.loopAngle != null && Number.isFinite(+e.loopAngle) ? -(+e.loopAngle) * Math.PI / 180 : Math.hypot(dcx, dcy) < 1 ? -Math.PI / 2 : Math.atan2(dcy, dcx), ux = Math.cos(ang), uy = Math.sin(ang);
             const r1 = rimAt(shA, ang - 0.5), r2 = rimAt(shA, ang + 0.5), rm = rimAt(shA, ang);
             const p1 = [ax + r1 * Math.cos(ang - 0.5), ay + r1 * Math.sin(ang - 0.5)], p2 = [ax + r2 * Math.cos(ang + 0.5), ay + r2 * Math.sin(ang + 0.5)];
             const c1 = [ax + (rm + 42) * Math.cos(ang - 0.7), ay + (rm + 42) * Math.sin(ang - 0.7)], c2 = [ax + (rm + 42) * Math.cos(ang + 0.7), ay + (rm + 42) * Math.sin(ang + 0.7)];
@@ -185,7 +194,10 @@
             let cp = R.defs.querySelector('#' + CSS.escape(cid)); if (!cp) { cp = svg('clipPath', { id: cid }); R.defs.append(cp); }
             cp.replaceChildren(shape(-1.5, {}));
             o.append(svg('rect', { x: x - hw, y: y + hh - 2 * hh * p, width: 2 * hw, height: 2 * hh * p, class: 'cvb-node-fill', 'clip-path': `url(#${cid})` }));
-            o.append(K.txt(x, y + hh + 12, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-outink' }));
+            /* item 314: valueSide on a node ("below" default, "above", "left", "right") moves its distribution value clear of a loop */
+            const vs = n.valueSide || (view.valueSide || {})[n.id] || 'below';
+            const [vx, vy, va] = vs === 'above' ? [x, y - hh - 12, 'middle'] : vs === 'left' ? [x - hw - 6, y, 'end'] : vs === 'right' ? [x + hw + 6, y, 'start'] : [x, y + hh + 12, 'middle'];
+            o.append(K.txt(vx, vy, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-outink', anchor: va }));
           }
           const lt = labOf(n, view);
           o.append(nodeLabel(x, y, lt, sh.pill ? 2 * hw - 12 : sh.kind === 'diamond' ? hw * 1.1 : 2 * hw - 8));

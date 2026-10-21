@@ -8,7 +8,7 @@
   'use strict';
   const Z = window.ZQ, C = Z.canvas, { svg, attrs, lerp } = C;
 
-  const SIZE = { ball: [26, 26], coin: [28, 28], card: [26, 36], slot: [28, 36], bag: [32, 34] };
+  const SIZE = { ball: [26, 26], coin: [28, 28], card: [26, 36], slot: [28, 36], bag: [32, 34], door: [56, 84] };
   const KIND = (k) => (k === 'sealed' ? 'bag' : k); // "sealed" is an alias of "bag": a closed bag whose contents are hidden
 
   function boxes(host, params, ctx = {}) {
@@ -18,11 +18,14 @@
     conts.forEach(c => c.items.forEach(it => { const v = { kind: P.itemKind || 'ball', ...it, home: c.id }; v.kind = KIND(v.kind); items.set(it.id, v); }));
     const total = items.size;
     /* items 102 and 111: a card is as wide as its label (a file name fits on one card); a wide card is a little shorter */
-    const sizeOf = (it) => {
+    /* item 289: size: "large" (or "medium", or a number) scales every item, so three large cards or doors fill the canvas */
+    const SZ = P.size === 'large' ? 2 : P.size === 'medium' ? 1.4 : Number.isFinite(+P.size) && +P.size > 0 ? +P.size : 1;
+    const sizeOf0 = (it) => {
       if (it.kind !== 'card') return SIZE[it.kind] || SIZE.ball;
       const w = Math.ceil(C.textW(String(it.label ?? ''), 13, 600)) + 14;
       return w > SIZE.card[0] ? [Math.min(200, w), 30] : SIZE.card;
     };
+    const sizeOf = (it) => sizeOf0(it).map((v) => v * SZ);
     const maxSz = [...items.values()].reduce((m, it) => { const z = sizeOf(it); return [Math.max(m[0], z[0]), Math.max(m[1], z[1])]; }, [0, 0]);
     const hand = conts.find(c => c.kind === 'hand') || null;
 
@@ -89,8 +92,9 @@
       const colour = it.colour == null ? (it.kind === 'ball' ? 1 : it.kind === 'coin' ? 4 : 0) : it.colour;
       const grp = svg('g', { class: `cv-obj cv-item cv-${it.kind}${colour ? ' cv-k' + colour : ' cv-plain'}`, 'data-id': it.id, 'data-tap': '', 'data-label': `${it.label || it.kind} ${it.id}` });
       const flip = svg('g', { class: 'cv-flip' });
-      if (it.kind === 'card') {
-        flip.append(svg('rect', { class: 'cv-body', x: -w / 2, y: -h / 2, width: w, height: h, rx: 4 }), svg('g', { class: 'cv-back' }, [svg('rect', { x: -w / 2 + 3, y: -h / 2 + 3, width: w - 6, height: h - 6, rx: 2 })]), C.label(0, 0.5, it.label ?? '', { cls: 'cv-itext', size: Math.max(9, Math.round(13 * scaleItem)) })); // the text shrinks with the card (item 162)
+      if (it.kind === 'card' || it.kind === 'door') {
+        flip.append(svg('rect', { class: 'cv-body', x: -w / 2, y: -h / 2, width: w, height: h, rx: it.kind === 'door' ? 3 : 4 }), svg('g', { class: 'cv-back' }, [svg('rect', { x: -w / 2 + 3, y: -h / 2 + 3, width: w - 6, height: h - 6, rx: 2 })]), C.label(0, it.kind === 'door' ? -h * 0.12 : 0.5, it.label ?? '', { cls: 'cv-itext', size: Math.max(9, Math.round(13 * scaleItem * Math.min(SZ, 1.6) * (it.kind === 'door' ? 1.3 : 1))) })); // the text shrinks with the card (item 162)
+        if (it.kind === 'door') flip.append(svg('circle', { class: 'cv-knob', cx: w * 0.3, cy: h * 0.06, r: Math.max(2.5, w * 0.05) })); // a door: a tall card with a knob
       } else if (it.kind === 'bag') {
         /* a sealed bag: a tied sack, its label (often "?" or "n") on the front */
         flip.append(svg('path', { class: 'cv-body', d: `M${-w * 0.16} ${-h / 2 + 6}C${-w / 2} ${-h * 0.2} ${-w / 2} ${h / 2} ${-w * 0.3} ${h / 2}H${w * 0.3}C${w / 2} ${h / 2} ${w / 2} ${-h * 0.2} ${w * 0.16} ${-h / 2 + 6}Z` }),
