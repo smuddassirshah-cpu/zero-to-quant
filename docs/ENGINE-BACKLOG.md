@@ -1169,3 +1169,16 @@ Raised later (ds level 3):
 405. `array` stack mode: a cell label separate from its value ("i2" above "6"), so a monotonic stack can show indices and values without shrinking text.
 406. `graph`: named pointers attached to nodes (`pointers: {slow: "n2", fast: "n4"}`) that move by patch, like `array`'s `pointers`, so linked-list lessons need not patch pill positions and null old edge ids.
 407. `manipulate` widget: reject a wrong op in place with its `why` (no dead-end state), halving the state count of stepping screens.
+
+Raised later (graphs-dp level 4):
+
+408. `grid`: a table-fill mode (`params.edit: [ids]`) graded per cell, with the cells a cell depends on highlighted as the learner focuses it, so a DP table can be filled on the grid itself (now a `table` widget under a `grid` that repeats it).
+409. `tree`: values on inner nodes (with 396), so backward induction can show V₂ and V₃ on the drawing.
+410. `grid`: two-line cell text (a fee and a running total).
+
+Raised later (algo-think level 3):
+
+411. `tap-regions`: a sequence mode that grades the order of taps on `array` cells (with 398 for `graph`); and a widget that grades the order after an `array` drag-reorder.
+412. `tree`: stack rows per level or enforce a minimum font size when `maxHeight` caps a deep or wide-labelled tree.
+413. `number-line`: intervals as tap targets, not only points.
+414. AUTHORING.md section 3: note that `__learner_source__` is visible only in `prelude` and `postlude`, so a "no `sorted`" check sets a flag in a postlude (with 395).
