@@ -1,0 +1,1435 @@
+{
+ "id": "l6-binomial-cpp",
+ "course": "cpp-pricing",
+ "title": "A binomial tree in C++",
+ "minutes": 15,
+ "objectives": [
+  "Port the Python binomial pricer to C++.",
+  "Price on one vector of n + 1 values, overwritten in place at each step back."
+ ],
+ "skills": [
+  "cx-pricers",
+  "cx-numeric"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "What a node needs",
+   "prose": "Trees l8's Python pricer built a fresh list at every step back. Before porting it, look at what one node actually needs. Here is our call on a three-step tree, with only the leaves valued.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "n00",
+       "label": "£100.00\n?",
+       "x": 0.07,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "n10",
+       "label": "£89.09\n?",
+       "x": 0.36,
+       "y": 0.64,
+       "shape": "rect"
+      },
+      {
+       "id": "n11",
+       "label": "£112.24\n?",
+       "x": 0.36,
+       "y": 0.36,
+       "shape": "rect"
+      },
+      {
+       "id": "n20",
+       "label": "£79.38\n?",
+       "x": 0.65,
+       "y": 0.78,
+       "shape": "rect"
+      },
+      {
+       "id": "n21",
+       "label": "£100.00\n?",
+       "x": 0.65,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "n22",
+       "label": "£125.98\n?",
+       "x": 0.65,
+       "y": 0.22,
+       "shape": "rect"
+      },
+      {
+       "id": "n30",
+       "label": "£70.72\n0.00",
+       "x": 0.93,
+       "y": 0.92,
+       "shape": "rect"
+      },
+      {
+       "id": "n31",
+       "label": "£89.09\n0.00",
+       "x": 0.93,
+       "y": 0.64,
+       "shape": "rect"
+      },
+      {
+       "id": "n32",
+       "label": "£112.24\n12.24",
+       "x": 0.93,
+       "y": 0.36,
+       "shape": "rect"
+      },
+      {
+       "id": "n33",
+       "label": "£141.40\n41.40",
+       "x": 0.93,
+       "y": 0.08,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "n00",
+       "to": "n10"
+      },
+      {
+       "from": "n00",
+       "to": "n11"
+      },
+      {
+       "from": "n10",
+       "to": "n20"
+      },
+      {
+       "from": "n10",
+       "to": "n21"
+      },
+      {
+       "from": "n11",
+       "to": "n21"
+      },
+      {
+       "from": "n11",
+       "to": "n22"
+      },
+      {
+       "from": "n20",
+       "to": "n30"
+      },
+      {
+       "from": "n20",
+       "to": "n31"
+      },
+      {
+       "from": "n21",
+       "to": "n31"
+      },
+      {
+       "from": "n21",
+       "to": "n32"
+      },
+      {
+       "from": "n22",
+       "to": "n32"
+      },
+      {
+       "from": "n22",
+       "to": "n33"
+      }
+     ],
+     "height": 310,
+     "directed": false
+    },
+    "state": {
+     "current": "n21",
+     "caption": "Our call, $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$, three steps. Each node: spot, then call value."
+    }
+   },
+   "question": "To value the ringed node, £100.00 after two steps, which nodes do you need? Tap them.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "n31",
+     "n32"
+    ],
+    "wrong": [
+     {
+      "id": "leaves",
+      "set": [
+       "n30",
+       "n31",
+       "n32",
+       "n33"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Backward induction values a node from the nodes one step later."
+    },
+    {
+     "rung": "point",
+     "text": "These two can be reached from the ringed node in one step.",
+     "highlight": [
+      "n31",
+      "n32"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Its up child is £112.24 and its down child £89.09."
+    }
+   ],
+   "feedback": {
+    "correct": "Two children, one step later.",
+    "generic": "Not quite right. Which nodes can the share reach from £100.00 in one step?",
+    "byKey": {
+     "leaves": "You took the whole last row. The ringed node needs only its up child and its down child.",
+     "n10": "That node is earlier in time. A node is valued from the two nodes one step later.",
+     "n11": "That node is earlier in time. A node is valued from the two nodes one step later."
+    }
+   },
+   "explain": {
+    "text": "The node needs only its two children: £112.24 and £89.09, one step later. So a step back needs one row and nothing older. For n = 3 we never hold more than 4 numbers at once, not all 10 nodes.",
+    "canvas": {
+     "highlight": [
+      "n31",
+      "n32"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "One row, reused",
+   "prose": "Store the leaves in one `std::vector<double>` of $n + 1 = 4$ values. Each step back overwrites the front of the same vector. Slide through the three steps. Faded cells hold values nothing needs any more.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "0.00",
+      "0.00",
+      "12.24",
+      "41.40"
+     ]
+    },
+    "state": {
+     "params": {
+      "step": 0
+     },
+     "pointers": [
+      {
+       "id": "v",
+       "at": 0,
+       "label": "v[0]"
+      }
+     ]
+    },
+    "derive": {
+     "let": {
+      "rows": "[[\"0.00\", \"0.00\", \"12.24\", \"41.40\"], [\"0.00\", \"6.55\", \"27.63\", \"41.40\"], [\"3.50\", \"17.71\", \"27.63\", \"41.40\"], [\"11.04\", \"17.71\", \"27.63\", \"41.40\"]]"
+     },
+     "cells": "rows[step]",
+     "active": "[0, 3 - step]",
+     "caption": "{{step == 0 ? 'Leaves: call payoffs at year 1' : 'After step back ' + step + ': cells 0 to ' + (3 - step) + ' hold time ' + (3 - step)}}"
+    },
+    "controls": [
+     {
+      "bind": "step",
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "label": "Steps back",
+      "start": 0
+     }
+    ]
+   },
+   "question": "After the last step, where is the option's price?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "In `v[0]`: £11.04",
+      "correct": true
+     },
+     {
+      "id": "top",
+      "text": "In `v[3]`: £41.40",
+      "why": "`v[3]` still holds the top leaf. It was never overwritten, because nothing earlier needs it once step one is done."
+     },
+     {
+      "id": "new",
+      "text": "In a new vector the loop returns",
+      "why": "No vector was made after the first. Every step wrote into the same four cells."
+     },
+     {
+      "id": "avg",
+      "text": "In the average of the four cells",
+      "why": "Only `v[0]` is current after three steps. The other cells are stale values from later times."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to 3 steps back and look at which cells are not faded."
+    },
+    {
+     "rung": "point",
+     "text": "Only one cell is still live."
+    },
+    {
+     "rung": "step",
+     "text": "The root of the tree is cell 0, with £11.04."
+    }
+   ],
+   "feedback": {
+    "correct": "The root lands in cell 0.",
+    "generic": "Not quite right. Slide to the last step and read the live cell.",
+    "byKey": {
+     "top": "`v[3]` still holds the top leaf. It was never overwritten, because nothing earlier needs it once step one is done."
+    }
+   },
+   "explain": {
+    "text": "Each step i rewrote cells 0 to i and left the rest stale. After three steps `v[0]` holds £11.04, the three-step price. The vector never changed size: only the range of cells that matter shrank.",
+    "canvas": {
+     "params": {
+      "step": 3
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The leaves",
+   "prose": "Start the port. Python's `leaves` listed the spots; here we store the payoffs straight away. The leaf with $j$ ups is at spot $Su^jd^{n-j}$. `Payoff` and the classes from the last lesson are loaded.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "def leaves(S, u, d, n):",
+      "    return [S * u**j * d**(n - j) for j in range(n + 1)]",
+      "",
+      "v = [payoff(s) for s in leaves(S, u, d, n)]"
+     ],
+     "title": "Python, trees l8"
+    },
+    "state": {}
+   },
+   "question": "Write `terminal_values`: the n + 1 leaf payoffs, `v[0]` with no ups.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <cmath>\n#include <vector>\n\n// Payoff, Call, Put and DigitalCall are loaded.\n\nstd::vector<double> terminal_values(const Payoff& payoff, double s,\n                                    double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    // v[j] = payoff at the leaf with j ups\n    return v;\n}\n",
+    "solution": "#include <cmath>\n#include <vector>\n\nstd::vector<double> terminal_values(const Payoff& payoff, double s,\n                                    double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\n",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <memory>\n#include <stdexcept>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\nclass DigitalCall : public Payoff {\npublic:\n    DigitalCall(double strike, double cash) : strike_(strike), cash_(cash) {}\n    double operator()(double spot) const override { return spot > strike_ ? cash_ : 0.0; }\nprivate:\n    double strike_;\n    double cash_;\n};\n",
+    "examples": [
+     {
+      "call": "terminal_values(Call(100.0), 100.0, 1.2, 0.8, 2)",
+      "expect": [
+       0,
+       0,
+       44
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "terminal_values(Call(100.0), 100.0, 1.2, 0.8, 2)",
+      "expect": [
+       0,
+       0,
+       44
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "terminal_values(Put(100.0), 100.0, 1.2, 0.8, 2)",
+      "expect": [
+       36,
+       4,
+       0
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "terminal_values(Call(100.0), 110.0, 1.2, 0.8, 0)",
+      "expect": [
+       10
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "terminal_values(DigitalCall(100.0, 1.0), 100.0, 1.2, 0.8, 3)",
+      "expect": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "terminal_values(Call(100.0), 100.0, 1.1224009024456676, 0.8909472522884107, 3)",
+      "expect": [
+       0,
+       0,
+       12.240090244566758,
+       41.398245808051655
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "terminal_values(Call(100.0), 100.0, 1.2, 0.8, 512).size()",
+      "expect": 513,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Lists are compared element by element within a relative 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Python's `**` is `std::pow` in C++."
+    },
+    {
+     "rung": "point",
+     "text": "Loop `j` from 0 to `n` inclusive: `j <= n`."
+    },
+    {
+     "rung": "step",
+     "text": "`v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));`"
+    }
+   ],
+   "feedback": {
+    "correct": "The leaves, as payoffs, in one vector.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "compile": "If the compiler rejects `**`, C++ has no power operator: use `std::pow(u, j)`.",
+     "test-3": "Test 3 has n = 0: the tree is a single leaf, the spot itself, paying £10."
+    }
+   },
+   "explain": {
+    "text": "`std::pow(u, j) * std::pow(d, n - j)` is Python's `u**j * d**(n - j)`. Calling `payoff(...)` dispatches through `const Payoff&`, so the same loop fills calls, puts and digitals.\n\n```cpp\nfor (int j = 0; j <= n; ++j)\n    v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n```"
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One step back, in place",
+   "prose": "Now one step back. At time $i$ there are $i + 1$ nodes, so only cells 0 to $i$ change: $$v_j \\leftarrow \\text{disc}\\,\\big(q\\,v_{j+1} + (1 - q)\\,v_j\\big).$$ Cells above $i$ keep stale values. Here is the two-step call from trees level 2, with $q = 0.625$ and disc $= 1/1.05$.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "0",
+      "0",
+      "44"
+     ]
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "i",
+       "at": 1,
+       "label": "i = 1"
+      }
+     ],
+     "highlight": {
+      "range": [
+       0,
+       1
+      ]
+     },
+     "caption": "`step_back(v, 1, 0.625, 1 / 1.05)` rewrites cells 0 and 1"
+    }
+   },
+   "question": "Write `step_back`. It changes `v` in place and returns nothing.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    // rewrite v[0] .. v[i] from v[0] .. v[i + 1]\n}\n",
+    "solution": "#include <vector>\n\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\n",
+    "examples": [
+     {
+      "setup": "std::vector<double> v{0, 0, 44}; step_back(v, 1, 0.625, 1 / 1.05);",
+      "call": "v",
+      "expect": [
+       0,
+       26.19047619047619,
+       44
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "std::vector<double> v{0, 0, 44}; step_back(v, 1, 0.625, 1 / 1.05);",
+      "call": "v",
+      "expect": [
+       0,
+       26.19047619047619,
+       44
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> v{0, 0, 44}; step_back(v, 1, 0.625, 1 / 1.05); step_back(v, 0, 0.625, 1 / 1.05);",
+      "call": "v",
+      "expect": [
+       15.589569160997732,
+       26.19047619047619,
+       44
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> v{36, 4, 0}; step_back(v, 1, 0.625, 1 / 1.05);",
+      "call": "v",
+      "expect": [
+       15.238095238095237,
+       1.4285714285714286,
+       0
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> v{1, 2, 4, 8}; step_back(v, 2, 0.5, 1.0);",
+      "call": "v",
+      "expect": [
+       1.5,
+       3,
+       6,
+       8
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> v{7, 9}; step_back(v, 0, 0.6, 0.98);",
+      "call": "v",
+      "expect": [
+       8.036,
+       9
+      ],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> v{0, 0, 44}; step_back(v, 1, 0.625, 1 / 1.05);",
+      "call": "v.size()",
+      "expect": 3,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 6 hidden tests. Each test runs your function on a small vector, then compares the whole vector within a relative 1e-9. Stale cells must be left alone."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which cells are rewritten, and which old values does each need?"
+    },
+    {
+     "rung": "point",
+     "text": "The vector is passed by reference, so writing `v[j]` changes the caller's vector."
+    },
+    {
+     "rung": "step",
+     "text": "`for (int j = 0; j <= i; ++j) v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);`"
+    }
+   ],
+   "feedback": {
+    "correct": "One row, overwritten in place.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-4": "Test 4 steps [1, 2, 4, 8] back once. If `v[1]` came out 4, your loop ran downwards and read a value it had just overwritten. Run `j` upwards.",
+     "test-1": "Test 1 expects `v[2]` still 44. Rewrite only cells 0 to `i`; the vector keeps its size."
+    }
+   },
+   "explain": {
+    "text": "Running `j` upwards, `v[j]` is read before it is rewritten, and `v[j + 1]` is still old. Downwards, `v[j + 1]` would already hold the new value. The vector keeps its size; `i` says which cells matter.",
+    "canvas": {
+     "cells": [
+      "0",
+      "26.19",
+      "44"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The whole pricer",
+   "prose": "Join the pieces. `tree_price` takes `growth`, what £1 grows to in one step: $1 + r$ on trees level 2's example, $e^{r\\Delta t}$ on a calibrated tree. For an American option, compare with exercising at each node, spot $Su^jd^{i-j}$. `binomial_price` sets $\\Delta t = t/n$, $u$ = `crr_u(sigma, dt)`, $d = 1/u$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "tree_price(Put(100.0), 100.0, 1.2, 0.8, 1.05, 2, false)  // 6.29, growth 1 + r",
+      "tree_price(Put(100.0), 100.0, 1.2, 0.8, 1.05, 2, true)   // 7.99, growth 1 + r",
+      "binomial_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 4, false)  // 9.97",
+      "binomial_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 512, false)  // 10.45",
+      "binomial_price(Call(100.0), 110.0, 0.05, 0.2, 0.0, 4, false)  // 10, t = 0",
+      "binomial_price(Call(100.0), 100.0, 0.05, 0.0, 1.0, 4, false)  // throws: q undefined"
+     ],
+     "title": "What it should do"
+    },
+    "state": {}
+   },
+   "question": "Write `tree_price` and `binomial_price`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\n#include <vector>\n\n// Loaded: Payoff, Call, Put, terminal_values, step_back,\n// and level 1's crr_u(sigma, dt).\n\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    // refuse q outside (0, 1); fill the leaves; step back n times;\n    // if american, take std::max(hold, exercise) at every node\n    return 0.0;\n}\n\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    // t == 0: no time left. Otherwise calibrate and call tree_price.\n    return 0.0;\n}\n",
+    "solution": "#include <algorithm>\n#include <cmath>\n#include <stdexcept>\n#include <vector>\n\ndouble tree_price(const Payoff& payoff, double s, double u, double d,\n                  double growth, int n, bool american) {\n    double q = (growth - d) / (u - d);\n    if (!(q > 0.0 && q < 1.0))\n        throw std::invalid_argument(\"q must lie strictly between 0 and 1\");\n    std::vector<double> v = terminal_values(payoff, s, u, d, n);\n    for (int i = n - 1; i >= 0; --i) {\n        step_back(v, i, q, 1.0 / growth);\n        if (american)\n            for (int j = 0; j <= i; ++j)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n    }\n    return v[0];\n}\n\ndouble binomial_price(const Payoff& payoff, double s, double r,\n                      double sigma, double t, int n, bool american) {\n    if (t == 0.0) return payoff(s);\n    double dt = t / n;\n    double u = crr_u(sigma, dt);\n    return tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american);\n}\n",
+    "prelude": "#include <algorithm>\n#include <cmath>\n#include <memory>\n#include <stdexcept>\n#include <vector>\nclass Payoff {\npublic:\n    virtual ~Payoff() = default;\n    virtual double operator()(double spot) const = 0;\n};\nclass Call : public Payoff {\npublic:\n    explicit Call(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(spot - strike_, 0.0); }\nprivate:\n    double strike_;\n};\nclass Put : public Payoff {\npublic:\n    explicit Put(double strike) : strike_(strike) {}\n    double operator()(double spot) const override { return std::max(strike_ - spot, 0.0); }\nprivate:\n    double strike_;\n};\nstd::vector<double> terminal_values(const Payoff& payoff, double s,\n                                    double u, double d, int n) {\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    return v;\n}\nvoid step_back(std::vector<double>& v, int i, double q, double disc) {\n    for (int j = 0; j <= i; ++j)\n        v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n}\ndouble crr_u(double sigma, double dt) { return std::exp(sigma * std::sqrt(dt)); }\n",
+    "examples": [
+     {
+      "call": "tree_price(Put(100.0), 100.0, 1.2, 0.8, 1.05, 2, false)",
+      "expect": 6.292517006802716,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "tree_price(Put(100.0), 100.0, 1.2, 0.8, 1.05, 2, false)",
+      "expect": 6.292517006802716,
+      "compare": "isclose"
+     },
+     {
+      "call": "tree_price(Put(100.0), 100.0, 1.2, 0.8, 1.05, 2, true)",
+      "expect": 7.993197278911562,
+      "compare": "isclose"
+     },
+     {
+      "call": "tree_price(Call(100.0), 100.0, 1.2, 0.8, 1.05, 2, false)",
+      "expect": 15.589569160997737,
+      "compare": "isclose"
+     },
+     {
+      "call": "binomial_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 1, false)",
+      "expect": 12.162284964623941,
+      "compare": "isclose"
+     },
+     {
+      "call": "binomial_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 4, false)",
+      "expect": 9.970522921901265,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::abs(binomial_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, 512, false) - 10.45) < 0.005",
+      "expect": true,
+      "compare": "equal"
+     },
+     {
+      "call": "binomial_price(Put(100.0), 100.0, 0.05, 0.2, 1.0, 4, true)",
+      "expect": 5.882800351329434,
+      "compare": "isclose"
+     },
+     {
+      "call": "binomial_price(Call(100.0), 110.0, 0.05, 0.2, 0.0, 4, false)",
+      "expect": 10.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "binomial_price(Call(100.0), 100.0, 0.05, 0.0, 1.0, 4, false)",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     },
+     {
+      "call": "tree_price(Call(100.0), 100.0, 1.2, 0.8, 1.25, 2, false)",
+      "compare": "raises",
+      "expect": "std::invalid_argument"
+     },
+     {
+      "call": "std::abs(binomial_price(Call(100.0), 100.0, 0.05, 0.01, 1.0, 512, false) - 4.8771) < 0.001",
+      "expect": true,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 11 hidden tests. Prices are accepted within a relative 1e-9; the 512-step call within 0.005 of 10.45. Two tests pass only if the program stops (throw `std::invalid_argument`): this browser build cannot catch exceptions."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Order: check q, fill the leaves, then loop `i` from `n - 1` down to 0."
+    },
+    {
+     "rung": "point",
+     "text": "After `step_back(v, i, q, 1.0 / growth)`, an American option loops `j` from 0 to `i` once more."
+    },
+    {
+     "rung": "step",
+     "text": "`v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));` In `binomial_price`: `if (t == 0.0) return payoff(s);` then `tree_price(payoff, s, u, 1.0 / u, std::exp(r * dt), n, american)`."
+    }
+   ],
+   "feedback": {
+    "correct": "The Python pricer, in C++, to the same digits.",
+    "generic": "Not quite right. Read the first failing test under the editor.",
+    "byKey": {
+     "test-2": "Test 2 is the American put, £7.99 with growth 1.05 per step. Take `std::max(hold, exercise)` at every node, with spot `s * std::pow(u, j) * std::pow(d, i - j)`.",
+     "test-8": "Test 8 has t = 0: no time left, so return `payoff(s)` before dividing by n.",
+     "test-9": "Test 9 has σ = 0, so u = d = 1 and q divides by zero. Throw when q is not strictly between 0 and 1.",
+     "test-10": "Test 10 grows £1 by 1.25 per step, above u = 1.2: an arbitrage, and q = 1.125. Refuse it."
+    }
+   },
+   "explain": {
+    "text": "The two-step tests use growth $1 + r = 1.05$, as trees level 2 did; `binomial_price` uses $e^{r\\Delta t}$, as trees l8 did. σ = 0 has no tree: q would divide by zero. A tiny σ such as 0.01, with enough steps, gives £4.88, the discounted forward payoff $e^{-rT}\\max(Se^{rT} - K, 0)$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "C++ against Python",
+   "prose": "Your `binomial_price` printed these calls. Inputs: $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$, growth $e^{r\\Delta t}$. Trees l8's Python gave the same numbers to about 15 significant figures. Black-Scholes, the limit, is £10.4506.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./tree",
+      "n =   1   12.1622849646",
+      "n =   4    9.9705229219",
+      "n = 128   10.4349761567",
+      "n = 512   10.4466788268"
+     ],
+     "title": "Terminal"
+    },
+    "state": {}
+   },
+   "question": "Fill in each error, the C++ price minus £10.4506, to 4 places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "n",
+     "C++ (£)",
+     "Python, trees l8 (£)",
+     "error (£)"
+    ],
+    "rows": [
+     [
+      "1",
+      "12.1623",
+      "12.1623",
+      {
+       "edit": true,
+       "answer": 1.7117,
+       "tol": {
+        "abs": 0.0002
+       }
+      }
+     ],
+     [
+      "4",
+      "9.9705",
+      "9.9705",
+      {
+       "edit": true,
+       "answer": -0.4801,
+       "tol": {
+        "abs": 0.0002
+       }
+      }
+     ],
+     [
+      "128",
+      "10.4350",
+      "10.4350",
+      {
+       "edit": true,
+       "answer": -0.0156,
+       "tol": {
+        "abs": 0.0002
+       }
+      }
+     ],
+     [
+      "512",
+      "10.4467",
+      "10.4467",
+      {
+       "edit": true,
+       "answer": -0.0039,
+       "tol": {
+        "abs": 0.0002
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract 10.4506 from each C++ price."
+    },
+    {
+     "rung": "point",
+     "text": "Below 10.4506 the error is negative.",
+     "highlight": [
+      "l2",
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "12.1623 − 10.4506 = 1.7117; 9.9705 − 10.4506 = −0.4801."
+    }
+   ],
+   "feedback": {
+    "correct": "The error shrinks about four times for four times the steps.",
+    "generic": "Not quite right. Each error is the C++ price minus 10.4506, with its sign."
+   },
+   "explain": {
+    "text": "From 128 to 512 steps the error falls from −0.0156 to −0.0039, a quarter: it shrinks roughly like $1/n$. Odd and even n zigzag around the limit (trees l9), so compare like with like. C++ and Python agree because they do the same arithmetic in the same doubles.",
+    "canvas": {
+     "highlight": [
+      "l4",
+      "l5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Days to expiry",
+   "prose": "A colleague prices a six-month at-the-money call with your pricer. His driver reads the days to expiry as an `int`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "int days = 182;",
+      "double t = days / 365;",
+      "std::cout << binomial_price(Call(100.0), 100.0, 0.05,",
+      "                            0.2, t, 200, false) << '\\n';",
+      "",
+      "$ ./driver",
+      "0"
+     ],
+     "title": "driver.cpp"
+    },
+    "state": {
+     "tone": {
+      "l7": "err"
+     }
+    }
+   },
+   "question": "It prints 0. Why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "`days / 365` divides two `int`s, so `t` is 0 and the pricer returns the payoff",
+      "correct": true
+     },
+     {
+      "id": "steps",
+      "text": "200 steps are too few",
+      "why": "200 steps leave an error of pennies, not £6.88. The price is exactly 0."
+     },
+     {
+      "id": "double",
+      "text": "A `double` cannot hold 182/365",
+      "why": "A `double` holds 0.4986 easily. The division happened in `int` arithmetic before the value reached `t`."
+     },
+     {
+      "id": "atm",
+      "text": "An at-the-money call is worth £0",
+      "why": "Only at expiry. With half a year left this call is worth about £6.88."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What are the types of `days` and `365`?"
+    },
+    {
+     "rung": "point",
+     "text": "Line 2 divides first, then stores the result in a `double`.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`182 / 365` in `int` arithmetic is 0. With t = 0 the pricer returns `payoff(100)`, which is 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Integer division threw away the whole half year.",
+    "generic": "Not quite right. Work out `182 / 365` in C++.",
+    "byKey": {
+     "double": "A `double` holds 0.4986 easily. The division happened in `int` arithmetic before the value reached `t`.",
+     "atm": "Only at expiry. With half a year left this call is worth about £6.88."
+    }
+   },
+   "explain": {
+    "text": "Python 3's `/` always gives a float; C++'s `/` on two `int`s drops the remainder. So `t` is 0, and the t = 0 branch returns the payoff at £100: £0. Make one side a `double`:\n\n```cpp\ndouble t = days / 365;     // int / int: 0\ndouble t = days / 365.0;   // 0.4986\n```",
+    "canvas": {
+     "highlight": [
+      "l2"
+     ],
+     "tone": {
+      "l2": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Counting the work",
+   "prose": "The American branch recomputes each node's spot with two `std::pow` calls. Trees l9 counted the nodes of an $n$-step tree: $(n + 1)(n + 2)/2$.",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "nodes": [
+      {
+       "id": "n00",
+       "label": "£100.00\n11.04",
+       "x": 0.07,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "n10",
+       "label": "£89.09\n3.50",
+       "x": 0.36,
+       "y": 0.64,
+       "shape": "rect"
+      },
+      {
+       "id": "n11",
+       "label": "£112.24\n17.71",
+       "x": 0.36,
+       "y": 0.36,
+       "shape": "rect"
+      },
+      {
+       "id": "n20",
+       "label": "£79.38\n0.00",
+       "x": 0.65,
+       "y": 0.78,
+       "shape": "rect"
+      },
+      {
+       "id": "n21",
+       "label": "£100.00\n6.55",
+       "x": 0.65,
+       "y": 0.5,
+       "shape": "rect"
+      },
+      {
+       "id": "n22",
+       "label": "£125.98\n27.63",
+       "x": 0.65,
+       "y": 0.22,
+       "shape": "rect"
+      },
+      {
+       "id": "n30",
+       "label": "£70.72\n0.00",
+       "x": 0.93,
+       "y": 0.92,
+       "shape": "rect"
+      },
+      {
+       "id": "n31",
+       "label": "£89.09\n0.00",
+       "x": 0.93,
+       "y": 0.64,
+       "shape": "rect"
+      },
+      {
+       "id": "n32",
+       "label": "£112.24\n12.24",
+       "x": 0.93,
+       "y": 0.36,
+       "shape": "rect"
+      },
+      {
+       "id": "n33",
+       "label": "£141.40\n41.40",
+       "x": 0.93,
+       "y": 0.08,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "n00",
+       "to": "n10"
+      },
+      {
+       "from": "n00",
+       "to": "n11"
+      },
+      {
+       "from": "n10",
+       "to": "n20"
+      },
+      {
+       "from": "n10",
+       "to": "n21"
+      },
+      {
+       "from": "n11",
+       "to": "n21"
+      },
+      {
+       "from": "n11",
+       "to": "n22"
+      },
+      {
+       "from": "n20",
+       "to": "n30"
+      },
+      {
+       "from": "n20",
+       "to": "n31"
+      },
+      {
+       "from": "n21",
+       "to": "n31"
+      },
+      {
+       "from": "n21",
+       "to": "n32"
+      },
+      {
+       "from": "n22",
+       "to": "n32"
+      },
+      {
+       "from": "n22",
+       "to": "n33"
+      }
+     ],
+     "height": 310,
+     "directed": false
+    },
+    "state": {
+     "highlight": [
+      "n00",
+      "n10",
+      "n11",
+      "n20",
+      "n21",
+      "n22",
+      "n30",
+      "n31",
+      "n32",
+      "n33"
+     ],
+     "caption": "n = 3: 10 nodes, $4 \\times 5 / 2$"
+    }
+   },
+   "question": "How many nodes does the 512-step American put visit?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 131841,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Number of nodes",
+    "accept": "131,841: $513 \\times 514 / 2$",
+    "wrong": [
+     {
+      "id": "row",
+      "value": 513,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "square",
+      "value": 262144,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "n1n2",
+      "value": 131328,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put n = 512 into the formula."
+    },
+    {
+     "rung": "point",
+     "text": "The ten nodes here are $4 \\times 5 / 2$, with n = 3."
+    },
+    {
+     "rung": "step",
+     "text": "$513 \\times 514 / 2 = 131{,}841$."
+    }
+   ],
+   "feedback": {
+    "correct": "131,841 nodes, so 263,682 `pow` calls for one price.",
+    "generic": "Not quite right. Use $(n + 1)(n + 2)/2$ with n = 512.",
+    "byKey": {
+     "row": "513 is one row, the memory we hold. The work visits every node of every row.",
+     "square": "That is $512^2$, which counts a square grid. A recombining tree is a triangle, about half that.",
+     "n1n2": "That is $512 \\times 513 / 2$. Use $(n + 1)(n + 2)/2$: there are n + 1 rows, from 1 node to 513."
+    }
+   },
+   "explain": {
+    "text": "Memory is one row of 513 doubles, but the work visits all 131,841 nodes. Two `pow` calls per node are correct and slow; level 3 times this and replaces them with a multiply. An `int` holds up to 2,147,483,647, so these counts and indices are safe."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The port",
+   "prose": "The whole pricer is one vector and two loops:\n\n```cpp\nstd::vector<double> v = terminal_values(payoff, s, u, d, n);\nfor (int i = n - 1; i >= 0; --i) {\n    step_back(v, i, q, 1.0 / growth);        // cells 0..i\n    if (american)\n        for (int j = 0; j <= i; ++j)         // exercise now?\n            v[j] = std::max(v[j], payoff(s * std::pow(u, j)\n                                         * std::pow(d, i - j)));\n}\nreturn v[0];\n```",
+   "question": "Which growth convention does each of our tests use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "1.05 per step on the two-step example; $e^{r\\Delta t}$ inside `binomial_price`",
+      "correct": true
+     },
+     {
+      "id": "exp",
+      "text": "$e^{r\\Delta t}$ everywhere",
+      "why": "The two-step example passed growth 1.05, that is $1 + r$, as trees level 2 did. Only the calibrated tree uses $e^{r\\Delta t}$."
+     },
+     {
+      "id": "simple",
+      "text": "$1 + r$ everywhere",
+      "why": "`binomial_price` grows £1 by `std::exp(r * dt)` per step, as trees l8 did."
+     },
+     {
+      "id": "rdt",
+      "text": "$1 + r\\Delta t$ inside `binomial_price`",
+      "why": "That is simple interest over one step. Our calibrated tree, like trees l8's, uses $e^{r\\Delta t}$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at what each test passes as `growth`."
+    },
+    {
+     "rung": "point",
+     "text": "`tree_price` takes growth as an argument; `binomial_price` computes it."
+    }
+   ],
+   "feedback": {
+    "correct": "`tree_price` takes any growth; `binomial_price` chooses $e^{r\\Delta t}$.",
+    "generic": "Not quite right. Read the growth each call passes."
+   },
+   "explain": {
+    "text": "Keeping growth an argument lets one `tree_price` reproduce both courses' numbers: £7.99 with $1 + r$, £5.88 with $e^{r\\Delta t}$. State the convention beside every price you report."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The overnight batch",
+   "prose": "A risk system runs pricers as programs: numbers in on `std::cin`, prices out on `std::cout`. A desk can price thousands of options a second on trees this way. Level 3 times yours against Python. `binomial_price` is loaded.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ echo 4 | ./price",
+      "9.9705",
+      "$ echo 512 | ./price",
+      "10.4467",
+      "$ echo 0 | ./price",
+      "need a whole number of steps, at least 1",
+      "$ echo $?",
+      "1"
+     ],
+     "title": "Terminal"
+    },
+    "state": {
+     "tone": {
+      "l6": "err"
+     }
+    }
+   },
+   "question": "Write `main`: read n, print our one-year call's tree price to 4 places, and exit with status 1 on a missing n or n below 1.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <iostream>\n#include <iomanip>\n\n// Loaded: Payoff, Call and binomial_price.\n\nint main() {\n    int n;\n    std::cin >> n;\n    // print binomial_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, n, false)\n    // to 4 places; refuse a missing n or n < 1 with exit status 1\n}\n",
+    "solution": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 1) {\n        std::cerr << \"need a whole number of steps, at least 1\\n\";\n        return 1;\n    }\n    double price = binomial_price(Call(100.0), 100.0, 0.05, 0.2, 1.0, n, false);\n    std::cout << std::fixed << std::setprecision(4) << price << '\\n';\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "4\n",
+      "expect": "9.9705\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "4\n",
+      "expect": "9.9705\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n",
+      "expect": "12.1623\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "512\n",
+      "expect": "10.4467\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "65\n",
+      "expect": "10.4776\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "64\n",
+      "expect": "10.4194\n"
+     },
+     {
+      "compare": "raises",
+      "stdin": "0\n"
+     },
+     {
+      "compare": "raises",
+      "stdin": ""
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 7 hidden tests. It runs your program 7 times with different input on `std::cin` and compares what it prints. The last two must end with a non-zero exit status."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`std::cin >> n` is false when no number could be read."
+    },
+    {
+     "rung": "point",
+     "text": "`std::fixed << std::setprecision(4)` prints exactly 4 places."
+    },
+    {
+     "rung": "step",
+     "text": "`if (!(std::cin >> n) || n < 1) { std::cerr << \"...\"; return 1; }` then print the price."
+    }
+   ],
+   "feedback": {
+    "correct": "A pricer the batch can call.",
+    "generic": "Not quite right. Compare your output with the expected line in the first failing run.",
+    "byKey": {
+     "test-7": "Test 7 gives no input. `std::cin >> n` fails and leaves `n` unset; check the read itself, not only `n < 1`.",
+     "test-6": "Test 6 gives n = 0. Refuse it before pricing: return 1 from `main`."
+    }
+   },
+   "explain": {
+    "text": "Reading into an `int` can fail, and then `n` holds garbage, so the check covers the read itself. `std::fixed` with `std::setprecision(4)` gives four places, like Python's `f\"{price:.4f}\"`. This is trees l8's pricer, rewritten in C++; level 3 times it."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A tree price needs one row at a time. Store the n + 1 leaf payoffs in a `std::vector<double>` and overwrite cells 0 to i at each step back, counting j upwards.",
+   "`tree_price` takes the growth per step, so it reproduces both conventions: $1 + r$ (trees level 2, £7.99 American put) and $e^{r\\Delta t}$ (trees l8, £9.97 at n = 4).",
+   "C++ and Python agree to about 15 significant figures. The price converges like $1/n$ to £10.4506, zigzagging between odd and even n."
+  ],
+  "formula": {
+   "name": "One step back",
+   "tex": "v_j \\leftarrow \\dfrac{q\\,v_{j+1} + (1 - q)\\,v_j}{g},\\quad q = \\dfrac{g - d}{u - d}",
+   "note": "$g$ is one step's growth: $1 + r$ or $e^{r\\Delta t}$. American: then $v_j \\leftarrow \\max(v_j, f(Su^jd^{i-j}))$."
+  },
+  "trap": "`days / 365` with two `int`s is 0, so the pricer sees t = 0 and returns the payoff. Make one side a `double`."
+ },
+ "quiz": [
+  {
+   "id": "q-memory",
+   "difficulty": 2,
+   "prose": "Our pricer stores one `std::vector<double>` of n + 1 values. A `double` takes 8 bytes.",
+   "question": "How many bytes does the vector hold for n = 512?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4104,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "bytes",
+    "label": "Bytes",
+    "accept": "4,104: $513 \\times 8$",
+    "wrong": [
+     {
+      "id": "lattice",
+      "value": 1054728,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "n",
+      "value": 4096,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 4 KB, whatever the number of steps' nodes.",
+    "generic": "Not quite right. The vector has n + 1 cells.",
+    "byKey": {
+     "lattice": "That stores every node, as a full tree would. We keep only one row.",
+     "n": "That is 512 cells. A row of the last step has n + 1 = 513 leaves."
+    }
+   },
+   "explain": {
+    "text": "513 doubles of 8 bytes is 4,104 bytes. The whole lattice would need 131,841 doubles, over 1 MB."
+   }
+  },
+  {
+   "id": "q-one-step",
+   "difficulty": 2,
+   "prose": "Edge case: one step. `tree_price(Call(100.0), 100.0, 1.2, 0.8, 1.05, 1, false)`.",
+   "question": "What does it return, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 11.9048,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "label": "Price in pounds",
+    "accept": "£11.90: $q = 0.25/0.4 = 0.625$, then $0.625 \\times 20 / 1.05$",
+    "wrong": [
+     {
+      "id": "nodisc",
+      "value": 12.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 9.5238,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One step back from [0, 20].",
+    "generic": "Not quite right. Find q, then take one discounted step back.",
+    "byKey": {
+     "nodisc": "You forgot to discount: divide by the growth, 1.05.",
+     "half": "You used q = 0.5. Here $q = (1.05 - 0.8)/(1.2 - 0.8) = 0.625$."
+    }
+   },
+   "explain": {
+    "text": "The leaves are [0, 20]. With $q = 0.625$, `v[0]` becomes $(0.625 \\times 20 + 0.375 \\times 0)/1.05 = 11.90$. The loop runs once, for i = 0."
+   }
+  },
+  {
+   "id": "q-downwards",
+   "difficulty": 3,
+   "prose": "A colleague writes the step back with `for (int j = i; j >= 0; --j)` instead of counting up.",
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Each new `v[j]` reads `v[j + 1]` after it was already overwritten",
+      "correct": true
+     },
+     {
+      "id": "bounds",
+      "text": "It reads past the end of the vector",
+      "why": "The indices are the same as before, 0 to i + 1, all inside the vector. Only the order changed."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing: addition does not care about order",
+      "why": "The cells are rewritten in place, so order decides whether a read sees the old or the new value."
+     },
+     {
+      "id": "slow",
+      "text": "It is correct but slower",
+      "why": "It is wrong, not slow. From the top, `v[j + 1]` already holds the earlier time's value."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "In place, the order of writes matters.",
+    "generic": "Not quite right. Trace j = i, then j = i − 1."
+   },
+   "explain": {
+    "text": "Counting down, `v[i]` is rewritten first; then the step for `j = i - 1` reads that new `v[i]` as if it were a later value. Counting up, each cell is read before it is rewritten."
+   }
+  },
+  {
+   "id": "q-sigma-zero",
+   "difficulty": 3,
+   "prose": "`binomial_price(Call(100.0), 100.0, 0.05, 0.0, 1.0, 4, false)`: volatility zero.",
+   "question": "What happens, and why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "It throws: u = d = 1, so q divides by zero",
+      "correct": true
+     },
+     {
+      "id": "fwd",
+      "text": "It returns £4.88, the discounted forward payoff",
+      "why": "That is the limit as σ falls, but the tree cannot reach it: with u = d, q is $(e^{r\\Delta t} - 1)/0$."
+     },
+     {
+      "id": "zero",
+      "text": "It returns £0, since nothing moves",
+      "why": "With r = 5% the share still grows to £105.13, so the call is worth something. The tree just cannot represent it."
+     },
+     {
+      "id": "crash",
+      "text": "The program crashes on a division by zero",
+      "why": "Dividing doubles by zero gives inf or NaN, not a crash. Our check on q throws instead."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "No volatility, no tree.",
+    "generic": "Not quite right. Work out u, d and q with σ = 0."
+   },
+   "explain": {
+    "text": "With σ = 0, u = d = 1 and q = $(e^{r\\Delta t} - 1)/0$. Our check refuses it. Black-Scholes, next lesson, gives the limit £4.88 directly."
+   }
+  }
+ ]
+}

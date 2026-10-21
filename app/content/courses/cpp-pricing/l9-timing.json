@@ -169,8 +169,8 @@
           "rung": "point",
           "text": "Two bars barely twitch.",
           "highlight": [
-            "xmedian",
-            "xmin"
+            "median",
+            "min"
           ]
         }
       ],
@@ -185,8 +185,8 @@
         "text": "The **median** is the middle run once sorted, so one extreme run shifts it by at most one place. The minimum is the run with the least interference. Desks report the median, or the minimum for the best case; never a single run, and rarely the mean.",
         "canvas": {
           "highlight": [
-            "xmedian",
-            "xmin"
+            "median",
+            "min"
           ]
         }
       }
@@ -567,7 +567,7 @@
         "prelude": "#include <chrono>\n#include <algorithm>\n#include <cmath>\n#include <vector>\n\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double operator()(double s) const = 0;\n};\n\nstruct CallPayoff : Payoff {\n    double k;\n    explicit CallPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(s - k, 0.0); }\n};\n\nstruct PutPayoff : Payoff {\n    double k;\n    explicit PutPayoff(double k) : k(k) {}\n    double operator()(double s) const override { return std::max(k - s, 0.0); }\n};\n\nlong long zq_trees = 0;\n\n// Level 2's pricer: one row of n + 1 values, reused at every step.\ndouble binomial_price(const Payoff& payoff, double s, double r, double sigma,\n                      double t, int n, bool american) {\n    ++zq_trees;\n    double dt = t / n;\n    double u = std::exp(sigma * std::sqrt(dt)), d = 1 / u;\n    double growth = std::exp(r * dt);\n    double q = (growth - d) / (u - d), disc = 1 / growth;\n    std::vector<double> v(n + 1);\n    for (int j = 0; j <= n; ++j)\n        v[j] = payoff(s * std::pow(u, j) * std::pow(d, n - j));\n    for (int i = n - 1; i >= 0; --i)\n        for (int j = 0; j <= i; ++j) {\n            v[j] = disc * (q * v[j + 1] + (1 - q) * v[j]);\n            if (american)\n                v[j] = std::max(v[j], payoff(s * std::pow(u, j) * std::pow(d, i - j)));\n        }\n    return v[0];\n}\n\nlong long zq_timed = 0;\n\ntemplate <class F>\nlong long time_us(F f) {\n    ++zq_timed;\n    auto start = std::chrono::steady_clock::now();\n    f();\n    auto stop = std::chrono::steady_clock::now();\n    return std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();\n}\n\ndouble median_of(std::vector<long long> xs) {\n    std::sort(xs.begin(), xs.end());\n    std::size_t m = xs.size() / 2;\n    if (xs.size() % 2 == 1) return xs[m];\n    return (xs[m - 1] + xs[m]) / 2.0;\n}\n",
         "examples": [
           {
-            "call": "tree_table({100, 200, 400}, 50)",
+            "call": "tree_table({100, 200, 400}, 30)",
             "expect": [
               10.430611662249232,
               10.440591259859703,
@@ -743,13 +743,11 @@
       "explain": {
         "text": "$T(1600)/T(800) \\approx (1600/800)^2 = 4$, so about 4,800 µs. Reading the ratio from your own run is a check on the code: a factor near 8 would mean a hidden extra loop.",
         "canvas": {
-          "markers": {
-            "m16": {
-              "i": 8,
-              "y": 1200,
-              "label": "×4 next: 4,800"
-            }
-          }
+          "highlight": [
+            "m4",
+            "m8"
+          ],
+          "caption": "300 to 1,200 µs is ×4; 1,200 × 4 = 4,800 µs at $n = 1{,}600$."
         }
       }
     },
@@ -983,7 +981,7 @@
           "rung": "point",
           "text": "Read the Python bar.",
           "highlight": [
-            "xpy"
+            "py"
           ]
         },
         {
@@ -1004,8 +1002,8 @@
         "text": "$100{,}000 \\times 0.040\\ \\text{s} = 4{,}000$ s, about 67 minutes; the release build needs 45 s, about 90 times less. NumPy only matches the debug build, and the debug build is ten times slower than release. That is why a benchmark always names its build.",
         "canvas": {
           "highlight": [
-            "xpy",
-            "xrel"
+            "py",
+            "rel"
           ],
           "caption": "Python 4,000 s; C++ -O2 45 s per night."
         }

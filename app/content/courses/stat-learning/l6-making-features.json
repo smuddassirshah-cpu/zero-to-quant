@@ -1,0 +1,1428 @@
+{
+  "id": "l6-making-features",
+  "course": "stat-learning",
+  "title": "Making features",
+  "minutes": 14,
+  "objectives": [
+    "Build interaction and polynomial features, and see when they overfit.",
+    "Encode sectors as dummies and reject features not known at prediction time."
+  ],
+  "skills": [
+    "sl-linear"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One slope is not enough",
+      "prose": "Eight shares: four volatile ($\\text{vol} = +1$) and four calm ($\\text{vol} = -1$). The model is $\\hat y = 0.3 + 0.7\\,\\text{mom} - 0.2\\,\\text{vol} + b_3\\,(\\text{mom} \\times \\text{vol})$. With $b_3 = 0$ both groups get the same slope.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2,
+            2
+          ],
+          "y": [
+            -2.5,
+            2.5
+          ],
+          "grid": true,
+          "xLabel": "mom (z-score)",
+          "yLabel": "Next-month return (%)",
+          "functions": [
+            {
+              "id": "hi",
+              "expr": "0.1 + (0.7 + b3)*x",
+              "label": "volatile",
+              "colour": 1,
+              "labelAt": 1.6
+            },
+            {
+              "id": "lo",
+              "expr": "0.5 + (0.7 - b3)*x",
+              "label": "calm",
+              "colour": 2,
+              "labelAt": 1.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "b3": 0
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "h0",
+              "x": -1.5,
+              "y": -1.7,
+              "colour": 1,
+              "tap": false
+            },
+            {
+              "id": "h1",
+              "x": -0.5,
+              "y": -0.5,
+              "colour": 1,
+              "tap": false
+            },
+            {
+              "id": "h2",
+              "x": 0.5,
+              "y": 0.7,
+              "colour": 1,
+              "tap": false
+            },
+            {
+              "id": "h3",
+              "x": 1.5,
+              "y": 1.9,
+              "colour": 1,
+              "tap": false
+            },
+            {
+              "id": "c0",
+              "x": -1.5,
+              "y": 0.2,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "c1",
+              "x": -0.5,
+              "y": 0.4,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "c2",
+              "x": 0.5,
+              "y": 0.6,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "c3",
+              "x": 1.5,
+              "y": 0.8,
+              "colour": 2,
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "caption": "Slope for volatile shares {{fixed(0.7 + b3, 2)}}, for calm shares {{fixed(0.7 - b3, 2)}}"
+        },
+        "maxHeight": 300
+      },
+      "question": "Set $b_3$ so each line runs through its own four shares.",
+      "widget": {
+        "kind": "slider",
+        "min": -1,
+        "max": 1,
+        "step": 0.05,
+        "start": 0,
+        "bind": "b3",
+        "label": "$b_3$",
+        "answer": 0.5,
+        "tol": 0.03,
+        "wrong": [
+          {
+            "id": "flat",
+            "from": -0.1,
+            "to": 0.1
+          },
+          {
+            "id": "neg",
+            "from": -1,
+            "to": -0.15
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The volatile shares rise steeply; the calm ones barely move."
+        },
+        {
+          "rung": "point",
+          "text": "The volatile shares climb 1.2% per unit of mom. Their slope is $0.7 + b_3$.",
+          "highlight": [
+            "h0",
+            "h3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.7 + b_3 = 1.2$ gives $b_3 = 0.5$. Check the calm slope: $0.7 - 0.5 = 0.2$."
+        }
+      ],
+      "feedback": {
+        "correct": "With $b_3 = 0.5$ momentum earns 1.2 per unit in volatile shares and 0.2 in calm ones.",
+        "generic": "Not quite right. Watch the caption: the volatile slope should be 1.2 and the calm slope 0.2.",
+        "byKey": {
+          "flat": "With $b_3$ near 0 both groups share one slope, so the line misses both groups.",
+          "neg": "You tilted the wrong way. A negative $b_3$ makes momentum pay more in calm shares."
+        }
+      },
+      "explain": {
+        "text": "You found $b_3 = 0.5$: the slope on mom is $0.7 + 0.5\\,\\text{vol}$, so it depends on vol. A model with mom and vol alone cannot do that. The extra column $\\text{mom} \\times \\text{vol}$ lets one feature change the effect of another.",
+        "canvas": {
+          "params": {
+            "b3": 0.5
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Building the column",
+      "prose": "The column you just used is an **interaction**: the product of two features, row by row. It is a new feature like any other, and OLS fits its coefficient as usual. Build it for four shares.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -2,
+            2
+          ],
+          "y": [
+            -2.5,
+            2.5
+          ],
+          "grid": true,
+          "xLabel": "mom (z-score)",
+          "yLabel": "Next-month return (%)",
+          "functions": [
+            {
+              "id": "hi",
+              "expr": "0.1 + (0.7 + b3)*x",
+              "label": "volatile",
+              "colour": 1,
+              "labelAt": 1.6
+            },
+            {
+              "id": "lo",
+              "expr": "0.5 + (0.7 - b3)*x",
+              "label": "calm",
+              "colour": 2,
+              "labelAt": 1.6,
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "b3": 0.5
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "h0",
+              "x": -1.5,
+              "y": -1.7,
+              "colour": 1,
+              "tap": false
+            },
+            {
+              "id": "h1",
+              "x": -0.5,
+              "y": -0.5,
+              "colour": 1,
+              "tap": false
+            },
+            {
+              "id": "h2",
+              "x": 0.5,
+              "y": 0.7,
+              "colour": 1,
+              "tap": false
+            },
+            {
+              "id": "h3",
+              "x": 1.5,
+              "y": 1.9,
+              "colour": 1,
+              "tap": false
+            },
+            {
+              "id": "c0",
+              "x": -1.5,
+              "y": 0.2,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "c1",
+              "x": -0.5,
+              "y": 0.4,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "c2",
+              "x": 0.5,
+              "y": 0.6,
+              "colour": 2,
+              "tap": false
+            },
+            {
+              "id": "c3",
+              "x": 1.5,
+              "y": 0.8,
+              "colour": 2,
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "caption": "Slope for volatile shares {{fixed(0.7 + b3, 2)}}, for calm shares {{fixed(0.7 - b3, 2)}}"
+        },
+        "maxHeight": 300
+      },
+      "question": "Fill in $\\text{mom} \\times \\text{vol}$ for each share.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Share",
+          "mom",
+          "vol",
+          "mom × vol"
+        ],
+        "rows": [
+          [
+            "A",
+            "1.2",
+            "0.5",
+            {
+              "edit": true,
+              "answer": 0.6,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "B",
+            "−0.8",
+            "1.5",
+            {
+              "edit": true,
+              "answer": -1.2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "C",
+            "0.4",
+            "−1.0",
+            {
+              "edit": true,
+              "answer": -0.4,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "D",
+            "−1.5",
+            "−2.0",
+            {
+              "edit": true,
+              "answer": 3.0,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the two numbers in each row."
+        },
+        {
+          "rung": "point",
+          "text": "Watch the signs: two negatives make a positive.",
+          "highlight": [
+            "h3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A: $1.2 \\times 0.5 = 0.6$. D: $-1.5 \\times -2.0 = 3.0$."
+        }
+      ],
+      "feedback": {
+        "correct": "Share D, a loser among volatile-looking shares, gets the largest value: 3.0.",
+        "generic": "Not quite right. Multiply mom by vol in each row and keep the sign."
+      },
+      "explain": {
+        "text": "The products are 0.6, −1.2, −0.4 and 3.0. Share D has negative mom and negative vol, yet its interaction is positive. That is why an interaction is read through its slope, $0.7 + b_3\\,\\text{vol}$, not on its own."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Every pair at once",
+      "prose": "A desk wants every pairwise interaction of its features appended to $\\mathbf{X}$: columns $x_ix_j$ for each pair $i < j$, in the order $(0, 1), (0, 2), \\dots, (1, 2), \\dots$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$x_0$",
+            "$x_1$",
+            "$x_2$",
+            "$x_0x_1$",
+            "$x_0x_2$",
+            "$x_1x_2$"
+          ],
+          "rows": [
+            [
+              "1",
+              "2",
+              "3",
+              "2",
+              "3",
+              "6"
+            ],
+            [
+              "−1",
+              "0.5",
+              "4",
+              "−0.5",
+              "−4",
+              "2"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Three features become six columns."
+        }
+      },
+      "question": "Complete `add_interactions(X)` so it returns $\\mathbf{X}$ with every pairwise product appended.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom itertools import combinations\n\ndef add_interactions(X):\n    X = np.asarray(X, dtype=float)\n    new = [...  for i, j in combinations(range(X.shape[1]), 2)]\n    return np.column_stack([X] + new)\n",
+        "solution": "import numpy as np\nfrom itertools import combinations\n\ndef add_interactions(X):\n    X = np.asarray(X, dtype=float)\n    new = [X[:, i] * X[:, j] for i, j in combinations(range(X.shape[1]), 2)]\n    return np.column_stack([X] + new)\n",
+        "examples": [
+          {
+            "call": "add_interactions([[1, 2, 3], [-1, 0.5, 4]]).tolist()",
+            "expect": "[[1, 2, 3, 2, 3, 6], [-1, 0.5, 4, -0.5, -4, 2]]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "add_interactions([[1, 2, 3], [-1, 0.5, 4]]).tolist()",
+            "expect": "[[1, 2, 3, 2, 3, 6], [-1, 0.5, 4, -0.5, -4, 2]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "add_interactions([[1, 2], [3, 4]]).tolist()",
+            "expect": "[[1, 2, 2], [3, 4, 12]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "add_interactions([[2], [3]]).tolist()",
+            "expect": "[[2], [3]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "add_interactions(np.ones((5, 4))).shape",
+            "expect": "(5, 10)"
+          },
+          {
+            "call": "np.round(add_interactions([[0.03, 1.36, 1.22, -0.51], [-0.3, -0.53, 0.57, -0.06], [0.75, -1.85, 1.57, -0.1]]), 6).tolist()",
+            "expect": "[[0.03, 1.36, 1.22, -0.51, 0.0408, 0.0366, -0.0153, 1.6592, -0.6936, -0.6222], [-0.3, -0.53, 0.57, -0.06, 0.159, -0.171, 0.018, -0.3021, 0.0318, -0.0342], [0.75, -1.85, 1.57, -0.1, -1.3875, 1.1775, -0.075, -2.9045, 0.185, -0.157]]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: the arrays are compared with math.isclose entry by entry, and one test checks the shape. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Column $i$ of `X` is `X[:, i]`."
+        },
+        {
+          "rung": "point",
+          "text": "Each new column is a row-by-row product of two columns.",
+          "highlight": [
+            "c3",
+            "c4",
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`X[:, i] * X[:, j]` inside the list."
+        }
+      ],
+      "feedback": {
+        "correct": "Four features gain six products: 10 columns.",
+        "generic": "Some tests failed. Each new column is `X[:, i] * X[:, j]` for one pair $i < j$."
+      },
+      "explain": {
+        "text": "`combinations` lists each pair once with $i < j$, so $p$ features gain $p(p-1)/2$ products. A single column has no pairs and comes back unchanged. A feature paired with itself would be its square, which `combinations` skips."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Polynomial features",
+      "prose": "`PolynomialFeatures(degree=2, include_bias=False)` goes further: every product of up to two features, squares included. Two features $x_0, x_1$ become five columns. The square $x_0^2$ is the interaction of $x_0$ with itself.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "lines": [
+            ">>> pf = PolynomialFeatures(degree=2, include_bias=False)",
+            ">>> pf.fit(X_train[:, :2]).get_feature_names_out()",
+            "array(['x0', 'x1', 'x0^2', 'x0 x1', 'x1^2'], dtype=object)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many columns does `PolynomialFeatures` make?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Features",
+          "Degree",
+          "Columns"
+        ],
+        "rows": [
+          [
+            "5",
+            "2",
+            {
+              "edit": true,
+              "answer": 20,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "5",
+            "3",
+            {
+              "edit": true,
+              "answer": 55,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "10",
+            "2",
+            {
+              "edit": true,
+              "answer": 65,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For degree 2: the features, their squares, then the products of two different features."
+        },
+        {
+          "rung": "point",
+          "text": "Five features: 5 linear, 5 squares and $\\binom{5}{2} = 10$ products.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Degree 2: $5 + 5 + 10 = 20$. Degree 3 adds the 35 products of three: 55. Ten features at degree 2: $10 + 10 + 45 = 65$."
+        }
+      ],
+      "feedback": {
+        "correct": "20, 55 and 65: the columns grow far faster than the features.",
+        "generic": "Not quite right. Count linear terms, squares and cross products separately."
+      },
+      "explain": {
+        "text": "Five features make 20 columns at degree 2 and 55 at degree 3. In general there are $\\binom{p + d}{d} - 1$ columns. Each one is a coefficient to estimate from the same rows."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Counting degree 2",
+      "prose": "Why does degree 2 give $p(p + 3)/2$ columns? Put the count in order.",
+      "question": "Put the lines of the count in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "lin",
+            "text": "Degree 1: the $p$ features themselves"
+          },
+          {
+            "id": "sq",
+            "text": "Degree 2, a feature times itself: $p$ squares $x_j^2$"
+          },
+          {
+            "id": "cross",
+            "text": "Degree 2, two different features: $\\binom{p}{2} = p(p - 1)/2$ products $x_ix_j$ with $i < j$"
+          },
+          {
+            "id": "sum",
+            "text": "Total: $p + p + p(p - 1)/2 = p(p + 3)/2$, which is 20 for $p = 5$"
+          }
+        ],
+        "answer": [
+          "lin",
+          "sq",
+          "cross",
+          "sum"
+        ],
+        "same": [
+          [
+            "lin",
+            "sq",
+            "cross"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every column has degree 1 or degree 2."
+        },
+        {
+          "rung": "point",
+          "text": "A degree-2 column multiplies either one feature by itself or two different features."
+        },
+        {
+          "rung": "step",
+          "text": "List the three kinds of column, then add them: $2p + p(p - 1)/2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Three kinds of column, then the sum.",
+        "generic": "Not quite right. The sum comes last, after the three kinds of column.",
+        "byKey": {
+          "sum": "The total needs all three counts first."
+        }
+      },
+      "explain": {
+        "text": "$2p + \\tfrac{p(p-1)}{2} = \\tfrac{4p + p^2 - p}{2} = \\tfrac{p(p + 3)}{2}$. For $p = 10$ that is 65, and the square term makes it grow like $p^2$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Degree against test error",
+      "prose": "Three features (mom, vol, value), 120 training share-months and 2,000 test ones. The true model has a mom × vol term. We fit `PolynomialFeatures` of degree 1 to 4: 3, 9, 19 and 34 columns.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "train",
+              "label": "Train MSE",
+              "values": [
+                2.12,
+                1.83,
+                1.57,
+                1.35
+              ],
+              "colour": 2
+            },
+            {
+              "id": "test",
+              "label": "Test MSE",
+              "values": [
+                2.57,
+                2.3,
+                3.12,
+                5.19
+              ],
+              "colour": 1
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xStep": 1,
+          "xLabel": "Degree",
+          "yLabel": "MSE (%²)",
+          "y": [
+            0,
+            6
+          ],
+          "decimals": 2
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "m3",
+              "i": 2,
+              "series": "test",
+              "label": "19 columns",
+              "below": false
+            },
+            {
+              "id": "m4",
+              "i": 3,
+              "series": "test",
+              "label": "34 columns"
+            }
+          ]
+        }
+      },
+      "question": "Which degree gives the lowest test MSE?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "d1",
+            "text": "1",
+            "why": "Degree 1 has no mom × vol column, so it misses the real interaction: test MSE 2.57."
+          },
+          {
+            "id": "d2",
+            "text": "2",
+            "correct": true
+          },
+          {
+            "id": "d3",
+            "text": "3",
+            "why": "You followed the training line. Degree 3 fits training rows better but tests at 3.12."
+          },
+          {
+            "id": "d4",
+            "text": "4",
+            "why": "You picked the lowest training error. Degree 4 has 34 columns for 120 rows and tests at 5.19."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the test line only."
+        },
+        {
+          "rung": "point",
+          "text": "The test line has one low point.",
+          "highlight": [
+            "test"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Test MSE: 2.57, 2.30, 3.12, 5.19."
+        }
+      ],
+      "feedback": {
+        "correct": "Degree 2 contains the true interaction and tests at 2.30.",
+        "generic": "Not quite right. Find the lowest point of the test line."
+      },
+      "explain": {
+        "text": "Degree 2 holds the mom × vol column the data needs, so test MSE falls to 2.30. Degree 3 and 4 add columns that fit noise in 120 rows. Degree 5, with 55 columns, tests at 66.4.",
+        "canvas": {
+          "highlight": [
+            "test"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Polynomial fit in code",
+      "prose": "Wrap the expansion and the fit together. Learn the transform on the training rows with `fit_transform`, then apply it to the test rows with `transform`. `make_curved(seed, n)` builds panels like the chart's.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "train",
+              "label": "Train MSE",
+              "values": [
+                2.12,
+                1.83,
+                1.57,
+                1.35
+              ],
+              "colour": 2
+            },
+            {
+              "id": "test",
+              "label": "Test MSE",
+              "values": [
+                2.57,
+                2.3,
+                3.12,
+                5.19
+              ],
+              "colour": 1
+            }
+          ],
+          "x": "index",
+          "indexFrom": 1,
+          "xStep": 1,
+          "xLabel": "Degree",
+          "yLabel": "MSE (%²)",
+          "y": [
+            0,
+            6
+          ],
+          "decimals": 2
+        },
+        "state": {
+          "markers": [
+            {
+              "id": "m3",
+              "i": 2,
+              "series": "test",
+              "label": "19 columns",
+              "below": false
+            },
+            {
+              "id": "m4",
+              "i": 3,
+              "series": "test",
+              "label": "34 columns"
+            }
+          ]
+        }
+      },
+      "question": "Complete `poly_test_mse` so it returns the test MSE of OLS on polynomial features, rounded to 6 places.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n\ndef make_curved(seed, n=400):\n    \"\"\"Three features (mom, vol, value) as z-scores, rows in month order.\n    Momentum pays more in volatile shares: the true model has a mom x vol term.\"\"\"\n    rng = np.random.default_rng(seed)\n    X = rng.standard_normal((n, 3))\n    y = 0.3 + 0.5 * X[:, 0] - 0.3 * X[:, 1] + 0.6 * X[:, 0] * X[:, 1] + 1.5 * rng.standard_normal(n)\n    return X, y\n",
+        "starter": "from sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error\n\ndef poly_test_mse(X_train, y_train, X_test, y_test, degree):\n    pf = PolynomialFeatures(degree=degree, include_bias=False)\n    P_train = ...   # learn the expansion on the training rows\n    P_test = ...    # apply it to the test rows\n    model = LinearRegression().fit(P_train, y_train)\n    return round(float(mean_squared_error(y_test, model.predict(P_test))), 6)\n",
+        "solution": "from sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import mean_squared_error\n\ndef poly_test_mse(X_train, y_train, X_test, y_test, degree):\n    pf = PolynomialFeatures(degree=degree, include_bias=False)\n    P_train = pf.fit_transform(X_train)\n    P_test = pf.transform(X_test)\n    model = LinearRegression().fit(P_train, y_train)\n    return round(float(mean_squared_error(y_test, model.predict(P_test))), 6)\n",
+        "examples": [
+          {
+            "setup": "X, y = make_curved(1)",
+            "call": "poly_test_mse(X[:300], y[:300], X[300:], y[300:], 2)",
+            "expect": "2.413486",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X, y = make_curved(1, n=400)",
+            "call": "poly_test_mse(X[:300], y[:300], X[300:], y[300:], 1)",
+            "expect": "2.693785",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_curved(1, n=400)",
+            "call": "poly_test_mse(X[:300], y[:300], X[300:], y[300:], 2)",
+            "expect": "2.413486",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_curved(1, n=400)",
+            "call": "poly_test_mse(X[:300], y[:300], X[300:], y[300:], 3)",
+            "expect": "2.63346",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_curved(2, n=200)",
+            "call": "poly_test_mse(X[:150], y[:150], X[150:], y[150:], 2)",
+            "expect": "2.631651",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X, y = make_curved(4, n=400)",
+            "call": "poly_test_mse(X[:300], y[:300], X[300:], y[300:], 4)",
+            "expect": "3.048086",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 5 hidden tests on panels from `make_curved(seed, n)`, which is already defined, at degrees 1 to 4. Each MSE is compared with math.isclose. The first run loads scikit-learn and NumPy, which takes 10 to 30 seconds; later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`fit_transform` learns and applies in one call; `transform` only applies."
+        },
+        {
+          "rung": "point",
+          "text": "Call `fit_transform` on `X_train` and `transform` on `X_test`.",
+          "highlight": [
+            "test"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`P_train = pf.fit_transform(X_train)` and `P_test = pf.transform(X_test)`."
+        }
+      ],
+      "feedback": {
+        "correct": "On `make_curved(1)` degree 2 tests at 2.4135, against 2.6938 for degree 1.",
+        "generic": "Some tests failed. Expand both sets with the same `pf`, learned on the training rows."
+      },
+      "explain": {
+        "text": "On panel 1 the test MSE runs 2.694, 2.413 and 2.633 for degrees 1 to 3. `PolynomialFeatures` learns nothing from the values, only the column count. A scaler does learn from values, which is why we keep the fit-on-train habit from now on."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Sectors as columns",
+      "prose": "A sector is text, so give each sector a 0 or 1 column: a **dummy**. With an intercept, drop the first sector's column. Otherwise the dummies add up to the column of ones, and $\\mathbf{X}^T\\mathbf{X}$ is singular.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Share",
+            "Sector",
+            "Energy",
+            "Tech"
+          ],
+          "rows": [
+            [
+              "1",
+              "Energy",
+              "1",
+              "0"
+            ],
+            [
+              "2",
+              "Banks",
+              "0",
+              "0"
+            ],
+            [
+              "3",
+              "Tech",
+              "0",
+              "1"
+            ],
+            [
+              "4",
+              "Banks",
+              "0",
+              "0"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Sorted sectors: Banks, Energy, Tech. Banks is dropped: it is the base the intercept stands for."
+        }
+      },
+      "question": "Complete `one_hot(sectors)`: sort the unique sectors, drop the first, and return one 0/1 column per remaining sector.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef one_hot(sectors):\n    levels = sorted(set(sectors))[1:]   # drop the first, the base\n    return np.array([[... for lev in levels] for s in sectors])\n",
+        "solution": "import numpy as np\n\ndef one_hot(sectors):\n    levels = sorted(set(sectors))[1:]   # drop the first, the base\n    return np.array([[1 if s == lev else 0 for lev in levels] for s in sectors])\n",
+        "examples": [
+          {
+            "call": "one_hot(['Energy', 'Banks', 'Tech', 'Banks']).tolist()",
+            "expect": "[[1, 0], [0, 0], [0, 1], [0, 0]]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "one_hot(['Energy', 'Banks', 'Tech', 'Banks']).tolist()",
+            "expect": "[[1, 0], [0, 0], [0, 1], [0, 0]]"
+          },
+          {
+            "call": "one_hot(['Tech', 'Tech', 'Banks']).tolist()",
+            "expect": "[[1], [1], [0]]"
+          },
+          {
+            "call": "one_hot(['Mining', 'Banks', 'Retail', 'Mining', 'Energy']).tolist()",
+            "expect": "[[0, 1, 0], [0, 0, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0]]"
+          },
+          {
+            "call": "one_hot(['Utilities'] * 3).shape",
+            "expect": "(3, 0)"
+          },
+          {
+            "call": "int(one_hot(['A', 'B', 'C', 'D', 'B']).sum())",
+            "expect": "4"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: three compare the 0/1 matrix exactly, one its shape and one its total. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each row has a 1 in its own sector's column, if that column was kept."
+        },
+        {
+          "rung": "point",
+          "text": "Banks rows are all zeros: the dropped base.",
+          "highlight": [
+            "r1",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`1 if s == lev else 0` inside the inner list."
+        }
+      ],
+      "feedback": {
+        "correct": "Base-sector rows are all zeros; every other row has one 1.",
+        "generic": "Some tests failed. Put a 1 where the share's sector matches the column's sector, else 0."
+      },
+      "explain": {
+        "text": "Each kept column's coefficient is that sector's average gap from Banks, the base. With all three columns plus the intercept, Banks = $1 - \\text{Energy} - \\text{Tech}$, so no unique fit exists. One sector only gives zero columns: there is nothing to compare it with."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Too good to be true",
+      "prose": "We predict February's return for 400 share-months, from data as of 31 January. A colleague tests five features one at a time on held-out months. One result is astonishing.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Feature",
+            "Known on",
+            "Test $R^2$ alone"
+          ],
+          "rows": [
+            [
+              "mom (past month)",
+              "31 Jan",
+              "2.36%"
+            ],
+            [
+              "vol (past 60 days)",
+              "31 Jan",
+              "3.92%"
+            ],
+            [
+              "value (last filing)",
+              "31 Jan",
+              "0.63%"
+            ],
+            [
+              "size (market cap)",
+              "31 Jan",
+              "1.33%"
+            ],
+            [
+              "net buying volume, February",
+              "28 Feb",
+              "44.92%"
+            ]
+          ],
+          "tap": "rows"
+        },
+        "state": {}
+      },
+      "question": "Tap the feature the desk must remove before anything else.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r4"
+        ],
+        "max": 1
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the second column. When would each value be known?"
+        },
+        {
+          "rung": "point",
+          "text": "Prediction happens on 31 January. One feature is not known until 28 February.",
+          "highlight": [
+            "r4c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "February's buying volume happens during the month being predicted. It is part of the answer, not a clue to it."
+        }
+      ],
+      "feedback": {
+        "correct": "February's buying volume is not known on 31 January. It leaks the target.",
+        "generic": "Not quite right. Check when each feature becomes known.",
+        "byKey": {
+          "r2": "You dropped the weakest feature. A weak test $R^2$ is normal for returns; the astonishing one is the problem.",
+          "r0": "Past-month return is known on 31 January. Its small score is what real signals look like.",
+          "r1": "Volatility over the past 60 days is known on 31 January. Its score is plausible.",
+          "r3": "Market cap on 31 January is known in time. Its score is small and plausible."
+        }
+      },
+      "explain": {
+        "text": "Buying volume in February moves with February's return, so it scores 44.92%. It does that by containing the answer: it is **leakage**. Any feature that is not known when the forecast is made has to go, however good it looks.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              4
+            ]
+          },
+          "dim": [
+            "r0",
+            "r1",
+            "r2",
+            "r3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The feature rules",
+      "prose": "New features are functions of old ones: products, powers, logs, lags and dummies. Degree $d$ on $p$ features gives $$\\binom{p + d}{d} - 1 \\text{ columns},$$ so test error, not training error, decides how far to go. Every feature must be computable at prediction time, and any transform is learned on training rows only.",
+      "question": "Four features at degree 3: how many columns does `PolynomialFeatures(include_bias=False)` make?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "r",
+            "text": "34",
+            "correct": true
+          },
+          {
+            "id": "bias",
+            "text": "35",
+            "why": "You kept the constant column. `include_bias=False` drops it: $\\binom{7}{3} - 1 = 34$."
+          },
+          {
+            "id": "cube",
+            "text": "64",
+            "why": "You counted ordered triples, $4^3$. The product $x_0x_1x_2$ is one column, not six."
+          },
+          {
+            "id": "twelve",
+            "text": "12",
+            "why": "You counted each feature to powers 1, 2 and 3 only. The cross products count too."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use $\\binom{p + d}{d} - 1$ with $p = 4$ and $d = 3$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\binom{7}{3} = 35$."
+        },
+        {
+          "rung": "step",
+          "text": "$35 - 1 = 34$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\binom{7}{3} - 1 = 34$, matching the chart's degree-4 count for three features.",
+        "generic": "Not quite right. Compute $\\binom{7}{3} - 1$."
+      },
+      "explain": {
+        "text": "$\\binom{7}{3} = 35$ monomials of degree at most 3, minus the constant: 34. The counts in the chart, 3, 9, 19 and 34, come from the same formula with $p = 3$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Point in time",
+      "prose": "The desk adds $\\text{mom} \\times \\text{vol}$ as a live feature: momentum has paid more in volatile shares. Its rule: a feature is allowed only if it could be computed at the close on 30 April, when May's forecast is made.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Candidate feature",
+            "Source"
+          ],
+          "rows": [
+            [
+              "mom × vol",
+              "April returns and 60-day volatility"
+            ],
+            [
+              "Sector dummies",
+              "Classification as of 30 April"
+            ],
+            [
+              "Book-to-price",
+              "Annual report filed 20 April"
+            ],
+            [
+              "Book-to-price, restated",
+              "Corrected report filed in June"
+            ],
+            [
+              "Earnings surprise",
+              "Results announced 15 May"
+            ],
+            [
+              "Log market cap",
+              "Price and shares at the 30 April close"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Select all that apply: which features pass the rule?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mv",
+            "text": "mom × vol",
+            "correct": true
+          },
+          {
+            "id": "sec",
+            "text": "Sector dummies",
+            "correct": true
+          },
+          {
+            "id": "btp",
+            "text": "Book-to-price from the 20 April filing",
+            "correct": true
+          },
+          {
+            "id": "rest",
+            "text": "Book-to-price as restated in June",
+            "why": "You used the corrected number. On 30 April only the original filing existed; a database that overwrites history leaks June into April."
+          },
+          {
+            "id": "earn",
+            "text": "Earnings surprise announced 15 May",
+            "why": "You used an announcement from inside May. It is part of what the forecast is trying to anticipate."
+          },
+          {
+            "id": "cap",
+            "text": "Log market cap at the 30 April close",
+            "correct": true
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For each source, ask: did it exist on 30 April?"
+        },
+        {
+          "rung": "point",
+          "text": "Two sources are dated after 30 April.",
+          "highlight": [
+            "r3",
+            "r4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep mom × vol, sectors, the April filing and the April market cap. Drop the June restatement and the May results."
+        }
+      ],
+      "feedback": {
+        "correct": "Four pass; the June restatement and the May earnings fail.",
+        "generic": "Not quite right. Keep exactly the features whose data existed on 30 April.",
+        "byKey": {
+          "rest": "The restated value did not exist on 30 April. Point-in-time data keeps what was known then.",
+          "earn": "Results on 15 May fall inside the month being predicted."
+        }
+      },
+      "explain": {
+        "text": "**Point-in-time** data stores each value as it was known on each date. A restated book value is the subtle leak: the number is about the past, but it was published later. Interactions and logs are fine as long as their ingredients pass the rule."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An interaction $x_ix_j$ lets one feature change another's slope; a square is a feature's interaction with itself.",
+      "Polynomial features multiply quickly, $\\binom{p+d}{d} - 1$ columns, and test error decides the degree.",
+      "Dummies drop one level beside an intercept, and every feature must be known when the forecast is made."
+    ],
+    "formula": {
+      "name": "Columns from `PolynomialFeatures`",
+      "tex": "\\binom{p + d}{d} - 1, \\qquad d = 2: \\ \\dfrac{p(p + 3)}{2}",
+      "note": "Five features: 20 at degree 2, 55 at degree 3."
+    },
+    "trap": "A feature with an astonishing test score is usually leaking the target: check when it would have been known."
+  },
+  "quiz": [
+    {
+      "id": "q-all-dummies",
+      "difficulty": 2,
+      "prose": "A model has an intercept and a dummy for every one of its 11 sectors, none dropped.",
+      "question": "What goes wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "coll",
+            "text": "The dummies add up to the ones column, so the coefficients are not unique",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: more dummies give a more detailed model",
+            "why": "You added the base sector back. Its column equals 1 minus the others, so OLS cannot separate it from the intercept."
+          },
+          {
+            "id": "overfit",
+            "text": "It overfits, but the coefficients are still unique",
+            "why": "It is worse than overfitting: with exact collinearity infinitely many coefficient sets give the same fit."
+          },
+          {
+            "id": "drop-int",
+            "text": "The intercept becomes 0 automatically",
+            "why": "Nothing forces that. You could drop the intercept yourself, but OLS will not choose for you."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Perfect collinearity: one column is an exact sum of others.",
+        "generic": "Not quite right. Add up the 11 dummy columns on any row."
+      },
+      "explain": {
+        "text": "Every share is in exactly one sector, so the 11 dummies sum to 1 on every row: the intercept's column. $\\mathbf{X}^T\\mathbf{X}$ is singular. Drop one sector, which then becomes the base."
+      }
+    },
+    {
+      "id": "q-one-firm",
+      "difficulty": 3,
+      "prose": "One sector, Shipping, has a single share in the training rows. Its dummy is kept.",
+      "question": "What does the fitted model do with that share?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "exact",
+            "text": "Fits its training return exactly: its dummy absorbs whatever the other features miss",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "Gives it the average sector effect",
+            "why": "You expected pooling. A dummy's coefficient is free, and with one share it simply matches that share."
+          },
+          {
+            "id": "drop",
+            "text": "Drops the dummy because it is too rare",
+            "why": "OLS never drops a column on its own."
+          },
+          {
+            "id": "zero",
+            "text": "Sets the dummy's coefficient to 0",
+            "why": "Only a column of zeros gets 0. This one is 1 on the Shipping row."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "A one-share dummy is a private intercept for that share: pure noise for forecasting.",
+        "generic": "Not quite right. The dummy is 1 on exactly one row."
+      },
+      "explain": {
+        "text": "The coefficient can move that one prediction anywhere without touching other rows, so OLS sets its residual to 0. The Shipping effect is then one share's one return: noise. Merge tiny sectors into a broader one."
+      }
+    },
+    {
+      "id": "q-count3",
+      "difficulty": 2,
+      "prose": "Three features, `PolynomialFeatures(degree=3, include_bias=False)`.",
+      "question": "How many columns come out?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "columns",
+        "label": "Number of columns",
+        "accept": "19: $\\binom{6}{3} - 1$.",
+        "wrong": [
+          {
+            "id": "bias",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "pow",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "cube",
+            "value": 27,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\binom{6}{3} - 1 = 19$.",
+        "generic": "Not quite right. Use $\\binom{p + d}{d} - 1$.",
+        "byKey": {
+          "bias": "You kept the constant; `include_bias=False` drops it.",
+          "pow": "You counted only powers of single features. Cross products such as $x_0x_1x_2$ count too.",
+          "cube": "You counted ordered triples. Order does not matter in a product."
+        }
+      },
+      "explain": {
+        "text": "$\\binom{6}{3} = 20$ monomials of degree at most 3, minus the constant: 19."
+      }
+    },
+    {
+      "id": "q-fit-all",
+      "difficulty": 3,
+      "prose": "A colleague calls `.fit` on two transforms using all 400 rows, test rows included: `PolynomialFeatures` and `StandardScaler`, which subtracts each column's mean.",
+      "question": "Which one leaks information from the test rows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "scaler",
+            "text": "Only the scaler: it learns means from the data; the polynomial expansion learns nothing but a column count",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Both equally",
+            "why": "`PolynomialFeatures` computes each row from that row alone, so the test rows change nothing. The habit of fitting on train is still right."
+          },
+          {
+            "id": "poly",
+            "text": "Only the polynomial expansion, since it multiplies test values",
+            "why": "Multiplying a row's own values uses nothing from other rows. The scaler's mean does."
+          },
+          {
+            "id": "neither",
+            "text": "Neither: transforms are not models",
+            "why": "A scaler's mean and spread are estimated, like coefficients. Estimating them on test rows lets the test period shape the inputs."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Anything estimated from rows leaks if test rows are among them.",
+        "generic": "Not quite right. Ask which transform computes something across rows."
+      },
+      "explain": {
+        "text": "The scaler's mean is an average over rows, so test rows shift it. Lesson 9 shows how that flatters a backtest. Fit every transform on training rows, even the harmless ones, so the habit never fails."
+      }
+    }
+  ]
+}

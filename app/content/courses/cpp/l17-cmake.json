@@ -1,0 +1,1141 @@
+{
+ "id": "l17-cmake",
+ "course": "cpp",
+ "title": "Building with CMake",
+ "minutes": 14,
+ "objectives": [
+  "Build a project of several files with CMake."
+ ],
+ "skills": [
+  "cp-build"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "A project of several files",
+   "prose": "CMake and the compiler run on a desk machine, not in this app; here we read their sessions. In lesson 1 you built one file with `g++`. A pricing project splits into a library, a program and tests.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "label": "Project folder",
+     "nodes": [
+      {
+       "id": "p",
+       "label": "pricing",
+       "children": [
+        {
+         "id": "c",
+         "label": "CMakeLists.txt"
+        },
+        {
+         "id": "i",
+         "label": "include",
+         "children": [
+          {
+           "id": "h",
+           "label": "pricer.h"
+          }
+         ]
+        },
+        {
+         "id": "s",
+         "label": "src",
+         "children": [
+          {
+           "id": "pc",
+           "label": "pricer.cpp"
+          },
+          {
+           "id": "m",
+           "label": "main.cpp"
+          }
+         ]
+        },
+        {
+         "id": "t",
+         "label": "tests",
+         "children": [
+          {
+           "id": "tp",
+           "label": "test_pricer.cpp"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Tap every file the compiler turns into an object file.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "p-s-pc",
+     "p-s-m",
+     "p-t-tp"
+    ],
+    "wrong": [
+     {
+      "id": "hdr",
+      "set": [
+       "p-s-pc",
+       "p-s-m",
+       "p-t-tp",
+       "p-i-h"
+      ]
+     }
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which files hold code that runs, and which only declare it?"
+    },
+    {
+     "rung": "point",
+     "text": "A header is pasted into each `.cpp` that writes `#include` for it.",
+     "highlight": [
+      "p-i-h"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The three `.cpp` files: `pricer.cpp`, `main.cpp` and `test_pricer.cpp`."
+    }
+   ],
+   "feedback": {
+    "correct": "Three `.cpp` files, three object files.",
+    "generic": "Not quite right. The compiler takes `.cpp` files, one at a time.",
+    "byKey": {
+     "hdr": "You added `pricer.h`. A header is never compiled alone: each `.cpp` that includes it compiles its declarations.",
+     "p-i-h": "A header is never compiled alone: each `.cpp` that includes it compiles its declarations.",
+     "p-c": "CMake reads `CMakeLists.txt`; the compiler never sees it.",
+     "p-i": "`include` is a folder.",
+     "p-s": "`src` is a folder.",
+     "p-t": "`tests` is a folder."
+    }
+   },
+   "explain": {
+    "text": "Each `.cpp` is compiled on its own into an object file, and the linker joins them. Typing the `g++` line for three files, the include folder and the flags by hand soon goes wrong. **CMake** reads `CMakeLists.txt` and writes those commands for you.",
+    "canvas": {
+     "highlight": [
+      "p-s-pc",
+      "p-s-m",
+      "p-t-tp"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Here is the project's `CMakeLists.txt`. Each command builds or wires up a **target**: a library or a program. Read it line by line, guessing from the names.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "cmake_minimum_required(VERSION 3.16)",
+      "project(pricing LANGUAGES CXX)",
+      "",
+      "set(CMAKE_CXX_STANDARD 17)",
+      "set(CMAKE_CXX_STANDARD_REQUIRED ON)",
+      "",
+      "add_library(pricing src/pricer.cpp)",
+      "target_include_directories(pricing PUBLIC include)",
+      "",
+      "add_executable(main src/main.cpp)",
+      "target_link_libraries(main PRIVATE pricing)"
+     ],
+     "title": "CMakeLists.txt",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Tap the two lines that each create a target.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l7",
+     "l10"
+    ],
+    "wrong": [
+     {
+      "id": "link",
+      "set": [
+       "l7",
+       "l11"
+      ]
+     }
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look for the commands whose names start with `add_`."
+    }
+   ],
+   "feedback": {
+    "correct": "`add_library` and `add_executable` make the two targets.",
+    "generic": "Not quite right. A target is created by a command that starts with `add_`.",
+    "byKey": {
+     "link": "Line 11 connects two targets that exist already. It creates nothing new.",
+     "l11": "Line 11 connects two targets that exist already. It creates nothing new.",
+     "l8": "Line 8 tells the `pricing` target where its headers are; it creates nothing.",
+     "l2": "`project` names the whole project, not a target to build.",
+     "l4": "Line 4 sets the C++ standard for every target."
+    }
+   },
+   "explain": {
+    "text": "Line 7 makes a library `pricing` from `pricer.cpp`, and line 10 a program `main`. Line 8 says users of `pricing` find headers in `include/`, and line 11 links `main` against it. Lines 1 to 5 fix the CMake version, the project name and C++17.",
+    "canvas": {
+     "shade": {
+      "targets": [
+       "l7",
+       "l10"
+      ]
+     },
+     "highlight": [
+      "l8",
+      "l11"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Configure, then build",
+   "prose": "Two commands build the project. `cmake -S . -B build` **configures**: it reads `CMakeLists.txt` and writes build files into `build/`. `cmake --build build` runs the compiler and linker. Sources stay clean; every generated file lands in `build/`, an **out-of-source build**.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ cmake -S . -B build",
+      "-- The CXX compiler identification is GNU 13.2.0",
+      "-- Configuring done (0.4s)",
+      "-- Generating done (0.0s)",
+      "-- Build files have been written to: /home/you/pricing/build",
+      "$ cmake --build build",
+      "[ 25%] Building CXX object CMakeFiles/pricing.dir/src/pricer.cpp.o",
+      "[ 50%] Linking CXX static library libpricing.a",
+      "[ 50%] Built target pricing",
+      "[ 75%] Building CXX object CMakeFiles/main.dir/src/main.cpp.o",
+      "[100%] Linking CXX executable main",
+      "[100%] Built target main",
+      "$ ./build/main",
+      "ATM call, 100 steps: 10.4306"
+     ],
+     "title": "Terminal"
+    },
+    "state": {}
+   },
+   "question": "Tap the line where the pricing code joins `main.cpp`.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l11"
+    ],
+    "wrong": [
+     {
+      "id": "lib",
+      "set": [
+       "l8"
+      ]
+     }
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Joining compiled pieces is the linker's job."
+    },
+    {
+     "rung": "point",
+     "text": "Two lines say Linking. Which one makes `main`?",
+     "highlight": [
+      "l8",
+      "l11"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Linking the executable pulls in `libpricing.a`.",
+    "generic": "Not quite right. Find the line that links the program `main`.",
+    "byKey": {
+     "lib": "Line 8 packs `pricer.o` into the library file. `main.cpp` is not involved yet.",
+     "l7": "Line 7 compiles `pricer.cpp` alone. Nothing is joined there.",
+     "l10": "Line 10 compiles `main.cpp` alone; its calls into the library are still unresolved.",
+     "l1": "That is the configure step. No code is compiled or joined."
+    }
+   },
+   "explain": {
+    "text": "The library is compiled and packed first, then `main.cpp` is compiled, and line 11 links the two. CMake chose that order from `target_link_libraries`. The program lives in `build/`, so you run `./build/main`.",
+    "canvas": {
+     "highlight": [
+      "l11"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Rebuilding after an edit",
+   "prose": "You change one line of `src/main.cpp` and run `cmake --build build` again. You do not configure again: `build/` remembers the setup, and CMake reconfigures by itself if `CMakeLists.txt` changes.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ cmake --build build",
+      "[ 25%] Building CXX object CMakeFiles/pricing.dir/src/pricer.cpp.o",
+      "[ 50%] Linking CXX static library libpricing.a",
+      "[ 50%] Built target pricing",
+      "[ 75%] Building CXX object CMakeFiles/main.dir/src/main.cpp.o",
+      "[100%] Linking CXX executable main",
+      "[100%] Built target main"
+     ],
+     "title": "The first build"
+    },
+    "state": {}
+   },
+   "question": "How many `.cpp` files does the second build compile?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "1",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which source files changed since the last build?"
+    },
+    {
+     "rung": "point",
+     "text": "`pricer.cpp` and its object file are untouched.",
+     "highlight": [
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only `main.cpp` is compiled again, then `main` is relinked."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the edited file, then a fresh link.",
+    "generic": "Not quite right. CMake compiles only what changed.",
+    "byKey": {
+     "two": "`pricer.cpp` did not change, so its object file is reused. Only `main.cpp` is compiled.",
+     "zero": "`main.cpp` changed, so it must be compiled again before `main` is relinked."
+    }
+   },
+   "explain": {
+    "text": "The build tool compares file times: only `main.cpp` is newer than its object file. So it compiles one file and relinks `main`. On a project of 200 files that turns minutes into seconds, which is why projects split into many files.",
+    "canvas": {
+     "highlight": [
+      "l5",
+      "l6"
+     ],
+     "tone": {
+      "l2": "muted",
+      "l3": "muted",
+      "l4": "muted"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A header and its source",
+   "prose": "The header `rates.h` declares three functions; this app has placed it above your file, as `#include` would. Write the matching definitions in `rates.cpp`. `namespace pricing` groups the library's names, as `std` does. Continuous rates: the forward is $S e^{rt}$ and each cash flow is discounted by $e^{-rt}$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "#pragma once",
+      "#include <vector>",
+      "",
+      "namespace pricing {",
+      "double discount_factor(double r, double t);",
+      "double forward_price(double spot, double r, double t);",
+      "double present_value(const std::vector<double>& cash,",
+      "                     const std::vector<double>& times,",
+      "                     double r);",
+      "}"
+     ],
+     "title": "include/pricing/rates.h",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Define `forward_price` and `present_value`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <cmath>\n#include <vector>\n\n// include/pricing/rates.h (supplied)\nnamespace pricing {\ndouble discount_factor(double r, double t);\ndouble forward_price(double spot, double r, double t);\ndouble present_value(const std::vector<double>& cash, const std::vector<double>& times, double r);\n}\n",
+    "starter": "#include <cmath>\n#include <vector>\n// src/rates.cpp: the app has included include/pricing/rates.h above\n\nnamespace pricing {\n\ndouble discount_factor(double r, double t) {\n    return std::exp(-r * t);\n}\n\n// define forward_price and present_value here\n\n}  // namespace pricing\n",
+    "solution": "#include <cmath>\n#include <vector>\n// src/rates.cpp: the app has included include/pricing/rates.h above\n\nnamespace pricing {\n\ndouble discount_factor(double r, double t) {\n    return std::exp(-r * t);\n}\n\ndouble forward_price(double spot, double r, double t) {\n    return spot / discount_factor(r, t);\n}\n\ndouble present_value(const std::vector<double>& cash, const std::vector<double>& times, double r) {\n    double pv = 0;\n    for (std::size_t i = 0; i < cash.size(); ++i) {\n        pv += cash[i] * discount_factor(r, times[i]);\n    }\n    return pv;\n}\n\n}  // namespace pricing\n",
+    "examples": [
+     {
+      "call": "pricing::forward_price(100.0, 0.05, 1.0)",
+      "expect": 105.12710963760242,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "pricing::discount_factor(0.05, 2.0)",
+      "expect": 0.9048374180359595,
+      "compare": "isclose"
+     },
+     {
+      "call": "pricing::forward_price(100.0, 0.05, 1.0)",
+      "expect": 105.12710963760242,
+      "compare": "isclose"
+     },
+     {
+      "call": "pricing::forward_price(250.0, 0.0, 3.0)",
+      "expect": 250.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "pricing::present_value({5, 5, 105}, {1, 2, 3}, 0.04)",
+      "expect": 102.54617478299633,
+      "compare": "isclose"
+     },
+     {
+      "call": "pricing::present_value({}, {}, 0.04)",
+      "expect": 0.0,
+      "compare": "equal"
+     },
+     {
+      "call": "pricing::present_value({100}, {0.5}, 0.03)",
+      "expect": 98.51119396030627,
+      "compare": "isclose"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check compiles your rates.cpp after the supplied header, as a real build would, then runs 6 hidden tests; each answer is accepted within a relative 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Copy each declaration from the header and give it a body."
+    },
+    {
+     "rung": "point",
+     "text": "The forward is the spot grown at the rate: `spot * std::exp(r * t)`."
+    },
+    {
+     "rung": "step",
+     "text": "`forward_price` returns `spot * std::exp(r * t)`. `present_value` loops over the cash flows, adding `cash[i] * discount_factor(r, times[i])`."
+    }
+   ],
+   "feedback": {
+    "correct": "Declarations in the header, definitions in the source.",
+    "generic": "Not quite right. Read the first failing test or the compiler's message.",
+    "byKey": {
+     "compile": "If the message says undefined symbol, a declared function has no definition with the same name and parameter types. Copy the declaration from the header exactly.",
+     "test-4": "Three flows of 5, 5 and 105 at 4% give about 102.55. Discount each by `std::exp(-r * t)` with its own time."
+    }
+   },
+   "explain": {
+    "text": "The header promises the functions exist; the `.cpp` keeps the promise. Other files include only the header, so they compile without seeing these bodies. If a definition were missing, the compile would pass and the link would fail, which the next screen shows."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "When the link fails",
+   "prose": "Someone edited `daycount.cpp`. It compiles, then the link fails with the message below. The header promises `year_fraction(int days, int basis)`: days over the basis, 365 or 360.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ cmake --build build",
+      "[ 50%] Building CXX object src/daycount.cpp.o",
+      "[100%] Linking CXX executable main",
+      "/usr/bin/ld: daycount.cpp.o: in function `accrued(double, int, int)':",
+      "daycount.cpp:(.text+0x1c): undefined reference to",
+      "    `year_fraction(int, int)'",
+      "collect2: error: ld returned 1 exit status"
+     ],
+     "title": "Terminal"
+    },
+    "state": {
+     "tone": {
+      "l4": "err",
+      "l5": "err",
+      "l6": "err"
+     }
+    }
+   },
+   "question": "Fix `daycount.cpp` so it links and the tests pass.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "// include/pricing/daycount.h (supplied)\ndouble year_fraction(int days, int basis);\ndouble accrued(double coupon, int days, int basis);\n",
+    "starter": "// src/daycount.cpp\n\ndouble year_fraction(int days) {\n    return days / 365.0;\n}\n\ndouble accrued(double coupon, int days, int basis) {\n    return coupon * year_fraction(days, basis);\n}\n",
+    "solution": "// src/daycount.cpp\n\ndouble year_fraction(int days, int basis) {\n    return static_cast<double>(days) / basis;\n}\n\ndouble accrued(double coupon, int days, int basis) {\n    return coupon * year_fraction(days, basis);\n}\n",
+    "examples": [
+     {
+      "call": "year_fraction(90, 360)",
+      "expect": 0.25,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "year_fraction(90, 360)",
+      "expect": 0.25,
+      "compare": "isclose"
+     },
+     {
+      "call": "year_fraction(73, 365)",
+      "expect": 0.2,
+      "compare": "isclose"
+     },
+     {
+      "call": "accrued(5.0, 182, 365)",
+      "expect": 2.493150684931507,
+      "compare": "isclose"
+     },
+     {
+      "call": "accrued(4.5, 180, 360)",
+      "expect": 2.25,
+      "compare": "isclose"
+     },
+     {
+      "call": "year_fraction(0, 365)",
+      "expect": 0.0,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB), and the first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check compiles and links your file after the supplied header, then runs 5 hidden tests; each answer is accepted within a relative 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the definition of `year_fraction` with the declaration in the header."
+    },
+    {
+     "rung": "point",
+     "text": "The header has two parameters; the definition has one."
+    },
+    {
+     "rung": "step",
+     "text": "Define `double year_fraction(int days, int basis)` and return `static_cast<double>(days) / basis`."
+    }
+   ],
+   "feedback": {
+    "correct": "Signatures match, so the linker finds the function.",
+    "generic": "Not quite right. Read the first failing test or the linker's message.",
+    "byKey": {
+     "compile": "Still an undefined symbol: the definition's parameter types must match `year_fraction(int, int)` exactly.",
+     "test-1": "90 days on a 360 basis is 0.25. If you got 0.2466, the basis is still fixed at 365.",
+     "test-2": "73 / 365 is 0.2. If you got 0, you divided two `int`s: convert with `static_cast<double>`."
+    }
+   },
+   "explain": {
+    "text": "C++ allows two functions with one name and different parameters, so `year_fraction(int)` was a separate function. `accrued` asked for `year_fraction(int, int)`, which nothing defined. The compiler trusted the header; only the linker could see the gap."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Debug and Release",
+   "prose": "`cmake -S . -B build -DCMAKE_BUILD_TYPE=Release` turns the optimiser on with `-O2`. A Debug build, `-DCMAKE_BUILD_TYPE=Debug`, keeps every variable for the debugger and optimises nothing. Desks keep one build folder for each.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "dbg",
+       "label": "Debug (-O0 -g)"
+      },
+      {
+       "id": "rel",
+       "label": "Release (-O2)"
+      }
+     ],
+     "yLabel": "Seconds",
+     "showValues": true,
+     "decimals": 2
+    },
+    "state": {
+     "values": {
+      "dbg": 1.28,
+      "rel": 0.16
+     },
+     "caption": "Pricing 1,000 options on a 500-step tree, one laptop"
+    }
+   },
+   "question": "How many times faster is the Release build?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "a ratio",
+    "accept": "8",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "diff",
+      "value": 1.12,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the Debug time by the Release time."
+    },
+    {
+     "rung": "point",
+     "text": "1.28 / 0.16",
+     "highlight": [
+      "xdbg",
+      "xrel"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "1.28 / 0.16 = 8 times faster.",
+    "generic": "Not quite right. Divide the slower time by the faster one.",
+    "byKey": {
+     "inv": "You divided Release by Debug. The question asks how many times faster, so put the slower time on top.",
+     "diff": "You subtracted. A speed-up is a ratio: 1.28 / 0.16."
+    }
+   },
+   "explain": {
+    "text": "The optimiser keeps values in registers and inlines small functions, which here buys a factor of 8. Time only Release builds, and never compare a Debug C++ time with Python. `cpp-pricing` times the binomial pricer this way against Python.",
+    "canvas": {
+     "highlight": [
+      "xrel"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Found the header, lost the code",
+   "prose": "A colleague's `CMakeLists.txt` ends like this, and the build fails.\n\n```cmake\nadd_library(pricing src/pricer.cpp)\ntarget_include_directories(pricing PUBLIC include)\nadd_executable(main src/main.cpp)\ntarget_include_directories(main PRIVATE include)\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "[ 75%] Building CXX object CMakeFiles/main.dir/src/main.cpp.o",
+      "[100%] Linking CXX executable main",
+      "/usr/bin/ld: main.cpp.o: in function `main':",
+      "main.cpp:(.text+0x5e): undefined reference to",
+      "    `binomial_call(double, double, double, double, double, int)'",
+      "collect2: error: ld returned 1 exit status"
+     ],
+     "title": "Terminal"
+    },
+    "state": {
+     "tone": {
+      "l3": "err",
+      "l4": "err",
+      "l5": "err"
+     }
+    }
+   },
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "link",
+      "text": "`main` sees the header but is never linked with `pricing`: add `target_link_libraries(main PRIVATE pricing)`",
+      "correct": true
+     },
+     {
+      "id": "hdr",
+      "text": "The compiler cannot find `pricer.h`",
+      "why": "`main.cpp` compiled at 75%, so the header was found. The error comes from the linker, after compiling."
+     },
+     {
+      "id": "src",
+      "text": "Add `src/pricer.cpp` to `add_executable(main ...)`",
+      "why": "That would link, but it compiles `pricer.cpp` a second time inside `main` and makes the library pointless."
+     },
+     {
+      "id": "std",
+      "text": "C++17 is not switched on",
+      "why": "A missing standard gives compile errors in `main.cpp`. This failure is in the link."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Did `main.cpp` compile?"
+    },
+    {
+     "rung": "point",
+     "text": "The error comes from `ld`, the linker: a function was declared but its code was never joined in.",
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Including a header gives declarations only. `target_link_libraries` joins the library's code."
+    }
+   ],
+   "feedback": {
+    "correct": "Headers declare; linking supplies the code.",
+    "generic": "Not quite right. Which tool printed the error, the compiler or the linker?",
+    "byKey": {
+     "hdr": "`main.cpp` compiled, so the header was found. The linker could not find the code behind it.",
+     "src": "That compiles `pricer.cpp` twice, once for the library and once for `main`. Link the library instead."
+    }
+   },
+   "explain": {
+    "text": "The header let `main.cpp` compile, but the code for `binomial_call` sits in `libpricing.a`, and nothing joined it. `target_link_libraries(main PRIVATE pricing)` links it. It also passes on `pricing`'s `PUBLIC` include folder, so line 4 can go.",
+    "canvas": {
+     "highlight": [
+      "l4",
+      "l5"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "The pattern behind every `CMakeLists.txt` you will meet:\n\n```cmake\nadd_library(name files...)          # a library target\ntarget_include_directories(name PUBLIC include)\nadd_executable(name files...)       # a program target\ntarget_link_libraries(user PRIVATE used...)\nadd_library(name INTERFACE)         # header-only\n```\n`PUBLIC` passes a setting on to every target that links this one; `PRIVATE` keeps it in.",
+   "question": "A new `greeks` library calls functions from `pricing`, and `main` calls `greeks`. Which lines link it all?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "chain",
+      "text": "`target_link_libraries(greeks PUBLIC pricing)` and `target_link_libraries(main PRIVATE greeks)`",
+      "correct": true
+     },
+     {
+      "id": "main",
+      "text": "`target_link_libraries(main PRIVATE greeks pricing)` alone",
+      "why": "This often links, but `greeks` itself never says it needs `pricing`. Every other user of `greeks` must then remember it."
+     },
+     {
+      "id": "inc",
+      "text": "`target_include_directories(greeks PUBLIC include)` alone",
+      "why": "That finds headers only. The code of `pricing` still has to be linked."
+     },
+     {
+      "id": "rev",
+      "text": "`target_link_libraries(pricing PUBLIC greeks)`",
+      "why": "That says `pricing` needs `greeks`, the wrong way round."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each target should state what it uses itself."
+    }
+   ],
+   "feedback": {
+    "correct": "Each target names what it uses.",
+    "generic": "Not quite right. Who uses whom?"
+   },
+   "explain": {
+    "text": "`greeks` uses `pricing`, so it links it, `PUBLIC` because its headers mention pricing types. `main` then links only `greeks` and receives `pricing` through it. A header-only library has no `.cpp`, so it is `INTERFACE`: it only passes on its include folder."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "A colleague clones the pricing project and wants to run `main` built for timing.",
+   "canvas": {
+    "kind": "tree",
+    "params": {
+     "label": "Project folder",
+     "nodes": [
+      {
+       "id": "p",
+       "label": "pricing",
+       "children": [
+        {
+         "id": "c",
+         "label": "CMakeLists.txt"
+        },
+        {
+         "id": "i",
+         "label": "include",
+         "children": [
+          {
+           "id": "h",
+           "label": "pricer.h"
+          }
+         ]
+        },
+        {
+         "id": "s",
+         "label": "src",
+         "children": [
+          {
+           "id": "pc",
+           "label": "pricer.cpp"
+          },
+          {
+           "id": "m",
+           "label": "main.cpp"
+          }
+         ]
+        },
+        {
+         "id": "t",
+         "label": "tests",
+         "children": [
+          {
+           "id": "tp",
+           "label": "test_pricer.cpp"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the steps in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "cd",
+      "text": "`cd pricing`, the folder with `CMakeLists.txt`"
+     },
+     {
+      "id": "cfg",
+      "text": "`cmake -S . -B build -DCMAKE_BUILD_TYPE=Release`"
+     },
+     {
+      "id": "bld",
+      "text": "`cmake --build build`"
+     },
+     {
+      "id": "run",
+      "text": "`./build/main`"
+     },
+     {
+      "id": "edit",
+      "text": "Edit `src/pricer.cpp`, then `cmake --build build` again"
+     }
+    ],
+    "answer": [
+     "cd",
+     "cfg",
+     "bld",
+     "run",
+     "edit"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Configuring writes the build files that the build step uses."
+    },
+    {
+     "rung": "point",
+     "text": "Running needs the program, which only the build step makes."
+    },
+    {
+     "rung": "step",
+     "text": "Folder, configure, build, run; after an edit, build again without configuring."
+    }
+   ],
+   "feedback": {
+    "correct": "Configure once, build after every edit.",
+    "generic": "Not quite right. Each step needs what the one before produced."
+   },
+   "explain": {
+    "text": "Configure reads `CMakeLists.txt` and fixes the build type; build compiles and links; then the program exists to run. After an edit only `cmake --build build` is needed, and it recompiles just `pricer.cpp`.",
+    "canvas": {
+     "highlight": [
+      "p-c",
+      "p-s-pc"
+     ]
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "One library, many tools",
+   "prose": "A desk keeps one pricing library that a risk report, a P&L tool and a backtester all link. A new joiner runs `git status` after their first build.\n\n```text\nUntracked files:\n  build/\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ git status --short",
+      "?? build/",
+      "$ cat .gitignore",
+      "*.csv",
+      ".env"
+     ],
+     "title": "Terminal"
+    },
+    "state": {}
+   },
+   "question": "What should they do with `build/`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ignore",
+      "text": "Add `build/` to `.gitignore`: anyone can rebuild it from the sources and `CMakeLists.txt`",
+      "correct": true
+     },
+     {
+      "id": "commit",
+      "text": "Commit it, so colleagues need not compile",
+      "why": "Its object files suit one compiler and one machine, and change on every build. Commit the recipe, not the output."
+     },
+     {
+      "id": "edit",
+      "text": "Edit `build/Makefile` to add the backtester",
+      "why": "Files in `build/` are rewritten on every configure, so the edit would vanish. Change `CMakeLists.txt`."
+     },
+     {
+      "id": "delete",
+      "text": "Delete `CMakeLists.txt` once `build/` exists",
+      "why": "`CMakeLists.txt` is the source of every build. Without it nobody can configure again."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Can the folder be made again from what is in the repository?"
+    },
+    {
+     "rung": "point",
+     "text": "`cmake -S . -B build` recreates it from `CMakeLists.txt`.",
+     "highlight": [
+      "l2"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "Version the recipe; ignore what it produces.",
+    "generic": "Not quite right. Is anything in `build/` impossible to regenerate?",
+    "byKey": {
+     "commit": "Build output depends on the machine and changes on every build. The git course's rule applies: keep generated files out."
+    }
+   },
+   "explain": {
+    "text": "`build/` is fully generated, so it belongs in `.gitignore`, as the git course did with data and secrets. Every tool links the one `pricing` target, so a fix in the library reaches all three after a rebuild. That library, with tests, is what `cpp-pricing` builds.",
+    "canvas": {
+     "highlight": [
+      "l2"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A project splits into `.cpp` files compiled one at a time; headers declare, sources define, and the linker joins the objects.",
+   "`CMakeLists.txt` names targets (`add_library`, `add_executable`) and wires them (`target_include_directories`, `target_link_libraries`).",
+   "`cmake -S . -B build` configures and `cmake --build build` compiles what changed; time only Release builds."
+  ],
+  "formula": {
+   "name": "Build and run",
+   "tex": "\\texttt{cmake -S . -B build} \\;\\to\\; \\texttt{cmake --build build} \\;\\to\\; \\texttt{./build/main}",
+   "note": "Add `-DCMAKE_BUILD_TYPE=Release` when you configure a build for timing."
+  },
+  "trap": "Including a header is not linking: without `target_link_libraries` the build fails with an undefined reference."
+ },
+ "quiz": [
+  {
+   "id": "q-edit-build",
+   "difficulty": 2,
+   "prose": "To add `-Wall`, you open `build/CMakeFiles/main.dir/flags.make` and add it there. Later a colleague changes `CMakeLists.txt`.",
+   "question": "What happens to your flag?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "gone",
+      "text": "It vanishes when CMake regenerates `build/`",
+      "correct": true
+     },
+     {
+      "id": "kept",
+      "text": "It stays for good",
+      "why": "Files in `build/` are generated. The next configure rewrites them from `CMakeLists.txt`."
+     },
+     {
+      "id": "copied",
+      "text": "CMake copies it into `CMakeLists.txt`",
+      "why": "CMake never writes back to your sources."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Generated files get regenerated.",
+    "generic": "Not quite right. Where does `build/` come from?"
+   },
+   "explain": {
+    "text": "Everything in `build/` comes from `CMakeLists.txt`. Put the flag there instead: `target_compile_options(main PRIVATE -Wall)`."
+   }
+  },
+  {
+   "id": "q-one-file",
+   "difficulty": 2,
+   "prose": "A one-off script, `vol.cpp`, reads closes and prints their volatility. It has no other files.",
+   "question": "Does it need CMake?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: `g++ -std=c++17 -O2 vol.cpp -o vol` builds it",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: C++ cannot build without CMake",
+      "why": "CMake only writes compiler commands. For one file you can type the one command yourself."
+     },
+     {
+      "id": "lib",
+      "text": "Yes, as a library",
+      "why": "A single program has nothing to share, so there is no library to make."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "One file, one command.",
+    "generic": "Not quite right. What does CMake add for a single file?"
+   },
+   "explain": {
+    "text": "CMake earns its keep with several files, libraries, tests and build types. A single file is one `g++` line, as in lesson 1."
+   }
+  },
+  {
+   "id": "q-mixed",
+   "difficulty": 3,
+   "prose": "A dashboard shows Python 4.1 s, C++ Debug 1.3 s and C++ Release 0.16 s for the same pricer.",
+   "question": "Which claim is fair?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rel",
+      "text": "C++ (Release) is about 26 times faster than Python here",
+      "correct": true
+     },
+     {
+      "id": "dbg",
+      "text": "C++ is about 3 times faster than Python here",
+      "why": "That uses the Debug build, which is not optimised. Timings must come from Release builds."
+     },
+     {
+      "id": "both",
+      "text": "C++ is between 3 and 26 times faster, depending on luck",
+      "why": "The gap is the build type, not luck. Only the Release build is a fair timing."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Compare Release with Python.",
+    "generic": "Not quite right. Which C++ build would ship?"
+   },
+   "explain": {
+    "text": "4.1 / 0.16 is about 26. A Debug build switches the optimiser off, so its time says little about real speed."
+   }
+  },
+  {
+   "id": "q-interface",
+   "difficulty": 3,
+   "prose": "`stats.h` is header-only: every function in it is `inline`, and there is no `stats.cpp`.",
+   "question": "How do you declare it in CMake?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "iface",
+      "text": "`add_library(stats INTERFACE)` with `target_include_directories(stats INTERFACE include)`",
+      "correct": true
+     },
+     {
+      "id": "static",
+      "text": "`add_library(stats include/stats.h)`",
+      "why": "A normal library needs source files to compile. A header alone compiles to nothing."
+     },
+     {
+      "id": "none",
+      "text": "It cannot be a target",
+      "why": "An `INTERFACE` library is a target with no code of its own; linking it passes on its include folder."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Header-only means `INTERFACE`.",
+    "generic": "Not quite right. What does a library with no `.cpp` have to pass on?"
+   },
+   "explain": {
+    "text": "An `INTERFACE` target compiles nothing. Linking it, `target_link_libraries(main PRIVATE stats)`, hands `main` its include folder and settings."
+   }
+  }
+ ]
+}

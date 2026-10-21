@@ -1,0 +1,1174 @@
+{
+ "id": "l8-stack-and-heap",
+ "course": "cpp",
+ "title": "Stack and heap",
+ "minutes": 15,
+ "objectives": [
+  "Explain object lifetimes on the stack and the heap.",
+  "Pair every `new` with the right `delete`, and spot a leak."
+ ],
+ "skills": [
+  "cp-memory"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two million prices",
+   "prose": "Two programs store two million prices, 16 MB. Each function call gets a fixed slice of memory for its locals; here that slice is 8 MB.\n\n```cpp\n// A\nint main() {\n    double prices[2000000];\n    prices[1999999] = 101.0;\n}\n\n// B\nint main() {\n    std::vector<double> prices(2000000);\n    prices[1999999] = 101.0;\n}\n```",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Program",
+      "Declares",
+      "Bytes"
+     ],
+     "rows": [
+      [
+       "A",
+       "`double prices[2000000]`",
+       "16,000,000"
+      ],
+      [
+       "B",
+       "`std::vector<double> prices(2000000)`",
+       "16,000,000"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "Locals get 8 MB in total, here and on a typical Linux desk"
+    }
+   },
+   "question": "Which program crashes?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "A only",
+      "correct": true
+     },
+     {
+      "id": "both",
+      "text": "Both: 16 MB does not fit in 8 MB",
+      "why": "B's vector keeps its two million `double`s somewhere else; only the small vector object is a local."
+     },
+     {
+      "id": "b",
+      "text": "B only",
+      "why": "A's array is a local, all 16 MB of it, so A is the one that does not fit."
+     },
+     {
+      "id": "neither",
+      "text": "Neither",
+      "why": "A asks for 16 MB of locals in an 8 MB region, so it runs off the end."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where does each program put the two million `double`s?"
+    },
+    {
+     "rung": "point",
+     "text": "A's array is itself a local. B's local is a `std::vector`, which holds a pointer to its elements.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A needs 16 MB of locals and has 8 MB: it crashes. B's elements live elsewhere, so B runs."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the array is a 16 MB local.",
+    "generic": "Not quite right. Ask which program makes the 16 MB a local variable.",
+    "byKey": {
+     "both": "B's elements are not locals. The vector object is small; it points at its elements elsewhere."
+    }
+   },
+   "explain": {
+    "text": "A's array is a local, so all 16 MB must fit in the 8 MB for locals. It overflows: this browser reports \"memory access out of bounds\", and g++ on Linux says `Segmentation fault`. B's vector object is 12 bytes here; its elements live elsewhere, so B runs.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Frames come and go",
+   "prose": "Each call gets a **frame** holding its locals and parameters. Step through the program.\n\n```cpp\ndouble mid(double bid, double ask) {\n    return (bid + ask) / 2;\n}\ndouble value(int qty, double bid, double ask) {\n    double m = mid(bid, ask);\n    return qty * m;\n}\nint main() {\n    double v = value(300, 99.5, 100.5);\n    std::cout << v << \"\\n\";\n}\n```",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "main: v"
+     ],
+     "mode": "stack",
+     "capacity": 3,
+     "showIndex": false,
+     "topLabel": "top"
+    },
+    "state": {
+     "caption": "1 frame"
+    }
+   },
+   "question": "Step through the program until no frames are left.",
+   "widget": {
+    "kind": "manipulate",
+    "start": "s0",
+    "target": "s5",
+    "states": {
+     "s0": {
+      "tex": "\\texttt{main}\\ \\text{has started}",
+      "canvas": {
+       "cells": [
+        "main: v"
+       ],
+       "highlight": [
+        "c0"
+       ],
+       "caption": "1 frame"
+      },
+      "ops": [
+       {
+        "label": "`main` prints `v`",
+        "to": "x0",
+        "why": "`v` comes from `value`, so `main` must call `value` first."
+       },
+       {
+        "label": "`main` calls `value(300, 99.5, 100.5)`",
+        "to": "s1"
+       }
+      ]
+     },
+     "s1": {
+      "tex": "\\texttt{value}\\ \\text{has started}",
+      "canvas": {
+       "cells": [
+        "main: v",
+        "value: qty bid ask m"
+       ],
+       "highlight": [
+        "c1"
+       ],
+       "caption": "2 frames"
+      },
+      "ops": [
+       {
+        "label": "`value` returns",
+        "to": "x1",
+        "why": "`value` needs `m`, so it must call `mid` first."
+       },
+       {
+        "label": "`value` calls `mid(99.5, 100.5)`",
+        "to": "s2"
+       }
+      ]
+     },
+     "s2": {
+      "tex": "\\texttt{mid}\\ \\text{has started}",
+      "canvas": {
+       "cells": [
+        "main: v",
+        "value: qty bid ask m",
+        "mid: bid ask"
+       ],
+       "highlight": [
+        "c2"
+       ],
+       "caption": "3 frames: the tallest"
+      },
+      "ops": [
+       {
+        "label": "`value` returns",
+        "to": "x2",
+        "why": "Only the frame on top can finish, and `mid` is on top."
+       },
+       {
+        "label": "`mid` returns 100",
+        "to": "s3"
+       }
+      ]
+     },
+     "s3": {
+      "tex": "\\texttt{mid}\\ \\text{returned}\\ 100",
+      "canvas": {
+       "cells": [
+        "main: v",
+        "value: qty bid ask m = 100"
+       ],
+       "highlight": [
+        "c1"
+       ],
+       "caption": "`mid`'s frame is gone"
+      },
+      "ops": [
+       {
+        "label": "`mid` returns again",
+        "to": "x3",
+        "why": "`mid`'s frame, with its `bid` and `ask`, was removed when it returned."
+       },
+       {
+        "label": "`value` returns 300 × 100 = 30000",
+        "to": "s4"
+       }
+      ]
+     },
+     "s4": {
+      "tex": "\\texttt{value}\\ \\text{returned}\\ 30000",
+      "canvas": {
+       "cells": [
+        "main: v = 30000"
+       ],
+       "highlight": [
+        "c0"
+       ],
+       "caption": "1 frame"
+      },
+      "ops": [
+       {
+        "label": "`main` prints 30000 and returns",
+        "to": "s5"
+       },
+       {
+        "label": "`value` returns again",
+        "to": "x4",
+        "why": "`value` has finished; its frame and its `m` are gone."
+       }
+      ]
+     },
+     "s5": {
+      "tex": "\\text{The program has ended}",
+      "canvas": {
+       "cells": [],
+       "highlight": [],
+       "caption": "No frames left"
+      }
+     },
+     "x0": {
+      "tex": "\\texttt{v}\\ \\text{has no value yet}"
+     },
+     "x1": {
+      "tex": "\\texttt{value}\\ \\text{cannot return yet}"
+     },
+     "x2": {
+      "tex": "\\texttt{mid}\\ \\text{is still running}"
+     },
+     "x3": {
+      "tex": "\\texttt{mid}\\ \\text{has already returned}"
+     },
+     "x4": {
+      "tex": "\\texttt{value}\\ \\text{has already returned}"
+     }
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A call adds a frame on top; a return removes the top frame."
+    },
+    {
+     "rung": "point",
+     "text": "Only the frame on top can finish.",
+     "highlight": [
+      "c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`main` calls `value`, `value` calls `mid`. Then `mid` returns, `value` returns, and `main` prints and ends."
+    }
+   ],
+   "feedback": {
+    "correct": "Last in, first out.",
+    "generic": "Not quite right. Only the frame on top can return."
+   },
+   "explain": {
+    "text": "Frames pile up as calls start and come off the top as they return. When `mid` returned, its `bid` and `ask` were gone. This pile is the **stack**: every local lives in a frame and dies at its function's `}`.",
+    "canvas": {
+     "cells": [],
+     "caption": "No frames left"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Memory that outlives a call",
+   "prose": "The pile of frames is the **stack**. `new` puts an object on the **heap** instead, where it stays until you `delete` it.\n\n```cpp\ndouble* make_price() {\n    double* p = new double(101.5);\n    return p;\n}\n\nint main() {\n    double* q = make_price();\n    std::cout << *q << \"\\n\";\n    delete q;\n}\n```",
+   "canvas": {
+    "kind": "graph",
+    "params": {
+     "height": 240,
+     "nodeRadius": 20,
+     "nodes": [
+      {
+       "id": "p",
+       "label": "p",
+       "x": 0.2,
+       "y": 0.2,
+       "shape": "pill"
+      },
+      {
+       "id": "q",
+       "label": "q",
+       "x": 0.45,
+       "y": 0.2,
+       "shape": "pill"
+      },
+      {
+       "id": "h",
+       "label": "double 101.5",
+       "x": 0.65,
+       "y": 0.82,
+       "shape": "rect"
+      }
+     ],
+     "edges": [
+      {
+       "from": "p",
+       "to": "h",
+       "directed": true
+      },
+      {
+       "from": "q",
+       "to": "h",
+       "directed": true
+      }
+     ],
+     "lanes": [
+      {
+       "y": 0.2,
+       "label": "stack"
+      },
+      {
+       "y": 0.82,
+       "label": "heap"
+      }
+     ]
+    },
+    "state": {
+     "caption": "`p` in `make_price`'s frame, `q` in `main`'s; the `double` on the heap"
+    }
+   },
+   "question": "Is reading `*q` in `main` safe?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "yes",
+      "text": "Yes: the `double` is on the heap and lives until `delete q`",
+      "correct": true
+     },
+     {
+      "id": "dies",
+      "text": "No: it died when `make_price` returned",
+      "why": "That is true of locals. Only `p` was a local; the `double` that `new` made is on the heap."
+     },
+     {
+      "id": "copy",
+      "text": "No: `q` is a copy of `p`, so it points somewhere else",
+      "why": "Copying a pointer copies the address. `q` holds the same address `p` held."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which objects live in `make_price`'s frame, and which does `new` create?"
+    },
+    {
+     "rung": "point",
+     "text": "`p` is in the frame; the `double` is on the heap.",
+     "highlight": [
+      "p",
+      "h"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "When `make_price` returns, `p` dies. The heap `double` stays, and `q` holds its address until `delete q`."
+    }
+   ],
+   "feedback": {
+    "correct": "Heap objects live until `delete`.",
+    "generic": "Not quite right. Separate the pointer `p` from the `double` it points at.",
+    "byKey": {
+     "dies": "Only `p` lived in the frame. The `double` came from `new`, so it is on the heap."
+    }
+   },
+   "explain": {
+    "text": "`p` lived in `make_price`'s frame and died at its `}`, but it had already handed its address to `q`. The `double` from `new` is on the heap, so `*q` reads 101.5. `delete q` ends it; a heap object's lifetime is yours to manage.",
+    "canvas": {
+     "nodes": {
+      "p": null
+     },
+     "caption": "After the call: `p` is gone, the heap `double` is not"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Stack or heap",
+   "prose": "A local lives on the stack, even when it is a pointer or a vector. What `new` makes, and what a vector holds, lives on the heap.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "std::vector<double> load(int n) {",
+      "    std::vector<double> px(n, 100.0);",
+      "    return px;",
+      "}",
+      "",
+      "int main() {",
+      "    int n = 1000;",
+      "    double* buf = new double[n];",
+      "    std::vector<double> prices = load(n);",
+      "    // ... use them ...",
+      "    delete[] buf;",
+      "}"
+     ],
+     "title": "main.cpp",
+     "numbers": true
+    },
+    "state": {}
+   },
+   "question": "Fill in where each lives while `main` runs: stack or heap.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Object",
+     "Lives on"
+    ],
+    "rows": [
+     [
+      "`n`",
+      {
+       "edit": true,
+       "answer": "stack"
+      }
+     ],
+     [
+      "`buf`, the pointer",
+      {
+       "edit": true,
+       "answer": "stack"
+      }
+     ],
+     [
+      "`buf[0]`",
+      {
+       "edit": true,
+       "answer": "heap"
+      }
+     ],
+     [
+      "`prices`, the vector object",
+      {
+       "edit": true,
+       "answer": "stack"
+      }
+     ],
+     [
+      "`prices[0]`",
+      {
+       "edit": true,
+       "answer": "heap"
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every variable declared inside `main` is a local. What do the pointer and the vector point at?"
+    },
+    {
+     "rung": "point",
+     "text": "`buf` holds an address; `new double[n]` made what it points at.",
+     "highlight": [
+      "l8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`n`, `buf` and `prices` are locals: stack. `buf[0]` came from `new[]`, and `prices[0]` is inside the vector's buffer: heap."
+    }
+   ],
+   "feedback": {
+    "correct": "The handles are on the stack; the data is on the heap.",
+    "generic": "Not quite right. Separate each local from what it points at."
+   },
+   "explain": {
+    "text": "`n`, the pointer `buf` and the vector object `prices` are locals in `main`'s frame. The 1,000 `double`s from `new double[n]` and the vector's 1,000 elements are on the heap. A vector object is 12 bytes in this browser and 24 on a 64-bit desk, whatever its size.",
+    "canvas": {
+     "shade": {
+      "stack": [
+       "l7",
+       "l8",
+       "l9"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A leak",
+   "prose": "A **leak** is a `new` with no `delete`: the memory stays taken until the program ends. LeakSanitizer, part of `-fsanitize=address`, reports it at exit.\n\n```cpp\ndouble sum_prices(int n) {\n    double* prices = new double[n];\n    double total = 0;\n    for (int i = 0; i < n; ++i) {\n        prices[i] = 100 + i;\n        total += prices[i];\n    }\n    return total;\n}\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ g++ -g -fsanitize=address leak.cpp -o leak && ./leak",
+      "==21322==ERROR: LeakSanitizer: detected memory leaks",
+      "Direct leak of 8000 byte(s) in 1 object(s) allocated from:",
+      "    #0 0x7f16a0cfe6c8 in operator new[](unsigned long)",
+      "    #1 0x55d48df23237 in sum_prices(int) leak.cpp:2",
+      "    #2 0x55d48df2330f in main leak.cpp:10",
+      "SUMMARY: AddressSanitizer: 8000 byte(s) leaked in 1 allocation(s)."
+     ],
+     "title": "Terminal: one call to sum_prices(1000)"
+    },
+    "state": {}
+   },
+   "question": "A backtest calls `sum_prices(1000)` once a day for 2,500 trading days. How many MB leak? Take 1 MB as 1,000,000 bytes.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 20,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "MB",
+    "label": "Megabytes leaked",
+    "accept": "20 MB: 2,500 calls × 8,000 bytes = 20,000,000 bytes.",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.008
+     },
+     {
+      "id": "bytes",
+      "value": 20000000
+     },
+     {
+      "id": "noeight",
+      "value": 2.5
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many bytes does one call leak?"
+    },
+    {
+     "rung": "point",
+     "text": "Line 3 of the report gives one call's leak.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each call leaks 1,000 × 8 = 8,000 bytes. Times 2,500 calls is 20,000,000 bytes, or 20 MB."
+    }
+   ],
+   "feedback": {
+    "correct": "8,000 bytes a day, 20 MB in all.",
+    "generic": "Not quite right. Multiply one call's leak by the number of calls.",
+    "byKey": {
+     "one": "That is one call. The backtest calls it 2,500 times.",
+     "bytes": "That is the count in bytes. Divide by 1,000,000.",
+     "noeight": "You counted one byte per price. Each `double` is 8 bytes."
+    }
+   },
+   "explain": {
+    "text": "Each call leaks one `new double[1000]`, 8,000 bytes, and line 5 of the report names `sum_prices` at `leak.cpp:2`. Over 2,500 days that is 20 MB that is never given back. In a server that runs for weeks, leaks like this end in an out-of-memory crash.",
+    "canvas": {
+     "shade": {
+      "where": [
+       "l3",
+       "l5"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Which delete",
+   "prose": "A colleague frees an array of prices. In this browser the program runs, prints nothing odd, and exits with status 0.\n\n```cpp\ndouble* px = new double[1000];\n// ... fill and use px ...\ndelete px;\n```",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ ./prices",
+      "$ echo $?",
+      "0"
+     ],
+     "title": "Browser build"
+    },
+    "state": {}
+   },
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "brackets",
+      "text": "`new[]` must be paired with `delete[]`; plain `delete` is undefined behaviour",
+      "correct": true
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing: the program ran and exited with 0",
+      "why": "This browser build is forgiving. Pairing `new[]` with plain `delete` is undefined, and a desk build with checks stops on it."
+     },
+     {
+      "id": "eight",
+      "text": "It frees only the first 8 bytes and leaks the rest",
+      "why": "It is not a tidy partial free. It is undefined behaviour: the allocator may corrupt itself or crash."
+     },
+     {
+      "id": "free",
+      "text": "It should be `free(px)`",
+      "why": "`free` pairs with `malloc`, not with `new[]`. Mixing them is undefined too."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How was `px` allocated?"
+    },
+    {
+     "rung": "point",
+     "text": "`new double[1000]` has brackets."
+    },
+    {
+     "rung": "step",
+     "text": "Every `new` pairs with `delete`, and every `new[]` with `delete[]`. Mixing them is undefined."
+    }
+   ],
+   "feedback": {
+    "correct": "`new[]` goes with `delete[]`.",
+    "generic": "Not quite right. Match the form of `delete` to the form of `new`.",
+    "byKey": {
+     "nothing": "This browser build is forgiving. A desk build with `-fsanitize=address` reports \"alloc-dealloc-mismatch\" here."
+    }
+   },
+   "explain": {
+    "text": "`new[]` must be freed with `delete[]`. clang warns at compile time, and a desk build with AddressSanitizer stops with \"alloc-dealloc-mismatch\". The browser build ran it silently: that is luck, not correctness.",
+    "canvas": {
+     "lines": [
+      "main.cpp:3:1: warning: 'delete' applied to a pointer that was",
+      "  allocated with 'new[]'; did you mean 'delete[]'?",
+      "",
+      "$ g++ -g -fsanitize=address prices.cpp && ./a.out",
+      "ERROR: AddressSanitizer: alloc-dealloc-mismatch",
+      "  (operator new [] vs operator delete)"
+     ],
+     "tone": {
+      "l1": "err",
+      "l5": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A heap buffer from input",
+   "prose": "Finish the program. It reads `n`, then `n` prices into a heap buffer, prints their sum to 2 decimals, and frees the buffer. `new double[0]` is allowed: it returns a pointer you must not read through, but must still free.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "$ echo \"3  101.5 99.25 100\" | ./sum",
+      "300.75",
+      "$ echo \"0\" | ./sum",
+      "0.00"
+     ],
+     "title": "What it should do"
+    },
+    "state": {}
+   },
+   "question": "Complete the program.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <cstdio>\n#include <cstdlib>\n#include <iostream>\n#include <new>\n// A small leak checker: counts blocks from new[] and complains at exit if any never reached delete[]\nnamespace zq_heap {\nlong open_blocks = 0;\nstruct Check {\n    ~Check() {\n        if (open_blocks != 0) {\n            std::cout.flush();\n            std::fflush(stdout);\n            std::fprintf(stderr, \"leak check: %ld block(s) from new[] never reached delete[]\\n\", open_blocks);\n            std::_Exit(1);\n        }\n    }\n} check;\n}\nvoid* operator new[](std::size_t n) { ++zq_heap::open_blocks; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; }\nvoid operator delete[](void* p) noexcept { if (p) --zq_heap::open_blocks; std::free(p); }\nvoid operator delete[](void* p, std::size_t) noexcept { if (p) --zq_heap::open_blocks; std::free(p); }\n",
+    "starter": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    int n = 0;\n    std::cin >> n;\n    double* px = new double[n];\n    // read n prices into px, then print their sum to 2 decimals\n    delete px;\n}\n",
+    "solution": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    int n = 0;\n    std::cin >> n;\n    double* px = new double[n];\n    for (int i = 0; i < n; ++i) std::cin >> px[i];\n    double total = 0;\n    for (int i = 0; i < n; ++i) total += px[i];\n    std::cout << std::fixed << std::setprecision(2) << total << \"\\n\";\n    delete[] px;\n}\n",
+    "examples": [
+     {
+      "compare": "stdout",
+      "stdin": "3\n101.5 99.25 100\n",
+      "expect": "300.75\n"
+     }
+    ],
+    "tests": [
+     {
+      "compare": "stdout",
+      "stdin": "3\n101.5 99.25 100\n",
+      "expect": "300.75\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "0\n",
+      "expect": "0.00\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "1\n-2.5\n",
+      "expect": "-2.50\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "4\n0.1\n0.2\n0.3\n0.4\n",
+      "expect": "1.00\n"
+     },
+     {
+      "compare": "stdout",
+      "stdin": "5\n100 100.5 101 101.5 102\n",
+      "expect": "505.00\n"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs your program 5 times with different input. A hidden leak checker counts every `new[]`: if a block never reaches `delete[]`, the program ends with status 1 and the test fails."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Two loops, or one: read each `px[i]`, then add them up."
+    },
+    {
+     "rung": "point",
+     "text": "`std::cout << std::fixed << std::setprecision(2)` prints two decimals."
+    },
+    {
+     "rung": "step",
+     "text": "Read with `for (int i = 0; i < n; ++i) std::cin >> px[i];`, sum into `total`, print it, and finish with `delete[] px;`."
+    }
+   ],
+   "feedback": {
+    "correct": "Read, sum, print, `delete[]`.",
+    "generic": "Not yet. The results under the editor say which test failed.",
+    "byKey": {
+     "test-1": "If the output is right but the test failed with status 1, the leak checker fired: `new[]` needs `delete[]`, not `delete`."
+    }
+   },
+   "explain": {
+    "text": "The buffer from `new double[n]` lives on the heap until `delete[] px`. With `n` = 0 the loops never run and the program prints 0.00, but the zero-length block must still be freed. Plain `delete px` is what the leak checker caught."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "From a C buffer to a vector",
+   "prose": "Exchange feeds often have a C interface: you hand over a buffer and the feed fills it. `fill_ticks(double* out, int n)` is hidden above your code. `std::vector<double> out(buf, buf + n)` copies a pointer range into a vector.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      "void fill_ticks(double* out, int n);",
+      "",
+      "read_ticks(5)  ->  {100, 100.5, 101, 101.5, 100}"
+     ],
+     "title": "feed.h (hidden above your code)"
+    },
+    "state": {}
+   },
+   "question": "Write `read_ticks(n)`: fill a `new[]` buffer, return its prices as a vector, and leave no leak.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <cstdio>\n#include <cstdlib>\n#include <iostream>\n#include <new>\n// A small leak checker: counts blocks from new[] and complains at exit if any never reached delete[]\nnamespace zq_heap {\nlong open_blocks = 0;\nstruct Check {\n    ~Check() {\n        if (open_blocks != 0) {\n            std::cout.flush();\n            std::fflush(stdout);\n            std::fprintf(stderr, \"leak check: %ld block(s) from new[] never reached delete[]\\n\", open_blocks);\n            std::_Exit(1);\n        }\n    }\n} check;\n}\nvoid* operator new[](std::size_t n) { ++zq_heap::open_blocks; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; }\nvoid operator delete[](void* p) noexcept { if (p) --zq_heap::open_blocks; std::free(p); }\nvoid operator delete[](void* p, std::size_t) noexcept { if (p) --zq_heap::open_blocks; std::free(p); }\n#include <vector>\n// feed.h: a C-style API that writes n prices into a buffer you provide\nvoid fill_ticks(double* out, int n) {\n    for (int i = 0; i < n; ++i) out[i] = 100.0 + 0.5 * (i % 4);\n}\n",
+    "starter": "#include <vector>\n\nstd::vector<double> read_ticks(int n) {\n    // 1. get a buffer of n doubles with new[]\n    // 2. fill_ticks(buffer, n)\n    // 3. copy the buffer into a vector, free the buffer, return the vector\n    return {};\n}\n",
+    "solution": "#include <vector>\n\nstd::vector<double> read_ticks(int n) {\n    double* buf = new double[n];\n    fill_ticks(buf, n);\n    std::vector<double> out(buf, buf + n);\n    delete[] buf;\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "read_ticks(5)",
+      "expect": [
+       100,
+       100.5,
+       101,
+       101.5,
+       100
+      ],
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "read_ticks(5)",
+      "expect": [
+       100,
+       100.5,
+       101,
+       101.5,
+       100
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "read_ticks(1)",
+      "expect": [
+       100
+      ],
+      "compare": "isclose"
+     },
+     {
+      "call": "read_ticks(0)",
+      "expect": [],
+      "compare": "isclose"
+     },
+     {
+      "setup": "std::vector<double> v = read_ticks(8);",
+      "call": "v[7]",
+      "expect": 101.5,
+      "compare": "isclose"
+     },
+     {
+      "call": "read_ticks(100000).size()",
+      "expect": 100000,
+      "compare": "equal"
+     }
+    ],
+    "how": "The first Check downloads the C++ compiler (about 26 MB) and its first compile takes 10 to 15 s; later Checks take 1 to 3 s. Check runs 5 hidden tests. The hidden leak checker fails a test whose program ends with a `new[]` block that never reached `delete[]`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Allocate, fill, copy, free, return: in that order."
+    },
+    {
+     "rung": "point",
+     "text": "Free the buffer after copying it into the vector, never before."
+    },
+    {
+     "rung": "step",
+     "text": "`double* buf = new double[n]; fill_ticks(buf, n); std::vector<double> out(buf, buf + n); delete[] buf; return out;`"
+    }
+   ],
+   "feedback": {
+    "correct": "The vector owns a copy; the buffer is freed.",
+    "generic": "Not yet. The results under the editor say which test failed."
+   },
+   "explain": {
+    "text": "The vector copies the `n` prices into its own heap buffer, so the `new[]` buffer can be freed before returning. `fill_ticks(out.data(), n)` on a vector of size `n` would skip the manual buffer entirely: the vector frees its own memory, which is the next lesson."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Where things live",
+   "prose": "The lifetimes you saw:\n\n```cpp\nvoid f(int n) {\n    double x = 1.0;              // stack: dies at }\n    double* p = new double(2.0); // heap: lives until delete\n    double* a = new double[n];   // heap array: delete[]\n    std::vector<double> v(n);    // v on the stack, its data on the heap\n    delete p;\n    delete[] a;                  // exactly once each\n}\n```\n\nThe stack is small, a few MB, and each call's frame takes some of it.",
+   "question": "A recursion 10,000,000 calls deep stops with \"call stack exhausted\". What ran out?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "stack",
+      "text": "The stack: every call still waiting holds a frame",
+      "correct": true
+     },
+     {
+      "id": "heap",
+      "text": "The heap",
+      "why": "Frames are not on the heap. The heap is for `new` and for containers' elements."
+     },
+     {
+      "id": "time",
+      "text": "Time: it ran too long",
+      "why": "Each frame takes stack space, and 10 million waiting frames do not fit, whatever the time."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Deep recursion overflows the stack.",
+    "generic": "Not quite right. Where does each waiting call keep its frame?"
+   },
+   "explain": {
+    "text": "Each call that has not returned keeps a frame on the stack. Ten million of them need far more than a few MB, so the stack overflows. A loop, or a vector used as your own stack, keeps depth off the call stack."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The life of a heap double",
+   "prose": "Back to `make_price` and `main`, where `main` does `double* q = make_price();`, reads `*q`, then calls `delete q;`.",
+   "question": "Put the events in the order they happen.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "e1",
+      "text": "`main`'s frame is pushed: the program starts"
+     },
+     {
+      "id": "e2",
+      "text": "`make_price`'s frame is pushed on top: `main` called it"
+     },
+     {
+      "id": "e3",
+      "text": "`new` puts 101.5 on the heap; `p` in the top frame holds its address"
+     },
+     {
+      "id": "e4",
+      "text": "`make_price`'s frame and `p` are popped; the heap `double` stays"
+     },
+     {
+      "id": "e5",
+      "text": "`delete q` frees the heap `double`: `q` now dangles"
+     }
+    ],
+    "answer": [
+     "e1",
+     "e2",
+     "e3",
+     "e4",
+     "e5"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Frames come and go with calls; heap objects come and go with `new` and `delete`."
+    },
+    {
+     "rung": "point",
+     "text": "The heap object is created inside `make_price`, and outlives it."
+    },
+    {
+     "rung": "step",
+     "text": "Push `main`, push `make_price`, `new`, pop `make_price`, then `delete` in `main`."
+    }
+   ],
+   "feedback": {
+    "correct": "The heap object outlives the frame that made it.",
+    "generic": "Not quite right. A frame must exist before code inside it runs `new`."
+   },
+   "explain": {
+    "text": "The `double` is created while `make_price`'s frame is on top, survives that frame's pop, and ends only at `delete q`. After the `delete`, `q` still holds the old address: reading `*q` then would be undefined."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A pricer's lattice",
+   "prose": "A binomial pricer needs `steps + 1` doubles of scratch space per price. A volatility calibration prices 50,000 options at 1,000 steps each, one after another.",
+   "question": "How should the pricer get its scratch space?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "member",
+      "text": "Hold a `std::vector<double>` member, sized once to `steps + 1` and reused for every price",
+      "correct": true
+     },
+     {
+      "id": "newdelete",
+      "text": "`new double[steps + 1]` and `delete[]` inside every call",
+      "why": "That works, but it pays for 50,000 trips to the allocator, and one missed `delete[]` leaks on every price."
+     },
+     {
+      "id": "local",
+      "text": "A local array `double v[steps + 1]`",
+      "why": "In standard C++ an array's size must be known at compile time, and a large local array can overflow the stack."
+     },
+     {
+      "id": "leak",
+      "text": "`new` once at start-up and never `delete`",
+      "why": "It runs, but nothing owns the memory or frees it, and leak checkers flag it. The next lesson's tools give it an owner."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The size is the same for every price. Why allocate it 50,000 times?"
+    },
+    {
+     "rung": "point",
+     "text": "A member lives as long as the pricer object."
+    },
+    {
+     "rung": "step",
+     "text": "Size a vector once, then reuse its elements: one allocation, freed automatically when the pricer goes."
+    }
+   ],
+   "feedback": {
+    "correct": "Allocate once, reuse, free automatically.",
+    "generic": "Not quite right. Count the allocations each design makes, and ask who frees them."
+   },
+   "explain": {
+    "text": "A vector member is allocated once and reused for all 50,000 prices, and it frees itself when the pricer is destroyed. Allocation in a hot loop costs time, and manual `new[]`/`delete[]` invites leaks. Desks preallocate lattices and buffers for exactly this reason."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Each call's locals live in its frame on the stack and die at its `}`. The stack is a few MB, so big arrays and very deep recursion overflow it.",
+   "`new` puts an object on the heap until you `delete` it: `new` with `delete`, `new[]` with `delete[]`, exactly once. A `new` with no `delete` leaks.",
+   "A vector object is a small local; its elements are on the heap. The browser build forgives mismatched or double deletes; a desk build with `-fsanitize=address` does not."
+  ],
+  "formula": {
+   "name": "Pairing allocations",
+   "tex": "\\texttt{new} \\leftrightarrow \\texttt{delete}, \\qquad \\texttt{new[]} \\leftrightarrow \\texttt{delete[]}",
+   "note": "Never `delete` what `new` did not return, such as the address of a local."
+  },
+  "trap": "Plain `delete` on memory from `new[]` is undefined behaviour, even when the program seems to run fine."
+ },
+ "quiz": [
+  {
+   "id": "q-delete-stack",
+   "difficulty": 2,
+   "prose": "```cpp\ndouble price = 101.25;\ndouble* p = &price;\ndelete p;\n```",
+   "question": "What is wrong here?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ub",
+      "text": "`price` is on the stack; `delete` is only for addresses `new` returned",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: it frees `price` early",
+      "why": "Stack objects are freed by their frame, at `}`. `delete` on one is undefined behaviour."
+     },
+     {
+      "id": "leak",
+      "text": "It leaks `price`",
+      "why": "Nothing leaks: `price` goes with its frame. The bug is deleting memory that `new` never gave out."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Only `delete` what `new` made.",
+    "generic": "Not quite right. Who created `price`, and who frees it?"
+   },
+   "explain": {
+    "text": "`price` lives in the frame and is freed at `}`. g++ warns \"called on unallocated object 'price'\", and the program aborts with `free(): invalid pointer`. This browser build ran it silently."
+   }
+  },
+  {
+   "id": "q-new-zero",
+   "difficulty": 3,
+   "question": "`int n = 0; double* p = new double[n];` What is true?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "valid",
+      "text": "It is valid: `p` is not null, must not be read through, and still needs `delete[] p`",
+      "correct": true
+     },
+     {
+      "id": "null",
+      "text": "It returns `nullptr`",
+      "why": "`new double[0]` returns a real, non-null pointer to zero elements."
+     },
+     {
+      "id": "error",
+      "text": "It is undefined behaviour",
+      "why": "Allocating zero elements is allowed. Reading `p[0]` would be undefined; freeing it is required."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Zero elements, one block to free.",
+    "generic": "Not quite right. Is a zero-length array allowed?"
+   },
+   "explain": {
+    "text": "A zero-length `new[]` is legal and returns a unique non-null pointer. There is nothing to read, but the block must still go to `delete[]`, or the leak checker counts it."
+   }
+  },
+  {
+   "id": "q-session",
+   "difficulty": 3,
+   "question": "A strategy object is created at start-up and used until the program ends. Where can it live?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "main",
+      "text": "A local in `main`: `main`'s frame lasts the whole run",
+      "correct": true
+     },
+     {
+      "id": "heap",
+      "text": "It must be on the heap, made with `new`",
+      "why": "Nothing forces the heap. `main`'s frame exists from start to end, so a local there lives the whole session."
+     },
+     {
+      "id": "global",
+      "text": "It cannot be a local: locals die too soon",
+      "why": "Locals die at their function's `}`, and `main`'s `}` is the end of the program."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`main`'s locals live as long as the program.",
+    "generic": "Not quite right. When does `main`'s frame end?"
+   },
+   "explain": {
+    "text": "A local in `main` lives until `main` returns, which is the end of the run. Other code can reach it through references you pass down. Heap allocation is for objects whose lifetime does not match a frame."
+   }
+  },
+  {
+   "id": "q-vec-local",
+   "difficulty": 2,
+   "question": "Inside a function, `std::vector<double> v(1000000);` Does it overflow the stack?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: the elements are on the heap; only the small vector object is a local",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: 8 MB of locals is too much",
+      "why": "The 8 MB of elements are on the heap. The local is the vector object, a few pointers."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A vector's data is on the heap.",
+    "generic": "Not quite right. Which part of a vector is a local?"
+   },
+   "explain": {
+    "text": "`v` itself holds a few pointers (12 bytes here, 24 on a desk). Its million `double`s sit on the heap, so the stack is untouched. That is why large data goes in vectors, not local arrays."
+   }
+  }
+ ]
+}
