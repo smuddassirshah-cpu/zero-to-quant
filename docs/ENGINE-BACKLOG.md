@@ -1182,3 +1182,11 @@ Raised later (algo-think level 3):
 412. `tree`: stack rows per level or enforce a minimum font size when `maxHeight` caps a deep or wide-labelled tree.
 413. `number-line`: intervals as tap targets, not only points.
 414. AUTHORING.md section 3: note that `__learner_source__` is visible only in `prelude` and `postlude`, so a "no `sorted`" check sets a flag in a postlude (with 395).
+
+Raised later (graphs-dp levels 2 and 3):
+
+415. `graph`: README-B says edges are directed by default but `graph.js` draws them undirected unless `params.directed` or `edge.directed` is set; fix one or the other.
+416. `graph`: edge labels as KaTeX; circle node radius fixed from the first labels (longer labels set later are cut off); a side panel for auxiliary state such as a heap's contents.
+417. `tree`: a `state.dim: [paths]` to grey out pruned branches (`collapse` hides and does nothing on a leaf).
+418. `grid`: `state.mark` badges sit in the cell corner and `null` in a patch prints "null" instead of removing the badge; offer a centred glyph and treat `null` as removal.
+419. `code`: the time limit is 5 s times the number of cases for the whole run, so a slow-but-correct solution cannot be caught per case (with 394); agents now count reads with a hidden list subclass or time inside a test.
